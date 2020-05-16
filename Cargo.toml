@@ -1,0 +1,31 @@
+[package]
+name = "game"
+version = "0.0.1"
+
+[dependencies]
+#lazy_static = "1.0.0"
+#apigpio = "0"
+#tokio = { version = "0.2", features = ["full"] }
+#futures-util = "0.3"
+
+#pin-utils = "0.1.0-alpha.4"
+# ^ this strange version + Cargo seems to make me have to specify it
+# exactly.  futures-rs/Cargo.toml does it this way, so ok ?
+
+anyhow = "1"
+thiserror = "1"
+
+#arrayvec = "0"
+
+#toml = "0.5"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+rocket = "0.4"
+rocket_contrib = { version = "0.4", default-features=false, features=["tera_templates","helmet"] }
+
+#hmac = "0.7"
+#base64 = "0.10"
+#sha2 = "0.8"
+#generic-array = "0.12"
+
