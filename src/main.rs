@@ -40,11 +40,24 @@ impl<'r> FromParam<'r> for CheckedResourceLeaf {
   }
 }
 
+type TestCounter = BufReader<TestCounterInner>;
+#[derive(Debug)]
+struct TestCounterInner { next : usize, }
+impl Read for TestCounterInner {
+  fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+    thread::sleep(Duration::from_millis(500));
+    let data = format!("data: {}\n\n", self.next);
+    self.next += 1;
+    buf[0..data.len()].copy_from_slice(data.as_bytes());
+    Ok(buf.len())
+  }
+}
+
 #[get("/updates")]
 fn updates() -> impl response::Responder<'static> {
-  let ch = response::Stream::chunked(
-    b"data: an update"
-      .as_ref(), 1);
+  let tc = TestCounterInner { next : 0 };
+  let tc = BufReader::new(tc);
+  let ch = response::Stream::chunked(tc, 1);
   let ct = ContentType::parse_flexible("text/event-stream; charset=utf-8").
     unwrap();
   response::content::Content(ct,ch)
