@@ -41,7 +41,7 @@ impl<'r> FromParam<'r> for CheckedResourceLeaf {
 }
 
 #[get("/updates")]
-fn updates() -> response::Content<response::Stream<&'static [u8]>> {
+fn updates() -> impl response::Responder<'static> {
   let ch = response::Stream::chunked(
     b"data: an update"
       .as_ref(), 1);
