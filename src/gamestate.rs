@@ -1,5 +1,7 @@
 
 pub trait Piece {
+  type Msg : Serialize;
+  fn msg(&self) -> Msg;
 }
 
 #[derive(Debug)]
@@ -10,13 +12,15 @@ pub struct PieceRecord {
   held : Option<PlayerRef>,
 }
 
+const RECENT_BUFFER : usize = 10;
+
 #[derive(Debug)]
 pub struct GameState {
   gen : Counter,
   data : GameStateData,
-  clients,
+  recent : VecDeque<MsgUpdate>,
+  notify : Condvar,
 }
-
 
 #[derive(Debug)]
 pub struct GameStateData {
@@ -32,35 +36,53 @@ impl Deref for GameState {
 impl GameState {
   fn as_ref(&self) -> (&usize, &GameStateData) { (&self.gen, &self.data) }
   fn gen(&self) -> usize { self.gen }
-}
 
-
-
-#[derive(Serialize)]
-enum MsgUpdate {
-  InsertPiece(usize, MsgPiece),
-  DeletePiece(usize),
-  UpdatePiece(usize, MsgPiece),
-}
-
-struct DataGuard<'gs> {
-  gs : &'gs mut GameState,
-  msg : MsgUpdate,
-}
-impl<'gs> Deref for DataGuard<'gs> {
-  type Output = GameState;
-  fn deref(&self) -> GameState<'gs> { self.gs }
-}
-impl<'gs> DerefMut for DataGuard<'gs> {
-  fn deref_mut(&mut self) -> GameState<'gs> { self.gs }
-}
-
-impl GameState {
-  fn update(&mut self, msg : MsgUpdate) -> DataGuard<'_> {
-    DataGuard { gs : self, msg }
+  fn<F> update(&mut self, f : F)
+  where F : FnOnce(&mut GameStateData) -> MsgUpdate {
+    let msg = f(&mut self.data),
+    if let MsgNoUpdate = msg { return }
+    self.gen += 1,
+    if self.recent.len() >= RECENT_BUFFER { self.pop_front() }
+    self.recent.push_back(msg);
+    self.notify.notify_all();
   }
 }
 
-impl Drop for DataGuard {
+#[derive(Serialize)]
+enum MsgUpdate {
+  MsgNoUpdate,
+  MsgPieceInsert(usize, MsgPiece),
+  MsgPieceDelete(usize),
+  MsgPieceUpdate(usize, MsgPiece),
+}
+
+struct MsgPiece {
   
+}
+
+impl PieceRecord {
+  fn msg(&self) -> MsgPiece {
+    
+  }
+}
+
+impl GameState {
+  fn piece_insert(&mut self, i : usize, p : PieceRecord) {
+    self.update(|d| {
+      d.pieces.insert(i, p);
+      MsgPieceInsert(i, p.msg())
+    );
+  }
+  fn piece_delete(&mut self, i : usize) {
+    self.update(|d| {
+      d.pieces.remove(i, p);
+      MsgPieceDelete(i)
+    }
+  }
+  fn piece_update(&mut self, i : usize, p : PieceRecord) {
+    self.update(|d| {
+      d.pieces[i] = p,
+      MsgPieceUpdate(i, p.msg()),
+    }
+  }
 }
