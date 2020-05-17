@@ -40,6 +40,14 @@ impl<'r> FromParam<'r> for CheckedResourceLeaf {
   }
 }
 
+#[get("/updates")]
+fn updates() -> response::Content<response::Stream<&'static [u8]>> {
+  let ch = response::Stream::chunked(b"42".as_ref(), 1);
+  let ct = ContentType::parse_flexible("text/event-stream; charset=utf-8").
+    unwrap();
+  response::content::Content(ct,ch)
+}  
+
 #[get("/<leaf>")]
 fn resource(leaf : CheckedResourceLeaf) -> io::Result<NamedFile> {
   let template_dir = "templates"; // xxx
@@ -58,6 +66,7 @@ fn main() {
     .mount("/", routes![
       index,
       resource,
+      updates,
     ])
     .launch();
 }
