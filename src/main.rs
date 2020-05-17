@@ -4,13 +4,20 @@
 #[macro_use] extern crate rocket;
 
 extern crate rocket_contrib; // why do we need this ?
+extern crate serde;
 
 mod imports;
 use imports::*;
 
-#[get("/t")]
-fn index() -> &'static str {
-  "Hello, world!"
+type RE = E;
+
+#[derive(Serialize,Debug)]
+struct TestRenderContext { }
+
+#[get("/")]
+fn index() -> Result<Template,RE> {
+  let c = TestRenderContext { };
+  Ok(Template::render("test",&c))
 }
 
 fn main() {
