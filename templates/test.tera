@@ -1,4 +1,7 @@
 <body>
 <h1>Hi!</h1>
 
+<div id="spong">nothing</div>
+
 </body>
+<script src="script.js"></script>

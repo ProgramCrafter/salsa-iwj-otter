@@ -5,6 +5,8 @@
 
 extern crate rocket_contrib; // why do we need this ?
 extern crate serde;
+extern crate thiserror;
+extern crate anyhow;
 
 mod imports;
 use imports::*;
@@ -20,6 +22,30 @@ fn index() -> Result<Template,RE> {
   Ok(Template::render("test",&c))
 }
 
+const RESOURCES : &[&'static str] = &["script.js", "style.css"];
+
+#[derive(Debug)]
+struct CheckedResourceLeaf { pub safe : &'static str }
+#[derive(Error,Debug)]
+#[error("not a valid resource path")]
+struct UnknownResource{}
+
+impl<'r> FromParam<'r> for CheckedResourceLeaf {
+  type Error = UnknownResource;
+  fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
+    for &safe in RESOURCES {
+      if safe == param.as_str() { return Ok(CheckedResourceLeaf{ safe }) }
+    }
+    Err(UnknownResource{})
+  }
+}
+
+#[get("/<leaf>")]
+fn resource(leaf : CheckedResourceLeaf) -> io::Result<NamedFile> {
+  let template_dir = "templates"; // xxx
+  NamedFile::open(format!("{}/{}", template_dir, leaf.safe))
+}  
+
 fn main() {
   let helmet = SpaceHelmet::default()
     .enable(NoSniff::Enable)
@@ -30,7 +56,8 @@ fn main() {
     .attach(helmet)
     .attach(Template::fairing())
     .mount("/", routes![
-      index
+      index,
+      resource,
     ])
     .launch();
 }
