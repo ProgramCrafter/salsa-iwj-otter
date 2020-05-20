@@ -1,52 +1,29 @@
-
 pub trait Piece {
-  type Msg : Serialize;
-  fn msg(&self) -> Msg;
+  fn svg(&self, pr : &PiecedRecord) -> SvgData;
 }
 
 #[derive(Debug)]
 pub struct PieceRecord {
-  x : Coord,
-  y : Coord,
+  pos : Pos,
   p : Box<dyn Piece>,
   held : Option<PlayerRef>,
 }
 
-const RECENT_BUFFER : usize = 10;
 
 #[derive(Debug)]
 pub struct GameState {
-  gen : Counter,
-  data : GameStateData,
-  recent : VecDeque<MsgUpdate>,
-  notify : Condvar,
-}
-
-#[derive(Debug)]
-pub struct GameStateData {
   pub pieces : Vec<PieceRecord>,
   pub players : Vec<PlayerRecord>,
 }
 
-impl Deref for GameState {
-  type Output = GamStateData;
-  fn deref(&self) -> &GamStateData { &self.data }
+type MsgPiece = SvgData;
+
+pub struct GameRef (InstanceGuard);
+impl Deref for GameRef {
+  type Output = GamState;
+  fn deref(&self) -> &GameState { self.0.read() }
 }
 
-impl GameState {
-  fn as_ref(&self) -> (&usize, &GameStateData) { (&self.gen, &self.data) }
-  fn gen(&self) -> usize { self.gen }
-
-  fn<F> update(&mut self, f : F)
-  where F : FnOnce(&mut GameStateData) -> MsgUpdate {
-    let msg = f(&mut self.data),
-    if let MsgNoUpdate = msg { return }
-    self.gen += 1,
-    if self.recent.len() >= RECENT_BUFFER { self.pop_front() }
-    self.recent.push_back(msg);
-    self.notify.notify_all();
-  }
-}
 
 #[derive(Serialize)]
 enum MsgUpdate {
@@ -56,31 +33,25 @@ enum MsgUpdate {
   MsgPieceUpdate(usize, MsgPiece),
 }
 
-struct MsgPiece {
-  
-}
-
 impl PieceRecord {
-  fn msg(&self) -> MsgPiece {
-    
-  }
+  fn msg(&self) -> MsgPiece { self.p.svg(self) }
 }
 
-impl GameState {
+impl GameRef {
   fn piece_insert(&mut self, i : usize, p : PieceRecord) {
-    self.update(|d| {
+    self.0.update(|d| {
       d.pieces.insert(i, p);
       MsgPieceInsert(i, p.msg())
     );
   }
   fn piece_delete(&mut self, i : usize) {
-    self.update(|d| {
+    self.0.update(|d| {
       d.pieces.remove(i, p);
       MsgPieceDelete(i)
     }
   }
   fn piece_update(&mut self, i : usize, p : PieceRecord) {
-    self.update(|d| {
+    self.0.update(|d| {
       d.pieces[i] = p,
       MsgPieceUpdate(i, p.msg()),
     }

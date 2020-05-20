@@ -21,3 +21,8 @@ pub use rocket::response::NamedFile;
 pub use rocket::response;
 
 pub type E = anyhow::Error;
+
+pub type SvgData = Vec<u8>;
+pub type Coord = isize;
+pub type Pos = [Coord; 2];
+pub type Colour = String;

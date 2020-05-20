@@ -13,6 +13,8 @@ use imports::*;
 
 type RE = E;
 
+pub type InstanceName = String;
+
 #[derive(Serialize,Debug)]
 struct TestRenderContext { }
 
@@ -53,7 +55,7 @@ impl Read for TestCounterInner {
   }
 }
 
-#[get("/updates")]
+#[get("/<instance>")]
 fn updates() -> impl response::Responder<'static> {
   let tc = TestCounterInner { next : 0 };
   let tc = BufReader::new(tc);
@@ -63,7 +65,7 @@ fn updates() -> impl response::Responder<'static> {
   response::content::Content(ct,ch)
 }  
 
-#[get("/<leaf>")]
+#[get("/_/<leaf>")]
 fn resource(leaf : CheckedResourceLeaf) -> io::Result<NamedFile> {
   let template_dir = "templates"; // xxx
   NamedFile::open(format!("{}/{}", template_dir, leaf.safe))
