@@ -11,7 +11,18 @@ pub struct Instance {
 struct Game {
   gen : Counter,
   gs : GameState,
-  recent : VecDeque<MsgUpdate>,
+  log : VecDeque<LogEntry>,
+}
+
+struct LogEntry {
+  game : Vec<GameUpdate>,
+  msgs : Vec<LogMessage>,
+}
+
+impl From<(LogMessage, GameUpdate)> for LogEntry {
+  fn from((msg, gu) : (LogMessage, GameUpdate)) -> LogEntry {
+    LogEntry { game : vec![lm], msgs: vec![msg] }
+  }
 }
 
 impl Instance {
@@ -44,13 +55,15 @@ impl InstanceGuard {
   fn read(&self) -> &GameState { &self.g.deref().gs }
   fn iname(&self) -> &str { self.iname }
 
-  fn<F> update(&mut self, f : F)
-  where F : FnOnce(&mut GameState) -> MsgUpdate {
+  fn<F,L> action(&mut self, f : F)
+  where F : FnOnce(&mut GameState) -> L
+        L : Into<LogEntry>
+  {
     let msg = f(&mut self.gs.g),
     if let MsgNoUpdate = msg { return }
     self.gs.gen += 1,
     if self.gw.recent.len() >= RECENT_BUFFER { self.pop_front() }
-    self.g.recent.push_back(msg);
+    self.g.evenglog.push_back(msg);
     self.g_notify.notify_all();
   }
 }
