@@ -17,8 +17,8 @@ function drag_mousedown(e) {
   dcx = e.clientX;
   dcy = e.clientY;
   delt = e.target;
-  dox = parseFloat(delt.getAttributeNS(null,"cx"));
-  doy = parseFloat(delt.getAttributeNS(null,"cy"));
+  dox = parseFloat(delt.getAttributeNS(null,"x"));
+  doy = parseFloat(delt.getAttributeNS(null,"y"));
   dragging = false;
   window.addEventListener('mousemove', drag_mousemove, true);
   window.addEventListener('mouseup',   drag_mouseup,   true);
@@ -39,8 +39,8 @@ function drag_mousemove(e) {
   if (dragging) {
     var x = dox + ddx;
     var y = doy + ddy;
-    delt.setAttributeNS(null, "cx", x);
-    delt.setAttributeNS(null, "cy", y);
+    delt.setAttributeNS(null, "x", x);
+    delt.setAttributeNS(null, "y", y);
     console.log(delt);
   }
 }
