@@ -15,6 +15,9 @@ function drag_mousedown(e) {
   console.log('mousedown', e);
   dcx = e.clientX;
   dcy = e.clientY;
+  delt = e.target;
+  dox = parseFloat(delt.getAttributeNS(null,"cx"));
+  doy = parseFloat(delt.getAttributeNS(null,"cy"));
   dragging = false;
   window.addEventListener('mousemove', drag_mousemove, true);
   window.addEventListener('mouseup',   drag_mouseup,   true);
@@ -31,6 +34,13 @@ function drag_mousemove(e) {
   }
   console.log('mousemove',
 	      ddx, ddy, dragging);
+  if (dragging) {
+    var x = dox + ddx;
+    var y = doy + ddy;
+    delt.setAttributeNS(null, "cx", x);
+    delt.setAttributeNS(null, "cy", y);
+    console.log(delt);
+  }
 }
 
 function drag_mouseup(e) {
