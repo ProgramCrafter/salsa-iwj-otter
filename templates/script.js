@@ -2,12 +2,13 @@
 
 // xxx deployment note: need a whole bunch of domains for SSE conn limit
 
-status_node = document.getElementById('spong');
+status_node = document.getElementById('status');
 status_node.innerHTML = 'js-done'
 
 var our_dnd_type = "text/puvnex-game-server-dummy";
 
 dragthresh = 5;
+space = document.getElementById('space');
 
   console.log('foo1');
 
@@ -24,8 +25,9 @@ function drag_mousedown(e) {
 }
 
 function drag_mousemove(e) {
-  ddx = e.clientX - dcx;
-  ddy = e.clientY - dcy;
+  ctm = space.getScreenCTM();
+  ddx = (e.clientX - dcx)/ctm.a;
+  ddy = (e.clientY - dcy)/ctm.d;
   if (!dragging) {
     ddr2 = ddx*ddx + ddy*ddy;
     if (ddr2 > dragthresh) {
