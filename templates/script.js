@@ -13,10 +13,12 @@ space = document.getElementById('space');
   console.log('foo1');
 
 function drag_mousedown(e) {
+  drag_cancel();
   console.log('mousedown', e);
+  delt = e.target;
+  if (!delt.dataset.p) { return; }
   dcx = e.clientX;
   dcy = e.clientY;
-  delt = e.target;
   dox = parseFloat(delt.getAttributeNS(null,"x"));
   doy = parseFloat(delt.getAttributeNS(null,"y"));
   dragging = false;
@@ -48,13 +50,17 @@ function drag_mousemove(e) {
 function drag_mouseup(e) {
   console.log('mouseup');
   drag_mousemove(e);
-  window.removeEventListener('mousemove', drag_mousemove, true);
-  window.removeEventListener('mouseup',   drag_mouseup,   true);
+  drag_cancel(e);
   if (dragging) {
     console.log('dragged', ddx, ddy);
   } else {
     console.log('clicked');
   }
+}
+
+function drag_cancel() {
+  window.removeEventListener('mousemove', drag_mousemove, true);
+  window.removeEventListener('mouseup',   drag_mouseup,   true);
 }
 
 es = new EventSource("updates");
