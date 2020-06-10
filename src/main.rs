@@ -81,7 +81,7 @@ fn resource(leaf : CheckedResourceLeaf) -> io::Result<NamedFile> {
 }  
 
 fn main() {
-  
+  testload()?;
 
   let helmet = SpaceHelmet::default()
     .enable(NoSniff::Enable)
