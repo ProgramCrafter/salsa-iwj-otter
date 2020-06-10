@@ -1,3 +1,4 @@
+
 pub trait Piece {
   fn svg(&self, pr : &PiecedRecord) -> SvgData;
 }
@@ -9,11 +10,14 @@ pub struct PieceRecord {
   held : Option<PlayerRef>,
 }
 
+struct PlayerRecord {
+  nick : String,
+}
 
 #[derive(Debug)]
 pub struct GameState {
   pub pieces : Vec<Rc<PieceRecord>>,
-  pub players : Vec<Rc<PlayerRecord>>,
+  pub players : Vec<PlayerRecord>,
 }
 
 pub struct GameRef (InstanceGuard);

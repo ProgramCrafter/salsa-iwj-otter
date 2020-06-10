@@ -3,6 +3,7 @@ const RECENT_BUFFER : usize = 10;
  
 #[derive(Debug)]
 pub struct Instance {
+  mod_token : RawToken,
   g : RwLock<Game>,
   g_notify : Condvar,
 }

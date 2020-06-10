@@ -55,8 +55,16 @@ impl Read for TestCounterInner {
   }
 }
 
-#[get("/<instance>")]
-fn updates() -> impl response::Responder<'static> {
+struct MainRenderContext { };
+
+#[post("/<access>")]
+fn mainpage(access : InstanceAccess) -> impl response::Responder<'static> {
+  let c = MainRenderContext { };
+  Template::render("main",&c)
+}
+
+/*
+
   let tc = TestCounterInner { next : 0 };
   let tc = BufReader::new(tc);
   let ch = response::Stream::chunked(tc, 1);
@@ -64,6 +72,7 @@ fn updates() -> impl response::Responder<'static> {
     unwrap();
   response::content::Content(ct,ch)
 }  
+*/
 
 #[get("/_/<leaf>")]
 fn resource(leaf : CheckedResourceLeaf) -> io::Result<NamedFile> {
@@ -72,6 +81,8 @@ fn resource(leaf : CheckedResourceLeaf) -> io::Result<NamedFile> {
 }  
 
 fn main() {
+  
+
   let helmet = SpaceHelmet::default()
     .enable(NoSniff::Enable)
     .enable(Frame::Deny)

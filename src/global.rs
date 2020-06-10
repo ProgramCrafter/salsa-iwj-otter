@@ -1,7 +1,12 @@
 
+strut InstanceAccess {
+  inst : Rc<Instance>,
+  user : usize,
+}
+
 #[derive(Default)]
 struct Global {
-  instances : RwLock<HashMap<InstanceName, Rc<Instance>>>,
+  tokens : RwLock<HashMap<RawToken, InstanceAccess>,
   // xxx delete instances at some point!
 }
 
@@ -9,21 +14,21 @@ lazy_static! {
   static ref GLOBAL : Global = Default::default();
 }
 
-fn lookup_instance(name : &str) -> Option<Rc<Instance>> {
-  GLOBAL.instances().read().get(name)
+fn lookup_token(s : &str) -> Option<InstanceAccess> {
+  GLOBAL.instances().read().get(s)
 }
-
-#[throws(TE)]
-fn create_instance(name : &str, i : Rc<Instance>) {
+  
+#[throws(E)]
+fn create_instance_access(name : &str, i : Rc<Instance>) {
   let w = GLOBAL.instances().write();
   match w.entry(name) {
-    Occupied(oe) => throw!(TE::InstanceAlreadyExists);
+    Occupied(oe) => throw!(anyhow!("access key alreay defined"));
     Vacant(ve) => ve.insert(i);
   }
 }
 
+/*
 impl<'r> FromParam<'r> for InstanceGuard<'r> {
-  // xxx any additional auth should go here
   type Error = AE;
   #[throws(E)]
   fn from_param(param: &'r RawStr) -> Self {
@@ -32,6 +37,17 @@ impl<'r> FromParam<'r> for InstanceGuard<'r> {
     let i = g.get(iname);
     let i = i.ok_or(anyhow!("unnown instance"))?;
     i.lock(iname)
+  }
+}
+*/
+
+impl<'r> FromParam<'r> for InstanceAccess<'r> {
+  type Error = AE;
+  #[throws(E)]
+  fn from_param(param: &'r RawStr) -> Option<Self> {
+    let g = GLOBAL.instances().read();
+    let iname = param.as_str();
+    g.get(iname);
   }
 }
 
