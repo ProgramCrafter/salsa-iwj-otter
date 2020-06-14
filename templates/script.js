@@ -12,6 +12,17 @@ var our_dnd_type = "text/puvnex-game-server-dummy";
 dragthresh = 5;
 space = document.getElementById('space');
 
+function new_xhr_then(good,bad) {
+  // xxx not yet finished??
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function(){
+    if (xhr.readyState != XMLHttpRequest.DONE) { return; }
+    if (xhr.status != 200) { bad(xhr); }
+    good(xhr);
+  };
+  return xhr;
+}
+
   console.log('foo1');
 
 function drag_mousedown(e) {
@@ -27,6 +38,7 @@ function drag_mousedown(e) {
   dragging = false;
   window.addEventListener('mousemove', drag_mousemove, true);
   window.addEventListener('mouseup',   drag_mouseup,   true);
+  
 }
 
 function drag_mousemove(e) {

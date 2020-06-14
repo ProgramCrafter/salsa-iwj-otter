@@ -1,6 +1,9 @@
+communicate with server about moves
+  sync problem wrt xhr api grab call and ui updates
+    per-piece seq no?
+
 client ? struct ?
 instance struct
 token in main url
 token in api queries
 dashedline around only things gotten
-communicate with server about moves
