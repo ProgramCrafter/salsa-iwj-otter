@@ -1,16 +1,10 @@
 
 #![feature(proc_macro_hygiene, decl_macro)]
 
-#[macro_use] extern crate rocket;
+use rocket::{get,routes};
+//use rocket::{post};
 
-extern crate rocket_contrib; // why do we need this ?
-extern crate serde;
-extern crate thiserror;
-extern crate anyhow;
-
-#[path="../imports.rs"]
-mod imports;
-use imports::*;
+use game::imports::*;
 
 type RE = E;
 

@@ -16,7 +16,7 @@ function drag_mousedown(e) {
   drag_cancel();
   console.log('mousedown', e);
   delt = e.target;
-  if (!delt.dataset.p) { return; }
+  if (!qdelt.dataset.p) { return; }
   dcx = e.clientX;
   dcy = e.clientY;
   dox = parseFloat(delt.getAttributeNS(null,"x"));
