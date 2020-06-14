@@ -1,6 +1,6 @@
 
 strut InstanceAccess {
-  inst : Rc<Instance>,
+  i : Rc<Instance>,
   user : usize,
 }
 

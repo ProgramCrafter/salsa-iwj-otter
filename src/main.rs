@@ -57,6 +57,17 @@ impl Read for TestCounterInner {
 
 struct MainRenderContext { };
 
+struct GraspForm {
+  a : InstanceAccess,
+  pn : usize,
+  grasped : bool,
+};
+#[post("/_/api/grasp")]
+fn mainpage(f : GraspForm) -> impl xxx json somehow response::Responder<'static> {
+  let mut g = f.a.i.lock();
+  let p = g.pieces.
+}
+
 #[post("/<access>")]
 fn mainpage(access : InstanceAccess) -> impl response::Responder<'static> {
   let c = MainRenderContext { };
