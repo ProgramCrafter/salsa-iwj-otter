@@ -2,6 +2,8 @@
 
 // xxx deployment note: need a whole bunch of domains for SSE conn limit
 
+messages = Object();
+
 status_node = document.getElementById('status');
 status_node.innerHTML = 'js-done'
 
@@ -64,7 +66,13 @@ function drag_cancel() {
   window.removeEventListener('mouseup',   drag_mouseup,   true);
 }
 
+messages.TestCounter = function(data) {
+  status_node.innerHTML = data.value;
+}
+
 es = new EventSource("updates");
 es.onmessage = function(event) {
-  status_node.innerHTML = event.data;
+  var j = JSON.parse(event.data);
+  var k = Object.keys(j)[0];
+  messages[k](j[k]);
 }

@@ -35,13 +35,21 @@ impl<'r> FromParam<'r> for CheckedResourceLeaf {
   }
 }
 
+#[derive(Serialize)]
+enum Update {
+  TestCounter { value: usize },
+}
+
 type TestCounter = BufReader<TestCounterInner>;
 #[derive(Debug)]
 struct TestCounterInner { next : usize, }
 impl Read for TestCounterInner {
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
     thread::sleep(Duration::from_millis(500));
-    let data = format!("data: {}\n\n", self.next);
+    let message = Update::TestCounter { value : self.next };
+    let data = serde_json::to_string(&message)?;
+    let data = format!("data: {}\n\n", &data);
+    // eprintln!("want to return into &[;{}] {:?}", buf.len(), &data);
     self.next += 1;
     buf[0..data.len()].copy_from_slice(data.as_bytes());
     Ok(buf.len())
