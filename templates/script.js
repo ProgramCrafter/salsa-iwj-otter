@@ -82,7 +82,7 @@ messages.TestCounter = function(data) {
   status_node.innerHTML = data.value;
 }
 
-es = new EventSource("updates");
+es = new EventSource("/_/updates");
 es.onmessage = function(event) {
   var j = JSON.parse(event.data);
   var k = Object.keys(j)[0];
