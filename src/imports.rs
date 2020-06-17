@@ -3,6 +3,9 @@ pub use std::io;
 pub use std::io::{BufReader,Read};
 pub use std::thread;
 pub use std::time::Duration;
+pub use std::sync::{Arc,Mutex,RwLock};
+pub use std::collections::HashMap;
+pub use std::borrow::Borrow;
 
 pub use thiserror::Error;
 pub use anyhow::{Context,anyhow};
@@ -19,6 +22,8 @@ pub use rocket::http::{Status,RawStr,ContentType};
 pub use rocket::request::{FromParam,FromRequest,FromFormValue,LenientForm};
 pub use rocket::response::NamedFile;
 pub use rocket::response;
+
+pub use handy::typed::{TypedHandle,TypedHandleMap};
 
 pub type E = anyhow::Error;
 

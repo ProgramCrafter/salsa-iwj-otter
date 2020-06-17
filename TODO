@@ -1,6 +1,7 @@
 token in main url
 client ? struct ?
 instance struct
+   page should tell us nick and client id
 
 communicate with server about moves
   sync problem wrt xhr api grab call and ui updates

@@ -1,23 +1,4 @@
 
-strut InstanceAccess {
-  i : Rc<Instance>,
-  user : usize,
-}
-
-#[derive(Default)]
-struct Global {
-  tokens : RwLock<HashMap<RawToken, InstanceAccess>,
-  // xxx delete instances at some point!
-}
-
-lazy_static! {
-  static ref GLOBAL : Global = Default::default();
-}
-
-fn lookup_token(s : &str) -> Option<InstanceAccess> {
-  GLOBAL.instances().read().get(s)
-}
-  
 #[throws(E)]
 fn create_instance_access(name : &str, i : Rc<Instance>) {
   let w = GLOBAL.instances().write();
