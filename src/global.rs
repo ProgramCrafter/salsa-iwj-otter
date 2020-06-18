@@ -59,12 +59,12 @@ pub fn xxx_global_setup() {
     clients : Default::default(),
   };
   let i = Arc::new(Mutex::new(i));
-  let ig = i.lock().unwrap();
+  let mut ig = i.lock().unwrap();
   for (token, nick) in XXX_USERS_TOKENS {
-    let nu = User { nick : nick.to_owned() };
+    let nu = User { nick : nick.to_string() };
     let user = ig.users.insert(nu);
-    let ia = InstanceAccess { i, user };
-    GLOBAL.tokens().write().unwrap().insert(
+    let ia = InstanceAccess { i : i.clone(), user };
+    GLOBAL.tokens.write().unwrap().insert(
       RawToken(token.to_string()), ia
     );
   }
