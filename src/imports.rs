@@ -23,7 +23,7 @@ pub use rocket::request::{FromParam,FromRequest,FromFormValue,LenientForm};
 pub use rocket::response::NamedFile;
 pub use rocket::response;
 
-pub use handy::typed::{TypedHandle,TypedHandleMap};
+pub use slotmap::dense::{DenseSlotMap};
 
 pub type E = anyhow::Error;
 

@@ -2,8 +2,10 @@
 use crate::imports::*;
 use lazy_static::lazy_static;
 
-type UserId = TypedHandle<User>;
-type ClientId = TypedHandle<Client>;
+slotmap::new_key_type!{
+  struct UserId;
+  struct ClientId;
+}
 
 #[derive(Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash)]
 struct RawToken (String);
@@ -21,8 +23,8 @@ struct User {
 
 struct Instance {
   /* game state goes here */
-  users : TypedHandleMap<User>,
-  clients : TypedHandleMap<Client>,
+  users : DenseSlotMap<UserId,User>,
+  clients : DenseSlotMap<ClientId,Client>,
 }
 
 #[derive(Clone)]
