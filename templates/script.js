@@ -4,9 +4,6 @@
 
 messages = Object();
 
-status_node = document.getElementById('status');
-status_node.innerHTML = 'js-done'
-
 var our_dnd_type = "text/puvnex-game-server-dummy";
 
 dragthresh = 5;
@@ -82,9 +79,16 @@ messages.TestCounter = function(data) {
   status_node.innerHTML = data.value;
 }
 
-es = new EventSource("/_/updates");
-es.onmessage = function(event) {
-  var j = JSON.parse(event.data);
-  var k = Object.keys(j)[0];
-  messages[k](j[k]);
+function startup() {
+  status_node = document.getElementById('status');
+  status_node.innerHTML = 'js-done'
+
+  es = new EventSource("/_/updates");
+  es.onmessage = function(event) {
+    var j = JSON.parse(event.data);
+    var k = Object.keys(j)[0];
+    messages[k](j[k]);
+  }
 }
+
+startup();
