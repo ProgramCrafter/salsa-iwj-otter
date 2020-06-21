@@ -35,10 +35,14 @@ impl<'r> FromParam<'r> for CheckedResourceLeaf {
   }
 }
 
+#[derive(Serialize,Debug)]
+struct LoadingRenderContext<'r> {
+  token : &'r str,
+}
+
 #[get("/<token>")]
 fn loading(token : InstanceAccess) -> Result<Template,RE> {
-  let _ = token;
-  let c = TestRenderContext { };
+  let c = LoadingRenderContext { token : token.raw_token };
   Ok(Template::render("loading",&c))
 }
 
