@@ -80,6 +80,8 @@ fn resource(leaf : CheckedResourceLeaf) -> io::Result<NamedFile> {
 }  
 
 fn main() {
+  global::xxx_global_setup();
+
   let helmet = SpaceHelmet::default()
     .enable(NoSniff::Enable)
     .enable(Frame::Deny)

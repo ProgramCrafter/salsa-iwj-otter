@@ -25,6 +25,8 @@ pub use rocket::response::NamedFile;
 pub use rocket::response;
 
 pub use slotmap::dense::{DenseSlotMap};
+
+pub use crate::global;
 pub use crate::global::InstanceAccess;
 
 pub type E = anyhow::Error;
