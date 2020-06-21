@@ -9,6 +9,7 @@ pub use std::borrow::Borrow;
 
 pub use thiserror::Error;
 pub use anyhow::{Context,anyhow};
+pub use fehler::{throws,throw};
 
 pub use serde::Deserialize;
 pub use serde::Serialize;
@@ -24,6 +25,7 @@ pub use rocket::response::NamedFile;
 pub use rocket::response;
 
 pub use slotmap::dense::{DenseSlotMap};
+pub use crate::global::InstanceAccess;
 
 pub type E = anyhow::Error;
 

@@ -22,13 +22,3 @@ impl<'r> FromParam<'r> for InstanceGuard<'r> {
 }
 */
 
-impl<'r> FromParam<'r> for InstanceAccess<'r> {
-  type Error = AE;
-  #[throws(E)]
-  fn from_param(param: &'r RawStr) -> Option<Self> {
-    let g = GLOBAL.instances().read();
-    let iname = param.as_str();
-    g.get(iname);
-  }
-}
-

@@ -35,6 +35,13 @@ impl<'r> FromParam<'r> for CheckedResourceLeaf {
   }
 }
 
+#[get("/<token>")]
+fn loading(token : InstanceAccess) -> Result<Template,RE> {
+  let _ = token;
+  let c = TestRenderContext { };
+  Ok(Template::render("loading",&c))
+}
+
 #[derive(Serialize)]
 enum Update {
   TestCounter { value: usize },
@@ -83,6 +90,7 @@ fn main() {
     .attach(Template::fairing())
     .mount("/", routes![
       index,
+      loading,
       resource,
       updates,
     ])
