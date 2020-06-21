@@ -2,25 +2,31 @@
 
 // xxx deployment note: need a whole bunch of domains for SSE conn limit
 
+general_timeout = 10000;
 messages = Object();
-
 var our_dnd_type = "text/puvnex-game-server-dummy";
 
-dragthresh = 5;
-space = document.getElementById('space');
-
-function new_xhr_then(good,bad) {
-  // xxx not yet finished??
+function xhr_post_then(url,data,good) {
   var xhr = new XMLHttpRequest();
   xhr.onreadystatechange = function(){
     if (xhr.readyState != XMLHttpRequest.DONE) { return; }
-    if (xhr.status != 200) { bad(xhr); }
-    good(xhr);
+    if (xhr.status != 200) { xhr_report_error(xhr); }
+    else { good(xhr); }
   };
-  return xhr;
+  xhr.timeout = general_timeout;
+  xhr.open('POST',url);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.send(data);
 }
 
-  console.log('foo1');
+function xhr_report_error(xhr) {
+  let error_message = JSON.stringify({
+    statusText : xhr.statusText,
+    responseText : xhr.responseText,
+  });
+  let errornode = document.getElementById('error');
+  errornode.textContent = 'Error (reloading may help?):' + error_message;
+}
 
 function drag_mousedown(e) {
   drag_cancel();
@@ -82,6 +88,8 @@ messages.TestCounter = function(data) {
 function startup() {
   status_node = document.getElementById('status');
   status_node.innerHTML = 'js-done'
+  dragthresh = 5;
+  space = document.getElementById('space');
 
   es = new EventSource("/_/updates");
   es.onmessage = function(event) {
@@ -91,4 +99,19 @@ function startup() {
   }
 }
 
-startup();
+function doload(){
+  console.log('DOLOAD');
+  var elem = document.getElementById('loading_token');
+  token = elem.dataset.token;
+  xhr_post_then('/session', 
+		JSON.stringify({ token : token }),
+		loaded);
+}
+
+function loaded(xhr){
+  console.log('LOADED');
+  var body = document.getElementById('loading_body');
+  body.outerHTML = xhr.response;
+}
+
+doload();
