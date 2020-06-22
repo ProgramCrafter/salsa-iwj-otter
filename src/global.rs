@@ -52,7 +52,7 @@ lazy_static! {
   static ref GLOBAL : Global = Default::default();
 }
 
-fn lookup_token(s : &str) -> Option<InstanceAccessDetails> {
+pub fn lookup_token(s : &str) -> Option<InstanceAccessDetails> {
   GLOBAL.tokens.read().unwrap().get(s).cloned()
 }
 

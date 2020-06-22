@@ -27,7 +27,7 @@ pub use rocket::response;
 pub use slotmap::dense::{DenseSlotMap};
 
 pub use crate::global;
-pub use crate::global::InstanceAccess;
+pub use crate::global::{lookup_token,InstanceAccess,InstanceAccessDetails};
 
 pub type E = anyhow::Error;
 

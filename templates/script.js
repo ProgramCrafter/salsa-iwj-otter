@@ -103,7 +103,7 @@ function doload(){
   console.log('DOLOAD');
   var elem = document.getElementById('loading_token');
   token = elem.dataset.token;
-  xhr_post_then('/session', 
+  xhr_post_then('/_/session', 
 		JSON.stringify({ token : token }),
 		loaded);
 }

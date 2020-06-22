@@ -1,7 +1,8 @@
 
 #![feature(proc_macro_hygiene, decl_macro)]
 
-use rocket::{get,routes};
+use rocket::{get,post,routes};
+use rocket_contrib::json::Json;
 //use rocket::{post};
 
 use game::imports::*;
@@ -44,6 +45,18 @@ struct LoadingRenderContext<'r> {
 fn loading(token : InstanceAccess) -> Result<Template,RE> {
   let c = LoadingRenderContext { token : token.raw_token };
   Ok(Template::render("loading",&c))
+}
+
+#[derive(Deserialize)]
+struct SessionForm {
+  token : String,
+}
+#[post("/_/session", format="json", data="<form>")]
+fn session(form : Json<SessionForm>) -> Result<Template,RE> {
+  // make session in this game, log a message to other players
+  let _i = lookup_token(&form.token).ok_or(anyhow!("unknown token"))?;
+  let c = TestRenderContext { };
+  Ok(Template::render("blah",&c))
 }
 
 #[derive(Serialize)]
@@ -97,6 +110,7 @@ fn main() {
     .mount("/", routes![
       index,
       loading,
+      session,
       resource,
       updates,
     ])
