@@ -112,6 +112,7 @@ function loaded(xhr){
   console.log('LOADED');
   var body = document.getElementById('loading_body');
   body.outerHTML = xhr.response;
+  startup();
 }
 
 doload();

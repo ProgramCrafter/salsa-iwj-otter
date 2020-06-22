@@ -56,7 +56,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
   // make session in this game, log a message to other players
   let _i = lookup_token(&form.token).ok_or(anyhow!("unknown token"))?;
   let c = TestRenderContext { };
-  Ok(Template::render("blah",&c))
+  Ok(Template::render("test",&c))
 }
 
 #[derive(Serialize)]
