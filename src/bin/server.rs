@@ -52,7 +52,7 @@ fn loading(token : InstanceAccess) -> Result<Template,RE> {
 
 #[derive(Serialize,Debug)]
 struct SessionRenderContext {
-  clientid : ClientId,
+  clientid : u64,
 }
 
 #[derive(Deserialize)]
@@ -67,8 +67,8 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
     let mut g = iad.i.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
     let user = g.users.get_mut(iad.user).ok_or_else(|| anyhow!("user deleted"))?;
     let client = Client { };
-    let clientid = user.clients.insert(client);
-    SessionRenderContext { clientid }
+    let clientid : slotmap::KeyData = user.clients.insert(client).into();
+    SessionRenderContext { clientid : clientid.as_ffi() }
   };
   Ok(Template::render("test",&c))
 }
