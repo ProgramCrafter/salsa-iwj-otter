@@ -24,7 +24,7 @@ serde_json = "1"
 
 lazy_static = "1.0.0"
 
-slotmap = "0.4"
+slotmap = { version = "0.4", features = ['serde'] }
 fehler = "1"
 
 rocket = "0.4"
