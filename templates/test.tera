@@ -1,6 +1,7 @@
 <body>
 <h1>Hi!</h1>
-
+<div id="error"></div>
+<p>
 <div id="status">nothing</div>
 
 <p>

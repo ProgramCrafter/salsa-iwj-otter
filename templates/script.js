@@ -20,10 +20,14 @@ function xhr_post_then(url,data,good) {
 }
 
 function xhr_report_error(xhr) {
-  let error_message = JSON.stringify({
+  json_report_error({
     statusText : xhr.statusText,
     responseText : xhr.responseText,
   });
+}
+
+function json_report_error(error_json) {
+  let error_message = JSON.stringify(error_json);
   let errornode = document.getElementById('error');
   errornode.textContent = 'Error (reloading may help?):' + error_message;
 }
@@ -96,6 +100,15 @@ function startup() {
     var j = JSON.parse(event.data);
     var k = Object.keys(j)[0];
     messages[k](j[k]);
+  }
+  es.onerror = function(e) {
+    console.log('FOO',e,es);
+    json_report_error({
+      updates_error : e,
+      updates_event_source : es,
+      updates_event_source_ready : es.readyState,
+      update_oe : e.className,
+    })
   }
 }
 
