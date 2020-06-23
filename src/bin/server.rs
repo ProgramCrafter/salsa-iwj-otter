@@ -65,7 +65,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
   let iad = lookup_token(&form.token).ok_or_else(|| anyhow!("unknown token"))?;
   let c = {
     let mut g = iad.i.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
-    let user = g.users.get_mut(iad.user).ok_or_else(|| anyhow!("user deletred"))?;
+    let user = g.users.get_mut(iad.user).ok_or_else(|| anyhow!("user deleted"))?;
     let client = Client { };
     let clientid = user.clients.insert(client);
     SessionRenderContext { c : clientid }
@@ -94,8 +94,25 @@ impl Read for TestCounterInner {
   }
 }
 
-#[get("/_/updates")]
-fn updates() -> impl response::Responder<'static> {
+/*
+#[derive(Deserialize)]
+struct APIForm {
+  t : String,
+  c : ClientId,
+}
+ */
+
+#[get("/_/updates/<token>/<clientid>")]
+#[throws(RE)]
+fn updates(token : &RawStr, clientid : u64) -> impl response::Responder<'static> {
+  let iad = lookup_token(token.as_str()).ok_or_else(|| anyhow!("unknown token"))?;
+  let clientid = slotmap::KeyData::from_ffi(clientid);
+  let clientid = clientid.into();
+  let _ = {
+    let mut g = iad.i.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
+    let user = g.users.get_mut(iad.user).ok_or_else(|| anyhow!("user deleted"))?;
+    let client = user.clients.get_mut(clientid).ok_or_else(|| anyhow!("client deleted"))?;
+  };
   let tc = TestCounterInner { next : 0 };
   let tc = BufReader::new(tc);
   let ch = response::Stream::chunked(tc, 1);
