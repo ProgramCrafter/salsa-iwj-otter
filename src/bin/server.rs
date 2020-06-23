@@ -1,4 +1,7 @@
 
+// xxx need button(s) to kill old clients
+// ? need expiry of old clients?  limit of client count?
+
 #![feature(proc_macro_hygiene, decl_macro)]
 
 use rocket::{get,post,routes};
