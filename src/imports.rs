@@ -28,6 +28,7 @@ pub use slotmap::dense::{DenseSlotMap};
 
 pub use crate::global;
 pub use crate::global::{lookup_token,InstanceAccess,InstanceAccessDetails};
+pub use crate::global::{Client,ClientId};
 
 pub type E = anyhow::Error;
 

@@ -47,6 +47,11 @@ fn loading(token : InstanceAccess) -> Result<Template,RE> {
   Ok(Template::render("loading",&c))
 }
 
+#[derive(Serialize,Debug)]
+struct SessionRenderContext {
+  c : ClientId,
+}
+
 #[derive(Deserialize)]
 struct SessionForm {
   token : String,
@@ -54,8 +59,14 @@ struct SessionForm {
 #[post("/_/session", format="json", data="<form>")]
 fn session(form : Json<SessionForm>) -> Result<Template,RE> {
   // make session in this game, log a message to other players
-  let _i = lookup_token(&form.token).ok_or(anyhow!("unknown token"))?;
-  let c = TestRenderContext { };
+  let iad = lookup_token(&form.token).ok_or_else(|| anyhow!("unknown token"))?;
+  let c = {
+    let mut g = iad.i.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
+    let user = g.users.get_mut(iad.user).ok_or_else(|| anyhow!("user deletred"))?;
+    let client = Client { };
+    let clientid = user.clients.insert(client);
+    SessionRenderContext { c : clientid }
+  };
   Ok(Template::render("test",&c))
 }
 

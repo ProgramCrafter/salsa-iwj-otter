@@ -16,17 +16,16 @@ impl Borrow<str> for RawToken {
 }
 
 pub struct Client {
-  user : UserId,
 }
 
 pub struct User {
-  nick : String,
+  pub nick : String,
+  pub clients : DenseSlotMap<ClientId,Client>,
 }
 
 pub struct Instance {
   /* game state goes here */
-  users : DenseSlotMap<UserId,User>,
-  clients : DenseSlotMap<ClientId,Client>,
+  pub users : DenseSlotMap<UserId,User>,
 }
 
 #[derive(Clone)]
@@ -75,12 +74,14 @@ impl<'r> FromParam<'r> for InstanceAccess<'r> {
 pub fn xxx_global_setup() {
   let i = Instance {
     users : Default::default(),
-    clients : Default::default(),
   };
   let i = Arc::new(Mutex::new(i));
   let mut ig = i.lock().unwrap();
   for (token, nick) in XXX_USERS_TOKENS {
-    let nu = User { nick : nick.to_string() };
+    let nu = User {
+      nick : nick.to_string(),
+      clients : Default::default(),
+    };
     let user = ig.users.insert(nu);
     let ia = InstanceAccessDetails { i : i.clone(), user };
     GLOBAL.tokens.write().unwrap().insert(
