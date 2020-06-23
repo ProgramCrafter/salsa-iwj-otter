@@ -52,7 +52,7 @@ fn loading(token : InstanceAccess) -> Result<Template,RE> {
 
 #[derive(Serialize,Debug)]
 struct SessionRenderContext {
-  c : ClientId,
+  clientid : ClientId,
 }
 
 #[derive(Deserialize)]
@@ -68,7 +68,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
     let user = g.users.get_mut(iad.user).ok_or_else(|| anyhow!("user deleted"))?;
     let client = Client { };
     let clientid = user.clients.insert(client);
-    SessionRenderContext { c : clientid }
+    SessionRenderContext { clientid }
   };
   Ok(Template::render("test",&c))
 }

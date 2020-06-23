@@ -90,12 +90,13 @@ messages.TestCounter = function(data) {
 }
 
 function startup() {
+  clientid = document.getElementById("main-body").dataset.clientid;
   status_node = document.getElementById('status');
   status_node.innerHTML = 'js-done'
   dragthresh = 5;
   space = document.getElementById('space');
 
-  es = new EventSource("/_/updates");
+  es = new EventSource("/_/updates/"+token+"/"+clientid);
   es.onmessage = function(event) {
     var j = JSON.parse(event.data);
     var k = Object.keys(j)[0];

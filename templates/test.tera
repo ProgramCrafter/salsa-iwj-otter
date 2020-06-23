@@ -1,4 +1,4 @@
-<body>
+<body id="main-body" data-clientid="{{clientid}}">
 <h1>Hi!</h1>
 <div id="error"></div>
 <p>
