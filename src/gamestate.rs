@@ -5,15 +5,23 @@ slotmap::new_key_type!{
   pub struct PieceId;
 }
 
+type VisiblePieceId = u64;
+
+pub struct PieceRenderInstructions {
+  pub id : VisiblePieceId,
+  pub face : FaceId,
+}
+
 pub trait Piece : Send + Debug {
+  fn svg_defs(&self, pri : &PieceRenderInstructions) -> String;
 }
 
 #[derive(Debug)]
 pub struct PieceRecord {
-  pos : Pos,
-  p : Box<dyn Piece>,
-  face : FaceId,
-  held : Option<UserId>,
+  pub pos : Pos,
+  pub p : Box<dyn Piece>,
+  pub face : FaceId,
+  pub held : Option<UserId>,
 }
 
 #[derive(Debug)]

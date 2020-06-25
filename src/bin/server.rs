@@ -53,6 +53,7 @@ fn loading(token : InstanceAccess) -> Result<Template,RE> {
 #[derive(Serialize,Debug)]
 struct SessionRenderContext {
   clientid : u64,
+  defs : Vec<String>,
 }
 
 #[derive(Deserialize)]
@@ -68,7 +69,21 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
     let user = g.users.get_mut(iad.user).ok_or_else(|| anyhow!("user deleted"))?;
     let client = Client { };
     let clientid : slotmap::KeyData = user.clients.insert(client).into();
-    SessionRenderContext { clientid : clientid.as_ffi() }
+
+    let mut defs = vec![];
+    for (gpid, pr) in &g.gs.pieces {
+      let id : slotmap::KeyData = gpid.into();
+      let pri = PieceRenderInstructions {
+        id : id.as_ffi(),
+        face : pr.face,
+      };
+      defs.push(pr.p.svg_defs(&pri));
+    }
+
+    SessionRenderContext {
+      clientid : clientid.as_ffi(),
+      defs,
+    }
   };
   Ok(Template::render("test",&c))
 }
@@ -111,7 +126,7 @@ fn updates(token : &RawStr, clientid : u64) -> impl response::Responder<'static>
   let _ = {
     let mut g = iad.i.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
     let user = g.users.get_mut(iad.user).ok_or_else(|| anyhow!("user deleted"))?;
-    let client = user.clients.get_mut(clientid).ok_or_else(|| anyhow!("client deleted"))?;
+    let _client = user.clients.get_mut(clientid).ok_or_else(|| anyhow!("client deleted"))?;
   };
   let tc = TestCounterInner { next : 0 };
   let tc = BufReader::new(tc);
