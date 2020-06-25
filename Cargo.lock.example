@@ -359,6 +359,7 @@ version = "0.0.1"
 dependencies = [
  "anyhow",
  "fehler",
+ "index_vec",
  "lazy_static",
  "rocket",
  "rocket_contrib",
@@ -485,6 +486,12 @@ dependencies = [
  "unicode-bidi",
  "unicode-normalization",
 ]
+
+[[package]]
+name = "index_vec"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d2d1585c10842c1bbc5abdceebf2b35d1aa81e66db83370f0e02d2189babe0d"
 
 [[package]]
 name = "indexmap"
