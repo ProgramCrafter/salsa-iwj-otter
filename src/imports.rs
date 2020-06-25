@@ -1,6 +1,7 @@
 
 pub use std::io;
 pub use std::io::{BufReader,Read};
+pub use std::fmt::Debug;
 pub use std::thread;
 pub use std::time::Duration;
 pub use std::sync::{Arc,Mutex,RwLock};
@@ -25,10 +26,11 @@ pub use rocket::response::NamedFile;
 pub use rocket::response;
 
 pub use slotmap::dense::{DenseSlotMap};
+pub use index_vec::{define_index_type,index_vec,IndexVec};
 
-pub use crate::global;
-pub use crate::global::{lookup_token,InstanceAccess,InstanceAccessDetails};
-pub use crate::global::{Client,ClientId};
+pub use crate::global::*;
+pub use crate::gamestate::*;
+pub use crate::pieces::*;
 
 pub type E = anyhow::Error;
 

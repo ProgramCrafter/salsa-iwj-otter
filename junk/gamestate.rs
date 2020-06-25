@@ -3,20 +3,11 @@ pub trait Piece {
   fn svg(&self, pr : &PiecedRecord) -> SvgData;
 }
 
-#[derive(Debug)]
-pub struct PieceRecord {
-  pos : Pos,
-  p : Rc<dyn Piece>,
-  held : Option<PlayerRef>,
-}
-
 struct PlayerRecord {
   nick : String,
 }
 
-#[derive(Debug)]
 pub struct GameState {
-  pub pieces : Vec<Rc<PieceRecord>>,
   pub players : Vec<PlayerRecord>,
 }
 

@@ -26,6 +26,7 @@ pub struct User {
 pub struct Instance {
   /* game state goes here */
   pub users : DenseSlotMap<UserId,User>,
+  pub gs : GameState,
 }
 
 #[derive(Clone)]
@@ -74,6 +75,7 @@ impl<'r> FromParam<'r> for InstanceAccess<'r> {
 pub fn xxx_global_setup() {
   let i = Instance {
     users : Default::default(),
+    gs : xxx_gamestate_init(),
   };
   let i = Arc::new(Mutex::new(i));
   let mut ig = i.lock().unwrap();
