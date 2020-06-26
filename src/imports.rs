@@ -1,7 +1,7 @@
 
 pub use std::io;
 pub use std::io::{BufReader,Read};
-pub use std::fmt::Debug;
+pub use std::fmt::{self,Display,Debug};
 pub use std::thread;
 pub use std::time::Duration;
 pub use std::sync::{Arc,Mutex,RwLock};

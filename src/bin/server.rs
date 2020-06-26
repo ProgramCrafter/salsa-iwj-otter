@@ -74,7 +74,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
     for (gpid, pr) in &g.gs.pieces {
       let id : slotmap::KeyData = gpid.into();
       let pri = PieceRenderInstructions {
-        id : id.as_ffi(),
+        id : VisiblePieceId(id.as_ffi()),
         face : pr.face,
       };
       defs.push(pr.p.svg_defs(&pri));

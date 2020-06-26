@@ -12,8 +12,9 @@ struct SimpleShape {
 }
 
 impl Piece for SimpleShape {
+  fn svg_other_ids(&self) -> VisiblePieceIdSvgIds { &["base"] }
   fn svg_defs(&self, pri : &PieceRenderInstructions) -> String {
-    format!(r#"<g id=base{}>{}</g>"#, pri.id, self.shape)
+    format!(r#"<g id={}>{}</g>"#, pri.id_other("base"), self.shape)
   }
 }
 
