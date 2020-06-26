@@ -77,7 +77,20 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
         id : VisiblePieceId(id.as_ffi()),
         face : pr.face,
       };
-      defs.push(pr.p.svg_defs(&pri));
+      defs.push(format!(r##"<g id="{}">{}</g>"##,
+                        pri.id_piece(),
+                        pr.p.svg_piece(&pri)));
+      defs.push(format!(r##"
+                          <g id="{}"
+                             stroke="black"
+               	             stroke-dasharray="3 1  1 1  1 1"
+	                     fill="none">
+                           {}
+                          </g>
+                        "##,
+                        pri.id_piece(),
+                        pr.p.svg_select(&pri)));
+      defs.push(pr.p.svg_x_defs(&pri));
     }
 
     SessionRenderContext {
