@@ -26,6 +26,38 @@ impl Debug for VisiblePieceId {
   }
 }
 
+struct VisiblePieceIdVisitor { }
+impl<'de> serde::de::Visitor<'de> for VisiblePieceIdVisitor {
+  type Value = VisiblePieceId;
+  fn expecting(&self, f : &mut fmt::Formatter) -> fmt::Result {
+    write!(f,"(visible) piece id")
+  }
+  fn visit_str<DE>(self, s : &str) -> Result<VisiblePieceId, DE>
+    where DE: serde::de::Error,
+  {
+    let e = || DE::custom("could not deserialise visibile piece id");
+    let mut i = s.splitn(2,'.').map(|s| s.parse().map_err(|_| e()));
+    let h : u32 = i.next().ok_or_else(e)??;
+    let l : u32 = i.next().ok_or_else(e)??;
+    Ok(VisiblePieceId(((h as u64) << 32) | (l as u64)))
+  }
+}
+
+impl<'de> Deserialize<'de> for VisiblePieceId {
+  fn deserialize<D>(d: D) -> Result<Self, <D as serde::de::Deserializer<'de>>::Error>
+  where D: serde::de::Deserializer<'de> {
+    d.deserialize_str(VisiblePieceIdVisitor{})
+  }
+}
+
+impl Serialize for VisiblePieceId {
+  fn serialize<S>(&self, s : S) -> Result<S::Ok, S::Error>
+  where S : Serializer
+  {
+    s.serialize_str(&format!("{}", self))
+  }
+}
+
 impl PieceRenderInstructions {
   pub fn id_piece(&self) -> String { format!("piece{}", self.id) }
   pub fn id_select(&self) -> String { format!("select{}", self.id) }

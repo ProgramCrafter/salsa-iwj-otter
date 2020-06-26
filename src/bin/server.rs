@@ -112,7 +112,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiGrab {
   t : String,
-  p : String,
+  p : VisiblePieceId,
 }
 
 #[post("/_/api/grab", format="json", data="<form>")]
