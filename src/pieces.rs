@@ -11,10 +11,30 @@ struct SimpleShape {
   colours : IndexVec<FaceId,Colour>,
 }
 
+const SELECT_SCALE : f64 = 1.1;
+
 impl Piece for SimpleShape {
-  fn svg_other_ids(&self) -> VisiblePieceIdSvgIds { &["base"] }
-  fn svg_defs(&self, pri : &PieceRenderInstructions) -> String {
-    format!(r#"<g id={}>{}</g>"#, pri.id_other("base"), self.shape)
+  fn svg_piece(&self, pri : &PieceRenderInstructions) -> String {
+    format!(r##"
+              <g fill="{}">
+                <use href="#{}"/>
+              </g>
+            "##,
+            self.colours[pri.face],
+            pri.id_x("base"))
+  }
+  fn svg_select(&self, pri : &PieceRenderInstructions) -> String {
+    format!(r##"
+              <g transform="scale({})">
+	        <use href="#{}"/>
+              </g>
+            "##,
+            SELECT_SCALE,
+            pri.id_x("base"))
+  }
+  fn svg_x_ids(&self) -> VisiblePieceIdSvgIds { &["base"] }
+  fn svg_x_defs(&self, pri : &PieceRenderInstructions) -> String {
+    format!(r#"<g id={}>{}</g>"#, pri.id_x("base"), self.shape)
   }
 }
 
