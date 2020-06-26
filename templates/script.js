@@ -92,7 +92,7 @@ function drag_mousedown(e) {
     dragging = DRAGGING.MAYBE_UNGRAB;
   } else {
     dragging = DRAGGING.MAYBE_GRAB;
-    delt.dataset.g = us;
+    set_grab(delt, us);
     api('grab', {
       t : token,
       p : delt.dataset.p,
@@ -101,6 +101,14 @@ function drag_mousedown(e) {
 
   window.addEventListener('mousemove', drag_mousemove, true);
   window.addEventListener('mouseup',   drag_mouseup,   true);
+}
+
+function set_grab(elt, owner) {
+  elt.dataset.g = owner;
+}
+
+function set_ungrab(elt) {
+  elt.dataset.g = "";
 }
 
 function drag_mousemove(e) {
@@ -115,15 +123,15 @@ function drag_mousemove(e) {
   }
   //console.log('mousemove', ddx, ddy, dragging);
   if (dragging & DRAGGING.YES) {
-    var x = dox + ddx;
-    var y = doy + ddy;
+    var x = Math.round(dox + ddx);
+    var y = Math.round(doy + ddy);
     delt.setAttributeNS(null, "x", x);
     delt.setAttributeNS(null, "y", y);
     //console.log(delt);
     api_delay('m',{
       t : token,
       p : delt.dataset.p,
-      l : [Math.round(x), Math.round(y)],
+      l : [x, y],
     });
   }
 }
@@ -134,7 +142,7 @@ function drag_mouseup(e) {
   //console.log('mouseup ...', dragging);
   if (dragging == DRAGGING.MAYBE_UNGRAB ||
       dragging == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
-    delt.dataset.g = "";
+    set_ungrab(delt);
     api('ungrab', {
       t : token,
       p : delt.dataset.p,
