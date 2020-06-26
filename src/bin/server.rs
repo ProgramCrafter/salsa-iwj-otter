@@ -54,6 +54,7 @@ fn loading(token : InstanceAccess) -> Result<Template,RE> {
 struct SessionRenderContext {
   clientid : u64,
   defs : Vec<String>,
+  uses : Vec<String>,
 }
 
 #[derive(Deserialize)]
@@ -70,6 +71,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
     let client = Client { };
     let clientid : slotmap::KeyData = user.clients.insert(client).into();
 
+    let mut uses = vec![];
     let mut defs = vec![];
     for (gpid, pr) in &g.gs.pieces {
       let id : slotmap::KeyData = gpid.into();
@@ -91,11 +93,17 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
                         pri.id_piece(),
                         pr.p.svg_select(&pri)));
       defs.push(pr.p.svg_x_defs(&pri));
+
+      uses.push(format!(r##"<use href="#{}" data-p="{}" x="{}" y="{}"/>"##,
+                        pri.id_piece(),
+                        pri.id,
+                        pr.pos[0], pr.pos[1]));
     }
 
     SessionRenderContext {
       clientid : clientid.as_ffi(),
       defs,
+      uses,
     }
   };
   Ok(Template::render("test",&c))
