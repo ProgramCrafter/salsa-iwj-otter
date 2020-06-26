@@ -5,6 +5,7 @@
 general_timeout = 10000;
 messages = Object();
 var our_dnd_type = "text/puvnex-game-server-dummy";
+drag_posting = false;
 
 function xhr_post_then(url,data,good) {
   var xhr = new XMLHttpRequest();
@@ -69,11 +70,28 @@ function drag_mousemove(e) {
     delt.setAttributeNS(null, "x", x);
     delt.setAttributeNS(null, "y", y);
     console.log(delt);
+    var l = [Math.round(x),Math.round(y)];
+    if (!drag_posting) {
+      drag_posting = l;
+      drag_posted();
+    } else {
+      drag_posting = l;
+    }
+  }
+}
+
+function drag_posted() {
+  if (!dragging) {
+    drag_posting = false;
+  } else if (drag_posting == true) {
+    drag_posting = false;
+  } else {
     xhr_post_then('/_/api/m',JSON.stringify({
       t : token,
       p : delt.dataset.p,
-      l : [Math.round(x),Math.round(y)],
-    }), function(){});
+      l : drag_posting,
+    }), drag_posted);
+    drag_posting = true;
   }
 }
 
