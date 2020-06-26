@@ -5,7 +5,8 @@
 general_timeout = 10000;
 messages = Object();
 var our_dnd_type = "text/puvnex-game-server-dummy";
-drag_posting = false;
+api_queue = [];
+api_posting = false;
 
 function xhr_post_then(url,data,good) {
   var xhr = new XMLHttpRequest();
@@ -33,6 +34,30 @@ function json_report_error(error_json) {
   errornode.textContent = 'Error (reloading may help?):' + error_message;
 }
 
+function api(meth, data) {
+  api_queue.push([meth, data]);
+  api_check();
+}
+function api_delay(meth, data) {
+  api_queue.push([meth, data]);
+  window.setTimeout(api_check, 10);
+}
+function api_check() {
+  if (api_posting) { return; }
+  if (!api_queue.length) { return; }
+  do {
+    var [meth, data] = api_queue.shift();
+  } while (meth == 'm' &&
+	   api_queue.length &&
+	   api_queue[0][0] == meth);
+  api_posting = true;
+  xhr_post_then('/_/api/'+meth, JSON.stringify(data), api_posted);
+}
+function api_posted() {
+  api_posting = false;
+  api_check();
+}
+
 function drag_mousedown(e) {
   drag_cancel();
   console.log('mousedown', e);
@@ -46,10 +71,10 @@ function drag_mousedown(e) {
   dragging = false;
   window.addEventListener('mousemove', drag_mousemove, true);
   window.addEventListener('mouseup',   drag_mouseup,   true);
-  xhr_post_then('/_/api/grab',JSON.stringify({
+  api('grab', {
     t : token,
     p : delt.dataset.p,
-  }), function(){ });
+  })
 }
 
 function drag_mousemove(e) {
@@ -70,28 +95,11 @@ function drag_mousemove(e) {
     delt.setAttributeNS(null, "x", x);
     delt.setAttributeNS(null, "y", y);
     console.log(delt);
-    var l = [Math.round(x),Math.round(y)];
-    if (!drag_posting) {
-      drag_posting = l;
-      drag_posted();
-    } else {
-      drag_posting = l;
-    }
-  }
-}
-
-function drag_posted() {
-  if (!dragging) {
-    drag_posting = false;
-  } else if (drag_posting == true) {
-    drag_posting = false;
-  } else {
-    xhr_post_then('/_/api/m',JSON.stringify({
+    api_delay('m',{
       t : token,
       p : delt.dataset.p,
-      l : drag_posting,
-    }), drag_posted);
-    drag_posting = true;
+      l : [Math.round(x), Math.round(y)],
+    });
   }
 }
 
