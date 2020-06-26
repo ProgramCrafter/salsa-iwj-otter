@@ -122,6 +122,18 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
 }
 
 #[derive(Debug,Serialize,Deserialize)]
+struct ApiUngrab {
+  t : String,
+  p : VisiblePieceId,
+}
+#[post("/_/api/ungrab", format="json", data="<form>")]
+#[throws(RE)]
+fn api_ungrab(form : Json<ApiUngrab>) -> impl response::Responder<'static> {
+  eprintln!("API {:?}", &form);
+  ""
+}
+
+#[derive(Debug,Serialize,Deserialize)]
 struct ApiMove {
   t : String,
   p : VisiblePieceId,
@@ -206,6 +218,7 @@ fn main() {
       resource,
       updates,
       api_grab,
+      api_ungrab,
       api_move,
     ])
     .launch();

@@ -58,43 +58,66 @@ function api_posted() {
   api_check();
 }
 
+// ----- clicking/dragging pieces -----
+
+// dataset
+//   delt.p       piece id (static)
+//   delt.g       grabbed user (+ve integer, null, or -1 meaning us)
+
+const DRAGGING = { // bitmask
+  NO           : 0,
+  MAYBE_GRAB   : 1,
+  MAYBE_UNGRAB : 2,
+  YES          : 4,
+};
+
+var delt;
+var dragging = DRAGGING.NO;
+
 function drag_mousedown(e) {
-  drag_cancel();
   console.log('mousedown', e);
+  if (!e.target.dataset.p) { return; }
+  drag_cancel();
   delt = e.target;
-  if (!delt.dataset.p) { return; }
-  if (delt.dataset.g) { return; }
+  if (delt.dataset.g > 0) { return; }
   dcx = e.clientX;
   dcy = e.clientY;
   dox = parseFloat(delt.getAttributeNS(null,"x"));
   doy = parseFloat(delt.getAttributeNS(null,"y"));
-  dragging = false;
+
+  console.log('mousedown ...', delt.dataset.g, !!delt.dataset.g);
+  if (delt.dataset.g < 0) {
+    dragging = DRAGGING.MAYBE_UNGRAB;
+  } else {
+    dragging = DRAGGING.MAYBE_GRAB;
+    delt.dataset.g = -1;
+    api('grab', {
+      t : token,
+      p : delt.dataset.p,
+    })
+  }
+
   window.addEventListener('mousemove', drag_mousemove, true);
   window.addEventListener('mouseup',   drag_mouseup,   true);
-  api('grab', {
-    t : token,
-    p : delt.dataset.p,
-  })
 }
 
 function drag_mousemove(e) {
   ctm = space.getScreenCTM();
   ddx = (e.clientX - dcx)/ctm.a;
   ddy = (e.clientY - dcy)/ctm.d;
-  if (!dragging) {
+  if (!(dragging & DRAGGING.YES)) {
     ddr2 = ddx*ddx + ddy*ddy;
     if (ddr2 > dragthresh) {
-      dragging = true;
+      dragging |= DRAGGING.YES;
     }
   }
-  console.log('mousemove',
-	      ddx, ddy, dragging);
-  if (dragging) {
+  console.log('mousemove', ddx, ddy, dragging);
+  if (dragging & DRAGGING.YES) {
     var x = dox + ddx;
     var y = doy + ddy;
     delt.setAttributeNS(null, "x", x);
     delt.setAttributeNS(null, "y", y);
-    console.log(delt);
+    //console.log(delt);
     api_delay('m',{
       t : token,
       p : delt.dataset.p,
@@ -104,20 +127,28 @@ function drag_mousemove(e) {
 }
 
 function drag_mouseup(e) {
-  console.log('mouseup');
+  console.log('mouseup', dragging);
   drag_mousemove(e);
-  drag_cancel(e);
-  if (dragging) {
-    console.log('dragged', ddx, ddy);
-  } else {
-    console.log('clicked');
+  console.log('mouseup ...', dragging);
+  if (dragging == DRAGGING.MAYBE_UNGRAB ||
+      dragging == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
+    delt.dataset.g = null;
+    api('ungrab', {
+      t : token,
+      p : delt.dataset.p,
+    });
   }
+  drag_cancel(e);
 }
 
 function drag_cancel() {
   window.removeEventListener('mousemove', drag_mousemove, true);
   window.removeEventListener('mouseup',   drag_mouseup,   true);
+  dragging = DRAGGING.NO;
+  delt = null;
 }
+
+// ----- test counter, startup -----
 
 messages.TestCounter = function(data) {
   status_node.innerHTML = data.value;
