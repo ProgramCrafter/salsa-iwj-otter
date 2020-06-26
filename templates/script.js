@@ -105,10 +105,22 @@ function drag_mousedown(e) {
 
 function set_grab(elt, owner) {
   elt.dataset.g = owner;
+  var [p, piece] = piece_cleanup_grab(elt);
+  var nelem = document.createElementNS(svg_ns,'use');
+  nelem.setAttributeNS(null,'href','#select'+p);
+  piece.appendChild(nelem);
 }
-
 function set_ungrab(elt) {
   elt.dataset.g = "";
+  piece_cleanup_grab(elt);
+}
+function piece_cleanup_grab(elt) {
+  var p = elt.dataset.p;
+  var piece = document.getElementById('piece'+p);
+  while (piece.children.length > 1) {
+    piece.lastElementChild.remove();
+  }
+  return [p, piece];
 }
 
 function drag_mousemove(e) {
@@ -172,6 +184,7 @@ function startup() {
   status_node.innerHTML = 'js-done'
   dragthresh = 5;
   space = document.getElementById('space');
+  svg_ns = space.getAttribute('xmlns');
 
   es = new EventSource("/_/updates/"+token+"/"+clientid);
   es.onmessage = function(event) {

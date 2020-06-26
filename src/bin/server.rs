@@ -91,7 +91,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
                            {}
                           </g>
                         "##,
-                        pri.id_piece(),
+                        pri.id_select(),
                         pr.p.svg_select(&pri)));
       defs.push(pr.p.svg_x_defs(&pri));
 
