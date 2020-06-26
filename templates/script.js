@@ -69,6 +69,11 @@ function drag_mousemove(e) {
     delt.setAttributeNS(null, "x", x);
     delt.setAttributeNS(null, "y", y);
     console.log(delt);
+    xhr_post_then('/_/api/m',JSON.stringify({
+      t : token,
+      p : delt.dataset.p,
+      l : [Math.round(x),Math.round(y)],
+    }), function(){});
   }
 }
 

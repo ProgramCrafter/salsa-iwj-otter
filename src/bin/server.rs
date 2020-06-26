@@ -114,10 +114,22 @@ struct ApiGrab {
   t : String,
   p : VisiblePieceId,
 }
-
 #[post("/_/api/grab", format="json", data="<form>")]
 #[throws(RE)]
-fn api(form : Json<ApiGrab>) -> impl response::Responder<'static> {
+fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
+  eprintln!("API {:?}", &form);
+  ""
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+struct ApiMove {
+  t : String,
+  p : VisiblePieceId,
+  l : Pos,
+}
+#[post("/_/api/m", format="json", data="<form>")]
+#[throws(RE)]
+fn api_move(form : Json<ApiMove>) -> impl response::Responder<'static> {
   eprintln!("API {:?}", &form);
   ""
 }
@@ -193,7 +205,8 @@ fn main() {
       session,
       resource,
       updates,
-      api,
+      api_grab,
+      api_move,
     ])
     .launch();
 }
