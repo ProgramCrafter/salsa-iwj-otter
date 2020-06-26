@@ -109,6 +109,19 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
   Ok(Template::render("test",&c))
 }
 
+#[derive(Debug,Serialize,Deserialize)]
+struct ApiGrab {
+  t : String,
+  p : String,
+}
+
+#[post("/_/api/grab", format="json", data="<form>")]
+#[throws(RE)]
+fn api(form : Json<ApiGrab>) -> impl response::Responder<'static> {
+  eprintln!("API {:?}", &form);
+  ""
+}
+
 #[derive(Serialize)]
 enum Update {
   TestCounter { value: usize },
@@ -180,6 +193,7 @@ fn main() {
       session,
       resource,
       updates,
+      api,
     ])
     .launch();
 }

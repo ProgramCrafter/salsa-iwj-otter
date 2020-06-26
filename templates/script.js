@@ -45,7 +45,10 @@ function drag_mousedown(e) {
   dragging = false;
   window.addEventListener('mousemove', drag_mousemove, true);
   window.addEventListener('mouseup',   drag_mouseup,   true);
-  
+  xhr_post_then('/_/api/grab',JSON.stringify({
+    t : token,
+    p : delt.dataset.p,
+  }), function(){ });
 }
 
 function drag_mousemove(e) {
