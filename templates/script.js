@@ -7,6 +7,7 @@ messages = Object();
 var our_dnd_type = "text/puvnex-game-server-dummy";
 api_queue = [];
 api_posting = false;
+var us;
 
 function xhr_post_then(url,data,good) {
   var xhr = new XMLHttpRequest();
@@ -62,7 +63,7 @@ function api_posted() {
 
 // dataset
 //   delt.p       piece id (static)
-//   delt.g       grabbed user (+ve integer, null, or -1 meaning us)
+//   delt.g       grabbed user (>=0 integer, or "")
 
 const DRAGGING = { // bitmask
   NO           : 0,
@@ -79,18 +80,19 @@ function drag_mousedown(e) {
   if (!e.target.dataset.p) { return; }
   drag_cancel();
   delt = e.target;
-  if (delt.dataset.g > 0) { return; }
+  var g =delt.dataset.g;
+  if (g != "" && g != us) { return; }
   dcx = e.clientX;
   dcy = e.clientY;
   dox = parseFloat(delt.getAttributeNS(null,"x"));
   doy = parseFloat(delt.getAttributeNS(null,"y"));
 
   console.log('mousedown ...', delt.dataset.g, !!delt.dataset.g);
-  if (delt.dataset.g < 0) {
+  if (g == us) {
     dragging = DRAGGING.MAYBE_UNGRAB;
   } else {
     dragging = DRAGGING.MAYBE_GRAB;
-    delt.dataset.g = -1;
+    delt.dataset.g = us;
     api('grab', {
       t : token,
       p : delt.dataset.p,
@@ -129,10 +131,10 @@ function drag_mousemove(e) {
 function drag_mouseup(e) {
   console.log('mouseup', dragging);
   drag_mousemove(e);
-  console.log('mouseup ...', dragging);
+  //console.log('mouseup ...', dragging);
   if (dragging == DRAGGING.MAYBE_UNGRAB ||
       dragging == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
-    delt.dataset.g = null;
+    delt.dataset.g = "";
     api('ungrab', {
       t : token,
       p : delt.dataset.p,
@@ -155,7 +157,9 @@ messages.TestCounter = function(data) {
 }
 
 function startup() {
-  clientid = document.getElementById("main-body").dataset.clientid;
+  var body = document.getElementById("main-body");
+  clientid = body.dataset.clientid;
+  us = body.dataset.us;
   status_node = document.getElementById('status');
   status_node.innerHTML = 'js-done'
   dragthresh = 5;

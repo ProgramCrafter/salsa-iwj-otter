@@ -53,6 +53,7 @@ fn loading(token : InstanceAccess) -> Result<Template,RE> {
 #[derive(Serialize,Debug)]
 struct SessionRenderContext {
   clientid : u64,
+  player : u32, // xxx
   defs : Vec<String>,
   uses : Vec<String>,
 }
@@ -94,7 +95,8 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
                         pr.p.svg_select(&pri)));
       defs.push(pr.p.svg_x_defs(&pri));
 
-      uses.push(format!(r##"<use href="#{}" data-p="{}" x="{}" y="{}"/>"##,
+      uses.push(format!(
+        r##"<use href="#{}" data-p="{}" data-g="" x="{}" y="{}"/>"##,
                         pri.id_piece(),
                         pri.id,
                         pr.pos[0], pr.pos[1]));
@@ -102,6 +104,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
 
     SessionRenderContext {
       clientid : clientid.as_ffi(),
+      player : 2, // xxx
       defs,
       uses,
     }
