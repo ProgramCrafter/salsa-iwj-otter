@@ -87,7 +87,7 @@ function drag_mousedown(e) {
   dox = parseFloat(delt.getAttributeNS(null,"x"));
   doy = parseFloat(delt.getAttributeNS(null,"y"));
 
-  console.log('mousedown ...', delt.dataset.g, !!delt.dataset.g);
+  //console.log('mousedown ...', delt.dataset.g, !!delt.dataset.g);
   if (g == us) {
     dragging = DRAGGING.MAYBE_UNGRAB;
   } else {
@@ -113,7 +113,7 @@ function drag_mousemove(e) {
       dragging |= DRAGGING.YES;
     }
   }
-  console.log('mousemove', ddx, ddy, dragging);
+  //console.log('mousemove', ddx, ddy, dragging);
   if (dragging & DRAGGING.YES) {
     var x = dox + ddx;
     var y = doy + ddy;
