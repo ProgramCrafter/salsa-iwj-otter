@@ -53,7 +53,7 @@ fn loading(token : InstanceAccess) -> Result<Template,RE> {
 #[derive(Serialize,Debug)]
 struct SessionRenderContext {
   clientid : u64,
-  player : u32, // xxx
+  player : PlayerId,
   defs : Vec<String>,
   uses : Vec<String>,
 }
@@ -104,7 +104,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
 
     SessionRenderContext {
       clientid : clientid.as_ffi(),
-      player : 2, // xxx
+      player : iad.user,
       defs,
       uses,
     }
