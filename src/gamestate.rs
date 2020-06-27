@@ -25,10 +25,8 @@ pub struct PieceRenderInstructions {
 pub type VisiblePieceIdSvgIds = &'static [&'static str];
 
 impl Display for VisiblePieceId {
-  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-    let v = self.0.as_ffi();
-    write!(f, "{}.{}", v >> 32, v & 0xffffffff)
-  }
+  #[throws(fmt::Error)]
+  fn fmt(&self, f : &mut fmt::Formatter) { slotkey_write(self.0,f)? }
 }
 display_consequential_impls!{VisiblePieceId}
 
