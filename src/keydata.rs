@@ -48,12 +48,10 @@ macro_rules! visible_slotmap_key {
       fn fmt(&self, f : &mut fmt::Formatter) { slotkey_write(self.0,'.',f)? }
     }
 
-    impl TryFrom<&str> for VisiblePieceId {
+    impl TryFrom<&str> for $x {
       type Error = AE;
       #[throws(AE)]
-      fn try_from(s : &str) -> VisiblePieceId {
-        VisiblePieceId(slotkey_parse(s,'.')?)
-      }
+      fn try_from(s : &str) -> $x { $x(slotkey_parse(s,'.')?) }
     }
 
     impl slotmap::Key for $x { }
