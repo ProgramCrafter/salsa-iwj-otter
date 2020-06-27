@@ -111,6 +111,13 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
   Ok(Template::render("test",&c))
 }
 
+#[derive(Error,Debug)]
+#[error("operation error {:?}",self)]
+enum OpError {
+  PieceGone,
+  PieceHeld,
+}
+
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiGrab {
   t : String,
@@ -119,7 +126,17 @@ struct ApiGrab {
 #[post("/_/api/grab", format="json", data="<form>")]
 #[throws(RE)]
 fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
-  eprintln!("API {:?}", &form);
+  let iad = lookup_token(&form.t).ok_or_else(||anyhow!("unknown token"))?;
+  let g = iad.i.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
+  let r : Result<(),OpError> = {
+    let p = g.gs.pieces.get_mut(form.p)/*.ok_or(OpError::PieceGone)?*/;
+/*
+    if p.held != None { Err(OpError::PieceHeld)? };
+    p.held = Some(iad.user);
+*/
+    Ok(())
+  };
+  eprintln!("API {:?} => {:?}", &form, &r);
   ""
 }
 
