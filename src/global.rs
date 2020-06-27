@@ -19,21 +19,16 @@ impl Borrow<str> for RawToken {
 pub struct Client {
 }
 
-pub struct Player {
-  pub nick : String,
-  pub clients : DenseSlotMap<ClientId,Client>,
-}
-
 pub struct Instance {
   /* game state goes here */
-  pub users : DenseSlotMap<PlayerId,Player>,
   pub gs : GameState,
+  pub clients : SecondarySlotMap<PlayerId,DenseSlotMap<ClientId,Client>>,
 }
 
 #[derive(Clone)]
 pub struct InstanceAccessDetails {
   pub i : Arc<Mutex<Instance>>,
-  pub user : PlayerId,
+  pub player : PlayerId,
 }
 
 #[derive(Clone)]
@@ -57,7 +52,7 @@ pub fn lookup_token(s : &str) -> Option<InstanceAccessDetails> {
   GLOBAL.tokens.read().unwrap().get(s).cloned()
 }
 
-const XXX_USERS_TOKENS : &[(&str, &str)] = &[
+const XXX_PLAYERS_TOKENS : &[(&str, &str)] = &[
   ("kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe", "alice"),
   ("ccg9kzoTh758QrVE1xMY7BQWB36dNJTx", "bob"),
 ];
@@ -75,18 +70,18 @@ impl<'r> FromParam<'r> for InstanceAccess<'r> {
 
 pub fn xxx_global_setup() {
   let i = Instance {
-    users : Default::default(),
     gs : xxx_gamestate_init(),
+    clients : Default::default(),
   };
   let i = Arc::new(Mutex::new(i));
   let mut ig = i.lock().unwrap();
-  for (token, nick) in XXX_USERS_TOKENS {
+  for (token, nick) in XXX_PLAYERS_TOKENS {
     let nu = Player {
       nick : nick.to_string(),
-      clients : Default::default(),
     };
-    let user = ig.users.insert(nu);
-    let ia = InstanceAccessDetails { i : i.clone(), user };
+    let player = ig.gs.players.insert(nu);
+    ig.clients.insert(player, Default::default());
+    let ia = InstanceAccessDetails { i : i.clone(), player };
     GLOBAL.tokens.write().unwrap().insert(
       RawToken(token.to_string()), ia
     );

@@ -27,7 +27,8 @@ pub use rocket::request::{FromParam,FromRequest,FromFormValue,LenientForm};
 pub use rocket::response::NamedFile;
 pub use rocket::response;
 
-pub use slotmap::dense::{DenseSlotMap};
+pub use slotmap::dense::DenseSlotMap;
+pub type SecondarySlotMap<K,V> = slotmap::secondary::SecondaryMap<K,V>;
 pub use index_vec::{define_index_type,index_vec,IndexVec};
 
 pub use crate::global::*;

@@ -51,6 +51,12 @@ pub struct PieceRecord {
 #[derive(Debug)]
 pub struct GameState {
   pub pieces : DenseSlotMap<PieceId,PieceRecord>,
+  pub players : DenseSlotMap<PlayerId,Player>,
+}
+
+#[derive(Debug)]
+pub struct Player {
+  pub nick : String,
 }
 
 pub fn xxx_gamestate_init() -> GameState {
@@ -63,5 +69,5 @@ pub fn xxx_gamestate_init() -> GameState {
     };
     pieces.insert(pr);
   }
-  GameState { pieces }
+  GameState { pieces, players : Default::default() }
 }

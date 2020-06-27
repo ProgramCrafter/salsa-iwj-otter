@@ -52,7 +52,7 @@ fn loading(token : InstanceAccess) -> Result<Template,RE> {
 
 #[derive(Serialize,Debug)]
 struct SessionRenderContext {
-  clientid : u64,
+  clientid : ClientId,
   player : PlayerId,
   defs : Vec<String>,
   uses : Vec<String>,
@@ -67,14 +67,15 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
   // make session in this game, log a message to other players
   let iad = lookup_token(&form.token).ok_or_else(|| anyhow!("unknown token"))?;
   let c = {
-    let mut g = iad.i.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
-    let user = g.users.get_mut(iad.user).ok_or_else(|| anyhow!("user deleted"))?;
+    let mut ig = iad.i.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
+    let _player = ig.gs.players.get_mut(iad.player)
+      .ok_or_else(|| anyhow!("player deleted"))?;
     let client = Client { };
-    let clientid : slotmap::KeyData = user.clients.insert(client).into();
+    let clientid = ig.clients[iad.player].insert(client);
 
     let mut uses = vec![];
     let mut defs = vec![];
-    for (gpid, pr) in &g.gs.pieces {
+    for (gpid, pr) in &ig.gs.pieces {
       let pri = PieceRenderInstructions {
         id : make_pieceid_visible(gpid),
         face : pr.face,
@@ -102,8 +103,8 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
     }
 
     SessionRenderContext {
-      clientid : clientid.as_ffi(),
-      player : iad.user,
+      clientid,
+      player : iad.player,
       defs,
       uses,
     }
@@ -132,7 +133,7 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
     let p = decode_visible_pieceid(form.p);
     let p = g.gs.pieces.get_mut(p).ok_or(OpError::PieceGone)?;
     if p.held != None { Err(OpError::PieceHeld)? };
-    p.held = Some(iad.user);
+    p.held = Some(iad.player);
     Ok(())
   })();
   eprintln!("API {:?} => {:?}", &form, &r);
@@ -200,9 +201,12 @@ fn updates(token : &RawStr, clientid : u64) -> impl response::Responder<'static>
   let clientid = slotmap::KeyData::from_ffi(clientid);
   let clientid = clientid.into();
   let _ = {
-    let mut g = iad.i.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
-    let user = g.users.get_mut(iad.user).ok_or_else(|| anyhow!("user deleted"))?;
-    let _client = user.clients.get_mut(clientid).ok_or_else(|| anyhow!("client deleted"))?;
+    let mut ig = iad.i.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
+    let g = &mut ig.gs;
+    let _player = g.players.get_mut(iad.player)
+      .ok_or_else(|| anyhow!("user deleted"))?;
+    let _client = ig.clients[iad.player].get_mut(clientid)
+      .ok_or_else(|| anyhow!("client deleted"))?;
   };
   let tc = TestCounterInner { next : 0 };
   let tc = BufReader::new(tc);
