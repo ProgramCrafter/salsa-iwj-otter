@@ -5,8 +5,7 @@ slotmap::new_key_type!{
   pub struct PieceId;
 }
 
-visible_slotmap_key!{VisiblePieceId}
-display_consequential_impls!{VisiblePieceId}
+visible_slotmap_key!{ VisiblePieceId('.') }
 
 pub fn make_pieceid_visible(p : PieceId) -> VisiblePieceId {
   // xxx need to do censorship mapping here

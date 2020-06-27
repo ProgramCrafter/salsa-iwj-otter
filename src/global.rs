@@ -8,8 +8,7 @@ slotmap::new_key_type!{
   pub struct ClientId;
 }
 
-visible_slotmap_key!{PlayerId}
-display_consequential_impls!{PlayerId}
+visible_slotmap_key!{ PlayerId('#') }
 
 #[derive(Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash)]
 struct RawToken (String);

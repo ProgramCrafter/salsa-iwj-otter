@@ -36,7 +36,7 @@ pub fn slotkey_write(k : SKD, sep : char, f : &mut fmt::Formatter) {
 
 #[macro_export]
 macro_rules! visible_slotmap_key {
-  ( $x:ident ) => {
+  ( $x:ident($sep:expr) ) => {
 
     #[derive(Copy,Clone,Eq,PartialEq,Ord,PartialOrd,Serialize,Deserialize)]
     #[serde(into="String")]
@@ -45,13 +45,13 @@ macro_rules! visible_slotmap_key {
 
     impl Display for $x {
       #[throws(fmt::Error)]
-      fn fmt(&self, f : &mut fmt::Formatter) { slotkey_write(self.0,'.',f)? }
+      fn fmt(&self, f : &mut fmt::Formatter) { slotkey_write(self.0,$sep,f)? }
     }
 
     impl TryFrom<&str> for $x {
       type Error = AE;
       #[throws(AE)]
-      fn try_from(s : &str) -> $x { $x(slotkey_parse(s,'.')?) }
+      fn try_from(s : &str) -> $x { $x(slotkey_parse(s,$sep)?) }
     }
 
     impl slotmap::Key for $x { }
@@ -63,6 +63,8 @@ macro_rules! visible_slotmap_key {
         p.0
       }
     }
+
+    display_consequential_impls!{$x}
   }
 }
 pub use crate::visible_slotmap_key; // this is madness!
