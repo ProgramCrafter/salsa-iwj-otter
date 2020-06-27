@@ -37,7 +37,8 @@ pub fn slotkey_write(k : SKD, sep : char, f : &mut fmt::Formatter) {
 #[macro_export]
 macro_rules! visible_slotmap_key {
   ( $x:ident ) => {
-    #[derive(Copy,Clone,Serialize,Deserialize)]
+
+    #[derive(Copy,Clone,Eq,PartialEq,Ord,PartialOrd,Serialize,Deserialize)]
     #[serde(into="String")]
     #[serde(try_from="&str")]
     pub struct $x(pub slotmap::KeyData);
@@ -52,6 +53,16 @@ macro_rules! visible_slotmap_key {
       #[throws(AE)]
       fn try_from(s : &str) -> VisiblePieceId {
         VisiblePieceId(slotkey_parse(s,'.')?)
+      }
+    }
+
+    impl slotmap::Key for $x { }
+    impl From<slotmap::KeyData> for $x {
+      fn from(d : slotmap::KeyData) -> Self { $x(d) }
+    }
+    impl From<$x> for slotmap::KeyData {
+      fn from(p : $x) -> Self {
+        p.0
       }
     }
   }
