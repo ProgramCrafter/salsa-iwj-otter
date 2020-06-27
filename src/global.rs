@@ -5,9 +5,15 @@ use crate::imports::*;
 use lazy_static::lazy_static;
 
 slotmap::new_key_type!{
-  pub struct PlayerId;
   pub struct ClientId;
 }
+
+type SKD = slotmap::KeyData;
+#[derive(Copy,Clone,PartialEq,Eq,Serialize,Deserialize,Debug)]
+pub struct PlayerId (SKD);
+impl slotmap::Key for PlayerId { }
+impl From<SKD> for PlayerId { fn from(d : SKD) -> Self { PlayerId(d) } }
+impl From<PlayerId> for SKD { fn from(p : PlayerId) -> Self { p.0 } }
 
 #[derive(Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash)]
 struct RawToken (String);
