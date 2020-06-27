@@ -5,6 +5,8 @@ slotmap::new_key_type!{
   pub struct PieceId;
 }
 
+#[derive(Copy,Clone,Serialize)]
+#[serde(into="String")]
 pub struct VisiblePieceId (pub u64);
 
 #[derive(Debug)]
@@ -24,6 +26,9 @@ impl Debug for VisiblePieceId {
   fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
     <Self as Display>::fmt(self, f)
   }
+}
+impl From<VisiblePieceId> for String {
+  fn from(p: VisiblePieceId) -> String { format!("{}",p) }
 }
 
 struct VisiblePieceIdVisitor { }
@@ -47,14 +52,6 @@ impl<'de> Deserialize<'de> for VisiblePieceId {
   fn deserialize<D>(d: D) -> Result<Self, <D as serde::de::Deserializer<'de>>::Error>
   where D: serde::de::Deserializer<'de> {
     d.deserialize_str(VisiblePieceIdVisitor{})
-  }
-}
-
-impl Serialize for VisiblePieceId {
-  fn serialize<S>(&self, s : S) -> Result<S::Ok, S::Error>
-  where S : Serializer
-  {
-    s.serialize_str(&format!("{}", self))
   }
 }
 

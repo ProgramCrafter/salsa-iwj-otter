@@ -63,7 +63,7 @@ function api_posted() {
 
 // dataset
 //   delt.p       piece id (static)
-//   delt.g       grabbed user (>=0 integer, or "")
+//   delt.g       grabbed user (player id string, or "")
 
 const DRAGGING = { // bitmask
   NO           : 0,
