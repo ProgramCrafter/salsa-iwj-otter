@@ -75,9 +75,8 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
     let mut uses = vec![];
     let mut defs = vec![];
     for (gpid, pr) in &g.gs.pieces {
-      let id : slotmap::KeyData = gpid.into();
       let pri = PieceRenderInstructions {
-        id : VisiblePieceId { uncensored : id },
+        id : make_pieceid_visible(gpid),
         face : pr.face,
       };
       defs.push(format!(r##"<g id="{}">{}</g>"##,
