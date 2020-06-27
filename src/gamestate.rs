@@ -5,8 +5,9 @@ slotmap::new_key_type!{
   pub struct PieceId;
 }
 
-#[derive(Copy,Clone,Serialize)]
+#[derive(Copy,Clone,Serialize,Deserialize)]
 #[serde(into="String")]
+#[serde(try_from="&str")]
 pub struct VisiblePieceId (pub u64);
 
 #[derive(Debug)]
@@ -31,35 +32,14 @@ impl From<VisiblePieceId> for String {
   fn from(p: VisiblePieceId) -> String { format!("{}",p) }
 }
 
-impl FromStr for VisiblePieceId {
-  type Err = AE;
-  fn from_str(s : &str) -> Result<VisiblePieceId,AE> {
+impl TryFrom<&str> for VisiblePieceId {
+  type Error = AE;
+  fn try_from(s : &str) -> Result<VisiblePieceId,AE> {
     let e = || anyhow!("could not deserialise visibile piece id");
     let mut i = s.splitn(2,'.').map(|s| s.parse().map_err(|_| e()));
     let h : u32 = i.next().ok_or_else(e)??;
     let l : u32 = i.next().ok_or_else(e)??;
     Ok(VisiblePieceId(((h as u64) << 32) | (l as u64)))
-  }
-//fn from(_: T) -> Self { todo!() }`
-}
-
-struct VisiblePieceIdVisitor { }
-impl<'de> serde::de::Visitor<'de> for VisiblePieceIdVisitor {
-  type Value = VisiblePieceId;
-  fn expecting(&self, f : &mut fmt::Formatter) -> fmt::Result {
-    write!(f,"(visible) piece id")
-  }
-  fn visit_str<DE>(self, s : &str) -> Result<VisiblePieceId, DE>
-    where DE: serde::de::Error,
-  {
-    s.parse().map_err(DE::custom)
-  }
-}
-
-impl<'de> Deserialize<'de> for VisiblePieceId {
-  fn deserialize<D>(d: D) -> Result<Self, <D as serde::de::Deserializer<'de>>::Error>
-  where D: serde::de::Deserializer<'de> {
-    d.deserialize_str(VisiblePieceIdVisitor{})
   }
 }
 
