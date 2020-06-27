@@ -127,15 +127,14 @@ struct ApiGrab {
 #[throws(RE)]
 fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
   let iad = lookup_token(&form.t).ok_or_else(||anyhow!("unknown token"))?;
-  let g = iad.i.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
-  let r : Result<(),OpError> = {
-    let p = g.gs.pieces.get_mut(form.p)/*.ok_or(OpError::PieceGone)?*/;
-/*
+  let mut g = iad.i.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
+  let r : Result<(),OpError> = (||{
+    let p = decode_visible_pieceid(form.p);
+    let p = g.gs.pieces.get_mut(p).ok_or(OpError::PieceGone)?;
     if p.held != None { Err(OpError::PieceHeld)? };
     p.held = Some(iad.user);
-*/
     Ok(())
-  };
+  })();
   eprintln!("API {:?} => {:?}", &form, &r);
   ""
 }
