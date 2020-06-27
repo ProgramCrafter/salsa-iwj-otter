@@ -5,7 +5,7 @@ use crate::imports::*;
 use lazy_static::lazy_static;
 
 slotmap::new_key_type!{
-  pub struct UserId;
+  pub struct PlayerId;
   pub struct ClientId;
 }
 
@@ -18,21 +18,21 @@ impl Borrow<str> for RawToken {
 pub struct Client {
 }
 
-pub struct User {
+pub struct Player {
   pub nick : String,
   pub clients : DenseSlotMap<ClientId,Client>,
 }
 
 pub struct Instance {
   /* game state goes here */
-  pub users : DenseSlotMap<UserId,User>,
+  pub users : DenseSlotMap<PlayerId,Player>,
   pub gs : GameState,
 }
 
 #[derive(Clone)]
 pub struct InstanceAccessDetails {
   pub i : Arc<Mutex<Instance>>,
-  pub user : UserId,
+  pub user : PlayerId,
 }
 
 #[derive(Clone)]
@@ -80,7 +80,7 @@ pub fn xxx_global_setup() {
   let i = Arc::new(Mutex::new(i));
   let mut ig = i.lock().unwrap();
   for (token, nick) in XXX_USERS_TOKENS {
-    let nu = User {
+    let nu = Player {
       nick : nick.to_string(),
       clients : Default::default(),
     };

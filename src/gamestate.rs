@@ -61,7 +61,7 @@ pub struct PieceRecord {
   pub pos : Pos,
   pub p : Box<dyn Piece>,
   pub face : FaceId,
-  pub held : Option<UserId>,
+  pub held : Option<PlayerId>,
 }
 
 #[derive(Debug)]
