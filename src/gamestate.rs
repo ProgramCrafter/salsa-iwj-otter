@@ -26,14 +26,16 @@ pub type VisiblePieceIdSvgIds = &'static [&'static str];
 
 impl Display for VisiblePieceId {
   #[throws(fmt::Error)]
-  fn fmt(&self, f : &mut fmt::Formatter) { slotkey_write(self.0,f)? }
+  fn fmt(&self, f : &mut fmt::Formatter) { slotkey_write(self.0,'.',f)? }
 }
 display_consequential_impls!{VisiblePieceId}
 
 impl TryFrom<&str> for VisiblePieceId {
   type Error = AE;
   #[throws(AE)]
-  fn try_from(s : &str) -> VisiblePieceId { VisiblePieceId(slotkey_parse(s)?) }
+  fn try_from(s : &str) -> VisiblePieceId {
+    VisiblePieceId(slotkey_parse(s,'.')?)
+  }
 }
 
 impl PieceRenderInstructions {
