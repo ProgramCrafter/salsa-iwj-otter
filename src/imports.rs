@@ -7,6 +7,8 @@ pub use std::time::Duration;
 pub use std::sync::{Arc,Mutex,RwLock};
 pub use std::collections::HashMap;
 pub use std::borrow::Borrow;
+pub use std::convert::TryFrom;
+pub use std::str::FromStr;
 
 pub use thiserror::Error;
 pub use anyhow::{Context,anyhow};
@@ -33,6 +35,7 @@ pub use crate::gamestate::*;
 pub use crate::pieces::*;
 
 pub type E = anyhow::Error;
+pub type AE = anyhow::Error;
 
 pub type SvgData = Vec<u8>;
 pub type Coord = isize;

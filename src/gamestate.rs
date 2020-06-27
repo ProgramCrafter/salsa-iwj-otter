@@ -31,6 +31,18 @@ impl From<VisiblePieceId> for String {
   fn from(p: VisiblePieceId) -> String { format!("{}",p) }
 }
 
+impl FromStr for VisiblePieceId {
+  type Err = AE;
+  fn from_str(s : &str) -> Result<VisiblePieceId,AE> {
+    let e = || anyhow!("could not deserialise visibile piece id");
+    let mut i = s.splitn(2,'.').map(|s| s.parse().map_err(|_| e()));
+    let h : u32 = i.next().ok_or_else(e)??;
+    let l : u32 = i.next().ok_or_else(e)??;
+    Ok(VisiblePieceId(((h as u64) << 32) | (l as u64)))
+  }
+//fn from(_: T) -> Self { todo!() }`
+}
+
 struct VisiblePieceIdVisitor { }
 impl<'de> serde::de::Visitor<'de> for VisiblePieceIdVisitor {
   type Value = VisiblePieceId;
@@ -40,11 +52,7 @@ impl<'de> serde::de::Visitor<'de> for VisiblePieceIdVisitor {
   fn visit_str<DE>(self, s : &str) -> Result<VisiblePieceId, DE>
     where DE: serde::de::Error,
   {
-    let e = || DE::custom("could not deserialise visibile piece id");
-    let mut i = s.splitn(2,'.').map(|s| s.parse().map_err(|_| e()));
-    let h : u32 = i.next().ok_or_else(e)??;
-    let l : u32 = i.next().ok_or_else(e)??;
-    Ok(VisiblePieceId(((h as u64) << 32) | (l as u64)))
+    s.parse().map_err(DE::custom)
   }
 }
 
