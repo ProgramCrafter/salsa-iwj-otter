@@ -23,14 +23,7 @@ impl Display for VisiblePieceId {
     write!(f, "{}.{}", self.0 >> 32, self.0 & 0xffffffff)
   }
 }
-impl Debug for VisiblePieceId {
-  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-    <Self as Display>::fmt(self, f)
-  }
-}
-impl From<VisiblePieceId> for String {
-  fn from(p: VisiblePieceId) -> String { format!("{}",p) }
-}
+display_consequential_impls!{VisiblePieceId}
 
 impl TryFrom<&str> for VisiblePieceId {
   type Error = AE;
