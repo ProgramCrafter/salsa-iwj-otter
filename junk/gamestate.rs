@@ -1,14 +1,6 @@
 
-pub trait Piece {
-  fn svg(&self, pr : &PiecedRecord) -> SvgData;
-}
-
 struct PlayerRecord {
   nick : String,
-}
-
-pub struct GameState {
-  pub players : Vec<PlayerRecord>,
 }
 
 pub struct GameRef (InstanceGuard);
