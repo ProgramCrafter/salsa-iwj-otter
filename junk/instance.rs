@@ -10,7 +10,6 @@ pub struct Instance {
 
 #[derive(Debug)]
 struct Game {
-  gen : Counter,
   log : VecDeque<LogEntry>,
 }
 

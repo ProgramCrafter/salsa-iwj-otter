@@ -5,6 +5,8 @@ slotmap::new_key_type!{
   pub struct PieceId;
 }
 
+type Counter = u64;
+
 visible_slotmap_key!{ VisiblePieceId('.') }
 
 pub fn make_pieceid_visible(p : PieceId) -> VisiblePieceId {
@@ -52,6 +54,7 @@ pub struct PieceRecord {
 pub struct GameState {
   pub pieces : DenseSlotMap<PieceId,PieceRecord>,
   pub players : DenseSlotMap<PlayerId,Player>,
+  pub gen : Counter,
 }
 
 #[derive(Debug)]
@@ -69,5 +72,5 @@ pub fn xxx_gamestate_init() -> GameState {
     };
     pieces.insert(pr);
   }
-  GameState { pieces, players : Default::default() }
+  GameState { pieces, gen : 1, players : Default::default(),  }
 }
