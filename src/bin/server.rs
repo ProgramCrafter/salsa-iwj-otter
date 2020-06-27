@@ -77,7 +77,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
     for (gpid, pr) in &g.gs.pieces {
       let id : slotmap::KeyData = gpid.into();
       let pri = PieceRenderInstructions {
-        id : VisiblePieceId(id.as_ffi()),
+        id : VisiblePieceId { uncensored : id },
         face : pr.face,
       };
       defs.push(format!(r##"<g id="{}">{}</g>"##,

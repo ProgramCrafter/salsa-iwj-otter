@@ -8,7 +8,7 @@ slotmap::new_key_type!{
 #[derive(Copy,Clone,Serialize,Deserialize)]
 #[serde(into="String")]
 #[serde(try_from="&str")]
-pub struct VisiblePieceId (pub u64);
+pub struct VisiblePieceId { pub uncensored : slotmap::KeyData }
 
 #[derive(Debug)]
 pub struct PieceRenderInstructions {
@@ -20,7 +20,8 @@ pub type VisiblePieceIdSvgIds = &'static [&'static str];
 
 impl Display for VisiblePieceId {
   fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-    write!(f, "{}.{}", self.0 >> 32, self.0 & 0xffffffff)
+    let v = self.uncensored.as_ffi();
+    write!(f, "{}.{}", v >> 32, v & 0xffffffff)
   }
 }
 display_consequential_impls!{VisiblePieceId}
@@ -28,7 +29,9 @@ display_consequential_impls!{VisiblePieceId}
 impl TryFrom<&str> for VisiblePieceId {
   type Error = AE;
   #[throws(AE)]
-  fn try_from(s : &str) -> VisiblePieceId { VisiblePieceId(slotkey_parse(s)?) }
+  fn try_from(s : &str) -> VisiblePieceId {
+    VisiblePieceId{ uncensored : slotkey_parse(s)? }
+  }
 }
 
 impl PieceRenderInstructions {
