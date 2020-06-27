@@ -1,4 +1,6 @@
 
+use crate::imports::*;
+
 #[macro_export]
 macro_rules! display_consequential_impls {
   ( $x:path ) => {
@@ -14,3 +16,12 @@ macro_rules! display_consequential_impls {
 }
 
 pub use crate::display_consequential_impls; // this is madness!
+
+#[throws(AE)]
+pub fn slotkey_parse(s : &str) -> u64 {
+  let e = || anyhow!("could not deserialise visibile piece id");
+  let mut i = s.splitn(2,'.').map(|s| s.parse().map_err(|_| e()));
+  let h : u32 = i.next().ok_or_else(e)??;
+  let l : u32 = i.next().ok_or_else(e)??;
+  ((h as u64) << 32) | (l as u64)
+}

@@ -27,13 +27,8 @@ display_consequential_impls!{VisiblePieceId}
 
 impl TryFrom<&str> for VisiblePieceId {
   type Error = AE;
-  fn try_from(s : &str) -> Result<VisiblePieceId,AE> {
-    let e = || anyhow!("could not deserialise visibile piece id");
-    let mut i = s.splitn(2,'.').map(|s| s.parse().map_err(|_| e()));
-    let h : u32 = i.next().ok_or_else(e)??;
-    let l : u32 = i.next().ok_or_else(e)??;
-    Ok(VisiblePieceId(((h as u64) << 32) | (l as u64)))
-  }
+  #[throws(AE)]
+  fn try_from(s : &str) -> VisiblePieceId { VisiblePieceId(slotkey_parse(s)?) }
 }
 
 impl PieceRenderInstructions {
