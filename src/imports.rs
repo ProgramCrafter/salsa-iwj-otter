@@ -35,6 +35,7 @@ pub use crate::global::*;
 pub use crate::gamestate::*;
 pub use crate::pieces::*;
 pub use crate::keydata::*;
+pub use crate::updates::*;
 
 pub type E = anyhow::Error;
 pub type AE = anyhow::Error;

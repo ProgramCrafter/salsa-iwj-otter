@@ -5,7 +5,7 @@ slotmap::new_key_type!{
   pub struct PieceId;
 }
 
-type Counter = u64;
+pub type Counter = u64;
 
 visible_slotmap_key!{ VisiblePieceId('.') }
 
@@ -72,7 +72,9 @@ pub fn xxx_gamestate_init() -> GameState {
       pos, p,
       face : 0.into(),
       held : None,
-      gen : 0,
+      lastclient : Default::default(),
+      gen_lastclient : 0,
+      gen_before_lastclient : 0,
     };
     pieces.insert(pr);
   }

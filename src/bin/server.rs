@@ -142,7 +142,7 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
     let u_gen =
       if client == p.lastclient { p.gen_lastclient }
       else { p.gen_before_lastclient };
-    if p.gen > u_gen { Err(OpError::Conflict)? }
+    if u_gen > form.g { Err(OpError::Conflict)? }
     if p.held != None { Err(OpError::PieceHeld)? };
     p.held = Some(iad.player);
     gs.gen += 1;
@@ -153,16 +153,16 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
     }
     p.gen_lastclient = gen;
     for (tplayer, tpl) in g.gs.players {
-      for (tclient, cl) in ig.clients.get(tplayer) {
+      for (tclient, cl) in g.clients.get(tplayer) {
         if tclient == cl {
           cl.transmit_update(client, Update {
             gen,
-            u : GameUpdate::ClientSequence(form.s)
+            u : UpdatePayload::ClientSequence(form.s),
           });
         } else {
           cl.transmit_update(client, Update {
             gen,
-            u : GameUpdate::PieceUpdate(p, p.update()),
+            u : UpdatePayload::PieceUpdate(p, p.update()),
           });
         }          
       }
