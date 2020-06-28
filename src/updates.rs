@@ -21,7 +21,7 @@ pub struct PieceUpdate {
 #[derive(Debug,Serialize)]
 pub enum UpdatePayload {
   NoUpdate,
-  ClientSequence(ClientSequence),
+  ClientSequence(PieceId, ClientSequence),
   PieceDelete(PieceId),
   PieceInsert(PieceId, PieceUpdate),
   PieceUpdate(PieceId, PieceUpdate),

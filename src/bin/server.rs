@@ -170,7 +170,7 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
       if tclient == client {
         tcl.transmit_update(&Update {
           gen,
-          u : UpdatePayload::ClientSequence(form.s),
+          u : UpdatePayload::ClientSequence(piece, form.s),
         });
       } else {
         tcl.transmit_update(&update);
