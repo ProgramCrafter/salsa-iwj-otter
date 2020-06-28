@@ -16,6 +16,8 @@ edition = "2018"
 anyhow = "1"
 thiserror = "1"
 
+rand = "0"
+
 #arrayvec = "0"
 
 #toml = "0.5"
