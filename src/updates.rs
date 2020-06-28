@@ -1,9 +1,9 @@
 
 use crate::imports::*;
 
-#[derive(Debug,Deserialize,Serialize)]
+#[derive(Debug,Copy,Clone,Eq,PartialEq,Deserialize,Serialize)]
 #[serde(transparent)]
-pub struct ClientSequence(String);
+pub struct ClientSequence(u64);
 
 #[derive(Debug,Serialize)]
 pub struct Update {

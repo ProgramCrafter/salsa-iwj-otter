@@ -133,6 +133,7 @@ struct ApiGrab {
 fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
   let iad = lookup_token(&form.t).ok_or_else(||anyhow!("unknown token"))?;
   let mut g = iad.i.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
+  let g = &mut *g;
   let client = form.c;
   let r : Result<(),OpError> = (||{
     let piece = decode_visible_pieceid(form.p);
@@ -151,19 +152,20 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
       p.gen_before_lastclient = p.gen_lastclient;
       p.lastclient = client;
     }
+    let update = Update {
+      gen,
+      u : UpdatePayload::PieceUpdate(piece, p.mk_update()),
+    };
     p.gen_lastclient = gen;
-    for (tplayer, tpl) in g.gs.players {
-      for (tclient, tcl) in g.clients[tplayer] {
+    for (tplayer, tpl) in &g.gs.players {
+      for (tclient, tcl) in &mut g.clients[tplayer] {
         if tclient == client {
           tcl.transmit_update(&Update {
             gen,
             u : UpdatePayload::ClientSequence(form.s),
           });
         } else {
-          tcl.transmit_update(&Update {
-            gen,
-            u : UpdatePayload::PieceUpdate(piece, p.mk_update()),
-          });
+          tcl.transmit_update(&update);
         }          
       }
     }
@@ -209,7 +211,7 @@ struct TestCounterInner { next : usize, }
 impl Read for TestCounterInner {
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
     thread::sleep(Duration::from_millis(500));
-    let message = Update::TestCounter { value : self.next };
+    let message = XUpdate::TestCounter { value : self.next };
     let data = serde_json::to_string(&message)?;
     let data = format!("data: {}\n\n", &data);
     // eprintln!("want to return into &[;{}] {:?}", buf.len(), &data);
