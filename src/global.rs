@@ -8,7 +8,7 @@ visible_slotmap_key!{ ClientId('C') }
 visible_slotmap_key!{ PlayerId('#') }
 
 #[derive(Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash)]
-pub struct RawToken (String);
+pub struct RawToken (pub String);
 impl Borrow<str> for RawToken {
   fn borrow(&self) -> &str { &self.0 }
 }
@@ -68,6 +68,17 @@ impl AccessId for ClientId {
 pub fn lookup_token<Id : AccessId>(s : &str)
       -> Option<InstanceAccessDetails<Id>> {
   Id::global_tokens().read().unwrap().get(s).cloned()
+}
+
+pub fn record_token<Id : AccessId>(iad : InstanceAccessDetails<Id>)
+                                   -> RawToken {
+  let mut rng = thread_rng();
+  let token = RawToken (
+    repeat_with(|| rng.sample(Alphanumeric))
+      .take(64).collect()
+  );
+  Id::global_tokens().write().unwrap().insert(token.clone(), iad);
+  token
 }
 
 const XXX_PLAYERS_TOKENS : &[(&str, &str)] = &[

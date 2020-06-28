@@ -41,18 +41,17 @@ impl<'r> FromParam<'r> for CheckedResourceLeaf {
 
 #[derive(Serialize,Debug)]
 struct LoadingRenderContext<'r> {
-  token : &'r str,
+  ptoken : &'r str,
 }
-
-#[get("/<token>")]
-fn loading(token : InstanceAccess<PlayerId>) -> Result<Template,RE> {
-  let c = LoadingRenderContext { token : token.raw_token };
+#[get("/<ptoken>")]
+fn loading(ptoken : InstanceAccess<PlayerId>) -> Result<Template,RE> {
+  let c = LoadingRenderContext { ptoken : ptoken.raw_token };
   Ok(Template::render("loading",&c))
 }
 
 #[derive(Serialize,Debug)]
 struct SessionRenderContext {
-  clientid : ClientId,
+  ctoken : String,
   player : PlayerId,
   defs : Vec<String>,
   uses : Vec<String>,
@@ -60,19 +59,26 @@ struct SessionRenderContext {
 
 #[derive(Deserialize)]
 struct SessionForm {
-  token : String,
+  ptoken : String,
 }
 #[post("/_/session", format="json", data="<form>")]
 fn session(form : Json<SessionForm>) -> Result<Template,RE> {
   // make session in this game, log a message to other players
-  let iad = lookup_token(&form.token).ok_or_else(|| anyhow!("unknown token"))?;
+  let iad = lookup_token(&form.ptoken)
+    .ok_or_else(|| anyhow!("unknown token"))?;
   let player = iad.ident;
   let c = {
     let mut ig = iad.g.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
-    let pl = ig.gs.players.get_mut(player)
+    let _pl = ig.gs.players.get_mut(player)
       .ok_or_else(|| anyhow!("player deleted"))?;
-    let client = Client { player };
-    let clientid = ig.clients.insert(client);
+    let cl = Client { player };
+    let client = ig.clients.insert(cl);
+
+    let ciad = InstanceAccessDetails {
+      g : iad.g.clone(),
+      ident : client,
+    };
+    let ctoken = record_token(ciad);
 
     let mut uses = vec![];
     let mut defs = vec![];
@@ -104,7 +110,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
     }
 
     SessionRenderContext {
-      clientid,
+      ctoken : ctoken.0,
       player,
       defs,
       uses,
@@ -146,7 +152,7 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
     let u_gen =
       if client == p.lastclient { p.gen_lastclient }
       else { p.gen_before_lastclient };
-    if u_gen > form.g { Err(OpError::Conflict)? }
+    if u_gen > q_gen { Err(OpError::Conflict)? }
     if p.held != None { Err(OpError::PieceHeld)? };
     p.held = Some(player);
     gs.gen += 1;
@@ -230,17 +236,17 @@ struct APIForm {
 }
  */
 
-#[get("/_/updates/<token>")]
+#[get("/_/updates/<ctoken>")]
 #[throws(RE)]
-fn updates(token : InstanceAccess<ClientId>)
+fn updates(ctoken : InstanceAccess<ClientId>)
            -> impl response::Responder<'static> {
-  let iad = token.i;
+  let iad = ctoken.i;
   let client = iad.ident;
   let _ = {
     let mut ig = iad.g.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
-    let g = &mut ig.gs;
+    let _g = &mut ig.gs;
     let cl = ig.clients.get(client).ok_or_else(|| anyhow!("no client"))?;
-    let player = cl.player;
+    let _player = cl.player;
   };
   let tc = TestCounterInner { next : 0 };
   let tc = BufReader::new(tc);

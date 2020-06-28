@@ -95,10 +95,9 @@ function drag_mousedown(e) {
     dragging = DRAGGING.MAYBE_GRAB;
     set_grab(delt, us);
     api('grab', {
-      t : token,
+      t : ctoken,
       g : gen,
       p : delt.dataset.p,
-      c : clientid,
       s : 0,
     })
   }
@@ -182,7 +181,7 @@ messages.TestCounter = function(data) {
 
 function startup() {
   var body = document.getElementById("main-body");
-  clientid = body.dataset.clientid;
+  ctoken = body.dataset.ctoken;
   us = body.dataset.us;
   status_node = document.getElementById('status');
   status_node.innerHTML = 'js-done'
@@ -190,7 +189,7 @@ function startup() {
   space = document.getElementById('space');
   svg_ns = space.getAttribute('xmlns');
 
-  es = new EventSource("/_/updates/"+token+"/"+clientid);
+  es = new EventSource("/_/updates/"+ctoken);
   es.onmessage = function(event) {
     var j = JSON.parse(event.data);
     var k = Object.keys(j)[0];
@@ -210,9 +209,9 @@ function startup() {
 function doload(){
   console.log('DOLOAD');
   var elem = document.getElementById('loading_token');
-  token = elem.dataset.token;
+  ptoken = elem.dataset.ptoken;
   xhr_post_then('/_/session', 
-		JSON.stringify({ token : token }),
+		JSON.stringify({ ptoken : ptoken }),
 		loaded);
 }
 

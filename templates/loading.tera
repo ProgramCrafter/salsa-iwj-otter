@@ -1,4 +1,4 @@
 <body id="loading_body">
-<h1 id="loading_token" data-token="{{ token }}">Loading!</h1>
+<h1 id="loading_token" data-ptoken="{{ ptoken }}">Loading!</h1>
 <div id="error"></div>
 <script src="/_/script.js"></script>

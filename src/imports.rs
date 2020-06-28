@@ -9,6 +9,7 @@ pub use std::collections::HashMap;
 pub use std::borrow::Borrow;
 pub use std::convert::TryFrom;
 pub use std::str::FromStr;
+pub use std::iter::repeat_with;
 
 pub use thiserror::Error;
 pub use anyhow::{Context,anyhow};
@@ -26,6 +27,10 @@ pub use rocket::http::{Status,RawStr,ContentType};
 pub use rocket::request::{FromParam,FromRequest,FromFormValue,LenientForm};
 pub use rocket::response::NamedFile;
 pub use rocket::response;
+
+pub use rand::thread_rng;
+pub use rand::Rng;
+pub use rand::distributions::Alphanumeric;
 
 pub use slotmap::dense::DenseSlotMap;
 pub type SecondarySlotMap<K,V> = slotmap::secondary::SecondaryMap<K,V>;

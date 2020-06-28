@@ -1,4 +1,4 @@
-<body id="main-body" data-clientid="{{clientid}}" data-us="{{player}}">
+<body id="main-body" data-ctoken="{{ctoken}}" data-us="{{player}}">
 <h1>Hi!</h1>
 <div id="error"></div>
 <p>
