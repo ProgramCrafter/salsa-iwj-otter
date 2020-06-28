@@ -231,10 +231,9 @@ struct APIForm {
 
 #[get("/_/updates/<token>/<clientid>")]
 #[throws(RE)]
-fn updates(token : &RawStr, clientid : u64) -> impl response::Responder<'static> {
+fn updates(token : &RawStr, clientid : String) -> impl response::Responder<'static> {
   let iad = lookup_token(token.as_str()).ok_or_else(|| anyhow!("unknown token"))?;
-  let clientid = slotmap::KeyData::from_ffi(clientid);
-  let clientid = clientid.into();
+  let clientid = TryFrom::try_from(clientid.as_ref())?;
   let _ = {
     let mut ig = iad.i.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
     let g = &mut ig.gs;
