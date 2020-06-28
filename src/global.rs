@@ -8,12 +8,13 @@ visible_slotmap_key!{ ClientId('C') }
 visible_slotmap_key!{ PlayerId('#') }
 
 #[derive(Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash)]
-struct RawToken (String);
+pub struct RawToken (String);
 impl Borrow<str> for RawToken {
   fn borrow(&self) -> &str { &self.0 }
 }
 
 pub struct Client {
+  pub player : PlayerId,
 }
 
 impl Client {
@@ -23,27 +24,29 @@ impl Client {
 }
 
 pub struct Instance {
-  /* game state goes here */
   pub gs : GameState,
-  pub clients : SecondarySlotMap<PlayerId,DenseSlotMap<ClientId,Client>>,
+  pub clients : DenseSlotMap<ClientId,Client>,
 }
 
 #[derive(Clone)]
-pub struct InstanceAccessDetails {
-  pub i : Arc<Mutex<Instance>>,
-  pub player : PlayerId,
+pub struct InstanceAccessDetails<Id> {
+  pub g : Arc<Mutex<Instance>>,
+  pub ident : Id,
 }
 
 #[derive(Clone)]
-pub struct InstanceAccess<'i> {
+pub struct InstanceAccess<'i, Id> {
   pub raw_token : &'i str,
-  pub i : InstanceAccessDetails,
+  pub i : InstanceAccessDetails<Id>,
 }
+
+pub type TokenTable<Id> = HashMap<RawToken, InstanceAccessDetails<Id>>;
 
 #[derive(Default)]
 struct Global {
   // lock hierarchy: this is the innermost lock
-  tokens : RwLock<HashMap<RawToken, InstanceAccessDetails>>,
+  players : RwLock<TokenTable<PlayerId>>,
+  clients : RwLock<TokenTable<ClientId>>,
   // xxx delete instances at some point!
 }
 
@@ -51,8 +54,20 @@ lazy_static! {
   static ref GLOBAL : Global = Default::default();
 }
 
-pub fn lookup_token(s : &str) -> Option<InstanceAccessDetails> {
-  GLOBAL.tokens.read().unwrap().get(s).cloned()
+pub trait AccessId : Copy + Clone + 'static {
+  fn global_tokens() -> &'static RwLock<TokenTable<Self>>;
+}
+
+impl AccessId for PlayerId {
+  fn global_tokens() -> &'static RwLock<TokenTable<Self>> { &GLOBAL.players }
+}
+impl AccessId for ClientId {
+  fn global_tokens() -> &'static RwLock<TokenTable<Self>> { &GLOBAL.clients }
+}
+
+pub fn lookup_token<Id : AccessId>(s : &str)
+      -> Option<InstanceAccessDetails<Id>> {
+  Id::global_tokens().read().unwrap().get(s).cloned()
 }
 
 const XXX_PLAYERS_TOKENS : &[(&str, &str)] = &[
@@ -60,11 +75,13 @@ const XXX_PLAYERS_TOKENS : &[(&str, &str)] = &[
   ("ccg9kzoTh758QrVE1xMY7BQWB36dNJTx", "bob"),
 ];
 
-impl<'r> FromParam<'r> for InstanceAccess<'r> {
+impl<'r, Id> FromParam<'r> for InstanceAccess<'r, Id>
+  where Id : AccessId
+{
   type Error = E;
   #[throws(E)]
   fn from_param(param: &'r RawStr) -> Self {
-    let g = GLOBAL.tokens.read().unwrap();
+    let g = Id::global_tokens().read().unwrap();
     let token = param.as_str();
     let i = g.get(token).ok_or_else(|| anyhow!("unknown token"))?;
     InstanceAccess { raw_token : token, i : i.clone() }
@@ -72,20 +89,19 @@ impl<'r> FromParam<'r> for InstanceAccess<'r> {
 }
 
 pub fn xxx_global_setup() {
-  let i = Instance {
+  let gi = Instance {
     gs : xxx_gamestate_init(),
     clients : Default::default(),
   };
-  let i = Arc::new(Mutex::new(i));
-  let mut ig = i.lock().unwrap();
+  let g = Arc::new(Mutex::new(gi));
+  let mut ig = g.lock().unwrap();
   for (token, nick) in XXX_PLAYERS_TOKENS {
-    let nu = Player {
+    let np = Player {
       nick : nick.to_string(),
     };
-    let player = ig.gs.players.insert(nu);
-    ig.clients.insert(player, Default::default());
-    let ia = InstanceAccessDetails { i : i.clone(), player };
-    GLOBAL.tokens.write().unwrap().insert(
+    let player = ig.gs.players.insert(np);
+    let ia = InstanceAccessDetails { g : g.clone(), ident : player };
+    GLOBAL.players.write().unwrap().insert(
       RawToken(token.to_string()), ia
     );
   }
