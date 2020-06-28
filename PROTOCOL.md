@@ -88,36 +88,6 @@ _record_: Sequence of Recorded updates is as follows.
 
 
 
-Invariants
-----------
-
-Server has recorded A.  Client has recorded T and B.  (B exists.)
-Client doesn't know if these are a B0,T0 or the B1,T1.
-
-BA are in flight from server to client.
-
-LT0 and B1T1 and are in flight from client to server; all of LT0
-precede any B1T1.  B0L were received and discarded by the server.
-
-O and U are server's.  BA are server's.
-BT are all client's.  UB1 are client's too, if B1 exists.
-
-If B1 exists, B1A is empty.
-
-Each update may have at most one directly descendent client's update.
-
-U has each B0 as a nontrivial ancestor.
-
-Updates in OA have increasing generation numbers.
-
-Client's updates mention the generation number from what was B when
-they were generated.
-
-(U and B must be inferred at the server, when they are needed.)
-
-
-
-
 Update generation operations
 ----------------------------
 
