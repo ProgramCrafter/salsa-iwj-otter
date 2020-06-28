@@ -98,6 +98,8 @@ function drag_mousedown(e) {
       t : token,
       g : gen,
       p : delt.dataset.p,
+      c : clientid,
+      s : 0,
     })
   }
 
