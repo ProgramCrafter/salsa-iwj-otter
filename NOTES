@@ -1,4 +1,4 @@
-protocol
+PROTOCOL
 
 
 all in context of a piece
@@ -276,10 +276,10 @@ _record_: By order of delivery, Q is the most recent Recorded
 Downbound.
 
 
-Liveness properties
--------------------
+Liveness property
+-----------------
 
-I. "When things ahve settled, all is consistent."
+"When things ahve settled, all is consistent."
 
 If there are no Upbound or Downbound updates, the most recent Recorded
 update R is Displayed.
@@ -302,106 +302,3 @@ If S is Recorded Superseded, at some point it was Displayed.  D is now
 Displayed.  So D was Displayed more recently than S.  D is Client so
 when it was Displayed it became Upbound, tagged with a generation of
 at least S's; i.e. D's generation >= S's.  _|_
-
-
-
-
-
-_live_: In all system states reachable from that system state without
-the generation of server updates, either there are Upbound updates or
-the most recently Recorded update is the most recently generated
-client update.
-
-
-
-
-
-
-  This extends A.  The server
-must send the update.  This is clearly OK.
-
-Client may invent a client's update at any time.  It puts in the value
-of B, which it knows.  This extends T.  The client must send the
-update.  This is clearly OK.
-
-
-Suppose the server receives a message, Q.  Q must be a descendant
-
-Denote the generation value recorded in Q (the value of B when Q was
-created) as B".
-
-I. B"A contains some server's updates
-
-Suppose Q is in B1T1.  At the time it was generated, it was T1: we can
-walk its client's descendants, and we must get to T1 or a T0.  If we
-get to a T0 then its B0 would be
-
-That means it is an ancestor of T1.  So it must
-have been an ancestor of T1 when it was generated, because T1 can only
-gain descendants.
-
-At the time Q was generated, B" was B.  If Q
-
-
- and Q
-was the new T.
-
-.  If it
-is B1 now then it must have been B1 then.
-
-
-.  So if Q is in B1T1,
-
-B"B
-
-Q cannot be in B1T1: if it is, then B1A is empty.
-
-
-U==A, B" >= U.
-
-
-
-
-I. If A is client's:
-
-AB must be empty.  It follows that B=A, so now the server knows where
-B is.  The server can record Q as the new A.  It does not need to send
-an update to the client.
-
-II. A is foreign.
-
-Look at the B" value in Q.  B"Q must all be client's, since they were
-BQ when the client sent its message.  So we have
-    ...B"==B==T
-and
-    O--C-*U==B*****A
-
-II.1. B"==A
-
-Then U=B=B"=A.  Again the server can record Q as the new A.
-
-II.2. B"!=A
-
-Consider B=A.  We have
-    O--C-*U==BA
-but this is the case where A is not client's so we must have
-    O--C-*UBA
-but B"==B is all client's and U is not client's, _|_.
-Therefore B!=A.
-
-So we discard Q, advancing K.
-
-Client message reciption
-------------------------
-
-Suppose the client receives a message Q.  This is going to become the
-new B, by definition.  Call the old B, B".
-
-
-
-
-
-; but U is foreign, so U is earliest for which this is
-true).
-
-  UBT
