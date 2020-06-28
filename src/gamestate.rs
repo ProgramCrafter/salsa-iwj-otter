@@ -48,6 +48,9 @@ pub struct PieceRecord {
   pub p : Box<dyn Piece>,
   pub face : FaceId,
   pub held : Option<PlayerId>,
+  pub lastclient : ClientId,
+  pub gen_lastclient : Counter,
+  pub gen_before_lastclient : Counter,
 }
 
 #[derive(Debug)]
@@ -69,6 +72,7 @@ pub fn xxx_gamestate_init() -> GameState {
       pos, p,
       face : 0.into(),
       held : None,
+      gen : 0,
     };
     pieces.insert(pr);
   }

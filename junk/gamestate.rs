@@ -9,13 +9,6 @@ impl Deref for GameRef {
   fn deref(&self) -> &GameState { self.0.read() }
 }
 
-enum GameUpdate {
-  NoUpdate,
-  PieceInsert(usize, PieceRecord),
-  PieceDelete(usize, PieceRecord),
-  PieceUpdate(usize, PieceRecord, PieceRecord),
-}
-
 struct LogMessage (HtmlString);
 
 impl PieceRecord {

@@ -8,6 +8,7 @@ var our_dnd_type = "text/puvnex-game-server-dummy";
 api_queue = [];
 api_posting = false;
 var us;
+var gen = 0;
 
 function xhr_post_then(url,data,good) {
   var xhr = new XMLHttpRequest();
@@ -95,6 +96,7 @@ function drag_mousedown(e) {
     set_grab(delt, us);
     api('grab', {
       t : token,
+      g : gen,
       p : delt.dataset.p,
     })
   }

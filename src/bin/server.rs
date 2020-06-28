@@ -115,6 +115,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
 #[derive(Error,Debug)]
 #[error("operation error {:?}",self)]
 enum OpError {
+  Conflict,
   PieceGone,
   PieceHeld,
 }
@@ -122,18 +123,50 @@ enum OpError {
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiGrab {
   t : String,
+  c : ClientId,
   p : VisiblePieceId,
+  g : Counter,
+  s : ClientSequence,
 }
 #[post("/_/api/grab", format="json", data="<form>")]
 #[throws(RE)]
 fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
   let iad = lookup_token(&form.t).ok_or_else(||anyhow!("unknown token"))?;
   let mut g = iad.i.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
+  let client = form.c;
   let r : Result<(),OpError> = (||{
     let p = decode_visible_pieceid(form.p);
-    let p = g.gs.pieces.get_mut(p).ok_or(OpError::PieceGone)?;
+    let gs = &mut g.gs;
+    let p = gs.pieces.get_mut(p).ok_or(OpError::PieceGone)?;
+    let q_gen = form.g;
+    let u_gen =
+      if client == p.lastclient { p.gen_lastclient }
+      else { p.gen_before_lastclient };
+    if p.gen > u_gen { Err(OpError::Conflict)? }
     if p.held != None { Err(OpError::PieceHeld)? };
     p.held = Some(iad.player);
+    gs.gen += 1;
+    let gen = gs.gen;
+    if client != p.lastclient {
+      p.gen_before_lastclient = p.gen_lastclient;
+      p.lastclient = client;
+    }
+    p.gen_lastclient = gen;
+    for (tplayer, tpl) in g.gs.players {
+      for (tclient, cl) in ig.clients.get(tplayer) {
+        if tclient == cl {
+          cl.transmit_update(client, Update {
+            gen,
+            u : GameUpdate::ClientSequence(form.s)
+          });
+        } else {
+          cl.transmit_update(client, Update {
+            gen,
+            u : GameUpdate::PieceUpdate(p, p.update()),
+          });
+        }          
+      }
+    }
     Ok(())
   })();
   eprintln!("API {:?} => {:?}", &form, &r);
