@@ -83,6 +83,7 @@ There is:
  - the actual history seen so far by the client
     this can only advance, which is a prefix of the above
  - possibly a branch of history made by the client
+    this can rewind and be discarded
 
 Overall system is a digraph with a single possible branch:
 
@@ -121,6 +122,8 @@ precede any B1T1.  B0L were received and discarded by the server.
 O and U are server's.  BA are server's.
 BT are all client's.  UB1 are client's too, if B1 exists.
 
+If B1 exists, B1A is empty.
+
 Each update may have at most one directly descendent client's update.
 
 U has each B0 as a nontrivial ancestor.
@@ -145,15 +148,36 @@ update.  This is clearly OK.
 Server message reception
 ------------------------
 
-Suppose the server receives a message, Q.
+Suppose the server receives a message, Q.  Q must be a descendant 
 
 Denote the generation value recorded in Q (the value of B when Q was
 created) as B".
 
 I. B"A contains some server's updates
 
-Declare 
+Suppose Q is in B1T1.  At the time it was generated, it was T1: we can
+walk its client's descendants, and we must get to T1 or a T0.  If we
+get to a T0 then its B0 would be 
 
+That means it is an ancestor of T1.  So it must
+have been an ancestor of T1 when it was generated, because T1 can only
+gain descendants.
+
+At the time Q was generated, B" was B.  If Q 
+
+
+ and Q
+was the new T.
+
+.  If it
+is B1 now then it must have been B1 then.
+
+
+.  So if Q is in B1T1, 
+
+B"B 
+
+Q cannot be in B1T1: if it is, then B1A is empty.
 
 
 U==A, B" >= U.
