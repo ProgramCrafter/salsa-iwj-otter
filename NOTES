@@ -89,12 +89,49 @@ Overall system is a digraph with a single possible branch:
 
 We have a graph of updates that must be look like this, (possibly some
 of the branches are degenerate):
+ 		    	
+    O====X=========BA  	  
+          \                  	 
+           \                 	 
+            `--K----L 	     	 
+ 		     	     
+    O====X==========****B***A 
+          \                   	 
+           \                  	 
+            `--K----L  	      	 
+ 		       	      	 
+    O====X==========****B	 
+          \              \       
+           \              \      
+            `--K----L 	   `----T
+ 		       	      	 
+    O====X==========****B--B
+          \                 \       
+           \                 \      
+            `--K----L 	      `-T
 
-    O===B0====*U--------B1******A
-          \              \
-           \              \
-            `--L----T0     `--T1
 
+	       
+    O====X==========****B***A 
+          \                  	 
+           \                 	 
+            `--K----L 	     	 
+ 		    	
+    O====X=========A****B***A
+          \              	 
+           \             	 
+            `--K----L 	 	 
+ 			
+    O====X=========******R******A
+          \              	 
+           \             	 
+            `--K----L 	 	 
+ 			 	 
+    O====X=============A         
+          \             \      	 
+           \             \     	
+            `--K----L 	  `----T
+	       
 There is zero or one B1T1 and zero or more B0LT0 (all distinct).
 We write just B to mean B1, or the last B0.
 
