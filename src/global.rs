@@ -19,6 +19,12 @@ impl Borrow<str> for RawToken {
 pub struct Client {
 }
 
+impl Client {
+  pub fn transmit_update(&mut self, u : &Update) {
+    eprintln!("XXX not transmitting {:?}", &u);
+  }
+}
+
 pub struct Instance {
   /* game state goes here */
   pub gs : GameState,

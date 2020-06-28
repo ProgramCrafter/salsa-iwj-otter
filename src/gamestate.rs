@@ -53,6 +53,16 @@ pub struct PieceRecord {
   pub gen_before_lastclient : Counter,
 }
 
+impl PieceRecord {
+  pub fn mk_update(&self) -> PieceUpdate {
+    PieceUpdate {
+      pos        : self.pos,
+      held       : self.held,
+      // xxx want all piece's stuff in the same def
+    }
+  }
+}
+
 #[derive(Debug)]
 pub struct GameState {
   pub pieces : DenseSlotMap<PieceId,PieceRecord>,

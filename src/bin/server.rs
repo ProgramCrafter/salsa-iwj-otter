@@ -135,9 +135,9 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
   let mut g = iad.i.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
   let client = form.c;
   let r : Result<(),OpError> = (||{
-    let p = decode_visible_pieceid(form.p);
+    let piece = decode_visible_pieceid(form.p);
     let gs = &mut g.gs;
-    let p = gs.pieces.get_mut(p).ok_or(OpError::PieceGone)?;
+    let p = gs.pieces.get_mut(piece).ok_or(OpError::PieceGone)?;
     let q_gen = form.g;
     let u_gen =
       if client == p.lastclient { p.gen_lastclient }
@@ -153,16 +153,16 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
     }
     p.gen_lastclient = gen;
     for (tplayer, tpl) in g.gs.players {
-      for (tclient, cl) in g.clients.get(tplayer) {
-        if tclient == cl {
-          cl.transmit_update(client, Update {
+      for (tclient, tcl) in g.clients[tplayer] {
+        if tclient == client {
+          tcl.transmit_update(&Update {
             gen,
             u : UpdatePayload::ClientSequence(form.s),
           });
         } else {
-          cl.transmit_update(client, Update {
+          tcl.transmit_update(&Update {
             gen,
-            u : UpdatePayload::PieceUpdate(p, p.update()),
+            u : UpdatePayload::PieceUpdate(piece, p.mk_update()),
           });
         }          
       }
@@ -199,7 +199,7 @@ fn api_move(form : Json<ApiMove>) -> impl response::Responder<'static> {
 }
 
 #[derive(Serialize)]
-enum Update {
+enum XUpdate {
   TestCounter { value: usize },
 }
 

@@ -15,10 +15,7 @@ pub struct Update {
 pub struct PieceUpdate {
   pub pos : Pos,
   pub held : Option<PlayerId>,
-  pub svg_piece : String,
-  pub svg_select : String,
-  pub svg_x_ids : VisiblePieceIdSvgIds,
-  pub svg_defs : String,
+//  pub svgs : Vec<String,String>;
 }
 
 #[derive(Debug,Serialize)]
