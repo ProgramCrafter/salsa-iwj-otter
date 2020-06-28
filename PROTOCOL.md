@@ -204,3 +204,27 @@ If S is `Recorded` `Superseded`, at some point it was `Displayed`.  D is now
 `Displayed`.  So D was `Displayed` more recently than S.  D is `Client` so
 when it was `Displayed` it became `Upbound`, tagged with a generation of
 at least S's; i.e. D's generation >= S's.  _|_
+
+SERVER ACKS
+===========
+
+Actually, the client wants to know when conflicts occur, so that it
+can report to the user, and interrupt drag operations etc.
+To this end:
+
+Update messages from the client to the server also contain a client
+sequence number (monotonically but not strictly increasing).  When the
+client sends an update, it makes a note of the sequence number.  This
+is the "outstanding Client updates sequence number note", or the
+"oustanding note".
+
+When the server processes a message from the client, it puts the
+client sequence number in the update stream (as a non-update message).
+(This is skipped if it's the same as the last client sequence number
+for that client.)
+
+If the echoed sequence number is equal to the client's oustanding
+note, the client knows the server is up to date, and deletes the note.
+
+If the client sees a Server update message, and the client has a note,
+it knows that there was a conflict.
