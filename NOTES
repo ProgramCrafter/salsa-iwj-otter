@@ -85,55 +85,46 @@ There is:
  - possibly a branch of history made by the client
     this can rewind and be discarded
 
-Overall system is a digraph with a single possible branch:
+There is a diagraph of updates.  Each update specifies the complete
+state of the piece.  The server maintains an authoritative history;
+the client only maintains the state of the piece.
 
-We have a graph of updates that must be look like this, (possibly some
-of the branches are degenerate):
- 		    	
-    O====X=========BA  	  
-          \                  	 
-           \                 	 
-            `--K----L 	     	 
- 		     	     
-    O====X==========****B***A 
-          \                   	 
-           \                  	 
-            `--K----L  	      	 
- 		       	      	 
-    O====X==========****B	 
-          \              \       
-           \              \      
-            `--K----L 	   `----T
- 		       	      	 
-    O====X==========****B--B
-          \                 \       
-           \                 \      
-            `--K----L 	      `-T
+Updates may be from this client ("client updates") or from another
+client or the server.  We look at the protocol from a single client's
+point of view, and call all the other updates "server updates".
 
+Each update has a single ancestor.  Updates may be:
 
-	       
-    O====X==========****B***A 
-          \                  	 
-           \                 	 
-            `--K----L 	     	 
- 		    	
-    O====X=========A****B***A
-          \              	 
-           \             	 
-            `--K----L 	 	 
- 			
-    O====X=========******R******A
-          \              	 
-           \             	 
-            `--K----L 	 	 
- 			 	 
-    O====X=============A         
-          \             \      	 
-           \             \     	
-            `--K----L 	  `----T
-	       
-There is zero or one B1T1 and zero or more B0LT0 (all distinct).
-We write just B to mean B1, or the last B0.
+From the point of view of the server an update it has seen
+may be:
+ Recorded - stored by server.
+ Downbound - on way from server to client.
+ Discarded - received by server and thrown away.
+
+From the point of view of the client an update that it has seen may
+be:
+ Processed - sent by server, state has been updated.
+ Upbound - local state has been updated by local action;
+           update on way from client to server.
+
+Server assigns generation number (strictly increasing but maybe with
+gaps) to each Recorded update.
+
+Each Upbound update contains the generation of the most recent
+Processed update.
+
+Actually the most redcent Processed generation stored by the client is
+global across all pieces, and the server's generations are likewise
+generated globally although recorded separately for each piece.  So
+the update contain s a generation >= the most recently Processed
+update for that piece, and < any subseuent Processed upate for that
+piece.  The server only compares the incoming update generation for >=
+with a recorded value, so this makes no difference.
+
+Invariants
+----------
+
+The Recorded updates form 
 
 Each update was caused by some client, possibly this one.  We are not
 interested in other clients - we treat those as the server deciding to
@@ -185,7 +176,7 @@ update.  This is clearly OK.
 Server message reception
 ------------------------
 
-Suppose the server receives a message, Q.  Q must be a descendant 
+Suppose the server receives a message, Q.  Q must be a descendant
 
 Denote the generation value recorded in Q (the value of B when Q was
 created) as B".
@@ -194,13 +185,13 @@ I. B"A contains some server's updates
 
 Suppose Q is in B1T1.  At the time it was generated, it was T1: we can
 walk its client's descendants, and we must get to T1 or a T0.  If we
-get to a T0 then its B0 would be 
+get to a T0 then its B0 would be
 
 That means it is an ancestor of T1.  So it must
 have been an ancestor of T1 when it was generated, because T1 can only
 gain descendants.
 
-At the time Q was generated, B" was B.  If Q 
+At the time Q was generated, B" was B.  If Q
 
 
  and Q
@@ -210,9 +201,9 @@ was the new T.
 is B1 now then it must have been B1 then.
 
 
-.  So if Q is in B1T1, 
+.  So if Q is in B1T1,
 
-B"B 
+B"B
 
 Q cannot be in B1T1: if it is, then B1A is empty.
 
@@ -262,10 +253,6 @@ new B, by definition.  Call the old B, B".
 
 
 ; but U is foreign, so U is earliest for which this is
-true).  
+true).
 
-  UBT 
-
-
-
-
+  UBT
