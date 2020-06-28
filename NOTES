@@ -60,3 +60,151 @@ server maintains
 	for each piece
 		gen
 	client list etc.
+
+--------------------------------------------------
+
+
+ANALYSIS
+========
+
+(Assumption: our network techniques deliver messages in order in both
+directions between a server and a client; failure of the communication
+stream is allowed to break things - we treat it as fatal.)
+
+We run the following algorithm / data model separately for each piece.
+
+
+Model
+-----
+
+There is:
+
+ - actual committed history, a list of updates with gen
+ - the actual history seen so far by the client
+    this can only advance, which is a prefix of the above
+ - possibly a branch of history made by the client
+
+Overall system is a digraph with a single possible branch:
+
+We have a graph of updates that must be look like this, (possibly some
+of the branches are degenerate):
+
+    O===B0====*U--------B1******A
+          \              \
+           \              \
+            `--L----T0     `--T1
+
+There is zero or one B1T1 and zero or more B0LT0 (all distinct).
+We write just B to mean B1, or the last B0.
+
+Each update was caused by some client, possibly this one.  We are not
+interested in other clients - we treat those as the server deciding to
+put its own updates onto A.  So we talk about "client's" updates and
+"server's" updates.
+
+(Notation: "=" is any updates; "*" is server's updates; "-" is
+client's updates.  We speak of "XYZ" to includes Y and Z but not X,
+unless X is O; or to put it another way letters indicate "just after"
+the update.  "!" indicates a nonempty sequence.)
+
+Invariants
+----------
+
+Server has recorded A.  Client has recorded T and B.  (B exists.)
+Client doesn't know if these are a B0,T0 or the B1,T1.
+
+BA are in flight from server to client.
+
+LT0 and B1T1 and are in flight from client to server; all of LT0
+precede any B1T1.  B0L were received and discarded by the server.
+
+O and U are server's.  BA are server's.
+BT are all client's.  UB1 are client's too, if B1 exists.
+
+Each update may have at most one directly descendent client's update.
+
+U has each B0 as a nontrivial ancestor.
+
+Updates in OA have increasing generation numbers.
+
+Client's updates mention the generation number from what was B when
+they were generated.
+
+(U and B must be inferred at the server, when they are needed.)
+
+Update generation operations
+----------------------------
+
+Sever may invent a foreign update at any time.  This extends A.
+The server must send the update.  This is clearly OK.
+
+Client may invent a client's update at any time.  It puts in the value
+of B, which it knows.  This extends T.  The client must send the
+update.  This is clearly OK.
+
+Server message reception
+------------------------
+
+Suppose the server receives a message, Q.
+
+Denote the generation value recorded in Q (the value of B when Q was
+created) as B".
+
+I. B"A contains some server's updates
+
+Declare 
+
+
+
+U==A, B" >= U.
+
+
+
+
+I. If A is client's:
+
+AB must be empty.  It follows that B=A, so now the server knows where
+B is.  The server can record Q as the new A.  It does not need to send
+an update to the client.
+
+II. A is foreign.
+
+Look at the B" value in Q.  B"Q must all be client's, since they were
+BQ when the client sent its message.  So we have
+    ...B"==B==T
+and
+    O--C-*U==B*****A
+
+II.1. B"==A
+
+Then U=B=B"=A.  Again the server can record Q as the new A.
+
+II.2. B"!=A
+
+Consider B=A.  We have
+    O--C-*U==BA
+but this is the case where A is not client's so we must have
+    O--C-*UBA
+but B"==B is all client's and U is not client's, _|_.
+Therefore B!=A.
+
+So we discard Q, advancing K.
+
+Client message reciption
+------------------------
+
+Suppose the client receives a message Q.  This is going to become the
+new B, by definition.  Call the old B, B".
+
+
+
+
+
+; but U is foreign, so U is earliest for which this is
+true).  
+
+  UBT 
+
+
+
+
