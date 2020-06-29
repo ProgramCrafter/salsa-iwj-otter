@@ -23,8 +23,16 @@ impl Client {
   }
 }
 
+pub struct PreparedUpdate {
+  gen : Counter,
+  client : ClientId,
+  piece : PieceId;
+  client_seq : ClientSequence,
+  json : Arc<String>,
+}
+
 pub struct PlayerUpdates {
-  pub log : VecDeque<(ClientId, Arc<Update>)>,
+  pub log : VecDeque<PreparedUpdate>,
   pub cv : Condvar,
 }
 
@@ -111,8 +119,8 @@ pub fn xxx_global_setup() {
     clients : Default::default(),
     updates : Default::default(),
   };
-  let g = Arc::new(Mutex::new(gi));
-  let mut ig = g.lock().unwrap();
+  let amu = Arc::new(Mutex::new(gi));
+  let mut ig = amu.lock().unwrap();
   for (token, nick) in XXX_PLAYERS_TOKENS {
     let np = Player {
       nick : nick.to_string(),

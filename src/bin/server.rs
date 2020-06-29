@@ -208,12 +208,23 @@ enum XUpdate {
   TestCounter { value: usize },
 }
 
-type TestCounter = BufReader<TestCounterInner>;
+const UPDATE_READER_SIZE : usize = 1024*32;
+const UPDATE_MAX_MSG_SIZE : usize = 1024;
+
 #[derive(Debug)]
-struct TestCounterInner { next : usize, }
-impl Read for TestCounterInner {
-        
-                    
+struct UpdateReader {
+  playerid : PlayerId,
+  client : ClientId,
+  startat : Counter,
+  amu : Arc<Mutex<Instance>>>,
+}
+impl Read for UpdateReader {
+  fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+    let mug = amu.lock()?;
+    loop {
+         implement this! 
+    }
+                    e
     /*
     for (tclient, tcl) in &mut g.clients {
       if tclient == client {
@@ -228,7 +239,6 @@ impl Read for TestCounterInner {
      */
 
 
-  fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
     thread::sleep(Duration::from_millis(500));
     let message = XUpdate::TestCounter { value : self.next };
     let data = serde_json::to_string(&message)?;
