@@ -165,16 +165,12 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
       gen,
       u : UpdatePayload::PieceUpdate(piece, p.mk_update()),
     };
+    let update = Arc::new(update);
+    // split vie wthing would go here
     p.gen_lastclient = gen;
-    for (tclient, tcl) in &mut g.clients {
-      if tclient == client {
-        tcl.transmit_update(&Update {
-          gen,
-          u : UpdatePayload::ClientSequence(piece, form.s),
-        });
-      } else {
-        tcl.transmit_update(&update);
-      }          
+    for (_tplayer, tplupdates) in &mut g.updates {
+      tplupdates.log.push_back((client, update.clone()));
+      tplupdates.cv.notify_all();
     }
     Ok(())
   })();
@@ -216,6 +212,22 @@ type TestCounter = BufReader<TestCounterInner>;
 #[derive(Debug)]
 struct TestCounterInner { next : usize, }
 impl Read for TestCounterInner {
+        
+                    
+    /*
+    for (tclient, tcl) in &mut g.clients {
+      if tclient == client {
+        tcl.transmit_update(&Update {
+          gen,
+          u : UpdatePayload::ClientSequence(piece, form.s),
+        });
+      } else {
+        tcl.transmit_update(&update);
+      }          
+    }
+     */
+
+
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
     thread::sleep(Duration::from_millis(500));
     let message = XUpdate::TestCounter { value : self.next };

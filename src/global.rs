@@ -23,9 +23,15 @@ impl Client {
   }
 }
 
+pub struct PlayerUpdates {
+  pub log : VecDeque<(ClientId, Arc<Update>)>,
+  pub cv : Condvar,
+}
+
 pub struct Instance {
   pub gs : GameState,
   pub clients : DenseSlotMap<ClientId,Client>,
+  pub updates : SecondarySlotMap<PlayerId, PlayerUpdates>,
 }
 
 #[derive(Clone)]
@@ -103,6 +109,7 @@ pub fn xxx_global_setup() {
   let gi = Instance {
     gs : xxx_gamestate_init(),
     clients : Default::default(),
+    updates : Default::default(),
   };
   let g = Arc::new(Mutex::new(gi));
   let mut ig = g.lock().unwrap();
