@@ -215,12 +215,43 @@ const UPDATE_MAX_MSG_SIZE : usize = 1024;
 struct UpdateReader {
   playerid : PlayerId,
   client : ClientId,
-  startat : Counter,
-  amu : Arc<Mutex<Instance>>>,
+  last_sent : Counter, // xxx race for setting this initially
+  ami : Arc<Mutex<Instance>>>,
 }
 impl Read for UpdateReader {
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-    let mug = amu.lock()?;
+    let amig = self.ami.lock()?;
+    loop {
+      let send_from = (||{
+        let updates = &amig.updates.get(playerid)
+          .ok_or_else(|| anyhow!("player gone"))?
+        let l = self.updates.len();
+        let last_probe = match updates.last() {
+          None => return None,
+          Some(&now) if self.last_sent > now.gen => return l+1,
+          _ => l,
+        };
+        let (lo, hi /* half-open */) = loop {
+          let depth = l - last_probe;
+          depth *= 2;
+          if depth > l { break (0, last_probe) }
+          let probe = l - depth;
+          let here = updates[probe];
+          if here.gen < l 
+
+        if let Some(&now) =  {
+          if  { return None }
+        }
+        let probe = inst.updates.len() - 1;
+        let (lo, hi) = loop {
+          if search == 0 { break }
+          search -= 1;
+          tu = inst.updates[search];
+          if 
+
+        let lo = 0;
+        
+      };
     loop {
          implement this! 
     }
