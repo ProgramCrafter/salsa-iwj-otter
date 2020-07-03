@@ -26,13 +26,13 @@ impl Client {
 pub struct PreparedUpdate {
   gen : Counter,
   client : ClientId,
-  piece : PieceId;
+  piece : PieceId,
   client_seq : ClientSequence,
   json : String,
 }
 
 pub struct PlayerUpdates {
-  pub log : StableIndexVecDeque<UpdateCounter,PreparedUpdate>,
+  pub log : StableIndexVecDeque<PreparedUpdate,UpdateCounter>,
   pub cv : Condvar,
 }
 
@@ -126,7 +126,7 @@ pub fn xxx_global_setup() {
       nick : nick.to_string(),
     };
     let player = ig.gs.players.insert(np);
-    let ia = InstanceAccessDetails { g : g.clone(), ident : player };
+    let ia = InstanceAccessDetails { g : amu.clone(), ident : player };
     GLOBAL.players.write().unwrap().insert(
       RawToken(token.to_string()), ia
     );

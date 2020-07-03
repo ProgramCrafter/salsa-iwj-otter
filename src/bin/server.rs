@@ -214,10 +214,10 @@ const UPDATE_KEEPALIVE : Duration = Duration::from_seconds(14);
 
 #[derive(Debug)]
 struct UpdateReader {
-  playerid : PlayerId,
+  player : PlayerId,
   client : ClientId,
   to_send : UpdateCounter, // xxx race for setting this initially
-  ami : Arc<Mutex<Instance>>>,
+  ami : Arc<Mutex<Instance>>,
 }
 
 impl Read for UpdateReader {
@@ -225,9 +225,9 @@ impl Read for UpdateReader {
     let amig = self.ami.lock()?;
     let orig_wanted = buf.len();
 
-    let pu = &mut amig.updates.get(playerid)
+    let pu = &mut amig.updates.get(self.player)
       .ok_or_else(|| io::Error::new
-                  (ErrorKind::Other, anyhow!("player gonee")))?;
+                  (io::ErrorKind::Other, anyhow!("player gonee")))?;
     loop {
       let next = match pu.log.get(self.to_send) {
         Some(next) => next,  None => { break }
@@ -254,7 +254,7 @@ data: {}
       let generated = orig_wanted - buf.len();
       if generated > 0 { return generated }
 
-      (amig,_) = cv.wait_timeout(amig, UPDATE_KEEPALIVE)?;
+      amig = self.cv.wait_timeout(amig, UPDATE_KEEPALIVE)?.0;
       write!(buf,r#"
 : keepalive
 "#);
@@ -307,7 +307,7 @@ data: {}
       }          
     }
      */
-
+/*
 
     thread::sleep(Duration::from_millis(500));
     let message = XUpdate::TestCounter { value : self.next };
@@ -318,7 +318,7 @@ data: {}
     buf[0..data.len()].copy_from_slice(data.as_bytes());
     Ok(buf.len())
   }
-}
+}*/
 
 /*
 #[derive(Deserialize)]

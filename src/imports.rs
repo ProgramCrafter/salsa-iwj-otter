@@ -37,11 +37,14 @@ pub use slotmap::dense::DenseSlotMap;
 pub type SecondarySlotMap<K,V> = slotmap::secondary::SecondaryMap<K,V>;
 pub use index_vec::{define_index_type,index_vec,IndexVec};
 
+pub use vecdeque_stableix::StableIndexVecDeque;
+
 pub use crate::global::*;
 pub use crate::gamestate::*;
 pub use crate::pieces::*;
 pub use crate::keydata::*;
 pub use crate::updates::*;
+pub use crate::sse::*;
 
 pub type E = anyhow::Error;
 pub type AE = anyhow::Error;
