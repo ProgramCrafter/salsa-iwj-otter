@@ -34,6 +34,8 @@ index_vec = "0.1.1"
 rocket = "0.4"
 rocket_contrib = { version = "0.4", default-features=false, features=["tera_templates","helmet","json"] }
 
+vecdeque-stableix = "0"
+
 #hmac = "0.7"
 #base64 = "0.10"
 #sha2 = "0.8"
