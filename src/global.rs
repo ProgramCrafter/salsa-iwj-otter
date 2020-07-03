@@ -28,11 +28,11 @@ pub struct PreparedUpdate {
   client : ClientId,
   piece : PieceId;
   client_seq : ClientSequence,
-  json : Arc<String>,
+  json : String,
 }
 
 pub struct PlayerUpdates {
-  pub log : VecDeque<PreparedUpdate>,
+  pub log : StableIndexVecDeque<UpdateCounter,PreparedUpdate>,
   pub cv : Condvar,
 }
 

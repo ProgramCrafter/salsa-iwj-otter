@@ -209,22 +209,63 @@ enum XUpdate {
 }
 
 const UPDATE_READER_SIZE : usize = 1024*32;
-const UPDATE_MAX_MSG_SIZE : usize = 1024;
+const UPDATE_MAX_FRAMING_SIZE : usize = 200;
+const UPDATE_KEEPALIVE : Duration = Duration::from_seconds(14);
 
 #[derive(Debug)]
 struct UpdateReader {
   playerid : PlayerId,
   client : ClientId,
-  last_sent : Counter, // xxx race for setting this initially
+  to_send : UpdateCounter, // xxx race for setting this initially
   ami : Arc<Mutex<Instance>>>,
 }
+
 impl Read for UpdateReader {
-  fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+  fn read(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
     let amig = self.ami.lock()?;
+    let orig_wanted = buf.len();
+
+    let pu = &mut amig.updates.get(playerid)
+      .ok_or_else(|| io::Error::new
+                  (ErrorKind::Other, anyhow!("player gonee")))?;
     loop {
+      let next = match pu.log.get(self.to_send) {
+        Some(next) => next,  None => { break }
+      };
+      let next_len = UPDATE_MAX_FRAMING_SIZE + next.json.len();
+      if next_len > buf.len() { break }
+
+      if next.client == self.client {
+        write!(buf, r#"
+event: recorded
+data: {{ gen: {}, piece: {}, cseq:{} }}
+"#,
+               &self.gen, &next.piece, &next.client_seq);
+      } else {
+        write!(buf, r#"
+id: {}
+data: {}
+"#,
+               &self.to_send,
+               &next.json);
+      }
+    }
+    loop {
+      let generated = orig_wanted - buf.len();
+      if generated > 0 { return generated }
+
+      (amig,_) = cv.wait_timeout(amig, UPDATE_KEEPALIVE)?;
+      write!(buf,r#"
+: keepalive
+"#);
+    }
+  }
+}
+
+    /*
+    loop {
+                    e
       let send_from = (||{
-        let updates = &amig.updates.get(playerid)
-          .ok_or_else(|| anyhow!("player gone"))?
         let l = self.updates.len();
         let last_probe = match updates.last() {
           None => return None,
@@ -255,8 +296,6 @@ impl Read for UpdateReader {
     loop {
          implement this! 
     }
-                    e
-    /*
     for (tclient, tcl) in &mut g.clients {
       if tclient == client {
         tcl.transmit_update(&Update {
