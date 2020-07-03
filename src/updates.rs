@@ -7,7 +7,7 @@ pub struct ClientSequence(u64);
 
 #[derive(Debug,Serialize)]
 pub struct Update {
-  pub gen : Counter,
+  pub gen : Generation,
   pub u : UpdatePayload,
 }
 

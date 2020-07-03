@@ -131,7 +131,7 @@ enum OpError {
 struct ApiGrab {
   t : String,
   p : VisiblePieceId,
-  g : Counter,
+  g : Generation,
   s : ClientSequence,
 }
 #[post("/_/api/grab", format="json", data="<form>")]
@@ -155,7 +155,7 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
     if u_gen > q_gen { Err(OpError::Conflict)? }
     if p.held != None { Err(OpError::PieceHeld)? };
     p.held = Some(player);
-    gs.gen += 1;
+    gs.gen.increment();
     let gen = gs.gen;
     if client != p.lastclient {
       p.gen_before_lastclient = p.gen_lastclient;
@@ -208,147 +208,19 @@ enum XUpdate {
   TestCounter { value: usize },
 }
 
-const UPDATE_READER_SIZE : usize = 1024*32;
-const UPDATE_MAX_FRAMING_SIZE : usize = 200;
-const UPDATE_KEEPALIVE : Duration = Duration::from_seconds(14);
-
-#[derive(Debug)]
-struct UpdateReader {
-  player : PlayerId,
-  client : ClientId,
-  to_send : UpdateCounter, // xxx race for setting this initially
-  ami : Arc<Mutex<Instance>>,
-}
-
-impl Read for UpdateReader {
-  fn read(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
-    let amig = self.ami.lock()?;
-    let orig_wanted = buf.len();
-
-    let pu = &mut amig.updates.get(self.player)
-      .ok_or_else(|| io::Error::new
-                  (io::ErrorKind::Other, anyhow!("player gonee")))?;
-    loop {
-      let next = match pu.log.get(self.to_send) {
-        Some(next) => next,  None => { break }
-      };
-      let next_len = UPDATE_MAX_FRAMING_SIZE + next.json.len();
-      if next_len > buf.len() { break }
-
-      if next.client == self.client {
-        write!(buf, r#"
-event: recorded
-data: {{ gen: {}, piece: {}, cseq:{} }}
-"#,
-               &self.gen, &next.piece, &next.client_seq);
-      } else {
-        write!(buf, r#"
-id: {}
-data: {}
-"#,
-               &self.to_send,
-               &next.json);
-      }
-    }
-    loop {
-      let generated = orig_wanted - buf.len();
-      if generated > 0 { return generated }
-
-      amig = self.cv.wait_timeout(amig, UPDATE_KEEPALIVE)?.0;
-      write!(buf,r#"
-: keepalive
-"#);
-    }
-  }
-}
-
-    /*
-    loop {
-                    e
-      let send_from = (||{
-        let l = self.updates.len();
-        let last_probe = match updates.last() {
-          None => return None,
-          Some(&now) if self.last_sent > now.gen => return l+1,
-          _ => l,
-        };
-        let (lo, hi /* half-open */) = loop {
-          let depth = l - last_probe;
-          depth *= 2;
-          if depth > l { break (0, last_probe) }
-          let probe = l - depth;
-          let here = updates[probe];
-          if here.gen < l 
-
-        if let Some(&now) =  {
-          if  { return None }
-        }
-        let probe = inst.updates.len() - 1;
-        let (lo, hi) = loop {
-          if search == 0 { break }
-          search -= 1;
-          tu = inst.updates[search];
-          if 
-
-        let lo = 0;
-        
-      };
-    loop {
-         implement this! 
-    }
-    for (tclient, tcl) in &mut g.clients {
-      if tclient == client {
-        tcl.transmit_update(&Update {
-          gen,
-          u : UpdatePayload::ClientSequence(piece, form.s),
-        });
-      } else {
-        tcl.transmit_update(&update);
-      }          
-    }
-     */
-/*
-
-    thread::sleep(Duration::from_millis(500));
-    let message = XUpdate::TestCounter { value : self.next };
-    let data = serde_json::to_string(&message)?;
-    let data = format!("data: {}\n\n", &data);
-    // eprintln!("want to return into &[;{}] {:?}", buf.len(), &data);
-    self.next += 1;
-    buf[0..data.len()].copy_from_slice(data.as_bytes());
-    Ok(buf.len())
-  }
-}*/
-
-/*
-#[derive(Deserialize)]
-struct APIForm {
-  t : String,
-  c : ClientId,
-}
- */
-
-#[get("/_/updates/<ctoken>")]
-#[throws(RE)]
-fn updates(ctoken : InstanceAccess<ClientId>)
+#[get("/_/updates/<ctoken>/<gen>")]
+#[throws(E)]
+fn updates(ctoken : InstanceAccess<ClientId>, gen: Generation)
            -> impl response::Responder<'static> {
   let iad = ctoken.i;
-  let client = iad.ident;
-  let _ = {
-    let mut ig = iad.g.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
-    let _g = &mut ig.gs;
-    let cl = ig.clients.get(client).ok_or_else(|| anyhow!("no client"))?;
-    let _player = cl.player;
-  };
-  let tc = TestCounterInner { next : 0 };
-  let tc = BufReader::new(tc);
-  let ch = response::Stream::chunked(tc, 1);
-  let ct = ContentType::parse_flexible("text/event-stream; charset=utf-8").
-    unwrap();
-  response::content::Content(ct,ch)
+  let content = sse::content(iad);
+  let content = response::Stream::chunked(content, 1);
+  const CTYPE : &str = "text/event-stream; charset=utf-8";
+  let ctype = ContentType::parse_flexible(CTYPE).unwrap();
+  response::content::Content(ctype,content)
 }  
 
-#[get("/_/<leaf>")]
+#[Get("/_/<leaf>")]
 fn resource(leaf : CheckedResourceLeaf) -> io::Result<NamedFile> {
   let template_dir = "templates"; // xxx
   NamedFile::open(format!("{}/{}", template_dir, leaf.safe))
@@ -370,7 +242,7 @@ fn main() {
       loading,
       session,
       resource,
-      updates,
+      sse::updates,
       api_grab,
       api_ungrab,
       api_move,

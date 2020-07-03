@@ -24,15 +24,15 @@ impl Client {
 }
 
 pub struct PreparedUpdate {
-  gen : Counter,
-  client : ClientId,
-  piece : PieceId,
-  client_seq : ClientSequence,
-  json : String,
+  pub gen : Generation,
+  pub client : ClientId,
+  pub piece : PieceId,
+  pub client_seq : ClientSequence,
+  pub json : String,
 }
 
 pub struct PlayerUpdates {
-  pub log : StableIndexVecDeque<PreparedUpdate,UpdateCounter>,
+  pub log : StableIndexVecDeque<PreparedUpdate,sse::UpdateId>,
   pub cv : Condvar,
 }
 

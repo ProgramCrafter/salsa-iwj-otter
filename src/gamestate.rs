@@ -5,7 +5,14 @@ slotmap::new_key_type!{
   pub struct PieceId;
 }
 
-pub type Counter = u64;
+#[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
+#[derive(Serialize)]
+#[serde(transparent)]
+pub struct Generation (u64);
+
+impl Generation {
+  pub fn increment(&mut self) { self.0 += 1 }
+}
 
 visible_slotmap_key!{ VisiblePieceId('.') }
 
@@ -49,8 +56,8 @@ pub struct PieceRecord {
   pub face : FaceId,
   pub held : Option<PlayerId>,
   pub lastclient : ClientId,
-  pub gen_lastclient : Counter,
-  pub gen_before_lastclient : Counter,
+  pub gen_lastclient : Generation,
+  pub gen_before_lastclient : Generation,
 }
 
 impl PieceRecord {
@@ -67,7 +74,7 @@ impl PieceRecord {
 pub struct GameState {
   pub pieces : DenseSlotMap<PieceId,PieceRecord>,
   pub players : DenseSlotMap<PlayerId,Player>,
-  pub gen : Counter,
+  pub gen : Generation,
 }
 
 #[derive(Debug)]
@@ -83,10 +90,10 @@ pub fn xxx_gamestate_init() -> GameState {
       face : 0.into(),
       held : None,
       lastclient : Default::default(),
-      gen_lastclient : 0,
-      gen_before_lastclient : 0,
+      gen_lastclient : Generation(0),
+      gen_before_lastclient : Generation(0),
     };
     pieces.insert(pr);
   }
-  GameState { pieces, gen : 1, players : Default::default(),  }
+  GameState { pieces, gen : Generation(1), players : Default::default(),  }
 }

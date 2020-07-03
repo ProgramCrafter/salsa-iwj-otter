@@ -1,6 +1,6 @@
 
 pub use std::io;
-pub use std::io::{BufReader,Read};
+pub use std::io::{BufReader,Read,Write};
 pub use std::fmt::{self,Display,Debug};
 pub use std::thread;
 pub use std::time::Duration;
@@ -44,7 +44,7 @@ pub use crate::gamestate::*;
 pub use crate::pieces::*;
 pub use crate::keydata::*;
 pub use crate::updates::*;
-pub use crate::sse::*;
+pub use crate::sse;
 
 pub type E = anyhow::Error;
 pub type AE = anyhow::Error;
@@ -53,3 +53,4 @@ pub type SvgData = Vec<u8>;
 pub type Coord = isize;
 pub type Pos = [Coord; 2];
 pub type Colour = String;
+
