@@ -210,6 +210,7 @@ fn updates(ctoken : InstanceAccess<ClientId>, gen: u64)
   let content = response::Stream::chunked(content, 1);
   const CTYPE : &str = "text/event-stream; charset=utf-8";
   let ctype = ContentType::parse_flexible(CTYPE).unwrap();
+  // xxx set CORS allowed header
   response::content::Content(ctype,content)
 }  
 
