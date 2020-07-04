@@ -134,7 +134,7 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
   let cl = &g.clients.byid(client)?;
   // ^ can only fail if we raced
   let player = cl.player;
-  let r : Result<(),OpError> = (||{
+  let r : Result<(),GameError> = (||{
     let piece = decode_visible_pieceid(form.p);
     let gs = &mut g.gs;
     let p = gs.pieces.byid_mut(piece)?;
@@ -142,8 +142,8 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
     let u_gen =
       if client == p.lastclient { p.gen_lastclient }
       else { p.gen_before_lastclient };
-    if u_gen > q_gen { Err(OpError::Conflict)? }
-    if p.held != None { Err(OpError::PieceHeld)? };
+    if u_gen > q_gen { Err(GameError::Conflict)? }
+    if p.held != None { Err(GameError::PieceHeld)? };
     p.held = Some(player);
     gs.gen.increment();
     let gen = gs.gen;

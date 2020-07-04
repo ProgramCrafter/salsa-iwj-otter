@@ -5,7 +5,7 @@ use std::sync::PoisonError;
 
 #[derive(Error,Debug)]
 #[error("operation error {:?}",self)]
-pub enum OpError {
+pub enum GameError {
   Conflict,
   PieceGone,
   PieceHeld,
@@ -70,6 +70,6 @@ impl<T> IdForById for T where T : AccessId {
 }
 
 impl IdForById for PieceId {
-  type Error = OpError;
-  const ERROR : OpError = OpError::PieceGone;
+  type Error = GameError;
+  const ERROR : GameError = GameError::PieceGone;
 }
