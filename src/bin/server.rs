@@ -62,12 +62,12 @@ struct SessionForm {
   ptoken : String,
 }
 #[post("/_/session", format="json", data="<form>")]
-fn session(form : Json<SessionForm>) -> Result<Template,RE> {
+fn session(form : Json<SessionForm>) -> Result<Template,OE> {
   // make session in this game, log a message to other players
   let iad = lookup_token(&form.ptoken)?;
   let player = iad.ident;
   let c = {
-    let mut ig = iad.g.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
+    let mut ig = iad.g.lock()?;
     let _pl = ig.gs.players.byid_mut(player)?;
     let cl = Client { player };
     let client = ig.clients.insert(cl);
