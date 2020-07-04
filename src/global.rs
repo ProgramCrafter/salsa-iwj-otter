@@ -33,7 +33,7 @@ pub struct PreparedUpdate {
   pub json : String,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Default)]
 pub struct PlayerUpdates {
   pub log : StableIndexVecDeque<Arc<PreparedUpdate>,sse::UpdateId>,
   pub cv : Arc<Condvar>,
@@ -138,5 +138,6 @@ pub fn xxx_global_setup() {
     GLOBAL.players.write().unwrap().insert(
       RawToken(token.to_string()), ia
     );
+    ig.updates.insert(player, Default::default());
   }
 }
