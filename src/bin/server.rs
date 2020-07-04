@@ -10,15 +10,14 @@ use rocket_contrib::json::Json;
 
 use game::imports::*;
 
-type RE = E;
-
 #[derive(Serialize,Debug)]
 struct TestRenderContext { }
 
 #[get("/")]
-fn index() -> Result<Template,RE> {
+#[throws(OE)]
+fn index() -> Template {
   let c = TestRenderContext { };
-  Ok(Template::render("test",&c))
+  Template::render("test",&c)
 }
 
 const RESOURCES : &[&'static str] = &["script.js", "style.css"];
@@ -44,9 +43,10 @@ struct LoadingRenderContext<'r> {
   ptoken : &'r str,
 }
 #[get("/<ptoken>")]
-fn loading(ptoken : InstanceAccess<PlayerId>) -> Result<Template,RE> {
+#[throws(OE)]
+fn loading(ptoken : InstanceAccess<PlayerId>) -> Template {
   let c = LoadingRenderContext { ptoken : ptoken.raw_token };
-  Ok(Template::render("loading",&c))
+  Template::render("loading",&c)
 }
 
 #[derive(Serialize,Debug)]
@@ -187,7 +187,7 @@ struct ApiUngrab {
   p : VisiblePieceId,
 }
 #[post("/_/api/ungrab", format="json", data="<form>")]
-#[throws(RE)]
+#[throws(OE)]
 fn api_ungrab(form : Json<ApiUngrab>) -> impl response::Responder<'static> {
   eprintln!("API {:?}", &form);
   ""
@@ -200,14 +200,14 @@ struct ApiMove {
   l : Pos,
 }
 #[post("/_/api/m", format="json", data="<form>")]
-#[throws(RE)]
+#[throws(OE)]
 fn api_move(form : Json<ApiMove>) -> impl response::Responder<'static> {
   eprintln!("API {:?}", &form);
   ""
 }
 
 #[get("/_/updates/<ctoken>/<gen>")]
-#[throws(E)]
+#[throws(OE)]
 fn updates(ctoken : InstanceAccess<ClientId>, gen: u64)
            -> impl response::Responder<'static> {
   let gen = Generation(gen);
