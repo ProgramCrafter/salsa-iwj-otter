@@ -39,7 +39,7 @@ impl StableIndexOffset for UpdateId {
 struct UpdateReader {
   player : PlayerId,
   client : ClientId,
-  to_send : UpdateId, // xxx race for setting this initially
+  to_send : UpdateId,
   ami : Arc<Mutex<Instance>>,
 }
 
