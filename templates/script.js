@@ -175,8 +175,8 @@ function drag_cancel() {
 
 // ----- test counter, startup -----
 
-messages.TestCounter = function(data) {
-  status_node.innerHTML = data.value;
+messages.PieceUpdate = function(data) {
+  console.log('PIECE UPDATE ',data)
 }
 
 function startup() {
