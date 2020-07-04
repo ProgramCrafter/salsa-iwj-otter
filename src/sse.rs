@@ -179,6 +179,8 @@ pub fn content(iad : InstanceAccessDetails<ClientId>, gen: Generation)
     let _g = &mut ig.gs;
     let cl = ig.clients.byid(client)?;
     let player = cl.player;
+eprintln!("updates content iad={:?} player={:?} cl={:?} updates={:?}",
+          &iad, &player, &cl, &ig.updates);
     let ami = iad.g.clone();
 
     let log = &ig.updates.byid(player)?.log;

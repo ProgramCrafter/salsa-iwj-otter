@@ -13,6 +13,7 @@ impl Borrow<str> for RawToken {
   fn borrow(&self) -> &str { &self.0 }
 }
 
+#[derive(Debug)] 
 pub struct Client {
   pub player : PlayerId,
 }
@@ -23,6 +24,7 @@ impl Client {
   }
 }
 
+#[derive(Debug)]
 pub struct PreparedUpdate {
   pub gen : Generation,
   pub client : ClientId,
@@ -31,24 +33,26 @@ pub struct PreparedUpdate {
   pub json : String,
 }
 
+#[derive(Debug)]
 pub struct PlayerUpdates {
   pub log : StableIndexVecDeque<Arc<PreparedUpdate>,sse::UpdateId>,
   pub cv : Arc<Condvar>,
 }
 
+#[derive(Debug)]
 pub struct Instance {
   pub gs : GameState,
   pub clients : DenseSlotMap<ClientId,Client>,
   pub updates : SecondarySlotMap<PlayerId, PlayerUpdates>,
 }
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct InstanceAccessDetails<Id> {
   pub g : Arc<Mutex<Instance>>,
   pub ident : Id,
 }
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct InstanceAccess<'i, Id> {
   pub raw_token : &'i str,
   pub i : InstanceAccessDetails<Id>,
