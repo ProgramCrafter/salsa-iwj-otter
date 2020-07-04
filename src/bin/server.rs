@@ -64,8 +64,7 @@ struct SessionForm {
 #[post("/_/session", format="json", data="<form>")]
 fn session(form : Json<SessionForm>) -> Result<Template,RE> {
   // make session in this game, log a message to other players
-  let iad = lookup_token(&form.ptoken)
-    .ok_or_else(|| anyhow!("unknown token"))?;
+  let iad = lookup_token(&form.ptoken)?;
   let player = iad.ident;
   let c = {
     let mut ig = iad.g.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
@@ -137,7 +136,7 @@ struct ApiGrab {
 #[post("/_/api/grab", format="json", data="<form>")]
 #[throws(RE)]
 fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
-  let iad = lookup_token(&form.t).ok_or_else(||anyhow!("unknown token"))?;
+  let iad = lookup_token(&form.t)?;
   let client = iad.ident;
   let mut g = iad.g.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
   let g = &mut *g;

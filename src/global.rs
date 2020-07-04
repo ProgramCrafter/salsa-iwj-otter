@@ -83,8 +83,9 @@ impl AccessId for ClientId {
 }
 
 pub fn lookup_token<Id : AccessId>(s : &str)
-      -> Option<InstanceAccessDetails<Id>> {
+      -> Result<InstanceAccessDetails<Id>, OE> {
   Id::global_tokens().read().unwrap().get(s).cloned()
+    .ok_or(Id::ERROR)
 }
 
 pub fn record_token<Id : AccessId>(iad : InstanceAccessDetails<Id>)
