@@ -177,11 +177,11 @@ pub fn content(iad : InstanceAccessDetails<ClientId>, gen: Generation)
   let content = {
     let mut ig = iad.g.lock()?;
     let _g = &mut ig.gs;
-    let cl = ig.clients.get(client).ok_or(NoClient)?;
+    let cl = ig.clients.byid(client)?;
     let player = cl.player;
     let ami = iad.g.clone();
 
-    let log = &ig.updates.get(player).ok_or(NoPlayer)?.log;
+    let log = &ig.updates.byid(player)?.log;
 
     let to_send = match log.into_iter().rev()
       .find(|(_,update)| update.gen < gen) {

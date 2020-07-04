@@ -74,12 +74,12 @@ pub trait AccessId : Copy + Clone + 'static {
 }
 
 impl AccessId for PlayerId {
-  fn global_tokens() -> &'static RwLock<TokenTable<Self>> { &GLOBAL.players }
   const ERROR : OnlineError = NoPlayer;
+  fn global_tokens() -> &'static RwLock<TokenTable<Self>> { &GLOBAL.players }
 }
 impl AccessId for ClientId {
-  fn global_tokens() -> &'static RwLock<TokenTable<Self>> { &GLOBAL.clients }
   const ERROR : OnlineError = NoClient;
+  fn global_tokens() -> &'static RwLock<TokenTable<Self>> { &GLOBAL.clients }
 }
 
 pub fn lookup_token<Id : AccessId>(s : &str)
