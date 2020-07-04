@@ -39,6 +39,7 @@ impl StableIndexOffset for UpdateId {
 struct UpdateReader {
   player : PlayerId,
   client : ClientId,
+  init_confirmation_send : iter::Once<()>,
   to_send : UpdateId,
   ami : Arc<Mutex<Instance>>,
 }
@@ -57,6 +58,14 @@ impl Read for UpdateReader {
 
     let mut amig = self.ami.lock().map_err(|_| em("poison"))?;
     let orig_wanted = buf.len();
+
+    if self.init_confirmation_send.next().is_some() {
+      write!(buf, r#"
+event: commsworking
+data: server online
+
+"#)?;
+    }
 
     let pu = &mut amig.updates.get(self.player)
       .ok_or_else(|| em("player gonee"))?;
@@ -192,7 +201,10 @@ eprintln!("updates content iad={:?} player={:?} cl={:?} updates={:?}",
         Some((i,_)) => i,
       };
     
-    UpdateReader { player, client, to_send, ami }
+    UpdateReader {
+      player, client, to_send, ami,
+      init_confirmation_send : iter::once(()),
+    }
   };
   BufReader::with_capacity(UPDATE_READER_SIZE, content)
 }
