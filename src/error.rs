@@ -29,7 +29,6 @@ impl<X> From<PoisonError<X>> for OnlineError {
   fn from(_: PoisonError<X>) -> OnlineError { GameCorrupted }
 }
 
-
 pub trait ById {
   type Id;
   type Entry;
