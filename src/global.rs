@@ -32,7 +32,7 @@ pub struct PreparedUpdate {
 }
 
 pub struct PlayerUpdates {
-  pub log : StableIndexVecDeque<PreparedUpdate,sse::UpdateId>,
+  pub log : StableIndexVecDeque<Arc<PreparedUpdate>,sse::UpdateId>,
   pub cv : Arc<Condvar>,
 }
 

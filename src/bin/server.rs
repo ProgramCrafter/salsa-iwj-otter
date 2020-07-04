@@ -161,15 +161,20 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
       p.gen_before_lastclient = p.gen_lastclient;
       p.lastclient = client;
     }
-    let update = Update {
+    let json = UpdatePayload::PieceUpdate(piece, p.mk_update());
+    let json = serde_json::to_string(&json).expect("convert to json");
+    let update = PreparedUpdate {
       gen,
-      u : UpdatePayload::PieceUpdate(piece, p.mk_update()),
+      client,
+      piece,
+      client_seq : form.s,
+      json,
     };
     let update = Arc::new(update);
     // split vie wthing would go here
     p.gen_lastclient = gen;
     for (_tplayer, tplupdates) in &mut g.updates {
-      tplupdates.log.push_back((client, update.clone()));
+      tplupdates.log.push_back(update.clone());
       tplupdates.cv.notify_all();
     }
     Ok(())
@@ -203,24 +208,20 @@ fn api_move(form : Json<ApiMove>) -> impl response::Responder<'static> {
   ""
 }
 
-#[derive(Serialize)]
-enum XUpdate {
-  TestCounter { value: usize },
-}
-
 #[get("/_/updates/<ctoken>/<gen>")]
 #[throws(E)]
-fn updates(ctoken : InstanceAccess<ClientId>, gen: Generation)
+fn updates(ctoken : InstanceAccess<ClientId>, gen: u64)
            -> impl response::Responder<'static> {
+  let gen = Generation(gen);
   let iad = ctoken.i;
-  let content = sse::content(iad);
+  let content = sse::content(iad, gen)?;
   let content = response::Stream::chunked(content, 1);
   const CTYPE : &str = "text/event-stream; charset=utf-8";
   let ctype = ContentType::parse_flexible(CTYPE).unwrap();
   response::content::Content(ctype,content)
 }  
 
-#[Get("/_/<leaf>")]
+#[get("/_/<leaf>")]
 fn resource(leaf : CheckedResourceLeaf) -> io::Result<NamedFile> {
   let template_dir = "templates"; // xxx
   NamedFile::open(format!("{}/{}", template_dir, leaf.safe))
@@ -242,7 +243,7 @@ fn main() {
       loading,
       session,
       resource,
-      sse::updates,
+      updates,
       api_grab,
       api_ungrab,
       api_move,

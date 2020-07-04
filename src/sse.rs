@@ -1,6 +1,4 @@
 
-#![feature(proc_macro_hygiene, decl_macro)]
-
 use crate::imports::*;
 
 #[derive(Copy,Clone,Debug,Eq,PartialEq,Ord,PartialOrd)]
@@ -100,7 +98,7 @@ data: {}
         .map_err(|_| em("poison"))?.0;
       write!(buf,r#"
 : keepalive
-"#);
+"#)?;
     }
   }
 }

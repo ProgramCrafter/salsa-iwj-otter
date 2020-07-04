@@ -6,9 +6,9 @@ slotmap::new_key_type!{
 }
 
 #[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
-#[derive(Serialize)]
+#[derive(Serialize,Deserialize)]
 #[serde(transparent)]
-pub struct Generation (u64);
+pub struct Generation (pub u64);
 
 impl Generation {
   pub fn increment(&mut self) { self.0 += 1 }
