@@ -133,13 +133,13 @@ struct ApiGrab {
   s : ClientSequence,
 }
 #[post("/_/api/grab", format="json", data="<form>")]
-#[throws(RE)]
+#[throws(OE)]
 fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
   let iad = lookup_token(&form.t)?;
   let client = iad.ident;
-  let mut g = iad.g.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
+  let mut g = iad.g.lock()?;
   let g = &mut *g;
-  let cl = &g.clients.get(client).ok_or_else(||anyhow!("unknown client"))?;
+  let cl = &g.clients.byid(client)?;
   // ^ can only fail if we raced
   let player = cl.player;
   let r : Result<(),OpError> = (||{
