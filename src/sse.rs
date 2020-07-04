@@ -104,8 +104,8 @@ data: {}
     loop {
       let generated = orig_wanted - buf.len();
       if generated > 0 {
-        eprintln!("SENDING to {:?} {:?}:\n{}\n",
-                  &self.player, &self.client,
+        eprintln!("SENDING {} to {:?} {:?}:\n{}\n",
+                  generated, &self.player, &self.client,
                   str::from_utf8(&orig_buf[0..generated]).unwrap());
         return Ok(generated)
       }
@@ -185,6 +185,20 @@ struct APIForm {
 }
  */
 
+#[derive(Debug)]
+struct DebugReader<T : Read>(T);
+
+impl<T : Read> Read for DebugReader<T> {
+  fn read(&mut self, buf: &mut [u8]) -> Result<usize,io::Error> {
+    let l = buf.len();
+    eprintln!("DebugReader({:?}).read()...", l);
+    let r = self.0.read(buf);
+    eprintln!("DebugReader({:?}).read() = {:?} {:?}", l, &r,
+              r.as_ref().map(|&r| str::from_utf8(&buf[0..r])));
+    r
+  }
+}
+
 #[throws(OE)]
 pub fn content(iad : InstanceAccessDetails<ClientId>, gen: Generation)
   -> impl Read {
@@ -212,5 +226,6 @@ eprintln!("updates content iad={:?} player={:?} cl={:?} updates={:?}",
       init_confirmation_send : iter::once(()),
     }
   };
-  BufReader::with_capacity(UPDATE_READER_SIZE, content)
+  let content = BufReader::with_capacity(UPDATE_READER_SIZE, content);
+  DebugReader(content)
 }
