@@ -169,19 +169,19 @@ struct APIForm {
 }
  */
 
-#[throws(E)]
+#[throws(OE)]
 pub fn content(iad : InstanceAccessDetails<ClientId>, gen: Generation)
   -> impl Read {
   let client = iad.ident;
 
   let content = {
-    let mut ig = iad.g.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
+    let mut ig = iad.g.lock()?;
     let _g = &mut ig.gs;
-    let cl = ig.clients.get(client).ok_or_else(|| anyhow!("no client"))?;
+    let cl = ig.clients.get(client).ok_or(NoClientSession)?;
     let player = cl.player;
     let ami = iad.g.clone();
 
-    let log = &ig.updates.get(player).ok_or_else(|| anyhow!("no plaeyr"))?.log;
+    let log = &ig.updates.get(player).ok_or(NoPlayer)?.log;
 
     let to_send = match log.into_iter().rev()
       .find(|(_,update)| update.gen < gen) {

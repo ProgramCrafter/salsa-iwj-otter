@@ -6,3 +6,4 @@ pub mod gamestate;
 pub mod keydata;
 pub mod updates;
 pub mod sse;
+pub mod error;

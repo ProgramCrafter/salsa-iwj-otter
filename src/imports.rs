@@ -45,12 +45,14 @@ pub use crate::pieces::*;
 pub use crate::keydata::*;
 pub use crate::updates::*;
 pub use crate::sse;
+pub use crate::error::*;
 
 pub type E = anyhow::Error;
 pub type AE = anyhow::Error;
+
+pub type OE = OnlineError;
 
 pub type SvgData = Vec<u8>;
 pub type Coord = isize;
 pub type Pos = [Coord; 2];
 pub type Colour = String;
-
