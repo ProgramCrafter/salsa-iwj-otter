@@ -53,6 +53,7 @@ fn loading(ptoken : InstanceAccess<PlayerId>) -> Template {
 struct SessionRenderContext {
   ctoken : String,
   player : PlayerId,
+  gen : Generation,
   defs : Vec<String>,
   uses : Vec<String>,
 }
@@ -109,6 +110,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
 
     SessionRenderContext {
       ctoken : ctoken.0,
+      gen : ig.gs.gen,
       player,
       defs,
       uses,
