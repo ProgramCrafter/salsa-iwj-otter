@@ -8,9 +8,8 @@ impl<'r> Responder<'r> for OnlineError {
   #[throws(Status)]
   fn respond_to(self, req: &Request) -> Response<'r> {
     let msg = format!("Online-layer error\n{:?}\n{}\n", self, self);
-    use rocket::http::Status;//::Continue;
+    use rocket::http::Status;
     use OnlineError::*;
-    let s = rocket::http::Status::Ok;
     let status = match self {
       GameCorrupted => Status::InternalServerError,
       NoClient | NoPlayer => Status::NotFound,
