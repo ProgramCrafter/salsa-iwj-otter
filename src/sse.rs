@@ -39,6 +39,7 @@ impl StableIndexOffset for UpdateId {
 struct UpdateReader {
   player : PlayerId,
   client : ClientId,
+  need_flush : bool,
   init_confirmation_send : iter::Once<()>,
   to_send : UpdateId,
   ami : Arc<Mutex<Instance>>,
@@ -51,6 +52,10 @@ struct RecordedConfirmation {
   cseq : ClientSequence,
 }
 
+#[derive(Error,Debug)]
+#[error("WouldBlock error misreported!")]
+struct FlushWouldBlockError{}
+
 impl Read for UpdateReader {
   fn read(&mut self, orig_buf: &mut [u8]) -> Result<usize,io::Error> {
     let em : fn(&'static str) -> io::Error =
@@ -62,10 +67,10 @@ impl Read for UpdateReader {
 
     if self.init_confirmation_send.next().is_some() {
       write!(buf, r#"
-event: commsworking
 data: server online
 
 "#)?;
+/*event: commsworking*/
     }
 
     let pu = &mut amig.updates.get(self.player)
@@ -107,7 +112,14 @@ data: {}
         eprintln!("SENDING {} to {:?} {:?}:\n{}\n",
                   generated, &self.player, &self.client,
                   str::from_utf8(&orig_buf[0..generated]).unwrap());
+        self.need_flush = true;
         return Ok(generated)
+      }
+
+      if self.need_flush {
+        self.need_flush = false;
+        return Err(io::Error::new(io::ErrorKind::WouldBlock,
+                                  FlushWouldBlockError{}));
       }
 
       amig = cv.wait_timeout(amig, UPDATE_KEEPALIVE)
@@ -223,6 +235,7 @@ eprintln!("updates content iad={:?} player={:?} cl={:?} updates={:?}",
     
     UpdateReader {
       player, client, to_send, ami,
+      need_flush : false,
       init_confirmation_send : iter::once(()),
     }
   };

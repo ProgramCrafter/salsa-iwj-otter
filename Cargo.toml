@@ -33,10 +33,16 @@ index_vec = "0.1.1"
 
 num-traits = "0.2"
 
-rocket = "0.4"
-rocket_contrib = { version = "0.4", default-features=false, features=["tera_templates","helmet","json"] }
+#rocket = "0.4"
+#rocket_contrib = { version = "0.4", default-features=false, features=["tera_templates","helmet","json"] }
+
+rocket = { path = "/home/ian/Rustup/Game/rocket/core/lib" }
+rocket_contrib = { path = "/home/ian/Rustup/Game/rocket/contrib/lib", default-features=false, features=["tera_templates","helmet","json"] }
 
 vecdeque-stableix = "0"
+
+[patch.crates-io]
+hyper = { path = "/home/ian/Rustup/Game/hyper" } 
 
 #hmac = "0.7"
 #base64 = "0.10"

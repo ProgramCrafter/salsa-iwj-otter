@@ -207,7 +207,7 @@ fn updates(ctoken : InstanceAccess<ClientId>, gen: u64)
   let gen = Generation(gen);
   let iad = ctoken.i;
   let content = sse::content(iad, gen)?;
-  let content = response::Stream::chunked(content, 1);
+  let content = response::Stream::chunked(content, 4096 /* xxx */);
   const CTYPE : &str = "text/event-stream; charset=utf-8";
   let ctype = ContentType::parse_flexible(CTYPE).unwrap();
   // xxx set CORS allowed header
