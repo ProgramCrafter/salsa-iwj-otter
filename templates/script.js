@@ -183,13 +183,14 @@ function startup() {
   var body = document.getElementById("main-body");
   ctoken = body.dataset.ctoken;
   us = body.dataset.us;
+  gen = body.dataset.gen;
   status_node = document.getElementById('status');
   status_node.innerHTML = 'js-done'
   dragthresh = 5;
   space = document.getElementById('space');
   svg_ns = space.getAttribute('xmlns');
 
-  es = new EventSource("/_/updates/"+ctoken);
+  es = new EventSource("/_/updates/"+ctoken+'/'+gen);
   es.onmessage = function(event) {
     var j = JSON.parse(event.data);
     var k = Object.keys(j)[0];

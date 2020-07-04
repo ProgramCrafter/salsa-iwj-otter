@@ -201,7 +201,7 @@ fn api_move(form : Json<ApiMove>) -> impl response::Responder<'static> {
 }
 
 #[get("/_/updates/<ctoken>/<gen>")]
-#[throws(OE)]
+#[throws(rocket::response::Debug<OE>)]
 fn updates(ctoken : InstanceAccess<ClientId>, gen: u64)
            -> impl response::Responder<'static> {
   let gen = Generation(gen);

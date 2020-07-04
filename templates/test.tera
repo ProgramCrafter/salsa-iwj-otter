@@ -1,4 +1,8 @@
-<body id="main-body" data-ctoken="{{ctoken}}" data-us="{{player}}">
+{# -*- HTML -*- -#}<body id="main-body" 
+      data-ctoken="{{ctoken}}"
+      data-us="{{player}}"
+      data-gen="{{gen}}"
+      >
 <h1>Hi!</h1>
 <div id="error"></div>
 <p>
