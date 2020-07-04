@@ -89,6 +89,7 @@ data: {}
                &self.to_send,
                &next.json)?;
       }
+      self.to_send.try_increment().unwrap();
     }
     loop {
       let generated = orig_wanted - buf.len();
