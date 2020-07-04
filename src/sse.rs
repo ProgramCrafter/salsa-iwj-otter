@@ -181,8 +181,13 @@ pub fn content(iad : InstanceAccessDetails<ClientId>, gen: Generation)
     let player = cl.player;
     let ami = iad.g.clone();
 
-    let _ = gen;
-    let to_send = UpdateId(42); // xxx
+    let log = &ig.updates.get(player).ok_or_else(|| anyhow!("no plaeyr"))?.log;
+
+    let to_send = match log.into_iter().rev()
+      .find(|(_,update)| update.gen < gen) {
+        None => log.end_index(),
+        Some((i,_)) => i,
+      };
     
     UpdateReader { player, client, to_send, ami }
   };
