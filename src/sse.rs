@@ -177,7 +177,7 @@ pub fn content(iad : InstanceAccessDetails<ClientId>, gen: Generation)
   let content = {
     let mut ig = iad.g.lock()?;
     let _g = &mut ig.gs;
-    let cl = ig.clients.get(client).ok_or(NoClientSession)?;
+    let cl = ig.clients.get(client).ok_or(NoClient)?;
     let player = cl.player;
     let ami = iad.g.clone();
 

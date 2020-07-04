@@ -70,13 +70,16 @@ lazy_static! {
 
 pub trait AccessId : Copy + Clone + 'static {
   fn global_tokens() -> &'static RwLock<TokenTable<Self>>;
+  const ERROR : OnlineError;
 }
 
 impl AccessId for PlayerId {
   fn global_tokens() -> &'static RwLock<TokenTable<Self>> { &GLOBAL.players }
+  const ERROR : OnlineError = NoPlayer;
 }
 impl AccessId for ClientId {
   fn global_tokens() -> &'static RwLock<TokenTable<Self>> { &GLOBAL.clients }
+  const ERROR : OnlineError = NoClient;
 }
 
 pub fn lookup_token<Id : AccessId>(s : &str)
@@ -103,12 +106,12 @@ const XXX_PLAYERS_TOKENS : &[(&str, &str)] = &[
 impl<'r, Id> FromParam<'r> for InstanceAccess<'r, Id>
   where Id : AccessId
 {
-  type Error = E;
-  #[throws(E)]
+  type Error = OE;
+  #[throws(OE)]
   fn from_param(param: &'r RawStr) -> Self {
     let g = Id::global_tokens().read().unwrap();
     let token = param.as_str();
-    let i = g.get(token).ok_or_else(|| anyhow!("unknown token"))?;
+    let i = g.get(token).ok_or(Id::ERROR)?;
     InstanceAccess { raw_token : token, i : i.clone() }
   }
 }
