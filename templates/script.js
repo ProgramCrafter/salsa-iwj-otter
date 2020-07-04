@@ -197,6 +197,12 @@ function startup() {
     var k = Object.keys(j)[0];
     messages[k](j[k]);
   }
+  es.oncommsworking = function(event) {
+    status_node.innerHTML = data.value;
+  }
+  es.onrecorded = function(event) {
+    xxx_recorded();
+  }
   es.onerror = function(e) {
     console.log('FOO',e,es);
     json_report_error({
