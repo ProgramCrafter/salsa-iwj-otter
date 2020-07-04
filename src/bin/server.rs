@@ -68,8 +68,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,RE> {
   let player = iad.ident;
   let c = {
     let mut ig = iad.g.lock().map_err(|e| anyhow!("lock poison {:?}",&e))?;
-    let _pl = ig.gs.players.get_mut(player)
-      .ok_or_else(|| anyhow!("player deleted"))?;
+    let _pl = ig.gs.players.byid_mut(player)?;
     let cl = Client { player };
     let client = ig.clients.insert(cl);
 

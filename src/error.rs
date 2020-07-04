@@ -27,6 +27,8 @@ pub trait ById {
   type Entry;
   #[throws(OE)]
   fn byid(&self, t: Self::Id) -> &Self::Entry;
+  #[throws(OE)]
+  fn byid_mut(&mut self, t: Self::Id) -> &mut Self::Entry;
 }
 
 impl<I:AccessId+slotmap::Key, T> ById for DenseSlotMap<I,T> {
@@ -35,11 +37,17 @@ impl<I:AccessId+slotmap::Key, T> ById for DenseSlotMap<I,T> {
   fn byid(&self, t: Self::Id) -> Result<&Self::Entry, OE> {
     self.get(t).ok_or(<I as AccessId>::ERROR)
   }
+  fn byid_mut(&mut self, t: Self::Id) -> Result<&mut Self::Entry, OE> {
+    self.get_mut(t).ok_or(<I as AccessId>::ERROR)
+  }
 }
 impl<I:AccessId+slotmap::Key, T> ById for SecondarySlotMap<I,T> {
   type Id = I;
   type Entry = T;
   fn byid(&self, t: Self::Id) -> Result<&Self::Entry, OE> {
     self.get(t).ok_or(<I as AccessId>::ERROR)
+  }
+  fn byid_mut(&mut self, t: Self::Id) -> Result<&mut Self::Entry, OE> {
+    self.get_mut(t).ok_or(<I as AccessId>::ERROR)
   }
 }
