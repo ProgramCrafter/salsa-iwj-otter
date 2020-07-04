@@ -32,25 +32,35 @@ pub trait ById {
   fn byid_mut(&mut self, t: Self::Id) -> &mut Self::Entry;
 }
 
-impl<I:AccessId+slotmap::Key, T> ById for DenseSlotMap<I,T> {
+pub trait IdForById {
+  type Error;
+  const ERROR : Self::Error;
+}
+
+impl<I:IdForById+slotmap::Key, T> ById for DenseSlotMap<I,T> {
   type Id = I;
   type Entry = T;
-  type Error = OE;
-  fn byid(&self, t: Self::Id) -> Result<&Self::Entry, OE> {
-    self.get(t).ok_or(<I as AccessId>::ERROR)
+  type Error = <I as IdForById>::Error;
+  fn byid(&self, t: Self::Id) -> Result<&Self::Entry, Self::Error> {
+    self.get(t).ok_or(<I as IdForById>::ERROR)
   }
-  fn byid_mut(&mut self, t: Self::Id) -> Result<&mut Self::Entry, OE> {
-    self.get_mut(t).ok_or(<I as AccessId>::ERROR)
+  fn byid_mut(&mut self, t: Self::Id) -> Result<&mut Self::Entry, Self::Error> {
+    self.get_mut(t).ok_or(<I as IdForById>::ERROR)
   }
 }
-impl<I:AccessId+slotmap::Key, T> ById for SecondarySlotMap<I,T> {
+impl<I:IdForById+slotmap::Key, T> ById for SecondarySlotMap<I,T> {
   type Id = I;
   type Entry = T;
+  type Error = <I as IdForById>::Error;
+  fn byid(&self, t: Self::Id) -> Result<&Self::Entry, Self::Error> {
+    self.get(t).ok_or(<I as IdForById>::ERROR)
+  }
+  fn byid_mut(&mut self, t: Self::Id) -> Result<&mut Self::Entry, Self::Error> {
+    self.get_mut(t).ok_or(<I as IdForById>::ERROR)
+  }
+}
+
+impl<T> IdForById for T where T : AccessId {
   type Error = OE;
-  fn byid(&self, t: Self::Id) -> Result<&Self::Entry, OE> {
-    self.get(t).ok_or(<I as AccessId>::ERROR)
-  }
-  fn byid_mut(&mut self, t: Self::Id) -> Result<&mut Self::Entry, OE> {
-    self.get_mut(t).ok_or(<I as AccessId>::ERROR)
-  }
+  const ERROR : OE = <Self as AccessId>::ERROR;
 }
