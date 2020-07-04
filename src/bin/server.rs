@@ -117,14 +117,6 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
   Ok(Template::render("test",&c))
 }
 
-#[derive(Error,Debug)]
-#[error("operation error {:?}",self)]
-enum OpError {
-  Conflict,
-  PieceGone,
-  PieceHeld,
-}
-
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiGrab {
   t : String,
@@ -145,7 +137,7 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
   let r : Result<(),OpError> = (||{
     let piece = decode_visible_pieceid(form.p);
     let gs = &mut g.gs;
-    let p = gs.pieces.get_mut(piece).ok_or(OpError::PieceGone)?;
+    let p = gs.pieces.byid_mut(piece)?;
     let q_gen = form.g;
     let u_gen =
       if client == p.lastclient { p.gen_lastclient }

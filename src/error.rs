@@ -4,6 +4,14 @@ use crate::imports::*;
 use std::sync::PoisonError;
 
 #[derive(Error,Debug)]
+#[error("operation error {:?}",self)]
+pub enum OpError {
+  Conflict,
+  PieceGone,
+  PieceHeld,
+}
+
+#[derive(Error,Debug)]
 pub enum OnlineError {
   #[error("Game corrupted by previous crash - consult administrator")]
   GameCorrupted,
@@ -63,4 +71,9 @@ impl<I:IdForById+slotmap::Key, T> ById for SecondarySlotMap<I,T> {
 impl<T> IdForById for T where T : AccessId {
   type Error = OE;
   const ERROR : OE = <Self as AccessId>::ERROR;
+}
+
+impl IdForById for PieceId {
+  type Error = OpError;
+  const ERROR : OpError = OpError::PieceGone;
 }
