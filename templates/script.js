@@ -183,7 +183,7 @@ function startup() {
   var body = document.getElementById("main-body");
   ctoken = body.dataset.ctoken;
   us = body.dataset.us;
-  gen = body.dataset.gen;
+  gen = parseInt(body.dataset.gen);
   status_node = document.getElementById('status');
   status_node.innerHTML = 'js-done'
   dragthresh = 5;
