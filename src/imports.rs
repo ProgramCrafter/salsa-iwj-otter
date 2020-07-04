@@ -8,7 +8,9 @@ pub use std::sync::{Arc,Mutex,RwLock,Condvar};
 pub use std::collections::HashMap;
 pub use std::borrow::Borrow;
 pub use std::convert::TryFrom;
+pub use std::str;
 pub use std::str::FromStr;
+pub use std::iter;
 pub use std::iter::repeat_with;
 pub use std::collections::VecDeque;
 
