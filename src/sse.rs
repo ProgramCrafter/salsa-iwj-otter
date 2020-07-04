@@ -52,12 +52,13 @@ struct RecordedConfirmation {
 }
 
 impl Read for UpdateReader {
-  fn read(&mut self, mut buf: &mut [u8]) -> Result<usize,io::Error> {
+  fn read(&mut self, orig_buf: &mut [u8]) -> Result<usize,io::Error> {
     let em : fn(&'static str) -> io::Error =
       |s| io::Error::new(io::ErrorKind::Other, anyhow!(s));
 
     let mut amig = self.ami.lock().map_err(|_| em("poison"))?;
-    let orig_wanted = buf.len();
+    let orig_wanted = orig_buf.len();
+    let mut buf = orig_buf.as_mut();
 
     if self.init_confirmation_send.next().is_some() {
       write!(buf, r#"
@@ -83,7 +84,7 @@ data: server online
         write!(buf, r#"
 event: recorded
 data: "#)?;
-        serde_json::to_writer(&mut buf, &RecordedConfirmation {
+        serde_json::to_writer(&mut *buf, &RecordedConfirmation {
           gen : next.gen,
           piece : next.piece,
           cseq : next.client_seq,
@@ -102,7 +103,12 @@ data: {}
     }
     loop {
       let generated = orig_wanted - buf.len();
-      if generated > 0 { return Ok(generated) }
+      if generated > 0 {
+        eprintln!("SENDING to {:?} {:?}:\n{}\n",
+                  &self.player, &self.client,
+                  str::from_utf8(&orig_buf[0..generated]).unwrap());
+        return Ok(generated)
+      }
 
       amig = cv.wait_timeout(amig, UPDATE_KEEPALIVE)
         .map_err(|_| em("poison"))?.0;
