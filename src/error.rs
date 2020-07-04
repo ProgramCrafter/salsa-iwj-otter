@@ -25,15 +25,17 @@ impl<X> From<PoisonError<X>> for OnlineError {
 pub trait ById {
   type Id;
   type Entry;
-  #[throws(OE)]
+  type Error;
+  #[throws(Self::Error)]
   fn byid(&self, t: Self::Id) -> &Self::Entry;
-  #[throws(OE)]
+  #[throws(Self::Error)]
   fn byid_mut(&mut self, t: Self::Id) -> &mut Self::Entry;
 }
 
 impl<I:AccessId+slotmap::Key, T> ById for DenseSlotMap<I,T> {
   type Id = I;
   type Entry = T;
+  type Error = OE;
   fn byid(&self, t: Self::Id) -> Result<&Self::Entry, OE> {
     self.get(t).ok_or(<I as AccessId>::ERROR)
   }
@@ -44,6 +46,7 @@ impl<I:AccessId+slotmap::Key, T> ById for DenseSlotMap<I,T> {
 impl<I:AccessId+slotmap::Key, T> ById for SecondarySlotMap<I,T> {
   type Id = I;
   type Entry = T;
+  type Error = OE;
   fn byid(&self, t: Self::Id) -> Result<&Self::Entry, OE> {
     self.get(t).ok_or(<I as AccessId>::ERROR)
   }
