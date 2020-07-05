@@ -10,10 +10,10 @@
 
 <p>
     <svg id="space"
-	 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"
+	 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 110"
  	 onmousedown="drag_mousedown(event)"
 	 >
-      <rect fill="green" x="20" y="20" width="200" height="100"/>
+      <rect fill="green" x="20" y="5" width="200" height="100"/>
 {%- for piece in uses %}
       {{piece}}
 {%- endfor %}
@@ -21,5 +21,31 @@
       <defs id="defs{{ piece.0 }}">{{ piece.1 }}</defs>
 {%- endfor %}
     </svg>
+<p>
+  <div style="overflow-y: scroll; height: 200px;">
+    Log item 1
+    <br>
+    Log item 2
+    <br>
+    Log item 3
+    <br>
+    Log item 4
+    <br>
+    Log item 5
+    <br>
+    Log item 6
+    <br>
+    Log item 7
+    <br>
+    Log item 8
+    <br>
+    Log item 9
+    <br>
+    Log item 10
+    <br>
+    Log item 11
+    <br>
+    Log item 12
+  </div>
 
 </body>
