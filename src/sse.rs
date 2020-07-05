@@ -233,8 +233,8 @@ eprintln!("updates content iad={:?} player={:?} cl={:?} updates={:?}",
 
     let to_send = match log.into_iter().rev()
       .find(|(_,update)| update.gen < gen) {
-        None => log.end_index(),
-        Some((i,_)) => i,
+        None => log.front_index(),
+        Some((mut i,_)) => { i.try_increment(); i },
       };
     
     UpdateReader {
