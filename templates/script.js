@@ -144,6 +144,8 @@ function set_grab(uelem, piece, owner) {
   pelem = piece_cleanup_grab(piece);
   var nelem = document.createElementNS(svg_ns,'use');
   nelem.setAttributeNS(null,'href','#select'+piece);
+  nelem.setAttributeNS(null,'stroke-dasharray',"3 1  1 1  1 1");
+	                     
   pelem.appendChild(nelem);
   return pelem;
 }
