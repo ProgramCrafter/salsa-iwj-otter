@@ -104,7 +104,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       defs.push(pr.p.svg_x_defs(&pri));
 
       uses.push(format!(
-        r##"<use href="#{}" data-p="{}" data-g="" x="{}" y="{}"/>"##,
+        r##"<use href="#{}" data-piece="{}" data-gplayer="" x="{}" y="{}"/>"##,
                         pri.id_piece(),
                         pri.id,
                         pr.pos[0], pr.pos[1]));
@@ -124,15 +124,15 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
 
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiGrab {
-  t : String,
-  p : VisiblePieceId,
-  g : Generation,
-  s : ClientSequence,
+  ctoken : String,
+  piece : VisiblePieceId,
+  gen : Generation,
+  cseq : ClientSequence,
 }
 #[post("/_/api/grab", format="json", data="<form>")]
 #[throws(OE)]
 fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
-  let iad = lookup_token(&form.t)?;
+  let iad = lookup_token(&form.ctoken)?;
   let client = iad.ident;
   let mut g = iad.g.lock()?;
   let g = &mut *g;
@@ -140,10 +140,10 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
   // ^ can only fail if we raced
   let player = cl.player;
   let r : Result<(),GameError> = (||{
-    let piece = decode_visible_pieceid(form.p);
+    let piece = decode_visible_pieceid(form.piece);
     let gs = &mut g.gs;
     let p = gs.pieces.byid_mut(piece)?;
-    let q_gen = form.g;
+    let q_gen = form.gen;
     let u_gen =
       if client == p.lastclient { p.gen_lastclient }
       else { p.gen_before_lastclient };
@@ -162,7 +162,7 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
       gen,
       client,
       piece,
-      client_seq : form.s,
+      cseq : form.cseq,
       json,
     };
     let update = Arc::new(update);

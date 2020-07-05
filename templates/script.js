@@ -9,6 +9,7 @@ api_queue = [];
 api_posting = false;
 var us;
 var gen = 0;
+var cseq = 0;
 
 function xhr_post_then(url,data,good) {
   var xhr = new XMLHttpRequest();
@@ -63,8 +64,9 @@ function api_posted() {
 // ----- clicking/dragging pieces -----
 
 // dataset
-//   delt.p       piece id (static)
-//   delt.g       grabbed user (player id string, or "")
+//   delt.pice     piece id (static)
+//   delt.gplayer grabbed user (player id string, or "")
+//   delt.cseq     client sequence (see PROTOCOL.md)
 
 const DRAGGING = { // bitmask
   NO           : 0,
@@ -78,27 +80,30 @@ var dragging = DRAGGING.NO;
 
 function drag_mousedown(e) {
   console.log('mousedown', e);
-  if (!e.target.dataset.p) { return; }
+  var piece = e.target.dataset.piece;
+  if (!piece) { return; }
   drag_cancel();
   delt = e.target;
-  var g =delt.dataset.g;
-  if (g != "" && g != us) { return; }
+  var gplayer = delt.dataset.gplayer;
+  if (gplayer != "" && gplayer != us) { return; }
   dcx = e.clientX;
   dcy = e.clientY;
   dox = parseFloat(delt.getAttributeNS(null,"x"));
   doy = parseFloat(delt.getAttributeNS(null,"y"));
 
-  //console.log('mousedown ...', delt.dataset.g, !!delt.dataset.g);
-  if (g == us) {
+  if (gplayer == us) {
     dragging = DRAGGING.MAYBE_UNGRAB;
   } else {
+    cseq += 1;
+    delt.dataset.cseq = cseq;
+
     dragging = DRAGGING.MAYBE_GRAB;
-    set_grab(delt, us);
+    set_grab(delt, piece, us);
     api('grab', {
-      t : ctoken,
-      g : gen,
-      p : delt.dataset.p,
-      s : 0,
+      ctoken : ctoken,
+      piece : piece,
+      gen : gen,
+      cseq : cseq,
     })
   }
 
@@ -106,24 +111,25 @@ function drag_mousedown(e) {
   window.addEventListener('mouseup',   drag_mouseup,   true);
 }
 
-function set_grab(elt, owner) {
-  elt.dataset.g = owner;
-  var [p, piece] = piece_cleanup_grab(elt);
+function set_grab(elem, piece, owner) {
+  elem.dataset.gplayer = owner;
+//  var [p, piece] = 
+  piece_cleanup_grab(elem);
   var nelem = document.createElementNS(svg_ns,'use');
-  nelem.setAttributeNS(null,'href','#select'+p);
-  piece.appendChild(nelem);
+  nelem.setAttributeNS(null,'href','#select'+piece);
+  elem.appendChild(nelem);
 }
-function set_ungrab(elt) {
-  elt.dataset.g = "";
-  piece_cleanup_grab(elt);
+function set_ungrab(elem) {
+  elem.dataset.gplayer = "";
+  piece_cleanup_grab(elem);
 }
-function piece_cleanup_grab(elt) {
-  var p = elt.dataset.p;
-  var piece = document.getElementById('piece'+p);
-  while (piece.children.length > 1) {
-    piece.lastElementChild.remove();
+function piece_cleanup_grab(elem) {
+//  var piece = elem.dataset.piece;
+//  var elem = document.getElementById('piece'+piece);
+  while (elem.children.length > 1) {
+    elem.lastElementChild.remove();
   }
-  return [p, piece];
+//  return [p, elem];
 }
 
 function drag_mousemove(e) {
@@ -145,7 +151,7 @@ function drag_mousemove(e) {
     //console.log(delt);
     api_delay('m',{
       t : token,
-      p : delt.dataset.p,
+      p : delt.dataset.piece,
       l : [x, y],
     });
   }
@@ -159,8 +165,8 @@ function drag_mouseup(e) {
       dragging == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
     set_ungrab(delt);
     api('ungrab', {
-      t : token,
-      p : delt.dataset.p,
+      ctoken : token,
+      piece : delt.dataset.piece,
     });
   }
   drag_cancel(e);
@@ -202,8 +208,10 @@ function startup() {
     status_node.innerHTML = event.data;
   });
   es.addEventListener('recorded', function(event) {
-//    var j = JSON.parse(event.data);
-    xxx_recorded();
+    var j = JSON.parse(event.data);
+    var elem = document.getElementById('piece'+j.piece);
+    if (j.cseq >= elem.dataset.cseq) { elem.dataset.cseq = 0 }
+    gen = j.gen;
   });
   es.onerror = function(e) {
     console.log('FOO',e,es);

@@ -90,7 +90,7 @@ impl Read for UpdateReader {
         serde_json::to_writer(&mut buf, &RecordedConfirmation {
           gen : next.gen,
           piece : next.piece,
-          cseq : next.client_seq,
+          cseq : next.cseq,
         })?;
         write!(buf, "\n\n")?;
       } else {

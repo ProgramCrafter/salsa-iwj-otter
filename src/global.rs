@@ -29,7 +29,7 @@ pub struct PreparedUpdate {
   pub gen : Generation,
   pub client : ClientId,
   pub piece : PieceId,
-  pub client_seq : ClientSequence,
+  pub cseq : ClientSequence,
   pub json : String,
 }
 
