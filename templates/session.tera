@@ -21,12 +21,10 @@
       <defs id="defs{{ piece.0 }}">{{ piece.1 }}</defs>
 {%- endfor %}
     </svg>
-<p>
-  <div style="overflow-y: scroll; height: 200px;">
-    Log item 1
-    <br>
-    Log item 2
-    <br>
+
+  <div id="log" style="overflow-y: scroll; height: 200px;">
+    <div id="log1">Log item 1</div>
+    <div id="log2">Log item 2</div>
     Log item 3
     <br>
     Log item 4
@@ -44,8 +42,7 @@
     Log item 10
     <br>
     Log item 11
-    <br>
-    Log item 12
-  </div>
+    <div id="log12">Log item 12</id>
+  </p>
 
 </body>

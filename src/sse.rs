@@ -81,23 +81,28 @@ impl Read for UpdateReader {
       let next = match pu.log.get(self.to_send) {
         Some(next) => next,  None => { break }
       };
-      let next_len = UPDATE_MAX_FRAMING_SIZE + next.json.len();
+      let next_len = UPDATE_MAX_FRAMING_SIZE + next.u.json_len();
       if next_len > buf.len() { break }
 
-      if next.client == self.client {
-        write!(buf, "event: recorded\n\
-                     data: ")?;
-        serde_json::to_writer(&mut buf, &RecordedConfirmation {
-          gen : next.gen,
-          piece : next.piece,
-          cseq : next.cseq,
-        })?;
-        write!(buf, "\n\n")?;
-      } else {
-        write!(buf, "id: {}\n\
-                     data: {}\n\n",
-               &self.to_send,
-               &next.json)?;
+      match &next.u {
+        &PreparedPieceUpdate {
+          piece, client : uclient, sameclient_cseq : cseq, ..
+        } if uclient== self.client => {
+          write!(buf, "event: recorded\n\
+                       data: ")?;
+          serde_json::to_writer(&mut buf, &RecordedConfirmation {
+            gen : next.gen,
+            piece : piece,
+            cseq : cseq,
+          })?;
+          write!(buf, "\n\n")?;
+        },
+        PreparedPieceUpdate { json, .. } => {
+          write!(buf, "id: {}\n\
+                       data: {}\n\n",
+                 &self.to_send,
+                 json)?;
+        },
       }
       self.to_send.try_increment().unwrap();
     }

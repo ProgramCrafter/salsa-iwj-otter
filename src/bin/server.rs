@@ -156,10 +156,12 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
     let json = serde_json::to_string(&json).expect("convert to json");
     let update = PreparedUpdate {
       gen,
-      client,
-      piece : vpiece,
-      cseq : form.cseq,
-      json,
+      u : PreparedPieceUpdate {
+        client,
+        sameclient_cseq : form.cseq,
+        piece : vpiece,
+        json,
+      },
     };
     let update = Arc::new(update);
     // split vie wthing would go here, see also update.piece

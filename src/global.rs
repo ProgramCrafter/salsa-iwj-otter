@@ -27,10 +27,23 @@ impl Client {
 #[derive(Debug)]
 pub struct PreparedUpdate {
   pub gen : Generation,
-  pub client : ClientId,
-  pub piece : VisiblePieceId,
-  pub cseq : ClientSequence,
-  pub json : String,
+  pub u : PreparedUpdatePayload,
+}
+#[derive(Debug)]
+pub enum PreparedUpdatePayload {
+  PreparedPieceUpdate {
+    client : ClientId,
+    sameclient_cseq : ClientSequence,
+    piece : VisiblePieceId,
+    json : String,
+  },
+}
+pub use PreparedUpdatePayload::*;
+
+impl PreparedUpdatePayload {
+  pub fn json_len(&self) -> usize { match self {
+    &PreparedPieceUpdate { ref json, .. } => json.len(),
+  } }
 }
 
 #[derive(Debug,Default)]

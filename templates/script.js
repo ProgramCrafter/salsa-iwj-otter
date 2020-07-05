@@ -210,6 +210,26 @@ function drag_cancel() {
   drag_uelem = null;
 }
 
+// ----- logs -----
+
+messages.LogUpdate = function(data) {
+  lastent = logdiv.lastElementChild;
+  in_scrollback =
+    // inspired by
+    //   https://stackoverflow.com/questions/487073/how-to-check-if-element-is-visible-after-scrolling/21627295#21627295
+    // rejected
+    //   https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API
+    lastent.getBoundingClientRect().bottom >
+    logdiv.getBoundingClientRect().bottom;
+
+  console.log('LOG UPDATE ',in_scrollback,data);
+
+  if (!in_scrollback) {
+    lastent = logdiv.lastElementChild;
+    lastent.scrollIntoView();
+  }
+}
+
 // ----- test counter, startup -----
 
 messages.PieceUpdate = function(data) {
@@ -238,6 +258,7 @@ function startup() {
   status_node.innerHTML = 'js-done'
   dragthresh = 5;
   space = document.getElementById('space');
+  logdiv = document.getElementById("log");
   svg_ns = space.getAttribute('xmlns');
 
   es = new EventSource("/_/updates/"+ctoken+'/'+gen);
