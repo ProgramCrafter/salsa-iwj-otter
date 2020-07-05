@@ -37,6 +37,7 @@ pub struct PieceRenderInstructions {
 pub type VisiblePieceIdSvgIds = &'static [&'static str];
 
 impl PieceRenderInstructions {
+  pub fn id_use(&self) -> String { format!("use{}", self.id) }
   pub fn id_piece(&self) -> String { format!("piece{}", self.id) }
   pub fn id_select(&self) -> String { format!("select{}", self.id) }
   pub fn id_x(&self, w : &str) -> String { format!("def.{}.{}", self.id, w) }

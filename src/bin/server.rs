@@ -92,8 +92,8 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       alldefs.push((pri.id, defs));
 
       uses.push(format!(
-        r##"<use id="use{}" href="#{}" data-piece="{}" data-gplayer="" x="{}" y="{}"/>"##,
-                        pri.id_piece(),
+        r##"<use id="{}" href="#{}" data-piece="{}" data-gplayer="" x="{}" y="{}"/>"##,
+                        pri.id_use(),
                         pri.id_piece(),
                         pri.id,
                         pr.pos[0], pr.pos[1]));
