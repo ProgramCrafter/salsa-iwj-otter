@@ -197,12 +197,13 @@ function startup() {
     var k = Object.keys(j)[0];
     messages[k](j[k]);
   }
-  es.oncommsworking = function(event) {
-    status_node.innerHTML = data.value;
-  }
-  es.onrecorded = function(event) {
+  es.addEventListener('commsworking', function(event) {
+    console.log('GOTDATA');
+    status_node.innerHTML = event.data;
+  });
+  es.addEventListener('recorded', function(event) {
     xxx_recorded();
-  }
+  });
   es.onerror = function(e) {
     console.log('FOO',e,es);
     json_report_error({

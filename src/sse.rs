@@ -41,6 +41,7 @@ struct UpdateReader {
   client : ClientId,
   need_flush : bool,
   init_confirmation_send : iter::Once<()>,
+  keepalives : Wrapping<u32>,
   to_send : UpdateId,
   ami : Arc<Mutex<Instance>>,
 }
@@ -66,11 +67,9 @@ impl Read for UpdateReader {
     let mut buf = orig_buf.as_mut();
 
     if self.init_confirmation_send.next().is_some() {
-      write!(buf, r#"
-data: server online
-
-"#)?;
-/*event: commsworking*/
+      write!(buf, "event: commsworking\n\
+                   data: server online {} {} G{}\n\n",
+             self.player, self.client, self.to_send)?;
     }
 
     let pu = &mut amig.updates.get(self.player)
@@ -86,21 +85,16 @@ data: server online
       if next_len > buf.len() { break }
 
       if next.client == self.client {
-        write!(buf, r#"
-event: recorded
-data: "#)?;
+        write!(buf, "event: recorded\n\
+                     data: foo\n\n")?;
         serde_json::to_writer(&mut *buf, &RecordedConfirmation {
           gen : next.gen,
           piece : next.piece,
           cseq : next.client_seq,
         })?;
-        write!(buf, r#"
-"#)?;
       } else {
-        write!(buf, r#"
-id: {}
-data: {}
-"#,
+        write!(buf, "id: {}\n\
+                     data: {}\n\n",
                &self.to_send,
                &next.json)?;
       }
@@ -109,7 +103,7 @@ data: {}
     loop {
       let generated = orig_wanted - buf.len();
       if generated > 0 {
-        eprintln!("SENDING {} to {:?} {:?}:\n{}\n",
+        eprintln!("SENDING {} to {:?} {:?}: {:?}",
                   generated, &self.player, &self.client,
                   str::from_utf8(&orig_buf[0..generated]).unwrap());
         self.need_flush = true;
@@ -124,9 +118,13 @@ data: {}
 
       amig = cv.wait_timeout(amig, UPDATE_KEEPALIVE)
         .map_err(|_| em("poison"))?.0;
-      write!(buf,r#"
-: keepalive
-"#)?;
+
+      write!(buf, "event: commsworking\n\
+                   data: server online {} {} G{} K{}\n\n",
+             self.player, self.client, self.to_send, self.keepalives)?;
+      self.keepalives += Wrapping(1);
+/*
+      write!(buf,": keepalive\n\n")?; */
     }
   }
 }
@@ -198,7 +196,7 @@ struct APIForm {
  */
 
 #[derive(Debug)]
-struct DebugReader<T : Read>(T);
+pub struct DebugReader<T : Read>(pub T);
 
 impl<T : Read> Read for DebugReader<T> {
   fn read(&mut self, buf: &mut [u8]) -> Result<usize,io::Error> {
@@ -236,9 +234,11 @@ eprintln!("updates content iad={:?} player={:?} cl={:?} updates={:?}",
     UpdateReader {
       player, client, to_send, ami,
       need_flush : false,
+      keepalives : Wrapping(0),
       init_confirmation_send : iter::once(()),
     }
   };
   let content = BufReader::with_capacity(UPDATE_READER_SIZE, content);
-  DebugReader(content)
+  //DebugReader(content)
+  content
 }

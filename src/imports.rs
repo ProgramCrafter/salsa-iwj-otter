@@ -13,6 +13,7 @@ pub use std::str::FromStr;
 pub use std::iter;
 pub use std::iter::repeat_with;
 pub use std::collections::VecDeque;
+pub use std::num::Wrapping;
 
 pub use thiserror::Error;
 pub use anyhow::{Context,anyhow};
