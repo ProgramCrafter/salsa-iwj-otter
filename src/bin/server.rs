@@ -152,16 +152,15 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
       id : vpiece, 
       face : p.face,
     };
-    let json = UpdatePayload::PieceUpdate(vpiece, p.mk_update(&pri));
-    let json = serde_json::to_string(&json).expect("convert to json");
+    let op = PieceUpdateOp::Modify(p.prep_piecestate(&pri));
     let update = PreparedUpdate {
       gen,
-      u : PreparedPieceUpdate {
+      us : vec![ PreparedUpdateEntry::Piece {
         client,
         sameclient_cseq : form.cseq,
         piece : vpiece,
-        json,
-      },
+        op,
+      }],
     };
     let update = Arc::new(update);
     // split vie wthing would go here, see also update.piece

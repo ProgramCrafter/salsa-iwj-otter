@@ -61,6 +61,13 @@ pub struct PieceRecord {
   pub gen_before_lastclient : Generation,
 }
 
+#[derive(Debug,Serialize)]
+pub struct PreparedPieceState {
+  pub pos : Pos,
+  pub held : Option<PlayerId>,
+  pub svg : String,
+}
+
 impl PieceRecord {
   pub fn make_defs(&self, pri : &PieceRenderInstructions) -> String {
     let pr = self;
@@ -75,11 +82,12 @@ impl PieceRecord {
     defs
   }
 
-  pub fn mk_update(&self, pri : &PieceRenderInstructions) -> PieceUpdate {
-    PieceUpdate {
+  pub fn prep_piecestate(&self, pri : &PieceRenderInstructions)
+                         -> PreparedPieceState {
+    PreparedPieceState {
       pos        : self.pos,
       held       : self.held,
-      svgs       : self.make_defs(pri),
+      svg        : self.make_defs(pri),
       // xxx want all piece's stuff in the same def
     }
   }

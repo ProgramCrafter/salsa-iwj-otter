@@ -18,33 +18,60 @@ pub struct Client {
   pub player : PlayerId,
 }
 
-impl Client {
-  pub fn transmit_update(&mut self, u : &Update) {
-    eprintln!("XXX not transmitting {:?}", &u);
-  }
-}
-
 #[derive(Debug)]
 pub struct PreparedUpdate {
   pub gen : Generation,
-  pub u : PreparedUpdatePayload,
+  pub us : Vec<PreparedUpdateEntry>,
 }
 #[derive(Debug)]
-pub enum PreparedUpdatePayload {
-  PreparedPieceUpdate {
+pub enum PreparedUpdateEntry {
+  Piece {
     client : ClientId,
     sameclient_cseq : ClientSequence,
     piece : VisiblePieceId,
-    json : String,
+    op : PieceUpdateOp<PreparedPieceState>,
+  },
+  Log {
   },
 }
-pub use PreparedUpdatePayload::*;
-
-impl PreparedUpdatePayload {
-  pub fn json_len(&self) -> usize { match self {
-    &PreparedPieceUpdate { ref json, .. } => json.len(),
-  } }
+impl PreparedUpdateEntry {
+  pub fn json_len(&self) -> usize {
+    use PreparedUpdateEntry::*;
+    match self {
+      Piece { ref op, .. } => {
+        50 +
+        op.new_state().map(|x| x.svg.len()).unwrap_or(0)
+      },
+      Log { .. } => {
+        todo!("json length of log")
+      }
+    }
+  }
 }
+impl PreparedUpdate {
+  pub fn json_len(&self) -> usize {
+    self.us.iter().map(|u| 20 + u.json_len()).sum()
+  }
+}
+
+#[derive(Debug,Serialize)]
+pub enum PieceUpdateOp<NS> {
+  Delete,
+  Insert(NS),
+  Modify(NS),
+  Move(Pos),
+}
+impl<NS> PieceUpdateOp<NS> {
+  pub fn new_state(&self) -> Option<&NS> {
+    use PieceUpdateOp::*;
+    match self {
+      Delete => None,
+      Insert(ns) => Some(ns),
+      Modify(ns) => Some(ns),
+      Move(_) => None,
+    }
+  }
+}      
 
 #[derive(Debug,Default)]
 pub struct PlayerUpdates {
