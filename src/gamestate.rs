@@ -61,6 +61,19 @@ pub struct PieceRecord {
 }
 
 impl PieceRecord {
+  pub fn make_defs(&self, pri : &PieceRenderInstructions) -> Vec<String> {
+    let pr = self;
+    let mut defs = vec![];
+    defs.push(format!(r##"<g id="{}">{}</g>"##,
+                      pri.id_piece(),
+                      pr.p.svg_piece(&pri)));
+    defs.push(format!(r##"<g id="{}" stroke="black" fill="none">{}</g>"##,
+                      pri.id_select(),
+                      pr.p.svg_select(&pri)));
+    defs.push(pr.p.svg_x_defs(&pri));
+    defs
+  }
+
   pub fn mk_update(&self) -> PieceUpdate {
     PieceUpdate {
       pos        : self.pos,

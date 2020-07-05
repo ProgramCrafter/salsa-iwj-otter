@@ -88,15 +88,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
         id : make_pieceid_visible(gpid),
         face : pr.face,
       };
-      let mut defs = vec![];
-      defs.push(format!(r##"<g id="{}">{}</g>"##,
-                        pri.id_piece(),
-                        pr.p.svg_piece(&pri)));
-      defs.push(format!(r##"<g id="{}" stroke="black" fill="none">{}</g>"##,
-                        pri.id_select(),
-                        pr.p.svg_select(&pri)));
-      defs.push(pr.p.svg_x_defs(&pri));
-
+      let defs = pr.make_defs(&pri);
       alldefs.push((pri.id, defs));
 
       uses.push(format!(
