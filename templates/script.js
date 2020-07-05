@@ -8,7 +8,8 @@
 // In svg toplevel
 //
 //   uelem
-//      <use href="#piece{}" x= y= >
+//      #use{}
+//      <use id="use{}", href="#piece{}" x= y= >
 //         .piece   piece id (static)
 //         .gplayer  grabbed user (player id string, or "")
 //      container to allow quick movement and hang stuff off
@@ -213,6 +214,19 @@ function drag_cancel() {
 
 messages.PieceUpdate = function(data) {
   console.log('PIECE UPDATE ',data)
+  var piece = data[0];
+  var info = data [1];
+  var uelem = document.getElementById('use'+piece);
+  var delem = document.getElementById('defs'+piece);
+  delem.innerHTML = info.svgs;
+  uelem.setAttributeNS(null, "x", info.pos[0]);
+  uelem.setAttributeNS(null, "y", info.pos[1]);
+  // xxx do something about conflict
+  if (info.held == '') {
+    set_ungrab(uelem, piece);
+  } else {
+    set_grab(uelem, piece, info.held);
+  }
 }
 
 function startup() {
