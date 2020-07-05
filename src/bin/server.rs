@@ -163,6 +163,7 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
       }],
     };
     let update = Arc::new(update);
+    eprintln!("UPDATE {:?}", &update);
     // split vie wthing would go here, see also update.piece
     p.gen_lastclient = gen;
     for (_tplayer, tplupdates) in &mut g.updates {

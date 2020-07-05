@@ -113,6 +113,7 @@ impl Read for UpdateReader {
       write!(buf, "]\n\
                    id: {}\n\n",
              &self.to_send)?;
+      self.to_send.try_increment().unwrap();
     }
 
     loop {

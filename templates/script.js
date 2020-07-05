@@ -38,6 +38,7 @@
 
 general_timeout = 10000;
 messages = Object();
+pieceops = Object();
 var our_dnd_type = "text/puvnex-game-server-dummy";
 api_queue = [];
 api_posting = false;
@@ -232,10 +233,16 @@ messages.LogUpdate = function(data) {
 
 // ----- test counter, startup -----
 
-messages.PieceUpdate = function(data) {
-  console.log('PIECE UPDATE ',data)
-  var piece = data[0];
-  var info = data [1];
+messages.Piece = function(j) {
+  console.log('PIECE UPDATE ',j)
+  var piece = j.piece;
+  var m = j.op;
+  var k = Object.keys(m)[0];
+  pieceops[k](piece, m[k]);
+}
+
+pieceops.Modify = function (piece, info) {
+  console.log('PIECE UPDATE MODIFY ',piece,info)
   var uelem = document.getElementById('use'+piece);
   var delem = document.getElementById('defs'+piece);
   delem.innerHTML = info.svgs;
@@ -247,6 +254,15 @@ messages.PieceUpdate = function(data) {
   } else {
     set_grab(uelem, piece, info.held);
   }
+  console.log('MODIFY DONE');
+}
+
+messages.Recorded = function(j) {
+  var pelem = document.getElementById('piece'+j.piece);
+  if (j.cseq >= pelem.dataset.cseq) {
+    delete pelem.dataset.cseq;
+  }
+  gen = j.gen;
 }
 
 function startup() {
@@ -265,20 +281,16 @@ function startup() {
   es.onmessage = function(event) {
     console.log('GOTEVE', event)
     var j = JSON.parse(event.data);
-    var k = Object.keys(j)[0];
-    messages[k](j[k]);
+    var tgen = j.pop();
+    for (var m of j) {
+      var k = Object.keys(m)[0];
+      messages[k](m[k]);
+    }
+    gen = tgen;
   }
   es.addEventListener('commsworking', function(event) {
     console.log('GOTDATA', event);
     status_node.innerHTML = event.data;
-  });
-  es.addEventListener('recorded', function(event) {
-    var j = JSON.parse(event.data);
-    var pelem = document.getElementById('piece'+j.piece);
-    if (j.cseq >= pelem.dataset.cseq) {
-      delete pelem.dataset.cseq;
-    }
-    gen = j.gen;
   });
   es.onerror = function(e) {
     console.log('FOO',e,es);
