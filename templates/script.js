@@ -198,10 +198,11 @@ function startup() {
     messages[k](j[k]);
   }
   es.addEventListener('commsworking', function(event) {
-    console.log('GOTDATA');
+    console.log('GOTDATA', event);
     status_node.innerHTML = event.data;
   });
   es.addEventListener('recorded', function(event) {
+//    var j = JSON.parse(event.data);
     xxx_recorded();
   });
   es.onerror = function(e) {

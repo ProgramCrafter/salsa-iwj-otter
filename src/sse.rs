@@ -86,12 +86,13 @@ impl Read for UpdateReader {
 
       if next.client == self.client {
         write!(buf, "event: recorded\n\
-                     data: foo\n\n")?;
-        serde_json::to_writer(&mut *buf, &RecordedConfirmation {
+                     data: ")?;
+        serde_json::to_writer(&mut buf, &RecordedConfirmation {
           gen : next.gen,
           piece : next.piece,
           cseq : next.client_seq,
         })?;
+        write!(buf, "\n\n")?;
       } else {
         write!(buf, "id: {}\n\
                      data: {}\n\n",
