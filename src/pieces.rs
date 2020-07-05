@@ -15,7 +15,7 @@ const SELECT_SCALE : f64 = 1.1;
 
 impl Piece for SimpleShape {
   fn svg_piece(&self, pri : &PieceRenderInstructions) -> String {
-    format!(r##"<g fill="{}"><use href="#{}"/></g>"##,
+    format!(r##"<use fill="{}" href="#{}"/>"##,
             self.colours[pri.face],
             pri.id_x("base"))
   }
