@@ -15,20 +15,12 @@ const SELECT_SCALE : f64 = 1.1;
 
 impl Piece for SimpleShape {
   fn svg_piece(&self, pri : &PieceRenderInstructions) -> String {
-    format!(r##"
-              <g fill="{}">
-                <use href="#{}"/>
-              </g>
-            "##,
+    format!(r##"<g fill="{}"><use href="#{}"/></g>"##,
             self.colours[pri.face],
             pri.id_x("base"))
   }
   fn svg_select(&self, pri : &PieceRenderInstructions) -> String {
-    format!(r##"
-              <g transform="scale({})">
-	        <use href="#{}"/>
-              </g>
-            "##,
+    format!(r##"<g transform="scale({})"><use href="#{}"/></g>"##,
             SELECT_SCALE,
             pri.id_x("base"))
   }
