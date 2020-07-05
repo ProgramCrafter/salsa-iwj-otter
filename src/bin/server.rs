@@ -56,6 +56,7 @@ struct SessionRenderContext {
   gen : Generation,
   defs : Vec<String>,
   uses : Vec<String>,
+  nick : String,
 }
 
 #[derive(Deserialize)]
@@ -69,7 +70,8 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
   let player = iad.ident;
   let c = {
     let mut ig = iad.g.lock()?;
-    let _pl = ig.gs.players.byid_mut(player)?;
+    let ig = &mut *ig;
+    let pl = ig.gs.players.byid_mut(player)?;
     let cl = Client { player };
     let client = ig.clients.insert(cl);
 
@@ -114,6 +116,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       player,
       defs,
       uses,
+      nick : pl.nick.clone(),
     }
   };
   Ok(Template::render("test",&c))

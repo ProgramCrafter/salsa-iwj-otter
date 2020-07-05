@@ -3,7 +3,7 @@
       data-us="{{player}}"
       data-gen="{{gen}}"
       >
-<h1>Hi!</h1>
+<h1>Hi {{nick}}!</h1>
 <div id="error"></div>
 <p>
 <div id="status">nothing</div>
