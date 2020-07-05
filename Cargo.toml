@@ -41,9 +41,6 @@ rocket_contrib = { path = "/home/ian/Rustup/Game/rocket/contrib/lib", default-fe
 
 vecdeque-stableix = "0"
 
-[patch.crates-io]
-hyper = { path = "/home/ian/Rustup/Game/hyper" } 
-
 #hmac = "0.7"
 #base64 = "0.10"
 #sha2 = "0.8"
