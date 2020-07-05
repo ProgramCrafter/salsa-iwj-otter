@@ -28,7 +28,7 @@ impl Client {
 pub struct PreparedUpdate {
   pub gen : Generation,
   pub client : ClientId,
-  pub piece : PieceId,
+  pub piece : VisiblePieceId,
   pub cseq : ClientSequence,
   pub json : String,
 }

@@ -161,12 +161,12 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
     let update = PreparedUpdate {
       gen,
       client,
-      piece,
+      piece : form.piece, // split view needs modified value!
       cseq : form.cseq,
       json,
     };
     let update = Arc::new(update);
-    // split vie wthing would go here
+    // split vie wthing would go here, see also update.piece
     p.gen_lastclient = gen;
     for (_tplayer, tplupdates) in &mut g.updates {
       tplupdates.log.push_back(update.clone());

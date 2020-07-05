@@ -49,7 +49,7 @@ struct UpdateReader {
 #[derive(Serialize)]
 struct RecordedConfirmation {
   gen : Generation,
-  piece : PieceId,
+  piece : VisiblePieceId,
   cseq : ClientSequence,
 }
 
