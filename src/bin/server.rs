@@ -110,7 +110,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
     eprintln!("SRC {:?}", &src);
     src
   };
-  Ok(Template::render("test",&c))
+  Ok(Template::render("session",&c))
 }
 
 #[derive(Debug,Serialize,Deserialize)]
