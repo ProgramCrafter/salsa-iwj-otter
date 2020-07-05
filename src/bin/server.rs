@@ -146,12 +146,17 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
       p.gen_before_lastclient = p.gen_lastclient;
       p.lastclient = client;
     }
-    let json = UpdatePayload::PieceUpdate(piece, p.mk_update());
+    let vpiece = form.piece; // split view needs modified value!
+    let pri = PieceRenderInstructions {
+      id : vpiece, 
+      face : p.face,
+    };
+    let json = UpdatePayload::PieceUpdate(vpiece, p.mk_update(&pri));
     let json = serde_json::to_string(&json).expect("convert to json");
     let update = PreparedUpdate {
       gen,
       client,
-      piece : form.piece, // split view needs modified value!
+      piece : vpiece,
       cseq : form.cseq,
       json,
     };

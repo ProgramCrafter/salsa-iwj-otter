@@ -15,15 +15,15 @@ pub struct Update {
 pub struct PieceUpdate {
   pub pos : Pos,
   pub held : Option<PlayerId>,
-//  pub svgs : Vec<String,String>;
+  pub svgs : String,
 }
 
 #[derive(Debug,Serialize)]
 pub enum UpdatePayload {
   NoUpdate,
   ClientSequence(PieceId, ClientSequence),
-  PieceDelete(PieceId),
-  PieceInsert(PieceId, PieceUpdate),
-  PieceUpdate(PieceId, PieceUpdate),
-  PieceMove(PieceId, Pos),
+  PieceDelete(VisiblePieceId),
+  PieceInsert(VisiblePieceId, PieceUpdate),
+  PieceUpdate(VisiblePieceId, PieceUpdate),
+  PieceMove(VisiblePieceId, Pos),
 }

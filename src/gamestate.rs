@@ -74,10 +74,11 @@ impl PieceRecord {
     defs
   }
 
-  pub fn mk_update(&self) -> PieceUpdate {
+  pub fn mk_update(&self, pri : &PieceRenderInstructions) -> PieceUpdate {
     PieceUpdate {
       pos        : self.pos,
       held       : self.held,
+      svgs       : self.make_defs(pri),
       // xxx want all piece's stuff in the same def
     }
   }
