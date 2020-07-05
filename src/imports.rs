@@ -1,6 +1,7 @@
 
 pub use std::io;
 pub use std::io::{BufReader,Read,Write};
+pub use std::fmt::Write as _;
 pub use std::fmt::{self,Display,Debug};
 pub use std::thread;
 pub use std::time::Duration;

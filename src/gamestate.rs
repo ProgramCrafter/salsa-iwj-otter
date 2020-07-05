@@ -61,16 +61,16 @@ pub struct PieceRecord {
 }
 
 impl PieceRecord {
-  pub fn make_defs(&self, pri : &PieceRenderInstructions) -> Vec<String> {
+  pub fn make_defs(&self, pri : &PieceRenderInstructions) -> String {
     let pr = self;
-    let mut defs = vec![];
-    defs.push(format!(r##"<g id="{}">{}</g>"##,
-                      pri.id_piece(),
-                      pr.p.svg_piece(&pri)));
-    defs.push(format!(r##"<g id="{}" stroke="black" fill="none">{}</g>"##,
-                      pri.id_select(),
-                      pr.p.svg_select(&pri)));
-    defs.push(pr.p.svg_x_defs(&pri));
+    let mut defs = String::new();
+    write!(defs, r##"<g id="{}">{}</g>"##,
+           pri.id_piece(),
+           pr.p.svg_piece(&pri)).unwrap();
+    write!(defs, r##"<g id="{}" stroke="black" fill="none">{}</g>"##,
+           pri.id_select(),
+           pr.p.svg_select(&pri)).unwrap();
+    write!(defs, "{}", pr.p.svg_x_defs(&pri)).unwrap();
     defs
   }
 

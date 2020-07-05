@@ -55,7 +55,7 @@ struct SessionRenderContext {
   player : PlayerId,
   gen : Generation,
   uses : Vec<String>,
-  defs : Vec<(VisiblePieceId,Vec<String>)>,
+  defs : Vec<(VisiblePieceId,String)>,
   nick : String,
 }
 

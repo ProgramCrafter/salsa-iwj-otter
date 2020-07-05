@@ -18,11 +18,7 @@
       {{piece}}
 {%- endfor %}
 {%- for piece in defs %}
-      <defs id="defs{{ piece.0 }}">
-{%-   for item in piece.1 %}
-        {{item}}
-{%-   endfor %}
-      </defs>
+      <defs id="defs{{ piece.0 }}">{{ piece.1 }}</defs>
 {%- endfor %}
     </svg>
 
