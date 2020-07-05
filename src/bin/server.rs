@@ -54,8 +54,8 @@ struct SessionRenderContext {
   ctoken : String,
   player : PlayerId,
   gen : Generation,
-  defs : Vec<String>,
   uses : Vec<String>,
+  defs : Vec<(VisiblePieceId,Vec<String>)>,
   nick : String,
 }
 
@@ -82,12 +82,13 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
     let ctoken = record_token(ciad);
 
     let mut uses = vec![];
-    let mut defs = vec![];
+    let mut alldefs = vec![];
     for (gpid, pr) in &ig.gs.pieces {
       let pri = PieceRenderInstructions {
         id : make_pieceid_visible(gpid),
         face : pr.face,
       };
+      let mut defs = vec![];
       defs.push(format!(r##"<g id="{}">{}</g>"##,
                         pri.id_piece(),
                         pr.p.svg_piece(&pri)));
@@ -103,6 +104,8 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
                         pr.p.svg_select(&pri)));
       defs.push(pr.p.svg_x_defs(&pri));
 
+      alldefs.push((pri.id, defs));
+
       uses.push(format!(
         r##"<use href="#{}" data-piece="{}" data-gplayer="" x="{}" y="{}"/>"##,
                         pri.id_piece(),
@@ -110,14 +113,16 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
                         pr.pos[0], pr.pos[1]));
     }
 
-    SessionRenderContext {
+    let src = SessionRenderContext {
       ctoken : ctoken.0,
       gen : ig.gs.gen,
       player,
-      defs,
+      defs : alldefs,
       uses,
       nick : pl.nick.clone(),
-    }
+    };
+    eprintln!("SRC {:?}", &src);
+    src
   };
   Ok(Template::render("test",&c))
 }

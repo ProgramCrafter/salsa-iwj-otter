@@ -13,7 +13,11 @@
 //         .gplayer  grabbed user (player id string, or "")
 //      container to allow quick movement and hang stuff off
 //
-// In defs
+//   delem
+//      #defs{}
+//      <def id="defs{}">
+//
+// And in each delem
 //
 //   pelem
 //   #piece{}
