@@ -114,7 +114,7 @@ pub struct Player {
 
 #[derive(Debug,Serialize)]
 pub struct LogEntry {
-  pub msg : String,
+  pub html : String,
 }
 
 pub fn xxx_gamestate_init() -> GameState {

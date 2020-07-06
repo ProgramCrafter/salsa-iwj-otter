@@ -42,7 +42,7 @@ impl PreparedUpdateEntry {
         op.new_state().map(|x| x.svg.len()).unwrap_or(0)
       },
       Log(logent) => {
-        logent.msg.as_bytes().len() * 3
+        logent.html.as_bytes().len() * 3
       }
     }
   }

@@ -42,7 +42,6 @@
     Log item 10
     <br>
     Log item 11
-    <div id="log12">Log item 12</id>
-  </p>
+    <div id="log12">Log item 12</div>
 
 </body>

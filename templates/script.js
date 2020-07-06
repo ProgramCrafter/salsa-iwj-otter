@@ -224,6 +224,9 @@ messages.Log = function(j) {
     logdiv.getBoundingClientRect().bottom;
 
   console.log('LOG UPDATE ',in_scrollback, j);
+  var nelem = document.createElement('div');
+  nelem.innerHTML = j.html;
+  logdiv.appendChild(nelem);
 
   if (!in_scrollback) {
     lastent = logdiv.lastElementChild;

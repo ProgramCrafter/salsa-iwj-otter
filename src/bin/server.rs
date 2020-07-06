@@ -157,11 +157,12 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
       face : p.face,
     };
     let logentry = Arc::new(LogEntry {
-      msg : format!("{} grasped {}",
-                    &htmlescape::encode_minimal(&pl.nick),
-                    p.describe_html(&pri)),
-                    // split view: pri should be global
-                    // (currently log is one global view)
+      html : format!("{} grasped {}",
+                     &htmlescape::encode_minimal(&pl.nick),
+                     p.describe_html(&pri
+                                     // split view: pri should be global
+                                     // (currently log is one global view)
+                     )),
     });
     gs_log.push((gen,logentry.clone()));
     let op = PieceUpdateOp::Modify(p.prep_piecestate(&pri));
