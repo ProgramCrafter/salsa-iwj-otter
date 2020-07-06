@@ -125,14 +125,13 @@ struct ApiPiece<O : ApiPieceOp> {
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiPieceGrab {
 }
-trait ApiPieceOp {
+trait ApiPieceOp : Debug {
 }
 impl ApiPieceOp for ApiPieceGrab { }
 
-#[post("/_/api/grab", format="json", data="<form>")]
 #[throws(OE)]
-fn api_grab(form : Json<ApiPiece<ApiPieceGrab>>)
-            -> impl response::Responder<'static> {
+fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
+                   -> impl response::Responder<'static> {
   let iad = lookup_token(&form.ctoken)?;
   let client = iad.ident;
   let mut g = iad.g.lock()?;
@@ -202,6 +201,13 @@ fn api_grab(form : Json<ApiPiece<ApiPieceGrab>>)
   })();
   eprintln!("API {:?} => {:?}", &form, &r);
   ""
+}
+
+#[post("/_/api/grab", format="json", data="<form>")]
+#[throws(OE)]
+fn api_grab(form : Json<ApiPiece<ApiPieceGrab>>)
+            -> impl response::Responder<'static> {
+  api_piece_op(form)
 }
 
 #[derive(Debug,Serialize,Deserialize)]
