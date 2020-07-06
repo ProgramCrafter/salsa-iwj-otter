@@ -266,16 +266,37 @@ impl ApiPieceOp for ApiPieceGrab {
     (update, vec![logent])
   }
 }
+
 #[derive(Debug,Serialize,Deserialize)]
-struct ApiUngrab {
-  t : String,
-  p : VisiblePieceId,
+struct ApiPieceUngrab {
 }
 #[post("/_/api/ungrab", format="json", data="<form>")]
 #[throws(OE)]
-fn api_ungrab(form : Json<ApiUngrab>) -> impl response::Responder<'static> {
-  eprintln!("API {:?}", &form);
-  ""
+fn api_ungrab(form : Json<ApiPiece<ApiPieceUngrab>>)
+              -> impl response::Responder<'static> {
+  api_piece_op(form)
+}
+impl ApiPieceOp for ApiPieceUngrab {
+  #[throws(GameError)]
+  fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
+        lens: &dyn Lens)
+        -> (PieceUpdateOp<()>, Vec<LogEntry>) {
+    let pl = gs.players.byid(player).unwrap();
+    let pc = gs.pieces.byid_mut(piece).unwrap();
+
+    if pc.held != Some(player) { Err(GameError::PieceHeld)? }
+    pc.held = None;
+    
+    let update = PieceUpdateOp::Modify(());
+
+    let logent = LogEntry {
+      html : format!("{} released {}",
+                     &htmlescape::encode_minimal(&pl.nick),
+                     pc.describe_html(&lens.log_pri(piece, pc))),
+    };
+
+    (update, vec![logent])
+  }
 }
 
 #[derive(Debug,Serialize,Deserialize)]
