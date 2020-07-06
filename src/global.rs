@@ -70,6 +70,16 @@ impl<NS> PieceUpdateOp<NS> {
       Move(_) => None,
     }
   }
+  pub fn map_new_state<NS2,F: FnOnce(NS) -> NS2>(self, f:F)
+                            -> PieceUpdateOp<NS2> {
+    use PieceUpdateOp::*;
+    match self {
+      Delete => Delete,
+      Insert(ns) => Insert(f(ns)),
+      Modify(ns) => Modify(f(ns)),
+      Move(pos) => Move(pos),
+    }
+  }
 }      
 
 #[derive(Debug,Default)]

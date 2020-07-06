@@ -22,13 +22,7 @@ pub fn make_pieceid_visible(p : PieceId) -> VisiblePieceId {
   VisiblePieceId(kd)
 }
 
-pub fn decode_visible_pieceid(p : VisiblePieceId) -> PieceId {
-  // xxx need to do censorship mapping here
-  let kd : slotmap::KeyData = p.into();
-  PieceId(kd)
-}
-
-#[derive(Debug)]
+#[derive(Debug,Copy,Clone)]
 pub struct PieceRenderInstructions {
   pub id : VisiblePieceId,
   pub face : FaceId,

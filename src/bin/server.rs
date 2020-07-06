@@ -126,8 +126,61 @@ struct ApiPiece<O : ApiPieceOp> {
 struct ApiPieceGrab {
 }
 trait ApiPieceOp : Debug {
+  #[throws(GameError)]
+  fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
+        lens: &dyn Lens)
+        -> (PieceUpdateOp<()>, Vec<LogEntry>);
 }
-impl ApiPieceOp for ApiPieceGrab { }
+
+trait Lens {
+  fn log_pri(&self, piece: PieceId, pc: &PieceRecord)
+             -> PieceRenderInstructions;
+  fn svg_pri(&self, piece: PieceId, pc: &PieceRecord, player: PlayerId)
+             -> PieceRenderInstructions;
+  fn decode_visible_pieceid(&self, vpiece: VisiblePieceId, player: PlayerId)
+                            -> PieceId;
+}
+struct TransparentLens { }
+impl Lens for TransparentLens {
+  fn log_pri(&self, piece: PieceId, pc: &PieceRecord)
+             -> PieceRenderInstructions {
+    let kd : slotmap::KeyData = piece.into();
+    let id = VisiblePieceId(kd);
+    PieceRenderInstructions { id, face : pc.face }
+  }
+  fn svg_pri(&self, piece: PieceId, pc: &PieceRecord, _player: PlayerId)
+             -> PieceRenderInstructions {
+    self.log_pri(piece, pc)
+  }
+  fn decode_visible_pieceid(&self, vpiece: VisiblePieceId, _player: PlayerId)
+                            -> PieceId {
+    let kd : slotmap::KeyData = vpiece.into();
+    PieceId::from(kd)
+  }
+}
+
+impl ApiPieceOp for ApiPieceGrab {
+  #[throws(GameError)]
+  fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
+        lens: &dyn Lens)
+        -> (PieceUpdateOp<()>, Vec<LogEntry>) {
+    let pl = gs.players.byid(player).unwrap();
+    let pc = gs.pieces.byid_mut(piece).unwrap();
+
+    if pc.held.is_some() { Err(GameError::PieceHeld)? }
+    pc.held = Some(player);
+    
+    let update = PieceUpdateOp::Modify(());
+
+    let logent = LogEntry {
+      html : format!("{} grasped {}",
+                     &htmlescape::encode_minimal(&pl.nick),
+                     pc.describe_html(&lens.log_pri(piece, pc))),
+    };
+
+    (update, vec![logent])
+  }
+}
 
 #[throws(OE)]
 fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
@@ -139,67 +192,72 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   let cl = &g.clients.byid(client)?;
   // ^ can only fail if we raced
   let player = cl.player;
-  let pl = g.gs.players.byid(player)?;
-  let g_updates = &mut g.updates;
-  let gs_pieces = &mut g.gs.pieces;
-  let gs_gen = &mut g.gs.gen;
-  let gs_log = &mut g.gs.log;
-  let r : Result<(),GameError> = (||{
-    let piece = decode_visible_pieceid(form.piece);
-    let p = gs_pieces.byid_mut(piece)?;
+  let gs = &mut g.gs;
+  let _ = gs.players.byid(player)?;
+  let lens = TransparentLens { };
+  let piece = lens.decode_visible_pieceid(form.piece, player);
+
+  match (||{
+    let pc = gs.pieces.byid_mut(piece)?;
+
     let q_gen = form.gen;
     let u_gen =
-      if client == p.lastclient { p.gen_lastclient }
-      else { p.gen_before_lastclient };
+      if client == pc.lastclient { pc.gen_lastclient }
+      else { pc.gen_before_lastclient };
     if u_gen > q_gen { Err(GameError::Conflict)? }
-    if p.held != None { Err(GameError::PieceHeld)? };
-    p.held = Some(player);
-    gs_gen.increment();
-    let gen = *gs_gen;
-    if client != p.lastclient {
-      p.gen_before_lastclient = p.gen_lastclient;
-      p.lastclient = client;
-    }
-    let vpiece = form.piece; // split view needs modified value!
-    let pri = PieceRenderInstructions {
-      id : vpiece, 
-      face : p.face,
+    if pc.held != None && pc.held != Some(player) {
+      Err(GameError::PieceHeld)?
     };
-    let logentry = Arc::new(LogEntry {
-      html : format!("{} grasped {}",
-                     &htmlescape::encode_minimal(&pl.nick),
-                     p.describe_html(&pri
-                                     // split view: pri should be global
-                                     // (currently log is one global view)
-                     )),
-    });
-    gs_log.push((gen,logentry.clone()));
-    let op = PieceUpdateOp::Modify(p.prep_piecestate(&pri));
-    let update = PreparedUpdate {
-      gen,
-      us : vec![
-        PreparedUpdateEntry::Piece {
-          client,
-          sameclient_cseq : form.cseq,
-          piece : vpiece,
-          op,
-        },
-        PreparedUpdateEntry::Log (
-          logentry,
-        ),
-      ],
-    };
-    let update = Arc::new(update);
-    eprintln!("UPDATE {:?}", &update);
-    // split vie wthing would go here, see also update.piece
-    p.gen_lastclient = gen;
-    for (_tplayer, tplupdates) in g_updates {
-      tplupdates.log.push_back(update.clone());
-      tplupdates.cv.notify_all();
+    let (update, logents) = form.op.op(gs,player,piece,&lens)?;
+    Ok((update, logents))
+  })() {
+    Err(err) => {
+      let err : GameError = err;
+      eprintln!("API {:?} => {:?}", &form, &err);
+    },
+    Ok((update, logents)) => {
+      let pc = gs.pieces.byid_mut(piece).expect("piece deleted by op!");
+
+      gs.gen.increment();
+      let gen = gs.gen;
+      if client != pc.lastclient {
+        pc.gen_before_lastclient = pc.gen_lastclient;
+        pc.lastclient = client;
+      }
+
+      let pri_for_all = lens.svg_pri(piece,pc,Default::default());
+
+      let update = update.map_new_state(|_|{
+        pc.prep_piecestate(&pri_for_all)
+      });
+
+      let mut us = Vec::with_capacity(1 + logents.len());
+
+      us.push(PreparedUpdateEntry::Piece {
+        client,
+        sameclient_cseq : form.cseq,
+        piece : pri_for_all.id,
+        op : update,
+      });
+
+      for logentry in logents {
+        let logentry = Arc::new(logentry);
+        gs.log.push((gen, logentry.clone()));
+        us.push(PreparedUpdateEntry::Log(logentry));
+      }
+
+      let update = PreparedUpdate { gen, us, };
+      let update = Arc::new(update);
+      eprintln!("UPDATE {:?}", &update);
+
+      pc.gen_lastclient = gen;
+      for (_tplayer, tplupdates) in &mut g.updates {
+        tplupdates.log.push_back(update.clone());
+        tplupdates.cv.notify_all();
+      }
+      eprintln!("API {:?} OK", &form);
     }
-    Ok(())
-  })();
-  eprintln!("API {:?} => {:?}", &form, &r);
+  }
   ""
 }
 
