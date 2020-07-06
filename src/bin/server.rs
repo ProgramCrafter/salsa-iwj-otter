@@ -119,7 +119,6 @@ struct ApiPiece<O : ApiPieceOp> {
   piece : VisiblePieceId,
   gen : Generation,
   cseq : ClientSequence,
-  #[serde(flatten)]
   op : O,
 }
 trait ApiPieceOp : Debug {

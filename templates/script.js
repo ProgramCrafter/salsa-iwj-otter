@@ -96,6 +96,18 @@ function api_posted() {
   api_check();
 }
 
+function api_piece(meth, piece, pelem, op) {
+  cseq += 1;
+  pelem.dataset.cseq = cseq;
+  api(meth, {
+    ctoken : ctoken,
+    piece : piece,
+    gen : gen,
+    cseq : cseq,
+    op : op,
+  })
+}
+
 // ----- clicking/dragging pieces -----
 
 const DRAGGING = { // bitmask
@@ -124,16 +136,9 @@ function drag_mousedown(e) {
   if (gplayer == us) {
     dragging = DRAGGING.MAYBE_UNGRAB;
   } else {
-    cseq += 1;
     dragging = DRAGGING.MAYBE_GRAB;
     pelem = set_grab(drag_uelem, piece, us);
-    pelem.dataset.cseq = cseq;
-    api('grab', {
-      ctoken : ctoken,
-      piece : piece,
-      gen : gen,
-      cseq : cseq,
-    })
+    api_piece('grab', piece, pelem, { });
   }
 
   window.addEventListener('mousemove', drag_mousemove, true);
@@ -143,7 +148,7 @@ function drag_mousedown(e) {
 function set_grab(uelem, piece, owner) {
   uelem.dataset.gplayer = owner;
 //  var [p, piece] = 
-  pelem = piece_cleanup_grab(piece);
+  var pelem = piece_cleanup_grab(piece);
   var nelem = document.createElementNS(svg_ns,'use');
   nelem.setAttributeNS(null,'href','#select'+piece);
   nelem.setAttributeNS(null,'stroke-dasharray',"3 1  1 1  1 1");
@@ -153,7 +158,8 @@ function set_grab(uelem, piece, owner) {
 }
 function set_ungrab(uelem, piece) {
   uelem.dataset.gplayer = "";
-  piece_cleanup_grab(piece);
+  var pelem = piece_cleanup_grab(piece);
+  return pelem;
 }
 function piece_cleanup_grab(piece) {
   var pelem = document.getElementById('piece'+piece);
@@ -195,11 +201,8 @@ function drag_mouseup(e) {
   if (dragging == DRAGGING.MAYBE_UNGRAB ||
       dragging == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
     piece = drag_uelem.dataset.piece;
-    set_ungrab(drag_uelem, piece);
-    api('ungrab', {
-      ctoken : token,
-      piece : drag_uelem.dataset.piece,
-    });
+    var pelem = set_ungrab(drag_uelem, piece);
+    api_piece('ungrab', drag_uelem.dataset.piece, pelem, { });
   }
   drag_cancel(e);
 }
