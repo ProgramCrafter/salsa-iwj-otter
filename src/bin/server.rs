@@ -114,15 +114,25 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-struct ApiGrab {
+struct ApiPiece<O : ApiPieceOp> {
   ctoken : String,
   piece : VisiblePieceId,
   gen : Generation,
   cseq : ClientSequence,
+  #[serde(flatten)]
+  op : O,
 }
+#[derive(Debug,Serialize,Deserialize)]
+struct ApiPieceGrab {
+}
+trait ApiPieceOp {
+}
+impl ApiPieceOp for ApiPieceGrab { }
+
 #[post("/_/api/grab", format="json", data="<form>")]
 #[throws(OE)]
-fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
+fn api_grab(form : Json<ApiPiece<ApiPieceGrab>>)
+            -> impl response::Responder<'static> {
   let iad = lookup_token(&form.ctoken)?;
   let client = iad.ident;
   let mut g = iad.g.lock()?;
