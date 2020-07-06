@@ -185,12 +185,9 @@ function drag_mousemove(e) {
     var y = Math.round(doy + ddy);
     drag_uelem.setAttributeNS(null, "x", x);
     drag_uelem.setAttributeNS(null, "y", y);
-    //console.log(drag_uelem);
-    api_piece(api_delay ('m',{
-      t : token,
-      p : drag_uelem.dataset.piece,
-      l : [x, y],
-    });
+    var piece = drag_uelem.dataset.piece;
+    var pelem = document.getElementById('piece'+piece);
+    api_piece(api_delay, 'm', piece, pelem, [x, y] );
   }
 }
 
@@ -202,7 +199,7 @@ function drag_mouseup(e) {
       dragging == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
     piece = drag_uelem.dataset.piece;
     var pelem = set_ungrab(drag_uelem, piece);
-    api_piece(f, 'ungrab', drag_uelem.dataset.piece, pelem, { });
+    api_piece(api, 'ungrab', drag_uelem.dataset.piece, pelem, { });
   }
   drag_cancel(e);
 }
