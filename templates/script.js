@@ -255,7 +255,7 @@ pieceops.Modify = function (piece, info) {
   uelem.setAttributeNS(null, "x", info.pos[0]);
   uelem.setAttributeNS(null, "y", info.pos[1]);
   // xxx do something about conflict
-  if (info.held == '') {
+  if (info.held == null) {
     set_ungrab(uelem, piece);
   } else {
     set_grab(uelem, piece, info.held);
