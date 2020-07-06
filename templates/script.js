@@ -96,10 +96,10 @@ function api_posted() {
   api_check();
 }
 
-function api_piece(meth, piece, pelem, op) {
+function api_piece(f, meth, piece, pelem, op) {
   cseq += 1;
   pelem.dataset.cseq = cseq;
-  api(meth, {
+  f(meth, {
     ctoken : ctoken,
     piece : piece,
     gen : gen,
@@ -138,7 +138,7 @@ function drag_mousedown(e) {
   } else {
     dragging = DRAGGING.MAYBE_GRAB;
     pelem = set_grab(drag_uelem, piece, us);
-    api_piece('grab', piece, pelem, { });
+    api_piece(api, 'grab', piece, pelem, { });
   }
 
   window.addEventListener('mousemove', drag_mousemove, true);
@@ -186,7 +186,7 @@ function drag_mousemove(e) {
     drag_uelem.setAttributeNS(null, "x", x);
     drag_uelem.setAttributeNS(null, "y", y);
     //console.log(drag_uelem);
-    api_delay('m',{
+    api_piece(api_delay ('m',{
       t : token,
       p : drag_uelem.dataset.piece,
       l : [x, y],
@@ -202,7 +202,7 @@ function drag_mouseup(e) {
       dragging == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
     piece = drag_uelem.dataset.piece;
     var pelem = set_ungrab(drag_uelem, piece);
-    api_piece('ungrab', drag_uelem.dataset.piece, pelem, { });
+    api_piece(f, 'ungrab', drag_uelem.dataset.piece, pelem, { });
   }
   drag_cancel(e);
 }

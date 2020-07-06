@@ -124,7 +124,7 @@ struct ApiPiece<O : ApiPieceOp> {
 trait ApiPieceOp : Debug {
   #[throws(GameError)]
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
-        lens: &dyn Lens)
+        lens: &dyn Lens /* used for LogEntry and PieceId but not Pos */)
         -> (PieceUpdateOp<()>, Vec<LogEntry>);
 }
 
@@ -133,6 +133,7 @@ trait Lens {
              -> PieceRenderInstructions;
   fn svg_pri(&self, piece: PieceId, pc: &PieceRecord, player: PlayerId)
              -> PieceRenderInstructions;
+  fn massage_prep_piecestate(&self, ns : &mut PreparedPieceState);
   fn decode_visible_pieceid(&self, vpiece: VisiblePieceId, player: PlayerId)
                             -> PieceId;
 }
@@ -153,6 +154,7 @@ impl Lens for TransparentLens {
     let kd : slotmap::KeyData = vpiece.into();
     PieceId::from(kd)
   }
+  fn massage_prep_piecestate(&self, _ns : &mut PreparedPieceState) { }
 }
 
 #[throws(OE)]
@@ -201,7 +203,9 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       let pri_for_all = lens.svg_pri(piece,pc,Default::default());
 
       let update = update.map_new_state(|_|{
-        pc.prep_piecestate(&pri_for_all)
+        let mut ns = pc.prep_piecestate(&pri_for_all);
+        lens.massage_prep_piecestate(&mut ns);
+        ns
       });
 
       let mut us = Vec::with_capacity(1 + logents.len());
@@ -299,16 +303,23 @@ impl ApiPieceOp for ApiPieceUngrab {
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-struct ApiMove {
-  t : String,
-  p : VisiblePieceId,
-  l : Pos,
-}
+struct ApiPieceMove (Pos);
 #[post("/_/api/m", format="json", data="<form>")]
 #[throws(OE)]
-fn api_move(form : Json<ApiMove>) -> impl response::Responder<'static> {
-  eprintln!("API {:?}", &form);
-  ""
+fn api_move(form : Json<ApiPiece<ApiPieceMove>>) -> impl response::Responder<'static> {
+  api_piece_op(form)
+}
+impl ApiPieceOp for ApiPieceMove {
+  #[throws(GameError)]
+  fn op(&self, gs: &mut GameState, _: PlayerId, piece: PieceId,
+        _lens: &dyn Lens)
+        -> (PieceUpdateOp<()>, Vec<LogEntry>) {
+    let pc = gs.pieces.byid_mut(piece).unwrap();
+
+    pc.pos = self.0;
+    let update = PieceUpdateOp::Move(self.0);
+    (update, vec![])
+  }
 }
 
 #[get("/_/updates/<ctoken>/<gen>")]
