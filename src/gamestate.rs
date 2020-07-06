@@ -104,11 +104,17 @@ pub struct GameState {
   pub pieces : DenseSlotMap<PieceId,PieceRecord>,
   pub players : DenseSlotMap<PlayerId,Player>,
   pub gen : Generation,
+  pub log : Vec<(Generation, Arc<LogEntry>)>,
 }
 
 #[derive(Debug)]
 pub struct Player {
   pub nick : String,
+}
+
+#[derive(Debug,Serialize)]
+pub struct LogEntry {
+  pub msg : String,
 }
 
 pub fn xxx_gamestate_init() -> GameState {
@@ -124,5 +130,6 @@ pub fn xxx_gamestate_init() -> GameState {
     };
     pieces.insert(pr);
   }
-  GameState { pieces, gen : Generation(1), players : Default::default(),  }
+  GameState { pieces, gen : Generation(1), players : Default::default(),
+              log : Default::default(), }
 }

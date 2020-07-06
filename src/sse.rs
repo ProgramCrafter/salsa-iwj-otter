@@ -56,9 +56,7 @@ enum TransmitUpdate<'u> {
     piece : VisiblePieceId,
     op : &'u PieceUpdateOp<PreparedPieceState>,
   },
-  Log {
-    msg : &'u str,
-  },
+  Log (&'u LogEntry),
 }
 
 #[derive(Error,Debug)]
@@ -103,8 +101,8 @@ impl Read for UpdateReader {
           &PreparedUpdateEntry::Piece { piece, ref op, .. } => {
             TransmitUpdate::Piece { piece, op }
           },
-          PreparedUpdateEntry::Log { msg } => {
-            TransmitUpdate::Log { msg }
+          PreparedUpdateEntry::Log(logent) => {
+            TransmitUpdate::Log(&*logent)
           },
         };
         serde_json::to_writer(&mut buf, &tu)?;

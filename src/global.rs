@@ -31,9 +31,7 @@ pub enum PreparedUpdateEntry {
     piece : VisiblePieceId,
     op : PieceUpdateOp<PreparedPieceState>,
   },
-  Log {
-    msg : Arc<String>,
-  },
+  Log (Arc<LogEntry>),
 }
 impl PreparedUpdateEntry {
   pub fn json_len(&self) -> usize {
@@ -43,8 +41,8 @@ impl PreparedUpdateEntry {
         50 +
         op.new_state().map(|x| x.svg.len()).unwrap_or(0)
       },
-      Log { msg } => {
-        msg.as_bytes().len() * 3
+      Log(logent) => {
+        logent.msg.as_bytes().len() * 3
       }
     }
   }

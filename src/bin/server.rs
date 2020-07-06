@@ -134,6 +134,7 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
   let g_updates = &mut g.updates;
   let gs_pieces = &mut g.gs.pieces;
   let gs_gen = &mut g.gs.gen;
+  let gs_log = &mut g.gs.log;
   let r : Result<(),GameError> = (||{
     let piece = decode_visible_pieceid(form.piece);
     let p = gs_pieces.byid_mut(piece)?;
@@ -155,6 +156,14 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
       id : vpiece, 
       face : p.face,
     };
+    let logentry = Arc::new(LogEntry {
+      msg : format!("{} grasped {}",
+                    &htmlescape::encode_minimal(&pl.nick),
+                    p.describe_html(&pri)),
+                    // split view: pri should be global
+                    // (currently log is one global view)
+    });
+    gs_log.push((gen,logentry.clone()));
     let op = PieceUpdateOp::Modify(p.prep_piecestate(&pri));
     let update = PreparedUpdate {
       gen,
@@ -165,14 +174,9 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
           piece : vpiece,
           op,
         },
-        PreparedUpdateEntry::Log {
-          msg : Arc::new(format!("{} grasped {}",
-                                 &htmlescape::encode_minimal(&pl.nick),
-                                 p.describe_html(&pri)
-                                 // split view: pri should be global
-                                 // (currently log is one global view)
-          )),
-        },
+        PreparedUpdateEntry::Log (
+          logentry,
+        ),
       ],
     };
     let update = Arc::new(update);
