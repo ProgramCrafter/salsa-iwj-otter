@@ -260,6 +260,13 @@ pieceops.Modify = function (piece, info) {
   console.log('MODIFY DONE');
 }
 
+pieceops.Move = function (piece, info) {
+  // xxx do something aboiut conflict
+  var uelem = document.getElementById('use'+piece);
+  uelem.setAttributeNS(null, "x", info[0]);
+  uelem.setAttributeNS(null, "y", info[1]);
+}
+
 messages.Recorded = function(j) {
   var pelem = document.getElementById('piece'+j.piece);
   if (j.cseq >= pelem.dataset.cseq) {

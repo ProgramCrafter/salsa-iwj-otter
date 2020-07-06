@@ -177,8 +177,11 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
 
     let q_gen = form.gen;
     let u_gen =
-      if client == pc.lastclient { pc.gen_lastclient }
-      else { pc.gen_before_lastclient };
+      if client == pc.lastclient { pc.gen_before_lastclient }
+      else { pc.gen };
+
+    eprintln!("Q_GEN={:?} U_GEN={:?}", u_gen, q_gen);
+
     if u_gen > q_gen { Err(GameError::Conflict)? }
     if pc.held != None && pc.held != Some(player) {
       Err(GameError::PieceHeld)?
@@ -196,9 +199,11 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       gs.gen.increment();
       let gen = gs.gen;
       if client != pc.lastclient {
-        pc.gen_before_lastclient = pc.gen_lastclient;
+        pc.gen_before_lastclient = pc.gen;
         pc.lastclient = client;
       }
+      pc.gen = gen;
+      eprintln!("PC GEN_LC={:?} LC={:?}", pc.gen, pc.lastclient);
 
       let pri_for_all = lens.svg_pri(piece,pc,Default::default());
 
@@ -227,7 +232,6 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       let update = Arc::new(update);
       eprintln!("UPDATE {:?}", &update);
 
-      pc.gen_lastclient = gen;
       for (_tplayer, tplupdates) in &mut g.updates {
         tplupdates.log.push_back(update.clone());
         tplupdates.cv.notify_all();
