@@ -245,7 +245,7 @@ pieceops.Modify = function (piece, info) {
   console.log('PIECE UPDATE MODIFY ',piece,info)
   var uelem = document.getElementById('use'+piece);
   var delem = document.getElementById('defs'+piece);
-  delem.innerHTML = info.svgs;
+  delem.innerHTML = info.svg;
   uelem.setAttributeNS(null, "x", info.pos[0]);
   uelem.setAttributeNS(null, "y", info.pos[1]);
   // xxx do something about conflict
