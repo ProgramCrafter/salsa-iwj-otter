@@ -122,9 +122,6 @@ struct ApiPiece<O : ApiPieceOp> {
   #[serde(flatten)]
   op : O,
 }
-#[derive(Debug,Serialize,Deserialize)]
-struct ApiPieceGrab {
-}
 trait ApiPieceOp : Debug {
   #[throws(GameError)]
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
@@ -156,29 +153,6 @@ impl Lens for TransparentLens {
                             -> PieceId {
     let kd : slotmap::KeyData = vpiece.into();
     PieceId::from(kd)
-  }
-}
-
-impl ApiPieceOp for ApiPieceGrab {
-  #[throws(GameError)]
-  fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
-        lens: &dyn Lens)
-        -> (PieceUpdateOp<()>, Vec<LogEntry>) {
-    let pl = gs.players.byid(player).unwrap();
-    let pc = gs.pieces.byid_mut(piece).unwrap();
-
-    if pc.held.is_some() { Err(GameError::PieceHeld)? }
-    pc.held = Some(player);
-    
-    let update = PieceUpdateOp::Modify(());
-
-    let logent = LogEntry {
-      html : format!("{} grasped {}",
-                     &htmlescape::encode_minimal(&pl.nick),
-                     pc.describe_html(&lens.log_pri(piece, pc))),
-    };
-
-    (update, vec![logent])
   }
 }
 
@@ -261,13 +235,37 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   ""
 }
 
+#[derive(Debug,Serialize,Deserialize)]
+struct ApiPieceGrab {
+}
 #[post("/_/api/grab", format="json", data="<form>")]
 #[throws(OE)]
 fn api_grab(form : Json<ApiPiece<ApiPieceGrab>>)
             -> impl response::Responder<'static> {
   api_piece_op(form)
 }
+impl ApiPieceOp for ApiPieceGrab {
+  #[throws(GameError)]
+  fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
+        lens: &dyn Lens)
+        -> (PieceUpdateOp<()>, Vec<LogEntry>) {
+    let pl = gs.players.byid(player).unwrap();
+    let pc = gs.pieces.byid_mut(piece).unwrap();
 
+    if pc.held.is_some() { Err(GameError::PieceHeld)? }
+    pc.held = Some(player);
+    
+    let update = PieceUpdateOp::Modify(());
+
+    let logent = LogEntry {
+      html : format!("{} grasped {}",
+                     &htmlescape::encode_minimal(&pl.nick),
+                     pc.describe_html(&lens.log_pri(piece, pc))),
+    };
+
+    (update, vec![logent])
+  }
+}
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiUngrab {
   t : String,
