@@ -32,6 +32,7 @@ pub enum PreparedUpdateEntry {
     op : PieceUpdateOp<PreparedPieceState>,
   },
   Log {
+    msg : Arc<String>,
   },
 }
 impl PreparedUpdateEntry {
@@ -42,8 +43,8 @@ impl PreparedUpdateEntry {
         50 +
         op.new_state().map(|x| x.svg.len()).unwrap_or(0)
       },
-      Log { .. } => {
-        todo!("json length of log")
+      Log { msg } => {
+        msg.as_bytes().len() * 3
       }
     }
   }

@@ -57,6 +57,7 @@ enum TransmitUpdate<'u> {
     op : &'u PieceUpdateOp<PreparedPieceState>,
   },
   Log {
+    msg : &'u str,
   },
 }
 
@@ -102,8 +103,8 @@ impl Read for UpdateReader {
           &PreparedUpdateEntry::Piece { piece, ref op, .. } => {
             TransmitUpdate::Piece { piece, op }
           },
-          PreparedUpdateEntry::Log { } => {
-            TransmitUpdate::Log { }
+          PreparedUpdateEntry::Log { msg } => {
+            TransmitUpdate::Log { msg }
           },
         };
         serde_json::to_writer(&mut buf, &tu)?;
@@ -131,6 +132,8 @@ impl Read for UpdateReader {
         return Err(io::Error::new(io::ErrorKind::WouldBlock,
                                   FlushWouldBlockError{}));
       }
+      // xxx this endless stream is a leak
+      // restart it occasionally
 
       amig = cv.wait_timeout(amig, UPDATE_KEEPALIVE)
         .map_err(|_| em("poison"))?.0;

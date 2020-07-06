@@ -213,7 +213,7 @@ function drag_cancel() {
 
 // ----- logs -----
 
-messages.LogUpdate = function(data) {
+messages.Log = function(j) {
   lastent = logdiv.lastElementChild;
   in_scrollback =
     // inspired by
@@ -223,7 +223,7 @@ messages.LogUpdate = function(data) {
     lastent.getBoundingClientRect().bottom >
     logdiv.getBoundingClientRect().bottom;
 
-  console.log('LOG UPDATE ',in_scrollback,data);
+  console.log('LOG UPDATE ',in_scrollback, j);
 
   if (!in_scrollback) {
     lastent = logdiv.lastElementChild;

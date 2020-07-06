@@ -130,10 +130,13 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
   let cl = &g.clients.byid(client)?;
   // ^ can only fail if we raced
   let player = cl.player;
+  let pl = g.gs.players.byid(player)?;
+  let g_updates = &mut g.updates;
+  let gs_pieces = &mut g.gs.pieces;
+  let gs_gen = &mut g.gs.gen;
   let r : Result<(),GameError> = (||{
     let piece = decode_visible_pieceid(form.piece);
-    let gs = &mut g.gs;
-    let p = gs.pieces.byid_mut(piece)?;
+    let p = gs_pieces.byid_mut(piece)?;
     let q_gen = form.gen;
     let u_gen =
       if client == p.lastclient { p.gen_lastclient }
@@ -141,8 +144,8 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
     if u_gen > q_gen { Err(GameError::Conflict)? }
     if p.held != None { Err(GameError::PieceHeld)? };
     p.held = Some(player);
-    gs.gen.increment();
-    let gen = gs.gen;
+    gs_gen.increment();
+    let gen = *gs_gen;
     if client != p.lastclient {
       p.gen_before_lastclient = p.gen_lastclient;
       p.lastclient = client;
@@ -155,18 +158,28 @@ fn api_grab(form : Json<ApiGrab>) -> impl response::Responder<'static> {
     let op = PieceUpdateOp::Modify(p.prep_piecestate(&pri));
     let update = PreparedUpdate {
       gen,
-      us : vec![ PreparedUpdateEntry::Piece {
-        client,
-        sameclient_cseq : form.cseq,
-        piece : vpiece,
-        op,
-      }],
+      us : vec![
+        PreparedUpdateEntry::Piece {
+          client,
+          sameclient_cseq : form.cseq,
+          piece : vpiece,
+          op,
+        },
+        PreparedUpdateEntry::Log {
+          msg : Arc::new(format!("{} grasped {}",
+                                 &htmlescape::encode_minimal(&pl.nick),
+                                 p.describe_html(&pri)
+                                 // split view: pri should be global
+                                 // (currently log is one global view)
+          )),
+        },
+      ],
     };
     let update = Arc::new(update);
     eprintln!("UPDATE {:?}", &update);
     // split vie wthing would go here, see also update.piece
     p.gen_lastclient = gen;
-    for (_tplayer, tplupdates) in &mut g.updates {
+    for (_tplayer, tplupdates) in g_updates {
       tplupdates.log.push_back(update.clone());
       tplupdates.cv.notify_all();
     }

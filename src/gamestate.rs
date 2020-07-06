@@ -48,6 +48,7 @@ pub trait Piece : Send + Debug {
   fn svg_select(&self, pri : &PieceRenderInstructions) -> String;
   fn svg_x_ids(&self) -> VisiblePieceIdSvgIds;
   fn svg_x_defs(&self, pri : &PieceRenderInstructions) -> String;
+  fn describe_html(&self, face : Option<FaceId>) -> String;
 }
 
 #[derive(Debug)]
@@ -90,6 +91,11 @@ impl PieceRecord {
       svg        : self.make_defs(pri),
       // xxx want all piece's stuff in the same def
     }
+  }
+
+  pub fn describe_html(&self, pri : &PieceRenderInstructions) -> String {
+    // xxx want to be able to hide things
+    self.p.describe_html(Some(pri.face))
   }
 }
 
