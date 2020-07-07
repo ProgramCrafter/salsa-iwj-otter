@@ -128,6 +128,12 @@ function api_piece(f: (meth: string, payload: Object) => void,
   })
 }
 
+function piece_element(base: string, piece: PieceId): SVGGraphicsElement | null
+{
+  let elem = document.getElementById(base+piece);
+  return elem as unknown as (SVGGraphicsElement | null);
+}
+
 // ----- clicking/dragging pieces -----
 
 const DRAGGING = { // bitmask
@@ -246,19 +252,14 @@ messages.Log = <MessageHandler>function
   add_log_message(j.html);
 }
 
-//interface Message_Log_Payload { html: string };
-//messages.Log = function(j: Message_Log_Payload) {
-//  add_log_message(j.html);
-//}
-
 function add_log_message(msg_html: string) {
   var lastent = logdiv.lastElementChild;
   var in_scrollback =
+    lastent == null ||
     // inspired by
     //   https://stackoverflow.com/questions/487073/how-to-check-if-element-is-visible-after-scrolling/21627295#21627295
     // rejected
     //   https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API
-    lastent == null ||
     lastent.getBoundingClientRect()!.bottom >
     logdiv.getBoundingClientRect()!.bottom;
 
@@ -287,8 +288,8 @@ messages.Piece = <MessageHandler>function
 pieceops.Modify = <PieceHandler>function
 (piece: PieceId, info: { svg: string, held: PlayerId, pos: Pos }) {
   console.log('PIECE UPDATE MODIFY ',piece,info)
-  var uelem = document.getElementById('use'+piece) as unknown as SVGGraphicsElement;
-  var delem = document.getElementById('defs'+piece) as unknown as SVGGraphicsElement;
+  var uelem = piece_element('use',piece)!;
+  var delem = piece_element('defs',piece)!;
   delem.innerHTML = info.svg;
   uelem.setAttributeNS(null, "x", info.pos[0]+"");
   uelem.setAttributeNS(null, "y", info.pos[1]+"");
@@ -303,7 +304,7 @@ pieceops.Modify = <PieceHandler>function
 
 pieceops.Move = <PieceHandler>function
 (piece, info: Pos ) {
-  var uelem = document.getElementById('use'+piece)! as unknown as SVGGraphicsElement;
+  var uelem = piece_element('use',piece)!;
   uelem_checkconflict(piece, uelem);
   uelem.setAttributeNS(null, "x", info[0]+"");
   uelem.setAttributeNS(null, "y", info[1]+"");
