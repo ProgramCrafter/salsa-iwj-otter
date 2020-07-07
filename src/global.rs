@@ -82,10 +82,19 @@ impl<NS> PieceUpdateOp<NS> {
   }
 }      
 
-#[derive(Debug,Default)]
+#[derive(Debug)]
 pub struct PlayerUpdates {
   pub log : StableIndexVecDeque<Arc<PreparedUpdate>,sse::UpdateId>,
   pub cv : Arc<Condvar>,
+}
+
+const RECENT_BUFFER : usize = 50;
+
+impl Default for PlayerUpdates {
+  fn default() -> PlayerUpdates { PlayerUpdates {
+    log : StableIndexVecDeque::with_capacity(RECENT_BUFFER),
+    cv : Default::default(),
+  } }
 }
 
 #[derive(Debug)]
