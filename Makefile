@@ -1,30 +1,32 @@
 #!/bin/sh
+#
+# make -j8
+# make -j8 release
 
 SHELL=/bin/bash
 
 CARGO ?= cargo
+CARGO_TARGET_DIR ?= target
+
+ifneq (,../Cargo.nail)
+CARGO = nailing-cargo
+CARGO_TARGET_DIR = ../Build/target
+endif
 
 default: debug
 
-ifneq (,$(NAILINGCARGO_MANIFEST_DIR))
-vpath % $(NAILINGCARGO_MANIFEST_DIR)
-CARGO_FLAGS += $(addprefix --manifest-path=,$(NAILINGCARGO_MANIFEST_DIR)/Cargo.toml)
-CARGO_FLAGS += $(NAILINGCARGO_CARGO_OPTIONS)
-endif
+debug release:: %: $(CARGO_TARGET_DIR)/%/server templates/script.js
+	@echo Built $@.
 
-foo:
-	printenv | sort
+.PHONY: $(CARGO_TARGET_DIR)/%/server
 
-debug: target/debug/server templates/script.js
+$(CARGO_TARGET_DIR)/debug/server:
+	$(CARGO) build
 
-.PHONY: target/debug/server
-
-target/debug/server:
-	$(CARGO) build $(CARGO_FLAGS)
+$(CARGO_TARGET_DIR)/release/server:
+	$(CARGO) build --release
 
 templates/script.js: templates/script.ts tsconfig.json
-	mkdir -p templates
-	test -f templates || ln -s $< templates/
 	tsc --outfile $@.tmp 2>&1 \
 	| perl -pe 's/\((\d+),(\d+)\):/:$$1:$$2:/'; \
 	test "$${PIPESTATUS[*]}" = "0 0"
