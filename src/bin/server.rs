@@ -161,6 +161,7 @@ impl Lens for TransparentLens {
 #[throws(OE)]
 fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
                    -> impl response::Responder<'static> {
+//  thread::sleep(Duration::from_millis(2000));
   let iad = lookup_token(&form.ctoken)?;
   let client = iad.ident;
   let mut g = iad.g.lock()?;

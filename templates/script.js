@@ -214,6 +214,10 @@ function drag_cancel() {
 // ----- logs -----
 
 messages.Log = function(j) {
+  add_log_message(j.html);
+}
+
+function add_log_message(msg_html) {
   lastent = logdiv.lastElementChild;
   in_scrollback =
     // inspired by
@@ -223,9 +227,9 @@ messages.Log = function(j) {
     lastent.getBoundingClientRect().bottom >
     logdiv.getBoundingClientRect().bottom;
 
-  console.log('LOG UPDATE ',in_scrollback, j);
+  console.log('ADD LOG MESSAGE ',in_scrollback, msg_html);
   var nelem = document.createElement('div');
-  nelem.innerHTML = j.html;
+  nelem.innerHTML = msg_html;
   logdiv.appendChild(nelem);
 
   if (!in_scrollback) {
@@ -251,7 +255,7 @@ pieceops.Modify = function (piece, info) {
   delem.innerHTML = info.svg;
   uelem.setAttributeNS(null, "x", info.pos[0]);
   uelem.setAttributeNS(null, "y", info.pos[1]);
-  // xxx do something about conflict
+  uelem_checkconflict(piece, uelem);
   if (info.held == null) {
     set_ungrab(uelem, piece);
   } else {
@@ -261,18 +265,24 @@ pieceops.Modify = function (piece, info) {
 }
 
 pieceops.Move = function (piece, info) {
-  // xxx do something aboiut conflict
   var uelem = document.getElementById('use'+piece);
+  uelem_checkconflict(piece, uelem);
   uelem.setAttributeNS(null, "x", info[0]);
   uelem.setAttributeNS(null, "y", info[1]);
 }
 
 messages.Recorded = function(j) {
-  var pelem = document.getElementById('piece'+j.piece);
-  if (j.cseq >= pelem.dataset.cseq) {
-    delete pelem.dataset.cseq;
+  var uelem = document.getElementById('use'+j.piece);
+  if (j.cseq >= uelem.dataset.cseq) {
+    delete uelem.dataset.cseq;
   }
   gen = j.gen;
+}
+
+function uelem_checkconflict(piece, uelem) {
+  if (uelem.dataset.cseq == null) { return; }
+  delete uelem.dataset.cseq;
+  add_log_message('Conflict! - simultaneous update');
 }
 
 function startup() {
