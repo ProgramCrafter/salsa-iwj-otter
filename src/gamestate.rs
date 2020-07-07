@@ -83,12 +83,10 @@ impl PieceRecord {
       pos        : self.pos,
       held       : self.held,
       svg        : self.make_defs(pri),
-      // xxx want all piece's stuff in the same def
     }
   }
 
   pub fn describe_html(&self, pri : &PieceRenderInstructions) -> String {
-    // xxx want to be able to hide things
     self.p.describe_html(Some(pri.face))
   }
 }

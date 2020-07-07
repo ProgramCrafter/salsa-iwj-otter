@@ -1,5 +1,6 @@
 
 // xxx need button(s) to kill old clients
+// and/or cause players to release grabs
 // ? need expiry of old clients?  limit of client count?
 
 #![feature(proc_macro_hygiene, decl_macro)]
@@ -333,7 +334,7 @@ fn updates(ctoken : InstanceAccess<ClientId>, gen: u64)
   let gen = Generation(gen);
   let iad = ctoken.i;
   let content = sse::content(iad, gen)?;
-  let content = response::Stream::chunked(content, 4096 /* xxx */);
+  let content = response::Stream::chunked(content, 4096);
   const CTYPE : &str = "text/event-stream; charset=utf-8";
   let ctype = ContentType::parse_flexible(CTYPE).unwrap();
   // xxx set CORS allowed header
@@ -342,7 +343,7 @@ fn updates(ctoken : InstanceAccess<ClientId>, gen: u64)
 
 #[get("/_/<leaf>")]
 fn resource(leaf : CheckedResourceLeaf) -> io::Result<NamedFile> {
-  let template_dir = "templates"; // xxx
+  let template_dir = "templates";
   NamedFile::open(format!("{}/{}", template_dir, leaf.safe))
 }  
 
