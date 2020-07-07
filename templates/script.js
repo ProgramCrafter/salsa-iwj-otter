@@ -12,6 +12,7 @@
 //      <use id="use{}", href="#piece{}" x= y= >
 //         .piece   piece id (static)
 //         .gplayer  grabbed user (player id string, or "")
+//         .cseq     client sequence (see PROTOCOL.md)
 //      container to allow quick movement and hang stuff off
 //
 //   delem
@@ -23,7 +24,6 @@
 //   pelem
 //   #piece{}
 //      <g id="piece{}" >
-//         .cseq     client sequence (see PROTOCOL.md)
 //      currently-displayed version of the piece
 //      to allow addition/removal of selected indication
 //      contains 1 or 2 subelements:
@@ -96,9 +96,9 @@ function api_posted() {
   api_check();
 }
 
-function api_piece(f, meth, piece, pelem, op) {
+function api_piece(f, meth, piece, uelem, op) {
   cseq += 1;
-  pelem.dataset.cseq = cseq;
+  uelem.dataset.cseq = cseq;
   f(meth, {
     ctoken : ctoken,
     piece : piece,
@@ -138,7 +138,7 @@ function drag_mousedown(e) {
   } else {
     dragging = DRAGGING.MAYBE_GRAB;
     pelem = set_grab(drag_uelem, piece, us);
-    api_piece(api, 'grab', piece, pelem, { });
+    api_piece(api, 'grab', piece, drag_uelem, { });
   }
 
   window.addEventListener('mousemove', drag_mousemove, true);
@@ -187,7 +187,7 @@ function drag_mousemove(e) {
     drag_uelem.setAttributeNS(null, "y", y);
     var piece = drag_uelem.dataset.piece;
     var pelem = document.getElementById('piece'+piece);
-    api_piece(api_delay, 'm', piece, pelem, [x, y] );
+    api_piece(api_delay, 'm', piece, drag_uelem, [x, y] );
   }
 }
 
@@ -199,7 +199,7 @@ function drag_mouseup(e) {
       dragging == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
     piece = drag_uelem.dataset.piece;
     var pelem = set_ungrab(drag_uelem, piece);
-    api_piece(api, 'ungrab', drag_uelem.dataset.piece, pelem, { });
+    api_piece(api, 'ungrab', drag_uelem.dataset.piece, drag_uelem, { });
   }
   drag_cancel(e);
 }
