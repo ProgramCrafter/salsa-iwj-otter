@@ -136,11 +136,11 @@ function piece_element(base: string, piece: PieceId): SVGGraphicsElement | null
 
 // ----- clicking/dragging pieces -----
 
-const DRAGGING = { // bitmask
-  NO           : 0,
-  MAYBE_GRAB   : 1,
-  MAYBE_UNGRAB : 2,
-  YES          : 4,
+enum DRAGGING { // bitmask
+  NO           = 0,
+  MAYBE_GRAB   = 1,
+  MAYBE_UNGRAB = 2,
+  YES          = 4,
 };
 
 var drag_uelem : SVGGraphicsElement | null;
