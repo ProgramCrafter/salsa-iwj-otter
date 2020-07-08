@@ -9,6 +9,7 @@ define_index_type! {
 struct SimpleShape {
   desc : String,
   shape : String,
+  approx_dia : Coord,
   colours : IndexVec<FaceId,Colour>,
 }
 
@@ -16,9 +17,11 @@ const SELECT_SCALE : f64 = 1.1;
 
 impl Piece for SimpleShape {
   fn svg_piece(&self, pri : &PieceRenderInstructions) -> String {
-    format!(r##"<use fill="{}" href="#{}"/>"##,
+    format!(r##"<use fill="{}" href="#{}" data-dragraise="{}"/>"##,
             self.colours[pri.face],
-            pri.id_x("base"))
+            pri.id_x("base"),
+            self.approx_dia / 2,
+    )
   }
   fn svg_select(&self, pri : &PieceRenderInstructions) -> String {
     format!(r##"<g transform="scale({})"><use href="#{}"/></g>"##,
@@ -43,12 +46,14 @@ pub fn xxx_make_pieces() -> Vec<(Pos, Box<dyn Piece>)> {
     ([ 90, 80 ],
      Box::new(SimpleShape {
        desc : "circle".to_owned(),
+       approx_dia : 20,
        shape : r#"<circle cx="0" cy="0" r="10"/>"#.to_owned(),
        colours : index_vec![ "red".to_string(), "grey".to_string() ],
      })),
     ([ 90, 60 ],
      Box::new(SimpleShape {
        desc : "square".to_owned(),
+       approx_dia : 20,
        shape : r#"<rect x="-10" y="-10" width="20" height="20"/>"#.to_owned(),
        colours : index_vec![ "blue".to_string(), "grey".to_string() ],
      })),
