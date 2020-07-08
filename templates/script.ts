@@ -163,6 +163,8 @@ function drag_mousedown(e : MouseEvent) {
   drag_uelem = target;
   var gplayer = drag_uelem.dataset.gplayer;
   if (gplayer != "" && gplayer != us) { return; }
+  var pelem = piece_element('piece',piece)!;
+
   dcx = e.clientX;
   dcy = e.clientY;
   dox = parseFloat(drag_uelem.getAttributeNS(null,"x")!);
@@ -172,7 +174,7 @@ function drag_mousedown(e : MouseEvent) {
     dragging = DRAGGING.MAYBE_UNGRAB;
   } else {
     dragging = DRAGGING.MAYBE_GRAB;
-    var pelem = set_grab(drag_uelem, piece, us);
+    set_grab(drag_uelem, pelem, piece, us);
     api_piece(api, 'grab', piece, drag_uelem, { });
   }
 
@@ -180,28 +182,23 @@ function drag_mousedown(e : MouseEvent) {
   window.addEventListener('mouseup',   drag_mouseup,   true);
 }
 
-function set_grab(uelem: SVGGraphicsElement, piece: PieceId, owner: PlayerId) {
-  uelem.dataset.gplayer = owner;
-//  var [p, piece] = 
-  var pelem = piece_cleanup_grab(piece);
+function set_grab(uelem: SVGGraphicsElement, pelem: SVGGraphicsElement,
+		  piece: PieceId, owner: PlayerId) {
   var nelem = document.createElementNS(svg_ns,'use');
+  uelem.dataset.gplayer = owner;
+  piece_cleanup_grab(pelem);
   nelem.setAttributeNS(null,'href','#select'+piece);
   nelem.setAttributeNS(null,'stroke-dasharray',"3 1  1 1  1 1");
-	                     
   pelem.appendChild(nelem);
-  return pelem;
 }
-function set_ungrab(uelem: SVGGraphicsElement, piece: PieceId) {
+function set_ungrab(uelem: SVGGraphicsElement, pelem: SVGGraphicsElement) {
   uelem.dataset.gplayer = "";
-  var pelem = piece_cleanup_grab(piece);
-  return pelem;
+  piece_cleanup_grab(pelem);
 }
-function piece_cleanup_grab(piece: PieceId) {
-  var pelem = document.getElementById('piece'+piece)!;
+function piece_cleanup_grab(pelem: SVGGraphicsElement) {
   while (pelem.children.length > 1) {
     pelem.lastElementChild!.remove();
   }
-  return pelem;
 }
 
 function drag_mousemove(e: MouseEvent) {
@@ -234,7 +231,8 @@ function drag_mouseup(e: MouseEvent) {
   if (dragging == DRAGGING.MAYBE_UNGRAB ||
       dragging == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
     var piece = drag_uelem!.dataset.piece!;
-    var pelem = set_ungrab(drag_uelem!, piece);
+    var pelem = piece_element('piece',piece)!;
+    set_ungrab(drag_uelem!, pelem);
     api_piece(api, 'ungrab', drag_uelem!.dataset.piece!, drag_uelem!, { });
   }
   drag_cancel();
@@ -292,14 +290,15 @@ pieceops.Modify = <PieceHandler>function
   console.log('PIECE UPDATE MODIFY ',piece,info)
   var uelem = piece_element('use',piece)!;
   var delem = piece_element('defs',piece)!;
+  var pelem = piece_element('piece',piece)!;
   delem.innerHTML = info.svg;
   uelem.setAttributeNS(null, "x", info.pos[0]+"");
   uelem.setAttributeNS(null, "y", info.pos[1]+"");
   uelem_checkconflict(piece, uelem);
   if (info.held == null) {
-    set_ungrab(uelem, piece);
+    set_ungrab(uelem, pelem);
   } else {
-    set_grab(uelem, piece, info.held);
+    set_grab(uelem, pelem, piece, info.held);
   }
   console.log('MODIFY DONE');
 }
