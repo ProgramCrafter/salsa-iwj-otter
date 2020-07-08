@@ -17,11 +17,13 @@ const SELECT_SCALE : f64 = 1.1;
 
 impl Piece for SimpleShape {
   fn svg_piece(&self, pri : &PieceRenderInstructions) -> String {
-    format!(r##"<use fill="{}" href="#{}" data-dragraise="{}"/>"##,
+    format!(r##"<use fill="{}" href="#{}"/>"##,
             self.colours[pri.face],
-            pri.id_x("base"),
-            self.approx_dia / 2,
-    )
+            pri.id_x("base"))
+  }
+  fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
+                      -> Option<Coord> {
+    Some(self.approx_dia / 2)
   }
   fn svg_select(&self, pri : &PieceRenderInstructions) -> String {
     format!(r##"<g transform="scale({})"><use href="#{}"/></g>"##,

@@ -226,14 +226,18 @@ function drag_mousemove(e: MouseEvent) {
 
 function drag_mouseup(e: MouseEvent) {
   console.log('mouseup', dragging);
-  let ddr2 = drag_mousemove(e);
-  //console.log('mouseup ...', dragging);
+  let ddr2 : number = drag_mousemove(e);
+  let piece = drag_uelem!.dataset.piece!;
+  let pelem = piece_element('piece',piece)!;
+  let dragraise = +pelem.dataset.dragraise!;
+  console.log('CHECK RAISE ', dragraise, dragraise*dragraise, ddr2);
+  if (dragraise > 0 && ddr2 >= dragraise*dragraise) {
+    api_piece(api, "raise", piece, drag_uelem!, { });
+  }
   if (dragging == DRAGGING.MAYBE_UNGRAB ||
       dragging == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
-    var piece = drag_uelem!.dataset.piece!;
-    var pelem = piece_element('piece',piece)!;
     set_ungrab(drag_uelem!, pelem);
-    api_piece(api, 'ungrab', drag_uelem!.dataset.piece!, drag_uelem!, { });
+    api_piece(api, 'ungrab', piece, drag_uelem!, { });
   }
   drag_cancel();
 }

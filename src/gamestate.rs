@@ -42,6 +42,8 @@ pub trait Piece : Send + Debug {
   fn svg_select(&self, pri : &PieceRenderInstructions) -> String;
   fn svg_x_ids(&self) -> VisiblePieceIdSvgIds;
   fn svg_x_defs(&self, pri : &PieceRenderInstructions) -> String;
+  fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
+                      -> Option<Coord>;
   fn describe_html(&self, face : Option<FaceId>) -> String;
 }
 
@@ -67,8 +69,14 @@ impl PieceRecord {
   pub fn make_defs(&self, pri : &PieceRenderInstructions) -> String {
     let pr = self;
     let mut defs = String::new();
-    write!(defs, r##"<g id="{}">{}</g>"##,
+    let dragraise = match pr.p.thresh_dragraise(pri) {
+      Some(n) if n < 0 => panic!(),
+      Some(n) => n,
+      None => -1,
+    };
+    write!(defs, r##"<g id="{}" data-dragraise="{}">{}</g>"##,
            pri.id_piece(),
+           dragraise,
            pr.p.svg_piece(&pri)).unwrap();
     write!(defs, r##"<g id="{}" stroke="black" fill="none">{}</g>"##,
            pri.id_select(),
