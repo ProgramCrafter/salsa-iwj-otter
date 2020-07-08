@@ -53,6 +53,7 @@ pub struct PieceRecord {
   pub p : Box<dyn Piece>,
   pub face : FaceId,
   pub held : Option<PlayerId>,
+  pub raised : Generation,
   pub gen : Generation,
   pub lastclient : ClientId,
   pub gen_before_lastclient : Generation,
@@ -119,17 +120,20 @@ pub struct LogEntry {
 
 pub fn xxx_gamestate_init() -> GameState {
   let mut pieces = DenseSlotMap::with_key();
+  let mut gen = Generation(0);
   for (pos, p) in xxx_make_pieces() {
     let pr = PieceRecord {
       pos, p,
       face : 0.into(),
       held : None,
       lastclient : Default::default(),
-      gen : Generation(0),
+      raised: Generation(0),
+      gen,
       gen_before_lastclient : Generation(0),
     };
+    gen.increment();
     pieces.insert(pr);
   }
-  GameState { pieces, gen : Generation(1), players : Default::default(),
+  GameState { pieces, gen, players : Default::default(),
               log : Default::default(), }
 }

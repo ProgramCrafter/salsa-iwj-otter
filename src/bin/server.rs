@@ -84,7 +84,12 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
 
     let mut uses = vec![];
     let mut alldefs = vec![];
-    for (gpid, pr) in &ig.gs.pieces {
+
+    let mut pieces : Vec<_> = ig.gs.pieces.iter().collect();
+
+    pieces.sort_by_key(|(_,pr)| !pr.raised.0);
+
+    for (gpid, pr) in pieces {
       let pri = PieceRenderInstructions {
         id : make_pieceid_visible(gpid),
         face : pr.face,
