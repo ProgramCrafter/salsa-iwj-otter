@@ -87,7 +87,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
 
     let mut pieces : Vec<_> = ig.gs.pieces.iter().collect();
 
-    pieces.sort_by_key(|(_,pr)| !pr.raised.0);
+    pieces.sort_by_key(|(_,pr)| pr.raised);
 
     for (gpid, pr) in pieces {
       let pri = PieceRenderInstructions {
@@ -329,7 +329,7 @@ impl ApiPieceOp for ApiPieceRaise {
         -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pc = gs.pieces.byid_mut(piece).unwrap();
     pc.raised = gs.gen;
-    let update = PieceUpdateOp::Raise;
+    let update = PieceUpdateOp::Raise();
     (update, vec![])
   }
 }

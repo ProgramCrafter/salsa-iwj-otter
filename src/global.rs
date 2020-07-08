@@ -55,32 +55,32 @@ impl PreparedUpdate {
 
 #[derive(Debug,Serialize)]
 pub enum PieceUpdateOp<NS> {
-  Delete,
+  Delete(),
   Insert(NS),
   Modify(NS),
   Move(Pos),
-  Raise,
+  Raise(),
 }
 impl<NS> PieceUpdateOp<NS> {
   pub fn new_state(&self) -> Option<&NS> {
     use PieceUpdateOp::*;
     match self {
-      Delete => None,
+      Delete() => None,
       Insert(ns) => Some(ns),
       Modify(ns) => Some(ns),
       Move(_) => None,
-      Raise => None,
+      Raise() => None,
     }
   }
   pub fn map_new_state<NS2,F: FnOnce(NS) -> NS2>(self, f:F)
                             -> PieceUpdateOp<NS2> {
     use PieceUpdateOp::*;
     match self {
-      Delete => Delete,
+      Delete() => Delete(),
       Insert(ns) => Insert(f(ns)),
       Modify(ns) => Modify(f(ns)),
       Move(pos) => Move(pos),
-      Raise => Raise,
+      Raise() => Raise(),
     }
   }
 }      

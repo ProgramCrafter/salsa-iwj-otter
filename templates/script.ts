@@ -232,6 +232,14 @@ function drag_mouseup(e: MouseEvent) {
   let dragraise = +pelem.dataset.dragraise!;
   console.log('CHECK RAISE ', dragraise, dragraise*dragraise, ddr2);
   if (dragraise > 0 && ddr2 >= dragraise*dragraise) {
+    let marker = piece_element('raisemarker',piece);
+    if (marker == null) {
+      marker = document.createElementNS(svg_ns,'defs')! as
+                   SVGGraphicsElement;
+      marker.setAttributeNS(null,'id','raisemarker'+piece);
+      drag_uelem!.parentNode!.insertBefore(marker, drag_uelem!);
+    }
+    raise_piece(drag_uelem!);
     api_piece(api, "raise", piece, drag_uelem!, { });
   }
   if (dragging == DRAGGING.MAYBE_UNGRAB ||
@@ -307,6 +315,16 @@ pieceops.Modify = <PieceHandler>function
   console.log('MODIFY DONE');
 }
 
+function raise_piece(uelem: SVGGraphicsElement) {
+  uelem.parentElement!.appendChild(uelem);
+}
+
+pieceops.Raise = <PieceHandler>function
+(piece, info: { } ) {
+  var uelem = piece_element('use',piece)!;
+  raise_piece(uelem);
+}
+
 pieceops.Move = <PieceHandler>function
 (piece, info: Pos ) {
   var uelem = piece_element('use',piece)!;
@@ -317,9 +335,14 @@ pieceops.Move = <PieceHandler>function
 
 messages.Recorded = <MessageHandler>function
 (j: { piece: PieceId, cseq: ClientSeq, gen: Generation } ) {
-  var uelem = document.getElementById('use'+j.piece)!;
+  let piece = j.piece;
+  var uelem = document.getElementById('use'+piece)!;
   if (uelem.dataset.cseq != null && j.cseq >= +uelem.dataset.cseq) {
     delete uelem.dataset.cseq;
+    let marker = piece_element('raisemarker',piece);
+    if (marker != null) {
+      marker.remove();
+    }
   }
   gen = j.gen;
 }
@@ -327,6 +350,11 @@ messages.Recorded = <MessageHandler>function
 function uelem_checkconflict(piece: PieceId, uelem: SVGGraphicsElement) {
   if (uelem.dataset.cseq == null) { return; }
   delete uelem.dataset.cseq;
+  let marker = piece_element('raisemarker',piece);
+  if (marker != null) {
+    uelem.parentElement!.insertBefore(marker,uelem);
+    marker.remove();
+  }
   add_log_message('Conflict! - simultaneous update');
 }
 
