@@ -47,13 +47,36 @@ pub trait Piece : Send + Debug {
   fn describe_html(&self, face : Option<FaceId>) -> String;
 }
 
+#[derive(Debug,Copy,Clone,PartialEq,PartialOrd)]
+#[derive(Serialize,Deserialize)]
+#[serde(into="f64")]
+#[serde(try_from="f64")]
+pub struct ZCoord(f64);
+impl TryFrom<f64> for ZCoord {
+  type Error = OnlineError;
+  #[throws(OnlineError)]
+  fn try_from(v: f64) -> ZCoord {
+    if !v.is_finite() { Err(OnlineError::InvalidZCoord)? }
+    ZCoord(v)
+  }
+}
+impl From<ZCoord> for f64 {
+  fn from(v: ZCoord) -> f64 { v.0 }
+}
+impl Ord for ZCoord {
+  fn cmp(&self, other: &Self) -> cmp::Ordering {
+    self.0.partial_cmp(&other.0).unwrap()
+  }
+}
+impl Eq for ZCoord { }
+
 #[derive(Debug)]
 pub struct PieceRecord {
   pub pos : Pos,
   pub p : Box<dyn Piece>,
   pub face : FaceId,
   pub held : Option<PlayerId>,
-  pub raised : Generation,
+  pub zlevel : (ZCoord,Generation),
   pub gen : Generation,
   pub lastclient : ClientId,
   pub gen_before_lastclient : Generation,
@@ -127,7 +150,7 @@ pub fn xxx_gamestate_init() -> GameState {
       face : 0.into(),
       held : None,
       lastclient : Default::default(),
-      raised: Generation(0),
+      zlevel : (0f64 .try_into().unwrap(), Generation(0)),
       gen,
       gen_before_lastclient : Generation(0),
     };

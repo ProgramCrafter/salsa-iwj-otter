@@ -51,6 +51,7 @@ enum TransmitUpdate<'u> {
   Recorded {
     piece : VisiblePieceId,
     cseq : ClientSequence,
+    zg : Generation,
   },
   Piece {
     piece : VisiblePieceId,
@@ -94,9 +95,9 @@ impl Read for UpdateReader {
       for u in &next.us {
         let tu = match u {
           &PreparedUpdateEntry::Piece
-          { piece, client, sameclient_cseq : cseq, .. }
+          { piece, client, sameclient_cseq : cseq, zg, .. }
           if client== self.client => {
-            TransmitUpdate::Recorded { piece, cseq }
+            TransmitUpdate::Recorded { piece, cseq, zg }
           },
           &PreparedUpdateEntry::Piece { piece, ref op, .. } => {
             TransmitUpdate::Piece { piece, op }

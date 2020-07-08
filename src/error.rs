@@ -19,6 +19,8 @@ pub enum OnlineError {
   NoClient,
   #[error("player not part of game (removed?)")]
   NoPlayer,
+  #[error("invalid Z coordinate")]
+  InvalidZCoord,
 }
 
 pub use OnlineError::{NoClient,NoPlayer};

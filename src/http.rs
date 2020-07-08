@@ -13,6 +13,7 @@ impl<'r> Responder<'r> for OnlineError {
     let status = match self {
       GameCorrupted => Status::InternalServerError,
       NoClient | NoPlayer => Status::NotFound,
+      InvalidZCoord => Status::BadRequest,
     };
     let mut resp = Responder::respond_to(msg,req).unwrap();
     resp.set_status(status);
