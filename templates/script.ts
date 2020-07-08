@@ -208,8 +208,8 @@ function drag_mousemove(e: MouseEvent) {
   var ctm = space.getScreenCTM()!;
   var ddx = (e.clientX - dcx!)/ctm.a;
   var ddy = (e.clientY - dcy!)/ctm.d;
+  var ddr2 = ddx*ddx + ddy*ddy;
   if (!(dragging & DRAGGING.YES)) {
-    var ddr2 = ddx*ddx + ddy*ddy;
     if (ddr2 > DRAGTHRESH) {
       dragging |= DRAGGING.YES;
     }
@@ -224,11 +224,12 @@ function drag_mousemove(e: MouseEvent) {
     var pelem = document.getElementById('piece'+piece);
     api_piece(api_delay, 'm', piece, drag_uelem!, [x, y] );
   }
+  return ddr2;
 }
 
 function drag_mouseup(e: MouseEvent) {
   console.log('mouseup', dragging);
-  drag_mousemove(e);
+  let ddr2 = drag_mousemove(e);
   //console.log('mouseup ...', dragging);
   if (dragging == DRAGGING.MAYBE_UNGRAB ||
       dragging == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
