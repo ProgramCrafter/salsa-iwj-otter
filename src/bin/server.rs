@@ -97,12 +97,17 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       let defs = pr.make_defs(&pri);
       alldefs.push((pri.id, defs));
 
+      let gplayer = match pr.held {
+        None => "".to_owned(),
+        Some(o) => format!("{}",o),
+      };
       uses.push(format!(
-        r##"<use id="{}" href="#{}" data-piece="{}" data-gplayer="" x="{}" y="{}"/>"##,
-                        pri.id_use(),
-                        pri.id_piece(),
-                        pri.id,
-                        pr.pos[0], pr.pos[1]));
+        r##"<use id="{}" href="#{}" data-piece="{}" data-gplayer="{}" x="{}" y="{}"/>"##,
+        pri.id_use(),
+        pri.id_piece(),
+        pri.id,
+        &gplayer,
+        pr.pos[0], pr.pos[1]));
     }
 
     let src = SessionRenderContext {
