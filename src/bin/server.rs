@@ -314,6 +314,27 @@ impl ApiPieceOp for ApiPieceUngrab {
 }
 
 #[derive(Debug,Serialize,Deserialize)]
+struct ApiPieceRaise {
+}
+#[post("/_/api/raise", format="json", data="<form>")]
+#[throws(OE)]
+fn api_raise(form : Json<ApiPiece<ApiPieceRaise>>)
+            -> impl response::Responder<'static> {
+  api_piece_op(form)
+}
+impl ApiPieceOp for ApiPieceRaise {
+  #[throws(GameError)]
+  fn op(&self, gs: &mut GameState, _: PlayerId, piece: PieceId,
+        _: &dyn Lens)
+        -> (PieceUpdateOp<()>, Vec<LogEntry>) {
+    let pc = gs.pieces.byid_mut(piece).unwrap();
+    pc.raised = gs.gen;
+    let update = PieceUpdateOp::Raise;
+    (update, vec![])
+  }
+}
+
+#[derive(Debug,Serialize,Deserialize)]
 struct ApiPieceMove (Pos);
 #[post("/_/api/m", format="json", data="<form>")]
 #[throws(OE)]
@@ -372,6 +393,7 @@ fn main() {
       updates,
       api_grab,
       api_ungrab,
+      api_raise,
       api_move,
     ])
     .launch();

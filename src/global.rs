@@ -59,6 +59,7 @@ pub enum PieceUpdateOp<NS> {
   Insert(NS),
   Modify(NS),
   Move(Pos),
+  Raise,
 }
 impl<NS> PieceUpdateOp<NS> {
   pub fn new_state(&self) -> Option<&NS> {
@@ -68,6 +69,7 @@ impl<NS> PieceUpdateOp<NS> {
       Insert(ns) => Some(ns),
       Modify(ns) => Some(ns),
       Move(_) => None,
+      Raise => None,
     }
   }
   pub fn map_new_state<NS2,F: FnOnce(NS) -> NS2>(self, f:F)
@@ -78,6 +80,7 @@ impl<NS> PieceUpdateOp<NS> {
       Insert(ns) => Insert(f(ns)),
       Modify(ns) => Modify(f(ns)),
       Move(pos) => Move(pos),
+      Raise => Raise,
     }
   }
 }      
