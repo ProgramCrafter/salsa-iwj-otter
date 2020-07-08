@@ -228,3 +228,21 @@ note, the client knows the server is up to date, and deletes the note.
 
 If the client sees a Server update message, and the client has a note,
 it knows that there was a conflict.
+
+
+LEVEL (Z ORDER)
+===============
+
+Each piece has a Z level which is a finite f64, set by the client
+which manipulates the piece, according to the protocol above.
+
+Each piece *also* has a Z level generation.  This is set by the
+server.  The server guarantees to set it to the server generation, and
+guarantees to do so as the result of any client Z level update.  
+
+So the client which sends a Z level update can assume that a server
+update to the generation will turn up, and with a higher value.
+
+The Z generation is used to disambiguate the Z order for pieces with
+identical Z level.  Higher values are closer to the user (ie, occlude
+lower values).
