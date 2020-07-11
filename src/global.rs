@@ -1,6 +1,4 @@
 
-#![allow(dead_code)]
-
 use crate::imports::*;
 use lazy_static::lazy_static;
 
