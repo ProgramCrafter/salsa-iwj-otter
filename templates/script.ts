@@ -61,7 +61,8 @@ var ctoken : string;
 
 var svg_ns : string;
 var space : SVGGraphicsElement;
-var def_marker : SVGGraphicsElement;
+var pieces_marker : SVGGraphicsElement;
+var defs_marker : SVGGraphicsElement;
 var logdiv : HTMLElement;
 var status_node : HTMLElement;
 
@@ -328,10 +329,10 @@ function piece_set_zlevel(uelem: SVGGraphicsElement,
   // O(new depth), which is right (since the UI for inserting
   // an object is itself O(new depth) UI operations to prepare.
 /*
-  let old_top = def_marker.previousElementSibling! as  unknown as SVGGraphicsElement;
+  let old_top = defs_marker.previousElementSibling! as  unknown as SVGGraphicsElement;
   modify(old_top);
   let container = uelem.parentElement!;
-  container.insertBefore(def_marker, uelem);
+  container.insertBefore(defs_marker, uelem);
 
   let previous = uelem | null;
   while ((previous = previous.previousElementSibling) != null &&
@@ -398,6 +399,13 @@ function uelem_checkconflict(piece: PieceId, uelem: SVGGraphicsElement) {
   add_log_message('Conflict! - simultaneous update');
 }
 
+function test_swap_stack() {
+  let old_bot = pieces_marker.nextElementSibling!;
+  let container = old_bot.parentElement!;
+  container.insertBefore(old_bot, defs_marker);
+  window.setTimeout(test_swap_stack, 1000);
+}
+
 function startup() {
   var body = document.getElementById("main-body")!;
   ctoken = body.dataset.ctoken!;
@@ -408,7 +416,8 @@ function startup() {
   logdiv = document.getElementById("log")!;
 
   space = svg_element('space')!;
-  def_marker = svg_element("def_marker")!;
+  pieces_marker = svg_element("pieces_marker")!;
+  defs_marker = svg_element("defs_marker")!;
   svg_ns = space.getAttribute('xmlns')!;
 
   var es = new EventSource("/_/updates/"+ctoken+'/'+gen);
@@ -435,6 +444,8 @@ function startup() {
       update_oe : (e as any).className,
     })
   }
+
+  test_swap_stack();
 }
 
 function doload(){

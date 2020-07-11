@@ -14,10 +14,11 @@
  	 onmousedown="drag_mousedown(event)"
 	 >
       <rect fill="green" x="20" y="5" width="200" height="100"/>
+      <g id="pieces_marker"></g>
 {%- for piece in uses %}
       {{piece}}
 {%- endfor %}
-      <defs id="def_marker"></defs>
+      <g id="defs_marker"></g>
 {%- for piece in defs %}
       <defs id="defs{{ piece.0 }}">{{ piece.1 }}</defs>
 {%- endfor %}
