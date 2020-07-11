@@ -241,8 +241,8 @@ function drag_mouseup(e: MouseEvent) {
   console.log('CHECK RAISE ', dragraise, dragraise*dragraise, ddr2);
   if (dragraise > 0 && ddr2 >= dragraise*dragraise) {
     piece_set_zlevel(uelem, (old_top) => {
-      let z = old_top.dataset.z! + 1;
-      uelem.dataset.z = z;
+      let z = +(old_top.dataset.z!) + 1;
+      uelem.dataset.z = z+"";
       api_piece(api, "setz", piece, uelem, { z: z });
     });
   }
@@ -304,10 +304,10 @@ messages.Piece = <MessageHandler>function
 pieceops.Modify = <PieceHandler>function
 (piece: PieceId, info: { svg: string, held: PlayerId, pos: Pos }) {
   console.log('PIECE UPDATE MODIFY ',piece,info)
-  var uelem = piece_element('use',piece)!;
   var delem = piece_element('defs',piece)!;
-  var pelem = piece_element('piece',piece)!;
   delem.innerHTML = info.svg;
+  var uelem = piece_element('use',piece)!;
+  var pelem = piece_element('piece',piece)!;
   uelem.setAttributeNS(null, "x", info.pos[0]+"");
   uelem.setAttributeNS(null, "y", info.pos[1]+"");
   uelem_checkconflict(piece, uelem);
@@ -328,21 +328,25 @@ function piece_set_zlevel(uelem: SVGGraphicsElement,
   // by assuming that uelem ought to go at the end, so this is
   // O(new depth), which is right (since the UI for inserting
   // an object is itself O(new depth) UI operations to prepare.
-/*
-  let old_top = defs_marker.previousElementSibling! as  unknown as SVGGraphicsElement;
+
+  let old_top = (defs_marker.previousElementSibling! as
+		 unknown as SVGGraphicsElement);
   modify(old_top);
   let container = uelem.parentElement!;
-  container.insertBefore(defs_marker, uelem);
 
-  let previous = uelem | null;
-  while ((previous = previous.previousElementSibling) != null &&
-	 piece_z_before(uelem, previous)) {
+  let ins_before = defs_marker
+  let earlier;
+  for (; ; ins_before = earlier) {
+    earlier = (ins_before.previousElementSibling! as
+		   unknown as SVGGraphicsElement);
+    if (earlier == pieces_marker) break;
+    if (earlier == uelem) continue;
+    if (!piece_z_before(uelem, earlier)) break;
   }
-  if (previous != uelem) {
-    constainer.insertAfter(previous, uelem);
-  }
-*/
+  if (ins_before != uelem)
+    container.insertBefore(uelem, ins_before);
 }
+
 function piece_z_before(a: SVGGraphicsElement, b: SVGGraphicsElement) {
   if (+(a.dataset.z !) < +(b.dataset.z !)) return true;
   if (+(a.dataset.z !) > +(b.dataset.z !)) return false;
@@ -445,7 +449,7 @@ function startup() {
     })
   }
 
-  test_swap_stack();
+//  test_swap_stack();
 }
 
 function doload(){
