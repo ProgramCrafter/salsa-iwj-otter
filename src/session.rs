@@ -10,6 +10,7 @@ struct SessionRenderContext {
   uses : Vec<SessionPieceContext>,
   defs : Vec<(VisiblePieceId,String)>,
   nick : String,
+  data : String,
 }
 
 #[derive(Serialize,Debug)]
@@ -24,6 +25,14 @@ struct SessionPieceLoadJson<'r> {
   held : &'r Option<PlayerId>,
   z : ZCoord,
   zg : Generation,
+}
+
+#[derive(Serialize,Debug)]
+struct DataLoad {
+  players : HashMap<PlayerId, DataLoadPlayer>,
+}
+#[derive(Serialize,Debug]
+struct DataLoadPlayer {
 }
 
 #[derive(Deserialize)]
@@ -77,6 +86,11 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       uses.push(for_piece);
     }
 
+    let load_players = players.map(|player, pl {
+      DataLoadPlayer {
+      };
+    });
+
     let src = SessionRenderContext {
       ctoken : ctoken.0,
       gen : ig.gs.gen,
@@ -84,6 +98,9 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       defs : alldefs,
       uses,
       nick : pl.nick.clone(),
+      dataload : DataLoad {
+        players : load_players,
+      },
     };
     eprintln!("SRC {:?}", &src);
     src
