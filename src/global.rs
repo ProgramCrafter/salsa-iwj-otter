@@ -2,19 +2,15 @@
 use crate::imports::*;
 use lazy_static::lazy_static;
 
+// ---------- newtypes and type aliases ----------
+
 visible_slotmap_key!{ ClientId('C') }
 visible_slotmap_key!{ PlayerId('#') }
 
 #[derive(Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash)]
 pub struct RawToken (pub String);
-impl Borrow<str> for RawToken {
-  fn borrow(&self) -> &str { &self.0 }
-}
 
-#[derive(Debug)] 
-pub struct Client {
-  pub player : PlayerId,
-}
+// ---------- data structure ----------
 
 #[derive(Debug)]
 pub struct Instance {
@@ -22,6 +18,21 @@ pub struct Instance {
   pub clients : DenseSlotMap<ClientId,Client>,
   pub updates : SecondarySlotMap<PlayerId, PlayerUpdates>,
 }
+
+#[derive(Debug)] 
+pub struct Client {
+  pub player : PlayerId,
+}
+
+#[derive(Default)]
+struct Global {
+  // lock hierarchy: this is the innermost lock
+  players : RwLock<TokenTable<PlayerId>>,
+  clients : RwLock<TokenTable<ClientId>>,
+  // xxx delete instances at some point!
+}
+
+// ---------- API ----------
 
 #[derive(Clone,Debug)]
 pub struct InstanceAccessDetails<Id> {
@@ -37,22 +48,26 @@ pub struct InstanceAccess<'i, Id> {
 
 pub type TokenTable<Id> = HashMap<RawToken, InstanceAccessDetails<Id>>;
 
-#[derive(Default)]
-struct Global {
-  // lock hierarchy: this is the innermost lock
-  players : RwLock<TokenTable<PlayerId>>,
-  clients : RwLock<TokenTable<ClientId>>,
-  // xxx delete instances at some point!
+pub trait AccessId : Copy + Clone + 'static {
+  fn global_tokens() -> &'static RwLock<TokenTable<Self>>;
+  const ERROR : OnlineError;
 }
+
+// ========== implementations ==========
+
+// ---------- newtypes and type aliases ----------
+
+impl Borrow<str> for RawToken {
+  fn borrow(&self) -> &str { &self.0 }
+}
+
+// ---------- data structure ----------
 
 lazy_static! {
   static ref GLOBAL : Global = Default::default();
 }
 
-pub trait AccessId : Copy + Clone + 'static {
-  fn global_tokens() -> &'static RwLock<TokenTable<Self>>;
-  const ERROR : OnlineError;
-}
+// ---------- API ----------
 
 impl AccessId for PlayerId {
   const ERROR : OnlineError = NoPlayer;
@@ -69,22 +84,6 @@ pub fn lookup_token<Id : AccessId>(s : &str)
     .ok_or(Id::ERROR)
 }
 
-pub fn record_token<Id : AccessId>(iad : InstanceAccessDetails<Id>)
-                                   -> RawToken {
-  let mut rng = thread_rng();
-  let token = RawToken (
-    repeat_with(|| rng.sample(Alphanumeric))
-      .take(64).collect()
-  );
-  Id::global_tokens().write().unwrap().insert(token.clone(), iad);
-  token
-}
-
-const XXX_PLAYERS_TOKENS : &[(&str, &str)] = &[
-  ("kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe", "alice"),
-  ("ccg9kzoTh758QrVE1xMY7BQWB36dNJTx", "bob"),
-];
-
 impl<'r, Id> FromParam<'r> for InstanceAccess<'r, Id>
   where Id : AccessId
 {
@@ -97,6 +96,24 @@ impl<'r, Id> FromParam<'r> for InstanceAccess<'r, Id>
     InstanceAccess { raw_token : token, i : i.clone() }
   }
 }
+
+pub fn record_token<Id : AccessId>(iad : InstanceAccessDetails<Id>)
+                                   -> RawToken {
+  let mut rng = thread_rng();
+  let token = RawToken (
+    repeat_with(|| rng.sample(Alphanumeric))
+      .take(64).collect()
+  );
+  Id::global_tokens().write().unwrap().insert(token.clone(), iad);
+  token
+}
+
+// ========== ad-hoc and temporary ==========
+
+const XXX_PLAYERS_TOKENS : &[(&str, &str)] = &[
+  ("kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe", "alice"),
+  ("ccg9kzoTh758QrVE1xMY7BQWB36dNJTx", "bob"),
+];
 
 pub fn xxx_global_setup() {
   let gi = Instance {
