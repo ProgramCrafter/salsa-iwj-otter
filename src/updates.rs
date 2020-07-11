@@ -55,6 +55,28 @@ pub enum PieceUpdateOp<NS> {
   SetZLevel(ZLevel),
 }
 
+// ---------- for traansmission ----------
+
+#[derive(Debug,Serialize)]
+pub struct TransmitUpdate<'u> (
+  Generation,
+  Vec<TransmitUpdateEntry<'u>>,
+);
+
+#[derive(Debug,Serialize)]
+enum TransmitUpdateEntry<'u> {
+  Recorded {
+    piece : VisiblePieceId,
+    cseq : ClientSequence,
+    zg : Option<Generation>,
+  },
+  Piece {
+    piece : VisiblePieceId,
+    op : &'u PieceUpdateOp<PreparedPieceState>,
+  },
+  Log (&'u LogEntry),
+}
+
 // ========== implementation ==========
 
 // ---------- prepared updates, queued in memory ----------
@@ -87,7 +109,7 @@ impl PreparedUpdateEntry {
   }
 }
 
-// ---------- piece updates ----------
+// ---------- PieceUpdatesOp ----------
 
 impl<NS> PieceUpdateOp<NS> {
   pub fn new_state(&self) -> Option<&NS> {
@@ -120,5 +142,31 @@ impl<NS> PieceUpdateOp<NS> {
       Move(_) => None,
       SetZLevel(ZLevel{zg,..}) => Some(*zg),
     }
+  }
+}
+
+// ---------- for traansmission ----------
+
+impl PreparedUpdate {
+  pub fn for_transmit(&self, dest : ClientId) -> TransmitUpdate {
+    let mut ents = vec![];
+    for u in &self.us {
+      let ue = match u {
+        &PreparedUpdateEntry::Piece
+        { piece, client, sameclient_cseq : cseq, ref op }
+        if client == dest => {
+          let zg = op.new_z_generation();
+          TransmitUpdateEntry::Recorded { piece, cseq, zg }
+        },
+        &PreparedUpdateEntry::Piece { piece, ref op, .. } => {
+          TransmitUpdateEntry::Piece { piece, op }
+        },
+        PreparedUpdateEntry::Log(logent) => {
+          TransmitUpdateEntry::Log(&*logent)
+        },
+      };
+      ents.push(ue);
+    };
+    TransmitUpdate(self.gen, ents)
   }
 }

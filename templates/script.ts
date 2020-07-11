@@ -463,9 +463,8 @@ function startup() {
   var es = new EventSource("/_/updates/"+ctoken+'/'+gen);
   es.onmessage = function(event) {
     console.log('GOTEVE', event)
-    var j = JSON.parse(event.data);
-    var tgen = j.pop();
-    for (var m of j) {
+    var [tgen, ms] = JSON.parse(event.data);
+    for (var m of ms) {
       var k = Object.keys(m)[0];
       messages[k](m[k]);
     }

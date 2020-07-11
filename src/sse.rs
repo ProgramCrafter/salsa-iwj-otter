@@ -25,20 +25,6 @@ struct UpdateReader {
   ami : Arc<Mutex<Instance>>,
 }
 
-#[derive(Debug,Serialize)]
-enum TransmitUpdate<'u> {
-  Recorded {
-    piece : VisiblePieceId,
-    cseq : ClientSequence,
-    zg : Option<Generation>,
-  },
-  Piece {
-    piece : VisiblePieceId,
-    op : &'u PieceUpdateOp<PreparedPieceState>,
-  },
-  Log (&'u LogEntry),
-}
-
 #[derive(Error,Debug)]
 #[error("WouldBlock error misreported!")]
 struct FlushWouldBlockError{}
@@ -70,27 +56,10 @@ impl Read for UpdateReader {
       let next_len = UPDATE_MAX_FRAMING_SIZE + next.json_len();
       if next_len > buf.len() { break }
 
-      write!(buf, "data: [")?;
-      for u in &next.us {
-        let tu = match u {
-          &PreparedUpdateEntry::Piece
-          { piece, client, sameclient_cseq : cseq, ref op }
-          if client== self.client => {
-            let zg = op.new_z_generation();
-            TransmitUpdate::Recorded { piece, cseq, zg }
-          },
-          &PreparedUpdateEntry::Piece { piece, ref op, .. } => {
-            TransmitUpdate::Piece { piece, op }
-          },
-          PreparedUpdateEntry::Log(logent) => {
-            TransmitUpdate::Log(&*logent)
-          },
-        };
-        serde_json::to_writer(&mut buf, &tu)?;
-        write!(buf,",")?;
-      }
-      serde_json::to_writer(&mut buf, &next.gen)?;
-      write!(buf, "]\n\
+      let tu = next.for_transmit(self.client);
+      write!(buf, "data: ")?;
+      serde_json::to_writer(&mut buf, &tu)?;
+      write!(buf, "\n\
                    id: {}\n\n",
              &self.to_send)?;
       self.to_send.try_increment().unwrap();
