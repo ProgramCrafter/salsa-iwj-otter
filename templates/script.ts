@@ -168,6 +168,7 @@ enum DRAGGING { // bitmask
   MAYBE_GRAB   = 1,
   MAYBE_UNGRAB = 2,
   YES          = 4,
+  RAISED       = 8,
 };
 
 var drag_piece : PieceId | null;
@@ -245,6 +246,20 @@ function drag_mousemove(e: MouseEvent) {
     p.uelem.setAttributeNS(null, "x", x+"");
     p.uelem.setAttributeNS(null, "y", y+"");
     api_piece(api_delay, 'm', piece,p, [x, y] );
+
+    if (!(dragging & DRAGGING.RAISED)) {
+      let dragraise = +p.pelem.dataset.dragraise!;
+      if (dragraise > 0 && ddr2 >= dragraise*dragraise) {
+	dragging |= DRAGGING.RAISED;
+	console.log('CHECK RAISE ', dragraise, dragraise*dragraise, ddr2);
+	piece_set_zlevel(piece,p, (oldtop_piece) => {
+	  let oldtop_p = pieces[oldtop_piece]!;
+	  let z = oldtop_p.z + 1;
+	  p.z = z;
+	  api_piece(api, "setz", piece,p, { z: z });
+	});
+      }
+    }
   }
   return ddr2;
 }
@@ -254,18 +269,8 @@ function drag_mouseup(e: MouseEvent) {
   let ddr2 : number = drag_mousemove(e);
   let piece = drag_piece!;
   let p = pieces[piece]!;
-  let dragraise = +p.pelem.dataset.dragraise!;
-  console.log('CHECK RAISE ', dragraise, dragraise*dragraise, ddr2);
-  if (dragraise > 0 && ddr2 >= dragraise*dragraise) {
-    piece_set_zlevel(piece,p, (oldtop_piece) => {
-      let oldtop_p = pieces[oldtop_piece]!;
-      let z = oldtop_p.z + 1;
-      p.z = z;
-      api_piece(api, "setz", piece,p, { z: z });
-    });
-  }
   if (dragging == DRAGGING.MAYBE_UNGRAB ||
-      dragging == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
+      (dragging & ~DRAGGING.RAISED) == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
     set_ungrab(piece,p);
     api_piece(api, 'ungrab', piece,p, { });
   }
