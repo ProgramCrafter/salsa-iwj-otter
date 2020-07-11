@@ -69,7 +69,7 @@ struct SessionPieceContext {
 
 #[derive(Serialize,Debug)]
 struct SessionPieceLoadJson<'r> {
-  gplayer : &'r Option<PlayerId>,
+  held : &'r Option<PlayerId>,
   z : ZCoord,
   zg : Generation,
 }
@@ -112,7 +112,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       alldefs.push((pri.id, defs));
 
       let for_info = SessionPieceLoadJson {
-        gplayer : &pr.held,
+        held : &pr.held,
         z  : pr.zlevel.z,
         zg : pr.zlevel.zg,
       };

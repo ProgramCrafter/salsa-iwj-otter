@@ -42,7 +42,7 @@ type ClientSeq = number;
 type Generation = number;
 
 type PieceInfo = {
-  gplayer : PlayerId | null,
+  held : PlayerId | null,
   cseq : number | null,
   z : number,
   zg : Generation,
@@ -189,15 +189,15 @@ function drag_mousedown(e : MouseEvent) {
   drag_cancel();
   let p = pieces[piece]!;
   drag_piece = piece;
-  var gplayer = p.gplayer;
-  if (gplayer != null && gplayer != us) { return; }
+  var held = p.held;
+  if (held != null && held != us) { return; }
 
   dcx = e.clientX;
   dcy = e.clientY;
   dox = parseFloat(p.uelem.getAttributeNS(null,"x")!);
   doy = parseFloat(p.uelem.getAttributeNS(null,"y")!);
 
-  if (gplayer == us) {
+  if (held == us) {
     dragging = DRAGGING.MAYBE_UNGRAB;
   } else {
     dragging = DRAGGING.MAYBE_GRAB;
@@ -211,14 +211,14 @@ function drag_mousedown(e : MouseEvent) {
 
 function set_grab(piece: PieceId, p: PieceInfo, owner: PlayerId) {
   var nelem = document.createElementNS(svg_ns,'use');
-  p.gplayer = owner;
+  p.held = owner;
   piece_cleanup_grab(piece, p);
   nelem.setAttributeNS(null,'href','#select'+piece);
   nelem.setAttributeNS(null,'stroke-dasharray',"3 1  1 1  1 1");
   p.pelem.appendChild(nelem);
 }
 function set_ungrab(piece: PieceId, p: PieceInfo) {
-  p.gplayer = null;
+  p.held = null;
   piece_cleanup_grab(piece,p);
 }
 function piece_cleanup_grab(piece: PieceId, p: PieceInfo) {
