@@ -33,6 +33,7 @@ struct DataLoad {
 }
 #[derive(Serialize,Debug)]
 struct DataLoadPlayer {
+  dasharray : String,
 }
 
 #[derive(Deserialize)]
@@ -61,7 +62,10 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
 
     let mut load_players = HashMap::new();
     for (player, _pl) in &ig.gs.players {
+      let dasharray = String::new();
+
       load_players.insert(player, DataLoadPlayer {
+        dasharray,
       });
     }
 
