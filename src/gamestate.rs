@@ -123,7 +123,7 @@ impl Display for ZCoord {
   }
 }
 
-// ---------- game state ----------
+// ---------- game state - rendering etc. ----------
 
 impl PieceState {
   pub fn make_defs(&self, pri : &PieceRenderInstructions) -> String {
