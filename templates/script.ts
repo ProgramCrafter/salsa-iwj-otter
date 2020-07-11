@@ -210,8 +210,11 @@ function drag_mousedown(e : MouseEvent) {
 }
 
 function set_grab(piece: PieceId, p: PieceInfo, owner: PlayerId) {
-  var nelem = document.createElementNS(svg_ns,'use');
   p.held = owner;
+  display_grab(piece,p);
+}
+function display_grab(piece: PieceId, p: PieceInfo) {
+  var nelem = document.createElementNS(svg_ns,'use');
   piece_cleanup_grab(piece, p);
   nelem.setAttributeNS(null,'href','#select'+piece);
   nelem.setAttributeNS(null,'stroke-dasharray',"3 1  1 1  1 1");
@@ -451,6 +454,7 @@ function startup() {
     p.pelem = piece_element('piece',piece);
     delete uelem.dataset.info;
     pieces[piece] = p;
+    if (p.held != null) display_grab(piece,p);
   }
 
   var es = new EventSource("/_/updates/"+ctoken+'/'+gen);
