@@ -238,10 +238,11 @@ impl ApiPieceOp for ApiPieceMove {
   }
 }
 
-/*
-      api_grab,
-      api_ungrab,
-      api_raise,
-      api_move,
-xxx
-*/
+pub fn mount(rocket_instance: Rocket) -> Rocket {
+  return rocket_instance.mount("/", routes![
+    api_grab,
+    api_ungrab,
+    api_raise,
+    api_move,
+  ]);
+}

@@ -1,7 +1,7 @@
 
 pub use rocket::request::Request;
 pub use rocket::response::{Response,Responder};
-pub use rocket::post;
+pub use rocket::{post,get,routes};
 pub use rocket_contrib::json::Json;
 pub use rocket::http::Status;
 

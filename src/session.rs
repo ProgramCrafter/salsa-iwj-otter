@@ -91,6 +91,8 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
   Ok(Template::render("session",&c))
 }
 
-pub fn mount(_rocket_instance: &mut Rocket) {
-  //rocket_instance.mount(&session);  xxx
+pub fn mount(rocket_instance: Rocket) -> Rocket {
+  return rocket_instance.mount("/", routes![
+    session,
+  ]);
 }

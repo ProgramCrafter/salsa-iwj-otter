@@ -76,7 +76,7 @@ fn main() {
     .enable(Frame::Deny)
     .enable(Referrer::NoReferrer);
 
-  let mut r = rocket::ignite()
+  let r = rocket::ignite()
     .attach(helmet)
     .attach(Template::fairing())
     .mount("/", routes![
@@ -85,6 +85,7 @@ fn main() {
       resource,
       updates,
     ]);
-  game::session::mount(&mut r);
+  let r = game::session::mount(r);
+  let r = game::api::mount(r);
   r.launch();
 }
