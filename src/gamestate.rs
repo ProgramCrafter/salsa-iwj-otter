@@ -1,6 +1,8 @@
 
 use crate::imports::*;
 
+// ---------- newtypes and type aliases ----------
+
 slotmap::new_key_type!{
   pub struct PieceId;
 }
@@ -10,21 +12,64 @@ slotmap::new_key_type!{
 #[serde(transparent)]
 pub struct Generation (pub u64);
 
-impl Generation {
-  pub fn increment(&mut self) { self.0 += 1 }
-}
-impl Display for Generation {
-  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-    Display::fmt(&self.0,f)
-  }
-}
-
 visible_slotmap_key!{ VisiblePieceId('.') }
 
-pub fn make_pieceid_visible(p : PieceId) -> VisiblePieceId {
-  // xxx need to do censorship mapping here
-  let kd : slotmap::KeyData = p.into();
-  VisiblePieceId(kd)
+#[derive(Debug,Copy,Clone,PartialEq,PartialOrd)]
+#[derive(Serialize,Deserialize)]
+#[serde(into="f64")]
+#[serde(try_from="f64")]
+pub struct ZCoord(f64);
+
+// ---------- general data types ----------
+
+#[derive(Debug,Copy,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
+pub struct ZLevel {
+  pub z: ZCoord,
+  pub zg: Generation,
+}
+
+// ---------- game state ----------
+
+#[derive(Debug)]
+pub struct GameState {
+  pub pieces : DenseSlotMap<PieceId,PieceRecord>,
+  pub players : DenseSlotMap<PlayerId,Player>,
+  pub gen : Generation,
+  pub log : Vec<(Generation, Arc<LogEntry>)>,
+}
+
+#[derive(Debug)]
+pub struct PieceRecord {
+  pub pos : Pos,
+  pub p : Box<dyn Piece>,
+  pub face : FaceId,
+  pub held : Option<PlayerId>,
+  pub zlevel : ZLevel,
+  pub gen : Generation,
+  pub lastclient : ClientId,
+  pub gen_before_lastclient : Generation,
+}
+
+#[derive(Debug)]
+pub struct Player {
+  pub nick : String,
+}
+
+#[derive(Debug,Serialize)]
+pub struct LogEntry {
+  pub html : String,
+}
+
+// ---------- piece trait, and rendering ----------
+
+pub trait Piece : Send + Debug {
+  fn svg_piece(&self, pri : &PieceRenderInstructions) -> String;
+  fn svg_select(&self, pri : &PieceRenderInstructions) -> String;
+  fn svg_x_ids(&self) -> VisiblePieceIdSvgIds;
+  fn svg_x_defs(&self, pri : &PieceRenderInstructions) -> String;
+  fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
+                      -> Option<Coord>;
+  fn describe_html(&self, face : Option<FaceId>) -> String;
 }
 
 #[derive(Debug,Copy,Clone)]
@@ -42,21 +87,19 @@ impl PieceRenderInstructions {
   pub fn id_x(&self, w : &str) -> String { format!("def.{}.{}", self.id, w) }
 }
 
-pub trait Piece : Send + Debug {
-  fn svg_piece(&self, pri : &PieceRenderInstructions) -> String;
-  fn svg_select(&self, pri : &PieceRenderInstructions) -> String;
-  fn svg_x_ids(&self) -> VisiblePieceIdSvgIds;
-  fn svg_x_defs(&self, pri : &PieceRenderInstructions) -> String;
-  fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
-                      -> Option<Coord>;
-  fn describe_html(&self, face : Option<FaceId>) -> String;
+// ========== implementations ==========
+
+// ---------- simple data types ----------
+
+impl Generation {
+  pub fn increment(&mut self) { self.0 += 1 }
+}
+impl Display for Generation {
+  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    Display::fmt(&self.0,f)
+  }
 }
 
-#[derive(Debug,Copy,Clone,PartialEq,PartialOrd)]
-#[derive(Serialize,Deserialize)]
-#[serde(into="f64")]
-#[serde(try_from="f64")]
-pub struct ZCoord(f64);
 impl TryFrom<f64> for ZCoord {
   type Error = OnlineError;
   #[throws(OnlineError)]
@@ -80,23 +123,7 @@ impl Display for ZCoord {
   }
 }
 
-#[derive(Debug,Copy,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
-pub struct ZLevel {
-  pub z: ZCoord,
-  pub zg: Generation,
-}
-
-#[derive(Debug)]
-pub struct PieceRecord {
-  pub pos : Pos,
-  pub p : Box<dyn Piece>,
-  pub face : FaceId,
-  pub held : Option<PlayerId>,
-  pub zlevel : ZLevel,
-  pub gen : Generation,
-  pub lastclient : ClientId,
-  pub gen_before_lastclient : Generation,
-}
+// ---------- game state ----------
 
 impl PieceRecord {
   pub fn make_defs(&self, pri : &PieceRenderInstructions) -> String {
@@ -134,22 +161,12 @@ impl PieceRecord {
   }
 }
 
-#[derive(Debug)]
-pub struct GameState {
-  pub pieces : DenseSlotMap<PieceId,PieceRecord>,
-  pub players : DenseSlotMap<PlayerId,Player>,
-  pub gen : Generation,
-  pub log : Vec<(Generation, Arc<LogEntry>)>,
-}
+// ========== ad-hoc and temporary ==========
 
-#[derive(Debug)]
-pub struct Player {
-  pub nick : String,
-}
-
-#[derive(Debug,Serialize)]
-pub struct LogEntry {
-  pub html : String,
+pub fn make_pieceid_visible(p : PieceId) -> VisiblePieceId {
+  // xxx need to do censorship mapping here
+  let kd : slotmap::KeyData = p.into();
+  VisiblePieceId(kd)
 }
 
 pub fn xxx_gamestate_init() -> GameState {
