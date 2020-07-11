@@ -5,7 +5,6 @@ use lazy_static::lazy_static;
 // ---------- newtypes and type aliases ----------
 
 visible_slotmap_key!{ ClientId('C') }
-visible_slotmap_key!{ PlayerId('#') }
 
 #[derive(Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash)]
 pub struct RawToken (pub String);

@@ -441,6 +441,8 @@ function startup() {
   status_node = document.getElementById('status')!;
   status_node.innerHTML = 'js-done';
   logdiv = document.getElementById("log")!;
+  let dataload = body.dataset.load;
+  delete body.dataset.load;
 
   space = svg_element('space')!;
   pieces_marker = svg_element("pieces_marker")!;

@@ -10,7 +10,7 @@ struct SessionRenderContext {
   uses : Vec<SessionPieceContext>,
   defs : Vec<(VisiblePieceId,String)>,
   nick : String,
-  data : String,
+  load : String,
 }
 
 #[derive(Serialize,Debug)]
@@ -31,7 +31,7 @@ struct SessionPieceLoadJson<'r> {
 struct DataLoad {
   players : HashMap<PlayerId, DataLoadPlayer>,
 }
-#[derive(Serialize,Debug]
+#[derive(Serialize,Debug)]
 struct DataLoadPlayer {
 }
 
@@ -47,7 +47,6 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
   let c = {
     let mut ig = iad.g.lock()?;
     let ig = &mut *ig;
-    let pl = ig.gs.players.byid_mut(player)?;
     let cl = Client { player };
     let client = ig.clients.insert(cl);
 
@@ -60,6 +59,13 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
     let mut uses = vec![];
     let mut alldefs = vec![];
 
+    let mut load_players = HashMap::new();
+    for (player, _pl) in &ig.gs.players {
+      load_players.insert(player, DataLoadPlayer {
+      });
+    }
+
+    let pl = ig.gs.players.byid_mut(player)?;
     let mut pieces : Vec<_> = ig.gs.pieces.iter().collect();
 
     pieces.sort_by_key(|(_,pr)| &pr.zlevel);
@@ -86,11 +92,6 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       uses.push(for_piece);
     }
 
-    let load_players = players.map(|player, pl {
-      DataLoadPlayer {
-      };
-    });
-
     let src = SessionRenderContext {
       ctoken : ctoken.0,
       gen : ig.gs.gen,
@@ -98,9 +99,9 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       defs : alldefs,
       uses,
       nick : pl.nick.clone(),
-      dataload : DataLoad {
+      load : serde_json::to_string(&DataLoad {
         players : load_players,
-      },
+      })?,
     };
     eprintln!("SRC {:?}", &src);
     src

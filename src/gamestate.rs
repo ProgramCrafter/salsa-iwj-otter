@@ -3,6 +3,8 @@ use crate::imports::*;
 
 // ---------- newtypes and type aliases ----------
 
+visible_slotmap_key!{ PlayerId('#') }
+
 slotmap::new_key_type!{
   pub struct PieceId;
 }

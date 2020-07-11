@@ -38,7 +38,7 @@ pub fn slotkey_write(k : SKD, sep : char, f : &mut fmt::Formatter) {
 macro_rules! visible_slotmap_key {
   ( $x:ident($sep:expr) ) => {
 
-    #[derive(Copy,Default,Clone,Eq,PartialEq,Ord,PartialOrd,Serialize,Deserialize)]
+    #[derive(Copy,Default,Clone,Eq,PartialEq,Ord,PartialOrd,Serialize,Deserialize,Hash)]
     #[serde(into="String")]
     #[serde(try_from="&str")]
     pub struct $x(pub slotmap::KeyData);
