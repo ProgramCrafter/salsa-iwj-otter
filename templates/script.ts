@@ -217,7 +217,7 @@ function set_grab(piece: PieceId, p: PieceInfo, owner: PlayerId) {
   p.pelem.appendChild(nelem);
 }
 function set_ungrab(piece: PieceId, p: PieceInfo) {
-  p.gplayer = "";
+  p.gplayer = null;
   piece_cleanup_grab(piece,p);
 }
 function piece_cleanup_grab(piece: PieceId, p: PieceInfo) {
