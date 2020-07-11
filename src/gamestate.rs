@@ -80,13 +80,19 @@ impl Display for ZCoord {
   }
 }
 
+#[derive(Debug,Copy,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
+pub struct ZLevel {
+  pub z: ZCoord,
+  pub zg: Generation,
+}
+
 #[derive(Debug)]
 pub struct PieceRecord {
   pub pos : Pos,
   pub p : Box<dyn Piece>,
   pub face : FaceId,
   pub held : Option<PlayerId>,
-  pub zlevel : (ZCoord,Generation),
+  pub zlevel : ZLevel,
   pub gen : Generation,
   pub lastclient : ClientId,
   pub gen_before_lastclient : Generation,
@@ -127,8 +133,8 @@ impl PieceRecord {
       pos        : self.pos,
       held       : self.held,
       svg        : self.make_defs(pri),
-      z          : self.zlevel.0,
-      zg         : self.zlevel.1,
+      z          : self.zlevel.z,
+      zg         : self.zlevel.zg,
     }
   }
 
@@ -164,7 +170,7 @@ pub fn xxx_gamestate_init() -> GameState {
       face : 0.into(),
       held : None,
       lastclient : Default::default(),
-      zlevel : (0f64 .try_into().unwrap(), Generation(0)),
+      zlevel : ZLevel{ z: 0f64 .try_into().unwrap(), zg: Generation(0) },
       gen,
       gen_before_lastclient : Generation(0),
     };

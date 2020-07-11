@@ -59,7 +59,7 @@ pub enum PieceUpdateOp<NS> {
   Insert(NS),
   Modify(NS),
   Move(Pos),
-  SetZLevel((ZCoord, Generation)),
+  SetZLevel(ZLevel),
 }
 impl<NS> PieceUpdateOp<NS> {
   pub fn new_state(&self) -> Option<&NS> {
@@ -90,10 +90,10 @@ impl<NS> PieceUpdateOp<NS> {
       Insert(_) => None,
       Modify(_) => None,
       Move(_) => None,
-      SetZLevel((_,zg)) => Some(*zg),
+      SetZLevel(ZLevel{zg,..}) => Some(*zg),
     }
   }
-}      
+}
 
 #[derive(Debug)]
 pub struct PlayerUpdates {

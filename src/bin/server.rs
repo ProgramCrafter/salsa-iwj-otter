@@ -101,7 +101,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
 
     let mut pieces : Vec<_> = ig.gs.pieces.iter().collect();
 
-    pieces.sort_by_key(|(_,pr)| pr.zlevel);
+    pieces.sort_by_key(|(_,pr)| &pr.zlevel);
 
     for (gpid, pr) in pieces {
       let pri = PieceRenderInstructions {
@@ -113,8 +113,8 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
 
       let for_info = SessionPieceLoadJson {
         gplayer : &pr.held,
-        z  : pr.zlevel.0,
-        zg : pr.zlevel.1,
+        z  : pr.zlevel.z,
+        zg : pr.zlevel.zg,
       };
 
       let for_piece = SessionPieceContext {
@@ -349,7 +349,7 @@ impl ApiPieceOp for ApiPieceRaise {
         _: &dyn Lens)
         -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pc = gs.pieces.byid_mut(piece).unwrap();
-    pc.zlevel = (self.z, gs.gen);
+    pc.zlevel = ZLevel { z : self.z, zg : gs.gen };
     let update = PieceUpdateOp::SetZLevel(pc.zlevel);
     (update, vec![])
   }
