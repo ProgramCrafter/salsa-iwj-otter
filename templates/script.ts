@@ -13,6 +13,7 @@
 //         .piece   piece id (static)
 //         .gplayer  grabbed user (player id string, or "")
 //         .cseq     client sequence (see PROTOCOL.md)
+//         .z, .zg   Z level
 //      container to allow quick movement and hang stuff off
 //
 //   delem
@@ -60,6 +61,7 @@ var ctoken : string;
 
 var svg_ns : string;
 var space : SVGGraphicsElement;
+var def_marker : SVGGraphicsElement;
 var logdiv : HTMLElement;
 var status_node : HTMLElement;
 
@@ -129,11 +131,15 @@ function api_piece(f: (meth: string, payload: Object) => void,
   })
 }
 
-function piece_element(base: string, piece: PieceId): SVGGraphicsElement | null
-{
-  let elem = document.getElementById(base+piece);
+function svg_element(id: string): SVGGraphicsElement | null {
+  let elem = document.getElementById(id);
   return elem as unknown as (SVGGraphicsElement | null);
 }
+function piece_element(base: string, piece: PieceId): SVGGraphicsElement | null
+{
+  return svg_element(base+piece);
+}
+
 
 // ----- clicking/dragging pieces -----
 
@@ -227,24 +233,21 @@ function drag_mousemove(e: MouseEvent) {
 function drag_mouseup(e: MouseEvent) {
   console.log('mouseup', dragging);
   let ddr2 : number = drag_mousemove(e);
-  let piece = drag_uelem!.dataset.piece!;
+  let uelem = drag_uelem!;
+  let piece = uelem.dataset.piece!;
   let pelem = piece_element('piece',piece)!;
   let dragraise = +pelem.dataset.dragraise!;
   console.log('CHECK RAISE ', dragraise, dragraise*dragraise, ddr2);
   if (dragraise > 0 && ddr2 >= dragraise*dragraise) {
-    let marker = piece_element('raisemarker',piece);
-    if (marker == null) {
-      marker = document.createElementNS(svg_ns,'defs')! as
-                   SVGGraphicsElement;
-      marker.setAttributeNS(null,'id','raisemarker'+piece);
-      drag_uelem!.parentNode!.insertBefore(marker, drag_uelem!);
-    }
-    raise_piece(drag_uelem!);
-    api_piece(api, "raise", piece, drag_uelem!, { });
+    piece_set_zlevel(uelem, (old_top) => {
+      let z = old_top.dataset.z! + 1;
+      uelem.dataset.z = z;
+      api_piece(api, "setz", piece, uelem, { z: z });
+    });
   }
   if (dragging == DRAGGING.MAYBE_UNGRAB ||
       dragging == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
-    set_ungrab(drag_uelem!, pelem);
+    set_ungrab(uelem, pelem);
     api_piece(api, 'ungrab', piece, drag_uelem!, { });
   }
   drag_cancel();
@@ -315,14 +318,36 @@ pieceops.Modify = <PieceHandler>function
   console.log('MODIFY DONE');
 }
 
-function raise_piece(uelem: SVGGraphicsElement) {
-  uelem.parentElement!.appendChild(uelem);
-}
+function piece_set_zlevel(uelem: SVGGraphicsElement,
+			  modify : (old_top: SVGGraphicsElement) => void) {
+  // Calls modify, which should set .dataset.z and/or .gz, and/or
+  // make any necessary API call.
+  //
+  // Then moves uelem to the right place in the DOM.  This is done
+  // by assuming that uelem ought to go at the end, so this is
+  // O(new depth), which is right (since the UI for inserting
+  // an object is itself O(new depth) UI operations to prepare.
+/*
+  let old_top = def_marker.previousElementSibling! as  unknown as SVGGraphicsElement;
+  modify(old_top);
+  let container = uelem.parentElement!;
+  container.insertBefore(def_marker, uelem);
 
-pieceops.Raise = <PieceHandler>function
-(piece, info: { } ) {
-  var uelem = piece_element('use',piece)!;
-  raise_piece(uelem);
+  let previous = uelem | null;
+  while ((previous = previous.previousElementSibling) != null &&
+	 piece_z_before(uelem, previous)) {
+  }
+  if (previous != uelem) {
+    constainer.insertAfter(previous, uelem);
+  }
+*/
+}
+function piece_z_before(a: SVGGraphicsElement, b: SVGGraphicsElement) {
+  if (+(a.dataset.z !) < +(b.dataset.z !)) return true;
+  if (+(a.dataset.z !) > +(b.dataset.z !)) return false;
+  if (+(a.dataset.zg!) < +(b.dataset.zg!)) return true;
+  if (+(a.dataset.zg!) > +(b.dataset.zg!)) return false;
+  return false;
 }
 
 pieceops.Move = <PieceHandler>function
@@ -333,16 +358,31 @@ pieceops.Move = <PieceHandler>function
   uelem.setAttributeNS(null, "y", info[1]+"");
 }
 
+pieceops.SetZLevel = <PieceHandler>function
+(piece, info: { z: Number, zg: Generation }) {
+  let uelem = piece_element('use',piece)!;
+  piece_set_zlevel(uelem, (old_top)=>{
+    uelem.dataset.z  = info.z +"";
+    uelem.dataset.zg = info.zg+"";
+  });
+}
+
 messages.Recorded = <MessageHandler>function
-(j: { piece: PieceId, cseq: ClientSeq, gen: Generation } ) {
+(j: { piece: PieceId, cseq: ClientSeq, gen: Generation,
+      zg: Generation|null } ) {
   let piece = j.piece;
-  var uelem = document.getElementById('use'+piece)!;
+  var uelem = piece_element('use',piece)!;
   if (uelem.dataset.cseq != null && j.cseq >= +uelem.dataset.cseq) {
     delete uelem.dataset.cseq;
     let marker = piece_element('raisemarker',piece);
     if (marker != null) {
       marker.remove();
     }
+  }
+  if (j.zg != null) {
+    piece_set_zlevel(uelem, (old_top: SVGGraphicsElement)=>{
+      uelem.dataset.zg = j.zg+"";
+    });
   }
   gen = j.gen;
 }
@@ -365,8 +405,10 @@ function startup() {
   gen = +body.dataset.gen!;
   status_node = document.getElementById('status')!;
   status_node.innerHTML = 'js-done';
-  space = document.getElementById('space') as unknown as SVGGraphicsElement;
   logdiv = document.getElementById("log")!;
+
+  space = svg_element('space')!;
+  def_marker = svg_element("def_marker")!;
   svg_ns = space.getAttribute('xmlns')!;
 
   var es = new EventSource("/_/updates/"+ctoken+'/'+gen);

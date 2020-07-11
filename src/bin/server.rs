@@ -102,12 +102,14 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
         Some(o) => format!("{}",o),
       };
       uses.push(format!(
-        r##"<use id="{}" href="#{}" data-piece="{}" data-gplayer="{}" x="{}" y="{}"/>"##,
+        r##"<use id="{}" href="#{}" data-piece="{}" data-gplayer="{}" x="{}" y="{}" data-z="{}" data-zg="{}"/>"##,
         pri.id_use(),
         pri.id_piece(),
         pri.id,
         &gplayer,
-        pr.pos[0], pr.pos[1]));
+        pr.pos[0], pr.pos[1],
+        pr.zlevel.0, pr.zlevel.1,
+      ));
     }
 
     let src = SessionRenderContext {
@@ -231,7 +233,6 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
         client,
         sameclient_cseq : form.cseq,
         piece : pri_for_all.id,
-        zg : pc.zlevel.1,
         op : update,
       });
 
@@ -323,7 +324,7 @@ impl ApiPieceOp for ApiPieceUngrab {
 struct ApiPieceRaise {
   z : ZCoord,
 }
-#[post("/_/api/raise", format="json", data="<form>")]
+#[post("/_/api/setz", format="json", data="<form>")]
 #[throws(OE)]
 fn api_raise(form : Json<ApiPiece<ApiPieceRaise>>)
             -> impl response::Responder<'static> {

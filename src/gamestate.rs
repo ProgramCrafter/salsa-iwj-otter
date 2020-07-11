@@ -13,6 +13,11 @@ pub struct Generation (pub u64);
 impl Generation {
   pub fn increment(&mut self) { self.0 += 1 }
 }
+impl Display for Generation {
+  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    Display::fmt(&self.0,f)
+  }
+}
 
 visible_slotmap_key!{ VisiblePieceId('.') }
 
@@ -69,6 +74,11 @@ impl Ord for ZCoord {
   }
 }
 impl Eq for ZCoord { }
+impl Display for ZCoord {
+  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    Display::fmt(&self.0,f)
+  }
+}
 
 #[derive(Debug)]
 pub struct PieceRecord {

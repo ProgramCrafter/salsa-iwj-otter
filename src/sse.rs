@@ -51,7 +51,7 @@ enum TransmitUpdate<'u> {
   Recorded {
     piece : VisiblePieceId,
     cseq : ClientSequence,
-    zg : Generation,
+    zg : Option<Generation>,
   },
   Piece {
     piece : VisiblePieceId,
@@ -95,8 +95,9 @@ impl Read for UpdateReader {
       for u in &next.us {
         let tu = match u {
           &PreparedUpdateEntry::Piece
-          { piece, client, sameclient_cseq : cseq, zg, .. }
+          { piece, client, sameclient_cseq : cseq, ref op }
           if client== self.client => {
+            let zg = op.new_z_generation();
             TransmitUpdate::Recorded { piece, cseq, zg }
           },
           &PreparedUpdateEntry::Piece { piece, ref op, .. } => {

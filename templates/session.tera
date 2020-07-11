@@ -17,6 +17,7 @@
 {%- for piece in uses %}
       {{piece}}
 {%- endfor %}
+      <defs id="def_marker"></defs>
 {%- for piece in defs %}
       <defs id="defs{{ piece.0 }}">{{ piece.1 }}</defs>
 {%- endfor %}

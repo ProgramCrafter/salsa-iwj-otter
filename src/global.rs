@@ -30,7 +30,6 @@ pub enum PreparedUpdateEntry {
     sameclient_cseq : ClientSequence,
     piece : VisiblePieceId,
     op : PieceUpdateOp<PreparedPieceState>,
-    zg : Generation,
   },
   Log (Arc<LogEntry>),
 }
@@ -82,6 +81,16 @@ impl<NS> PieceUpdateOp<NS> {
       Modify(ns) => Modify(f(ns)),
       Move(pos) => Move(pos),
       SetZLevel(zl) => SetZLevel(zl),
+    }
+  }
+  pub fn new_z_generation(&self) -> Option<Generation> {
+    use PieceUpdateOp::*;
+    match self {
+      Delete() => None,
+      Insert(_) => None,
+      Modify(_) => None,
+      Move(_) => None,
+      SetZLevel((_,zg)) => Some(*zg),
     }
   }
 }      
