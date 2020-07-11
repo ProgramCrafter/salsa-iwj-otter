@@ -18,9 +18,9 @@ trait ApiPieceOp : Debug {
 }
 
 trait Lens {
-  fn log_pri(&self, piece: PieceId, pc: &PieceRecord)
+  fn log_pri(&self, piece: PieceId, pc: &PieceState)
              -> PieceRenderInstructions;
-  fn svg_pri(&self, piece: PieceId, pc: &PieceRecord, player: PlayerId)
+  fn svg_pri(&self, piece: PieceId, pc: &PieceState, player: PlayerId)
              -> PieceRenderInstructions;
   fn massage_prep_piecestate(&self, ns : &mut PreparedPieceState);
   fn decode_visible_pieceid(&self, vpiece: VisiblePieceId, player: PlayerId)
@@ -28,13 +28,13 @@ trait Lens {
 }
 struct TransparentLens { }
 impl Lens for TransparentLens {
-  fn log_pri(&self, piece: PieceId, pc: &PieceRecord)
+  fn log_pri(&self, piece: PieceId, pc: &PieceState)
              -> PieceRenderInstructions {
     let kd : slotmap::KeyData = piece.into();
     let id = VisiblePieceId(kd);
     PieceRenderInstructions { id, face : pc.face }
   }
-  fn svg_pri(&self, piece: PieceId, pc: &PieceRecord, _player: PlayerId)
+  fn svg_pri(&self, piece: PieceId, pc: &PieceState, _player: PlayerId)
              -> PieceRenderInstructions {
     self.log_pri(piece, pc)
   }

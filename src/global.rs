@@ -109,7 +109,7 @@ pub fn xxx_global_setup() {
   let amu = Arc::new(Mutex::new(gi));
   let mut ig = amu.lock().unwrap();
   for (token, nick) in XXX_PLAYERS_TOKENS {
-    let np = Player {
+    let np = PlayerState {
       nick : nick.to_string(),
     };
     let player = ig.gs.players.insert(np);

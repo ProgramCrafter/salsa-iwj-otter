@@ -32,14 +32,14 @@ pub struct ZLevel {
 
 #[derive(Debug)]
 pub struct GameState {
-  pub pieces : DenseSlotMap<PieceId,PieceRecord>,
-  pub players : DenseSlotMap<PlayerId,Player>,
+  pub pieces : DenseSlotMap<PieceId,PieceState>,
+  pub players : DenseSlotMap<PlayerId,PlayerState>,
   pub gen : Generation,
   pub log : Vec<(Generation, Arc<LogEntry>)>,
 }
 
 #[derive(Debug)]
-pub struct PieceRecord {
+pub struct PieceState {
   pub pos : Pos,
   pub p : Box<dyn Piece>,
   pub face : FaceId,
@@ -51,7 +51,7 @@ pub struct PieceRecord {
 }
 
 #[derive(Debug)]
-pub struct Player {
+pub struct PlayerState {
   pub nick : String,
 }
 
@@ -125,7 +125,7 @@ impl Display for ZCoord {
 
 // ---------- game state ----------
 
-impl PieceRecord {
+impl PieceState {
   pub fn make_defs(&self, pri : &PieceRenderInstructions) -> String {
     let pr = self;
     let mut defs = String::new();
@@ -173,7 +173,7 @@ pub fn xxx_gamestate_init() -> GameState {
   let mut pieces = DenseSlotMap::with_key();
   let mut gen = Generation(0);
   for (pos, p) in xxx_make_pieces() {
-    let pr = PieceRecord {
+    let pr = PieceState {
       pos, p,
       face : 0.into(),
       held : None,
