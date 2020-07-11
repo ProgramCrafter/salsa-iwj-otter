@@ -1,40 +1,19 @@
 
 use crate::imports::*;
 
+use vecdeque_stableix::StableIndexOffset;
+use std::ops::Neg;
+
+// ---------- basic definitions ----------
+
 #[derive(Copy,Clone,Debug,Eq,PartialEq,Ord,PartialOrd)]
 #[derive(Serialize,Deserialize)]
 #[serde(transparent)]
 pub struct UpdateId (i64);
 
-use vecdeque_stableix::StableIndexOffset;
-use std::ops::Neg;
-
 const UPDATE_READER_SIZE : usize = 1024*32;
 const UPDATE_MAX_FRAMING_SIZE : usize = 200;
 const UPDATE_KEEPALIVE : Duration = Duration::from_secs(14);
-
-impl Neg for UpdateId {
-  type Output = Self;
-  fn neg(self) -> Self { UpdateId(-self.0) }
-}
-
-impl Display for UpdateId {
-  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-    Display::fmt(&self.0,f)
-  }
-}
-
-impl StableIndexOffset for UpdateId {
-  fn try_increment(&mut self) -> Option<()> { self.0.try_increment() }
-  fn try_decrement(&mut self) -> Option<()> { self.0.try_decrement() }
-  fn index_input(&self, input: Self) -> Option<usize> {
-    self.0.index_input(input.0)
-  }
-  fn index_output(&self, inner: usize) -> Option<Self> {
-    self.0.index_output(inner).map(|v| UpdateId(v))
-  }
-  fn zero() -> Self { UpdateId(0) }
-}
 
 struct UpdateReader {
   player : PlayerId,
@@ -147,6 +126,33 @@ impl Read for UpdateReader {
     }
   }
 }
+
+// ---------- support implementation ----------
+
+impl Neg for UpdateId {
+  type Output = Self;
+  fn neg(self) -> Self { UpdateId(-self.0) }
+}
+
+impl Display for UpdateId {
+  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    Display::fmt(&self.0,f)
+  }
+}
+
+impl StableIndexOffset for UpdateId {
+  fn try_increment(&mut self) -> Option<()> { self.0.try_increment() }
+  fn try_decrement(&mut self) -> Option<()> { self.0.try_decrement() }
+  fn index_input(&self, input: Self) -> Option<usize> {
+    self.0.index_input(input.0)
+  }
+  fn index_output(&self, inner: usize) -> Option<Self> {
+    self.0.index_output(inner).map(|v| UpdateId(v))
+  }
+  fn zero() -> Self { UpdateId(0) }
+}
+
+// ---------- entrypoint for dribbling the http response ----------
 
 #[throws(OE)]
 pub fn content(iad : InstanceAccessDetails<ClientId>, gen: Generation)
