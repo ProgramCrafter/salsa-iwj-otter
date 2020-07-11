@@ -11,9 +11,6 @@
 //      #use{}
 //      <use id="use{}", href="#piece{}" x= y= >
 //         .piece   piece id (static)
-//         .gplayer  grabbed user (player id string, or "")
-//         .cseq     client sequence (see PROTOCOL.md)
-//         .z, .zg   Z level
 //      container to allow quick movement and hang stuff off
 //
 //   delem
@@ -44,8 +41,28 @@ type Pos = [number, number];
 type ClientSeq = number;
 type Generation = number;
 
+type PieceInfo = {
+  gplayer : PlayerId | null,
+  cseq : number | null,
+  z : number,
+  zg : Generation,
+  uelem : SVGGraphicsElement,
+  delem : SVGGraphicsElement,
+  pelem : SVGGraphicsElement,
+}
+
+/*
+interface PieceMap {
+  [piece: string]: PieceInfo;
+}
+var pieces : PieceMap = new Map();
+*/
+
+let pieces : { [typeid: string]: PieceInfo } = Object();
+    //Object.create(null);
+
 type MessageHandler = (op: Object) => void;
-type PieceHandler = (piece: PieceId, info: Object) => void;
+type PieceHandler = (piece: PieceId, p: PieceInfo, info: Object) => void;
 interface DispatchTable<H> { [key: string]: H };
 
 var general_timeout : number = 10000;
@@ -119,13 +136,15 @@ function api_posted() {
 }
 
 function api_piece(f: (meth: string, payload: Object) => void,
-		   meth: string, piece: string,
-		   uelem: SVGGraphicsElement, op: Object) {
+		   meth: string,
+		   piece: PieceId, p: PieceInfo,
+		   op: Object) {
   cseq += 1;
-  uelem.dataset.cseq! = cseq+"";
+  p.cseq = cseq;
   f(meth, {
     ctoken : ctoken,
     piece : piece,
+    p : p,
     gen : gen,
     cseq : cseq,
     op : op,
@@ -151,7 +170,7 @@ enum DRAGGING { // bitmask
   YES          = 4,
 };
 
-var drag_uelem : SVGGraphicsElement | null;
+var drag_piece : PieceId | null;
 var dragging = DRAGGING.NO;
 
 var dox : number | null;
@@ -164,47 +183,46 @@ const DRAGTHRESH = 5;
 function drag_mousedown(e : MouseEvent) {
   console.log('mousedown', e);
   var target = e.target as SVGGraphicsElement; // we check this just now!
-  var piece = target.dataset.piece;
+  var piece = target.dataset.piece!;
   if (!piece) { return; }
   drag_cancel();
-  drag_uelem = target;
-  var gplayer = drag_uelem.dataset.gplayer;
-  if (gplayer != "" && gplayer != us) { return; }
-  var pelem = piece_element('piece',piece)!;
+  let p = pieces[piece]!;
+  drag_piece = piece;
+  var gplayer = p.gplayer;
+  if (gplayer != null && gplayer != us) { return; }
 
   dcx = e.clientX;
   dcy = e.clientY;
-  dox = parseFloat(drag_uelem.getAttributeNS(null,"x")!);
-  doy = parseFloat(drag_uelem.getAttributeNS(null,"y")!);
+  dox = parseFloat(p.uelem.getAttributeNS(null,"x")!);
+  doy = parseFloat(p.uelem.getAttributeNS(null,"y")!);
 
   if (gplayer == us) {
     dragging = DRAGGING.MAYBE_UNGRAB;
   } else {
     dragging = DRAGGING.MAYBE_GRAB;
-    set_grab(drag_uelem, pelem, piece, us);
-    api_piece(api, 'grab', piece, drag_uelem, { });
+    set_grab(piece,p, us);
+    api_piece(api, 'grab', piece,p, { });
   }
 
   window.addEventListener('mousemove', drag_mousemove, true);
   window.addEventListener('mouseup',   drag_mouseup,   true);
 }
 
-function set_grab(uelem: SVGGraphicsElement, pelem: SVGGraphicsElement,
-		  piece: PieceId, owner: PlayerId) {
+function set_grab(piece: PieceId, p: PieceInfo, owner: PlayerId) {
   var nelem = document.createElementNS(svg_ns,'use');
-  uelem.dataset.gplayer = owner;
-  piece_cleanup_grab(pelem);
+  p.gplayer = owner;
+  piece_cleanup_grab(piece, p);
   nelem.setAttributeNS(null,'href','#select'+piece);
   nelem.setAttributeNS(null,'stroke-dasharray',"3 1  1 1  1 1");
-  pelem.appendChild(nelem);
+  p.pelem.appendChild(nelem);
 }
-function set_ungrab(uelem: SVGGraphicsElement, pelem: SVGGraphicsElement) {
-  uelem.dataset.gplayer = "";
-  piece_cleanup_grab(pelem);
+function set_ungrab(piece: PieceId, p: PieceInfo) {
+  p.gplayer = "";
+  piece_cleanup_grab(piece,p);
 }
-function piece_cleanup_grab(pelem: SVGGraphicsElement) {
-  while (pelem.children.length > 1) {
-    pelem.lastElementChild!.remove();
+function piece_cleanup_grab(piece: PieceId, p: PieceInfo) {
+  while (p.pelem.children.length > 1) {
+    p.pelem.lastElementChild!.remove();
   }
 }
 
@@ -220,13 +238,13 @@ function drag_mousemove(e: MouseEvent) {
   }
   //console.log('mousemove', ddx, ddy, dragging);
   if (dragging & DRAGGING.YES) {
+    let piece = drag_piece!;
+    let p = pieces[piece]!;
     var x = Math.round(dox! + ddx);
     var y = Math.round(doy! + ddy);
-    drag_uelem!.setAttributeNS(null, "x", x+"");
-    drag_uelem!.setAttributeNS(null, "y", y+"");
-    var piece = drag_uelem!.dataset.piece!;
-    var pelem = document.getElementById('piece'+piece);
-    api_piece(api_delay, 'm', piece, drag_uelem!, [x, y] );
+    p.uelem.setAttributeNS(null, "x", x+"");
+    p.uelem.setAttributeNS(null, "y", y+"");
+    api_piece(api_delay, 'm', piece,p, [x, y] );
   }
   return ddr2;
 }
@@ -234,22 +252,22 @@ function drag_mousemove(e: MouseEvent) {
 function drag_mouseup(e: MouseEvent) {
   console.log('mouseup', dragging);
   let ddr2 : number = drag_mousemove(e);
-  let uelem = drag_uelem!;
-  let piece = uelem.dataset.piece!;
-  let pelem = piece_element('piece',piece)!;
-  let dragraise = +pelem.dataset.dragraise!;
+  let piece = drag_piece!;
+  let p = pieces[piece]!;
+  let dragraise = +p.pelem.dataset.dragraise!;
   console.log('CHECK RAISE ', dragraise, dragraise*dragraise, ddr2);
   if (dragraise > 0 && ddr2 >= dragraise*dragraise) {
-    piece_set_zlevel(uelem, (old_top) => {
-      let z = +(old_top.dataset.z!) + 1;
-      uelem.dataset.z = z+"";
-      api_piece(api, "setz", piece, uelem, { z: z });
+    piece_set_zlevel(piece,p, (oldtop_piece) => {
+      let oldtop_p = pieces[oldtop_piece]!;
+      let z = oldtop_p.z + 1;
+      p.z = z;
+      api_piece(api, "setz", piece,p, { z: z });
     });
   }
   if (dragging == DRAGGING.MAYBE_UNGRAB ||
       dragging == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
-    set_ungrab(uelem, pelem);
-    api_piece(api, 'ungrab', piece, drag_uelem!, { });
+    set_ungrab(piece,p);
+    api_piece(api, 'ungrab', piece,p, { });
   }
   drag_cancel();
 }
@@ -258,7 +276,7 @@ function drag_cancel() {
   window.removeEventListener('mousemove', drag_mousemove, true);
   window.removeEventListener('mouseup',   drag_mouseup,   true);
   dragging = DRAGGING.NO;
-  drag_uelem = null;
+  drag_piece = null;
 }
 
 // ----- logs -----
@@ -298,30 +316,31 @@ messages.Piece = <MessageHandler>function
   var piece = j.piece;
   var m = j.op as { [k: string]: Object };
   var k = Object.keys(m)[0];
-  pieceops[k](piece, m[k]);
+  let p = pieces[piece]!;
+  pieceops[k](piece,p, m[k]);
 };
 
 pieceops.Modify = <PieceHandler>function
-(piece: PieceId, info: { svg: string, held: PlayerId, pos: Pos }) {
+(piece: PieceId, p: PieceInfo,
+ info: { svg: string, held: PlayerId, pos: Pos, z: number, zg: Generation}) {
   console.log('PIECE UPDATE MODIFY ',piece,info)
-  var delem = piece_element('defs',piece)!;
-  delem.innerHTML = info.svg;
-  var uelem = piece_element('use',piece)!;
-  var pelem = piece_element('piece',piece)!;
-  uelem.setAttributeNS(null, "x", info.pos[0]+"");
-  uelem.setAttributeNS(null, "y", info.pos[1]+"");
-  uelem_checkconflict(piece, uelem);
+  p.delem.innerHTML = info.svg;
+  p.pelem= piece_element('piece',piece)!;
+  p.uelem.setAttributeNS(null, "x", info.pos[0]+"");
+  p.uelem.setAttributeNS(null, "y", info.pos[1]+"");
+  piece_checkconflict(piece,p);
   if (info.held == null) {
-    set_ungrab(uelem, pelem);
+    set_ungrab(piece,p);
   } else {
-    set_grab(uelem, pelem, piece, info.held);
+    set_grab(piece,p, info.held);
   }
+  // xxx handle z
   console.log('MODIFY DONE');
 }
 
-function piece_set_zlevel(uelem: SVGGraphicsElement,
-			  modify : (old_top: SVGGraphicsElement) => void) {
-  // Calls modify, which should set .dataset.z and/or .gz, and/or
+function piece_set_zlevel(piece: PieceId, p: PieceInfo,
+			  modify : (oldtop_piece: PieceId) => void) {
+  // Calls modify, which should set .z and/or .gz, and/or
   // make any necessary API call.
   //
   // Then moves uelem to the right place in the DOM.  This is done
@@ -329,46 +348,47 @@ function piece_set_zlevel(uelem: SVGGraphicsElement,
   // O(new depth), which is right (since the UI for inserting
   // an object is itself O(new depth) UI operations to prepare.
 
-  let old_top = (defs_marker.previousElementSibling! as
-		 unknown as SVGGraphicsElement);
-  modify(old_top);
-  let container = uelem.parentElement!;
+  let oldtop_elem = (defs_marker.previousElementSibling! as
+		     unknown as SVGGraphicsElement);
+  let oldtop_piece = oldtop_elem.dataset.piece!;
+  modify(oldtop_piece);
 
   let ins_before = defs_marker
-  let earlier;
-  for (; ; ins_before = earlier) {
-    earlier = (ins_before.previousElementSibling! as
+  let earlier_elem;
+  for (; ; ins_before = earlier_elem) {
+    earlier_elem = (ins_before.previousElementSibling! as
 		   unknown as SVGGraphicsElement);
-    if (earlier == pieces_marker) break;
-    if (earlier == uelem) continue;
-    if (!piece_z_before(uelem, earlier)) break;
+    if (earlier_elem == pieces_marker) break;
+    if (earlier_elem == p.uelem) continue;
+    let earlier_p = pieces[earlier_elem.dataset.piece!]!;
+    if (!piece_z_before(p, earlier_p)) break;
   }
-  if (ins_before != uelem)
-    container.insertBefore(uelem, ins_before);
+  if (ins_before != p.uelem)
+    space.insertBefore(p.uelem, ins_before);
 }
 
-function piece_z_before(a: SVGGraphicsElement, b: SVGGraphicsElement) {
-  if (+(a.dataset.z !) < +(b.dataset.z !)) return true;
-  if (+(a.dataset.z !) > +(b.dataset.z !)) return false;
-  if (+(a.dataset.zg!) < +(b.dataset.zg!)) return true;
-  if (+(a.dataset.zg!) > +(b.dataset.zg!)) return false;
+function piece_z_before(a: PieceInfo, b: PieceInfo) {
+  if (a.z  < b.z ) return true;
+  if (a.z  > b.z ) return false;
+  if (a.zg < b.zg) return true;
+  if (a.zg > b.zg) return false;
   return false;
 }
 
 pieceops.Move = <PieceHandler>function
-(piece, info: Pos ) {
-  var uelem = piece_element('use',piece)!;
-  uelem_checkconflict(piece, uelem);
-  uelem.setAttributeNS(null, "x", info[0]+"");
-  uelem.setAttributeNS(null, "y", info[1]+"");
+(piece,p, info: Pos ) {
+  piece_checkconflict(piece,p);
+  p.uelem.setAttributeNS(null, "x", info[0]+"");
+  p.uelem.setAttributeNS(null, "y", info[1]+"");
 }
 
 pieceops.SetZLevel = <PieceHandler>function
-(piece, info: { z: Number, zg: Generation }) {
+(piece,p, info: { z: number, zg: Generation }) {
   let uelem = piece_element('use',piece)!;
-  piece_set_zlevel(uelem, (old_top)=>{
-    uelem.dataset.z  = info.z +"";
-    uelem.dataset.zg = info.zg+"";
+  piece_set_zlevel(piece,p, (oldtop_piece)=>{
+    let oldtop_p = pieces[oldtop_piece]!;
+    p.z  = info.z;
+    p.zg = info.zg;
   });
 }
 
@@ -376,30 +396,22 @@ messages.Recorded = <MessageHandler>function
 (j: { piece: PieceId, cseq: ClientSeq, gen: Generation,
       zg: Generation|null } ) {
   let piece = j.piece;
-  var uelem = piece_element('use',piece)!;
-  if (uelem.dataset.cseq != null && j.cseq >= +uelem.dataset.cseq) {
-    delete uelem.dataset.cseq;
-    let marker = piece_element('raisemarker',piece);
-    if (marker != null) {
-      marker.remove();
-    }
+  let p = pieces[piece]!;
+  if (p.cseq != null && j.cseq >= p.cseq) {
+    p.cseq == null;
   }
   if (j.zg != null) {
-    piece_set_zlevel(uelem, (old_top: SVGGraphicsElement)=>{
-      uelem.dataset.zg = j.zg+"";
+    var zg_new = j.zg; // type narrowing doesn't propagate :-/
+    piece_set_zlevel(piece,p, (oldtop_piece: PieceId)=>{
+      p.zg = zg_new;
     });
   }
   gen = j.gen;
 }
 
-function uelem_checkconflict(piece: PieceId, uelem: SVGGraphicsElement) {
-  if (uelem.dataset.cseq == null) { return; }
-  delete uelem.dataset.cseq;
-  let marker = piece_element('raisemarker',piece);
-  if (marker != null) {
-    uelem.parentElement!.insertBefore(marker,uelem);
-    marker.remove();
-  }
+function piece_checkconflict(piece: PieceId, p: PieceInfo) {
+  if (p.cseq == null) { return; }
+  p.cseq = null;
   add_log_message('Conflict! - simultaneous update');
 }
 
@@ -423,6 +435,18 @@ function startup() {
   pieces_marker = svg_element("pieces_marker")!;
   defs_marker = svg_element("defs_marker")!;
   svg_ns = space.getAttribute('xmlns')!;
+
+  for (let uelem = pieces_marker.nextElementSibling! as SVGGraphicsElement;
+       uelem != defs_marker;
+       uelem = uelem.nextElementSibling! as SVGGraphicsElement) {
+    let piece = uelem.dataset.piece!;
+    let p = JSON.parse(uelem.dataset.info!);
+    p.uelem = uelem;
+    p.delem = piece_element('defs',piece);
+    p.pelem = piece_element('piece',piece);
+    delete uelem.dataset.info;
+    pieces[piece] = p;
+  }
 
   var es = new EventSource("/_/updates/"+ctoken+'/'+gen);
   es.onmessage = function(event) {

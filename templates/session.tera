@@ -16,7 +16,9 @@
       <rect fill="green" x="20" y="5" width="200" height="100"/>
       <g id="pieces_marker"></g>
 {%- for piece in uses %}
-      {{piece}}
+      <use id="use{{ piece.id }}" href="#piece{{ piece.id }}"
+	   x="{{ piece.pos[0] }}" y="{{ piece.pos[1] }}"
+	   data-piece="{{ piece.id }}" data-info="{{ piece.info | escape }}" />
 {%- endfor %}
       <g id="defs_marker"></g>
 {%- for piece in defs %}

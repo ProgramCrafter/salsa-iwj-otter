@@ -55,9 +55,23 @@ struct SessionRenderContext {
   ctoken : String,
   player : PlayerId,
   gen : Generation,
-  uses : Vec<String>,
+  uses : Vec<SessionPieceContext>,
   defs : Vec<(VisiblePieceId,String)>,
   nick : String,
+}
+
+#[derive(Serialize,Debug)]
+struct SessionPieceContext {
+  id: VisiblePieceId,
+  pos: Pos,
+  info: String,
+}
+
+#[derive(Serialize,Debug)]
+struct SessionPieceLoadJson<'r> {
+  gplayer : &'r Option<PlayerId>,
+  z : ZCoord,
+  zg : Generation,
 }
 
 #[derive(Deserialize)]
@@ -97,19 +111,18 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       let defs = pr.make_defs(&pri);
       alldefs.push((pri.id, defs));
 
-      let gplayer = match pr.held {
-        None => "".to_owned(),
-        Some(o) => format!("{}",o),
+      let for_info = SessionPieceLoadJson {
+        gplayer : &pr.held,
+        z  : pr.zlevel.0,
+        zg : pr.zlevel.1,
       };
-      uses.push(format!(
-        r##"<use id="{}" href="#{}" data-piece="{}" data-gplayer="{}" x="{}" y="{}" data-z="{}" data-zg="{}"/>"##,
-        pri.id_use(),
-        pri.id_piece(),
-        pri.id,
-        &gplayer,
-        pr.pos[0], pr.pos[1],
-        pr.zlevel.0, pr.zlevel.1,
-      ));
+
+      let for_piece = SessionPieceContext {
+        id: pri.id,
+        pos : pr.pos,
+        info : serde_json::to_string(&for_info)?,
+      };
+      uses.push(for_piece);
     }
 
     let src = SessionRenderContext {

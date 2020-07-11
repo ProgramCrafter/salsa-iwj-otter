@@ -11,7 +11,8 @@ impl<'r> Responder<'r> for OnlineError {
     use rocket::http::Status;
     use OnlineError::*;
     let status = match self {
-      GameCorrupted => Status::InternalServerError,
+      GameCorrupted | JSONSerializeFailed(_)
+        => Status::InternalServerError,
       NoClient | NoPlayer => Status::NotFound,
       InvalidZCoord => Status::BadRequest,
     };

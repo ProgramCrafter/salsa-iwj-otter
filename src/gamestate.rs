@@ -95,8 +95,10 @@ pub struct PieceRecord {
 #[derive(Debug,Serialize)]
 pub struct PreparedPieceState {
   pub pos : Pos,
-  pub held : Option<PlayerId>,
   pub svg : String,
+  pub held : Option<PlayerId>,
+  pub z : ZCoord,
+  pub zg : Generation,
 }
 
 impl PieceRecord {
@@ -125,6 +127,8 @@ impl PieceRecord {
       pos        : self.pos,
       held       : self.held,
       svg        : self.make_defs(pri),
+      z          : self.zlevel.0,
+      zg         : self.zlevel.1,
     }
   }
 

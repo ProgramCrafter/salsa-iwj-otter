@@ -21,6 +21,8 @@ pub enum OnlineError {
   NoPlayer,
   #[error("invalid Z coordinate")]
   InvalidZCoord,
+  #[error("JSON~ serialisation error: {0:?}")]
+  JSONSerializeFailed(#[from] serde_json::error::Error),
 }
 
 pub use OnlineError::{NoClient,NoPlayer};
