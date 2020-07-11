@@ -190,7 +190,10 @@ function drag_mousedown(e : MouseEvent) {
   let p = pieces[piece]!;
   drag_piece = piece;
   var held = p.held;
-  if (held != null && held != us) { return; }
+  if (held != null && held != us) {
+    add_log_message('That piece is held by another player.');
+    return;
+  }
 
   dcx = e.clientX;
   dcy = e.clientY;
