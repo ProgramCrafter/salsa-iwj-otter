@@ -1,17 +1,29 @@
-
 // update messages from server to client
 
 use crate::imports::*;
 
+// ---------- newtypes, type aliases, basic definitions ----------
+
 #[derive(Debug,Copy,Clone,Eq,PartialEq,Deserialize,Serialize)]
 #[serde(transparent)]
 pub struct ClientSequence(u64);
+
+const RECENT_BUFFER : usize = 50;
+
+// ---------- prepared updates, queued in memory ----------
+
+#[derive(Debug)]
+pub struct PlayerUpdates {
+  pub log : StableIndexVecDeque<Arc<PreparedUpdate>,sse::UpdateId>,
+  pub cv : Arc<Condvar>,
+}
 
 #[derive(Debug)]
 pub struct PreparedUpdate {
   pub gen : Generation,
   pub us : Vec<PreparedUpdateEntry>,
 }
+
 #[derive(Debug)]
 pub enum PreparedUpdateEntry {
   Piece {
@@ -22,6 +34,44 @@ pub enum PreparedUpdateEntry {
   },
   Log (Arc<LogEntry>),
 }
+
+#[derive(Debug,Serialize)]
+pub struct PreparedPieceState {
+  pub pos : Pos,
+  pub svg : String,
+  pub held : Option<PlayerId>,
+  pub z : ZCoord,
+  pub zg : Generation,
+}
+
+// ---------- piece updates ----------
+
+#[derive(Debug,Serialize)]
+pub enum PieceUpdateOp<NS> {
+  Delete(),
+  Insert(NS),
+  Modify(NS),
+  Move(Pos),
+  SetZLevel(ZLevel),
+}
+
+// ========== implementation ==========
+
+// ---------- prepared updates, queued in memory ----------
+
+impl Default for PlayerUpdates {
+  fn default() -> PlayerUpdates { PlayerUpdates {
+    log : StableIndexVecDeque::with_capacity(RECENT_BUFFER),
+    cv : Default::default(),
+  } }
+}
+
+impl PreparedUpdate {
+  pub fn json_len(&self) -> usize {
+    self.us.iter().map(|u| 20 + u.json_len()).sum()
+  }
+}
+
 impl PreparedUpdateEntry {
   pub fn json_len(&self) -> usize {
     use PreparedUpdateEntry::*;
@@ -36,20 +86,9 @@ impl PreparedUpdateEntry {
     }
   }
 }
-impl PreparedUpdate {
-  pub fn json_len(&self) -> usize {
-    self.us.iter().map(|u| 20 + u.json_len()).sum()
-  }
-}
 
-#[derive(Debug,Serialize)]
-pub enum PieceUpdateOp<NS> {
-  Delete(),
-  Insert(NS),
-  Modify(NS),
-  Move(Pos),
-  SetZLevel(ZLevel),
-}
+// ---------- piece updates ----------
+
 impl<NS> PieceUpdateOp<NS> {
   pub fn new_state(&self) -> Option<&NS> {
     use PieceUpdateOp::*;
@@ -82,28 +121,4 @@ impl<NS> PieceUpdateOp<NS> {
       SetZLevel(ZLevel{zg,..}) => Some(*zg),
     }
   }
-}
-
-#[derive(Debug)]
-pub struct PlayerUpdates {
-  pub log : StableIndexVecDeque<Arc<PreparedUpdate>,sse::UpdateId>,
-  pub cv : Arc<Condvar>,
-}
-
-const RECENT_BUFFER : usize = 50;
-
-impl Default for PlayerUpdates {
-  fn default() -> PlayerUpdates { PlayerUpdates {
-    log : StableIndexVecDeque::with_capacity(RECENT_BUFFER),
-    cv : Default::default(),
-  } }
-}
-
-#[derive(Debug,Serialize)]
-pub struct PreparedPieceState {
-  pub pos : Pos,
-  pub svg : String,
-  pub held : Option<PlayerId>,
-  pub z : ZCoord,
-  pub zg : Generation,
 }
