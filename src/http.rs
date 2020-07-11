@@ -1,6 +1,9 @@
 
-use rocket::request::Request;
-use rocket::response::{Response,Responder};
+pub use rocket::request::Request;
+pub use rocket::response::{Response,Responder};
+pub use rocket::post;
+pub use rocket_contrib::json::Json;
+pub use rocket::http::Status;
 
 use crate::imports::*;
 

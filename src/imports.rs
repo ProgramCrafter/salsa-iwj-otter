@@ -28,8 +28,8 @@ pub use serde::Serializer;
 pub use rocket_contrib::helmet::*;
 pub use rocket_contrib::templates::Template;
 
-pub use rocket::State;
-pub use rocket::http::{Status,RawStr,ContentType};
+pub use rocket::{State,Rocket};
+pub use rocket::http::{RawStr,ContentType};
 pub use rocket::request::{FromParam,FromRequest,FromFormValue,LenientForm};
 pub use rocket::response::NamedFile;
 pub use rocket::response;

@@ -98,15 +98,6 @@ pub struct PieceRecord {
   pub gen_before_lastclient : Generation,
 }
 
-#[derive(Debug,Serialize)]
-pub struct PreparedPieceState {
-  pub pos : Pos,
-  pub svg : String,
-  pub held : Option<PlayerId>,
-  pub z : ZCoord,
-  pub zg : Generation,
-}
-
 impl PieceRecord {
   pub fn make_defs(&self, pri : &PieceRenderInstructions) -> String {
     let pr = self;
