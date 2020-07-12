@@ -5,12 +5,15 @@ define_index_type! {
   pub struct FaceId = u8;
 }
 
+type ColourMap = IndexVec<FaceId,Colour>;
+
 #[derive(Debug)]
 struct SimpleShape {
   desc : String,
   path : String,
+//  scaled_path : String,
   approx_dia : Coord,
-  colours : IndexVec<FaceId,Colour>,
+  colours : ColourMap,
 }
 
 const SELECT_SCALE : f64 = 1.1;
@@ -42,7 +45,10 @@ pub fn svg_rescale_path(input: &str, scale: f64) -> String {
     const fn new(bits: BM, len: BI) -> Self { Self{ bits, len, index:0 } }
     fn reset(&mut self) { self.index= 0; }
     fn next(&mut self) -> bool {
-      return false;
+      let r = (self.bits >> (self.len-1 - self.index)) & 1 != 0;
+      self.index += 1;
+      if self.index == self.len { self.index = 0; }
+      r
     }
   }
   const ALWAYS_MAP : RotatingBitmap = RotatingBitmap::new(0x01, 1);
@@ -101,16 +107,33 @@ impl Piece for SimpleShape {
   }
 }
 
-pub fn xxx_make_pieces() -> Vec<(Pos, Box<dyn Piece>)> {
-  vec![
+impl SimpleShape {
+  #[throws(SVGProcessError)]
+  fn new_from_path(desc: String, path: String, approx_dia: Coord,
+                   colours: ColourMap) -> Self {
+    SimpleShape {
+      desc, approx_dia, path, colours,
+    }
+  }
+  #[throws(SVGProcessError)]
+  fn new_circle(approx_dia: Coord, colours: ColourMap) -> Self {
+    let unit_path =
+      "M 0 1  a 1 1 0 1 0 0 -2 \
+              a 1 1 0 1 0 0  2  z";
+    let scale = (approx_dia as f64) * 0.5;
+    let path = svg_rescale_path(&unit_path, scale)?;
+eprintln!("rescaled by {}: {} as {}",scale,&unit_path,&path);
+    Self::new_from_path("circle".to_owned(), path, approx_dia, colours)?
+  }
+}
+
+pub fn xxx_make_pieces() -> Result<Vec<(Pos, Box<dyn Piece>)>,SVGProcessError> {
+  Ok(vec![
     ([ 90, 80 ],
-     Box::new(SimpleShape {
-       desc : "circle".to_owned(),
-       approx_dia : 20,
-       path : "M 0 10  a 10 10 0 1 0 0 -20\
-                       a 10 10 0 1 0 0  20 z".to_owned(),
-       colours : index_vec![ "red".to_string(), "grey".to_string() ],
-     })),
+     Box::new(SimpleShape::new_circle(
+       20,
+       index_vec![ "red".to_string(), "grey".to_string() ],
+     )?)),
     ([ 90, 60 ],
      Box::new(SimpleShape {
        desc : "square".to_owned(),
@@ -118,5 +141,5 @@ pub fn xxx_make_pieces() -> Vec<(Pos, Box<dyn Piece>)> {
        path : "M -10 -10 h 20 v 20 h -20 v -20 z".to_owned(),
        colours : index_vec![ "blue".to_string(), "grey".to_string() ],
      })),
-  ]
+  ])
 }

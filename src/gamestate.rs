@@ -174,7 +174,7 @@ pub fn make_pieceid_visible(p : PieceId) -> VisiblePieceId {
 pub fn xxx_gamestate_init() -> GameState {
   let mut pieces = DenseSlotMap::with_key();
   let mut gen = Generation(0);
-  for (pos, p) in xxx_make_pieces() {
+  for (pos, p) in xxx_make_pieces().expect("make pieces") {
     let pr = PieceState {
       pos, p,
       face : 0.into(),
