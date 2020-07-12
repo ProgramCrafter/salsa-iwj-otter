@@ -37,7 +37,7 @@ pub struct GameState {
   pub pieces : DenseSlotMap<PieceId,PieceState>,
   pub players : DenseSlotMap<PlayerId,PlayerState>,
   pub gen : Generation,
-  pub log : Vec<(Generation, Arc<LogEntry>)>,
+  pub log : Vec<(Generation,LogEntryRef)>,
 }
 
 #[derive(Debug)]
@@ -56,6 +56,9 @@ pub struct PieceState {
 pub struct PlayerState {
   pub nick : String,
 }
+
+#[derive(Debug,Clone)]
+pub struct LogEntryRef(pub Arc<LogEntry>);
 
 #[derive(Debug,Serialize)]
 pub struct LogEntry {
@@ -131,6 +134,12 @@ impl Display for ZCoord {
 }
 
 // ---------- game state - rendering etc. ----------
+
+impl Serialize for LogEntryRef {
+  fn serialize<S>(&self, s: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where S: Serializer {
+    self.0.serialize(s)
+  }
+}
 
 impl PieceState {
   #[throws(SE)]

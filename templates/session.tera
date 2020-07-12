@@ -28,25 +28,9 @@
     </svg>
 
   <div id="log" style="overflow-y: scroll; height: 200px;">
-    <div id="log1">Log item 1</div>
-    <div id="log2">Log item 2</div>
-    Log item 3
-    <br>
-    Log item 4
-    <br>
-    Log item 5
-    <br>
-    Log item 6
-    <br>
-    Log item 7
-    <br>
-    Log item 8
-    <br>
-    Log item 9
-    <br>
-    Log item 10
-    <br>
-    Log item 11
-    <div id="log12">Log item 12</div>
+{% for ent in log %}
+    <div>{{ ent.1.html | safe }}</div>
+{%- endfor %}
+  </div>
 
 </body>

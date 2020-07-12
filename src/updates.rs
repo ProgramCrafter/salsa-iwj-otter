@@ -32,7 +32,7 @@ pub enum PreparedUpdateEntry {
     piece : VisiblePieceId,
     op : PieceUpdateOp<PreparedPieceState>,
   },
-  Log (Arc<LogEntry>),
+  Log (LogEntryRef),
 }
 
 #[derive(Debug,Serialize)]
@@ -103,7 +103,7 @@ impl PreparedUpdateEntry {
         op.new_state().map(|x| x.svg.len()).unwrap_or(0)
       },
       Log(logent) => {
-        logent.html.as_bytes().len() * 3
+        logent.0.html.as_bytes().len() * 3
       }
     }
   }
@@ -169,7 +169,7 @@ impl PreparedUpdate {
           TransmitUpdateEntry::Piece { piece, op }
         },
         PreparedUpdateEntry::Log(logent) => {
-          TransmitUpdateEntry::Log(&*logent)
+          TransmitUpdateEntry::Log(&logent.0)
         },
       };
       ents.push(ue);
