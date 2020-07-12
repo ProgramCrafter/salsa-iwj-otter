@@ -233,10 +233,13 @@ function set_ungrab(piece: PieceId, p: PieceInfo) {
   piece_undisplay_grab(piece,p);
 }
 function piece_undisplay_grab(piece: PieceId, p: PieceInfo) {
+  piece_undisplay_ancillary(p, "#select"+piece);
+}
+function piece_undisplay_ancillary(p: PieceInfo, href: string) {
   for (let celem = p.pelem.firstElementChild;
        celem != null;
        celem = celem.nextElementSibling) {
-    if (celem.getAttributeNS(null,"href") == "#select"+piece) {
+    if (celem.getAttributeNS(null,"href") == href) {
       celem.remove();
       return;
     }
