@@ -441,7 +441,7 @@ messages.Recorded = <MessageHandler>function
   let piece = j.piece;
   let p = pieces[piece]!;
   if (p.cseq != null && j.cseq >= p.cseq) {
-    p.cseq == null;
+    p.cseq = null;
   }
   if (j.zg != null) {
     var zg_new = j.zg; // type narrowing doesn't propagate :-/
