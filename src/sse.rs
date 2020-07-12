@@ -140,7 +140,7 @@ eprintln!("updates content iad={:?} player={:?} cl={:?} updates={:?}",
     let log = &ig.updates.byid(player)?.log;
 
     let to_send = match log.into_iter().rev()
-      .find(|(_,update)| update.gen < gen) {
+      .find(|(_,update)| update.gen <= gen) {
         None => log.front_index(),
         Some((mut i,_)) => { i.try_increment(); i },
       };
