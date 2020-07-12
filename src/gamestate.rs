@@ -132,6 +132,7 @@ impl Display for ZCoord {
 // ---------- game state - rendering etc. ----------
 
 impl PieceState {
+  #[throws(SE)]
   pub fn make_defs(&self, pri : &PieceRenderInstructions) -> String {
     let pr = self;
     let mut defs = String::new();
@@ -152,12 +153,13 @@ impl PieceState {
     defs
   }
 
+  #[throws(SE)]
   pub fn prep_piecestate(&self, pri : &PieceRenderInstructions)
                          -> PreparedPieceState {
     PreparedPieceState {
       pos        : self.pos,
       held       : self.held,
-      svg        : self.make_defs(pri),
+      svg        : self.make_defs(pri)?,
       z          : self.zlevel.z,
       zg         : self.zlevel.zg,
     }

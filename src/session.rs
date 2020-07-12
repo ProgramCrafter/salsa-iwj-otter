@@ -91,7 +91,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
         id : make_pieceid_visible(gpid),
         face : pr.face,
       };
-      let defs = pr.make_defs(&pri);
+      let defs = pr.make_defs(&pri)?;
       alldefs.push((pri.id, defs));
 
       let for_info = SessionPieceLoadJson {

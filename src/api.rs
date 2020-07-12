@@ -97,11 +97,11 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
 
       let pri_for_all = lens.svg_pri(piece,pc,Default::default());
 
-      let update = update.map_new_state(|_|{
-        let mut ns = pc.prep_piecestate(&pri_for_all);
+      let update = update.try_map_new_state(|_|{
+        let mut ns = pc.prep_piecestate(&pri_for_all)?;
         lens.massage_prep_piecestate(&mut ns);
-        ns
-      });
+        <Result<_,SVGProcessingError>>::Ok(ns)
+      })?;
 
       let mut us = Vec::with_capacity(1 + logents.len());
 

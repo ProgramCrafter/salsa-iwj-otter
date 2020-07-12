@@ -17,6 +17,7 @@ pub use std::iter::repeat_with;
 pub use std::collections::VecDeque;
 pub use std::num::Wrapping;
 pub use std::cmp;
+pub use std::error::Error;
   
 pub use thiserror::Error;
 pub use anyhow::{Context,anyhow};

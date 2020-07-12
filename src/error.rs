@@ -23,6 +23,8 @@ pub enum OnlineError {
   InvalidZCoord,
   #[error("JSON~ serialisation error: {0:?}")]
   JSONSerializeFailed(#[from] serde_json::error::Error),
+  #[error("SVG processing/generation error {0:?}")]
+  SVGProcessingFailed(#[from] SVGProcessingError),
 }
 
 pub use OnlineError::{NoClient,NoPlayer};

@@ -122,16 +122,23 @@ impl<NS> PieceUpdateOp<NS> {
       SetZLevel(_) => None,
     }
   }
-  pub fn map_new_state<NS2,F: FnOnce(NS) -> NS2>(self, f:F)
-                            -> PieceUpdateOp<NS2> {
+  pub fn try_map_new_state<NS2,E:Error, F: FnOnce(NS) -> Result<NS2,E>>
+    (self, f:F) -> Result<PieceUpdateOp<NS2>,E>
+  {
     use PieceUpdateOp::*;
-    match self {
+    Ok(match self {
       Delete() => Delete(),
-      Insert(ns) => Insert(f(ns)),
-      Modify(ns) => Modify(f(ns)),
+      Insert(ns) => Insert(f(ns)?),
+      Modify(ns) => Modify(f(ns)?),
       Move(pos) => Move(pos),
       SetZLevel(zl) => SetZLevel(zl),
-    }
+    })
+  }
+  pub fn map_new_state<NS2,F: FnOnce(NS) -> NS2>(self, f:F)
+                            -> PieceUpdateOp<NS2> {
+    #[derive(Error,Debug)]
+    enum Never { }
+    self.try_map_new_state(|ns| <Result<_,Never>>::Ok(f(ns))).unwrap()
   }
   pub fn new_z_generation(&self) -> Option<Generation> {
     use PieceUpdateOp::*;
