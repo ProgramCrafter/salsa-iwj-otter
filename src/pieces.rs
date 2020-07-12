@@ -11,7 +11,7 @@ type ColourMap = IndexVec<FaceId,Colour>;
 struct SimpleShape {
   desc : String,
   path : String,
-//  scaled_path : String,
+  scaled_path : String,
   approx_dia : Coord,
   colours : ColourMap,
 }
@@ -113,6 +113,7 @@ impl SimpleShape {
   fn new_from_path(desc: String, path: String, approx_dia: Coord,
                    colours: ColourMap) -> Self {
     SimpleShape {
+      scaled_path : svg_rescale_path(&path, SELECT_SCALE)?,
       desc, approx_dia, path, colours,
     }
   }
