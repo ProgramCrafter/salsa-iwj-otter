@@ -93,18 +93,10 @@ impl Piece for SimpleShape {
   fn surround_path(&self, _pri : &PieceRenderInstructions) -> String {
     self.scaled_path.clone()
   }
-  /*
-  fn svg_select(&self, pri : &PieceRenderInstructions) -> String {
-    format!(r##"<g transform="scale({})"><use href="#{}"/></g>"##,
-            SELECT_SCALE,
-            pri.id_x("base"))
-  }
-*/
   fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
                       -> Option<Coord> {
     Some(self.approx_dia / 2)
   }
-  fn svg_x_ids(&self) -> VisiblePieceIdSvgIds { &["base"] }
   fn svg_x_defs(&self, _pri : &PieceRenderInstructions) -> String {
     "".to_owned()
   }

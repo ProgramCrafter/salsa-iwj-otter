@@ -71,7 +71,6 @@ pub trait Piece : Send + Debug {
   fn svg_piece(&self, f: &mut String, pri: &PieceRenderInstructions) -> SR;
   fn outline_path(&self, pri : &PieceRenderInstructions) -> String;
   fn surround_path(&self, pri : &PieceRenderInstructions) -> String;
-  fn svg_x_ids(&self) -> VisiblePieceIdSvgIds;
   fn svg_x_defs(&self, pri : &PieceRenderInstructions) -> String;
   fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
                       -> Option<Coord>;
@@ -82,15 +81,6 @@ pub trait Piece : Send + Debug {
 pub struct PieceRenderInstructions {
   pub id : VisiblePieceId,
   pub face : FaceId,
-}
-
-pub type VisiblePieceIdSvgIds = &'static [&'static str];
-
-impl PieceRenderInstructions {
-  pub fn id_use(&self) -> String { format!("use{}", self.id) }
-  pub fn id_piece(&self) -> String { format!("piece{}", self.id) }
-  pub fn id_select(&self) -> String { format!("select{}", self.id) }
-  pub fn id_x(&self, w : &str) -> String { format!("def.{}.{}", self.id, w) }
 }
 
 // ========== implementations ==========
@@ -141,14 +131,14 @@ impl PieceState {
       Some(n) => n,
       None => -1,
     };
-    write!(defs, r##"<g id="{}" data-dragraise="{}">"##,
-           pri.id_piece(),
-           dragraise)?;
+    write!(defs,
+           r##"<g id="piece{}" data-dragraise="{}">"##,
+           pri.id, dragraise)?;
     pr.p.svg_piece(&mut defs, &pri)?;
     write!(defs, r##"</g>"##)?;
-    write!(defs, r##"<path id="{}" stroke="black" fill="none" d="{}"/>"##,
-           pri.id_select(),
-           pr.p.surround_path(&pri))?;
+    write!(defs,
+           r##"<path id="select{}" stroke="black" fill="none" d="{}"/>"##,
+           pri.id, pr.p.surround_path(&pri))?;
     write!(defs, "{}", pr.p.svg_x_defs(&pri))?;
     defs
   }
