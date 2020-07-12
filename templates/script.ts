@@ -147,10 +147,7 @@ function api_piece(f: (meth: string, payload: Object) => void,
 		   op: Object) {
   cseq += 1;
   p.cseq = cseq;
-  if (halo == piece) {
-    piece_undisplay_ancillary(p, "#halo"+halo);
-    halo = null;
-  }
+  if (halo == piece) { clear_halo(); }
   f(meth, {
     ctoken : ctoken,
     piece : piece,
@@ -224,24 +221,31 @@ function drag_mousedown(e : MouseEvent) {
 
 function set_grab(piece: PieceId, p: PieceInfo, owner: PlayerId) {
   p.held = owner;
-  display_grab(piece,p);
-}
-function display_grab(piece: PieceId, p: PieceInfo) {
-  piece_undisplay_grab(piece, p);
-  var nelem = document.createElementNS(svg_ns,'use');
-  nelem.setAttributeNS(null,'href','#select'+piece);
-  let da = players[p.held!]!.dasharray;
-  nelem.setAttributeNS(null,'stroke-dasharray',da);
-  p.pelem.appendChild(nelem);
+  redisplay_ancillaries(piece,p);
 }
 function set_ungrab(piece: PieceId, p: PieceInfo) {
   p.held = null;
-  piece_undisplay_grab(piece,p);
+  redisplay_ancillaries(piece,p);
 }
-function piece_undisplay_grab(piece: PieceId, p: PieceInfo) {
-  piece_undisplay_ancillary(p, "#select"+piece);
+function clear_halo() {
+  let piece = halo;
+  if (piece == null) { return }
+  let p = pieces[piece]!;
+  halo = null;
+  redisplay_ancillaries(piece,p);
 }
-function piece_undisplay_ancillary(p: PieceInfo, href: string) {
+
+function ancillary_node(piece: PieceId, stroke: string): SVGGraphicsElement {
+  var nelem = document.createElementNS(svg_ns,'use');
+  nelem.setAttributeNS(null,'href','#surround'+piece);
+  nelem.setAttributeNS(null,'stroke',stroke);
+  nelem.setAttributeNS(null,'fill','none');
+  return nelem as any;
+}
+
+function redisplay_ancillaries(piece: PieceId, p: PieceInfo) {
+  let href = '#surround'+piece;
+
   for (let celem = p.pelem.firstElementChild;
        celem != null;
        celem = celem.nextElementSibling) {
@@ -251,6 +255,20 @@ function piece_undisplay_ancillary(p: PieceInfo, href: string) {
       celem.remove();
       return;
     }
+  }
+
+  if (piece == halo) {
+    let nelem = ancillary_node(piece, 'yellow');
+    if (p.held != null) {
+      nelem.setAttributeNS(null,'stroke-width','3px');
+    }
+    p.pelem.prepend(nelem);
+  }
+  if (p.held != null) {
+    let da = players[p.held!]!.dasharray;
+    let nelem = ancillary_node(piece, 'black');
+    nelem.setAttributeNS(null,'stroke-dasharray',da);
+    p.pelem.appendChild(nelem);
   }
 }
 
@@ -360,14 +378,13 @@ pieceops.Modify = <PieceHandler>function
   p.pelem= piece_element('piece',piece)!;
   p.uelem.setAttributeNS(null, "x", info.pos[0]+"");
   p.uelem.setAttributeNS(null, "y", info.pos[1]+"");
-  if (halo == piece) { halo = null }
-  piece_checkconflict(piece,p);
-  if (info.held == null) {
-    set_ungrab(piece,p);
-  } else {
-    set_grab(piece,p, info.held);
-  }
-  // xxx handle z
+  p.held = info.held;
+  piece_set_zlevel(piece,p, (oldtop_piece)=>{
+    p.z  = info.z;
+    p.zg = info.zg;
+  });
+  piece_checkconflict_nrda(piece,p);
+  redisplay_ancillaries(piece,p);
   console.log('MODIFY DONE');
 }
 
@@ -410,14 +427,14 @@ function piece_z_before(a: PieceInfo, b: PieceInfo) {
 
 pieceops.Move = <PieceHandler>function
 (piece,p, info: Pos ) {
-  piece_checkconflict(piece,p);
+  if (piece_checkconflict_nrda(piece,p))
+    redisplay_ancillaries(piece,p);
   p.uelem.setAttributeNS(null, "x", info[0]+"");
   p.uelem.setAttributeNS(null, "y", info[1]+"");
 }
 
 pieceops.SetZLevel = <PieceHandler>function
 (piece,p, info: { z: number, zg: Generation }) {
-  let uelem = piece_element('use',piece)!;
   piece_set_zlevel(piece,p, (oldtop_piece)=>{
     let oldtop_p = pieces[oldtop_piece]!;
     p.z  = info.z;
@@ -442,22 +459,18 @@ messages.Recorded = <MessageHandler>function
   gen = j.gen;
 }
 
-function piece_checkconflict(piece: PieceId, p: PieceInfo) {
-  if (halo != piece) {
-    if (halo != null) {
-      console.log('UNHALOING',halo);
-      piece_undisplay_ancillary(pieces[halo]!, "#halo"+halo);
-    }
-    console.log('HALOING',piece);
-    halo = piece;
-    var nelem = document.createElementNS(svg_ns,'use');
-    nelem.setAttributeNS(null,'href','#halo'+piece);
-    p.pelem.prepend(nelem);
+function piece_checkconflict_nrda(piece: PieceId, p: PieceInfo): boolean {
+  if (p.cseq != null) {
+    p.cseq = null;
+    add_log_message('Conflict! - simultaneous update');
   }
 
-  if (p.cseq == null) { return; }
-  p.cseq = null;
-  add_log_message('Conflict! - simultaneous update');
+  if (halo != piece) {
+    clear_halo();
+    halo = piece;
+    return true;
+  }
+  return false;
 }
 
 function test_swap_stack() {
@@ -494,7 +507,7 @@ function startup() {
     p.pelem = piece_element('piece',piece);
     delete uelem.dataset.info;
     pieces[piece] = p;
-    if (p.held != null) display_grab(piece,p);
+    redisplay_ancillaries(piece,p);
   }
 
   var es = new EventSource("/_/updates/"+ctoken+'/'+gen);
