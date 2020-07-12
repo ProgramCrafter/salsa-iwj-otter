@@ -67,7 +67,7 @@ pub fn svg_rescale_path(input: &str, scale: f64) -> String {
       v if v.starts_with(|s:char| s=='-' || s=='.' || s.is_ascii_digit()) => {
         if map.next() {
           let v : f64 = v.parse()?;
-          write!(&mut out, "{} ", v * scale)?;
+          write!(&mut out, "{}", v * scale)?;
           continue;
         }
       }
@@ -76,6 +76,7 @@ pub fn svg_rescale_path(input: &str, scale: f64) -> String {
     write!(&mut out, "{}", w)?;
   }
 
+eprintln!("rescaled by {}: {} as {}",scale,&input,&out);
   out
 }
 
@@ -116,14 +117,21 @@ impl SimpleShape {
     }
   }
   #[throws(SVGProcessError)]
-  fn new_circle(approx_dia: Coord, colours: ColourMap) -> Self {
+  fn new_circle(dia: Coord, colours: ColourMap) -> Self {
     let unit_path =
       "M 0 1  a 1 1 0 1 0 0 -2 \
               a 1 1 0 1 0 0  2  z";
-    let scale = (approx_dia as f64) * 0.5;
+    let scale = (dia as f64) * 0.5;
     let path = svg_rescale_path(&unit_path, scale)?;
-eprintln!("rescaled by {}: {} as {}",scale,&unit_path,&path);
-    Self::new_from_path("circle".to_owned(), path, approx_dia, colours)?
+    Self::new_from_path("circle".to_owned(), path, dia, colours)?
+  }
+  #[throws(SVGProcessError)]
+  fn new_square(edgelen: Coord, colours: ColourMap) -> Self {
+    let unit_path =
+      "M -1 -1 h 2 v 2 h -2 z";
+    let scale = (edgelen as f64) * 0.5;
+    let path = svg_rescale_path(&unit_path, scale)?;
+    Self::new_from_path("square".to_owned(), path, edgelen, colours)?
   }
 }
 
@@ -135,11 +143,9 @@ pub fn xxx_make_pieces() -> Result<Vec<(Pos, Box<dyn Piece>)>,SVGProcessError> {
        index_vec![ "red".to_string(), "grey".to_string() ],
      )?)),
     ([ 90, 60 ],
-     Box::new(SimpleShape {
-       desc : "square".to_owned(),
-       approx_dia : 20,
-       path : "M -10 -10 h 20 v 20 h -20 v -20 z".to_owned(),
-       colours : index_vec![ "blue".to_string(), "grey".to_string() ],
-     })),
+     Box::new(SimpleShape::new_square(
+       20,
+       index_vec![ "blue".to_string(), "grey".to_string() ],
+     )?)),
   ])
 }
