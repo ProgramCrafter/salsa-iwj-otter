@@ -222,16 +222,17 @@ function set_grab(piece: PieceId, p: PieceInfo, owner: PlayerId) {
 }
 function display_grab(piece: PieceId, p: PieceInfo) {
   var nelem = document.createElementNS(svg_ns,'use');
-  piece_cleanup_grab(piece, p);
+  piece_undisplay_grab(piece, p);
   nelem.setAttributeNS(null,'href','#select'+piece);
-  nelem.setAttributeNS(null,'stroke-dasharray',"3 1  1 1  1 1");
+  let da = players[p.held!]!.dasharray;
+  nelem.setAttributeNS(null,'stroke-dasharray',da);
   p.pelem.appendChild(nelem);
 }
 function set_ungrab(piece: PieceId, p: PieceInfo) {
   p.held = null;
-  piece_cleanup_grab(piece,p);
+  piece_undisplay_grab(piece,p);
 }
-function piece_cleanup_grab(piece: PieceId, p: PieceInfo) {
+function piece_undisplay_grab(piece: PieceId, p: PieceInfo) {
   while (p.pelem.children.length > 1) {
     p.pelem.lastElementChild!.remove();
   }
