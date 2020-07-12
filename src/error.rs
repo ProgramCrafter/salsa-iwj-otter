@@ -88,3 +88,13 @@ macro_rules! display_as_debug {
   }
 }
 pub use crate::display_as_debug;
+
+#[macro_export]
+macro_rules! error_from_losedetails {
+  {$to:ty, $variant:ident, $from:ty} => {
+    impl From<$from> for $to {
+      fn from(_: $from) -> Self { <$to>::$variant }
+    }
+  }
+}
+pub use crate::error_from_losedetails;

@@ -23,9 +23,7 @@ pub enum SVGProcessError {
   WriteFail,
 }
 display_as_debug!{SVGProcessError}
-impl From<fmt::Error> for SVGProcessError {
-  fn from(_: fmt::Error) -> Self { SVGProcessError::WriteFail }
-}
+error_from_losedetails!{SVGProcessError, WriteFail, fmt::Error}
 
 #[throws(SVGProcessError)]
 pub fn svg_rescale_path(input: &str, scale: f64) -> String {
