@@ -143,13 +143,13 @@ impl PieceState {
     };
     write!(defs, r##"<g id="{}" data-dragraise="{}">"##,
            pri.id_piece(),
-           dragraise).unwrap();
-    pr.p.svg_piece(&mut defs, &pri).unwrap();
-    write!(defs, r##"</g>"##).unwrap();
+           dragraise)?;
+    pr.p.svg_piece(&mut defs, &pri)?;
+    write!(defs, r##"</g>"##)?;
     write!(defs, r##"<path id="{}" stroke="black" fill="none" d="{}"/>"##,
            pri.id_select(),
-           pr.p.surround_path(&pri)).unwrap();
-    write!(defs, "{}", pr.p.svg_x_defs(&pri)).unwrap();
+           pr.p.surround_path(&pri))?;
+    write!(defs, "{}", pr.p.svg_x_defs(&pri))?;
     defs
   }
 
