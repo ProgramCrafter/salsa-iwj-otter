@@ -52,8 +52,7 @@ type PieceInfo = {
   pelem : SVGGraphicsElement,
 }
 
-let pieces : { [typeid: string]: PieceInfo } = Object();
-    //Object.create(null);
+let pieces : { [typeid: string]: PieceInfo } = Object.create(null);
 
 type MessageHandler = (op: Object) => void;
 type PieceHandler = (piece: PieceId, p: PieceInfo, info: Object) => void;
