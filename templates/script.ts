@@ -149,6 +149,7 @@ function api_piece(f: (meth: string, payload: Object) => void,
 		   meth: string,
 		   piece: PieceId, p: PieceInfo,
 		   op: Object) {
+  clear_halo(piece,p);
   cseq += 1;
   p.cseq = cseq;
   f(meth, {
@@ -244,6 +245,11 @@ function set_grab(piece: PieceId, p: PieceInfo, owner: PlayerId) {
 }
 function set_ungrab(piece: PieceId, p: PieceInfo) {
   p.held = null;
+  redisplay_ancillaries(piece,p);
+}
+
+function clear_halo(piece: PieceId, p: PieceInfo) {
+  p.last_seen_moved = null;
   redisplay_ancillaries(piece,p);
 }
 
