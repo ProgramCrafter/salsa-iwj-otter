@@ -76,3 +76,9 @@ impl IdForById for PieceId {
   type Error = GameError;
   const ERROR : GameError = GameError::PieceGone;
 }
+
+#[macro_export]
+macro_rules! display_as_debug {
+  {$x:ty} => {
+  }
+}

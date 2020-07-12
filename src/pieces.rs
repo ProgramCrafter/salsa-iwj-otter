@@ -15,6 +15,69 @@ struct SimpleShape {
 
 const SELECT_SCALE : f64 = 1.1;
 
+
+#[derive(Copy,Clone,Debug,Error)]
+pub enum SVGProcessError {
+  UnknownOperator,
+  BadNumber,
+  WriteFail,
+}
+impl From<fmt::Error> for SVGProcessError {
+  fn from(_: fmt::Error) -> Self { SVGProcessError::WriteFail }
+}
+impl Display for SVGProcessError {
+  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    <Self as Debug>::fmt(self, f)
+  }
+}
+
+#[throws(SVGProcessError)]
+pub fn svg_rescale_path(input: &str, scale: f64) -> String {
+  use SVGProcessError::*;
+
+  type BM = u64;
+  type BI = u32;
+  #[derive(Debug,Copy,Clone)]
+  struct RotatingBitmap {
+    bits: BM,
+    len: BI,
+    index: BI,
+  };
+  impl RotatingBitmap {
+    const fn new(bits: BM, len: BI) -> Self { Self{ bits, len, index:0 } }
+    fn reset(&mut self) { self.index= 0; }
+    fn next(&mut self) -> bool {
+      return false;
+    }
+  }
+  const ALWAYS_MAP : RotatingBitmap = RotatingBitmap::new(0x01, 1);
+  
+  let mut out = String::new();
+  let mut map = ALWAYS_MAP;
+  let mut first = iter::once(());
+
+  for w in input.split_ascii_whitespace() {
+    if !first.next().is_some() { write!(&mut out, " ")?; }
+    match w {
+      "L" | "l" | "M" | "m" |
+      "V" | "v" | "H" | "h" => map = ALWAYS_MAP,
+      "A" | "a"             => map = RotatingBitmap::new(0x63, 7),
+      "z"                   => map.reset(),
+      v if v.starts_with(|s:char| s=='-' || s=='.' || s.is_ascii_digit()) => {
+        if map.next() {
+          let v : f64 = v.parse().map_err(|_| BadNumber)?;
+          write!(&mut out, "{} ", v * scale)?;
+          continue;
+        }
+      }
+      _ => Err(UnknownOperator)?,
+    };
+    write!(&mut out, "{}", w)?;
+  }
+
+  out
+}
+
 impl Piece for SimpleShape {
   fn svg_piece(&self, pri : &PieceRenderInstructions) -> String {
     format!(r##"<use fill="{}" href="#{}"/>"##,
