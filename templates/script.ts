@@ -261,7 +261,8 @@ function redisplay_ancillaries(piece: PieceId, p: PieceInfo) {
 
   for (let celem = p.pelem.firstElementChild;
        celem != null;
-       celem = celem.nextElementSibling) {
+       celem = nextelem) {
+    var nextelem = celem.nextElementSibling
     let thref = celem.getAttributeNS(null,"href");
     if (thref == href) {
       celem.remove();
