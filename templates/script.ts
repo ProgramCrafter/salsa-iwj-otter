@@ -203,8 +203,28 @@ function drag_add_piece(piece: PieceId, p: PieceInfo) {
   });
 }
 
-function drag_mousedown(e : MouseEvent) {
+function some_mousedown(e : MouseEvent) {
   console.log('mousedown', e);
+
+  if (e.button != 0) { return }
+  if (e.altKey) { return }
+  if (e.metaKey) { return }
+  if (e.shiftKey) {
+    if (e.ctrlKey) {
+      return;
+    } else {
+      // group select
+    }
+  } else {
+    if (e.ctrlKey) {
+      // region indication
+    } else {
+      drag_mousedown(e);
+    }
+  }
+}
+
+function drag_mousedown(e : MouseEvent) {
   var target = e.target as SVGGraphicsElement; // we check this just now!
   var piece = target.dataset.piece!;
   if (!piece) { return; }

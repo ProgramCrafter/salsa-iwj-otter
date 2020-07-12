@@ -12,7 +12,7 @@
 <p>
     <svg id="space"
 	 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 110"
- 	 onmousedown="drag_mousedown(event)"
+ 	 onmousedown="some_mousedown(event)"
 	 >
       <rect fill="green" x="20" y="5" width="200" height="100"/>
       <g id="pieces_marker"></g>
