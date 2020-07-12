@@ -24,6 +24,7 @@ pub enum SVGProcessError {
 }
 display_as_debug!{SVGProcessError}
 error_from_losedetails!{SVGProcessError, WriteFail, fmt::Error}
+error_from_losedetails!{SVGProcessError, BadNumber, std::num::ParseFloatError}
 
 #[throws(SVGProcessError)]
 pub fn svg_rescale_path(input: &str, scale: f64) -> String {
@@ -59,7 +60,7 @@ pub fn svg_rescale_path(input: &str, scale: f64) -> String {
       "z"                   => map.reset(),
       v if v.starts_with(|s:char| s=='-' || s=='.' || s.is_ascii_digit()) => {
         if map.next() {
-          let v : f64 = v.parse().map_err(|_| BadNumber)?;
+          let v : f64 = v.parse()?;
           write!(&mut out, "{} ", v * scale)?;
           continue;
         }
