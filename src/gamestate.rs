@@ -198,7 +198,7 @@ pub fn xxx_gamestate_init() -> GameState {
       face : 0.into(),
       held : None,
       lastclient : Default::default(),
-      zlevel : ZLevel{ z: 0f64 .try_into().unwrap(), zg: Generation(0) },
+      zlevel : ZLevel{ z: 0f64 .try_into().unwrap(), zg: gen },
       gen,
       gen_before_lastclient : Generation(0),
     };
