@@ -167,6 +167,12 @@ function piece_element(base: string, piece: PieceId): SVGGraphicsElement | null
 
 // ----- clicking/dragging pieces -----
 
+type DragInfo = {
+  piece : PieceId,
+  dox : number,
+  doy : number,
+}
+
 enum DRAGGING { // bitmask
   NO           = 0,
   MAYBE_GRAB   = 1,
@@ -175,15 +181,20 @@ enum DRAGGING { // bitmask
   RAISED       = 8,
 };
 
-var drag_piece : PieceId | null;
+var drag_pieces : DragInfo[] = [];
 var dragging = DRAGGING.NO;
-
-var dox : number | null;
-var doy : number | null;
 var dcx : number | null;
 var dcy : number | null;
 
 const DRAGTHRESH = 5;
+
+function drag_add_piece(piece: PieceId, p: PieceInfo) {
+  drag_pieces.push({
+    piece: piece,
+    dox: parseFloat(p.uelem.getAttributeNS(null,"x")!),
+    doy: parseFloat(p.uelem.getAttributeNS(null,"y")!),
+  });
+}
 
 function drag_mousedown(e : MouseEvent) {
   console.log('mousedown', e);
@@ -191,26 +202,31 @@ function drag_mousedown(e : MouseEvent) {
   var piece = target.dataset.piece!;
   if (!piece) { return; }
   drag_cancel();
+
   let p = pieces[piece]!;
-  drag_piece = piece;
-  var held = p.held;
-  if (held != null && held != us) {
+  let held = p.held;
+
+  drag_pieces = [];
+  if (held == null) {
+    dragging = DRAGGING.MAYBE_GRAB;
+    drag_add_piece(piece,p);
+    set_grab(piece,p, us);
+    api_piece(api, 'grab', piece,p, { });
+  } else if (held == us) {
+    dragging = DRAGGING.MAYBE_UNGRAB;
+    drag_add_piece(piece,p); // contrive to have this one first
+    for (let tpiece of Object.keys(pieces)) {
+      if (tpiece == piece) continue;
+      let tp = pieces[tpiece]!;
+      if (tp.held != us) continue;
+      drag_add_piece(tpiece,tp);
+    }
+  } else {
     add_log_message('That piece is held by another player.');
     return;
   }
-
   dcx = e.clientX;
   dcy = e.clientY;
-  dox = parseFloat(p.uelem.getAttributeNS(null,"x")!);
-  doy = parseFloat(p.uelem.getAttributeNS(null,"y")!);
-
-  if (held == us) {
-    dragging = DRAGGING.MAYBE_UNGRAB;
-  } else {
-    dragging = DRAGGING.MAYBE_GRAB;
-    set_grab(piece,p, us);
-    api_piece(api, 'grab', piece,p, { });
-  }
 
   window.addEventListener('mousemove', drag_mousemove, true);
   window.addEventListener('mouseup',   drag_mouseup,   true);
@@ -280,16 +296,22 @@ function drag_mousemove(e: MouseEvent) {
   }
   //console.log('mousemove', ddx, ddy, dragging);
   if (dragging & DRAGGING.YES) {
-    let piece = drag_piece!;
-    let p = pieces[piece]!;
-    var x = Math.round(dox! + ddx);
-    var y = Math.round(doy! + ddy);
-    p.uelem.setAttributeNS(null, "x", x+"");
-    p.uelem.setAttributeNS(null, "y", y+"");
-    p.queued_moves++;
-    api_piece(api_delay, 'm', piece,p, [x, y] );
-
-    if (!(dragging & DRAGGING.RAISED)) {
+    console.log('DRAG PIECES',drag_pieces);
+    for (let dp of drag_pieces) {
+      console.log('DRAG PIECES PIECE',dp);
+      let tpiece = dp.piece;
+      let tp = pieces[tpiece]!;
+      var x = Math.round(dp.dox + ddx);
+      var y = Math.round(dp.doy + ddy);
+      tp.uelem.setAttributeNS(null, "x", x+"");
+      tp.uelem.setAttributeNS(null, "y", y+"");
+      tp.queued_moves++;
+      api_piece(api_delay, 'm', tpiece,tp, [x, y] );
+    }
+    if (!(dragging & DRAGGING.RAISED) && drag_pieces.length==1) {
+      let dp = drag_pieces[0];
+      let piece = dp.piece;
+      let p = pieces[piece]!;
       let dragraise = +p.pelem.dataset.dragraise!;
       if (dragraise > 0 && ddr2 >= dragraise*dragraise) {
 	dragging |= DRAGGING.RAISED;
@@ -309,10 +331,11 @@ function drag_mousemove(e: MouseEvent) {
 function drag_mouseup(e: MouseEvent) {
   console.log('mouseup', dragging);
   let ddr2 : number = drag_mousemove(e);
-  let piece = drag_piece!;
-  let p = pieces[piece]!;
   if (dragging == DRAGGING.MAYBE_UNGRAB ||
       (dragging & ~DRAGGING.RAISED) == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
+    let dp = drag_pieces[0]!;
+    let piece = dp.piece;
+    let p = pieces[piece]!;
     set_ungrab(piece,p);
     api_piece(api, 'ungrab', piece,p, { });
   }
@@ -323,7 +346,7 @@ function drag_cancel() {
   window.removeEventListener('mousemove', drag_mousemove, true);
   window.removeEventListener('mouseup',   drag_mouseup,   true);
   dragging = DRAGGING.NO;
-  drag_piece = null;
+  drag_pieces = [];
 }
 
 // ----- logs -----
