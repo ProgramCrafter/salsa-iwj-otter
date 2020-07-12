@@ -242,15 +242,14 @@ function ancillary_node(piece: PieceId, stroke: string): SVGGraphicsElement {
 
 function redisplay_ancillaries(piece: PieceId, p: PieceInfo) {
   let href = '#surround'+piece;
+  console.log('REDISPLAY ANCILLARIES',href);
 
   for (let celem = p.pelem.firstElementChild;
        celem != null;
        celem = celem.nextElementSibling) {
     let thref = celem.getAttributeNS(null,"href");
-    console.log('UNDISPLAY ANCILLARY',href,thref);
     if (thref == href) {
       celem.remove();
-      return;
     }
   }
 
