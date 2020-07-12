@@ -51,6 +51,7 @@ type PieceInfo = {
   delem : SVGGraphicsElement,
   pelem : SVGGraphicsElement,
   queued_moves : number,
+  last_seen_moved : DOMHighResTimeStamp | null, // non-0 means halo'd
 }
 
 let pieces : { [typeid: string]: PieceInfo } = Object.create(null);
@@ -76,12 +77,18 @@ var pieces_marker : SVGGraphicsElement;
 var defs_marker : SVGGraphicsElement;
 var logdiv : HTMLElement;
 var status_node : HTMLElement;
-var halo : PieceId | null;
 
 type PlayerInfo = {
   dasharray : string,
 }
 var players : { [player: string]: PlayerInfo };
+
+type MovementRecord = {
+  piece: PieceId,
+  p: PieceInfo,
+  this_motion: DOMHighResTimeStamp,
+}
+var movements : MovementRecord[] = [];
 
 function xhr_post_then(url : string, data: string,
 		       good : (xhr: XMLHttpRequest) => void) {
@@ -144,7 +151,6 @@ function api_piece(f: (meth: string, payload: Object) => void,
 		   op: Object) {
   cseq += 1;
   p.cseq = cseq;
-  if (halo == piece) { clear_halo(); }
   f(meth, {
     ctoken : ctoken,
     piece : piece,
@@ -240,13 +246,6 @@ function set_ungrab(piece: PieceId, p: PieceInfo) {
   p.held = null;
   redisplay_ancillaries(piece,p);
 }
-function clear_halo() {
-  let piece = halo;
-  if (piece == null) { return }
-  let p = pieces[piece]!;
-  halo = null;
-  redisplay_ancillaries(piece,p);
-}
 
 function ancillary_node(piece: PieceId, stroke: string): SVGGraphicsElement {
   var nelem = document.createElementNS(svg_ns,'use');
@@ -269,7 +268,7 @@ function redisplay_ancillaries(piece: PieceId, p: PieceInfo) {
     }
   }
 
-  if (piece == halo) {
+  if (p.last_seen_moved != null) {
     let nelem = ancillary_node(piece, 'yellow');
     if (p.held != null) {
       nelem.setAttributeNS(null,'stroke-width','2px');
@@ -447,8 +446,24 @@ function piece_z_before(a: PieceInfo, b: PieceInfo) {
 
 pieceops.Move = <PieceHandler>function
 (piece,p, info: Pos ) {
-  if (piece_checkconflict_nrda(piece,p))
-    redisplay_ancillaries(piece,p);
+  piece_checkconflict_nrda(piece,p);
+  let now = performance.now();
+
+  let need_redisplay = p.last_seen_moved == null;
+  p.last_seen_moved = now;
+  if (need_redisplay) redisplay_ancillaries(piece,p);
+
+  let cutoff = now-1000.;
+  while (movements.length > 0 && movements[0].this_motion < cutoff) {
+    let mr = movements.shift()!;
+    if (mr.p.last_seen_moved != null &&
+	mr.p.last_seen_moved < cutoff) {
+      mr.p.last_seen_moved = null;
+      redisplay_ancillaries(mr.piece,mr.p);
+    }
+  }
+  movements.push({ piece: piece, p: p, this_motion: now });
+
   p.uelem.setAttributeNS(null, "x", info[0]+"");
   p.uelem.setAttributeNS(null, "y", info[1]+"");
 }
@@ -483,12 +498,6 @@ function piece_checkconflict_nrda(piece: PieceId, p: PieceInfo): boolean {
   if (p.cseq != null) {
     p.cseq = null;
     add_log_message('Conflict! - simultaneous update');
-  }
-
-  if (halo != piece) {
-    clear_halo();
-    halo = piece;
-    return true;
   }
   return false;
 }
