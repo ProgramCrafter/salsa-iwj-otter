@@ -87,15 +87,8 @@ impl Piece for SimpleShape {
   fn svg_piece(&self, f: &mut String, pri: &PieceRenderInstructions) {
     write!(f, r##"<path fill="{}" d="{}"/>"##,
            self.colours[pri.face],
-           svg_rescale_path(&self.path, 0.5)?,
-    )?;
+           &self.path)?;
   }
-/*
-  #[throws(SE)]
-  fn outline_path(&self, _pri : &PieceRenderInstructions) -> String {
-    self.path.clone()
-  }
-*/
   #[throws(SE)]
   fn surround_path(&self, _pri : &PieceRenderInstructions) -> String {
     self.scaled_path.clone()

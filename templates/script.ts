@@ -52,13 +52,6 @@ type PieceInfo = {
   pelem : SVGGraphicsElement,
 }
 
-/*
-interface PieceMap {
-  [piece: string]: PieceInfo;
-}
-var pieces : PieceMap = new Map();
-*/
-
 let pieces : { [typeid: string]: PieceInfo } = Object();
     //Object.create(null);
 
@@ -260,7 +253,7 @@ function redisplay_ancillaries(piece: PieceId, p: PieceInfo) {
   if (piece == halo) {
     let nelem = ancillary_node(piece, 'yellow');
     if (p.held != null) {
-      nelem.setAttributeNS(null,'stroke-width','3px');
+      nelem.setAttributeNS(null,'stroke-width','2px');
     }
     p.pelem.prepend(nelem);
   }
