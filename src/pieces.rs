@@ -82,22 +82,29 @@ eprintln!("rescaled by {}: {} as {}",scale,&input,&out);
 
 impl Piece for SimpleShape {
   fn svg_piece(&self, pri : &PieceRenderInstructions) -> String {
-    format!(r##"<use fill="{}" href="#{}"/>"##,
-            self.colours[pri.face],
-            pri.id_x("base"))
+    format!(r##"<path fill="{}" d="{}"/>"##,
+            self.colours[pri.face], self.path)
   }
-  fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
-                      -> Option<Coord> {
-    Some(self.approx_dia / 2)
+  fn outline_path(&self, _pri : &PieceRenderInstructions) -> String {
+    self.path.clone()
   }
+  fn surround_path(&self, _pri : &PieceRenderInstructions) -> String {
+    self.scaled_path.clone()
+  }
+  /*
   fn svg_select(&self, pri : &PieceRenderInstructions) -> String {
     format!(r##"<g transform="scale({})"><use href="#{}"/></g>"##,
             SELECT_SCALE,
             pri.id_x("base"))
   }
+*/
+  fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
+                      -> Option<Coord> {
+    Some(self.approx_dia / 2)
+  }
   fn svg_x_ids(&self) -> VisiblePieceIdSvgIds { &["base"] }
-  fn svg_x_defs(&self, pri : &PieceRenderInstructions) -> String {
-    format!(r#"<path id={} d="{}"></path>"#, pri.id_x("base"), self.path)
+  fn svg_x_defs(&self, _pri : &PieceRenderInstructions) -> String {
+    "".to_owned()
   }
   fn describe_html(&self, face : Option<FaceId>) -> String {
     if let Some(face) = face {

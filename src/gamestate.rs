@@ -66,7 +66,8 @@ pub struct LogEntry {
 
 pub trait Piece : Send + Debug {
   fn svg_piece(&self, pri : &PieceRenderInstructions) -> String;
-  fn svg_select(&self, pri : &PieceRenderInstructions) -> String;
+  fn outline_path(&self, pri : &PieceRenderInstructions) -> String;
+  fn surround_path(&self, pri : &PieceRenderInstructions) -> String;
   fn svg_x_ids(&self) -> VisiblePieceIdSvgIds;
   fn svg_x_defs(&self, pri : &PieceRenderInstructions) -> String;
   fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
@@ -140,9 +141,9 @@ impl PieceState {
            pri.id_piece(),
            dragraise,
            pr.p.svg_piece(&pri)).unwrap();
-    write!(defs, r##"<g id="{}" stroke="black" fill="none">{}</g>"##,
+    write!(defs, r##"<path id="{}" stroke="black" fill="none" d="{}"/>"##,
            pri.id_select(),
-           pr.p.svg_select(&pri)).unwrap();
+           pr.p.surround_path(&pri)).unwrap();
     write!(defs, "{}", pr.p.svg_x_defs(&pri)).unwrap();
     defs
   }
