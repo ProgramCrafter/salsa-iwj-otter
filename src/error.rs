@@ -80,5 +80,11 @@ impl IdForById for PieceId {
 #[macro_export]
 macro_rules! display_as_debug {
   {$x:ty} => {
+    impl Display for $x {
+      fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        <Self as Debug>::fmt(self, f)
+      }
+    }
   }
 }
+pub use crate::display_as_debug;

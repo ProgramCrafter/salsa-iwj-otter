@@ -22,13 +22,9 @@ pub enum SVGProcessError {
   BadNumber,
   WriteFail,
 }
+display_as_debug!{SVGProcessError}
 impl From<fmt::Error> for SVGProcessError {
   fn from(_: fmt::Error) -> Self { SVGProcessError::WriteFail }
-}
-impl Display for SVGProcessError {
-  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-    <Self as Debug>::fmt(self, f)
-  }
 }
 
 #[throws(SVGProcessError)]
