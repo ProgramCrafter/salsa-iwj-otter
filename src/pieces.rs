@@ -8,7 +8,7 @@ define_index_type! {
 #[derive(Debug)]
 struct SimpleShape {
   desc : String,
-  shape : String,
+  path : String,
   approx_dia : Coord,
   colours : IndexVec<FaceId,Colour>,
 }
@@ -32,7 +32,7 @@ impl Piece for SimpleShape {
   }
   fn svg_x_ids(&self) -> VisiblePieceIdSvgIds { &["base"] }
   fn svg_x_defs(&self, pri : &PieceRenderInstructions) -> String {
-    format!(r#"<g id={}>{}</g>"#, pri.id_x("base"), self.shape)
+    format!(r#"<path id={} d="{}"></path>"#, pri.id_x("base"), self.path)
   }
   fn describe_html(&self, face : Option<FaceId>) -> String {
     if let Some(face) = face {
@@ -49,14 +49,15 @@ pub fn xxx_make_pieces() -> Vec<(Pos, Box<dyn Piece>)> {
      Box::new(SimpleShape {
        desc : "circle".to_owned(),
        approx_dia : 20,
-       shape : r#"<circle cx="0" cy="0" r="10"/>"#.to_owned(),
+       path : "M 10 0  a 10 10 0 1 0 -20 0\
+                       a 10 10 0 1 0  20 0".to_owned(),
        colours : index_vec![ "red".to_string(), "grey".to_string() ],
      })),
     ([ 90, 60 ],
      Box::new(SimpleShape {
        desc : "square".to_owned(),
        approx_dia : 20,
-       shape : r#"<rect x="-10" y="-10" width="20" height="20"/>"#.to_owned(),
+       path : "M -10 -10 h 20 v 20 h -20 v -20".to_owned(),
        colours : index_vec![ "blue".to_string(), "grey".to_string() ],
      })),
   ]
