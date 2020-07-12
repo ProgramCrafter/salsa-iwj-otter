@@ -71,8 +71,10 @@ pub trait Piece : Send + Debug {
   // #[throws] doesn't work here for some reason
   fn svg_piece(&self, f: &mut String, pri: &PieceRenderInstructions) -> SR;
 
+/*
   #[throws(SE)]
   fn outline_path(&self, pri : &PieceRenderInstructions) -> String;
+*/
 
   #[throws(SE)]
   fn surround_path(&self, pri : &PieceRenderInstructions) -> String;
@@ -149,10 +151,9 @@ impl PieceState {
            r##"<path id="select{}" stroke="black" fill="none" d="{}"/>"##,
            pri.id, pr.p.surround_path(&pri)?)?;
     write!(defs,
-           r##"<path id="halo{}" stroke="none" fill="yellow" d="{} {}"/>"##,
+           r##"<path id="halo{}" stroke="yellow" stroke-width="2px" fill="none" d="{}"/>"##,
            pri.id,
-           pr.p.surround_path(&pri)?,
-           pr.p.outline_path(&pri)?)?;
+           pr.p.surround_path(&pri)?)?;
     pr.p.svg_x_defs(&mut defs, &pri)?;
     defs
   }
