@@ -50,6 +50,7 @@ type PieceInfo = {
   uelem : SVGGraphicsElement,
   delem : SVGGraphicsElement,
   pelem : SVGGraphicsElement,
+  queued_moves : number,
 }
 
 let pieces : { [typeid: string]: PieceInfo } = Object.create(null);
@@ -114,17 +115,21 @@ function api(meth: string, data: Object) {
   api_check();
 }
 function api_delay(meth: string, data: Object) {
+  if (api_queue.length==0) window.setTimeout(api_check, 10);
   api_queue.push([meth, data]);
-  window.setTimeout(api_check, 10);
 }
 function api_check() {
   if (api_posting) { return; }
   if (!api_queue.length) { return; }
   do {
     var [meth, data] = api_queue.shift()!;
-  } while (meth == 'm' &&
-	   api_queue.length &&
-	   api_queue[0][0] == meth);
+    if (meth != 'm') break;
+    let piece = (data as any).piece;
+    let p = pieces[piece];
+    if (p == null) break;
+    p.queued_moves--;
+    if (p.queued_moves == 0) break;
+  } while(1);
   api_posting = true;
   xhr_post_then('/_/api/'+meth, JSON.stringify(data), api_posted);
 }
@@ -282,6 +287,7 @@ function drag_mousemove(e: MouseEvent) {
     var y = Math.round(doy! + ddy);
     p.uelem.setAttributeNS(null, "x", x+"");
     p.uelem.setAttributeNS(null, "y", y+"");
+    p.queued_moves++;
     api_piece(api_delay, 'm', piece,p, [x, y] );
 
     if (!(dragging & DRAGGING.RAISED)) {
@@ -497,6 +503,7 @@ function startup() {
     p.uelem = uelem;
     p.delem = piece_element('defs',piece);
     p.pelem = piece_element('piece',piece);
+    p.queued_moves = 0;
     delete uelem.dataset.info;
     pieces[piece] = p;
     redisplay_ancillaries(piece,p);
