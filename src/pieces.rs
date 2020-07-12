@@ -49,15 +49,15 @@ pub fn xxx_make_pieces() -> Vec<(Pos, Box<dyn Piece>)> {
      Box::new(SimpleShape {
        desc : "circle".to_owned(),
        approx_dia : 20,
-       path : "M 10 0  a 10 10 0 1 0 -20 0\
-                       a 10 10 0 1 0  20 0".to_owned(),
+       path : "M 0 10  a 10 10 0 1 0 0 -20\
+                       a 10 10 0 1 0 0  20 z".to_owned(),
        colours : index_vec![ "red".to_string(), "grey".to_string() ],
      })),
     ([ 90, 60 ],
      Box::new(SimpleShape {
        desc : "square".to_owned(),
        approx_dia : 20,
-       path : "M -10 -10 h 20 v 20 h -20 v -20".to_owned(),
+       path : "M -10 -10 h 20 v 20 h -20 v -20 z".to_owned(),
        colours : index_vec![ "blue".to_string(), "grey".to_string() ],
      })),
   ]
