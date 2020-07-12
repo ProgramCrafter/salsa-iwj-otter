@@ -81,6 +81,7 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   })() {
     Err(err) => {
       let err : GameError = err;
+      if let GameError::InternalErrorSVG(svg) = err { Err(svg)? }
       eprintln!("API {:?} => {:?}", &form, &err);
     },
     Ok((update, logents)) => {
@@ -157,7 +158,7 @@ impl ApiPieceOp for ApiPieceGrab {
     let logent = LogEntry {
       html : format!("{} grasped {}",
                      &htmlescape::encode_minimal(&pl.nick),
-                     pc.describe_html(&lens.log_pri(piece, pc))),
+                     pc.describe_html(&lens.log_pri(piece, pc))?),
     };
 
     (update, vec![logent])
@@ -189,7 +190,7 @@ impl ApiPieceOp for ApiPieceUngrab {
     let logent = LogEntry {
       html : format!("{} released {}",
                      &htmlescape::encode_minimal(&pl.nick),
-                     pc.describe_html(&lens.log_pri(piece, pc))),
+                     pc.describe_html(&lens.log_pri(piece, pc))?),
     };
 
     (update, vec![logent])

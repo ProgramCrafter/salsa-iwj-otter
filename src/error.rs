@@ -9,6 +9,7 @@ pub enum GameError {
   Conflict,
   PieceGone,
   PieceHeld,
+  InternalErrorSVG(#[from] SVGProcessingError),
 }
 
 #[derive(Error,Debug)]

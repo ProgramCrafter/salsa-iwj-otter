@@ -24,6 +24,7 @@ pub enum SVGProcessingError {
   UnknownOperator,
   BadNumber,
   WriteFail,
+  NegativeDragraise,
 }
 
 display_as_debug!{SVGProcessingError}
@@ -87,12 +88,15 @@ impl Piece for SimpleShape {
     write!(f, r##"<path fill="{}" d="{}"/>"##,
            self.colours[pri.face], self.path)?;
   }
+  #[throws(SE)]
   fn outline_path(&self, _pri : &PieceRenderInstructions) -> String {
     self.path.clone()
   }
+  #[throws(SE)]
   fn surround_path(&self, _pri : &PieceRenderInstructions) -> String {
     self.scaled_path.clone()
   }
+  #[throws(SE)]
   fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
                       -> Option<Coord> {
     Some(self.approx_dia / 2)
@@ -100,6 +104,7 @@ impl Piece for SimpleShape {
   fn svg_x_defs(&self, _pri : &PieceRenderInstructions) -> String {
     "".to_owned()
   }
+  #[throws(SE)]
   fn describe_html(&self, face : Option<FaceId>) -> String {
     if let Some(face) = face {
       format!("a {} {}", self.colours[face], self.desc)

@@ -69,12 +69,16 @@ type SR = Result<(),SE>;
 
 pub trait Piece : Send + Debug {
   fn svg_piece(&self, f: &mut String, pri: &PieceRenderInstructions) -> SR;
+  #[throws(SE)]
   fn outline_path(&self, pri : &PieceRenderInstructions) -> String;
+  #[throws(SE)]
   fn surround_path(&self, pri : &PieceRenderInstructions) -> String;
   fn svg_x_defs(&self, pri : &PieceRenderInstructions) -> String;
+  #[throws(SE)]
   fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
                       -> Option<Coord>;
-  fn describe_html(&self, face : Option<FaceId>) -> String;
+
+  fn describe_html(&self, face : Option<FaceId>) -> Result<String,SE>;
 }
 
 #[derive(Debug,Copy,Clone)]
@@ -126,8 +130,8 @@ impl PieceState {
   pub fn make_defs(&self, pri : &PieceRenderInstructions) -> String {
     let pr = self;
     let mut defs = String::new();
-    let dragraise = match pr.p.thresh_dragraise(pri) {
-      Some(n) if n < 0 => panic!(),
+    let dragraise = match pr.p.thresh_dragraise(pri)? {
+      Some(n) if n < 0 => Err(SE::NegativeDragraise)?,
       Some(n) => n,
       None => -1,
     };
@@ -138,7 +142,7 @@ impl PieceState {
     write!(defs, r##"</g>"##)?;
     write!(defs,
            r##"<path id="select{}" stroke="black" fill="none" d="{}"/>"##,
-           pri.id, pr.p.surround_path(&pri))?;
+           pri.id, pr.p.surround_path(&pri)?)?;
     write!(defs, "{}", pr.p.svg_x_defs(&pri))?;
     defs
   }
@@ -155,7 +159,7 @@ impl PieceState {
     }
   }
 
-  pub fn describe_html(&self, pri : &PieceRenderInstructions) -> String {
+  pub fn describe_html(&self, pri : &PieceRenderInstructions) -> Result<String,SE> {
     self.p.describe_html(Some(pri.face))
   }
 }
