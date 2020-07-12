@@ -164,8 +164,9 @@ impl PieceState {
     }
   }
 
-  pub fn describe_html(&self, pri : &PieceRenderInstructions) -> Result<String,SE> {
-    self.p.describe_html(Some(pri.face))
+  #[throws(SE)]
+  pub fn describe_html(&self, pri : &PieceRenderInstructions) -> String {
+    self.p.describe_html(Some(pri.face))?
   }
 }
 
