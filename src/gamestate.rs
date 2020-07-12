@@ -64,8 +64,11 @@ pub struct LogEntry {
 
 // ---------- piece trait, and rendering ----------
 
+type SE = SVGProcessingError;
+type SR = Result<(),SE>;
+
 pub trait Piece : Send + Debug {
-  fn svg_piece(&self, pri : &PieceRenderInstructions) -> String;
+  fn svg_piece(&self, f: &mut String, pri: &PieceRenderInstructions) -> SR;
   fn outline_path(&self, pri : &PieceRenderInstructions) -> String;
   fn surround_path(&self, pri : &PieceRenderInstructions) -> String;
   fn svg_x_ids(&self) -> VisiblePieceIdSvgIds;
@@ -137,10 +140,11 @@ impl PieceState {
       Some(n) => n,
       None => -1,
     };
-    write!(defs, r##"<g id="{}" data-dragraise="{}">{}</g>"##,
+    write!(defs, r##"<g id="{}" data-dragraise="{}">"##,
            pri.id_piece(),
-           dragraise,
-           pr.p.svg_piece(&pri)).unwrap();
+           dragraise).unwrap();
+    pr.p.svg_piece(&mut defs, &pri).unwrap();
+    write!(defs, r##"</g>"##).unwrap();
     write!(defs, r##"<path id="{}" stroke="black" fill="none" d="{}"/>"##,
            pri.id_select(),
            pr.p.surround_path(&pri)).unwrap();

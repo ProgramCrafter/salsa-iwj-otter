@@ -20,19 +20,20 @@ const SELECT_SCALE : f64 = 1.1;
 
 
 #[derive(Copy,Clone,Debug,Error)]
-pub enum SVGProcessError {
+pub enum SVGProcessingError {
   UnknownOperator,
   BadNumber,
   WriteFail,
 }
-display_as_debug!{SVGProcessError}
-error_from_losedetails!{SVGProcessError, WriteFail, fmt::Error}
-error_from_losedetails!{SVGProcessError, BadNumber, std::num::ParseFloatError}
 
-#[throws(SVGProcessError)]
+display_as_debug!{SVGProcessingError}
+error_from_losedetails!{SVGProcessingError,WriteFail,fmt::Error}
+error_from_losedetails!{SVGProcessingError,BadNumber,std::num::ParseFloatError}
+
+type SE = SVGProcessingError;
+
+#[throws(SE)]
 pub fn svg_rescale_path(input: &str, scale: f64) -> String {
-  use SVGProcessError::*;
-
   type BM = u64;
   type BI = u32;
   #[derive(Debug,Copy,Clone)]
@@ -71,7 +72,7 @@ pub fn svg_rescale_path(input: &str, scale: f64) -> String {
           continue;
         }
       }
-      _ => Err(UnknownOperator)?,
+      _ => Err(SE::UnknownOperator)?,
     };
     write!(&mut out, "{}", w)?;
   }
@@ -81,9 +82,10 @@ eprintln!("rescaled by {}: {} as {}",scale,&input,&out);
 }
 
 impl Piece for SimpleShape {
-  fn svg_piece(&self, pri : &PieceRenderInstructions) -> String {
-    format!(r##"<path fill="{}" d="{}"/>"##,
-            self.colours[pri.face], self.path)
+  #[throws(SE)]
+  fn svg_piece(&self, f: &mut String, pri: &PieceRenderInstructions) {
+    write!(f, r##"<path fill="{}" d="{}"/>"##,
+           self.colours[pri.face], self.path)?;
   }
   fn outline_path(&self, _pri : &PieceRenderInstructions) -> String {
     self.path.clone()
@@ -116,7 +118,7 @@ impl Piece for SimpleShape {
 }
 
 impl SimpleShape {
-  #[throws(SVGProcessError)]
+  #[throws(SE)]
   fn new_from_path(desc: String, path: String, approx_dia: Coord,
                    colours: ColourMap) -> Self {
     SimpleShape {
@@ -124,7 +126,7 @@ impl SimpleShape {
       desc, approx_dia, path, colours,
     }
   }
-  #[throws(SVGProcessError)]
+  #[throws(SE)]
   fn new_circle(dia: Coord, colours: ColourMap) -> Self {
     let unit_path =
       "M 0 1  a 1 1 0 1 0 0 -2 \
@@ -133,7 +135,7 @@ impl SimpleShape {
     let path = svg_rescale_path(&unit_path, scale)?;
     Self::new_from_path("circle".to_owned(), path, dia, colours)?
   }
-  #[throws(SVGProcessError)]
+  #[throws(SE)]
   fn new_square(edgelen: Coord, colours: ColourMap) -> Self {
     let unit_path =
       "M -1 -1 h 2 v 2 h -2 z";
@@ -143,7 +145,7 @@ impl SimpleShape {
   }
 }
 
-pub fn xxx_make_pieces() -> Result<Vec<(Pos, Box<dyn Piece>)>,SVGProcessError> {
+pub fn xxx_make_pieces() -> Result<Vec<(Pos, Box<dyn Piece>)>,SE> {
   Ok(vec![
     ([ 90, 80 ],
      Box::new(SimpleShape::new_circle(
