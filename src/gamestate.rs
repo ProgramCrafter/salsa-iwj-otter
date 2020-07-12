@@ -148,6 +148,11 @@ impl PieceState {
     write!(defs,
            r##"<path id="select{}" stroke="black" fill="none" d="{}"/>"##,
            pri.id, pr.p.surround_path(&pri)?)?;
+    write!(defs,
+           r##"<path id="halo{}" stroke="none" fill="yellow" d="{} {}"/>"##,
+           pri.id,
+           pr.p.surround_path(&pri)?,
+           pr.p.outline_path(&pri)?)?;
     pr.p.svg_x_defs(&mut defs, &pri)?;
     defs
   }
