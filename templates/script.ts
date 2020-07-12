@@ -83,6 +83,10 @@ var defs_marker : SVGGraphicsElement;
 var logdiv : HTMLElement;
 var status_node : HTMLElement;
 
+type PlayerInfo = {
+  dasharray : string,
+}
+var players : { [player: string]: PlayerInfo };
 
 function xhr_post_then(url : string, data: string,
 		       good : (xhr: XMLHttpRequest) => void) {
@@ -441,7 +445,8 @@ function startup() {
   status_node = document.getElementById('status')!;
   status_node.innerHTML = 'js-done';
   logdiv = document.getElementById("log")!;
-  let dataload = body.dataset.load;
+  let dataload = JSON.parse(body.dataset.load!);
+  players = dataload.players!;
   delete body.dataset.load;
 
   space = svg_element('space')!;
