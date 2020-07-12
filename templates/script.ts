@@ -147,6 +147,10 @@ function api_piece(f: (meth: string, payload: Object) => void,
 		   op: Object) {
   cseq += 1;
   p.cseq = cseq;
+  if (halo == piece) {
+    piece_undisplay_ancillary(p, "#halo"+halo);
+    halo = null;
+  }
   f(meth, {
     ctoken : ctoken,
     piece : piece,
@@ -241,7 +245,9 @@ function piece_undisplay_ancillary(p: PieceInfo, href: string) {
   for (let celem = p.pelem.firstElementChild;
        celem != null;
        celem = celem.nextElementSibling) {
-    if (celem.getAttributeNS(null,"href") == href) {
+    let thref = celem.getAttributeNS(null,"href");
+    console.log('UNDISPLAY ANCILLARY',href,thref);
+    if (thref == href) {
       celem.remove();
       return;
     }
@@ -440,7 +446,7 @@ function piece_checkconflict(piece: PieceId, p: PieceInfo) {
   if (halo != piece) {
     if (halo != null) {
       console.log('UNHALOING',halo);
-      piece_undisplay_ancillary(p, "#halo"+halo);
+      piece_undisplay_ancillary(pieces[halo]!, "#halo"+halo);
     }
     console.log('HALOING',piece);
     halo = piece;
