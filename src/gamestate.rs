@@ -68,12 +68,17 @@ type SE = SVGProcessingError;
 type SR = Result<(),SE>;
 
 pub trait Piece : Send + Debug {
+  // #[throws] doesn't work here for some reason
   fn svg_piece(&self, f: &mut String, pri: &PieceRenderInstructions) -> SR;
+
   #[throws(SE)]
   fn outline_path(&self, pri : &PieceRenderInstructions) -> String;
+
   #[throws(SE)]
   fn surround_path(&self, pri : &PieceRenderInstructions) -> String;
-  fn svg_x_defs(&self, pri : &PieceRenderInstructions) -> String;
+
+  fn svg_x_defs(&self, f: &mut String, pri : &PieceRenderInstructions) -> SR;
+
   #[throws(SE)]
   fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
                       -> Option<Coord>;
@@ -143,7 +148,7 @@ impl PieceState {
     write!(defs,
            r##"<path id="select{}" stroke="black" fill="none" d="{}"/>"##,
            pri.id, pr.p.surround_path(&pri)?)?;
-    write!(defs, "{}", pr.p.svg_x_defs(&pri))?;
+    pr.p.svg_x_defs(&mut defs, &pri)?;
     defs
   }
 

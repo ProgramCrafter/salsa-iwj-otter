@@ -101,8 +101,8 @@ impl Piece for SimpleShape {
                       -> Option<Coord> {
     Some(self.approx_dia / 2)
   }
-  fn svg_x_defs(&self, _pri : &PieceRenderInstructions) -> String {
-    "".to_owned()
+  #[throws(SE)]
+  fn svg_x_defs(&self, _f: &mut String, _pri : &PieceRenderInstructions) {
   }
   #[throws(SE)]
   fn describe_html(&self, face : Option<FaceId>) -> String {
