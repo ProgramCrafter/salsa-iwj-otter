@@ -38,7 +38,7 @@ pub struct ZLevel {
 
 // ---------- game state ----------
 
-#[derive(Debug)]
+#[derive(Debug,Serialize)]
 pub struct GameState {
   pub pieces : DenseSlotMap<PieceId,PieceState>,
   pub players : DenseSlotMap<PlayerId,PlayerState>,
@@ -46,9 +46,10 @@ pub struct GameState {
   pub log : Vec<(Generation,LogEntryRef)>,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Serialize)]
 pub struct PieceState {
   pub pos : Pos,
+  #[serde(with="self::piece_serde")]
   pub p : Box<dyn Piece>,
   pub face : FaceId,
   pub held : Option<PlayerId>,
@@ -58,7 +59,7 @@ pub struct PieceState {
   pub gen_before_lastclient : Generation,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Serialize)]
 pub struct PlayerState {
   pub nick : String,
 }
@@ -185,6 +186,19 @@ impl PieceState {
   pub fn describe_html(&self, pri : &PieceRenderInstructions) -> String {
     self.p.describe_html(Some(pri.face))?
   }
+}
+
+// ---------- pice load and save ----------
+
+mod piece_serde {
+  use crate::gamestate::*;
+  use serde::Serializer;
+//  #[throws(Result<<S as Serializer>::Ok,<S as Serializer>::Error>)]
+  pub fn serialize<S:Serializer>(pc : &Box<dyn Piece>, s:S)
+                                 -> Result<S::Ok, S::Error> {
+    s.serialize_none()
+  }
+  pub fn deserialize() { }
 }
 
 // ========== ad-hoc and temporary ==========
