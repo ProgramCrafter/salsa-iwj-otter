@@ -143,20 +143,18 @@ impl Display for ZCoord {
 // ---------- game state - rendering etc. ----------
 
 impl Serialize for LogEntryRef {
-  fn serialize<S>(&self, s: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where S: Serializer {
-    self.0.serialize(s)
+  #[throws(S::Error)]
+  fn serialize<S:Serializer>(&self, s: S) -> S::Ok {
+    self.0.serialize(s)?
   }
 }
 
 impl<'d> Deserialize<'d> for LogEntryRef {
-  fn deserialize<D>(d: D) -> Result<Self, D::Error> where D: Deserializer<'d> {
-    todo!()
+  #[throws(D::Error)]
+  fn deserialize<D:Deserializer<'d>>(d: D) -> LogEntryRef {
+    let l : LogEntry = <LogEntry as Deserialize<'_>>::deserialize(d)?;
+    LogEntryRef(Arc::new(l))
   }
-  /*
-  fn deserialize<O>(o:D) Result<Self, S::Error>`
-  fn deserialize<S>(&self, s: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where S: Serializer {
-    self.0.serialize(s)
-  }*/
 }
 
 impl PieceState {
