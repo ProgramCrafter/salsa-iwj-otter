@@ -25,7 +25,7 @@ pub use fehler::{throws,throw};
 
 pub use serde::Deserialize;
 pub use serde::Serialize;
-pub use serde::Serializer;
+pub use serde::{Serializer,Deserializer};
 
 pub use rocket_contrib::helmet::*;
 pub use rocket_contrib::templates::Template;

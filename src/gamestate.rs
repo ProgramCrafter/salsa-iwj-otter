@@ -38,7 +38,7 @@ pub struct ZLevel {
 
 // ---------- game state ----------
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Serialize,Deserialize)]
 pub struct GameState {
   pub pieces : DenseSlotMap<PieceId,PieceState>,
   pub players : DenseSlotMap<PlayerId,PlayerState>,
@@ -46,7 +46,7 @@ pub struct GameState {
   pub log : Vec<(Generation,LogEntryRef)>,
 }
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Serialize,Deserialize)]
 pub struct PieceState {
   pub pos : Pos,
   #[serde(with="self::piece_serde")]
@@ -59,7 +59,7 @@ pub struct PieceState {
   pub gen_before_lastclient : Generation,
 }
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Serialize,Deserialize)]
 pub struct PlayerState {
   pub nick : String,
 }
@@ -67,7 +67,7 @@ pub struct PlayerState {
 #[derive(Debug,Clone)]
 pub struct LogEntryRef(pub Arc<LogEntry>);
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Serialize,Deserialize)]
 pub struct LogEntry {
   pub html : String,
 }
@@ -148,6 +148,17 @@ impl Serialize for LogEntryRef {
   }
 }
 
+impl<'d> Deserialize<'d> for LogEntryRef {
+  fn deserialize<D>(d: D) -> Result<Self, D::Error> where D: Deserializer<'d> {
+    todo!()
+  }
+  /*
+  fn deserialize<O>(o:D) Result<Self, S::Error>`
+  fn deserialize<S>(&self, s: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where S: Serializer {
+    self.0.serialize(s)
+  }*/
+}
+
 impl PieceState {
   #[throws(SE)]
   pub fn make_defs(&self, pri : &PieceRenderInstructions) -> String {
@@ -197,7 +208,10 @@ mod piece_serde {
   pub fn serialize<S:Serializer>(pc : &Box<dyn Piece>, s:S) -> S::Ok {
     s.serialize_none()?
   }
-  pub fn deserialize() { }
+  #[throws(D::Error)]
+  pub fn deserialize<'d,D:Deserializer<'d>>(d:D) -> Box<dyn Piece> {
+    panic!();
+  }
 }
 
 // ========== ad-hoc and temporary ==========
