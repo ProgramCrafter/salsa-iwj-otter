@@ -1,10 +1,6 @@
 
 use crate::imports::*;
 
-define_index_type! {
-  pub struct FaceId = u8;
-}
-
 type ColourMap = IndexVec<FaceId,Colour>;
 
 #[derive(Debug)]

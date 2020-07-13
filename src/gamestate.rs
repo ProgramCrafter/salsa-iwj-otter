@@ -9,6 +9,10 @@ slotmap::new_key_type!{
   pub struct PieceId;
 }
 
+define_index_type! {
+  pub struct FaceId = u8;
+}
+
 #[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
 #[derive(Serialize,Deserialize)]
 #[serde(transparent)]
