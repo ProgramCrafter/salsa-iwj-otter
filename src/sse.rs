@@ -15,12 +15,6 @@ const UPDATE_READER_SIZE : usize = 1024*32;
 const UPDATE_MAX_FRAMING_SIZE : usize = 200;
 const UPDATE_KEEPALIVE : Duration = Duration::from_secs(14);
 
-// We suspect that browsers leak the datastream.  Certainly with
-// the developer tools network console open, firefox eventually
-// displays the whole datastream!
-const CLIENT_LEAK_LOW_WATER  : usize =   10*1024;
-const CLIENT_LEAK_HIGH_WATER : usize = 2*10*1024;
-
 struct UpdateReader {
   player : PlayerId,
   client : ClientId,
@@ -29,7 +23,6 @@ struct UpdateReader {
   keepalives : Wrapping<u32>,
   to_send : UpdateId,
   ami : Arc<Mutex<Instance>>,
-  sent : usize,
 }
 
 #[derive(Error,Debug)]
@@ -38,8 +31,6 @@ struct FlushWouldBlockError{}
 
 impl Read for UpdateReader {
   fn read(&mut self, orig_buf: &mut [u8]) -> Result<usize,io::Error> {
-    if self.sent > CLIENT_LEAK_HIGH_WATER { return Ok(0) }
-
     let em : fn(&'static str) -> io::Error =
       |s| io::Error::new(io::ErrorKind::Other, anyhow!(s));
 
@@ -81,7 +72,6 @@ impl Read for UpdateReader {
                   generated, &self.player, &self.client,
                   str::from_utf8(&orig_buf[0..generated]).unwrap());
         self.need_flush = true;
-        self.sent += generated;
         return Ok(generated)
       }
 
@@ -90,8 +80,8 @@ impl Read for UpdateReader {
         return Err(io::Error::new(io::ErrorKind::WouldBlock,
                                   FlushWouldBlockError{}));
       }
-
-      if self.sent > CLIENT_LEAK_LOW_WATER { return Ok(0) }
+      // xxx this endless stream is a leak
+      // restart it occasionally
 
       amig = cv.wait_timeout(amig, UPDATE_KEEPALIVE)
         .map_err(|_| em("poison"))?.0;
@@ -131,21 +121,6 @@ impl StableIndexOffset for UpdateId {
   fn zero() -> Self { UpdateId(0) }
 }
 
-impl<'a,'r> FromRequest<'a,'r> for UpdateId {
-  type Error = OperationalError;
-
-  fn from_request(req: &'a Request<'r>)
-                  -> request::Outcome<Self,OperationError> {
-    let header: Vec<_> = request.headers().get("Last-Event-ID").collect();
-    match keys.len() {
-      0 => Outcome::Failure((Status::BadRequest, ApiKeyError::Missing)),
-      1 if is_valid(keys[0]) => Outcome::Success(ApiKey(keys[0].to_string())),
-      1 => Outcome::Failure((Status::BadRequest, ApiKeyError::Invalid)),
-      _ => Outcome::Failure((Status::BadRequest, ApiKeyError::BadCount)),
-    }
-  }
-}
-
 // ---------- entrypoint for dribbling the http response ----------
 
 #[throws(OE)]
@@ -174,7 +149,6 @@ eprintln!("updates content iad={:?} player={:?} cl={:?} updates={:?}",
       player, client, to_send, ami,
       need_flush : false,
       keepalives : Wrapping(0),
-      sent : 0,
       init_confirmation_send : iter::once(()),
     }
   };

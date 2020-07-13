@@ -583,7 +583,6 @@ function startup() {
   });
   es.onerror = function(e) {
     console.log('FOO',e,es);
-    if (es.readyState == 0/*CONNECTING*/) return;
     json_report_error({
       updates_error : e,
       updates_event_source : es,
