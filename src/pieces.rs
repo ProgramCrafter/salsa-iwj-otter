@@ -3,7 +3,7 @@ use crate::imports::*;
 
 type ColourMap = IndexVec<FaceId,Colour>;
 
-#[derive(Debug)]
+#[derive(Debug,Serialize,Deserialize)]
 struct SimpleShape {
   desc : String,
   path : String,

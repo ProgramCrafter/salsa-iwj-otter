@@ -31,7 +31,7 @@ lazy_static = "1.0.0"
 slotmap = { version = "0.4", features = ['serde'] }
 fehler = "1"
 
-index_vec = "0.1.1"
+index_vec = { version = "0.1.1", features = ['serde'] }
 
 num-traits = "0.2"
 
