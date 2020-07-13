@@ -193,10 +193,9 @@ impl PieceState {
 mod piece_serde {
   use crate::gamestate::*;
   use serde::Serializer;
-//  #[throws(Result<<S as Serializer>::Ok,<S as Serializer>::Error>)]
-  pub fn serialize<S:Serializer>(pc : &Box<dyn Piece>, s:S)
-                                 -> Result<S::Ok, S::Error> {
-    s.serialize_none()
+  #[throws(S::Error)]
+  pub fn serialize<S:Serializer>(pc : &Box<dyn Piece>, s:S) -> S::Ok {
+    s.serialize_none()?
   }
   pub fn deserialize() { }
 }
