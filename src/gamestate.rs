@@ -47,7 +47,6 @@ pub struct GameState {
 #[derive(Debug,Serialize,Deserialize)]
 pub struct PieceState {
   pub pos : Pos,
-  #[serde(with="self::piece_serde")]
   pub p : Box<dyn Piece>,
   pub face : FaceId,
   pub held : Option<PlayerId>,
@@ -72,6 +71,7 @@ pub struct LogEntry {
 type SE = SVGProcessingError;
 type SR = Result<(),SE>;
 
+#[typetag::serde]
 pub trait Piece : Send + Debug {
   // #[throws] doesn't work here for some reason
   fn svg_piece(&self, f: &mut String, pri: &PieceRenderInstructions) -> SR;
@@ -174,21 +174,6 @@ impl PieceState {
   #[throws(SE)]
   pub fn describe_html(&self, pri : &PieceRenderInstructions) -> String {
     self.p.describe_html(Some(pri.face))?
-  }
-}
-
-// ---------- pice load and save ----------
-
-mod piece_serde {
-  use crate::gamestate::*;
-  use serde::Serializer;
-  #[throws(S::Error)]
-  pub fn serialize<S:Serializer>(pc : &Box<dyn Piece>, s:S) -> S::Ok {
-    s.serialize_none()?
-  }
-  #[throws(D::Error)]
-  pub fn deserialize<'d,D:Deserializer<'d>>(d:D) -> Box<dyn Piece> {
-    panic!();
   }
 }
 

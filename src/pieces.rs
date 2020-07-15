@@ -78,6 +78,7 @@ eprintln!("rescaled by {}: {} as {}",scale,&input,&out);
   out
 }
 
+#[typetag::serde]
 impl Piece for SimpleShape {
   #[throws(SE)]
   fn svg_piece(&self, f: &mut String, pri: &PieceRenderInstructions) {
