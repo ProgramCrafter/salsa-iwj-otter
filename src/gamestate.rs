@@ -62,8 +62,7 @@ pub struct PlayerState {
   pub nick : String,
 }
 
-#[derive(Debug,Clone)]
-pub struct LogEntryRef(pub Arc<LogEntry>);
+pub type LogEntryRef = Arc<LogEntry>;
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct LogEntry {
@@ -139,21 +138,6 @@ impl Display for ZCoord {
 }
 
 // ---------- game state - rendering etc. ----------
-
-impl Serialize for LogEntryRef {
-  #[throws(S::Error)]
-  fn serialize<S:Serializer>(&self, s: S) -> S::Ok {
-    self.0.serialize(s)?
-  }
-}
-
-impl<'d> Deserialize<'d> for LogEntryRef {
-  #[throws(D::Error)]
-  fn deserialize<D:Deserializer<'d>>(d: D) -> LogEntryRef {
-    let l : LogEntry = <LogEntry as Deserialize<'_>>::deserialize(d)?;
-    LogEntryRef(Arc::new(l))
-  }
-}
 
 impl PieceState {
   #[throws(SE)]

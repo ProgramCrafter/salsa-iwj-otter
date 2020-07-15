@@ -114,7 +114,7 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       });
 
       for logentry in logents {
-        let logentry = LogEntryRef(Arc::new(logentry));
+        let logentry = Arc::new(logentry);
         gs.log.push((gen, logentry.clone()));
         us.push(PreparedUpdateEntry::Log(logentry));
       }
