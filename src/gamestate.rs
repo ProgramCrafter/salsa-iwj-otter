@@ -41,7 +41,7 @@ pub struct GameState {
   pub pieces : DenseSlotMap<PieceId,PieceState>,
   pub players : DenseSlotMap<PlayerId,PlayerState>,
   pub gen : Generation,
-  pub log : Vec<(Generation,LogEntryRef)>,
+  pub log : Vec<(Generation,Arc<LogEntry>)>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -61,8 +61,6 @@ pub struct PieceState {
 pub struct PlayerState {
   pub nick : String,
 }
-
-pub type LogEntryRef = Arc<LogEntry>;
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct LogEntry {

@@ -32,7 +32,7 @@ pub enum PreparedUpdateEntry {
     piece : VisiblePieceId,
     op : PieceUpdateOp<PreparedPieceState>,
   },
-  Log (LogEntryRef),
+  Log (Arc<LogEntry>),
 }
 
 #[derive(Debug,Serialize)]
