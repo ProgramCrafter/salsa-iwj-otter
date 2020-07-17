@@ -141,6 +141,16 @@ impl InstanceGuard<'_> {
     Id::global_tokens(PRIVATE_Y).write().unwrap().insert(token, iad);
   }
 
+  pub fn destroy(mut self) {
+    Self::forget_all_tokens(&mut self.ig.tokens_players);
+    Self::forget_all_tokens(&mut self.ig.tokens_clients);
+  }
+  fn forget_all_tokens<Id:AccessId>(tokens: &mut TokenRegistry<Id>) {
+    let global : &RwLock<TokenTable<Id>> = AccessId::global_tokens(PRIVATE_Y);
+    let mut global = global.write().unwrap();
+    for t in tokens.tr.drain() { global.remove(&t); }
+  }
+
   #[throws(OE)]
   fn save_game_now(&mut self) { eprintln!("xxx would save!"); }
   #[throws(OE)]
