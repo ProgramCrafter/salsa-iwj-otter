@@ -62,10 +62,16 @@ pub struct InstanceAccess<'i, Id> {
 pub type TokenTable<Id> = HashMap<RawToken, InstanceAccessDetails<Id>>;
 
 pub trait AccessId : Copy + Clone + 'static {
-  fn global_tokens() -> &'static RwLock<TokenTable<Self>>;
-  fn tokens_registry(ig: &mut Instance) -> &mut TokenRegistry<Self>;
+  fn global_tokens(_:PrivateCaller) -> &'static RwLock<TokenTable<Self>>;
+  fn tokens_registry(ig: &mut Instance, _:PrivateCaller)
+                     -> &mut TokenRegistry<Self>;
   const ERROR : OnlineError;
 }
+
+pub struct PrivateCaller(());
+// outsiders cannot construct this
+// workaround for inability to have private trait methods
+const PRIVATE_Y : PrivateCaller = PrivateCaller(());
 
 // ========== implementations ==========
 
@@ -131,8 +137,8 @@ impl InstanceGuard<'_> {
     token: RawToken,
     iad: InstanceAccessDetails<Id>
   ) {
-    Id::tokens_registry(&mut *self.ig).tr.insert(token.clone());
-    Id::global_tokens().write().unwrap().insert(token, iad);
+    Id::tokens_registry(&mut *self.ig, PRIVATE_Y).tr.insert(token.clone());
+    Id::global_tokens(PRIVATE_Y).write().unwrap().insert(token, iad);
   }
 
   #[throws(OE)]
@@ -145,22 +151,28 @@ impl InstanceGuard<'_> {
 
 impl AccessId for PlayerId {
   const ERROR : OnlineError = NoPlayer;
-  fn global_tokens() -> &'static RwLock<TokenTable<Self>> { &GLOBAL.players }
-  fn tokens_registry(ig: &mut Instance) -> &mut TokenRegistry<Self> {
+  fn global_tokens(_: PrivateCaller) -> &'static RwLock<TokenTable<Self>> {
+    &GLOBAL.players
+  }
+  fn tokens_registry(ig: &mut Instance, _:PrivateCaller)
+                     -> &mut TokenRegistry<Self> {
     &mut ig.tokens_players
   }
 }
 impl AccessId for ClientId {
   const ERROR : OnlineError = NoClient;
-  fn global_tokens() -> &'static RwLock<TokenTable<Self>> { &GLOBAL.clients }
-  fn tokens_registry(ig: &mut Instance) -> &mut TokenRegistry<Self> {
+  fn global_tokens(_: PrivateCaller) -> &'static RwLock<TokenTable<Self>> {
+    &GLOBAL.clients
+  }
+  fn tokens_registry(ig: &mut Instance, _:PrivateCaller)
+                     -> &mut TokenRegistry<Self> {
     &mut ig.tokens_clients
   }
 }
 
 pub fn lookup_token<Id : AccessId>(s : &str)
       -> Result<InstanceAccessDetails<Id>, OE> {
-  Id::global_tokens().read().unwrap().get(s).cloned()
+  Id::global_tokens(PRIVATE_Y).read().unwrap().get(s).cloned()
     .ok_or(Id::ERROR)
 }
 
@@ -170,7 +182,7 @@ impl<'r, Id> FromParam<'r> for InstanceAccess<'r, Id>
   type Error = OE;
   #[throws(OE)]
   fn from_param(param: &'r RawStr) -> Self {
-    let g = Id::global_tokens().read().unwrap();
+    let g = Id::global_tokens(PRIVATE_Y).read().unwrap();
     let token = param.as_str();
     let i = g.get(token).ok_or(Id::ERROR)?;
     InstanceAccess { raw_token : token, i : i.clone() }
