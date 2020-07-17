@@ -47,8 +47,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
   let iad = lookup_token(&form.ptoken)?;
   let player = iad.ident;
   let c = {
-    let mut ig = iad.g.lock()?;
-    let ig = &mut *ig;
+    let mut ig = Instance::lock(&iad.g)?;
     let cl = Client { player };
     let client = ig.clients.insert(cl);
 
@@ -56,7 +55,8 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       g : iad.g.clone(),
       ident : client,
     };
-    let ctoken = record_token(ciad);
+    let ctoken = record_token(&mut ig, ciad);
+    let ig = &mut *ig;
 
     let mut uses = vec![];
     let mut alldefs = vec![];

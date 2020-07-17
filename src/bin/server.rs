@@ -69,7 +69,7 @@ fn resource(leaf : CheckedResourceLeaf) -> io::Result<NamedFile> {
 }  
 
 fn main() {
-  xxx_global_setup();
+  xxx_global_setup().expect("global setup failed");
 
   let helmet = SpaceHelmet::default()
     .enable(NoSniff::Enable)
