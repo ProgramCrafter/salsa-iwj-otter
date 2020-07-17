@@ -141,7 +141,7 @@ impl InstanceGuard<'_> {
     Id::global_tokens(PRIVATE_Y).write().unwrap().insert(token, iad);
   }
 
-  pub fn destroy(mut self) {
+  pub fn game_destroy(mut self) {
     Self::forget_all_tokens(&mut self.ig.tokens_players);
     Self::forget_all_tokens(&mut self.ig.tokens_clients);
   }
