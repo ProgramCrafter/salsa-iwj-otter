@@ -2,6 +2,8 @@
 use crate::imports::*;
 use lazy_static::lazy_static;
 
+const SAVE_DIRECTORY : &str = "save";
+
 // ---------- newtypes and type aliases ----------
 
 visible_slotmap_key!{ ClientId('C') }
@@ -13,6 +15,7 @@ pub struct RawToken (pub String);
 
 #[derive(Debug)]
 pub struct Instance {
+  pub name : String,
   pub gs : GameState,
   pub clients : DenseSlotMap<ClientId,Client>,
   pub updates : SecondarySlotMap<PlayerId, PlayerUpdates>,
@@ -91,8 +94,9 @@ lazy_static! {
 
 impl Instance {
   #[throws(OE)]
-  pub fn new(gs: GameState) -> Instance {
+  pub fn new(gs: GameState, instance_name: String) -> Instance {
     Instance {
+      name : instance_name,
       gs,
       clients : Default::default(),
       updates : Default::default(),
@@ -152,7 +156,18 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(OE)]
-  fn save_game_now(&mut self) { eprintln!("xxx would save!"); }
+  fn save_game_now(&mut self) {
+    let savefile : String =
+      iter::once("g-")
+      .chain( utf8_percent_encode(&self.name,
+                                  &percent_encoding::NON_ALPHANUMERIC) )
+      .chain( iter::once(".tmp") )
+      .collect();
+    let mut f = BufWriter::new(fs::File::create(&savefile)?);
+    rmp_serde::encode::write_named(&mut f, &self.ig.gs);
+    eprintln!("xxx saved {} to {}!", self.name, &savefile);
+  }
+
   #[throws(OE)]
   fn save_access_now(&mut self) { eprintln!("xxx would save!"); }
 }
@@ -222,7 +237,7 @@ const XXX_PLAYERS_TOKENS : &[(&str, &str)] = &[
 #[throws(OE)]
 pub fn xxx_global_setup() {
   let gs = xxx_gamestate_init();
-  let gi = Instance::new(gs)?;
+  let gi = Instance::new(gs, "dummy".to_string())?;
   let amu = Arc::new(Mutex::new(gi));
   let mut ig = Instance::lock(&amu)?;
   for (token, nick) in XXX_PLAYERS_TOKENS {

@@ -1,6 +1,6 @@
 
 pub use std::io;
-pub use std::io::{BufReader,Read,Write};
+pub use std::io::{BufReader,Read,BufWriter,Write};
 pub use std::fmt::Write as _;
 pub use std::fmt::Formatter;
 pub use std::fmt::{self,Display,Debug};
@@ -20,6 +20,7 @@ pub use std::cmp;
 pub use std::error::Error;
 pub use std::marker::PhantomData;
 pub use std::ops::{Deref,DerefMut};
+pub use std::fs;
   
 pub use thiserror::Error;
 pub use anyhow::{Context,anyhow};
@@ -30,6 +31,9 @@ pub use serde::{Serializer,Deserializer};
 
 pub use rocket_contrib::helmet::*;
 pub use rocket_contrib::templates::Template;
+
+pub use percent_encoding::utf8_percent_encode;
+pub use percent_encoding::NON_ALPHANUMERIC;
 
 pub use rocket::{State,Rocket};
 pub use rocket::http::{RawStr,ContentType};
