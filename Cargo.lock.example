@@ -382,7 +382,7 @@ dependencies = [
  "index_vec",
  "lazy_static",
  "num-traits",
- "percent-encoding 1.0.1",
+ "percent-encoding 2.1.0",
  "rand",
  "rmp-serde",
  "rocket",
