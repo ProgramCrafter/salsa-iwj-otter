@@ -1,4 +1,9 @@
 
+// results:
+// rustc 1.46.0-nightly --release
+//
+// slotmap::Keydata::get_idx_version      3.259 3.185 3.220
+
 use slotmap::KeyData;
 
 const BATCH : usize = 128;
