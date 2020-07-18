@@ -1,11 +1,10 @@
+//! Provides a `get_idx_key` method on `slotmap::KeyData`.
+//! See `KeyDataExt`.
 
-use thiserror::Error;
-
+/// Extension trait for `slotmap::KeyData`, providing `get_idx_version`.
+///
+/// No-one is expected to implement this trait for anything else.
 pub trait KeyDataExt {
-  fn get_idx_version(self) -> (u32, u32);
-}
-
-impl KeyDataExt for slotmap::KeyData {
   /// Returns the slot index and version.  This is useful only in
   /// unusual situations.  At any one time, a slotmap has at most
   /// one entry with each index.  The combination of index and
@@ -21,6 +20,10 @@ impl KeyDataExt for slotmap::KeyData {
   /// representation has changed too much.  This ought to be caught
   /// by the tests, and would probably be a breaking change in the
   /// underlying `slotmap` crate in any case.
+  fn get_idx_version(self) -> (u32, u32);
+}
+
+impl KeyDataExt for slotmap::KeyData {
   fn get_idx_version(self) -> (u32, u32) {
     keydata_extract(self).expect(
       "slotmap KeyData Serialize representation changed!"
@@ -28,9 +31,11 @@ impl KeyDataExt for slotmap::KeyData {
   }
 }
 
-/// Underlying extraction function.  Fails rather than panicing if the
-/// `slotmap::KeyData` `serde::ser::Serialize` representation has changed too
-/// much.  Should not be able to fail otherwise.
+/// Underlying extraction function.  Fails rather than panicing.
+///
+/// Fails if the `slotmap::KeyData` `serde::ser::Serialize`
+/// representation has changed too much.  Should not be able to fail
+/// otherwise.
 pub fn keydata_extract(key : slotmap::KeyData) -> Result<(u32, u32), Error> {
   let mut m : MainExtractor = std::default::Default::default();
   key.serialize(&mut m)?;
@@ -38,11 +43,17 @@ pub fn keydata_extract(key : slotmap::KeyData) -> Result<(u32, u32), Error> {
        m.version.ok_or(error(line!()))? ))
 }
 
-#[derive(Error,Debug)]
+#[derive(Debug)]
+/// Problem with the `slotmap::KeyData` `Serialize` implementation.
+///
+/// Not really helpful.  `Unexpected` gives the source line number
+/// in `slotmap-slot-idx.rs`.  `WasCustomSerialize` threw the
+/// actual error away.
 pub enum Error {
   WasCustomSerialize,
   Unexpected(std::num::NonZeroU32),
 }
+impl std::error::Error for Error { }
 
 //---------- implementation.  avert your eyes ----------
 
@@ -193,4 +204,13 @@ impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
     fmt::Debug::fmt(self,f)
   }
+}
+
+#[test]
+fn check(){
+  let v : u64 = 0x123456789abcdef;
+  let kd = slotmap::KeyData::from_ffi(v);
+  let (idx,vsn) = self::KeyDataExt::get_idx_version(kd);
+  assert_eq!(idx as u64, v & 0xffffffff);
+  assert_eq!(vsn as u64, v >> 32);
 }
