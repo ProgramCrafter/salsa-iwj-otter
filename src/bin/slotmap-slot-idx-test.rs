@@ -20,7 +20,7 @@ fn main () {
 
     for (&i,o) in input.iter().zip(output.iter_mut()) {
       let kd = slotmap::KeyData::from_ffi(i);
-      let (vsn,_) = slotmap_slot_idx::KeyData::get_idx_version(kd);
+      let (vsn,_) = slotmap_slot_idx::KeyDataExt::get_idx_version(kd);
       *o = vsn;
     }
 

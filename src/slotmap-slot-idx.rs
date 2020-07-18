@@ -3,11 +3,11 @@ use serde::ser::{self,*};
 use thiserror::Error;
 use std::line;
 
-pub trait KeyData {
+pub trait KeyDataExt {
   fn get_idx_version(self) -> (u32, u32);
 }
 
-impl KeyData for slotmap::KeyData {
+impl KeyDataExt for slotmap::KeyData {
   fn get_idx_version(self) -> (u32, u32) {
     keydata_extract(self).unwrap()
   }
