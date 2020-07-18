@@ -58,6 +58,7 @@ pub use crate::keydata::*;
 pub use crate::updates::*;
 pub use crate::sse;
 pub use crate::error::*;
+pub use crate::slotmap_slot_idx::*;
 
 pub type E = anyhow::Error;
 pub type AE = anyhow::Error;
