@@ -3,12 +3,30 @@ use serde::ser::{self,*};
 use thiserror::Error;
 use std::line;
 
+pub trait KeyData {
+  fn get_idx_version(self) -> (u32, u32);
+}
+
+impl KeyData for slotmap::KeyData {
+  fn get_idx_version(self) -> (u32, u32) {
+    keydata_extract(self).unwrap()
+  }
+}
+
+pub fn keydata_extract(key : slotmap::KeyData) -> Result<(u32, u32), Error> {
+  let mut m : MainExtractor = std::default::Default::default();
+  key.serialize(&mut m)?;
+  Ok(( m.idx    .ok_or(error(line!()))?,
+       m.version.ok_or(error(line!()))? ))
+}
+
 #[derive(Error,Debug)]
-enum Error {
+pub enum Error {
   WasCustomSerialize,
   Unexpected(std::num::NonZeroU32),
 }
 
+#[derive(Default)]
 struct MainExtractor {
   idx: Option<u32>,
   version: Option<u32>,
@@ -20,7 +38,8 @@ type R<Return> = Result<Return,Error>;
 type ROk = R<()>;
 
 
-fn unexpected<T>(line: u32) -> R<T> { Err(Error::Unexpected(std::convert::TryFrom::try_from(line).unwrap())) }
+fn error(line: u32) -> Error { Error::Unexpected(std::convert::TryFrom::try_from(line).unwrap()) }
+fn unexpected<T>(line: u32) -> R<T> { Err(error(line)) }
 
 type Imp = Impossible<(),Error>;
 
