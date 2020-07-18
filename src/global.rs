@@ -49,6 +49,12 @@ pub struct TokenRegistry<Id: AccessId> {
   id : PhantomData<Id>,
 }
 
+#[derive(Debug,Serialize,Deserialize)]
+struct InstanceSaveAccesses<'r> {
+  #[serde(borrow)]
+  tokens_players : Vec<(&'r str, PlayerId)>,
+}
+
 // ---------- API ----------
 
 #[derive(Clone,Debug)]
