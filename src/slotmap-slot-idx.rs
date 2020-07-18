@@ -1,18 +1,36 @@
 
-use serde::ser::{self,*};
 use thiserror::Error;
-use std::line;
 
 pub trait KeyDataExt {
   fn get_idx_version(self) -> (u32, u32);
 }
 
 impl KeyDataExt for slotmap::KeyData {
+  /// Returns the slot index and version.  This is useful only in
+  /// unusual situations.  At any one time, a slotmap has at most
+  /// one entry with each index.  The combination of index and
+  /// version are unique across time.  Indices are generally not
+  /// significantly bigger than thw maximum ever occupancy.  No
+  /// other guarantees are made.
+  ///
+  /// For serialisation, use `serde` or `as_ffi`.
+  ///
+  /// ### panics: ###
+  ///
+  /// This function panics if the `slotmap::KeyData` `serde::ser::Serialize`
+  /// representation has changed too much.  This ought to be caught
+  /// by the tests, and would probably be a breaking change in the
+  /// underlying `slotmap` crate in any case.
   fn get_idx_version(self) -> (u32, u32) {
-    keydata_extract(self).unwrap()
+    keydata_extract(self).expect(
+      "slotmap KeyData Serialize representation changed!"
+    )
   }
 }
 
+/// Underlying extraction function.  Fails rather than panicing if the
+/// `slotmap::KeyData` `serde::ser::Serialize` representation has changed too
+/// much.  Should not be able to fail otherwise.
 pub fn keydata_extract(key : slotmap::KeyData) -> Result<(u32, u32), Error> {
   let mut m : MainExtractor = std::default::Default::default();
   key.serialize(&mut m)?;
@@ -26,6 +44,13 @@ pub enum Error {
   Unexpected(std::num::NonZeroU32),
 }
 
+//---------- implementation.  avert your eyes ----------
+
+use serde::ser::{self,*};
+use std::line;
+use std::convert::TryFrom;
+use std::fmt;
+
 #[derive(Default)]
 struct MainExtractor {
   idx: Option<u32>,
@@ -36,12 +61,13 @@ struct ValueExtractor;
 
 type R<Return> = Result<Return,Error>;
 type ROk = R<()>;
+use self::Error::*;
 
-
-fn error(line: u32) -> Error { Error::Unexpected(std::convert::TryFrom::try_from(line).unwrap()) }
-fn unexpected<T>(line: u32) -> R<T> { Err(error(line)) }
+fn error(line: u32) -> Error { Unexpected(TryFrom::try_from(line).unwrap()) }
+fn u<T>(line: u32) -> R<T> { Err(error(line)) }
 
 type Imp = Impossible<(),Error>;
+type RI = R<Imp>;
 
 impl Serializer for &mut MainExtractor {
   type Ok = ();
@@ -58,35 +84,38 @@ impl Serializer for &mut MainExtractor {
 
   fn serialize_struct(self, _:&str, _: usize) -> R<Self> { Ok(self) }
 
-  fn serialize_bool (self, _: bool )  -> ROk { unexpected(line!()) }
-  fn serialize_i8   (self, _: i8   )  -> ROk { unexpected(line!()) }
-  fn serialize_i16  (self, _: i16  )  -> ROk { unexpected(line!()) }
-  fn serialize_i32  (self, _: i32  )  -> ROk { unexpected(line!()) }
-  fn serialize_i64  (self, _: i64  )  -> ROk { unexpected(line!()) }
-  fn serialize_u8   (self, _: u8   )  -> ROk { unexpected(line!()) }
-  fn serialize_u16  (self, _: u16  )  -> ROk { unexpected(line!()) }
-  fn serialize_u32  (self, _: u32  )  -> ROk { unexpected(line!()) }
-  fn serialize_u64  (self, _: u64  )  -> ROk { unexpected(line!()) }
-  fn serialize_f32  (self, _: f32  )  -> ROk { unexpected(line!()) }
-  fn serialize_f64  (self, _: f64  )  -> ROk { unexpected(line!()) }
-  fn serialize_char (self, _: char )  -> ROk { unexpected(line!()) }
-  fn serialize_str  (self, _: &str )  -> ROk { unexpected(line!()) }
-  fn serialize_bytes(self, _: &[u8 ]) -> ROk { unexpected(line!()) }
-  fn serialize_none (self)            -> ROk { unexpected(line!()) }
-  fn serialize_unit (self)            -> ROk { unexpected(line!()) }
+  fn serialize_bool (self, _: bool )  -> ROk { u(line!()) }
+  fn serialize_i8   (self, _: i8   )  -> ROk { u(line!()) }
+  fn serialize_i16  (self, _: i16  )  -> ROk { u(line!()) }
+  fn serialize_i32  (self, _: i32  )  -> ROk { u(line!()) }
+  fn serialize_i64  (self, _: i64  )  -> ROk { u(line!()) }
+  fn serialize_u8   (self, _: u8   )  -> ROk { u(line!()) }
+  fn serialize_u16  (self, _: u16  )  -> ROk { u(line!()) }
+  fn serialize_u32  (self, _: u32  )  -> ROk { u(line!()) }
+  fn serialize_u64  (self, _: u64  )  -> ROk { u(line!()) }
+  fn serialize_f32  (self, _: f32  )  -> ROk { u(line!()) }
+  fn serialize_f64  (self, _: f64  )  -> ROk { u(line!()) }
+  fn serialize_char (self, _: char )  -> ROk { u(line!()) }
+  fn serialize_str  (self, _: &str )  -> ROk { u(line!()) }
+  fn serialize_bytes(self, _: &[u8 ]) -> ROk { u(line!()) }
+  fn serialize_none (self)            -> ROk { u(line!()) }
+  fn serialize_unit (self)            -> ROk { u(line!()) }
 
-  fn serialize_some           <T:Serialize+?Sized>(self,                        _: &T) -> ROk { unexpected(line!()) }
-  fn serialize_newtype_struct <T:Serialize+?Sized>(self, _:&str,                _: &T) -> ROk { unexpected(line!()) }
-  fn serialize_newtype_variant<T:Serialize+?Sized>(self, _:&str, _:u32, _:&str, _: &T) -> ROk { unexpected(line!()) }
+  fn serialize_some<T>(self,                                   _: &T) -> ROk
+  where T : Serialize + ?Sized  { u(line!()) }
+  fn serialize_newtype_struct <T>(self, _:&str,                _: &T) -> ROk
+  where T : Serialize + ?Sized  { u(line!()) }
+  fn serialize_newtype_variant<T>(self, _:&str, _:u32, _:&str, _: &T) -> ROk
+  where T : Serialize + ?Sized  { u(line!()) }
 
-  fn serialize_unit_struct                 (self, _: &str                           ) -> ROk    { unexpected(line!()) }
-  fn serialize_unit_variant                (self, _: &str, _:u32, _:&str            ) -> ROk    { unexpected(line!()) }
-  fn serialize_seq                         (self, _: Option<usize>                  ) -> R<Imp> { unexpected(line!()) }
-  fn serialize_tuple                       (self, _: usize                          ) -> R<Imp> { unexpected(line!()) }
-  fn serialize_tuple_struct                (self, _: &str, _: usize                 ) -> R<Imp> { unexpected(line!()) }
-  fn serialize_tuple_variant               (self, _: &str, _: u32, _: &str, _: usize) -> R<Imp> { unexpected(line!()) }
-  fn serialize_map                         (self, _: std::option::Option<usize>     ) -> R<Imp> { unexpected(line!()) }
-  fn serialize_struct_variant              (self, _: &str, _: u32, _: &str, _: usize) -> R<Imp> { unexpected(line!()) }
+  fn serialize_unit_struct (self,_:&str             ) -> ROk { u(line!()) }
+  fn serialize_unit_variant(self,_:&str,_:u32,_:&str) -> ROk { u(line!()) }
+  fn serialize_seq         (self,_:Option<usize>    ) -> RI  { u(line!()) }
+  fn serialize_tuple       (self,_:usize            ) -> RI  { u(line!()) }
+  fn serialize_tuple_struct(self,_:&str, _:usize    ) -> RI  { u(line!()) }
+  fn serialize_map         (self,_:Option<usize>    ) -> RI  { u(line!()) }
+ fn serialize_tuple_variant (self,_:&str,_:u32,_:&str,_:usize)->RI{u(line!())}
+ fn serialize_struct_variant(self,_:&str,_:u32,_:&str,_:usize)->RI{u(line!())}
 }
 
 impl SerializeStruct for &mut MainExtractor {
@@ -106,6 +135,7 @@ impl SerializeStruct for &mut MainExtractor {
 
 type V = u32;
 type ImpV = Impossible<V,Error>;
+type RIV = R<ImpV>;
 
 impl Serializer for ValueExtractor {
   type Ok = V;
@@ -121,43 +151,46 @@ impl Serializer for ValueExtractor {
   type SerializeTupleVariant  = ImpV;
   type SerializeStructVariant = ImpV;
 
-  fn serialize_bool (self, _: bool )  -> R<V> { unexpected(line!()) }
-  fn serialize_i8   (self, _: i8   )  -> R<V> { unexpected(line!()) }
-  fn serialize_i16  (self, _: i16  )  -> R<V> { unexpected(line!()) }
-  fn serialize_i32  (self, _: i32  )  -> R<V> { unexpected(line!()) }
-  fn serialize_i64  (self, _: i64  )  -> R<V> { unexpected(line!()) }
-  fn serialize_u8   (self, _: u8   )  -> R<V> { unexpected(line!()) }
-  fn serialize_u16  (self, _: u16  )  -> R<V> { unexpected(line!()) }
-  fn serialize_u64  (self, _: u64  )  -> R<V> { unexpected(line!()) }
-  fn serialize_f32  (self, _: f32  )  -> R<V> { unexpected(line!()) }
-  fn serialize_f64  (self, _: f64  )  -> R<V> { unexpected(line!()) }
-  fn serialize_char (self, _: char )  -> R<V> { unexpected(line!()) }
-  fn serialize_str  (self, _: &str )  -> R<V> { unexpected(line!()) }
-  fn serialize_bytes(self, _: &[u8 ]) -> R<V> { unexpected(line!()) }
-  fn serialize_none (self)            -> R<V> { unexpected(line!()) }
-  fn serialize_unit (self)            -> R<V> { unexpected(line!()) }
+  fn serialize_bool (self, _: bool )  -> R<V> { u(line!()) }
+  fn serialize_i8   (self, _: i8   )  -> R<V> { u(line!()) }
+  fn serialize_i16  (self, _: i16  )  -> R<V> { u(line!()) }
+  fn serialize_i32  (self, _: i32  )  -> R<V> { u(line!()) }
+  fn serialize_i64  (self, _: i64  )  -> R<V> { u(line!()) }
+  fn serialize_u8   (self, _: u8   )  -> R<V> { u(line!()) }
+  fn serialize_u16  (self, _: u16  )  -> R<V> { u(line!()) }
+  fn serialize_u64  (self, _: u64  )  -> R<V> { u(line!()) }
+  fn serialize_f32  (self, _: f32  )  -> R<V> { u(line!()) }
+  fn serialize_f64  (self, _: f64  )  -> R<V> { u(line!()) }
+  fn serialize_char (self, _: char )  -> R<V> { u(line!()) }
+  fn serialize_str  (self, _: &str )  -> R<V> { u(line!()) }
+  fn serialize_bytes(self, _: &[u8 ]) -> R<V> { u(line!()) }
+  fn serialize_none (self)            -> R<V> { u(line!()) }
+  fn serialize_unit (self)            -> R<V> { u(line!()) }
 
-  fn serialize_some           <T:Serialize+?Sized>(self,                        _: &T) -> R<V> { unexpected(line!()) }
-  fn serialize_newtype_struct <T:Serialize+?Sized>(self, _:&str,                _: &T) -> R<V> { unexpected(line!()) }
-  fn serialize_newtype_variant<T:Serialize+?Sized>(self, _:&str, _:u32, _:&str, _: &T) -> R<V> { unexpected(line!()) }
+  fn serialize_some           <T>(self,                        _: &T) -> R<V>
+  where T : Serialize + ?Sized  { u(line!()) }
+  fn serialize_newtype_struct <T>(self, _:&str,                _: &T) -> R<V>
+  where T : Serialize + ?Sized  { u(line!()) }
+  fn serialize_newtype_variant<T>(self, _:&str, _:u32, _:&str, _: &T) -> R<V>
+  where T : Serialize + ?Sized  { u(line!()) }
 
-  fn serialize_unit_struct                 (self, _: &str                           ) -> R<V>    { unexpected(line!()) }
-  fn serialize_unit_variant                (self, _: &str, _:u32, _:&str            ) -> R<V>    { unexpected(line!()) }
-  fn serialize_seq                         (self, _: Option<usize>                  ) -> R<ImpV> { unexpected(line!()) }
-  fn serialize_tuple                       (self, _: usize                          ) -> R<ImpV> { unexpected(line!()) }
-  fn serialize_tuple_struct                (self, _: &str, _: usize                 ) -> R<ImpV> { unexpected(line!()) }
-  fn serialize_tuple_variant               (self, _: &str, _: u32, _: &str, _: usize) -> R<ImpV> { unexpected(line!()) }
-  fn serialize_struct                      (self, _: &str, _: usize                 ) -> R<ImpV> { unexpected(line!()) }
-  fn serialize_map                         (self, _: std::option::Option<usize>     ) -> R<ImpV> { unexpected(line!()) }
-  fn serialize_struct_variant              (self, _: &str, _: u32, _: &str, _: usize) -> R<ImpV> { unexpected(line!()) }
+  fn serialize_unit_struct   (self,_:&str             ) -> R<V>    { u(line!()) }
+  fn serialize_unit_variant  (self,_:&str,_:u32,_:&str) -> R<V>    { u(line!()) }
+  fn serialize_seq           (self,_:Option<usize>    ) -> RIV { u(line!()) }
+  fn serialize_tuple         (self,_:usize            ) -> RIV { u(line!()) }
+  fn serialize_tuple_struct  (self,_:&str, _: usize   ) -> RIV { u(line!()) }
+  fn serialize_struct        (self,_:&str, _: usize   ) -> RIV { u(line!()) }
+  fn serialize_map           (self,_:Option<usize>    ) -> RIV { u(line!()) }
+ fn serialize_tuple_variant (self,_:&str,_:u32,_:&str,_:usize)->RIV{u(line!())}
+ fn serialize_struct_variant(self,_:&str,_:u32,_:&str,_:usize)->RIV{u(line!())}
 }
 
 impl ser::Error for Error {
   fn custom<T>(_msg: T) -> Self { return Error::WasCustomSerialize; }
 }
 
-impl std::fmt::Display for Error {
-  fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-    std::fmt::Debug::fmt(self,f)
+impl fmt::Display for Error {
+  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fmt::Debug::fmt(self,f)
   }
 }
