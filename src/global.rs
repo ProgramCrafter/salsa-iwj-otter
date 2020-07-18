@@ -156,16 +156,22 @@ impl InstanceGuard<'_> {
     for t in tokens.tr.drain() { global.remove(&t); }
   }
 
-  #[throws(OE)]
-  fn save_game_now(&mut self) {
-    let savefile : String =
-      iter::once("g-")
+  fn savefile(&self, prefix: &str, suffix: &str) -> String {
+    iter::once(prefix)
       .chain( utf8_percent_encode(&self.name,
                                   &percent_encoding::NON_ALPHANUMERIC) )
-      .chain( iter::once(".tmp") )
-      .collect();
+      .chain( iter::once(suffix) )
+      .collect()
+  }
+
+  #[throws(OE)]
+  fn save_game_now(&mut self) {
+    let savefile = self.savefile("g-","tmp");
     let mut f = BufWriter::new(fs::File::create(&savefile)?);
     rmp_serde::encode::write_named(&mut f, &self.ig.gs)?;
+    f.flush()?;
+    drop( f.into_inner().map_err(|e| { let e : io::Error = e.into(); e })? );
+    fs::rename(&savefile, &self.savefile("g-",""))?;
     eprintln!("xxx saved {} to {}!", self.name, &savefile);
   }
 
