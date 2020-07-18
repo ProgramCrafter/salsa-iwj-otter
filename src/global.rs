@@ -163,16 +163,27 @@ impl InstanceGuard<'_> {
       .chain( iter::once(suffix) )
       .collect()
   }
+  #[throws(OE)]
+  fn save_something(
+    &self, prefix: &str,
+    w: fn(s: &Self, w: &mut BufWriter<fs::File>)
+          -> Result<(),rmp_serde::encode::Error>
+  ) {
+    let tmp = self.savefile(prefix,".tmp");
+    let mut f = BufWriter::new(fs::File::create(&tmp)?);
+    w(self, &mut f)?;
+    f.flush()?;
+    drop( f.into_inner().map_err(|e| { let e : io::Error = e.into(); e })? );
+    let out = self.savefile(prefix,"");
+    fs::rename(&tmp, &out)?;
+    eprintln!("xxx saved {} to {}!", self.name, &out);
+  }
 
   #[throws(OE)]
   fn save_game_now(&mut self) {
-    let savefile = self.savefile("g-","tmp");
-    let mut f = BufWriter::new(fs::File::create(&savefile)?);
-    rmp_serde::encode::write_named(&mut f, &self.ig.gs)?;
-    f.flush()?;
-    drop( f.into_inner().map_err(|e| { let e : io::Error = e.into(); e })? );
-    fs::rename(&savefile, &self.savefile("g-",""))?;
-    eprintln!("xxx saved {} to {}!", self.name, &savefile);
+    self.save_something("g-", |s,w| {
+      rmp_serde::encode::write_named(w, &s.ig.gs)
+    })?;
   }
 
   #[throws(OE)]
