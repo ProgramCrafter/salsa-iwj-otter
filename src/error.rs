@@ -26,8 +26,10 @@ pub enum OnlineError {
   JSONSerializeFailed(#[from] serde_json::error::Error),
   #[error("SVG processing/generation error {0:?}")]
   SVGProcessingFailed(#[from] SVGProcessingError),
-  #[error("IO error in server {0:?}")]
+  #[error("Server IO error {0:?}")]
   ServerIOError(#[from] io::Error),
+  #[error("Server MessagePack encoding error {0:?}")]
+  ServerMessagePackEncodeFail(#[from] rmp_serde::encode::Error),
 }
 
 pub use OnlineError::{NoClient,NoPlayer};

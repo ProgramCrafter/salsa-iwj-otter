@@ -2,6 +2,7 @@
 use crate::imports::*;
 use lazy_static::lazy_static;
 
+#[allow(dead_code)]
 const SAVE_DIRECTORY : &str = "save";
 
 // ---------- newtypes and type aliases ----------
@@ -164,7 +165,7 @@ impl InstanceGuard<'_> {
       .chain( iter::once(".tmp") )
       .collect();
     let mut f = BufWriter::new(fs::File::create(&savefile)?);
-    rmp_serde::encode::write_named(&mut f, &self.ig.gs);
+    rmp_serde::encode::write_named(&mut f, &self.ig.gs)?;
     eprintln!("xxx saved {} to {}!", self.name, &savefile);
   }
 
