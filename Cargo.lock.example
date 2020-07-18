@@ -384,6 +384,7 @@ dependencies = [
  "num-traits",
  "percent-encoding 2.1.0",
  "rand",
+ "rmp",
  "rmp-serde",
  "rocket",
  "rocket_contrib",
