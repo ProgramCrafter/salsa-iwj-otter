@@ -3,6 +3,7 @@ use slotmap::KeyData;
 
 const BATCH : usize = 128;
 const ITERS : usize = 1024*1024;
+const ITERS : usize = 10*1024*1024;
 
 fn main () {
   let mut vol_i_buffer = [ 0x123456789abcdefu64; BATCH ];
