@@ -1,16 +1,17 @@
-//! Provides a `get_idx_key` method on `slotmap::KeyData`.
-//! See `KeyDataExt`.
+//! Provides a [`get_idx_key`](trait.KeyDataExt.html#tymethod.get_idx_version) method on
+//! `slotmap::KeyData`.  See [KeyDataExt::get_idx_version].
 
 /// Extension trait for `slotmap::KeyData`, providing `get_idx_version`.
 ///
 /// No-one is expected to implement this trait for anything else.
 pub trait KeyDataExt {
   /// Returns the slot index and version.  This is useful only in
-  /// unusual situations.  At any one time, a slotmap has at most
-  /// one entry with each index.  The combination of index and
-  /// version are unique across time.  Indices are generally not
-  /// significantly bigger than thw maximum ever occupancy.  No
-  /// other guarantees are made.
+  /// unusual situations.
+  ///
+  /// At any one time, a slotmap has at most one entry with each
+  /// index.  The combination of index and version are unique across
+  /// time.  Indices are generally not significantly bigger than thw
+  /// maximum ever occupancy.  No other guarantees are made.
   ///
   /// For serialisation, use `serde` or `as_ffi`.
   ///
@@ -20,6 +21,9 @@ pub trait KeyDataExt {
   /// representation has changed too much.  This ought to be caught
   /// by the tests, and would probably be a breaking change in the
   /// underlying `slotmap` crate in any case.
+  ///
+  /// If you prefer to receive an error rather than panicing,
+  /// see [keydata_extract].
   fn get_idx_version(self) -> (u32, u32);
 }
 
