@@ -208,9 +208,21 @@ impl fmt::Display for Error {
 
 #[test]
 fn check(){
-  let v : u64 = 0x123456789abcdef;
-  let kd = slotmap::KeyData::from_ffi(v);
-  let (idx,vsn) = self::KeyDataExt::get_idx_version(kd);
-  assert_eq!(idx as u64, v & 0xffffffff);
-  assert_eq!(vsn as u64, v >> 32);
+  fn t(v: u64) {
+    let kd = slotmap::KeyData::from_ffi(v);
+    let v = kd.as_ffi(); // KeyData is not transparent for all u64
+    let (idx,vsn) = self::KeyDataExt::get_idx_version(kd);
+    eprintln!("KeyData={:?} v=0x{:x?} idx={}=0x{:x} vsn={}=0x{:x}",
+              &kd, &v, idx,idx, vsn,vsn);
+    assert_eq!(v, ((vsn as u64) << 32) | (idx as u64));
+  }
+  t(0x0123456789abcdef);
+  t(0xfedcba9876543210);
+  t(0);
+  t(0xffffffff12345678);
+  t(0x12345678ffffffff);
+  t(0xffffffff00000000);
+  t(0x00000000ffffffff);
+  t(0x0000000012345678);
+  t(0x1234567800000000);
 }
