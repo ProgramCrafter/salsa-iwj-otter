@@ -30,6 +30,8 @@ pub enum OnlineError {
   ServerIOError(#[from] io::Error),
   #[error("Server MessagePack encoding error {0:?}")]
   ServerMessagePackEncodeFail(#[from] rmp_serde::encode::Error),
+  #[error("Server MessagePack decoding error (game load failed) {0:?}")]
+  ServerMessagePackDecodeFail(#[from] rmp_serde::decode::Error),
 }
 
 pub use OnlineError::{NoClient,NoPlayer};

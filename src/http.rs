@@ -15,7 +15,9 @@ impl<'r> Responder<'r> for OnlineError {
     use OnlineError::*;
     let status = match self {
       GameCorrupted | JSONSerializeFailed(_) | SVGProcessingFailed(_)
-        | ServerIOError(_) | ServerMessagePackEncodeFail(_)
+        | ServerIOError(_)
+        | ServerMessagePackEncodeFail(_)
+        | ServerMessagePackDecodeFail(_)
         => Status::InternalServerError,
       NoClient | NoPlayer => Status::NotFound,
       InvalidZCoord => Status::BadRequest,

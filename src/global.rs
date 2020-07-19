@@ -50,9 +50,8 @@ pub struct TokenRegistry<Id: AccessId> {
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-struct InstanceSaveAccesses<'r> {
-  #[serde(borrow)]
-  tokens_players : Vec<(&'r str, PlayerId)>,
+struct InstanceSaveAccesses<RawTokenStr> {
+  tokens_players : Vec<(RawTokenStr, PlayerId)>,
 }
 
 // ---------- API ----------
@@ -162,9 +161,9 @@ impl InstanceGuard<'_> {
     for t in tokens.tr.drain() { global.remove(&t); }
   }
 
-  fn savefile(&self, prefix: &str, suffix: &str) -> String {
+  fn savefile(name: &str, prefix: &str, suffix: &str) -> String {
     iter::once(prefix)
-      .chain( utf8_percent_encode(&self.name,
+      .chain( utf8_percent_encode(name,
                                   &percent_encoding::NON_ALPHANUMERIC) )
       .chain( iter::once(suffix) )
       .collect()
@@ -175,14 +174,14 @@ impl InstanceGuard<'_> {
     w: fn(s: &Self, w: &mut BufWriter<fs::File>)
           -> Result<(),rmp_serde::encode::Error>
   ) {
-    let tmp = self.savefile(prefix,".tmp");
+    let tmp = Self::savefile(&self.name, prefix,".tmp");
     let mut f = BufWriter::new(fs::File::create(&tmp)?);
     w(self, &mut f)?;
     f.flush()?;
     drop( f.into_inner().map_err(|e| { let e : io::Error = e.into(); e })? );
-    let out = self.savefile(prefix,"");
+    let out = Self::savefile(&self.name, prefix,"");
     fs::rename(&tmp, &out)?;
-    eprintln!("xxx saved {} to {}!", self.name, &out);
+    eprintln!("saved to {}", &out);
   }
 
   #[throws(OE)]
@@ -193,7 +192,33 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(OE)]
-  fn save_access_now(&mut self) { eprintln!("xxx would save!"); }
+  fn save_access_now(&mut self) {
+    self.save_something("a-", |s,w| {
+      let global_players = GLOBAL.players.read().unwrap();
+      let tokens_players : Vec<(&str, PlayerId)> =
+        s.ig.tokens_players.tr
+        .iter()
+        .map(|token|
+             global_players.get(token)
+             .map(|player| (token.0.as_str(), player.ident)))
+        .flatten()
+        .collect();
+      let isa = InstanceSaveAccesses { tokens_players };
+      rmp_serde::encode::write_named(w, &isa)
+    })?;
+  }
+
+  #[throws(OE)]
+  fn load_something<T:DeserializeOwned>(name: &str, prefix: &str) -> T {
+    let inp = Self::savefile(name, prefix, "");
+    let mut f = BufReader::new(fs::File::open(&inp)?);
+    rmp_serde::decode::from_read(&mut f)?
+  }
+/*
+  pub fn load(instance_name: String) -> Arc<Mutex<Instance>> {
+    let gs = Self::savefile(&instance_name,"g-");
+    
+  }*/
 }
 
 // ---------- Lookup and token API ----------
