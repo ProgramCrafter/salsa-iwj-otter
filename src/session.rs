@@ -55,7 +55,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       g : iad.g.clone(),
       ident : client,
     };
-    let ctoken = record_token(&mut ig, ciad);
+    let ctoken = record_token(&mut ig, ciad)?;
     let ig = &mut *ig;
 
     let mut uses = vec![];

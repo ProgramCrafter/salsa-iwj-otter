@@ -276,7 +276,7 @@ impl AccessId for ClientId {
 
 impl RawToken {
   #[throws(OE)]
-  fn new_random() -> Self {
+  pub fn new_random() -> Self {
     let mut rng = thread_rng();
     let token = RawToken (
       repeat_with(|| rng.sample(Alphanumeric))

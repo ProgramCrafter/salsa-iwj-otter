@@ -12,4 +12,5 @@ pub mod error;
 pub mod http;
 pub mod session;
 pub mod api;
+pub mod spec;
 #[path="slotmap-slot-idx.rs"] pub mod slotmap_slot_idx;
