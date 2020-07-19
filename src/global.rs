@@ -274,6 +274,18 @@ impl AccessId for ClientId {
   }
 }
 
+impl RawToken {
+  #[throws(OE)]
+  fn new_random() -> Self {
+    let mut rng = thread_rng();
+    let token = RawToken (
+      repeat_with(|| rng.sample(Alphanumeric))
+        .take(64).collect()
+    );
+    token
+  }
+}
+
 pub fn lookup_token<Id : AccessId>(s : &str)
       -> Result<InstanceAccessDetails<Id>, OE> {
   Id::global_tokens(PRIVATE_Y).read().unwrap().get(s).cloned()
@@ -292,16 +304,13 @@ impl<'r, Id> FromParam<'r> for InstanceAccess<'r, Id>
     InstanceAccess { raw_token : token, i : i.clone() }
   }
 }
-  
-pub fn record_token<Id : AccessId>(
+
+#[throws(OE)]
+pub fn record_token<Id : AccessId> (
   ig : &mut InstanceGuard,
   iad : InstanceAccessDetails<Id>
 ) -> RawToken {
-  let mut rng = thread_rng();
-  let token = RawToken (
-    repeat_with(|| rng.sample(Alphanumeric))
-      .take(64).collect()
-  );
+  let token = RawToken::new_random()?;
   ig.token_register(token.clone(), iad);
   token
 }
