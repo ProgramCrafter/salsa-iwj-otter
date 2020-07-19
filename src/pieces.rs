@@ -4,13 +4,19 @@ use crate::imports::*;
 type ColourMap = IndexVec<FaceId,Colour>;
 
 #[derive(Debug,Serialize,Deserialize)]
+#[serde(try_from="SimpleShapeLoad")]
 struct SimpleShape {
   desc : String,
   path : String,
+  #[serde(skip)]
   scaled_path : String,
   approx_dia : Coord,
   colours : ColourMap,
 }
+
+#[derive(Deserialize)]
+#[serde(transparent)]
+struct SimpleShapeLoad(SimpleShape);
 
 const SELECT_SCALE : f64 = 1.1;
 
@@ -108,14 +114,24 @@ impl Piece for SimpleShape {
   }
 }
 
+impl TryFrom<SimpleShapeLoad> for SimpleShape {
+  type Error = SVGProcessingError;
+  #[throws(SE)]
+  fn try_from(l: SimpleShapeLoad) -> SimpleShape {
+    let mut s = l.0;
+    s.scaled_path = svg_rescale_path(&s.path, SELECT_SCALE)?;
+    s
+  }
+}
+
 impl SimpleShape {
   #[throws(SE)]
   fn new_from_path(desc: String, path: String, approx_dia: Coord,
                    colours: ColourMap) -> Self {
-    SimpleShape {
-      scaled_path : svg_rescale_path(&path, SELECT_SCALE)?,
+    SimpleShapeLoad(SimpleShape {
+      scaled_path : Default::default(),
       desc, approx_dia, path, colours,
-    }
+    }).try_into()?
   }
   #[throws(SE)]
   fn new_circle(dia: Coord, colours: ColourMap) -> Self {
