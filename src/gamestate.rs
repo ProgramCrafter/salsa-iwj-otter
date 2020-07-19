@@ -76,11 +76,6 @@ pub trait Piece : Send + Debug {
   // #[throws] doesn't work here for some reason
   fn svg_piece(&self, f: &mut String, pri: &PieceRenderInstructions) -> SR;
 
-/*
-  #[throws(SE)]
-  fn outline_path(&self, pri : &PieceRenderInstructions) -> String;
-*/
-
   #[throws(SE)]
   fn surround_path(&self, pri : &PieceRenderInstructions) -> String;
 

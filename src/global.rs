@@ -212,13 +212,43 @@ impl InstanceGuard<'_> {
   fn load_something<T:DeserializeOwned>(name: &str, prefix: &str) -> T {
     let inp = Self::savefile(name, prefix, "");
     let mut f = BufReader::new(fs::File::open(&inp)?);
+    // xxx handle ENOENT specially, own OE variant
     rmp_serde::decode::from_read(&mut f)?
   }
-/*
+
+  #[throws(OE)]
   pub fn load(instance_name: String) -> Arc<Mutex<Instance>> {
-    let gs = Self::savefile(&instance_name,"g-");
-    
-  }*/
+    let gs : GameState = Self::load_something(&instance_name, "g-")?;
+    let mut al : InstanceSaveAccesses<String>
+                       = Self::load_something(&instance_name, "a-")?;
+    let mut updates : SecondarySlotMap<_,_> = Default::default();
+    for player in gs.players.keys() {
+      updates.insert(player, Default::default());
+    }
+    let inst = Instance {
+      name : instance_name,
+      gs, updates,
+      clients : Default::default(),
+      tokens_clients : Default::default(),
+      tokens_players : Default::default(),
+    };
+    let amu = Arc::new(Mutex::new(inst));
+    let mut ig = amu.lock().unwrap();
+    for (token, _) in &al.tokens_players {
+      ig.tokens_players.tr.insert(RawToken(token.clone()));
+    }
+    let mut global = GLOBAL.players.write().unwrap();
+    for (token, player) in al.tokens_players.drain(0..) {
+      let iad = InstanceAccessDetails {
+        g : amu.clone(),
+        ident : player,
+      };
+      global.insert(RawToken(token), iad);
+    }
+    drop(global);
+    drop(ig);
+    amu
+  }
 }
 
 // ---------- Lookup and token API ----------
