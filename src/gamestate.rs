@@ -94,6 +94,11 @@ pub struct PieceRenderInstructions {
   pub face : FaceId,
 }
 
+#[typetag::deserialize]
+pub trait PieceSpec {
+  fn load(self) -> Result<Box<dyn Piece>,SE>;
+}
+
 // ========== implementations ==========
 
 // ---------- simple data types ----------

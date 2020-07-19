@@ -125,44 +125,71 @@ impl TryFrom<SimpleShapeLoad> for SimpleShape {
 }
 
 impl SimpleShape {
-  #[throws(SE)]
   fn new_from_path(desc: String, path: String, approx_dia: Coord,
-                   colours: ColourMap) -> Self {
-    SimpleShapeLoad(SimpleShape {
+                   colours: ColourMap) -> Result<Box<dyn Piece>,SE> {
+    Ok(Box::new(SimpleShape {
       scaled_path : Default::default(),
       desc, approx_dia, path, colours,
-    }).try_into()?
+    }))
   }
-  #[throws(SE)]
-  fn new_circle(dia: Coord, colours: ColourMap) -> Self {
-    let unit_path =
-      "M 0 1  a 1 1 0 1 0 0 -2 \
-              a 1 1 0 1 0 0  2  z";
-    let scale = (dia as f64) * 0.5;
-    let path = svg_rescale_path(&unit_path, scale)?;
-    Self::new_from_path("circle".to_owned(), path, dia, colours)?
-  }
-  #[throws(SE)]
-  fn new_square(edgelen: Coord, colours: ColourMap) -> Self {
+  fn new_square(edgelen: Coord, colours: ColourMap) -> Result<Box<dyn Piece>,SE> {
     let unit_path =
       "M -1 -1 h 2 v 2 h -2 z";
     let scale = (edgelen as f64) * 0.5;
     let path = svg_rescale_path(&unit_path, scale)?;
-    Self::new_from_path("square".to_owned(), path, edgelen, colours)?
+    Ok(Self::new_from_path("square".to_owned(), path, edgelen, colours)?)
+  }
+}
+
+#[derive(Deserialize)]
+#[derive(Debug,Default)]
+#[repr(transparent)]
+struct ColourSpec(String);
+
+impl TryFrom<ColourSpec> for Colour {
+  type Error = SE;
+  #[throws(SE)]
+  fn try_from(spec: ColourSpec) -> Colour {
+    // xxx check syntax
+    spec.0
+  }
+}
+
+#[derive(Debug,Deserialize)]
+struct Disc {
+  diam : Coord,
+  faces : [ColourSpec; 2],
+}
+
+#[typetag::deserialize]
+impl PieceSpec for Disc {
+  #[throws(SE)]
+  fn load(mut self) -> Box<dyn Piece> {
+    let unit_path =
+      "M 0 1  a 1 1 0 1 0 0 -2 \
+              a 1 1 0 1 0 0  2  z";
+    let scale = (self.diam as f64) * 0.5;
+    let path = svg_rescale_path(&unit_path, scale)?;
+    let colours = self.faces
+      .iter_mut()
+      .map(|s| mem::take(s).try_into())
+      .collect::<Result<_,SE>>()?;
+    SimpleShape::new_from_path("circle".to_owned(), path, self.diam,
+                               colours)?
   }
 }
 
 pub fn xxx_make_pieces() -> Result<Vec<(Pos, Box<dyn Piece>)>,SE> {
   Ok(vec![
     ([ 90, 80 ],
-     Box::new(SimpleShape::new_circle(
-       20,
-       index_vec![ "red".to_string(), "grey".to_string() ],
-     )?)),
+     Disc {
+       diam : 20,
+       faces : [ ColourSpec("red".to_string()), ColourSpec("grey".to_string()) ]
+     }.load()?),
     ([ 90, 60 ],
-     Box::new(SimpleShape::new_square(
+     SimpleShape::new_square(
        20,
        index_vec![ "blue".to_string(), "grey".to_string() ],
-     )?)),
+     )?),
   ])
 }

@@ -21,6 +21,7 @@ pub use std::error::Error;
 pub use std::marker::PhantomData;
 pub use std::ops::{Deref,DerefMut};
 pub use std::fs;
+pub use std::mem;
   
 pub use thiserror::Error;
 pub use anyhow::{Context,anyhow};
