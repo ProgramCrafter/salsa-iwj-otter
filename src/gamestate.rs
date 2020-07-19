@@ -94,7 +94,7 @@ pub struct PieceRenderInstructions {
   pub face : FaceId,
 }
 
-#[typetag::deserialize]
+#[typetag::deserialize(tag="type")]
 pub trait PieceSpec {
   fn load(self) -> Result<Box<dyn Piece>,SE>;
 }
