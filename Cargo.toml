@@ -41,6 +41,8 @@ typetag = "0.1"
 rmp-serde = "0.14"
 rmp = "^0.8"
 
+uds = "0"
+
 #rocket = "0.4"
 rocket_contrib = { version = "0.4", default-features=false, features=["tera_templates","helmet","json"], git = "file:///home/ian/Rustup/Game/rocket/.git" branch = "Game-rocket-contrib" }
 
