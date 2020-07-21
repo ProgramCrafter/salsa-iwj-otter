@@ -4,6 +4,7 @@
 use crate::imports::*;
 
 //use std::os::unix::prelude;
+use std::os::unix::io::AsRawFd;
 
 pub use std::os::unix::net::UnixStream;
 use std::os::unix::net::UnixListener;
@@ -33,7 +34,14 @@ impl CommandStream {
 impl CommandListener {
   #[throws(StartupError)]
   pub fn new() -> Self {
-    let listener = UnixListener::bind(SOCKET_PATH)?;
+    let path = SOCKET_PATH;
+    match fs::remove_file(path) {
+      Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(()),
+      r => r,
+    }
+    .with_context(|| format!("remove socket {:?} before we bind", &path))?;
+    let listener = UnixListener::bind(path)
+      .with_context(|| format!("bind command socket {:?}", &path))?;
     CommandListener { listener }
   }
 
@@ -50,8 +58,8 @@ impl CommandListener {
 
   #[throws(CSE)]
   fn accept_one(&mut self) {
-    let (conn, caller) = self.listener.accept().context("accept")?;
-    let mut desc = format!("conn={:?} peer={:?}", &conn, &caller);
+    let (conn, _caller) = self.listener.accept().context("accept")?;
+    let mut desc = format!("{:>5}", conn.as_raw_fd());
     eprintln!("command connection {}: accepted", &desc);
     thread::spawn(move||{
       match (||{
