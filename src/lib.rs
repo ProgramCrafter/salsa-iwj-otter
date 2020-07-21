@@ -13,5 +13,5 @@ pub mod http;
 pub mod session;
 pub mod api;
 pub mod spec;
-pub mod command;
+pub mod cmdlistener;
 #[path="slotmap-slot-idx.rs"] pub mod slotmap_slot_idx;

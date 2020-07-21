@@ -60,7 +60,7 @@ pub use crate::updates::*;
 pub use crate::sse;
 pub use crate::error::*;
 pub use crate::slotmap_slot_idx::*;
-pub use crate::command::*;
+pub use crate::cmdlistener::*;
 
 pub type E = anyhow::Error;
 pub type AE = anyhow::Error;
