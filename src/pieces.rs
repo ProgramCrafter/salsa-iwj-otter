@@ -20,6 +20,7 @@ pub enum SVGProcessingError {
   BadNumber,
   WriteFail,
   NegativeDragraise,
+  ImproperSizeSpec,
 }
 
 display_as_debug!{SVGProcessingError}
@@ -119,13 +120,6 @@ impl SimpleShape {
       scaled_path, desc, approx_dia, path, colours,
     }))
   }
-  fn new_square(edgelen: Coord, colours: Vec<ColourSpec>) -> Result<Box<dyn Piece>,SE> {
-    let unit_path =
-      "M -1 -1 h 2 v 2 h -2 z";
-    let scale = (edgelen as f64) * 0.5;
-    let path = svg_rescale_path(&unit_path, scale)?;
-    Ok(Self::new_from_path("square".to_owned(), path, edgelen, colours)?)
-  }
 }
 
 #[derive(Deserialize)]
@@ -149,7 +143,7 @@ struct Disc {
 }
 
 #[derive(Debug,Deserialize)]
-struct Rectangle {
+struct Square {
   size : Vec<Coord>,
   faces : Vec<ColourSpec>,
 }
@@ -157,7 +151,7 @@ struct Rectangle {
 #[typetag::deserialize]
 impl PieceSpec for Disc {
   #[throws(SE)]
-  fn load(mut self) -> Box<dyn Piece> {
+  fn load(self) -> Box<dyn Piece> {
     let unit_path =
       "M 0 1  a 1 1 0 1 0 0 -2 \
               a 1 1 0 1 0 0  2  z";
@@ -168,6 +162,21 @@ impl PieceSpec for Disc {
   }
 }
 
+#[typetag::deserialize]
+impl PieceSpec for Square {
+  #[throws(SE)]
+  fn load(self) -> Box<dyn Piece> {
+    let (x, y) = match self.size.as_slice() {
+      &[s,] => (s,s),
+      &[x, y] => (x,y),
+      _ => throw!(SE::ImproperSizeSpec),
+    };
+    let path = format!("M {} {} h {} v {} h {} z",
+                       -(x as f64)*0.5, -(y as f64)*0.5, x, y, -x);
+    SimpleShape::new_from_path("square".to_owned(), path, (x+y+1)/2, self.faces)?
+  }
+} 
+
 pub fn xxx_make_pieces() -> Result<Vec<(Pos, Box<dyn Piece>)>,SE> {
   Ok(vec![
     ([ 90, 80 ],
@@ -176,9 +185,9 @@ pub fn xxx_make_pieces() -> Result<Vec<(Pos, Box<dyn Piece>)>,SE> {
        faces : vec![ ColourSpec("red".to_string()), ColourSpec("grey".to_string()) ],
      }.load()?),
     ([ 90, 60 ],
-     SimpleShape::new_square(
-       20,
-       vec![ ColourSpec("blue".to_string()), ColourSpec("grey".to_string()) ],
-     )?),
+     Square {
+       size : vec![20],
+       faces : vec![ ColourSpec("blue".to_string()), ColourSpec("grey".to_string()) ],
+     }.load()?),
   ])
 }
