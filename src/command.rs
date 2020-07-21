@@ -1,18 +1,20 @@
 
+#![allow(dead_code)]
+
 use crate::imports::*;
 
-use std::os::unix::prelude;
+//use std::os::unix::prelude;
 
 pub use std::os::unix::net::UnixStream;
-
 use std::os::unix::net::UnixListener;
-use uds::UnixListenerExt;
+use uds::UnixStreamExt;
+//use uds::UnixListenerExt;
 use pwd::Passwd;
 
 const SOCKET_PATH : &str = "command.socket"; // xxx
 
-struct CommandListener {
-  listener : UnixListener;
+pub struct CommandListener {
+  listener : UnixListener,
 }
 
 struct CommandStream {
@@ -20,70 +22,68 @@ struct CommandStream {
   euid : Result<u32, anyhow::Error>,
 }
 
+type CSE = anyhow::Error;
+
+impl CommandStream {
+  #[throws(CSE)]
+  pub fn mainloop(&mut self) {
+  }
+}
+
 impl CommandListener {
-  #[throws(OE)]
-  fn new() -> Self {
+  #[throws(StartupError)]
+  pub fn new() -> Self {
     let listener = UnixListener::bind(SOCKET_PATH)?;
     CommandListener { listener }
   }
-  #[throws(OE)]
-  fn process_one() -> Self {
-    let (conn, caller) = self.listener.accept()?;
-    let desc = format!("conn={:?} peer={:?}", &client, &caller);
-    eprintln!("command connection {}: accepted", client);
-    thread::spawn(move||{
-      (||{
-        let euid = conn.initial_peer_credentials()
-          .map_err(|e| anyhow!("initial_peer_credentials: {:?}", e))
-          .and_then(|creds| creds.euid().ok_or_else(
-            || Err(anyhow!("initial_peer_credentials no euid!"))));
-        write!(&mut desc, " user={}", (||{
-          let pwent = Passwd::from_uid(euid?)
-            .map_err(|e| format!("euid {} lookup failed {}",uid,e))?;
-          pwent.map_or_else(|p| p.name,
-                            || format!("<euid {}>", uid))
-        })().ok_or_else(|e| format!("<error: {}>", &e)));
 
-        thread::Builder::new()
-          .name(desc.clone())
-          .spawn().context
-        match euid
-          .and_then(
-            |uid| 
-              .map_err(|e| anyhow!("<euid {:?} lookup failed {}",
-                                   uid, e))
-              .and_then(|pwent| pwent.ok_or_else(
-                
-                    
-        {
-          Err(e) => 
-          Ok(u) => {
-            let pwent = Passwd::from_uid(euid);
-            
-        }
-                                                    
-        
-        let credentials_euid =
-          cred
-
- match &credentials {
-          Ok(cred) {
-            match cred.euid() {
-              None => 
-              Some(e) => Ok(e),
-              
-
-          Ok(
-        };
-      })().ok_or(|e|{
-        xxx
-      });
-    });
+  #[throws(StartupError)]
+  pub fn spawn(mut self) {
+    thread::spawn(move ||{
+      loop {
+        self.accept_one().unwrap_or_else(
+          |e| eprintln!("accept/spawn failed: {:?}", e)
+        );
+      }
+    })
   }
-  
-  #[throws(OE)]
-  fn process() -> Self {n
-    loop {
-      
+
+  #[throws(CSE)]
+  fn accept_one(&mut self) {
+    let (conn, caller) = self.listener.accept().context("accept")?;
+    let mut desc = format!("conn={:?} peer={:?}", &conn, &caller);
+    eprintln!("command connection {}: accepted", &desc);
+    thread::spawn(move||{
+      match (||{
+        let euid = conn.initial_peer_credentials()
+          .context("initial_peer_credentials")
+          .map(|creds| creds.euid());
+
+        #[derive(Error,Debug)]
+        struct EuidLookupError(String);
+        display_as_debug!{EuidLookupError}
+        impl From<&E> for EuidLookupError where E : Display {
+          fn from(e: &E) -> Self { EuidLookupError(format!("{}",e)) }
+        }
+
+        let user_desc : String = (||{
+          let euid = *(euid.as_ref()?);
+          let pwent = Passwd::from_uid(euid);
+          let show_username =
+            pwent.map_or_else(|| format!("<euid {}>", euid),
+                              |p| p.name);
+          <Result<String,EuidLookupError>>::Ok(show_username)
+        })().unwrap_or_else(|e| format!("<error: {}>", e.0));
+        write!(&mut desc, " user={}", user_desc)?;
+
+        let mut cs = CommandStream { conn, euid };
+        cs.mainloop()?;
+        
+        <Result<_,StartupError>>::Ok(())
+      })() {
+        Ok(()) => eprintln!("command connection {}: disconnected", &desc),
+        Err(e) => eprintln!("command connection {}: error: {:?}", &desc, e),
+      }
+    });
   }
 }

@@ -34,6 +34,8 @@ pub enum OnlineError {
   ServerMessagePackDecodeFail(#[from] rmp_serde::decode::Error),
 }
 
+pub type StartupError = anyhow::Error;
+
 pub use OnlineError::{NoClient,NoPlayer};
 
 use OnlineError::*;

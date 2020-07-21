@@ -68,8 +68,12 @@ fn resource(leaf : CheckedResourceLeaf) -> io::Result<NamedFile> {
   NamedFile::open(format!("{}/{}", template_dir, leaf.safe))
 }  
 
+#[throws(StartupError)]
 fn main() {
   xxx_global_setup().expect("global setup failed");
+
+  let cl = CommandListener::new()?;
+  cl.spawn()?;
 
   let helmet = SpaceHelmet::default()
     .enable(NoSniff::Enable)
