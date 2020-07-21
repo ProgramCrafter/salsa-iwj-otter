@@ -109,13 +109,17 @@ impl Piece for SimpleShape {
 
 impl SimpleShape {
   fn new_from_path(desc: String, path: String, approx_dia: Coord,
-                   colours: ColourMap) -> Result<Box<dyn Piece>,SE> {
+                   mut faces: Vec<ColourSpec>) -> Result<Box<dyn Piece>,SE> {
     let scaled_path = svg_rescale_path(&path, SELECT_SCALE)?;
+    let colours = faces
+      .iter_mut()
+      .map(|s| mem::take(s).try_into())
+      .collect::<Result<_,SE>>()?;
     Ok(Box::new(SimpleShape {
       scaled_path, desc, approx_dia, path, colours,
     }))
   }
-  fn new_square(edgelen: Coord, colours: ColourMap) -> Result<Box<dyn Piece>,SE> {
+  fn new_square(edgelen: Coord, colours: Vec<ColourSpec>) -> Result<Box<dyn Piece>,SE> {
     let unit_path =
       "M -1 -1 h 2 v 2 h -2 z";
     let scale = (edgelen as f64) * 0.5;
@@ -141,7 +145,13 @@ impl TryFrom<ColourSpec> for Colour {
 #[derive(Debug,Deserialize)]
 struct Disc {
   diam : Coord,
-  faces : [ColourSpec; 2],
+  faces : Vec<ColourSpec>,
+}
+
+#[derive(Debug,Deserialize)]
+struct Rectangle {
+  size : Vec<Coord>,
+  faces : Vec<ColourSpec>,
 }
 
 #[typetag::deserialize]
@@ -153,12 +163,8 @@ impl PieceSpec for Disc {
               a 1 1 0 1 0 0  2  z";
     let scale = (self.diam as f64) * 0.5;
     let path = svg_rescale_path(&unit_path, scale)?;
-    let colours = self.faces
-      .iter_mut()
-      .map(|s| mem::take(s).try_into())
-      .collect::<Result<_,SE>>()?;
     SimpleShape::new_from_path("circle".to_owned(), path, self.diam,
-                               colours)?
+                               self.faces)?
   }
 }
 
@@ -167,12 +173,12 @@ pub fn xxx_make_pieces() -> Result<Vec<(Pos, Box<dyn Piece>)>,SE> {
     ([ 90, 80 ],
      Disc {
        diam : 20,
-       faces : [ ColourSpec("red".to_string()), ColourSpec("grey".to_string()) ]
+       faces : vec![ ColourSpec("red".to_string()), ColourSpec("grey".to_string()) ],
      }.load()?),
     ([ 90, 60 ],
      SimpleShape::new_square(
        20,
-       index_vec![ "blue".to_string(), "grey".to_string() ],
+       vec![ ColourSpec("blue".to_string()), ColourSpec("grey".to_string()) ],
      )?),
   ])
 }
