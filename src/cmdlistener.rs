@@ -40,6 +40,36 @@ impl CommandStream {
   }
 }
 
+impl From<serde_json::Error> for MgmtError {
+  fn from(je: serde_json::Error) -> ME {
+    ParseFailed(format!("{}", &je))
+  }
+}
+
+use MgmtCommand::*;
+use MgmtResponse::*;
+use MgmtError::*;
+
+type ME = MgmtError;
+
+pub fn decode_and_process(s: &str) -> MgmtResponse {
+  self::decode_process_inner(s)
+    .unwrap_or_else(|e| MgmtResponse::Error(format!("{}", e)))
+}
+
+#[throws(ME)]
+fn decode_process_inner(s: &str)-> MgmtResponse {
+  let cmd : MgmtCommand = serde_json::from_str(s)?;
+  execute(cmd)?
+}
+
+#[throws(ME)]
+fn execute(cmd: MgmtCommand) -> MgmtResponse {
+  match cmd {
+    Noop { } => Fine { },
+  }
+}
+
 impl CommandListener {
   #[throws(StartupError)]
   pub fn new() -> Self {
