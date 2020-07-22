@@ -12,8 +12,8 @@ use uds::UnixStreamExt;
 //use uds::UnixListenerExt;
 use pwd::Passwd;
 
-use serde_json::ser::Serializer;
-use serde_json::de::{IoRead,Deserializer,StreamDeserializer};
+//use serde_json::ser::Serializer;
+//use serde_json::de::{IoRead,StreamDeserializer};
 
 const SOCKET_PATH : &str = "command.socket"; // xxx
 
@@ -21,19 +21,21 @@ pub struct CommandListener {
   listener : UnixListener,
 }
 
-struct CommandStream<'de> {
+struct CommandStream {
   euid : Result<u32, anyhow::Error>,
-  read : StreamDeserializer<'de,IoRead<BufReader<UnixStream>>,
-                            MgmtCommand>,
+  read : io::Lines<BufReader<UnixStream>>,
   write : UnixStream,
 }
 
 type CSE = anyhow::Error;
 
-impl CommandStream<'_> {
-  pub fn mainloop(self) -> Result<(),CSE> {
-    loop {
-      
+impl CommandStream {
+  #[throws(CSE)]
+  pub fn mainloop(mut self) {
+    for l in &mut self.read {
+      let l = l.context("read")?;
+      let reply = decode_and_process(&l);
+      writeln!(&mut self.write, "Reply: {:?}", &reply)?;
     }
   }
 }
@@ -94,8 +96,7 @@ impl CommandListener {
         let read = conn.try_clone().context("dup the command stream")?;
         let write = conn;
         let read = BufReader::new(read);
-        let read = IoRead::new(read);
-        let read = StreamDeserializer::new(read);
+        let read = read.lines();
 
         let cs = CommandStream { read, write, euid };
         cs.mainloop()?;

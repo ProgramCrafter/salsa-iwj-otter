@@ -1,6 +1,6 @@
 
 pub use std::io;
-pub use std::io::{BufReader,Read,BufWriter,Write};
+pub use std::io::{BufReader,Read,BufRead,BufWriter,Write};
 pub use std::fmt::Write as _;
 pub use std::fmt::Formatter;
 pub use std::fmt::{self,Display,Debug};
