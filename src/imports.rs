@@ -59,6 +59,7 @@ pub use crate::keydata::*;
 pub use crate::updates::*;
 pub use crate::sse;
 pub use crate::error::*;
+pub use crate::commands::*;
 pub use crate::slotmap_slot_idx::*;
 pub use crate::cmdlistener::*;
 
