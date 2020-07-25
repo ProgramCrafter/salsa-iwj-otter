@@ -3,7 +3,8 @@ use crate::imports::*;
 
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtCommand {
-  Noop { }
+  Noop { },
+  AddPiece(Box<dyn PieceSpec>),
 }
 
 #[derive(Debug,Serialize,Deserialize)]

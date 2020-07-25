@@ -72,6 +72,8 @@ fn decode_process_inner(s: &str)-> MgmtResponse {
 fn execute(cmd: MgmtCommand) -> MgmtResponse {
   match cmd {
     Noop { } => Fine { },
+    AddPiece(_) => Fine {
+    }, // xxx
   }
 }
 

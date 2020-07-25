@@ -122,7 +122,7 @@ impl SimpleShape {
   }
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize,Deserialize)]
 #[derive(Debug,Default)]
 #[repr(transparent)]
 struct ColourSpec(String);
@@ -136,19 +136,19 @@ impl TryFrom<ColourSpec> for Colour {
   }
 }
 
-#[derive(Debug,Deserialize)]
+#[derive(Debug,Serialize,Deserialize)]
 struct Disc {
   diam : Coord,
   faces : Vec<ColourSpec>,
 }
 
-#[derive(Debug,Deserialize)]
+#[derive(Debug,Serialize,Deserialize)]
 struct Square {
   size : Vec<Coord>,
   faces : Vec<ColourSpec>,
 }
 
-#[typetag::deserialize]
+#[typetag::serde]
 impl PieceSpec for Disc {
   #[throws(SE)]
   fn load(self) -> Box<dyn Piece> {
@@ -162,7 +162,7 @@ impl PieceSpec for Disc {
   }
 }
 
-#[typetag::deserialize]
+#[typetag::serde]
 impl PieceSpec for Square {
   #[throws(SE)]
   fn load(self) -> Box<dyn Piece> {
