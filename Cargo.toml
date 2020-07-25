@@ -44,6 +44,8 @@ rmp = "^0.8"
 uds = "0"
 pwd = "1"
 
+libc = "0.2"
+
 serde-lexpr = "0.1"
 
 #rocket = "0.4"

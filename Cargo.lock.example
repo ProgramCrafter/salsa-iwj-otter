@@ -403,6 +403,7 @@ dependencies = [
  "htmlescape",
  "index_vec",
  "lazy_static",
+ "libc",
  "num-traits",
  "percent-encoding 2.1.0",
  "pwd",
