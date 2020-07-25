@@ -60,11 +60,11 @@ vecdeque-stableix = "0"
 #sha2 = "0.8"
 #generic-array = "0.12"
 
-#[patch.crates-io]
-#rocket = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket" }
-#rocket_codegen = { git = "file:///home/ian/Rustup/Game/rocket/.git" branch = "Game-rocket-codegen" }
-#rocket_http = { git = "file:///home/ian/Rustup/Game/rocket/.git" branch = "Game-rocket-http" }
-#rocket_contrib = { git = "file:///home/ian/Rustup/Game/rocket/.git" branch = "Game-rocket-contrib", default-features=false, features=["tera_templates","helmet","json"] }
+[patch.crates-io]
+rocket = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket" }
+rocket_codegen = { git = "file:///home/ian/Rustup/Game/rocket/.git" branch = "Game-rocket-codegen" }
+rocket_http = { git = "file:///home/ian/Rustup/Game/rocket/.git" branch = "Game-rocket-http" }
+rocket_contrib = { git = "file:///home/ian/Rustup/Game/rocket/.git" branch = "Game-rocket-contrib", default-features=false, features=["tera_templates","helmet","json"] }
 #rocket_contrib_codegen = { git = "file:///home/ian/Rustup/Game/rocket/.git" branch = "Game-rocket-contrib-codegen" }
 
 
