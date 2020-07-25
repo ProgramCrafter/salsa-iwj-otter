@@ -1095,6 +1095,7 @@ dependencies = [
 [[package]]
 name = "rocket"
 version = "0.4.5"
+source = "git+file:///home/ian/Rustup/Game/rocket/.git?branch=Game-rocket#8acfb5a6a2cf42c4233bc5c56e0816cd89035345"
 dependencies = [
  "atty",
  "base64 0.12.3",
@@ -1114,6 +1115,7 @@ dependencies = [
 [[package]]
 name = "rocket_codegen"
 version = "0.4.5"
+source = "git+file:///home/ian/Rustup/Game/rocket/.git?branch=Game-rocket-codegen#0775bdde13ea5253913c2d21938630f4230fa030"
 dependencies = [
  "devise",
  "glob 0.3.0",
@@ -1127,6 +1129,7 @@ dependencies = [
 [[package]]
 name = "rocket_contrib"
 version = "0.4.5"
+source = "git+file:///home/ian/Rustup/Game/rocket/.git?branch=Game-rocket-contrib#023e80804a8b5583c7ab828b5b4237b4d7a8b143"
 dependencies = [
  "glob 0.3.0",
  "log 0.4.11",
@@ -1141,6 +1144,7 @@ dependencies = [
 [[package]]
 name = "rocket_http"
 version = "0.4.5"
+source = "git+file:///home/ian/Rustup/Game/rocket/.git?branch=Game-rocket-http#ae2884c91a8b9916a3544c5e4ced78f10fa505e4"
 dependencies = [
  "cookie",
  "hyper",
