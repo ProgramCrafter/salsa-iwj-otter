@@ -40,8 +40,8 @@ impl CommandStream {
   }
 }
 
-impl From<serde_json::Error> for MgmtError {
-  fn from(je: serde_json::Error) -> ME {
+impl From<serde_lexpr::Error> for MgmtError {
+  fn from(je: serde_lexpr::Error) -> ME {
     ParseFailed(format!("{}", &je))
   }
 }
@@ -59,7 +59,7 @@ pub fn decode_and_process(s: &str) -> MgmtResponse {
 
 #[throws(ME)]
 fn decode_process_inner(s: &str)-> MgmtResponse {
-  let cmd : MgmtCommand = serde_json::from_str(s)?;
+  let cmd : MgmtCommand = serde_lexpr::from_str(s)?;
   execute(cmd)?
 }
 
