@@ -71,6 +71,8 @@ fn decode_process_inner(s: &str)-> MgmtResponse {
 
 const USERLIST : &str = "/etc/userlist";
 
+struct Authorized<T>;
+
 fn authorize_scope(cs: &CommandStream, wanted: &ManagementScope) {
   type AS = AuthorizedScope;
   
@@ -82,7 +84,7 @@ fn authorize_scope(cs: &CommandStream, wanted: &ManagementScope) {
         let our_euid = unsafe { libc::getuid() };
         let ok = cs.authorized_uid(our_euid)?;
         AS((ok,),
-           ManagementScope:::XXX)
+           ManagementScope::XXX)
       };
       y.into()
     },
@@ -91,7 +93,7 @@ fn authorize_scope(cs: &CommandStream, wanted: &ManagementScope) {
         Authorized<(Passwd,uid_t)>, // caller_has
         Authorized<File>,           // in_userlist:
       )> = {
-        let pwent = Passwd::from_name(user)?:
+        let pwent = Passwd::from_name(user)?;
         let caller_has = cs.authorized_uid(pwent.uid)?;
         let found = (||{
           let allowed = File::open(USERLIST)?;
@@ -109,13 +111,13 @@ fn authorize_scope(cs: &CommandStream, wanted: &ManagementScope) {
 
 #[throws(ME)]
 fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
-  use MgmgError::*;
+  use MgmtError::*;
 
   match cmd {
     Noop { } => Fine { },
 
     Scope(wanted_scope) => {
-      let (_: AuthorizedConclusion, authorized: ManagementScope) = 
+      let (_, authorized) : (AuthorizedConclusion, ManagementScope) =
         authorize_scope(cs, &wanted_scope)?;
       cs.scope = authorized;
       Fine { }
