@@ -21,10 +21,12 @@ pub struct CommandListener {
   listener : UnixListener,
 }
 
+type CSWrite = BufWriter<UnixStream>;
+
 struct CommandStream {
   euid : Result<u32, anyhow::Error>,
   read : io::Lines<BufReader<UnixStream>>,
-  write : UnixStream,
+  write : CSWrite,
 }
 
 type CSE = anyhow::Error;
@@ -34,8 +36,9 @@ impl CommandStream {
   pub fn mainloop(mut self) {
     for l in &mut self.read {
       let l = l.context("read")?;
-      let reply = decode_and_process(&l);
-      writeln!(&mut self.write, "Reply: {:?}", &reply)?;
+      decode_and_process(&l, &mut self.write)?;
+      write!(&mut self.write, "\n")?;
+      self.write.flush()?;
     }
   }
 }
@@ -52,9 +55,11 @@ use MgmtError::*;
 
 type ME = MgmtError;
 
-pub fn decode_and_process(s: &str) -> MgmtResponse {
-  self::decode_process_inner(s)
-    .unwrap_or_else(|e| MgmtResponse::Error(format!("{}", e)))
+#[throws(CSE)]
+pub fn decode_and_process(s: &str, w: &mut CSWrite) {
+  let resp = self::decode_process_inner(s)
+    .unwrap_or_else(|e| MgmtResponse::Error(format!("{}", e)));
+  serde_lexpr::to_writer(w, &resp)?;
 }
 
 #[throws(ME)]
@@ -124,9 +129,10 @@ impl CommandListener {
         write!(&mut desc, " user={}", user_desc)?;
 
         let read = conn.try_clone().context("dup the command stream")?;
-        let write = conn;
         let read = BufReader::new(read);
         let read = read.lines();
+        let write = conn;
+        let write = BufWriter::new(write);
 
         let cs = CommandStream { read, write, euid };
         cs.mainloop()?;
