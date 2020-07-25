@@ -26,7 +26,7 @@ pub struct Instance {
   pub tokens_clients : TokenRegistry<ClientId>,
 }
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Deserialize,Serialize)]
 pub enum ManagementScope {
   XXX,
   Unix { user : String /* username, so filename-safe */ },

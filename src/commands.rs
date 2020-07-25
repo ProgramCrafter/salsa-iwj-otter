@@ -16,6 +16,8 @@ pub enum MgmtResponse {
 #[derive(Debug,Error)]
 pub enum MgmtError {
   ParseFailed(String),
+  SetScope(ManagementScope),
+  XXXU(&'static str),
 }
 display_as_debug!{MgmtError}
 

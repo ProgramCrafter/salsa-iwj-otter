@@ -27,6 +27,7 @@ struct CommandStream {
   euid : Result<u32, anyhow::Error>,
   read : io::Lines<BufReader<UnixStream>>,
   write : CSWrite,
+  scope : Option<ManagementScope>,
 }
 
 type CSE = anyhow::Error;
@@ -68,12 +69,70 @@ fn decode_process_inner(s: &str)-> MgmtResponse {
   execute(cmd)?
 }
 
+const USERLIST : &str = "/etc/userlist";
+
+fn authorize_scope(cs: &CommandStream, wanted: &ManagementScope) {
+  type AS = AuthorizedScope;
+  
+  match &wanted {
+    ManagementScope::XXX => {
+      let y : AS<(
+        Authorized<(Passwd,uid_t)>,
+      )> = {
+        let our_euid = unsafe { libc::getuid() };
+        let ok = cs.authorized_uid(our_euid)?;
+        AS((ok,),
+           ManagementScope:::XXX)
+      };
+      y.into()
+    },
+    Unix(user) => {
+      let y : AS<(
+        Authorized<(Passwd,uid_t)>, // caller_has
+        Authorized<File>,           // in_userlist:
+      )> = {
+        let pwent = Passwd::from_name(user)?:
+        let caller_has = cs.authorized_uid(pwent.uid)?;
+        let found = (||{
+          let allowed = File::open(USERLIST)?;
+          let found = allowed.lines()?.map(|l| l.trim() == user).any();
+          Ok(found)
+        })?;
+        let in_userlist = Authorized::from_bool(USERLIST)?;
+        AS((caller_has, in_userlist),
+           ManagementScope::Unix(pwent.username))
+      };
+      y.into()
+    }
+  };
+}
+
 #[throws(ME)]
-fn execute(cmd: MgmtCommand) -> MgmtResponse {
+fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
+  use MgmgError::*;
+
   match cmd {
     Noop { } => Fine { },
-    AddPiece(_) => Fine {
-    }, // xxx
+
+    Scope(wanted_scope) => {
+      let (_: AuthorizedConclusion, authorized: ManagementScope) = 
+        authorize_scope(cs, &wanted_scope)?;
+      cs.scope = authorized;
+      Fine { }
+    }
+/*
+    CreateGame(game) => {
+      
+    },
+    AddPiece(game, { pos,count,name,info }) => {
+      let game = cs.lookup_game(&game)?;
+      let count = spec.count.unwrap_or(1);
+      let pos = spec.ok_or(XXU("missing piece pos"))?;
+      let _xxx_name = spec.name;
+      let pc = info.load()?;
+      
+    }
+    }, // xxx*/
   }
 }
 
