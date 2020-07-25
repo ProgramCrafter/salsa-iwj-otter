@@ -399,6 +399,7 @@ name = "game"
 version = "0.0.1"
 dependencies = [
  "anyhow",
+ "failure",
  "fehler",
  "htmlescape",
  "index_vec",

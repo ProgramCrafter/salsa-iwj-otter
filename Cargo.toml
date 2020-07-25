@@ -43,6 +43,7 @@ rmp = "^0.8"
 
 uds = "0"
 pwd = "1"
+failure = "0.1.8" # for pwd
 
 libc = "0.2"
 
