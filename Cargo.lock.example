@@ -230,7 +230,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39858aa5bac06462d4dd4b9164848eb81ffc4aa5c479746393598fd193afa227"
 dependencies = [
  "quote 1.0.7",
- "syn 1.0.34",
+ "syn 1.0.35",
 ]
 
 [[package]]
@@ -317,7 +317,7 @@ checksum = "aa4da3c766cd7a0db8242e326e9e4e081edd567072893ed320008189715366a4"
 dependencies = [
  "proc-macro2 1.0.19",
  "quote 1.0.7",
- "syn 1.0.34",
+ "syn 1.0.35",
  "synstructure",
 ]
 
@@ -344,7 +344,7 @@ checksum = "ccb5acb1045ebbfa222e2c50679e392a71dd77030b78fb0189f2d9c5974400f9"
 dependencies = [
  "proc-macro2 1.0.19",
  "quote 1.0.7",
- "syn 1.0.34",
+ "syn 1.0.35",
 ]
 
 [[package]]
@@ -458,7 +458,7 @@ checksum = "1a5bcf1bbeab73aa4cf2fde60a846858dc036163c7c33bec309f8d17de785479"
 dependencies = [
  "proc-macro2 1.0.19",
  "quote 1.0.7",
- "syn 1.0.34",
+ "syn 1.0.35",
 ]
 
 [[package]]
@@ -623,7 +623,7 @@ checksum = "f99a4111304bade76468d05beab3487c226e4fe4c4de1c4e8f006e815762db73"
 dependencies = [
  "proc-macro2 1.0.19",
  "quote 1.0.7",
- "syn 1.0.34",
+ "syn 1.0.35",
 ]
 
 [[package]]
@@ -671,9 +671,7 @@ checksum = "b294d6fa9ee409a054354afc4352b0b9ef7ca222c69b8812cbea9e7d2bf3783f"
 
 [[package]]
 name = "lexpr"
-version = "0.2.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d6b5eeb1dcf1c6a1fad8c1a88c4cc01618db83810c55cc64c1f86d73688fbfdc"
+version = "0.2.4"
 dependencies = [
  "itoa",
  "lexpr-macros",
@@ -684,8 +682,6 @@ dependencies = [
 [[package]]
 name = "lexpr-macros"
 version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd627fb38e19c00d8d068618259205f7a91c91aeade5c15bc35dbca037bb1c35"
 dependencies = [
  "proc-macro-hack",
  "proc-macro2 1.0.19",
@@ -928,7 +924,7 @@ dependencies = [
  "pest_meta",
  "proc-macro2 1.0.19",
  "quote 1.0.7",
- "syn 1.0.34",
+ "syn 1.0.35",
 ]
 
 [[package]]
@@ -1099,7 +1095,6 @@ dependencies = [
 [[package]]
 name = "rocket"
 version = "0.4.5"
-source = "git+file:///home/ian/Rustup/Game/rocket/.git?branch=Game-rocket#8acfb5a6a2cf42c4233bc5c56e0816cd89035345"
 dependencies = [
  "atty",
  "base64 0.12.3",
@@ -1119,7 +1114,6 @@ dependencies = [
 [[package]]
 name = "rocket_codegen"
 version = "0.4.5"
-source = "git+file:///home/ian/Rustup/Game/rocket/.git?branch=Game-rocket-codegen#0775bdde13ea5253913c2d21938630f4230fa030"
 dependencies = [
  "devise",
  "glob 0.3.0",
@@ -1133,7 +1127,6 @@ dependencies = [
 [[package]]
 name = "rocket_contrib"
 version = "0.4.5"
-source = "git+file:///home/ian/Rustup/Game/rocket/.git?branch=Game-rocket-contrib#023e80804a8b5583c7ab828b5b4237b4d7a8b143"
 dependencies = [
  "glob 0.3.0",
  "log 0.4.11",
@@ -1148,7 +1141,6 @@ dependencies = [
 [[package]]
 name = "rocket_http"
 version = "0.4.5"
-source = "git+file:///home/ian/Rustup/Game/rocket/.git?branch=Game-rocket-http#ae2884c91a8b9916a3544c5e4ced78f10fa505e4"
 dependencies = [
  "cookie",
  "hyper",
@@ -1200,8 +1192,6 @@ dependencies = [
 [[package]]
 name = "serde-lexpr"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "143e5e658ac3a7374bdf285b9355cab74dd144293b86c9be27eab39452239d41"
 dependencies = [
  "lexpr",
  "serde",
@@ -1215,7 +1205,7 @@ checksum = "2a0be94b04690fbaed37cddffc5c134bf537c8e3329d53e982fe04c374978f8e"
 dependencies = [
  "proc-macro2 1.0.19",
  "quote 1.0.7",
- "syn 1.0.34",
+ "syn 1.0.35",
 ]
 
 [[package]]
@@ -1314,9 +1304,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.34"
+version = "1.0.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "936cae2873c940d92e697597c5eee105fb570cd5689c695806f672883653349b"
+checksum = "fb7f4c519df8c117855e19dd8cc851e89eb746fe7a73f0157e0d95fdec5369b0"
 dependencies = [
  "proc-macro2 1.0.19",
  "quote 1.0.7",
@@ -1331,7 +1321,7 @@ checksum = "b834f2d66f734cb897113e34aaff2f1ab4719ca946f9a7358dba8f8064148701"
 dependencies = [
  "proc-macro2 1.0.19",
  "quote 1.0.7",
- "syn 1.0.34",
+ "syn 1.0.35",
  "unicode-xid 0.2.1",
 ]
 
@@ -1373,7 +1363,7 @@ checksum = "bd80fc12f73063ac132ac92aceea36734f04a1d93c1240c6944e23a3b8841793"
 dependencies = [
  "proc-macro2 1.0.19",
  "quote 1.0.7",
- "syn 1.0.34",
+ "syn 1.0.35",
 ]
 
 [[package]]
@@ -1449,7 +1439,7 @@ checksum = "dc232cda3b1d82664153e6c95d1071809aa0f1011f306c3d6989f33d8c6ede17"
 dependencies = [
  "proc-macro2 1.0.19",
  "quote 1.0.7",
- "syn 1.0.34",
+ "syn 1.0.35",
 ]
 
 [[package]]
