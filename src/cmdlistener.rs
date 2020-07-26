@@ -52,8 +52,8 @@ impl CommandStream<'_> {
   }
 }
 
-impl From<serde_lexpr::Error> for MgmtError {
-  fn from(je: serde_lexpr::Error) -> ME {
+impl From<ron::error::Error> for MgmtError {
+  fn from(je: ron::error::Error) -> ME {
     ParseFailed(format!("{}", &je))
   }
 }
@@ -71,12 +71,12 @@ fn decode_and_process(cs: &mut CommandStream, s: &str) {
     .unwrap_or_else(|e| MgmtResponse::Error {
       error: MgmtError::ParseFailed(format!("{}", e))
     });
-  serde_lexpr::to_writer(&mut cs.write, &resp)?;
+  ron::ser::to_writer(&mut cs.write, &resp)?;
 }
 
 #[throws(ME)]
 fn decode_process_inner(cs: &mut CommandStream, s: &str)-> MgmtResponse {
-  let cmd : MgmtCommand = serde_lexpr::from_str(s)?;
+  let cmd : MgmtCommand = ron::de::from_str(s)?;
   execute(cs, cmd)?
 }
 

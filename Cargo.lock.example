@@ -413,6 +413,7 @@ dependencies = [
  "rmp-serde",
  "rocket",
  "rocket_contrib",
+ "ron",
  "serde",
  "serde-lexpr",
  "serde_json",
@@ -1157,6 +1158,17 @@ dependencies = [
  "state",
  "time",
  "unicode-xid 0.1.0",
+]
+
+[[package]]
+name = "ron"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a91260f321dbf3b5a16ff91c451dc9eb644ce72775a6812f9c3dfffe63818f8f"
+dependencies = [
+ "base64 0.12.3",
+ "bitflags",
+ "serde",
 ]
 
 [[package]]
