@@ -15,10 +15,17 @@ pub struct RawToken (pub String);
 
 // ---------- data structure ----------
 
+#[derive(Debug,Serialize,Deserialize)]
+#[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
+pub struct InstanceName {
+  pub scope: ManagementScope,
+  pub scoped_name: String,
+}
+pub type InstanceRef = Arc<Mutex<Instance>>;
+
 #[derive(Debug)]
 pub struct Instance {
-  pub scope : ManagementScope,
-  pub scoped_name : String,
+  pub name : Arc<InstanceName>,
   pub gs : GameState,
   pub clients : DenseSlotMap<ClientId,Client>,
   pub updates : SecondarySlotMap<PlayerId, PlayerUpdates>,
@@ -26,7 +33,8 @@ pub struct Instance {
   pub tokens_clients : TokenRegistry<ClientId>,
 }
 
-#[derive(Debug,Deserialize,Serialize)]
+#[derive(Debug,Clone,Deserialize,Serialize)]
+#[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
 pub enum ManagementScope {
   XXX,
   Unix { user : String /* username, so filename-safe */ },
@@ -46,6 +54,7 @@ pub struct InstanceGuard<'g> {
 #[derive(Default)]
 struct Global {
   // lock hierarchy: this is the innermost lock
+  games   : RwLock<HashMap<Arc<InstanceName>,InstanceRef>>,
   players : RwLock<TokenTable<PlayerId>>,
   clients : RwLock<TokenTable<ClientId>>,
   // xxx delete instances at some point!
@@ -107,17 +116,32 @@ lazy_static! {
 // ---------- Player and instance API ----------
 
 impl Instance {
-  #[throws(OE)]
-  pub fn new(gs: GameState,
-             scope : ManagementScope,
-             scoped_name: String) -> Instance {
-    Instance {
-      scope, scoped_name, gs,
+  /// Returns `None` if a game with this name already exists
+  #[throws(MgmtError)]
+  pub fn new(name: InstanceName, gs: GameState) -> InstanceRef {
+    let name = Arc::new(name);
+
+    let inst = Instance {
+      name : name.clone(),
+      gs,
       clients : Default::default(),
       updates : Default::default(),
       tokens_players : Default::default(),
       tokens_clients : Default::default(),
-    }
+    };
+
+    let mut games = GLOBAL.games.write().unwrap();
+    let entry = games.entry(name);
+
+    use hash_map::Entry::*;
+    let entry = match entry {
+      Vacant(ve) => ve,
+      Occupied(_) => throw!(MgmtError::AlreadyExists),
+    };
+
+    let ami = Arc::new(Mutex::new(inst));
+    entry.insert(ami.clone());
+    ami
   }
 
   #[throws(OE)]
@@ -170,15 +194,14 @@ impl InstanceGuard<'_> {
     for t in tokens.tr.drain() { global.remove(&t); }
   }
 
-  fn savefile(scope: &ManagementScope, scoped_name: &str,
-              prefix: &str, suffix: &str) -> String {
-    let scope_prefix = { use ManagementScope::*; match scope {
-        XXX => format!(""),
-        Unix{user} => { format!("{}:", user) },
+  fn savefile(name: &InstanceName, prefix: &str, suffix: &str) -> String {
+    let scope_prefix = { use ManagementScope::*; match &name.scope {
+      XXX => format!(""),
+      Unix{user} => { format!("{}:", user) },
     } };
     iter::once(prefix)
       .chain( iter::once(scope_prefix.as_ref()) )
-      .chain( utf8_percent_encode(scoped_name,
+      .chain( utf8_percent_encode(&name.scoped_name,
                                   &percent_encoding::NON_ALPHANUMERIC) )
       .chain( iter::once(suffix) )
       .collect()
@@ -189,12 +212,12 @@ impl InstanceGuard<'_> {
     w: fn(s: &Self, w: &mut BufWriter<fs::File>)
           -> Result<(),rmp_serde::encode::Error>
   ) {
-    let tmp = Self::savefile(&self.scope, &self.scoped_name, prefix,".tmp");
+    let tmp = Self::savefile(&self.name, prefix,".tmp");
     let mut f = BufWriter::new(fs::File::create(&tmp)?);
     w(self, &mut f)?;
     f.flush()?;
     drop( f.into_inner().map_err(|e| { let e : io::Error = e.into(); e })? );
-    let out = Self::savefile(&self.scope, &self.scoped_name, prefix,"");
+    let out = Self::savefile(&self.name, prefix,"");
     fs::rename(&tmp, &out)?;
     eprintln!("saved to {}", &out);
   }
@@ -224,33 +247,33 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(OE)]
-  fn load_something<T:DeserializeOwned>(
-    scope: &ManagementScope,
-    scoped_name: &str,
-    prefix: &str
-  ) -> T {
-    let inp = Self::savefile(scope, scoped_name, prefix, "");
+  fn load_something<T:DeserializeOwned>(name: &InstanceName, prefix: &str) -> T {
+    let inp = Self::savefile(name, prefix, "");
     let mut f = BufReader::new(fs::File::open(&inp)?);
     // xxx handle ENOENT specially, own OE variant
     rmp_serde::decode::from_read(&mut f)?
   }
 
   #[throws(OE)]
-  pub fn load(scope: ManagementScope, scoped_name: String)
-              -> Arc<Mutex<Instance>> {
-    let gs : GameState = Self::load_something(&scope, &scoped_name, "g-")?;
+  pub fn load(name: InstanceName) -> Arc<Mutex<Instance>> {
+    // xxx scan on startup, rather than asking caller to specify names
+    // xxx should take a file lock on save area
+    let gs : GameState = Self::load_something(&name, "g-")?;
     let mut al : InstanceSaveAccesses<String>
-                       = Self::load_something(&scope, &scoped_name, "a-")?;
+                       = Self::load_something(&name, "a-")?;
     let mut updates : SecondarySlotMap<_,_> = Default::default();
     for player in gs.players.keys() {
       updates.insert(player, Default::default());
     }
+    let name = Arc::new(name);
+
     let inst = Instance {
-      scope, scoped_name, gs, updates,
+      name, gs, updates,
       clients : Default::default(),
       tokens_clients : Default::default(),
       tokens_players : Default::default(),
     };
+    // xxx record in GLOBAL.games
     let amu = Arc::new(Mutex::new(inst));
     let mut ig = amu.lock().unwrap();
     for (token, _) in &al.tokens_players {
@@ -344,9 +367,11 @@ const XXX_PLAYERS_TOKENS : &[(&str, &str)] = &[
 #[throws(OE)]
 pub fn xxx_global_setup() {
   let gs = xxx_gamestate_init();
-  let gi = Instance::new(gs, ManagementScope::XXX, "dummy".to_string())?;
-  let amu = Arc::new(Mutex::new(gi));
-  let mut ig = Instance::lock(&amu)?;
+  let ami = Instance::new(InstanceName {
+    scope: ManagementScope::XXX,
+    scoped_name: "dummy".to_string()
+  }, gs).expect("xxx create dummy");
+  let mut ig = Instance::lock(&ami)?;
   for (token, nick) in XXX_PLAYERS_TOKENS {
     let player = ig.player_new(PlayerState {
       nick : nick.to_string(),

@@ -31,8 +31,9 @@ struct CommandStream<'d> {
   euid : Result<u32, ConnectionEuidDiscoverEerror>,
   read : io::Lines<BufReader<UnixStream>>,
   write : CSWrite,
-  scope : Option<ManagementScope>,
   desc : &'d str,
+  scope : Option<ManagementScope>,
+  amu : Option<InstanceRef>,
 }
 
 type CSE = anyhow::Error;
@@ -195,10 +196,25 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine { }
     },
 
-/*
-    CreateGame(game) => {
-      
+    CreateGame(name) => {
+      let gs = GameState {
+        pieces : Default::default(),
+        players : Default::default(),
+        log : Default::default(),
+        gen : Generation(0),
+      };
+
+      let name = InstanceName {
+        scope : cs.scope.as_ref().ok_or(NoScope)?.clone(),
+        scoped_name : name,
+      };
+
+      cs.amu = Some(Instance::new(name, gs)?);
+
+      Fine { }
     },
+
+    /*
     AddPiece(game, { pos,count,name,info }) => {
       let game = cs.lookup_game(&game)?;
       let count = spec.count.unwrap_or(1);
@@ -271,7 +287,7 @@ impl CommandListener {
         let write = BufWriter::new(write);
 
         let cs = CommandStream {
-          scope: None, desc: &desc,
+          scope: None, amu: None, desc: &desc,
           read, write, euid,
         };
         cs.mainloop()?;

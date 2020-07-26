@@ -5,6 +5,7 @@ use crate::imports::*;
 pub enum MgmtCommand {
   Noop { },
   SetScope(ManagementScope),
+  CreateGame(String),
 //  AddPiece(Box<dyn PieceSpec>),
 }
 
@@ -18,6 +19,8 @@ pub enum MgmtResponse {
 pub enum MgmtError {
   ParseFailed(String),
   AuthorisationError,
+  NoScope,
+  AlreadyExists,
   XXXU(&'static str),
 }
 display_as_debug!{MgmtError}
