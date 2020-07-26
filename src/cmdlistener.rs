@@ -113,8 +113,8 @@ impl From<ConnectionEuidDiscoverEerror> for AuthorisationError {
 
 impl CommandStream<'_> {
   #[throws(AuthorisationError)]
-  fn authorised_uid(&self, wanted: Option<uid_t>)
-                    -> Authorised<(Passwd,uid_t)> {
+  fn authorised_uid(&self, wanted: Option<uid_t>, xinfo: Option<&str>)
+                    -> Authorised<(Passwd,uid_t),> {
     let client_euid = *self.euid.as_ref().map_err(|e| e.clone())?;
     let server_euid = unsafe { libc::getuid() };
     if client_euid == 0 ||
@@ -123,8 +123,9 @@ impl CommandStream<'_> {
     {
       return Authorised::authorise();
     }
-    Err(anyhow!("{}: euid mismatch: client={:?} server={:?} wanted={:?}",
-                &self.desc, client_euid, server_euid, wanted))?
+    Err(anyhow!("{}: euid mismatch: client={:?} server={:?} wanted={:?}{}",
+                &self.desc, client_euid, server_euid, wanted,
+                xinfo.unwrap_or("")))?
   }
 
   fn map_auth_err(&self, ae: AuthorisationError) -> MgmtError {
@@ -147,7 +148,7 @@ fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
       let y : AS<
         Authorised<(Passwd,uid_t)>,
       > = {
-        let ok = cs.authorised_uid(None)?;
+        let ok = cs.authorised_uid(None,None)?;
         (ok,
          ManagementScope::XXX)
       };
@@ -170,27 +171,38 @@ fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
             ))
           )?;
 
-        let userlist_info = (||{ <Result<_,anyhow::Error>>::Ok({
-          let allowed = BufReader::new(File::open(USERLIST)?);
+        let (in_userlist, xinfo) = (||{ <Result<(_,Option<String>),anyhow::Error>>::Ok({
+          let allowed = BufReader::new(match File::open(USERLIST) {
+            Err(e) if e.kind() == ErrorKind::NotFound => {
+              return Ok((
+                AuthorisedIf{ authorized_for: None },
+                Some(format!(" user list {} does not exist", USERLIST))
+              ))
+            },
+            r => r,            
+          }?);
           allowed
             .lines()
             .filter_map(|le| match le {
               Ok(l) if l.trim() == wanted => Some(
-                Ok(AuthorisedIf{ authorized_for: Some(pwent.uid) })
+                Ok((
+                  AuthorisedIf{ authorized_for: Some(pwent.uid) },
+                  None
+                ))
               ),
               Ok(_) => None,
               Err(e) => Some(<Result<_,anyhow::Error>>::Err(e.into())),
             })
             .next()
             .unwrap_or_else(
-              || Err(anyhow!("requested username {:?} not in {:?}",
+              || Err(anyhow!(" requested username {:?} not in {:?}",
                              &wanted, USERLIST))
             )?
         })})()?;
 
-        let AuthorisedIf{ authorized_for } = userlist_info;
-        let ok = cs.authorised_uid(authorized_for)?;
-
+        let AuthorisedIf{ authorized_for } = in_userlist;
+        let info = xinfo.as_ref().map(|s| s.as_str());
+        let ok = cs.authorised_uid(authorized_for, info)?;
         (ok,
          ManagementScope::Unix { user: pwent.name })
       };
