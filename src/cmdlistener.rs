@@ -50,6 +50,11 @@ impl CommandStream<'_> {
       self.write.flush()?;
     }
   }
+
+  #[throws(MgmtError)]
+  fn get_scope(&self) -> &ManagementScope {
+    self.scope.as_ref().ok_or(NoScope)?
+  }
 }
 
 impl From<serde_lexpr::Error> for MgmtError {
@@ -216,7 +221,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       };
 
       let name = InstanceName {
-        scope : cs.scope.as_ref().ok_or(NoScope)?.clone(),
+        scope : cs.get_scope()?.clone(),
         scoped_name : name,
       };
 
@@ -238,7 +243,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
           authorise_scope(cs, &ManagementScope::Server)?;
         None
       } else {
-        let scope = cs.scope.as_ref().ok_or(NoScope)?;
+        let scope = cs.get_scope()?;
         Some(scope)
       };
       let mut games = list_games(scope);
