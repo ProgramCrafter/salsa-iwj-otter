@@ -36,16 +36,11 @@ type CSE = anyhow::Error;
 impl CommandStream<'_> {
   #[throws(CSE)]
   pub fn mainloop(mut self) {
-    loop {
-      match self.read.next() {
-        None => break,
-        Some(l) => {
-          let l = l.context("read")?;
-          decode_and_process(&mut self, &l)?;
-          write!(&mut self.write, "\n")?;
-          self.write.flush()?;
-        },
-      }
+    while let Some(l) = self.read.next() {
+      let l = l.context("read")?;
+      decode_and_process(&mut self, &l)?;
+      write!(&mut self.write, "\n")?;
+      self.write.flush()?;
     }
   }
 }
