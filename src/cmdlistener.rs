@@ -158,7 +158,7 @@ fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
       let y : AS<
         Authorised<(Passwd,uid_t)>,
       > = {
-        struct AuthorisedIf { authorized_for : Option<uid_t> };
+        struct AuthorisedIf { authorised_for : Option<uid_t> };
 
         let pwent = Passwd::from_name(&wanted)
           .map_err(
@@ -175,7 +175,7 @@ fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
           let allowed = BufReader::new(match File::open(USERLIST) {
             Err(e) if e.kind() == ErrorKind::NotFound => {
               return Ok((
-                AuthorisedIf{ authorized_for: None },
+                AuthorisedIf{ authorised_for: None },
                 Some(format!(" user list {} does not exist", USERLIST))
               ))
             },
@@ -186,7 +186,7 @@ fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
             .filter_map(|le| match le {
               Ok(l) if l.trim() == wanted => Some(
                 Ok((
-                  AuthorisedIf{ authorized_for: Some(pwent.uid) },
+                  AuthorisedIf{ authorised_for: Some(pwent.uid) },
                   None
                 ))
               ),
@@ -195,14 +195,17 @@ fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
             })
             .next()
             .unwrap_or_else(
-              || Err(anyhow!(" requested username {:?} not in {:?}",
-                             &wanted, USERLIST))
+              || Ok((
+                AuthorisedIf{ authorised_for: None },
+                Some(format!(" requested username {:?} not in {}",
+                             &wanted, USERLIST)),
+              ))
             )?
         })})()?;
 
-        let AuthorisedIf{ authorized_for } = in_userlist;
+        let AuthorisedIf{ authorised_for } = in_userlist;
         let info = xinfo.as_ref().map(|s| s.as_str());
-        let ok = cs.authorised_uid(authorized_for, info)?;
+        let ok = cs.authorised_uid(authorised_for, info)?;
         (ok,
          ManagementScope::Unix { user: pwent.name })
       };
