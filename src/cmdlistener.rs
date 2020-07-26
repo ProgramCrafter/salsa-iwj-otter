@@ -227,6 +227,13 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine { }
     },
 
+    ListGames { } => {
+      let scope = cs.scope.as_ref().ok_or(NoScope)?;
+      let mut games = list_games(Some(scope));
+      games.sort_unstable();
+      GamesList { games }
+    },
+
 //      let game = cs.lookup_game(&game)?;
 
   }

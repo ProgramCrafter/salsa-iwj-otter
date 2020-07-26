@@ -328,6 +328,17 @@ impl InstanceGuard<'_> {
   }
 }
 
+pub fn list_games(scope: Option<&ManagementScope>)
+                  -> Vec<Arc<InstanceName>> {
+  let games = GLOBAL.games.read().unwrap();
+  let out : Vec<Arc<InstanceName>> =
+    games.keys()
+    .filter(|k| scope == None || scope == Some(&k.scope))
+    .map(|k| k.clone())
+    .collect();
+  out
+}
+
 // ---------- Lookup and token API ----------
 
 impl AccessId for PlayerId {
