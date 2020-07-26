@@ -113,13 +113,13 @@ fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
 
   match &wanted {
 
-    ManagementScope::XXX => {
+    ManagementScope::Server => {
       let y : AS<
         Authorised<(Passwd,uid_t)>,
       > = {
         let ok = cs.authorised_uid(None,None)?;
         (ok,
-         ManagementScope::XXX)
+         ManagementScope::Server)
       };
       return y.into()
     },

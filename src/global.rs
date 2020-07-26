@@ -46,7 +46,7 @@ pub struct Instance {
 #[derive(Debug,Clone,Deserialize,Serialize)]
 #[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
 pub enum ManagementScope {
-  XXX,
+  Server,
   Unix { user : String /* username, so filename-safe */ },
 }
 
@@ -227,7 +227,7 @@ impl InstanceGuard<'_> {
 
   fn savefile(name: &InstanceName, prefix: &str, suffix: &str) -> String {
     let scope_prefix = { use ManagementScope::*; match &name.scope {
-      XXX => format!(""),
+      Server => format!(""),
       Unix{user} => { format!("{}:", user) },
     } };
     iter::once(prefix)
@@ -414,7 +414,7 @@ const XXX_PLAYERS_TOKENS : &[(&str, &str)] = &[
 pub fn xxx_global_setup() {
   let gs = xxx_gamestate_init();
   let gref = Instance::new(InstanceName {
-    scope: ManagementScope::XXX,
+    scope: ManagementScope::Server,
     scoped_name: "dummy".to_string()
   }, gs).expect("xxx create dummy");
   let mut g = gref.lock()?;
