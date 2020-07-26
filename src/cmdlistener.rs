@@ -199,7 +199,7 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
 
 #[throws(ME)]
 fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
-//  use MgmtError::*;
+  eprintln!("{:?} executing {:?}", &cs.desc, &cmd);
 
   match cmd {
     Noop { } => Fine { },
@@ -266,7 +266,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
 #[derive(Debug,Default)]
 struct UpdateHandlerBulk {
-  pieces : SecondarySlotMap<PieceId, PieceUpdateOp<()>>,
+  pieces : slotmap::SparseSecondaryMap<PieceId, PieceUpdateOp<()>>,
 }
 
 #[derive(Debug)]
@@ -301,7 +301,7 @@ impl UpdateHandler {
             ( _                  , _        ) => Some( Modify(()) ),
           };
           match ne {
-            Some(ne) => { bulk.pieces[upiece] = ne; },
+            Some(ne) => { bulk.pieces.insert(upiece, ne); },
             None     => { bulk.pieces.remove(upiece); },
           };
         }
