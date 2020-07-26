@@ -25,6 +25,7 @@ pub type InstanceRef = Arc<Mutex<Instance>>;
 
 #[derive(Debug)]
 pub struct Instance {
+  pub live : bool,
   pub name : Arc<InstanceName>,
   pub gs : GameState,
   pub clients : DenseSlotMap<ClientId,Client>,
@@ -122,6 +123,7 @@ impl Instance {
     let name = Arc::new(name);
 
     let inst = Instance {
+      live : true,
       name : name.clone(),
       gs,
       clients : Default::default(),
@@ -147,7 +149,16 @@ impl Instance {
   #[throws(OE)]
   pub fn lock<'g>(amu : &'g Arc<Mutex<Instance>>) -> InstanceGuard<'g> {
     let ig = amu.lock()?;
+    if !ig.live { throw!(OnlineError::GameBeingDestroyed) }
     InstanceGuard { ig, amu: amu.clone() }
+  }
+
+  pub fn destroy(g: InstanceGuard) {
+    g.live = false;
+    // remove the files
+    GLOBAL.games.write().unwrap().remove(&g.name);
+    InstanceGuard::forget_all_tokens(&mut g.tokens_players);
+    InstanceGuard::forget_all_tokens(&mut g.tokens_clients);
   }
 }
 
@@ -184,10 +195,6 @@ impl InstanceGuard<'_> {
     Id::global_tokens(PRIVATE_Y).write().unwrap().insert(token, iad);
   }
 
-  pub fn game_destroy(mut self) {
-    Self::forget_all_tokens(&mut self.ig.tokens_players);
-    Self::forget_all_tokens(&mut self.ig.tokens_clients);
-  }
   fn forget_all_tokens<Id:AccessId>(tokens: &mut TokenRegistry<Id>) {
     let global : &RwLock<TokenTable<Id>> = AccessId::global_tokens(PRIVATE_Y);
     let mut global = global.write().unwrap();
@@ -268,6 +275,7 @@ impl InstanceGuard<'_> {
     let name = Arc::new(name);
 
     let inst = Instance {
+      live: true,
       name, gs, updates,
       clients : Default::default(),
       tokens_clients : Default::default(),

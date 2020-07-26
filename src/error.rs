@@ -14,6 +14,8 @@ pub enum GameError {
 
 #[derive(Error,Debug)]
 pub enum OnlineError {
+  #[error("Game in process of being destroyed")]
+  GameBeingDestroyed,
   #[error("Game corrupted by previous crash - consult administrator")]
   GameCorrupted,
   #[error("client session not recognised (terminated by server?)")]

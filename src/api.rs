@@ -27,7 +27,10 @@ pub trait Lens {
   fn decode_visible_pieceid(&self, vpiece: VisiblePieceId, player: PlayerId)
                             -> PieceId;
 }
-struct TransparentLens { }
+pub struct TransparentLens {
+  // when lenses become nontrivial, make this nonconstructable
+  // to find all the places where a TransparentLens was bodged
+}
 impl Lens for TransparentLens {
   fn pieceid2visible(&self, piece: PieceId) -> VisiblePieceId {
     let kd : slotmap::KeyData = piece.into();
@@ -89,8 +92,8 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       eprintln!("API {:?} => {:?}", &form, &err);
     },
     Ok((update, logents)) => {
-      let mut buf = PrepareUpdatesBuffer::new(g, client, form.cseq,
-                                              1 + logents.len());
+      let mut buf = PrepareUpdatesBuffer::new(g, Some((client, form.cseq)),
+                                              Some(1 + logents.len()));
       
       buf.piece_update(piece, update, &lens)?;
       buf.log_updates(logents)?;

@@ -5,14 +5,26 @@ use crate::imports::*;
 pub enum MgmtCommand {
   Noop { },
   SetScope(ManagementScope),
-  CreateGame(String),
+  CreateGame(String, Vec<MgmtGameUpdate>),
 //  AddPiece(Box<dyn PieceSpec>),
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+pub enum MgmtGameUpdate {
+  Noop { },
 }
 
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtResponse {
   Fine { },
-  Error(String),
+  Error(MgmtError),
+  ErrorAfter(usize, MgmtError),
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+pub enum MgmtGameUpdateMode {
+  Online,
+  Bulk,
 }
 
 #[derive(Debug,Error)]

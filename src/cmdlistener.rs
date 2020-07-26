@@ -65,7 +65,8 @@ type ME = MgmtError;
 #[throws(CSE)]
 fn decode_and_process(cs: &mut CommandStream, s: &str) {
   let resp = self::decode_process_inner(cs, s)
-    .unwrap_or_else(|e| MgmtResponse::Error(format!("{}", e)));
+    .unwrap_or_else(|e| MgmtResponse::Error(
+      MgmtError::ParseFailed(format!("{}", e))));
   serde_lexpr::to_writer(&mut cs.write, &resp)?;
 }
 
@@ -196,7 +197,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine { }
     },
 
-    CreateGame(name) => {
+    CreateGame(name, subcommands) => {
       let gs = GameState {
         pieces : Default::default(),
         players : Default::default(),
@@ -209,10 +210,19 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         scoped_name : name,
       };
 
-      cs.amu = Some(Instance::new(name, gs)?);
+      let ami = Instance::new(name, gs)?;
+      let g = ami.lock();
+
+      execute_for_game(cs, &ami, subcommands, MgmtGameUpdateMode::Bulk)
+        .map_err(|e|{
+          Instance::destroy(ami);
+          e
+        })?;
 
       Fine { }
     },
+
+    
 
     /*
     AddPiece(game, { pos,count,name,info }) => {
@@ -226,6 +236,105 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     }, // xxx*/
   }
 }
+
+struct UpdateHandlerBulk {
+  pieces : SecondarySlotMap<PieceId, PieceUpdateOp<()>>,
+}
+
+enum UpdateHandler {
+  Bulk(UpdateHandlerBulk),
+  Online,
+}
+
+impl UpdateHandler {
+  #[throws(SVGProcessingError)]
+  fn accumulate(&mut self, g: &mut Instance,
+                upieces: Vec<(PieceId,PieceUpdateOp<()>)>,
+                ulogs: Vec<LogEntry>) {
+    use UpdateHandler::*;
+    match self {
+      Bulk(bulk) => {
+        for (upiece, uuop) in upieces {
+          use PieceUpdateOp::*;
+          let ne = match (bulk.pieces.get(upiece), uuop) {
+            ( None               , e                  ) => e,
+            ( Some( Insert(()) ) , Some( Delete(()) ) ) => None,
+            ( Some( Insert(()) ) , _                  ) => Some( Insert(()) ),
+            ( Some( Delete(()) ) , _                  ) => Some( Modify(()) ),
+            ( _                  , _                  ) => Some( Modify(()) ),
+          };
+          match ne {
+            Some(ne) => bulk.pieces[upiece] = ne,
+            None     => bulk.pieces.remove(upiece),
+          };
+        }
+        let _logs = ulogs;
+      },
+      Online => {
+        let estimate = upieces.len() + ulogs.len();
+        let buf = PrepareUpdatesBuffer::new(g, None, Some(estimate));
+        for (upiece, uuop) in upieces {
+          let lens = TransparentLens { };
+          buf.piece_update(upiece, uuop, &lens)?;
+        }
+        buf.log_updates(ulogs)?;
+      },
+    }
+  }
+
+  #[throws(SVGProcessingError)]
+  fn complete(&mut self, g: &mut Instance) {
+    use UpdateHandler::*;
+    match self {
+      Bulk(bulk) => {
+        let buf = PrepareUpdatesBuffer::new(g, None, None);
+        for (upiece, uuop) in self.pieces {
+          let lens = TransparentLens { };
+          buf.piece_update(upiece, uuop, &lens)?;
+        }
+
+        buf.log_updates(LogEntry {
+          html: "The facilitator (re)configured the game".to_owned(),
+        })?;
+        },
+      Online => { },
+    }
+  }
+}
+
+#[throws(ME)]
+fn execute_for_game(cs: &CommandStream, amu: &InstanceRef,
+                    subcommands: Vec<MgmtGameUpdate>,
+                    how: MgmtGameUpdateMode) {
+  let g = amu.lock()?;
+  let mut subcommands = subcommands.drain.zip(0..);
+  let mut uh = UpdateHandler::from_how(how);
+  let response = 'subcommands: loop {
+
+    let (subcommand, index) = match subcommands.next() {
+      None => break 'subcommands Fine { },
+      Some(r) => r,
+    };
+
+    let (upieces, ulogs) = match execute_game_update(&mut g.gs, subcommand) {
+      Err(e) => break 'subcommands ErrorAfter(index, e),
+      Ok(r) => r,
+    };
+
+    uh.accumulate(upieces, ulogs)?;
+
+  };
+
+  uh.complete()?;
+}
+
+#[throws(ME)]
+fn execute_game_update(gs: &mut GameState, update: MgmtGameUpdate)
+                       -> (Vec<(PieceId,PieceUpdateOp<()>)>, Vec<LogEntry>) {
+  match update {
+  }
+}
+
 
 impl CommandListener {
   #[throws(StartupError)]

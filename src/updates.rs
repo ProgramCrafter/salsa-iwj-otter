@@ -161,14 +161,21 @@ pub struct PrepareUpdatesBuffer<'r> {
 }
 
 impl<'r> PrepareUpdatesBuffer<'r> {
-  pub fn new(g: &'r mut Instance, by_client: ClientId, cseq: ClientSequence,
-             estimate: usize) -> Self
+  pub fn new(g: &'r mut Instance,
+             by_client: Option<(ClientId, ClientSequence)>,
+             estimate: Option<usize>) -> Self
   {
+    let by_client = by_client.unwrap_or(
+      (Default::default(), ClientSequence(0))
+    );
+    let us = estimate.map(|e| Vec::with_capacity(e)).unwrap_or(vec![]);
+
     g.gs.gen.increment();
+
     PrepareUpdatesBuffer {
-      us: Vec::with_capacity(estimate),
       gen: g.gs.gen,
-      g, by_client, cseq,
+      by_client: by_client.0, cseq: by_client.1,
+      us, g,
     }
   }
 
