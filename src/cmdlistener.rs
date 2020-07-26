@@ -154,10 +154,11 @@ fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
       return y.into()
     },
     ManagementScope::Unix { user: wanted } => {
-      let y : AS<(
-        Authorised<(Passwd,uid_t)>, // caller_has
-        Authorised<File>,           // in_userlist:
-      )> = {
+      let y : AS<
+        Authorised<(Passwd,uid_t)>,
+      > = {
+        struct AuthorisedIf { authorized_for : Option<uid_t> };
+
         let pwent = Passwd::from_name(&wanted)
           .map_err(
             |e| anyhow!("looking up requested username {:?}: {:?}",
@@ -168,13 +169,15 @@ fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
               "requested username {:?} not found", &wanted
             ))
           )?;
-        let caller_has = cs.authorised_uid(Some(pwent.uid))?;
-        let in_userlist = (||{ <Result<_,anyhow::Error>>::Ok({
+
+        let userlist_info = (||{ <Result<_,anyhow::Error>>::Ok({
           let allowed = BufReader::new(File::open(USERLIST)?);
           allowed
             .lines()
             .filter_map(|le| match le {
-              Ok(l) if l.trim() == wanted => Some(Ok(Authorised::authorise())),
+              Ok(l) if l.trim() == wanted => Some(
+                Ok(AuthorisedIf{ authorized_for: Some(pwent.uid) })
+              ),
               Ok(_) => None,
               Err(e) => Some(<Result<_,anyhow::Error>>::Err(e.into())),
             })
@@ -184,8 +187,11 @@ fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
                              &wanted, USERLIST))
             )?
         })})()?;
-        ((caller_has,
-          in_userlist),
+
+        let AuthorisedIf{ authorized_for } = userlist_info;
+        let ok = cs.authorised_uid(authorized_for)?;
+
+        (ok,
          ManagementScope::Unix { user: pwent.name })
       };
       y.into()
