@@ -68,8 +68,9 @@ from_instance_lock_error!{MgmtError}
 #[throws(CSE)]
 fn decode_and_process(cs: &mut CommandStream, s: &str) {
   let resp = self::decode_process_inner(cs, s)
-    .unwrap_or_else(|e| MgmtResponse::Error(
-      MgmtError::ParseFailed(format!("{}", e))));
+    .unwrap_or_else(|e| MgmtResponse::Error {
+      error: MgmtError::ParseFailed(format!("{}", e))
+    });
   serde_lexpr::to_writer(&mut cs.write, &resp)?;
 }
 
@@ -191,7 +192,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
   match cmd {
     Noop { } => Fine { },
 
-    SetScope(wanted_scope) => {
+    SetScope{ scope: wanted_scope } => {
       let authorised : AuthorisedSatisfactory =
         authorise_scope(cs, &wanted_scope)
         .map_err(|e| cs.map_auth_err(e))
@@ -200,7 +201,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine { }
     },
 
-    CreateGame(name, subcommands) => {
+    CreateGame { name, insns } => {
       let gs = GameState {
         pieces : Default::default(),
         players : Default::default(),
@@ -216,7 +217,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       let gref = Instance::new(name, gs)?;
       let mut ig = gref.lock()?;
 
-      execute_for_game(cs, &mut ig, subcommands, MgmtGameUpdateMode::Bulk)
+      execute_for_game(cs, &mut ig, insns, MgmtGameUpdateMode::Bulk)
         .map_err(|e|{
           Instance::destroy(ig);
           e
@@ -318,19 +319,19 @@ impl UpdateHandler {
 
 #[throws(ME)]
 fn execute_for_game(cs: &CommandStream, ig: &mut InstanceGuard,
-                    mut subcommands: Vec<MgmtGameUpdate>,
+                    mut insns: Vec<MgmtGameInstruction>,
                     how: MgmtGameUpdateMode) -> MgmtResponse {
-  let mut subcommands = subcommands.drain(0..).zip(0..);
+  let mut insns = insns.drain(0..).zip(0..);
   let mut uh = UpdateHandler::from_how(how);
   let response = 'subcommands: loop {
 
-    let (subcommand, index) = match subcommands.next() {
+    let (insn, index) = match insns.next() {
       None => break 'subcommands Fine { },
       Some(r) => r,
     };
 
-    let (upieces, ulogs) = match execute_game_update(&mut ig.gs, subcommand) {
-      Err(e) => break 'subcommands ErrorAfter(index, e),
+    let (upieces, ulogs) = match execute_game_insn(&mut ig.gs, insn) {
+      Err(e) => break 'subcommands ErrorAfter { successes: index, error: e },
       Ok(r) => r,
     };
 
@@ -343,9 +344,9 @@ fn execute_for_game(cs: &CommandStream, ig: &mut InstanceGuard,
 }
 
 #[throws(ME)]
-fn execute_game_update(_gs: &mut GameState, update: MgmtGameUpdate)
-                       -> (Vec<(PieceId,PieceUpdateOp<()>)>, Vec<LogEntry>) {
-  use MgmtGameUpdate::*;
+fn execute_game_insn(_gs: &mut GameState, update: MgmtGameInstruction)
+                     -> (Vec<(PieceId,PieceUpdateOp<()>)>, Vec<LogEntry>) {
+  use MgmtGameInstruction::*;
   match update {
     Noop { } => (vec![], vec![]),
   }
