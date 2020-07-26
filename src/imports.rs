@@ -51,7 +51,7 @@ pub use rand::distributions::Alphanumeric;
 
 pub use slotmap::dense::DenseSlotMap;
 pub type SecondarySlotMap<K,V> = slotmap::secondary::SecondaryMap<K,V>;
-pub use index_vec::{define_index_type,index_vec,IndexVec};
+pub use index_vec::{define_index_type,index_vec,IndexVec,IndexSlice};
 
 pub use vecdeque_stableix::StableIndexVecDeque;
 
@@ -65,7 +65,9 @@ pub use crate::error::*;
 pub use crate::commands::*;
 pub use crate::slotmap_slot_idx::*;
 pub use crate::cmdlistener::*;
+pub use crate::spec::*;
 pub use crate::api::{Lens,TransparentLens};
+pub use crate::utils::OrdExt;
 
 pub use libc::uid_t;
 

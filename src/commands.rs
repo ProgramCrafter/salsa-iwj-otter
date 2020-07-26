@@ -11,7 +11,7 @@ pub enum MgmtCommand {
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtGameInstruction {
   Noop { },
-  //  AddPiece(Box<dyn PieceSpec>),
+  AddPiece(PiecesSpec),
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -35,7 +35,9 @@ pub enum MgmtError {
   AlreadyExists,
   GameBeingDestroyed,
   GameCorrupted,
+  LimitExceeded,
   SVGProcessingFailed(#[from] SVGProcessingError),
+  GameError(#[from] GameError),
 }
 display_as_debug!{MgmtError}
 

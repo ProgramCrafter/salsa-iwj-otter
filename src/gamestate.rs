@@ -10,6 +10,7 @@ slotmap::new_key_type!{
 }
 
 define_index_type! {
+  #[derive(Default)]
   pub struct FaceId = u8;
 }
 
@@ -24,7 +25,7 @@ visible_slotmap_key!{ VisiblePieceId('.') }
 #[derive(Serialize,Deserialize)]
 #[serde(into="f64")]
 #[serde(try_from="f64")]
-pub struct ZCoord(f64);
+pub struct ZCoord(pub f64);
 
 // ---------- general data types ----------
 
@@ -42,6 +43,7 @@ pub struct GameState {
   pub players : DenseSlotMap<PlayerId,PlayerState>,
   pub gen : Generation,
   pub log : Vec<(Generation,Arc<LogEntry>)>,
+  pub max_z : ZCoord,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -96,7 +98,9 @@ pub struct PieceRenderInstructions {
 
 #[typetag::serde(tag="type")]
 pub trait PieceSpec : Debug {
-  fn load(self) -> Result<Box<dyn Piece>,SE>;
+  fn load(&self) -> Result<Box<dyn Piece>,SE>;
+  fn resolve_spec_face(&self, face : Option<FaceId>)
+                       -> Result<FaceId,GameError>;
 }
 
 // ========== implementations ==========
@@ -202,5 +206,6 @@ pub fn xxx_gamestate_init() -> GameState {
     pieces.insert(pr);
   }
   GameState { pieces, gen, players : Default::default(),
+              max_z: ZCoord(0.),
               log : Default::default(), }
 }

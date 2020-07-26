@@ -11,7 +11,7 @@ const SAVE_DIRECTORY : &str = "save";
 
 visible_slotmap_key!{ ClientId('C') }
 
-#[derive(Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash,Deserialize)]
+#[derive(Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash,Serialize,Deserialize)]
 #[serde(transparent)]
 pub struct RawToken (pub String);
 

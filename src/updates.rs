@@ -184,8 +184,12 @@ impl<'r> PrepareUpdatesBuffer<'r> {
                       lens: &dyn Lens) {
     let gs = &mut self.g.gs;
 
+    // xxx check pos is within range,  everywhere
+
     let (update, piece) = match gs.pieces.byid_mut(piece) {
       Ok(pc) => {
+        gs.max_z.update_max(pc.zlevel.z);
+
         if self.by_client != pc.lastclient {
           pc.gen_before_lastclient = pc.gen;
           pc.lastclient = self.by_client;

@@ -110,11 +110,12 @@ impl Piece for SimpleShape {
 
 impl SimpleShape {
   fn new_from_path(desc: String, path: String, approx_dia: Coord,
-                   mut faces: Vec<ColourSpec>) -> Result<Box<dyn Piece>,SE> {
+                   faces: &IndexVec<FaceId,ColourSpec>)
+                   -> Result<Box<dyn Piece>,SE> {
     let scaled_path = svg_rescale_path(&path, SELECT_SCALE)?;
     let colours = faces
-      .iter_mut()
-      .map(|s| mem::take(s).try_into())
+      .iter()
+      .map(|s| s.try_into())
       .collect::<Result<_,SE>>()?;
     Ok(Box::new(SimpleShape {
       scaled_path, desc, approx_dia, path, colours,
@@ -127,45 +128,58 @@ impl SimpleShape {
 #[repr(transparent)]
 struct ColourSpec(String);
 
-impl TryFrom<ColourSpec> for Colour {
+impl TryFrom<&ColourSpec> for Colour {
   type Error = SE;
   #[throws(SE)]
-  fn try_from(spec: ColourSpec) -> Colour {
+  fn try_from(spec: &ColourSpec) -> Colour {
     // xxx check syntax
-    spec.0
+    spec.0.clone()
   }
 }
 
 #[derive(Debug,Serialize,Deserialize)]
 struct Disc {
   diam : Coord,
-  faces : Vec<ColourSpec>,
+  faces : IndexVec<FaceId,ColourSpec>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
 struct Square {
   size : Vec<Coord>,
-  faces : Vec<ColourSpec>,
+  faces : IndexVec<FaceId,ColourSpec>,
+}
+
+#[throws(GameError)]
+fn simple_resolve_spec_face(faces: &IndexSlice<FaceId,[ColourSpec]>,
+                            face: Option<FaceId>)
+                            -> FaceId {
+  let face = face.unwrap_or_default();
+  faces.get(face).ok_or(GameError::FaceNotFound)?;
+  face
 }
 
 #[typetag::serde]
 impl PieceSpec for Disc {
   #[throws(SE)]
-  fn load(self) -> Box<dyn Piece> {
+  fn load(&self) -> Box<dyn Piece> {
     let unit_path =
       "M 0 1  a 1 1 0 1 0 0 -2 \
               a 1 1 0 1 0 0  2  z";
     let scale = (self.diam as f64) * 0.5;
     let path = svg_rescale_path(&unit_path, scale)?;
     SimpleShape::new_from_path("circle".to_owned(), path, self.diam,
-                               self.faces)?
+                               &self.faces)?
+  }
+  #[throws(GameError)]
+  fn resolve_spec_face(&self, face: Option<FaceId>) -> FaceId {
+    simple_resolve_spec_face(&self.faces, face)?
   }
 }
 
 #[typetag::serde]
 impl PieceSpec for Square {
   #[throws(SE)]
-  fn load(self) -> Box<dyn Piece> {
+  fn load(&self) -> Box<dyn Piece> {
     let (x, y) = match self.size.as_slice() {
       &[s,] => (s,s),
       &[x, y] => (x,y),
@@ -173,7 +187,12 @@ impl PieceSpec for Square {
     };
     let path = format!("M {} {} h {} v {} h {} z",
                        -(x as f64)*0.5, -(y as f64)*0.5, x, y, -x);
-    SimpleShape::new_from_path("square".to_owned(), path, (x+y+1)/2, self.faces)?
+    SimpleShape::new_from_path("square".to_owned(), path, (x+y+1)/2,
+                               &self.faces)?
+  }
+  #[throws(GameError)]
+  fn resolve_spec_face(&self, face: Option<FaceId>) -> FaceId {
+    simple_resolve_spec_face(&self.faces, face)?
   }
 } 
 
@@ -182,12 +201,12 @@ pub fn xxx_make_pieces() -> Result<Vec<(Pos, Box<dyn Piece>)>,SE> {
     ([ 90, 80 ],
      Disc {
        diam : 20,
-       faces : vec![ ColourSpec("red".to_string()), ColourSpec("grey".to_string()) ],
+       faces : index_vec![ ColourSpec("red".to_string()), ColourSpec("grey".to_string()) ],
      }.load()?),
     ([ 90, 60 ],
      Square {
        size : vec![20],
-       faces : vec![ ColourSpec("blue".to_string()), ColourSpec("grey".to_string()) ],
+       faces : index_vec![ ColourSpec("blue".to_string()), ColourSpec("grey".to_string()) ],
      }.load()?),
   ])
 }

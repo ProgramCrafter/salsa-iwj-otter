@@ -207,6 +207,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         players : Default::default(),
         log : Default::default(),
         gen : Generation(0),
+        max_z: ZCoord(0.),
       };
 
       let name = InstanceName {
@@ -226,18 +227,8 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine { }
     },
 
-    
+//      let game = cs.lookup_game(&game)?;
 
-    /*
-    AddPiece(game, { pos,count,name,info }) => {
-      let game = cs.lookup_game(&game)?;
-      let count = spec.count.unwrap_or(1);
-      let pos = spec.ok_or(XXU("missing piece pos"))?;
-      let _xxx_name = spec.name;
-      let pc = info.load()?;
-      
-    }
-    }, // xxx*/
   }
 }
 
@@ -343,12 +334,47 @@ fn execute_for_game(cs: &CommandStream, ig: &mut InstanceGuard,
   response
 }
 
+const XXX_START_POS : Pos = [20,20];
+const XXX_DEFAULT_POSD : Pos = [5,5];
+
+const CREATE_PIECES_MAX : u32 = 300;
+
 #[throws(ME)]
-fn execute_game_insn(_gs: &mut GameState, update: MgmtGameInstruction)
+fn execute_game_insn(gs: &mut GameState, update: MgmtGameInstruction)
                      -> (Vec<(PieceId,PieceUpdateOp<()>)>, Vec<LogEntry>) {
   use MgmtGameInstruction::*;
   match update {
     Noop { } => (vec![], vec![]),
+
+    AddPiece(PiecesSpec{ pos,posd,count,face,info }) => {
+      let count = count.unwrap_or(1);
+      if count > CREATE_PIECES_MAX { throw!(LimitExceeded) }
+      let posd = posd.unwrap_or(XXX_DEFAULT_POSD);
+      let face = info.resolve_spec_face(face)?;
+
+      let mut updates = Vec::with_capacity(count as usize);
+      let mut pos = pos.unwrap_or(XXX_START_POS);
+      for _ in 0..count {
+        let p = info.load()?;
+        let z = ZCoord(gs.max_z.0 + (count + 1) as f64);
+        let pc = PieceState {
+          held: None,
+          zlevel: ZLevel { z, zg: gs.gen },
+          lastclient: Default::default(),
+          gen_before_lastclient: Generation(0),
+          gen: gs.gen,
+          pos, p, face,
+        };
+        let piece = gs.pieces.insert(pc);
+        updates.push((piece, PieceUpdateOp::Insert(())));
+        pos[0] += posd[0];
+        pos[1] += posd[1];
+      }
+
+      (updates, vec![ LogEntry {
+        html: format!("The facilitaror added {} pieces", count),
+      }])
+    },
   }
 }
 

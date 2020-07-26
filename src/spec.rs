@@ -3,37 +3,38 @@
 
 use crate::imports::*;
 
-#[derive(Debug,Deserialize)]
-struct GameSpec {
-  table : Pos,
-  players : Vec<PlayerSpec>,
-  pieces : Vec<PiecesSpec>,
+#[derive(Debug,Serialize,Deserialize)]
+pub struct GameSpec {
+  pub table : Pos,
+  pub players : Vec<PlayerSpec>,
+  pub pieces : Vec<PiecesSpec>,
 }
 
-#[derive(Debug,Deserialize)]
-struct PlayerSpec {
-  nick: String,
+#[derive(Debug,Serialize,Deserialize)]
+pub struct PlayerSpec {
+  pub nick: String,
   #[serde(flatten)]
-  access: Box<dyn PlayerAccessSpec>,
+  pub access: Box<dyn PlayerAccessSpec>,
 }
 
-#[derive(Debug,Deserialize)]
-struct PiecesSpec {
-  pos : Option<Pos>,
-  count : Option<u32>,
-  name : Option<String>,
+#[derive(Debug,Serialize,Deserialize)]
+pub struct PiecesSpec {
+  pub pos : Option<Pos>,
+  pub posd : Option<Pos>,
+  pub count : Option<u32>,
+  pub face : Option<FaceId>,
   #[serde(flatten)]
-  info : Box<dyn PieceSpec>,
+  pub info : Box<dyn PieceSpec>,
 }
 
-#[typetag::deserialize(tag="access")]
-trait PlayerAccessSpec : Debug {
+#[typetag::serde(tag="access")]
+pub trait PlayerAccessSpec : Debug {
   #[throws(OE)]
   fn make_token(&self) -> RawToken { RawToken::new_random()? }
   fn deliver_token(&mut self) -> Result<(),OE>;
 }
 
-#[typetag::deserialize]
+#[typetag::serde]
 impl PlayerAccessSpec for RawToken {
   #[throws(OE)]
   fn make_token(&self) -> RawToken { self.clone() }

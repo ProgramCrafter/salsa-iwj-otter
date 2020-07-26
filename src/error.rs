@@ -1,12 +1,13 @@
 
 use crate::imports::*;
 
-#[derive(Error,Debug)]
+#[derive(Error,Debug,Serialize,Deserialize)]
 #[error("operation error {:?}",self)]
 pub enum GameError {
   Conflict,
   PieceGone,
   PieceHeld,
+  FaceNotFound,
   InternalErrorSVG(#[from] SVGProcessingError),
 }
 
