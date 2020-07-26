@@ -64,6 +64,7 @@ pub use crate::error::*;
 pub use crate::commands::*;
 pub use crate::slotmap_slot_idx::*;
 pub use crate::cmdlistener::*;
+pub use crate::api::Lens;
 
 pub use libc::uid_t;
 

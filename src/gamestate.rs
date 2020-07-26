@@ -163,6 +163,7 @@ impl PieceState {
   pub fn prep_piecestate(&self, pri : &PieceRenderInstructions)
                          -> PreparedPieceState {
     PreparedPieceState {
+      piece      : pri.id,
       pos        : self.pos,
       held       : self.held,
       svg        : self.make_defs(pri)?,
