@@ -5,7 +5,7 @@ use crate::imports::*;
 pub enum MgmtCommand {
   Noop { },
   SetScope(ManagementScope),
-  AddPiece(Box<dyn PieceSpec>),
+//  AddPiece(Box<dyn PieceSpec>),
 }
 
 #[derive(Debug,Serialize,Deserialize)]
