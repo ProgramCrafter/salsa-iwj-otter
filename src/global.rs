@@ -177,6 +177,14 @@ impl Instance {
     gref
   }
 
+  #[throws(MgmtError)]
+  pub fn lookup_by_name(name: &InstanceName) -> InstanceRef {
+    GLOBAL.games.read().unwrap()
+      .get(name)
+      .ok_or(MgmtError::GameNotFound)?
+      .clone()
+  }
+
   pub fn destroy(mut g: InstanceGuard) {
     g.c.live = false;
     // remove the files

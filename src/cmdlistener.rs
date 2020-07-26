@@ -251,6 +251,16 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       GamesList { games }
     },
 
+    AlterGame { name, insns, how} => {
+      let name = InstanceName {
+        scope: cs.get_scope()?.clone(),
+        scoped_name: name
+      };
+      let gref = Instance::lookup_by_name(&name)?;
+      let mut g = gref.lock()?;
+      execute_for_game(cs, &mut g, insns, how)?
+    },
+
   }
 }
 

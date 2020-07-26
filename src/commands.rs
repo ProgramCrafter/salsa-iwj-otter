@@ -7,6 +7,10 @@ pub enum MgmtCommand {
   SetScope { scope: ManagementScope },
   CreateGame { name: String, insns: Vec<MgmtGameInstruction> },
   ListGames { all: Option<bool>, },
+  AlterGame {
+    name: String, insns: Vec<MgmtGameInstruction>,
+    how: MgmtGameUpdateMode,
+  },
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -36,6 +40,7 @@ pub enum MgmtError {
   NoScope,
   AlreadyExists,
   GameBeingDestroyed,
+  GameNotFound,
   GameCorrupted,
   LimitExceeded,
   SVGProcessingFailed(#[from] SVGProcessingError),
