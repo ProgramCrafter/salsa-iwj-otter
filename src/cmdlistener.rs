@@ -104,9 +104,6 @@ impl CommandStream<'_> {
 fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
                    -> AuthorisedSatisfactory {
   type AS<T> = (T, ManagementScope);
-//  fn AS<T>(a:T, s:ManagementScope) -> AuthorisedScope<T>
-//  { AuthorisedScope(a,s) }
-  use fs::File;
 
   match &wanted {
     ManagementScope::XXX => {
