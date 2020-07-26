@@ -47,8 +47,7 @@ failure = "0.1.8" # for pwd
 
 libc = "0.2"
 
-serde-lexpr = "0.1" #xxx
-ron = "0.6"
+serde-lexpr = "0.1"
 
 #rocket = "0.4"
 rocket_contrib = { version = "0.4", default-features=false, features=["tera_templates","helmet","json"], git = "file:///home/ian/Rustup/Game/rocket/.git" branch = "Game-rocket-contrib" }
