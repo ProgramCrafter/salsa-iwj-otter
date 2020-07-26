@@ -6,7 +6,7 @@ pub enum MgmtCommand {
   Noop { },
   SetScope { scope: ManagementScope },
   CreateGame { name: String, insns: Vec<MgmtGameInstruction> },
-  ListGames { },
+  ListGames { all: Option<bool>, },
 }
 
 #[derive(Debug,Serialize,Deserialize)]

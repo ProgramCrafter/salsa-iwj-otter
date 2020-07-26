@@ -106,8 +106,15 @@ impl CommandStream<'_> {
   }
 }
 
-#[throws(AuthorisationError)]
+#[throws(MgmtError)]
 fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
+                   -> AuthorisedSatisfactory {
+  do_authorise_scope(cs, wanted)
+    .map_err(|e| cs.map_auth_err(e))?
+}
+
+#[throws(AuthorisationError)]
+fn do_authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
                    -> AuthorisedSatisfactory {
   type AS<T> = (T, ManagementScope);
 
@@ -194,9 +201,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
     SetScope{ scope: wanted_scope } => {
       let authorised : AuthorisedSatisfactory =
-        authorise_scope(cs, &wanted_scope)
-        .map_err(|e| cs.map_auth_err(e))
-        ?;
+        authorise_scope(cs, &wanted_scope)?;
       cs.scope = Some(authorised.into_inner());
       Fine { }
     },
@@ -227,14 +232,19 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine { }
     },
 
-    ListGames { } => {
-      let scope = cs.scope.as_ref().ok_or(NoScope)?;
-      let mut games = list_games(Some(scope));
+    ListGames { all } => {
+      let scope = if all == Some(true) {
+        let _authorise : AuthorisedSatisfactory =
+          authorise_scope(cs, &ManagementScope::Server)?;
+        None
+      } else {
+        let scope = cs.scope.as_ref().ok_or(NoScope)?;
+        Some(scope)
+      };
+      let mut games = list_games(scope);
       games.sort_unstable();
       GamesList { games }
     },
-
-//      let game = cs.lookup_game(&game)?;
 
   }
 }
