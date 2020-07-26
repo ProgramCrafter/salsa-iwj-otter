@@ -106,6 +106,7 @@ fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
   type AS<T> = (T, ManagementScope);
 
   match &wanted {
+
     ManagementScope::XXX => {
       let y : AS<
         Authorised<(Passwd,uid_t)>,
@@ -116,6 +117,7 @@ fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
       };
       return y.into()
     },
+
     ManagementScope::Unix { user: wanted } => {
       let y : AS<
         Authorised<(Passwd,uid_t)>,
@@ -133,7 +135,7 @@ fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
             ))
           )?;
 
-        let (in_userlist, xinfo) = (||{ <Result<(_,Option<String>),anyhow::Error>>::Ok({
+        let (in_userlist, xinfo) = (||{ <Result<_,AE>>::Ok({
           let allowed = BufReader::new(match File::open(USERLIST) {
             Err(e) if e.kind() == ErrorKind::NotFound => {
               return Ok((
@@ -153,7 +155,7 @@ fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
                 ))
               ),
               Ok(_) => None,
-              Err(e) => Some(<Result<_,anyhow::Error>>::Err(e.into())),
+              Err(e) => Some(<Result<_,AE>>::Err(e.into())),
             })
             .next()
             .unwrap_or_else(
@@ -172,7 +174,8 @@ fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
          ManagementScope::Unix { user: pwent.name })
       };
       y.into()
-    }
+    },
+
   }
 }
 
@@ -190,7 +193,8 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         ?;
       cs.scope = Some(authorised.into_inner());
       Fine { }
-    }
+    },
+
 /*
     CreateGame(game) => {
       
@@ -256,7 +260,7 @@ impl CommandListener {
           let show_username =
             pwent.map_or_else(|| format!("<euid {}>", euid),
                               |p| p.name);
-          <Result<String,anyhow::Error>>::Ok(show_username)
+          <Result<_,AE>>::Ok(show_username)
         })().unwrap_or_else(|e| format!("<error: {}>", e));
         write!(&mut desc, " user={}", user_desc)?;
 
