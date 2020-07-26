@@ -433,6 +433,20 @@ pieceops.Modify = <PieceHandler>function
   redisplay_ancillaries(piece,p);
   console.log('MODIFY DONE');
 }
+/*
+pieceops.Insert = <PieceHandler>function
+(piece: PieceId, p: null,
+ info: { svg: string, held: PlayerId, pos: Pos, z: number, zg: Generation}) {
+  console.log('PIECE UPDATE INSERT ',piece,info)
+  delem = document.createElementNS(svg_ns,'defs');
+  delem.setAttributeNS(null,'id','defs'+piece);
+  delem.innerHTML = info.svg;
+  space.appendChild(delem);
+  pelem = 
+
+  nelem.setAttributeNS(null,'stroke',stroke);
+  nelem.setAttributeNS(null,'fill','none');
+*/
 
 function piece_set_zlevel(piece: PieceId, p: PieceInfo,
 			  modify : (oldtop_piece: PieceId) => void) {
