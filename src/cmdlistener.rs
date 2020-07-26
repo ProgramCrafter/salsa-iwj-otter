@@ -23,21 +23,22 @@ pub struct CommandListener {
 
 type CSWrite = BufWriter<UnixStream>;
 
-struct CommandStream {
+struct CommandStream<'d> {
   euid : Result<u32, anyhow::Error>,
   read : io::Lines<BufReader<UnixStream>>,
   write : CSWrite,
   scope : Option<ManagementScope>,
+  desc : &'d str,
 }
 
 type CSE = anyhow::Error;
 
-impl CommandStream {
+impl CommandStream<'_> {
   #[throws(CSE)]
   pub fn mainloop(mut self) {
     for l in &mut self.read {
       let l = l.context("read")?;
-      decode_and_process(&l, &mut self.write)?;
+      decode_and_process(&mut self, &l)?;
       write!(&mut self.write, "\n")?;
       self.write.flush()?;
     }
@@ -57,69 +58,145 @@ use MgmtError::*;
 type ME = MgmtError;
 
 #[throws(CSE)]
-pub fn decode_and_process(s: &str, w: &mut CSWrite) {
-  let resp = self::decode_process_inner(s)
+pub fn decode_and_process(cs: &mut CommandStream, s: &str) {
+  let resp = self::decode_process_inner(cs, s)
     .unwrap_or_else(|e| MgmtResponse::Error(format!("{}", e)));
-  serde_lexpr::to_writer(w, &resp)?;
+  serde_lexpr::to_writer(&mut cs.write, &resp)?;
 }
 
 #[throws(ME)]
-fn decode_process_inner(s: &str)-> MgmtResponse {
+fn decode_process_inner(cs: &mut CommandStream, s: &str)-> MgmtResponse {
   let cmd : MgmtCommand = serde_lexpr::from_str(s)?;
-  execute(cmd)?
+  execute(cs, cmd)?
 }
 
 const USERLIST : &str = "/etc/userlist";
 
-struct Authorized<T>;
+#[derive(Error,Debug)]
+#[error("internal AuthorisationError {0}")]
+struct AuthorisationError(String);
 
-fn authorize_scope(cs: &CommandStream, wanted: &ManagementScope) {
-  type AS = AuthorizedScope;
-  
+struct Authorised<A> (PhantomData<A>);
+//struct AuthorisedScope<A> (Authorised<A>, ManagementScope);
+struct AuthorisedSatisfactory (ManagementScope);
+use libc::uid_t;
+
+impl AuthorisedSatisfactory {
+  fn into_inner(self) -> ManagementScope { self.0 }
+}
+
+impl<T> Authorised<T> {
+  fn authorise() -> Authorised<T> { Authorised(PhantomData) }
+}
+
+impl<T> From<(Authorised<T>, ManagementScope)> for AuthorisedSatisfactory {
+  fn from((_,s): (Authorised<T>, ManagementScope)) -> Self { Self(s) }
+}
+impl<T,U> From<((Authorised<T>, Authorised<U>), ManagementScope)> for AuthorisedSatisfactory {
+  fn from(((..),s): ((Authorised<T>, Authorised<U>), ManagementScope)) -> Self { Self(s) }
+}
+
+impl From<anyhow::Error> for AuthorisationError {
+  fn from(a: anyhow::Error) -> AuthorisationError {
+    AuthorisationError(format!("{}",a))
+  }
+}
+
+impl CommandStream<'_> {
+  #[throws(AuthorisationError)]
+  fn authorised_uid(&self, wanted: Option<uid_t>)
+                    -> Authorised<(Passwd,uid_t)> {
+    let client_euid = self.euid.context("client euid")?;
+    let server_euid = unsafe { libc::getuid() };
+    if client_euid == 0 ||
+       client_euid == server_euid ||
+       Some(client_euid) == wanted
+    {
+      return Authorised::authorise();
+    }
+    Err(anyhow!("{}: euid mismatch: client={:?} server={:?} wanted={:?}",
+                &self.desc, client_euid, server_euid, wanted))?
+  }
+
+  fn map_auth_err(&self, ae: AuthorisationError) -> MgmtError {
+    eprintln!("command connection {}: authorisation error: {:?}",
+              self.desc, ae.0);
+    return MgmtError::AuthorisationError;
+  }
+}
+
+#[throws(AuthorisationError)]
+fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
+                   -> AuthorisedSatisfactory {
+  type AS<T> = (T, ManagementScope);
+//  fn AS<T>(a:T, s:ManagementScope) -> AuthorisedScope<T>
+//  { AuthorisedScope(a,s) }
+  use fs::File;
+
   match &wanted {
     ManagementScope::XXX => {
-      let y : AS<(
-        Authorized<(Passwd,uid_t)>,
-      )> = {
-        let our_euid = unsafe { libc::getuid() };
-        let ok = cs.authorized_uid(our_euid)?;
-        AS((ok,),
-           ManagementScope::XXX)
+      let y : AS<
+        Authorised<(Passwd,uid_t)>,
+      > = {
+        let ok = cs.authorised_uid(None)?;
+        (ok,
+         ManagementScope::XXX)
       };
-      y.into()
+      return y.into()
     },
-    Unix(user) => {
+    ManagementScope::Unix { user: wanted } => {
       let y : AS<(
-        Authorized<(Passwd,uid_t)>, // caller_has
-        Authorized<File>,           // in_userlist:
+        Authorised<(Passwd,uid_t)>, // caller_has
+        Authorised<File>,           // in_userlist:
       )> = {
-        let pwent = Passwd::from_name(user)?;
-        let caller_has = cs.authorized_uid(pwent.uid)?;
-        let found = (||{
-          let allowed = File::open(USERLIST)?;
-          let found = allowed.lines()?.map(|l| l.trim() == user).any();
-          Ok(found)
-        })?;
-        let in_userlist = Authorized::from_bool(USERLIST)?;
-        AS((caller_has, in_userlist),
-           ManagementScope::Unix(pwent.username))
+        let pwent = Passwd::from_name(&wanted)
+          .map_err(
+            |e| anyhow!("looking up requested username {:?}: {:?}",
+                        &wanted, &e)
+          )?
+          .ok_or_else(
+            || AuthorisationError(format!(
+              "requested username {:?} not found", &wanted
+            ))
+          )?;
+        let caller_has = cs.authorised_uid(Some(pwent.uid))?;
+        let in_userlist = (||{ <Result<_,anyhow::Error>>::Ok({
+          let allowed = BufReader::new(File::open(USERLIST)?);
+          allowed
+            .lines()
+            .filter_map(|le| match le {
+              Ok(l) if l.trim() == wanted => Some(Ok(Authorised::authorise())),
+              Ok(_) => None,
+              Err(e) => Some(<Result<_,anyhow::Error>>::Err(e.into())),
+            })
+            .next()
+            .unwrap_or_else(
+              || Err(anyhow!("requested username {:?} not in {:?}",
+                             &wanted, USERLIST))
+            )?
+        })})()?;
+        ((caller_has,
+          in_userlist),
+         ManagementScope::Unix { user: pwent.name })
       };
       y.into()
     }
-  };
+  }
 }
 
 #[throws(ME)]
 fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
-  use MgmtError::*;
+//  use MgmtError::*;
 
   match cmd {
     Noop { } => Fine { },
 
-    Scope(wanted_scope) => {
-      let (_, authorized) : (AuthorizedConclusion, ManagementScope) =
-        authorize_scope(cs, &wanted_scope)?;
-      cs.scope = authorized;
+    SetScope(wanted_scope) => {
+      let authorised : AuthorisedSatisfactory =
+        authorise_scope(cs, &wanted_scope)
+        .map_err(|e| cs.map_auth_err(e))
+        ?;
+      cs.scope = Some(authorised.into_inner());
       Fine { }
     }
 /*
@@ -197,7 +274,10 @@ impl CommandListener {
         let write = conn;
         let write = BufWriter::new(write);
 
-        let cs = CommandStream { read, write, euid };
+        let cs = CommandStream {
+          scope: None, desc: &desc,
+          read, write, euid,
+        };
         cs.mainloop()?;
         
         <Result<_,StartupError>>::Ok(())

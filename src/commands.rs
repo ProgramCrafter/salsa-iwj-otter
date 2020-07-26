@@ -4,6 +4,7 @@ use crate::imports::*;
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtCommand {
   Noop { },
+  SetScope(ManagementScope),
   AddPiece(Box<dyn PieceSpec>),
 }
 
@@ -16,7 +17,7 @@ pub enum MgmtResponse {
 #[derive(Debug,Error)]
 pub enum MgmtError {
   ParseFailed(String),
-  SetScope(ManagementScope),
+  AuthorisationError,
   XXXU(&'static str),
 }
 display_as_debug!{MgmtError}
