@@ -23,8 +23,12 @@ pub struct CommandListener {
 
 type CSWrite = BufWriter<UnixStream>;
 
+#[derive(Debug,Error,Clone)]
+#[error("connection euid lookup failed (at connection initiation): {0}")]
+pub struct ConnectionEuidDiscoverEerror(String);
+
 struct CommandStream<'d> {
-  euid : Result<u32, anyhow::Error>,
+  euid : Result<u32, ConnectionEuidDiscoverEerror>,
   read : io::Lines<BufReader<UnixStream>>,
   write : CSWrite,
   scope : Option<ManagementScope>,
@@ -58,7 +62,7 @@ use MgmtError::*;
 type ME = MgmtError;
 
 #[throws(CSE)]
-pub fn decode_and_process(cs: &mut CommandStream, s: &str) {
+fn decode_and_process(cs: &mut CommandStream, s: &str) {
   let resp = self::decode_process_inner(cs, s)
     .unwrap_or_else(|e| MgmtResponse::Error(format!("{}", e)));
   serde_lexpr::to_writer(&mut cs.write, &resp)?;
@@ -101,12 +105,17 @@ impl From<anyhow::Error> for AuthorisationError {
     AuthorisationError(format!("{}",a))
   }
 }
+impl From<ConnectionEuidDiscoverEerror> for AuthorisationError {
+  fn from(e: ConnectionEuidDiscoverEerror) -> AuthorisationError {
+    AuthorisationError(format!("{}",e))
+  }
+}
 
 impl CommandStream<'_> {
   #[throws(AuthorisationError)]
   fn authorised_uid(&self, wanted: Option<uid_t>)
                     -> Authorised<(Passwd,uid_t)> {
-    let client_euid = self.euid.context("client euid")?;
+    let client_euid = *self.euid.as_ref().map_err(|e| e.clone())?;
     let server_euid = unsafe { libc::getuid() };
     if client_euid == 0 ||
        client_euid == server_euid ||
@@ -119,7 +128,7 @@ impl CommandStream<'_> {
   }
 
   fn map_auth_err(&self, ae: AuthorisationError) -> MgmtError {
-    eprintln!("command connection {}: authorisation error: {:?}",
+    eprintln!("command connection {}: authorisation error: {}",
               self.desc, ae.0);
     return MgmtError::AuthorisationError;
   }
@@ -248,8 +257,8 @@ impl CommandListener {
     thread::spawn(move||{
       match (||{
         let euid = conn.initial_peer_credentials()
-          .context("initial_peer_credentials")
-          .map(|creds| creds.euid());
+          .map(|creds| creds.euid())
+          .map_err(|e| ConnectionEuidDiscoverEerror(format!("{}", e)));
 
         #[derive(Error,Debug)]
         struct EuidLookupError(String);
@@ -259,13 +268,13 @@ impl CommandListener {
         }
 
         let user_desc : String = (||{
-          let euid = *(euid.as_ref()?);
+          let euid = euid.clone()?;
           let pwent = Passwd::from_uid(euid);
           let show_username =
             pwent.map_or_else(|| format!("<euid {}>", euid),
                               |p| p.name);
-          <Result<String,EuidLookupError>>::Ok(show_username)
-        })().unwrap_or_else(|e| format!("<error: {}>", e.0));
+          <Result<String,anyhow::Error>>::Ok(show_username)
+        })().unwrap_or_else(|e| format!("<error: {}>", e));
         write!(&mut desc, " user={}", user_desc)?;
 
         let read = conn.try_clone().context("dup the command stream")?;
