@@ -59,7 +59,7 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
 //  thread::sleep(Duration::from_millis(2000));
   let iad = lookup_token(&form.ctoken)?;
   let client = iad.ident;
-  let mut g = iad.g.lock()?;
+  let mut g = iad.gref.lock()?;
   let g = &mut *g;
   let cl = &g.clients.byid(client)?;
   // ^ can only fail if we raced

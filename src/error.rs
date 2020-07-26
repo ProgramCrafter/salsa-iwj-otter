@@ -1,8 +1,6 @@
 
 use crate::imports::*;
 
-use std::sync::PoisonError;
-
 #[derive(Error,Debug)]
 #[error("operation error {:?}",self)]
 pub enum GameError {
@@ -35,15 +33,30 @@ pub enum OnlineError {
   #[error("Server MessagePack decoding error (game load failed) {0:?}")]
   ServerMessagePackDecodeFail(#[from] rmp_serde::decode::Error),
 }
+from_instance_lock_error!{OnlineError}
 
 pub type StartupError = anyhow::Error;
 
 pub use OnlineError::{NoClient,NoPlayer};
 
-use OnlineError::*;
-
-impl<X> From<PoisonError<X>> for OnlineError {
-  fn from(_: PoisonError<X>) -> OnlineError { GameCorrupted }
+#[derive(Error,Debug)]
+pub enum InstanceLockError {
+  GameCorrupted,
+  GameBeingDestroyed,
+}
+#[macro_export]
+macro_rules! from_instance_lock_error {
+  ($into:ident) => {
+    impl From<InstanceLockError> for $into {
+      fn from(e: InstanceLockError) -> $into {
+        use InstanceLockError::*;
+        match e {
+          GameCorrupted      => $into::GameCorrupted,
+          GameBeingDestroyed => $into::GameBeingDestroyed,
+        }
+      }
+    }
+  }
 }
 
 pub trait ById {

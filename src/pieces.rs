@@ -14,7 +14,7 @@ struct SimpleShape {
 
 const SELECT_SCALE : f64 = 1.1;
 
-#[derive(Copy,Clone,Debug,Error)]
+#[derive(Copy,Clone,Debug,Error,Serialize,Deserialize)]
 pub enum SVGProcessingError {
   UnknownOperator,
   BadNumber,

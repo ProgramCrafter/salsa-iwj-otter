@@ -19,7 +19,7 @@ impl<'r> Responder<'r> for OnlineError {
         | ServerMessagePackEncodeFail(_)
         | ServerMessagePackDecodeFail(_)
         => Status::InternalServerError,
-      NoClient | NoPlayer => Status::NotFound,
+      NoClient | NoPlayer | GameBeingDestroyed => Status::NotFound,
       InvalidZCoord => Status::BadRequest,
     };
     let mut resp = Responder::respond_to(msg,req).unwrap();

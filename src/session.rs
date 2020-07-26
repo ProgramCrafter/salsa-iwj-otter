@@ -47,12 +47,12 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
   let iad = lookup_token(&form.ptoken)?;
   let player = iad.ident;
   let c = {
-    let mut ig = Instance::lock(&iad.g)?;
+    let mut ig = iad.gref.lock()?;
     let cl = Client { player };
     let client = ig.clients.insert(cl);
 
     let ciad = InstanceAccessDetails {
-      g : iad.g.clone(),
+      gref : iad.gref.clone(),
       ident : client,
     };
     let ctoken = record_token(&mut ig, ciad)?;

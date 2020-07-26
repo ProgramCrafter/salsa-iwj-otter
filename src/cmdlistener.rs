@@ -1,6 +1,8 @@
 
 #![allow(dead_code)]
 
+pub use crate::from_instance_lock_error;
+
 use crate::imports::*;
 
 //use std::os::unix::prelude;
@@ -61,6 +63,7 @@ use MgmtResponse::*;
 use MgmtError::*;
 
 type ME = MgmtError;
+from_instance_lock_error!{MgmtError}
 
 #[throws(CSE)]
 fn decode_and_process(cs: &mut CommandStream, s: &str) {
@@ -210,12 +213,12 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         scoped_name : name,
       };
 
-      let ami = Instance::new(name, gs)?;
-      let g = ami.lock();
+      let gref = Instance::new(name, gs)?;
+      let mut ig = gref.lock()?;
 
-      execute_for_game(cs, &ami, subcommands, MgmtGameUpdateMode::Bulk)
+      execute_for_game(cs, &mut ig, subcommands, MgmtGameUpdateMode::Bulk)
         .map_err(|e|{
-          Instance::destroy(ami);
+          Instance::destroy(ig);
           e
         })?;
 
@@ -237,16 +240,26 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
   }
 }
 
+#[derive(Debug,Default)]
 struct UpdateHandlerBulk {
   pieces : SecondarySlotMap<PieceId, PieceUpdateOp<()>>,
 }
 
+#[derive(Debug)]
 enum UpdateHandler {
   Bulk(UpdateHandlerBulk),
   Online,
 }
 
 impl UpdateHandler {
+  fn from_how(how: MgmtGameUpdateMode) -> Self {
+    use UpdateHandler::*;
+    match how {
+      MgmtGameUpdateMode::Bulk => Bulk(Default::default()),
+      MgmtGameUpdateMode::Online => Online,
+    }
+  }
+
   #[throws(SVGProcessingError)]
   fn accumulate(&mut self, g: &mut Instance,
                 upieces: Vec<(PieceId,PieceUpdateOp<()>)>,
@@ -257,22 +270,22 @@ impl UpdateHandler {
         for (upiece, uuop) in upieces {
           use PieceUpdateOp::*;
           let ne = match (bulk.pieces.get(upiece), uuop) {
-            ( None               , e                  ) => e,
-            ( Some( Insert(()) ) , Some( Delete(()) ) ) => None,
-            ( Some( Insert(()) ) , _                  ) => Some( Insert(()) ),
-            ( Some( Delete(()) ) , _                  ) => Some( Modify(()) ),
-            ( _                  , _                  ) => Some( Modify(()) ),
+            ( None               , e        ) => Some( e          ),
+            ( Some( Insert(()) ) , Delete() ) => None,
+            ( Some( Insert(()) ) , _        ) => Some( Insert(()) ),
+            ( Some( Delete(  ) ) , _        ) => Some( Modify(()) ),
+            ( _                  , _        ) => Some( Modify(()) ),
           };
           match ne {
-            Some(ne) => bulk.pieces[upiece] = ne,
-            None     => bulk.pieces.remove(upiece),
+            Some(ne) => { bulk.pieces[upiece] = ne; },
+            None     => { bulk.pieces.remove(upiece); },
           };
         }
         let _logs = ulogs;
       },
       Online => {
         let estimate = upieces.len() + ulogs.len();
-        let buf = PrepareUpdatesBuffer::new(g, None, Some(estimate));
+        let mut buf = PrepareUpdatesBuffer::new(g, None, Some(estimate));
         for (upiece, uuop) in upieces {
           let lens = TransparentLens { };
           buf.piece_update(upiece, uuop, &lens)?;
@@ -283,19 +296,20 @@ impl UpdateHandler {
   }
 
   #[throws(SVGProcessingError)]
-  fn complete(&mut self, g: &mut Instance) {
+  fn complete(self, _cs: &CommandStream, g: &mut InstanceGuard) {
     use UpdateHandler::*;
     match self {
       Bulk(bulk) => {
-        let buf = PrepareUpdatesBuffer::new(g, None, None);
-        for (upiece, uuop) in self.pieces {
+        let mut buf = PrepareUpdatesBuffer::new(g, None, None);
+        for (upiece, uuop) in bulk.pieces {
           let lens = TransparentLens { };
           buf.piece_update(upiece, uuop, &lens)?;
         }
 
-        buf.log_updates(LogEntry {
+        buf.log_updates(vec![LogEntry {
           html: "The facilitator (re)configured the game".to_owned(),
-        })?;
+          // xxx use cs.desc
+        }])?;
         },
       Online => { },
     }
@@ -303,11 +317,10 @@ impl UpdateHandler {
 }
 
 #[throws(ME)]
-fn execute_for_game(cs: &CommandStream, amu: &InstanceRef,
-                    subcommands: Vec<MgmtGameUpdate>,
-                    how: MgmtGameUpdateMode) {
-  let g = amu.lock()?;
-  let mut subcommands = subcommands.drain.zip(0..);
+fn execute_for_game(cs: &CommandStream, ig: &mut InstanceGuard,
+                    mut subcommands: Vec<MgmtGameUpdate>,
+                    how: MgmtGameUpdateMode) -> MgmtResponse {
+  let mut subcommands = subcommands.drain(0..).zip(0..);
   let mut uh = UpdateHandler::from_how(how);
   let response = 'subcommands: loop {
 
@@ -316,22 +329,25 @@ fn execute_for_game(cs: &CommandStream, amu: &InstanceRef,
       Some(r) => r,
     };
 
-    let (upieces, ulogs) = match execute_game_update(&mut g.gs, subcommand) {
+    let (upieces, ulogs) = match execute_game_update(&mut ig.gs, subcommand) {
       Err(e) => break 'subcommands ErrorAfter(index, e),
       Ok(r) => r,
     };
 
-    uh.accumulate(upieces, ulogs)?;
+    uh.accumulate(ig, upieces, ulogs)?;
 
   };
 
-  uh.complete()?;
+  uh.complete(cs,ig)?;
+  response
 }
 
 #[throws(ME)]
-fn execute_game_update(gs: &mut GameState, update: MgmtGameUpdate)
+fn execute_game_update(_gs: &mut GameState, update: MgmtGameUpdate)
                        -> (Vec<(PieceId,PieceUpdateOp<()>)>, Vec<LogEntry>) {
+  use MgmtGameUpdate::*;
   match update {
+    Noop { } => (vec![], vec![]),
   }
 }
 

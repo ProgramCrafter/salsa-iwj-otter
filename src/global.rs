@@ -2,6 +2,8 @@
 use crate::imports::*;
 use lazy_static::lazy_static;
 
+use std::sync::PoisonError;
+
 #[allow(dead_code)]
 const SAVE_DIRECTORY : &str = "save";
 
@@ -21,11 +23,18 @@ pub struct InstanceName {
   pub scope: ManagementScope,
   pub scoped_name: String,
 }
-pub type InstanceRef = Arc<Mutex<Instance>>;
+
+#[derive(Debug,Clone)]
+pub struct InstanceRef (Arc<Mutex<InstanceContainer>>);
+
+#[derive(Debug)]
+pub struct InstanceContainer {
+  live : bool,
+  g : Instance,
+}
 
 #[derive(Debug)]
 pub struct Instance {
-  pub live : bool,
   pub name : Arc<InstanceName>,
   pub gs : GameState,
   pub clients : DenseSlotMap<ClientId,Client>,
@@ -48,8 +57,8 @@ pub struct Client {
 
 #[derive(Debug)]
 pub struct InstanceGuard<'g> {
-  ig : MutexGuard<'g,Instance>,
-  amu : Arc<Mutex<Instance>>,
+  pub c : MutexGuard<'g,InstanceContainer>,
+  pub gref : InstanceRef,
 }
 
 #[derive(Default)]
@@ -72,11 +81,16 @@ struct InstanceSaveAccesses<RawTokenStr> {
   tokens_players : Vec<(RawTokenStr, PlayerId)>,
 }
 
+display_as_debug!{InstanceLockError}
+impl<X> From<PoisonError<X>> for InstanceLockError {
+  fn from(_: PoisonError<X>) -> Self { Self::GameCorrupted }
+}
+
 // ---------- API ----------
 
 #[derive(Clone,Debug)]
 pub struct InstanceAccessDetails<Id> {
-  pub g : Arc<Mutex<Instance>>,
+  pub gref : InstanceRef,
   pub ident : Id,
 }
 
@@ -116,14 +130,22 @@ lazy_static! {
 
 // ---------- Player and instance API ----------
 
+impl InstanceRef {
+  #[throws(InstanceLockError)]
+  pub fn lock<'g>(&'g self) -> InstanceGuard<'g> {
+    let c = self.0.lock()?;
+    if !c.live { throw!(InstanceLockError::GameBeingDestroyed) }
+    InstanceGuard { c, gref: self.clone() }
+  }
+}
+
 impl Instance {
   /// Returns `None` if a game with this name already exists
   #[throws(MgmtError)]
   pub fn new(name: InstanceName, gs: GameState) -> InstanceRef {
     let name = Arc::new(name);
 
-    let inst = Instance {
-      live : true,
+    let g = Instance {
       name : name.clone(),
       gs,
       clients : Default::default(),
@@ -131,6 +153,13 @@ impl Instance {
       tokens_players : Default::default(),
       tokens_clients : Default::default(),
     };
+
+    let cont = InstanceContainer {
+      live : true,
+      g,
+    };
+
+    let gref = InstanceRef(Arc::new(Mutex::new(cont)));
 
     let mut games = GLOBAL.games.write().unwrap();
     let entry = games.entry(name);
@@ -141,20 +170,15 @@ impl Instance {
       Occupied(_) => throw!(MgmtError::AlreadyExists),
     };
 
-    let ami = Arc::new(Mutex::new(inst));
-    entry.insert(ami.clone());
-    ami
+    entry.insert(gref.clone());
+
+    // xxx save, but first release the GLOBAL.games lock
+
+    gref
   }
 
-  #[throws(OE)]
-  pub fn lock<'g>(amu : &'g Arc<Mutex<Instance>>) -> InstanceGuard<'g> {
-    let ig = amu.lock()?;
-    if !ig.live { throw!(OnlineError::GameBeingDestroyed) }
-    InstanceGuard { ig, amu: amu.clone() }
-  }
-
-  pub fn destroy(g: InstanceGuard) {
-    g.live = false;
+  pub fn destroy(mut g: InstanceGuard) {
+    g.c.live = false;
     // remove the files
     GLOBAL.games.write().unwrap().remove(&g.name);
     InstanceGuard::forget_all_tokens(&mut g.tokens_players);
@@ -164,24 +188,24 @@ impl Instance {
 
 impl Deref for InstanceGuard<'_> {
   type Target = Instance;
-  fn deref(&self) -> &Instance { &self.ig }
+  fn deref(&self) -> &Instance { &self.c.g }
 }
 impl DerefMut for InstanceGuard<'_> {
-  fn deref_mut(&mut self) -> &mut Instance { &mut self.ig }
+  fn deref_mut(&mut self) -> &mut Instance { &mut self.c.g }
 }
 
 impl InstanceGuard<'_> {
   #[throws(OE)]
   pub fn player_new(&mut self, newplayer: PlayerState) -> PlayerId {
-    let player = self.ig.gs.players.insert(newplayer);
-    self.ig.updates.insert(player, Default::default());
+    let player = self.c.g.gs.players.insert(newplayer);
+    self.c.g.updates.insert(player, Default::default());
     self.save_game_now()?;
     player
   }
 
   #[throws(OE)]
   pub fn player_access_register(&mut self, token: RawToken, player: PlayerId) {
-    let iad = InstanceAccessDetails { g : self.amu.clone(), ident : player };
+    let iad = InstanceAccessDetails { gref : self.gref.clone(), ident : player };
     self.token_register(token, iad);
     self.save_access_now()?;
   }
@@ -191,7 +215,7 @@ impl InstanceGuard<'_> {
     token: RawToken,
     iad: InstanceAccessDetails<Id>
   ) {
-    Id::tokens_registry(&mut *self.ig, PRIVATE_Y).tr.insert(token.clone());
+    Id::tokens_registry(&mut self.c.g, PRIVATE_Y).tr.insert(token.clone());
     Id::global_tokens(PRIVATE_Y).write().unwrap().insert(token, iad);
   }
 
@@ -232,7 +256,7 @@ impl InstanceGuard<'_> {
   #[throws(OE)]
   fn save_game_now(&mut self) {
     self.save_something("g-", |s,w| {
-      rmp_serde::encode::write_named(w, &s.ig.gs)
+      rmp_serde::encode::write_named(w, &s.c.g.gs)
     })?;
   }
 
@@ -241,7 +265,7 @@ impl InstanceGuard<'_> {
     self.save_something("a-", |s,w| {
       let global_players = GLOBAL.players.read().unwrap();
       let tokens_players : Vec<(&str, PlayerId)> =
-        s.ig.tokens_players.tr
+        s.c.g.tokens_players.tr
         .iter()
         .map(|token|
              global_players.get(token)
@@ -262,7 +286,7 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(OE)]
-  pub fn load(name: InstanceName) -> Arc<Mutex<Instance>> {
+  pub fn load(name: InstanceName) -> InstanceRef {
     // xxx scan on startup, rather than asking caller to specify names
     // xxx should take a file lock on save area
     let gs : GameState = Self::load_something(&name, "g-")?;
@@ -274,30 +298,33 @@ impl InstanceGuard<'_> {
     }
     let name = Arc::new(name);
 
-    let inst = Instance {
-      live: true,
+    let g = Instance {
       name, gs, updates,
       clients : Default::default(),
       tokens_clients : Default::default(),
       tokens_players : Default::default(),
     };
+    let cont = InstanceContainer {
+      live: true,
+      g,
+    };
     // xxx record in GLOBAL.games
-    let amu = Arc::new(Mutex::new(inst));
-    let mut ig = amu.lock().unwrap();
+    let gref = InstanceRef(Arc::new(Mutex::new(cont)));
+    let mut g = gref.lock().unwrap();
     for (token, _) in &al.tokens_players {
-      ig.tokens_players.tr.insert(RawToken(token.clone()));
+      g.tokens_players.tr.insert(RawToken(token.clone()));
     }
     let mut global = GLOBAL.players.write().unwrap();
     for (token, player) in al.tokens_players.drain(0..) {
       let iad = InstanceAccessDetails {
-        g : amu.clone(),
+        gref : gref.clone(),
         ident : player,
       };
       global.insert(RawToken(token), iad);
     }
     drop(global);
-    drop(ig);
-    amu
+    drop(g);
+    gref
   }
 }
 
@@ -375,15 +402,15 @@ const XXX_PLAYERS_TOKENS : &[(&str, &str)] = &[
 #[throws(OE)]
 pub fn xxx_global_setup() {
   let gs = xxx_gamestate_init();
-  let ami = Instance::new(InstanceName {
+  let gref = Instance::new(InstanceName {
     scope: ManagementScope::XXX,
     scoped_name: "dummy".to_string()
   }, gs).expect("xxx create dummy");
-  let mut ig = Instance::lock(&ami)?;
+  let mut g = gref.lock()?;
   for (token, nick) in XXX_PLAYERS_TOKENS {
-    let player = ig.player_new(PlayerState {
+    let player = g.player_new(PlayerState {
       nick : nick.to_string(),
     })?;
-    ig.player_access_register(RawToken(token.to_string()), player)?;
+    g.player_access_register(RawToken(token.to_string()), player)?;
   }
 }

@@ -3,7 +3,7 @@ use crate::imports::*;
 
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtCommand {
-  Noop { },
+  Noop(),
   SetScope(ManagementScope),
   CreateGame(String, Vec<MgmtGameUpdate>),
 //  AddPiece(Box<dyn PieceSpec>),
@@ -11,12 +11,12 @@ pub enum MgmtCommand {
 
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtGameUpdate {
-  Noop { },
+  Noop(),
 }
 
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtResponse {
-  Fine { },
+  Fine(),
   Error(MgmtError),
   ErrorAfter(usize, MgmtError),
 }
@@ -27,13 +27,15 @@ pub enum MgmtGameUpdateMode {
   Bulk,
 }
 
-#[derive(Debug,Error)]
+#[derive(Debug,Error,Serialize,Deserialize)]
 pub enum MgmtError {
   ParseFailed(String),
   AuthorisationError,
   NoScope,
   AlreadyExists,
-  XXXU(&'static str),
+  GameBeingDestroyed,
+  GameCorrupted,
+  SVGProcessingFailed(#[from] SVGProcessingError),
 }
 display_as_debug!{MgmtError}
 

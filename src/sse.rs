@@ -22,7 +22,7 @@ struct UpdateReader {
   init_confirmation_send : iter::Once<()>,
   keepalives : Wrapping<u32>,
   to_send : UpdateId,
-  ami : Arc<Mutex<Instance>>,
+  gref : InstanceRef,
 }
 
 #[derive(Error,Debug)]
@@ -34,7 +34,7 @@ impl Read for UpdateReader {
     let em : fn(&'static str) -> io::Error =
       |s| io::Error::new(io::ErrorKind::Other, anyhow!(s));
 
-    let mut amig = self.ami.lock().map_err(|_| em("poison"))?;
+    let mut ig = self.gref.lock().map_err(|_| em("poison"))?;
     let orig_wanted = orig_buf.len();
     let mut buf = orig_buf.as_mut();
 
@@ -44,7 +44,7 @@ impl Read for UpdateReader {
              self.player, self.client, self.to_send)?;
     }
 
-    let pu = &mut amig.updates.get(self.player)
+    let pu = &mut ig.updates.get(self.player)
       .ok_or_else(|| em("player gonee"))?;
 
     let cv = pu.cv.clone();
@@ -83,7 +83,7 @@ impl Read for UpdateReader {
       // xxx this endless stream is a leak
       // restart it occasionally
 
-      amig = cv.wait_timeout(amig, UPDATE_KEEPALIVE)
+      ig.c = cv.wait_timeout(ig.c, UPDATE_KEEPALIVE)
         .map_err(|_| em("poison"))?.0;
 
       write!(buf, "event: commsworking\n\
@@ -129,15 +129,15 @@ pub fn content(iad : InstanceAccessDetails<ClientId>, gen: Generation)
   let client = iad.ident;
 
   let content = {
-    let mut ig = iad.g.lock()?;
-    let _g = &mut ig.gs;
-    let cl = ig.clients.byid(client)?;
+    let mut g = iad.gref.lock()?;
+    let _g = &mut g.gs;
+    let cl = g.clients.byid(client)?;
     let player = cl.player;
 eprintln!("updates content iad={:?} player={:?} cl={:?} updates={:?}",
-          &iad, &player, &cl, &ig.updates);
-    let ami = iad.g.clone();
+          &iad, &player, &cl, &g.updates);
+    let gref = iad.gref.clone();
 
-    let log = &ig.updates.byid(player)?.log;
+    let log = &g.updates.byid(player)?.log;
 
     let to_send = match log.into_iter().rev()
       .find(|(_,update)| update.gen <= gen) {
@@ -146,7 +146,7 @@ eprintln!("updates content iad={:?} player={:?} cl={:?} updates={:?}",
       };
     
     UpdateReader {
-      player, client, to_send, ami,
+      player, client, to_send, gref,
       need_flush : false,
       keepalives : Wrapping(0),
       init_confirmation_send : iter::once(()),
