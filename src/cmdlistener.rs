@@ -76,41 +76,6 @@ fn decode_process_inner(cs: &mut CommandStream, s: &str)-> MgmtResponse {
 
 const USERLIST : &str = "/etc/userlist";
 
-#[derive(Error,Debug)]
-#[error("internal AuthorisationError {0}")]
-struct AuthorisationError(String);
-
-struct Authorised<A> (PhantomData<A>);
-//struct AuthorisedScope<A> (Authorised<A>, ManagementScope);
-struct AuthorisedSatisfactory (ManagementScope);
-use libc::uid_t;
-
-impl AuthorisedSatisfactory {
-  fn into_inner(self) -> ManagementScope { self.0 }
-}
-
-impl<T> Authorised<T> {
-  fn authorise() -> Authorised<T> { Authorised(PhantomData) }
-}
-
-impl<T> From<(Authorised<T>, ManagementScope)> for AuthorisedSatisfactory {
-  fn from((_,s): (Authorised<T>, ManagementScope)) -> Self { Self(s) }
-}
-impl<T,U> From<((Authorised<T>, Authorised<U>), ManagementScope)> for AuthorisedSatisfactory {
-  fn from(((..),s): ((Authorised<T>, Authorised<U>), ManagementScope)) -> Self { Self(s) }
-}
-
-impl From<anyhow::Error> for AuthorisationError {
-  fn from(a: anyhow::Error) -> AuthorisationError {
-    AuthorisationError(format!("{}",a))
-  }
-}
-impl From<ConnectionEuidDiscoverEerror> for AuthorisationError {
-  fn from(e: ConnectionEuidDiscoverEerror) -> AuthorisationError {
-    AuthorisationError(format!("{}",e))
-  }
-}
-
 impl CommandStream<'_> {
   #[throws(AuthorisationError)]
   fn authorised_uid(&self, wanted: Option<uid_t>, xinfo: Option<&str>)
@@ -316,5 +281,46 @@ impl CommandListener {
         Err(e) => eprintln!("command connection {}: error: {:?}", &desc, e),
       }
     });
+  }
+}
+
+use authproofs::*;
+use authproofs::AuthorisationError;
+
+mod authproofs {
+  use crate::imports::*;
+
+  #[derive(Error,Debug)]
+  #[error("internal AuthorisationError {0}")]
+  pub struct AuthorisationError(pub String);
+
+  pub struct Authorised<A> (PhantomData<A>);
+  //struct AuthorisedScope<A> (Authorised<A>, ManagementScope);
+  pub struct AuthorisedSatisfactory (ManagementScope);
+
+  impl AuthorisedSatisfactory {
+    pub fn into_inner(self) -> ManagementScope { self.0 }
+  }
+
+  impl<T> Authorised<T> {
+    pub fn authorise() -> Authorised<T> { Authorised(PhantomData) }
+  }
+
+  impl<T> From<(Authorised<T>, ManagementScope)> for AuthorisedSatisfactory {
+    fn from((_,s): (Authorised<T>, ManagementScope)) -> Self { Self(s) }
+  }
+  impl<T,U> From<((Authorised<T>, Authorised<U>), ManagementScope)> for AuthorisedSatisfactory {
+    fn from(((..),s): ((Authorised<T>, Authorised<U>), ManagementScope)) -> Self { Self(s) }
+  }
+
+  impl From<anyhow::Error> for AuthorisationError {
+    fn from(a: anyhow::Error) -> AuthorisationError {
+      AuthorisationError(format!("{}",a))
+    }
+  }
+  impl From<ConnectionEuidDiscoverEerror> for AuthorisationError {
+    fn from(e: ConnectionEuidDiscoverEerror) -> AuthorisationError {
+      AuthorisationError(format!("{}",e))
+    }
   }
 }

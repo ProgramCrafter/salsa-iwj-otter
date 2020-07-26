@@ -64,6 +64,8 @@ pub use crate::commands::*;
 pub use crate::slotmap_slot_idx::*;
 pub use crate::cmdlistener::*;
 
+pub use libc::uid_t;
+
 pub type E = anyhow::Error;
 pub type AE = anyhow::Error;
 
