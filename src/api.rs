@@ -85,7 +85,7 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       eprintln!("API {:?} => {:?}", &form, &err);
     },
     Ok((update, logents)) => {
-      let pc = gs.pieces.byid_mut(piece).expect("piece deleted by op!");
+      let pc = gs.pieces.byid_mut(piece).expect("xxx piece deleted by op!");
 
       gs.gen.increment();
       let gen = gs.gen;
