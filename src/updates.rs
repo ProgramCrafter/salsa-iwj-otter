@@ -29,14 +29,14 @@ pub enum PreparedUpdateEntry {
   Piece {
     client : ClientId,
     sameclient_cseq : ClientSequence,
-    op : PieceUpdateOp<VisiblePieceId,PreparedPieceState>,
+    piece : VisiblePieceId,
+    op : PieceUpdateOp<PreparedPieceState>,
   },
   Log (Arc<LogEntry>),
 }
 
 #[derive(Debug,Serialize)]
 pub struct PreparedPieceState {
-  pub piece : VisiblePieceId,
   pub pos : Pos,
   pub svg : String,
   pub held : Option<PlayerId>,
@@ -47,12 +47,12 @@ pub struct PreparedPieceState {
 // ---------- piece updates ----------
 
 #[derive(Debug,Serialize)]
-pub enum PieceUpdateOp<ID,NS> {
-  Delete(ID),
+pub enum PieceUpdateOp<NS> {
+  Delete(),
   Insert(NS),
   Modify(NS),
-  Move(ID,Pos),
-  SetZLevel(ID,ZLevel),
+  Move(Pos),
+  SetZLevel(ZLevel),
 }
 
 // ---------- for traansmission ----------
@@ -71,7 +71,8 @@ enum TransmitUpdateEntry<'u> {
     zg : Option<Generation>,
   },
   Piece {
-    op : &'u PieceUpdateOp<VisiblePieceId, PreparedPieceState>,
+    piece : VisiblePieceId,
+    op : &'u PieceUpdateOp<PreparedPieceState>,
   },
   Log (&'u LogEntry),
 }
@@ -110,59 +111,43 @@ impl PreparedUpdateEntry {
 
 // ---------- PieceUpdatesOp ----------
 
-impl<ID,NS> PieceUpdateOp<ID,NS> {
+impl<NS> PieceUpdateOp<NS> {
   pub fn new_state(&self) -> Option<&NS> {
     use PieceUpdateOp::*;
     match self {
-      Delete(_) => None,
+      Delete() => None,
       Insert(ns) => Some(ns),
       Modify(ns) => Some(ns),
-      Move(..) => None,
-      SetZLevel(..) => None,
+      Move(_) => None,
+      SetZLevel(_) => None,
     }
   }
-  pub fn try_map<ID2,NS2, E:Error,
-                 IDF: FnOnce(ID) -> Result<ID2,E>,
-                 NSF: FnOnce(NS) -> Result<NS2,E>>
-    (self, f:NSF, idf:IDF) -> Result<PieceUpdateOp<ID2,NS2>,E>
+  pub fn try_map_new_state<NS2,E:Error, F: FnOnce(NS) -> Result<NS2,E>>
+    (self, f:F) -> Result<PieceUpdateOp<NS2>,E>
   {
     use PieceUpdateOp::*;
     Ok(match self {
-      Delete(i) => Delete(idf(i)?),
+      Delete() => Delete(),
       Insert(ns) => Insert(f(ns)?),
       Modify(ns) => Modify(f(ns)?),
-      Move(i,pos) => Move(idf(i)?,pos),
-      SetZLevel(i,zl) => SetZLevel(idf(i)?,zl),
+      Move(pos) => Move(pos),
+      SetZLevel(zl) => SetZLevel(zl),
     })
   }
-  pub fn map<ID2,NS2,
-             IDF: FnOnce(ID) -> ID2,
-             NSF: FnOnce(NS) -> NS2>
-    (self, nsf:NSF, idf:IDF) -> PieceUpdateOp<ID2,NS2>
-  {
-    #[derive(Error,Debug)] enum Never { }
-    self.try_map(
-      |ns| <Result<_,Never>>::Ok(nsf(ns)),
-      |id| <Result<_,Never>>::Ok(idf(id)),
-    ).unwrap()
+  pub fn map_new_state<NS2,F: FnOnce(NS) -> NS2>(self, f:F)
+                            -> PieceUpdateOp<NS2> {
+    #[derive(Error,Debug)]
+    enum Never { }
+    self.try_map_new_state(|ns| <Result<_,Never>>::Ok(f(ns))).unwrap()
   }
   pub fn new_z_generation(&self) -> Option<Generation> {
     use PieceUpdateOp::*;
     match self {
-      Delete(_) => None,
+      Delete() => None,
       Insert(_) => None,
       Modify(_) => None,
-      Move(..) => None,
-      SetZLevel(_,ZLevel{zg,..}) => Some(*zg),
-    }
-  }
-  pub fn pieceid<'ns>(&'ns self) -> ID where &'ns NS : Into<ID>, ID : Copy {
-    use PieceUpdateOp::*;
-    match self {
-      Delete(i) => *i,
-      Insert(ns) | Modify(ns) => ns.into(),
-      Move(i,_) => *i,
-      SetZLevel(i,_) => *i,
+      Move(_) => None,
+      SetZLevel(ZLevel{zg,..}) => Some(*zg),
     }
   }
 }
@@ -187,12 +172,13 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     }
   }
 
-  pub fn piece_update(&mut self, piece: PieceId, update: PieceUpdateOp<(),()>,
+  #[throws(SVGProcessingError)]
+  pub fn piece_update(&mut self, piece: PieceId, update: PieceUpdateOp<()>,
                       lens: &dyn Lens) {
     let gs = &mut self.g.gs;
 
-    let update = match gs.pieces.byid_mut(piece) {
-      Some(pc) => {
+    let (update, piece) = match gs.pieces.byid_mut(piece) {
+      Ok(pc) => {
         if self.by_client != pc.lastclient {
           pc.gen_before_lastclient = pc.gen;
           pc.lastclient = self.by_client;
@@ -202,31 +188,33 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       
         let pri_for_all = lens.svg_pri(piece,pc,Default::default());
 
-        let update = update.try_map(
+        let update = update.try_map_new_state(
           |_|{
             let mut ns = pc.prep_piecestate(&pri_for_all)?;
             lens.massage_prep_piecestate(&mut ns);
             <Result<_,SVGProcessingError>>::Ok(ns)
           },
-          |_|{
-            <Result<_,SVGProcessingError>>::Ok(pri_for_all.id)
-          },
         )?;
 
-        update
+        (update, pri_for_all.id)
       },
-      None => {
-        PieceUpdateOp::Delete(lens.make_piece_visible(piece))
+      Err(GameError::PieceGone) => {
+        (PieceUpdateOp::Delete(), lens.pieceid2visible(piece))
+      }
+      Err(e) => {
+        panic!(format!("unexpected error {:?} from pices.byid_mut", &e));
       }
     };
 
     self.us.push(PreparedUpdateEntry::Piece {
+      piece,
       client : self.by_client,
       sameclient_cseq : self.cseq,
       op : update,
     });
   }
 
+  #[throws(SVGProcessingError)]
   pub fn log_updates(&mut self, logents: Vec<LogEntry>) {
     for logentry in logents {
       let logentry = Arc::new(logentry);
@@ -238,7 +226,10 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
 impl<'r> Drop for PrepareUpdatesBuffer<'r> {
   fn drop(&mut self) {
-    let update = PreparedUpdate { gen: self.gen, us: self.us.take(), };
+    let update = PreparedUpdate {
+      gen: self.gen,
+      us: mem::take(&mut self.us),
+    };
     let update = Arc::new(update);
     eprintln!("UPDATE {:?}", &update);
 

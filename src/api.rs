@@ -14,11 +14,11 @@ trait ApiPieceOp : Debug {
   #[throws(GameError)]
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
         lens: &dyn Lens /* used for LogEntry and PieceId but not Pos */)
-        -> (PieceUpdateOp<(),()>, Vec<LogEntry>);
+        -> (PieceUpdateOp<()>, Vec<LogEntry>);
 }
 
 pub trait Lens {
-  fn visible_pieceid(&self, piece: PieceId) -> VisiblePieceId;
+  fn pieceid2visible(&self, piece: PieceId) -> VisiblePieceId;
   fn log_pri(&self, piece: PieceId, pc: &PieceState)
              -> PieceRenderInstructions;
   fn svg_pri(&self, piece: PieceId, pc: &PieceState, player: PlayerId)
@@ -29,13 +29,13 @@ pub trait Lens {
 }
 struct TransparentLens { }
 impl Lens for TransparentLens {
-  fn visible_pieceid(&self, piece: PieceId) -> VisiblePieceId {
+  fn pieceid2visible(&self, piece: PieceId) -> VisiblePieceId {
     let kd : slotmap::KeyData = piece.into();
-    VisiblePieceId(kd);
+    VisiblePieceId(kd)
   }
   fn log_pri(&self, piece: PieceId, pc: &PieceState)
              -> PieceRenderInstructions {
-    let id = self.make_piece_visible(piece);
+    let id = self.pieceid2visible(piece);
     PieceRenderInstructions { id, face : pc.face }
   }
   fn svg_pri(&self, piece: PieceId, pc: &PieceState, _player: PlayerId)
@@ -92,8 +92,8 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       let mut buf = PrepareUpdatesBuffer::new(g, client, form.cseq,
                                               1 + logents.len());
       
-      buf.piece_update(piece, update, &lens);
-      buf.log_updates(logents);
+      buf.piece_update(piece, update, &lens)?;
+      buf.log_updates(logents)?;
 
       eprintln!("API {:?} OK", &form);
     }
@@ -114,7 +114,7 @@ impl ApiPieceOp for ApiPieceGrab {
   #[throws(GameError)]
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
         lens: &dyn Lens)
-        -> (PieceUpdateOp<(),()>, Vec<LogEntry>) {
+        -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pl = gs.players.byid(player).unwrap();
     let pc = gs.pieces.byid_mut(piece).unwrap();
 
@@ -146,7 +146,7 @@ impl ApiPieceOp for ApiPieceUngrab {
   #[throws(GameError)]
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
         lens: &dyn Lens)
-        -> (PieceUpdateOp<(),()>, Vec<LogEntry>) {
+        -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pl = gs.players.byid(player).unwrap();
     let pc = gs.pieces.byid_mut(piece).unwrap();
 
@@ -179,7 +179,7 @@ impl ApiPieceOp for ApiPieceRaise {
   #[throws(GameError)]
   fn op(&self, gs: &mut GameState, _: PlayerId, piece: PieceId,
         _: &dyn Lens)
-        -> (PieceUpdateOp<(),()>, Vec<LogEntry>) {
+        -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pc = gs.pieces.byid_mut(piece).unwrap();
     pc.zlevel = ZLevel { z : self.z, zg : gs.gen };
     let update = PieceUpdateOp::SetZLevel(pc.zlevel);
@@ -198,7 +198,7 @@ impl ApiPieceOp for ApiPieceMove {
   #[throws(GameError)]
   fn op(&self, gs: &mut GameState, _: PlayerId, piece: PieceId,
         _lens: &dyn Lens)
-        -> (PieceUpdateOp<(),()>, Vec<LogEntry>) {
+        -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pc = gs.pieces.byid_mut(piece).unwrap();
 
     pc.pos = self.0;
