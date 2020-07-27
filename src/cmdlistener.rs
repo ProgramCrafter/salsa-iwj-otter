@@ -246,7 +246,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         let scope = cs.get_scope()?;
         Some(scope)
       };
-      let mut games = list_games(scope);
+      let mut games = Instance::list_names(scope);
       games.sort_unstable();
       GamesList { games }
     },

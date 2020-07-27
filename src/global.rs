@@ -15,7 +15,7 @@ visible_slotmap_key!{ ClientId('C') }
 #[serde(transparent)]
 pub struct RawToken (pub String);
 
-// ---------- data structure ----------
+// ---------- public data structure ----------
 
 #[derive(Debug,Serialize,Deserialize)]
 #[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
@@ -26,12 +26,6 @@ pub struct InstanceName {
 
 #[derive(Debug,Clone)]
 pub struct InstanceRef (Arc<Mutex<InstanceContainer>>);
-
-#[derive(Debug)]
-pub struct InstanceContainer {
-  live : bool,
-  g : Instance,
-}
 
 #[derive(Debug)]
 pub struct Instance {
@@ -61,32 +55,13 @@ pub struct InstanceGuard<'g> {
   pub gref : InstanceRef,
 }
 
-#[derive(Default)]
-struct Global {
-  // lock hierarchy: this is the innermost lock
-  games   : RwLock<HashMap<Arc<InstanceName>,InstanceRef>>,
-  players : RwLock<TokenTable<PlayerId>>,
-  clients : RwLock<TokenTable<ClientId>>,
-  // xxx delete instances at some point!
-}
-
 #[derive(Debug,Default)]
 pub struct TokenRegistry<Id: AccessId> {
   tr : HashSet<RawToken>,
   id : PhantomData<Id>,
 }
 
-#[derive(Debug,Serialize,Deserialize)]
-struct InstanceSaveAccesses<RawTokenStr> {
-  tokens_players : Vec<(RawTokenStr, PlayerId)>,
-}
-
-display_as_debug!{InstanceLockError}
-impl<X> From<PoisonError<X>> for InstanceLockError {
-  fn from(_: PoisonError<X>) -> Self { Self::GameCorrupted }
-}
-
-// ---------- API ----------
+// ---------- Token Table API ----------
 
 #[derive(Clone,Debug)]
 pub struct InstanceAccessDetails<Id> {
@@ -114,21 +89,44 @@ pub struct PrivateCaller(());
 // workaround for inability to have private trait methods
 const PRIVATE_Y : PrivateCaller = PrivateCaller(());
 
-// ========== implementations ==========
-
-// ---------- newtypes and type aliases ----------
-
-impl Borrow<str> for RawToken {
-  fn borrow(&self) -> &str { &self.0 }
-}
-
-// ---------- data structure ----------
+// ========== internal data structures ==========
 
 lazy_static! {
   static ref GLOBAL : Global = Default::default();
 }
 
-// ---------- Player and instance API ----------
+#[derive(Default)]
+struct Global {
+  // lock hierarchy: this is the innermost lock
+  games   : RwLock<HashMap<Arc<InstanceName>,InstanceRef>>,
+  players : RwLock<TokenTable<PlayerId>>,
+  clients : RwLock<TokenTable<ClientId>>,
+  // xxx delete instances at some point!
+}
+
+#[derive(Debug)]
+pub struct InstanceContainer {
+  live : bool,
+  g : Instance,
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+struct InstanceSaveAccesses<RawTokenStr> {
+  tokens_players : Vec<(RawTokenStr, PlayerId)>,
+}
+
+display_as_debug!{InstanceLockError}
+impl<X> From<PoisonError<X>> for InstanceLockError {
+  fn from(_: PoisonError<X>) -> Self { Self::GameCorrupted }
+}
+
+// ========== implementations ==========
+
+impl Borrow<str> for RawToken {
+  fn borrow(&self) -> &str { &self.0 }
+}
+
+// ---------- Main instance API ----------
 
 impl InstanceRef {
   #[throws(InstanceLockError)]
@@ -192,7 +190,20 @@ impl Instance {
     InstanceGuard::forget_all_tokens(&mut g.tokens_players);
     InstanceGuard::forget_all_tokens(&mut g.tokens_clients);
   }
+
+  pub fn list_names(scope: Option<&ManagementScope>)
+                    -> Vec<Arc<InstanceName>> {
+    let games = GLOBAL.games.read().unwrap();
+    let out : Vec<Arc<InstanceName>> =
+      games.keys()
+      .filter(|k| scope == None || scope == Some(&k.scope))
+      .map(|k| k.clone())
+      .collect();
+    out
+  }
 }
+
+// ---------- Simple trait implementations ----------
 
 impl Deref for InstanceGuard<'_> {
   type Target = Instance;
@@ -201,6 +212,8 @@ impl Deref for InstanceGuard<'_> {
 impl DerefMut for InstanceGuard<'_> {
   fn deref_mut(&mut self) -> &mut Instance { &mut self.c.g }
 }
+
+// ---------- Player and token functionality ----------
 
 impl InstanceGuard<'_> {
   #[throws(OE)]
@@ -232,7 +245,11 @@ impl InstanceGuard<'_> {
     let mut global = global.write().unwrap();
     for t in tokens.tr.drain() { global.remove(&t); }
   }
+}
 
+// ---------- save/load ----------
+
+impl InstanceGuard<'_> {
   fn savefile(name: &InstanceName, prefix: &str, suffix: &str) -> String {
     let scope_prefix = { use ManagementScope::*; match &name.scope {
       Server => format!(""),
@@ -334,17 +351,6 @@ impl InstanceGuard<'_> {
     drop(g);
     gref
   }
-}
-
-pub fn list_games(scope: Option<&ManagementScope>)
-                  -> Vec<Arc<InstanceName>> {
-  let games = GLOBAL.games.read().unwrap();
-  let out : Vec<Arc<InstanceName>> =
-    games.keys()
-    .filter(|k| scope == None || scope == Some(&k.scope))
-    .map(|k| k.clone())
-    .collect();
-  out
 }
 
 // ---------- Lookup and token API ----------
