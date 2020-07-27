@@ -45,6 +45,12 @@ pub enum MgmtError {
   LimitExceeded,
   SVGProcessingFailed(#[from] SVGProcessingError),
   GameError(#[from] GameError),
+  ServerFailure(String),
 }
 display_as_debug!{MgmtError}
 
+impl From<ServerFailure> for MgmtError {
+  fn from(e: ServerFailure) -> MgmtError {
+    MgmtError::ServerFailure(format!("ServerFailure {}\n", &e))
+  }
+}

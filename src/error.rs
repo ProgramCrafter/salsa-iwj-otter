@@ -27,14 +27,20 @@ pub enum OnlineError {
   JSONSerializeFailed(#[from] serde_json::error::Error),
   #[error("SVG processing/generation error {0:?}")]
   SVGProcessingFailed(#[from] SVGProcessingError),
-  #[error("Server IO error {0:?}")]
-  ServerIOError(#[from] io::Error),
-  #[error("Server MessagePack encoding error {0:?}")]
-  ServerMessagePackEncodeFail(#[from] rmp_serde::encode::Error),
-  #[error("Server MessagePack decoding error (game load failed) {0:?}")]
-  ServerMessagePackDecodeFail(#[from] rmp_serde::decode::Error),
+  #[error("Server operational problems: {0:?}")]
+  ServerFailure(#[from] ServerFailure),
 }
 from_instance_lock_error!{OnlineError}
+
+#[derive(Error,Debug)]
+pub enum ServerFailure {
+  #[error("Server IO error {0:?}")]
+  IO(#[from] io::Error),
+  #[error("Server MessagePack encoding error {0:?}")]
+  MessagePackEncodeFail(#[from] rmp_serde::encode::Error),
+  #[error("Server MessagePack decoding error (game load failed) {0:?}")]
+  MessagePackDecodeFail(#[from] rmp_serde::decode::Error),
+}
 
 pub type StartupError = anyhow::Error;
 

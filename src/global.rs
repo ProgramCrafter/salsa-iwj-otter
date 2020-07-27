@@ -148,18 +148,27 @@ impl Instance {
 
     let gref = InstanceRef(Arc::new(Mutex::new(cont)));
 
-    let mut games = GLOBAL.games.write().unwrap();
-    let entry = games.entry(name);
+    {
+      // access without save means it's deleted
+      // save without access menas no accesses
+      // we save first since that's more fallible
+      let mut ig = gref.lock()?;
+      ig.save_access_now()?;
+      ig.save_game_now()?;
+    }
 
-    use hash_map::Entry::*;
-    let entry = match entry {
-      Vacant(ve) => ve,
-      Occupied(_) => throw!(MgmtError::AlreadyExists),
-    };
+    {
+      let mut games = GLOBAL.games.write().unwrap();
+      let entry = games.entry(name);
 
-    entry.insert(gref.clone());
+      use hash_map::Entry::*;
+      let entry = match entry {
+        Vacant(ve) => ve,
+        Occupied(_) => throw!(MgmtError::AlreadyExists),
+      };
 
-    // xxx save, but first release the GLOBAL.games lock
+      entry.insert(gref.clone());
+    }
 
     gref
   }
@@ -251,7 +260,7 @@ impl InstanceGuard<'_> {
       .chain( iter::once(suffix) )
       .collect()
   }
-  #[throws(OE)]
+  #[throws(ServerFailure)]
   fn save_something(
     &self, prefix: &str,
     w: fn(s: &Self, w: &mut BufWriter<fs::File>)
@@ -267,14 +276,14 @@ impl InstanceGuard<'_> {
     eprintln!("saved to {}", &out);
   }
 
-  #[throws(OE)]
+  #[throws(ServerFailure)]
   pub fn save_game_now(&mut self) {
     self.save_something("g-", |s,w| {
       rmp_serde::encode::write_named(w, &s.c.g.gs)
     })?;
   }
 
-  #[throws(OE)]
+  #[throws(ServerFailure)]
   fn save_access_now(&mut self) {
     self.save_something("a-", |s,w| {
       let global_players = GLOBAL.players.read().unwrap();
@@ -291,7 +300,7 @@ impl InstanceGuard<'_> {
     })?;
   }
 
-  #[throws(OE)]
+  #[throws(ServerFailure)]
   fn load_something<T:DeserializeOwned>(name: &InstanceName, prefix: &str) -> T {
     let inp = Self::savefile(name, prefix, "");
     let mut f = BufReader::new(fs::File::open(&inp)?);
