@@ -61,8 +61,6 @@ pub struct TokenRegistry<Id: AccessId> {
   id : PhantomData<Id>,
 }
 
-// ---------- Token Table API ----------
-
 #[derive(Clone,Debug)]
 pub struct InstanceAccessDetails<Id> {
   pub gref : InstanceRef,
@@ -74,20 +72,6 @@ pub struct InstanceAccess<'i, Id> {
   pub raw_token : &'i str,
   pub i : InstanceAccessDetails<Id>,
 }
-
-pub type TokenTable<Id> = HashMap<RawToken, InstanceAccessDetails<Id>>;
-
-pub trait AccessId : Copy + Clone + 'static {
-  fn global_tokens(_:PrivateCaller) -> &'static RwLock<TokenTable<Self>>;
-  fn tokens_registry(ig: &mut Instance, _:PrivateCaller)
-                     -> &mut TokenRegistry<Self>;
-  const ERROR : OnlineError;
-}
-
-pub struct PrivateCaller(());
-// outsiders cannot construct this
-// workaround for inability to have private trait methods
-const PRIVATE_Y : PrivateCaller = PrivateCaller(());
 
 // ========== internal data structures ==========
 
@@ -119,6 +103,11 @@ display_as_debug!{InstanceLockError}
 impl<X> From<PoisonError<X>> for InstanceLockError {
   fn from(_: PoisonError<X>) -> Self { Self::GameCorrupted }
 }
+
+pub struct PrivateCaller(());
+// outsiders cannot construct this
+// workaround for inability to have private trait methods
+const PRIVATE_Y : PrivateCaller = PrivateCaller(());
 
 // ========== implementations ==========
 
@@ -353,7 +342,16 @@ impl InstanceGuard<'_> {
   }
 }
 
-// ---------- Lookup and token API ----------
+// ---------- Tokens / TokenTable / AccessId ----------
+
+pub type TokenTable<Id> = HashMap<RawToken, InstanceAccessDetails<Id>>;
+
+pub trait AccessId : Copy + Clone + 'static {
+  fn global_tokens(_:PrivateCaller) -> &'static RwLock<TokenTable<Self>>;
+  fn tokens_registry(ig: &mut Instance, _:PrivateCaller)
+                     -> &mut TokenRegistry<Self>;
+  const ERROR : OnlineError;
+}
 
 impl AccessId for PlayerId {
   const ERROR : OnlineError = NoPlayer;
