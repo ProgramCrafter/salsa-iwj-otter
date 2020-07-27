@@ -268,7 +268,7 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(OE)]
-  fn save_game_now(&mut self) {
+  pub fn save_game_now(&mut self) {
     self.save_something("g-", |s,w| {
       rmp_serde::encode::write_named(w, &s.c.g.gs)
     })?;
