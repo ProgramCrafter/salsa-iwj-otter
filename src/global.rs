@@ -75,6 +75,50 @@ pub struct InstanceAccess<'i, Id> {
 
 // ========== internal data structures ==========
 
+//! UPDATE RELIABILITY/PERSISTENCE RULES
+//!
+//! From the caller's point of view
+//!
+//! We offer atomic creation/modification/destruction of:
+//!
+//!    * Games (roughtly, a map from InstanceName to GameState;
+//!             includes any player)
+//!
+//!    * Player access tokens, for an existing (game, player)
+//!
+//!    * Clients (for an existing (game, player)
+//!
+//! All of the above, except clients, are persistent, in the sense
+//! that a server restart will preserve them.
+//!
+//! The general code gets mutable access to the GameState.  We offer
+//! post-hoc saving of a modified game.  This should not be used for
+//! player changes.  For other changes, if the save fails, a server
+//! restart may be a rewind.  This relaxation of the rules is
+//! necessary avoid complicated three-phase commit on GameState update
+//! for routine game events.
+//
+// IMPLEMENTATION
+//
+// Games are created in this order:
+//
+//  save/a-<nameforfs>    MessagePack of InstanceSaveAccess
+//     if, on reload, this does not exist, the game is considered
+//     not to exist, so at this stage the game conclusively does
+//     not exist
+//
+//  save/g-<nameforfs>    MessagePack of GameState
+//
+//  games
+//     can always be done right after g-<nameforfs>
+//     since games update is infallible (barring unexpected panic)
+//
+// For the access elements such as player tokens and client
+// tokents, we
+//   1. check constraints against existing state
+//   2. save to disk
+//   3. modify in memory (infallibly)
+
 lazy_static! {
   static ref GLOBAL : Global = Default::default();
 }
