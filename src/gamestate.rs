@@ -40,7 +40,7 @@ pub struct ZLevel {
 #[derive(Debug,Serialize,Deserialize)]
 pub struct GameState {
   pub pieces : DenseSlotMap<PieceId,PieceState>,
-  pub players : DenseSlotMap<PlayerId,PlayerState>,
+  pub players : PlayerMap,
   pub gen : Generation,
   pub log : Vec<(Generation,Arc<LogEntry>)>,
   pub max_z : ZCoord,

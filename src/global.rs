@@ -49,6 +49,79 @@ pub struct Client {
   pub player : PlayerId,
 }
 
+type DenseSlotMap<PlayerId,PlayerState>;
+#[derive(Serialize,Deserialize)]
+#[repr(transparent)]
+pub struct PlayerMap(ActualPlayerMap);
+impl Deref for PlayerMap {
+  type Target = ActualPlayerMap;
+  fn deref(&self) -> &ActualPlayerMap { return self.0 }
+}
+// No DerefMut: callers in this module should access .0 directly
+// This prevents accidental modification of Players without appropriate
+// synchrnoisation.
+
+/// UPDATE RELIABILITY/PERSISTENCE RULES
+///
+/// From the caller's point of view
+///
+/// We offer atomic creation/modification/destruction of:
+///
+///    * Games (roughtly, a map from InstanceName to GameState;
+///             includes any player)
+///
+///    * Player access tokens, for an existing (game, player)
+///
+///    * Clients (for an existing (game, player)
+///
+/// We also offer atomic destruction of:
+///
+///    * Games
+///
+///    * Players
+///
+/// All of the above, except clients, are persistent, in the sense
+/// that a server restart will preserve them.
+///
+/// The general code gets mutable access to the GameState.  We offer
+/// post-hoc saving of a modified game.  This should not be used for
+/// player changes.  For other changes, if the save fails, a server
+/// restart may be a rewind.  This relaxation of the rules is
+/// necessary avoid complicated three-phase commit on GameState update
+/// for routine game events.
+//
+// IMPLEMENTATION
+//
+// Games are created in this order:
+//
+//  save/a-<nameforfs>    MessagePack of InstanceSaveAccess
+//     if, on reload, this does not exist, the game is considered
+//     not to exist, so at this stage the game conclusively does
+//     not exist
+//
+//  save/g-<nameforfs>    MessagePack of GameState
+//
+//  games
+//     can always be done right after g-<nameforfs>
+//     since games update is infallible (barring unexpected panic)
+//
+// For the access elements such as player tokens and client
+// tokents, we
+//   1. check constraints against existing state
+//   2. save to disk
+//   3. modify in memory (infallibly)
+//
+// A consequence is that game creation or deletion means running
+// much of this code (including game save/load) with a write lock
+// onto `games`.
+//
+// The Instance object is inside Arc<Mutex>.  Because of Arc the Mutex
+// may persist beyond the lifetime of the actual game.  So within the
+// Mutex we have a field `live' that tells us if the thing is dead.
+// This allows a lockholder to infallibly declare the thing dead,
+// atomically from the pov of anyone else who has got a reference
+// to it.  We prevent the caller from ever seeing an Instance whosae
+// `live` is `false`.
 #[derive(Debug)]
 pub struct InstanceGuard<'g> {
   pub c : MutexGuard<'g,InstanceContainer>,
@@ -75,57 +148,14 @@ pub struct InstanceAccess<'i, Id> {
 
 // ========== internal data structures ==========
 
-//! UPDATE RELIABILITY/PERSISTENCE RULES
-//!
-//! From the caller's point of view
-//!
-//! We offer atomic creation/modification/destruction of:
-//!
-//!    * Games (roughtly, a map from InstanceName to GameState;
-//!             includes any player)
-//!
-//!    * Player access tokens, for an existing (game, player)
-//!
-//!    * Clients (for an existing (game, player)
-//!
-//! All of the above, except clients, are persistent, in the sense
-//! that a server restart will preserve them.
-//!
-//! The general code gets mutable access to the GameState.  We offer
-//! post-hoc saving of a modified game.  This should not be used for
-//! player changes.  For other changes, if the save fails, a server
-//! restart may be a rewind.  This relaxation of the rules is
-//! necessary avoid complicated three-phase commit on GameState update
-//! for routine game events.
-//
-// IMPLEMENTATION
-//
-// Games are created in this order:
-//
-//  save/a-<nameforfs>    MessagePack of InstanceSaveAccess
-//     if, on reload, this does not exist, the game is considered
-//     not to exist, so at this stage the game conclusively does
-//     not exist
-//
-//  save/g-<nameforfs>    MessagePack of GameState
-//
-//  games
-//     can always be done right after g-<nameforfs>
-//     since games update is infallible (barring unexpected panic)
-//
-// For the access elements such as player tokens and client
-// tokents, we
-//   1. check constraints against existing state
-//   2. save to disk
-//   3. modify in memory (infallibly)
-
 lazy_static! {
   static ref GLOBAL : Global = Default::default();
 }
 
 #[derive(Default)]
 struct Global {
-  // lock hierarchy: this is the innermost lock
+  // lock hierarchy: InstanceContainer < games < {players, clients}
+  // (in order of criticality (perf impact); outermost first, innermost last)
   games   : RwLock<HashMap<Arc<InstanceName>,InstanceRef>>,
   players : RwLock<TokenTable<PlayerId>>,
   clients : RwLock<TokenTable<ClientId>>,
@@ -204,8 +234,6 @@ impl Instance {
       Occupied(_) => throw!(MgmtError::AlreadyExists),
     };
 
-    // access without save means it's deleted
-    // save without access menas no accesses
     ig.save_access_now()?;
     ig.save_game_now()?;
 
@@ -225,16 +253,28 @@ impl Instance {
   }
 
   #[throws(MgmtError)]
-  pub fn destroy(mut g: InstanceGuard) {
-    g.c.live = false;
-    (||{
-      fs::remove_file(InstanceGuard::savefile(&g.name, "g-", ""))?;
-      fs::remove_file(InstanceGuard::savefile(&g.name, "a-", ""))?;
-      <Result<_,ServerFailure>>::Ok(())
-    })()?;
-    GLOBAL.games.write().unwrap().remove(&g.name);
-    InstanceGuard::forget_all_tokens(&mut g.tokens_players);
-    InstanceGuard::forget_all_tokens(&mut g.tokens_clients);
+  pub fn destroy_game(mut g: InstanceGuard) {
+    let a_savefile = InstanceGuard::savefile(&g.name, "a-", "");
+
+    let gw = GLOBAL.games.write().unwrap();
+    fs::remove_file(InstanceGuard::savefile(&g.name, "g-", ""))?;
+
+    (||{ // Infallible:
+      g.c.live = false;
+      gw.remove(&g.name);
+      InstanceGuard::forget_all_tokens(&mut g.tokens_clients);
+      InstanceGuard::forget_all_tokens(&mut g.tokens_players);
+    }()); // <- No ?, ensures that IEFE is infallible (barring panics)
+
+    (||{ // Best effort:
+      fs::remove_file(&a_savefile)
+    })()
+      .unwrap_or_else(
+        |e| eprintln!("warning: failed to delete stale auth file {:?}: {:?}",
+                      &a_savefile, e)
+        // apart from that, ignore the error.  someone will clean it up
+        // later.   xxx periodic cleanup ?
+      );
   }
 
   pub fn list_names(scope: Option<&ManagementScope>)
