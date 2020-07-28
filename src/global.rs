@@ -147,30 +147,29 @@ impl Instance {
     };
 
     let gref = InstanceRef(Arc::new(Mutex::new(cont)));
+    let mut ig = gref.lock()?;
 
-    {
-      // access without save means it's deleted
-      // save without access menas no accesses
-      // we save first since that's more fallible
-      let mut ig = gref.lock()?;
-      ig.save_access_now()?;
-      ig.save_game_now()?;
-    }
+    // We hold the GLOBAL.games lock while we save the new game.
+    // That lock is not on the hot path.
+    let mut games = GLOBAL.games.write().unwrap();
+    let entry = games.entry(name);
 
-    {
-      let mut games = GLOBAL.games.write().unwrap();
-      let entry = games.entry(name);
+    use hash_map::Entry::*;
+    let entry = match entry {
+      Vacant(ve) => ve,
+      Occupied(_) => throw!(MgmtError::AlreadyExists),
+    };
 
-      use hash_map::Entry::*;
-      let entry = match entry {
-        Vacant(ve) => ve,
-        Occupied(_) => throw!(MgmtError::AlreadyExists),
-      };
+    // access without save means it's deleted
+    // save without access menas no accesses
+    ig.save_access_now()?;
+    ig.save_game_now()?;
 
+    (||{
       entry.insert(gref.clone());
-    }
+    })(); // <- No ?, ensures that IEFE is infallible (barring panics)
 
-    gref
+    ig.gref
   }
 
   #[throws(MgmtError)]
@@ -181,9 +180,14 @@ impl Instance {
       .clone()
   }
 
+  #[throws(MgmtError)]
   pub fn destroy(mut g: InstanceGuard) {
     g.c.live = false;
-    // remove the files
+    (||{
+      fs::remove_file(InstanceGuard::savefile(&g.name, "g-", ""))?;
+      fs::remove_file(InstanceGuard::savefile(&g.name, "a-", ""))?;
+      <Result<_,ServerFailure>>::Ok(())
+    })()?;
     GLOBAL.games.write().unwrap().remove(&g.name);
     InstanceGuard::forget_all_tokens(&mut g.tokens_players);
     InstanceGuard::forget_all_tokens(&mut g.tokens_clients);
