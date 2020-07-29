@@ -49,7 +49,8 @@ pub struct Client {
   pub player : PlayerId,
 }
 
-type DenseSlotMap<PlayerId,PlayerState>;
+pub type PlayerMap = DenseSlotMap<PlayerId,PlayerState>;
+/* xxx
 #[derive(Serialize,Deserialize)]
 #[repr(transparent)]
 pub struct PlayerMap(ActualPlayerMap);
@@ -60,6 +61,7 @@ impl Deref for PlayerMap {
 // No DerefMut: callers in this module should access .0 directly
 // This prevents accidental modification of Players without appropriate
 // synchrnoisation.
+*/
 
 /// UPDATE RELIABILITY/PERSISTENCE RULES
 ///
@@ -252,11 +254,11 @@ impl Instance {
       .clone()
   }
 
-  #[throws(MgmtError)]
+  #[throws(ServerFailure)]
   pub fn destroy_game(mut g: InstanceGuard) {
     let a_savefile = InstanceGuard::savefile(&g.name, "a-", "");
 
-    let gw = GLOBAL.games.write().unwrap();
+    let mut gw = GLOBAL.games.write().unwrap();
     fs::remove_file(InstanceGuard::savefile(&g.name, "g-", ""))?;
 
     (||{ // Infallible:
@@ -264,7 +266,7 @@ impl Instance {
       gw.remove(&g.name);
       InstanceGuard::forget_all_tokens(&mut g.tokens_clients);
       InstanceGuard::forget_all_tokens(&mut g.tokens_players);
-    }()); // <- No ?, ensures that IEFE is infallible (barring panics)
+    })(); // <- No ?, ensures that IEFE is infallible (barring panics)
 
     (||{ // Best effort:
       fs::remove_file(&a_savefile)

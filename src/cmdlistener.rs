@@ -231,7 +231,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       execute_for_game(cs, &mut ig, insns, MgmtGameUpdateMode::Bulk)
         .map_err(|e|{
           let name = ig.name.clone();
-          Instance::destroy(ig)
+          Instance::destroy_game(ig)
             .unwrap_or_else(|e|
  eprintln!("failed to tidy up failecd creation of {:?}: {:?}",
                                       &name, &e));
