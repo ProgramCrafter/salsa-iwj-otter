@@ -33,6 +33,7 @@ pub enum PreparedUpdateEntry {
     op : PieceUpdateOp<PreparedPieceState>,
   },
   Log (Arc<LogEntry>),
+  RenderingError,
 }
 
 #[derive(Debug,Serialize)]
@@ -75,6 +76,7 @@ enum TransmitUpdateEntry<'u> {
     op : &'u PieceUpdateOp<PreparedPieceState>,
   },
   Log (&'u LogEntry),
+  ServerUpdateGenerationError,
 }
 
 // ========== implementation ==========
@@ -104,6 +106,9 @@ impl PreparedUpdateEntry {
       },
       Log(logent) => {
         logent.html.as_bytes().len() * 3
+      }
+      RenderingError => {
+        100
       }
     }
   }
@@ -180,11 +185,12 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   }
 
   #[throws(SVGProcessingError)]
-  pub fn piece_update(&mut self, piece: PieceId, update: PieceUpdateOp<()>,
-                      lens: &dyn Lens) {
+  fn piece_update_fallible(&mut self, piece: PieceId,
+                           update: PieceUpdateOp<()>,
+                           lens: &dyn Lens) -> PreparedUpdateEntry {
     let gs = &mut self.g.gs;
 
-    // xxx check pos is within range,  everywhere
+    // xxx enforce pos is within range,  everywhere
 
     let (update, piece) = match gs.pieces.byid_mut(piece) {
       Ok(pc) => {
@@ -217,15 +223,28 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       }
     };
 
-    self.us.push(PreparedUpdateEntry::Piece {
+    PreparedUpdateEntry::Piece {
       piece,
       client : self.by_client,
       sameclient_cseq : self.cseq,
       op : update,
-    });
+    }
   }
 
-  #[throws(SVGProcessingError)]
+  pub fn piece_update(&mut self, piece: PieceId, update: PieceUpdateOp<()>,
+                      lens: &dyn Lens) {
+    // Caller needs us to be infallible since it is too late by
+    // this point to back out a game state change.
+
+    let update = self.piece_update_fallible(piece, update, lens)
+      .unwrap_or_else(|e| {
+        eprintln!("piece update error! piece={:?} lens={:?} error={:?}",
+                  piece, &lens, &e);
+        PreparedUpdateEntry::RenderingError
+      });
+    self.us.push(update);
+  }
+
   pub fn log_updates(&mut self, logents: Vec<LogEntry>) {
     for logentry in logents {
       let logentry = Arc::new(logentry);
@@ -270,6 +289,9 @@ impl PreparedUpdate {
         PreparedUpdateEntry::Log(logent) => {
           TransmitUpdateEntry::Log(&logent)
         },
+        PreparedUpdateEntry::RenderingError => {
+          TransmitUpdateEntry::ServerUpdateGenerationError
+        }
       };
       ents.push(ue);
     };

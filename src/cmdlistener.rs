@@ -316,9 +316,9 @@ impl UpdateHandler {
         let mut buf = PrepareUpdatesBuffer::new(g, None, Some(estimate));
         for (upiece, uuop) in upieces {
           let lens = TransparentLens { };
-          buf.piece_update(upiece, uuop, &lens)?;
+          buf.piece_update(upiece, uuop, &lens);
         }
-        buf.log_updates(ulogs)?;
+        buf.log_updates(ulogs);
       },
     }
   }
@@ -331,13 +331,13 @@ impl UpdateHandler {
         let mut buf = PrepareUpdatesBuffer::new(g, None, None);
         for (upiece, uuop) in bulk.pieces {
           let lens = TransparentLens { };
-          buf.piece_update(upiece, uuop, &lens)?;
+          buf.piece_update(upiece, uuop, &lens);
         }
 
         buf.log_updates(vec![LogEntry {
           html: "The facilitator (re)configured the game".to_owned(),
           // xxx use cs.desc
-        }])?;
+        }]);
         },
       Online => { },
     }

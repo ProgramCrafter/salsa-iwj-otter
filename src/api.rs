@@ -17,7 +17,7 @@ trait ApiPieceOp : Debug {
         -> (PieceUpdateOp<()>, Vec<LogEntry>);
 }
 
-pub trait Lens {
+pub trait Lens : Debug {
   fn pieceid2visible(&self, piece: PieceId) -> VisiblePieceId;
   fn log_pri(&self, piece: PieceId, pc: &PieceState)
              -> PieceRenderInstructions;
@@ -27,6 +27,7 @@ pub trait Lens {
   fn decode_visible_pieceid(&self, vpiece: VisiblePieceId, player: PlayerId)
                             -> PieceId;
 }
+#[derive(Debug)]
 pub struct TransparentLens {
   // when lenses become nontrivial, make this nonconstructable
   // to find all the places where a TransparentLens was bodged
@@ -95,8 +96,8 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       let mut buf = PrepareUpdatesBuffer::new(g, Some((client, form.cseq)),
                                               Some(1 + logents.len()));
       
-      buf.piece_update(piece, update, &lens)?;
-      buf.log_updates(logents)?;
+      buf.piece_update(piece, update, &lens);
+      buf.log_updates(logents);
 
       eprintln!("API {:?} OK", &form);
     }
