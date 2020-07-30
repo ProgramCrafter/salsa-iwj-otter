@@ -320,34 +320,63 @@ impl InstanceGuard<'_> {
     player
   }
 
-  #[throws(ServerFailure)]
-  pub fn player_remove(&mut self, oldplayer: PlayerId) {
+//  #[throws(ServerFailure)]
+  pub fn player_remove(&mut self, oldplayer: PlayerId) -> Result<(),ServerFailure> {
     // We have to filter this player out of everything
     // Then save
     // Then send updates
     // We make a copy so if the save fails, we can put everything back
-    let pieces = self.c.g.gs.pieces.clone();
-    for (_piece,p) in &mut pieces {
-      if p.held == Some(oldplayer) { p.held = None }
-    }
-    let players = self.c.g.gs.players.clone();
+
+    let mut players = self.c.g.gs.players.clone();
     players.remove(oldplayer);
-    let gs = GameState {
+
+    // New state
+    let mut gs = GameState {
+      // These parts are straightforward and correct
       gen : self.c.g.gs.gen,
-      log : mem::take(&mut self.c.g.gs.log), // must put this back
       max_z : self.gs.max_z,
-      pieces, players,
+      players,
+      // These have special handling
+      log : Default::default(),
+      pieces : Default::default(),
     };
 
-    mem::swap(&mut gs, &mut self.gs);
+    let mut undo : Vec<Box<dyn FnOnce(&mut InstanceGuard)>> = vec![];
+
+    // Arrange gs.pieces
+    let mut updated_pieces = vec![];
+    for (piece,p) in &mut self.c.g.gs.pieces {
+      if p.held == Some(oldplayer) {
+        p.held = None;
+        updated_pieces.push(piece);
+      }
+    }
+    undo.push(Box::new(|ig| for piece in updated_pieces {
+      ig.c.g.gs.pieces[piece].held = Some(oldplayer)
+    }));
+
+    // xxx send updates for pieces
+
+    // Handle gs.log:
+    // Installs gs as the new game state, stealing the log
+    let mut swap_things = |ig: &mut InstanceGuard| {
+      mem::swap(&mut ig.c.g.gs.log, &mut gs.log);
+      mem::swap(&mut ig.c.g.gs,     &mut gs,   );
+    };
+    swap_things(self);
+    undo.push(Box::new(swap_things));
+
     self.save_game_now().map_err(|e|{
       // oof
-      mem::swap(&mut gs,     &mut self.gs);
-      mem::swap(&mut gs.log, &mut self.gs.log);
+      for u in undo.drain(..).rev() {
+        u(self);
+      }
       e
     })?;
 
     // point of no return
+    mem::drop(undo);
+
     (||{
       let mut clients_to_remove = HashSet::new();
       self.clients.retain(|k,v| {
@@ -359,12 +388,14 @@ impl InstanceGuard<'_> {
       self.updates.remove(oldplayer);
       self.tokens_deregister_for_id(|id:PlayerId| id==oldplayer);
       self.tokens_deregister_for_id(|id| clients_to_remove.contains(&id));
-      self.save_access_now().map_err(
+      self.save_access_now().unwrap_or_else(
         |e| eprintln!(
           "trouble garbage collecting accesses for deleted player: {:?}",
           &e)
       );
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
+
+    Ok(())
   }
 
   #[throws(OE)]
@@ -516,15 +547,12 @@ impl InstanceGuard<'_> {
 
 pub type TokenTable<Id> = HashMap<RawToken, InstanceAccessDetails<Id>>;
 
-pub trait AccessId : Copy + Clone + Sealed + 'static {
+pub trait AccessId : Copy + Clone + 'static {
   fn global_tokens(_:PrivateCaller) -> &'static RwLock<TokenTable<Self>>;
   fn tokens_registry(ig: &mut Instance, _:PrivateCaller)
                      -> &mut TokenRegistry<Self>;
   const ERROR : OnlineError;
 }
-
-trait Sealed { }
-impl<T> Sealed for T { }
 
 impl AccessId for PlayerId {
   const ERROR : OnlineError = NoPlayer;
