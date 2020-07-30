@@ -191,7 +191,7 @@ impl Borrow<str> for RawToken {
   fn borrow(&self) -> &str { &self.0 }
 }
 
-// ---------- Main instance API ----------
+// ---------- Main API for instance lifecycle ----------
 
 impl InstanceRef {
   #[throws(InstanceLockError)]
@@ -304,16 +304,76 @@ impl DerefMut for InstanceGuard<'_> {
 // ---------- Player and token functionality ----------
 
 impl InstanceGuard<'_> {
-  #[throws(OE)]
+  #[throws(ServerFailure)]
   pub fn player_new(&mut self, newplayer: PlayerState) -> PlayerId {
+    // saving is fallible, but we can't attempt to save unless
+    // we have a thing to serialise with the player in it
     let player = self.c.g.gs.players.insert(newplayer);
-    self.c.g.updates.insert(player, Default::default());
-    self.save_game_now()?;
+    self.save_game_now().map_err(|e|{
+      self.c.g.gs.players.remove(player);
+      e
+    })?;
+    (||{
+      self.c.g.updates.insert(player, Default::default());
+      // xxx send log message, should be provided by caller
+    })(); // <- No ?, ensures that IEFE is infallible (barring panics)
     player
+  }
+
+  #[throws(ServerFailure)]
+  pub fn player_remove(&mut self, oldplayer: PlayerId) {
+    // We have to filter this player out of everything
+    // Then save
+    // Then send updates
+    // We make a copy so if the save fails, we can put everything back
+    let pieces = self.c.g.gs.pieces.clone();
+    for (_piece,p) in &mut pieces {
+      if p.held == Some(oldplayer) { p.held = None }
+    }
+    let players = self.c.g.gs.players.clone();
+    players.remove(oldplayer);
+    let gs = GameState {
+      gen : self.c.g.gs.gen,
+      log : mem::take(&mut self.c.g.gs.log), // must put this back
+      max_z : self.gs.max_z,
+      pieces, players,
+    };
+
+    mem::swap(&mut gs, &mut self.gs);
+    self.save_game_now().map_err(|e|{
+      // oof
+      mem::swap(&mut gs,     &mut self.gs);
+      mem::swap(&mut gs.log, &mut self.gs.log);
+      e
+    })?;
+
+    // point of no return
+    (||{
+      let mut clients_to_remove = HashSet::new();
+      self.clients.retain(|k,v| {
+        let remove = v.player == oldplayer;
+        if remove { clients_to_remove.insert(k); }
+        !remove
+      });
+      // xxx signal this client to abandon ?
+      self.updates.remove(oldplayer);
+      self.tokens_deregister_for_id(|id:PlayerId| id==oldplayer);
+      self.tokens_deregister_for_id(|id| clients_to_remove.contains(&id));
+      self.save_access_now().map_err(
+        |e| eprintln!(
+          "trouble garbage collecting accesses for deleted player: {:?}",
+          &e)
+      );
+    })(); // <- No ?, ensures that IEFE is infallible (barring panics)
   }
 
   #[throws(OE)]
   pub fn player_access_register(&mut self, token: RawToken, player: PlayerId) {
+    // xxx server has to not allow unpriv users to define tokens
+    // xxx which is a shame because it means tokens can't persist,
+    // xxx unless game is never destroyed ?
+    // xxx these things are then more like tables, and persistent
+    // xxx boxes feature maybe
     let iad = InstanceAccessDetails { gref : self.gref.clone(), ident : player };
     self.token_register(token, iad);
     self.save_access_now()?;
@@ -332,6 +392,16 @@ impl InstanceGuard<'_> {
     let global : &RwLock<TokenTable<Id>> = AccessId::global_tokens(PRIVATE_Y);
     let mut global = global.write().unwrap();
     for t in tokens.tr.drain() { global.remove(&t); }
+  }
+
+  fn tokens_deregister_for_id<Id:AccessId, F: Fn(Id) -> bool
+                              > (&mut self, oldid: F) {
+    let mut tokens = AccessId::global_tokens(PRIVATE_Y).write().unwrap();
+    tokens.retain(|k,v| {
+      let remove = oldid(v.ident);
+      if remove { Id::tokens_registry(self, PRIVATE_Y).tr.remove(k); }
+      !remove
+    });
   }
 }
 
@@ -402,6 +472,7 @@ impl InstanceGuard<'_> {
   pub fn load(name: InstanceName) -> InstanceRef {
     // xxx scan on startup, rather than asking caller to specify names
     // xxx should take a file lock on save area
+    // xxx check for deleted players, throw their tokens away
     let gs : GameState = Self::load_something(&name, "g-")?;
     let mut al : InstanceSaveAccesses<String>
                        = Self::load_something(&name, "a-")?;
@@ -445,12 +516,15 @@ impl InstanceGuard<'_> {
 
 pub type TokenTable<Id> = HashMap<RawToken, InstanceAccessDetails<Id>>;
 
-pub trait AccessId : Copy + Clone + 'static {
+pub trait AccessId : Copy + Clone + Sealed + 'static {
   fn global_tokens(_:PrivateCaller) -> &'static RwLock<TokenTable<Self>>;
   fn tokens_registry(ig: &mut Instance, _:PrivateCaller)
                      -> &mut TokenRegistry<Self>;
   const ERROR : OnlineError;
 }
+
+trait Sealed { }
+impl<T> Sealed for T { }
 
 impl AccessId for PlayerId {
   const ERROR : OnlineError = NoPlayer;

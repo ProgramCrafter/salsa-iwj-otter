@@ -46,7 +46,7 @@ pub struct GameState {
   pub max_z : ZCoord,
 }
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct PieceState {
   pub pos : Pos,
   pub p : Box<dyn Piece>,
@@ -58,7 +58,7 @@ pub struct PieceState {
   pub gen_before_lastclient : Generation,
 }
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct PlayerState {
   pub nick : String,
 }
