@@ -12,10 +12,13 @@ const RECENT_BUFFER : usize = 50;
 
 // ---------- prepared updates, queued in memory ----------
 
+pub type PlayerUpdatesLog =
+  StableIndexVecDeque<Arc<PreparedUpdate>,sse::UpdateId>;
+
 #[derive(Debug)]
 pub struct PlayerUpdates {
-  pub log : StableIndexVecDeque<Arc<PreparedUpdate>,sse::UpdateId>,
-  pub cv : Arc<Condvar>,
+  log : PlayerUpdatesLog,
+  cv : Arc<Condvar>,
 }
 
 #[derive(Debug)]
@@ -95,6 +98,13 @@ impl PlayerUpdates {
     self.log.push_back(update.into());
     self.cv.notify_all();
   }
+  pub fn read_log(&self) -> &PlayerUpdatesLog { &self.log }
+
+  pub fn get_or_cv(&self, index: sse::UpdateId)
+                   -> Result<&Arc<PreparedUpdate>,Arc<Condvar>> {
+    self.log.get(index).ok_or_else(|| self.cv.clone())
+  }
+  pub fn get_cv(&self) -> Arc<Condvar> { self.cv.clone() }
 }
 
 impl PreparedUpdate {

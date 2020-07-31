@@ -47,14 +47,12 @@ impl Read for UpdateReader {
     let pu = &mut ig.updates.get(self.player)
       .ok_or_else(|| em("player gonee"))?;
 
-    let cv = pu.cv.clone();
-
-    loop {
-      let next = match pu.log.get(self.to_send) {
-        Some(next) => next,  None => { break }
+    let cv = loop {
+      let next = match pu.get_or_cv(self.to_send) {
+        Ok(next) => next,  Err(cv) => { break cv }
       };
       let next_len = UPDATE_MAX_FRAMING_SIZE + next.json_len();
-      if next_len > buf.len() { break }
+      if next_len > buf.len() { break pu.get_cv() }
 
       let tu = next.for_transmit(self.client);
       // xxx handle overflow by allocating
@@ -64,7 +62,7 @@ impl Read for UpdateReader {
                    id: {}\n\n",
              &self.to_send)?;
       self.to_send.try_increment().unwrap();
-    }
+    };
 
     loop {
       let generated = orig_wanted - buf.len();
@@ -138,7 +136,7 @@ eprintln!("updates content iad={:?} player={:?} cl={:?} updates={:?}",
           &iad, &player, &cl, &g.updates);
     let gref = iad.gref.clone();
 
-    let log = &g.updates.byid(player)?.log;
+    let log = &g.updates.byid(player)?.read_log();
 
     let to_send = match log.into_iter().rev()
       .find(|(_,update)| update.gen <= gen) {
