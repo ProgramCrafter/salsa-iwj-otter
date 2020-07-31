@@ -90,6 +90,13 @@ impl Default for PlayerUpdates {
   } }
 }
 
+impl PlayerUpdates {
+  fn push<U: Into<Arc<PreparedUpdate>>>(&mut self, update: U) {
+    self.log.push_back(update.into());
+    self.cv.notify_all();
+  }
+}
+
 impl PreparedUpdate {
   pub fn json_len(&self) -> usize {
     self.us.iter().map(|u| 20 + u.json_len()).sum()
@@ -266,8 +273,7 @@ impl<'r> Drop for PrepareUpdatesBuffer<'r> {
     eprintln!("UPDATE {:?}", &update);
 
     for (_tplayer, tplupdates) in &mut self.g.updates {
-      tplupdates.log.push_back(update.clone());
-      tplupdates.cv.notify_all();
+      tplupdates.push(update.clone());
     }
   }
 }
