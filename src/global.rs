@@ -397,8 +397,14 @@ impl InstanceGuard<'_> {
         if remove { clients_to_remove.insert(k); }
         !remove
       });
-      // xxx signal this client to abandon ?
-      self.updates.remove(oldplayer);
+      if let Some(mut updates) = self.updates.remove(oldplayer) {
+        updates. push(PreparedUpdate {
+          gen: self.c.g.gs.gen,
+          us : vec![ PreparedUpdateEntry::Error(
+            ErrorSignaledViaUpdate::PlayerRemoved
+          )],
+        });
+      }
       self.tokens_deregister_for_id(|id:PlayerId| id==oldplayer);
       self.tokens_deregister_for_id(|id| clients_to_remove.contains(&id));
       self.save_access_now().unwrap_or_else(

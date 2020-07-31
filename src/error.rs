@@ -45,6 +45,7 @@ pub enum ServerFailure {
 #[derive(Error,Debug,Serialize,Copy,Clone)]
 pub enum ErrorSignaledViaUpdate {
   RenderingError,
+  PlayerRemoved,
 }
 display_as_debug!{ErrorSignaledViaUpdate}
 
