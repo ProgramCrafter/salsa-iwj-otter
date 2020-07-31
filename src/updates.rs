@@ -91,7 +91,7 @@ impl Default for PlayerUpdates {
 }
 
 impl PlayerUpdates {
-  fn push<U: Into<Arc<PreparedUpdate>>>(&mut self, update: U) {
+  pub fn push<U: Into<Arc<PreparedUpdate>>>(&mut self, update: U) {
     self.log.push_back(update.into());
     self.cv.notify_all();
   }
