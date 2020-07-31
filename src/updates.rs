@@ -98,6 +98,8 @@ impl PlayerUpdates {
     self.log.push_back(update.into());
     self.cv.notify_all();
   }
+  // giving out only immutable references means no-one can
+  // forget to cv.notify
   pub fn read_log(&self) -> &PlayerUpdatesLog { &self.log }
   pub fn get_cv(&self) -> Arc<Condvar> { self.cv.clone() }
 }
