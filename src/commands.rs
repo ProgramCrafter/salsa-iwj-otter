@@ -17,6 +17,7 @@ pub enum MgmtCommand {
 pub enum MgmtGameInstruction {
   Noop { },
   AddPiece(PiecesSpec),
+  // todo: RemovePiece
   AddPlayer(PlayerState),
   RemovePlayer(PlayerId),
 }
@@ -50,6 +51,7 @@ pub enum MgmtError {
   GameBeingDestroyed,
   GameNotFound,
   GameCorrupted,
+  PlayerNotFound,
   LimitExceeded,
   SVGProcessingFailed(#[from] SVGProcessingError),
   GameError(#[from] GameError),

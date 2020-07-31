@@ -428,12 +428,15 @@ impl InstanceGuard<'_> {
     self.token_register(token, iad);
   }
 
-  #[throws(OE)]
+  #[throws(MgmtError)]
   pub fn player_access_reset(&mut self, players: &[PlayerId])
                              -> Vec<RawToken> {
     // tokens can't persist unless game is never destroyed ?
     // so a game is like a tables, and persistent
     // xxx boxes feature maybe
+    for &player in players {
+      self.c.g.gs.players.get(player).ok_or(MgmtError::PlayerNotFound)?;
+    }
     self.tokens_deregister_for_id(|id:PlayerId| players.contains(&id));
     self.save_access_now()?;
     let mut tokens = vec![];
@@ -442,7 +445,7 @@ impl InstanceGuard<'_> {
         gref : self.gref.clone(),
         ident : player
       };
-      let token = RawToken::new_random()?;
+      let token = RawToken::new_random();
       self.token_register(token.clone(), iad);
       tokens.push(token);
     }
@@ -618,7 +621,6 @@ impl AccessId for ClientId {
 }
 
 impl RawToken {
-  #[throws(OE)]
   fn new_random() -> Self {
     let mut rng = thread_rng();
     let token = RawToken (
@@ -653,7 +655,7 @@ pub fn record_token<Id : AccessId> (
   ig : &mut InstanceGuard,
   iad : InstanceAccessDetails<Id>
 ) -> RawToken {
-  let token = RawToken::new_random()?;
+  let token = RawToken::new_random();
   ig.token_register(token.clone(), iad);
   token
 }
