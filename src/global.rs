@@ -429,7 +429,7 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(MgmtError)]
-  pub fn player_access_reset(&mut self, players: &[PlayerId])
+  pub fn players_access_reset(&mut self, players: &[PlayerId])
                              -> Vec<RawToken> {
     // tokens can't persist unless game is never destroyed ?
     // so a game is like a tables, and persistent

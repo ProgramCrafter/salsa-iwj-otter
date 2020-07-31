@@ -264,7 +264,6 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       let mut g = gref.lock()?;
       execute_for_game(cs, &mut g, insns, how)?
     },
-
   }
 }
 
@@ -393,6 +392,12 @@ fn execute_game_insn(ig: &mut InstanceGuard, update: MgmtGameInstruction)
       ig.player_remove(player)?;
       (vec![], vec![], Fine{})
     },
+
+
+    ResetPlayerAccesses { players } => {
+      let tokens = ig.players_access_reset(&players)?;
+      (vec![], vec![], PlayerAccessTokens { tokens })
+    }
 
     AddPiece(PiecesSpec{ pos,posd,count,face,info }) => {
       let gs = &mut ig.gs;
