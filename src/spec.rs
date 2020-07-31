@@ -30,14 +30,5 @@ pub struct PiecesSpec {
 #[typetag::serde(tag="access")]
 pub trait PlayerAccessSpec : Debug {
   #[throws(OE)]
-  fn make_token(&self) -> RawToken { RawToken::new_random()? }
   fn deliver_token(&mut self) -> Result<(),OE>;
-}
-
-#[typetag::serde]
-impl PlayerAccessSpec for RawToken {
-  #[throws(OE)]
-  fn make_token(&self) -> RawToken { self.clone() }
-  #[throws(OE)]
-  fn deliver_token(&mut self) { }
 }

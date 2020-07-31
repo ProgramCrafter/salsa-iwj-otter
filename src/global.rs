@@ -418,15 +418,33 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(OE)]
-  pub fn player_access_register(&mut self, token: RawToken, player: PlayerId) {
-    // xxx server has to not allow unpriv users to define tokens
-    // xxx which is a shame because it means tokens can't persist,
-    // xxx unless game is never destroyed ?
-    // xxx these things are then more like tables, and persistent
-    // xxx boxes feature maybe
-    let iad = InstanceAccessDetails { gref : self.gref.clone(), ident : player };
+  pub fn player_access_register_xxx(&mut self, token: RawToken, player: PlayerId) {
+    // xxx server has to not allow even facilitators to define tokens
+    // xxx this fn should become part of player_access_add
+    let iad = InstanceAccessDetails {
+      gref : self.gref.clone(),
+      ident : player
+    };
     self.token_register(token, iad);
+  }
+
+  #[throws(OE)]
+  pub fn player_access_reset(&mut self, player: PlayerId) -> RawToken {
+    // tokens can't persist unless game is never destroyed ?
+    // so a game is like a tables, and persistent
+    // xxx boxes feature maybe
+    self.tokens_deregister_for_id(|id:PlayerId| id==player);
     self.save_access_now()?;
+    let iad = InstanceAccessDetails {
+      gref : self.gref.clone(),
+      ident : player
+    };
+    let token = RawToken::new_random()?;
+    self.token_register(token.clone(), iad);
+    self.save_access_now()?;
+    // If the save fails, we don't return the token so no-one can use
+    // it.  Therefore we don't need to bother deleting it.
+    token
   }
 
   fn token_register<Id:AccessId>(
@@ -596,7 +614,7 @@ impl AccessId for ClientId {
 
 impl RawToken {
   #[throws(OE)]
-  pub fn new_random() -> Self {
+  fn new_random() -> Self {
     let mut rng = thread_rng();
     let token = RawToken (
       repeat_with(|| rng.sample(Alphanumeric))
@@ -654,6 +672,6 @@ pub fn xxx_global_setup() {
     let player = g.player_new(PlayerState {
       nick : nick.to_string(),
     })?;
-    g.player_access_register(RawToken(token.to_string()), player)?;
+    g.player_access_register_xxx(RawToken(token.to_string()), player)?;
   }
 }
