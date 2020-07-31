@@ -23,8 +23,14 @@ pub enum MgmtGameInstruction {
 pub enum MgmtResponse {
   Fine { },
   Error { error: MgmtError },
-  ErrorAfter { successes: usize, error: MgmtError },
+  AlterGame { error: Option<MgmtError>, results: Vec<MgmtGameResult> },
   GamesList { games: Vec<Arc<InstanceName>> },
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+pub enum MgmtGameResult {
+  Fine { },
+  AddPlayer { player: PlayerId },
 }
 
 #[derive(Debug,Serialize,Deserialize)]

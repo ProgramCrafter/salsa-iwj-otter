@@ -255,7 +255,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       GamesList { games }
     },
 
-    AlterGame { name, insns, how} => {
+    MgmtCommand::AlterGame { name, insns, how} => {
       let name = InstanceName {
         scope: cs.get_scope()?.clone(),
         scoped_name: name
@@ -348,26 +348,21 @@ impl UpdateHandler {
 fn execute_for_game(cs: &CommandStream, ig: &mut InstanceGuard,
                     mut insns: Vec<MgmtGameInstruction>,
                     how: MgmtGameUpdateMode) -> MgmtResponse {
-  let mut insns = insns.drain(0..).zip(0..);
   let mut uh = UpdateHandler::from_how(how);
-  let response = 'subcommands: loop {
-
-    let (insn, index) = match insns.next() {
-      None => break 'subcommands Fine { },
-      Some(r) => r,
-    };
-
-    let (upieces, ulogs) = match execute_game_insn(&mut ig.gs, insn) {
-      Err(e) => break 'subcommands ErrorAfter { successes: index, error: e },
-      Ok(r) => r,
-    };
-
-    uh.accumulate(ig, upieces, ulogs)?;
-
-  };
-
-  uh.complete(cs,ig)?;
-  response
+  let mut results = Vec::with_capacity(insns.len());
+  let ok = (||{
+    for insn in insns.drain(0..) {
+      let (upieces, ulogs, resp) = execute_game_insn(&mut ig.gs, insn)?;
+      uh.accumulate(ig, upieces, ulogs)?;
+      results.push(resp);
+    }
+    uh.complete(cs,ig)?;
+    Ok(None)
+  })();
+  MgmtResponse::AlterGame {
+    results,
+    error: ok.unwrap_or_else(|e| Some(e))
+  }
 }
 
 const XXX_START_POS : Pos = [20,20];
@@ -377,10 +372,15 @@ const CREATE_PIECES_MAX : u32 = 300;
 
 #[throws(ME)]
 fn execute_game_insn(gs: &mut GameState, update: MgmtGameInstruction)
-                     -> (Vec<(PieceId,PieceUpdateOp<()>)>, Vec<LogEntry>) {
+                     ->
+  (Vec<(PieceId,PieceUpdateOp<()>)>,
+   Vec<LogEntry>,
+   MgmtGameResult,
+  ) {
   use MgmtGameInstruction::*;
+  use MgmtGameResult::*;
   match update {
-    Noop { } => (vec![], vec![]),
+    Noop { } => (vec![], vec![], Fine { }),
 
     AddPiece(PiecesSpec{ pos,posd,count,face,info }) => {
       let count = count.unwrap_or(1);
@@ -409,7 +409,9 @@ fn execute_game_insn(gs: &mut GameState, update: MgmtGameInstruction)
 
       (updates, vec![ LogEntry {
         html: format!("The facilitaror added {} pieces", count),
-      }])
+      }],
+       Fine { }
+      )
     },
   }
 }
