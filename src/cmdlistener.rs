@@ -352,7 +352,7 @@ fn execute_for_game(cs: &CommandStream, ig: &mut InstanceGuard,
   let mut results = Vec::with_capacity(insns.len());
   let ok = (||{
     for insn in insns.drain(0..) {
-      let (upieces, ulogs, resp) = execute_game_insn(&mut ig.gs, insn)?;
+      let (upieces, ulogs, resp) = execute_game_insn(ig, insn)?;
       uh.accumulate(ig, upieces, ulogs)?;
       results.push(resp);
     }
@@ -371,18 +371,31 @@ const XXX_DEFAULT_POSD : Pos = [5,5];
 const CREATE_PIECES_MAX : u32 = 300;
 
 #[throws(ME)]
-fn execute_game_insn(gs: &mut GameState, update: MgmtGameInstruction)
-                     ->
-  (Vec<(PieceId,PieceUpdateOp<()>)>,
-   Vec<LogEntry>,
-   MgmtGameResult,
-  ) {
+fn execute_game_insn(ig: &mut InstanceGuard, update: MgmtGameInstruction)
+                     -> (Vec<(PieceId,PieceUpdateOp<()>)>,
+                         Vec<LogEntry>,
+                         MgmtGameResult) {
   use MgmtGameInstruction::*;
   use MgmtGameResult::*;
   match update {
     Noop { } => (vec![], vec![], Fine { }),
 
+    MgmtGameInstruction::AddPlayer(pl) => {
+      let player = ig.player_new(pl)?;
+      (vec![],
+       vec![ LogEntry {
+         html: format!("The facilitator added a player xxx"),
+       } ],
+       MgmtGameResult::AddPlayer { player })
+    },
+
+    RemovePlayer(player) => {
+      ig.player_remove(player)?;
+      (vec![], vec![], Fine{})
+    },
+
     AddPiece(PiecesSpec{ pos,posd,count,face,info }) => {
+      let gs = &mut ig.gs;
       let count = count.unwrap_or(1);
       if count > CREATE_PIECES_MAX { throw!(LimitExceeded) }
       let posd = posd.unwrap_or(XXX_DEFAULT_POSD);

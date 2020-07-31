@@ -17,6 +17,8 @@ pub enum MgmtCommand {
 pub enum MgmtGameInstruction {
   Noop { },
   AddPiece(PiecesSpec),
+  AddPlayer(PlayerState),
+  RemovePlayer(PlayerId),
 }
 
 #[derive(Debug,Serialize,Deserialize)]
