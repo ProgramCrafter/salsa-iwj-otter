@@ -395,7 +395,13 @@ fn execute_game_insn(ig: &mut InstanceGuard, update: MgmtGameInstruction)
 
 
     ResetPlayerAccesses { players } => {
-      let tokens = ig.players_access_reset(&players)?;
+      let tokens = ig.players_access_reset(&players)?
+        .drain(0..).map(|token| vec![token]).collect();
+      (vec![], vec![], PlayerAccessTokens { tokens })
+    }
+
+    ReportPlayerAccesses { players } => {
+      let tokens = ig.players_access_report(&players)?;
       (vec![], vec![], PlayerAccessTokens { tokens })
     }
 

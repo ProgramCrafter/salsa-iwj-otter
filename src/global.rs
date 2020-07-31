@@ -455,6 +455,37 @@ impl InstanceGuard<'_> {
     tokens
   }
 
+  #[throws(MgmtError)]
+  pub fn players_access_report(&mut self, players: &[PlayerId])
+                               -> Vec<Vec<RawToken>> {
+    // tokens can't persist unless game is never destroyed ?
+    // so a game is like a tables, and persistent
+    // xxx boxes feature maybe
+    let mut wanted = {
+      let mut wanted = SecondarySlotMap::new();
+      for &player in players {
+        wanted.insert(player, vec![]);
+      }
+      let global = GLOBAL.players.read().unwrap();
+      for token in &self.tokens_players.tr {
+        (||{
+          let iad = global.get(token)?;
+          let e = wanted.get_mut(iad.ident)?;
+          e.push(token.clone());
+          Some(())
+        })();
+      }
+      wanted
+    };
+    let out = players.iter().map(|&player| {
+      let mut tokens = wanted.remove(player)
+        .unwrap_or(vec![] /* dupe, somehow */);
+      tokens.sort_unstable();
+      tokens
+    }).collect();
+    out
+  }
+
   fn token_register<Id:AccessId>(
     &mut self,
     token: RawToken,

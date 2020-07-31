@@ -21,6 +21,7 @@ pub enum MgmtGameInstruction {
   AddPlayer(PlayerState),
   RemovePlayer(PlayerId),
   ResetPlayerAccesses { players: Vec<PlayerId> },
+  ReportPlayerAccesses { players: Vec<PlayerId> },
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -35,7 +36,7 @@ pub enum MgmtResponse {
 pub enum MgmtGameResult {
   Fine { },
   AddPlayer { player: PlayerId },
-  PlayerAccessTokens { tokens: Vec<RawToken> },
+  PlayerAccessTokens { tokens: Vec<Vec<RawToken>> },
 }
 
 #[derive(Debug,Serialize,Deserialize)]

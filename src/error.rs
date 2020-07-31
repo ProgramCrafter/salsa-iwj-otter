@@ -40,6 +40,8 @@ pub enum ServerFailure {
   MessagePackEncodeFail(#[from] rmp_serde::encode::Error),
   #[error("Server MessagePack decoding error (game load failed) {0:?}")]
   MessagePackDecodeFail(#[from] rmp_serde::decode::Error),
+  #[error("Server internal logic error {0:}")]
+  InternalLogicError(String),
 }
 
 #[derive(Error,Debug,Serialize,Copy,Clone)]
