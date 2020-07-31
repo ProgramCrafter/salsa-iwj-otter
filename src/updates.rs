@@ -99,11 +99,6 @@ impl PlayerUpdates {
     self.cv.notify_all();
   }
   pub fn read_log(&self) -> &PlayerUpdatesLog { &self.log }
-
-  pub fn get_or_cv(&self, index: sse::UpdateId)
-                   -> Result<&Arc<PreparedUpdate>,Arc<Condvar>> {
-    self.log.get(index).ok_or_else(|| self.cv.clone())
-  }
   pub fn get_cv(&self) -> Arc<Condvar> { self.cv.clone() }
 }
 
