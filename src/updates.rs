@@ -252,6 +252,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       self.us.push(PreparedUpdateEntry::Log(logentry));
     }
   }
+
+  pub fn finish(self) { }
 }
 
 impl<'r> Drop for PrepareUpdatesBuffer<'r> {

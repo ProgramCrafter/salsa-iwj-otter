@@ -341,21 +341,22 @@ impl InstanceGuard<'_> {
       pieces : Default::default(),
     };
 
+    let mut updated_pieces = vec![];
+    
+    // drop order is reverse of creation order, so create undo
+    // after all the things it will reference
     let mut undo : Vec<Box<dyn FnOnce(&mut InstanceGuard)>> = vec![];
 
     // Arrange gs.pieces
-    let mut updated_pieces = vec![];
     for (piece,p) in &mut self.c.g.gs.pieces {
       if p.held == Some(oldplayer) {
         p.held = None;
         updated_pieces.push(piece);
       }
     }
-    undo.push(Box::new(|ig| for piece in updated_pieces {
+    undo.push(Box::new(|ig| for &piece in &updated_pieces {
       ig.c.g.gs.pieces[piece].held = Some(oldplayer)
     }));
-
-    // xxx send updates for pieces
 
     // Handle gs.log:
     // Installs gs as the new game state, stealing the log
@@ -378,6 +379,18 @@ impl InstanceGuard<'_> {
     mem::drop(undo);
 
     (||{
+      for &piece in &updated_pieces {
+        self.c.g.gs.pieces[piece].gen = self.c.g.gs.gen;
+      }
+
+      let lens = TransparentLens { };
+      let estimate = updated_pieces.len() + 1;
+      let mut buf = PrepareUpdatesBuffer::new(self, None, Some(estimate));
+      for &piece in &updated_pieces {
+        buf.piece_update(piece, PieceUpdateOp::Modify(()), &lens);
+      }
+      buf.finish();
+
       let mut clients_to_remove = HashSet::new();
       self.clients.retain(|k,v| {
         let remove = v.player == oldplayer;
