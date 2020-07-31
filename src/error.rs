@@ -42,6 +42,12 @@ pub enum ServerFailure {
   MessagePackDecodeFail(#[from] rmp_serde::decode::Error),
 }
 
+#[derive(Error,Debug,Serialize,Copy,Clone)]
+pub enum ErrorSignaledViaUpdate {
+  RenderingError,
+}
+display_as_debug!{ErrorSignaledViaUpdate}
+
 pub type StartupError = anyhow::Error;
 
 pub use OnlineError::{NoClient,NoPlayer};

@@ -33,7 +33,7 @@ pub enum PreparedUpdateEntry {
     op : PieceUpdateOp<PreparedPieceState>,
   },
   Log (Arc<LogEntry>),
-  RenderingError,
+  Error (ErrorSignaledViaUpdate),
 }
 
 #[derive(Debug,Serialize)]
@@ -76,7 +76,7 @@ enum TransmitUpdateEntry<'u> {
     op : &'u PieceUpdateOp<PreparedPieceState>,
   },
   Log (&'u LogEntry),
-  ServerUpdateGenerationError,
+  Error(ErrorSignaledViaUpdate),
 }
 
 // ========== implementation ==========
@@ -113,10 +113,10 @@ impl PreparedUpdateEntry {
       },
       Log(logent) => {
         logent.html.as_bytes().len() * 3
-      }
-      RenderingError => {
+      },
+      Error(_) => {
         100
-      }
+      },
     }
   }
 }
@@ -247,7 +247,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       .unwrap_or_else(|e| {
         eprintln!("piece update error! piece={:?} lens={:?} error={:?}",
                   piece, &lens, &e);
-        PreparedUpdateEntry::RenderingError
+        PreparedUpdateEntry::Error(ErrorSignaledViaUpdate::RenderingError)
       });
     self.us.push(update);
   }
@@ -297,8 +297,8 @@ impl PreparedUpdate {
         PreparedUpdateEntry::Log(logent) => {
           TransmitUpdateEntry::Log(&logent)
         },
-        PreparedUpdateEntry::RenderingError => {
-          TransmitUpdateEntry::ServerUpdateGenerationError
+        &PreparedUpdateEntry::Error(e) => {
+          TransmitUpdateEntry::Error(e)
         }
       };
       ents.push(ue);
