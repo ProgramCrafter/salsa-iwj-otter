@@ -429,22 +429,27 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(OE)]
-  pub fn player_access_reset(&mut self, player: PlayerId) -> RawToken {
+  pub fn player_access_reset(&mut self, players: &[PlayerId])
+                             -> Vec<RawToken> {
     // tokens can't persist unless game is never destroyed ?
     // so a game is like a tables, and persistent
     // xxx boxes feature maybe
-    self.tokens_deregister_for_id(|id:PlayerId| id==player);
+    self.tokens_deregister_for_id(|id:PlayerId| players.contains(&id));
     self.save_access_now()?;
-    let iad = InstanceAccessDetails {
-      gref : self.gref.clone(),
-      ident : player
-    };
-    let token = RawToken::new_random()?;
-    self.token_register(token.clone(), iad);
+    let mut tokens = vec![];
+    for &player in players {
+      let iad = InstanceAccessDetails {
+        gref : self.gref.clone(),
+        ident : player
+      };
+      let token = RawToken::new_random()?;
+      self.token_register(token.clone(), iad);
+      tokens.push(token);
+    }
     self.save_access_now()?;
     // If the save fails, we don't return the token so no-one can use
     // it.  Therefore we don't need to bother deleting it.
-    token
+    tokens
   }
 
   fn token_register<Id:AccessId>(
