@@ -14,6 +14,7 @@ const RECENT_BUFFER : usize = 50;
 
 pub type PlayerUpdatesLog =
   StableIndexVecDeque<Arc<PreparedUpdate>,sse::UpdateId>;
+// xxx delete old updates at some point
 
 #[derive(Debug)]
 pub struct PlayerUpdates {

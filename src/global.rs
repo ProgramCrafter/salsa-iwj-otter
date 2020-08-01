@@ -521,11 +521,11 @@ impl InstanceGuard<'_> {
       Server => format!(""),
       Unix{user} => { format!("{}:", user) },
     } };
-    iter::once(prefix)
-      .chain( iter::once(scope_prefix.as_ref()) )
+    [ SAVE_DIRECTORY, &"/", prefix, scope_prefix.as_ref() ]
+      .iter().map(Deref::deref)
       .chain( utf8_percent_encode(&name.scoped_name,
                                   &percent_encoding::NON_ALPHANUMERIC) )
-      .chain( iter::once(suffix) )
+      .chain([ suffix ].iter().map(Deref::deref))
       .collect()
   }
   #[throws(ServerFailure)]
