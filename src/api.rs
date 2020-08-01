@@ -62,8 +62,9 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   let client = iad.ident;
   let mut g = iad.gref.lock()?;
   let g = &mut *g;
-  let cl = &g.clients.byid(client)?;
+  let cl = &mut g.clients.byid_mut(client)?;
   // ^ can only fail if we raced
+  cl.lastseen = Instant::now();
   let player = cl.player;
   let gs = &mut g.gs;
   let _ = gs.players.byid(player)?;

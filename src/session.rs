@@ -48,7 +48,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
   let player = iad.ident;
   let c = {
     let mut ig = iad.gref.lock()?;
-    let cl = Client { player };
+    let cl = Client { player, lastseen: Instant::now() };
     let client = ig.clients.insert(cl);
 
     let ciad = InstanceAccessDetails {

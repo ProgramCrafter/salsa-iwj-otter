@@ -47,6 +47,7 @@ pub enum ManagementScope {
 #[derive(Debug)] 
 pub struct Client {
   pub player : PlayerId,
+  pub lastseen : Instant,
 }
 
 pub type PlayerMap = DenseSlotMap<PlayerId,PlayerState>;
