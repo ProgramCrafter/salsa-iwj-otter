@@ -714,4 +714,5 @@ pub fn xxx_global_setup() {
     })?;
     g.player_access_register_xxx(RawToken(token.to_string()), player)?;
   }
+  g.save_access_now().unwrap();
 }
