@@ -66,13 +66,6 @@ impl Read for UpdateReader {
 
     let cv = pu.get_cv();
 
-    if (||{
-      (*ig).gs.players.get(self.player)?;
-      let client = ig.clients.get_mut(self.client)?;
-      client.lastseen = Instant::now();
-      Some(())
-    })() == None { return Ok(0) }
-
     loop {
       let generated = orig_wanted - buf.len();
       if generated > 0 {
@@ -90,6 +83,13 @@ impl Read for UpdateReader {
       }
       // xxx this endless stream is a leak
       // restart it occasionally
+
+      if (||{
+        (*ig).gs.players.get(self.player)?;
+        let client = ig.clients.get_mut(self.client)?;
+        client.lastseen = Instant::now();
+        Some(())
+      })() == None { return Ok(0) }
 
       ig.c = cv.wait_timeout(ig.c, UPDATE_KEEPALIVE)
         .map_err(|_| em("poison"))?.0;
