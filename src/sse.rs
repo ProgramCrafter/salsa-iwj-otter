@@ -35,13 +35,6 @@ impl Read for UpdateReader {
       |s| io::Error::new(io::ErrorKind::Other, anyhow!(s));
 
     let mut ig = self.gref.lock().map_err(|_| em("poison"))?;
-    if (||{
-      (*ig).gs.players.get(self.player)?;
-      let client = ig.clients.get_mut(self.client)?;
-      client.lastseen = Instant::now();
-      Some(())
-    })() == None { return Ok(0) }
-
     let orig_wanted = orig_buf.len();
     let mut buf = orig_buf.as_mut();
 
@@ -70,7 +63,15 @@ impl Read for UpdateReader {
              &self.to_send)?;
       self.to_send.try_increment().unwrap();
     }
+
     let cv = pu.get_cv();
+
+    if (||{
+      (*ig).gs.players.get(self.player)?;
+      let client = ig.clients.get_mut(self.client)?;
+      client.lastseen = Instant::now();
+      Some(())
+    })() == None { return Ok(0) }
 
     loop {
       let generated = orig_wanted - buf.len();
