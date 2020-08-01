@@ -554,15 +554,16 @@ impl InstanceGuard<'_> {
   #[throws(ServerFailure)]
   fn save_access_now(&mut self) {
     self.save_something("a-", |s,w| {
-      let global_players = GLOBAL.players.read().unwrap();
-      let tokens_players : Vec<(&str, PlayerId)> =
+      let tokens_players : Vec<(&str, PlayerId)> = {
+        let global_players = GLOBAL.players.read().unwrap();
         s.c.g.tokens_players.tr
-        .iter()
-        .map(|token|
-             global_players.get(token)
-             .map(|player| (token.0.as_str(), player.ident)))
-        .flatten()
-        .collect();
+          .iter()
+          .map(|token|
+               global_players.get(token)
+               .map(|player| (token.0.as_str(), player.ident)))
+          .flatten()
+          .collect()
+      };
       let isa = InstanceSaveAccesses { tokens_players };
       rmp_serde::encode::write_named(w, &isa)
     })?;
