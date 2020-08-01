@@ -81,8 +81,6 @@ impl Read for UpdateReader {
         return Err(io::Error::new(io::ErrorKind::WouldBlock,
                                   FlushWouldBlockError{}));
       }
-      // xxx this endless stream is a leak
-      // restart it occasionally
 
       if (||{
         (*ig).gs.players.get(self.player)?;
