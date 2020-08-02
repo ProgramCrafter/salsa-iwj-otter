@@ -661,6 +661,32 @@ impl InstanceGuard<'_> {
   }
 }
 
+#[throws(ServerFailure)]
+pub fn load_games() {
+/*
+  /// xxx take a lock
+  enum A_State { Found, Used };
+  let mut a_leaves = HashMap::new();
+  for de in fs::read_dir(SAVE_DIRECTORY)? {
+    let leaf = de.file_name().as_bytes();
+    if leaf.starts_with("a-") {
+      a_leaves.entry(leaf.to_owned()).or_insert(A_State::Found);
+    } else if leaf.starts_with("g-") {
+      
+      a_leaves.insert(leaf.to_owned(),A_State::Used);
+      
+    }
+    
+    match  {
+      &[b"g-"..] => {
+      }
+      _ => {
+      }
+    }
+  }
+*/
+}
+
 // ---------- Tokens / TokenTable / AccessId ----------
 
 pub type TokenTable<Id> = HashMap<RawToken, InstanceAccessDetails<Id>>;
