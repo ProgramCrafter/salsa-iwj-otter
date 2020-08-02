@@ -562,8 +562,7 @@ fn savefilename_parse(leaf: &[u8]) -> SavefilenameParseResult {
   if rhs.rfind('.').is_some() { return TempToDelete }
   let scoped_name = percent_decode_str(rhs).decode_utf8()?.into();
   GameFile {
-    access_leaf : [ b"a-", after_ftype_prefix ]
-      .iter().flat_map(|s| s.iter()).map(|c| *c).collect(),
+    access_leaf : [ b"a-", after_ftype_prefix ].concat(),
     name : InstanceName { scope, scoped_name },
   }
 }
