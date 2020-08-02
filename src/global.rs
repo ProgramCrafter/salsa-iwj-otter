@@ -171,7 +171,7 @@ pub struct InstanceContainer {
   g : Instance,
 }
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug,Default,Serialize,Deserialize)]
 struct InstanceSaveAccesses<RawTokenStr> {
   tokens_players : Vec<(RawTokenStr, PlayerId)>,
 }
@@ -624,7 +624,13 @@ impl InstanceGuard<'_> {
     // xxx check for deleted players, throw their tokens away
     let gs : GameState = Self::load_something(&name, "g-")?;
     let mut al : InstanceSaveAccesses<String>
-                       = Self::load_something(&name, "a-")?;
+      = Self::load_something(&name, "a-")
+      .or_else(|e:ServerFailure| match e {
+        ServerFailure::IO(ioe) if ioe.kind() == io::ErrorKind::NotFound => {
+          Ok(Default::default())
+        },
+        e => Err(e),
+      })?;
     let mut updates : SecondarySlotMap<_,_> = Default::default();
     for player in gs.players.keys() {
       updates.insert(player, Default::default());
