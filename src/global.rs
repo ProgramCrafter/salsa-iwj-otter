@@ -257,10 +257,10 @@ impl Instance {
 
   #[throws(ServerFailure)]
   pub fn destroy_game(mut g: InstanceGuard) {
-    let a_savefile = InstanceGuard::savefile(&g.name, "a-", "");
+    let a_savefile = savefilename(&g.name, "a-", "");
 
     let mut gw = GLOBAL.games.write().unwrap();
-    fs::remove_file(InstanceGuard::savefile(&g.name, "g-", ""))?;
+    fs::remove_file(savefilename(&g.name, "g-", ""))?;
 
     (||{ // Infallible:
       g.c.live = false;
@@ -525,62 +525,62 @@ enum SavefilenameParseResult {
   },
 }
 
+fn savefilename(name: &InstanceName, prefix: &str, suffix: &str) -> String {
+  let scope_prefix = { use ManagementScope::*; match &name.scope {
+    Server => format!(""),
+    Unix{user} => { format!("{}:", user) },
+  } };
+  [ SAVE_DIRECTORY, &"/", prefix, scope_prefix.as_ref() ]
+    .iter().map(Deref::deref)
+    .chain( utf8_percent_encode(&name.scoped_name,
+                                &percent_encoding::NON_ALPHANUMERIC) )
+    .chain([ suffix ].iter().map(Deref::deref))
+    .collect()
+}
+
+#[throws(anyhow::Error)]
+fn savefilename_parse(leaf: &[u8]) -> SavefilenameParseResult {
+  use SavefilenameParseResult::*;
+
+  if leaf.starts_with(b"a-") { return AccessFile }
+  let rhs = match leaf.strip_prefix(b"g-") {
+    Some(rhs) => rhs,
+    None => return NotGameFile,
+  };
+  let after_ftype_prefix = rhs;
+  let rhs = str::from_utf8(rhs)?;
+  let (rhs, scope) = match rhs.find(':') {
+    None => {
+      (rhs, ManagementScope::Server)
+    },
+    Some(colon) => {
+      let (lhs, rhs) = rhs.split_at(colon);
+      assert_eq!(rhs.chars().next(), Some(':'));
+      (rhs, ManagementScope::Unix { user: lhs.to_owned() })
+    },
+  };
+  if rhs.rfind('.').is_some() { return TempToDelete }
+  let scoped_name = percent_decode_str(rhs).decode_utf8()?.into();
+  GameFile {
+    access_leaf : [ b"a-", after_ftype_prefix ]
+      .iter().flat_map(|s| s.iter()).map(|c| *c).collect(),
+    name : InstanceName { scope, scoped_name },
+  }
+}
+
 impl InstanceGuard<'_> {
-  fn savefile(name: &InstanceName, prefix: &str, suffix: &str) -> String {
-    let scope_prefix = { use ManagementScope::*; match &name.scope {
-      Server => format!(""),
-      Unix{user} => { format!("{}:", user) },
-    } };
-    [ SAVE_DIRECTORY, &"/", prefix, scope_prefix.as_ref() ]
-      .iter().map(Deref::deref)
-      .chain( utf8_percent_encode(&name.scoped_name,
-                                  &percent_encoding::NON_ALPHANUMERIC) )
-      .chain([ suffix ].iter().map(Deref::deref))
-      .collect()
-  }
-
-  #[throws(anyhow::Error)]
-  fn savefilename_parse(leaf: &[u8]) -> SavefilenameParseResult {
-    use SavefilenameParseResult::*;
-
-    if leaf.starts_with(b"a-") { return AccessFile }
-    let rhs = match leaf.strip_prefix(b"g-") {
-      Some(rhs) => rhs,
-      None => return NotGameFile,
-    };
-    let after_ftype_prefix = rhs;
-    let rhs = str::from_utf8(rhs)?;
-    let (rhs, scope) = match rhs.find(':') {
-      None => {
-        (rhs, ManagementScope::Server)
-      },
-      Some(colon) => {
-        let (lhs, rhs) = rhs.split_at(colon);
-        assert_eq!(rhs.chars().next(), Some(':'));
-        (rhs, ManagementScope::Unix { user: lhs.to_owned() })
-      },
-    };
-    if rhs.rfind('.').is_some() { return TempToDelete }
-    let scoped_name = percent_decode_str(rhs).decode_utf8()?.into();
-    GameFile {
-      access_leaf : [ b"a-", after_ftype_prefix ]
-        .iter().flat_map(|s| s.iter()).map(|c| *c).collect(),
-      name : InstanceName { scope, scoped_name },
-    }
-  }
-  
   #[throws(ServerFailure)]
   fn save_something(
     &self, prefix: &str,
     w: fn(s: &Self, w: &mut BufWriter<fs::File>)
           -> Result<(),rmp_serde::encode::Error>
   ) {
-    let tmp = Self::savefile(&self.name, prefix,".tmp");
+    let tmp = savefilename(&self.name, prefix,".tmp");
     let mut f = BufWriter::new(fs::File::create(&tmp)?);
     w(self, &mut f)?;
     f.flush()?;
     drop( f.into_inner().map_err(|e| { let e : io::Error = e.into(); e })? );
-    let out = Self::savefile(&self.name, prefix,"");
+    let out = savefilename(&self.name, prefix,"");
     fs::rename(&tmp, &out)?;
     eprintln!("saved to {}", &out);
   }
@@ -612,7 +612,7 @@ impl InstanceGuard<'_> {
 
   #[throws(ServerFailure)]
   fn load_something<T:DeserializeOwned>(name: &InstanceName, prefix: &str) -> T {
-    let inp = Self::savefile(name, prefix, "");
+    let inp = savefilename(name, prefix, "");
     let mut f = BufReader::new(fs::File::open(&inp)?);
     // xxx handle ENOENT specially, own OE variant
     rmp_serde::decode::from_read(&mut f)?
