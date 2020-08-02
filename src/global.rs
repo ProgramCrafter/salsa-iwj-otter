@@ -667,30 +667,47 @@ impl InstanceGuard<'_> {
   }
 }
 
-#[throws(ServerFailure)]
+#[throws(anyhow::Error)]
 pub fn load_games() {
-/*
   /// xxx take a lock
-  enum A_State { Found, Used };
+  enum AFState { Found(PathBuf), Used };
+  use AFState::*;
+  use SavefilenameParseResult::*;
   let mut a_leaves = HashMap::new();
   for de in fs::read_dir(SAVE_DIRECTORY)? {
-    let leaf = de.file_name().as_bytes();
-    if leaf.starts_with("a-") {
-      a_leaves.entry(leaf.to_owned()).or_insert(A_State::Found);
-    } else if leaf.starts_with("g-") {
-      
-      a_leaves.insert(leaf.to_owned(),A_State::Used);
-      
-    }
-    
-    match  {
-      &[b"g-"..] => {
+    let de = de?;
+    let leaf = de.file_name();
+    (||{
+      let leaf = leaf.as_bytes();
+      match savefilename_parse(leaf)? {
+        NotGameFile => {
+        },
+        TempToDelete => {
+          fs::remove_file(de.path())
+            .context("stale temporary file")?;
+        },
+        AccessFile => {
+          a_leaves.entry(leaf.to_owned()).or_insert_with(
+            || Found(de.path())
+          );
+        },
+        GameFile { access_leaf, name } => {
+          InstanceGuard::load(name)?;
+          a_leaves.insert(access_leaf, Used);
+        },
       }
-      _ => {
-      }
-    }
+      <Result<_,anyhow::Error>>::Ok(())
+    })().with_context(|| format!("leaf={:?}", leaf))?;
   }
-*/
+  (||{
+    for (leaf, state) in &a_leaves {
+      if let Found(path) = state {
+        fs::remove_file(&path)
+          .with_context(|| format!("leaf={:?}", leaf))?;
+      }
+    }
+    <Result<_,anyhow::Error>>::Ok(())
+  })().context("cleaning up stale files")?;
 }
 
 // ---------- Tokens / TokenTable / AccessId ----------
