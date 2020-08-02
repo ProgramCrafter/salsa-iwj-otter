@@ -515,6 +515,16 @@ impl InstanceGuard<'_> {
 
 // ---------- save/load ----------
 
+enum SavefilenameParseResult {
+  NotGameFile,
+  AccessFile,
+  TempToDelete,
+  GameFile {
+    access_leaf : Vec<u8>,
+    name : InstanceName,
+  },
+}
+
 impl InstanceGuard<'_> {
   fn savefile(name: &InstanceName, prefix: &str, suffix: &str) -> String {
     let scope_prefix = { use ManagementScope::*; match &name.scope {
@@ -528,6 +538,37 @@ impl InstanceGuard<'_> {
       .chain([ suffix ].iter().map(Deref::deref))
       .collect()
   }
+
+  #[throws(anyhow::Error)]
+  fn savefilename_parse(leaf: &[u8]) -> SavefilenameParseResult {
+    use SavefilenameParseResult::*;
+
+    if leaf.starts_with(b"a-") { return AccessFile }
+    let rhs = match leaf.strip_prefix(b"g-") {
+      Some(rhs) => rhs,
+      None => return NotGameFile,
+    };
+    let after_ftype_prefix = rhs;
+    let rhs = str::from_utf8(rhs)?;
+    let (rhs, scope) = match rhs.find(':') {
+      None => {
+        (rhs, ManagementScope::Server)
+      },
+      Some(colon) => {
+        let (lhs, rhs) = rhs.split_at(colon);
+        assert_eq!(rhs.chars().next(), Some(':'));
+        (rhs, ManagementScope::Unix { user: lhs.to_owned() })
+      },
+    };
+    if rhs.rfind('.').is_some() { return TempToDelete }
+    let scoped_name = percent_decode_str(rhs).decode_utf8()?.into();
+    GameFile {
+      access_leaf : [ b"a-", after_ftype_prefix ]
+        .iter().flat_map(|s| s.iter()).map(|c| *c).collect(),
+      name : InstanceName { scope, scoped_name },
+    }
+  }
+  
   #[throws(ServerFailure)]
   fn save_something(
     &self, prefix: &str,

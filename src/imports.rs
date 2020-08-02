@@ -38,6 +38,7 @@ pub use rocket_contrib::helmet::*;
 pub use rocket_contrib::templates::Template;
 
 pub use percent_encoding::utf8_percent_encode;
+pub use percent_encoding::percent_decode_str;
 pub use percent_encoding::NON_ALPHANUMERIC;
 
 pub use rocket::{State,Rocket};

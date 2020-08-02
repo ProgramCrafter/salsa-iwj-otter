@@ -1,5 +1,6 @@
 
 #![feature(proc_macro_hygiene, decl_macro)]
+#![feature(slice_strip)]
 
 pub mod imports;
 pub mod global;
