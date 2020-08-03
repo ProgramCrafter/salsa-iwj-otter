@@ -187,7 +187,7 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
         })})()?;
 
         let AuthorisedIf{ authorised_for } = in_userlist;
-        let info = xinfo.as_ref().map(|s| s.as_str());
+        let info = xinfo.as_deref();
         let ok = cs.authorised_uid(authorised_for, info)?;
         (ok,
          ManagementScope::Unix { user: pwent.name })
@@ -361,7 +361,7 @@ fn execute_for_game(cs: &CommandStream, ig: &mut InstanceGuard,
   })();
   MgmtResponse::AlterGame {
     results,
-    error: ok.unwrap_or_else(|e| Some(e))
+    error: ok.unwrap_or_else(Some)
   }
 }
 
@@ -382,6 +382,7 @@ fn execute_game_insn(ig: &mut InstanceGuard, update: MgmtGameInstruction)
 
     MgmtGameInstruction::AddPlayer(pl) => {
       let player = ig.player_new(pl)?;
+      #[allow(clippy::useless_format)] // xxx below
       (vec![],
        vec![ LogEntry {
          html: format!("The facilitator added a player xxx"),

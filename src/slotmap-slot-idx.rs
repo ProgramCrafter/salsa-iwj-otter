@@ -1,3 +1,5 @@
+#![allow(clippy::or_fun_call)]
+
 //! Provides a [`get_idx_key`](trait.KeyDataExt.html#tymethod.get_idx_version) method on
 //! `slotmap::KeyData`.  See [KeyDataExt::get_idx_version].
 
