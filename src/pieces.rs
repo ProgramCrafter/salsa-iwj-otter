@@ -56,7 +56,7 @@ pub fn svg_rescale_path(input: &str, scale: f64) -> String {
   let mut first = iter::once(());
 
   for w in input.split_ascii_whitespace() {
-    if !first.next().is_some() { write!(&mut out, " ")?; }
+    if first.next().is_none() { write!(&mut out, " ")?; }
     match w {
       "L" | "l" | "M" | "m" |
       "V" | "v" | "H" | "h" => map = ALWAYS_MAP,
@@ -69,7 +69,7 @@ pub fn svg_rescale_path(input: &str, scale: f64) -> String {
           continue;
         }
       }
-      _ => Err(SE::UnknownOperator)?,
+      _ => throw!(SE::UnknownOperator),
     };
     write!(&mut out, "{}", w)?;
   }
@@ -180,9 +180,9 @@ impl PieceSpec for Disc {
 impl PieceSpec for Square {
   #[throws(SE)]
   fn load(&self) -> Box<dyn Piece> {
-    let (x, y) = match self.size.as_slice() {
-      &[s,] => (s,s),
-      &[x, y] => (x,y),
+    let (x, y) = match *self.size.as_slice() {
+      [s,] => (s,s),
+      [x, y] => (x,y),
       _ => throw!(SE::ImproperSizeSpec),
     };
     let path = format!("M {} {} h {} v {} h {} z",
@@ -196,6 +196,7 @@ impl PieceSpec for Square {
   }
 } 
 
+#[allow(clippy::type_complexity)]
 pub fn xxx_make_pieces() -> Result<Vec<(Pos, Box<dyn Piece>)>,SE> {
   Ok(vec![
     ([ 90, 80 ],

@@ -120,7 +120,7 @@ impl TryFrom<f64> for ZCoord {
   type Error = OnlineError;
   #[throws(OnlineError)]
   fn try_from(v: f64) -> ZCoord {
-    if !v.is_finite() { Err(OnlineError::InvalidZCoord)? }
+    if !v.is_finite() { throw!(OnlineError::InvalidZCoord) }
     ZCoord(v)
   }
 }
@@ -147,7 +147,7 @@ impl PieceState {
     let pr = self;
     let mut defs = String::new();
     let dragraise = match pr.p.thresh_dragraise(pri)? {
-      Some(n) if n < 0 => Err(SE::NegativeDragraise)?,
+      Some(n) if n < 0 => throw!(SE::NegativeDragraise),
       Some(n) => n,
       None => -1,
     };

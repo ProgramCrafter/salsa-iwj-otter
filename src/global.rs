@@ -1,3 +1,4 @@
+#![allow(clippy::let_and_return)]
 
 use crate::imports::*;
 use lazy_static::lazy_static;
@@ -196,7 +197,7 @@ impl Borrow<str> for RawToken {
 
 impl InstanceRef {
   #[throws(InstanceLockError)]
-  pub fn lock<'g>(&'g self) -> InstanceGuard<'g> {
+  pub fn lock(&self) -> InstanceGuard<'_> {
     let c = self.0.lock()?;
     if !c.live { throw!(InstanceLockError::GameBeingDestroyed) }
     InstanceGuard { c, gref: self.clone() }
@@ -205,6 +206,7 @@ impl InstanceRef {
 
 impl Instance {
   /// Returns `None` if a game with this name already exists
+  #[allow(clippy::new_ret_no_self)]
   #[throws(MgmtError)]
   pub fn new(name: InstanceName, gs: GameState) -> InstanceRef {
     let name = Arc::new(name);
@@ -286,7 +288,7 @@ impl Instance {
     let out : Vec<Arc<InstanceName>> =
       games.keys()
       .filter(|k| scope == None || scope == Some(&k.scope))
-      .map(|k| k.clone())
+      .cloned()
       .collect();
     out
   }
@@ -478,6 +480,7 @@ impl InstanceGuard<'_> {
       }
       wanted
     };
+    #[allow(clippy::or_fun_call)]
     let out = players.iter().map(|&player| {
       let mut tokens = wanted.remove(player)
         .unwrap_or(vec![] /* dupe, somehow */);

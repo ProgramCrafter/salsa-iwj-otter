@@ -1,3 +1,5 @@
+#![allow(clippy::while_let_loop)]
+#![allow(clippy::blocks_in_if_conditions)]
 
 use crate::imports::*;
 
@@ -36,6 +38,7 @@ impl Read for UpdateReader {
 
     let mut ig = self.gref.lock().map_err(|_| em("poison"))?;
     let orig_wanted = orig_buf.len();
+    #[allow(clippy::useless_asref)] // todo: report this
     let mut buf = orig_buf.as_mut();
 
     if self.init_confirmation_send.next().is_some() {
@@ -122,7 +125,7 @@ impl StableIndexOffset for UpdateId {
     self.0.index_input(input.0)
   }
   fn index_output(&self, inner: usize) -> Option<Self> {
-    self.0.index_output(inner).map(|v| UpdateId(v))
+    self.0.index_output(inner).map(UpdateId)
   }
   fn zero() -> Self { UpdateId(0) }
 }

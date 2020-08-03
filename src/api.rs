@@ -81,16 +81,16 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
 
     eprintln!("Q_GEN={:?} U_GEN={:?}", u_gen, q_gen);
 
-    if u_gen > q_gen { Err(GameError::Conflict)? }
+    if u_gen > q_gen { throw!(GameError::Conflict) }
     if pc.held != None && pc.held != Some(player) {
-      Err(GameError::PieceHeld)?
+      throw!(GameError::PieceHeld)
     };
     let (update, logents) = form.op.op(gs,player,piece,&lens)?;
     Ok((update, logents))
   })() {
     Err(err) => {
       let err : GameError = err;
-      if let GameError::InternalErrorSVG(svg) = err { Err(svg)? }
+      if let GameError::InternalErrorSVG(svg) = err { throw!(svg) }
       eprintln!("API {:?} => {:?}", &form, &err);
     },
     Ok((update, logents)) => {
@@ -123,7 +123,7 @@ impl ApiPieceOp for ApiPieceGrab {
     let pl = gs.players.byid(player).unwrap();
     let pc = gs.pieces.byid_mut(piece).unwrap();
 
-    if pc.held.is_some() { Err(GameError::PieceHeld)? }
+    if pc.held.is_some() { throw!(GameError::PieceHeld) }
     pc.held = Some(player);
     
     let update = PieceUpdateOp::Modify(());
@@ -155,7 +155,7 @@ impl ApiPieceOp for ApiPieceUngrab {
     let pl = gs.players.byid(player).unwrap();
     let pc = gs.pieces.byid_mut(piece).unwrap();
 
-    if pc.held != Some(player) { Err(GameError::PieceHeld)? }
+    if pc.held != Some(player) { throw!(GameError::PieceHeld) }
     pc.held = None;
     
     let update = PieceUpdateOp::Modify(());

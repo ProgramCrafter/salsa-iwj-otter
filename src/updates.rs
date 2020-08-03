@@ -188,7 +188,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     let by_client = by_client.unwrap_or(
       (Default::default(), ClientSequence(0))
     );
-    let us = estimate.map(|e| Vec::with_capacity(e)).unwrap_or(vec![]);
+    let us = estimate.map_or(vec![], Vec::with_capacity);
 
     g.gs.gen.increment();
 

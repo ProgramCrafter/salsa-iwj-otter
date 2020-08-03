@@ -100,9 +100,9 @@ impl CommandStream<'_> {
     {
       return Authorised::authorise();
     }
-    Err(anyhow!("{}: euid mismatch: client={:?} server={:?} wanted={:?}{}",
-                &self.desc, client_euid, server_euid, wanted,
-                xinfo.unwrap_or("")))?
+    throw!(anyhow!("{}: euid mismatch: client={:?} server={:?} wanted={:?}{}",
+                   &self.desc, client_euid, server_euid, wanted,
+                   xinfo.unwrap_or("")));
   }
 
   fn map_auth_err(&self, ae: AuthorisationError) -> MgmtError {
