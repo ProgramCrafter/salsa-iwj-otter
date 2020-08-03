@@ -38,8 +38,7 @@ impl Read for UpdateReader {
 
     let mut ig = self.gref.lock().map_err(|_| em("poison"))?;
     let orig_wanted = orig_buf.len();
-    #[allow(clippy::useless_asref)] // todo: report this
-    let mut buf = orig_buf.as_mut();
+    let mut buf = &mut *orig_buf;
 
     if self.init_confirmation_send.next().is_some() {
       write!(buf, "event: commsworking\n\
