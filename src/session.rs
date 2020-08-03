@@ -128,7 +128,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
 }
 
 pub fn mount(rocket_instance: Rocket) -> Rocket {
-  return rocket_instance.mount("/", routes![
+  rocket_instance.mount("/", routes![
     session,
-  ]);
+  ])
 }

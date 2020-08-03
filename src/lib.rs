@@ -2,6 +2,8 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 #![feature(slice_strip)]
 
+#![allow(clippy::redundant_closure_call)]
+
 pub mod imports;
 pub mod global;
 pub mod pieces;

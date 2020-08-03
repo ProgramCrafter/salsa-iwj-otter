@@ -46,6 +46,7 @@ impl CommandStream<'_> {
     while let Some(l) = self.read.next() {
       let l = l.context("read")?;
       decode_and_process(&mut self, &l)?;
+      #[allow(clippy::write_with_newline)]
       write!(&mut self.write, "\n")?;
       self.write.flush()?;
     }
@@ -107,7 +108,7 @@ impl CommandStream<'_> {
   fn map_auth_err(&self, ae: AuthorisationError) -> MgmtError {
     eprintln!("command connection {}: authorisation error: {}",
               self.desc, ae.0);
-    return MgmtError::AuthorisationError;
+    MgmtError::AuthorisationError
   }
 }
 

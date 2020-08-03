@@ -201,7 +201,7 @@ impl Serializer for ValueExtractor {
 }
 
 impl ser::Error for Error {
-  fn custom<T>(_msg: T) -> Self { return Error::WasCustomSerialize; }
+  fn custom<T>(_msg: T) -> Self { Error::WasCustomSerialize }
 }
 
 impl fmt::Display for Error {
