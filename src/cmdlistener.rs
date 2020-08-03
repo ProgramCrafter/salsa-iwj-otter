@@ -454,7 +454,7 @@ impl CommandListener {
     let listener = UnixListener::bind(path)
       .with_context(|| format!("bind command socket {:?}", &path))?;
 
-    fs::set_permissions(path, unix::fs::PermissionsExt::from_mode(0666))
+    fs::set_permissions(path, unix::fs::PermissionsExt::from_mode(0o666))
       .with_context(|| format!("chmod sommand socket {:?}", &path))?;
 
     CommandListener { listener }
