@@ -87,7 +87,8 @@ pub trait ById {
 
 pub trait IdForById {
   type Error;
-  #[allow(clippy::declare_interior_mutable_const)] // todo: report this
+  #[allow(clippy::declare_interior_mutable_const)]
+// https://github.com/rust-lang/rust-clippy/issues/3962#issuecomment-667957112
   const ERROR : Self::Error;
 }
 
