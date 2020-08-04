@@ -4,10 +4,8 @@
 use crate::imports::*;
 
 #[derive(Debug,Serialize,Deserialize)]
-pub struct GameSpec {
-  pub table : Pos,
+pub struct TableSpec {
   pub players : Vec<PlayerSpec>,
-  pub pieces : Vec<PiecesSpec>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -15,6 +13,12 @@ pub struct PlayerSpec {
   pub nick: String,
   #[serde(flatten)]
   pub access: Box<dyn PlayerAccessSpec>,
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+pub struct GameSpec {
+  pub table : Pos,
+  pub pieces : Vec<PiecesSpec>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -30,5 +34,6 @@ pub struct PiecesSpec {
 #[typetag::serde(tag="access")]
 pub trait PlayerAccessSpec : Debug {
   #[throws(OE)]
+  /// todo const DELIVER_TOKEN_SERVER : bool; etc.
   fn deliver_token(&mut self) -> Result<(),OE>;
 }

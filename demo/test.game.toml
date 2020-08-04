@@ -1,0 +1,5 @@
+table = [300, 100]
+
+[[pieces]]
+pos = [90,80]
+type = "Disc"
