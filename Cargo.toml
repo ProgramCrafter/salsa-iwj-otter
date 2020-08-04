@@ -63,6 +63,10 @@ vecdeque-stableix = "0"
 #sha2 = "0.8"
 #generic-array = "0.12"
 
+
+clap = "2"
+structopt = "0.3"
+
 [patch.crates-io]
 rocket = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket" }
 rocket_codegen = { git = "file:///home/ian/Rustup/Game/rocket/.git" branch = "Game-rocket-codegen" }
