@@ -50,7 +50,7 @@ libc = "0.2"
 serde-lexpr = "0.1"
 
 #rocket = "0.4"
-rocket_contrib = { version = "0.4", default-features=false, features=["tera_templates","helmet","json"], git = "file:///home/ian/Rustup/Game/rocket/.git" branch = "Game-rocket-contrib" }
+rocket_contrib = { version = "0.4", default-features=false, features=["tera_templates","helmet","json"], git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket-contrib" }
 
 rocket = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket" }
 
@@ -69,9 +69,7 @@ structopt = "0.3"
 
 [patch.crates-io]
 rocket = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket" }
-rocket_codegen = { git = "file:///home/ian/Rustup/Game/rocket/.git" branch = "Game-rocket-codegen" }
-rocket_http = { git = "file:///home/ian/Rustup/Game/rocket/.git" branch = "Game-rocket-http" }
-rocket_contrib = { git = "file:///home/ian/Rustup/Game/rocket/.git" branch = "Game-rocket-contrib", default-features=false, features=["tera_templates","helmet","json"] }
+rocket_codegen = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket-codegen" }
+rocket_http = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket-http" }
+rocket_contrib = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket-contrib", default-features=false, features=["tera_templates","helmet","json"] }
 #rocket_contrib_codegen = { git = "file:///home/ian/Rustup/Game/rocket/.git" branch = "Game-rocket-contrib-codegen" }
-
-
