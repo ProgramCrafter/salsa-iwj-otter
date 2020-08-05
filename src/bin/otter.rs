@@ -2,9 +2,10 @@
 
 use game::imports::*;
 use argparse::{self,ArgumentParser,action::{TypedAction,ParseResult}};
-use argparse::action::{Action,IArgAction};
+use argparse::action::{Action,IFlagAction,IArgAction};
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::cell::Cell;
 
 /*
 use std::cell::Cell;
@@ -44,24 +45,37 @@ impl<'a,T> Deref for CellRef<'a,T> {
 }
  */
 
-struct Call;
-struct CallIArgAction<RRF>(RRF);
-impl<F> IArgAction for CallIArgAction<Rc<RefCell<F>>>
+struct CallAction<C,F>(F, PhantomData<C>);
+
+struct CallFlag;
+
+impl<F> IFlagAction for CallAction<CallFlag,Rc<RefCell<F>>>
+where F : FnMut() -> ParseResult {
+  fn parse_flag(&self) -> ParseResult {
+    self.0.borrow_mut()()
+  }
+}
+
+impl<F: FnMut() -> ParseResult> TypedAction<F> for CallFlag {
+  fn bind<'x>(&self, f: Rc<RefCell<&'x mut F>>) -> Action<'x> {
+    Action::Flag(Box::new(CallAction(f.clone(), PhantomData::<Self>)))
+  }
+}
+
+struct CallArg;
+
+impl<F> IArgAction for CallAction<CallArg,Rc<RefCell<F>>>
 where F : FnMut(&str) -> ParseResult {
   fn parse_arg(&self, arg: &str) -> ParseResult {
     self.0.borrow_mut()(arg)
   }
 }
-impl<F: FnMut(&str) -> ParseResult> TypedAction<F> for Call {
+
+impl<F: FnMut(&str) -> ParseResult> TypedAction<F> for CallArg {
   fn bind<'x>(&self, f: Rc<RefCell<&'x mut F>>) -> Action<'x> {
-    Action::Single(Box::new(CallIArgAction(f.clone())))
+    Action::Single(Box::new(CallAction(f.clone(), PhantomData::<Self>)))
   }
-//  fn bind<'x>(&self, t: Rc<RefCell<&'x mut F>>) -> Action<'x> {
 }
-/*<S,T> (&FnMut(
-}
-*/
-//use structopt::StructOpt;
 
 //#[derive(Debug,StructOpt)]
 //#[structopt(rename_all="kebab-case")]
@@ -77,12 +91,11 @@ enum Subcommand {
 }
 
 fn main() {
-  let mainopts : MainOpts = Default::default();
+  let mut mainopts : MainOpts = Default::default();
   {
     let ap = ArgumentParser::new();
+    let scope = Cell::from_mut(&mut mainopts.scope);
     /*
-    let scope = ap.refer(&mut scope);
-    scope.add_option(
 
     Cell::from_mut(&mut mainopts.scope);
     ap.refer(&mut &scope).
