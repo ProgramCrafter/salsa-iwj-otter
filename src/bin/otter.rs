@@ -81,7 +81,7 @@ impl<F: FnMut(&str) -> ParseResult> TypedAction<F> for CallArg {
 
 //#[derive(Debug,StructOpt)]
 //#[structopt(rename_all="kebab-case")]
-#[derive(Default)]
+#[derive(Debug,Default)]
 struct MainOpts {
   scope: Option<ManagementScope>,
 }
@@ -95,17 +95,20 @@ enum Subcommand {
 fn main() {
   let mut mainopts : MainOpts = Default::default();
   {
+    let mut ap = ArgumentParser::new();
     let scope = Cell::from_mut(&mut mainopts.scope);
     let mut set_scope_server = ||{ scope.set(Some(ManagementScope::Server)); Parsed };
-    let mut ap = ArgumentParser::new();
     ap.refer(&mut set_scope_server)
       .add_option(&["--scope-server"], CallFlag,
                   "use Server scope for game names");
+    let r = ap.parse_args();
+    mem::drop(ap);
+    r
     /*
 
     Cell::from_mut(&mut mainopts.scope);
     let opts = MainOpts::from_args();
 */
-  }
-//  println!("{:?}", &opts);
+  }.expect("parse argw");
+  println!("{:?}", &mainopts);
 }
