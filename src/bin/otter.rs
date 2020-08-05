@@ -1,5 +1,5 @@
 //
-
+/*
 use game::imports::*;
 use std::cell::Cell;
 
@@ -54,8 +54,10 @@ enum Subcommand {
   CreateTable {
   }
 }
-
+*/
 fn main() {
+/*
   let opts = MainOpts::from_args();
   println!("{:?}", &opts);
+*/
 }
