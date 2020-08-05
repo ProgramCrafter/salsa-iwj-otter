@@ -7,6 +7,8 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::cell::Cell;
 
+use argparse::action::ParseResult::Parsed;
+
 /*
 use std::cell::Cell;
 
@@ -93,12 +95,15 @@ enum Subcommand {
 fn main() {
   let mut mainopts : MainOpts = Default::default();
   {
-    let ap = ArgumentParser::new();
     let scope = Cell::from_mut(&mut mainopts.scope);
+    let mut set_scope_server = ||{ scope.set(Some(ManagementScope::Server)); Parsed };
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut set_scope_server)
+      .add_option(&["--scope-server"], CallFlag,
+                  "use Server scope for game names");
     /*
 
     Cell::from_mut(&mut mainopts.scope);
-    ap.refer(&mut &scope).
     let opts = MainOpts::from_args();
 */
   }
