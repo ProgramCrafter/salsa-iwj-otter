@@ -99,8 +99,8 @@ enum Subcommand {
 }
 
 fn main() {
-  let mut mainopts : MainOpts = Default::default();
-  {
+  let mainopts = (||{
+    let mut mainopts : MainOpts = Default::default();
     use argparse::*;
     let mut ap = ArgumentParser::new();
     let mut scope = ap.refer(&mut mainopts.scope);
@@ -115,14 +115,22 @@ fn main() {
     scope.add_option(&["--scope-unix"],
                      StoreConst(None),
                      "use USER scope");
-    let r = ap.parse_args();
+    ap.parse_args()?;
     mem::drop(ap);
-    r
+    /*
+    mainopts.scope.get_or_insert_with(||{
+      let user = env::var("USER").unwrap_or_else(|e|{
+        // want to call ap.error but we have to drop it because
+        // otherwise it still has mainopts.scope borrowed
+        ap.error(
+    });
+     */
+    <Result<_,i32>>::Ok(mainopts)
     /*
 
     Cell::from_mut(&mut mainopts.scope);
     let opts = MainOpts::from_args();
 */
-  }.unwrap_or_else(|rc| std::process::exit(if rc!=0 { 12 } else { 0 }));
+  })().unwrap_or_else(|rc| std::process::exit(if rc!=0 { 12 } else { 0 }));
   println!("{:?}", &mainopts);
 }
