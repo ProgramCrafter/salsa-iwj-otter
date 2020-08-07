@@ -60,7 +60,9 @@ struct BoundMapStore<'r, T, F: FnMut(&str) -> Result<T,String>> {
 }
 
 impl<'f,T,F> TypedAction<T> for MapStore<T,F>
-where F : 'static + Clone + FnMut(&str) -> Result<T,String> {
+where F : 'f + Clone + FnMut(&str) -> Result<T,String>,
+     'f : 'static // ideally TypedAction wuld have a lifetime parameter
+{
   fn bind<'x>(&self, r: Rc<RefCell<&'x mut T>>) -> Action<'x>
   {
     Action::Single(Box::new(BoundMapStore {
@@ -74,11 +76,11 @@ impl<'x, T, F: FnMut(&str) -> Result<T,String>>
   IArgAction for BoundMapStore<'x, T, F>
 {
   fn parse_arg(&self, arg: &str) -> ParseResult {
-    let v = match self.f.borrow_mut()(arg) {
+    let v : T = match self.f.borrow_mut()(arg) {
       Ok(r) => r,
       Err(e) => return ParseResult::Error(e),
     };
-    *self.r.borrow_mut(arg) = v;
+    **self.r.borrow_mut() = v;
     ParseResult::Parsed
   }
 }
@@ -101,12 +103,14 @@ fn main() {
   {
     use argparse::*;
     let mut ap = ArgumentParser::new();
-    let scope = ap.refer(&mut mainopts.scope);
+    let mut scope = ap.refer(&mut mainopts.scope);
     scope.add_option(&["--scope-server"],
-                     Store(Some(ManagementScope::Server)),
+                     StoreConst(Some(ManagementScope::Server)),
                      "use Server scope");
     scope.add_option(&["--scope-unix-user"],
-                     MapStore(|user| ManagementScope::Unix { user }),
+                     MapStore(|user| Ok(Some(ManagementScope::Unix {
+                       user: user.into()
+                     }))),
                      "use specified unix user scope");
     let r = ap.parse_args();
     mem::drop(ap);
