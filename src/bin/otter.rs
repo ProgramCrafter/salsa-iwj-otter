@@ -123,6 +123,6 @@ fn main() {
     Cell::from_mut(&mut mainopts.scope);
     let opts = MainOpts::from_args();
 */
-  }.unwrap_or_else(|_already_printed| std::process::exit(12));
+  }.unwrap_or_else(|rc| std::process::exit(if rc!=0 { 12 } else { 0 }));
   println!("{:?}", &mainopts);
 }
