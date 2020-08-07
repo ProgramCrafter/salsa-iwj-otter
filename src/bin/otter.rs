@@ -1,5 +1,7 @@
 //
 
+#![allow(unused_imports)]
+
 use game::imports::*;
 use argparse::{self,ArgumentParser,action::{TypedAction,ParseResult}};
 use argparse::action::{Action,IFlagAction,IArgAction};
@@ -47,35 +49,37 @@ impl<'a,T> Deref for CellRef<'a,T> {
 }
  */
 
-struct CallAction<C,F>(F, PhantomData<C>);
+#[derive(Clone)]
+struct MapStore<T, F: FnMut(&str) -> Result<T,String> > (
+  F
+);
 
-struct CallFlag;
+struct BoundMapStore<'r, T, F: FnMut(&str) -> Result<T,String>> {
+  f: Rc<RefCell<F>>,
+  r: Rc<RefCell<&'r mut T>>,
+}
 
-impl<F> IFlagAction for CallAction<CallFlag,Rc<RefCell<F>>>
-where F : FnMut() -> ParseResult {
-  fn parse_flag(&self) -> ParseResult {
-    self.0.borrow_mut()()
+impl<'f,T,F> TypedAction<T> for MapStore<T,F>
+where F : 'static + Clone + FnMut(&str) -> Result<T,String> {
+  fn bind<'x>(&self, r: Rc<RefCell<&'x mut T>>) -> Action<'x>
+  {
+    Action::Single(Box::new(BoundMapStore {
+      f: Rc::new(RefCell::new(self.0.clone())),
+      r
+    }))
   }
 }
 
-impl<F: FnMut() -> ParseResult> TypedAction<F> for CallFlag {
-  fn bind<'x>(&self, f: Rc<RefCell<&'x mut F>>) -> Action<'x> {
-    Action::Flag(Box::new(CallAction(f.clone(), PhantomData::<Self>)))
-  }
-}
-
-struct CallArg;
-
-impl<F> IArgAction for CallAction<CallArg,Rc<RefCell<F>>>
-where F : FnMut(&str) -> ParseResult {
+impl<'x, T, F: FnMut(&str) -> Result<T,String>>
+  IArgAction for BoundMapStore<'x, T, F>
+{
   fn parse_arg(&self, arg: &str) -> ParseResult {
-    self.0.borrow_mut()(arg)
-  }
-}
-
-impl<F: FnMut(&str) -> ParseResult> TypedAction<F> for CallArg {
-  fn bind<'x>(&self, f: Rc<RefCell<&'x mut F>>) -> Action<'x> {
-    Action::Single(Box::new(CallAction(f.clone(), PhantomData::<Self>)))
+    let v = match self.f.borrow_mut()(arg) {
+      Ok(r) => r,
+      Err(e) => return ParseResult::Error(e),
+    };
+    *self.r.borrow_mut(arg) = v;
+    ParseResult::Parsed
   }
 }
 
@@ -95,15 +99,15 @@ enum Subcommand {
 fn main() {
   let mut mainopts : MainOpts = Default::default();
   {
+    use argparse::*;
     let mut ap = ArgumentParser::new();
-    let scope = Cell::from_mut(&mut mainopts.scope);
-
-    Call(||{ scope.set(Some(ManagementScope::Server)); Parsed })
-      .
-    let mut set_scope_server = 
-    ap.refer(&mut set_scope_server)
-      .add_option(&["--scope-server"], CallFlag,
-                  "use Server scope for game names");
+    let scope = ap.refer(&mut mainopts.scope);
+    scope.add_option(&["--scope-server"],
+                     Store(Some(ManagementScope::Server)),
+                     "use Server scope");
+    scope.add_option(&["--scope-unix-user"],
+                     MapStore(|user| ManagementScope::Unix { user }),
+                     "use specified unix user scope");
     let r = ap.parse_args();
     mem::drop(ap);
     r
