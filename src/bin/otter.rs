@@ -112,6 +112,9 @@ fn main() {
                        user: user.into()
                      }))),
                      "use specified unix user scope");
+    scope.add_option(&["--scope-unix"],
+                     StoreConst(None),
+                     "use USER scope");
     let r = ap.parse_args();
     mem::drop(ap);
     r
@@ -120,6 +123,6 @@ fn main() {
     Cell::from_mut(&mut mainopts.scope);
     let opts = MainOpts::from_args();
 */
-  }.expect("parse argw");
+  }.unwrap_or_else(|_already_printed| std::process::exit(12));
   println!("{:?}", &mainopts);
 }
