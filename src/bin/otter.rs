@@ -85,18 +85,10 @@ impl<'x, T, F: FnMut(&str) -> Result<T,String>>
   }
 }
 
-//#[derive(Debug,StructOpt)]
-//#[structopt(rename_all="kebab-case")]
 #[derive(Debug,Default)]
 struct MainOpts {
   scope: Option<ManagementScope>,
 }
-/*
-//#[derive(Debug,StructOpt)]
-enum Subcommand {
-  CreateTable {
-  }
-}*/
 
 struct Subcommand (
   &'static str,
@@ -150,11 +142,6 @@ fn main() {
       ManagementScope::Unix { user }
     });
     <Result<_,i32>>::Ok((mainopts, subcommand, subargs))
-    /*
-
-    Cell::from_mut(&mut mainopts.scope);
-    let opts = MainOpts::from_args();
-*/
   })().unwrap_or_else(|rc| exit(if rc!=0 { 12 } else { 0 }));
 
   for _ in inventory::iter::<Subcommand> { }
