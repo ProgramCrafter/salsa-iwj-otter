@@ -132,7 +132,7 @@ fn main() {
                      StoreConst(None),
                      "use USER scope");
 
-    ap.parse_args()?;
+    ap.parse_args().unwrap_or_else(|rc| exit(if rc!=0 { EXIT_USAGE } else { 0 }));
     mem::drop(ap);
     mainopts.scope.get_or_insert_with(||{
       let user = env::var("USER").unwrap_or_else(|e|{
@@ -143,8 +143,8 @@ fn main() {
       });
       ManagementScope::Unix { user }
     });
-    <Result<_,i32>>::Ok((mainopts, subcommand, subargs))
-  })().unwrap_or_else(|rc| exit(if rc!=0 { EXIT_USAGE } else { 0 }));
+    (mainopts, subcommand, subargs)
+  })();
 
   for _ in inventory::iter::<Subcommand> { }
 
