@@ -28,6 +28,8 @@ pub use std::os::unix;
 pub use std::time::Instant;
 pub use std::path::PathBuf;
 pub use std::os::unix::ffi::OsStrExt;
+pub use std::env;
+pub use std::process::exit;
 
 pub use thiserror::Error;
 pub use anyhow::{Context,anyhow};
