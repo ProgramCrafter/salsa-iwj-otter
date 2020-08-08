@@ -91,24 +91,39 @@ impl<'x, T, F: FnMut(&str) -> Result<T,String>>
 struct MainOpts {
   scope: Option<ManagementScope>,
 }
-
+/*
 //#[derive(Debug,StructOpt)]
 enum Subcommand {
   CreateTable {
   }
-}
+}*/
+
+struct Subcommand (
+  &'static str,
+  fn(MainOpts, &[String]),
+);
+inventory::collect!(Subcommand);
+
+inventory::submit!{Subcommand(
+  "create-table", |mainopts, args|{
+    eprintln!("CREATE-TABLE {:?} {:?}", &mainopts, &args);
+  }
+)}
 
 fn main() {
-  let mainopts = (||{
+  let pa = (||{
     let mut mainopts : MainOpts = Default::default();
-    let mut args : Vec<String> = vec![];
+    let mut subcommand = String::new();
+    let mut subargs : Vec<String> = vec![];
     use argparse::*;
 
     let mut ap = ArgumentParser::new();
     ap.stop_on_first_argument(true);
     ap.silence_double_dash(true);
-    ap.refer(&mut args).add_argument("subcommand",Collect,
-                                  "subcommand and argueents");
+    ap.refer(&mut subcommand).add_argument("subcommand",Store,
+                                           "subcommand");
+    ap.refer(&mut subargs).add_argument("...",Collect,
+                                        "subcommand options/argueents");
 
     let mut scope = ap.refer(&mut mainopts.scope);
     scope.add_option(&["--scope-server"],
@@ -134,12 +149,23 @@ fn main() {
       });
       ManagementScope::Unix { user }
     });
-    <Result<_,i32>>::Ok((mainopts, args))
+    <Result<_,i32>>::Ok((mainopts, subcommand, subargs))
     /*
 
     Cell::from_mut(&mut mainopts.scope);
     let opts = MainOpts::from_args();
 */
   })().unwrap_or_else(|rc| exit(if rc!=0 { 12 } else { 0 }));
-  println!("{:?}", &mainopts);
+
+  for _ in inventory::iter::<Subcommand> { }
+
+  let Subcommand(_,call) = inventory::iter::<Subcommand>.into_iter()
+    .filter(|Subcommand(found,_)| found == &pa.1)
+    .next()
+    .unwrap_or_else(||{
+      eprintln!("subcommand `{}' not recognised", &pa.1);
+      exit(12);
+    });
+
+  call(pa.0, &pa.2);
 }
