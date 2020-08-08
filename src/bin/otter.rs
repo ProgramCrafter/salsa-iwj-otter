@@ -101,8 +101,15 @@ enum Subcommand {
 fn main() {
   let mainopts = (||{
     let mut mainopts : MainOpts = Default::default();
+    let mut args : Vec<String> = vec![];
     use argparse::*;
+
     let mut ap = ArgumentParser::new();
+    ap.stop_on_first_argument(true);
+    ap.silence_double_dash(true);
+    ap.refer(&mut args).add_argument("subcommand",Collect,
+                                  "subcommand and argueents");
+
     let mut scope = ap.refer(&mut mainopts.scope);
     scope.add_option(&["--scope-server"],
                      StoreConst(Some(ManagementScope::Server)),
@@ -115,6 +122,7 @@ fn main() {
     scope.add_option(&["--scope-unix"],
                      StoreConst(None),
                      "use USER scope");
+
     ap.parse_args()?;
     mem::drop(ap);
     mainopts.scope.get_or_insert_with(||{
@@ -126,7 +134,7 @@ fn main() {
       });
       ManagementScope::Unix { user }
     });
-    <Result<_,i32>>::Ok(mainopts)
+    <Result<_,i32>>::Ok((mainopts, args))
     /*
 
     Cell::from_mut(&mut mainopts.scope);
