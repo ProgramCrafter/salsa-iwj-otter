@@ -85,6 +85,8 @@ impl<'x, T, F: FnMut(&str) -> Result<T,String>>
   }
 }
 
+const EXIT_USAGE : i32 = 12;
+
 #[derive(Debug,Default)]
 struct MainOpts {
   scope: Option<ManagementScope>,
@@ -137,12 +139,12 @@ fn main() {
         // want to call ap.error but we have to drop it because
         // otherwise it still has mainopts.scope borrowed
         eprintln!("bad usage: --scope-unix needs USER env var: {}", &e);
-        exit(12);
+        exit(EXIT_USAGE);
       });
       ManagementScope::Unix { user }
     });
     <Result<_,i32>>::Ok((mainopts, subcommand, subargs))
-  })().unwrap_or_else(|rc| exit(if rc!=0 { 12 } else { 0 }));
+  })().unwrap_or_else(|rc| exit(if rc!=0 { EXIT_USAGE } else { 0 }));
 
   for _ in inventory::iter::<Subcommand> { }
 
@@ -151,7 +153,7 @@ fn main() {
     .next()
     .unwrap_or_else(||{
       eprintln!("subcommand `{}' not recognised", &pa.1);
-      exit(12);
+      exit(EXIT_USAGE);
     });
 
   call(pa.0, &pa.2);
