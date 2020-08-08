@@ -105,56 +105,51 @@ inventory::submit!{Subcommand(
 )}
 
 fn main() {
-  let pa = (||{
-    let mut mainopts : MainOpts = Default::default();
-    let mut subcommand = String::new();
-    let mut subargs : Vec<String> = vec![];
-    use argparse::*;
+  let mut mainopts : MainOpts = Default::default();
+  let mut subcommand = String::new();
+  let mut subargs : Vec<String> = vec![];
+  use argparse::*;
 
-    let mut ap = ArgumentParser::new();
-    ap.stop_on_first_argument(true);
-    ap.silence_double_dash(true);
-    ap.refer(&mut subcommand).add_argument("subcommand",Store,
-                                           "subcommand");
-    ap.refer(&mut subargs).add_argument("...",Collect,
-                                        "subcommand options/argueents");
+  let mut ap = ArgumentParser::new();
+  ap.stop_on_first_argument(true);
+  ap.silence_double_dash(true);
+  ap.refer(&mut subcommand).add_argument("subcommand",Store,
+                                         "subcommand");
+  ap.refer(&mut subargs).add_argument("...",Collect,
+                                      "subcommand options/argueents");
 
-    let mut scope = ap.refer(&mut mainopts.scope);
-    scope.add_option(&["--scope-server"],
-                     StoreConst(Some(ManagementScope::Server)),
-                     "use Server scope");
-    scope.add_option(&["--scope-unix-user"],
-                     MapStore(|user| Ok(Some(ManagementScope::Unix {
-                       user: user.into()
-                     }))),
-                     "use specified unix user scope");
-    scope.add_option(&["--scope-unix"],
-                     StoreConst(None),
-                     "use USER scope");
+  let mut scope = ap.refer(&mut mainopts.scope);
+  scope.add_option(&["--scope-server"],
+                   StoreConst(Some(ManagementScope::Server)),
+                   "use Server scope");
+  scope.add_option(&["--scope-unix-user"],
+                   MapStore(|user| Ok(Some(ManagementScope::Unix {
+                     user: user.into()
+                   }))),
+                   "use specified unix user scope");
+  scope.add_option(&["--scope-unix"],
+                   StoreConst(None),
+                   "use USER scope");
 
-    ap.parse_args().unwrap_or_else(|rc| exit(if rc!=0 { EXIT_USAGE } else { 0 }));
-    mem::drop(ap);
-    mainopts.scope.get_or_insert_with(||{
-      let user = env::var("USER").unwrap_or_else(|e|{
-        // want to call ap.error but we have to drop it because
-        // otherwise it still has mainopts.scope borrowed
-        eprintln!("bad usage: --scope-unix needs USER env var: {}", &e);
-        exit(EXIT_USAGE);
-      });
-      ManagementScope::Unix { user }
+  ap.parse_args().unwrap_or_else(|rc| exit(if rc!=0 { EXIT_USAGE } else { 0 }));
+  mem::drop(ap);
+  mainopts.scope.get_or_insert_with(||{
+    let user = env::var("USER").unwrap_or_else(|e|{
+      // want to call ap.error but we have to drop it because
+      // otherwise it still has mainopts.scope borrowed
+      eprintln!("bad usage: --scope-unix needs USER env var: {}", &e);
+      exit(EXIT_USAGE);
     });
-    (mainopts, subcommand, subargs)
-  })();
-
-  for _ in inventory::iter::<Subcommand> { }
+    ManagementScope::Unix { user }
+  });
 
   let Subcommand(_,call) = inventory::iter::<Subcommand>.into_iter()
-    .filter(|Subcommand(found,_)| found == &pa.1)
+    .filter(|Subcommand(found,_)| found == &subcommand)
     .next()
     .unwrap_or_else(||{
-      eprintln!("subcommand `{}' not recognised", &pa.1);
+      eprintln!("subcommand `{}' not recognised", &subcommand);
       exit(EXIT_USAGE);
     });
 
-  call(pa.0, &pa.2);
+  call(mainopts, &subargs);
 }
