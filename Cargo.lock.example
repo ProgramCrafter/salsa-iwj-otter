@@ -410,6 +410,7 @@ dependencies = [
  "fehler",
  "htmlescape",
  "index_vec",
+ "inventory",
  "lazy_static",
  "libc",
  "num-traits",
