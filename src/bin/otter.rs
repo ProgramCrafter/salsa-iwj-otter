@@ -109,7 +109,6 @@ fn main() {
 
   let mut parsed = Default::default();
   let apmaker :
-    for<'output, 'parser>
       fn(&mut (MainOpts, String, Vec<String>)) -> ArgumentParser
          = | (mainopts, subcommand, subargs) | 
  -> ArgumentParser
