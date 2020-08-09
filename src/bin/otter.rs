@@ -104,10 +104,20 @@ inventory::submit!{Subcommand(
   }
 )}
 
+fn parse_args<T,F>(apmaker: &F) -> T
+  where T:Default, F: Fn(&mut T) -> ArgumentParser
+{
+  let mut parsed = Default::default();
+  let ap = apmaker(&mut parsed);
+
+  ap.parse_args().unwrap_or_else(|rc| exit(if rc!=0 { EXIT_USAGE } else { 0 }));
+  mem::drop(ap);
+  parsed
+}
+
 fn main() {
   use argparse::*;
 
-  let mut parsed = Default::default();
   let apmaker :
       fn(&mut (MainOpts, String, Vec<String>)) -> ArgumentParser
          = | (mainopts, subcommand, subargs) | {
@@ -133,11 +143,7 @@ fn main() {
                      "use USER scope");
     ap
   };
-  let ap = apmaker(&mut parsed);
-
-  ap.parse_args().unwrap_or_else(|rc| exit(if rc!=0 { EXIT_USAGE } else { 0 }));
-  mem::drop(ap);
-  let (mut mainopts, subcommand, subargs) = parsed;
+  let (mut mainopts, subcommand, subargs) = parse_args(&apmaker);
 
   mainopts.scope.get_or_insert_with(||{
     let user = env::var("USER").unwrap_or_else(|e|{
