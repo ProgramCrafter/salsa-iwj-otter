@@ -96,15 +96,9 @@ struct MainOpts {
 struct Subcommand (
   &'static str, // command
   &'static str, // desc
-  fn(&Subcommand, MainOpts, &[String]),
+  fn(&Subcommand, MainOpts, Vec<String>),
 );
 inventory::collect!(Subcommand);
-
-inventory::submit!{Subcommand(
-  "create-table", "Create a new table", |_sc, mainopts, args|{
-    eprintln!("CREATE-TABLE {:?} {:?}", &mainopts, &args);
-  }
-)}
 
 #[derive(Error,Debug)]
 struct ArgumentParseError(String);
@@ -213,5 +207,17 @@ fn main() {
     });
   let Subcommand(_,_,call) = sc;
 
-  call(sc, ma.opts, &ma.subargs);
+  let mut subargs = ma.subargs;
+  subargs.insert(0, format!("{} {}",
+                            env::args().next().unwrap(),
+                            &ma.subcommand));
+
+  call(sc, ma.opts, subargs);
 }
+
+inventory::submit!{Subcommand(
+  "create-table", "Create a new table", |_sc, mainopts, args|{
+    
+    eprintln!("CREATE-TABLE {:?} {:?}", &mainopts, &args);
+  }
+)}
