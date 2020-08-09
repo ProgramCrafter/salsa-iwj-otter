@@ -110,9 +110,8 @@ fn main() {
   let mut parsed = Default::default();
   let apmaker :
     for<'output, 'parser>
-      fn(&'output mut (MainOpts, String, Vec<String>)) -> ArgumentParser
-         = | (mainopts, subcommand, subargs):                 
-             &/*'output*/ mut (MainOpts, String, Vec<String>)| 
+      fn(&mut (MainOpts, String, Vec<String>)) -> ArgumentParser
+         = | (mainopts, subcommand, subargs) | 
  -> ArgumentParser
              
 {
@@ -138,7 +137,7 @@ fn main() {
                      "use USER scope");
     ap
   };
-  let mut ap = apmaker(&mut parsed);
+  let ap = apmaker(&mut parsed);
 
   ap.parse_args().unwrap_or_else(|rc| exit(if rc!=0 { EXIT_USAGE } else { 0 }));
   mem::drop(ap);
