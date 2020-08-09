@@ -144,23 +144,23 @@ fn main() {
     let mut ap = ArgumentParser::new();
     ap.stop_on_first_argument(true);
     ap.silence_double_dash(true);
-    ap.refer(&mut ma.subcommand).add_argument("subcommand",Store,
+    ap.refer(&mut ma.subcommand).required().add_argument("SUBCOMMAND",Store,
                                       "subcommand");
     ap.refer(&mut ma.subargs).add_argument("...",Collect,
-                                   "subcommand options/argueents");
+                                   "subcommand options/arguments");
 
     let mut scope = ap.refer(&mut ma.opts.scope);
     scope.add_option(&["--scope-server"],
                      StoreConst(Some(ManagementScope::Server)),
                      "use Server scope");
-    scope.add_option(&["--scope-unix-user"],
+    scope.metavar("USER").add_option(&["--scope-unix-user"],
                      MapStore(|user| Ok(Some(ManagementScope::Unix {
                        user: user.into()
                      }))),
                      "use specified unix user scope");
     scope.add_option(&["--scope-unix"],
                      StoreConst(None),
-                     "use USER scope");
+                     "use unix user $USER scope (default)");
     ap
   }, &|ma| {
     if let ref mut scope @None = ma.opts.scope {
