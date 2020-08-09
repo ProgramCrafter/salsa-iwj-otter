@@ -118,19 +118,22 @@ fn parse_args<T,F>(apmaker: &F) -> T
 fn main() {
   use argparse::*;
 
-  let (mut mainopts, subcommand, subargs) = parse_args(&|(
-    mainopts, subcommand, subargs):
-    &mut (MainOpts, String, Vec<String>)
-  |{
+  #[derive(Default,Debug)]
+  struct MainArgs {
+    opts: MainOpts,
+    subcommand: String,
+    subargs: Vec<String>,
+  };
+  let mut ma = parse_args(&|ma: &mut MainArgs|{
     let mut ap = ArgumentParser::new();
     ap.stop_on_first_argument(true);
     ap.silence_double_dash(true);
-    ap.refer(subcommand).add_argument("subcommand",Store,
+    ap.refer(&mut ma.subcommand).add_argument("subcommand",Store,
                                       "subcommand");
-    ap.refer(subargs).add_argument("...",Collect,
+    ap.refer(&mut ma.subargs).add_argument("...",Collect,
                                    "subcommand options/argueents");
 
-    let mut scope = ap.refer(&mut mainopts.scope);
+    let mut scope = ap.refer(&mut ma.opts.scope);
     scope.add_option(&["--scope-server"],
                      StoreConst(Some(ManagementScope::Server)),
                      "use Server scope");
@@ -145,7 +148,7 @@ fn main() {
     ap
   });
 
-  mainopts.scope.get_or_insert_with(||{
+  ma.opts.scope.get_or_insert_with(||{
     let user = env::var("USER").unwrap_or_else(|e|{
       // want to call ap.error but we have to drop it because
       // otherwise it still has mainopts.scope borrowed
@@ -156,12 +159,12 @@ fn main() {
   });
 
   let Subcommand(_,call) = inventory::iter::<Subcommand>.into_iter()
-    .filter(|Subcommand(found,_)| found == &subcommand)
+    .filter(|Subcommand(found,_)| found == &ma.subcommand)
     .next()
     .unwrap_or_else(||{
-      eprintln!("subcommand `{}' not recognised", &subcommand);
+      eprintln!("subcommand `{}' not recognised", &ma.subcommand);
       exit(EXIT_USAGE);
     });
 
-  call(mainopts, &subargs);
+  call(ma.opts, &ma.subargs);
 }
