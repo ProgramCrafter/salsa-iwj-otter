@@ -121,10 +121,12 @@ where T: Default,
 {
   let mut parsed = Default::default();
   let ap = apmaker(&mut parsed);
+  let us = args.get(0).expect("argv[0] must be provided!").clone();
 
   let mut stdout = io::stdout();
+  let mut stderr = io::stderr();
 
-  let r = ap.parse(args, &mut stdout, &mut io::stderr());
+  let r = ap.parse(args, &mut stdout, &mut stderr);
   if let Err(rc) = r {
     exit(match rc {
       0 => {
@@ -136,12 +138,14 @@ where T: Default,
         }
         0
       },
-      _ => EXIT_USAGE,
+      2 => EXIT_USAGE,
+      _ => panic!("unexpected error rc {} from ArgumentParser::parse", rc),
     });
   }
   mem::drop(ap);
-  completer(&mut parsed).unwrap_or_else(|e| {
-    eprintln!("bad usage: {}", &e);
+  completer(&mut parsed).unwrap_or_else(|e:ArgumentParseError| {
+    let ap = apmaker(&mut parsed);
+    ap.error(&us, &e.0, &mut stderr);
     exit(EXIT_USAGE);
   });
   parsed
