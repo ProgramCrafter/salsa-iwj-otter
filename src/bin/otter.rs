@@ -94,13 +94,14 @@ struct MainOpts {
 }
 
 struct Subcommand (
-  &'static str,
-  fn(MainOpts, &[String]),
+  &'static str, // command
+  &'static str, // desc
+  fn(&Subcommand, MainOpts, &[String]),
 );
 inventory::collect!(Subcommand);
 
 inventory::submit!{Subcommand(
-  "create-table", |mainopts, args|{
+  "create-table", "Create a new table", |_sc, mainopts, args|{
     eprintln!("CREATE-TABLE {:?} {:?}", &mainopts, &args);
   }
 )}
@@ -113,7 +114,7 @@ fn parse_args<T,F,C>(
   args: Vec<String>,
   apmaker: &F,
   completer: &C,
-  extra_help: Option<&mut dyn FnMut(&mut dyn Write) -> Result<(), io::Error>>,
+  extra_help: Option<&dyn Fn(&mut dyn Write) -> Result<(), io::Error>>,
 ) -> T
 where T: Default,
       F: Fn(&mut T) -> ArgumentParser,
@@ -192,15 +193,25 @@ fn main() {
       *scope = Some(ManagementScope::Unix { user });
     }
     Ok(())
-  }, None);
+  }, Some(&|w|{
+    writeln!(w, "\nSubcommands:")?;
+    let maxlen = inventory::iter::<Subcommand>.into_iter()
+      .map(|Subcommand(verb,_,_)| verb.len())
+      .max().unwrap_or(0);
+    for Subcommand(verb,desc,_) in inventory::iter::<Subcommand> {
+      writeln!(w, "  {:width$}  {}", verb, desc, width=maxlen)?;
+    }
+    Ok(())
+  }));
 
-  let Subcommand(_,call) = inventory::iter::<Subcommand>.into_iter()
-    .filter(|Subcommand(found,_)| found == &ma.subcommand)
+  let sc = inventory::iter::<Subcommand>.into_iter()
+    .filter(|Subcommand(found,_,_)| found == &ma.subcommand)
     .next()
     .unwrap_or_else(||{
       eprintln!("subcommand `{}' not recognised", &ma.subcommand);
       exit(EXIT_USAGE);
     });
+  let Subcommand(_,_,call) = sc;
 
-  call(ma.opts, &ma.subargs);
+  call(sc, ma.opts, &ma.subargs);
 }
