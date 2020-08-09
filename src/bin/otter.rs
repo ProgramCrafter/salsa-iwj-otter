@@ -108,7 +108,7 @@ inventory::submit!{Subcommand(
 struct ArgumentParseError(String);
 display_as_debug!(ArgumentParseError);
 
-fn parse_args<T,F,C>(apmaker: &F, completer: &C) -> T
+fn parse_args<T,F,C>(args: Vec<String>, apmaker: &F, completer: &C) -> T
 where T: Default,
       F: Fn(&mut T) -> ArgumentParser,
       C: Fn(&mut T) -> Result<(), ArgumentParseError>,
@@ -116,7 +116,8 @@ where T: Default,
   let mut parsed = Default::default();
   let ap = apmaker(&mut parsed);
 
-  if let Err(mut rc) = ap.parse_args() {
+  let r = ap.parse(args, &mut io::stdout(), &mut io::stderr());
+  if let Err(mut rc) = r {
     if rc!=0 { rc = EXIT_USAGE }
     exit(rc);
   }
@@ -137,7 +138,9 @@ fn main() {
     subcommand: String,
     subargs: Vec<String>,
   };
-  let ma = parse_args::<MainArgs,_,_>(&|ma|{
+  let ma = parse_args::<MainArgs,_,_>(
+    env::args().collect(),
+  &|ma|{
     let mut ap = ArgumentParser::new();
     ap.stop_on_first_argument(true);
     ap.silence_double_dash(true);
