@@ -110,12 +110,13 @@ fn main() {
   let mut parsed = Default::default();
   let apmaker :
     for<'output, 'parser>
-      fn(&'parser mut ArgumentParser,
-         &'output mut (MainOpts, String, Vec<String>)) -> ()
-      where 'output : 'parser
-         = | ap: &/*'parser*/ mut ArgumentParser,
-             (mainopts, subcommand, subargs):                 
-             &/*'output*/ mut (MainOpts, String, Vec<String>)| {
+      fn(&'output mut (MainOpts, String, Vec<String>)) -> ArgumentParser
+         = | (mainopts, subcommand, subargs):                 
+             &/*'output*/ mut (MainOpts, String, Vec<String>)| 
+ -> ArgumentParser
+             
+{
+  let mut ap = ArgumentParser::new();
     ap.stop_on_first_argument(true);
     ap.silence_double_dash(true);
     ap.refer(subcommand).add_argument("subcommand",Store,
@@ -135,14 +136,14 @@ fn main() {
     scope.add_option(&["--scope-unix"],
                      StoreConst(None),
                      "use USER scope");
+    ap
   };
-  let mut ap = ArgumentParser::new();
-  apmaker(&mut ap, &mut parsed);
+  let mut ap = apmaker(&mut parsed);
 
   ap.parse_args().unwrap_or_else(|rc| exit(if rc!=0 { EXIT_USAGE } else { 0 }));
+  mem::drop(ap);
   let (mut mainopts, subcommand, subargs) = parsed;
 
-  mem::drop(ap);
   mainopts.scope.get_or_insert_with(||{
     let user = env::var("USER").unwrap_or_else(|e|{
       // want to call ap.error but we have to drop it because
