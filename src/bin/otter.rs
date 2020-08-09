@@ -105,33 +105,43 @@ inventory::submit!{Subcommand(
 )}
 
 fn main() {
-  let mut mainopts : MainOpts = Default::default();
-  let mut subcommand = String::new();
-  let mut subargs : Vec<String> = vec![];
   use argparse::*;
 
-  let mut ap = ArgumentParser::new();
-  ap.stop_on_first_argument(true);
-  ap.silence_double_dash(true);
-  ap.refer(&mut subcommand).add_argument("subcommand",Store,
-                                         "subcommand");
-  ap.refer(&mut subargs).add_argument("...",Collect,
-                                      "subcommand options/argueents");
+  let mut parsed = Default::default();
+  let apmaker :
+    for<'output, 'parser>
+      fn(&'parser mut ArgumentParser,
+         &'output mut (MainOpts, String, Vec<String>)) -> ()
+      where 'output : 'parser
+         = | ap: &/*'parser*/ mut ArgumentParser,
+             (mainopts, subcommand, subargs):                 
+             &/*'output*/ mut (MainOpts, String, Vec<String>)| {
+    ap.stop_on_first_argument(true);
+    ap.silence_double_dash(true);
+    ap.refer(subcommand).add_argument("subcommand",Store,
+                                           "subcommand");
+    ap.refer(subargs).add_argument("...",Collect,
+                                        "subcommand options/argueents");
 
-  let mut scope = ap.refer(&mut mainopts.scope);
-  scope.add_option(&["--scope-server"],
-                   StoreConst(Some(ManagementScope::Server)),
-                   "use Server scope");
-  scope.add_option(&["--scope-unix-user"],
-                   MapStore(|user| Ok(Some(ManagementScope::Unix {
-                     user: user.into()
-                   }))),
-                   "use specified unix user scope");
-  scope.add_option(&["--scope-unix"],
-                   StoreConst(None),
-                   "use USER scope");
+    let mut scope = ap.refer(&mut mainopts.scope);
+    scope.add_option(&["--scope-server"],
+                     StoreConst(Some(ManagementScope::Server)),
+                     "use Server scope");
+    scope.add_option(&["--scope-unix-user"],
+                     MapStore(|user| Ok(Some(ManagementScope::Unix {
+                       user: user.into()
+                     }))),
+                     "use specified unix user scope");
+    scope.add_option(&["--scope-unix"],
+                     StoreConst(None),
+                     "use USER scope");
+  };
+  let mut ap = ArgumentParser::new();
+  apmaker(&mut ap, &mut parsed);
 
   ap.parse_args().unwrap_or_else(|rc| exit(if rc!=0 { EXIT_USAGE } else { 0 }));
+  let (mut mainopts, subcommand, subargs) = parsed;
+
   mem::drop(ap);
   mainopts.scope.get_or_insert_with(||{
     let user = env::var("USER").unwrap_or_else(|e|{
