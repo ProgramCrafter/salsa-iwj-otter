@@ -116,7 +116,10 @@ where T: Default,
   let mut parsed = Default::default();
   let ap = apmaker(&mut parsed);
 
-  ap.parse_args().unwrap_or_else(|rc| exit(if rc!=0 { EXIT_USAGE } else { 0 }));
+  if let Err(mut rc) = ap.parse_args() {
+    if rc!=0 { rc = EXIT_USAGE }
+    exit(rc);
+  }
   mem::drop(ap);
   completer(&mut parsed).unwrap_or_else(|e| {
     eprintln!("bad usage: {}", &e);
@@ -134,7 +137,7 @@ fn main() {
     subcommand: String,
     subargs: Vec<String>,
   };
-  let ma = parse_args(&|ma: &mut MainArgs|{
+  let ma = parse_args::<MainArgs,_,_>(&|ma|{
     let mut ap = ArgumentParser::new();
     ap.stop_on_first_argument(true);
     ap.silence_double_dash(true);
@@ -156,7 +159,7 @@ fn main() {
                      StoreConst(None),
                      "use USER scope");
     ap
-  }, &|ma: &mut MainArgs| {
+  }, &|ma| {
     if let ref mut scope @None = ma.opts.scope {
       let user = env::var("USER").map_err(|e| ArgumentParseError(
         format!("--scope-unix needs USER env var: {}", &e)
