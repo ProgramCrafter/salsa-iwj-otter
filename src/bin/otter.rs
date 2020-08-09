@@ -85,7 +85,8 @@ impl<'x, T, F: FnMut(&str) -> Result<T,String>>
   }
 }
 
-const EXIT_USAGE : i32 = 12;
+const EXIT_USAGE :    i32 = 12;
+const EXIT_DISASTER : i32 = 16;
 
 #[derive(Debug,Default)]
 struct MainOpts {
@@ -108,7 +109,12 @@ inventory::submit!{Subcommand(
 struct ArgumentParseError(String);
 display_as_debug!(ArgumentParseError);
 
-fn parse_args<T,F,C>(args: Vec<String>, apmaker: &F, completer: &C) -> T
+fn parse_args<T,F,C>(
+  args: Vec<String>,
+  apmaker: &F,
+  completer: &C,
+  extra_help: Option<&mut dyn FnMut(&mut dyn Write) -> Result<(), io::Error>>,
+) -> T
 where T: Default,
       F: Fn(&mut T) -> ArgumentParser,
       C: Fn(&mut T) -> Result<(), ArgumentParseError>,
@@ -116,10 +122,22 @@ where T: Default,
   let mut parsed = Default::default();
   let ap = apmaker(&mut parsed);
 
-  let r = ap.parse(args, &mut io::stdout(), &mut io::stderr());
-  if let Err(mut rc) = r {
-    if rc!=0 { rc = EXIT_USAGE }
-    exit(rc);
+  let mut stdout = io::stdout();
+
+  let r = ap.parse(args, &mut stdout, &mut io::stderr());
+  if let Err(rc) = r {
+    exit(match rc {
+      0 => {
+        if let Some(eh) = extra_help {
+          eh(&mut stdout).unwrap_or_else(|e|{
+            eprintln!("write help to stdout: {:?}", &e);
+            exit(EXIT_DISASTER);
+          });
+        }
+        0
+      },
+      _ => EXIT_USAGE,
+    });
   }
   mem::drop(ap);
   completer(&mut parsed).unwrap_or_else(|e| {
@@ -170,7 +188,7 @@ fn main() {
       *scope = Some(ManagementScope::Unix { user });
     }
     Ok(())
-  });
+  }, None);
 
   let Subcommand(_,call) = inventory::iter::<Subcommand>.into_iter()
     .filter(|Subcommand(found,_)| found == &ma.subcommand)
