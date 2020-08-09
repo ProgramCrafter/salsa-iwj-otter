@@ -104,14 +104,24 @@ inventory::submit!{Subcommand(
   }
 )}
 
-fn parse_args<T,F>(apmaker: &F) -> T
-  where T:Default, F: Fn(&mut T) -> ArgumentParser
+#[derive(Error,Debug)]
+struct ArgumentParseError(String);
+display_as_debug!(ArgumentParseError);
+
+fn parse_args<T,F,C>(apmaker: &F, completer: &C) -> T
+where T: Default,
+      F: Fn(&mut T) -> ArgumentParser,
+      C: Fn(&mut T) -> Result<(), ArgumentParseError>,
 {
   let mut parsed = Default::default();
   let ap = apmaker(&mut parsed);
 
   ap.parse_args().unwrap_or_else(|rc| exit(if rc!=0 { EXIT_USAGE } else { 0 }));
   mem::drop(ap);
+  completer(&mut parsed).unwrap_or_else(|e| {
+    eprintln!("bad usage: {}", &e);
+    exit(EXIT_USAGE);
+  });
   parsed
 }
 
@@ -124,7 +134,7 @@ fn main() {
     subcommand: String,
     subargs: Vec<String>,
   };
-  let mut ma = parse_args(&|ma: &mut MainArgs|{
+  let ma = parse_args(&|ma: &mut MainArgs|{
     let mut ap = ArgumentParser::new();
     ap.stop_on_first_argument(true);
     ap.silence_double_dash(true);
@@ -146,16 +156,14 @@ fn main() {
                      StoreConst(None),
                      "use USER scope");
     ap
-  });
-
-  ma.opts.scope.get_or_insert_with(||{
-    let user = env::var("USER").unwrap_or_else(|e|{
-      // want to call ap.error but we have to drop it because
-      // otherwise it still has mainopts.scope borrowed
-      eprintln!("bad usage: --scope-unix needs USER env var: {}", &e);
-      exit(EXIT_USAGE);
-    });
-    ManagementScope::Unix { user }
+  }, &|ma: &mut MainArgs| {
+    if let ref mut scope @None = ma.opts.scope {
+      let user = env::var("USER").map_err(|e| ArgumentParseError(
+        format!("--scope-unix needs USER env var: {}", &e)
+      ))?;
+      *scope = Some(ManagementScope::Unix { user });
+    }
+    Ok(())
   });
 
   let Subcommand(_,call) = inventory::iter::<Subcommand>.into_iter()
