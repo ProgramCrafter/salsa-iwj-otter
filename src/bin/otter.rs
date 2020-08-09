@@ -118,16 +118,17 @@ fn parse_args<T,F>(apmaker: &F) -> T
 fn main() {
   use argparse::*;
 
-  let (mut mainopts, subcommand, subargs) =
-    parse_args::< (MainOpts, String, Vec<String>), _ >(&
- | (mainopts, subcommand, subargs) | {
-  let mut ap = ArgumentParser::new();
+  let (mut mainopts, subcommand, subargs) = parse_args(&|(
+    mainopts, subcommand, subargs):
+    &mut (MainOpts, String, Vec<String>)
+  |{
+    let mut ap = ArgumentParser::new();
     ap.stop_on_first_argument(true);
     ap.silence_double_dash(true);
     ap.refer(subcommand).add_argument("subcommand",Store,
-                                           "subcommand");
+                                      "subcommand");
     ap.refer(subargs).add_argument("...",Collect,
-                                        "subcommand options/argueents");
+                                   "subcommand options/argueents");
 
     let mut scope = ap.refer(&mut mainopts.scope);
     scope.add_option(&["--scope-server"],
@@ -142,8 +143,7 @@ fn main() {
                      StoreConst(None),
                      "use USER scope");
     ap
-  }
-  );
+  });
 
   mainopts.scope.get_or_insert_with(||{
     let user = env::var("USER").unwrap_or_else(|e|{
