@@ -110,10 +110,7 @@ fn main() {
   let mut parsed = Default::default();
   let apmaker :
       fn(&mut (MainOpts, String, Vec<String>)) -> ArgumentParser
-         = | (mainopts, subcommand, subargs) | 
- -> ArgumentParser
-             
-{
+         = | (mainopts, subcommand, subargs) | {
   let mut ap = ArgumentParser::new();
     ap.stop_on_first_argument(true);
     ap.silence_double_dash(true);
