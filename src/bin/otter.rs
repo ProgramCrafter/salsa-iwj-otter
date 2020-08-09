@@ -118,9 +118,9 @@ fn parse_args<T,F>(apmaker: &F) -> T
 fn main() {
   use argparse::*;
 
-  let apmaker :
-      fn(&mut (MainOpts, String, Vec<String>)) -> ArgumentParser
-         = | (mainopts, subcommand, subargs) | {
+  let (mut mainopts, subcommand, subargs) =
+    parse_args::< (MainOpts, String, Vec<String>), _ >(&
+ | (mainopts, subcommand, subargs) | {
   let mut ap = ArgumentParser::new();
     ap.stop_on_first_argument(true);
     ap.silence_double_dash(true);
@@ -142,8 +142,8 @@ fn main() {
                      StoreConst(None),
                      "use USER scope");
     ap
-  };
-  let (mut mainopts, subcommand, subargs) = parse_args(&apmaker);
+  }
+  );
 
   mainopts.scope.get_or_insert_with(||{
     let user = env::var("USER").unwrap_or_else(|e|{
