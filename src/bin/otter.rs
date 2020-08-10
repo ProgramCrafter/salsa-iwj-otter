@@ -147,8 +147,6 @@ where T: Default,
 }
 
 fn main() {
-  use argparse::*;
-
   #[derive(Default,Debug)]
   struct MainArgs {
     opts: MainOpts,
@@ -158,6 +156,7 @@ fn main() {
   let ma = parse_args::<MainArgs,_,_>(
     env::args().collect(),
   &|ma|{
+    use argparse::*;
     let mut ap = ArgumentParser::new();
     ap.stop_on_first_argument(true);
     ap.silence_double_dash(true);
@@ -217,7 +216,24 @@ fn main() {
 
 inventory::submit!{Subcommand(
   "create-table", "Create a new table", |_sc, mainopts, args|{
-    
+    #[derive(Default,Debug)]
+    struct Args {
+      name: String,
+      file: String,
+    }
+    let args = parse_args::<Args,_,_>(args,
+    &|ma|{
+      use argparse::*;
+      let mut ap = ArgumentParser::new();
+      ap.refer(&mut ma.name).required()
+        .add_argument("TABLE-NAME",Store,"table name");
+      ap.refer(&mut ma.file).required()
+        .add_argument("TABLE-SPEC-TOML",Store,"table spec");
+      ap
+    }, &|_ma|{
+      Ok(())
+    }, None);
+
     eprintln!("CREATE-TABLE {:?} {:?}", &mainopts, &args);
   }
 )}
