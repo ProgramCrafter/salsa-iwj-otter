@@ -11,44 +11,6 @@ use std::cell::Cell;
 
 use argparse::action::ParseResult::Parsed;
 
-/*
-use std::cell::Cell;
-
-pub struct CellRef<'a, T> {
-  origin: &'a mut T,
-  current: Cell<T>,
-}
-
-impl<'a,T> CellRef<'a,T> {
-  pub fn cloning(origin: &mut T) -> CellRef<T> where T: Clone {
-    let current = Cell::new(origin.clone());
-    CellRef { origin, current }
-  }
-  pub fn copying(origin: &mut T) -> CellRef<T> where T: Copy {
-    let current = Cell::new(*origin);
-    CellRef { origin, current }
-  }
-  pub fn defaulting(origin: &mut T) -> CellRef<T> where T: Default {
-    let current = Cell::new(mem::take(origin));
-    CellRef { origin, current }
-  }
-  pub fn with_placeholder(origin: &mut T, placeholder: T) -> CellRef<T> {
-    let current = Cell::new(mem::replace(origin, placeholder));
-    CellRef { origin, current }
-  }
-}
-
-impl<'a,T> Drop for CellRef<'a,T> {
-  fn drop(&mut self) {
-    mem::swap(self.current.get_mut(), self.origin);
-  }
-}
-impl<'a,T> Deref for CellRef<'a,T> {
-  type Target = Cell<T>;
-  fn deref(&self) -> &Cell<T> { &self.current }
-}
- */
-
 #[derive(Clone)]
 struct MapStore<T, F: FnMut(&str) -> Result<T,String> > (
   F
