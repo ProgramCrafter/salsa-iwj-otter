@@ -72,6 +72,7 @@ pub use crate::commands::*;
 pub use crate::slotmap_slot_idx::*;
 pub use crate::cmdlistener::*;
 pub use crate::spec::*;
+pub use crate::client::*;
 pub use crate::api::{Lens,TransparentLens};
 pub use crate::utils::OrdExt;
 

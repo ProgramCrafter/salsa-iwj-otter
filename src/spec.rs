@@ -12,7 +12,7 @@ pub struct TableSpec {
 pub struct PlayerSpec {
   pub nick: String,
   #[serde(flatten)]
-  pub access: Box<dyn PlayerAccessSpec>,
+  pub access: Option<Box<dyn PlayerAccessSpec>>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -33,7 +33,17 @@ pub struct PiecesSpec {
 
 #[typetag::serde(tag="access")]
 pub trait PlayerAccessSpec : Debug {
-  #[throws(OE)]
-  /// todo const DELIVER_TOKEN_SERVER : bool; etc.
-  fn deliver_token(&mut self) -> Result<(),OE>;
+  fn deliver_token_client(&self, conn: &mut MgmtConnection, nick: &str)
+                          -> Result<(),anyhow::Error>;
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+struct UrlOnStdout;
+
+#[typetag::serde]
+impl PlayerAccessSpec for UrlOnStdout {
+  fn deliver_token_client(&self, conn: &mut MgmtConnection, nick: &str)
+                          -> Result<(),anyhow::Error> {
+    todo!()
+  }
 }
