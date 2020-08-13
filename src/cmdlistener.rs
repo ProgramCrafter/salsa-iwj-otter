@@ -17,7 +17,7 @@ use pwd::Passwd;
 //use serde_json::ser::Serializer;
 //use serde_json::de::{IoRead,StreamDeserializer};
 
-const SOCKET_PATH : &str = "command.socket"; // xxx
+pub const SOCKET_PATH : &str = "command.socket"; // xxx
 
 pub struct CommandListener {
   listener : UnixListener,

@@ -41,7 +41,7 @@ impl<U: IoTryClone + Read + Write> MgmtChannel<U> {
   }
 }
 
-trait IoTryClone : Sized {
+pub trait IoTryClone : Sized {
   fn try_clone(&self) -> io::Result<Self>;
 }
 

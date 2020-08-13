@@ -33,7 +33,7 @@ pub struct PiecesSpec {
 
 #[typetag::serde(tag="access")]
 pub trait PlayerAccessSpec : Debug {
-  fn deliver_token_client(&self, conn: &mut MgmtConnection, nick: &str)
+  fn deliver_token_client(&self, conn: &mut ()/*xxx*/, nick: &str)
                           -> Result<(),anyhow::Error>;
 }
 
@@ -42,7 +42,7 @@ struct UrlOnStdout;
 
 #[typetag::serde]
 impl PlayerAccessSpec for UrlOnStdout {
-  fn deliver_token_client(&self, conn: &mut MgmtConnection, nick: &str)
+  fn deliver_token_client(&self, conn: &mut (), nick: &str)
                           -> Result<(),anyhow::Error> {
     todo!()
   }

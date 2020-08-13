@@ -9,6 +9,8 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::cell::Cell;
 
+type E = anyhow::Error;
+
 use argparse::action::ParseResult::Parsed;
 
 #[derive(Clone)]
@@ -58,7 +60,7 @@ struct MainOpts {
 struct Subcommand (
   &'static str, // command
   &'static str, // desc
-  fn(&Subcommand, MainOpts, Vec<String>),
+  fn(&Subcommand, MainOpts, Vec<String>) -> Result<(),E>,
 );
 inventory::collect!(Subcommand);
 
@@ -173,7 +175,15 @@ fn main() {
                             env::args().next().unwrap(),
                             &ma.subcommand));
 
-  call(sc, ma.opts, subargs);
+  call(sc, ma.opts, subargs).expect("execution error");
+}
+
+type Conn = MgmtChannel<UnixStream>;
+
+fn connect(ma: &MainOpts) -> Result<(),E> {
+  let unix = UnixStream::connect(SOCKET_PATH).context("connect to server")?;
+  
+  todo!()
 }
 
 inventory::submit!{Subcommand(
@@ -196,6 +206,9 @@ inventory::submit!{Subcommand(
       Ok(())
     }, None);
 
-    eprintln!("CREATE-TABLE {:?} {:?}", &mainopts, &args);
+    let chan = connect(&mainopts)?;
+
+    eprintln!("CREATE-TABLE {:?} {:?} {:?}", &mainopts, &args, &chan);
+    Ok(())
   }
 )}
