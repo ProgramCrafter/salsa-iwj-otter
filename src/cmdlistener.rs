@@ -41,17 +41,17 @@ impl CommandStream<'_> {
   #[throws(CSE)]
   pub fn mainloop(mut self) {
     use MgmtChannelReadError::*;
-    let resp = match self.chan.read()? {
-      Ok(Some(cmd)) => execute(&mut self, cmd),
+    let resp = match self.chan.read() {
+      Ok(Some(cmd)) => match execute(&mut self, cmd),
       Err(IO(ioe)) => {
         eprintln!("{}: io error reading: {}", &self.desc, ioe);
         return;
       }
-      Err(ParseFailed(s)) => MgmtResponse::Error {
+      Err(Parse(s)) => MgmtResponse::Error {
         error: MgmtError::ParseFailed(s),
       },
     };
-    serde_lexpr::to_writer(&mut cs.write, &resp)?;
+    self.chan.write(&resp)?;
   }
 
   #[throws(MgmtError)]

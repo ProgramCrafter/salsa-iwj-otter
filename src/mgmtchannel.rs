@@ -6,7 +6,7 @@ pub enum MgmtChannelReadError {
   Parse(String),
   IO(#[from] io::Error),
 }
-display_as_debug!{MgmtChannelError}
+display_as_debug!{MgmtChannelReadError}
 
 #[derive(Clone,Debug)]
 pub struct MgmtChannel<U : Read + Write> {
@@ -25,13 +25,18 @@ impl<U: IoTryClone + Read + Write> MgmtChannel<U> {
     MgmtChannel { read, write }
   }
 
-  #[throws(MgmthannelReadError)]
-  fn read<T>(&mut self) -> Option<T> {
+  #[throws(MgmtChannelReadError)]
+  pub fn read<T>(&mut self) -> Option<T> {
     let lq = self.read.next().map_err(MgmtChannelReadError::IO)?;
     let incoming : T = lq.map(
       |l| serde_lexpr::from_str(l)
     ).collect().map_err(|e| MgmtChannelReadError::Parse("{}", &e))?;
     incoming
+  }
+
+  #[throws(io::Error)]
+  pub fn write<T:Serialize>(&mut self, val: &T) {
+    serde_lexpr::to_writer(&mut self.write, val)?;
   }
 }
 
