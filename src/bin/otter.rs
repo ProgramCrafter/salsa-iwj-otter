@@ -181,9 +181,10 @@ fn main() {
 type Conn = MgmtChannel;
 
 #[throws(E)]
-fn connect(ma: &MainOpts) -> MgmtChannel {
+fn connect(_ma: &MainOpts) -> MgmtChannel {
   let unix = UnixStream::connect(SOCKET_PATH).context("connect to server")?;
   let chan = MgmtChannel::new(unix)?;
+  // xxx set scope
   chan
 }
 
@@ -207,7 +208,26 @@ inventory::submit!{Subcommand(
       Ok(())
     }, None);
 
+    let spec = (||{
+      let mut f = File::open(&args.file).context("open")?;
+      let mut buf = String::new();
+      f.read_to_string(&mut buf).context("read")?;
+      let spec : TableSpec = toml::de::from_str(&buf).context("parse")?;
+      <Result<_,AE>>::Ok(spec)
+    })().context("game spec toml").context(&args.file)?;
+
     let chan = connect(&mainopts)?;
+
+    /*
+
+    chan.cmd(MgmtCommand::CreateGame {
+      CreateGame {
+        name: args.name,
+        insns: vec![
+          MgmtGameInstruction {
+            
+          },
+        ]*/
 
     eprintln!("CREATE-TABLE {:?} {:?}", &mainopts, &args);
     Ok(())
