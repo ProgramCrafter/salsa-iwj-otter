@@ -3,12 +3,13 @@ use crate::imports::*;
 
 #[derive(Debug,Error)]
 pub enum MgmtChannelReadError {
+  EOF,
   Parse(String),
   IO(#[from] io::Error),
 }
 display_as_debug!{MgmtChannelReadError}
 
-#[derive(Clone,Debug)]
+#[derive(Debug)]
 pub struct MgmtChannel<U : Read + Write> {
   read : io::Lines<BufReader<U>>,
   write : BufWriter<U>,
@@ -16,7 +17,7 @@ pub struct MgmtChannel<U : Read + Write> {
 
 impl<U: IoTryClone + Read + Write> MgmtChannel<U> {
   #[throws(AE)]
-  fn new(conn: U) -> MgmtChannel<U> {
+  pub fn new(conn: U) -> MgmtChannel<U> {
     let read = conn.try_clone().context("dup the command stream")?;
     let read = BufReader::new(read);
     let read = read.lines();
@@ -26,12 +27,12 @@ impl<U: IoTryClone + Read + Write> MgmtChannel<U> {
   }
 
   #[throws(MgmtChannelReadError)]
-  pub fn read<T>(&mut self) -> Option<T> {
-    let lq = self.read.next().map_err(MgmtChannelReadError::IO)?;
-    let incoming : T = lq.map(
-      |l| serde_lexpr::from_str(l)
-    ).collect().map_err(|e| MgmtChannelReadError::Parse("{}", &e))?;
-    incoming
+  pub fn read<T:DeserializeOwned>(&mut self) -> T {
+    use MgmtChannelReadError::*;
+    let l = self.read.next().ok_or(EOF)??;
+    let v = serde_lexpr::from_str(&l)
+      .map_err(|e| Parse(format!("{}", &e)))?;
+    v
   }
 
   #[throws(io::Error)]

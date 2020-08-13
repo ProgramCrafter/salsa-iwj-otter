@@ -40,18 +40,16 @@ type CSE = anyhow::Error;
 impl CommandStream<'_> {
   #[throws(CSE)]
   pub fn mainloop(mut self) {
-    use MgmtChannelReadError::*;
-    let resp = match self.chan.read() {
-      Ok(Some(cmd)) => match execute(&mut self, cmd),
-      Err(IO(ioe)) => {
-        eprintln!("{}: io error reading: {}", &self.desc, ioe);
-        return;
-      }
-      Err(Parse(s)) => MgmtResponse::Error {
-        error: MgmtError::ParseFailed(s),
-      },
-    };
-    self.chan.write(&resp)?;
+    loop {
+      use MgmtChannelReadError::*;
+      let resp = match self.chan.read() {
+        Ok(cmd) => execute(&mut self, cmd)?,
+        Err(EOF) => break,
+        Err(IO(e)) => Err(e).context("read command stream")?,
+        Err(Parse(s)) => MgmtResponse::Error { error : ParseFailed(s) },
+      };
+      self.chan.write(&resp).context("swrite command stream")?;
+    }
   }
 
   #[throws(MgmtError)]
@@ -60,11 +58,13 @@ impl CommandStream<'_> {
   }
 }
 
+/*
 impl From<serde_lexpr::Error> for MgmtError {
   fn from(je: serde_lexpr::Error) -> ME {
     ParseFailed(format!("{}", &je))
   }
 }
+*/
 
 use MgmtCommand::*;
 use MgmtResponse::*;
@@ -487,7 +487,7 @@ impl CommandListener {
         })().unwrap_or_else(|e| format!("<error: {}>", e));
         write!(&mut desc, " user={}", user_desc)?;
 
-        let chan = MgmtChannel::new(conn);
+        let chan = MgmtChannel::new(conn)?;
 
         let cs = CommandStream {
           scope: None, amu: None, desc: &desc,
