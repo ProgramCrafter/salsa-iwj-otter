@@ -194,8 +194,10 @@ inventory::submit!{Subcommand(
   do_create_table,
 )}
 
-#[throws(E)]
-fn do_create_table(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+//#[throws(E)]
+fn do_create_table(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) 
+ -> Result<(),E>
+{
   #[derive(Default,Debug)]
   struct Args {
     name: String,
@@ -213,15 +215,18 @@ fn do_create_table(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
   }, &|_ma|{
     Ok(())
   }, None);
-/*
-  let spec = (||{
-    let mut f = File::open(&args.file).context("open")?;
+
+let specf = &args.file;
+  let spec = {//(|f|{
+
+    let mut f = File::open(f).context("open")?;
     let mut buf = String::new();
     f.read_to_string(&mut buf).context("read")?;
     let spec : TableSpec = toml::de::from_str(&buf).context("parse")?;
     <Result<_,AE>>::Ok(spec)
-  })().context("game spec toml").context(&args.file)?;
-*/
+//  })(&args.file).context("game spec toml").context(&args.file)?;
+  };
+
   let chan = connect(&ma)?;
 
   /*
