@@ -23,19 +23,16 @@ pub struct CommandListener {
   listener : UnixListener,
 }
 
-type CSWrite = BufWriter<UnixStream>;
-
 #[derive(Debug,Error,Clone)]
 #[error("connection euid lookup failed (at connection initiation): {0}")]
 pub struct ConnectionEuidDiscoverEerror(String);
 
 struct CommandStream<'d> {
   euid : Result<u32, ConnectionEuidDiscoverEerror>,
-  read : io::Lines<BufReader<UnixStream>>,
-  write : CSWrite,
   desc : &'d str,
   scope : Option<ManagementScope>,
   amu : Option<InstanceRef>,
+  chan : MgmtChannel<UnixStream>,
 }
 
 type CSE = anyhow::Error;
@@ -43,13 +40,18 @@ type CSE = anyhow::Error;
 impl CommandStream<'_> {
   #[throws(CSE)]
   pub fn mainloop(mut self) {
-    while let Some(l) = self.read.next() {
-      let l = l.context("read")?;
-      decode_and_process(&mut self, &l)?;
-      #[allow(clippy::write_with_newline)]
-      write!(&mut self.write, "\n")?;
-      self.write.flush()?;
-    }
+    use MgmtChannelReadError::*;
+    let resp = match self.chan.read()? {
+      Ok(Some(cmd)) => execute(&mut self, cmd),
+      Err(IO(ioe)) => {
+        eprintln!("{}: io error reading: {}", &self.desc, ioe);
+        return;
+      }
+      Err(ParseFailed(s)) => MgmtResponse::Error {
+        error: MgmtError::ParseFailed(s),
+      },
+    };
+    serde_lexpr::to_writer(&mut cs.write, &resp)?;
   }
 
   #[throws(MgmtError)]
@@ -70,21 +72,6 @@ use MgmtError::*;
 
 type ME = MgmtError;
 from_instance_lock_error!{MgmtError}
-
-#[throws(CSE)]
-fn decode_and_process(cs: &mut CommandStream, s: &str) {
-  let resp = self::decode_process_inner(cs, s)
-    .unwrap_or_else(|e| MgmtResponse::Error {
-      error: MgmtError::ParseFailed(format!("{}", e))
-    });
-  serde_lexpr::to_writer(&mut cs.write, &resp)?;
-}
-
-#[throws(ME)]
-fn decode_process_inner(cs: &mut CommandStream, s: &str)-> MgmtResponse {
-  let cmd : MgmtCommand = serde_lexpr::from_str(s)?;
-  execute(cs, cmd)?
-}
 
 const USERLIST : &str = "/etc/userlist";
 
@@ -500,15 +487,11 @@ impl CommandListener {
         })().unwrap_or_else(|e| format!("<error: {}>", e));
         write!(&mut desc, " user={}", user_desc)?;
 
-        let read = conn.try_clone().context("dup the command stream")?;
-        let read = BufReader::new(read);
-        let read = read.lines();
-        let write = conn;
-        let write = BufWriter::new(write);
+        let chan = MgmtChannel::new(conn);
 
         let cs = CommandStream {
           scope: None, amu: None, desc: &desc,
-          read, write, euid,
+          chan, euid,
         };
         cs.mainloop()?;
         
