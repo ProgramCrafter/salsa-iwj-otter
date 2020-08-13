@@ -219,7 +219,7 @@ fn do_create_table(_sc: &Subcommand, ma: MainOpts, args: Vec<String>)
 let specf = &args.file;
   let spec = {//(|f|{
 
-    let mut f = File::open(f).context("open")?;
+    let mut f = File::open(specf).context("open")?;
     let mut buf = String::new();
     f.read_to_string(&mut buf).context("read")?;
     let spec : TableSpec = toml::de::from_str(&buf).context("parse")?;
@@ -241,4 +241,5 @@ let specf = &args.file;
       ]*/
 
   eprintln!("CREATE-TABLE {:?} {:?}", &ma, &args);
+  Ok(())
 }
