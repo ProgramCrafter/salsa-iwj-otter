@@ -178,12 +178,13 @@ fn main() {
   call(sc, ma.opts, subargs).expect("execution error");
 }
 
-type Conn = MgmtChannel<UnixStream>;
+type Conn = MgmtChannel;
 
-fn connect(ma: &MainOpts) -> Result<(),E> {
+#[throws(E)]
+fn connect(ma: &MainOpts) -> MgmtChannel {
   let unix = UnixStream::connect(SOCKET_PATH).context("connect to server")?;
-  
-  todo!()
+  let chan = MgmtChannel::new(unix)?;
+  chan
 }
 
 inventory::submit!{Subcommand(
@@ -208,7 +209,7 @@ inventory::submit!{Subcommand(
 
     let chan = connect(&mainopts)?;
 
-    eprintln!("CREATE-TABLE {:?} {:?} {:?}", &mainopts, &args, &chan);
+    eprintln!("CREATE-TABLE {:?} {:?}", &mainopts, &args);
     Ok(())
   }
 )}

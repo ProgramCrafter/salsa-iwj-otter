@@ -42,7 +42,7 @@ struct UrlOnStdout;
 
 #[typetag::serde]
 impl PlayerAccessSpec for UrlOnStdout {
-  fn deliver_token_client(&self, conn: &mut (), nick: &str)
+  fn deliver_token_client(&self, _conn: &mut (), _nick: &str)
                           -> Result<(),anyhow::Error> {
     todo!()
   }

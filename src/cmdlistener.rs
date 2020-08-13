@@ -32,7 +32,7 @@ struct CommandStream<'d> {
   desc : &'d str,
   scope : Option<ManagementScope>,
   amu : Option<InstanceRef>,
-  chan : MgmtChannel<UnixStream>,
+  chan : MgmtChannel,
 }
 
 type CSE = anyhow::Error;

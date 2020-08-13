@@ -9,19 +9,19 @@ pub enum MgmtChannelReadError {
 }
 display_as_debug!{MgmtChannelReadError}
 
-#[derive(Debug)]
-pub struct MgmtChannel<U : Read + Write> {
-  read : io::Lines<BufReader<U>>,
-  write : BufWriter<U>,
+pub struct MgmtChannel {
+  read : io::Lines<BufReader<Box<dyn Read>>>,
+  write : BufWriter<Box<dyn Write>>,
 }
 
-impl<U: IoTryClone + Read + Write> MgmtChannel<U> {
+impl MgmtChannel {
   #[throws(AE)]
-  pub fn new(conn: U) -> MgmtChannel<U> {
+  pub fn new<U: IoTryClone + Read + Write + 'static>(conn: U) -> MgmtChannel {
     let read = conn.try_clone().context("dup the command stream")?;
+    let read = Box::new(read) as Box<dyn Read>;
     let read = BufReader::new(read);
     let read = read.lines();
-    let write = conn;
+    let write = Box::new(conn) as Box<dyn Write>;
     let write = BufWriter::new(write);
     MgmtChannel { read, write }
   }
