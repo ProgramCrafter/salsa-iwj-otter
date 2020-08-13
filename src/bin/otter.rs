@@ -189,47 +189,51 @@ fn connect(_ma: &MainOpts) -> MgmtChannel {
 }
 
 inventory::submit!{Subcommand(
-  "create-table", "Create a new table", |_sc, mainopts, args|{
-    #[derive(Default,Debug)]
-    struct Args {
-      name: String,
-      file: String,
-    }
-    let args = parse_args::<Args,_,_>(args,
-    &|ma|{
-      use argparse::*;
-      let mut ap = ArgumentParser::new();
-      ap.refer(&mut ma.name).required()
-        .add_argument("TABLE-NAME",Store,"table name");
-      ap.refer(&mut ma.file).required()
-        .add_argument("TABLE-SPEC-TOML",Store,"table spec");
-      ap
-    }, &|_ma|{
-      Ok(())
-    }, None);
-
-    let spec = (||{
-      let mut f = File::open(&args.file).context("open")?;
-      let mut buf = String::new();
-      f.read_to_string(&mut buf).context("read")?;
-      let spec : TableSpec = toml::de::from_str(&buf).context("parse")?;
-      <Result<_,AE>>::Ok(spec)
-    })().context("game spec toml").context(&args.file)?;
-
-    let chan = connect(&mainopts)?;
-
-    /*
-
-    chan.cmd(MgmtCommand::CreateGame {
-      CreateGame {
-        name: args.name,
-        insns: vec![
-          MgmtGameInstruction {
-            
-          },
-        ]*/
-
-    eprintln!("CREATE-TABLE {:?} {:?}", &mainopts, &args);
-    Ok(())
-  }
+  "create-table",
+  "Create a new table",
+  do_create_table,
 )}
+
+#[throws(E)]
+fn do_create_table(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+  #[derive(Default,Debug)]
+  struct Args {
+    name: String,
+    file: String,
+  }
+  let args = parse_args::<Args,_,_>(args,
+  &|ma|{
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut ma.name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
+    ap.refer(&mut ma.file).required()
+      .add_argument("TABLE-SPEC-TOML",Store,"table spec");
+    ap
+  }, &|_ma|{
+    Ok(())
+  }, None);
+/*
+  let spec = (||{
+    let mut f = File::open(&args.file).context("open")?;
+    let mut buf = String::new();
+    f.read_to_string(&mut buf).context("read")?;
+    let spec : TableSpec = toml::de::from_str(&buf).context("parse")?;
+    <Result<_,AE>>::Ok(spec)
+  })().context("game spec toml").context(&args.file)?;
+*/
+  let chan = connect(&ma)?;
+
+  /*
+
+  chan.cmd(MgmtCommand::CreateGame {
+    CreateGame {
+      name: args.name,
+      insns: vec![
+        MgmtGameInstruction {
+
+        },
+      ]*/
+
+  eprintln!("CREATE-TABLE {:?} {:?}", &ma, &args);
+}
