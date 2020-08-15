@@ -45,7 +45,7 @@ pub enum MgmtGameUpdateMode {
   Bulk,
 }
 
-#[derive(Debug,Error,Serialize,Deserialize)]
+#[derive(Debug,Clone,Error,Serialize,Deserialize)]
 pub enum MgmtError {
   ParseFailed(String),
   AuthorisationError,

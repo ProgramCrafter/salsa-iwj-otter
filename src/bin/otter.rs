@@ -180,11 +180,31 @@ fn main() {
 
 type Conn = MgmtChannel;
 
+trait ConnExt {
+  fn cmd(&mut self, cmd: &MgmtCommand) -> Result<MgmtResponse,AE>;
+}
+impl ConnExt for Conn {
+  #[throws(AE)]
+  fn cmd(&mut self, cmd: &MgmtCommand) -> MgmtResponse {
+    use MgmtResponse::*;
+    self.write(&cmd).context("send command")?;
+    let resp = self.read().context("read response")?;
+    match &resp {
+      Fine{..} | GamesList{..} => { },
+      AlterGame { error: None, .. } => { },
+      Error { error } | AlterGame { error: Some(error), .. } => {
+        Err(error.clone()).context(format!("response to: {:?}",cmd))?;
+      },
+    };
+    resp
+  }
+}
+
 #[throws(E)]
-fn connect(_ma: &MainOpts) -> MgmtChannel {
+fn connect(ma: &MainOpts) -> MgmtChannel {
   let unix = UnixStream::connect(SOCKET_PATH).context("connect to server")?;
-  let chan = MgmtChannel::new(unix)?;
-  // xxx set scope
+  let mut chan = MgmtChannel::new(unix)?;
+  chan.cmd(&MgmtCommand::SetScope { scope: ma.scope.clone().unwrap() })?;
   chan
 }
 
@@ -214,7 +234,7 @@ mod create_table {
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_,_>(args, &subargs, &complete, None);
 
-    let spec = (||{
+    let _spec = (||{
       let mut f = File::open(&args.file).context("open")?;
       let mut buf = String::new();
       f.read_to_string(&mut buf).context("read")?;
@@ -222,7 +242,7 @@ mod create_table {
       <Result<_,AE>>::Ok(spec)
     })().context("game spec toml").with_context(|| args.file.to_owned())?;
 
-    let chan = connect(&ma)?;
+    let _chan = connect(&ma)?;
 
     /*
 

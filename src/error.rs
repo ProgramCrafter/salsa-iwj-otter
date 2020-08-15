@@ -1,7 +1,7 @@
 
 use crate::imports::*;
 
-#[derive(Error,Debug,Serialize,Deserialize)]
+#[derive(Error,Clone,Debug,Serialize,Deserialize)]
 #[error("operation error {:?}",self)]
 pub enum GameError {
   Conflict,
