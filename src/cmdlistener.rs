@@ -43,7 +43,10 @@ impl CommandStream<'_> {
     loop {
       use MgmtChannelReadError::*;
       let resp = match self.chan.read() {
-        Ok(cmd) => execute(&mut self, cmd)?,
+        Ok(cmd) => match execute(&mut self, cmd) {
+          Ok(resp) => resp,
+          Err(error) => MgmtResponse::Error { error },
+        },
         Err(EOF) => break,
         Err(IO(e)) => Err(e).context("read command stream")?,
         Err(Parse(s)) => MgmtResponse::Error { error : ParseFailed(s) },
@@ -187,7 +190,7 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
 
 #[throws(ME)]
 fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
-  eprintln!("{:?} executing {:?}", &cs.desc, &cmd);
+  eprintln!("command connection {}: executing {:?}", &cs.desc, &cmd);
 
   match cmd {
     Noop { } => Fine { },

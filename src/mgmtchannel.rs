@@ -38,6 +38,8 @@ impl MgmtChannel {
   #[throws(io::Error)]
   pub fn write<T:Serialize>(&mut self, val: &T) {
     serde_lexpr::to_writer(&mut self.write, val)?;
+    write!(self.write, "\n")?;
+    self.write.flush()?;
   }
 }
 
