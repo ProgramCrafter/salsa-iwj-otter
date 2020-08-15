@@ -5,9 +5,6 @@ use lazy_static::lazy_static;
 
 use std::sync::PoisonError;
 
-#[allow(dead_code)]
-const SAVE_DIRECTORY : &str = "save";
-
 // ---------- newtypes and type aliases ----------
 
 visible_slotmap_key!{ ClientId('C') }
@@ -163,6 +160,7 @@ struct Global {
   games   : RwLock<HashMap<Arc<InstanceName>,InstanceRef>>,
   players : RwLock<TokenTable<PlayerId>>,
   clients : RwLock<TokenTable<ClientId>>,
+  config  : RwLock<Arc<ServerConfig>>,
   // xxx delete instances at some point!
 }
 
@@ -533,7 +531,7 @@ fn savefilename(name: &InstanceName, prefix: &str, suffix: &str) -> String {
     Server => format!(""),
     Unix{user} => { format!("{}:", user) },
   } };
-  [ SAVE_DIRECTORY, &"/", prefix, scope_prefix.as_ref() ]
+  [ config().save_directory.as_str(), &"/", prefix, scope_prefix.as_ref() ]
     .iter().map(Deref::deref)
     .chain( utf8_percent_encode(&name.scoped_name,
                                 &percent_encoding::NON_ALPHANUMERIC) )
@@ -677,7 +675,7 @@ pub fn load_games() {
   use AFState::*;
   use SavefilenameParseResult::*;
   let mut a_leaves = HashMap::new();
-  for de in fs::read_dir(SAVE_DIRECTORY)? {
+  for de in fs::read_dir(&config().save_directory)? {
     let de = de?;
     let leaf = de.file_name();
     (||{
@@ -783,6 +781,26 @@ pub fn record_token<Id : AccessId> (
   let token = RawToken::new_random();
   ig.token_register(token.clone(), iad);
   token
+}
+
+// ========== server config ==========
+
+const DEFAULT_SAVE_DIRECTORY : &str = "save";
+
+pub struct ServerConfig {
+  pub save_directory: String,
+}
+
+pub fn config() -> Arc<ServerConfig> {
+  GLOBAL.config.read().unwrap().clone()
+}
+
+impl Default for ServerConfig {
+  fn default() -> ServerConfig {
+    ServerConfig {
+      save_directory: DEFAULT_SAVE_DIRECTORY.to_owned(),
+    }
+  }
 }
 
 // ========== ad-hoc and temporary ==========
