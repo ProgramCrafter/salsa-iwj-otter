@@ -60,7 +60,16 @@ pub enum MgmtError {
   GameError(#[from] GameError),
   ServerFailure(String),
 }
-display_as_debug!{MgmtError}
+impl Display for MgmtError {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut fmt::Formatter) {
+    use MgmtError::*;
+    match self {
+      ServerFailure(s) => write!(f, "ServerFailure: {}", &s)?,
+      _ => <Self as Debug>::fmt(self,f)?,
+    }
+  }
+}
 
 impl From<ServerFailure> for MgmtError {
   fn from(e: ServerFailure) -> MgmtError {

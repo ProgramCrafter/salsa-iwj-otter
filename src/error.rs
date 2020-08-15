@@ -34,14 +34,14 @@ from_instance_lock_error!{OnlineError}
 
 #[derive(Error,Debug)]
 pub enum ServerFailure {
-  #[error("Server IO error {0:?}")]
-  IO(#[from] io::Error),
-  #[error("Server MessagePack encoding error {0:?}")]
+  #[error("Server MessagePack encoding error {0}")]
   MessagePackEncodeFail(#[from] rmp_serde::encode::Error),
-  #[error("Server MessagePack decoding error (game load failed) {0:?}")]
+  #[error("Server MessagePack decoding error (game load failed) {0}")]
   MessagePackDecodeFail(#[from] rmp_serde::decode::Error),
-  #[error("Server internal logic error {0:}")]
+  #[error("Server internal logic error {0}")]
   InternalLogicError(String),
+  #[error("Server error {0:?}")]
+  Anyhow(#[from] anyhow::Error),
 }
 
 #[derive(Error,Debug,Serialize,Copy,Clone)]

@@ -260,7 +260,8 @@ impl Instance {
     let a_savefile = savefilename(&g.name, "a-", "");
 
     let mut gw = GLOBAL.games.write().unwrap();
-    fs::remove_file(savefilename(&g.name, "g-", ""))?;
+    let g_file = savefilename(&g.name, "g-", "");
+    fs::remove_file(&g_file).context("remove").context(g_file)?;
 
     (||{ // Infallible:
       g.c.live = false;
@@ -576,12 +577,19 @@ impl InstanceGuard<'_> {
           -> Result<(),rmp_serde::encode::Error>
   ) {
     let tmp = savefilename(&self.name, prefix,".tmp");
-    let mut f = BufWriter::new(fs::File::create(&tmp)?);
+    let f = fs::File::create(&tmp)
+      .with_context(||format!("save: create {:?}",&tmp))?;
+    let mut f = BufWriter::new(f);
     w(self, &mut f)?;
-    f.flush()?;
-    drop( f.into_inner().map_err(|e| { let e : io::Error = e.into(); e })? );
+    f.flush()
+      .with_context(||format!("save: flush {:?}",&tmp))?;
+    drop(
+      f.into_inner().map_err(|e| { let e : io::Error = e.into(); e })
+        .with_context(||format!("save: close {:?}",&tmp))?
+    );
     let out = savefilename(&self.name, prefix,"");
-    fs::rename(&tmp, &out)?;
+    fs::rename(&tmp, &out).context("install")
+      .with_context(||format!("save: install {:?} as {:?}", &tmp, &out))?;
     eprintln!("saved to {}", &out);
   }
 
@@ -613,7 +621,7 @@ impl InstanceGuard<'_> {
   #[throws(ServerFailure)]
   fn load_something<T:DeserializeOwned>(name: &InstanceName, prefix: &str) -> T {
     let inp = savefilename(name, prefix, "");
-    let mut f = BufReader::new(fs::File::open(&inp)?);
+    let mut f = BufReader::new(fs::File::open(&inp).context(inp)?);
     // xxx handle ENOENT specially, own OE variant
     rmp_serde::decode::from_read(&mut f)?
   }
@@ -626,11 +634,15 @@ impl InstanceGuard<'_> {
     let gs : GameState = Self::load_something(&name, "g-")?;
     let mut al : InstanceSaveAccesses<String>
       = Self::load_something(&name, "a-")
-      .or_else(|e:ServerFailure| match e {
-        ServerFailure::IO(ioe) if ioe.kind() == io::ErrorKind::NotFound => {
-          Ok(Default::default())
-        },
-        e => Err(e),
+      .or_else(|e| {
+        if let ServerFailure::Anyhow(ae) = &e {
+          if let Some(ioe) = ae.downcast_ref::<io::Error>() {
+            if ioe.kind() == io::ErrorKind::NotFound {
+              return Ok(Default::default())
+            }
+          }
+        }
+        Err(e)
       })?;
     let mut updates : SecondarySlotMap<_,_> = Default::default();
     for player in gs.players.keys() {
@@ -787,9 +799,13 @@ pub fn record_token<Id : AccessId> (
 
 const DEFAULT_SAVE_DIRECTORY : &str = "save";
 
+#[derive(Deserialize,Debug,Clone)]
 pub struct ServerConfig {
+  #[serde(default="default_save_directory")]
   pub save_directory: String,
 }
+
+fn default_save_directory() -> String { DEFAULT_SAVE_DIRECTORY.to_owned() }
 
 pub fn config() -> Arc<ServerConfig> {
   GLOBAL.config.read().unwrap().clone()
@@ -810,13 +826,13 @@ const XXX_PLAYERS_TOKENS : &[(&str, &str)] = &[
   ("ccg9kzoTh758QrVE1xMY7BQWB36dNJTx", "bob"),
 ];
 
-#[throws(OE)]
+#[throws(AE)]
 pub fn xxx_global_setup() {
   let gs = xxx_gamestate_init();
   let gref = Instance::new(InstanceName {
     scope: ManagementScope::Server,
     scoped_name: "dummy".to_string()
-  }, gs).expect("xxx create dummy");
+  }, gs)?;
   let mut g = gref.lock()?;
   for (token, nick) in XXX_PLAYERS_TOKENS {
     let player = g.player_new(PlayerState {
