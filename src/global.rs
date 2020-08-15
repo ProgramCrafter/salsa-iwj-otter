@@ -811,11 +811,13 @@ pub fn config() -> Arc<ServerConfig> {
   GLOBAL.config.read().unwrap().clone()
 }
 
+pub fn set_config(config: ServerConfig) {
+  *GLOBAL.config.write().unwrap() = Arc::new(config)
+}
+
 impl Default for ServerConfig {
   fn default() -> ServerConfig {
-    ServerConfig {
-      save_directory: DEFAULT_SAVE_DIRECTORY.to_owned(),
-    }
+    toml::de::from_str("").expect("parse empty string as ServerConfig")
   }
 }
 

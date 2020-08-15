@@ -240,7 +240,7 @@ mod create_table {
       f.read_to_string(&mut buf).context("read")?;
       let spec : TableSpec = toml::de::from_str(&buf).context("parse")?;
       <Result<_,AE>>::Ok(spec)
-    })().context("game spec toml").with_context(|| args.file.to_owned())?;
+    })().with_context(|| args.file.to_owned()).context("read game spec")?;
 
     let _chan = connect(&ma)?;
 

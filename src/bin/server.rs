@@ -68,8 +68,19 @@ fn resource(leaf : CheckedResourceLeaf) -> io::Result<NamedFile> {
   NamedFile::open(format!("{}/{}", template_dir, leaf.safe))
 }  
 
+const DEFAULT_CONFIG_FILENAME : &str = "server.toml";
+
 #[throws(StartupError)]
 fn main() {
+  {
+    let config_filename = env::args().nth(1)
+      .unwrap_or(DEFAULT_CONFIG_FILENAME.to_owned());
+    let mut buf = String::new();
+    File::open(config_filename)?.read_to_string(&mut buf)?;
+    let config = toml::de::from_str(&buf)?;
+    set_config(config);
+  };
+
   xxx_global_setup().expect("global setup failed");
 
   let cl = CommandListener::new()?;
