@@ -1,1 +1,4 @@
+# /volatile/rustcargo/Rustup/Game/server
+# target/debug/server ~ian/Rustup/Game/server/server.toml
+
 save_directory = "/home/ian/Rustup/Game/server/save"
