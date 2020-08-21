@@ -109,22 +109,29 @@ fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
     .map_err(|e| cs.map_auth_err(e))?
 }
 
+struct ServerOperatorPrivilege;
+#[throws(AuthorisationError)]
+fn do_authorise_server(cs: &CommandStream)
+                       -> AuthorisedSatisfactory<ServerOperatorPrivilege {
+  type AS<T> = (T, ManagementScope);
+  let y : AS<
+      Authorised<(Passwd,uid_t)>,
+    > = {
+    let ok = cs.authorised_uid(None,None)?;
+    (ok, ServerOperatorPrivilege)
+    )
+  };
+  return y.into()
+}
+
 #[throws(AuthorisationError)]
 fn do_authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
                    -> AuthorisedSatisfactory {
   type AS<T> = (T, ManagementScope);
 
   match &wanted {
-
     ManagementScope::Server => {
-      let y : AS<
-        Authorised<(Passwd,uid_t)>,
-      > = {
-        let ok = cs.authorised_uid(None,None)?;
-        (ok,
-         ManagementScope::Server)
-      };
-      return y.into()
+      do_authorise_server(cs,wanted) ManagementScope::Server
     },
 
     ManagementScope::Unix { user: wanted } => {
