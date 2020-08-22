@@ -3,6 +3,8 @@
 
 use crate::imports::*;
 
+//---------- Table TOML file ----------
+
 #[derive(Debug,Serialize,Deserialize)]
 pub struct TableSpec {
   pub players : Vec<PlayerSpec>,
@@ -14,6 +16,14 @@ pub struct PlayerSpec {
   #[serde(flatten)]
   pub access: Option<Box<dyn PlayerAccessSpec>>,
 }
+
+#[derive(Debug,Serialize,Deserialize)]
+struct FixedToken { token: RawToken }
+
+#[derive(Debug,Serialize,Deserialize)]
+struct TokenOnStdout;
+
+//---------- Game TOML file ----------
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct GameSpec {
@@ -31,6 +41,8 @@ pub struct PiecesSpec {
   pub info : Box<dyn PieceSpec>,
 }
 
+//----------  Implementation ----------
+
 #[typetag::serde(tag="access")]
 pub trait PlayerAccessSpec : Debug {
   fn token_mgi(&self, _player: PlayerId) -> Option<MgmtGameInstruction> {
@@ -39,9 +51,6 @@ pub trait PlayerAccessSpec : Debug {
   fn deliver_tokens(&self, ps: &PlayerSpec, tokens: &[RawToken])
     -> Result<(),AE>;
 }
-
-#[derive(Debug,Serialize,Deserialize)]
-struct FixedToken { token: RawToken }
 
 #[typetag::serde]
 impl PlayerAccessSpec for FixedToken {
@@ -54,9 +63,6 @@ impl PlayerAccessSpec for FixedToken {
   #[throws(AE)]
   fn deliver_tokens(&self, _ps: &PlayerSpec, _tokens: &[RawToken]) { }
 }
-
-#[derive(Debug,Serialize,Deserialize)]
-struct TokenOnStdout;
 
 #[typetag::serde]
 impl PlayerAccessSpec for TokenOnStdout {
