@@ -11,7 +11,6 @@ pub struct TableSpec {
 #[derive(Debug,Serialize,Deserialize)]
 pub struct PlayerSpec {
   pub nick: String,
-  #[serde(flatten)]
   pub access: Option<Box<dyn PlayerAccessSpec>>,
 }
 
@@ -31,7 +30,7 @@ pub struct PiecesSpec {
   pub info : Box<dyn PieceSpec>,
 }
 
-#[typetag::serde(tag="access")]
+#[typetag::serde(tag="deliver")]
 pub trait PlayerAccessSpec : Debug {
   fn token_mgi(&self, _player: PlayerId) -> Option<MgmtGameInstruction> {
     None
@@ -41,14 +40,14 @@ pub trait PlayerAccessSpec : Debug {
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-struct FixedToken(RawToken);
+struct FixedToken { token: RawToken }
 
 #[typetag::serde]
 impl PlayerAccessSpec for FixedToken {
   fn token_mgi(&self, player: PlayerId) -> Option<MgmtGameInstruction> {
     Some(MgmtGameInstruction::SetFixedPlayerAccess {
       player,
-      token: self.0.clone(),
+      token: self.token.clone(),
     })
   }
   #[throws(AE)]

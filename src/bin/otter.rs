@@ -404,7 +404,8 @@ mod create_table {
 
     setup_table(&mut chan, &spec)?;
 
-    eprintln!("CREATE-TABLE DID SETUP_TABLE NEEDS GAMESPEC"); // xxx
+    eprintln!("CREATE-TABLE DID SETUP_TABLE NEEDS GAMESPEC {:?}",
+              &spec); // xxx
   }
 
   inventory::submit!{Subcommand(
