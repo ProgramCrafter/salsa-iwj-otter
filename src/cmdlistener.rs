@@ -373,6 +373,7 @@ fn execute_game_insn(ig: &mut InstanceGuard, update: MgmtGameInstruction)
     MgmtGameInstruction::AddPlayer(pl) => {
       let player = ig.player_new(pl)?;
       #[allow(clippy::useless_format)] // xxx below
+      // xxx check for duplicate players
       (vec![],
        vec![ LogEntry {
          html: format!("The facilitator added a player xxx"),

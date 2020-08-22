@@ -33,17 +33,34 @@ pub struct PiecesSpec {
 
 #[typetag::serde(tag="access")]
 pub trait PlayerAccessSpec : Debug {
-  fn deliver_token_client(&self, conn: &mut ()/*xxx*/, nick: &str)
-                          -> Result<(),anyhow::Error>;
+  fn token_mgi(&self, player: PlayerId) -> Option<MgmtGameInstructions> {
+    None
+  }
+  #[throws(AE)]
+  fn deliver_token(&self, ps: &PlayerSpec, tokens: &[RawToken]) { }
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-struct UrlOnStdout;
+struct FixedToken(RawToken);
 
 #[typetag::serde]
-impl PlayerAccessSpec for UrlOnStdout {
-  fn deliver_token_client(&self, _conn: &mut (), _nick: &str)
-                          -> Result<(),anyhow::Error> {
-    todo!()
+impl PlayerAccessSpec for FixedToken {
+  fn token_mgi(&self, player: PlayerId) -> Option<MgmtGameInstructions> {
+    Some(MgmtGmmeInstruction::SetFixedPlayerAccess {
+      player,
+      token: self.0.clone(),
+    })
+  }
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+struct TokenOnStdout;
+
+#[typetag::serde]
+impl PlayerAccessSpec for FixedToken {
+  #[throws(AE)]
+  fn deliver_tokens(&self, ps: &PlayerSpec, token: &[RawToken]) {
+                   -> Result<(),anyhow::Error> {
+    println!("access nick={:?} token={}", &ps.nick, token);
   }
 }
