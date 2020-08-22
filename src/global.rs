@@ -421,9 +421,6 @@ impl InstanceGuard<'_> {
   #[throws(MgmtError)]
   pub fn players_access_reset(&mut self, players: &[PlayerId])
                              -> Vec<RawToken> {
-    // tokens can't persist unless game is never destroyed ?
-    // so a game is like a tables, and persistent
-    // xxx boxes feature maybe
     for &player in players {
       self.c.g.gs.players.get(player).ok_or(MgmtError::PlayerNotFound)?;
     }
@@ -447,9 +444,6 @@ impl InstanceGuard<'_> {
   #[throws(MgmtError)]
   pub fn players_access_report(&mut self, players: &[PlayerId])
                                -> Vec<Vec<RawToken>> {
-    // tokens can't persist unless game is never destroyed ?
-    // so a game is like a tables, and persistent
-    // xxx boxes feature maybe
     let mut wanted = {
       let mut wanted = SecondarySlotMap::new();
       for &player in players {
@@ -609,7 +603,6 @@ impl InstanceGuard<'_> {
   fn load_something<T:DeserializeOwned>(name: &InstanceName, prefix: &str) -> T {
     let inp = savefilename(name, prefix, "");
     let mut f = BufReader::new(fs::File::open(&inp).context(inp)?);
-    // xxx handle ENOENT specially, own OE variant
     rmp_serde::decode::from_read(&mut f)?
   }
 
