@@ -11,6 +11,7 @@ pub struct TableSpec {
 #[derive(Debug,Serialize,Deserialize)]
 pub struct PlayerSpec {
   pub nick: String,
+  #[serde(flatten)]
   pub access: Option<Box<dyn PlayerAccessSpec>>,
 }
 
