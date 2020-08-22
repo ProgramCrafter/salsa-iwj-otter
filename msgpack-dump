@@ -1,0 +1,9 @@
+#!/usr/bin/perl -w
+use strict;
+use Data::MessagePack;
+use Data::Dumper;
+$/ = undef;
+$!=0; $_ = <> // die $!;
+my $mp = Data::MessagePack->new();
+my $val = $mp->unpack($_);
+print Dumper($val);
