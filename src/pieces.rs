@@ -1,3 +1,4 @@
+// pieces
 
 use crate::imports::*;
 
@@ -122,32 +123,6 @@ impl SimpleShape {
   }
 }
 
-#[derive(Serialize,Deserialize)]
-#[derive(Debug,Default)]
-#[repr(transparent)]
-struct ColourSpec(String);
-
-impl TryFrom<&ColourSpec> for Colour {
-  type Error = SE;
-  #[throws(SE)]
-  fn try_from(spec: &ColourSpec) -> Colour {
-    // xxx check syntax
-    spec.0.clone()
-  }
-}
-
-#[derive(Debug,Serialize,Deserialize)]
-struct Disc {
-  diam : Coord,
-  faces : IndexVec<FaceId,ColourSpec>,
-}
-
-#[derive(Debug,Serialize,Deserialize)]
-struct Square {
-  size : Vec<Coord>,
-  faces : IndexVec<FaceId,ColourSpec>,
-}
-
 #[throws(GameError)]
 fn simple_resolve_spec_face(faces: &IndexSlice<FaceId,[ColourSpec]>,
                             face: Option<FaceId>)
@@ -158,7 +133,7 @@ fn simple_resolve_spec_face(faces: &IndexSlice<FaceId,[ColourSpec]>,
 }
 
 #[typetag::serde]
-impl PieceSpec for Disc {
+impl PieceSpec for piece_specs::Disc {
   #[throws(SE)]
   fn load(&self) -> Box<dyn Piece> {
     let unit_path =
@@ -176,7 +151,7 @@ impl PieceSpec for Disc {
 }
 
 #[typetag::serde]
-impl PieceSpec for Square {
+impl PieceSpec for piece_specs::Square {
   #[throws(SE)]
   fn load(&self) -> Box<dyn Piece> {
     let (x, y) = match *self.size.as_slice() {
@@ -194,19 +169,3 @@ impl PieceSpec for Square {
     simple_resolve_spec_face(&self.faces, face)?
   }
 } 
-
-#[allow(clippy::type_complexity)]
-pub fn xxx_make_pieces() -> Result<Vec<(Pos, Box<dyn Piece>)>,SE> {
-  Ok(vec![
-    ([ 90, 80 ],
-     Disc {
-       diam : 20,
-       faces : index_vec![ ColourSpec("red".to_string()), ColourSpec("grey".to_string()) ],
-     }.load()?),
-    ([ 90, 60 ],
-     Square {
-       size : vec![20],
-       faces : index_vec![ ColourSpec("blue".to_string()), ColourSpec("grey".to_string()) ],
-     }.load()?),
-  ])
-}

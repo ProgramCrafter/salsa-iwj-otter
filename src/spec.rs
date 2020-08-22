@@ -2,7 +2,7 @@
 
 use serde::{Serialize,Deserialize};
 use fehler::throws;
-use index_vec::define_index_type;
+use index_vec::{define_index_type,IndexVec,index_vec};
 use crate::gamestate::PieceSpec;
 use std::fmt::Debug;
 use implementation::PlayerAccessSpec;
@@ -21,6 +21,11 @@ define_index_type! {
   #[derive(Default)]
   pub struct FaceId = u8;
 }
+
+#[derive(Serialize,Deserialize)]
+#[derive(Debug,Default)]
+#[repr(transparent)]
+pub struct ColourSpec(String);
 
 //---------- Table TOML file ----------
 
@@ -57,15 +62,36 @@ pub struct PiecesSpec {
   pub count : Option<u32>,
   pub face : Option<FaceId>,
   #[serde(flatten)]
-  pub info : Box<dyn PieceSpec>, // see pieces.rs
+  pub info : Box<dyn PieceSpec>,
 }
 
-//----------  Implementation ----------
+//---------- Piece specs ----------
+// the implementations are in pieces.rs
+
+pub mod piece_specs {
+  use super::*;
+
+  #[derive(Debug,Serialize,Deserialize)]
+  pub struct Disc {
+    pub diam : Coord,
+    pub faces : IndexVec<FaceId,ColourSpec>,
+  }
+
+  #[derive(Debug,Serialize,Deserialize)]
+  pub struct Square {
+    pub size : Vec<Coord>,
+    pub faces : IndexVec<FaceId,ColourSpec>,
+  }
+
+}
+
+//---------- Implementation ----------
 
 mod implementation {
   use super::*;
   use crate::imports::*;
   type Insn = crate::commands::MgmtGameInstruction;
+  type SE = SVGProcessingError;
 
   #[typetag::serde(tag="access")]
   pub trait PlayerAccessSpec : Debug {
@@ -97,4 +123,30 @@ mod implementation {
       }
     }
   }
+
+  impl TryFrom<&ColourSpec> for Colour {
+    type Error = SE;
+    #[throws(SE)]
+    fn try_from(spec: &ColourSpec) -> Colour {
+      // xxx check syntax
+      spec.0.clone()
+    }
+  }
+}
+
+#[allow(clippy::type_complexity)]
+pub fn xxx_make_pieces() -> Result<Vec<(Pos, Box<dyn crate::gamestate::Piece>)>,crate::pieces::SVGProcessingError> {
+  use crate::imports::*;
+  Ok(vec![
+    ([ 90, 80 ],
+     piece_specs::Disc {
+       diam : 20,
+       faces : index_vec![ ColourSpec("red".to_string()), ColourSpec("grey".to_string()) ],
+     }.load()?),
+    ([ 90, 60 ],
+     piece_specs::Square {
+       size : vec![20],
+       faces : index_vec![ ColourSpec("blue".to_string()), ColourSpec("grey".to_string()) ],
+     }.load()?),
+  ])
 }
