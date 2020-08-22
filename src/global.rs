@@ -9,10 +9,6 @@ use std::sync::PoisonError;
 
 visible_slotmap_key!{ ClientId('C') }
 
-#[derive(Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash,Serialize,Deserialize)]
-#[serde(transparent)]
-pub struct RawToken (pub String);
-
 // ---------- public data structure ----------
 
 #[derive(Debug,Serialize,Deserialize)]

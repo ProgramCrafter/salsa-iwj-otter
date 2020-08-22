@@ -24,121 +24,16 @@ type ME = MgmtError;
 from_instance_lock_error!{MgmtError}
 
 const USERLIST : &str = "/etc/userlist";
+const CREATE_PIECES_MAX : u32 = 300;
 
-// ---------- entrypoint for the rest of the program ----------
+const XXX_START_POS : Pos = [20,20];
+const XXX_DEFAULT_POSD : Pos = [5,5];
 
 pub struct CommandListener {
   listener : UnixListener,
 }
 
-// ---------- core listener implementation ----------
-
-struct CommandStream<'d> {
-  euid : Result<u32, ConnectionEuidDiscoverEerror>,
-  desc : &'d str,
-  scope : Option<ManagementScope>,
-  chan : MgmtChannel,
-}
-
-impl CommandStream<'_> {
-  #[throws(CSE)]
-  pub fn mainloop(mut self) {
-    loop {
-      use MgmtChannelReadError::*;
-      let resp = match self.chan.read() {
-        Ok(cmd) => match execute(&mut self, cmd) {
-          Ok(resp) => resp,
-          Err(error) => MgmtResponse::Error { error },
-        },
-        Err(EOF) => break,
-        Err(IO(e)) => Err(e).context("read command stream")?,
-        Err(Parse(s)) => MgmtResponse::Error { error : ParseFailed(s) },
-      };
-      self.chan.write(&resp).context("swrite command stream")?;
-    }
-  }
-
-  #[throws(MgmtError)]
-  fn get_scope(&self) -> &ManagementScope {
-    self.scope.as_ref().ok_or(NoScope)?
-  }
-}
-
-impl CommandListener {
-  #[throws(StartupError)]
-  pub fn new() -> Self {
-    let path = SOCKET_PATH;
-    match fs::remove_file(path) {
-      Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(()),
-      r => r,
-    }
-    .with_context(|| format!("remove socket {:?} before we bind", &path))?;
-    let listener = UnixListener::bind(path)
-      .with_context(|| format!("bind command socket {:?}", &path))?;
-
-    fs::set_permissions(path, unix::fs::PermissionsExt::from_mode(0o666))
-      .with_context(|| format!("chmod sommand socket {:?}", &path))?;
-
-    CommandListener { listener }
-  }
-
-  #[throws(StartupError)]
-  pub fn spawn(mut self) {
-    thread::spawn(move ||{
-      loop {
-        self.accept_one().unwrap_or_else(
-          |e| eprintln!("accept/spawn failed: {:?}", e)
-        );
-      }
-    })
-  }
-
-  #[throws(CSE)]
-  fn accept_one(&mut self) {
-    let (conn, _caller) = self.listener.accept().context("accept")?;
-    let mut desc = format!("{:>5}", conn.as_raw_fd());
-    eprintln!("command connection {}: accepted", &desc);
-    thread::spawn(move||{
-      match (||{
-        let euid = conn.initial_peer_credentials()
-          .map(|creds| creds.euid())
-          .map_err(|e| ConnectionEuidDiscoverEerror(format!("{}", e)));
-
-        #[derive(Error,Debug)]
-        struct EuidLookupError(String);
-        display_as_debug!{EuidLookupError}
-        impl From<&E> for EuidLookupError where E : Display {
-          fn from(e: &E) -> Self { EuidLookupError(format!("{}",e)) }
-        }
-
-        let user_desc : String = (||{
-          let euid = euid.clone()?;
-          let pwent = Passwd::from_uid(euid);
-          let show_username =
-            pwent.map_or_else(|| format!("<euid {}>", euid),
-                              |p| p.name);
-          <Result<_,AE>>::Ok(show_username)
-        })().unwrap_or_else(|e| format!("<error: {}>", e));
-        write!(&mut desc, " user={}", user_desc)?;
-
-        let chan = MgmtChannel::new(conn)?;
-
-        let cs = CommandStream {
-          scope: None, desc: &desc,
-          chan, euid,
-        };
-        cs.mainloop()?;
-        
-        <Result<_,StartupError>>::Ok(())
-      })() {
-        Ok(()) => eprintln!("command connection {}: disconnected", &desc),
-        Err(e) => eprintln!("command connection {}: error: {:?}", &desc, e),
-      }
-    });
-  }
-}
-
-// ---------- core management channel implementation ----------
+// ========== management API ==========
 
 // ---------- management command implementations
 
@@ -213,148 +108,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
   }
 }
 
-//---------- authorisation ----------
-
-#[derive(Debug,Error,Clone)]
-#[error("connection euid lookup failed (at connection initiation): {0}")]
-pub struct ConnectionEuidDiscoverEerror(String);
-
-impl CommandStream<'_> {
-  #[throws(AuthorisationError)]
-  fn authorised_uid(&self, wanted: Option<uid_t>, xinfo: Option<&str>)
-                    -> Authorised<(Passwd,uid_t),> {
-    let client_euid = *self.euid.as_ref().map_err(|e| e.clone())?;
-    let server_euid = unsafe { libc::getuid() };
-    if client_euid == 0 ||
-       client_euid == server_euid ||
-       Some(client_euid) == wanted
-    {
-      return Authorised::authorise();
-    }
-    throw!(anyhow!("{}: euid mismatch: client={:?} server={:?} wanted={:?}{}",
-                   &self.desc, client_euid, server_euid, wanted,
-                   xinfo.unwrap_or("")));
-  }
-
-  fn map_auth_err(&self, ae: AuthorisationError) -> MgmtError {
-    eprintln!("command connection {}: authorisation error: {}",
-              self.desc, ae.0);
-    MgmtError::AuthorisationError
-  }
-}
-
-#[throws(MgmtError)]
-fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
-                   -> AuthorisedSatisfactory {
-  do_authorise_scope(cs, wanted)
-    .map_err(|e| cs.map_auth_err(e))?
-}
-
-#[throws(AuthorisationError)]
-fn do_authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
-                   -> AuthorisedSatisfactory {
-  type AS<T> = (T, ManagementScope);
-
-  match &wanted {
-
-    ManagementScope::Server => {
-      let y : AS<
-        Authorised<(Passwd,uid_t)>,
-      > = {
-        let ok = cs.authorised_uid(None,None)?;
-        (ok,
-         ManagementScope::Server)
-      };
-      return y.into()
-    },
-
-    ManagementScope::Unix { user: wanted } => {
-      let y : AS<
-        Authorised<(Passwd,uid_t)>,
-      > = {
-        struct AuthorisedIf { authorised_for : Option<uid_t> };
-
-        let pwent = Passwd::from_name(&wanted)
-          .map_err(
-            |e| anyhow!("looking up requested username {:?}: {:?}",
-                        &wanted, &e)
-          )?
-          .ok_or_else(
-            || AuthorisationError(format!(
-              "requested username {:?} not found", &wanted
-            ))
-          )?;
-
-        let (in_userlist, xinfo) = (||{ <Result<_,AE>>::Ok({
-          let allowed = BufReader::new(match File::open(USERLIST) {
-            Err(e) if e.kind() == ErrorKind::NotFound => {
-              return Ok((
-                AuthorisedIf{ authorised_for: None },
-                Some(format!(" user list {} does not exist", USERLIST))
-              ))
-            },
-            r => r,            
-          }?);
-          allowed
-            .lines()
-            .filter_map(|le| match le {
-              Ok(l) if l.trim() == wanted => Some(
-                Ok((
-                  AuthorisedIf{ authorised_for: Some(pwent.uid) },
-                  None
-                ))
-              ),
-              Ok(_) => None,
-              Err(e) => Some(<Result<_,AE>>::Err(e.into())),
-            })
-            .next()
-            .unwrap_or_else(
-              || Ok((
-                AuthorisedIf{ authorised_for: None },
-                Some(format!(" requested username {:?} not in {}",
-                             &wanted, USERLIST)),
-              ))
-            )?
-        })})()?;
-
-        let AuthorisedIf{ authorised_for } = in_userlist;
-        let info = xinfo.as_deref();
-        let ok = cs.authorised_uid(authorised_for, info)?;
-        (ok,
-         ManagementScope::Unix { user: pwent.name })
-      };
-      y.into()
-    },
-
-  }
-}
-
-
-#[throws(ME)]
-fn execute_for_game(cs: &CommandStream, ig: &mut InstanceGuard,
-                    mut insns: Vec<MgmtGameInstruction>,
-                    how: MgmtGameUpdateMode) -> MgmtResponse {
-  let mut uh = UpdateHandler::from_how(how);
-  let mut responses = Vec::with_capacity(insns.len());
-  let ok = (||{
-    for insn in insns.drain(0..) {
-      let (updates, resp) = execute_game_insn(cs, ig, insn)?;
-      uh.accumulate(ig, updates)?;
-      responses.push(resp);
-    }
-    uh.complete(cs,ig)?;
-    Ok(None)
-  })();
-  MgmtResponse::AlterGame {
-    responses,
-    error: ok.unwrap_or_else(Some)
-  }
-}
-
-const XXX_START_POS : Pos = [20,20];
-const XXX_DEFAULT_POSD : Pos = [5,5];
-
-const CREATE_PIECES_MAX : u32 = 300;
+// ---------- game command implementations ----------
 
 type ExecuteGameInsnResults = (
   ExecuteGameChangeUpdates,
@@ -510,7 +264,30 @@ fn execute_game_insn(cs: &CommandStream,
     },
   }
 }
-//---------- game update processing ----------
+
+// ---------- how to execute game commands & handle their updates ----------
+
+#[throws(ME)]
+fn execute_for_game(cs: &CommandStream, ig: &mut InstanceGuard,
+                    mut insns: Vec<MgmtGameInstruction>,
+                    how: MgmtGameUpdateMode) -> MgmtResponse {
+  let mut uh = UpdateHandler::from_how(how);
+  let mut responses = Vec::with_capacity(insns.len());
+  let ok = (||{
+    for insn in insns.drain(0..) {
+      let (updates, resp) = execute_game_insn(cs, ig, insn)?;
+      uh.accumulate(ig, updates)?;
+      responses.push(resp);
+    }
+    uh.complete(cs,ig)?;
+    Ok(None)
+  })();
+  MgmtResponse::AlterGame {
+    responses,
+    error: ok.unwrap_or_else(Some)
+  }
+}
+
 
 #[derive(Debug,Default)]
 struct UpdateHandlerBulk {
@@ -593,6 +370,231 @@ impl UpdateHandler {
       },
       Online => { },
     }
+  }
+}
+
+// ========== general implementation ==========
+
+// ---------- core listener implementation ----------
+
+struct CommandStream<'d> {
+  euid : Result<u32, ConnectionEuidDiscoverEerror>,
+  desc : &'d str,
+  scope : Option<ManagementScope>,
+  chan : MgmtChannel,
+}
+
+impl CommandStream<'_> {
+  #[throws(CSE)]
+  pub fn mainloop(mut self) {
+    loop {
+      use MgmtChannelReadError::*;
+      let resp = match self.chan.read() {
+        Ok(cmd) => match execute(&mut self, cmd) {
+          Ok(resp) => resp,
+          Err(error) => MgmtResponse::Error { error },
+        },
+        Err(EOF) => break,
+        Err(IO(e)) => Err(e).context("read command stream")?,
+        Err(Parse(s)) => MgmtResponse::Error { error : ParseFailed(s) },
+      };
+      self.chan.write(&resp).context("swrite command stream")?;
+    }
+  }
+
+  #[throws(MgmtError)]
+  fn get_scope(&self) -> &ManagementScope {
+    self.scope.as_ref().ok_or(NoScope)?
+  }
+}
+
+impl CommandListener {
+  #[throws(StartupError)]
+  pub fn new() -> Self {
+    let path = SOCKET_PATH;
+    match fs::remove_file(path) {
+      Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(()),
+      r => r,
+    }
+    .with_context(|| format!("remove socket {:?} before we bind", &path))?;
+    let listener = UnixListener::bind(path)
+      .with_context(|| format!("bind command socket {:?}", &path))?;
+
+    fs::set_permissions(path, unix::fs::PermissionsExt::from_mode(0o666))
+      .with_context(|| format!("chmod sommand socket {:?}", &path))?;
+
+    CommandListener { listener }
+  }
+
+  #[throws(StartupError)]
+  pub fn spawn(mut self) {
+    thread::spawn(move ||{
+      loop {
+        self.accept_one().unwrap_or_else(
+          |e| eprintln!("accept/spawn failed: {:?}", e)
+        );
+      }
+    })
+  }
+
+  #[throws(CSE)]
+  fn accept_one(&mut self) {
+    let (conn, _caller) = self.listener.accept().context("accept")?;
+    let mut desc = format!("{:>5}", conn.as_raw_fd());
+    eprintln!("command connection {}: accepted", &desc);
+    thread::spawn(move||{
+      match (||{
+        let euid = conn.initial_peer_credentials()
+          .map(|creds| creds.euid())
+          .map_err(|e| ConnectionEuidDiscoverEerror(format!("{}", e)));
+
+        #[derive(Error,Debug)]
+        struct EuidLookupError(String);
+        display_as_debug!{EuidLookupError}
+        impl From<&E> for EuidLookupError where E : Display {
+          fn from(e: &E) -> Self { EuidLookupError(format!("{}",e)) }
+        }
+
+        let user_desc : String = (||{
+          let euid = euid.clone()?;
+          let pwent = Passwd::from_uid(euid);
+          let show_username =
+            pwent.map_or_else(|| format!("<euid {}>", euid),
+                              |p| p.name);
+          <Result<_,AE>>::Ok(show_username)
+        })().unwrap_or_else(|e| format!("<error: {}>", e));
+        write!(&mut desc, " user={}", user_desc)?;
+
+        let chan = MgmtChannel::new(conn)?;
+
+        let cs = CommandStream {
+          scope: None, desc: &desc,
+          chan, euid,
+        };
+        cs.mainloop()?;
+        
+        <Result<_,StartupError>>::Ok(())
+      })() {
+        Ok(()) => eprintln!("command connection {}: disconnected", &desc),
+        Err(e) => eprintln!("command connection {}: error: {:?}", &desc, e),
+      }
+    });
+  }
+}
+
+//---------- authorisation ----------
+
+#[derive(Debug,Error,Clone)]
+#[error("connection euid lookup failed (at connection initiation): {0}")]
+pub struct ConnectionEuidDiscoverEerror(String);
+
+impl CommandStream<'_> {
+  #[throws(AuthorisationError)]
+  fn authorised_uid(&self, wanted: Option<uid_t>, xinfo: Option<&str>)
+                    -> Authorised<(Passwd,uid_t),> {
+    let client_euid = *self.euid.as_ref().map_err(|e| e.clone())?;
+    let server_euid = unsafe { libc::getuid() };
+    if client_euid == 0 ||
+       client_euid == server_euid ||
+       Some(client_euid) == wanted
+    {
+      return Authorised::authorise();
+    }
+    throw!(anyhow!("{}: euid mismatch: client={:?} server={:?} wanted={:?}{}",
+                   &self.desc, client_euid, server_euid, wanted,
+                   xinfo.unwrap_or("")));
+  }
+
+  fn map_auth_err(&self, ae: AuthorisationError) -> MgmtError {
+    eprintln!("command connection {}: authorisation error: {}",
+              self.desc, ae.0);
+    MgmtError::AuthorisationError
+  }
+}
+
+#[throws(MgmtError)]
+fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
+                   -> AuthorisedSatisfactory {
+  do_authorise_scope(cs, wanted)
+    .map_err(|e| cs.map_auth_err(e))?
+}
+
+#[throws(AuthorisationError)]
+fn do_authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
+                   -> AuthorisedSatisfactory {
+  type AS<T> = (T, ManagementScope);
+
+  match &wanted {
+
+    ManagementScope::Server => {
+      let y : AS<
+        Authorised<(Passwd,uid_t)>,
+      > = {
+        let ok = cs.authorised_uid(None,None)?;
+        (ok,
+         ManagementScope::Server)
+      };
+      return y.into()
+    },
+
+    ManagementScope::Unix { user: wanted } => {
+      let y : AS<
+        Authorised<(Passwd,uid_t)>,
+      > = {
+        struct AuthorisedIf { authorised_for : Option<uid_t> };
+
+        let pwent = Passwd::from_name(&wanted)
+          .map_err(
+            |e| anyhow!("looking up requested username {:?}: {:?}",
+                        &wanted, &e)
+          )?
+          .ok_or_else(
+            || AuthorisationError(format!(
+              "requested username {:?} not found", &wanted
+            ))
+          )?;
+
+        let (in_userlist, xinfo) = (||{ <Result<_,AE>>::Ok({
+          let allowed = BufReader::new(match File::open(USERLIST) {
+            Err(e) if e.kind() == ErrorKind::NotFound => {
+              return Ok((
+                AuthorisedIf{ authorised_for: None },
+                Some(format!(" user list {} does not exist", USERLIST))
+              ))
+            },
+            r => r,            
+          }?);
+          allowed
+            .lines()
+            .filter_map(|le| match le {
+              Ok(l) if l.trim() == wanted => Some(
+                Ok((
+                  AuthorisedIf{ authorised_for: Some(pwent.uid) },
+                  None
+                ))
+              ),
+              Ok(_) => None,
+              Err(e) => Some(<Result<_,AE>>::Err(e.into())),
+            })
+            .next()
+            .unwrap_or_else(
+              || Ok((
+                AuthorisedIf{ authorised_for: None },
+                Some(format!(" requested username {:?} not in {}",
+                             &wanted, USERLIST)),
+              ))
+            )?
+        })})()?;
+
+        let AuthorisedIf{ authorised_for } = in_userlist;
+        let info = xinfo.as_deref();
+        let ok = cs.authorised_uid(authorised_for, info)?;
+        (ok,
+         ManagementScope::Unix { user: pwent.name })
+      };
+      y.into()
+    },
+
   }
 }
 
