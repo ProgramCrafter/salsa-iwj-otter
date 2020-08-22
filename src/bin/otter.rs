@@ -55,6 +55,7 @@ const EXIT_DISASTER : i32 = 16;
 #[derive(Debug,Default)]
 struct MainOpts {
   scope: Option<ManagementScope>,
+  verbose: i32,
 }
 
 struct Subcommand (
@@ -141,6 +142,11 @@ fn main() {
     scope.add_option(&["--scope-unix"],
                      StoreConst(None),
                      "use unix user $USER scope (default)");
+    let mut verbose = ap.refer(&mut ma.opts.verbose);
+    verbose.add_option(&["-q","--quiet"], StoreConst(-1),
+                       "set verbosity to error messages only");
+    verbose.add_option(&["-v","--verbose"], IncrBy(1),
+       "increase verbosity (default is short progress messages)");
     ap
   }, &|ma| {
     if let ref mut scope @None = ma.opts.scope {
@@ -354,6 +360,17 @@ fn setup_table(chan: &mut ConnForGame, spec: &TableSpec) -> Result<(),AE> {
   Ok(())
 }
 
+#[throws(AE)]
+fn read_spec<T: DeserializeOwned>(filename: &str, what: &str) -> T {
+  (||{
+    let mut f = File::open(filename).context("open")?;
+    let mut buf = String::new();
+    f.read_to_string(&mut buf).context("read")?;
+    let spec : T = toml::de::from_str(&buf).context("parse")?;
+    Ok::<_,AE>(spec)
+  })().with_context(|| format!("read {} {:?}", what, filename))?
+}
+
 mod create_table {
   use super::*;
 
@@ -380,15 +397,11 @@ mod create_table {
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_,_>(args, &subargs, &complete, None);
 
-    eprintln!("CREATE-TABLE {:?} {:?}", &ma, &args);
+    if ma.verbose >= 2 {
+      eprintln!("CREATE-TABLE {:?} {:?}", &ma, &args);
+    }
 
-    let spec = (||{
-      let mut f = File::open(&args.file).context("open")?;
-      let mut buf = String::new();
-      f.read_to_string(&mut buf).context("read")?;
-      let spec : TableSpec = toml::de::from_str(&buf).context("parse")?;
-      <Result<_,AE>>::Ok(spec)
-    })().with_context(|| args.file.to_owned()).context("read game spec")?;
+    let spec : TableSpec = read_spec(&args.file, "game spec")?;
 
     let mut chan = connect(&ma)?;
 
@@ -404,8 +417,9 @@ mod create_table {
 
     setup_table(&mut chan, &spec)?;
 
-    eprintln!("CREATE-TABLE DID SETUP_TABLE NEEDS GAMESPEC {:?}",
-              &spec); // xxx
+    if ma.verbose >= 0 {
+      eprintln!("create-table successful.  game still needs setup.");
+    }
   }
 
   inventory::submit!{Subcommand(
