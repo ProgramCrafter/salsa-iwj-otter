@@ -583,6 +583,7 @@ function startup() {
 
   var es = new EventSource("/_/updates/"+ctoken+'/'+gen);
   es.onmessage = function(event) {
+    // xxx want to trap errors and ask user to reload
     console.log('GOTEVE', event)
     var [tgen, ms] = JSON.parse(event.data);
     for (var m of ms) {
