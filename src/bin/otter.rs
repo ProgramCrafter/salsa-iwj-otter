@@ -69,15 +69,14 @@ inventory::collect!(Subcommand);
 struct ArgumentParseError(String);
 display_as_debug!(ArgumentParseError);
 
-fn parse_args<T,F,C>(
+fn parse_args<T,F>(
   args: Vec<String>,
   apmaker: &F,
-  completer: &C,
+  completer: Option<&dyn Fn(&mut T) -> Result<(), ArgumentParseError>>,
   extra_help: Option<&dyn Fn(&mut dyn Write) -> Result<(), io::Error>>,
 ) -> T
 where T: Default,
       F: Fn(&mut T) -> ArgumentParser,
-      C: Fn(&mut T) -> Result<(), ArgumentParseError>,
 {
   let mut parsed = Default::default();
   let ap = apmaker(&mut parsed);
@@ -103,11 +102,13 @@ where T: Default,
     });
   }
   mem::drop(ap);
-  completer(&mut parsed).unwrap_or_else(|e:ArgumentParseError| {
-    let ap = apmaker(&mut parsed);
-    ap.error(&us, &e.0, &mut stderr);
-    exit(EXIT_USAGE);
-  });
+  if let Some(completer) = completer {
+    completer(&mut parsed).unwrap_or_else(|e:ArgumentParseError| {
+      let ap = apmaker(&mut parsed);
+      ap.error(&us, &e.0, &mut stderr);
+      exit(EXIT_USAGE);
+    });
+  }
   parsed
 }
 
@@ -118,7 +119,7 @@ fn main() {
     subcommand: String,
     subargs: Vec<String>,
   };
-  let ma = parse_args::<MainArgs,_,_>(
+  let ma = parse_args::<MainArgs,_>(
     env::args().collect(),
   &|ma|{
     use argparse::*;
@@ -148,7 +149,7 @@ fn main() {
     verbose.add_option(&["-v","--verbose"], IncrBy(1),
        "increase verbosity (default is short progress messages)");
     ap
-  }, &|ma| {
+  }, Some(&|ma| {
     if let ref mut scope @None = ma.opts.scope {
       let user = env::var("USER").map_err(|e| ArgumentParseError(
         format!("--scope-unix needs USER env var: {}", &e)
@@ -156,7 +157,7 @@ fn main() {
       *scope = Some(ManagementScope::Unix { user });
     }
     Ok(())
-  }, Some(&|w|{
+  }), Some(&|w|{
     writeln!(w, "\nSubcommands:")?;
     let maxlen = inventory::iter::<Subcommand>.into_iter()
       .map(|Subcommand(verb,_,_)| verb.len())
@@ -226,7 +227,7 @@ impl DerefMut for ConnForGame {
 impl ConnForGame {
   #[throws(AE)]
   fn alter_game(&mut self, insns: Vec<MgmtGameInstruction>,
-                f: &mut dyn FnMut(&MgmtGameResponse) -> Result<(),AE>)
+                f: Option<&mut dyn FnMut(&MgmtGameResponse) -> Result<(),AE>>)
                 -> Vec<MgmtGameResponse> {
     let insns_len = insns.len();
     let cmd = MgmtCommand::AlterGame {
@@ -241,25 +242,28 @@ impl ConnForGame {
       wat => Err(anyhow!("unexpected AlterGame response: {:?} => {:?}",
                          &cmd, &wat))?,
     };
-    for response in &responses {
-      f(response)?;
+    if let Some(f) = f {
+      for response in &responses {
+        f(response)?;
+      }
     }
     responses
   }
 
-  fn get_players(&mut self) ->
-    Result<(PlayerMap, HashMap<String,PlayerId>),AE>
+  fn get_info(&mut self) -> Result<
+      (MgmtGameResponseGameInfo, HashMap<String,PlayerId>
+      ),AE>
   {
     let mut players = self.alter_game(
-      vec![ MgmtGameInstruction::GetPlayers { } ],
-      &mut |_|Ok(())
+      vec![ MgmtGameInstruction::Info ],
+      None,
     )?;
-    let players = match players.pop() {
-      Some(MgmtGameResponse::Players(players)) => players,
+    let info = match players.pop() {
+      Some(MgmtGameResponse::Info(info)) => info,
       wat => Err(anyhow!("GetGstate got {:?}", &wat))?,
     };
     let mut nick2id = HashMap::new();
-    for (player, pstate) in players.iter() {
+    for (player, pstate) in info.players.iter() {
       use hash_map::Entry::*;
       match nick2id.entry(pstate.nick.clone()) {
         Occupied(oe) => Err(anyhow!("game has duplicate nick {:?}, {} {}",
@@ -267,7 +271,7 @@ impl ConnForGame {
         Vacant(ve) => ve.insert(player),
       };
     }
-    Ok((players, nick2id))
+    Ok((info, nick2id))
   }
 }
 
@@ -285,7 +289,7 @@ fn setup_table(chan: &mut ConnForGame, spec: &TableSpec) -> Result<(),AE> {
 
   // create missing players
   let (added_players,) = {
-    let (_, nick2id) = chan.get_players()?;
+    let (_, nick2id) = chan.get_info()?;
 
     let mut insns = vec![];
     for pspec in &spec.players {
@@ -296,7 +300,7 @@ fn setup_table(chan: &mut ConnForGame, spec: &TableSpec) -> Result<(),AE> {
       }
     }
     let mut added_players = HashSet::new();
-    chan.alter_game(insns, &mut |response| {
+    chan.alter_game(insns, Some(&mut |response| {
       let player = match response {
         &MgmtGameResponse::AddPlayer(player) => player,
         _ => Err(anyhow!("AddPlayer strange answer {:?}",
@@ -304,14 +308,14 @@ fn setup_table(chan: &mut ConnForGame, spec: &TableSpec) -> Result<(),AE> {
       };
       added_players.insert(player);
       Ok(())
-    })?;
+    }))?;
 
     (added_players,)
   };
 
   // ensure players have access tokens
   {
-    let (_, nick2id) = chan.get_players()?;
+    let (_, nick2id) = chan.get_info()?;
     let mut insns = vec![];
     let mut resetreport = vec![];
     let mut resetspecs = vec![];
@@ -338,12 +342,12 @@ fn setup_table(chan: &mut ConnForGame, spec: &TableSpec) -> Result<(),AE> {
       players: resetreport.clone(),
     });
     let mut got_tokens = None;
-    chan.alter_game(insns, &mut |response| {
+    chan.alter_game(insns, Some(&mut |response| {
       if let MgmtGameResponse::PlayerAccessTokens(tokens) = response {
         got_tokens = Some(tokens.clone());
       }
       Ok(())
-    })?;
+    }))?;
     let got_tokens = match got_tokens {
       Some(t) if t.len() == resetreport.len() => t,
       wat => Err(anyhow!("Did not get expected ReportPlayerAccesses! {:?}",
@@ -371,6 +375,8 @@ fn read_spec<T: DeserializeOwned>(filename: &str, what: &str) -> T {
   })().with_context(|| format!("read {} {:?}", what, filename))?
 }
 
+//---------- create-game ----------
+
 mod create_table {
   use super::*;
 
@@ -381,28 +387,19 @@ mod create_table {
   }
 
   fn subargs(sa: &mut Args) -> ArgumentParser {
-      use argparse::*;
-      let mut ap = ArgumentParser::new();
-      ap.refer(&mut sa.name).required()
-        .add_argument("TABLE-NAME",Store,"table name");
-      ap.refer(&mut sa.file).required()
-        .add_argument("TABLE-SPEC-TOML",Store,"table spec");
-      ap
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
+    ap.refer(&mut sa.file).required()
+      .add_argument("TABLE-SPEC-TOML",Store,"table spec");
+    ap
   }
-
-  #[throws(ArgumentParseError)]
-  fn complete(_sa: &mut Args) { }
 
   #[throws(E)]
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
-    let args = parse_args::<Args,_,_>(args, &subargs, &complete, None);
-
-    if ma.verbose >= 2 {
-      eprintln!("CREATE-TABLE {:?} {:?}", &ma, &args);
-    }
-
-    let spec : TableSpec = read_spec(&args.file, "game spec")?;
-
+    let args = parse_args::<Args,_>(args, &subargs, None, None);
+    let spec : TableSpec = read_spec(&args.file, "table spec")?;
     let mut chan = connect(&ma)?;
 
     chan.cmd(&MgmtCommand::CreateGame {
@@ -429,8 +426,81 @@ mod create_table {
   )}
 }
 
+//---------- reset-game ----------
 
-/*
-impl Default for Args {
-  fn default() -> Args { Args { name: String::new(), file: String::new() }}
-}*/
+type Insn = MgmtGameInstruction;
+
+mod reset_game {
+  use super::*;
+
+  #[derive(Default,Debug)]
+  struct Args {
+    name: String,
+    game_file: String,
+    table_file: Option<String>,
+  }
+
+  fn subargs(sa: &mut Args) -> ArgumentParser {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.table_file)
+      .add_option(&["--reset-table"],StoreOption,
+                  "reset the players and access too");
+    ap.refer(&mut sa.name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
+    ap.refer(&mut sa.game_file).required()
+      .add_argument("GAME-SPEC-TOML",Store,"game spec");
+    ap
+  }
+
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+    let args = parse_args::<Args,_>(args, &subargs, None, None);
+    let mut chan = ConnForGame {
+      conn: connect(&ma)?,
+      name: args.name.clone(),
+      how: MgmtGameUpdateMode::Bulk,
+    };
+    let game : GameSpec = read_spec(&args.game_file, "game spec")?;
+    if let Some(table_file) = args.table_file {
+      let table_spec = read_spec(&table_file, "table spec")?;
+      setup_table(&mut chan, &table_spec)?;
+    }
+
+    let mut insns = vec![];
+
+    chan.alter_game(
+      vec![ MgmtGameInstruction::ListPieces ],
+      Some(&mut |response|{ match response {
+        MgmtGameResponse::Pieces(pieces) => {
+          for p in pieces {
+            insns.push(MgmtGameInstruction::DeletePiece(p.piece));
+          }
+          Ok(())
+        },
+        wat => Err(anyhow!("ListPieces => {:?}", &wat))?,
+      }})
+    )?;
+
+    if let Some(size) = game.table_size {
+      insns.push(Insn::SetTableSize(size));
+    }
+
+    let mut game = game;
+    for pspec in game.pieces.drain(..) {
+      insns.push(Insn::AddPieces(pspec));
+    }
+
+    chan.alter_game(insns, None)?;
+
+    if ma.verbose >= 0 {
+      eprintln!("reset successful.");
+    }
+    Ok(())
+  }
+
+  inventory::submit!{Subcommand(
+    "reset",
+    "Reset the state of the game table",
+    call,
+  )}
+}

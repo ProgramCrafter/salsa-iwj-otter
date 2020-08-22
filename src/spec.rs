@@ -17,7 +17,7 @@ pub struct PlayerSpec {
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct GameSpec {
-  pub table : Pos,
+  pub table_size : Option<Pos>,
   pub pieces : Vec<PiecesSpec>,
 }
 

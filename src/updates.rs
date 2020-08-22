@@ -36,6 +36,7 @@ pub enum PreparedUpdateEntry {
     piece : VisiblePieceId,
     op : PieceUpdateOp<PreparedPieceState>,
   },
+  SetTableSize(Pos),
   Log (Arc<LogEntry>),
   Error (ErrorSignaledViaUpdate),
 }
@@ -79,6 +80,7 @@ enum TransmitUpdateEntry<'u> {
     piece : VisiblePieceId,
     op : &'u PieceUpdateOp<PreparedPieceState>,
   },
+  SetTableSize(Pos),
   Log (&'u LogEntry),
   Error(ErrorSignaledViaUpdate),
 }
@@ -122,6 +124,7 @@ impl PreparedUpdateEntry {
       Log(logent) => {
         logent.html.as_bytes().len() * 3
       },
+      SetTableSize(_) |
       Error(_) => {
         100
       },
@@ -260,6 +263,10 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     self.us.push(update);
   }
 
+  pub fn raw_updates(&mut self, mut raw: Vec<PreparedUpdateEntry>) {
+    self.us.append(&mut raw)
+  }
+
   pub fn log_updates(&mut self, logents: Vec<LogEntry>) {
     for logentry in logents {
       let logentry = Arc::new(logentry);
@@ -292,8 +299,9 @@ impl PreparedUpdate {
   pub fn for_transmit(&self, dest : ClientId) -> TransmitUpdate {
     let mut ents = vec![];
     for u in &self.us {
+      type Prep = PreparedUpdateEntry;
       let ue = match u {
-        &PreparedUpdateEntry::Piece
+        &Prep::Piece
         { piece, client, sameclient_cseq : cseq, ref op }
         if client == dest => {
           let zg = op.new_z_generation();
@@ -304,6 +312,9 @@ impl PreparedUpdate {
         },
         PreparedUpdateEntry::Log(logent) => {
           TransmitUpdateEntry::Log(&logent)
+        },
+        &PreparedUpdateEntry::SetTableSize(size) => {
+          TransmitUpdateEntry::SetTableSize(size)
         },
         &PreparedUpdateEntry::Error(e) => {
           TransmitUpdateEntry::Error(e)

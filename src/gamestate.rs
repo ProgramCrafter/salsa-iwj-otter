@@ -27,6 +27,8 @@ visible_slotmap_key!{ VisiblePieceId('.') }
 #[serde(try_from="f64")]
 pub struct ZCoord(pub f64);
 
+pub const DEFAULT_TABLE_SIZE : Pos = [ 200, 100 ];
+
 // ---------- general data types ----------
 
 #[derive(Debug,Copy,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
@@ -39,6 +41,7 @@ pub struct ZLevel {
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct GameState {
+  pub table_size : Pos, // xxx send to client etc.
   pub pieces : DenseSlotMap<PieceId,PieceState>,
   pub players : PlayerMap,
   pub gen : Generation,
@@ -207,7 +210,8 @@ pub fn xxx_gamestate_init() -> GameState {
     gen.increment();
     pieces.insert(pr);
   }
-  GameState { pieces, gen, players : Default::default(),
+  GameState { table_size : DEFAULT_TABLE_SIZE,
+              pieces, gen, players : Default::default(),
               max_z: ZCoord(0.),
               log : Default::default(), }
 }

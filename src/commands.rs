@@ -24,11 +24,15 @@ pub enum MgmtResponse {
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtGameInstruction {
   Noop,
-  AddPiece(PiecesSpec),
-  // todo: RemovePiece
+  Info,
+  SetTableSize(Pos),
+
+  ListPieces,
+  AddPieces(PiecesSpec),
+  DeletePiece(PieceId),
+
   AddPlayer(PlayerState),
   RemovePlayer(PlayerId),
-  GetPlayers,
   ResetPlayerAccesses { players: Vec<PlayerId> },
   ReportPlayerAccesses { players: Vec<PlayerId> },
   SetFixedPlayerAccess { player: PlayerId, token: RawToken },
@@ -37,9 +41,26 @@ pub enum MgmtGameInstruction {
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtGameResponse {
   Fine,
+  Info(MgmtGameResponseGameInfo),
+
+  Pieces(Vec<MgmtGamePieceInfo>),
+
   AddPlayer(PlayerId),
   PlayerAccessTokens(Vec<Vec<RawToken>>),
-  Players(PlayerMap),
+}
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct MgmtGameResponseGameInfo {
+  pub table_size: Pos,
+  pub players: PlayerMap,
+}
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct MgmtGamePieceInfo {
+  pub piece: PieceId,
+  pub pos: Pos,
+  pub face: FaceId,
+  pub desc_html: String,
 }
 
 #[derive(Debug,Copy,Clone,Serialize,Deserialize)]
