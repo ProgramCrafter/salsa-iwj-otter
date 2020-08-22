@@ -31,7 +31,7 @@ pub struct PiecesSpec {
   pub info : Box<dyn PieceSpec>,
 }
 
-#[typetag::serde(tag="deliver")]
+#[typetag::serde(tag="access")]
 pub trait PlayerAccessSpec : Debug {
   fn token_mgi(&self, _player: PlayerId) -> Option<MgmtGameInstruction> {
     None
