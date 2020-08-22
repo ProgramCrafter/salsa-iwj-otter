@@ -1,5 +1,13 @@
-table = [300, 100]
+# table_size = [300, 200]
 
 [[pieces]]
 pos = [90,80]
 type = "Disc"
+diam = 20
+faces = ["red","grey"]
+
+[[pieces]]
+pos = [90, 60]
+type = "Square"
+size = [20]
+faces = ["blue", "grey"]
