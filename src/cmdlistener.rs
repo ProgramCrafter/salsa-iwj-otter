@@ -238,9 +238,9 @@ fn execute_game_insn(cs: &CommandStream,
 
       let mut updates = Vec::with_capacity(count as usize);
       let mut pos = pos.unwrap_or(XXX_START_POS);
-      for _ in 0..count {
+      for i in 0..count {
         let p = info.load()?;
-        let z = ZCoord(gs.max_z.0 + (count + 1) as f64);
+        let z = ZCoord(gs.max_z.0 + (i + 1) as f64);
         let pc = PieceState {
           held: None,
           zlevel: ZLevel { z, zg: gs.gen },
