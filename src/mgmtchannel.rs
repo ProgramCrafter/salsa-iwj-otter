@@ -30,14 +30,14 @@ impl MgmtChannel {
   pub fn read<T:DeserializeOwned>(&mut self) -> T {
     use MgmtChannelReadError::*;
     let l = self.read.next().ok_or(EOF)??;
-    let v = serde_lexpr::from_str(&l)
+    let v = serde_json::from_str(&l)
       .map_err(|e| Parse(format!("{}", &e)))?;
     v
   }
 
   #[throws(io::Error)]
   pub fn write<T:Serialize>(&mut self, val: &T) {
-    serde_lexpr::to_writer(&mut self.write, val)?;
+    serde_json::to_writer(&mut self.write, val)?;
     write!(self.write, "\n")?;
     self.write.flush()?;
   }

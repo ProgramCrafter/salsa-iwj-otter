@@ -47,8 +47,6 @@ failure = "0.1.8" # for pwd
 
 libc = "0.2"
 
-serde-lexpr = "0.1"
-
 toml = "0.5"
 
 #rocket = "0.4"
