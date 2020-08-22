@@ -193,13 +193,13 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
   eprintln!("command connection {}: executing {:?}", &cs.desc, &cmd);
 
   match cmd {
-    Noop { } => Fine { },
+    Noop => Fine,
 
-    SetScope{ scope: wanted_scope } => {
+    SetScope(wanted_scope) => {
       let authorised : AuthorisedSatisfactory =
         authorise_scope(cs, &wanted_scope)?;
       cs.scope = Some(authorised.into_inner());
-      Fine { }
+      Fine
     },
 
     CreateGame { name, insns } => {
@@ -229,7 +229,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
           e
         })?;
 
-      Fine { }
+      Fine
     },
 
     ListGames { all } => {
@@ -243,7 +243,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       };
       let mut games = Instance::list_names(scope);
       games.sort_unstable();
-      GamesList { games }
+      GamesList(games)
     },
 
     MgmtCommand::AlterGame { name, insns, how} => {
@@ -369,7 +369,7 @@ fn execute_game_insn(cs: &CommandStream,
   use MgmtGameInstruction::*;
   use MgmtGameResponse::*;
   match update {
-    Noop { } => (vec![], vec![], Fine { }),
+    Noop { } => (vec![], vec![], Fine),
 
     MgmtGameInstruction::AddPlayer(pl) => {
       let player = ig.player_new(pl)?;
@@ -384,7 +384,7 @@ fn execute_game_insn(cs: &CommandStream,
 
     RemovePlayer(player) => {
       ig.player_remove(player)?;
-      (vec![], vec![], Fine{})
+      (vec![], vec![], Fine)
     },
 
     GetPlayers { } => {
@@ -395,12 +395,12 @@ fn execute_game_insn(cs: &CommandStream,
     ResetPlayerAccesses { players } => {
       let tokens = ig.players_access_reset(&players)?
         .drain(0..).map(|token| vec![token]).collect();
-      (vec![], vec![], PlayerAccessTokens { tokens })
+      (vec![], vec![], PlayerAccessTokens(tokens))
     }
 
     ReportPlayerAccesses { players } => {
       let tokens = ig.players_access_report(&players)?;
-      (vec![], vec![], PlayerAccessTokens { tokens })
+      (vec![], vec![], PlayerAccessTokens(tokens))
     }
 
     SetFixedPlayerAccess { player, token } => {
@@ -413,7 +413,7 @@ fn execute_game_insn(cs: &CommandStream,
       ig.player_access_register_fixed(
         player, token, authorised
       )?;
-      (vec![], vec![], Fine{})
+      (vec![], vec![], Fine)
     }
 
     AddPiece(PiecesSpec{ pos,posd,count,face,info }) => {
@@ -445,7 +445,7 @@ fn execute_game_insn(cs: &CommandStream,
       (updates, vec![ LogEntry {
         html: format!("The facilitaror added {} pieces", count),
       }],
-       Fine { }
+       Fine
       )
     },
   }

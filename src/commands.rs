@@ -3,8 +3,8 @@ use crate::imports::*;
 
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtCommand {
-  Noop { },
-  SetScope { scope: ManagementScope },
+  Noop,
+  SetScope(ManagementScope),
   CreateGame { name: String, insns: Vec<MgmtGameInstruction> },
   ListGames { all: Option<bool>, },
   AlterGame {
@@ -15,15 +15,15 @@ pub enum MgmtCommand {
 
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtResponse {
-  Fine { },
+  Fine,
   Error { error: MgmtError },
   AlterGame { error: Option<MgmtError>, responses: Vec<MgmtGameResponse> },
-  GamesList { games: Vec<Arc<InstanceName>> },
+  GamesList(Vec<Arc<InstanceName>>),
 }
 
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtGameInstruction {
-  Noop { },
+  Noop,
   AddPiece(PiecesSpec),
   // todo: RemovePiece
   AddPlayer(PlayerState),
@@ -36,9 +36,9 @@ pub enum MgmtGameInstruction {
 
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtGameResponse {
-  Fine { },
+  Fine,
   AddPlayer(PlayerId),
-  PlayerAccessTokens { tokens: Vec<Vec<RawToken>> },
+  PlayerAccessTokens(Vec<Vec<RawToken>>),
   Players(PlayerMap),
 }
 

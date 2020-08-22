@@ -189,7 +189,7 @@ impl Conn {
     self.chan.write(&cmd).context("send command")?;
     let resp = self.chan.read().context("read response")?;
     match &resp {
-      Fine{..} | GamesList{..} => { },
+      Fine | GamesList{..} => { },
       AlterGame { error: None, .. } => { },
       Error { error } => {
         Err(error.clone()).context(format!("response to: {:?}",&cmd))?;
@@ -270,7 +270,7 @@ fn connect(ma: &MainOpts) -> Conn {
   let unix = UnixStream::connect(SOCKET_PATH).context("connect to server")?;
   let chan = MgmtChannel::new(unix)?;
   let mut chan = Conn { chan };
-  chan.cmd(&MgmtCommand::SetScope { scope: ma.scope.clone().unwrap() })?;
+  chan.cmd(&MgmtCommand::SetScope(ma.scope.clone().unwrap()))?;
   chan
 }
 
@@ -328,11 +328,12 @@ fn setup_table(chan: &mut ConnForGame, spec: &TableSpec) -> Result<(),AE> {
       players: resetreport.clone(),
     });
     insns.push(MgmtGameInstruction::ReportPlayerAccesses {
+      // xxx not needed
       players: resetreport.clone(),
     });
     let mut got_tokens = None;
     chan.alter_game(insns, &mut |response| {
-      if let MgmtGameResponse::PlayerAccessTokens { tokens } = response {
+      if let MgmtGameResponse::PlayerAccessTokens(tokens) = response {
         got_tokens = Some(tokens.clone());
       }
       Ok(())
