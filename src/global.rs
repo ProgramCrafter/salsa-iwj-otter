@@ -44,19 +44,6 @@ pub struct Client {
   pub lastseen : Instant,
 }
 
-/* xxx
-#[derive(Serialize,Deserialize)]
-#[repr(transparent)]
-pub struct PlayerMap(ActualPlayerMap);
-impl Deref for PlayerMap {
-  type Target = ActualPlayerMap;
-  fn deref(&self) -> &ActualPlayerMap { return self.0 }
-}
-// No DerefMut: callers in this module should access .0 directly
-// This prevents accidental modification of Players without appropriate
-// synchrnoisation.
-*/
-
 /// UPDATE RELIABILITY/PERSISTENCE RULES
 ///
 /// From the caller's point of view
@@ -629,7 +616,16 @@ impl InstanceGuard<'_> {
     // xxx scan on startup, rather than asking caller to specify names
     // xxx should take a file lock on save area
     // xxx check for deleted players, throw their tokens away
-    let gs : GameState = Self::load_something(&name, "g-")?;
+    // xxx clear clients as we start with no clients and the lastclient
+    //     fields are all nonsense
+    let gs = {
+      let mut gs : GameState = Self::load_something(&name, "g-")?;
+      for mut p in gs.pieces.values_mut() {
+        p.lastclient = Default::default();
+      }
+      gs
+    };
+
     let mut al : InstanceSaveAccesses<String>
       = Self::load_something(&name, "a-")
       .or_else(|e| {

@@ -41,7 +41,7 @@ macro_rules! visible_slotmap_key {
 
     #[derive(Copy,Default,Clone,Eq,PartialEq,Ord,PartialOrd,Serialize,Deserialize,Hash)]
     #[serde(into="String")]
-    #[serde(try_from="&str")]
+    #[serde(try_from="String")]
     pub struct $x(pub slotmap::KeyData);
 
     impl Display for $x {
@@ -53,6 +53,11 @@ macro_rules! visible_slotmap_key {
       type Error = AE;
       #[throws(AE)]
       fn try_from(s : &str) -> $x { $x(slotkey_parse(s,$sep)?) }
+    }
+    impl TryFrom<String> for $x {
+      type Error = AE;
+      #[throws(AE)]
+      fn try_from(s : String) -> $x { $x(slotkey_parse(&s,$sep)?) }
     }
 
     impl slotmap::Key for $x { }

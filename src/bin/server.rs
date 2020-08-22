@@ -81,6 +81,8 @@ fn main() {
     set_config(config);
   };
 
+  load_games()?;
+
   let cl = CommandListener::new()?;
   cl.spawn()?;
 
