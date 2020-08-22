@@ -76,7 +76,7 @@ pub use crate::api::{Lens,TransparentLens};
 pub use crate::utils::OrdExt;
 pub use crate::spec::*;
 
-pub use libc::uid_t;
+pub use nix::unistd::Uid;
 
 pub type E = anyhow::Error;
 pub type AE = anyhow::Error;

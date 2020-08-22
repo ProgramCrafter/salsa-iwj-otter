@@ -380,7 +380,7 @@ impl UpdateHandler {
 // ---------- core listener implementation ----------
 
 struct CommandStream<'d> {
-  euid : Result<u32, ConnectionEuidDiscoverEerror>,
+  euid : Result<Uid, ConnectionEuidDiscoverEerror>,
   desc : &'d str,
   scope : Option<ManagementScope>,
   chan : MgmtChannel,
@@ -471,7 +471,7 @@ impl CommandListener {
 
         let cs = CommandStream {
           scope: None, desc: &desc,
-          chan, euid,
+          chan, euid: euid.map(Uid::from_raw),
         };
         cs.mainloop()?;
         
@@ -492,18 +492,18 @@ pub struct ConnectionEuidDiscoverEerror(String);
 
 impl CommandStream<'_> {
   #[throws(AuthorisationError)]
-  fn authorised_uid(&self, wanted: Option<uid_t>, xinfo: Option<&str>)
-                    -> Authorised<(Passwd,uid_t),> {
+  fn authorised_uid(&self, wanted: Option<Uid>, xinfo: Option<&str>)
+                    -> Authorised<(Passwd,Uid),> {
     let client_euid = *self.euid.as_ref().map_err(|e| e.clone())?;
-    let server_euid = unsafe { libc::getuid() };
-    if client_euid == 0 ||
-       client_euid == server_euid ||
+    let server_uid = Uid::current();
+    if client_euid.is_root() ||
+       client_euid == server_uid ||
        Some(client_euid) == wanted
     {
       return Authorised::authorise();
     }
     throw!(anyhow!("{}: euid mismatch: client={:?} server={:?} wanted={:?}{}",
-                   &self.desc, client_euid, server_euid, wanted,
+                   &self.desc, client_euid, server_uid, wanted,
                    xinfo.unwrap_or("")));
   }
 
@@ -530,7 +530,7 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
 
     ManagementScope::Server => {
       let y : AS<
-        Authorised<(Passwd,uid_t)>,
+        Authorised<(Passwd,Uid)>,
       > = {
         let ok = cs.authorised_uid(None,None)?;
         (ok,
@@ -541,9 +541,9 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
 
     ManagementScope::Unix { user: wanted } => {
       let y : AS<
-        Authorised<(Passwd,uid_t)>,
+        Authorised<(Passwd,Uid)>,
       > = {
-        struct AuthorisedIf { authorised_for : Option<uid_t> };
+        struct AuthorisedIf { authorised_for : Option<Uid> };
 
         let pwent = Passwd::from_name(&wanted)
           .map_err(
@@ -571,7 +571,9 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
             .filter_map(|le| match le {
               Ok(l) if l.trim() == wanted => Some(
                 Ok((
-                  AuthorisedIf{ authorised_for: Some(pwent.uid) },
+                  AuthorisedIf{ authorised_for: Some(
+                    Uid::from_raw(pwent.uid)
+                  ) },
                   None
                 ))
               ),
