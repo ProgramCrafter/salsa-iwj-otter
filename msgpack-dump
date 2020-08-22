@@ -2,6 +2,7 @@
 use strict;
 use Data::MessagePack;
 use Data::Dumper;
+$Data::Dumper::Sortkeys=1;
 $/ = undef;
 $!=0; $_ = <> // die $!;
 my $mp = Data::MessagePack->new();
