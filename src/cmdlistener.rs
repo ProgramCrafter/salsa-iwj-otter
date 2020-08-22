@@ -145,12 +145,13 @@ fn execute_game_insn(cs: &CommandStream,
       if ig.gs.players.values().any(|p| p.nick == pl.nick) {
         Err(ME::AlreadyExists)?;
       }
-      let player = ig.player_new(pl)?;
+      let logentry = LogEntry {
+        html: format!("The facilitator added a player xxx"),
+      };
+      let (player, logentry) = ig.player_new(pl, logentry)?;
       #[allow(clippy::useless_format)] // xxx below
       (U{ pcs: vec![],
-          log: vec![ LogEntry {
-            html: format!("The facilitator added a player xxx"),
-          } ],
+          log: vec![ logentry ],
           raw: None },
        Resp::AddPlayer(player))
     },

@@ -143,7 +143,7 @@ struct Global {
   players : RwLock<TokenTable<PlayerId>>,
   clients : RwLock<TokenTable<ClientId>>,
   config  : RwLock<Arc<ServerConfig>>,
-  // xxx delete instances at some point!
+  // xxx delete clients at some point!
 }
 
 #[derive(Debug)]
@@ -288,8 +288,11 @@ impl DerefMut for InstanceGuard<'_> {
 // ---------- Player and token functionality ----------
 
 impl InstanceGuard<'_> {
+  /// caller is responsible for logging; threading it through
+  /// proves the caller has a log entry.
   #[throws(ServerFailure)]
-  pub fn player_new(&mut self, newplayer: PlayerState) -> PlayerId {
+  pub fn player_new(&mut self, newplayer: PlayerState,
+                    logentry: LogEntry) -> (PlayerId, LogEntry) {
     // saving is fallible, but we can't attempt to save unless
     // we have a thing to serialise with the player in it
     let player = self.c.g.gs.players.insert(newplayer);
@@ -299,9 +302,8 @@ impl InstanceGuard<'_> {
     })?;
     (||{
       self.c.g.updates.insert(player, Default::default());
-      // xxx send log message, should be provided by caller
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
-    player
+    (player, logentry)
   }
 
 //  #[throws(ServerFailure)]
@@ -613,11 +615,8 @@ impl InstanceGuard<'_> {
 
   #[throws(OE)]
   pub fn load(name: InstanceName) -> InstanceRef {
-    // xxx scan on startup, rather than asking caller to specify names
     // xxx should take a file lock on save area
     // xxx check for deleted players, throw their tokens away
-    // xxx clear clients as we start with no clients and the lastclient
-    //     fields are all nonsense
     let gs = {
       let mut gs : GameState = Self::load_something(&name, "g-")?;
       for mut p in gs.pieces.values_mut() {
