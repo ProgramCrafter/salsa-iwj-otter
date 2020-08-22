@@ -79,6 +79,7 @@ pub enum MgmtError {
   GameNotFound,
   GameCorrupted,
   PlayerNotFound,
+  PieceNotFound,
   LimitExceeded,
   SVGProcessingFailed(#[from] SVGProcessingError),
   GameError(#[from] GameError),

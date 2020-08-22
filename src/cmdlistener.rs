@@ -283,13 +283,12 @@ impl UpdateHandler {
 
   #[throws(SVGProcessingError)]
   fn accumulate(&mut self, g: &mut Instance,
-                upieces: Vec<(PieceId,PieceUpdateOp<()>)>,
-                ulogs: Vec<LogEntry>,
-                mut raw: Vec<PreparedUpdateEntry>) {
+                updates: ExecuteGameChangeUpdates) {
+    let mut raw = updates.raw.unwrap_or_default();
     use UpdateHandler::*;
     match self {
       Bulk(bulk) => {
-        for (upiece, uuop) in upieces {
+        for (upiece, uuop) in updates.pcs {
           use PieceUpdateOp::*;
           let ne = match (bulk.pieces.get(upiece), uuop) {
             ( None               , e        ) => Some( e          ),
@@ -303,17 +302,17 @@ impl UpdateHandler {
             None     => { bulk.pieces.remove(upiece); },
           };
         }
-        bulk.logs |= ulogs.len() != 0;
+        bulk.logs |= updates.log.len() != 0;
         bulk.raw.append(&mut raw);
       },
       Online => {
-        let estimate = upieces.len() + ulogs.len();
+        let estimate = updates.pcs.len() + updates.log.len();
         let mut buf = PrepareUpdatesBuffer::new(g, None, Some(estimate));
-        for (upiece, uuop) in upieces {
+        for (upiece, uuop) in updates.pcs {
           let lens = TransparentLens { };
           buf.piece_update(upiece, uuop, &lens);
         }
-        buf.log_updates(ulogs);
+        buf.log_updates(updates.log);
         buf.raw_updates(raw);
       },
     }
@@ -352,8 +351,8 @@ fn execute_for_game(cs: &CommandStream, ig: &mut InstanceGuard,
   let mut responses = Vec::with_capacity(insns.len());
   let ok = (||{
     for insn in insns.drain(0..) {
-      let (upieces, ulogs, raw, resp) = execute_game_insn(cs, ig, insn)?;
-      uh.accumulate(ig, upieces, ulogs, raw.unwrap_or_default())?;
+      let (updates, resp) = execute_game_insn(cs, ig, insn)?;
+      uh.accumulate(ig, updates)?;
       responses.push(resp);
     }
     uh.complete(cs,ig)?;
@@ -371,9 +370,7 @@ const XXX_DEFAULT_POSD : Pos = [5,5];
 const CREATE_PIECES_MAX : u32 = 300;
 
 type ExecuteGameInsnResults = (
-  Vec<(PieceId,PieceUpdateOp<()>)>,
-  Vec<LogEntry>,
-  Option<Vec<PreparedUpdateEntry>>,
+  ExecuteGameChangeUpdates,
   MgmtGameResponse,
 );
 
@@ -381,48 +378,46 @@ type ExecuteGameInsnResults = (
 fn execute_game_insn(cs: &CommandStream,
                      ig: &mut InstanceGuard, update: MgmtGameInstruction)
                      -> ExecuteGameInsnResults {
+  type U = ExecuteGameChangeUpdates;
   use MgmtGameInstruction::*;
   use MgmtGameResponse::*;
   type Insn = MgmtGameInstruction;
   type Resp = MgmtGameResponse;
   fn readonly(_ig: &InstanceGuard, resp: Resp) -> ExecuteGameInsnResults {
-    (vec![], vec![], None, resp)
+    (U{ pcs: vec![], log: vec![], raw: None }, resp)
   }
 
   match update {
     Noop { } => readonly(ig, Fine),
 
-    Insn::DeletePiece(_) => panic!(),//xxx
-
-    MgmtGameInstruction::SetTableSize(size) => {
+    Insn::SetTableSize(size) => {
       ig.gs.table_size = size;
-      (vec![],
-       vec![ LogEntry {
-         html: format!("The table was resized to {}x{}", size[0], size[1]),
-       }],
-       Some(vec![ PreparedUpdateEntry::SetTableSize(size) ]),
+      (U{ pcs: vec![],
+          log: vec![ LogEntry {
+            html: format!("The table was resized to {}x{}", size[0], size[1]),
+          }],
+          raw: Some(vec![ PreparedUpdateEntry::SetTableSize(size) ]) },
        Fine)
     }
 
-    MgmtGameInstruction::AddPlayer(pl) => {
+    Insn::AddPlayer(pl) => {
       if ig.gs.players.values().any(|p| p.nick == pl.nick) {
         Err(ME::AlreadyExists)?;
       }
       let player = ig.player_new(pl)?;
       #[allow(clippy::useless_format)] // xxx below
-      (vec![],
-       vec![ LogEntry {
-         html: format!("The facilitator added a player xxx"),
-       } ],
-       None,
-       MgmtGameResponse::AddPlayer(player))
+      (U{ pcs: vec![],
+          log: vec![ LogEntry {
+            html: format!("The facilitator added a player xxx"),
+          } ],
+          raw: None },
+       Resp::AddPlayer(player))
     },
 
     Insn::ListPieces => readonly(ig, {
       let pieces = ig.gs.pieces.iter().map(|(piece,p)|{
         let &PieceState { pos, face, .. } = p;
-        let desc_html = p.p.describe_html(None)
-          .unwrap_or_else(|_|"[html formatting failed!]".to_string());
+        let desc_html = p.p.describe_html(None);
         MgmtGamePieceInfo { piece, pos, face, desc_html }
       }).collect();
       Resp::Pieces(pieces)
@@ -430,26 +425,38 @@ fn execute_game_insn(cs: &CommandStream,
 
     RemovePlayer(player) => {
       ig.player_remove(player)?;
-      (vec![], vec![], None, Fine)
+      #[allow(clippy::useless_format)] // xxx below
+      (U{ pcs: vec![],
+          log: vec![ LogEntry {
+            html: format!("The facilitator removed a player xxx"),
+          }],
+          raw: None},
+       Fine)
     },
 
-    MgmtGameInstruction::Info { } => {
+    Insn::Info => readonly(ig, {
       let players = ig.gs.players.clone();
       let table_size = ig.gs.table_size;
       let info = MgmtGameResponseGameInfo { table_size, players };
-      (vec![], vec![], None, Resp::Info(info))
-    },
+      Resp::Info(info)
+    }),
 
     ResetPlayerAccesses { players } => {
       let tokens = ig.players_access_reset(&players)?
         .drain(0..).map(|token| vec![token]).collect();
-      (vec![], vec![], None, PlayerAccessTokens(tokens))
+      (U{ pcs: vec![],
+          log: vec![],
+          raw: None },
+       PlayerAccessTokens(tokens))
     }
 
     ReportPlayerAccesses { players } => {
       let tokens = ig.players_access_report(&players)?;
-      (vec![], vec![], None, PlayerAccessTokens(tokens))
-    }
+      (U{ pcs: vec![],
+          log: vec![],
+          raw: None },
+       PlayerAccessTokens(tokens))
+    },
 
     SetFixedPlayerAccess { player, token } => {
       let authorised : AuthorisedSatisfactory =
@@ -461,8 +468,25 @@ fn execute_game_insn(cs: &CommandStream,
       ig.player_access_register_fixed(
         player, token, authorised
       )?;
-      (vec![], vec![], None, Fine)
+      (U{ pcs: vec![],
+          log: vec![],
+          raw: None},
+       Fine)
     }
+
+    DeletePiece(piece) => {
+      let gs = &mut ig.gs;
+      let p = gs.pieces.remove(piece).ok_or(ME::PieceNotFound)?;
+      let desc_html = p.p.describe_html(Some(Default::default()));
+      p.p.delete_hook(&p, gs);
+      (U{ pcs: vec![(piece, PieceUpdateOp::Delete())],
+          log: vec![ LogEntry {
+            html: format!("A piece {} was removed from the game",
+                          desc_html),
+          }],
+          raw: None },
+       Fine)
+    },
 
     AddPieces(PiecesSpec{ pos,posd,count,face,info }) => {
       let gs = &mut ig.gs;
@@ -490,13 +514,12 @@ fn execute_game_insn(cs: &CommandStream,
         pos[1] += posd[1];
       }
 
-      (updates,
-       vec![ LogEntry {
-         html: format!("The facilitaror added {} pieces", count),
-       }],
-       None,
-       Fine
-      )
+      (U{ pcs: updates,
+          log: vec![ LogEntry {
+            html: format!("The facilitaror added {} pieces", count),
+          }],
+          raw: None },
+       Fine)
     },
   }
 }

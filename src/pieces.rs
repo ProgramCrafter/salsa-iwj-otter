@@ -98,7 +98,6 @@ impl Piece for SimpleShape {
   #[throws(SE)]
   fn svg_x_defs(&self, _f: &mut String, _pri : &PieceRenderInstructions) {
   }
-  #[throws(SE)]
   fn describe_html(&self, face : Option<FaceId>) -> String {
     if let Some(face) = face {
       format!("a {} {}", self.colours[face], self.desc)

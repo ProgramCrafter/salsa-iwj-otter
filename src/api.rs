@@ -131,7 +131,7 @@ impl ApiPieceOp for ApiPieceGrab {
     let logent = LogEntry {
       html : format!("{} grasped {}",
                      &htmlescape::encode_minimal(&pl.nick),
-                     pc.describe_html(&lens.log_pri(piece, pc))?),
+                     pc.describe_html(&lens.log_pri(piece, pc))),
     };
 
     (update, vec![logent])
@@ -163,7 +163,7 @@ impl ApiPieceOp for ApiPieceUngrab {
     let logent = LogEntry {
       html : format!("{} released {}",
                      &htmlescape::encode_minimal(&pl.nick),
-                     pc.describe_html(&lens.log_pri(piece, pc))?),
+                     pc.describe_html(&lens.log_pri(piece, pc))),
     };
 
     (update, vec![logent])

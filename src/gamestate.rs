@@ -92,7 +92,12 @@ pub trait Piece : Send + Debug {
   fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
                       -> Option<Coord>;
 
-  fn describe_html(&self, face : Option<FaceId>) -> Result<String,SE>;
+  fn describe_html(&self, face : Option<FaceId>) -> String;
+
+  fn delete_hook(&self, _p: &PieceState, _gs: &mut GameState)
+                 -> ExecuteGameChangeUpdates { 
+    ExecuteGameChangeUpdates{ pcs: vec![], log: vec![], raw: None }
+  }
 }
 
 #[derive(Debug,Copy,Clone)]
@@ -180,9 +185,8 @@ impl PieceState {
     }
   }
 
-  #[throws(SE)]
   pub fn describe_html(&self, pri : &PieceRenderInstructions) -> String {
-    self.p.describe_html(Some(pri.face))?
+    self.p.describe_html(Some(pri.face))
   }
 }
 

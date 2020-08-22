@@ -10,6 +10,15 @@ pub struct ClientSequence(u64);
 
 const RECENT_BUFFER : usize = 50;
 
+// ---------- from manamgenet operations ----------
+
+#[derive(Debug)] // not Default
+pub struct ExecuteGameChangeUpdates {
+  pub pcs: Vec<(PieceId,PieceUpdateOp<()>)>,
+  pub log: Vec<LogEntry>,
+  pub raw: Option<Vec<PreparedUpdateEntry>>,
+}
+
 // ---------- prepared updates, queued in memory ----------
 
 pub type PlayerUpdatesLog =
