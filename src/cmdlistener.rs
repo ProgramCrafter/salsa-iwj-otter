@@ -261,6 +261,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 #[derive(Debug,Default)]
 struct UpdateHandlerBulk {
   pieces : slotmap::SparseSecondaryMap<PieceId, PieceUpdateOp<()>>,
+  logs : bool,
 }
 
 #[derive(Debug)]
@@ -299,7 +300,7 @@ impl UpdateHandler {
             None     => { bulk.pieces.remove(upiece); },
           };
         }
-        let _logs = ulogs;
+        bulk.logs |= ulogs.len() != 0;
       },
       Online => {
         let estimate = upieces.len() + ulogs.len();
@@ -324,11 +325,13 @@ impl UpdateHandler {
           buf.piece_update(upiece, uuop, &lens);
         }
 
-        buf.log_updates(vec![LogEntry {
-          html: "The facilitator (re)configured the game".to_owned(),
-          // xxx use cs.desc
-        }]);
-        },
+        if bulk.logs {
+          buf.log_updates(vec![LogEntry {
+            html: "The facilitator (re)configured the game".to_owned(),
+            // xxx use cs.desc
+          }]);
+        }
+      },
       Online => { },
     }
   }
