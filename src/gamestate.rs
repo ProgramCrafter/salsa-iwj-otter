@@ -58,6 +58,8 @@ pub struct PieceState {
   pub gen_before_lastclient : Generation,
 }
 
+pub type PlayerMap = DenseSlotMap<PlayerId,PlayerState>;
+
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct PlayerState {
   pub nick : String,

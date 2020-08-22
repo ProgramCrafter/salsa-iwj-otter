@@ -179,15 +179,15 @@ fn main() {
 }
 
 struct Conn {
-  mc: MgmtChannel,
+  chan: MgmtChannel,
 }
 
 impl Conn {
   #[throws(AE)]
   fn cmd(&mut self, cmd: &MgmtCommand) -> MgmtResponse {
     use MgmtResponse::*;
-    self.mc.write(&cmd).context("send command")?;
-    let resp = self.mc.read().context("read response")?;
+    self.chan.write(&cmd).context("send command")?;
+    let resp = self.chan.read().context("read response")?;
     match &resp {
       Fine{..} | GamesList{..} => { },
       AlterGame { error: None, .. } => { },
@@ -208,85 +208,93 @@ struct ConnForGame {
   pub conn: Conn,
   pub name: String,
   pub how: MgmtGameUpdateMode,
-};
+}
 impl Deref for ConnForGame {
   type Target = Conn;
-  fn deref(cg: &ConnForGame) -> Conn { &cg.conn }
+  fn deref(&self) -> &Conn { &self.conn }
 }
 impl DerefMut for ConnForGame {
-  fn deref_mut(cg: &mut ConnForGame) -> Conn { &mut cg.conn }
+  fn deref_mut(&mut self) -> &mut Conn { &mut self.conn }
 }
 
 impl ConnForGame {
   #[throws(AE)]
-  fn alter_game(&mut self, insns: Vec<MgmtGameInstructions>,
-                f: &mut dyn FnMut(&MgmtGameInstruction, &MgmtGameResult)
-                                  -> Result<AE>)
-                     -> Vec<MgmtGameResult>> {
+  fn alter_game(&mut self, insns: Vec<MgmtGameInstruction>,
+                f: &mut dyn FnMut(&MgmtGameResponse) -> Result<(),AE>)
+                -> Vec<MgmtGameResponse> {
+    let insns_len = insns.len();
     let cmd = MgmtCommand::AlterGame {
       name: self.name.clone(), how: self.how,
-      insns,
+      insns
     };
-    let results = match self.cmd(&cmd) {
-      MgmtResponse::AlterGame { error: None, results }
-      if results.len() == cmd.insns.len()
-      => results,
-      wat => anyhow!("unexpected AlterGame response: {:?} => {:?}",
-                     &cmd, &wat),
+    let responses = match self.cmd(&cmd)? {
+      MgmtResponse::AlterGame { error: None, responses }
+      if responses.len() == insns_len => {
+        responses
+      },
+      wat => Err(anyhow!("unexpected AlterGame response: {:?} => {:?}",
+                         &cmd, &wat))?,
     };
-    for (insn, result) in insns.iter.zip(results.iter()) {
-      f(insn,result)?;
+    for response in &responses {
+      f(response)?;
     }
-    results
+    responses
   }
 
-  #[throws(AE)]
-  fn game_state(&mut self) -> (GameState, HashMap<String,PlayerId>) {
-    let gs = self.alter_game(
-      vec![ MgmtGameInstruction::GetState { } ],
-      |..|Ok(())
+  fn get_players(&mut self) ->
+    Result<(PlayerMap, HashMap<String,PlayerId>),AE>
+  {
+    let mut players = self.alter_game(
+      vec![ MgmtGameInstruction::GetPlayers { } ],
+      &mut |_|Ok(())
     )?;
-    let gs = match gs {
-      &[ GameState { gs } ] => gs,
-      wat => anyhow!("GetGstate got {:?}", &wat);
+    let players = match players.pop() {
+      Some(MgmtGameResponse::Players(players)) => players,
+      wat => Err(anyhow!("GetGstate got {:?}", &wat))?,
     };
     let mut nick2id = HashMap::new();
-    for (player, pstate) in &gs.players {
+    for (player, pstate) in players.iter() {
+      use hash_map::Entry::*;
       match nick2id.entry(pstate.nick.clone()) {
-        Occupied(oe) => anyhow!("game has duplicate nick {:?}, {} {}",
-                                &nick, *oe.get(), player),
-        Vacant(ve) ve.insert(player),
-      }
+        Occupied(oe) => Err(anyhow!("game has duplicate nick {:?}, {} {}",
+                                    &pstate.nick, *oe.get(), player))?,
+        Vacant(ve) => ve.insert(player),
+      };
     }
-    (gs, nick2id)
+    Ok((players, nick2id))
   }
 }
 
 #[throws(E)]
-fn connect(ma: &MainOpts) -> MgmtChannel {
+fn connect(ma: &MainOpts) -> Conn {
   let unix = UnixStream::connect(SOCKET_PATH).context("connect to server")?;
-  let mut chan = MgmtChannel::new(unix)?;
+  let chan = MgmtChannel::new(unix)?;
+  let mut chan = Conn { chan };
   chan.cmd(&MgmtCommand::SetScope { scope: ma.scope.clone().unwrap() })?;
   chan
 }
 
-#[throws(E)]
-fn setup_table(game: &mut ConnForGame, spec: &TableSpec) {
+fn setup_table(chan: &mut ConnForGame, spec: &TableSpec) -> Result<(),AE> {
+  // xxx should delete old players
+
   // create missing players
   let (added_players,) = {
-    let (gs, nick2id) = chan.game_state()?;
+    let (_, nick2id) = chan.get_players()?;
 
-    let mut inss = vec![];
-    for psec in &spec.players {
-      if !nick2id.has_key(pspec.nick) {
-        insns.push(AddPlayer { nick: ps.nick });
+    let mut insns = vec![];
+    for pspec in &spec.players {
+      if !nick2id.contains_key(&pspec.nick) {
+        insns.push(MgmtGameInstruction::AddPlayer(PlayerState {
+          nick: pspec.nick.clone()
+        }));
       }
     }
     let mut added_players = HashSet::new();
-    chan.alter_game(name, insns, |insn,result| {
-      let player = match result {
-        MgmtGameInstruction::AddPlayer { player } => player,
-        _ => anyhow!("AddPlayer strange answer: {:?} => {:?}",&insn,&result),
+    chan.alter_game(insns, &mut |response| {
+      let player = match response {
+        &MgmtGameResponse::AddPlayer(player) => player,
+        _ => Err(anyhow!("AddPlayer strange answer {:?}",
+                         &response))?,
       };
       added_players.insert(player);
       Ok(())
@@ -297,44 +305,52 @@ fn setup_table(game: &mut ConnForGame, spec: &TableSpec) {
 
   // ensure players have access tokens
   {
-    let (gs, nick2id) = chan.game_state()?;
+    let (_, nick2id) = chan.get_players()?;
     let mut insns = vec![];
     let mut resetreport = vec![];
     let mut resetspecs = vec![];
     for pspec in &spec.players {
-      let player = nick2id.get(&pspec.nick)
-        .ok_or_else(anyhow!("player {:?} vanished or renamed!",
-                            &pspec.nick))?;
-      match pspec.access.token_mgi(player) {
-        Some(insn) => insns.push(insn),
-        None if added_players.contains(player) => {
-          resetreport.push(player);
-          resetspecs.push(player);
-        },
-        None => (),
+      let player = *nick2id.get(&pspec.nick)
+        .ok_or_else(||anyhow!("player {:?} vanished or renamed!",
+                              &pspec.nick))?;
+      if let Some(access) = &pspec.access {
+        match access.token_mgi(player) {
+          Some(insn) => insns.push(insn),
+          None if added_players.contains(&player) => {
+            resetreport.push(player);
+            resetspecs.push((pspec, access));
+          },
+          None => (),
+        }
       };
     }
     insns.push(MgmtGameInstruction::ResetPlayerAccesses {
       players: resetreport.clone(),
     });
-    insns.push(MgmtGameInstruction::ReporPlayerAccesses {
+    insns.push(MgmtGameInstruction::ReportPlayerAccesses {
       players: resetreport.clone(),
     });
-    let got_tokens = None;
-    chan.alter_game(insns, &mut |insn,result| {
-      if let PlayerAccessTokens { tokens } = result {
-        got_tokens = Some(tokens.clone()),
+    let mut got_tokens = None;
+    chan.alter_game(insns, &mut |response| {
+      if let MgmtGameResponse::PlayerAccessTokens { tokens } = response {
+        got_tokens = Some(tokens.clone());
       }
-    });
+      Ok(())
+    })?;
     let got_tokens = match got_tokens {
       Some(t) if t.len() == resetreport.len() => t,
-      wat => anyhow!("Did not get expected ReportPlayerAccesses! {:?}", &wat)?,
+      wat => Err(anyhow!("Did not get expected ReportPlayerAccesses! {:?}",
+                         &wat))?,
     };
-    for (pspec, ptokens) in resetspecs.iter().zip(got_tokens.iter()) {
-      pspec.access.deliver_tokens(&pspec, &ptokens)
-        .context("deliver tokens for nick={:?}", &pspec.nick)?;
+    for ((pspec, access), ptokens)
+      in resetspecs.iter().zip(got_tokens.iter()) {
+      access.deliver_tokens(&pspec, &ptokens)
+          .with_context(||format!("deliver tokens for nick={:?}",
+                                  &pspec.nick))?;
     }
   }
+
+  Ok(())
 }
 
 mod create_table {
@@ -373,19 +389,21 @@ mod create_table {
       <Result<_,AE>>::Ok(spec)
     })().with_context(|| args.file.to_owned()).context("read game spec")?;
 
+    let mut chan = connect(&ma)?;
+
     chan.cmd(&MgmtCommand::CreateGame {
       name: args.name.clone(), insns: vec![]
     })?;
 
-    let chan = ConnForGame {
+    let mut chan = ConnForGame {
       conn: chan,
       name: args.name.clone(),
       how: MgmtGameUpdateMode::Bulk,
     };
 
-    setup_table(&chan &spec.table)?;
+    setup_table(&mut chan, &spec)?;
 
-    eprintln!("CREATE-TABLE DID SETUP_TABLE NEEDS GAMESPEC", &ma, &args);
+    eprintln!("CREATE-TABLE DID SETUP_TABLE NEEDS GAMESPEC"); // xxx
   }
 
   inventory::submit!{Subcommand(

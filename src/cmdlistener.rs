@@ -203,7 +203,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     },
 
     CreateGame { name, insns } => {
-      let gs = GameState {
+      let gs = crate::gamestate::GameState {
         pieces : Default::default(),
         players : Default::default(),
         log : Default::default(),
@@ -339,18 +339,18 @@ fn execute_for_game(cs: &CommandStream, ig: &mut InstanceGuard,
                     mut insns: Vec<MgmtGameInstruction>,
                     how: MgmtGameUpdateMode) -> MgmtResponse {
   let mut uh = UpdateHandler::from_how(how);
-  let mut results = Vec::with_capacity(insns.len());
+  let mut responses = Vec::with_capacity(insns.len());
   let ok = (||{
     for insn in insns.drain(0..) {
-      let (upieces, ulogs, resp) = execute_game_insn(ig, insn)?;
+      let (upieces, ulogs, resp) = execute_game_insn(cs, ig, insn)?;
       uh.accumulate(ig, upieces, ulogs)?;
-      results.push(resp);
+      responses.push(resp);
     }
     uh.complete(cs,ig)?;
     Ok(None)
   })();
   MgmtResponse::AlterGame {
-    results,
+    responses,
     error: ok.unwrap_or_else(Some)
   }
 }
@@ -361,12 +361,13 @@ const XXX_DEFAULT_POSD : Pos = [5,5];
 const CREATE_PIECES_MAX : u32 = 300;
 
 #[throws(ME)]
-fn execute_game_insn(ig: &mut InstanceGuard, update: MgmtGameInstruction)
+fn execute_game_insn(cs: &CommandStream,
+                     ig: &mut InstanceGuard, update: MgmtGameInstruction)
                      -> (Vec<(PieceId,PieceUpdateOp<()>)>,
                          Vec<LogEntry>,
-                         MgmtGameResult) {
+                         MgmtGameResponse) {
   use MgmtGameInstruction::*;
-  use MgmtGameResult::*;
+  use MgmtGameResponse::*;
   match update {
     Noop { } => (vec![], vec![], Fine { }),
 
@@ -378,7 +379,7 @@ fn execute_game_insn(ig: &mut InstanceGuard, update: MgmtGameInstruction)
        vec![ LogEntry {
          html: format!("The facilitator added a player xxx"),
        } ],
-       MgmtGameResult::AddPlayer { player })
+       MgmtGameResponse::AddPlayer(player))
     },
 
     RemovePlayer(player) => {
@@ -386,6 +387,10 @@ fn execute_game_insn(ig: &mut InstanceGuard, update: MgmtGameInstruction)
       (vec![], vec![], Fine{})
     },
 
+    GetPlayers { } => {
+      let players = ig.gs.players.clone();
+      (vec![], vec![], Players(players))
+    },
 
     ResetPlayerAccesses { players } => {
       let tokens = ig.players_access_reset(&players)?
@@ -396,6 +401,19 @@ fn execute_game_insn(ig: &mut InstanceGuard, update: MgmtGameInstruction)
     ReportPlayerAccesses { players } => {
       let tokens = ig.players_access_report(&players)?;
       (vec![], vec![], PlayerAccessTokens { tokens })
+    }
+
+    SetFixedPlayerAccess { player, token } => {
+      let authorised : AuthorisedSatisfactory =
+        authorise_scope(cs, &ManagementScope::Server)?;
+      let authorised = match authorised.into_inner() {
+        ManagementScope::Server => Authorised::<RawToken>::authorise(),
+        _ => panic!(),
+      };
+      ig.player_access_register_fixed(
+        player, token, authorised
+      )?;
+      (vec![], vec![], Fine{})
     }
 
     AddPiece(PiecesSpec{ pos,posd,count,face,info }) => {
@@ -510,6 +528,8 @@ impl CommandListener {
 
 use authproofs::*;
 use authproofs::AuthorisationError;
+
+pub use authproofs::Authorised;
 
 mod authproofs {
   use crate::imports::*;

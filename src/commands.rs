@@ -17,9 +17,8 @@ pub enum MgmtCommand {
 pub enum MgmtResponse {
   Fine { },
   Error { error: MgmtError },
-  AlterGame { error: Option<MgmtError>, results: Vec<MgmtGameResult> },
+  AlterGame { error: Option<MgmtError>, responses: Vec<MgmtGameResponse> },
   GamesList { games: Vec<Arc<InstanceName>> },
-  GameState { gs: GameState },
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -29,23 +28,24 @@ pub enum MgmtGameInstruction {
   // todo: RemovePiece
   AddPlayer(PlayerState),
   RemovePlayer(PlayerId),
-  GetState { },
+  GetPlayers,
   ResetPlayerAccesses { players: Vec<PlayerId> },
   ReportPlayerAccesses { players: Vec<PlayerId> },
   SetFixedPlayerAccess { player: PlayerId, token: RawToken },
 }
 
 #[derive(Debug,Serialize,Deserialize)]
+pub enum MgmtGameResponse {
+  Fine { },
+  AddPlayer(PlayerId),
+  PlayerAccessTokens { tokens: Vec<Vec<RawToken>> },
+  Players(PlayerMap),
+}
+
+#[derive(Debug,Copy,Clone,Serialize,Deserialize)]
 pub enum MgmtGameUpdateMode {
   Online,
   Bulk,
-}
-
-#[derive(Debug,Serialize,Deserialize)]
-pub enum MgmtGameResult {
-  Fine { },
-  AddPlayer { player: PlayerId },
-  PlayerAccessTokens { tokens: Vec<Vec<RawToken>> },
 }
 
 #[derive(Debug,Clone,Error,Serialize,Deserialize)]

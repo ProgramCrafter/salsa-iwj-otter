@@ -48,7 +48,6 @@ pub struct Client {
   pub lastseen : Instant,
 }
 
-pub type PlayerMap = DenseSlotMap<PlayerId,PlayerState>;
 /* xxx
 #[derive(Serialize,Deserialize)]
 #[repr(transparent)]
@@ -419,15 +418,18 @@ impl InstanceGuard<'_> {
     Ok(())
   }
 
-  #[throws(OE)]
-  pub fn player_access_register_xxx(&mut self, token: RawToken, player: PlayerId) {
-    // xxx server has to not allow even facilitators to define tokens
-    // xxx this fn should become part of player_access_add
+  #[throws(MgmtError)]
+  pub fn player_access_register_fixed(&mut self,
+                                      player: PlayerId, token: RawToken,
+                                      _safe: Authorised<RawToken>
+  ) {
+    self.tokens_deregister_for_id(|id:PlayerId| id==player);
     let iad = InstanceAccessDetails {
       gref : self.gref.clone(),
       ident : player
     };
     self.token_register(token, iad);
+    self.save_access_now()?;
   }
 
   #[throws(MgmtError)]
@@ -439,7 +441,6 @@ impl InstanceGuard<'_> {
     for &player in players {
       self.c.g.gs.players.get(player).ok_or(MgmtError::PlayerNotFound)?;
     }
-    self.tokens_deregister_for_id(|id:PlayerId| players.contains(&id));
     self.save_access_now()?;
     let mut tokens = vec![];
     for &player in players {
@@ -840,7 +841,8 @@ pub fn xxx_global_setup() {
     let player = g.player_new(PlayerState {
       nick : nick.to_string(),
     })?;
-    g.player_access_register_xxx(RawToken(token.to_string()), player)?;
+    g.player_access_register_fixed(player, RawToken(token.to_string()),
+                                   Authorised::authorise())?;
   }
   g.save_access_now().unwrap();
 }
