@@ -818,28 +818,3 @@ impl Default for ServerConfig {
     toml::de::from_str("").expect("parse empty string as ServerConfig")
   }
 }
-
-// ========== ad-hoc and temporary ==========
-
-const XXX_PLAYERS_TOKENS : &[(&str, &str)] = &[
-  ("kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe", "alice"),
-  ("ccg9kzoTh758QrVE1xMY7BQWB36dNJTx", "bob"),
-];
-
-#[throws(AE)]
-pub fn xxx_global_setup() {
-  let gs = xxx_gamestate_init();
-  let gref = Instance::new(InstanceName {
-    scope: ManagementScope::Server,
-    scoped_name: "dummy".to_string()
-  }, gs)?;
-  let mut g = gref.lock()?;
-  for (token, nick) in XXX_PLAYERS_TOKENS {
-    let player = g.player_new(PlayerState {
-      nick : nick.to_string(),
-    })?;
-    g.player_access_register_fixed(player, RawToken(token.to_string()),
-                                   Authorised::authorise())?;
-  }
-  g.save_access_now().unwrap();
-}

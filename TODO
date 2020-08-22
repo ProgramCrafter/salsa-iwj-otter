@@ -1,3 +1,8 @@
+loading does not seem to work
+
+templates directory not found unless we symlink it
+
+
 token in main url
 client ? struct ?
 instance struct

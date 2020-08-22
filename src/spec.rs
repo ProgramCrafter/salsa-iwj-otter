@@ -2,7 +2,7 @@
 
 use serde::{Serialize,Deserialize};
 use fehler::throws;
-use index_vec::{define_index_type,IndexVec,index_vec};
+use index_vec::{define_index_type,IndexVec};
 use crate::gamestate::PieceSpec;
 use std::fmt::Debug;
 use implementation::PlayerAccessSpec;
@@ -132,21 +132,4 @@ mod implementation {
       spec.0.clone()
     }
   }
-}
-
-#[allow(clippy::type_complexity)]
-pub fn xxx_make_pieces() -> Result<Vec<(Pos, Box<dyn crate::gamestate::Piece>)>,crate::pieces::SVGProcessingError> {
-  use crate::imports::*;
-  Ok(vec![
-    ([ 90, 80 ],
-     piece_specs::Disc {
-       diam : 20,
-       faces : index_vec![ ColourSpec("red".to_string()), ColourSpec("grey".to_string()) ],
-     }.load()?),
-    ([ 90, 60 ],
-     piece_specs::Square {
-       size : vec![20],
-       faces : index_vec![ ColourSpec("blue".to_string()), ColourSpec("grey".to_string()) ],
-     }.load()?),
-  ])
 }

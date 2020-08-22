@@ -81,8 +81,6 @@ fn main() {
     set_config(config);
   };
 
-  xxx_global_setup().expect("global setup failed");
-
   let cl = CommandListener::new()?;
   cl.spawn()?;
 

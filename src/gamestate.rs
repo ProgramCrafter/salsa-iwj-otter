@@ -192,25 +192,3 @@ pub fn make_pieceid_visible(p : PieceId) -> VisiblePieceId {
   let kd : slotmap::KeyData = p.into();
   VisiblePieceId(kd)
 }
-
-pub fn xxx_gamestate_init() -> GameState {
-  let mut pieces = DenseSlotMap::with_key();
-  let mut gen = Generation(0);
-  for (pos, p) in xxx_make_pieces().expect("make pieces") {
-    let pr = PieceState {
-      pos, p,
-      face : 0.into(),
-      held : None,
-      lastclient : Default::default(),
-      zlevel : ZLevel{ z: 0f64 .try_into().unwrap(), zg: gen },
-      gen,
-      gen_before_lastclient : Generation(0),
-    };
-    gen.increment();
-    pieces.insert(pr);
-  }
-  GameState { table_size : DEFAULT_TABLE_SIZE,
-              pieces, gen, players : Default::default(),
-              max_z: ZCoord(0.),
-              log : Default::default(), }
-}
