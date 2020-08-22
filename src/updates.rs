@@ -8,8 +8,6 @@ use crate::imports::*;
 #[serde(transparent)]
 pub struct ClientSequence(u64);
 
-const RECENT_BUFFER : usize = 50;
-
 // ---------- from manamgenet operations ----------
 
 #[derive(Debug)] // not Default
@@ -100,7 +98,7 @@ enum TransmitUpdateEntry<'u> {
 
 impl Default for PlayerUpdates {
   fn default() -> PlayerUpdates { PlayerUpdates {
-    log : StableIndexVecDeque::with_capacity(RECENT_BUFFER),
+    log : StableIndexVecDeque::with_capacity(50),
     cv : Default::default(),
   } }
 }
