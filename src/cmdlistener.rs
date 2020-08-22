@@ -282,6 +282,7 @@ fn execute_for_game(cs: &CommandStream, ig: &mut InstanceGuard,
     uh.complete(cs,ig)?;
     Ok(None)
   })();
+  ig.save_game_now()?;
   MgmtResponse::AlterGame {
     responses,
     error: ok.unwrap_or_else(Some)
