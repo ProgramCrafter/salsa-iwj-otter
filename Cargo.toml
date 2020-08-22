@@ -48,7 +48,7 @@ failure = "0.1.8" # for pwd
 fs2 = "0.4"
 nix = "0.18"
 
-libc = "0.2"
+#libc = "0.2"
 
 toml = "0.5"
 
