@@ -199,7 +199,9 @@ impl Conn {
       Fine | GamesList{..} => { },
       AlterGame { error: None, .. } => { },
       Error { error } => {
-        Err(error.clone()).context(format!("response to: {:?}",&cmd))?;
+        Err(error.clone()).context(
+          format!("got error response to: {:?}",&cmd)
+        )?;
       },
       AlterGame { error: Some(error), .. } => {
         Err(error.clone()).context(format!(
@@ -461,8 +463,19 @@ mod reset_game {
       how: MgmtGameUpdateMode::Bulk,
     };
     let game : GameSpec = read_spec(&args.game_file, "game spec")?;
+
     if let Some(table_file) = args.table_file {
       let table_spec = read_spec(&table_file, "table spec")?;
+      chan.cmd(&MgmtCommand::CreateGame {
+        name: args.name.clone(),
+        insns: vec![],
+      }).map(|_|()).or_else(|e| {
+        if let Some(&MgmtError::AlreadyExists) = e.downcast_ref() {
+          return Ok(())
+        }
+        Err(e)
+      })?;
+
       setup_table(&mut chan, &table_spec)?;
     }
 
