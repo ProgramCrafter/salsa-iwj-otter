@@ -811,8 +811,6 @@ pub fn record_token<Id : AccessId> (
 
 // ---------- client expiiry ----------
 
-// xxx is lastseen updated by sse and by api calls ?
-
 pub fn client_expire_old_clients() {
   fn lock_even_poisoned(gref: &InstanceRef) -> MutexGuard<InstanceContainer> {
     match gref.0.lock() {

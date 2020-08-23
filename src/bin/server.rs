@@ -1,7 +1,5 @@
 
-// xxx need button(s) to kill old clients
-// and/or cause players to release grabs
-// ? need expiry of old clients?  limit of client count?
+// xxx need button(s) to cause players to release grabs ?
 
 #![feature(proc_macro_hygiene, decl_macro)]
 

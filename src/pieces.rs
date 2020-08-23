@@ -5,6 +5,7 @@ use crate::imports::*;
 type ColourMap = IndexVec<FaceId,Colour>;
 
 #[derive(Debug,Serialize,Deserialize)]
+// todo: this serialisation is rather large
 struct SimpleShape {
   desc : String,
   path : String,
