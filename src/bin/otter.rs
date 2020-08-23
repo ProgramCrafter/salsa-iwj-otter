@@ -281,7 +281,7 @@ impl ConnForGame {
 
 #[throws(E)]
 fn connect(ma: &MainOpts) -> Conn {
-  let unix = UnixStream::connect(SOCKET_PATH).context("connect to server")?;
+  let unix = UnixStream::connect(DEFAULT_COMMAND_SOCKET).context("connect to server")?; // xxx
   let chan = MgmtChannel::new(unix)?;
   let mut chan = Conn { chan };
   chan.cmd(&MgmtCommand::SetScope(ma.scope.clone().unwrap()))?;

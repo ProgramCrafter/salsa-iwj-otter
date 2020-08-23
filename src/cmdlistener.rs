@@ -12,8 +12,6 @@ use pwd::Passwd;
 pub use crate::from_instance_lock_error;
 pub use std::os::unix::net::UnixStream;
 
-pub const SOCKET_PATH : &str = "command.socket"; // xxx
-
 type CSE = anyhow::Error;
 
 use MgmtCommand::*;
@@ -413,7 +411,7 @@ impl CommandStream<'_> {
 impl CommandListener {
   #[throws(StartupError)]
   pub fn new() -> Self {
-    let path = SOCKET_PATH;
+    let path = &config().command_socket;
     match fs::remove_file(path) {
       Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(()),
       r => r,

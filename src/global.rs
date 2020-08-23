@@ -922,25 +922,34 @@ pub fn client_expire_old_clients() {
 // ========== server config ==========
 
 const DEFAULT_SAVE_DIRECTORY : &str = "save";
+pub const DEFAULT_COMMAND_SOCKET : &str = "command.socket"; // in save dir
+// ^ xxx should not be pub
 
 #[derive(Deserialize,Debug,Clone)]
 pub struct ServerConfigSpec {
   pub save_directory: Option<String>,
+  pub command_socket: Option<String>,
 }
 
 #[derive(Debug,Clone)]
 pub struct ServerConfig {
   pub save_directory: String,
+  pub command_socket: String,
 }
 
 impl TryFrom<ServerConfigSpec> for ServerConfig {
   type Error = AE;
   #[throws(Self::Error)]
   fn try_from(spec: ServerConfigSpec) -> ServerConfig {
-    let ServerConfigSpec { save_directory } = spec;
+    let ServerConfigSpec { save_directory, command_socket } = spec;
     let save_directory = save_directory
       .unwrap_or_else(|| DEFAULT_SAVE_DIRECTORY.to_owned());
-    ServerConfig { save_directory }
+    let mut command_socket = command_socket
+      .unwrap_or_else(|| DEFAULT_COMMAND_SOCKET.to_owned());
+    if !command_socket.starts_with('/') {
+      command_socket = format!("{}/{}", save_directory, command_socket);
+    }
+    ServerConfig { save_directory, command_socket }
   }
 }
 
