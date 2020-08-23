@@ -501,6 +501,9 @@ impl InstanceGuard<'_> {
 
 // ---------- save/load ----------
 
+// xxx saving on client api calls
+// xxx saving on "extraordinary" mgmt calls
+
 enum SavefilenameParseResult {
   NotGameFile,
   AccessFile,

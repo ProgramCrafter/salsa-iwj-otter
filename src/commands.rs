@@ -8,6 +8,7 @@ pub enum MgmtCommand {
   CreateGame { name: String, insns: Vec<MgmtGameInstruction> },
   ListGames { all: Option<bool>, },
   AlterGame {
+    // xxx option scope, access control
     name: String, insns: Vec<MgmtGameInstruction>,
     how: MgmtGameUpdateMode,
   },
