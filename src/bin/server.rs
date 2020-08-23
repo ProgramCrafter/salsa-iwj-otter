@@ -66,19 +66,10 @@ fn resource(leaf : CheckedResourceLeaf) -> io::Result<NamedFile> {
   NamedFile::open(format!("{}/{}", template_dir, leaf.safe))
 }  
 
-const DEFAULT_CONFIG_FILENAME : &str = "server.toml";
-
 #[throws(StartupError)]
 fn main() {
-  {
-    let config_filename = env::args().nth(1)
-      .unwrap_or(DEFAULT_CONFIG_FILENAME.to_owned());
-    let mut buf = String::new();
-    File::open(config_filename)?.read_to_string(&mut buf)?;
-    let config : ServerConfigSpec = toml::de::from_str(&buf)?;
-    let config = config.try_into()?;
-    set_config(config);
-  };
+  let config_filename = env::args().nth(1);
+  ServerConfig::read(config_filename.as_ref().map(String::as_str))?;
 
   load_games()?;
 
