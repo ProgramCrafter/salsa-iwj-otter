@@ -1,6 +1,7 @@
 
 #![feature(proc_macro_hygiene, decl_macro)]
 #![feature(slice_strip)]
+#![feature(error_iter)]
 
 #![allow(clippy::redundant_closure_call)]
 
