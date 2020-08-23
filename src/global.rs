@@ -621,7 +621,6 @@ impl InstanceGuard<'_> {
         })().context(lockfile).context("lock global save area")?);
       }
     }
-    // xxx check for deleted players, throw their tokens away
     let gs = {
       let mut gs : GameState = Self::load_something(&name, "g-")?;
       for mut p in gs.pieces.values_mut() {
@@ -630,7 +629,7 @@ impl InstanceGuard<'_> {
       gs
     };
 
-    let mut al : InstanceSaveAccesses<String>
+    let mut access_load : InstanceSaveAccesses<String>
       = Self::load_something(&name, "a-")
       .or_else(|e| {
         if let ServerFailure::Anyhow(ae) = &e {
@@ -647,6 +646,7 @@ impl InstanceGuard<'_> {
       updates.insert(player, Default::default());
     }
     let name = Arc::new(name);
+    // xxx check for deleted players, throw their tokens away
 
     let g = Instance {
       name, gs, updates,
@@ -661,11 +661,11 @@ impl InstanceGuard<'_> {
     // xxx record in GLOBAL.games
     let gref = InstanceRef(Arc::new(Mutex::new(cont)));
     let mut g = gref.lock().unwrap();
-    for (token, _) in &al.tokens_players {
+    for (token, _) in &access_load.tokens_players {
       g.tokens_players.tr.insert(RawToken(token.clone()));
     }
     let mut global = GLOBAL.players.write().unwrap();
-    for (token, player) in al.tokens_players.drain(0..) {
+    for (token, player) in access_load.tokens_players.drain(0..) {
       let iad = InstanceAccessDetails {
         gref : gref.clone(),
         ident : player,
