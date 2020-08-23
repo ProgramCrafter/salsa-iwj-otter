@@ -36,7 +36,7 @@ pub struct ZLevel {
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct GameState {
-  pub table_size : Pos, // xxx send to client etc.
+  pub table_size : Pos,
   pub pieces : DenseSlotMap<PieceId,PieceState>,
   pub players : PlayerMap,
   pub gen : Generation,
