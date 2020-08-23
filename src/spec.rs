@@ -128,7 +128,18 @@ mod implementation {
     type Error = SE;
     #[throws(SE)]
     fn try_from(spec: &ColourSpec) -> Colour {
-      // xxx check syntax
+      lazy_static! {
+        static ref RE: Regex = Regex::new(concat!(
+          r"^(?:", r"[[:alpha:]]{1,50}",
+             r"|", r"#[[:xdigit:]]{3}{1,2}",
+             r"|", r"(?:rgba?|hsla?)\([-.%\t 0-9]{1,50}\)",
+            r")$"
+        )).unwrap();
+      }
+      let s = &spec.0;
+      if !RE.is_match(s) {
+        throw!(SVGProcessingError::UnsupportedColourSpec);
+      }
       spec.0.clone()
     }
   }

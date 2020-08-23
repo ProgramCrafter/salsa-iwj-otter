@@ -23,6 +23,7 @@ pub enum SVGProcessingError {
   WriteFail,
   NegativeDragraise,
   ImproperSizeSpec,
+  UnsupportedColourSpec,
 }
 
 display_as_debug!{SVGProcessingError}
