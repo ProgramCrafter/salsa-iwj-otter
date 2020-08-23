@@ -22,7 +22,7 @@ visible_slotmap_key!{ VisiblePieceId('.') }
 #[serde(try_from="f64")]
 pub struct ZCoord(pub f64);
 
-pub const DEFAULT_TABLE_SIZE : Pos = [ 200, 100 ];
+pub const DEFAULT_TABLE_SIZE : Pos = [ 400, 200 ];
 
 // ---------- general data types ----------
 

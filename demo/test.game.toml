@@ -1,4 +1,4 @@
-# table_size = [300, 200]
+table_size = [300, 100]
 
 [[pieces]]
 pos = [90,80]

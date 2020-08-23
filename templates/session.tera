@@ -11,10 +11,12 @@
 
 <p>
     <svg id="space"
-	 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 110"
+	 xmlns="http://www.w3.org/2000/svg"
+	 viewBox="0 0 {{ table_size[0] }} {{ table_size[1] }}"
  	 onmousedown="some_mousedown(event)"
 	 >
-      <rect fill="green" x="20" y="5" width="200" height="100"/>
+      <rect fill="green" x="0" y="0"
+	    width="{{ table_size[0] }}" height="{{ table_size[1] }}"/>
       <g id="pieces_marker"></g>
 {%- for piece in uses %}
       <use id="use{{ piece.id }}" href="#piece{{ piece.id }}"
