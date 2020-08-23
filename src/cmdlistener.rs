@@ -144,7 +144,8 @@ fn execute_game_insn(cs: &CommandStream,
         Err(ME::AlreadyExists)?;
       }
       let logentry = LogEntry {
-        html: format!("The facilitator added a player xxx"),
+        html: format!("The facilitator added a player: {}",
+                      htmlescape::encode_minimal(&pl.nick)),
       };
       let (player, logentry) = ig.player_new(pl, logentry)?;
       #[allow(clippy::useless_format)] // xxx below
@@ -164,12 +165,13 @@ fn execute_game_insn(cs: &CommandStream,
     }),
 
     RemovePlayer(player) => {
-      ig.player_remove(player)?;
+      let old_state = ig.player_remove(player)?;
       #[allow(clippy::useless_format)] // xxx below
       (U{ pcs: vec![],
-          log: vec![ LogEntry {
-            html: format!("The facilitator removed a player xxx"),
-          }],
+          log: old_state.iter().map(|pl| LogEntry {
+            html: format!("The facilitator removed a player: {}",
+                          htmlescape::encode_minimal(&pl.nick)),
+          }).collect(),
           raw: None},
        Fine)
     },

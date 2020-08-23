@@ -328,14 +328,14 @@ impl InstanceGuard<'_> {
   //  #[throws(ServerFailure)]
   //  https://github.com/withoutboats/fehler/issues/62
   pub fn player_remove(&mut self, oldplayer: PlayerId)
-                       -> Result<(),ServerFailure> {
+                       -> Result<Option<PlayerState>,ServerFailure> {
     // We have to filter this player out of everything
     // Then save
     // Then send updates
     // We make a copy so if the save fails, we can put everything back
 
     let mut players = self.c.g.gs.players.clone();
-    players.remove(oldplayer);
+    let old_data = players.remove(oldplayer);
 
     // New state
     let mut gs = GameState {
@@ -422,7 +422,7 @@ impl InstanceGuard<'_> {
       );
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
 
-    Ok(())
+    Ok(old_data)
   }
 
   #[throws(MgmtError)]
