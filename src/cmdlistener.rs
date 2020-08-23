@@ -364,7 +364,6 @@ impl UpdateHandler {
         if bulk.logs {
           buf.log_updates(vec![LogEntry {
             html: "The facilitator (re)configured the game".to_owned(),
-            // xxx use cs.desc
           }]);
         }
 
