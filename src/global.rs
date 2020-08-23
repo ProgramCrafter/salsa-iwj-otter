@@ -924,8 +924,7 @@ pub fn client_expire_old_clients() {
 const DEFAULT_CONFIG_FILENAME : &str = "server.toml";
 
 const DEFAULT_SAVE_DIRECTORY : &str = "save";
-pub const DEFAULT_COMMAND_SOCKET : &str = "command.socket"; // in save dir
-// ^ xxx should not be pub
+const DEFAULT_COMMAND_SOCKET : &str = "command.socket"; // in save dir
 
 #[derive(Deserialize,Debug,Clone)]
 pub struct ServerConfigSpec {
@@ -969,7 +968,8 @@ impl ServerConfig {
     let config_filename = config_filename
       .unwrap_or_else(|| DEFAULT_CONFIG_FILENAME);
     let mut buf = String::new();
-    File::open(config_filename)?.read_to_string(&mut buf)?;
+    File::open(&config_filename).with_context(||config_filename.to_string())?
+      .read_to_string(&mut buf)?;
     let config : ServerConfigSpec = toml::de::from_str(&buf)?;
     let config = config.try_into()?;
     set_config(config);

@@ -57,6 +57,7 @@ const EXIT_DISASTER : i32 = 16;
 #[derive(Debug,Default)]
 struct MainOpts {
   scope: Option<ManagementScope>,
+  socket_path: Option<String>,
   verbose: i32,
 }
 
@@ -70,6 +71,13 @@ inventory::collect!(Subcommand);
 #[derive(Error,Debug)]
 struct ArgumentParseError(String);
 display_as_debug!(ArgumentParseError);
+
+impl From<anyhow::Error> for ArgumentParseError {
+  fn from(ae: anyhow::Error) -> ArgumentParseError {
+    eprintln!("error during argument parsing/startup: {:?}\n", &ae);
+    exit(EXIT_USAGE);
+  }
+}
 
 fn parse_args<T,F>(
   args: Vec<String>,
@@ -118,6 +126,7 @@ fn main() {
   #[derive(Default,Debug)]
   struct MainArgs {
     opts: MainOpts,
+    config_filename: Option<String>,
     subcommand: String,
     subargs: Vec<String>,
   };
@@ -145,6 +154,12 @@ fn main() {
     scope.add_option(&["--scope-unix"],
                      StoreConst(None),
                      "use unix user $USER scope (default)");
+    ap.refer(&mut ma.opts.socket_path)
+      .add_option(&["--socket"], StoreOption,
+                  "specify server socket path");
+    ap.refer(&mut ma.config_filename)
+      .add_option(&["-C","--config"], StoreOption,
+                  "specify server config file (used for finding socket)");
     let mut verbose = ap.refer(&mut ma.opts.verbose);
     verbose.add_option(&["-q","--quiet"], StoreConst(-1),
                        "set verbosity to error messages only");
@@ -158,6 +173,13 @@ fn main() {
       ))?;
       *scope = Some(ManagementScope::Unix { user });
     }
+    if ma.config_filename.is_some() || ma.opts.socket_path.is_none() {
+      ServerConfig::read(ma.config_filename.as_ref().map(String::as_str))
+        .context("read config file")?;
+    }
+    ma.opts.socket_path.get_or_insert_with(
+      || config().command_socket.clone()
+    );
     Ok(())
   }), Some(&|w|{
     writeln!(w, "\nSubcommands:")?;
@@ -281,7 +303,9 @@ impl ConnForGame {
 
 #[throws(E)]
 fn connect(ma: &MainOpts) -> Conn {
-  let unix = UnixStream::connect(DEFAULT_COMMAND_SOCKET).context("connect to server")?; // xxx
+  let socket_path = ma.socket_path.as_ref().unwrap();
+  let unix = UnixStream::connect(&socket_path)
+    .with_context(||socket_path.clone()).context("connect to server")?; 
   let chan = MgmtChannel::new(unix)?;
   let mut chan = Conn { chan };
   chan.cmd(&MgmtCommand::SetScope(ma.scope.clone().unwrap()))?;
