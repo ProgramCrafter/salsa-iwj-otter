@@ -148,7 +148,6 @@ fn execute_game_insn(cs: &CommandStream,
                       htmlescape::encode_minimal(&pl.nick)),
       };
       let (player, logentry) = ig.player_new(pl, logentry)?;
-      #[allow(clippy::useless_format)] // xxx below
       (U{ pcs: vec![],
           log: vec![ logentry ],
           raw: None },
@@ -166,7 +165,6 @@ fn execute_game_insn(cs: &CommandStream,
 
     RemovePlayer(player) => {
       let old_state = ig.player_remove(player)?;
-      #[allow(clippy::useless_format)] // xxx below
       (U{ pcs: vec![],
           log: old_state.iter().map(|pl| LogEntry {
             html: format!("The facilitator removed a player: {}",
