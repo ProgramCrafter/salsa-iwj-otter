@@ -322,8 +322,10 @@ impl InstanceGuard<'_> {
     (player, logentry)
   }
 
-//  #[throws(ServerFailure)]
-  pub fn player_remove(&mut self, oldplayer: PlayerId) -> Result<(),ServerFailure> {
+  //  #[throws(ServerFailure)]
+  //  https://github.com/withoutboats/fehler/issues/62
+  pub fn player_remove(&mut self, oldplayer: PlayerId)
+                       -> Result<(),ServerFailure> {
     // We have to filter this player out of everything
     // Then save
     // Then send updates
