@@ -46,6 +46,15 @@ pub struct Client {
   pub lastseen : Instant,
 }
 
+/// KINDS OF PERSISTENT STATE
+///
+///               TokenTable   TokenTable    GameState    GameState
+///                <ClientId>   <PlayerId>    .players     .pieces
+///
+///   Saved        No           a-*           g-*          g-*
+///   Spec TOML    Absent       table, ish    table        game
+///
+///
 /// UPDATE RELIABILITY/PERSISTENCE RULES
 ///
 /// From the caller's point of view
@@ -66,7 +75,7 @@ pub struct Client {
 ///    * Players
 ///
 /// All of the above, except clients, are persistent, in the sense
-/// that a server restart will preserve them.
+/// that a server restart will preserve them.  See above.
 ///
 /// The general code gets mutable access to the GameState.  We offer
 /// post-hoc saving of a modified game.  This should not be used for
