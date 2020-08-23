@@ -617,7 +617,8 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(ServerFailure)]
-  fn load_something<T:DeserializeOwned>(name: &InstanceName, prefix: &str) -> T {
+  fn load_something<T:DeserializeOwned>(name: &InstanceName, prefix: &str)
+                                        -> T {
     let inp = savefilename(name, prefix, "");
     let mut f = BufReader::new(fs::File::open(&inp).context(inp)?);
     rmp_serde::decode::from_read(&mut f)?
