@@ -11,6 +11,8 @@ visible_slotmap_key!{ ClientId('C') }
 
 const MAX_CLIENT_INACTIVITY : Duration = Duration::from_secs(200);
 
+const GAME_SAVE_LAG : Duration = Duration::from_millis(500);
+
 // ---------- public data structure ----------
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -154,6 +156,7 @@ struct Global {
   players : RwLock<TokenTable<PlayerId>>,
   clients : RwLock<TokenTable<ClientId>>,
   config  : RwLock<Arc<ServerConfig>>,
+  dirty   : Mutex<VecDeque<InstanceRef>>,
   save_area_lock : Mutex<Option<File>>,
   // xxx delete clients at some point!
 }
@@ -161,6 +164,7 @@ struct Global {
 #[derive(Debug)]
 pub struct InstanceContainer {
   live : bool,
+  game_dirty : bool,
   g : Instance,
 }
 
@@ -214,6 +218,7 @@ impl Instance {
 
     let cont = InstanceContainer {
       live : true,
+      game_dirty : false,
       g,
     };
 
@@ -594,6 +599,7 @@ impl InstanceGuard<'_> {
     self.save_something("g-", |s,w| {
       rmp_serde::encode::write_named(w, &s.c.g.gs)
     })?;
+    self.c.game_dirty = false;
   }
 
   #[throws(ServerFailure)]
@@ -673,6 +679,7 @@ impl InstanceGuard<'_> {
     };
     let cont = InstanceContainer {
       live: true,
+      game_dirty: false,
       g,
     };
     let gref = InstanceRef(Arc::new(Mutex::new(cont)));
@@ -809,7 +816,45 @@ pub fn record_token<Id : AccessId> (
   token
 }
 
-// ---------- client expiiry ----------
+// ========== background maintenance ==========
+
+// ---------- delayed game save ----------
+
+impl InstanceGuard<'_> {
+  pub fn save_game_later(&mut self) {
+    if self.c.game_dirty { return }
+    GLOBAL.dirty.lock().unwrap().push_back(self.gref.clone());
+    self.c.game_dirty = true;
+  }
+}
+
+pub fn game_flush_task() {
+  let mut inner_queue = VecDeque::new();
+  loop {
+    {
+      mem::swap(&mut inner_queue, &mut *GLOBAL.dirty.lock().unwrap());
+    }
+    thread::sleep(GAME_SAVE_LAG);
+    for _ in 0..inner_queue.len() {
+      let ent = inner_queue.pop_front().unwrap();
+      let mut ig = match ent.lock() { Ok(ig) => ig, _ => continue/*ah well*/ };
+      if !ig.c.game_dirty { continue }
+      match ig.save_game_now() {
+        Ok(_) => {
+          assert!(!ig.c.game_dirty);
+          eprintln!("saved {:?}", &ig.name);
+        },
+        Err(e) => {
+          eprintln!("save error! name={:?}: {}", &ig.name, &e);
+          mem::drop(ig);
+          inner_queue.push_back(ent); // oof
+        }
+      }
+    }
+  }
+}
+
+// ---------- client expiry ----------
 
 pub fn client_expire_old_clients() {
   fn lock_even_poisoned(gref: &InstanceRef) -> MutexGuard<InstanceContainer> {
