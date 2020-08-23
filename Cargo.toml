@@ -18,6 +18,7 @@ thiserror = "1"
 
 rand = "0"
 
+regex = "1"
 #arrayvec = "0"
 
 #toml = "0.5"
