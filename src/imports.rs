@@ -61,6 +61,8 @@ pub use index_vec::{define_index_type,index_vec,IndexVec,IndexSlice};
 
 pub use vecdeque_stableix::StableIndexVecDeque;
 
+pub use fs2::FileExt;
+
 pub use crate::global::*;
 pub use crate::gamestate::*;
 pub use crate::pieces::*;

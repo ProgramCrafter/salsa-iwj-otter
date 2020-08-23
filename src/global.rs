@@ -143,6 +143,7 @@ struct Global {
   players : RwLock<TokenTable<PlayerId>>,
   clients : RwLock<TokenTable<ClientId>>,
   config  : RwLock<Arc<ServerConfig>>,
+  save_area_lock : Mutex<Option<File>>,
   // xxx delete clients at some point!
 }
 
@@ -606,9 +607,20 @@ impl InstanceGuard<'_> {
     rmp_serde::decode::from_read(&mut f)?
   }
 
-  #[throws(OE)]
+  #[throws(StartupError)]
   pub fn load(name: InstanceName) -> InstanceRef {
-    // xxx should take a file lock on save area
+    {
+      let mut st = GLOBAL.save_area_lock.lock().unwrap();
+      let st = &mut *st;
+      if st.is_none() {
+        let lockfile = format!("{}/lock", config().save_directory);
+        *st = Some((||{
+          let file = File::create(&lockfile).context("open")?;
+          file.try_lock_exclusive().context("lock")?;
+          Ok::<_,AE>(file)
+        })().context(lockfile).context("lock global save area")?);
+      }
+    }
     // xxx check for deleted players, throw their tokens away
     let gs = {
       let mut gs : GameState = Self::load_something(&name, "g-")?;
