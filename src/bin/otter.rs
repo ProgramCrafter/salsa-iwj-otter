@@ -363,10 +363,6 @@ fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
     insns.push(MgmtGameInstruction::ResetPlayerAccesses {
       players: resetreport.clone(),
     });
-    insns.push(MgmtGameInstruction::ReportPlayerAccesses {
-      // xxx not needed
-      players: resetreport.clone(),
-    });
     let mut got_tokens = None;
     chan.alter_game(insns, Some(&mut |response| {
       if let MgmtGameResponse::PlayerAccessTokens(tokens) = response {
