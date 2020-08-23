@@ -60,9 +60,9 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
 //  thread::sleep(Duration::from_millis(2000));
   let iad = lookup_token(&form.ctoken)?;
   let client = iad.ident;
-  let mut g = iad.gref.lock()?;
-  g.save_game_later();
-  let g = &mut *g;
+  let mut ig = iad.gref.lock()?;
+  ig.save_game_later();
+  let g = &mut *ig;
   let cl = &mut g.clients.byid_mut(client)?;
   // ^ can only fail if we raced
   cl.lastseen = Instant::now();
