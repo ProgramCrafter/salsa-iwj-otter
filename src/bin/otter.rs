@@ -290,9 +290,7 @@ fn connect(ma: &MainOpts) -> Conn {
 
 fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
                spec: &TableSpec) -> Result<(),AE> {
-  // xxx should delete old players
-
-  // create missing players
+  // create missing players and delete old players
   let (added_players,) = {
     let (_, nick2id) = chan.get_info()?;
 
