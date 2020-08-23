@@ -646,7 +646,9 @@ impl InstanceGuard<'_> {
       updates.insert(player, Default::default());
     }
     let name = Arc::new(name);
-    // xxx check for deleted players, throw their tokens away
+    access_load.tokens_players.retain(
+      |&(_,player)| gs.players.contains_key(player)
+    );
 
     let g = Instance {
       name, gs, updates,
