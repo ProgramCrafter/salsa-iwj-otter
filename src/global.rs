@@ -158,7 +158,6 @@ struct Global {
   config  : RwLock<Arc<ServerConfig>>,
   dirty   : Mutex<VecDeque<InstanceRef>>,
   save_area_lock : Mutex<Option<File>>,
-  // xxx delete clients at some point!
 }
 
 #[derive(Debug)]
@@ -514,9 +513,6 @@ impl InstanceGuard<'_> {
 }
 
 // ---------- save/load ----------
-
-// xxx saving on client api calls
-// xxx saving on "extraordinary" mgmt calls
 
 enum SavefilenameParseResult {
   NotGameFile,
