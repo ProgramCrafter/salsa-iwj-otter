@@ -1,16 +1,1 @@
-loading does not seem to work
-
-templates directory not found unless we symlink it
-
-
-token in main url
-client ? struct ?
-instance struct
-   page should tell us nick and client id
-
-communicate with server about moves
-  sync problem wrt xhr api grab call and ui updates
-    per-piece seq no?
-
-token in api queries
-dashedline around only things gotten
+xxx templates directory not found unless we symlink it
