@@ -680,7 +680,6 @@ impl InstanceGuard<'_> {
 
 #[throws(anyhow::Error)]
 pub fn load_games() {
-  /// xxx take a lock
   enum AFState { Found(PathBuf), Used };
   use AFState::*;
   use SavefilenameParseResult::*;
