@@ -10,6 +10,8 @@ use std::cell::RefCell;
 use std::cell::Cell;
 
 type E = anyhow::Error;
+type Insn = MgmtGameInstruction;
+type Resp = MgmtGameResponse;
 
 use argparse::action::ParseResult::Parsed;
 
@@ -293,9 +295,19 @@ fn setup_table(chan: &mut ConnForGame, spec: &TableSpec) -> Result<(),AE> {
   let (added_players,) = {
     let (_, nick2id) = chan.get_info()?;
 
+    #[derive(Default)]
+    struct St { id: PlayerId, old: bool, new: bool };
+
+    let mut nick2st : HashMap<_,_> = {nick2id}
+      .drain()
+      .map(|(nick,id)| (nick, St { id, old: true, new: false }))
+      .collect();
+
     let mut insns = vec![];
     for pspec in &spec.players {
-      if !nick2id.contains_key(&pspec.nick) {
+      let st = nick2st.entry(pspec.nick.clone()).or_default();
+      st.new = true;
+      if !st.old {
         insns.push(MgmtGameInstruction::AddPlayer(PlayerState {
           nick: pspec.nick.clone()
         }));
@@ -304,7 +316,7 @@ fn setup_table(chan: &mut ConnForGame, spec: &TableSpec) -> Result<(),AE> {
     let mut added_players = HashSet::new();
     chan.alter_game(insns, Some(&mut |response| {
       let player = match response {
-        &MgmtGameResponse::AddPlayer(player) => player,
+        &Resp::AddPlayer(player) => player,
         _ => Err(anyhow!("AddPlayer strange answer {:?}",
                          &response))?,
       };
@@ -429,8 +441,6 @@ mod create_table {
 }
 
 //---------- reset-game ----------
-
-type Insn = MgmtGameInstruction;
 
 mod reset_game {
   use super::*;
