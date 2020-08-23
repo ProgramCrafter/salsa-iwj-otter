@@ -288,7 +288,8 @@ fn connect(ma: &MainOpts) -> Conn {
   chan
 }
 
-fn setup_table(chan: &mut ConnForGame, spec: &TableSpec) -> Result<(),AE> {
+fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
+               spec: &TableSpec) -> Result<(),AE> {
   // xxx should delete old players
 
   // create missing players
@@ -306,6 +307,9 @@ fn setup_table(chan: &mut ConnForGame, spec: &TableSpec) -> Result<(),AE> {
     let mut insns = vec![];
     for pspec in &spec.players {
       let st = nick2st.entry(pspec.nick.clone()).or_default();
+      if st.new {
+        Err(anyhow!("duplicate player nick {:?} in spec", &pspec.nick))?;
+      }
       st.new = true;
       if !st.old {
         insns.push(MgmtGameInstruction::AddPlayer(PlayerState {
@@ -313,14 +317,24 @@ fn setup_table(chan: &mut ConnForGame, spec: &TableSpec) -> Result<(),AE> {
         }));
       }
     }
+
+    for (nick, st) in nick2st {
+      if st.new { continue }
+      if !st.old { continue }
+      if ma.verbose >= 1 {
+        eprintln!("removing old player {:?}", &nick);
+      }
+      insns.push(Insn::RemovePlayer(st.id));
+    }
+
     let mut added_players = HashSet::new();
     chan.alter_game(insns, Some(&mut |response| {
-      let player = match response {
-        &Resp::AddPlayer(player) => player,
-        _ => Err(anyhow!("AddPlayer strange answer {:?}",
-                         &response))?,
+      match response {
+        &Resp::AddPlayer(player) => {
+          added_players.insert(player);
+        },
+        _ => { },
       };
-      added_players.insert(player);
       Ok(())
     }))?;
 
@@ -426,7 +440,7 @@ mod create_table {
       how: MgmtGameUpdateMode::Bulk,
     };
 
-    setup_table(&mut chan, &spec)?;
+    setup_table(&ma, &mut chan, &spec)?;
 
     if ma.verbose >= 0 {
       eprintln!("create-table successful.  game still needs setup.");
@@ -486,7 +500,7 @@ mod reset_game {
         Err(e)
       })?;
 
-      setup_table(&mut chan, &table_spec)?;
+      setup_table(&ma, &mut chan, &table_spec)?;
     }
 
     let mut insns = vec![];

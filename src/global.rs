@@ -306,11 +306,14 @@ impl DerefMut for InstanceGuard<'_> {
 impl InstanceGuard<'_> {
   /// caller is responsible for logging; threading it through
   /// proves the caller has a log entry.
-  #[throws(ServerFailure)]
+  #[throws(MgmtError)]
   pub fn player_new(&mut self, newplayer: PlayerState,
                     logentry: LogEntry) -> (PlayerId, LogEntry) {
     // saving is fallible, but we can't attempt to save unless
     // we have a thing to serialise with the player in it
+    if self.c.g.gs.players.values().any(|pl| pl.nick == newplayer.nick) {
+      Err(MgmtError::AlreadyExists)?;
+    }
     let player = self.c.g.gs.players.insert(newplayer);
     self.save_game_now().map_err(|e|{
       self.c.g.gs.players.remove(player);
