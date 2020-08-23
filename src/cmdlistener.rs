@@ -24,8 +24,8 @@ from_instance_lock_error!{MgmtError}
 const USERLIST : &str = "/etc/userlist";
 const CREATE_PIECES_MAX : u32 = 300;
 
-const XXX_START_POS : Pos = [20,20];
-const XXX_DEFAULT_POSD : Pos = [5,5];
+const DEFAULT_POS_START : Pos = [20,20];
+const DEFAULT_POS_DELTA : Pos = [5,5];
 
 pub struct CommandListener {
   listener : UnixListener,
@@ -232,11 +232,11 @@ fn execute_game_insn(cs: &CommandStream,
       let gs = &mut ig.gs;
       let count = count.unwrap_or(1);
       if count > CREATE_PIECES_MAX { throw!(LimitExceeded) }
-      let posd = posd.unwrap_or(XXX_DEFAULT_POSD);
+      let posd = posd.unwrap_or(DEFAULT_POS_DELTA);
       let face = info.resolve_spec_face(face)?;
 
       let mut updates = Vec::with_capacity(count as usize);
-      let mut pos = pos.unwrap_or(XXX_START_POS);
+      let mut pos = pos.unwrap_or(DEFAULT_POS_START);
       for i in 0..count {
         let p = info.load()?;
         let z = ZCoord(gs.max_z.0 + (i + 1) as f64);
