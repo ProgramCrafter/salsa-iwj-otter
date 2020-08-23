@@ -188,7 +188,7 @@ impl PieceState {
 // ========== ad-hoc and temporary ==========
 
 pub fn make_pieceid_visible(p : PieceId) -> VisiblePieceId {
-  // xxx need to do censorship mapping here
+  // todo-lens need to do censorship mapping here
   let kd : slotmap::KeyData = p.into();
   VisiblePieceId(kd)
 }
