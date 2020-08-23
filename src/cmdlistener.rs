@@ -2,6 +2,8 @@
 
 use crate::imports::*;
 
+// xxx principled approach to logging
+
 // ---------- newtypes, type aliases, basic definitions ----------
 
 use std::os::unix::io::AsRawFd;

@@ -2,6 +2,7 @@
 
 // xxx deployment note: need a whole bunch of domains for SSE conn limit
 
+// xxx some way to choose faces / rotate
 
 // elemnts for a piece
 //
