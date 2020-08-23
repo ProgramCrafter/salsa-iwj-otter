@@ -9,6 +9,8 @@ use std::sync::PoisonError;
 
 visible_slotmap_key!{ ClientId('C') }
 
+const MAX_CLIENT_INACTIVITY : Duration = Duration::from_secs(200);
+
 // ---------- public data structure ----------
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -793,6 +795,69 @@ pub fn record_token<Id : AccessId> (
   let token = RawToken::new_random();
   ig.token_register(token.clone(), iad);
   token
+}
+
+// ---------- client expiiry ----------
+
+pub fn client_expire_old_clients() {
+  fn lock_even_poisoned(gref: &InstanceRef) -> MutexGuard<InstanceContainer> {
+    match gref.0.lock() {
+      Ok(g) => g,
+      Err(poison) => poison.into_inner(),
+    }
+  }
+
+  let mut expire = vec![];
+  let max_age = Instant::now() - MAX_CLIENT_INACTIVITY;
+
+  trait ClientIterator {
+    type Ret;
+    fn iter<'g>(&mut self, gref: &'g InstanceRef, max_age: Instant)
+            -> (MutexGuard<'g, InstanceContainer>, Option<Self::Ret>) {
+      let c = lock_even_poisoned(gref);
+      let ret = 'ret: loop {
+        for (client, cl) in &c.g.clients {
+          if cl.lastseen > max_age { continue }
+          let ret = self.old(client);
+          if ret.is_some() { break 'ret ret }
+        }
+        break 'ret None;
+      };
+      (c,ret)
+    }
+    fn old(&mut self, client: ClientId) -> Option<Self::Ret>;
+  }
+
+  for gref in GLOBAL.games.read().unwrap().values() {
+    struct Any;
+    impl ClientIterator for Any {
+      type Ret = ();
+      fn old(&mut self, _client: ClientId) -> Option<()> {
+        return Some(())
+      }
+    }
+    if let (_, Some(())) = Any.iter(&gref, max_age) {
+      expire.push(gref.clone());
+    }
+  }
+  for gref in expire.drain(..) {
+    struct Now(HashSet<ClientId>);
+    enum Impossible { }
+    impl ClientIterator for Now {
+      type Ret = Impossible;
+      fn old(&mut self, client: ClientId)
+             -> Option<Impossible> {
+        self.0.insert(client);
+        None
+      }
+    }
+
+    let mut now = Now(Default::default());
+    let (mut c, _) = now.iter(&gref, max_age);
+    c.g.clients.retain(|c,_| !now.0.contains(&c));
+    let mut gref = InstanceGuard { c, gref: gref.clone() };
+    gref.tokens_deregister_for_id::<ClientId,_>(|c| now.0.contains(&c));
+  }
 }
 
 // ========== server config ==========
