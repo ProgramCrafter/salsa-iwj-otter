@@ -75,7 +75,8 @@ fn main() {
       .unwrap_or(DEFAULT_CONFIG_FILENAME.to_owned());
     let mut buf = String::new();
     File::open(config_filename)?.read_to_string(&mut buf)?;
-    let config = toml::de::from_str(&buf)?;
+    let config : ServerConfigSpec = toml::de::from_str(&buf)?;
+    let config = config.try_into()?;
     set_config(config);
   };
 

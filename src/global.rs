@@ -924,12 +924,25 @@ pub fn client_expire_old_clients() {
 const DEFAULT_SAVE_DIRECTORY : &str = "save";
 
 #[derive(Deserialize,Debug,Clone)]
+pub struct ServerConfigSpec {
+  pub save_directory: Option<String>,
+}
+
+#[derive(Debug,Clone)]
 pub struct ServerConfig {
-  #[serde(default="default_save_directory")]
   pub save_directory: String,
 }
 
-fn default_save_directory() -> String { DEFAULT_SAVE_DIRECTORY.to_owned() }
+impl TryFrom<ServerConfigSpec> for ServerConfig {
+  type Error = AE;
+  #[throws(Self::Error)]
+  fn try_from(spec: ServerConfigSpec) -> ServerConfig {
+    let ServerConfigSpec { save_directory } = spec;
+    let save_directory = save_directory
+      .unwrap_or_else(|| DEFAULT_SAVE_DIRECTORY.to_owned());
+    ServerConfig { save_directory }
+  }
+}
 
 pub fn config() -> Arc<ServerConfig> {
   GLOBAL.config.read().unwrap().clone()
@@ -941,6 +954,8 @@ pub fn set_config(config: ServerConfig) {
 
 impl Default for ServerConfig {
   fn default() -> ServerConfig {
-    toml::de::from_str("").expect("parse empty string as ServerConfig")
+    let spec : ServerConfigSpec = toml::de::from_str("")
+      .expect("parse empty string as ServerConfigSpec");
+    spec.try_into().expect("empty spec into config")
   }
 }
