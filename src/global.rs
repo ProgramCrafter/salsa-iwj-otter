@@ -651,7 +651,8 @@ impl InstanceGuard<'_> {
     );
 
     let g = Instance {
-      name, gs, updates,
+      gs, updates,
+      name: name.clone(),
       clients : Default::default(),
       tokens_clients : Default::default(),
       tokens_players : Default::default(),
@@ -660,7 +661,6 @@ impl InstanceGuard<'_> {
       live: true,
       g,
     };
-    // xxx record in GLOBAL.games
     let gref = InstanceRef(Arc::new(Mutex::new(cont)));
     let mut g = gref.lock().unwrap();
     for (token, _) in &access_load.tokens_players {
@@ -676,6 +676,7 @@ impl InstanceGuard<'_> {
     }
     drop(global);
     drop(g);
+    GLOBAL.games.write().unwrap().insert(name, gref.clone());
     gref
   }
 }
