@@ -83,10 +83,10 @@ fn main() {
     .enable(Frame::Deny)
     .enable(Referrer::NoReferrer);
 
-  let config = config();
+  let c = config();
 
   let mut cbuilder = rocket::config::Config::build(
-    if config.debug {
+    if c.debug {
       rocket::config::Environment::Development
     } else {
       eprintln!("requesting Production");
@@ -94,11 +94,11 @@ fn main() {
     }
   );
 
-  if config.debug {
+  if c.debug {
     cbuilder = cbuilder.address("127.0.0.1")
   }
-  cbuilder = cbuilder.workers(config.rocket_workers);
-  if let Some(port) = config.http_port {
+  cbuilder = cbuilder.workers(c.rocket_workers);
+  if let Some(port) = c.http_port {
     cbuilder = cbuilder.port(port);
   }
   let rconfig = cbuilder.finalize()?;
