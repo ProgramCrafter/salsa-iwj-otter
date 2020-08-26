@@ -930,6 +930,8 @@ pub struct ServerConfigSpec {
   pub save_directory: Option<String>,
   pub command_socket: Option<String>,
   pub debug: Option<bool>,
+  pub http_port: Option<u16>,
+  pub rocket_workers: Option<u16>,
 }
 
 #[derive(Debug,Clone)]
@@ -937,6 +939,8 @@ pub struct ServerConfig {
   pub save_directory: String,
   pub command_socket: String,
   pub debug: bool,
+  pub http_port: Option<u16>,
+  pub rocket_workers: u16,
 }
 
 impl TryFrom<ServerConfigSpec> for ServerConfig {
@@ -945,6 +949,7 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
   fn try_from(spec: ServerConfigSpec) -> ServerConfig {
     let ServerConfigSpec {
       save_directory, command_socket, debug,
+      http_port, rocket_workers,
     } = spec;
 
     let save_directory = save_directory
@@ -957,9 +962,12 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
     }
 
     let debug = debug.unwrap_or(cfg!(debug_assertions));
+    let rocket_workers = rocket_workers.unwrap_or(
+      if debug { 20 } else { 1000 });
 
     ServerConfig {
       save_directory, command_socket, debug,
+      http_port, rocket_workers,
     }
   }
 }

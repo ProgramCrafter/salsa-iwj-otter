@@ -83,7 +83,27 @@ fn main() {
     .enable(Frame::Deny)
     .enable(Referrer::NoReferrer);
 
-  let r = rocket::ignite()
+  let config = config();
+
+  let mut cbuilder = rocket::config::Config::build(
+    if config.debug {
+      rocket::config::Environment::Development
+    } else {
+      eprintln!("requesting Production");
+      rocket::config::Environment::Production
+    }
+  );
+
+  if config.debug {
+    cbuilder = cbuilder.address("127.0.0.1")
+  }
+  cbuilder = cbuilder.workers(config.rocket_workers);
+  if let Some(port) = config.http_port {
+    cbuilder = cbuilder.port(port);
+  }
+  let rconfig = cbuilder.finalize()?;
+
+  let r = rocket::custom(rconfig)
     .attach(helmet)
     .attach(Template::fairing())
     .mount("/", routes![
