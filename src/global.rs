@@ -941,15 +941,22 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
   type Error = AE;
   #[throws(Self::Error)]
   fn try_from(spec: ServerConfigSpec) -> ServerConfig {
-    let ServerConfigSpec { save_directory, command_socket } = spec;
+    let ServerConfigSpec {
+      save_directory, command_socket,
+    } = spec;
+
     let save_directory = save_directory
       .unwrap_or_else(|| DEFAULT_SAVE_DIRECTORY.to_owned());
+
     let mut command_socket = command_socket
       .unwrap_or_else(|| DEFAULT_COMMAND_SOCKET.to_owned());
     if !command_socket.starts_with('/') {
       command_socket = format!("{}/{}", save_directory, command_socket);
     }
-    ServerConfig { save_directory, command_socket }
+
+    ServerConfig {
+      save_directory, command_socket,
+    }
   }
 }
 
