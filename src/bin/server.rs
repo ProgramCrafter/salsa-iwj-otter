@@ -48,16 +48,16 @@ fn loading(ptoken : InstanceAccess<PlayerId>) -> Template {
 
 #[get("/_/updates/<ctoken>/<gen>")]
 #[throws(OE)]
-fn updates(ctoken : InstanceAccess<ClientId>, gen: u64)
-           -> impl response::Responder<'static> {
+fn updates<'r>(ctoken : InstanceAccess<ClientId>, gen: u64,
+           cors: rocket_cors::Guard<'r>)
+           -> impl response::Responder<'r> {
   let gen = Generation(gen);
   let iad = ctoken.i;
   let content = sse::content(iad, gen)?;
   let content = response::Stream::chunked(content, 4096);
   const CTYPE : &str = "text/event-stream; charset=utf-8";
   let ctype = ContentType::parse_flexible(CTYPE).unwrap();
-  // xxx set CORS allowed header
-  response::content::Content(ctype,content)
+  cors.responder(response::content::Content(ctype,content))
 }  
 
 #[get("/_/<leaf>")]
@@ -102,17 +102,29 @@ fn main() {
   }
   cbuilder.extras.insert("template_dir".to_owned(),
                          c.template_dir.clone().into());
+
+  let cors_state = {
+    use rocket_cors::*;
+    let opts = CorsOptions::default()
+      .allowed_origins(AllowedOrigins::all())
+      .allowed_methods(iter::once(rocket::http::Method::Get.into()).collect());
+    opts.validate().expect("cors options");
+    opts.to_cors().expect("cors")
+  };
+
   let rconfig = cbuilder.finalize()?;
 
   let r = rocket::custom(rconfig)
     .attach(helmet)
     .attach(Template::fairing())
+    .manage(cors_state)
     .mount("/", routes![
       index,
       loading,
       resource,
       updates,
     ]);
+
   let r = game::session::mount(r);
   let r = game::api::mount(r);
   r.launch();
