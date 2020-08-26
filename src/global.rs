@@ -929,12 +929,14 @@ const DEFAULT_COMMAND_SOCKET : &str = "command.socket"; // in save dir
 pub struct ServerConfigSpec {
   pub save_directory: Option<String>,
   pub command_socket: Option<String>,
+  pub debug: Option<bool>,
 }
 
 #[derive(Debug,Clone)]
 pub struct ServerConfig {
   pub save_directory: String,
   pub command_socket: String,
+  pub debug: bool,
 }
 
 impl TryFrom<ServerConfigSpec> for ServerConfig {
@@ -942,7 +944,7 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
   #[throws(Self::Error)]
   fn try_from(spec: ServerConfigSpec) -> ServerConfig {
     let ServerConfigSpec {
-      save_directory, command_socket,
+      save_directory, command_socket, debug,
     } = spec;
 
     let save_directory = save_directory
@@ -954,8 +956,10 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
       command_socket = format!("{}/{}", save_directory, command_socket);
     }
 
+    let debug = debug.unwrap_or(cfg!(debug_assertions));
+
     ServerConfig {
-      save_directory, command_socket,
+      save_directory, command_socket, debug,
     }
   }
 }
