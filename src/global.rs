@@ -924,6 +924,7 @@ const DEFAULT_CONFIG_FILENAME : &str = "server.toml";
 
 const DEFAULT_SAVE_DIRECTORY : &str = "save";
 const DEFAULT_COMMAND_SOCKET : &str = "command.socket"; // in save dir
+const DEFAULT_TEMPLATE_DIR : &str = "templates";
 
 #[derive(Deserialize,Debug,Clone)]
 pub struct ServerConfigSpec {
@@ -932,6 +933,7 @@ pub struct ServerConfigSpec {
   pub debug: Option<bool>,
   pub http_port: Option<u16>,
   pub rocket_workers: Option<u16>,
+  pub template_dir: Option<String>,
 }
 
 #[derive(Debug,Clone)]
@@ -941,6 +943,7 @@ pub struct ServerConfig {
   pub debug: bool,
   pub http_port: Option<u16>,
   pub rocket_workers: u16,
+  pub template_dir: String,
 }
 
 impl TryFrom<ServerConfigSpec> for ServerConfig {
@@ -949,7 +952,7 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
   fn try_from(spec: ServerConfigSpec) -> ServerConfig {
     let ServerConfigSpec {
       save_directory, command_socket, debug,
-      http_port, rocket_workers,
+      http_port, rocket_workers, template_dir
     } = spec;
 
     let save_directory = save_directory
@@ -965,9 +968,12 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
     let rocket_workers = rocket_workers.unwrap_or(
       if debug { 20 } else { 1000 });
 
+    let template_dir = template_dir
+      .unwrap_or_else(|| DEFAULT_TEMPLATE_DIR.to_owned());
+
     ServerConfig {
       save_directory, command_socket, debug,
-      http_port, rocket_workers,
+      http_port, rocket_workers, template_dir
     }
   }
 }

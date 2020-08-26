@@ -2,3 +2,4 @@
 # target/debug/server ~ian/Rustup/Game/server/server.toml
 
 save_directory = "/home/ian/Rustup/Game/server/save"
+template_dir = "/home/ian/Rustup/Game/server/templates"

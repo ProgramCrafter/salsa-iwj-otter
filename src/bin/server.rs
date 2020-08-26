@@ -62,8 +62,7 @@ fn updates(ctoken : InstanceAccess<ClientId>, gen: u64)
 
 #[get("/_/<leaf>")]
 fn resource(leaf : CheckedResourceLeaf) -> io::Result<NamedFile> {
-  let template_dir = "templates";
-  NamedFile::open(format!("{}/{}", template_dir, leaf.safe))
+  NamedFile::open(format!("{}/{}", config().template_dir, leaf.safe))
 }  
 
 #[throws(StartupError)]
@@ -101,6 +100,8 @@ fn main() {
   if let Some(port) = c.http_port {
     cbuilder = cbuilder.port(port);
   }
+  cbuilder.extras.insert("template_dir".to_owned(),
+                         c.template_dir.clone().into());
   let rconfig = cbuilder.finalize()?;
 
   let r = rocket::custom(rconfig)
