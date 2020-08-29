@@ -93,6 +93,12 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       let err : GameError = err;
       if let GameError::InternalErrorSVG(svg) = err { throw!(svg) }
       eprintln!("API {:?} => {:?}", &form, &err);
+      // Restating the state of this piece (with a new generation)
+      // will forcibly synchronise the client which made the failing
+      // request.
+      let mut buf = PrepareUpdatesBuffer::new(g, None, None);
+      buf.piece_update(piece, PieceUpdateOp::Modify(()), &lens);
+      throw!(err);
     },
     Ok((update, logents)) => {
       let mut buf = PrepareUpdatesBuffer::new(g, Some((client, form.cseq)),

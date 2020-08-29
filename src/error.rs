@@ -21,6 +21,8 @@ pub enum OnlineError {
   NoClient,
   #[error("player not part of game (removed?)")]
   NoPlayer,
+  #[error("game operation error")]
+  GameError(#[from] GameError),
   #[error("invalid Z coordinate")]
   InvalidZCoord,
   #[error("JSON~ serialisation error: {0:?}")]

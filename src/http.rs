@@ -18,7 +18,7 @@ impl<'r> Responder<'r> for OnlineError {
         | ServerFailure(_)
         => Status::InternalServerError,
       NoClient | NoPlayer | GameBeingDestroyed => Status::NotFound,
-      InvalidZCoord => Status::BadRequest,
+      InvalidZCoord | OnlineError::GameError(_) => Status::BadRequest,
     };
     let mut resp = Responder::respond_to(msg,req).unwrap();
     resp.set_status(status);
