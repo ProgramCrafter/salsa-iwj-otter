@@ -65,6 +65,8 @@ pub use fs2::FileExt;
 pub use lazy_static::lazy_static;
 pub use regex::Regex;
 
+pub use arrayvec::ArrayVec;
+
 pub use crate::global::*;
 pub use crate::gamestate::*;
 pub use crate::pieces::*;
