@@ -144,6 +144,31 @@ impl Display for ZCoord {
   }
 }
 
+pub trait ClampTable : Sized {
+  fn clamped(self, range: Self) -> (Self, bool);
+}
+
+impl ClampTable for Coord {
+  fn clamped(self, range: Coord) -> (Coord, bool) {
+    if self < 0     { return (0,     true) }
+    if self > range { return (range, true) }
+    return (self, false)
+  }
+}
+
+impl ClampTable for Pos {
+  fn clamped(self, range: Pos) -> (Pos, bool) {
+    let mut output = ArrayVec::new();
+    let mut did = false;
+    for (npos, tdid) in self.iter().zip(range.iter())
+      .map(|(&pos, &rng)| pos.clamped(rng)) {
+      output.push(npos);
+      did |= tdid;
+    }
+    (output.into_inner().unwrap(), did)
+  }
+}
+
 // ---------- game state - rendering etc. ----------
 
 impl PieceState {

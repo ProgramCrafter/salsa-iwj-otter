@@ -8,6 +8,7 @@ pub enum GameError {
   PieceGone,
   PieceHeld,
   FaceNotFound,
+  PosOffTable,
   InternalErrorSVG(#[from] SVGProcessingError),
 }
 

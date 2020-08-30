@@ -212,7 +212,9 @@ impl ApiPieceOp for ApiPieceMove {
         _lens: &dyn Lens)
         -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pc = gs.pieces.byid_mut(piece).unwrap();
-
+    if let (_,true) = self.0.clamped(gs.table_size) {
+      throw!(GameError::PosOffTable);
+    }
     pc.pos = self.0;
     let update = PieceUpdateOp::Move(self.0);
     (update, vec![])
