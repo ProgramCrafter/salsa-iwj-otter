@@ -358,6 +358,10 @@ function drag_mousemove(e: MouseEvent) {
 function drag_mouseup(e: MouseEvent) {
   console.log('mouseup', dragging);
   let ddr2 : number = drag_mousemove(e);
+  drag_end();
+}
+
+function drag_end() {
   if (dragging == DRAGGING.MAYBE_UNGRAB ||
       (dragging & ~DRAGGING.RAISED) == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
     let dp = drag_pieces[0]!;
@@ -539,6 +543,10 @@ messages.Recorded = <MessageHandler>function
 function piece_checkconflict_nrda(piece: PieceId, p: PieceInfo): boolean {
   if (p.cseq != null) {
     p.cseq = null;
+    if (drag_pieces.some(function(dp) { return dp.piece == piece; })) {
+      console.log('drag end due to conflict');
+      drag_end();
+    }
     add_log_message('Conflict! - simultaneous update');
   }
   return false;
