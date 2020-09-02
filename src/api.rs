@@ -11,11 +11,18 @@ struct ApiPiece<O : ApiPieceOp> {
   op : O,
 }
 trait ApiPieceOp : Debug {
-  #[throws(GameError)]
+  #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
         lens: &dyn Lens /* used for LogEntry and PieceId but not Pos */)
         -> (PieceUpdateOp<()>, Vec<LogEntry>);
 }
+
+#[derive(Error,Debug)]
+enum ApiPieceOpError {
+  ReportViaResponse(#[from] OnlineError),
+  ReportViaUpdate(#[from] PieceOpError),
+}
+display_as_debug!(ApiPieceOpError);
 
 pub trait Lens : Debug {
   fn pieceid2visible(&self, piece: PieceId) -> VisiblePieceId;
@@ -82,24 +89,15 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
 
     eprintln!("Q_GEN={:?} U_GEN={:?}", u_gen, q_gen);
 
-    if u_gen > q_gen { throw!(GameError::Conflict) }
+    if u_gen > q_gen { throw!(PieceOpError::Conflict) }
     if pc.held != None && pc.held != Some(player) {
-      throw!(GameError::PieceHeld)
+      throw!(OnlineError::PieceHeld)
     };
     let (update, logents) = form.op.op(gs,player,piece,&lens)?;
-    Ok((update, logents))
+    Ok::<_,ApiPieceOpError>((update, logents))
   })() {
-    Err(err) => {
-      let err : GameError = err;
-      if let GameError::InternalErrorSVG(svg) = err { throw!(svg) }
-      eprintln!("API {:?} => {:?}", &form, &err);
-      // Restating the state of this piece (with a new generation)
-      // will forcibly synchronise the client which made the failing
-      // request.
-      let mut buf = PrepareUpdatesBuffer::new(g, None, None);
-      buf.piece_update(piece, PieceUpdateOp::Modify(()), &lens);
-      throw!(err);
-    },
+    Err(err) => err.report(&mut ig, piece, player, client, &lens)?,
+
     Ok((update, logents)) => {
       let mut buf = PrepareUpdatesBuffer::new(g, Some((client, form.cseq)),
                                               Some(1 + logents.len()));
@@ -113,6 +111,38 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   ""
 }
 
+impl ApiPieceOpError {
+  pub fn report(self, ig: &mut InstanceGuard,
+                piece: PieceId, player: PlayerId, client: ClientId,
+                lens: &dyn Lens) -> Result<(),OE> {
+    use ApiPieceOpError::*;
+
+    match self {
+      ReportViaUpdate(poe) => {
+        let gen = ig.gs.gen;
+        ig.updates.get_mut(player)
+          .ok_or(OE::NoPlayer)?
+          .push(Arc::new(PreparedUpdate {
+            gen,
+            us : vec![ PreparedUpdateEntry::Error(
+              Some(client),
+              ErrorSignaledViaUpdate::PieceOpError(piece, poe),
+            )],
+          }));
+
+        let mut buf = PrepareUpdatesBuffer::new(ig, None, None);
+        buf.piece_update(piece, PieceUpdateOp::Modify(()), lens);
+      },
+      
+      ReportViaResponse(err) => {
+        eprintln!("API ERROR => {:?}", &err);
+        Err(err)?;
+      },
+    }
+    Ok(())
+  }
+}
+
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiPieceGrab {
 }
@@ -123,14 +153,14 @@ fn api_grab(form : Json<ApiPiece<ApiPieceGrab>>)
   api_piece_op(form)
 }
 impl ApiPieceOp for ApiPieceGrab {
-  #[throws(GameError)]
+  #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
         lens: &dyn Lens)
         -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pl = gs.players.byid(player).unwrap();
     let pc = gs.pieces.byid_mut(piece).unwrap();
 
-    if pc.held.is_some() { throw!(GameError::PieceHeld) }
+    if pc.held.is_some() { throw!(OnlineError::PieceHeld) }
     pc.held = Some(player);
     
     let update = PieceUpdateOp::Modify(());
@@ -155,14 +185,14 @@ fn api_ungrab(form : Json<ApiPiece<ApiPieceUngrab>>)
   api_piece_op(form)
 }
 impl ApiPieceOp for ApiPieceUngrab {
-  #[throws(GameError)]
+  #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
         lens: &dyn Lens)
         -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pl = gs.players.byid(player).unwrap();
     let pc = gs.pieces.byid_mut(piece).unwrap();
 
-    if pc.held != Some(player) { throw!(GameError::PieceHeld) }
+    if pc.held != Some(player) { throw!(OnlineError::PieceHeld) }
     pc.held = None;
     
     let update = PieceUpdateOp::Modify(());
@@ -188,7 +218,7 @@ fn api_raise(form : Json<ApiPiece<ApiPieceRaise>>)
   api_piece_op(form)
 }
 impl ApiPieceOp for ApiPieceRaise {
-  #[throws(GameError)]
+  #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, _: PlayerId, piece: PieceId,
         _: &dyn Lens)
         -> (PieceUpdateOp<()>, Vec<LogEntry>) {
@@ -207,13 +237,13 @@ fn api_move(form : Json<ApiPiece<ApiPieceMove>>) -> impl response::Responder<'st
   api_piece_op(form)
 }
 impl ApiPieceOp for ApiPieceMove {
-  #[throws(GameError)]
+  #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, _: PlayerId, piece: PieceId,
         _lens: &dyn Lens)
         -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pc = gs.pieces.byid_mut(piece).unwrap();
     if let (_,true) = self.0.clamped(gs.table_size) {
-      throw!(GameError::PosOffTable);
+      Err(ApiPieceOpError::ReportViaUpdate(PieceOpError::PosOffTable))?;
     }
     pc.pos = self.0;
     let update = PieceUpdateOp::Move(self.0);

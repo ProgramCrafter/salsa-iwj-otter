@@ -70,20 +70,21 @@ pub struct LogEntry {
 
 // ---------- piece trait, and rendering ----------
 
+type IE = InternalError;
+type IR = Result<(),IE>;
 type SE = SVGProcessingError;
-type SR = Result<(),SE>;
 
 #[typetag::serde]
 pub trait Piece : Send + Debug {
   // #[throws] doesn't work here for some reason
-  fn svg_piece(&self, f: &mut String, pri: &PieceRenderInstructions) -> SR;
+  fn svg_piece(&self, f: &mut String, pri: &PieceRenderInstructions) -> IR;
 
-  #[throws(SE)]
+  #[throws(IE)]
   fn surround_path(&self, pri : &PieceRenderInstructions) -> String;
 
-  fn svg_x_defs(&self, f: &mut String, pri : &PieceRenderInstructions) -> SR;
+  fn svg_x_defs(&self, f: &mut String, pri : &PieceRenderInstructions) -> IR;
 
-  #[throws(SE)]
+  #[throws(IE)]
   fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
                       -> Option<Coord>;
 
@@ -103,9 +104,9 @@ pub struct PieceRenderInstructions {
 
 #[typetag::serde(tag="type")]
 pub trait PieceSpec : Debug {
-  fn load(&self) -> Result<Box<dyn Piece>,SE>;
+  fn load(&self) -> Result<Box<dyn Piece>,SpecError>;
   fn resolve_spec_face(&self, face : Option<FaceId>)
-                       -> Result<FaceId,GameError>;
+                       -> Result<FaceId,SpecError>;
 }
 
 // ========== implementations ==========
@@ -172,7 +173,7 @@ impl ClampTable for Pos {
 // ---------- game state - rendering etc. ----------
 
 impl PieceState {
-  #[throws(SE)]
+  #[throws(IE)]
   pub fn make_defs(&self, pri : &PieceRenderInstructions) -> String {
     let pr = self;
     let mut defs = String::new();
@@ -193,7 +194,7 @@ impl PieceState {
     defs
   }
 
-  #[throws(SE)]
+  #[throws(IE)]
   pub fn prep_piecestate(&self, pri : &PieceRenderInstructions)
                          -> PreparedPieceState {
     PreparedPieceState {

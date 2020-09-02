@@ -82,9 +82,8 @@ pub enum MgmtError {
   PlayerNotFound,
   PieceNotFound,
   LimitExceeded,
-  SVGProcessingFailed(#[from] SVGProcessingError),
-  GameError(#[from] GameError),
   ServerFailure(String),
+  BadSpec(#[from] SpecError),
 }
 impl Display for MgmtError {
   #[throws(fmt::Error)]
@@ -97,8 +96,8 @@ impl Display for MgmtError {
   }
 }
 
-impl From<ServerFailure> for MgmtError {
-  fn from(e: ServerFailure) -> MgmtError {
+impl From<InternalError> for MgmtError {
+  fn from(e: InternalError) -> MgmtError {
     MgmtError::ServerFailure(format!("ServerFailure {}\n", &e))
   }
 }

@@ -22,14 +22,17 @@ pub enum SVGProcessingError {
   BadNumber,
   WriteFail,
   NegativeDragraise,
-  ImproperSizeSpec,
-  UnsupportedColourSpec,
 }
 
 display_as_debug!{SVGProcessingError}
 error_from_losedetails!{SVGProcessingError,WriteFail,fmt::Error}
 error_from_losedetails!{SVGProcessingError,BadNumber,std::num::ParseFloatError}
 
+impl From<SVGProcessingError> for MgmtError {
+  fn from(se: SVGProcessingError) -> MgmtError { se.into() }
+}
+
+type IE = InternalError;
 type SE = SVGProcessingError;
 
 #[throws(SE)]
@@ -83,22 +86,22 @@ eprintln!("rescaled by {}: {} as {}",scale,&input,&out);
 
 #[typetag::serde]
 impl Piece for SimpleShape {
-  #[throws(SE)]
+  #[throws(IE)]
   fn svg_piece(&self, f: &mut String, pri: &PieceRenderInstructions) {
     write!(f, r##"<path fill="{}" d="{}"/>"##,
            self.colours[pri.face],
            &self.path)?;
   }
-  #[throws(SE)]
+  #[throws(IE)]
   fn surround_path(&self, _pri : &PieceRenderInstructions) -> String {
     self.scaled_path.clone()
   }
-  #[throws(SE)]
+  #[throws(IE)]
   fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
                       -> Option<Coord> {
     Some(self.approx_dia / 2)
   }
-  #[throws(SE)]
+  #[throws(IE)]
   fn svg_x_defs(&self, _f: &mut String, _pri : &PieceRenderInstructions) {
   }
   fn describe_html(&self, face : Option<FaceId>) -> String {
@@ -113,30 +116,30 @@ impl Piece for SimpleShape {
 impl SimpleShape {
   fn new_from_path(desc: String, path: String, approx_dia: Coord,
                    faces: &IndexVec<FaceId,ColourSpec>)
-                   -> Result<Box<dyn Piece>,SE> {
+                   -> Result<Box<dyn Piece>,SpecError> {
     let scaled_path = svg_rescale_path(&path, SELECT_SCALE)?;
     let colours = faces
       .iter()
       .map(|s| s.try_into())
-      .collect::<Result<_,SE>>()?;
+      .collect::<Result<_,SpecError>>()?;
     Ok(Box::new(SimpleShape {
       scaled_path, desc, approx_dia, path, colours,
     }))
   }
 }
 
-#[throws(GameError)]
+#[throws(SpecError)]
 fn simple_resolve_spec_face(faces: &IndexSlice<FaceId,[ColourSpec]>,
                             face: Option<FaceId>)
                             -> FaceId {
   let face = face.unwrap_or_default();
-  faces.get(face).ok_or(GameError::FaceNotFound)?;
+  faces.get(face).ok_or(SpecError::FaceNotFound)?;
   face
 }
 
 #[typetag::serde]
 impl PieceSpec for piece_specs::Disc {
-  #[throws(SE)]
+  #[throws(SpecError)]
   fn load(&self) -> Box<dyn Piece> {
     let unit_path =
       "M 0 1  a 1 1 0 1 0 0 -2 \
@@ -146,7 +149,7 @@ impl PieceSpec for piece_specs::Disc {
     SimpleShape::new_from_path("circle".to_owned(), path, self.diam,
                                &self.faces)?
   }
-  #[throws(GameError)]
+  #[throws(SpecError)]
   fn resolve_spec_face(&self, face: Option<FaceId>) -> FaceId {
     simple_resolve_spec_face(&self.faces, face)?
   }
@@ -154,19 +157,19 @@ impl PieceSpec for piece_specs::Disc {
 
 #[typetag::serde]
 impl PieceSpec for piece_specs::Square {
-  #[throws(SE)]
+  #[throws(SpecError)]
   fn load(&self) -> Box<dyn Piece> {
     let (x, y) = match *self.size.as_slice() {
       [s,] => (s,s),
       [x, y] => (x,y),
-      _ => throw!(SE::ImproperSizeSpec),
+      _ => throw!(SpecError::ImproperSizeSpec),
     };
     let path = format!("M {} {} h {} v {} h {} z",
                        -(x as f64)*0.5, -(y as f64)*0.5, x, y, -x);
     SimpleShape::new_from_path("square".to_owned(), path, (x+y+1)/2,
                                &self.faces)?
   }
-  #[throws(GameError)]
+  #[throws(SpecError)]
   fn resolve_spec_face(&self, face: Option<FaceId>) -> FaceId {
     simple_resolve_spec_face(&self.faces, face)?
   }

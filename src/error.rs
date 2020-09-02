@@ -1,58 +1,66 @@
 
 use crate::imports::*;
 
-#[derive(Error,Clone,Debug,Serialize,Deserialize)]
-#[error("operation error {:?}",self)]
-pub enum GameError {
-  Conflict,
-  PieceGone,
-  PieceHeld,
-  FaceNotFound,
-  PosOffTable,
-  InternalErrorSVG(#[from] SVGProcessingError),
-}
-
 #[derive(Error,Debug)]
 pub enum OnlineError {
   #[error("Game in process of being destroyed")]
   GameBeingDestroyed,
-  #[error("Game corrupted by previous crash - consult administrator")]
-  GameCorrupted,
   #[error("client session not recognised (terminated by server?)")]
   NoClient,
   #[error("player not part of game (removed?)")]
   NoPlayer,
-  #[error("game operation error")]
-  GameError(#[from] GameError),
   #[error("invalid Z coordinate")]
   InvalidZCoord,
-  #[error("JSON~ serialisation error: {0:?}")]
-  JSONSerializeFailed(#[from] serde_json::error::Error),
-  #[error("SVG processing/generation error {0:?}")]
-  SVGProcessingFailed(#[from] SVGProcessingError),
-  #[error("Server operational problems: {0:?}")]
-  ServerFailure(#[from] ServerFailure),
+  #[error("improper piece hold status for op (client should have known)")]
+  PieceHeld,
+  #[error("Server operational problems - consult administrator: {0:?}")]
+  ServerFailure(#[from] InternalError),
+  #[error("JSON deserialisation error: {0:?}")]
+  BadJSON(serde_json::Error),
 }
 from_instance_lock_error!{OnlineError}
 
 #[derive(Error,Debug)]
-pub enum ServerFailure {
+pub enum InternalError {
+  #[error("Game corrupted by previous crash")]
+  GameCorrupted,
   #[error("Server MessagePack encoding error {0}")]
   MessagePackEncodeFail(#[from] rmp_serde::encode::Error),
   #[error("Server MessagePack decoding error (game load failed) {0}")]
   MessagePackDecodeFail(#[from] rmp_serde::decode::Error),
   #[error("Server internal logic error {0}")]
   InternalLogicError(String),
+  #[error("SVG processing/generation error {0:?}")]
+  SVGProcessingFailed(#[from] SVGProcessingError),
+  #[error("String formatting error {0}")]
+  StringFormatting(#[from] fmt::Error),
+  #[error("JSON deserialisation error: {0:?}")]
+  JSONEncode(serde_json::Error),
   #[error("Server error {0:?}")]
   Anyhow(#[from] anyhow::Error),
 }
 
+impl From<InternalError> for SpecError {
+  fn from(ie: InternalError) -> SpecError {
+    SpecError::InternalError(format!("{:?}",ie))
+  }
+}
+
 #[derive(Error,Debug,Serialize,Copy,Clone)]
 pub enum ErrorSignaledViaUpdate {
-  RenderingError,
+  InternalError,
   PlayerRemoved,
+  PieceOpError(PieceId, PieceOpError),
 }
 display_as_debug!{ErrorSignaledViaUpdate}
+
+#[derive(Error,Debug,Serialize,Copy,Clone)]
+pub enum PieceOpError {
+  Gone,
+  Conflict,
+  PosOffTable,
+}
+display_as_debug!{PieceOpError}
 
 pub type StartupError = anyhow::Error;
 
@@ -70,8 +78,8 @@ macro_rules! from_instance_lock_error {
       fn from(e: InstanceLockError) -> $into {
         use InstanceLockError::*;
         match e {
-          GameCorrupted      => $into::GameCorrupted,
           GameBeingDestroyed => $into::GameBeingDestroyed,
+          GameCorrupted      => InternalError::GameCorrupted.into(),
         }
       }
     }
@@ -120,16 +128,17 @@ impl<T> IdForById for T where T : AccessId {
 }
 
 impl IdForById for PieceId {
-  type Error = GameError;
-  const ERROR : GameError = GameError::PieceGone;
+  type Error = PieceOpError;
+  const ERROR : PieceOpError = PieceOpError::Gone;
 }
 
 #[macro_export]
 macro_rules! display_as_debug {
   {$x:ty} => {
-    impl Display for $x {
-      fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        <Self as Debug>::fmt(self, f)
+    impl std::fmt::Display for $x {
+      #[throws(std::fmt::Error)]
+      fn fmt(&self, f: &mut std::fmt::Formatter) {
+        <Self as Debug>::fmt(self, f)?
       }
     }
   }
@@ -145,3 +154,9 @@ macro_rules! error_from_losedetails {
   }
 }
 pub use crate::error_from_losedetails;
+
+impl From<SVGProcessingError> for SpecError {
+  fn from(se: SVGProcessingError) -> SpecError {
+    InternalError::SVGProcessingFailed(se).into()
+  }
+}

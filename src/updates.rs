@@ -45,7 +45,7 @@ pub enum PreparedUpdateEntry {
   },
   SetTableSize(Pos),
   Log (Arc<LogEntry>),
-  Error (ErrorSignaledViaUpdate),
+  Error (Option<ClientId> /* none: all */, ErrorSignaledViaUpdate),
 }
 
 #[derive(Debug,Serialize)]
@@ -132,7 +132,7 @@ impl PreparedUpdateEntry {
         logent.html.as_bytes().len() * 3
       },
       SetTableSize(_) |
-      Error(_) => {
+      Error(_,_) => {
         100
       },
     }
@@ -209,7 +209,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     }
   }
 
-  #[throws(SVGProcessingError)]
+  #[throws(InternalError)]
   fn piece_update_fallible(&mut self, piece: PieceId,
                            update: PieceUpdateOp<()>,
                            lens: &dyn Lens) -> PreparedUpdateEntry {
@@ -234,13 +234,13 @@ impl<'r> PrepareUpdatesBuffer<'r> {
           |_|{
             let mut ns = pc.prep_piecestate(&pri_for_all)?;
             lens.massage_prep_piecestate(&mut ns);
-            <Result<_,SVGProcessingError>>::Ok(ns)
+            <Result<_,InternalError>>::Ok(ns)
           },
         )?;
 
         (update, pri_for_all.id)
       },
-      Err(GameError::PieceGone) => {
+      Err(PieceOpError::Gone) => {
         (PieceUpdateOp::Delete(), lens.pieceid2visible(piece))
       }
       Err(e) => {
@@ -265,7 +265,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       .unwrap_or_else(|e| {
         eprintln!("piece update error! piece={:?} lens={:?} error={:?}",
                   piece, &lens, &e);
-        PreparedUpdateEntry::Error(ErrorSignaledViaUpdate::RenderingError)
+        PreparedUpdateEntry::Error(None,
+                                   ErrorSignaledViaUpdate::InternalError)
       });
     self.us.push(update);
   }
@@ -323,7 +324,8 @@ impl PreparedUpdate {
         &PreparedUpdateEntry::SetTableSize(size) => {
           TransmitUpdateEntry::SetTableSize(size)
         },
-        &PreparedUpdateEntry::Error(e) => {
+        &PreparedUpdateEntry::Error(c, e) => {
+          if let Some(c) = c { if c != dest { continue } }
           TransmitUpdateEntry::Error(e)
         }
       };

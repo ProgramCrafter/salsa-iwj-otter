@@ -6,6 +6,8 @@ use index_vec::{define_index_type,IndexVec};
 use crate::gamestate::PieceSpec;
 use std::fmt::Debug;
 use implementation::PlayerAccessSpec;
+use thiserror::Error;
+use crate::error::display_as_debug;
 
 //---------- common types ----------
 
@@ -26,6 +28,15 @@ define_index_type! {
 #[derive(Debug,Default)]
 #[repr(transparent)]
 pub struct ColourSpec(String);
+
+#[derive(Error,Clone,Serialize,Deserialize,Debug)]
+pub enum SpecError {
+  ImproperSizeSpec,
+  UnsupportedColourSpec,
+  FaceNotFound,
+  InternalError(String),
+}
+display_as_debug!{SpecError}
 
 //---------- Table TOML file ----------
 
@@ -91,7 +102,6 @@ mod implementation {
   use super::*;
   use crate::imports::*;
   type Insn = crate::commands::MgmtGameInstruction;
-  type SE = SVGProcessingError;
 
   #[typetag::serde(tag="access")]
   pub trait PlayerAccessSpec : Debug {
@@ -125,8 +135,8 @@ mod implementation {
   }
 
   impl TryFrom<&ColourSpec> for Colour {
-    type Error = SE;
-    #[throws(SE)]
+    type Error = SpecError;
+    #[throws(SpecError)]
     fn try_from(spec: &ColourSpec) -> Colour {
       lazy_static! {
         static ref RE: Regex = Regex::new(concat!(
@@ -138,7 +148,7 @@ mod implementation {
       }
       let s = &spec.0;
       if !RE.is_match(s) {
-        throw!(SVGProcessingError::UnsupportedColourSpec);
+        throw!(SpecError::UnsupportedColourSpec);
       }
       spec.0.clone()
     }

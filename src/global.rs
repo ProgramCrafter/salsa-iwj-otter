@@ -252,7 +252,7 @@ impl Instance {
       .clone()
   }
 
-  #[throws(ServerFailure)]
+  #[throws(InternalError)]
   pub fn destroy_game(mut g: InstanceGuard) {
     let a_savefile = savefilename(&g.name, "a-", "");
 
@@ -327,7 +327,7 @@ impl InstanceGuard<'_> {
   //  #[throws(ServerFailure)]
   //  https://github.com/withoutboats/fehler/issues/62
   pub fn player_remove(&mut self, oldplayer: PlayerId)
-                       -> Result<Option<PlayerState>,ServerFailure> {
+                       -> Result<Option<PlayerState>,InternalError> {
     // We have to filter this player out of everything
     // Then save
     // Then send updates
@@ -408,6 +408,7 @@ impl InstanceGuard<'_> {
         updates. push(PreparedUpdate {
           gen: self.c.g.gs.gen,
           us : vec![ PreparedUpdateEntry::Error(
+            None,
             ErrorSignaledViaUpdate::PlayerRemoved
           )],
         });
@@ -571,7 +572,7 @@ fn savefilename_parse(leaf: &[u8]) -> SavefilenameParseResult {
 }
 
 impl InstanceGuard<'_> {
-  #[throws(ServerFailure)]
+  #[throws(InternalError)]
   fn save_something(
     &self, prefix: &str,
     w: fn(s: &Self, w: &mut BufWriter<fs::File>)
@@ -594,7 +595,7 @@ impl InstanceGuard<'_> {
     eprintln!("saved to {}", &out);
   }
 
-  #[throws(ServerFailure)]
+  #[throws(InternalError)]
   pub fn save_game_now(&mut self) {
     self.save_something("g-", |s,w| {
       rmp_serde::encode::write_named(w, &s.c.g.gs)
@@ -602,7 +603,7 @@ impl InstanceGuard<'_> {
     self.c.game_dirty = false;
   }
 
-  #[throws(ServerFailure)]
+  #[throws(InternalError)]
   fn save_access_now(&mut self) {
     self.save_something("a-", |s,w| {
       let tokens_players : Vec<(&str, PlayerId)> = {
@@ -620,7 +621,7 @@ impl InstanceGuard<'_> {
     })?;
   }
 
-  #[throws(ServerFailure)]
+  #[throws(InternalError)]
   fn load_something<T:DeserializeOwned>(name: &InstanceName, prefix: &str)
                                         -> T {
     let inp = savefilename(name, prefix, "");
@@ -653,7 +654,7 @@ impl InstanceGuard<'_> {
     let mut access_load : InstanceSaveAccesses<String>
       = Self::load_something(&name, "a-")
       .or_else(|e| {
-        if let ServerFailure::Anyhow(ae) = &e {
+        if let InternalError::Anyhow(ae) = &e {
           if let Some(ioe) = ae.downcast_ref::<io::Error>() {
             if ioe.kind() == io::ErrorKind::NotFound {
               return Ok(Default::default())

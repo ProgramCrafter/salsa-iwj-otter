@@ -105,7 +105,8 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       let for_piece = SessionPieceContext {
         id: pri.id,
         pos : pr.pos,
-        info : serde_json::to_string(&for_info)?,
+        info : serde_json::to_string(&for_info)
+          .map_err(|e| InternalError::JSONEncode(e))?,
       };
       uses.push(for_piece);
     }
@@ -121,7 +122,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       nick : pl.nick.clone(),
       load : serde_json::to_string(&DataLoad {
         players : load_players,
-      })?,
+      }).map_err(|e| InternalError::JSONEncode(e))?,
     };
     eprintln!("SRC {:?}", &src);
     src

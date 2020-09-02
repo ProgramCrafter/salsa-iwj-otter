@@ -14,11 +14,10 @@ impl<'r> Responder<'r> for OnlineError {
     use rocket::http::Status;
     use OnlineError::*;
     let status = match self {
-      GameCorrupted | JSONSerializeFailed(_) | SVGProcessingFailed(_)
-        | ServerFailure(_)
-        => Status::InternalServerError,
+      ServerFailure(_) => Status::InternalServerError,
       NoClient | NoPlayer | GameBeingDestroyed => Status::NotFound,
-      InvalidZCoord | OnlineError::GameError(_) => Status::BadRequest,
+      InvalidZCoord | BadJSON(_) | OnlineError::PieceHeld
+        => Status::BadRequest,
     };
     let mut resp = Responder::respond_to(msg,req).unwrap();
     resp.set_status(status);
