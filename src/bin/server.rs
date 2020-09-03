@@ -103,6 +103,8 @@ fn main() {
   cbuilder.extras.insert("template_dir".to_owned(),
                          c.template_dir.clone().into());
 
+  thread::spawn(game_flush_task);
+
   let cors_state = {
     use rocket_cors::*;
     let opts = CorsOptions::default()
