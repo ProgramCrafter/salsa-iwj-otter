@@ -616,9 +616,9 @@ function startup() {
       }
       gen = tgen;
     } catch (exc) {
+      var s = exc.toString();
       string_report_error('exception handling update '
-			  + k + ': ' + JSON.stringify(m) + ': ' +
-			  + exc.toString());
+			  + k + ': ' + JSON.stringify(m) + ': ' + s);
     }
   }
   es.addEventListener('commsworking', function(event) {
