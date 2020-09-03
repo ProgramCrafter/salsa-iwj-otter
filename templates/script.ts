@@ -426,10 +426,21 @@ messages.Piece = <MessageHandler>function
   pieceops[k](piece,p, m[k]);
 };
 
+type PieceStateMessage = {
+  svg: string,
+  held: PlayerId,
+  pos: Pos,
+  z: number,
+  zg: Generation,
+}
+
 pieceops.Modify = <PieceHandler>function
-(piece: PieceId, p: PieceInfo,
- info: { svg: string, held: PlayerId, pos: Pos, z: number, zg: Generation}) {
+(piece: PieceId, p: PieceInfo, info: PieceStateMessage) {
   console.log('PIECE UPDATE MODIFY ',piece,info)
+  piece_modify(piece, p, info);
+}
+
+function piece_modify(piece: PieceId, p: PieceInfo, info: PieceStateMessage) {
   p.delem.innerHTML = info.svg;
   p.pelem= piece_element('piece',piece)!;
   p.uelem.setAttributeNS(null, "x", info.pos[0]+"");
@@ -443,6 +454,7 @@ pieceops.Modify = <PieceHandler>function
   redisplay_ancillaries(piece,p);
   console.log('MODIFY DONE');
 }
+
 /*
 pieceops.Insert = <PieceHandler>function
 (piece: PieceId, p: null,
