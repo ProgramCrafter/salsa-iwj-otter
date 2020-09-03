@@ -78,6 +78,7 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   let _ = gs.players.byid(player)?;
   let lens = TransparentLens { };
   let piece = lens.decode_visible_pieceid(form.piece, player);
+  use ApiPieceOpError::*;
 
   match (||{
     let pc = gs.pieces.byid_mut(piece)
@@ -97,8 +98,16 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
     let (update, logents) = form.op.op(gs,player,piece,&lens)?;
     Ok::<_,ApiPieceOpError>((update, logents))
   })() {
-    Err(err) => err.report(&mut ig, piece, player, client, &lens)?,
-
+    Err(ReportViaUpdate(poe)) => {
+      PrepareUpdatesBuffer::piece_report_error(
+        &mut ig, poe,
+        piece, player, client, &lens
+      )?;
+    },
+    Err(ReportViaResponse(err)) => {
+      eprintln!("API ERROR => {:?}", &err);
+      Err(err)?;
+    },
     Ok((update, logents)) => {
       let mut buf = PrepareUpdatesBuffer::new(g, Some((client, form.cseq)),
                                               Some(1 + logents.len()));
@@ -110,43 +119,6 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
     }
   }
   ""
-}
-
-impl ApiPieceOpError {
-  pub fn report(self, ig: &mut InstanceGuard,
-                piece: PieceId, player: PlayerId, client: ClientId,
-                lens: &dyn Lens) -> Result<(),OE> {
-    use ApiPieceOpError::*;
-
-    eprintln!("ApiPieceOpError.report {:?}", &self);
-
-    match self {
-      ReportViaUpdate(poe) => {
-        ig.gs.gen.increment();
-        let gen = ig.gs.gen;
-        let pc = ig.gs.pieces.byid_mut(piece).map_err(|()| OE::PieceGone)?;
-        let pri = lens.svg_pri(piece,pc,player);
-        let state = pc.prep_piecestate(&pri)?;
-        let pl_updates = ig.updates.get_mut(player).ok_or(OE::NoPlayer)?;
-        let pue = PreparedUpdateEntry::Error(
-          Some(client),
-          ErrorSignaledViaUpdate::PieceOpError {
-            piece: pri.id,
-            error: poe,
-            state,
-          },
-        );
-        let update = PreparedUpdate { gen, us : vec![ pue ] };
-        pl_updates.push(Arc::new(update));
-      },
-      
-      ReportViaResponse(err) => {
-        eprintln!("API ERROR => {:?}", &err);
-        Err(err)?;
-      },
-    }
-    Ok(())
-  }
 }
 
 #[derive(Debug,Serialize,Deserialize)]

@@ -209,6 +209,40 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     }
   }
 
+  fn new_for_error(ig: &'r mut Instance) -> Self {
+    Self::new(ig, None, Some(1))
+  }
+  pub fn piece_report_error(ig: &mut Instance,
+                            error: PieceOpError,
+                            piece: PieceId, player: PlayerId, client: ClientId,
+                            lens: &dyn Lens) -> Result<(),OE> {
+    let mut buf = PrepareUpdatesBuffer::new_for_error(ig);
+    let update = buf.piece_update_fallible(
+      piece, PieceUpdateOp::Modify(()), lens
+    )?;
+    let update = match update {
+      PreparedUpdateEntry::Piece {
+        piece,
+        op : PieceUpdateOp::Modify(state),
+        ..
+      } => {
+        PreparedUpdateEntry::Error(
+          Some(client),
+          ErrorSignaledViaUpdate::PieceOpError {
+            piece, error, state,
+          },
+        )
+      },
+      _ => panic!(),
+    };
+    let update = PreparedUpdate { gen: buf.gen, us : vec![ update ] };
+    assert!(buf.us.is_empty());
+    mem::drop(buf);
+    let pl_updates = ig.updates.get_mut(player).ok_or(OE::NoPlayer)?;
+    pl_updates.push(Arc::new(update));
+    Ok(())
+  }
+
   #[throws(InternalError)]
   fn piece_update_fallible(&mut self, piece: PieceId,
                            update: PieceUpdateOp<()>,
