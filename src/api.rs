@@ -80,7 +80,8 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   let piece = lens.decode_visible_pieceid(form.piece, player);
 
   match (||{
-    let pc = gs.pieces.byid_mut(piece)?;
+    let pc = gs.pieces.byid_mut(piece)
+      .map_err(|()| OnlineError::PieceGone)?;
 
     let q_gen = form.gen;
     let u_gen =
@@ -122,21 +123,20 @@ impl ApiPieceOpError {
     match self {
       ReportViaUpdate(poe) => {
         let gen = ig.gs.gen;
-        ig.updates.get_mut(player)
-          .ok_or(OE::NoPlayer)?
-          .push(Arc::new(PreparedUpdate {
-            gen,
-            us : vec![ PreparedUpdateEntry::Error(
-              Some(client),
-              ErrorSignaledViaUpdate::PieceOpError(
-                lens.pieceid2visible(piece),
-                poe,
-              ),
-            )],
-          }));
-
-        let mut buf = PrepareUpdatesBuffer::new(ig, None, None);
-        buf.piece_update(piece, PieceUpdateOp::Modify(()), lens);
+        let pc = ig.gs.pieces.byid_mut(piece).map_err(|()| OE::PieceGone)?;
+        let pri = lens.svg_pri(piece,pc,player);
+        let state = pc.prep_piecestate(&pri)?;
+        let pl_updates = ig.updates.get_mut(player).ok_or(OE::NoPlayer)?;
+        let pue = PreparedUpdateEntry::Error(
+          Some(client),
+          ErrorSignaledViaUpdate::PieceOpError {
+            piece: pri.id,
+            error: poe,
+            state,
+          },
+        );
+        let update = PreparedUpdate { gen, us : vec![ pue ] };
+        pl_updates.push(Arc::new(update));
       },
       
       ReportViaResponse(err) => {

@@ -11,12 +11,14 @@ pub enum OnlineError {
   NoPlayer,
   #[error("invalid Z coordinate")]
   InvalidZCoord,
-  #[error("improper piece hold status for op (client should have known)")]
-  PieceHeld,
   #[error("Server operational problems - consult administrator: {0:?}")]
   ServerFailure(#[from] InternalError),
   #[error("JSON deserialisation error: {0:?}")]
   BadJSON(serde_json::Error),
+  #[error("referenced piece is gone (maybe race)")]
+  PieceGone,
+  #[error("improper piece hold status for op (maybe race)")]
+  PieceHeld,
 }
 from_instance_lock_error!{OnlineError}
 
@@ -46,17 +48,20 @@ impl From<InternalError> for SpecError {
   }
 }
 
-#[derive(Error,Debug,Serialize,Copy,Clone)]
+#[derive(Error,Debug,Serialize,Clone)]
 pub enum ErrorSignaledViaUpdate {
   InternalError,
   PlayerRemoved,
-  PieceOpError(VisiblePieceId, PieceOpError),
+  PieceOpError {
+    piece: VisiblePieceId,
+    error: PieceOpError,
+    state: PreparedPieceState,
+  },
 }
 display_as_debug!{ErrorSignaledViaUpdate}
 
 #[derive(Error,Debug,Serialize,Copy,Clone)]
 pub enum PieceOpError {
-  Gone,
   Conflict,
   PosOffTable,
 }
@@ -128,8 +133,8 @@ impl<T> IdForById for T where T : AccessId {
 }
 
 impl IdForById for PieceId {
-  type Error = PieceOpError;
-  const ERROR : PieceOpError = PieceOpError::Gone;
+  type Error = ();
+  const ERROR : () = ();
 }
 
 #[macro_export]

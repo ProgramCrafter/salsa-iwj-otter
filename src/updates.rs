@@ -48,7 +48,7 @@ pub enum PreparedUpdateEntry {
   Error (Option<ClientId> /* none: all */, ErrorSignaledViaUpdate),
 }
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Clone,Serialize)]
 pub struct PreparedPieceState {
   pub pos : Pos,
   pub svg : String,
@@ -89,7 +89,7 @@ enum TransmitUpdateEntry<'u> {
   },
   SetTableSize(Pos),
   Log (&'u LogEntry),
-  Error(ErrorSignaledViaUpdate),
+  Error(&'u ErrorSignaledViaUpdate),
 }
 
 // ========== implementation ==========
@@ -240,11 +240,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
         (update, pri_for_all.id)
       },
-      Err(PieceOpError::Gone) => {
+      Err(()) => {
         (PieceUpdateOp::Delete(), lens.pieceid2visible(piece))
-      }
-      Err(e) => {
-        panic!(format!("unexpected error {:?} from pices.byid_mut", &e));
       }
     };
 
@@ -325,8 +322,8 @@ eprintln!("FOR_TRANSMIT TO={:?} {:?}", dest, &u);
         &PreparedUpdateEntry::SetTableSize(size) => {
           TransmitUpdateEntry::SetTableSize(size)
         },
-        &PreparedUpdateEntry::Error(c, e) => {
-          if let Some(c) = c { if c != dest { continue } }
+        PreparedUpdateEntry::Error(c, e) => {
+          if let Some(c) = c { if *c != dest { continue } }
           TransmitUpdateEntry::Error(e)
         }
       };

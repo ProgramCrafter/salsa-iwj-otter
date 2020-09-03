@@ -15,8 +15,11 @@ impl<'r> Responder<'r> for OnlineError {
     use OnlineError::*;
     let status = match self {
       ServerFailure(_) => Status::InternalServerError,
-      NoClient | NoPlayer | GameBeingDestroyed => Status::NotFound,
-      InvalidZCoord | BadJSON(_) | OnlineError::PieceHeld
+      NoClient | NoPlayer | GameBeingDestroyed
+        => Status::NotFound,
+      OnlineError::PieceHeld | OnlineError::PieceGone
+        => Status::Conflict,
+      InvalidZCoord | BadJSON(_)
         => Status::BadRequest,
     };
     let mut resp = Responder::respond_to(msg,req).unwrap();
