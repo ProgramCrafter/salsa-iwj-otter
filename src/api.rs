@@ -117,6 +117,8 @@ impl ApiPieceOpError {
                 lens: &dyn Lens) -> Result<(),OE> {
     use ApiPieceOpError::*;
 
+    eprintln!("ApiPieceOpError.report {:?}", &self);
+
     match self {
       ReportViaUpdate(poe) => {
         let gen = ig.gs.gen;

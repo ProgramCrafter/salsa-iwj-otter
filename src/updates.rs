@@ -308,6 +308,7 @@ impl PreparedUpdate {
     let mut ents = vec![];
     for u in &self.us {
       type Prep = PreparedUpdateEntry;
+eprintln!("FOR_TRANSMIT TO={:?} {:?}", dest, &u);
       let ue = match u {
         &Prep::Piece
         { piece, client, sameclient_cseq : cseq, ref op }
