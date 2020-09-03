@@ -114,8 +114,12 @@ function xhr_report_error(xhr: XMLHttpRequest) {
 
 function json_report_error(error_for_json: Object) {
   let error_message = JSON.stringify(error_for_json);
+  string_report_error(error_message);
+}
+
+function string_report_error(error_message: String) {
   let errornode = document.getElementById('error')!;
-  errornode.textContent = 'Error (reloading may help?):' + error_message;
+  errornode.textContent += '\nError (reloading may help?):' + error_message;
 }
 
 function api(meth: string, data: Object) {
