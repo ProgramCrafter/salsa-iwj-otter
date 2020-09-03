@@ -445,6 +445,8 @@ pieceops.Modify = <PieceHandler>function
 
 piece_error_handlers.PosOffTable = <PieceErrorHandler>function()
 { return true ; }
+piece_error_handlers.Conflict = <PieceErrorHandler>function()
+{ return true ; }
 
 function piece_modify(piece: PieceId, p: PieceInfo, info: PieceStateMessage,
 		      conflict_expected: boolean) {

@@ -85,7 +85,7 @@ enum TransmitUpdateEntry<'u> {
   },
   Piece {
     piece : VisiblePieceId,
-    op : &'u PieceUpdateOp<PreparedPieceState>,
+    op : PieceUpdateOp<&'u PreparedPieceState>,
   },
   SetTableSize(Pos),
   Log (&'u LogEntry),
@@ -163,6 +163,16 @@ impl<NS> PieceUpdateOp<NS> {
       Move(pos) => Move(pos),
       SetZLevel(zl) => SetZLevel(zl),
     })
+  }
+  pub fn map_ref_new_state(&self) -> PieceUpdateOp<&NS> {
+    use PieceUpdateOp::*;
+    match self {
+      Delete() => Delete(),
+      Insert(ns) => Insert(ns),
+      Modify(ns) => Modify(ns),
+      Move(pos) => Move(*pos),
+      SetZLevel(zl) => SetZLevel(*zl),
+    }
   }
   pub fn map_new_state<NS2,F: FnOnce(NS) -> NS2>(self, f:F)
                             -> PieceUpdateOp<NS2> {
@@ -336,29 +346,36 @@ impl<'r> Drop for PrepareUpdatesBuffer<'r> {
 
 impl PreparedUpdate {
   pub fn for_transmit(&self, dest : ClientId) -> TransmitUpdate {
+    type ESVU = ErrorSignaledViaUpdate;
+    type PUE = PreparedUpdateEntry;
+    type TUE<'u> = TransmitUpdateEntry<'u>;
     let mut ents = vec![];
     for u in &self.us {
-      type Prep = PreparedUpdateEntry;
 eprintln!("FOR_TRANSMIT TO={:?} {:?}", dest, &u);
       let ue = match u {
-        &Prep::Piece
-        { piece, client, sameclient_cseq : cseq, ref op }
+        &PUE::Piece { piece, client, sameclient_cseq : cseq, ref op }
         if client == dest => {
           let zg = op.new_z_generation();
-          TransmitUpdateEntry::Recorded { piece, cseq, zg }
+          TUE::Recorded { piece, cseq, zg }
         },
-        &PreparedUpdateEntry::Piece { piece, ref op, .. } => {
-          TransmitUpdateEntry::Piece { piece, op }
+        &PUE::Piece { piece, ref op, .. } => {
+          TUE::Piece { piece, op: op.map_ref_new_state() }
         },
-        PreparedUpdateEntry::Log(logent) => {
-          TransmitUpdateEntry::Log(&logent)
+        PUE::Log(logent) => {
+          TUE::Log(&logent)
         },
-        &PreparedUpdateEntry::SetTableSize(size) => {
-          TransmitUpdateEntry::SetTableSize(size)
+        &PUE::SetTableSize(size) => {
+          TUE::SetTableSize(size)
         },
-        PreparedUpdateEntry::Error(c, e) => {
-          if let Some(c) = c { if *c != dest { continue } }
-          TransmitUpdateEntry::Error(e)
+        PUE::Error(c, e) => {
+          if *c == None || *c == Some(dest) {
+            TUE::Error(e)
+          } else if let &ESVU::PieceOpError { piece, ref state, .. } = e {
+            let op = PieceUpdateOp::Modify(state);
+            TUE::Piece { piece, op }
+          } else {
+            continue
+          }
         }
       };
       ents.push(ue);
