@@ -5,7 +5,7 @@
       data-load="{{ load | escape }}"
       >
 <h1>Hi {{nick}}!</h1>
-<div id="error"></div>
+<pre id="error"></pre>
 <p>
 <div id="status">nothing</div>
 

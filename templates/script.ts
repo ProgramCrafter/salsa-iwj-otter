@@ -64,6 +64,7 @@ interface DispatchTable<H> { [key: string]: H };
 var general_timeout : number = 10000;
 var messages : DispatchTable<MessageHandler> = Object();
 var pieceops : DispatchTable<PieceHandler> = Object();
+var update_error_handlers : DispatchTable<MessageHandler> = Object();
 var our_dnd_type = "text/puvnex-game-server-dummy";
 var api_queue : [string, Object][] = [];
 var api_posting = false;
@@ -544,6 +545,13 @@ messages.Recorded = <MessageHandler>function
   gen = j.gen;
 }
 
+messages.Error = <MessageHandler>function
+(m: any) {
+  console.log('ERROR UPDATE ', m);
+  var k = Object.keys(m)[0];
+  update_error_handlers[k](m[k]);
+}
+
 function piece_checkconflict_nrda(piece: PieceId, p: PieceInfo): boolean {
   if (p.cseq != null) {
     p.cseq = null;
@@ -597,13 +605,21 @@ function startup() {
   var es = new EventSource("/_/updates/"+ctoken+'/'+gen);
   es.onmessage = function(event) {
     // xxx want to trap errors and ask user to reload
-    console.log('GOTEVE', event)
-    var [tgen, ms] = JSON.parse(event.data);
-    for (var m of ms) {
-      var k = Object.keys(m)[0];
-      messages[k](m[k]);
+    console.log('GOTEVE', event);
+    var k;
+    var m;
+    try {
+      var [tgen, ms] = JSON.parse(event.data);
+      for (m of ms) {
+	k = Object.keys(m)[0];
+	messages[k](m[k]);
+      }
+      gen = tgen;
+    } catch (exc) {
+      string_report_error('exception handling update '
+			  + k + ': ' + JSON.stringify(m) + ': ' +
+			  + exc.toString());
     }
-    gen = tgen;
   }
   es.addEventListener('commsworking', function(event) {
     console.log('GOTDATA', event);
