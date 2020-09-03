@@ -249,7 +249,7 @@ impl ApiPieceOp for ApiPieceMove {
         -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let (pos, clamped) = self.0.clamped(gs.table_size);
-    pc.pos = self.0;
+    pc.pos = pos;
     if clamped {
       Err(ApiPieceOpError::ReportViaUpdate(PieceOpError::PosOffTable))?;
     }
