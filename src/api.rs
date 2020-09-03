@@ -128,7 +128,10 @@ impl ApiPieceOpError {
             gen,
             us : vec![ PreparedUpdateEntry::Error(
               Some(client),
-              ErrorSignaledViaUpdate::PieceOpError(piece, poe),
+              ErrorSignaledViaUpdate::PieceOpError(
+                lens.pieceid2visible(piece),
+                poe,
+              ),
             )],
           }));
 

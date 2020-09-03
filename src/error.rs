@@ -50,7 +50,7 @@ impl From<InternalError> for SpecError {
 pub enum ErrorSignaledViaUpdate {
   InternalError,
   PlayerRemoved,
-  PieceOpError(PieceId, PieceOpError),
+  PieceOpError(VisiblePieceId, PieceOpError),
 }
 display_as_debug!{ErrorSignaledViaUpdate}
 
