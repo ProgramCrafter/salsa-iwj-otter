@@ -122,6 +122,7 @@ impl ApiPieceOpError {
 
     match self {
       ReportViaUpdate(poe) => {
+        ig.gs.gen.increment();
         let gen = ig.gs.gen;
         let pc = ig.gs.pieces.byid_mut(piece).map_err(|()| OE::PieceGone)?;
         let pri = lens.svg_pri(piece,pc,player);
@@ -247,10 +248,11 @@ impl ApiPieceOp for ApiPieceMove {
         _lens: &dyn Lens)
         -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pc = gs.pieces.byid_mut(piece).unwrap();
-    if let (_,true) = self.0.clamped(gs.table_size) {
+    let (pos, clamped) = self.0.clamped(gs.table_size);
+    pc.pos = self.0;
+    if clamped {
       Err(ApiPieceOpError::ReportViaUpdate(PieceOpError::PosOffTable))?;
     }
-    pc.pos = self.0;
     let update = PieceUpdateOp::Move(self.0);
     (update, vec![])
   }
