@@ -59,12 +59,15 @@ let pieces : { [typeid: string]: PieceInfo } = Object.create(null);
 
 type MessageHandler = (op: Object) => void;
 type PieceHandler = (piece: PieceId, p: PieceInfo, info: Object) => void;
+type PieceErrorHandler = (piece: PieceId, p: PieceInfo, m: PieceOpError)
+  => boolean;
 interface DispatchTable<H> { [key: string]: H };
 
 var general_timeout : number = 10000;
 var messages : DispatchTable<MessageHandler> = Object();
 var pieceops : DispatchTable<PieceHandler> = Object();
 var update_error_handlers : DispatchTable<MessageHandler> = Object();
+var piece_error_handlers : DispatchTable<PieceErrorHandler> = Object();
 var our_dnd_type = "text/puvnex-game-server-dummy";
 var api_queue : [string, Object][] = [];
 var api_posting = false;
@@ -437,10 +440,14 @@ type PieceStateMessage = {
 pieceops.Modify = <PieceHandler>function
 (piece: PieceId, p: PieceInfo, info: PieceStateMessage) {
   console.log('PIECE UPDATE MODIFY ',piece,info)
-  piece_modify(piece, p, info);
+  piece_modify(piece, p, info, false);
 }
 
-function piece_modify(piece: PieceId, p: PieceInfo, info: PieceStateMessage) {
+piece_error_handlers.PosOffTable = <PieceErrorHandler>function()
+{ return true ; }
+
+function piece_modify(piece: PieceId, p: PieceInfo, info: PieceStateMessage,
+		      conflict_expected: boolean) {
   p.delem.innerHTML = info.svg;
   p.pelem= piece_element('piece',piece)!;
   p.uelem.setAttributeNS(null, "x", info.pos[0]+"");
@@ -450,7 +457,7 @@ function piece_modify(piece: PieceId, p: PieceInfo, info: PieceStateMessage) {
     p.z  = info.z;
     p.zg = info.zg;
   });
-  piece_checkconflict_nrda(piece,p);
+  piece_checkconflict_nrda(piece,p,conflict_expected);
   redisplay_ancillaries(piece,p);
   console.log('MODIFY DONE');
 }
@@ -509,7 +516,7 @@ function piece_z_before(a: PieceInfo, b: PieceInfo) {
 
 pieceops.Move = <PieceHandler>function
 (piece,p, info: Pos ) {
-  piece_checkconflict_nrda(piece,p);
+  piece_checkconflict_nrda(piece,p,false);
   let now = performance.now();
 
   let need_redisplay = p.last_seen_moved == null;
@@ -564,14 +571,31 @@ messages.Error = <MessageHandler>function
   update_error_handlers[k](m[k]);
 }
 
-function piece_checkconflict_nrda(piece: PieceId, p: PieceInfo): boolean {
+type PieceOpError = {
+  piece: PieceId,
+  error: string,
+  state: PieceStateMessage,
+};
+
+update_error_handlers.PieceOpError = <MessageHandler>function
+(m: PieceOpError) {
+  let p = pieces[m.piece];
+  if (p == null) return;
+  let conflict_expected = piece_error_handlers[m.error](m.piece, p, m);
+  piece_modify(m.piece, p, m.state, conflict_expected);
+}
+
+function piece_checkconflict_nrda(piece: PieceId, p: PieceInfo,
+				  conflict_expected: boolean): boolean {
   if (p.cseq != null) {
     p.cseq = null;
     if (drag_pieces.some(function(dp) { return dp.piece == piece; })) {
       console.log('drag end due to conflict');
       drag_end();
     }
-    add_log_message('Conflict! - simultaneous update');
+    if (!conflict_expected) {
+      add_log_message('Conflict! - simultaneous update');
+    }
   }
   return false;
 }
