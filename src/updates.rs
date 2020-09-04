@@ -256,8 +256,6 @@ impl<'r> PrepareUpdatesBuffer<'r> {
                            lens: &dyn Lens) -> PreparedUpdateEntry {
     let gs = &mut self.g.gs;
 
-    // xxx enforce pos is within range,  everywhere
-
     let (update, piece) = match gs.pieces.byid_mut(piece) {
       Ok(pc) => {
         gs.max_z.update_max(pc.zlevel.z);

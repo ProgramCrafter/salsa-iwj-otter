@@ -35,6 +35,7 @@ pub enum SpecError {
   UnsupportedColourSpec,
   FaceNotFound,
   InternalError(String),
+  PosOffTable,
 }
 display_as_debug!{SpecError}
 

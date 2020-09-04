@@ -250,6 +250,9 @@ fn execute_game_insn(cs: &CommandStream,
           gen: gs.gen,
           pos, p, face,
         };
+        if let (_, true) = pc.pos.clamped(gs.table_size) {
+          throw!(SpecError::PosOffTable);
+        }
         let piece = gs.pieces.insert(pc);
         updates.push((piece, PieceUpdateOp::Insert(())));
         pos[0] += posd[0];
