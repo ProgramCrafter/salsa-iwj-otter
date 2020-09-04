@@ -21,6 +21,7 @@ trait ApiPieceOp : Debug {
 enum ApiPieceOpError {
   ReportViaResponse(#[from] OnlineError),
   ReportViaUpdate(#[from] PieceOpError),
+  PartiallyProcessed(PieceOpError, Vec<LogEntry>),
 }
 display_as_debug!(ApiPieceOpError);
 
@@ -101,7 +102,13 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
     Err(ReportViaUpdate(poe)) => {
       PrepareUpdatesBuffer::piece_report_error(
         &mut ig, poe,
-        piece, player, client, &lens
+        piece, vec![], client, &lens
+      )?;
+    },
+    Err(PartiallyProcessed(poe, logents)) => {
+      PrepareUpdatesBuffer::piece_report_error(
+        &mut ig, poe,
+        piece, logents, client, &lens
       )?;
     },
     Err(ReportViaResponse(err)) => {
@@ -221,12 +228,16 @@ impl ApiPieceOp for ApiPieceMove {
         -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let (pos, clamped) = self.0.clamped(gs.table_size);
+    let logents = vec![];
     pc.pos = pos;
     if clamped {
-      Err(ApiPieceOpError::ReportViaUpdate(PieceOpError::PosOffTable))?;
+      throw!(ApiPieceOpError::PartiallyProcessed(
+        PieceOpError::PosOffTable,
+        logents,
+      ));
     }
     let update = PieceUpdateOp::Move(self.0);
-    (update, vec![])
+    (update, logents)
   }
 }
 

@@ -223,8 +223,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     Self::new(ig, None, Some(1))
   }
   pub fn piece_report_error(ig: &mut Instance,
-                            error: PieceOpError,
-                            piece: PieceId, player: PlayerId, client: ClientId,
+                            error: PieceOpError, piece: PieceId,
+                            logents: Vec<LogEntry>, client: ClientId,
                             lens: &dyn Lens) -> Result<(),OE> {
     let mut buf = PrepareUpdatesBuffer::new_for_error(ig);
     let update = buf.piece_update_fallible(
@@ -245,11 +245,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       },
       _ => panic!(),
     };
-    let update = PreparedUpdate { gen: buf.gen, us : vec![ update ] };
-    assert!(buf.us.is_empty());
-    mem::drop(buf);
-    let pl_updates = ig.updates.get_mut(player).ok_or(OE::NoPlayer)?;
-    pl_updates.push(Arc::new(update));
+    buf.us.push(update);
+    buf.log_updates(logents);
     Ok(())
   }
 
