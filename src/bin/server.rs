@@ -37,7 +37,7 @@ impl<'r> FromParam<'r> for CheckedResourceLeaf {
 
 #[derive(Serialize,Debug)]
 struct LoadingRenderContext<'r> {
-  ptoken : &'r str,
+  ptoken : &'r RawTokenVal,
 }
 #[get("/<ptoken>")]
 #[throws(OE)]

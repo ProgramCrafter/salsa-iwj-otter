@@ -99,16 +99,20 @@ pub mod piece_specs {
 
 //---------- Implementation ----------
 
-mod implementation {
+pub mod implementation {
   use super::*;
   use crate::imports::*;
   type Insn = crate::commands::MgmtGameInstruction;
 
+  pub fn raw_token_debug_as_str(s: &str, f: &mut fmt::Formatter)
+                                -> fmt::Result {
+    let len = min(5, s.len() / 2);
+    write!(f, "{:?}...", &s[0..len])
+  }
+
   impl Debug for RawToken {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-      let s = &self.0;
-      let len = min(5, s.len() / 2);
-      write!(f, "{:?}...", &s[0..len])
+      raw_token_debug_as_str(&self.0, f)
     }
   }
 

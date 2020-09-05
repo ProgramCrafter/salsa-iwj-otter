@@ -12,6 +12,10 @@ const MAX_CLIENT_INACTIVITY : Duration = Duration::from_secs(200);
 
 const GAME_SAVE_LAG : Duration = Duration::from_millis(500);
 
+#[derive(Hash,Ord,PartialOrd,Eq,PartialEq,Serialize)]
+#[repr(transparent)]
+pub struct RawTokenVal(str);
+
 // ---------- public data structure ----------
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -137,7 +141,7 @@ pub struct InstanceAccessDetails<Id> {
 
 #[derive(Clone,Debug)]
 pub struct InstanceAccess<'i, Id> {
-  pub raw_token : &'i str,
+  pub raw_token : &'i RawTokenVal,
   pub i : InstanceAccessDetails<Id>,
 }
 
@@ -183,8 +187,26 @@ const PRIVATE_Y : PrivateCaller = PrivateCaller(());
 
 // ========== implementations ==========
 
+/*
 impl Borrow<str> for RawToken {
   fn borrow(&self) -> &str { &self.0 }
+}*/
+
+impl RawTokenVal {
+  // str is [u8] with a funny hat on, so &str is pointer + byte count.
+  // nomicon says &SomeStruct([T]) is pointer plus number of elements.
+  // So &str and &SomeStruct(str) have the same layout
+  fn from_str(s: &str) -> &RawTokenVal { unsafe { mem::transmute(s) } }
+}
+
+impl Borrow<RawTokenVal> for RawToken {
+  fn borrow(&self) -> &RawTokenVal { RawTokenVal::from_str(&self.0) }
+}
+
+impl Debug for RawTokenVal {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    crate::spec::implementation::raw_token_debug_as_str(&self.0, f)
+  }
 }
 
 // ---------- Main API for instance lifecycle ----------
@@ -789,7 +811,7 @@ impl RawToken {
   }
 }
 
-pub fn lookup_token<Id : AccessId>(s : &str)
+pub fn lookup_token<Id : AccessId>(s : &RawTokenVal)
       -> Result<InstanceAccessDetails<Id>, OE> {
   Id::global_tokens(PRIVATE_Y).read().unwrap().get(s).cloned()
     .ok_or(Id::ERROR)
@@ -802,7 +824,7 @@ impl<'r, Id> FromParam<'r> for InstanceAccess<'r, Id>
   #[throws(OE)]
   fn from_param(param: &'r RawStr) -> Self {
     let g = Id::global_tokens(PRIVATE_Y).read().unwrap();
-    let token = param.as_str();
+    let token = RawTokenVal::from_str(param.as_str());
     let i = g.get(token).ok_or(Id::ERROR)?;
     InstanceAccess { raw_token : token, i : i.clone() }
   }

@@ -40,12 +40,12 @@ struct DataLoadPlayer {
 
 #[derive(Deserialize)]
 struct SessionForm {
-  ptoken : String,
+  ptoken : RawToken,
 }
 #[post("/_/session", format="json", data="<form>")]
 fn session(form : Json<SessionForm>) -> Result<Template,OE> {
   // make session in this game, log a message to other players
-  let iad = lookup_token(&form.ptoken)?;
+  let iad = lookup_token(form.ptoken.borrow())?;
   let player = iad.ident;
   let c = {
     let mut ig = iad.gref.lock()?;
