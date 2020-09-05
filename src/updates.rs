@@ -265,8 +265,6 @@ impl<'r> PrepareUpdatesBuffer<'r> {
           pc.lastclient = self.by_client;
         }
         pc.gen = self.gen;
-        eprintln!("PC GEN_LC={:?} LC={:?}", pc.gen, pc.lastclient);
-      
         let pri_for_all = lens.svg_pri(piece,pc,Default::default());
 
         let update = update.try_map_new_state(
@@ -299,8 +297,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
     let update = self.piece_update_fallible(piece, update, lens)
       .unwrap_or_else(|e| {
-        eprintln!("piece update error! piece={:?} lens={:?} error={:?}",
-                  piece, &lens, &e);
+        error!("piece update error! piece={:?} lens={:?} error={:?}",
+               piece, &lens, &e);
         PreparedUpdateEntry::Error(None,
                                    ErrorSignaledViaUpdate::InternalError)
       });
@@ -329,7 +327,7 @@ impl<'r> Drop for PrepareUpdatesBuffer<'r> {
       us: mem::take(&mut self.us),
     };
     let update = Arc::new(update);
-    eprintln!("UPDATE {:?}", &update);
+    trace!("PrepareUpdatesBuffer update {:?}", &update);
 
     for (_tplayer, tplupdates) in &mut self.g.updates {
       tplupdates.push(update.clone());
@@ -346,7 +344,7 @@ impl PreparedUpdate {
     type TUE<'u> = TransmitUpdateEntry<'u>;
     let mut ents = vec![];
     for u in &self.us {
-eprintln!("FOR_TRANSMIT TO={:?} {:?}", dest, &u);
+      trace!("for_transmit to={:?} {:?}", dest, &u);
       let ue = match u {
         &PUE::Piece { piece, client, sameclient_cseq : cseq, ref op }
         if client == dest => {

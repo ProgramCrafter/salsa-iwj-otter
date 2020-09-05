@@ -623,7 +623,7 @@ impl InstanceGuard<'_> {
       rmp_serde::encode::write_named(w, &s.c.g.gs)
     })?;
     self.c.game_dirty = false;
-    info!("saved (now) {:?}", &self.name);
+    debug!("saved (now) {:?}", &self.name);
   }
 
   #[throws(InternalError)]
@@ -873,7 +873,6 @@ pub fn game_flush_task() {
       match ig.save_game_now() {
         Ok(_) => {
           assert!(!ig.c.game_dirty);
-          info!("saved (flush) {:?}", &ig.name);
         },
         Err(e) => {
           // todo: notify the players

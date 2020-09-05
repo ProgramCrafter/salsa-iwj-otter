@@ -71,9 +71,9 @@ impl Read for UpdateReader {
     loop {
       let generated = orig_wanted - buf.len();
       if generated > 0 {
-        eprintln!("SENDING {} to {:?} {:?}: {:?}",
-                  generated, &self.player, &self.client,
-                  str::from_utf8(&orig_buf[0..generated]).unwrap());
+        debug!("sending {} to {:?} {:?}: {:?}",
+               generated, &self.player, &self.client,
+               str::from_utf8(&orig_buf[0..generated]).unwrap());
         self.need_flush = true;
         return Ok(generated)
       }
@@ -141,8 +141,8 @@ pub fn content(iad : InstanceAccessDetails<ClientId>, gen: Generation)
     let _g = &mut g.gs;
     let cl = g.clients.byid(client)?;
     let player = cl.player;
-eprintln!("updates content iad={:?} player={:?} cl={:?} updates={:?}",
-          &iad, &player, &cl, &g.updates);
+    trace!("updates content iad={:?} player={:?} cl={:?} updates={:?}",
+           &iad, &player, &cl, &g.updates);
     let gref = iad.gref.clone();
 
     let log = &g.updates.byid(player)?.read_log();
