@@ -935,7 +935,7 @@ pub struct ServerConfigSpec {
   pub http_port: Option<u16>,
   pub rocket_workers: Option<u16>,
   pub template_dir: Option<String>,
-  pub log: toml::Value,
+  pub log: Option<toml::Value>,
 }
 
 #[derive(Debug,Clone)]
@@ -974,6 +974,17 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
     let template_dir = template_dir
       .unwrap_or_else(|| DEFAULT_TEMPLATE_DIR.to_owned());
 
+    let log = {
+      use toml::Value::Table;
+      match log {
+        None => Table(Default::default()),
+        Some(log @Table(_)) => log,
+        Some(x) => throw!(anyhow!(
+          r#"wanted table for "log" config key, not {}"#,
+          x.type_str())
+        ),
+      }
+    };
     let log = toml::to_string(&log)?;
     let log = LogSpecification::from_toml(&log)
       .context("log specification")?;
