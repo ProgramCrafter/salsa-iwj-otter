@@ -67,7 +67,7 @@ pub use regex::Regex;
 
 pub use arrayvec::ArrayVec;
 
-pub use log::{debug,warn};
+pub use log::{trace,debug,info,warn,error};
 
 pub use flexi_logger::{LogSpecification};
 

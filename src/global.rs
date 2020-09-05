@@ -293,8 +293,8 @@ impl Instance {
       fs::remove_file(&a_savefile)
     })()
       .unwrap_or_else(
-        |e| eprintln!("warning: failed to delete stale auth file {:?}: {:?}",
-                      &a_savefile, e)
+        |e| warn!("failed to delete stale auth file {:?}: {:?}",
+                  &a_savefile, e)
         // apart from that, ignore the error.  someone will clean it up
         // later.   xxx periodic cleanup ?
       );
@@ -438,7 +438,7 @@ impl InstanceGuard<'_> {
       self.tokens_deregister_for_id(|id:PlayerId| id==oldplayer);
       self.tokens_deregister_for_id(|id| clients_to_remove.contains(&id));
       self.save_access_now().unwrap_or_else(
-        |e| eprintln!(
+        |e| warn!(
           "trouble garbage collecting accesses for deleted player: {:?}",
           &e)
       );
@@ -614,7 +614,7 @@ impl InstanceGuard<'_> {
     let out = savefilename(&self.name, prefix,"");
     fs::rename(&tmp, &out).context("install")
       .with_context(||format!("save: install {:?} as {:?}", &tmp, &out))?;
-    eprintln!("saved to {}", &out);
+    debug!("saved to {}", &out);
   }
 
   #[throws(InternalError)]
@@ -623,6 +623,7 @@ impl InstanceGuard<'_> {
       rmp_serde::encode::write_named(w, &s.c.g.gs)
     })?;
     self.c.game_dirty = false;
+    info!("saved (now) {:?}", &self.name);
   }
 
   #[throws(InternalError)]
@@ -641,14 +642,18 @@ impl InstanceGuard<'_> {
       let isa = InstanceSaveAccesses { tokens_players };
       rmp_serde::encode::write_named(w, &isa)
     })?;
+    info!("saved accesses for {:?}", &self.name);
   }
 
   #[throws(InternalError)]
   fn load_something<T:DeserializeOwned>(name: &InstanceName, prefix: &str)
                                         -> T {
     let inp = savefilename(name, prefix, "");
-    let mut f = BufReader::new(fs::File::open(&inp).context(inp)?);
-    rmp_serde::decode::from_read(&mut f)?
+    let f = fs::File::open(&inp).with_context(|| inp.clone())?;
+    let mut f = BufReader::new(f);
+    let thing = rmp_serde::decode::from_read(&mut f)?;
+    debug!("loaded from {:?}", &inp);
+    thing
   }
 
   #[throws(StartupError)]
@@ -721,7 +726,8 @@ impl InstanceGuard<'_> {
     }
     drop(global);
     drop(g);
-    GLOBAL.games.write().unwrap().insert(name, gref.clone());
+    GLOBAL.games.write().unwrap().insert(name.clone(), gref.clone());
+    info!("loadewd {:?}", &name);
     gref
   }
 }
@@ -766,6 +772,7 @@ pub fn load_games() {
     }
     <Result<_,anyhow::Error>>::Ok(())
   })().context("cleaning up stale files")?;
+  info!("loaded games");
 }
 
 // ---------- Tokens / TokenTable / AccessId ----------
@@ -866,10 +873,11 @@ pub fn game_flush_task() {
       match ig.save_game_now() {
         Ok(_) => {
           assert!(!ig.c.game_dirty);
-          eprintln!("saved {:?}", &ig.name);
+          info!("saved (flush) {:?}", &ig.name);
         },
         Err(e) => {
-          eprintln!("save error! name={:?}: {}", &ig.name, &e);
+          // todo: notify the players
+          error!("save error! name={:?}: {}", &ig.name, &e);
           mem::drop(ig);
           inner_queue.push_back(ent); // oof
         }
