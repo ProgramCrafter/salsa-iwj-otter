@@ -90,8 +90,6 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       if client == pc.lastclient { pc.gen_before_lastclient }
       else { pc.gen };
 
-    eprintln!("Q_GEN={:?} U_GEN={:?}", u_gen, q_gen);
-
     if u_gen > q_gen { throw!(PieceOpError::Conflict) }
     if pc.held != None && pc.held != Some(player) {
       throw!(OnlineError::PieceHeld)
@@ -112,7 +110,7 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       )?;
     },
     Err(ReportViaResponse(err)) => {
-      eprintln!("API ERROR => {:?}", &err);
+      warn!("api_piece_op ERROR {:?}: {:?}", &form, &err);
       Err(err)?;
     },
     Ok((update, logents)) => {
@@ -122,7 +120,7 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       buf.piece_update(piece, update, &lens);
       buf.log_updates(logents);
 
-      eprintln!("API {:?} OK", &form);
+      debug!("api_piece_op OK: {:?}", &form);
     }
   }
   ""

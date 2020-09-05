@@ -6,3 +6,6 @@ template_dir = "/home/ian/Rustup/Game/server/templates"
 
 [log]
 global_level = 'debug'
+
+[log.modules]
+'hyper::server' = 'info'
