@@ -15,7 +15,7 @@ pub type Coord = isize;
 
 pub type Pos = [Coord; 2];
 
-#[derive(Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash,Serialize,Deserialize)]
+#[derive(Clone,Eq,PartialEq,Ord,PartialOrd,Hash,Serialize,Deserialize)]
 #[serde(transparent)]
 pub struct RawToken (pub String);
 
@@ -103,6 +103,14 @@ mod implementation {
   use super::*;
   use crate::imports::*;
   type Insn = crate::commands::MgmtGameInstruction;
+
+  impl Debug for RawToken {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+      let s = &self.0;
+      let len = min(5, s.len() / 2);
+      write!(f, "{:?}...", &s[0..len])
+    }
+  }
 
   #[typetag::serde(tag="access")]
   pub trait PlayerAccessSpec : Debug {
