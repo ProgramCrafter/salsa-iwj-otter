@@ -3,3 +3,6 @@
 
 save_directory = "/home/ian/Rustup/Game/server/save"
 template_dir = "/home/ian/Rustup/Game/server/templates"
+
+[log]
+global_level = 'debug'

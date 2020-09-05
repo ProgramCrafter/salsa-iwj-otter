@@ -72,6 +72,8 @@ fn main() {
 
   std::env::set_var("ROCKET_CLI_COLORS","off");
 
+  flexi_logger::Logger::with(config().log.clone()).start()?;
+
   load_games()?;
 
   let cl = CommandListener::new()?;
