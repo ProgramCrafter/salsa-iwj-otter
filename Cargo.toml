@@ -42,6 +42,9 @@ typetag = "0.1"
 rmp-serde = "0.14"
 rmp = "^0.8"
 
+log = "0.4"
+flexi_logger = { version = "0.15", features = [ "specfile" ] }
+
 uds = "0"
 pwd = "1"
 failure = "0.1.8" # for pwd

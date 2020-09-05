@@ -378,6 +378,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "flexi_logger"
+version = "0.15.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aaab3caedb4149800f91e8e4899f29cd9ddf3b569b04c365ca9334f92f7542bf"
+dependencies = [
+ "atty",
+ "chrono",
+ "glob 0.3.0",
+ "lazy_static",
+ "log 0.4.11",
+ "notify",
+ "regex",
+ "serde",
+ "serde_derive",
+ "thiserror",
+ "toml 0.5.6",
+ "yansi",
+]
+
+[[package]]
 name = "fs2"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -431,11 +451,13 @@ dependencies = [
  "arrayvec",
  "failure",
  "fehler",
+ "flexi_logger",
  "fs2",
  "htmlescape",
  "index_vec",
  "inventory",
  "lazy_static",
+ "log 0.4.11",
  "nix",
  "num-traits",
  "percent-encoding 2.1.0",

@@ -67,6 +67,8 @@ pub use regex::Regex;
 
 pub use arrayvec::ArrayVec;
 
+pub use flexi_logger::{LogSpecification};
+
 pub use crate::global::*;
 pub use crate::gamestate::*;
 pub use crate::pieces::*;
