@@ -124,9 +124,11 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
         players : load_players,
       }).map_err(|e| InternalError::JSONEncode(e))?,
     };
-    eprintln!("SRC {:?}", &src);
+    trace!("SessionRenderContext {:?}", &src);
     src
   };
+  info!("rendering /_/session for {:?} {:?}", &player, &iad);
+
   Ok(Template::render("session",&c))
 }
 

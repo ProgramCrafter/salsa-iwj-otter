@@ -28,7 +28,6 @@ pub struct InstanceName {
 #[derive(Debug,Clone)]
 pub struct InstanceRef (Arc<Mutex<InstanceContainer>>);
 
-#[derive(Debug)]
 pub struct Instance {
   pub name : Arc<InstanceName>,
   pub gs : GameState,
@@ -206,6 +205,12 @@ impl Borrow<RawTokenVal> for RawToken {
 impl Debug for RawTokenVal {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     crate::spec::implementation::raw_token_debug_as_str(&self.0, f)
+  }
+}
+
+impl Debug for Instance {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "Instance {{ name: {:?}, .. }}", &self.name)
   }
 }
 
