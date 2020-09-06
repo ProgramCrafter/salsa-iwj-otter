@@ -96,7 +96,7 @@ fn main() {
   );
 
   if c.debug {
-    cbuilder = cbuilder.address("127.0.0.1")
+    cbuilder = cbuilder.address("127.0.0.1");
   }
   cbuilder = cbuilder.workers(c.rocket_workers);
   if let Some(port) = c.http_port {
