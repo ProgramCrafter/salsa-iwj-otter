@@ -973,6 +973,7 @@ pub struct ServerConfigSpec {
   pub rocket_workers: Option<u16>,
   pub template_dir: Option<String>,
   pub log: Option<toml::Value>,
+  pub bundled_sources: Option<String>,
 }
 
 #[derive(Debug,Clone)]
@@ -984,6 +985,7 @@ pub struct ServerConfig {
   pub rocket_workers: u16,
   pub template_dir: String,
   pub log: LogSpecification,
+  pub bundled_sources: String,
 }
 
 impl TryFrom<ServerConfigSpec> for ServerConfig {
@@ -992,7 +994,7 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
   fn try_from(spec: ServerConfigSpec) -> ServerConfig {
     let ServerConfigSpec {
       save_directory, command_socket, debug,
-      http_port, rocket_workers, template_dir, log,
+      http_port, rocket_workers, template_dir, log, bundled_sources,
     } = spec;
 
     let save_directory = save_directory
@@ -1026,9 +1028,12 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
     let log = LogSpecification::from_toml(&log)
       .context("log specification")?;
 
+    let bundled_sources = bundled_sources
+      .unwrap_or_else(|| save_directory.clone());
+
     ServerConfig {
       save_directory, command_socket, debug,
-      http_port, rocket_workers, template_dir, log,
+      http_port, rocket_workers, template_dir, log, bundled_sources,
     }
   }
 }
