@@ -54,6 +54,12 @@ pub use rocket::request::{FromParam,FromRequest,FromFormValue,LenientForm};
 pub use rocket::response::NamedFile;
 pub use rocket::response;
 
+pub use rocket::request::Request;
+pub use rocket::response::{Response,Responder};
+pub use rocket::{post,get,routes};
+pub use rocket_contrib::json::Json;
+pub use rocket::http::Status;
+
 pub use rand::thread_rng;
 pub use rand::Rng;
 pub use rand::distributions::Alphanumeric;

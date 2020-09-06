@@ -15,7 +15,6 @@ pub mod keydata;
 pub mod updates;
 pub mod sse;
 pub mod error;
-pub mod http;
 pub mod session;
 pub mod api;
 pub mod spec;
