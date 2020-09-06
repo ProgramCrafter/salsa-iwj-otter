@@ -33,20 +33,21 @@ struct FlushWouldBlockError{}
 
 impl UpdateReader {
   #[throws(io::Error)]
-  fn write_next<U>(&mut self, mut buf: &mut U, next: &PreparedUpdate)
+  fn write_next<U>(player: PlayerId, client: ClientId, to_send: &mut UpdateId,
+                   mut buf: &mut U, next: &PreparedUpdate)
                    where U : Write {
-    let tu = next.for_transmit(self.client);
+    let tu = next.for_transmit(client);
 
     write!(buf, "data: ")?;
     serde_json::to_writer(&mut buf, &tu)?;
     write!(buf, "\n\
                  id: {}\n\n",
-           &self.to_send)?;
+           to_send)?;
 
     debug!("sending to {:?} {:?}: {:?}",
-           &self.player, &self.client, &tu);
+           &player, &client, &tu);
 
-    self.to_send.try_increment().unwrap();
+    to_send.try_increment().unwrap();
   }
 }
 
@@ -55,8 +56,7 @@ impl Read for UpdateReader {
     let em : fn(&'static str) -> io::Error =
       |s| io::Error::new(io::ErrorKind::Other, anyhow!(s));
 
-    let gref = self.gref.clone();
-    let mut ig = gref.lock().map_err(|_| em("poison"))?;
+    let mut ig = self.gref.lock().map_err(|_| em("poison"))?;
     let orig_wanted = orig_buf.len();
     let mut buf = &mut *orig_buf;
 
@@ -77,7 +77,8 @@ impl Read for UpdateReader {
       if next_len > buf.len() { break }
 
       // xxx handle overflow by allocating
-      self.write_next(&mut buf, &next)
+      UpdateReader::write_next(self.player, self.client, &mut self.to_send,
+                               &mut buf, &next)
         .map_err(|e| {
           error!("UpdateReader.write_next: {} {} {:?}",
                  &self.player, &self.client, e);
