@@ -63,7 +63,7 @@ bundle-sources = "0"
 arrayvec = "0"
 
 #rocket = "0.4"
-rocket_contrib = { version = "0.4", default-features=false, features=["tera_templates","helmet","json"], git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket-contrib" }
+rocket_contrib = { version = "0.4", default-features=false, features=["tera_templates","helmet","json","serve"], git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket-contrib" }
 
 rocket = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket" }
 
