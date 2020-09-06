@@ -4,7 +4,7 @@
 
 #![allow(unused_imports)]
 
-use game::imports::*;
+use otter::imports::*;
 use argparse::{self,ArgumentParser,action::{TypedAction,ParseResult}};
 use argparse::action::{Action,IFlagAction,IArgAction};
 use std::rc::Rc;

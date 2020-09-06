@@ -8,7 +8,7 @@
 // slotmap::Keydata::get_idx_version               3.259 3.185 3.220
 // slotmap_slot_idx::KeyData::get_idx_version      3.724 3.750 3.665
 
-use game::slotmap_slot_idx;
+use otter::slotmap_slot_idx;
 
 const BATCH : usize = 128;
 const ITERS : usize = 10*1024*1024;

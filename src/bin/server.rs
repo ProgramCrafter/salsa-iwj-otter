@@ -13,7 +13,7 @@
 use rocket::{get,routes};
 use rocket_contrib::serve::StaticFiles;
 
-use game::imports::*;
+use otter::imports::*;
 
 #[derive(Serialize,Debug)]
 struct TestRenderContext { }
@@ -147,7 +147,7 @@ fn main() {
     .mount("/src", StaticFiles::from(bundled_sources))
     ;
 
-  let r = game::session::mount(r);
-  let r = game::api::mount(r);
+  let r = otter::session::mount(r);
+  let r = otter::api::mount(r);
   r.launch();
 }

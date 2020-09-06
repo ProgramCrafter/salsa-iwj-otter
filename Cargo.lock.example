@@ -482,44 +482,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3dcaa9ae7725d12cdb85b3ad99a434db70b468c09ded17e012d86b5c1010f7a7"
 
 [[package]]
-name = "game"
-version = "0.0.1"
-dependencies = [
- "anyhow",
- "argparse",
- "arrayvec",
- "bundle-sources",
- "failure",
- "fehler",
- "flexi_logger",
- "fs2",
- "htmlescape",
- "index_vec",
- "inventory",
- "lazy_static",
- "log 0.4.11",
- "nix",
- "num-traits",
- "percent-encoding 2.1.0",
- "pwd",
- "rand",
- "regex",
- "rmp",
- "rmp-serde",
- "rocket",
- "rocket_contrib",
- "rocket_cors",
- "serde",
- "serde_json",
- "slotmap",
- "thiserror",
- "toml 0.5.6",
- "typetag",
- "uds",
- "vecdeque-stableix",
-]
-
-[[package]]
 name = "generic-array"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -968,6 +930,44 @@ name = "opaque-debug"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
+
+[[package]]
+name = "otter"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "argparse",
+ "arrayvec",
+ "bundle-sources",
+ "failure",
+ "fehler",
+ "flexi_logger",
+ "fs2",
+ "htmlescape",
+ "index_vec",
+ "inventory",
+ "lazy_static",
+ "log 0.4.11",
+ "nix",
+ "num-traits",
+ "percent-encoding 2.1.0",
+ "pwd",
+ "rand",
+ "regex",
+ "rmp",
+ "rmp-serde",
+ "rocket",
+ "rocket_contrib",
+ "rocket_cors",
+ "serde",
+ "serde_json",
+ "slotmap",
+ "thiserror",
+ "toml 0.5.6",
+ "typetag",
+ "uds",
+ "vecdeque-stableix",
+]
 
 [[package]]
 name = "pear"
