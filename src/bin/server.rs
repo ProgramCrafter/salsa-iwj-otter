@@ -79,7 +79,9 @@ fn main() {
 
   std::env::set_var("ROCKET_CLI_COLORS","off");
 
-  flexi_logger::Logger::with(config().log.clone()).start()?;
+  let c = config();
+
+  flexi_logger::Logger::with(c.log.clone()).start()?;
 
   load_games()?;
 
@@ -90,8 +92,6 @@ fn main() {
     .enable(NoSniff::Enable)
     .enable(Frame::Deny)
     .enable(Referrer::NoReferrer);
-
-  let c = config();
 
   let mut cbuilder = rocket::config::Config::build(
     if c.debug {
