@@ -47,7 +47,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
   // make session in this game, log a message to other players
   let iad = lookup_token(form.ptoken.borrow())?;
   let player = iad.ident;
-  let c = {
+  let (c, client) = {
     let mut ig = iad.gref.lock()?;
     let cl = Client { player, lastseen: Instant::now() };
     let client = ig.clients.insert(cl);
@@ -125,9 +125,11 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       }).map_err(|e| InternalError::JSONEncode(e))?,
     };
     trace!("SessionRenderContext {:?}", &src);
-    src
+    (src, client)
   };
-  info!("rendering /_/session for {:?} {:?}", &player, &iad);
+  info!("rendering /_/session for {:?} {:?} {:?} {:?} {:?}",
+        &player, client, &c.nick, &c.ctoken,
+        iad.gref.lock().ok().as_ref().map(|ig| &**ig));
 
   Ok(Template::render("session",&c))
 }
