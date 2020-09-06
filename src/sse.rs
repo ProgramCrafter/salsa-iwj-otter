@@ -31,12 +31,32 @@ struct UpdateReader {
 #[error("WouldBlock error misreported!")]
 struct FlushWouldBlockError{}
 
+impl UpdateReader {
+  #[throws(io::Error)]
+  fn write_next<U>(&mut self, mut buf: &mut U, next: &PreparedUpdate)
+                   where U : Write {
+    let tu = next.for_transmit(self.client);
+
+    write!(buf, "data: ")?;
+    serde_json::to_writer(&mut buf, &tu)?;
+    write!(buf, "\n\
+                 id: {}\n\n",
+           &self.to_send)?;
+
+    debug!("sending to {:?} {:?}: {:?}",
+           &self.player, &self.client, &tu);
+
+    self.to_send.try_increment().unwrap();
+  }
+}
+
 impl Read for UpdateReader {
   fn read(&mut self, orig_buf: &mut [u8]) -> Result<usize,io::Error> {
     let em : fn(&'static str) -> io::Error =
       |s| io::Error::new(io::ErrorKind::Other, anyhow!(s));
 
-    let mut ig = self.gref.lock().map_err(|_| em("poison"))?;
+    let gref = self.gref.clone();
+    let mut ig = gref.lock().map_err(|_| em("poison"))?;
     let orig_wanted = orig_buf.len();
     let mut buf = &mut *orig_buf;
 
@@ -56,18 +76,13 @@ impl Read for UpdateReader {
       let next_len = UPDATE_MAX_FRAMING_SIZE + next.json_len();
       if next_len > buf.len() { break }
 
-      let tu = next.for_transmit(self.client);
       // xxx handle overflow by allocating
-      write!(buf, "data: ")?;
-      serde_json::to_writer(&mut buf, &tu)
-        .map_err(|e| { error!("serde_json::to_write: {:?}", e); e })?;
-      write!(buf, "\n\
-                   id: {}\n\n",
-             &self.to_send)?;
-      self.to_send.try_increment().unwrap();
-
-      debug!("sending to {:?} {:?}: {:?}",
-             &self.player, &self.client, &tu);
+      self.write_next(&mut buf, &next)
+        .map_err(|e| {
+          error!("UpdateReader.write_next: {} {} {:?}",
+                 &self.player, &self.client, e);
+          e
+        })?;
 
     }
 
