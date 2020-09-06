@@ -85,6 +85,7 @@ pub use crate::mgmtchannel::*;
 pub use crate::api::{Lens,TransparentLens};
 pub use crate::utils::*;
 pub use crate::spec::*;
+pub use crate::debugreader::DebugReader;
 
 pub use nix::unistd::Uid;
 

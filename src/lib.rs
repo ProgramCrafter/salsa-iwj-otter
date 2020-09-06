@@ -20,4 +20,5 @@ pub mod cmdlistener;
 pub mod commands;
 pub mod utils;
 pub mod mgmtchannel;
+pub mod debugreader;
 #[path="slotmap-slot-idx.rs"] pub mod slotmap_slot_idx;

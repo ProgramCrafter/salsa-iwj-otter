@@ -59,7 +59,8 @@ impl Read for UpdateReader {
       let tu = next.for_transmit(self.client);
       // xxx handle overflow by allocating
       write!(buf, "data: ")?;
-      serde_json::to_writer(&mut buf, &tu)?;
+      serde_json::to_writer(&mut buf, &tu)
+        .map_err(|e| { error!("serde_json::to_write: {:?}", e); e })?;
       write!(buf, "\n\
                    id: {}\n\n",
              &self.to_send)?;

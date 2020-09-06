@@ -53,7 +53,10 @@ fn updates<'r>(ctoken : InstanceAccess<ClientId>, gen: u64,
            -> impl response::Responder<'r> {
   let gen = Generation(gen);
   let iad = ctoken.i;
+  debug!("starting update stream {:?}", &iad);
+  let client = iad.ident;
   let content = sse::content(iad, gen)?;
+  let content = DebugReader(content, client);
   let content = response::Stream::chunked(content, 4096);
   const CTYPE : &str = "text/event-stream; charset=utf-8";
   let ctype = ContentType::parse_flexible(CTYPE).unwrap();
