@@ -32,6 +32,7 @@ pub struct PlayerUpdates {
 #[derive(Debug)]
 pub struct PreparedUpdate {
   pub gen : Generation,
+  pub when: Instant,
   pub us : Vec<PreparedUpdateEntry>,
 }
 
@@ -112,6 +113,21 @@ impl PlayerUpdates {
   // forget to cv.notify
   pub fn read_log(&self) -> &PlayerUpdatesLog { &self.log }
   pub fn get_cv(&self) -> Arc<Condvar> { self.cv.clone() }
+
+  pub fn expire_upto(&mut self, before: Instant) {
+    loop {
+      if self.log.len() < 2 { break }
+
+      let front = {
+        if let Some(front) = self.log.front() { front }
+        else { break }
+      };
+      if front.when >= before { break }
+
+      trace!("update expiring #{}", self.log.front_index());
+      self.log.pop_front();
+    }
+  }
 }
 
 impl PreparedUpdate {
@@ -323,6 +339,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 impl<'r> Drop for PrepareUpdatesBuffer<'r> {
   fn drop(&mut self) {
     let update = PreparedUpdate {
+      when: Instant::now(),
       gen: self.gen,
       us: mem::take(&mut self.us),
     };

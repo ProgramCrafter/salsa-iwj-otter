@@ -662,6 +662,10 @@ function startup() {
     console.log('GOTDATA', event);
     status_node.innerHTML = (event as any).data;
   });
+  es.addEventListener('updates_expired', function(event) {
+    console.log('UPDATES-EXPIRED', event);
+    string_report_error('connection to server interrupted too long');
+  });
   es.onerror = function(e) {
     console.log('FOO',e,es);
     json_report_error({

@@ -434,6 +434,7 @@ impl InstanceGuard<'_> {
       if let Some(mut updates) = self.updates.remove(oldplayer) {
         updates. push(PreparedUpdate {
           gen: self.c.g.gs.gen,
+          when: Instant::now(),
           us : vec![ PreparedUpdateEntry::Error(
             None,
             ErrorSignaledViaUpdate::PlayerRemoved

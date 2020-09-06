@@ -16,6 +16,7 @@ pub struct UpdateId (i64);
 const UPDATE_READER_SIZE : usize = 1024*32;
 const UPDATE_MAX_FRAMING_SIZE : usize = 200;
 const UPDATE_KEEPALIVE : Duration = Duration::from_secs(14);
+const UPDATE_EXPIRE : Duration = Duration::from_secs(66);
 
 struct UpdateReaderWN {
   player : PlayerId,
@@ -53,8 +54,8 @@ impl UpdateReaderWN {
                  id: {}\n\n",
            self.to_send)?;
 
-    debug!("sending to {:?} {:?}: {:?}",
-           &self.player, &self.client, &tu);
+    debug!("sending to {:?} {:?}: #{} {:?}",
+           &self.player, &self.client, self.to_send, &tu);
 
     self.to_send.try_increment().unwrap();
   }
@@ -80,7 +81,7 @@ impl Read for UpdateReader {
              self.player, self.client, self.to_send)?;
     }
 
-    let pu = &mut ig.updates.get(self.player)
+    let pu = &mut ig.updates.get_mut(self.player)
       .ok_or_else(|| self.trouble("player gonee",()))?;
 
     loop {
@@ -94,7 +95,20 @@ impl Read for UpdateReader {
       }
 
       let next = match pu.read_log().get(self.to_send) {
-        Some(next) => next,  None => { break }
+        Some(next) => next,
+        None => {
+          if self.to_send < pu.read_log().front_index()
+          && buf.len() == orig_wanted {
+            write!(buf, "event: updates_expired\ndata: {}\n\n",
+                   self.to_send)
+              .map_err(|e| self.wn.trouble("notify updates expired", &e))?;
+            debug!("updates expired for {} {}, telling client (#{})",
+                   &self.wn.player, &self.wn.client, self.to_send);
+            self.wn.to_send = UpdateId::max_value();
+            // ^ just stops us spewing, hopefully client will notice
+          }
+          break
+        }
       };
       let next_len = UPDATE_MAX_FRAMING_SIZE + next.json_len();
       if next_len > buf.len() {
@@ -116,6 +130,9 @@ impl Read for UpdateReader {
 
       self.wn.write_next(&mut buf, &next)
         .map_err(|e| self.wn.trouble("UpdateReader.write_next",&e))?;
+
+      let before = next.when - UPDATE_EXPIRE;
+      pu.expire_upto(before);
     }
 
     let cv = pu.get_cv();
@@ -164,6 +181,11 @@ impl Display for UpdateId {
   fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
     Display::fmt(&self.0,f)
   }
+}
+
+impl Bounded for UpdateId {
+  fn max_value() -> Self { UpdateId(Bounded::max_value()) }
+  fn min_value() -> Self { UpdateId(Bounded::min_value()) }
 }
 
 impl StableIndexOffset for UpdateId {
