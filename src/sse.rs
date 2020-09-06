@@ -17,37 +17,45 @@ const UPDATE_READER_SIZE : usize = 1024*32;
 const UPDATE_MAX_FRAMING_SIZE : usize = 200;
 const UPDATE_KEEPALIVE : Duration = Duration::from_secs(14);
 
-struct UpdateReader {
+struct UpdateReaderWN {
   player : PlayerId,
   client : ClientId,
-  need_flush : bool,
-  init_confirmation_send : iter::Once<()>,
-  keepalives : Wrapping<u32>,
   to_send : UpdateId,
+}
+
+struct UpdateReader {
+  wn: UpdateReaderWN,
+  need_flush : bool,
   gref : InstanceRef,
+  keepalives : Wrapping<u32>,
+  init_confirmation_send : iter::Once<()>,
+}
+
+impl Deref for UpdateReader {
+  type Target = UpdateReaderWN;
+  fn deref(&self) -> &UpdateReaderWN { &self.wn }
 }
 
 #[derive(Error,Debug)]
 #[error("WouldBlock error misreported!")]
 struct FlushWouldBlockError{}
 
-impl UpdateReader {
+impl UpdateReaderWN {
   #[throws(io::Error)]
-  fn write_next<U>(player: PlayerId, client: ClientId, to_send: &mut UpdateId,
-                   mut buf: &mut U, next: &PreparedUpdate)
+  fn write_next<U>(&mut self, mut buf: &mut U, next: &PreparedUpdate)
                    where U : Write {
-    let tu = next.for_transmit(client);
+    let tu = next.for_transmit(self.client);
 
     write!(buf, "data: ")?;
     serde_json::to_writer(&mut buf, &tu)?;
     write!(buf, "\n\
                  id: {}\n\n",
-           to_send)?;
+           self.to_send)?;
 
     debug!("sending to {:?} {:?}: {:?}",
-           &player, &client, &tu);
+           &self.player, &self.client, &tu);
 
-    to_send.try_increment().unwrap();
+    self.to_send.try_increment().unwrap();
   }
 }
 
@@ -77,8 +85,7 @@ impl Read for UpdateReader {
       if next_len > buf.len() { break }
 
       // xxx handle overflow by allocating
-      UpdateReader::write_next(self.player, self.client, &mut self.to_send,
-                               &mut buf, &next)
+      self.wn.write_next(&mut buf, &next)
         .map_err(|e| {
           error!("UpdateReader.write_next: {} {} {:?}",
                  &self.player, &self.client, e);
@@ -172,10 +179,13 @@ pub fn content(iad : InstanceAccessDetails<ClientId>, gen: Generation)
       };
     
     UpdateReader {
-      player, client, to_send, gref,
       need_flush : false,
       keepalives : Wrapping(0),
+      gref,
       init_confirmation_send : iter::once(()),
+      wn : UpdateReaderWN {
+        player, client, to_send,
+      },
     }
   };
   let content = BufReader::with_capacity(UPDATE_READER_SIZE, content);
