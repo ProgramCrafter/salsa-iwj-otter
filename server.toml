@@ -5,6 +5,7 @@
 
 save_directory = "/home/rustcargo/Rustup/Game/server"
 template_dir = "/home/ian/Rustup/Game/server/templates"
+bundled_sources = "/home/rustcargo/Rustup/Game/server/target/bundled-sources"
 
 [log]
 global_level = 'debug'

@@ -83,6 +83,11 @@ fn main() {
 
   flexi_logger::Logger::with(c.log.clone()).start()?;
 
+  let bundled_sources = &c.bundled_sources;
+  fs::metadata(format!("{}/index.html", bundled_sources))
+    .with_context(||bundled_sources.clone())
+    .context("check bundled-sources directory's index.html")?;
+
   load_games()?;
 
   let cl = CommandListener::new()?;
