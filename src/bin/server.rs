@@ -8,6 +8,7 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
 use rocket::{get,routes};
+use rocket_contrib::serve::StaticFiles;
 
 use game::imports::*;
 
@@ -139,7 +140,9 @@ fn main() {
       loading,
       resource,
       updates,
-    ]);
+    ])
+    .mount("/src", StaticFiles::from(bundled_sources))
+    ;
 
   let r = game::session::mount(r);
   let r = game::api::mount(r);

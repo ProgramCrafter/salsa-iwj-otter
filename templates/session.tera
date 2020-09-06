@@ -35,4 +35,8 @@
 {%- endfor %}
   </div>
 
+<hr>
+<address>
+<a href="/src/">source code for this running server version</a>
+
 </body>
