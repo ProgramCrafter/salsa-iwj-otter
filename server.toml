@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # There is NO WARRANTY.
 
-# /volatile/rustcargo/Rustup/Game/server
-# target/debug/server ~ian/Rustup/Game/server/server.toml
+# /volatile/rustcargo/Rustup/Game/daemon-otter
+# target/debug/daemon-otter ~ian/Rustup/Game/server/server.toml
 
 # USER=rustcargo target/debug/otter --config ~ian/Rustup/Game/server/server.toml --scope-server reset --reset-table ~ian/Rustup/Game/server/demo/test.table.toml dummy  ~ian/Rustup/Game/server/demo/test.game.toml
 
