@@ -126,7 +126,7 @@ impl PreparedUpdateEntry {
     match self {
       Piece { ref op, .. } => {
         50 +
-        op.new_state().map(|x| x.svg.0.len()).unwrap_or(0)
+        op.new_state().map(|x| x.svg.0.as_bytes().len()).unwrap_or(0)
       },
       Log(logent) => {
         logent.html.0.as_bytes().len() * 3

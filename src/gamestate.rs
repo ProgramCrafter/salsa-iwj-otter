@@ -22,7 +22,7 @@ visible_slotmap_key!{ VisiblePieceId('.') }
 #[serde(try_from="f64")]
 pub struct ZCoord(pub f64);
 
-#[derive(Clone,Debug,Serialize,Deserialize)]
+#[derive(Clone,Serialize,Deserialize)]
 #[serde(transparent)]
 pub struct Html (pub String);
 
@@ -176,6 +176,17 @@ impl ClampTable for Pos {
 
 impl Html {
   pub fn lit(s: &str) -> Self { Html(s.to_owned()) }
+}
+
+impl Debug for Html {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    const MAX : usize = 23;
+    if self.0.len() < MAX {
+      write!(f, "<{}>", &self.0)
+    } else {
+      write!(f, "<{}>...", &self.0[0..MAX-3])
+    }
+  }
 }
 
 // ---------- game state - rendering etc. ----------
