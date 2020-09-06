@@ -3,7 +3,9 @@
       data-us="{{player}}"
       data-gen="{{gen}}"
       data-load="{{ load | escape }}"
-      >
+ <!-- Copyright 2020 Ian Jackson
+     SPDX-License-Identifier: AGPL-3.0-or-later
+     There is NO WARRANTY. -->
 <h1>Hi {{nick | escape}}!</h1>
 <pre id="error"></pre>
 <p>

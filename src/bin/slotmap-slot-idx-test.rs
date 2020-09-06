@@ -1,3 +1,6 @@
+// Copyright 2020 Ian Jackson
+// SPDX-License-Identifier: MIT-0 OR AGPL-3.0-or-later
+// There is NO WARRANTY.
 
 // results:
 // rustc 1.46.0-nightly --release

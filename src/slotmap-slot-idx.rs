@@ -1,3 +1,7 @@
+// Copyright 2020 Ian Jackson
+// SPDX-License-Identifier: MIT-0 OR AGPL-3.0-or-later
+// There is NO WARRANTY.
+
 #![allow(clippy::or_fun_call)]
 
 //! Provides a [`get_idx_key`](trait.KeyDataExt.html#tymethod.get_idx_version) method on

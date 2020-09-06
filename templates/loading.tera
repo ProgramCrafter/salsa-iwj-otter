@@ -1,4 +1,7 @@
 <body id="loading_body">
+<!-- Copyright 2020 Ian Jackson
+     SPDX-License-Identifier: AGPL-3.0-or-later
+     There is NO WARRANTY. -->
 <h1 id="loading_token" data-ptoken="{{ ptoken }}">Loading!</h1>
 <div id="error"></div>
 <script src="/_/script.js"></script>

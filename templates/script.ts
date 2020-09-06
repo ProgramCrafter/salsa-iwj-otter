@@ -1,5 +1,9 @@
 // -*- JavaScript -*-
 
+// Copyright 2020 Ian Jackson
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// There is NO WARRANTY. -->
+
 // xxx deployment note: need a whole bunch of domains for SSE conn limit
 
 // xxx some way to choose faces / rotate
