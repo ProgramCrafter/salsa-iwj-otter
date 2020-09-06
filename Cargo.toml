@@ -58,6 +58,8 @@ toml = "0.5"
 
 rocket_cors = "0.5"
 
+bundle-sources = "0"
+
 arrayvec = "0"
 
 #rocket = "0.4"
