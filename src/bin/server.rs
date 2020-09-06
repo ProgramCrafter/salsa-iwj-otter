@@ -131,5 +131,9 @@ fn main() {
 
   let r = game::session::mount(r);
   let r = game::api::mount(r);
+
+  let r = r.attach(rocket::fairing::AdHoc::on_launch("report launch", |r|{
+    info!("rocket launching on {} {}", &r.config().address, &r.config().port);
+  }));
   r.launch();
 }
