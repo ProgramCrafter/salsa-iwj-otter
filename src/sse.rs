@@ -220,7 +220,7 @@ pub fn content(iad : InstanceAccessDetails<ClientId>, gen: Generation)
 
     let to_send = match log.into_iter().rev()
       .find(|(_,update)| update.gen <= gen) {
-        None => log.front_index(),
+        None => UpdateId::min_value(),
         Some((mut i,_)) => { i.try_increment(); i },
       };
     

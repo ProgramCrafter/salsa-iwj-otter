@@ -97,14 +97,30 @@ enum TransmitUpdateEntry<'u> {
 
 // ---------- prepared updates, queued in memory ----------
 
-impl Default for PlayerUpdates {
-  fn default() -> PlayerUpdates { PlayerUpdates {
-    log : StableIndexVecDeque::with_capacity(50),
-    cv : Default::default(),
-  } }
+
+pub struct PlayerUpdatesBuildContext {
+  pub(self) u1: Arc<PreparedUpdate>,
+}
+
+impl PlayerUpdatesBuildContext {
+  pub fn new(&self) -> PlayerUpdates {
+    let mut log = StableIndexVecDeque::with_capacity(50);
+    log.push_back(self.u1.clone());
+    let cv = Default::default();
+    PlayerUpdates { log, cv }
+  }
 }
 
 impl PlayerUpdates {
+  pub fn new_begin(gs: &GameState) -> PlayerUpdatesBuildContext {
+    let u1 = Arc::new(PreparedUpdate {
+      gen : gs.gen,
+      when: Instant::now(),
+      us: vec![],
+    });
+    PlayerUpdatesBuildContext { u1 }
+  }
+
   pub fn push<U: Into<Arc<PreparedUpdate>>>(&mut self, update: U) {
     self.log.push_back(update.into());
     self.cv.notify_all();

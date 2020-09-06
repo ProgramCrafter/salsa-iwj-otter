@@ -346,7 +346,8 @@ impl InstanceGuard<'_> {
       e
     })?;
     (||{
-      self.c.g.updates.insert(player, Default::default());
+      let pu_bc = PlayerUpdates::new_begin(&self.c.g.gs);
+      self.c.g.updates.insert(player, pu_bc.new());
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
     (player, logentry)
   }
@@ -663,7 +664,7 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(StartupError)]
-  pub fn load(name: InstanceName) -> InstanceRef {
+  fn load(name: InstanceName) -> InstanceRef {
     {
       let mut st = GLOBAL.save_area_lock.lock().unwrap();
       let st = &mut *st;
@@ -697,8 +698,9 @@ impl InstanceGuard<'_> {
         Err(e)
       })?;
     let mut updates : SecondarySlotMap<_,_> = Default::default();
+    let pu_bc = PlayerUpdates::new_begin(&gs);
     for player in gs.players.keys() {
-      updates.insert(player, Default::default());
+      updates.insert(player, pu_bc.new());
     }
     let name = Arc::new(name);
     access_load.tokens_players.retain(
