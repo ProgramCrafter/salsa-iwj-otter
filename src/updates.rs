@@ -21,7 +21,6 @@ pub struct ExecuteGameChangeUpdates {
 
 pub type PlayerUpdatesLog =
   StableIndexVecDeque<Arc<PreparedUpdate>,sse::UpdateId>;
-// xxx delete old updates at some point
 
 #[derive(Debug)]
 pub struct PlayerUpdates {
