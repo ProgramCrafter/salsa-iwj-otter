@@ -90,7 +90,7 @@ fn main() {
     if c.debug {
       rocket::config::Environment::Development
     } else {
-      eprintln!("requesting Production");
+      info!("requesting Production");
       rocket::config::Environment::Production
     }
   );

@@ -80,7 +80,7 @@ pub fn svg_rescale_path(input: &str, scale: f64) -> String {
     write!(&mut out, "{}", w)?;
   }
 
-eprintln!("rescaled by {}: {} as {}",scale,&input,&out);
+  trace!("rescaled by {}: {} as {}",scale,&input,&out);
   out
 }
 

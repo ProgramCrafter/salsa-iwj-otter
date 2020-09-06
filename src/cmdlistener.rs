@@ -39,7 +39,7 @@ pub struct CommandListener {
 
 #[throws(ME)]
 fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
-  eprintln!("command connection {}: executing {:?}", &cs.desc, &cmd);
+  info!("command connection {}: executing {:?}", &cs.desc, &cmd);
 
   match cmd {
     Noop => Fine,
@@ -73,9 +73,10 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         .map_err(|e|{
           let name = ig.name.clone();
           Instance::destroy_game(ig)
-            .unwrap_or_else(|e|
- eprintln!("failed to tidy up failecd creation of {:?}: {:?}",
-                                      &name, &e));
+            .unwrap_or_else(|e| warn!(
+              "failed to tidy up failecd creation of {:?}: {:?}",
+              &name, &e
+            ));
           e
         })?;
 
@@ -435,7 +436,7 @@ impl CommandListener {
     thread::spawn(move ||{
       loop {
         self.accept_one().unwrap_or_else(
-          |e| eprintln!("accept/spawn failed: {:?}", e)
+          |e| error!("accept/spawn failed: {:?}", e)
         );
       }
     })
@@ -445,7 +446,7 @@ impl CommandListener {
   fn accept_one(&mut self) {
     let (conn, _caller) = self.listener.accept().context("accept")?;
     let mut desc = format!("{:>5}", conn.as_raw_fd());
-    eprintln!("command connection {}: accepted", &desc);
+    info!("command connection {}: accepted", &desc);
     thread::spawn(move||{
       match (||{
         let euid = conn.initial_peer_credentials()
@@ -479,8 +480,8 @@ impl CommandListener {
         
         <Result<_,StartupError>>::Ok(())
       })() {
-        Ok(()) => eprintln!("command connection {}: disconnected", &desc),
-        Err(e) => eprintln!("command connection {}: error: {:?}", &desc, e),
+        Ok(()) => info!("command connection {}: disconnected", &desc),
+        Err(e) => warn!("command connection {}: error: {:?}", &desc, e),
       }
     });
   }
@@ -510,8 +511,8 @@ impl CommandStream<'_> {
   }
 
   fn map_auth_err(&self, ae: AuthorisationError) -> MgmtError {
-    eprintln!("command connection {}: authorisation error: {}",
-              self.desc, ae.0);
+    warn!("command connection {}: authorisation error: {}",
+          self.desc, ae.0);
     MgmtError::AuthorisationError
   }
 }
