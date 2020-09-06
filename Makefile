@@ -5,20 +5,37 @@
 
 SHELL=/bin/bash
 
+default: debug
+
 CARGO ?= cargo
 CARGO_TARGET_DIR ?= target
 
-ifneq (,../Cargo.nail)
+ifneq (,$(wildcard(../Cargo.nail)))
 CARGO = nailing-cargo
-CARGO_TARGET_DIR = ../Build/target
+CARGO_TARGET_DIR = ../Build/$(notdir $(PWD))/target
+BUNDLE_SOURCES_DIR = ../bundle-sources
+BUNDLE_SOURCES = ../Build/bundle-sources/target/debug/bundle-rust-sources
+
+ifneq (,$(wildcard $(BUNDLE_SOURCES_DIR)))
+$(BUNDLE_SOURCES):
+	cd ../bundle-sources && $(CARGO) build
+.PHONY: $(BUNDLE_SOURCES)
+endif
 endif
 
-default: debug
-
-debug release:: %: $(CARGO_TARGET_DIR)/%/server templates/script.js
+debug release:: %: $(CARGO_TARGET_DIR)/%/server templates/script.js extra-%
 	@echo Built $@.
+.PHONY: $(CARGO_TARGET_DIR)/debug/server
+.PHONY: $(CARGO_TARGET_DIR)/release/server
 
-.PHONY: $(CARGO_TARGET_DIR)/%/server
+extra-debug:
+extra-release: bundled-sources
+
+bundled-sources: $(CARGO_TARGET_DIR)/bundled-sources
+$(CARGO_TARGET_DIR)/bundled-sources: $(BUNDLE_SOURCES)
+	nailing-cargo --- $(abspath $(BUNDLE_SOURCES)) --output $(abspath $@)
+	@echo Bundled sources.
+.PHONY: bundle-sources $(CARGO_TARGET_DIR)/bundled-sources
 
 $(CARGO_TARGET_DIR)/debug/server:
 	$(CARGO) build
