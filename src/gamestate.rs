@@ -22,6 +22,10 @@ visible_slotmap_key!{ VisiblePieceId('.') }
 #[serde(try_from="f64")]
 pub struct ZCoord(pub f64);
 
+#[derive(Clone,Debug,Serialize,Deserialize)]
+#[serde(transparent)]
+pub struct Html (pub String);
+
 pub const DEFAULT_TABLE_SIZE : Pos = [ 400, 200 ];
 
 // ---------- general data types ----------
@@ -65,7 +69,7 @@ pub struct PlayerState {
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct LogEntry {
-  pub html : String,
+  pub html : Html,
 }
 
 // ---------- piece trait, and rendering ----------
@@ -77,18 +81,18 @@ type SE = SVGProcessingError;
 #[typetag::serde]
 pub trait Piece : Send + Debug {
   // #[throws] doesn't work here for some reason
-  fn svg_piece(&self, f: &mut String, pri: &PieceRenderInstructions) -> IR;
+  fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) -> IR;
 
   #[throws(IE)]
-  fn surround_path(&self, pri : &PieceRenderInstructions) -> String;
+  fn surround_path(&self, pri : &PieceRenderInstructions) -> Html;
 
-  fn svg_x_defs(&self, f: &mut String, pri : &PieceRenderInstructions) -> IR;
+  fn svg_x_defs(&self, f: &mut Html, pri : &PieceRenderInstructions) -> IR;
 
   #[throws(IE)]
   fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
                       -> Option<Coord>;
 
-  fn describe_html(&self, face : Option<FaceId>) -> String;
+  fn describe_html(&self, face : Option<FaceId>) -> Html;
 
   fn delete_hook(&self, _p: &PieceState, _gs: &mut GameState)
                  -> ExecuteGameChangeUpdates { 
@@ -170,26 +174,30 @@ impl ClampTable for Pos {
   }
 }
 
+impl Html {
+  pub fn lit(s: &str) -> Self { Html(s.to_owned()) }
+}
+
 // ---------- game state - rendering etc. ----------
 
 impl PieceState {
   #[throws(IE)]
-  pub fn make_defs(&self, pri : &PieceRenderInstructions) -> String {
+  pub fn make_defs(&self, pri : &PieceRenderInstructions) -> Html {
     let pr = self;
-    let mut defs = String::new();
+    let mut defs = Html(String::new());
     let dragraise = match pr.p.thresh_dragraise(pri)? {
       Some(n) if n < 0 => throw!(SE::NegativeDragraise),
       Some(n) => n,
       None => -1,
     };
-    write!(defs,
+    write!(&mut defs.0,
            r##"<g id="piece{}" data-dragraise="{}">"##,
            pri.id, dragraise)?;
     pr.p.svg_piece(&mut defs, &pri)?;
-    write!(defs, r##"</g>"##)?;
-    write!(defs,
+    write!(&mut defs.0, r##"</g>"##)?;
+    write!(&mut defs.0,
            r##"<path id="surround{}" d="{}"/>"##,
-           pri.id, pr.p.surround_path(&pri)?)?;
+           pri.id, pr.p.surround_path(&pri)?.0)?;
     pr.p.svg_x_defs(&mut defs, &pri)?;
     defs
   }
@@ -206,7 +214,7 @@ impl PieceState {
     }
   }
 
-  pub fn describe_html(&self, pri : &PieceRenderInstructions) -> String {
+  pub fn describe_html(&self, pri : &PieceRenderInstructions) -> Html {
     self.p.describe_html(Some(pri.face))
   }
 }

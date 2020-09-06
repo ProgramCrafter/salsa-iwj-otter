@@ -61,7 +61,7 @@ pub struct MgmtGamePieceInfo {
   pub piece: PieceId,
   pub pos: Pos,
   pub face: FaceId,
-  pub desc_html: String,
+  pub desc_html: Html,
 }
 
 #[derive(Debug,Copy,Clone,Serialize,Deserialize)]

@@ -9,7 +9,7 @@ struct SessionRenderContext {
   gen : Generation,
   table_size : Pos,
   uses : Vec<SessionPieceContext>,
-  defs : Vec<(VisiblePieceId,String)>,
+  defs : Vec<(VisiblePieceId,Html)>,
   nick : String,
   load : String,
   log : Vec<(Generation,Arc<LogEntry>)>,

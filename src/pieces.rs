@@ -7,9 +7,9 @@ type ColourMap = IndexVec<FaceId,Colour>;
 #[derive(Debug,Serialize,Deserialize)]
 // todo: this serialisation is rather large
 struct SimpleShape {
-  desc : String,
-  path : String,
-  scaled_path : String,
+  desc : Html,
+  path : Html,
+  scaled_path : Html,
   approx_dia : Coord,
   colours : ColourMap,
 }
@@ -36,7 +36,7 @@ type IE = InternalError;
 type SE = SVGProcessingError;
 
 #[throws(SE)]
-pub fn svg_rescale_path(input: &str, scale: f64) -> String {
+pub fn svg_rescale_path(input: &Html, scale: f64) -> Html {
   type BM = u64;
   type BI = u32;
   #[derive(Debug,Copy,Clone)]
@@ -61,7 +61,7 @@ pub fn svg_rescale_path(input: &str, scale: f64) -> String {
   let mut map = ALWAYS_MAP;
   let mut first = iter::once(());
 
-  for w in input.split_ascii_whitespace() {
+  for w in input.0.split_ascii_whitespace() {
     if first.next().is_none() { write!(&mut out, " ")?; }
     match w {
       "L" | "l" | "M" | "m" |
@@ -80,20 +80,20 @@ pub fn svg_rescale_path(input: &str, scale: f64) -> String {
     write!(&mut out, "{}", w)?;
   }
 
-  trace!("rescaled by {}: {} as {}",scale,&input,&out);
-  out
+  trace!("rescaled by {}: {:?} as {:?}",scale,input,&out);
+  Html(out)
 }
 
 #[typetag::serde]
 impl Piece for SimpleShape {
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut String, pri: &PieceRenderInstructions) {
-    write!(f, r##"<path fill="{}" d="{}"/>"##,
-           self.colours[pri.face],
-           &self.path)?;
+  fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) {
+    write!(&mut f.0, r##"<path fill="{}" d="{}"/>"##,
+           self.colours[pri.face].0,
+           &self.path.0)?;
   }
   #[throws(IE)]
-  fn surround_path(&self, _pri : &PieceRenderInstructions) -> String {
+  fn surround_path(&self, _pri : &PieceRenderInstructions) -> Html {
     self.scaled_path.clone()
   }
   #[throws(IE)]
@@ -102,19 +102,19 @@ impl Piece for SimpleShape {
     Some(self.approx_dia / 2)
   }
   #[throws(IE)]
-  fn svg_x_defs(&self, _f: &mut String, _pri : &PieceRenderInstructions) {
+  fn svg_x_defs(&self, _f: &mut Html, _pri : &PieceRenderInstructions) {
   }
-  fn describe_html(&self, face : Option<FaceId>) -> String {
-    if let Some(face) = face {
-      format!("a {} {}", self.colours[face], self.desc)
+  fn describe_html(&self, face : Option<FaceId>) -> Html {
+    Html(if let Some(face) = face {
+      format!("a {} {}", self.colours[face].0, self.desc.0)
     } else {
-      format!("a {}", self.desc)
-    }
+      format!("a {}", self.desc.0)
+    })
   }
 }
 
 impl SimpleShape {
-  fn new_from_path(desc: String, path: String, approx_dia: Coord,
+  fn new_from_path(desc: Html, path: Html, approx_dia: Coord,
                    faces: &IndexVec<FaceId,ColourSpec>)
                    -> Result<Box<dyn Piece>,SpecError> {
     let scaled_path = svg_rescale_path(&path, SELECT_SCALE)?;
@@ -141,12 +141,13 @@ fn simple_resolve_spec_face(faces: &IndexSlice<FaceId,[ColourSpec]>,
 impl PieceSpec for piece_specs::Disc {
   #[throws(SpecError)]
   fn load(&self) -> Box<dyn Piece> {
-    let unit_path =
+    let unit_path = Html::lit(
       "M 0 1  a 1 1 0 1 0 0 -2 \
-              a 1 1 0 1 0 0  2  z";
+              a 1 1 0 1 0 0  2  z"
+    );
     let scale = (self.diam as f64) * 0.5;
     let path = svg_rescale_path(&unit_path, scale)?;
-    SimpleShape::new_from_path("circle".to_owned(), path, self.diam,
+    SimpleShape::new_from_path(Html::lit("circle"), path, self.diam,
                                &self.faces)?
   }
   #[throws(SpecError)]
@@ -164,9 +165,9 @@ impl PieceSpec for piece_specs::Square {
       [x, y] => (x,y),
       _ => throw!(SpecError::ImproperSizeSpec),
     };
-    let path = format!("M {} {} h {} v {} h {} z",
-                       -(x as f64)*0.5, -(y as f64)*0.5, x, y, -x);
-    SimpleShape::new_from_path("square".to_owned(), path, (x+y+1)/2,
+    let path = Html(format!("M {} {} h {} v {} h {} z",
+                            -(x as f64)*0.5, -(y as f64)*0.5, x, y, -x));
+    SimpleShape::new_from_path(Html::lit("square"), path, (x+y+1)/2,
                                &self.faces)?
   }
   #[throws(SpecError)]

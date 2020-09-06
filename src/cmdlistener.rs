@@ -134,7 +134,8 @@ fn execute_game_insn(cs: &CommandStream,
       ig.gs.table_size = size;
       (U{ pcs: vec![],
           log: vec![ LogEntry {
-            html: format!("The table was resized to {}x{}", size[0], size[1]),
+            html: Html(format!("The table was resized to {}x{}",
+                               size[0], size[1])),
           }],
           raw: Some(vec![ PreparedUpdateEntry::SetTableSize(size) ]) },
        Fine)
@@ -145,8 +146,8 @@ fn execute_game_insn(cs: &CommandStream,
         Err(ME::AlreadyExists)?;
       }
       let logentry = LogEntry {
-        html: format!("The facilitator added a player: {}",
-                      htmlescape::encode_minimal(&pl.nick)),
+        html: Html(format!("The facilitator added a player: {}",
+                      htmlescape::encode_minimal(&pl.nick))),
       };
       let (player, logentry) = ig.player_new(pl, logentry)?;
       (U{ pcs: vec![],
@@ -168,8 +169,8 @@ fn execute_game_insn(cs: &CommandStream,
       let old_state = ig.player_remove(player)?;
       (U{ pcs: vec![],
           log: old_state.iter().map(|pl| LogEntry {
-            html: format!("The facilitator removed a player: {}",
-                          htmlescape::encode_minimal(&pl.nick)),
+            html: Html(format!("The facilitator removed a player: {}",
+                          htmlescape::encode_minimal(&pl.nick))),
           }).collect(),
           raw: None},
        Fine)
@@ -222,8 +223,8 @@ fn execute_game_insn(cs: &CommandStream,
       p.p.delete_hook(&p, gs);
       (U{ pcs: vec![(piece, PieceUpdateOp::Delete())],
           log: vec![ LogEntry {
-            html: format!("A piece {} was removed from the game",
-                          desc_html),
+            html: Html(format!("A piece {} was removed from the game",
+                          desc_html.0)),
           }],
           raw: None },
        Fine)
@@ -260,7 +261,8 @@ fn execute_game_insn(cs: &CommandStream,
 
       (U{ pcs: updates,
           log: vec![ LogEntry {
-            html: format!("The facilitaror added {} pieces", count),
+            html: Html(format!("The facilitaror added {} pieces",
+                               count)),
           }],
           raw: None },
        Fine)
@@ -365,7 +367,7 @@ impl UpdateHandler {
 
         if bulk.logs {
           buf.log_updates(vec![LogEntry {
-            html: "The facilitator (re)configured the game".to_owned(),
+            html: Html::lit("The facilitator (re)configured the game")
           }]);
         }
 

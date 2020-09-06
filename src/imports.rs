@@ -95,4 +95,4 @@ pub type AE = anyhow::Error;
 pub type OE = OnlineError;
 
 pub type SvgData = Vec<u8>;
-pub type Colour = String;
+pub type Colour = Html;

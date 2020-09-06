@@ -51,7 +51,7 @@ pub enum PreparedUpdateEntry {
 #[derive(Debug,Clone,Serialize)]
 pub struct PreparedPieceState {
   pub pos : Pos,
-  pub svg : String,
+  pub svg : Html,
   pub held : Option<PlayerId>,
   pub z : ZCoord,
   pub zg : Generation,
@@ -126,10 +126,10 @@ impl PreparedUpdateEntry {
     match self {
       Piece { ref op, .. } => {
         50 +
-        op.new_state().map(|x| x.svg.len()).unwrap_or(0)
+        op.new_state().map(|x| x.svg.0.len()).unwrap_or(0)
       },
       Log(logent) => {
-        logent.html.as_bytes().len() * 3
+        logent.html.0.as_bytes().len() * 3
       },
       SetTableSize(_) |
       Error(_,_) => {

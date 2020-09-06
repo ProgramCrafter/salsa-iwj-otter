@@ -163,7 +163,7 @@ pub mod implementation {
       if !RE.is_match(s) {
         throw!(SpecError::UnsupportedColourSpec);
       }
-      spec.0.clone()
+      Html(spec.0.clone())
     }
   }
 }
