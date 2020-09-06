@@ -300,8 +300,8 @@ impl Instance {
       .unwrap_or_else(
         |e| warn!("failed to delete stale auth file {:?}: {:?}",
                   &a_savefile, e)
-        // apart from that, ignore the error.  someone will clean it up
-        // later.   xxx periodic cleanup ?
+        // apart from that, ignore the error
+        // load_games will clean it up later.
       );
   }
 
