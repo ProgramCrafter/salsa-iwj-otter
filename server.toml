@@ -11,3 +11,4 @@ global_level = 'debug'
 'hyper::server' = 'info'
 rocket = 'error'
 _ = "error" # rocket
+"game::debugreader" = 'info'

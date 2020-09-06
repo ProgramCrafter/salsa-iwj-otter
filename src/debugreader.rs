@@ -9,8 +9,13 @@ impl<T : Read> Read for DebugReader<T> {
     let l = buf.len();
     trace!("{} read({})...", &self.1, l);
     let r = self.0.read(buf);
-    debug!("{} read({}) = {:?} {:?}", &self.1, l, &r,
-           r.as_ref().map(|&r| str::from_utf8(&buf[0..r])));
+    let level = match &r {
+      Err(e) if e.kind() == io::ErrorKind::WouldBlock => log::Level::Trace,
+      Err(_) => log::Level::Info,
+      _ => log::Level::Debug,
+    };
+    log!(level,"{} read({}) = {:?} {:?}", &self.1, l, &r,
+         r.as_ref().map(|&r| str::from_utf8(&buf[0..r])));
     r
   }
 }

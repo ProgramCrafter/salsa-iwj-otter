@@ -65,6 +65,10 @@ impl Read for UpdateReader {
                    id: {}\n\n",
              &self.to_send)?;
       self.to_send.try_increment().unwrap();
+
+      debug!("sending to {:?} {:?}: {:?}",
+             &self.player, &self.client, &tu);
+
     }
 
     let cv = pu.get_cv();
@@ -72,9 +76,6 @@ impl Read for UpdateReader {
     loop {
       let generated = orig_wanted - buf.len();
       if generated > 0 {
-        debug!("sending {} to {:?} {:?}: {:?}",
-               generated, &self.player, &self.client,
-               str::from_utf8(&orig_buf[0..generated]).unwrap());
         self.need_flush = true;
         return Ok(generated)
       }
