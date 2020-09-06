@@ -4,7 +4,7 @@ use crate::http::*;
 
 #[derive(Serialize,Debug)]
 struct SessionRenderContext {
-  ctoken : String,
+  ctoken : RawToken,
   player : PlayerId,
   gen : Generation,
   table_size : Pos,
@@ -112,7 +112,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
     }
 
     let src = SessionRenderContext {
-      ctoken : ctoken.0,
+      ctoken,
       gen : ig.gs.gen,
       log : ig.gs.log.clone(),
       table_size : ig.gs.table_size,
