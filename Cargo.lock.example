@@ -211,9 +211,9 @@ checksum = "08c48aae112d48ed9f069b33538ea9e3e90aa263cfa3d1c24309612b1f7472de"
 
 [[package]]
 name = "cargo_metadata"
-version = "0.11.1"
+version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89fec17b16f1ac67908af82e47d0a90a7afd0e1827b181cd77504323d3263d35"
+checksum = "c990b1694d29f8e477f456db1b2fcd5dd1cd6e29d5be082df45213e8834eb39a"
 dependencies = [
  "semver",
  "serde",
@@ -929,9 +929,9 @@ dependencies = [
 
 [[package]]
 name = "net2"
-version = "0.2.34"
+version = "0.2.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ba7c918ac76704fb42afcbbb43891e72731f3dcca3bef2a19786297baf14af7"
+checksum = "3ebc3ec692ed7c9a255596c67808dee269f64655d8baf7b4f0638e51ba1d6853"
 dependencies = [
  "cfg-if",
  "libc",
@@ -2038,6 +2038,8 @@ dependencies = [
 [[package]]
 name = "vecdeque-stableix"
 version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ab416559db4fce6ef572b6e7fe7efc157ef331ab4e4b9df0d6ffb542e97ed22"
 dependencies = [
  "num-traits",
 ]

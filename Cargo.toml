@@ -78,7 +78,7 @@ rocket = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rock
 
 percent-encoding = "2"
 
-vecdeque-stableix = "0"
+vecdeque-stableix = "1"
 
 #hmac = "0.7"
 #base64 = "0.10"

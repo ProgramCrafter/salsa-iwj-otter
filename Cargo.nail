@@ -4,7 +4,6 @@
 
 subdirs = """
 server
-vecdeque-stableix
 lexpr-rs
 flexi_logger
 bundle-sources
