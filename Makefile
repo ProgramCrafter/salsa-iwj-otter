@@ -52,6 +52,26 @@ templates/script.js: templates/script.ts tsconfig.json
 	test "$${PIPESTATUS[*]}" = "0 0"
 	mv -f $@.tmp $@
 
+DEPLOY_ARCH=x86_64-unknown-linux-musl
+DEPLOY_RELEASE=debug
+DEPLOY_TARGET_DIR=$(CARGO_TARGET_DIR)/$(addsuffix /,$(DEPLOY_ARCH))$(DEPLOY_RELEASE)
+
+deploy-build: $(DEPLOY_TARGET_DIR)/server
+ifneq (,$(DEPLOY_ARCH))
+$(DEPLOY_TARGET_DIR)/server:
+	$(CARGO) -T$(DEPLOY_ARCH) build $(addprefix --,$(filter-out debug,$(DEPLOY_RELEASE)))
+	@echo Built $@.
+.PHONY: $(DEPLOY_TARGET_DIR)/server
+endif
+
+PROGRAMS=daemon-otter otter
+
+DEPLOY_BASE=Otter@login.chiark.greenend.org.uk:/volatile/Otter
+
+deploy: deploy-build bundled-sources
+	rsync -zv --progress $(addprefix $(DEPLOY_TARGET_DIR)/,$(PROGRAMS)) $(DEPLOY_BASE)/bin/
+	rsync -rv --progress $(CARGO_TARGET_DIR)/bundled-sources/. $(DEPLOY_BASE)/bundled-sources
+
 clean:
 	rm -f templates/script.js
 	rm -rf target
