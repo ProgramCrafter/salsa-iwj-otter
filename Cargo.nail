@@ -10,3 +10,6 @@ flexi_logger
 bundle-sources
 #rocket
 """
+
+[arch]
+CHIARK = "x86_64-unknown-linux-musl"
