@@ -7,7 +7,7 @@
 
 use crate::imports::*;
 
-use vecdeque_stableix::StableIndexOffset;
+use vecdeque_stableix::Offset as StableIndexOffset;
 use std::ops::Neg;
 
 // ---------- basic definitions ----------

@@ -68,7 +68,7 @@ pub use slotmap::dense::DenseSlotMap;
 pub type SecondarySlotMap<K,V> = slotmap::secondary::SecondaryMap<K,V>;
 pub use index_vec::{define_index_type,index_vec,IndexVec,IndexSlice};
 
-pub use vecdeque_stableix::StableIndexVecDeque;
+pub use vecdeque_stableix::Deque as StableIndexVecDeque;
 
 pub use fs2::FileExt;
 pub use lazy_static::lazy_static;
