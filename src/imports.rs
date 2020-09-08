@@ -83,6 +83,8 @@ pub use num_traits::Bounded;
 
 pub use flexi_logger::{LogSpecification};
 
+pub use hashlink::LinkedHashMap;
+
 pub use crate::global::*;
 pub use crate::gamestate::*;
 pub use crate::pieces::*;

@@ -1,0 +1,21 @@
+# Copyright 2020 Ian Jackson
+# SPDX-License-Identifier: AGPL-3.0-or-later OR CC-BY-SA-3.0
+# There is NO WARRANTY.
+
+[chess]
+
+shape = "circle"
+size = [45]
+shift = [22.5, 22.5];
+category = "chess"
+
+files = "
+blt45	a white bishop
+adt45	a black knight
+"
+[chess.scraper]
+
+method = "wikimedia"
+licences = [ "Cc-by-sa-3.0", "GFDL|migration=relicense" ]
+url_prefix = "https://commons.wikimedia.org/wiki/File:Chess "
+url_suffix = ".svg"

@@ -85,6 +85,7 @@ vecdeque-stableix = "1"
 #sha2 = "0.8"
 #generic-array = "0.12"
 
+hashlink = { version = "0.5", features = ["serde_impl"] }
 
 #clap = "2"
 #structopt = "0.3"
