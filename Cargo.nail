@@ -4,7 +4,6 @@
 
 subdirs = """
 server
-lexpr-rs
 flexi_logger
 bundle-sources
 #rocket
