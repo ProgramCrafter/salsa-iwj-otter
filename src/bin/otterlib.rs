@@ -2,8 +2,7 @@ pub use otter::imports::*;
 
 #[throws(anyhow::Error)]
 fn main(){
-  let mut s = String::new();
-  io::stdin().read_to_string(&mut s)?;
-  let l : shapelib::Library = toml::from_str(&s)?;
+  let f = env::args().nth(1).unwrap();
+  let l = shapelib::Library::load(&f)?;
   dbg!(l);
 }
