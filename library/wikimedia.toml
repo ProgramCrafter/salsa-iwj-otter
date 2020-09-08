@@ -4,15 +4,16 @@
 
 [chess]
 
-shape = "circle"
+outline.Circle = { }
 size = [45]
-shift = [22.5, 22.5];
+scale = 0.20
+shift = [22.5, 22.5]
 category = "chess"
 
-files = "
+files = """
 blt45	a white bishop
 adt45	a black knight
-"
+"""
 [chess.scraper]
 
 method = "wikimedia"

@@ -4,12 +4,13 @@
 
 pub use crate::imports::*;
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Debug)]
+#[serde(transparent)]
 pub struct Library {
   pub sections: LinkedHashMap<String, Section>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Debug)]
 pub struct Section {
   pub shape: Box<dyn OutlineSpec>,
   pub size: Vec<Coord>,
@@ -19,15 +20,20 @@ pub struct Section {
   pub scraper: toml::Value,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Debug)]
 pub struct FileList (Vec<FileEntry>);
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Debug)]
 pub struct FileEntry {
   pub filespec: String,
   pub desc: Html,
 }
 
-#[typetag::serde(tag="outline")]
-pub trait OutlineSpec {
+#[typetag::deserialize(tag="outline")]
+pub trait OutlineSpec : Debug {
 }
+
+#[derive(Deserialize,Debug)]
+pub struct Circle { }
+#[typetag::deserialize]
+impl OutlineSpec for Circle { }
