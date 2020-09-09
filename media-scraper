@@ -1,0 +1,62 @@
+#!/usr/bin/perl -w
+use strict;
+use autodie;
+
+use POSIX;
+use TOML::Parser;
+use Data::Dumper;
+use Time::HiRes;
+
+our $max_rate = 2; # per second
+
+#print Dumper($libinfo);
+
+open DEBUG, ">&STDERR" or die $!;
+
+sub run_curl {
+  my (@curl) = (qw(curl), @_);
+  our $last_curl;
+  $last_curl //= 0.;
+  my $now = Time::HiRes::time;
+  my $delay = 1./$max_rate - ($now - $last_curl);
+  Time::HiRes::sleep $delay if $delay > 0;
+  $last_curl = $now;
+  print DEBUG "+ @curl\n";
+  $!=$?=0; my $r = system @curl; die "curl failed ($? $!): @curl" if $r;
+}
+
+sub method_wikimedia ($$) {
+  my ($cfg, $methname) = @_;
+  print DEBUG "METHOD $methname...\n";
+  return sub {
+    my ($filespec, $base) = @_;
+    my $url = $cfg->{url_prefix}.$filespec.$cfg->{url_suffix};
+    my $wt = "$base.wikitext";
+    run_curl '-o',$wt,$url;
+    print STDERR "ONE $wt\n";
+  };
+}
+
+my $input = $ARGV[0] // die;
+$input =~ m/\.toml$/ or die "$input ?";
+my $basename = $`;
+mkdir $basename or $!==EEXIST or die "mkdir $basename: $!";
+
+my $parser = TOML::Parser->new();
+my $libinfo = $parser->parse_file($input);
+
+foreach my $sect (values %$libinfo) {
+  my $scraper = $sect->{scraper};
+  next unless $scraper;
+  my $method = $scraper->{method};
+  my $fn = ${*::}{"method_$method"};
+  my $method_fn = $fn->($scraper, $method);
+  foreach (split(/\n/, $sect->{files})) {
+    s/^\s+//;
+    next if m/^\#/ || m/^$/;
+    m/^\S+/;
+    my $filespec = $&;
+    my $base = "$basename/$filespec";
+    $method_fn->($filespec, $base);
+  }
+}
