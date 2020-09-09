@@ -12,11 +12,11 @@ category = "chess"
 
 files = """
 blt45	a white bishop
-adt45	a black knight
+#adt45	a black knight
 """
 [chess.scraper]
 
 method = "wikimedia"
 licences = [ "Cc-by-sa-3.0", "GFDL|migration=relicense" ]
-url_prefix = "https://commons.wikimedia.org/wiki/File:Chess "
-url_suffix = ".svg"
+url_prefix = "https://commons.wikimedia.org/wiki/File:Chess_"
+url_suffix = ".svg?action=raw"

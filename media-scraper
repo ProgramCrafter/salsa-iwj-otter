@@ -1,6 +1,5 @@
 #!/usr/bin/perl -w
 use strict;
-use autodie;
 
 use POSIX;
 use TOML::Parser;
@@ -14,7 +13,7 @@ our $max_rate = 2; # per second
 open DEBUG, ">&STDERR" or die $!;
 
 sub run_curl {
-  my (@curl) = (qw(curl), @_);
+  my (@curl) = (qw(curl -Ssf -L --proto-redir -all), @_);
   our $last_curl;
   $last_curl //= 0.;
   my $now = Time::HiRes::time;
