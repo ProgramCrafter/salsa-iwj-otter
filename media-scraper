@@ -13,7 +13,11 @@ our $max_rate = 2; # per second
 open DEBUG, ">&STDERR" or die $!;
 
 sub run_curl {
-  my (@curl) = (qw(curl -Ssf -L --proto-redir -all), @_);
+  my ($output, $url, @xopts) = @_;
+  return if stat $output;
+  die "$output $!" unless $!==ENOENT;
+  my @curl = (qw(curl -Ssf -L --proto-redir -all), @xopts);
+  push @curl, '-o', "$output.tmp", $url;
   our $last_curl;
   $last_curl //= 0.;
   my $now = Time::HiRes::time;
@@ -22,6 +26,7 @@ sub run_curl {
   $last_curl = $now;
   print DEBUG "+ @curl\n";
   $!=$?=0; my $r = system @curl; die "curl failed ($? $!): @curl" if $r;
+  rename "$output.tmp", "$output" or die "install $output: $!";
 }
 
 sub method_wikimedia ($$) {
@@ -31,7 +36,7 @@ sub method_wikimedia ($$) {
     my ($filespec, $base) = @_;
     my $url = $cfg->{url_prefix}.$filespec.$cfg->{url_suffix};
     my $wt = "$base.wikitext";
-    run_curl '-o',$wt,$url;
+    run_curl $wt,$url;
     print STDERR "ONE $wt\n";
   };
 }
