@@ -2,6 +2,7 @@
 use strict;
 
 use POSIX;
+use IO::Handle;
 use TOML::Parser;
 use Data::Dumper;
 use Time::HiRes;
@@ -11,9 +12,10 @@ our $max_rate = 2; # per second
 #print Dumper($libinfo);
 
 open DEBUG, ">&STDERR" or die $!;
+autoflush DEBUG 1;
 
 sub run_curl {
-  my ($output, $url, @xopts) = @_;
+  my ($datalog, $output, $url, @xopts) = @_;
   return if stat $output;
   die "$output $!" unless $!==ENOENT;
   my @curl = (qw(curl -Ssf -L --proto-redir -all), @xopts);
@@ -26,6 +28,9 @@ sub run_curl {
   $last_curl = $now;
   print DEBUG "+ @curl\n";
   $!=$?=0; my $r = system @curl; die "curl failed ($? $!): @curl" if $r;
+  my $logtime = strftime "%F %T UTC", gmtime time;
+  print $datalog "$logtime: downloaded into $output from $url\n"
+    or die $!;
   rename "$output.tmp", "$output" or die "install $output: $!";
 }
 
@@ -36,8 +41,29 @@ sub method_wikimedia ($$) {
     my ($filespec, $base) = @_;
     my $url = $cfg->{url_prefix}.$filespec.$cfg->{url_suffix};
     my $wt = "$base.wikitext";
-    run_curl $wt,$url;
-    print STDERR "ONE $wt\n";
+    my $datalog = new IO::File "$base.download-log", '>>' or die $!;
+    print $datalog "\n" or die $!;
+    run_curl $datalog, $wt, $url;
+    print DEBUG "file $wt ";
+    open WT, "$wt" or die $!;
+    my (@lics) = @{ $cfg->{licences} };
+    s/\W/\\$&/g foreach @lics;
+    my $lic1_re = '(?:'.(join '|', @lics).')';
+    my $ok;
+    while (<WT>) {
+      s/\s+$//;
+      if (m{^ \{\{ ($lic1_re) \}\} $}xi ||
+	  m{^ \{\{ self\| (?:[^{}]*\|)? ($lic1_re) (?:\|[^{}]*)? \}\} $}xi) {
+	print "licence=$1 ";
+	$ok = 1;
+	last;
+      }
+    }
+    if (!$ok) {
+      die "\nfile $wt from $url no appropriate licence $lic1_re";
+    }
+#    my $data_url =
+    close $datalog or die $!;
   };
 }
 
