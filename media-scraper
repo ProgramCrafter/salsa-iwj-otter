@@ -6,6 +6,7 @@ use IO::Handle;
 use TOML::Parser;
 use Data::Dumper;
 use Time::HiRes;
+use Digest::MD5 qw(md5_hex);
 
 our $max_rate = 2; # per second
 
@@ -39,12 +40,13 @@ sub method_wikimedia ($$) {
   print DEBUG "METHOD $methname...\n";
   return sub {
     my ($filespec, $base) = @_;
-    my $url = $cfg->{url_prefix}.$filespec.$cfg->{url_suffix};
+    my $filename = $cfg->{filename_prefix}.$filespec.$cfg->{filename_suffix};
+    print DEBUG "file $filespec $filename ";
+    my $url = $cfg->{url_prefix}.$filename.$cfg->{url_suffix};
     my $wt = "$base.wikitext";
     my $datalog = new IO::File "$base.download-log", '>>' or die $!;
     print $datalog "\n" or die $!;
     run_curl $datalog, $wt, $url;
-    print DEBUG "file $wt ";
     open WT, "$wt" or die $!;
     my (@lics) = @{ $cfg->{licences} };
     s/\W/\\$&/g foreach @lics;
@@ -62,7 +64,15 @@ sub method_wikimedia ($$) {
     if (!$ok) {
       die "\nfile $wt from $url no appropriate licence $lic1_re";
     }
-#    my $data_url =
+    my $data_url = $cfg->{data_url_prefix};
+    if ($cfg->{data_url_hashprefix}) {
+      # https://www.mediawiki.org/wiki/Special:MyLanguage/Manual:$wgHashedUploadDirectory
+      md5_hex($filename) =~ m{^((.).)} or die;
+      $data_url .= "$2/$1/";
+    }
+    $data_url .= $filename.$cfg->{data_url_suffix};
+    my $ups = "$base.upstream.svg";
+    run_curl $datalog, $ups, $data_url;
     close $datalog or die $!;
   };
 }
