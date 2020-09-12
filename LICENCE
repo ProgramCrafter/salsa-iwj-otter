@@ -17,18 +17,39 @@ License v3 along with this program, in the file AGPL-3.
 If not, see <http://www.gnu.org/licenses/>.
 
 
+Shape libraries
+---------------
+
+The shape librariues in library/ are *not* part of otter itself.  The
+files there have a variety of different licences, and are often
+multiply-licenced.  But all of these files are available under
+at least CC-BY-SA 3.0 or CC-BY-SA 4.0, so:
+
+The shape libraries are licensed under either the Creative Commons
+Attribution-Share Alike 3.0 Unported License, or the Creative Commons
+Attribution-ShareAlike 4.0 International Licence.
+There is NO WARRANTY.
+
+For each file in the shape library, there is a corresponding file
+".licence" giving licence, provenance and authorship information.
+
+You can find a copy of the actual licences in the files
+CC-BY-SA-3.0.txt and CC-BY-SA-4.0.txt.  If not, see
+<https://creativecommons.org/>.
+
+
 Formalities
 -----------
 
-Individual files generally contain the following tag in the copyright
-notice, instead of the full licence grant text:
+Individual files generally contain the following tag (or similar)
+in the copyright notice, instead of the full licence grant text:
   SPDX-License-Identifier: AGPL-3.0-or-later
 As is conventional, this should be read as a licence grant.
 
-Contributions are accepted based on the git commit Signed-off-by
-convention, by which the contributors' certify their contributions
-according to the Developer Certificate of Origin version 1.1 - see
-the file DEVELOPER-CERTIFICATE.
+Contributions to otter are accepted based on the git commit
+Signed-off-by convention, by which the contributors' certify their
+contributions according to the Developer Certificate of Origin version
+1.1 - see the file DEVELOPER-CERTIFICATE.
 
 If you create a new file please be sure to add an appropriate licence
 header, probably something like this:

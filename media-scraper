@@ -1,6 +1,10 @@
 #!/usr/bin/perl -w
 use strict;
 
+# xxx copyright and source information in library svg as output by server
+# xxx at least original filename should be svg sent to clients
+# xxx should be mentioned in copyright statement at bottom of game page
+
 use POSIX;
 use IO::Handle;
 use TOML::Parser;
