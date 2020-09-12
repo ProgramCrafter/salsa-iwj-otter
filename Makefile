@@ -12,12 +12,20 @@ default: debug
 
 CARGO ?= cargo
 CARGO_TARGET_DIR ?= target
+USVG ?= USVG
 
 ifneq (,$(wildcard(../Cargo.nail)))
-CARGO = nailing-cargo
+NAILING_CARGO = nailing-cargo
+CARGO = $(NAILING_CARGO)
 CARGO_TARGET_DIR = ../Build/$(notdir $(PWD))/target
+
 BUNDLE_SOURCES_DIR = ../bundle-sources
 BUNDLE_SOURCES = ../Build/bundle-sources/target/debug/bundle-rust-sources
+
+USVG_BINARY = ../resvg/target/release/usvg
+USVG = $(NAILING_CARGO) -- $(USVG)
+# To build usvg
+# zealot:resvg$ nailing-cargo build -p usvg --release
 
 ifneq (,$(wildcard $(BUNDLE_SOURCES_DIR)))
 $(BUNDLE_SOURCES):
