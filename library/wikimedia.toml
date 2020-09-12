@@ -16,11 +16,13 @@ blt45	a white bishop
 """
 [chess.scraper]
 
+spdx = "CC-BY-SA-3.0"
+filename_prefix = "Chess_"
+filename_suffix = ".svg"
+
 method = "wikimedia"
 licences = [ "Cc-by-sa-3.0", "GFDL|migration=relicense" ]
 url_prefix = "https://commons.wikimedia.org/wiki/File:"
-filename_prefix = "Chess_"
-filename_suffix = ".svg"
 url_suffix = "?action=raw"
 data_url_prefix = "https://upload.wikimedia.org/wikipedia/commons/"
 data_url_hashprefix = true

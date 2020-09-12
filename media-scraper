@@ -21,8 +21,6 @@ autoflush DEBUG 1;
 
 sub run_curl {
   my ($datalog, $output, $url, @xopts) = @_;
-  return if stat $output;
-  die "$output $!" unless $!==ENOENT;
   my @curl = (qw(curl -Ssf -L --proto-redir -all), @xopts);
   push @curl, '-o', "$output.tmp", $url;
   our $last_curl;
@@ -31,7 +29,7 @@ sub run_curl {
   my $delay = 1./$max_rate - ($now - $last_curl);
   Time::HiRes::sleep $delay if $delay > 0;
   $last_curl = $now;
-  print DEBUG "+ @curl\n";
+#  print DEBUG "+ @curl\n";
   $!=$?=0; my $r = system @curl; die "curl failed ($? $!): @curl" if $r;
   my $logtime = strftime "%F %T UTC", gmtime time;
   print $datalog "$logtime: downloaded into $output from $url\n"
@@ -39,13 +37,12 @@ sub run_curl {
   rename "$output.tmp", "$output" or die "install $output: $!";
 }
 
-sub method_wikimedia ($$) {
+sub method_wikimedia ($$$) {
   my ($cfg, $methname) = @_;
   print DEBUG "METHOD $methname...\n";
   return sub {
     my ($filespec, $base) = @_;
     my $filename = $cfg->{filename_prefix}.$filespec.$cfg->{filename_suffix};
-    print DEBUG "file $filespec $filename ";
     my $url = $cfg->{url_prefix}.$filename.$cfg->{url_suffix};
     my $wt = "$base.wikitext";
     my $datalog = new IO::File "$base.download-log", '>>' or die $!;
@@ -75,9 +72,15 @@ sub method_wikimedia ($$) {
       $data_url .= "$2/$1/";
     }
     $data_url .= $filename.$cfg->{data_url_suffix};
-    my $ups = "$base.upstream.svg";
+    my $ups = "$base.svg";
     run_curl $datalog, $ups, $data_url;
     close $datalog or die $!;
+    return <<END;
+This file was downloaded from a wikimedia/mediawiki installation.
+See .download-log for the original URL and download timestamp.
+The wikitext of the File: page on the wiki is in .wikitext, and
+contains the authorship and derivation information.
+END
   };
 }
 
@@ -101,6 +104,19 @@ foreach my $sect (values %$libinfo) {
     m/^\S+/;
     my $filespec = $&;
     my $base = "$basename/$filespec";
-    $method_fn->($filespec, $base);
+    my $licpath = "$base.licence";
+    print DEBUG "file $base ";
+    if (stat $licpath) {
+      print DEBUG "already.\n";
+      next;
+    }
+    die "$base $!" unless $!==ENOENT;
+    my $lictext = $method_fn->($filespec, $base);
+    $lictext = "SPDX-License-Identifier: $scraper->{spdx}\n\n".$lictext;
+    my $licfile = new IO::File "$licpath.tmp", '>' or die $!;
+    print $licfile $lictext or die $!;
+    close $licfile or die $!;
+    rename "$licpath.tmp", "$licpath" or die $!;
+    print DEBUG "done.\n";
   }
 }

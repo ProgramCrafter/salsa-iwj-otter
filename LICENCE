@@ -30,8 +30,27 @@ Attribution-Share Alike 3.0 Unported License, or the Creative Commons
 Attribution-ShareAlike 4.0 International Licence.
 There is NO WARRANTY.
 
-For each file in the shape library, there is a corresponding file
-".licence" giving licence, provenance and authorship information.
+Many of these files were downloaded from public sources using the
+./media-scraper script; if they are to be edited, it would be best to
+edit them at the public source.
+
+For each file in the shape library, there is either a corresponding
+file ".licence" (in the git source tree), or a file LICENCE in the
+relevant directory, giving licence, provenance and authorship
+information.
+
+The individual shapes must be sent by the server to the client as part
+of HTML/XML documents and as part of the client/server protocol; they
+become part of the dynamic HTML in the page in the client web browser.
+
+These versions of the files have been processed by usvg and are saved
+as ".usvg" in the built version of the overall git tree.  The spdx
+licence identifier and the provenance of the file is recorded in an
+XML comment like this <!-- $SPDX $LIBNAME/$BASENAME --> where $SPDX is
+the SPDX licence identifier for the primary licence we are using; and
+the $LIBNAME/$BASENAME are relative to the library/ directory in the
+source tree, where the full authorship and licence information, and
+source url etc., can be found.
 
 You can find a copy of the actual licences in the files
 CC-BY-SA-3.0.txt and CC-BY-SA-4.0.txt.  If not, see
