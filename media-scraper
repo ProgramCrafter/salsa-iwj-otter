@@ -7,6 +7,7 @@ use strict;
 
 use POSIX;
 use IO::Handle;
+use Carp;
 use TOML::Parser;
 use Data::Dumper;
 use Time::HiRes;
@@ -37,27 +38,73 @@ sub run_curl {
   rename "$output.tmp", "$output" or die "install $output: $!";
 }
 
+sub cfg_lookup_1 ($@) {
+  my ($dict, @keys) = @_;
+  #print DEBUG "cfg_lookup_1 ".Dumper($dict, \@keys);
+  foreach my $k (@keys) {
+    confess unless ref $dict eq 'HASH';
+    $dict = $dict->{$k};
+    return undef if !defined $dict;
+  }
+  #print DEBUG "cfg_lookup_1 (@keys) => $dict\n";
+  return $dict;
+}
+
+sub mk_cfg_lookup ($$@) {
+  my ($groups, $thisgroup, @keysprefix) = @_;
+  #print DEBUG "mk_cfg_lookup >@keysprefix< ".Dumper($thisgroup);
+  return sub {
+    #print DEBUG "from mk_cfg_lookup >@keysprefix< >@_<\n";
+    my $cgroup = $thisgroup;
+    for (;;) {
+      my $got = cfg_lookup_1($cgroup, @keysprefix, @_);
+      return $got if defined $got;
+      my $inherit = cfg_lookup_1($cgroup, qw(inherit));
+      return undef unless $inherit;
+      $cgroup = $groups->{$inherit};
+      confess "$inherit".Dumper($groups,$inherit)."?" unless $cgroup;
+    }
+  }
+}
+
 sub cfg_affixes ($$$) {
   my ($cfg, $keybase, $middle) = @_;
   return
-    $cfg->("${keybase}_prefix")
+    ($cfg->("${keybase}_prefix") // '')
     .$middle
-    .$cfg->('${keybase}_suffix');
+    .($cfg->("${keybase}_suffix") // '');
+}
+
+sub methodlic_wikimedia ($) {
+  my ($scraper, $input) = @_;
+  return <<END;
+These files were all obtained from ${ \ $scraper->('site-title') }
+
+They are all available under at least ${ \ $scraper->('spdx') }
+as well as possibly other licences.
+
+See <file>.download-log for the original URL and download timestamp.
+The wikitext of the File: page on the wiki is in <file>.wikitext, and
+contains the authorship and derivation information.
+
+The download was done by media-scraper, controlled by $input.
+END
 }
 
 sub method_wikimedia ($$$) {
-  my ($cfg, $methname) = @_;
-  print DEBUG "METHOD $methname...\n";
+  my ($scraper, $methname) = @_;
+  #print DEBUG "METHOD $methname...\n";
   return sub {
-    my ($filespec, $base) = @_;
-    my $filename = cfg_affixes $cfg, 'filename', $filespec;
-    my $url = cfg_affixes $cfg, 'url', $filename;
-    my $wt = "$base.wikitext";
-    my $datalog = new IO::File "$base.download-log", '>>' or die $!;
+    my ($lbase, $ldest, $rstem) = @_;
+    my $rfilename = cfg_affixes $scraper, 'filename', $rstem;
+    my $url = cfg_affixes $scraper, 'url', $rfilename;
+    my $wt = "$lbase.wikitext";
+    #print DEBUG "rfilename=$rfilename url=$url .\n";
+    my $datalog = new IO::File "$lbase.download-log", '>>' or die $!;
     print $datalog "\n" or die $!;
     run_curl $datalog, $wt, $url;
     open WT, "$wt" or die $!;
-    my (@lics) = @{ $cfg->('licences') };
+    my (@lics) = @{ $scraper->('licences') };
     s/\W/\\$&/g foreach @lics;
     my $lic1_re = '(?:'.(join '|', @lics).')';
     my $ok;
@@ -73,21 +120,16 @@ sub method_wikimedia ($$$) {
     if (!$ok) {
       die "\nfile $wt from $url no appropriate licence $lic1_re";
     }
-    my $data_url_middle = '';
-    if ($cfg->('data_url_hashprefix')) {
+    my $hash_prefix = '';
+    if ($scraper->('data_url_hashprefix')) {
       # https://www.mediawiki.org/wiki/Special:MyLanguage/Manual:$wgHashedUploadDirectory
-      md5_hex($filename) =~ m{^((.).)} or die;
-      $data_url_middle .= "$2/$1/";
+      md5_hex($rfilename) =~ m{^((.).)} or die;
+      $hash_prefix .= "$2/$1/";
     }
-    my $data_url = cfg_affixes $cfg, 'data_url', $data_url_middle;
-    my $ups = "$base.svg";
-    run_curl $datalog, $ups, $data_url;
+    my $data_url = cfg_affixes $scraper, 'data_url', $hash_prefix.$rfilename;
+    run_curl $datalog, $ldest, $data_url;
     close $datalog or die $!;
     return <<END;
-This file was downloaded from a wikimedia/mediawiki installation.
-See .download-log for the original URL and download timestamp.
-The wikitext of the File: page on the wiki is in .wikitext, and
-contains the authorship and derivation information.
 END
   };
 }
@@ -99,40 +141,55 @@ mkdir $basename or $!==EEXIST or die "mkdir $basename: $!";
 
 my $parser = TOML::Parser->new();
 my $libinfo = $parser->parse_file($input);
+my $groups = $libinfo->{group};
+my $scraper = sub { $libinfo->{scraper}{$_[0]} };
+my $method = $scraper->('method');
+my $method_fn = ${*::}{"method_$method"};
 
-foreach my $sect (values %$libinfo) {
-  my $spec = sub { $sect->{$_[0]} };
-  my $scraper_hash = $spec->('scraper');
-  my $scraper = sub { $scraper_hash->{$_[0]} };
-  next unless $scraper;
-  my $method = $scraper->('method');
-  my $fn = ${*::}{"method_$method"};
-  my $makepath = "$basename/.make";
-  my $makefile = new IO::File "$makepath.tmp", '>' or die $!;
-  my $method_fn = $fn->($scraper, $method);
-  foreach (split(/\n/, $sect->{files})) {
+my $methodlic_fn = ${*::}{"methodlic_$method"};
+my $licpath = "$basename/LICENCE";
+my $licfile = new IO::File "$licpath.tmp", '>' or die $!;
+print $licfile <<END, $methodlic_fn->($scraper, $input) or die $!;
+SPDX-License-Identifier: $scraper->(spdx)
+(applies to the contents of this directory unless otherwise stated)
+
+END
+
+my $makepath = "$basename/.make";
+my $makefile = new IO::File "$makepath.tmp", '>' or die $!;
+
+foreach my $groupname (sort keys %$groups) {
+  my $group_dict = $groups->{$groupname};
+  my $gcfg = mk_cfg_lookup($groups, $group_dict);
+  my $method_impl = $method_fn->($scraper, $method);
+  foreach (split(/\n/, $gcfg->('files'))) {
     s/^\s+//;
     next if m/^\#/ || m/^$/;
     m/^\S+/;
-    my $filespec = $&;
-    my $base = "$basename/$filespec";
-    my $licpath = "$base.licence";
-    print DEBUG "file $base ";
-    print $makefile <<END or die $!;
-LIBRARY_FILES += $base
-END
-    if (stat $licpath) {
+    my $ministem = $&;
+    my $rstem = cfg_affixes $gcfg, 'stem', $ministem;
+    my $lstem = lc $rstem;
+    my $lbase = "$basename/$lstem";
+    my $lupstream = "$lbase.svg";
+    my $lprocessed = "$lbase.usvg";
+
+    print DEBUG "file $lstem ";
+    if (stat $lupstream) {
       print DEBUG "already.\n";
       next;
     }
-    die "$base $!" unless $!==ENOENT;
-    my $lictext = $method_fn->($filespec, $base);
-    $lictext = "SPDX-License-Identifier: $scraper->{spdx}\n\n".$lictext;
-    my $licfile = new IO::File "$licpath.tmp", '>' or die $!;
-    print $licfile $lictext or die $!;
-    close $licfile or die $!;
-    rename "$licpath.tmp", "$licpath" or die $!;
+    die "$lupstream $!" unless $!==ENOENT;
+
+    $method_impl->($lbase, $lupstream, $rstem);
+
+    print $makefile <<END or die $!;
+LIBRARY_FILES += $lprocessed
+$lprocessed: $lupstream $licpath ;	$(LIBRARY_PROCESS_SVG)
+END
+
     print DEBUG "done.\n";
   }
-  close $makefile or die $!;
 }
+
+close $makefile or die $!;
+rename "$makepath.tmp", $makepath or die $!;

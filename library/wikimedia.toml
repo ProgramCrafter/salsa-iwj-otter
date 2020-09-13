@@ -2,28 +2,32 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR CC-BY-SA-3.0
 # There is NO WARRANTY.
 
-[chess]
+[scraper]
+method = "wikimedia"
+site-title = "Wikimedia"
+spdx = "CC-BY-SA-3.0"
 
+licences = [ "Cc-by-sa-3.0", "GFDL|migration=relicense" ]
+filename_suffix = ".svg"
+url_prefix = "https://commons.wikimedia.org/wiki/File:"
+url_suffix = "?action=raw"
+data_url_prefix = "https://upload.wikimedia.org/wikipedia/commons/"
+data_url_hashprefix = true
+
+[group.chess]
 outline.Circle = { }
 size = [45]
 scale = 0.20
 shift = [22.5, 22.5]
 category = "chess"
-
+stem_prefix = "Chess_"
 files = """
 blt45	a white bishop
-#adt45	a black knight
 """
-[chess.scraper]
 
-spdx = "CC-BY-SA-3.0"
-filename_prefix = "Chess_"
-filename_suffix = ".svg"
-
-method = "wikimedia"
-licences = [ "Cc-by-sa-3.0", "GFDL|migration=relicense" ]
-url_prefix = "https://commons.wikimedia.org/wiki/File:"
-url_suffix = "?action=raw"
-data_url_prefix = "https://upload.wikimedia.org/wikipedia/commons/"
-data_url_hashprefix = true
-data_url_suffix = ""
+[group.chess-flip]
+inherit = "chess"
+flip = true
+files = """
+adt45	a black knight
+"""
