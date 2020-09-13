@@ -8,7 +8,7 @@
 
 SHELL=/bin/bash
 
-default: debug libraries
+default: debug
 
 CARGO ?= cargo
 CARGO_TARGET_DIR ?= target
@@ -38,9 +38,11 @@ include $(wildcard library/*/files.make)
 
 LIBRARY_PROCESS_SVG = ./usvg-processor $@ $^ '$(USVG)'
 
+assets: templates/script.js libraries
+
 libraries: $(LIBRARY_FILES)
 
-debug release:: %: $(CARGO_TARGET_DIR)/%/server templates/script.js extra-%
+debug release:: %: $(CARGO_TARGET_DIR)/%/server assets extra-%
 	@echo Built $@.
 .PHONY: $(CARGO_TARGET_DIR)/debug/server
 .PHONY: $(CARGO_TARGET_DIR)/release/server
