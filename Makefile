@@ -23,7 +23,7 @@ BUNDLE_SOURCES_DIR = ../bundle-sources
 BUNDLE_SOURCES = ../Build/bundle-sources/target/debug/bundle-rust-sources
 
 USVG_BINARY = ../resvg/target/release/usvg
-USVG = $(NAILING_CARGO) --no-lock --no-nail --- $(USVG_BINARY)
+USVG = $(NAILING_CARGO) --just-run -q --- $(USVG_BINARY)
 # To build usvg
 # zealot:resvg$ nailing-cargo build -p usvg --release
 
@@ -42,7 +42,8 @@ assets: templates/script.js libraries
 
 libraries: $(LIBRARY_FILES)
 
-debug release:: %: $(CARGO_TARGET_DIR)/%/server assets extra-%
+debug release:: %: cargo-% assets extra-%
+cargo-debug cargo-release:: cargo-%: $(CARGO_TARGET_DIR)/%/server
 	@echo Built $@.
 .PHONY: $(CARGO_TARGET_DIR)/debug/server
 .PHONY: $(CARGO_TARGET_DIR)/release/server
@@ -89,5 +90,5 @@ deploy: deploy-build bundled-sources
 	rsync -rv --progress $(CARGO_TARGET_DIR)/bundled-sources/. $(DEPLOY_BASE)/bundled-sources
 
 clean:
-	rm -f templates/script.js
+	rm -f templates/script.js library/*/*.usvg
 	rm -rf target
