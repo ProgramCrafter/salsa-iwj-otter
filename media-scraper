@@ -97,6 +97,8 @@ foreach my $sect (values %$libinfo) {
   next unless $scraper;
   my $method = $scraper->{method};
   my $fn = ${*::}{"method_$method"};
+  my $makepath = "$basename/.make";
+  my $makefile = new IO::File "$makepath.tmp", '>' or die $!;
   my $method_fn = $fn->($scraper, $method);
   foreach (split(/\n/, $sect->{files})) {
     s/^\s+//;
@@ -106,6 +108,9 @@ foreach my $sect (values %$libinfo) {
     my $base = "$basename/$filespec";
     my $licpath = "$base.licence";
     print DEBUG "file $base ";
+    print $makefile <<END or die $!;
+LIBRARY_FILES += $base
+END
     if (stat $licpath) {
       print DEBUG "already.\n";
       next;
@@ -119,4 +124,5 @@ foreach my $sect (values %$libinfo) {
     rename "$licpath.tmp", "$licpath" or die $!;
     print DEBUG "done.\n";
   }
+  close $makefile or die $!;
 }
