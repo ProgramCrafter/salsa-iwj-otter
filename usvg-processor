@@ -1,0 +1,25 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+die unless @ARGV == 4;
+our ($out, $in, $lic, $usvg) = @ARGV;
+
+open STDOUT, '>', "$out.tmp" or die $!;
+open L, '<', $lic or die $!;
+open STDIN, "<", $in or die $!;
+
+sub add_lic () {
+  while (<L>) {
+    next unless m{^\s*SPDX-License-Identifier:\s+(\S.*?)\s*$};
+    print "<!-- $out $1, see $lic-->\n" or die $!;
+    return;
+  }
+  die "no spdx in $lic ?";
+}
+
+add_lic();
+
+flush STDOUT or die $!;
+$!=0; $?=0; system qw(sh -ec), "exec $usvg -c -" and die "exec usvg: $? $!";
+rename "$out.tmp", $out or die $!;

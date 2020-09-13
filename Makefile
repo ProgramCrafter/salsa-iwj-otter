@@ -8,11 +8,11 @@
 
 SHELL=/bin/bash
 
-default: debug
+default: debug libraries
 
 CARGO ?= cargo
 CARGO_TARGET_DIR ?= target
-USVG ?= USVG
+USVG ?= usvg
 
 ifneq (,$(wildcard(../Cargo.nail)))
 NAILING_CARGO = nailing-cargo
@@ -23,7 +23,7 @@ BUNDLE_SOURCES_DIR = ../bundle-sources
 BUNDLE_SOURCES = ../Build/bundle-sources/target/debug/bundle-rust-sources
 
 USVG_BINARY = ../resvg/target/release/usvg
-USVG = $(NAILING_CARGO) -- $(USVG)
+USVG = $(NAILING_CARGO) --- $(USVG_BINARY)
 # To build usvg
 # zealot:resvg$ nailing-cargo build -p usvg --release
 
@@ -33,6 +33,12 @@ $(BUNDLE_SOURCES):
 .PHONY: $(BUNDLE_SOURCES)
 endif
 endif
+
+include $(wildcard library/*/files.make)
+
+LIBRARY_PROCESS_SVG = ./usvg-processor $@ $^ '$(USVG)'
+
+libraries: $(LIBRARY_FILES)
 
 debug release:: %: $(CARGO_TARGET_DIR)/%/server templates/script.js extra-%
 	@echo Built $@.
