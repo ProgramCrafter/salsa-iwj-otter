@@ -23,7 +23,7 @@ BUNDLE_SOURCES_DIR = ../bundle-sources
 BUNDLE_SOURCES = ../Build/bundle-sources/target/debug/bundle-rust-sources
 
 USVG_BINARY = ../resvg/target/release/usvg
-USVG = $(NAILING_CARGO) --- $(USVG_BINARY)
+USVG = $(NAILING_CARGO) --no-lock --no-nail --- $(USVG_BINARY)
 # To build usvg
 # zealot:resvg$ nailing-cargo build -p usvg --release
 
