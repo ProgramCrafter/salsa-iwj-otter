@@ -37,19 +37,27 @@ sub run_curl {
   rename "$output.tmp", "$output" or die "install $output: $!";
 }
 
+sub cfg_affixes ($$$) {
+  my ($cfg, $keybase, $middle) = @_;
+  return
+    $cfg->("${keybase}_prefix")
+    .$middle
+    .$cfg->('${keybase}_suffix');
+}
+
 sub method_wikimedia ($$$) {
   my ($cfg, $methname) = @_;
   print DEBUG "METHOD $methname...\n";
   return sub {
     my ($filespec, $base) = @_;
-    my $filename = $cfg->{filename_prefix}.$filespec.$cfg->{filename_suffix};
-    my $url = $cfg->{url_prefix}.$filename.$cfg->{url_suffix};
+    my $filename = cfg_affixes $cfg, 'filename', $filespec;
+    my $url = cfg_affixes $cfg, 'url', $filename;
     my $wt = "$base.wikitext";
     my $datalog = new IO::File "$base.download-log", '>>' or die $!;
     print $datalog "\n" or die $!;
     run_curl $datalog, $wt, $url;
     open WT, "$wt" or die $!;
-    my (@lics) = @{ $cfg->{licences} };
+    my (@lics) = @{ $cfg->('licences') };
     s/\W/\\$&/g foreach @lics;
     my $lic1_re = '(?:'.(join '|', @lics).')';
     my $ok;
@@ -65,13 +73,13 @@ sub method_wikimedia ($$$) {
     if (!$ok) {
       die "\nfile $wt from $url no appropriate licence $lic1_re";
     }
-    my $data_url = $cfg->{data_url_prefix};
-    if ($cfg->{data_url_hashprefix}) {
+    my $data_url_middle = '';
+    if ($cfg->('data_url_hashprefix')) {
       # https://www.mediawiki.org/wiki/Special:MyLanguage/Manual:$wgHashedUploadDirectory
       md5_hex($filename) =~ m{^((.).)} or die;
-      $data_url .= "$2/$1/";
+      $data_url_middle .= "$2/$1/";
     }
-    $data_url .= $filename.$cfg->{data_url_suffix};
+    my $data_url = cfg_affixes $cfg, 'data_url', $data_url_middle;
     my $ups = "$base.svg";
     run_curl $datalog, $ups, $data_url;
     close $datalog or die $!;
@@ -93,9 +101,11 @@ my $parser = TOML::Parser->new();
 my $libinfo = $parser->parse_file($input);
 
 foreach my $sect (values %$libinfo) {
-  my $scraper = $sect->{scraper};
+  my $spec = sub { $sect->{$_[0]} };
+  my $scraper_hash = $spec->('scraper');
+  my $scraper = sub { $scraper_hash->{$_[0]} };
   next unless $scraper;
-  my $method = $scraper->{method};
+  my $method = $scraper->('method');
   my $fn = ${*::}{"method_$method"};
   my $makepath = "$basename/.make";
   my $makefile = new IO::File "$makepath.tmp", '>' or die $!;
