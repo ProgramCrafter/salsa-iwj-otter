@@ -76,18 +76,19 @@ sub cfg_affixes ($$$) {
 }
 
 sub methodlic_wikimedia ($) {
-  my ($scraper, $input) = @_;
+  my ($scraper) = @_;
   return <<END;
-These files were all obtained from ${ \ $scraper->('site-title') }
+These files were all obtained from
+    ${ \ $scraper->('site-title') }
 
-They are all available under at least ${ \ $scraper->('spdx') }
-as well as possibly other licences.
+They are all available under at least, and distributed here under,
+    ${ \ $scraper->('spdx') }
+as well as possibly other licences.  There is NO WARRANTY.
 
 See <file>.download-log for the original URL and download timestamp.
 The wikitext of the File: page on the wiki is in <file>.wikitext, and
-contains the authorship and derivation information.
-
-The download was done by media-scraper, controlled by $input.
+contains the authorship and derivation information, as well as
+information about any alternative licence terms.
 END
 }
 
@@ -149,11 +150,15 @@ my $method_fn = ${*::}{"method_$method"};
 my $methodlic_fn = ${*::}{"methodlic_$method"};
 my $licpath = "$basename/LICENCE";
 my $licfile = new IO::File "$licpath.tmp", '>' or die $!;
-print $licfile <<END, $methodlic_fn->($scraper, $input) or die $!;
-SPDX-License-Identifier: $scraper->(spdx)
+print $licfile <<END, $methodlic_fn->($scraper), <<END or die $!;
+SPDX-License-Identifier: ${ \ $scraper->('spdx') }
 (applies to the contents of this directory unless otherwise stated)
 
 END
+
+The download was done by media-scraper, controlled by $input.
+END
+close $licfile or die $!;
 
 my $makepath = "$basename/files.make";
 my $makefile = new IO::File "$makepath.tmp", '>' or die $!;
@@ -194,4 +199,5 @@ END
 }
 
 close $makefile or die $!;
+rename "$licpath.tmp", $licpath or die $!;
 rename "$makepath.tmp", $makepath or die $!;
