@@ -155,7 +155,7 @@ SPDX-License-Identifier: $scraper->(spdx)
 
 END
 
-my $makepath = "$basename/.make";
+my $makepath = "$basename/files.make";
 my $makefile = new IO::File "$makepath.tmp", '>' or die $!;
 
 foreach my $groupname (sort keys %$groups) {
@@ -174,6 +174,13 @@ foreach my $groupname (sort keys %$groups) {
     my $lprocessed = "$lbase.usvg";
 
     print DEBUG "file $lstem ";
+
+    print $makefile <<END or die $!;
+LIBRARY_FILES += $lprocessed
+$lprocessed: $lupstream $licpath
+	\$(LIBRARY_PROCESS_SVG)
+END
+
     if (stat $lupstream) {
       print DEBUG "already.\n";
       next;
@@ -181,11 +188,6 @@ foreach my $groupname (sort keys %$groups) {
     die "$lupstream $!" unless $!==ENOENT;
 
     $method_impl->($lbase, $lupstream, $rstem);
-
-    print $makefile <<END or die $!;
-LIBRARY_FILES += $lprocessed
-$lprocessed: $lupstream $licpath ;	$(LIBRARY_PROCESS_SVG)
-END
 
     print DEBUG "done.\n";
   }
