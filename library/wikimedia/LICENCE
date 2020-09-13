@@ -1,0 +1,16 @@
+SPDX-License-Identifier: CC-BY-SA-3.0
+(applies to the contents of this directory unless otherwise stated)
+
+These files were all obtained from
+    Wikimedia
+
+They are all available under at least, and distributed here under,
+    CC-BY-SA-3.0
+as well as possibly other licences.  There is NO WARRANTY.
+
+See <file>.download-log for the original URL and download timestamp.
+The wikitext of the File: page on the wiki is in <file>.wikitext, and
+contains the authorship and derivation information, as well as
+information about any alternative licence terms.
+
+The download was done by media-scraper, controlled by library/wikimedia.toml.
