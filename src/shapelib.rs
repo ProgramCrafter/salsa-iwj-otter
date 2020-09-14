@@ -29,7 +29,7 @@ pub struct LibraryGroupInfo {
 
 #[derive(Debug,Deserialize)]
 struct LibraryGroupSpec {
-  #[serde(transparent)]
+  #[serde(flatten)]
   pub info: Arc<LibraryGroupInfo>,
   #[serde(default)]
   pub stem_prefix: String,
@@ -61,7 +61,9 @@ pub enum LibraryLoadError{
   #[error("{:?}",&self)]
   ExpectedTable(String),
   #[error("{:?}",&self)]
-  InheritMissingParentGroup(String,String),
+  ExpectedString(String),
+  #[error("{:?}",&self)]
+  InheritMissingParent(String,String),
   #[error("{:?}",&self)]
   InheritDepthLimitExceeded(String),
   #[error("{:?}",&self)]
@@ -75,8 +77,9 @@ const INHERIT_DEPTH_LIMIT : u8 = 20;
 type LLE = LibraryLoadError;
 
 #[throws(LibraryLoadError)]
-fn resolve_inherit(depth: u8, groups: &toml::Table, group_name: &str,
-                   group: &'g toml::Value) -> Cow<'g, toml::Table> {
+fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
+                       group_name: &str, group: &'r toml::Value)
+                       -> Cow<'r, toml::value::Table> {
   let gn = || format!("{}", group_name);
   let gp = || format!("group.{}", group_name);
 
@@ -84,48 +87,58 @@ fn resolve_inherit(depth: u8, groups: &toml::Table, group_name: &str,
 
   let parent_name = match group.get("inherit") {
     None => { return Cow::Borrowed(group) },
-    Some(p) = p,
+    Some(p) => p,
   };
+  let parent_name = parent_name
+    .as_str().ok_or_else(|| LLE::ExpectedString(format!("group.{}.inherit",
+                                                        group_name)))?;
   let parent = groups.get(parent_name)
-    .ok_or_else(|| LLE::MissingParentGroup(gn(), parent_name.to_string))?;
+    .ok_or_else(|| LLE::InheritMissingParent(gn(), parent_name.to_string()))?;
 
-  let mut build = parent.resolve_inherit(
-    depth.checked_sub(1).ok_or_else(!| LLE:InheritDepthLimitExceeded(gn()))?,
-    groups, parent_name, parent);
+  let mut build = resolve_inherit(
+    depth.checked_sub(1).ok_or_else(|| LLE::InheritDepthLimitExceeded(gn()))?,
+    groups, parent_name, parent
+  )?.into_owned();
 
-  build.extend(group.iter());
-  build
+  build.extend(group.iter().map(|(k,v)| (k.clone(), v.clone())));
+  Cow::Owned(build)
 }
 
-impl Library {
+impl LibraryContents {
   #[throws(LibraryLoadError)]
-  pub fn load(path: &str) -> Library {
-    let f = File::open(path)?;
+  pub fn load(directory: String) -> LibraryContents {
+    let toml_path = format!("{}.toml", &directory);
+    let f = File::open(toml_path)?;
     let mut f = BufReader::new(f);
     let mut s = String::new();
     f.read_to_string(&mut s).unwrap();
     let toplevel : toml::Value = s.parse()?;
-    let mut l = LibraryContents { pieces: HashMap::new() };
+    let mut l = LibraryContents {
+      pieces: HashMap::new(),
+      directory,
+    };
+    let empty_table = toml::value::Value::Table(Default::default());
     let groups =
       toplevel
-      .as_table().ok_or_else(|| LLE::ExpectedTable(format!("toplevel")))?;
-      .get("group").or_else(toml::value::Value::Table(Default::default()))
+      .as_table().ok_or_else(|| LLE::ExpectedTable(format!("toplevel")))?
+      .get("group").unwrap_or(&empty_table)
       .as_table().ok_or_else(|| LLE::ExpectedTable(format!("group")))?;
     for (group_name, group_value) in groups {
       let resolved = resolve_inherit(INHERIT_DEPTH_LIMIT,
-                                     &groups, group_name, group_value);
-      let spec : LibraryGroupSpec = resolved.try_into()?;
-      for f in spec.files {
-        let usvgfile = format!("{}{}{}.usvg",
-                               spec.stem_prefix, f.filespec, spec.stem_suffix);
-        let lp = LibraryPieceInfo { info, desc: fileentry.desc };
+                                     &groups, group_name, group_value)?;
+      let spec : LibraryGroupSpec = resolved.as_ref().try_into()?;
+      for fe in spec.files {
+        let usvgfile = format!("{}{}{}.usvg", spec.stem_prefix,
+                               fe.filespec, spec.stem_suffix);
+        let lp = LibraryPieceInfo { info: spec.info, desc: fe.desc };
+        type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
         match l.entry(usvgfile) {
-          Occupied(oe) => throw!(LLE::DuplicateFile(
+          H::Occupied(oe) => throw!(LLE::DuplicateFile(
             oe.key().clone(),
             oe.get().clone(),
             lp,
           )),
-          Vacant(ve) => ve.insert(lp),
+          H::Vacant(ve) => ve.insert(lp),
         };
       }
     }
