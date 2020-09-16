@@ -151,11 +151,11 @@ pub struct InstanceAccess<'i, Id> {
 // ========== internal data structures ==========
 
 lazy_static! {
-  static ref GLOBAL : Global = Default::default();
+  pub static ref GLOBAL : Global = Default::default();
 }
 
 #[derive(Default)]
-struct Global {
+pub struct Global {
   // lock hierarchy: InstanceContainer < games < {players, clients}
   // (in order of criticality (perf impact); outermost first, innermost last)
   games   : RwLock<HashMap<Arc<InstanceName>,InstanceRef>>,
@@ -164,6 +164,7 @@ struct Global {
   config  : RwLock<Arc<ServerConfig>>,
   dirty   : Mutex<VecDeque<InstanceRef>>,
   save_area_lock : Mutex<Option<File>>,
+  pub shapelibs : RwLock<HashMap<String,LibraryContents>>,
 }
 
 #[derive(Debug)]

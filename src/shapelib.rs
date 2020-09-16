@@ -6,48 +6,49 @@ pub use crate::imports::*;
 
 #[derive(Debug)]
 pub struct LibraryContents {
-  pub dirname: String,
-  pub pieces: HashMap<String /* usvg path */, LibraryPieceInfo>,
+  dirname: String,
+  pieces: HashMap<String /* usvg path */, LibraryPieceInfo>,
 }
 
 #[derive(Debug,Clone)]
 pub struct LibraryPieceInfo {
-  pub desc: Html,
-  pub info: Arc<LibraryGroupInfo>,
+  desc: Html,
+  info: Arc<LibraryGroupInfo>,
 }
 
 #[derive(Debug,Deserialize)]
 pub struct LibraryGroupInfo {
-  pub outline: Box<dyn OutlineSpec>,
-  pub size: Vec<Coord>,
+  outline: Box<dyn OutlineSpec>,
+  size: Vec<Coord>,
   #[serde(default="num_traits::identities::One::one")]
-  pub scale: f64,
+  scale: f64,
   #[serde(default)]
-  pub centre: Option<Vec<f64>>,
-  pub category: String,
+  centre: Option<Vec<f64>>,
+  category: String,
 }
 
 #[derive(Debug,Deserialize)]
 struct LibraryGroupSpec {
-  #[serde(default)] pub stem_prefix: String,
-  #[serde(default)] pub stem_suffix: String,
-  #[serde(default)] pub flip: bool,
-  pub files: FileList,
-  #[serde(flatten)] pub info: Arc<LibraryGroupInfo>,
+  #[serde(default)] stem_prefix: String,
+  #[serde(default)] stem_suffix: String,
+  #[serde(default)] flip: bool,
+  files: FileList,
+  #[serde(flatten)] info: Arc<LibraryGroupInfo>,
 }
 
 #[derive(Deserialize,Debug)]
 #[serde(try_from="String")]
-pub struct FileList (Vec<FileEntry>);
+struct FileList (Vec<FileEntry>);
 
 #[derive(Deserialize,Debug)]
-pub struct FileEntry {
-  pub filespec: String,
-  pub desc: Html,
+struct FileEntry {
+  filespec: String,
+  desc: Html,
 }
 
 #[typetag::deserialize]
-pub trait OutlineSpec : Debug + Sync + Send {
+trait OutlineSpec : Debug + Sync + Send {
+  fn check(&self, lgi: &LibraryGroupInfo) -> Result<(),LibraryLoadError>;
 }
 
 #[derive(Error,Debug)]
@@ -60,6 +61,8 @@ pub enum LibraryLoadError{
   ExpectedTable(String),
   #[error("{:?}",&self)]
   ExpectedString(String),
+  #[error("{:?}",&self)]
+  WrongNumberOfSizeDimensions { got: usize, expected: usize },
   #[error("{:?}",&self)]
   InheritMissingParent(String,String),
   #[error("{:?}",&self)]
@@ -103,53 +106,74 @@ fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
   Cow::Owned(build)
 }
 
-impl LibraryContents {
-  #[throws(LibraryLoadError)]
-  pub fn load(dirname: String) -> LibraryContents {
-    let toml_path = format!("{}.toml", &dirname);
-    let f = File::open(toml_path)?;
-    let mut f = BufReader::new(f);
-    let mut s = String::new();
-    f.read_to_string(&mut s).unwrap();
-    let toplevel : toml::Value = s.parse()?;
-    let mut l = LibraryContents {
-      pieces: HashMap::new(),
-      dirname,
-    };
-    let empty_table = toml::value::Value::Table(Default::default());
-    let groups =
-      toplevel
-      .as_table().ok_or_else(|| LLE::ExpectedTable(format!("toplevel")))?
-      .get("group").unwrap_or(&empty_table)
-      .as_table().ok_or_else(|| LLE::ExpectedTable(format!("group")))?;
-    for (group_name, group_value) in groups {
-      let resolved = resolve_inherit(INHERIT_DEPTH_LIMIT,
-                                     &groups, group_name, group_value)?;
-      let resolved = TV::Table(resolved.into_owned());
-      let spec : LibraryGroupSpec = resolved.try_into()?;
-      for fe in spec.files.0 {
-        let usvgfile = format!("{}{}{}.usvg", spec.stem_prefix,
-                               fe.filespec, spec.stem_suffix);
-        let lp = LibraryPieceInfo { info: spec.info.clone(), desc: fe.desc };
-        type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
-        match l.pieces.entry(usvgfile) {
-          H::Occupied(oe) => throw!(LLE::DuplicateFile(
-            oe.key().clone(),
-            oe.get().clone(),
-            lp,
-          )),
-          H::Vacant(ve) => ve.insert(lp),
-        };
-      }
+#[throws(LibraryLoadError)]
+fn load_catalogue(dirname: String) -> LibraryContents {
+  let toml_path = format!("{}.toml", &dirname);
+  let f = File::open(toml_path)?;
+  let mut f = BufReader::new(f);
+  let mut s = String::new();
+  f.read_to_string(&mut s).unwrap();
+  let toplevel : toml::Value = s.parse()?;
+  let mut l = LibraryContents {
+    pieces: HashMap::new(),
+    dirname,
+  };
+  let empty_table = toml::value::Value::Table(Default::default());
+  let groups =
+    toplevel
+    .as_table().ok_or_else(|| LLE::ExpectedTable(format!("toplevel")))?
+    .get("group").unwrap_or(&empty_table)
+    .as_table().ok_or_else(|| LLE::ExpectedTable(format!("group")))?;
+  for (group_name, group_value) in groups {
+    let resolved = resolve_inherit(INHERIT_DEPTH_LIMIT,
+                                   &groups, group_name, group_value)?;
+    let resolved = TV::Table(resolved.into_owned());
+    let spec : LibraryGroupSpec = resolved.try_into()?;
+    for fe in spec.files.0 {
+      let usvgfile = format!("{}{}{}.usvg", spec.stem_prefix,
+                             fe.filespec, spec.stem_suffix);
+      let lp = LibraryPieceInfo { info: spec.info.clone(), desc: fe.desc };
+      type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
+      match l.pieces.entry(usvgfile) {
+        H::Occupied(oe) => throw!(LLE::DuplicateFile(
+          oe.key().clone(),
+          oe.get().clone(),
+          lp,
+        )),
+        H::Vacant(ve) => ve.insert(lp),
+      };
     }
-    l
   }
+  l
+}
+
+#[throws(LibraryLoadError)]
+pub fn load(libname: String, dirname: String) {
+  let data = load_catalogue(dirname.clone())?;
+  dbg!(&data);
+  GLOBAL.shapelibs.write().unwrap().insert(libname.clone(), data);
+  info!("loaded library {:?} from {:?}", libname, dirname);
 }
 
 #[derive(Deserialize,Debug)]
 struct Circle { }
 #[typetag::deserialize]
-impl OutlineSpec for Circle { }
+impl OutlineSpec for Circle {
+  #[throws(LibraryLoadError)]
+  fn check(&self, lgi: &LibraryGroupInfo) {
+    Self::get_size(lgi)?;
+  }
+}
+impl Circle {
+  #[throws(LibraryLoadError)]
+  fn get_size(lgi: &LibraryGroupInfo) -> Coord {
+    match lgi.size.as_slice() {
+      &[c] => c,
+      size => throw!(LLE::WrongNumberOfSizeDimensions
+                     { got: size.len(), expected : 1 }),
+    }
+  }
+}
 
 impl TryFrom<String> for FileList {
   type Error = LLE;
