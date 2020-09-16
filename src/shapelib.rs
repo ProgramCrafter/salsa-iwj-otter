@@ -29,13 +29,11 @@ pub struct LibraryGroupInfo {
 
 #[derive(Debug,Deserialize)]
 struct LibraryGroupSpec {
-  #[serde(flatten)]
-  pub info: Arc<LibraryGroupInfo>,
-  #[serde(default)]
-  pub stem_prefix: String,
-  #[serde(default)]
-  pub stem_suffix: String,
+  #[serde(default)] pub stem_prefix: String,
+  #[serde(default)] pub stem_suffix: String,
+  #[serde(default)] pub flip: bool,
   pub files: FileList,
+  #[serde(flatten)] pub info: Arc<LibraryGroupInfo>,
 }
 
 #[derive(Deserialize,Debug)]
