@@ -6,11 +6,11 @@ pub use crate::imports::*;
 
 #[derive(Debug)]
 pub struct LibraryContents {
-  pub directory: String,
+  pub dirname: String,
   pub pieces: HashMap<String /* usvg path */, LibraryPieceInfo>,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct LibraryPieceInfo {
   pub desc: Html,
   pub info: Arc<LibraryGroupInfo>,
@@ -49,7 +49,7 @@ pub struct FileEntry {
 }
 
 #[typetag::deserialize]
-pub trait OutlineSpec : Debug {
+pub trait OutlineSpec : Debug + Sync + Send {
 }
 
 #[derive(Error,Debug)]
@@ -75,6 +75,7 @@ pub enum LibraryLoadError{
 const INHERIT_DEPTH_LIMIT : u8 = 20;
 
 type LLE = LibraryLoadError;
+type TV = toml::Value;
 
 #[throws(LibraryLoadError)]
 fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
@@ -106,8 +107,8 @@ fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
 
 impl LibraryContents {
   #[throws(LibraryLoadError)]
-  pub fn load(directory: String) -> LibraryContents {
-    let toml_path = format!("{}.toml", &directory);
+  pub fn load(dirname: String) -> LibraryContents {
+    let toml_path = format!("{}.toml", &dirname);
     let f = File::open(toml_path)?;
     let mut f = BufReader::new(f);
     let mut s = String::new();
@@ -115,7 +116,7 @@ impl LibraryContents {
     let toplevel : toml::Value = s.parse()?;
     let mut l = LibraryContents {
       pieces: HashMap::new(),
-      directory,
+      dirname,
     };
     let empty_table = toml::value::Value::Table(Default::default());
     let groups =
@@ -126,13 +127,14 @@ impl LibraryContents {
     for (group_name, group_value) in groups {
       let resolved = resolve_inherit(INHERIT_DEPTH_LIMIT,
                                      &groups, group_name, group_value)?;
-      let spec : LibraryGroupSpec = resolved.as_ref().try_into()?;
-      for fe in spec.files {
+      let resolved = TV::Table(resolved.into_owned());
+      let spec : LibraryGroupSpec = resolved.try_into()?;
+      for fe in spec.files.0 {
         let usvgfile = format!("{}{}{}.usvg", spec.stem_prefix,
                                fe.filespec, spec.stem_suffix);
-        let lp = LibraryPieceInfo { info: spec.info, desc: fe.desc };
+        let lp = LibraryPieceInfo { info: spec.info.clone(), desc: fe.desc };
         type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
-        match l.entry(usvgfile) {
+        match l.pieces.entry(usvgfile) {
           H::Occupied(oe) => throw!(LLE::DuplicateFile(
             oe.key().clone(),
             oe.get().clone(),
