@@ -115,6 +115,12 @@ impl Piece for SimpleShape {
       format!("a {}", self.desc.0)
     })
   }
+  #[throws(SpecError)]
+  fn resolve_spec_face(&self, face: Option<FaceId>) -> FaceId {
+    let face = face.unwrap_or_default();
+    self.colours.get(face).ok_or(SpecError::FaceNotFound)?;
+    face
+  }
 }
 
 impl SimpleShape {
@@ -132,15 +138,6 @@ impl SimpleShape {
   }
 }
 
-#[throws(SpecError)]
-fn simple_resolve_spec_face(faces: &IndexSlice<FaceId,[ColourSpec]>,
-                            face: Option<FaceId>)
-                            -> FaceId {
-  let face = face.unwrap_or_default();
-  faces.get(face).ok_or(SpecError::FaceNotFound)?;
-  face
-}
-
 #[typetag::serde]
 impl PieceSpec for piece_specs::Disc {
   #[throws(SpecError)]
@@ -153,10 +150,6 @@ impl PieceSpec for piece_specs::Disc {
     let path = svg_rescale_path(&unit_path, scale)?;
     SimpleShape::new_from_path(Html::lit("circle"), path, self.diam,
                                &self.faces)?
-  }
-  #[throws(SpecError)]
-  fn resolve_spec_face(&self, face: Option<FaceId>) -> FaceId {
-    simple_resolve_spec_face(&self.faces, face)?
   }
 }
 
@@ -173,9 +166,5 @@ impl PieceSpec for piece_specs::Square {
                             -(x as f64)*0.5, -(y as f64)*0.5, x, y, -x));
     SimpleShape::new_from_path(Html::lit("square"), path, (x+y+1)/2,
                                &self.faces)?
-  }
-  #[throws(SpecError)]
-  fn resolve_spec_face(&self, face: Option<FaceId>) -> FaceId {
-    simple_resolve_spec_face(&self.faces, face)?
   }
 } 

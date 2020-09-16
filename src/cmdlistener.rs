@@ -239,12 +239,12 @@ fn execute_game_insn(cs: &CommandStream,
       let count = count.unwrap_or(1);
       if count > CREATE_PIECES_MAX { throw!(LimitExceeded) }
       let posd = posd.unwrap_or(DEFAULT_POS_DELTA);
-      let face = info.resolve_spec_face(face)?;
 
       let mut updates = Vec::with_capacity(count as usize);
       let mut pos = pos.unwrap_or(DEFAULT_POS_START);
       for i in 0..count {
         let p = info.load()?;
+        let face = p.resolve_spec_face(face)?;
         let z = ZCoord(gs.max_z.0 + (i + 1) as f64);
         let pc = PieceState {
           held: None,

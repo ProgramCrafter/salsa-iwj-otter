@@ -83,6 +83,9 @@ type SE = SVGProcessingError;
 
 #[typetag::serde]
 pub trait Piece : Send + Debug {
+  fn resolve_spec_face(&self, face : Option<FaceId>)
+                       -> Result<FaceId,SpecError>;
+
   // #[throws] doesn't work here for some reason
   fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) -> IR;
 
@@ -112,8 +115,6 @@ pub struct PieceRenderInstructions {
 #[typetag::serde(tag="type")]
 pub trait PieceSpec : Debug {
   fn load(&self) -> Result<Box<dyn Piece>,SpecError>;
-  fn resolve_spec_face(&self, face : Option<FaceId>)
-                       -> Result<FaceId,SpecError>;
 }
 
 // ========== implementations ==========
