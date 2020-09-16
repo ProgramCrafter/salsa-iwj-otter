@@ -39,7 +39,7 @@ struct LibraryGroupSpec {
 }
 
 #[derive(Deserialize,Debug)]
-#[serde(try_from="&str")]
+#[serde(try_from="String")]
 pub struct FileList (Vec<FileEntry>);
 
 #[derive(Deserialize,Debug)]
@@ -153,10 +153,10 @@ struct Circle { }
 #[typetag::deserialize]
 impl OutlineSpec for Circle { }
 
-impl TryFrom<&str> for FileList {
+impl TryFrom<String> for FileList {
   type Error = LLE;
   #[throws(LLE)]
-  fn try_from(s: &str) -> FileList {
+  fn try_from(s: String) -> FileList {
     let mut o = Vec::new();
     for (lno,l) in s.lines().enumerate() {
       let l = l.trim();
