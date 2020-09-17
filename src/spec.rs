@@ -40,6 +40,8 @@ pub enum SpecError {
   FaceNotFound,
   InternalError(String),
   PosOffTable,
+  LibraryNotFound,
+  LibraryItemNotFound,
 }
 display_as_debug!{SpecError}
 

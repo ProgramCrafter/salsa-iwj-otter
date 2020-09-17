@@ -20,4 +20,4 @@ faces = ["blue", "grey"]
 pos = [90,100]
 type = "Lib"
 lib = "wikimedia"
-file = "chess-w-n"
+item = "chess-w-N"

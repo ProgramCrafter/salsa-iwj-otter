@@ -20,14 +20,15 @@ size = [45]
 scale = 0.20
 centre = [22.5, 22.5]
 category = "chess"
+item_prefix = "chess-"
 stem_prefix = "Chess_"
 files = """
-blt45	a white bishop
+w-B	blt45	a white bishop
 """
 
 [group.chess-flip]
 inherit = "chess"
 flip = true
 files = """
-adt45	a black knight
+b-N	adt45	a black knight
 """

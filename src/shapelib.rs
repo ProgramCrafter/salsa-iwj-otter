@@ -7,12 +7,17 @@ pub use crate::imports::*;
 #[derive(Debug)]
 pub struct LibraryContents {
   dirname: String,
-  pieces: HashMap<String /* usvg path */, LibraryPieceInfo>,
+  items: HashMap<String /* item (name) */, LibraryItemInfo>,
 }
 
 #[derive(Debug,Clone)]
-pub struct LibraryPieceInfo {
+pub struct LibraryItemDetails {
   desc: Html,
+}
+
+#[derive(Debug,Clone)]
+pub struct LibraryItemInfo {
+  details: Arc<LibraryItemDetails>,
   info: Arc<LibraryGroupInfo>,
 }
 
@@ -29,6 +34,8 @@ pub struct LibraryGroupInfo {
 
 #[derive(Debug,Deserialize)]
 struct LibraryGroupSpec {
+  #[serde(default)] item_prefix: String,
+  #[serde(default)] item_suffix: String,
   #[serde(default)] stem_prefix: String,
   #[serde(default)] stem_suffix: String,
   #[serde(default)] flip: bool,
@@ -42,7 +49,8 @@ struct FileList (Vec<FileEntry>);
 
 #[derive(Deserialize,Debug)]
 struct FileEntry {
-  filespec: String,
+  item_spec: String,
+  r_file_spec: String,
   desc: Html,
 }
 
@@ -68,7 +76,7 @@ pub enum LibraryLoadError{
   #[error("{:?}",&self)]
   InheritDepthLimitExceeded(String),
   #[error("{:?}",&self)]
-  DuplicateFile(String,LibraryPieceInfo,LibraryPieceInfo),
+  DuplicateItem(String,LibraryItemInfo,LibraryItemInfo),
   #[error("{:?}",&self)]
   FilesListLineMissingWhitespace(usize),
 }
@@ -77,27 +85,53 @@ const INHERIT_DEPTH_LIMIT : u8 = 20;
 
 type LLE = LibraryLoadError;
 type TV = toml::Value;
+type SE = SpecError;
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct LibPieceSpec {
   lib: String,
-  file: String,
+  item: String,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-struct LibraryPiece {
-  
+struct LibraryItem {
+  svg: Html,
 }
 
+/*
 #[typetag::serde(name="LP")]
-impl Piece for LibraryPiece {
+impl Item for LibraryItem {
 }
+*/
 
 #[typetag::serde(name="Lib")]
 impl PieceSpec for LibPieceSpec {
   fn load(&self) -> Result<Box<dyn Piece>,SpecError> {
-    Ok(Box::new(LibraryPiece {
-    }))
+    let lib = GLOBAL.shapelibs.read().unwrap().get(&self.lib)
+      .ok_or(SE::LibraryNotFound)?;
+    let lpi = lib.items.get(&self.item)
+      .ok_or(SE::LibraryItemNotFound)?;
+    let svg_path = format!("{}/{}", lib.dirname, &self.item);
+    let omg = |e,m:&str| {
+      error!("{}: {}: {}", &m, &svg_path, e);
+      SE::InternalError(m.to_string())
+    };
+    let f = File::open(&svg_path)
+      .map_err(|e| if e.kind() == ErrorKind::NotFound {
+        SE::LibraryItemNotFound
+      } else {
+        omg(&e, "unable to access library itme data file")
+      }
+      )?;
+    let svg_data = String::new();
+    f.read_to_string(&mut svg_data).map_err(
+      |e| omg(&e, "unable to read library item data file")
+    )?;
+    let lp = LibraryItem {
+      svg: Html(svg_data)
+    };
+    Box::new(lp);
+    panic!();
   }
 }
 
@@ -139,7 +173,7 @@ fn load_catalogue(dirname: String) -> LibraryContents {
   f.read_to_string(&mut s).unwrap();
   let toplevel : toml::Value = s.parse()?;
   let mut l = LibraryContents {
-    pieces: HashMap::new(),
+    items: HashMap::new(),
     dirname,
   };
   let empty_table = toml::value::Value::Table(Default::default());
@@ -154,12 +188,13 @@ fn load_catalogue(dirname: String) -> LibraryContents {
     let resolved = TV::Table(resolved.into_owned());
     let spec : LibraryGroupSpec = resolved.try_into()?;
     for fe in spec.files.0 {
-      let usvgfile = format!("{}{}{}.usvg", spec.stem_prefix,
-                             fe.filespec, spec.stem_suffix);
-      let lp = LibraryPieceInfo { info: spec.info.clone(), desc: fe.desc };
+      let item = format!("{}{}{}.usvg", spec.item_prefix,
+                         fe.item_spec, spec.item_suffix);
+      let details = Arc::new(LibraryItemDetails { desc: fe.desc });
+      let lp = LibraryItemInfo { info: spec.info.clone(), details };
       type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
-      match l.pieces.entry(usvgfile) {
-        H::Occupied(oe) => throw!(LLE::DuplicateFile(
+      match l.items.entry(item) {
+        H::Occupied(oe) => throw!(LLE::DuplicateItem(
           oe.key().clone(),
           oe.get().clone(),
           lp,
@@ -207,14 +242,16 @@ impl TryFrom<String> for FileList {
     for (lno,l) in s.lines().enumerate() {
       let l = l.trim();
       if l=="" || l.starts_with("#") { continue }
-      let sp = l.find(|c:char| c.is_ascii_whitespace())
-        .ok_or(LLE::FilesListLineMissingWhitespace(lno))?;
-      let (lhs, rhs) = l.split_at(sp);
-      let rhs = rhs.trim();
-      o.push(FileEntry{
-        filespec: lhs.to_owned(),
-        desc: Html(rhs.to_owned()),
-      });
+      let words = l.splitn(3, |c:char| c.is_ascii_whitespace());
+      let n = ||{
+        words.next().ok_or(LLE::FilesListLineMissingWhitespace(lno))
+          .map(|s| s.to_owned())
+      };
+      let item_spec = n()?;
+      let r_file_spec = n()?;
+      let desc = Html(n()?);
+      assert!(!n().is_err());
+      o.push(FileEntry{ item_spec, r_file_spec, desc  });
     }
     FileList(o)
   }
