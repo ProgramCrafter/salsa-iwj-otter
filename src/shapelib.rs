@@ -78,6 +78,30 @@ const INHERIT_DEPTH_LIMIT : u8 = 20;
 type LLE = LibraryLoadError;
 type TV = toml::Value;
 
+#[derive(Debug,Serialize,Deserialize)]
+pub struct LibPieceSpec {
+  lib: String,
+  file: String,
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+struct LibraryPiece {
+  
+}
+
+#[typetag::serde(name="LP")]
+impl Piece for LibraryPiece {
+}
+
+#[typetag::serde(name="Lib")]
+impl PieceSpec for LibPieceSpec {
+  fn load(&self) -> Result<Box<dyn Piece>,SpecError> {
+    Ok(Box::new(LibraryPiece {
+    }))
+  }
+}
+
+
 #[throws(LibraryLoadError)]
 fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
                        group_name: &str, group: &'r toml::Value)

@@ -15,3 +15,9 @@ pos = [90, 60]
 type = "Square"
 size = [20]
 faces = ["blue", "grey"]
+
+[[pieces]]
+pos = [90,100]
+type = "Lib"
+lib = "wikimedia"
+file = "chess-w-n"
