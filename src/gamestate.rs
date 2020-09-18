@@ -54,7 +54,6 @@ pub struct GameState {
 #[derive(Debug,Serialize,Deserialize)]
 pub struct PieceState {
   pub pos : Pos,
-  pub p : Box<dyn Piece>,
   pub face : FaceId,
   pub held : Option<PlayerId>,
   pub zlevel : ZLevel,
@@ -197,10 +196,28 @@ impl Debug for Html {
 
 impl PieceState {
   #[throws(IE)]
-  pub fn make_defs(&self, pri : &PieceRenderInstructions) -> Html {
-    let pr = self;
+  pub fn prep_piecestate(&self, p: &dyn Piece, pri : &PieceRenderInstructions)
+                     -> PreparedPieceState {
+    PreparedPieceState {
+      pos        : self.pos,
+      held       : self.held,
+      svg        : p.make_defs(pri)?,
+      z          : self.zlevel.z,
+      zg         : self.zlevel.zg,
+    }
+  }
+}
+
+pub trait PieceExt {
+  fn make_defs(&self, pri : &PieceRenderInstructions) -> Result<Html,IE>;
+  fn describe_pri(&self, pri : &PieceRenderInstructions) -> Html;
+}
+
+impl<T> PieceExt for T where T: Piece + ?Sized {
+  #[throws(IE)]
+  fn make_defs(&self, pri : &PieceRenderInstructions) -> Html {
     let mut defs = Html(String::new());
-    let dragraise = match pr.p.thresh_dragraise(pri)? {
+    let dragraise = match self.thresh_dragraise(pri)? {
       Some(n) if n < 0 => throw!(SE::NegativeDragraise),
       Some(n) => n,
       None => -1,
@@ -208,29 +225,17 @@ impl PieceState {
     write!(&mut defs.0,
            r##"<g id="piece{}" data-dragraise="{}">"##,
            pri.id, dragraise)?;
-    pr.p.svg_piece(&mut defs, &pri)?;
+    self.svg_piece(&mut defs, &pri)?;
     write!(&mut defs.0, r##"</g>"##)?;
     write!(&mut defs.0,
            r##"<path id="surround{}" d="{}"/>"##,
-           pri.id, pr.p.surround_path(&pri)?.0)?;
-    pr.p.svg_x_defs(&mut defs, &pri)?;
+           pri.id, self.surround_path(&pri)?.0)?;
+    self.svg_x_defs(&mut defs, &pri)?;
     defs
   }
 
-  #[throws(IE)]
-  pub fn prep_piecestate(&self, pri : &PieceRenderInstructions)
-                         -> PreparedPieceState {
-    PreparedPieceState {
-      pos        : self.pos,
-      held       : self.held,
-      svg        : self.make_defs(pri)?,
-      z          : self.zlevel.z,
-      zg         : self.zlevel.zg,
-    }
-  }
-
-  pub fn describe_html(&self, pri : &PieceRenderInstructions) -> Html {
-    self.p.describe_html(Some(pri.face))
+  fn describe_pri(&self, pri : &PieceRenderInstructions) -> Html {
+    self.describe_html(Some(pri.face))
   }
 }
 

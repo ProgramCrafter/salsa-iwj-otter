@@ -68,7 +68,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         scoped_name : name,
       };
 
-      let gref = Instance::new(name, gs)?;
+      let gref = Instance::new(name, gs, Default::default())?;
       let mut ig = gref.lock()?;
 
       execute_for_game(cs, &mut ig, insns, MgmtGameUpdateMode::Bulk)
@@ -163,9 +163,9 @@ fn execute_game_insn(cs: &CommandStream,
     Insn::ListPieces => readonly(ig, {
       let pieces = ig.gs.pieces.iter().map(|(piece,p)|{
         let &PieceState { pos, face, .. } = p;
-        let desc_html = p.p.describe_html(None);
-        MgmtGamePieceInfo { piece, pos, face, desc_html }
-      }).collect();
+        let desc_html = ig.pieces.get(piece)?.describe_html(None);
+        Some(MgmtGamePieceInfo { piece, pos, face, desc_html })
+      }).flatten().collect();
       Resp::Pieces(pieces)
     }),
 
@@ -221,10 +221,11 @@ fn execute_game_insn(cs: &CommandStream,
     }
 
     DeletePiece(piece) => {
+      let p = ig.pieces.remove(piece).ok_or(ME::PieceNotFound)?;
       let gs = &mut ig.gs;
-      let p = gs.pieces.remove(piece).ok_or(ME::PieceNotFound)?;
-      let desc_html = p.p.describe_html(Some(Default::default()));
-      p.p.delete_hook(&p, gs);
+      let pc = gs.pieces.remove(piece);
+      let desc_html = p.describe_html(Some(Default::default()));
+      if let Some(pc) = pc { p.delete_hook(&pc, gs); }
       (U{ pcs: vec![(piece, PieceUpdateOp::Delete())],
           log: vec![ LogEntry {
             html: Html(format!("A piece {} was removed from the game",
@@ -235,6 +236,7 @@ fn execute_game_insn(cs: &CommandStream,
     },
 
     AddPieces(PiecesSpec{ pos,posd,count,face,info }) => {
+      let ig = &mut **ig;
       let gs = &mut ig.gs;
       let count = count.unwrap_or(1);
       if count > CREATE_PIECES_MAX { throw!(LimitExceeded) }
@@ -252,12 +254,13 @@ fn execute_game_insn(cs: &CommandStream,
           lastclient: Default::default(),
           gen_before_lastclient: Generation(0),
           gen: gs.gen,
-          pos, p, face,
+          pos, face,
         };
         if let (_, true) = pc.pos.clamped(gs.table_size) {
           throw!(SpecError::PosOffTable);
         }
         let piece = gs.pieces.insert(pc);
+        ig.pieces.insert(piece, p);
         updates.push((piece, PieceUpdateOp::Insert(())));
         pos[0] += posd[0];
         pos[1] += posd[1];

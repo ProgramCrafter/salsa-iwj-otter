@@ -20,6 +20,8 @@ const GAME_SAVE_LAG : Duration = Duration::from_millis(500);
 #[repr(transparent)]
 pub struct RawTokenVal(str);
 
+pub type PiecesLoaded = SecondarySlotMap<PieceId,Box<dyn Piece>>;
+
 // ---------- public data structure ----------
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -35,6 +37,7 @@ pub struct InstanceRef (Arc<Mutex<InstanceContainer>>);
 pub struct Instance {
   pub name : Arc<InstanceName>,
   pub gs : GameState,
+  pub pieces : PiecesLoaded,
   pub clients : DenseSlotMap<ClientId,Client>,
   pub updates : SecondarySlotMap<PlayerId, PlayerUpdates>,
   pub tokens_players : TokenRegistry<PlayerId>,
@@ -56,11 +59,11 @@ pub struct Client {
 
 /// KINDS OF PERSISTENT STATE
 ///
-///               TokenTable   TokenTable    GameState    GameState
-///                <ClientId>   <PlayerId>    .players     .pieces
+///               TokenTable   TokenTable    GameState    Instance GameState
+///                <ClientId>   <PlayerId>    .players    .pieces  .pieces
 ///
-///   Saved        No           a-*           g-*          g-*
-///   Spec TOML    Absent       table, ish    table        game
+///   Saved        No           a-*           g-*         a-*      g-*
+///   Spec TOML    Absent       table, ish    table       game     game
 ///
 ///
 /// UPDATE RELIABILITY/PERSISTENCE RULES
@@ -175,8 +178,9 @@ pub struct InstanceContainer {
 }
 
 #[derive(Debug,Default,Serialize,Deserialize)]
-struct InstanceSaveAccesses<RawTokenStr> {
-  tokens_players : Vec<(RawTokenStr, PlayerId)>,
+struct InstanceSaveAccesses<RawTokenStr, PiecesLoadedRef> {
+  pieces: PiecesLoadedRef,
+  tokens_players: Vec<(RawTokenStr, PlayerId)>,
 }
 
 display_as_debug!{InstanceLockError}
@@ -234,12 +238,13 @@ impl Instance {
   /// Returns `None` if a game with this name already exists
   #[allow(clippy::new_ret_no_self)]
   #[throws(MgmtError)]
-  pub fn new(name: InstanceName, gs: GameState) -> InstanceRef {
+  pub fn new(name: InstanceName, gs: GameState, pieces: PiecesLoaded)
+             -> InstanceRef {
     let name = Arc::new(name);
 
     let g = Instance {
       name : name.clone(),
-      gs,
+      gs, pieces,
       clients : Default::default(),
       updates : Default::default(),
       tokens_players : Default::default(),
@@ -641,6 +646,7 @@ impl InstanceGuard<'_> {
   #[throws(InternalError)]
   fn save_access_now(&mut self) {
     self.save_something("a-", |s,w| {
+      let pieces = &s.c.g.pieces;
       let tokens_players : Vec<(&str, PlayerId)> = {
         let global_players = GLOBAL.players.read().unwrap();
         s.c.g.tokens_players.tr
@@ -651,7 +657,7 @@ impl InstanceGuard<'_> {
           .flatten()
           .collect()
       };
-      let isa = InstanceSaveAccesses { tokens_players };
+      let isa = InstanceSaveAccesses { pieces, tokens_players };
       rmp_serde::encode::write_named(w, &isa)
     })?;
     info!("saved accesses for {:?}", &self.name);
@@ -682,16 +688,8 @@ impl InstanceGuard<'_> {
         })().context(lockfile).context("lock global save area")?);
       }
     }
-    let gs = {
-      let mut gs : GameState = Self::load_something(&name, "g-")?;
-      for mut p in gs.pieces.values_mut() {
-        p.lastclient = Default::default();
-      }
-      gs
-    };
-
-    let mut access_load : InstanceSaveAccesses<String>
-      = Self::load_something(&name, "a-")
+    let InstanceSaveAccesses::<String,PiecesLoaded>
+    { mut tokens_players, mut pieces } = Self::load_something(&name, "a-")
       .or_else(|e| {
         if let InternalError::Anyhow(ae) = &e {
           if let Some(ioe) = ae.downcast_ref::<io::Error>() {
@@ -702,18 +700,30 @@ impl InstanceGuard<'_> {
         }
         Err(e)
       })?;
+
+    let gs = {
+      let mut gs : GameState = Self::load_something(&name, "g-")?;
+      for mut p in gs.pieces.values_mut() {
+        p.lastclient = Default::default();
+      }
+      gs.pieces.retain(|k,_v| pieces.contains_key(k));
+      pieces.retain(|k,_v| gs.pieces.contains_key(k));
+
+      gs
+    };
+
     let mut updates : SecondarySlotMap<_,_> = Default::default();
     let pu_bc = PlayerUpdates::new_begin(&gs);
     for player in gs.players.keys() {
       updates.insert(player, pu_bc.new());
     }
     let name = Arc::new(name);
-    access_load.tokens_players.retain(
+    tokens_players.retain(
       |&(_,player)| gs.players.contains_key(player)
     );
 
     let g = Instance {
-      gs, updates,
+      gs, pieces, updates,
       name: name.clone(),
       clients : Default::default(),
       tokens_clients : Default::default(),
@@ -726,11 +736,11 @@ impl InstanceGuard<'_> {
     };
     let gref = InstanceRef(Arc::new(Mutex::new(cont)));
     let mut g = gref.lock().unwrap();
-    for (token, _) in &access_load.tokens_players {
+    for (token, _) in &tokens_players {
       g.tokens_players.tr.insert(RawToken(token.clone()));
     }
     let mut global = GLOBAL.players.write().unwrap();
-    for (token, player) in access_load.tokens_players.drain(0..) {
+    for (token, player) in tokens_players.drain(0..) {
       let iad = InstanceAccessDetails {
         gref : gref.clone(),
         ident : player,

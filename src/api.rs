@@ -15,6 +15,7 @@ struct ApiPiece<O : ApiPieceOp> {
 trait ApiPieceOp : Debug {
   #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
+        p: &dyn Piece,
         lens: &dyn Lens /* used for LogEntry and PieceId but not Pos */)
         -> (PieceUpdateOp<()>, Vec<LogEntry>);
 }
@@ -99,12 +100,14 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   cl.lastseen = Instant::now();
   let player = cl.player;
   let gs = &mut g.gs;
+  let g_pieces = &g.pieces;
   let _ = gs.players.byid(player)?;
   let lens = TransparentLens { };
   let piece = lens.decode_visible_pieceid(form.piece, player);
   use ApiPieceOpError::*;
 
   match (||{
+    let p = g_pieces.get(piece).ok_or(OnlineError::PieceGone)?;
     let pc = gs.pieces.byid_mut(piece)
       .map_err(|()| OnlineError::PieceGone)?;
 
@@ -117,7 +120,7 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
     if pc.held != None && pc.held != Some(player) {
       throw!(OnlineError::PieceHeld)
     };
-    let (update, logents) = form.op.op(gs,player,piece,&lens)?;
+    let (update, logents) = form.op.op(gs,player,piece,p.as_ref(),&lens)?;
     Ok::<_,ApiPieceOpError>((update, logents))
   })() {
     Err(ReportViaUpdate(poe)) => {
@@ -161,7 +164,7 @@ fn api_grab(form : Json<ApiPiece<ApiPieceGrab>>)
 impl ApiPieceOp for ApiPieceGrab {
   #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
-        lens: &dyn Lens)
+        p: &dyn Piece, lens: &dyn Lens)
         -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pl = gs.players.byid(player).unwrap();
     let pc = gs.pieces.byid_mut(piece).unwrap();
@@ -174,7 +177,7 @@ impl ApiPieceOp for ApiPieceGrab {
     let logent = LogEntry {
       html : Html(format!("{} grasped {}",
                      &htmlescape::encode_minimal(&pl.nick),
-                     pc.describe_html(&lens.log_pri(piece, pc)).0)),
+                     p.describe_pri(&lens.log_pri(piece, pc)).0)),
     };
 
     (update, vec![logent])
@@ -193,7 +196,7 @@ fn api_ungrab(form : Json<ApiPiece<ApiPieceUngrab>>)
 impl ApiPieceOp for ApiPieceUngrab {
   #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
-        lens: &dyn Lens)
+        p: &dyn Piece, lens: &dyn Lens)
         -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pl = gs.players.byid(player).unwrap();
     let pc = gs.pieces.byid_mut(piece).unwrap();
@@ -206,7 +209,7 @@ impl ApiPieceOp for ApiPieceUngrab {
     let logent = LogEntry {
       html : Html(format!("{} released {}",
                      &htmlescape::encode_minimal(&pl.nick),
-                     pc.describe_html(&lens.log_pri(piece, pc)).0)),
+                     p.describe_pri(&lens.log_pri(piece, pc)).0)),
     };
 
     (update, vec![logent])
@@ -226,7 +229,7 @@ fn api_raise(form : Json<ApiPiece<ApiPieceRaise>>)
 impl ApiPieceOp for ApiPieceRaise {
   #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, _: PlayerId, piece: PieceId,
-        _: &dyn Lens)
+        _p: &dyn Piece, _: &dyn Lens)
         -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pc = gs.pieces.byid_mut(piece).unwrap();
     pc.zlevel = ZLevel { z : self.z, zg : gs.gen };
@@ -245,7 +248,7 @@ fn api_move(form : Json<ApiPiece<ApiPieceMove>>) -> impl response::Responder<'st
 impl ApiPieceOp for ApiPieceMove {
   #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, _: PlayerId, piece: PieceId,
-        _lens: &dyn Lens)
+        _p: &dyn Piece, _lens: &dyn Lens)
         -> (PieceUpdateOp<()>, Vec<LogEntry>) {
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let (pos, clamped) = self.0.clamped(gs.table_size);

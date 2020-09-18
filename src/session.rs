@@ -95,7 +95,9 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
         id : make_pieceid_visible(gpid),
         face : pr.face,
       };
-      let defs = pr.make_defs(&pri)?;
+      let p = if let Some(p) = ig.pieces.get(gpid) { p }
+      else { continue /* was deleted */ };
+      let defs = p.make_defs(&pri)?;
       alldefs.push((pri.id, defs));
 
       let for_info = SessionPieceLoadJson {

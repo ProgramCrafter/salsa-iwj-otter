@@ -291,8 +291,11 @@ impl<'r> PrepareUpdatesBuffer<'r> {
                            lens: &dyn Lens) -> PreparedUpdateEntry {
     let gs = &mut self.g.gs;
 
-    let (update, piece) = match gs.pieces.byid_mut(piece) {
-      Ok(pc) => {
+    let (update, piece) = match (
+      gs.pieces.byid_mut(piece),
+      self.g.pieces.byid(piece),
+    ) {
+      (Ok(pc), Ok(p)) => {
         gs.max_z.update_max(pc.zlevel.z);
 
         if self.by_client != pc.lastclient {
@@ -304,7 +307,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
         let update = update.try_map_new_state(
           |_|{
-            let mut ns = pc.prep_piecestate(&pri_for_all)?;
+            let mut ns = pc.prep_piecestate(p.as_ref(), &pri_for_all)?;
             lens.massage_prep_piecestate(&mut ns);
             <Result<_,InternalError>>::Ok(ns)
           },
@@ -312,7 +315,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
         (update, pri_for_all.id)
       },
-      Err(()) => {
+      _ => {
         (PieceUpdateOp::Delete(), lens.pieceid2visible(piece))
       }
     };
