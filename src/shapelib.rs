@@ -4,29 +4,34 @@
 
 pub use crate::imports::*;
 
+// Naming convention:
+//  *Defn          read from library toml file
+//  *Info, *List   from toml etc. but processed
+//  *Details       some shared structure
+//  Item           } once loaded and part of a game,
+//  Outline        }  no Arc's as we serialise/deserialize during save/load
+
 #[derive(Debug)]
-pub struct LibraryContents {
+pub struct ContentsDefn {
   dirname: String,
   items: HashMap<String /* item (name) */, LibraryItemInfo>,
 }
 
 #[derive(Debug,Clone)]
-#[derive(Serialize)] // xxx
-#[derive(Deserialize)] // xxx
-pub struct LibraryItemDetails {
+#[derive(Serialize,Deserialize)]
+pub struct ItemDetails {
   desc: Html,
 }
 
 #[derive(Debug,Clone)]
-pub struct LibraryItemInfo {
+pub struct LibraryItemDefn { // xxx ???
   details: Arc<LibraryItemDetails>,
-  info: Arc<LibraryGroupInfo>,
+  info: Arc<LibraryGroupDefn>,
 }
 
-#[derive(Debug,Deserialize)]
-#[derive(Serialize)] // xxx
-pub struct LibraryGroupInfo {
-  outline: Box<dyn OutlineSpec>,
+#[derive(Debug,Deserialize,Serialize)]
+pub struct GroupInfo {
+  outline: Box<dyn OutlineDefn>,
   size: Vec<Coord>,
   #[serde(default="num_traits::identities::One::one")]
   scale: f64,
@@ -36,8 +41,7 @@ pub struct LibraryGroupInfo {
 }
 
 #[derive(Debug,Deserialize)]
-#[derive(Serialize)] // xxx
-struct LibraryGroupSpec {
+struct GroupDefn {
   #[serde(default)] item_prefix: String,
   #[serde(default)] item_suffix: String,
   #[serde(default)] stem_prefix: String,
@@ -50,19 +54,21 @@ struct LibraryGroupSpec {
 #[derive(Deserialize,Debug)]
 #[serde(try_from="String")]
 #[derive(Serialize)] // xxx
-struct FileList (Vec<FileEntry>);
+struct FileList (Vec<FileInfo>);
 
 #[derive(Deserialize,Debug)]
 #[derive(Serialize)] // xxx
-struct FileEntry {
+struct FileInfo {
   item_spec: String,
   r_file_spec: String,
   desc: Html,
 }
 
+trait Outline { }
+
 //#[typetag::deserialize]
 #[typetag::serde] // xxx
-trait OutlineSpec : Debug + Sync + Send {
+trait OutlineDefn : Debug + Sync + Send {
   fn check(&self, lgi: &LibraryGroupInfo) -> Result<(),LibraryLoadError>;
 }
 
@@ -95,13 +101,13 @@ type TV = toml::Value;
 type SE = SpecError;
 
 #[derive(Debug,Serialize,Deserialize)]
-pub struct LibPieceSpec {
+pub struct LibPieceSpec { // xxx rename, see above
   lib: String,
   item: String,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-struct LibraryItem {
+struct Item { // xxx totally redo the contents
   svg: Html,
   details: Arc<LibraryItemDetails>,
   info: Arc<LibraryGroupInfo>,
