@@ -11,6 +11,8 @@ pub struct LibraryContents {
 }
 
 #[derive(Debug,Clone)]
+#[derive(Serialize)] // xxx
+#[derive(Deserialize)] // xxx
 pub struct LibraryItemDetails {
   desc: Html,
 }
@@ -22,6 +24,7 @@ pub struct LibraryItemInfo {
 }
 
 #[derive(Debug,Deserialize)]
+#[derive(Serialize)] // xxx
 pub struct LibraryGroupInfo {
   outline: Box<dyn OutlineSpec>,
   size: Vec<Coord>,
@@ -33,6 +36,7 @@ pub struct LibraryGroupInfo {
 }
 
 #[derive(Debug,Deserialize)]
+#[derive(Serialize)] // xxx
 struct LibraryGroupSpec {
   #[serde(default)] item_prefix: String,
   #[serde(default)] item_suffix: String,
@@ -45,16 +49,19 @@ struct LibraryGroupSpec {
 
 #[derive(Deserialize,Debug)]
 #[serde(try_from="String")]
+#[derive(Serialize)] // xxx
 struct FileList (Vec<FileEntry>);
 
 #[derive(Deserialize,Debug)]
+#[derive(Serialize)] // xxx
 struct FileEntry {
   item_spec: String,
   r_file_spec: String,
   desc: Html,
 }
 
-#[typetag::deserialize]
+//#[typetag::deserialize]
+#[typetag::serde] // xxx
 trait OutlineSpec : Debug + Sync + Send {
   fn check(&self, lgi: &LibraryGroupInfo) -> Result<(),LibraryLoadError>;
 }
@@ -96,6 +103,8 @@ pub struct LibPieceSpec {
 #[derive(Debug,Serialize,Deserialize)]
 struct LibraryItem {
   svg: Html,
+  details: Arc<LibraryItemDetails>,
+  info: Arc<LibraryGroupInfo>,
 }
 
 /*
@@ -104,37 +113,49 @@ impl Item for LibraryItem {
 }
 */
 
+/*
 #[typetag::serde(name="Lib")]
 impl PieceSpec for LibPieceSpec {
+*/
+impl LibPieceSpec {
   fn load(&self) -> Result<Box<dyn Piece>,SpecError> {
-    let lib = GLOBAL.shapelibs.read().unwrap().get(&self.lib)
+    let libs = GLOBAL.shapelibs.read().unwrap(); 
+    let lib = libs.get(&self.lib)
       .ok_or(SE::LibraryNotFound)?;
-    let lpi = lib.items.get(&self.item)
+    let lii = lib.items.get(&self.item)
       .ok_or(SE::LibraryItemNotFound)?;
     let svg_path = format!("{}/{}", lib.dirname, &self.item);
-    let omg = |e,m:&str| {
-      error!("{}: {}: {}", &m, &svg_path, e);
+    let omg : &dyn Fn(&io::Error, _) -> SE = &|e,m:&str| {
+      error!("{}: {}: {}", &m, &svg_path, &e);
       SE::InternalError(m.to_string())
     };
-    let f = File::open(&svg_path)
+    let mut f = File::open(&svg_path)
       .map_err(|e| if e.kind() == ErrorKind::NotFound {
         SE::LibraryItemNotFound
       } else {
         omg(&e, "unable to access library itme data file")
       }
       )?;
-    let svg_data = String::new();
+    let mut svg_data = String::new();
     f.read_to_string(&mut svg_data).map_err(
       |e| omg(&e, "unable to read library item data file")
     )?;
     let lp = LibraryItem {
-      svg: Html(svg_data)
+      svg: Html(svg_data),
+      details: lii.details.clone(),
+      info:    lii.info.clone(),
     };
     Box::new(lp);
     panic!();
   }
 }
 
+#[typetag::serde(name="Lib")]
+impl PieceSpec for LibPieceSpec {
+  fn load(&self) -> Result<Box<dyn Piece>,SpecError> {
+    self.load()
+  }
+}
 
 #[throws(LibraryLoadError)]
 fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
@@ -215,8 +236,10 @@ pub fn load(libname: String, dirname: String) {
 }
 
 #[derive(Deserialize,Debug)]
+#[derive(Serialize)] // xxx
 struct Circle { }
-#[typetag::deserialize]
+//#[typetag::deserialize]
+#[typetag::serde] // xxx
 impl OutlineSpec for Circle {
   #[throws(LibraryLoadError)]
   fn check(&self, lgi: &LibraryGroupInfo) {
@@ -236,14 +259,14 @@ impl Circle {
 
 impl TryFrom<String> for FileList {
   type Error = LLE;
-  #[throws(LLE)]
-  fn try_from(s: String) -> FileList {
+//  #[throws(LLE)]
+  fn try_from(s: String) -> Result<FileList,LLE> {
     let mut o = Vec::new();
     for (lno,l) in s.lines().enumerate() {
       let l = l.trim();
       if l=="" || l.starts_with("#") { continue }
-      let words = l.splitn(3, |c:char| c.is_ascii_whitespace());
-      let n = ||{
+      let mut words = l.splitn(3, |c:char| c.is_ascii_whitespace());
+      let mut n = ||{
         words.next().ok_or(LLE::FilesListLineMissingWhitespace(lno))
           .map(|s| s.to_owned())
       };
@@ -253,6 +276,6 @@ impl TryFrom<String> for FileList {
       assert!(!n().is_err());
       o.push(FileEntry{ item_spec, r_file_spec, desc  });
     }
-    FileList(o)
+    Ok(FileList(o))
   }
 }
