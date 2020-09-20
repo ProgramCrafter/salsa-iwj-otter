@@ -291,6 +291,15 @@ struct Circle { diam: f64 }
 
 #[typetag::serde(name="Circle")]
 impl Outline for Circle {
+  #[throws(IE)]
+  fn surround_path(&self, _pri : &PieceRenderInstructions) -> Html {
+    svg_circle_path(self.diam * SELECT_SCALE)?
+  }
+  #[throws(IE)]
+  fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
+                      -> Option<Coord> {
+    Some(self.diam / 2)
+  }
 }
 
 #[derive(Deserialize,Debug)]
@@ -299,6 +308,7 @@ struct CircleDefn { }
 impl OutlineDefn for CircleDefn {
   #[throws(LibraryLoadError)]
   fn check(&self, lgd: &GroupData) { Self::get_size(lgd)?; }
+  #[throws(InternalError)]
   fn load(&self, lgd: &GroupData) -> Box<dyn Outline> {
     Box::new(Circle {
       diam: Self::get_size(lgd).unrap()
