@@ -121,7 +121,7 @@ struct Item {
   faces: IndexVec<FaceId, ItemFace>,
   desc_hidden: DescId,
   descs: IndexVec<DescId, Html>,
-  outline: Box<dyn Outline>,
+  outline: Box<dyn JustOutline>,
 }
 
 impl Outline for Item { delegate! { to self.outline {
@@ -157,7 +157,7 @@ impl Piece for Item {
     Html(format!("a {}", self.descs[ match face {
       Some(face) => self.faces[face].desc,
       None => self.desc_hidden,
-    }]))
+    }].0))
   }
 }
 
@@ -175,7 +175,7 @@ impl ItemSpec {
   fn load(&self) -> Result<Box<dyn Piece>,SpecError> {
     let libs = GLOBAL.shapelibs.read().unwrap(); 
     let lib = libs.get(&self.lib).ok_or(SE::LibraryNotFound)?;
-    let lii = lib.items.get(&self.item).ok_or(SE::LibraryItemNotFound)?;
+    let idata = lib.items.get(&self.item).ok_or(SE::LibraryItemNotFound)?;
 
     let svg_path = format!("{}/{}", lib.dirname, &self.item);
     let svg_data = fs::read_to_string(&svg_path)
@@ -187,14 +187,14 @@ impl ItemSpec {
         SE::InternalError(m.to_string())
       })?;
 
-    let o_checked = lii.group.outline.check(&lii.group)
+    let o_checked = idata.group.d.outline.check(&idata.group)
       .map_err(|e| SE::InternalError(format!("rechecking outline: {}",&e)))?;
-    let outline = lii.group.outline.load(&lii.group)?;
+    let outline = idata.group.d.outline.load(&idata.group)?;
 
     // xxx do something with flip
 
     let descs = index_vec![ ];
-    let desc = descs.push_back(lii.info.desc.clone());
+    let desc = descs.push(idata.d.desc.clone());
     let face = ItemFace { svg: Html(svg_data), desc };
     let faces = index_vec![ face ];
     let it = Item { faces, descs, outline };
