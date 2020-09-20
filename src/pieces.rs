@@ -88,6 +88,17 @@ pub fn svg_rescale_path(input: &Html, scale: f64) -> Html {
   Html(out)
 }
 
+#[throws(SE)]
+pub fn svg_circle_path(diam: f64) -> Html {
+  let unit_path = Html::lit(
+    "M 0 1  a 1 1 0 1 0 0 -2 \
+     a 1 1 0 1 0 0  2  z"
+  );
+  let scale = diam * 0.5;
+  let path = svg_rescale_path(&unit_path, scale)?;
+  path
+}
+
 #[typetag::serde]
 impl Outline for SimpleShape {
   #[throws(IE)]
@@ -145,12 +156,7 @@ impl SimpleShape {
 impl PieceSpec for piece_specs::Disc {
   #[throws(SpecError)]
   fn load(&self) -> Box<dyn Piece> {
-    let unit_path = Html::lit(
-      "M 0 1  a 1 1 0 1 0 0 -2 \
-              a 1 1 0 1 0 0  2  z"
-    );
-    let scale = (self.diam as f64) * 0.5;
-    let path = svg_rescale_path(&unit_path, scale)?;
+    let path = svg_circle_path(self.diam as f64)?;
     SimpleShape::new_from_path(Html::lit("circle"), path, self.diam,
                                &self.faces)?
   }

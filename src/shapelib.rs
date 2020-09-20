@@ -31,9 +31,9 @@ pub struct ItemData {
 
 #[derive(Debug,Deserialize)]
 pub struct GroupDetails {
-  size: Vec<Coord>,
+  size: Vec<f64>,
   category: String,
-  #[serde(default)] centre: Option<Vec<f64>>,
+  #[serde(default)] centre: [f64; 2],
   #[serde(default)] flip: bool,
   #[serde(default="num_traits::identities::One::one")] scale: f64,
   #[serde(flatten)] outline: Box<dyn OutlineDefn>,
@@ -50,7 +50,7 @@ struct GroupDefn {
   files: FileList,
   #[serde(default)] item_prefix: String,
   #[serde(default)] item_suffix: String,
-  #[serde(flatten)] info: Arc<GroupData>,
+  #[serde(flatten)] info: Arc<GroupDetails>,
 }
 
 #[derive(Deserialize,Debug)]
@@ -112,11 +112,14 @@ define_index_type!{ pub struct DescId = u8; }
 struct ItemFace {
   svg: Html,
   desc: DescId,
+  centre: [f64; 2],
+  scale: f64,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
 struct Item {
   faces: IndexVec<FaceId, ItemFace>,
+  desc_hidden: DescId,
   descs: IndexVec<DescId, Html>,
   outline: Box<dyn Outline>,
 }
@@ -130,7 +133,30 @@ impl Outline for Item { delegate! { to self.outline {
 
 #[typetag::serde(name="Lib")]
 impl Piece for Item {
-  
+  #[throws(SpecError)]
+  fn resolve_spec_face(&self, face: Option<FaceId>) -> FaceId {
+    let face = face.unwrap_or_default();
+    self.faces.get(face).ok_or(SpecError::FaceNotFound)?;
+    face
+  }
+
+  #[throws(IE)]
+  fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) {
+    let face = &self.faces[pri.face];
+    write!(&mut f.0,
+           r##"<g transform="scale({}) translate({} {})">{}</g>"##,
+           face.scale, face.centre[0], face.centre[1],
+           face.svg.0)?;
+  }
+  #[throws(IE)]
+  fn svg_x_defs(&self, _f: &mut Html, _pri : &PieceRenderInstructions) {
+  }
+  fn describe_html(&self, face : Option<FaceId>) -> Html {
+    Html(format!("a {}", self.descs[ match face {
+      Some(face) => self.faces[face].desc,
+      None => self.desc_hidden,
+    }]))
+  }
 }
 
 /*
@@ -261,15 +287,27 @@ pub fn load(libname: String, dirname: String) {
 }
 
 #[derive(Serialize,Deserialize,Debug)]
+struct Circle { diam: f64 }
+
+#[typetag::serde(name="Circle")]
+impl Outline for Circle {
+}
+
+#[derive(Deserialize,Debug)]
 struct CircleDefn { }
 #[typetag::deserialize(name="Circle")]
 impl OutlineDefn for CircleDefn {
   #[throws(LibraryLoadError)]
   fn check(&self, lgd: &GroupData) { Self::get_size(lgd)?; }
+  fn load(&self, lgd: &GroupData) -> Box<dyn Outline> {
+    Box::new(Circle {
+      diam: Self::get_size(lgd).unrap()
+    })
+  }
 }
 impl CircleDefn {
   #[throws(LibraryLoadError)]
-  fn get_size(lgd: &GroupData) -> Coord {
+  fn get_size(lgd: &GroupData) -> f64 {
     match lgd.size.as_slice() {
       &[c] => c,
       size => throw!(LLE::WrongNumberOfSizeDimensions
