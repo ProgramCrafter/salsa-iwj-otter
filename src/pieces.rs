@@ -89,13 +89,7 @@ pub fn svg_rescale_path(input: &Html, scale: f64) -> Html {
 }
 
 #[typetag::serde]
-impl Piece for SimpleShape {
-  #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) {
-    write!(&mut f.0, r##"<path fill="{}" d="{}"/>"##,
-           self.colours[pri.face].0,
-           &self.path.0)?;
-  }
+impl Outline for SimpleShape {
   #[throws(IE)]
   fn surround_path(&self, _pri : &PieceRenderInstructions) -> Html {
     self.scaled_path.clone()
@@ -104,6 +98,15 @@ impl Piece for SimpleShape {
   fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
                       -> Option<Coord> {
     Some(self.approx_dia / 2)
+  }
+}
+#[typetag::serde]
+impl Piece for SimpleShape {
+  #[throws(IE)]
+  fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) {
+    write!(&mut f.0, r##"<path fill="{}" d="{}"/>"##,
+           self.colours[pri.face].0,
+           &self.path.0)?;
   }
   #[throws(IE)]
   fn svg_x_defs(&self, _f: &mut Html, _pri : &PieceRenderInstructions) {

@@ -15,7 +15,7 @@ data_url_prefix = "https://upload.wikimedia.org/wikipedia/commons/"
 data_url_hashprefix = true
 
 [group.chess]
-outline.Circle = { }
+outline = "Circle"
 size = [45]
 scale = 0.20
 centre = [22.5, 22.5]

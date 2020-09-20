@@ -86,6 +86,8 @@ pub use flexi_logger::{LogSpecification};
 
 pub use hashlink::LinkedHashMap;
 
+pub use delegate::delegate;
+
 pub use crate::global::*;
 pub use crate::gamestate::*;
 pub use crate::pieces::*;
@@ -101,7 +103,7 @@ pub use crate::api::{Lens,TransparentLens};
 pub use crate::utils::*;
 pub use crate::spec::*;
 pub use crate::debugreader::DebugReader;
-pub use crate::shapelib::{self,LibraryContents};
+pub use crate::shapelib;
 
 pub use nix::unistd::Uid;
 

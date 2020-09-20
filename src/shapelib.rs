@@ -5,16 +5,16 @@
 pub use crate::imports::*;
 
 // Naming convention:
-//  *Defn          read from library toml file
-//  *Info, *List   from toml etc. but processed
+//  *Data, *List   from toml etc. (processed if need be)
+//  *Defn          raw read from library toml file (where different from Info)
 //  *Details       some shared structure
 //  Item           } once loaded and part of a game,
 //  Outline        }  no Arc's as we serialise/deserialize during save/load
 
 #[derive(Debug)]
-pub struct ContentsDefn {
+pub struct Contents {
   dirname: String,
-  items: HashMap<String /* item (name) */, LibraryItemInfo>,
+  items: HashMap<String /* item (name) */, ItemData>,
 }
 
 #[derive(Debug,Clone)]
@@ -24,52 +24,53 @@ pub struct ItemDetails {
 }
 
 #[derive(Debug,Clone)]
-pub struct LibraryItemDefn { // xxx ???
-  details: Arc<LibraryItemDetails>,
-  info: Arc<LibraryGroupDefn>,
+pub struct ItemData {
+  details: Arc<ItemDetails>,
+  group: Arc<GroupData>,
 }
 
-#[derive(Debug,Deserialize,Serialize)]
-pub struct GroupInfo {
-  outline: Box<dyn OutlineDefn>,
+#[derive(Debug,Deserialize)]
+pub struct GroupDetails {
   size: Vec<Coord>,
-  #[serde(default="num_traits::identities::One::one")]
-  scale: f64,
-  #[serde(default)]
-  centre: Option<Vec<f64>>,
   category: String,
+  #[serde(default)] centre: Option<Vec<f64>>,
+  #[serde(default)] flip: bool,
+  #[serde(default="num_traits::identities::One::one")] scale: f64,
+  #[serde(flatten)] outline: Box<dyn OutlineDefn>,
+}
+
+#[derive(Debug)]
+pub struct GroupData {
+  groupname: String,
+  d: GroupDetails,
 }
 
 #[derive(Debug,Deserialize)]
 struct GroupDefn {
+  files: FileList,
   #[serde(default)] item_prefix: String,
   #[serde(default)] item_suffix: String,
-  #[serde(default)] stem_prefix: String,
-  #[serde(default)] stem_suffix: String,
-  #[serde(default)] flip: bool,
-  files: FileList,
-  #[serde(flatten)] info: Arc<LibraryGroupInfo>,
+  #[serde(flatten)] info: Arc<GroupData>,
 }
 
 #[derive(Deserialize,Debug)]
 #[serde(try_from="String")]
-#[derive(Serialize)] // xxx
-struct FileList (Vec<FileInfo>);
+struct FileList (Vec<FileData>);
 
 #[derive(Deserialize,Debug)]
-#[derive(Serialize)] // xxx
-struct FileInfo {
+struct FileData {
   item_spec: String,
-  r_file_spec: String,
+  r_file_spec: (), // string, in the actual source file
   desc: Html,
 }
 
-trait Outline { }
+type IE = InternalError;
 
-//#[typetag::deserialize]
-#[typetag::serde] // xxx
+#[typetag::deserialize(tag="outline")]
 trait OutlineDefn : Debug + Sync + Send {
-  fn check(&self, lgi: &LibraryGroupInfo) -> Result<(),LibraryLoadError>;
+  type Checked;
+  fn check(&self, lgi: &GroupData) -> Result<Self::Checked,LLE>;
+  fn load(&self, checked: &Self::Checked) -> Result<Box<dyn Outline>,IE>;
 }
 
 #[derive(Error,Debug)]
@@ -89,7 +90,7 @@ pub enum LibraryLoadError{
   #[error("{:?}",&self)]
   InheritDepthLimitExceeded(String),
   #[error("{:?}",&self)]
-  DuplicateItem(String,LibraryItemInfo,LibraryItemInfo),
+  DuplicateItem { item: String, group1: String, group2: String },
   #[error("{:?}",&self)]
   FilesListLineMissingWhitespace(usize),
 }
@@ -101,16 +102,36 @@ type TV = toml::Value;
 type SE = SpecError;
 
 #[derive(Debug,Serialize,Deserialize)]
-pub struct LibPieceSpec { // xxx rename, see above
+pub struct ItemSpec {
   lib: String,
   item: String,
 }
 
+define_index_type!{ pub struct DescId = u8; }
+
 #[derive(Debug,Serialize,Deserialize)]
-struct Item { // xxx totally redo the contents
+struct ItemFace {
   svg: Html,
-  details: Arc<LibraryItemDetails>,
-  info: Arc<LibraryGroupInfo>,
+  desc: DescId,
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+struct Item {
+  faces: IndexVec<FaceId, ItemFace>,
+  descs: IndexVec<DescId, Html>,
+  outline: Box<dyn Outline>,
+}
+
+#[typetag::serde(name="Lib")]
+impl Outline for Item { delegate! { to self.outline {
+  fn surround_path(&self, pri : &PieceRenderInstructions) -> Result<Html, IE>;
+  fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
+                      -> Result<Option<Coord>, IE>;
+}}}
+
+#[typetag::serde(name="Lib")]
+impl Piece for Item {
+  
 }
 
 /*
@@ -123,41 +144,40 @@ impl Item for LibraryItem {
 #[typetag::serde(name="Lib")]
 impl PieceSpec for LibPieceSpec {
 */
-impl LibPieceSpec {
+impl ItemSpec {
   fn load(&self) -> Result<Box<dyn Piece>,SpecError> {
     let libs = GLOBAL.shapelibs.read().unwrap(); 
-    let lib = libs.get(&self.lib)
-      .ok_or(SE::LibraryNotFound)?;
-    let lii = lib.items.get(&self.item)
-      .ok_or(SE::LibraryItemNotFound)?;
+    let lib = libs.get(&self.lib).ok_or(SE::LibraryNotFound)?;
+    let lii = lib.items.get(&self.item).ok_or(SE::LibraryItemNotFound)?;
+
     let svg_path = format!("{}/{}", lib.dirname, &self.item);
-    let omg : &dyn Fn(&io::Error, _) -> SE = &|e,m:&str| {
-      error!("{}: {}: {}", &m, &svg_path, &e);
-      SE::InternalError(m.to_string())
-    };
-    let mut f = File::open(&svg_path)
+    let svg_data = fs::read_to_string(&svg_path)
       .map_err(|e| if e.kind() == ErrorKind::NotFound {
         SE::LibraryItemNotFound
       } else {
-        omg(&e, "unable to access library itme data file")
-      }
-      )?;
-    let mut svg_data = String::new();
-    f.read_to_string(&mut svg_data).map_err(
-      |e| omg(&e, "unable to read library item data file")
-    )?;
-    let lp = LibraryItem {
-      svg: Html(svg_data),
-      details: lii.details.clone(),
-      info:    lii.info.clone(),
-    };
-    Box::new(lp);
+        let m = "error accessing/reading library item data file";
+        error!("{}: {}: {}", &m, &svg_path, &e);
+        SE::InternalError(m.to_string())
+      })?;
+
+    let o_checked = lii.group.outline.check(&lii.group)
+      .map_err(|e| SE::InternalError(format!("rechecking outline: {}",&e)))?;
+    let outline = lii.group.outline.load(&lii.group)?;
+
+    // xxx do something with flip
+
+    let descs = index_vec![ ];
+    let desc = descs.push_back(lii.info.desc.clone());
+    let face = ItemFace { svg: Html(svg_data), desc };
+    let faces = index_vec![ face ];
+    let it = Item { faces, descs, outline };
+    Box::new(it);
     panic!();
   }
 }
 
 #[typetag::serde(name="Lib")]
-impl PieceSpec for LibPieceSpec {
+impl PieceSpec for ItemSpec {
   fn load(&self) -> Result<Box<dyn Piece>,SpecError> {
     self.load()
   }
@@ -241,12 +261,10 @@ pub fn load(libname: String, dirname: String) {
   info!("loaded library {:?} from {:?}", libname, dirname);
 }
 
-#[derive(Deserialize,Debug)]
-#[derive(Serialize)] // xxx
-struct Circle { }
-//#[typetag::deserialize]
-#[typetag::serde] // xxx
-impl OutlineSpec for Circle {
+#[derive(Serialize,Deserialize,Debug)]
+struct CircleDefn { }
+#[typetag::serde(name="Circle")]
+impl OutlineSpec for CircleDefn {
   #[throws(LibraryLoadError)]
   fn check(&self, lgi: &LibraryGroupInfo) {
     Self::get_size(lgi)?;

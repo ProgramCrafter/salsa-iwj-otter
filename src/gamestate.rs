@@ -81,21 +81,21 @@ type IR = Result<(),IE>;
 type SE = SVGProcessingError;
 
 #[typetag::serde]
-pub trait Piece : Send + Debug {
+pub trait Outline : Send + Debug {
+  fn surround_path(&self, pri : &PieceRenderInstructions) -> Result<Html, IE>;
+  fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
+                      -> Result<Option<Coord>, IE>;
+}
+
+#[typetag::serde]
+pub trait Piece : Outline + Send + Debug {
   fn resolve_spec_face(&self, face : Option<FaceId>)
                        -> Result<FaceId,SpecError>;
 
   // #[throws] doesn't work here for some reason
   fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) -> IR;
 
-  #[throws(IE)]
-  fn surround_path(&self, pri : &PieceRenderInstructions) -> Html;
-
   fn svg_x_defs(&self, f: &mut Html, pri : &PieceRenderInstructions) -> IR;
-
-  #[throws(IE)]
-  fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
-                      -> Option<Coord>;
 
   fn describe_html(&self, face : Option<FaceId>) -> Html;
 
