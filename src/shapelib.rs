@@ -25,7 +25,7 @@ pub struct ItemDetails {
 
 #[derive(Debug,Clone)]
 pub struct ItemData {
-  details: Arc<ItemDetails>,
+  d: Arc<ItemDetails>,
   group: Arc<GroupData>,
 }
 
@@ -68,9 +68,8 @@ type IE = InternalError;
 
 #[typetag::deserialize(tag="outline")]
 trait OutlineDefn : Debug + Sync + Send {
-  type Checked;
-  fn check(&self, lgi: &GroupData) -> Result<Self::Checked,LLE>;
-  fn load(&self, checked: &Self::Checked) -> Result<Box<dyn Outline>,IE>;
+  fn check(&self, lgi: &GroupData) -> Result<(),LLE>;
+  fn load(&self, lgi: &GroupData) -> Result<Box<dyn Outline>,IE>;
 }
 
 #[derive(Error,Debug)]
@@ -212,14 +211,14 @@ fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
 }
 
 #[throws(LibraryLoadError)]
-fn load_catalogue(dirname: String) -> LibraryContents {
+fn load_catalogue(dirname: String) -> Contents {
   let toml_path = format!("{}.toml", &dirname);
   let f = File::open(toml_path)?;
   let mut f = BufReader::new(f);
   let mut s = String::new();
   f.read_to_string(&mut s).unwrap();
   let toplevel : toml::Value = s.parse()?;
-  let mut l = LibraryContents {
+  let mut l = Contents {
     items: HashMap::new(),
     dirname,
   };
@@ -233,12 +232,12 @@ fn load_catalogue(dirname: String) -> LibraryContents {
     let resolved = resolve_inherit(INHERIT_DEPTH_LIMIT,
                                    &groups, group_name, group_value)?;
     let resolved = TV::Table(resolved.into_owned());
-    let spec : LibraryGroupSpec = resolved.try_into()?;
+    let spec : GroupDefn = resolved.try_into()?;
     for fe in spec.files.0 {
       let item = format!("{}{}{}.usvg", spec.item_prefix,
                          fe.item_spec, spec.item_suffix);
-      let details = Arc::new(LibraryItemDetails { desc: fe.desc });
-      let lp = LibraryItemInfo { info: spec.info.clone(), details };
+      let details = Arc::new(ItemDetails { desc: fe.desc });
+      let lp = ItemData { info: spec.info.clone(), details };
       type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
       match l.items.entry(item) {
         H::Occupied(oe) => throw!(LLE::DuplicateItem(
@@ -263,17 +262,15 @@ pub fn load(libname: String, dirname: String) {
 
 #[derive(Serialize,Deserialize,Debug)]
 struct CircleDefn { }
-#[typetag::serde(name="Circle")]
-impl OutlineSpec for CircleDefn {
+#[typetag::deserialize(name="Circle")]
+impl OutlineDefn for CircleDefn {
   #[throws(LibraryLoadError)]
-  fn check(&self, lgi: &LibraryGroupInfo) {
-    Self::get_size(lgi)?;
-  }
+  fn check(&self, lgd: &GroupData) { Self::get_size(lgd)?; }
 }
-impl Circle {
+impl CircleDefn {
   #[throws(LibraryLoadError)]
-  fn get_size(lgi: &LibraryGroupInfo) -> Coord {
-    match lgi.size.as_slice() {
+  fn get_size(lgd: &GroupData) -> Coord {
+    match lgd.size.as_slice() {
       &[c] => c,
       size => throw!(LLE::WrongNumberOfSizeDimensions
                      { got: size.len(), expected : 1 }),
@@ -298,7 +295,7 @@ impl TryFrom<String> for FileList {
       let r_file_spec = n()?;
       let desc = Html(n()?);
       assert!(!n().is_err());
-      o.push(FileEntry{ item_spec, r_file_spec, desc  });
+      o.push(FileData{ item_spec, r_file_spec, desc  });
     }
     Ok(FileList(o))
   }
