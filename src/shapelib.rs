@@ -124,12 +124,14 @@ struct Item {
   outline: Box<dyn Outline>,
 }
 
-#[typetag::serde(name="Lib")]
 impl Outline for Item { delegate! { to self.outline {
   fn surround_path(&self, pri : &PieceRenderInstructions) -> Result<Html, IE>;
   fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
                       -> Result<Option<Coord>, IE>;
 }}}
+
+#[typetag::serde(name="Lib")]
+impl JustOutline for Item { }
 
 #[typetag::serde(name="Lib")]
 impl Piece for Item {
@@ -289,7 +291,6 @@ pub fn load(libname: String, dirname: String) {
 #[derive(Serialize,Deserialize,Debug)]
 struct Circle { diam: f64 }
 
-#[typetag::serde(name="Circle")]
 impl Outline for Circle {
   #[throws(IE)]
   fn surround_path(&self, _pri : &PieceRenderInstructions) -> Html {
@@ -301,6 +302,8 @@ impl Outline for Circle {
     Some(self.diam / 2)
   }
 }
+#[typetag::serde(name="Circle")]
+impl JustOutline for Circle { }
 
 #[derive(Deserialize,Debug)]
 struct CircleDefn { }

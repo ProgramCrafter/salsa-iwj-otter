@@ -80,12 +80,14 @@ type IE = InternalError;
 type IR = Result<(),IE>;
 type SE = SVGProcessingError;
 
-#[typetag::serde]
 pub trait Outline : Send + Debug {
   fn surround_path(&self, pri : &PieceRenderInstructions) -> Result<Html, IE>;
   fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
                       -> Result<Option<Coord>, IE>;
 }
+
+#[typetag::serde]
+pub trait JustOutline : Outline + Send + Debug { }
 
 #[typetag::serde]
 pub trait Piece : Outline + Send + Debug {

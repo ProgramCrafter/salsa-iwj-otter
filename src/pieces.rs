@@ -99,7 +99,6 @@ pub fn svg_circle_path(diam: f64) -> Html {
   path
 }
 
-#[typetag::serde]
 impl Outline for SimpleShape {
   #[throws(IE)]
   fn surround_path(&self, _pri : &PieceRenderInstructions) -> Html {
