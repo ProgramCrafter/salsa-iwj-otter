@@ -48,7 +48,7 @@ index_vec = { version = "0.1.1", features = ['serde'] }
 
 num-traits = "0.2"
 
-typetag = "0.1"
+typetag = "^0.1.6"
 #inventory = "0.1"
 
 rmp-serde = "0.14"
