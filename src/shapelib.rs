@@ -195,7 +195,9 @@ impl ItemSpec {
 
     let descs = index_vec![ ];
     let desc = descs.push(idata.d.desc.clone());
-    let face = ItemFace { svg: Html(svg_data), desc };
+    let centre = idata.group.d.centre;
+    let scale = idata.group.d.scale;
+    let face = ItemFace { svg: Html(svg_data), desc, centre, scale };
     let faces = index_vec![ face ];
     let it = Item { faces, descs, outline };
     Box::new(it);
