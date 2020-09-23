@@ -165,16 +165,6 @@ impl Piece for Item {
   }
 }
 
-/*
-#[typetag::serde(name="LP")]
-impl Item for LibraryItem {
-}
-*/
-
-/*
-#[typetag::serde(name="Lib")]
-impl PieceSpec for LibPieceSpec {
-*/
 impl ItemSpec {
   fn load(&self) -> Result<Box<dyn Piece>,SpecError> {
     let libs = GLOBAL.shapelibs.read().unwrap(); 
@@ -205,8 +195,7 @@ impl ItemSpec {
     let face = ItemFace { svg: Html(svg_data), desc, centre, scale };
     let faces = index_vec![ face ];
     let it = Item { faces, descs, outline, desc_hidden };
-    Box::new(it);
-    panic!(); //xxx
+    Ok(Box::new(it))
   }
 }
 
