@@ -98,7 +98,7 @@ pub fn svg_circle_path(diam: f64) -> Html {
   let path = svg_rescale_path(&unit_path, scale)?;
   path
 }
-
+#[typetag::serde]
 impl Outline for SimpleShape {
   #[throws(IE)]
   fn surround_path(&self, _pri : &PieceRenderInstructions) -> Html {

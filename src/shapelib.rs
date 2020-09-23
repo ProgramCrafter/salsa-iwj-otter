@@ -50,7 +50,7 @@ struct GroupDefn {
   files: FileList,
   #[serde(default)] item_prefix: String,
   #[serde(default)] item_suffix: String,
-  #[serde(flatten)] info: Arc<GroupDetails>,
+  #[serde(flatten)] d: GroupDetails,
 }
 
 #[derive(Deserialize,Debug)]
@@ -94,6 +94,12 @@ pub enum LibraryLoadError{
   FilesListLineMissingWhitespace(usize),
 }
 
+impl LibraryLoadError {
+  fn ought(self) -> InternalError {
+    InternalError::InternalLogicError(format!("{:?}",self))
+  }
+}
+
 const INHERIT_DEPTH_LIMIT : u8 = 20;
 
 type LLE = LibraryLoadError;
@@ -121,17 +127,15 @@ struct Item {
   faces: IndexVec<FaceId, ItemFace>,
   desc_hidden: DescId,
   descs: IndexVec<DescId, Html>,
-  outline: Box<dyn JustOutline>,
+  outline: Box<dyn Outline>,
 }
 
+#[typetag::serde(name="Lib")]
 impl Outline for Item { delegate! { to self.outline {
   fn surround_path(&self, pri : &PieceRenderInstructions) -> Result<Html, IE>;
   fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
                       -> Result<Option<Coord>, IE>;
 }}}
-
-#[typetag::serde(name="Lib")]
-impl JustOutline for Item { }
 
 #[typetag::serde(name="Lib")]
 impl Piece for Item {
@@ -187,19 +191,20 @@ impl ItemSpec {
         SE::InternalError(m.to_string())
       })?;
 
-    let o_checked = idata.group.d.outline.check(&idata.group)
+    idata.group.d.outline.check(&idata.group)
       .map_err(|e| SE::InternalError(format!("rechecking outline: {}",&e)))?;
     let outline = idata.group.d.outline.load(&idata.group)?;
 
     // xxx do something with flip
 
-    let descs = index_vec![ ];
+    let mut descs = index_vec![ ];
     let desc = descs.push(idata.d.desc.clone());
+    let desc_hidden = desc; // todo
     let centre = idata.group.d.centre;
     let scale = idata.group.d.scale;
     let face = ItemFace { svg: Html(svg_data), desc, centre, scale };
     let faces = index_vec![ face ];
-    let it = Item { faces, descs, outline };
+    let it = Item { faces, descs, outline, desc_hidden };
     Box::new(it);
     panic!();
   }
@@ -258,24 +263,29 @@ fn load_catalogue(dirname: String) -> Contents {
     .as_table().ok_or_else(|| LLE::ExpectedTable(format!("toplevel")))?
     .get("group").unwrap_or(&empty_table)
     .as_table().ok_or_else(|| LLE::ExpectedTable(format!("group")))?;
-  for (group_name, group_value) in groups {
-    let resolved = resolve_inherit(INHERIT_DEPTH_LIMIT,
-                                   &groups, group_name, group_value)?;
-    let resolved = TV::Table(resolved.into_owned());
-    let spec : GroupDefn = resolved.try_into()?;
-    for fe in spec.files.0 {
-      let item = format!("{}{}{}.usvg", spec.item_prefix,
-                         fe.item_spec, spec.item_suffix);
-      let details = Arc::new(ItemDetails { desc: fe.desc });
-      let lp = ItemData { info: spec.info.clone(), details };
+  for (groupname, gdefn) in groups {
+    let gdefn = resolve_inherit(INHERIT_DEPTH_LIMIT,
+                                &groups, groupname, gdefn)?;
+    let gdefn : GroupDefn = TV::Table(gdefn.into_owned()).try_into()?;
+    let group = Arc::new(GroupData {
+      groupname: groupname.clone(),
+      d: gdefn.d,
+    });
+    for fe in gdefn.files.0 {
+      let item_name = format!("{}{}{}.usvg", gdefn.item_prefix,
+                              fe.item_spec, gdefn.item_suffix);
+      let idata = ItemData {
+        group: group.clone(),
+        d: Arc::new(ItemDetails { desc: fe.desc.clone() }),
+      };
       type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
-      match l.items.entry(item) {
-        H::Occupied(oe) => throw!(LLE::DuplicateItem(
-          oe.key().clone(),
-          oe.get().clone(),
-          lp,
-        )),
-        H::Vacant(ve) => ve.insert(lp),
+      match l.items.entry(item_name.clone()) {
+        H::Occupied(oe) => throw!(LLE::DuplicateItem {
+          item: item_name.clone(),
+          group1: oe.get().group.groupname.clone(),
+          group2: groupname.clone(),
+        }),
+        H::Vacant(ve) => ve.insert(idata),
       };
     }
   }
@@ -293,6 +303,7 @@ pub fn load(libname: String, dirname: String) {
 #[derive(Serialize,Deserialize,Debug)]
 struct Circle { diam: f64 }
 
+#[typetag::serde(name="Circle")]
 impl Outline for Circle {
   #[throws(IE)]
   fn surround_path(&self, _pri : &PieceRenderInstructions) -> Html {
@@ -301,11 +312,9 @@ impl Outline for Circle {
   #[throws(IE)]
   fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
                       -> Option<Coord> {
-    Some(self.diam / 2)
+    Some((self.diam * 0.5) as Coord)
   }
 }
-#[typetag::serde(name="Circle")]
-impl JustOutline for Circle { }
 
 #[derive(Deserialize,Debug)]
 struct CircleDefn { }
@@ -313,17 +322,16 @@ struct CircleDefn { }
 impl OutlineDefn for CircleDefn {
   #[throws(LibraryLoadError)]
   fn check(&self, lgd: &GroupData) { Self::get_size(lgd)?; }
-  #[throws(InternalError)]
-  fn load(&self, lgd: &GroupData) -> Box<dyn Outline> {
-    Box::new(Circle {
-      diam: Self::get_size(lgd).unrap()
-    })
+  fn load(&self, lgd: &GroupData) -> Result<Box<dyn Outline>,IE> {
+    Ok(Box::new(Circle {
+      diam: Self::get_size(lgd).map_err(|e| e.ought())?,
+    }))
   }
 }
 impl CircleDefn {
   #[throws(LibraryLoadError)]
-  fn get_size(lgd: &GroupData) -> f64 {
-    match lgd.size.as_slice() {
+  fn get_size(group: &GroupData) -> f64 {
+    match group.d.size.as_slice() {
       &[c] => c,
       size => throw!(LLE::WrongNumberOfSizeDimensions
                      { got: size.len(), expected : 1 }),
@@ -345,10 +353,10 @@ impl TryFrom<String> for FileList {
           .map(|s| s.to_owned())
       };
       let item_spec = n()?;
-      let r_file_spec = n()?;
+      let _r_file_spec = n()?;
       let desc = Html(n()?);
       assert!(!n().is_err());
-      o.push(FileData{ item_spec, r_file_spec, desc  });
+      o.push(FileData{ item_spec, r_file_spec: (), desc  });
     }
     Ok(FileList(o))
   }
