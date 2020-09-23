@@ -206,7 +206,7 @@ impl ItemSpec {
     let faces = index_vec![ face ];
     let it = Item { faces, descs, outline, desc_hidden };
     Box::new(it);
-    panic!();
+    panic!(); //xxx
   }
 }
 
