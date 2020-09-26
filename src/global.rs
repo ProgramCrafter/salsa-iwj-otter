@@ -978,6 +978,7 @@ const DEFAULT_CONFIG_FILENAME : &str = "server.toml";
 const DEFAULT_SAVE_DIRECTORY : &str = "save";
 const DEFAULT_COMMAND_SOCKET : &str = "command.socket"; // in save dir
 const DEFAULT_TEMPLATE_DIR : &str = "templates";
+const DEFAULT_LIBRARY_DIR : &str = "library";
 
 #[derive(Deserialize,Debug,Clone)]
 pub struct ServerConfigSpec {
@@ -989,6 +990,7 @@ pub struct ServerConfigSpec {
   pub template_dir: Option<String>,
   pub log: Option<toml::Value>,
   pub bundled_sources: Option<String>,
+  pub shapelibs: Option<Vec<shapelib::Config1>>,
 }
 
 #[derive(Debug,Clone)]
@@ -1001,6 +1003,7 @@ pub struct ServerConfig {
   pub template_dir: String,
   pub log: LogSpecification,
   pub bundled_sources: String,
+  pub shapelibs: Vec<shapelib::Config1>,
 }
 
 impl TryFrom<ServerConfigSpec> for ServerConfig {
@@ -1010,6 +1013,7 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
     let ServerConfigSpec {
       save_directory, command_socket, debug,
       http_port, rocket_workers, template_dir, log, bundled_sources,
+      shapelibs,
     } = spec;
 
     let save_directory = save_directory
@@ -1046,9 +1050,15 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
     let bundled_sources = bundled_sources
       .unwrap_or_else(|| save_directory.clone());
 
+    let shapelibs = shapelibs.unwrap_or_else(
+      ||vec![ shapelib::Config1::PathGlob(
+        format!("{}/*.toml", DEFAULT_LIBRARY_DIR)
+      )]);
+
     ServerConfig {
       save_directory, command_socket, debug,
       http_port, rocket_workers, template_dir, log, bundled_sources,
+      shapelibs,
     }
   }
 }

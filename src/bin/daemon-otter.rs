@@ -91,6 +91,8 @@ fn main() {
     .with_context(||bundled_sources.clone())
     .context("check bundled-sources directory's index.html")?;
 
+  shapelib::load()?;
+
   load_games()?;
 
   let cl = CommandListener::new()?;

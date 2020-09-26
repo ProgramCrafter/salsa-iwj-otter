@@ -19,18 +19,18 @@ pub struct Contents {
 
 #[derive(Debug,Clone)]
 #[derive(Serialize,Deserialize)]
-pub struct ItemDetails {
+struct ItemDetails {
   desc: Html,
 }
 
 #[derive(Debug,Clone)]
-pub struct ItemData {
+struct ItemData {
   d: Arc<ItemDetails>,
   group: Arc<GroupData>,
 }
 
 #[derive(Debug,Deserialize)]
-pub struct GroupDetails {
+struct GroupDetails {
   size: Vec<f64>,
   category: String,
   #[serde(default)] centre: [f64; 2],
@@ -40,7 +40,7 @@ pub struct GroupDetails {
 }
 
 #[derive(Debug)]
-pub struct GroupData {
+struct GroupData {
   groupname: String,
   d: GroupDetails,
 }
@@ -76,8 +76,16 @@ trait OutlineDefn : Debug + Sync + Send {
 pub enum LibraryLoadError{ 
   #[error(transparent)]
   TomlParseError(#[from] toml::de::Error),
-  #[error("error reading/opening library file: {0}")]
-  FileError(#[from] io::Error),
+  #[error("error reading/opening library file: {0}: {1}")]
+  FileError(String, io::Error),
+  #[error("OS error globbing for files: {0}")]
+  GlobFileError(#[from] glob::GlobError),
+  #[error("bad glob pattern: {pat:?} (near char {pos}): {msg}")]
+  BadGlobPattern { pat: String, msg: &'static str, pos: usize },
+  #[error("glob pattern {pat:?} matched non-utf-8 filename {actual:?}")]
+  GlobNonUTF8 { pat: String, actual: PathBuf },
+  #[error("glob pattern {pat:?} matched filename with no extension {path:?}")]
+  GlobNoExtension { pat: String, path: String },
   #[error("{:?}",&self)]
   ExpectedTable(String),
   #[error("{:?}",&self)]
@@ -107,7 +115,7 @@ type TV = toml::Value;
 type SE = SpecError;
 
 #[derive(Debug,Serialize,Deserialize)]
-pub struct ItemSpec {
+struct ItemSpec {
   lib: String,
   item: String,
 }
@@ -235,16 +243,16 @@ fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
 }
 
 #[throws(LibraryLoadError)]
-fn load_catalogue(dirname: String) -> Contents {
-  let toml_path = format!("{}.toml", &dirname);
-  let f = File::open(toml_path)?;
+fn load_catalogue(dirname: &str, toml_path: &str) -> Contents {
+  let ioe = |io| LLE::FileError(toml_path.to_string(), io);
+  let f = File::open(toml_path).map_err(ioe)?;
   let mut f = BufReader::new(f);
   let mut s = String::new();
-  f.read_to_string(&mut s).unwrap();
+  f.read_to_string(&mut s).map_err(ioe)?;
   let toplevel : toml::Value = s.parse()?;
   let mut l = Contents {
     items: HashMap::new(),
-    dirname,
+    dirname: dirname.to_string(),
   };
   let empty_table = toml::value::Value::Table(Default::default());
   let groups =
@@ -281,12 +289,82 @@ fn load_catalogue(dirname: String) -> Contents {
   l
 }
 
+#[derive(Deserialize,Debug,Clone)]
+#[serde(untagged)]
+pub enum Config1 {
+  PathGlob(String),
+  Explicit(Explicit1),
+}
+
+#[derive(Deserialize,Debug,Clone)]
+pub struct Explicit1 {
+  pub name: String,
+  pub catalogue: String,
+  pub dirname: String,
+}
+
 #[throws(LibraryLoadError)]
-pub fn load(libname: String, dirname: String) {
-  let data = load_catalogue(dirname.clone())?;
-  dbg!(&data);
-  GLOBAL.shapelibs.write().unwrap().insert(libname.clone(), data);
-  info!("loaded library {:?} from {:?}", libname, dirname);
+pub fn load1(l: &Explicit1) {
+  let data = load_catalogue(&l.dirname, &l.catalogue)?;
+  GLOBAL.shapelibs.write().unwrap().insert(l.name.clone(), data);
+  info!("loaded library {:?} from {:?} and {:?}",
+        &l.name, &l.catalogue, &l.dirname);
+}
+
+impl Config1 {
+  fn resolve(&self) -> Result<Box<dyn Iterator<Item=Explicit1>>, LibraryLoadError> {
+    use Config1::*;
+    Ok(match self {
+      Explicit(e) => Box::new(iter::once(e.clone())),
+      PathGlob(pat) => {
+
+        #[throws(LLE)]
+        fn resolve_globresult(pat: &str, globresult: glob::GlobResult)
+                              -> Explicit1 {
+          let path = globresult?;
+          let path = path.to_str().ok_or_else(
+            || LLE::GlobNonUTF8
+            { pat: pat.to_string(), actual: path.clone() })?
+            .to_string();
+
+          let dirname = path.rsplitn(2,'.').nth(1).ok_or_else(
+            || LLE::GlobNoExtension
+            { pat: pat.to_string(), path: path.clone() })?;
+
+          let base = dirname.rsplit('/').next().unwrap();
+
+          Explicit1 {
+            name: base.to_string(),
+            dirname: dirname.to_string(),
+            catalogue: path,
+          }
+        };
+
+        let results = glob::glob_with(pat, glob::MatchOptions {
+          require_literal_separator: true,
+          require_literal_leading_dot: true,
+          .. Default::default()
+        })
+          .map_err(
+            |glob::PatternError { pos, msg, .. }|
+            LLE::BadGlobPattern { pat: pat.clone(), pos, msg }
+          )?
+          .map(|globresult| resolve_globresult(pat, globresult))
+          .collect::<Result<Vec<_>, LLE>>()?;
+
+        Box::new(results.into_iter())
+      },
+    })
+  }
+}
+
+#[throws(LibraryLoadError)]
+pub fn load() {
+  for l in &config().shapelibs {
+    for e in l.resolve()? {
+      load1(&e)?;
+    }
+  }
 }
 
 #[derive(Serialize,Deserialize,Debug)]

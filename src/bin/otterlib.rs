@@ -2,6 +2,13 @@ pub use otter::imports::*;
 
 #[throws(anyhow::Error)]
 fn main(){
-  let f = env::args().nth(1).unwrap();
-  shapelib::load(f.clone(),f)?;
+  let mut a = env::args();
+  a.next().unwrap();
+  let name = a.next().unwrap();
+  let dirname = a.next().unwrap();
+  let catalogue = format!("{}.toml", &dirname);
+  let e = shapelib::Explicit1 {
+    name, dirname, catalogue
+  };
+  shapelib::load1(&e).unwrap();
 }
