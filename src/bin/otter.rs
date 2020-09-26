@@ -564,3 +564,51 @@ mod reset_game {
     call,
   )}
 }
+
+//---------- library-sdd ----------
+
+mod library_add {
+  use super::*;
+
+  #[derive(Default,Debug)]
+  struct Args {
+    name: String,
+    lib: String,
+    pat: String,
+  }
+
+  fn subargs(sa: &mut Args) -> ArgumentParser {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+/*      .add_option(&["--no-add-markers"],StoreOption,
+                  "reset the players and access too");
+*/
+    ap.refer(&mut sa.name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
+    ap.refer(&mut sa.lib).required()
+      .add_argument("LIB-NAME",Store,"library name");
+    ap.refer(&mut sa.pat).required()
+      .add_argument("ITEM-GLOB-PATTERN",Store,"item glob pattern");
+    ap
+  }
+
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+    let args = parse_args::<Args,_>(args, &subargs, None, None);
+    let mut chan = ConnForGame {
+      conn: connect(&ma)?,
+      name: args.name.clone(),
+      how: MgmtGameUpdateMode::Online,
+    };
+    let markers = chan.get_pieces()?.into_iter().filter(
+      |p| p.itemname == "mgmt-library-load-marker"
+    ).collect::<Vec<_>>();
+    dbg!(&markers);
+    Ok(())
+  }
+
+  inventory::submit!{Subcommand(
+    "library-add",
+    "Add pieces from the shape libraries",
+    call,
+  )}
+}
