@@ -301,6 +301,18 @@ impl ConnForGame {
     }
     Ok((info, nick2id))
   }
+
+  #[throws(AE)]
+  fn get_pieces(&mut self) -> Vec<MgmtGamePieceInfo> {
+    let insns = vec![ MgmtGameInstruction::ListPieces ];
+    let mut responses = self.alter_game(insns, None)?;
+    match responses.as_mut_slice() {
+      &mut [MgmtGameResponse::Pieces(ref mut pieces)] => {
+        return mem::take(pieces)
+      },
+      wat => Err(anyhow!("ListPieces => {:?}", &wat))?,
+    }
+  }
 }
 
 #[throws(E)]
@@ -525,18 +537,9 @@ mod reset_game {
 
     let mut insns = vec![];
 
-    chan.alter_game(
-      vec![ MgmtGameInstruction::ListPieces ],
-      Some(&mut |response|{ match response {
-        MgmtGameResponse::Pieces(pieces) => {
-          for p in pieces {
-            insns.push(MgmtGameInstruction::DeletePiece(p.piece));
-          }
-          Ok(())
-        },
-        wat => Err(anyhow!("ListPieces => {:?}", &wat))?,
-      }})
-    )?;
+    for p in chan.get_pieces()? {
+      insns.push(MgmtGameInstruction::DeletePiece(p.piece));
+    }
 
     if let Some(size) = game.table_size {
       insns.push(Insn::SetTableSize(size));
