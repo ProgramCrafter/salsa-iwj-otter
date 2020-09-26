@@ -95,3 +95,13 @@ files = """
 w-commoner	Commoner_Transparent		a white commoner piece
 b-commoner	CommonerB_Transparent		a black commoner piece
 """
+
+[group.misc-management]
+outline = "Square"
+size = [448,326]
+centre = [224, 163]
+scale = 0.025
+category = "management"
+files = """
+library-load-marker	Box_with_polygons	a library load area marker
+"""

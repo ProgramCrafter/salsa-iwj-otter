@@ -1,0 +1,28 @@
+=={{int:filedesc}}==
+{{Information
+|description={{en|1=A box with polygons}}
+|date=2015-04-16
+|source=This work based on:
+
+* [[:File:Package-x-generic.svg]]
+* [[:File:Example of a set.svg]]
+** derivative work of [[:File:PolygonsSet.svg]]
+|author=*[[:File:Package-x-generic.svg]]: [http://tango.freedesktop.org/The_People The people from the Tango! project]
+* [[:File:Example of a set.svg]]: [http://kulla.me Stephan Kulla] ([[User:Stephan Kulla]])
+** [[:File:PolygonsSet.svg]]: [[User:kismalac|kismalac]]
+* derivative work: [http://kulla.me Stephan Kulla] ([[User:Stephan Kulla]])
+|permission=
+|other versions=<gallery>
+File:Example of a set.svg|set of all polygons in this box
+File:Transparent box with polygons.svg|transparent box with all polygons
+</gallery>
+}}
+{{Created with Inkscape}}
+
+=={{int:license-header}}==
+{{self|cc-zero}}
+
+[[Category:Open box icons]]
+[[Category:SVG polygons]]
+[[Category:Sets]]
+[[Category:Logic icons]]
