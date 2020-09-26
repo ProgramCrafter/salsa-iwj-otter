@@ -88,6 +88,8 @@ pub use hashlink::LinkedHashMap;
 
 pub use delegate::delegate;
 
+pub use itertools::Itertools;
+
 pub use crate::global::*;
 pub use crate::gamestate::*;
 pub use crate::pieces::*;
