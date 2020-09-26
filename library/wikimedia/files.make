@@ -79,14 +79,14 @@ library/wikimedia/chess-w-N.usvg: library/wikimedia/chess-w-N.svg library/wikime
 LIBRARY_FILES += library/wikimedia/chess-b-N.usvg
 library/wikimedia/chess-b-N.usvg: library/wikimedia/chess-b-N.svg library/wikimedia/LICENCE
 	$(LIBRARY_PROCESS_SVG)
-LIBRARY_FILES += library/wikimedia/chess-g-Q.usvg
-library/wikimedia/chess-g-Q.usvg: library/wikimedia/chess-g-Q.svg library/wikimedia/LICENCE
+LIBRARY_FILES += library/wikimedia/chess-g-N.usvg
+library/wikimedia/chess-g-N.usvg: library/wikimedia/chess-g-N.svg library/wikimedia/LICENCE
 	$(LIBRARY_PROCESS_SVG)
-LIBRARY_FILES += library/wikimedia/chess-r-Q.usvg
-library/wikimedia/chess-r-Q.usvg: library/wikimedia/chess-r-Q.svg library/wikimedia/LICENCE
+LIBRARY_FILES += library/wikimedia/chess-r-N.usvg
+library/wikimedia/chess-r-N.usvg: library/wikimedia/chess-r-N.svg library/wikimedia/LICENCE
 	$(LIBRARY_PROCESS_SVG)
-LIBRARY_FILES += library/wikimedia/chess-y-Q.usvg
-library/wikimedia/chess-y-Q.usvg: library/wikimedia/chess-y-Q.svg library/wikimedia/LICENCE
+LIBRARY_FILES += library/wikimedia/chess-y-N.usvg
+library/wikimedia/chess-y-N.usvg: library/wikimedia/chess-y-N.svg library/wikimedia/LICENCE
 	$(LIBRARY_PROCESS_SVG)
 LIBRARY_FILES += library/wikimedia/chess-w-zebra.usvg
 library/wikimedia/chess-w-zebra.usvg: library/wikimedia/chess-w-zebra.svg library/wikimedia/LICENCE
