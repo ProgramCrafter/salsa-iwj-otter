@@ -230,9 +230,9 @@ impl<NS> PieceUpdateOp<NS> {
 pub struct PrepareUpdatesBuffer<'r> {
   g : &'r mut Instance,
   us : Vec<PreparedUpdateEntry>,
-  gen : Generation,
   by_client : ClientId,
   cseq : ClientSequence,
+  gen : Option<Generation>,
 }
 
 impl<'r> PrepareUpdatesBuffer<'r> {
@@ -245,13 +245,19 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     );
     let us = estimate.map_or(vec![], Vec::with_capacity);
 
-    g.gs.gen.increment();
-
     PrepareUpdatesBuffer {
-      gen: g.gs.gen,
+      gen: None,
       by_client: by_client.0, cseq: by_client.1,
       us, g,
     }
+  }
+
+  pub fn gen(&mut self) -> Generation {
+    let gs = &mut self.g.gs;
+    *self.gen.get_or_insert_with(||{
+      gs.gen.increment();
+      gs.gen
+    })
   }
 
   fn new_for_error(ig: &'r mut Instance) -> Self {
@@ -289,6 +295,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   fn piece_update_fallible(&mut self, piece: PieceId,
                            update: PieceUpdateOp<()>,
                            lens: &dyn Lens) -> PreparedUpdateEntry {
+    let gen = self.gen();
     let gs = &mut self.g.gs;
 
     let (update, piece) = match (
@@ -302,7 +309,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
           pc.gen_before_lastclient = pc.gen;
           pc.lastclient = self.by_client;
         }
-        pc.gen = self.gen;
+        pc.gen = gen;
         let pri_for_all = lens.svg_pri(piece,pc,Default::default());
 
         let update = update.try_map_new_state(
@@ -350,7 +357,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   pub fn log_updates(&mut self, logents: Vec<LogEntry>) {
     for logentry in logents {
       let logentry = Arc::new(logentry);
-      self.g.gs.log.push((self.gen, logentry.clone()));
+      let gen = self.gen();
+      self.g.gs.log.push((gen, logentry.clone()));
       self.us.push(PreparedUpdateEntry::Log(logentry));
     }
   }
@@ -360,16 +368,18 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
 impl<'r> Drop for PrepareUpdatesBuffer<'r> {
   fn drop(&mut self) {
-    let update = PreparedUpdate {
-      when: Instant::now(),
-      gen: self.gen,
-      us: mem::take(&mut self.us),
-    };
-    let update = Arc::new(update);
-    trace!("PrepareUpdatesBuffer update {:?}", &update);
+    if let Some(gen) = self.gen {
+      let update = PreparedUpdate {
+        when: Instant::now(),
+        gen,
+        us: mem::take(&mut self.us),
+      };
+      let update = Arc::new(update);
+      trace!("PrepareUpdatesBuffer update {:?}", &update);
 
-    for (_tplayer, tplupdates) in &mut self.g.updates {
-      tplupdates.push(update.clone());
+      for (_tplayer, tplupdates) in &mut self.g.updates {
+        tplupdates.push(update.clone());
+      }
     }
   }
 }
