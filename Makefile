@@ -36,7 +36,9 @@ endif
 
 include $(wildcard library/*/files.make)
 
-LIBRARY_PROCESS_SVG = ./usvg-processor $@ $^ '$(USVG)'
+USVG_PROCESSOR = usvg-processor
+LIBRARY_PROCESS_SVG = ./$(USVG_PROCESSOR) $@ $(filter-out $(USVG_PROCESSOR),$^) '$(USVG)'
+$(LIBRARY_FILES): $(USVG_PROCESSOR)
 
 assets: templates/script.js libraries
 
