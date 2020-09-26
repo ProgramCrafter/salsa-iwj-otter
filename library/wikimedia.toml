@@ -85,7 +85,7 @@ b-zebra		Zdt45	a black zebra piece
 # ^ wikimedia calls these Centaurs
 """
 
-[group.chess-anomalous-files]
+[group.chess-anomalous-filenames]
 inherit = "chess"
 stem_prefix = ""
 files = """
