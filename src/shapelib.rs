@@ -166,10 +166,10 @@ impl Piece for Item {
   fn svg_x_defs(&self, _f: &mut Html, _pri : &PieceRenderInstructions) {
   }
   fn describe_html(&self, face : Option<FaceId>) -> Html {
-    Html(format!("a {}", self.descs[ match face {
+    self.descs[ match face {
       Some(face) => self.faces[face].desc,
       None => self.desc_hidden,
-    }].0))
+    }].clone()
   }
 }
 
