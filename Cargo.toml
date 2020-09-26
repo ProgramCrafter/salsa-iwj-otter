@@ -51,6 +51,8 @@ num-traits = "0.2"
 typetag = "0.1.6"
 #inventory = "0.1"
 
+ordered-float = "2"
+
 rmp-serde = "0.14"
 rmp = "0.8"
 

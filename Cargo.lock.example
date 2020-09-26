@@ -1048,6 +1048,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
 
 [[package]]
+name = "ordered-float"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9fe9037165d7023b1228bc4ae9a2fa1a2b0095eca6c2998c624723dfd01314a5"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "otter"
 version = "0.0.1"
 dependencies = [
@@ -1069,6 +1078,7 @@ dependencies = [
  "log 0.4.11",
  "nix",
  "num-traits",
+ "ordered-float",
  "percent-encoding 2.1.0",
  "pwd",
  "rand",
