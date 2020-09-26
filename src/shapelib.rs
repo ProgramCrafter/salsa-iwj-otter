@@ -32,7 +32,6 @@ struct ItemData {
 #[derive(Debug,Deserialize)]
 struct GroupDetails {
   size: Vec<f64>, // scaled when put into GroupData
-  category: String,
   #[serde(default)] centre: [f64; 2],
   #[serde(default)] flip: bool,
   #[serde(default="num_traits::identities::One::one")] scale: f64,
