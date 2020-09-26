@@ -94,6 +94,12 @@ library/wikimedia/chess-r-ship.usvg: library/wikimedia/chess-r-ship.svg library/
 LIBRARY_FILES += library/wikimedia/chess-y-ship.usvg
 library/wikimedia/chess-y-ship.usvg: library/wikimedia/chess-y-ship.svg library/wikimedia/LICENCE
 	$(LIBRARY_PROCESS_SVG)
+LIBRARY_FILES += library/wikimedia/chess-w-commoner.usvg
+library/wikimedia/chess-w-commoner.usvg: library/wikimedia/chess-w-commoner.svg library/wikimedia/LICENCE
+	$(LIBRARY_PROCESS_SVG)
+LIBRARY_FILES += library/wikimedia/chess-b-commoner.usvg
+library/wikimedia/chess-b-commoner.usvg: library/wikimedia/chess-b-commoner.svg library/wikimedia/LICENCE
+	$(LIBRARY_PROCESS_SVG)
 LIBRARY_FILES += library/wikimedia/chess-w-N.usvg
 library/wikimedia/chess-w-N.usvg: library/wikimedia/chess-w-N.svg library/wikimedia/LICENCE
 	$(LIBRARY_PROCESS_SVG)

@@ -92,7 +92,6 @@ b-knight-king	Cdt45	a white knight king piece
 inherit = "chess"
 stem_prefix = ""
 files = """
-# next ones have some kind of licence problem? xxx
-# w-commoner	Commoner%20Transparent		a white commoner piece
-# b-commoner	CommonerB%20Transparent		a black commoner piece
+w-commoner	Commoner_Transparent		a white commoner piece
+b-commoner	CommonerB_Transparent		a black commoner piece
 """
