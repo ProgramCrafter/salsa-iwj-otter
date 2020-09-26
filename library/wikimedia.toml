@@ -16,8 +16,8 @@ data_url_hashprefix = true
 
 [group.chess]
 outline = "Circle"
-size = [9]
 scale = 0.20
+size = [45]
 centre = [22.5, 22.5]
 category = "chess"
 item_prefix = "chess-"

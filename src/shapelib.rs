@@ -31,7 +31,7 @@ struct ItemData {
 
 #[derive(Debug,Deserialize)]
 struct GroupDetails {
-  size: Vec<f64>,
+  size: Vec<f64>, // scaled when put into GroupData
   category: String,
   #[serde(default)] centre: [f64; 2],
   #[serde(default)] flip: bool,
@@ -266,9 +266,13 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
     let gdefn = resolve_inherit(INHERIT_DEPTH_LIMIT,
                                 &groups, groupname, gdefn)?;
     let gdefn : GroupDefn = TV::Table(gdefn.into_owned()).try_into()?;
+    let d = GroupDetails {
+      size: gdefn.d.size.iter().map(|s| s * gdefn.d.scale).collect(),
+      ..gdefn.d
+    };
     let group = Arc::new(GroupData {
       groupname: groupname.clone(),
-      d: gdefn.d,
+      d,
     });
     for fe in gdefn.files.0 {
       let item_name = format!("{}{}{}", gdefn.item_prefix,
