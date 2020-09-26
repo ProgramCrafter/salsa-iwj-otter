@@ -179,7 +179,7 @@ impl ItemSpec {
     let lib = libs.get(&self.lib).ok_or(SE::LibraryNotFound)?;
     let idata = lib.items.get(&self.item).ok_or(SE::LibraryItemNotFound)?;
 
-    let svg_path = format!("{}/{}", lib.dirname, &self.item);
+    let svg_path = format!("{}/{}.usvg", lib.dirname, &self.item);
     let svg_data = fs::read_to_string(&svg_path)
       .map_err(|e| if e.kind() == ErrorKind::NotFound {
         SE::LibraryItemNotFound
@@ -243,7 +243,7 @@ fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
 }
 
 #[throws(LibraryLoadError)]
-fn load_catalogue(dirname: &str, toml_path: &str) -> Contents {
+fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
   let ioe = |io| LLE::FileError(toml_path.to_string(), io);
   let f = File::open(toml_path).map_err(ioe)?;
   let mut f = BufReader::new(f);
@@ -269,7 +269,7 @@ fn load_catalogue(dirname: &str, toml_path: &str) -> Contents {
       d: gdefn.d,
     });
     for fe in gdefn.files.0 {
-      let item_name = format!("{}{}{}.usvg", gdefn.item_prefix,
+      let item_name = format!("{}{}{}", gdefn.item_prefix,
                               fe.item_spec, gdefn.item_suffix);
       let idata = ItemData {
         group: group.clone(),
@@ -282,7 +282,10 @@ fn load_catalogue(dirname: &str, toml_path: &str) -> Contents {
           group1: oe.get().group.groupname.clone(),
           group2: groupname.clone(),
         }),
-        H::Vacant(ve) => ve.insert(idata),
+        H::Vacant(ve) => {
+          debug!("loaded shape {} {}", libname, item_name);
+          ve.insert(idata);
+        },
       };
     }
   }
@@ -305,10 +308,11 @@ pub struct Explicit1 {
 
 #[throws(LibraryLoadError)]
 pub fn load1(l: &Explicit1) {
-  let data = load_catalogue(&l.dirname, &l.catalogue)?;
+  let data = load_catalogue(&l.name, &l.dirname, &l.catalogue)?;
+  let count = data.items.len();
   GLOBAL.shapelibs.write().unwrap().insert(l.name.clone(), data);
-  info!("loaded library {:?} from {:?} and {:?}",
-        &l.name, &l.catalogue, &l.dirname);
+  info!("loaded {} shapes in library {:?} from {:?} and {:?}",
+        count, &l.name, &l.catalogue, &l.dirname);
 }
 
 impl Config1 {
