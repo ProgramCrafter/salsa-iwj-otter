@@ -1058,6 +1058,7 @@ dependencies = [
  "fehler",
  "flexi_logger",
  "fs2",
+ "glob 0.3.0",
  "hashlink",
  "htmlescape",
  "index_vec",
