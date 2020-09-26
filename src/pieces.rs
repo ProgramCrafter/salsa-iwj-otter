@@ -101,7 +101,7 @@ pub fn svg_circle_path(diam: f64) -> Html {
 }
 
 #[throws(SE)]
-pub fn svg_rectangle_path(x: f64, y: f64) -> Html {
+pub fn svg_rectangle_path([x, y] : [f64;2]) -> Html {
   Html(format!("M {} {} h {} v {} h {} z",
                -x*0.5, -y*0.5, x, y, -x))
 }
@@ -183,7 +183,7 @@ impl PieceSpec for piece_specs::Square {
       [x, y] => (x,y),
       _ => throw!(SpecError::ImproperSizeSpec),
     };
-    let path = svg_rectangle_path(x as f64, y as f64)?;
+    let path = svg_rectangle_path([x as f64, y as f64])?;
     let itemname = self.itemname.clone()
       .unwrap_or_else(||"simple-square".to_string());
     SimpleShape::new_from_path(Html::lit("square"), path, (x+y+1)/2,

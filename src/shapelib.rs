@@ -90,7 +90,7 @@ pub enum LibraryLoadError{
   #[error("{:?}",&self)]
   ExpectedString(String),
   #[error("{:?}",&self)]
-  WrongNumberOfSizeDimensions { got: usize, expected: usize },
+  WrongNumberOfSizeDimensions { got: usize, expected: [usize;2] },
   #[error("{:?}",&self)]
   InheritMissingParent(String,String),
   #[error("{:?}",&self)]
@@ -418,7 +418,52 @@ impl CircleDefn {
     match group.d.size.as_slice() {
       &[c] => c,
       size => throw!(LLE::WrongNumberOfSizeDimensions
-                     { got: size.len(), expected : 1 }),
+                     { got: size.len(), expected : [1,1] }),
+    }
+  }
+}
+
+#[derive(Serialize,Deserialize,Debug)]
+struct Square { xy: [f64;2] }
+
+#[typetag::serde(name="Square")]
+impl Outline for Square {
+  #[throws(IE)]
+  fn surround_path(&self, _pri : &PieceRenderInstructions) -> Html {
+    let size : ArrayVec<_> =
+      self.xy.iter().map(|s| s * SELECT_SCALE)
+      .collect();
+    svg_rectangle_path(size.into_inner().unwrap())?
+  }
+  #[throws(IE)]
+  fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
+                      -> Option<Coord> {
+    let smallest : f64 = self.xy.iter().cloned()
+      .map(OrderedFloat::from).min().unwrap().into();
+    Some((smallest * 0.5) as Coord)
+  }
+}
+
+#[derive(Deserialize,Debug)]
+struct SquareDefn { }
+#[typetag::deserialize(name="Square")]
+impl OutlineDefn for SquareDefn {
+  #[throws(LibraryLoadError)]
+  fn check(&self, lgd: &GroupData) { Self::get(lgd)?; }
+  fn load(&self, lgd: &GroupData) -> Result<Box<dyn Outline>,IE> {
+    Ok(Box::new(
+      Self::get(lgd).map_err(|e| e.ought())?
+    ))
+  }
+}
+impl SquareDefn {
+  #[throws(LibraryLoadError)]
+  fn get(group: &GroupData) -> Square {
+    match group.d.size.as_slice() {
+      &[s] => Square { xy: [s,s] },
+      s if s.len() == 2 => Square { xy: s.try_into().unwrap() },
+      size => throw!(LLE::WrongNumberOfSizeDimensions
+                     { got: size.len(), expected : [1,2]}),
     }
   }
 }

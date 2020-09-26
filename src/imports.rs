@@ -90,6 +90,8 @@ pub use delegate::delegate;
 
 pub use itertools::Itertools;
 
+pub use ordered_float::OrderedFloat;
+
 pub use crate::global::*;
 pub use crate::gamestate::*;
 pub use crate::pieces::*;
