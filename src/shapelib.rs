@@ -159,7 +159,7 @@ impl Piece for Item {
     let face = &self.faces[pri.face];
     write!(&mut f.0,
            r##"<g transform="scale({}) translate({} {})">{}</g>"##,
-           face.scale, face.centre[0], face.centre[1],
+           face.scale, -face.centre[0], -face.centre[1],
            face.svg.0)?;
   }
   #[throws(IE)]

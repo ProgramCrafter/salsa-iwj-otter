@@ -17,13 +17,13 @@ size = [20]
 faces = ["blue", "grey"]
 
 [[pieces]]
-pos = [90,100]
+pos = [200,40]
 type = "Lib"
 lib = "wikimedia"
 item = "chess-w-B"
 
 [[pieces]]
-pos = [90,110]
+pos = [210,40]
 type = "Lib"
 lib = "wikimedia"
 item = "chess-b-N"
