@@ -182,6 +182,8 @@ impl ItemSpec {
     let svg_path = format!("{}/{}.usvg", lib.dirname, &self.item);
     let svg_data = fs::read_to_string(&svg_path)
       .map_err(|e| if e.kind() == ErrorKind::NotFound {
+        warn!("library item lib={} itme={} data file {:?} not found",
+              &self.lib, &self.item, &svg_path);
         SE::LibraryItemNotFound
       } else {
         let m = "error accessing/reading library item data file";
