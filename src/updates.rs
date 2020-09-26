@@ -368,7 +368,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
 impl<'r> Drop for PrepareUpdatesBuffer<'r> {
   fn drop(&mut self) {
-    if let Some(gen) = self.gen {
+    if ! (self.us.is_empty() && self.gen.is_none()) {
+      let gen = self.gen();
       let update = PreparedUpdate {
         when: Instant::now(),
         gen,
