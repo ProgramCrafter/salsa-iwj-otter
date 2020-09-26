@@ -101,7 +101,8 @@ outline = "Square"
 size = [448,326]
 centre = [224, 163]
 scale = 0.025
-category = "management"
+category = "management/library-load-marker"
+# xxx this is clumsy, we want to use [[files]]
 files = """
 library-load-marker	Box_with_polygons	a library load area marker
 """
