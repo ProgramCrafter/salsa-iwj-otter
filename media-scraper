@@ -12,6 +12,7 @@ use TOML::Parser;
 use Data::Dumper;
 use Time::HiRes;
 use Digest::MD5 qw(md5_hex);
+use File::Compare;
 
 our $max_rate = 2; # per second
 
@@ -200,5 +201,12 @@ END
 }
 
 close $makefile or die $!;
-rename "$licpath.tmp", $licpath or die $!;
+
+my $cmp = compare("$licpath.tmp", $licpath);
+die if $cmp < 0;
+if ($cmp) {
+  rename "$licpath.tmp", $licpath or die $!;
+} else {
+  remove "$licpath.tmp";
+}
 rename "$makepath.tmp", $makepath or die $!;
