@@ -1,0 +1,18 @@
+== {{int:filedesc}} ==
+{{Information
+|Description={{en| Dark queen on transparent square, default size 45x45}}
+|Source={{own}}
+|Date=2006-12-27
+|Author=[[:en:User:Cburnett]]
+|Permission=GFDL & BSD & GPL
+|other_versions={{DerivativeVersions|Chess gdt45.svg}}
+
+}}
+
+== {{int:license-header}} ==
+{{self|GFDL|migration=relicense|BSD|GPL}}
+
+
+[[Category:Black chess queen symbols]]
+[[Category:SVG chess pieces/Standard transparent]]
+[[Category:Unicode MiscSymb SVG| U+265B]]

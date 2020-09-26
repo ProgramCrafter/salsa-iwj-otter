@@ -23,12 +23,73 @@ category = "chess"
 item_prefix = "chess-"
 stem_prefix = "Chess_"
 files = """
+w-P	plt45	a white pawn
 w-B	blt45	a white bishop
+w-R	rlt45	a white rook
+w-K	klt45	the white king
+w-Q	qlt45	the white queen
+
+b-P	pdt45	a black pawn
+b-B	bdt45	a black bishop
+b-R	rdt45	a black rook
+b-K	kdt45	the black king
+b-Q	qdt45	the black queen
+
+g-P	pgt45	a green chess pawn
+g-B	bgt45	a green chess bishop
+g-R	rgt45	a green chess rook
+g-K	kgt45	a green chess king
+g-Q	qgt45	a green chess queen
+
+r-P	prt45	a red chess pawn
+r-B	brt45	a red chess bishop
+r-R	rrt45	a red chess rook
+r-K	krt45	a red chess king
+r-Q	qrt45	a red chess queen
+
+y-P	pyt45	a yellow chess pawn
+y-B	byt45	a yellow chess bishop
+y-R	ryt45	a yellow chess rook
+y-K	kyt45	a yellow chess king
+y-Q	qyt45	a yellow chess queen
+
+# next ones have some kind of licence problem? xxx
+# w-mann		Mlt45	a white Mann piece
+# b-mann		Mdt45	a black Mann piece
+# w-elephant	elt45	a white elephant piece
+# b-elephant	edt45	a black elephant piece
+# w-ship		slt45	a white ship piece
+# b-ship		sdt45	a black ship piece
+# g-ship		sgt45	a green ship piece
+# r-ship		srt45	a red ship piece
+# y-ship		syt45	a yellow ship piece
 """
 
 [group.chess-flip]
 inherit = "chess"
 flip = true
 files = """
+w-N	blt45	a white knight
 b-N	adt45	a black knight
+
+g-Q	qgt45	a green chess knight
+r-Q	qrt45	a red chess knight
+y-Q	qyt45	a yellow chess knight
+
+w-zebra		Zlt45	a white zebra piece
+b-zebra		Zdt45	a black zebra piece
+
+# Cet has some kind of licence problem? xxx
+# w-knight-king	Cet45	a white knight king piece
+# b-knight-king	Cdt45	a white knight king piece
+# ^ wikimedia calls these Centaurs
+"""
+
+[group.chess-anomalous-files]
+inherit = "chess"
+stem_prefix = ""
+files = """
+# next ones have some kind of licence problem? xxx
+# w-commoner	Commoner%20Transparent		a white commoner piece
+# b-commoner	CommonerB%20Transparent		a black commoner piece
 """

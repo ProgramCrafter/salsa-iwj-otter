@@ -1,0 +1,18 @@
+== {{int:filedesc}} ==
+{{Information
+|Description={{en| Dark king on transparent square, default size 64x64}}
+|Source={{own}} {{Created with Inkscape}}
+|Date=2006-12-27
+|Author=[[:en:User:Cburnett]]
+|Permission=GFDL & BSD & GPL
+|other_versions={{DerivativeVersions|Chess fdt45.svg|ChessCastlingMovie en.svg}}
+
+}}
+
+== {{int:license-header}} ==
+{{self|GFDL|migration=relicense|BSD|GPL}}
+
+
+[[Category:Black chess king symbols]]
+[[Category:SVG chess pieces/Standard transparent]]
+[[Category:Unicode MiscSymb SVG| U+265A]]
