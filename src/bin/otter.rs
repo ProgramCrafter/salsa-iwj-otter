@@ -307,7 +307,7 @@ impl ConnForGame {
     let insns = vec![ MgmtGameInstruction::ListPieces ];
     let mut responses = self.alter_game(insns, None)?;
     match responses.as_mut_slice() {
-      &mut [MgmtGameResponse::Pieces(ref mut pieces)] => {
+      [MgmtGameResponse::Pieces(pieces)] => {
         return mem::take(pieces)
       },
       wat => Err(anyhow!("ListPieces => {:?}", &wat))?,
