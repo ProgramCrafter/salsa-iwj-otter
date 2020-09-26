@@ -115,3 +115,9 @@ library/wikimedia/chess-w-zebra.usvg: library/wikimedia/chess-w-zebra.svg librar
 LIBRARY_FILES += library/wikimedia/chess-b-zebra.usvg
 library/wikimedia/chess-b-zebra.usvg: library/wikimedia/chess-b-zebra.svg library/wikimedia/LICENCE
 	$(LIBRARY_PROCESS_SVG)
+LIBRARY_FILES += library/wikimedia/chess-w-knight-king.usvg
+library/wikimedia/chess-w-knight-king.usvg: library/wikimedia/chess-w-knight-king.svg library/wikimedia/LICENCE
+	$(LIBRARY_PROCESS_SVG)
+LIBRARY_FILES += library/wikimedia/chess-b-knight-king.usvg
+library/wikimedia/chess-b-knight-king.usvg: library/wikimedia/chess-b-knight-king.svg library/wikimedia/LICENCE
+	$(LIBRARY_PROCESS_SVG)

@@ -7,7 +7,7 @@ method = "wikimedia"
 site-title = "Wikimedia"
 spdx = "CC-BY-SA-4.0"
 
-licences = [ "Cc-by-sa-3.0", "Cc-by-sa-3.0-migrated", "cc-by-sa-4.0", "GFDL|migration=relicense" ]
+licences = [ "Cc-by-sa-3.0", "Cc-by-sa-3.0-migrated", "cc-by-sa-4.0", "GFDL|migration=relicense", "cc-zero" ]
 filename_suffix = ".svg"
 url_prefix = "https://commons.wikimedia.org/wiki/File:"
 url_suffix = "?action=raw"
@@ -83,9 +83,8 @@ y-N	qyt45	a yellow chess knight
 w-zebra		Zlt45	a white zebra piece
 b-zebra		Zdt45	a black zebra piece
 
-# Cet has some kind of licence problem? xxx
-# w-knight-king	Cet45	a white knight king piece
-# b-knight-king	Cdt45	a white knight king piece
+w-knight-king	Cet45	a white knight king piece
+b-knight-king	Cdt45	a white knight king piece
 # ^ wikimedia calls these Centaurs
 """
 

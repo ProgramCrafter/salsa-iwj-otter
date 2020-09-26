@@ -1,0 +1,16 @@
+=={{int:filedesc}}==
+{{Information
+|description={{en|1=Symbol for an royal knight for chess articles.}}
+|date=2017-04-02
+|source={{own}}
+|author={{U|CheChe}}
+|permission=
+|other versions=
+|other fields={{Igen|U|+|s=}}
+}}
+
+=={{int:license-header}}==
+{{self|cc-zero}}
+
+[[Category:Chess variants with nonstandard pieces]]
+[[Category:Fairy chess]]
