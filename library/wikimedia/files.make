@@ -127,6 +127,6 @@ library/wikimedia/chess-w-knight-king.usvg: library/wikimedia/chess-w-knight-kin
 LIBRARY_FILES += library/wikimedia/chess-b-knight-king.usvg
 library/wikimedia/chess-b-knight-king.usvg: library/wikimedia/chess-b-knight-king.svg library/wikimedia/LICENCE
 	$(LIBRARY_PROCESS_SVG)
-LIBRARY_FILES += library/wikimedia/library-load-marker.usvg
-library/wikimedia/library-load-marker.usvg: library/wikimedia/library-load-marker.svg library/wikimedia/LICENCE
+LIBRARY_FILES += library/wikimedia/mgmt-library-load-marker.usvg
+library/wikimedia/mgmt-library-load-marker.usvg: library/wikimedia/mgmt-library-load-marker.svg library/wikimedia/LICENCE
 	$(LIBRARY_PROCESS_SVG)
