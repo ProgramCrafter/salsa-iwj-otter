@@ -7,7 +7,7 @@ method = "wikimedia"
 site-title = "Wikimedia"
 spdx = "CC-BY-SA-4.0"
 
-licences = [ "Cc-by-sa-3.0", "cc-by-sa-4.0", "GFDL|migration=relicense" ]
+licences = [ "Cc-by-sa-3.0", "Cc-by-sa-3.0-migrated", "cc-by-sa-4.0", "GFDL|migration=relicense" ]
 filename_suffix = ".svg"
 url_prefix = "https://commons.wikimedia.org/wiki/File:"
 url_suffix = "?action=raw"
