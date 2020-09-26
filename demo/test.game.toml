@@ -20,4 +20,10 @@ faces = ["blue", "grey"]
 pos = [90,100]
 type = "Lib"
 lib = "wikimedia"
-item = "chess-w-N"
+item = "chess-w-B"
+
+[[pieces]]
+pos = [90,110]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-b-N"
