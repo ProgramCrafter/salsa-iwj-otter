@@ -312,7 +312,7 @@ pub fn load1(l: &Explicit1) {
 }
 
 impl Config1 {
-  fn resolve(&self) -> Result<Box<dyn Iterator<Item=Explicit1>>, LibraryLoadError> {
+  fn resolve(&self) -> Result<Box<dyn ExactSizeIterator<Item=Explicit1>>, LibraryLoadError> {
     use Config1::*;
     Ok(match self {
       Explicit(e) => Box::new(iter::once(e.clone())),
@@ -361,9 +361,13 @@ impl Config1 {
 #[throws(LibraryLoadError)]
 pub fn load() {
   for l in &config().shapelibs {
-    for e in l.resolve()? {
+    let libs = l.resolve()?;
+    let n = libs.len();
+    for e in libs {
       load1(&e)?;
     }
+    info!("loaded {} shape libraries from {:?}", n, &l);
+          
   }
 }
 
@@ -422,7 +426,7 @@ impl TryFrom<String> for FileList {
       let item_spec = n()?;
       let _r_file_spec = n()?;
       let desc = Html(n()?);
-      assert!(!n().is_err());
+      assert!(n().is_err());
       o.push(FileData{ item_spec, r_file_spec: (), desc  });
     }
     Ok(FileList(o))
