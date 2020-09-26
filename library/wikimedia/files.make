@@ -73,6 +73,27 @@ library/wikimedia/chess-y-K.usvg: library/wikimedia/chess-y-K.svg library/wikime
 LIBRARY_FILES += library/wikimedia/chess-y-Q.usvg
 library/wikimedia/chess-y-Q.usvg: library/wikimedia/chess-y-Q.svg library/wikimedia/LICENCE
 	$(LIBRARY_PROCESS_SVG)
+LIBRARY_FILES += library/wikimedia/chess-w-mann.usvg
+library/wikimedia/chess-w-mann.usvg: library/wikimedia/chess-w-mann.svg library/wikimedia/LICENCE
+	$(LIBRARY_PROCESS_SVG)
+LIBRARY_FILES += library/wikimedia/chess-b-mann.usvg
+library/wikimedia/chess-b-mann.usvg: library/wikimedia/chess-b-mann.svg library/wikimedia/LICENCE
+	$(LIBRARY_PROCESS_SVG)
+LIBRARY_FILES += library/wikimedia/chess-w-elephant.usvg
+library/wikimedia/chess-w-elephant.usvg: library/wikimedia/chess-w-elephant.svg library/wikimedia/LICENCE
+	$(LIBRARY_PROCESS_SVG)
+LIBRARY_FILES += library/wikimedia/chess-b-elephant.usvg
+library/wikimedia/chess-b-elephant.usvg: library/wikimedia/chess-b-elephant.svg library/wikimedia/LICENCE
+	$(LIBRARY_PROCESS_SVG)
+LIBRARY_FILES += library/wikimedia/chess-g-ship.usvg
+library/wikimedia/chess-g-ship.usvg: library/wikimedia/chess-g-ship.svg library/wikimedia/LICENCE
+	$(LIBRARY_PROCESS_SVG)
+LIBRARY_FILES += library/wikimedia/chess-r-ship.usvg
+library/wikimedia/chess-r-ship.usvg: library/wikimedia/chess-r-ship.svg library/wikimedia/LICENCE
+	$(LIBRARY_PROCESS_SVG)
+LIBRARY_FILES += library/wikimedia/chess-y-ship.usvg
+library/wikimedia/chess-y-ship.usvg: library/wikimedia/chess-y-ship.svg library/wikimedia/LICENCE
+	$(LIBRARY_PROCESS_SVG)
 LIBRARY_FILES += library/wikimedia/chess-w-N.usvg
 library/wikimedia/chess-w-N.usvg: library/wikimedia/chess-w-N.svg library/wikimedia/LICENCE
 	$(LIBRARY_PROCESS_SVG)

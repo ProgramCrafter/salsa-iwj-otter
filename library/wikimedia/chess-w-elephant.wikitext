@@ -1,0 +1,22 @@
+{{Information
+|Description={{en| Inverted light bishop on transparent square, default size 45x45}}
+|Source=*[[:File:Chess_blt45.svg|Chess_blt45.svg]]
+|Date=2010-05-23 10:08 (UTC)
+|Author=*[[:File:Chess_blt45.svg|Chess_blt45.svg]]: [[:en:User:Cburnett]]
+*derivative work: [[User:NikNaks93|NikNaks93]] ([[User talk:NikNaks93|<span class="signature-talk">talk</span>]])
+|Permission=
+|other_versions=
+}}
+
+{{self|BSD|Cc-by-sa-3.0-migrated|GFDL|GPL}}
+
+== {{original upload log}} ==
+This image is a derivative work of the following images:
+
+*[[:File:Chess_blt45.svg]] licensed with BSD, Cc-by-sa-3.0-migrated, GFDL, GPL
+**2007-01-03T04:26:33Z [[User:Cburnett|Cburnett]] 45x45 (4554 Bytes) ''<nowiki>Updated piece</nowiki>''
+**2006-12-28T04:49:26Z [[User:Cburnett|Cburnett]] 45x45 (4258 Bytes) ''<nowiki>{{Information |Description='''en:''' Light bishop on transparent square, default size 45x45 |Source=Own work with Inkscape |Date=[[December 27]], [[2006]] |Author=[[:en:User:Cburnett]] |Permission=GFDL |other_versions= }} </nowiki>''
+
+{{Uploaded with derivativeFX}}
+
+[[Category:SVG chess pieces/Special design]]

@@ -53,16 +53,20 @@ y-R	ryt45	a yellow chess rook
 y-K	kyt45	a yellow chess king
 y-Q	qyt45	a yellow chess queen
 
-# next ones have some kind of licence problem? xxx
-# w-mann		Mlt45	a white Mann piece
-# b-mann		Mdt45	a black Mann piece
-# w-elephant	elt45	a white elephant piece
-# b-elephant	edt45	a black elephant piece
-# w-ship		slt45	a white ship piece
-# b-ship		sdt45	a black ship piece
-# g-ship		sgt45	a green ship piece
-# r-ship		srt45	a red ship piece
-# y-ship		syt45	a yellow ship piece
+w-mann		Mlt45	a white Mann piece
+b-mann		Mdt45	a black Mann piece
+w-elephant	elt45	a white elephant piece
+b-elephant	edt45	a black elephant piece
+
+#  Foolish people stole "s" for an upside-down knight, and as
+#  a result the white one is not available.  So I guess no
+#  black one either unless someone wants to edit it.
+# w-ship	Xslt45X	a white ship piece
+# b-ship	sdt45	a black ship piece
+
+g-ship		sgt45	a green ship piece
+r-ship		srt45	a red ship piece
+y-ship		syt45	a yellow ship piece
 """
 
 [group.chess-flip]

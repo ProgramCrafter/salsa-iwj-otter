@@ -1,0 +1,21 @@
+{{Information
+|Description=Red ship chess piece
+|Source=*[[:File:Chess_srg45.svg|Chess_srg45.svg]]
+|Date=2010-05-25 19:05 (UTC)
+|Author=*[[:File:Chess_srg45.svg|Chess_srg45.svg]]: [[User:Spinningspark|'''<font style="background:#FFF090;color:#00C000">Sp<font style="background:#FFF0A0;color:#80C000">in<font style="color:#C08000">ni</font></font><font style="color:#C00000">ng</font></font><font style="color:#2820F0">Spark</font>''']] real life identity: SHA-1 commitment ba62ca25da3fee2f8f36c101994f571c151abee7
+*derivative work: [[User:NikNaks93|NikNaks93]] ([[User talk:NikNaks93|<span class="signature-talk">talk</span>]])
+|Permission=
+|other_versions=
+}}
+
+{{self|Cc-by-sa-3.0}}
+
+== {{original upload log}} ==
+This image is a derivative work of the following images:
+
+*[[:File:Chess_srg45.svg]] licensed with Cc-by-sa-3.0
+**2009-06-03T11:14:03Z [[User:Spinningspark|Spinningspark]] 45x45 (6458 Bytes) ''<nowiki>== Summary == {{Information |Description={{en|1=Chess icon for use in chess diagram templates.   This piece is intended for uncheckered grid board style diagrams such as [[:en:chaturanga|chaturanga]]}} |Source=Self created us</nowiki>''
+
+{{Uploaded with derivativeFX}}
+
+[[Category:SVG chess pieces/Special design]]
