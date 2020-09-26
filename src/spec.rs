@@ -91,12 +91,14 @@ pub mod piece_specs {
 
   #[derive(Debug,Serialize,Deserialize)]
   pub struct Disc {
+    pub itemname: Option<String>,
     pub diam : Coord,
     pub faces : IndexVec<FaceId,ColourSpec>,
   }
 
   #[derive(Debug,Serialize,Deserialize)]
   pub struct Square {
+    pub itemname: Option<String>,
     pub size : Vec<Coord>,
     pub faces : IndexVec<FaceId,ColourSpec>,
   }

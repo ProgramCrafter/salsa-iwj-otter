@@ -103,6 +103,8 @@ pub trait Piece : Outline + Send + Debug {
                  -> ExecuteGameChangeUpdates { 
     ExecuteGameChangeUpdates{ pcs: vec![], log: vec![], raw: None }
   }
+
+  fn itemname(&self) -> &str;
 }
 
 #[derive(Debug,Copy,Clone)]

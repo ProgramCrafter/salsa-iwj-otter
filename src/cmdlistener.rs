@@ -163,8 +163,10 @@ fn execute_game_insn(cs: &CommandStream,
     Insn::ListPieces => readonly(ig, {
       let pieces = ig.gs.pieces.iter().map(|(piece,p)|{
         let &PieceState { pos, face, .. } = p;
-        let desc_html = ig.pieces.get(piece)?.describe_html(None);
-        Some(MgmtGamePieceInfo { piece, pos, face, desc_html })
+        let pinfo = ig.pieces.get(piece)?;
+        let desc_html = pinfo.describe_html(None);
+        let itemname = pinfo.itemname().to_string();
+        Some(MgmtGamePieceInfo { piece, pos, face, desc_html, itemname })
       }).flatten().collect();
       Resp::Pieces(pieces)
     }),

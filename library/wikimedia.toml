@@ -19,7 +19,6 @@ outline = "Circle"
 scale = 0.20
 size = [45]
 centre = [22.5, 22.5]
-category = "chess"
 item_prefix = "chess-"
 stem_prefix = "Chess_"
 files = """
@@ -101,8 +100,6 @@ outline = "Square"
 size = [448,326]
 centre = [224, 163]
 scale = 0.025
-category = "management/library-load-marker"
-# xxx this is clumsy, we want to use [[files]]
 files = """
-library-load-marker	Box_with_polygons	a library load area marker
+mgmt-library-load-marker   Box_with_polygons	a library load area marker
 """

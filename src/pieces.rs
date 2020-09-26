@@ -16,6 +16,7 @@ struct SimpleShape {
   scaled_path : Html,
   approx_dia : Coord,
   colours : ColourMap,
+  itemname: String,
 }
 
 pub const SELECT_SCALE : f64 = 1.1;
@@ -134,11 +135,14 @@ impl Piece for SimpleShape {
     self.colours.get(face).ok_or(SpecError::FaceNotFound)?;
     face
   }
+
+  fn itemname(&self) -> &str { &self.itemname }
 }
 
 impl SimpleShape {
   fn new_from_path(desc: Html, path: Html, approx_dia: Coord,
-                   faces: &IndexVec<FaceId,ColourSpec>)
+                   faces: &IndexVec<FaceId,ColourSpec>,
+                   itemname: String)
                    -> Result<Box<dyn Piece>,SpecError> {
     let scaled_path = svg_rescale_path(&path, SELECT_SCALE)?;
     let colours = faces
@@ -146,7 +150,7 @@ impl SimpleShape {
       .map(|s| s.try_into())
       .collect::<Result<_,SpecError>>()?;
     Ok(Box::new(SimpleShape {
-      scaled_path, desc, approx_dia, path, colours,
+      scaled_path, desc, approx_dia, path, colours, itemname
     }))
   }
 }
@@ -156,8 +160,10 @@ impl PieceSpec for piece_specs::Disc {
   #[throws(SpecError)]
   fn load(&self) -> Box<dyn Piece> {
     let path = svg_circle_path(self.diam as f64)?;
+    let itemname = self.itemname.clone()
+      .unwrap_or_else(||"simple-disc".to_string());
     SimpleShape::new_from_path(Html::lit("circle"), path, self.diam,
-                               &self.faces)?
+                               &self.faces, itemname)?
   }
 }
 
@@ -172,7 +178,9 @@ impl PieceSpec for piece_specs::Square {
     };
     let path = Html(format!("M {} {} h {} v {} h {} z",
                             -(x as f64)*0.5, -(y as f64)*0.5, x, y, -x));
+    let itemname = self.itemname.clone()
+      .unwrap_or_else(||"simple-square".to_string());
     SimpleShape::new_from_path(Html::lit("square"), path, (x+y+1)/2,
-                               &self.faces)?
+                               &self.faces, itemname)?
   }
 } 

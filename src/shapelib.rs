@@ -132,6 +132,7 @@ struct ItemFace {
 
 #[derive(Debug,Serialize,Deserialize)]
 struct Item {
+  itemname: String,
   faces: IndexVec<FaceId, ItemFace>,
   desc_hidden: DescId,
   descs: IndexVec<DescId, Html>,
@@ -171,6 +172,8 @@ impl Piece for Item {
       None => self.desc_hidden,
     }].clone()
   }
+
+  fn itemname(&self) -> &str { &self.itemname }
 }
 
 impl ItemSpec {
@@ -204,7 +207,8 @@ impl ItemSpec {
     let scale = idata.group.d.scale;
     let face = ItemFace { svg: Html(svg_data), desc, centre, scale };
     let faces = index_vec![ face ];
-    let it = Item { faces, descs, outline, desc_hidden };
+    let it = Item { faces, descs, outline, desc_hidden,
+                    itemname: self.item.clone() };
     Ok(Box::new(it))
   }
 }
