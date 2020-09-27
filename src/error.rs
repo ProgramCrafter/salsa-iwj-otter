@@ -22,6 +22,8 @@ pub enum OnlineError {
   PieceGone,
   #[error("improper piece hold status for op (maybe race)")]
   PieceHeld,
+  #[error("improper UI operation")]
+  BadOperation,
 }
 from_instance_lock_error!{OnlineError}
 

@@ -72,6 +72,9 @@ pub enum PieceUpdateOp<NS> {
   SetZLevel(ZLevel),
 }
 
+pub type PieceUpdateFromOp = (PieceUpdateOp<()>, Vec<LogEntry>);
+pub type PieceUpdateResult = Result<PieceUpdateFromOp, ApiPieceOpError>;
+
 // ---------- for traansmission ----------
 
 #[derive(Debug,Serialize)]

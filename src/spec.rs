@@ -27,9 +27,10 @@ pub type Pos = PosC<Coord>;
 #[serde(transparent)]
 pub struct RawToken (pub String);
 
+pub type RawFaceId = u8;
 define_index_type! {
   #[derive(Default)]
-  pub struct FaceId = u8;
+  pub struct FaceId = RawFaceId;
 }
 
 #[derive(Serialize,Deserialize)]

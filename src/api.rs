@@ -12,16 +12,17 @@ struct ApiPiece<O : ApiPieceOp> {
   cseq : ClientSequence,
   op : O,
 }
+
 trait ApiPieceOp : Debug {
   #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
         p: &dyn Piece,
         lens: &dyn Lens /* used for LogEntry and PieceId but not Pos */)
-        -> (PieceUpdateOp<()>, Vec<LogEntry>);
+        -> PieceUpdateFromOp;
 }
 
 #[derive(Error,Debug)]
-enum ApiPieceOpError {
+pub enum ApiPieceOpError {
   ReportViaResponse(#[from] OnlineError),
   ReportViaUpdate(#[from] PieceOpError),
   PartiallyProcessed(PieceOpError, Vec<LogEntry>),
@@ -77,7 +78,7 @@ impl<'r> Responder<'r> for OnlineError {
         => Status::NotFound,
       OnlineError::PieceHeld | OnlineError::PieceGone
         => Status::Conflict,
-      InvalidZCoord | BadJSON(_)
+      InvalidZCoord | BadOperation | BadJSON(_)
         => Status::BadRequest,
     };
     let mut resp = Responder::respond_to(msg,req).unwrap();
