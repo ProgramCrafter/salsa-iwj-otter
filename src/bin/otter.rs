@@ -778,7 +778,7 @@ mod library_add {
           self.top = self.cbot;
           self.clhs = self.lhs;
         };
-        self.cbot = min(self.cbot, h);
+        self.cbot = min(self.cbot, self.top - h);
         if self.cbot > self.bot { None? }
 
         let ttopleft = PosC([tlhs, self.top]);
