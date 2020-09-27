@@ -615,8 +615,8 @@ mod library_add {
 
     #[derive(Debug)]
     enum Situation {
-      Poor(Vec<Insn>),
-      Good(),
+      Poor(Vec<Insn>, &'static str),
+      Good([Pos; 2]),
     };
     use Situation::*;
 
@@ -634,16 +634,56 @@ mod library_add {
         face: None,
         info: Box::new(spec),
       };
-      Poor(vec![ Insn::AddPieces(spec) ])
+      Poor(vec![ Insn::AddPieces(spec) ],
+           "marker(s) created")
     } else if markers.len() > WANTED {
       let insns = markers[WANTED..].iter()
         .map(|p| Insn::DeletePiece(p.piece))
         .collect();
-      Poor(insns)
+      Poor(insns,
+           "surplus marker(s) removed")
     } else {
-      Good()
+      let good : ArrayVec<_> = markers.iter().map(|p| p.pos).collect();
+      Good(good.into_inner().unwrap())
     };
     dbg!(&situation);
+
+    #[derive(Debug)]
+    struct Placement {
+      top: Coord,
+      bot: Coord,
+      rhs: Coord,
+      lhs: Coord,
+      cline_upto: Coord,
+      cline_bottom: Coord,
+    };
+
+    let placement = match situation {
+      Poor(insns, msg) => {
+        if !args.adjust_markers() {
+          throw!(anyhow!("only {} markers, wanted {}",
+                         markers.len(), msg));
+        }
+        chan.alter_game(insns, None)?;
+        println!("updated game: {}\n\
+                  please adjust markers as desired and run again",
+                 msg);
+        return Ok(());
+      }
+      Good([a, b]) => {
+        // todo: take account of the space used by the markers themselves
+        let lhs = min(a[0], b[0]);
+        let rhs = max(a[0], b[0]);
+        let top = min(a[1], b[1]);
+        let bot = max(a[1], b[1]);
+        Placement {
+          lhs, rhs, top, bot,
+          cline_upto: lhs,
+          cline_bottom: top,
+        }
+      }
+    };
+    dbg!(&placement);
 
     Ok(())
   }
