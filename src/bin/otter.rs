@@ -768,12 +768,15 @@ mod library_add {
       fn place(&mut self, bbox: &[Pos;2]) -> Option<Pos> {
         let PosC([w,h]) = bbox[1] - bbox[0];
 
-        let (ncbot, tlhs) = loop {
+        let (ncbot, tlhs) = 'search : loop {
           let ncbot = max(self.cbot, self.top + h);
           if ncbot > self.bot { None? }
           let tlhs = self.clhs;
-          self.clhs += w;
-          if self.clhs <= self.rhs { break (ncbot, tlhs) }
+          'within_line: loop {
+            self.clhs += w;
+            if self.clhs > self.rhs { break 'within_line }
+            break 'search (ncbot, tlhs);
+          }
           // line is full
           self.top = self.cbot;
           self.clhs = self.lhs;
