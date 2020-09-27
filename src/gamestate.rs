@@ -25,7 +25,7 @@ visible_slotmap_key!{ VisiblePieceId('.') }
 #[serde(try_from="f64")]
 pub struct ZCoord(pub f64);
 
-#[derive(Clone,Serialize,Deserialize)]
+#[derive(Clone,Serialize,Deserialize,Eq,Ord,PartialEq,PartialOrd)]
 #[serde(transparent)]
 pub struct Html (pub String);
 

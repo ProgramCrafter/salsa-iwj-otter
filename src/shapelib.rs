@@ -141,7 +141,7 @@ struct Item {
   outline: Box<dyn Outline>,
 }
 
-#[derive(Debug,Clone,Serialize,Deserialize)]
+#[derive(Debug,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
 pub struct ItemEnquiryData {
   pub itemname: String,
   pub f0desc: Html,

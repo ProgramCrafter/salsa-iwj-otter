@@ -602,8 +602,15 @@ mod library_list {
     };
 
     let cmd = MgmtCommand::LibraryListByGlob { glob: args.pat.clone() };
-    let items = chan.cmd(&cmd)?;
-    dbg!(&items);
+    let mut items = match chan.cmd(&cmd)? {
+      MgmtResponse::LibraryItems(items) => items,
+      wat => Err(anyhow!("unexpected LibraryListByGlob response: {:?}",
+                         &wat))?,
+    };
+    items.sort();
+    for it in &items {
+      println!("{:20}  {}", it.itemname, it.f0desc.0);
+    }
 
     Ok(())
   }
