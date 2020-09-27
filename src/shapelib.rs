@@ -171,9 +171,6 @@ impl Piece for Item {
            face.scale[0], face.scale[1], -face.centre[0], -face.centre[1],
            svgd.0)?;
   }
-  #[throws(IE)]
-  fn svg_x_defs(&self, _f: &mut Html, _pri : &PieceRenderInstructions) {
-  }
   fn describe_html(&self, face : Option<FaceId>) -> Html {
     self.descs[ match face {
       Some(face) => self.faces[face].desc,

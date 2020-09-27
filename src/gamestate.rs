@@ -114,8 +114,6 @@ pub trait Piece : Outline + Send + Debug {
   // #[throws] doesn't work here for some reason
   fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) -> IR;
 
-  fn svg_x_defs(&self, f: &mut Html, pri : &PieceRenderInstructions) -> IR;
-
   fn describe_html(&self, face : Option<FaceId>) -> Html;
 
   fn delete_hook(&self, _p: &PieceState, _gs: &mut GameState)
@@ -254,7 +252,6 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
     write!(&mut defs.0,
            r##"<path id="surround{}" d="{}"/>"##,
            pri.id, self.surround_path(&pri)?.0)?;
-    self.svg_x_defs(&mut defs, &pri)?;
     defs
   }
 

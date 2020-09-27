@@ -126,9 +126,6 @@ impl Piece for SimpleShape {
            self.colours[pri.face].0,
            &self.path.0)?;
   }
-  #[throws(IE)]
-  fn svg_x_defs(&self, _f: &mut Html, _pri : &PieceRenderInstructions) {
-  }
   fn describe_html(&self, face : Option<FaceId>) -> Html {
     Html(if let Some(face) = face {
       format!("a {} {}", self.colours[face].0, self.desc.0)
