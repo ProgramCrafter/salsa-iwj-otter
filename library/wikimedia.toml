@@ -72,7 +72,7 @@ y-ship		syt45	a yellow ship piece
 inherit = "chess"
 flip = true
 files = """
-w-N	blt45	a white knight
+w-N	alt45	a white knight
 b-N	adt45	a black knight
 
 g-N	qgt45	a green chess knight
