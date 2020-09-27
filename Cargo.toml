@@ -65,6 +65,8 @@ uds = "0"
 pwd = "1"
 failure = "0.1.8" # for pwd
 
+rental = "0.5"
+
 fs2 = "0.4"
 nix = "0.18"
 
