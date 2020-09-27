@@ -222,7 +222,7 @@ impl Conn {
     self.chan.write(&cmd).context("send command")?;
     let resp = self.chan.read().context("read response")?;
     match &resp {
-      Fine | GamesList{..} => { },
+      Fine | GamesList{..} | LibraryItems(_) => { },
       AlterGame { error: None, .. } => { },
       Error { error } => {
         Err(error.clone()).context(

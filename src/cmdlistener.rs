@@ -109,8 +109,10 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       execute_for_game(cs, &mut g, insns, how)?
     },
 
-    LibraryListByGlob { glob: _pat } => {
-      panic!() //xxx
+    LibraryListByGlob { glob: spec } => {
+      let lib = shapelib::libs_lookup(&spec.lib)?;
+      let results = lib.list_glob(&spec.item)?;
+      LibraryItems(results)
     },
   }
 }

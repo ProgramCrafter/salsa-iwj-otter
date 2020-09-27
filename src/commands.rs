@@ -26,6 +26,7 @@ pub enum MgmtResponse {
   Error { error: MgmtError },
   AlterGame { error: Option<MgmtError>, responses: Vec<MgmtGameResponse> },
   GamesList(Vec<Arc<InstanceName>>),
+  LibraryItems(Vec<shapelib::ItemEnquiryData>),
 }
 
 #[derive(Debug,Serialize,Deserialize)]

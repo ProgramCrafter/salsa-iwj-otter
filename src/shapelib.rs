@@ -142,7 +142,7 @@ struct Item {
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
-struct ItemEnquiryResult {
+pub struct ItemEnquiryData {
   pub itemname: String,
   pub f0desc: Html,
   pub f0bbox: [Pos; 2],
@@ -239,7 +239,7 @@ impl Contents {
   }
 
   #[throws(MgmtError)]
-  fn list_glob(&self, pat: &str) -> Vec<ItemEnquiryResult> {
+  pub fn list_glob(&self, pat: &str) -> Vec<ItemEnquiryData> {
     let pat = glob::Pattern::new(pat).map_err(|pe| MgmtError::BadGlob {
       pat: pat.to_string(), msg: pe.msg.to_string() })?;
     let mut out = vec![];
@@ -251,7 +251,7 @@ impl Contents {
         Ok(r) => r,
       };
       let f0bbox = loaded.bbox_approx();
-      let ier = ItemEnquiryResult {
+      let ier = ItemEnquiryData {
         itemname: k.clone(),
         f0bbox,
         f0desc: loaded.describe_html(Some(Default::default())),
