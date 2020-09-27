@@ -15,6 +15,9 @@ pub enum MgmtCommand {
     name: String, insns: Vec<MgmtGameInstruction>,
     how: MgmtGameUpdateMode,
   },
+  LibraryListByGlob {
+    glob: shapelib::ItemSpec,
+  },
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -66,6 +69,7 @@ pub struct MgmtGamePieceInfo {
   pub pos: Pos,
   pub face: FaceId,
   pub desc_html: Html,
+  pub bbox: [Pos;2],
 }
 
 #[derive(Debug,Copy,Clone,Serialize,Deserialize)]
@@ -87,6 +91,7 @@ pub enum MgmtError {
   PieceNotFound,
   LimitExceeded,
   ServerFailure(String),
+  BadGlob { pat: String, msg: String },
   BadSpec(#[from] SpecError),
 }
 impl Display for MgmtError {

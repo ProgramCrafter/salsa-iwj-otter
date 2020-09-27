@@ -108,6 +108,10 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       let mut g = gref.lock()?;
       execute_for_game(cs, &mut g, insns, how)?
     },
+
+    LibraryListByGlob { glob: _pat } => {
+      panic!() //xxx
+    },
   }
 }
 
@@ -166,7 +170,8 @@ fn execute_game_insn(cs: &CommandStream,
         let pinfo = ig.pieces.get(piece)?;
         let desc_html = pinfo.describe_html(None);
         let itemname = pinfo.itemname().to_string();
-        Some(MgmtGamePieceInfo { piece, pos, face, desc_html, itemname })
+        let bbox = pinfo.bbox_approx();
+        Some(MgmtGamePieceInfo { piece, pos, face, desc_html, bbox, itemname })
       }).flatten().collect();
       Resp::Pieces(pieces)
     }),

@@ -142,8 +142,8 @@ struct Item {
 #[derive(Debug,Clone,Serialize,Deserialize)]
 struct ItemEnquiryResult {
   pub itemname: String,
-  pub bbbox: [Pos; 2],
   pub f0desc: Html,
+  pub f0bbox: [Pos; 2],
 }
 
 #[typetag::serde(name="Lib")]
@@ -189,14 +189,14 @@ impl ItemSpec {
   pub fn load(&self) -> Box<dyn Piece> {
     let libs = GLOBAL.shapelibs.read().unwrap(); 
     let lib = libs.get(&self.lib).ok_or(SE::LibraryNotFound)?;
-    lib.load1(&self.item)?
+    let idata = lib.items.get(&self.item).ok_or(SE::LibraryItemNotFound)?;
+    lib.load1(idata, &self.item)?
   }
 }
 
 impl Contents {
-  fn load1(&self, name: &str) -> Result<Box<dyn Piece>,SpecError> {
-    let idata = self.items.get(name).ok_or(SE::LibraryItemNotFound)?;
-
+  fn load1(&self, idata: &ItemData, name: &str)
+           -> Result<Box<dyn Piece>,SpecError> {
     let svg_path = format!("{}/{}.usvg", self.dirname, &name);
     let svg_data = fs::read_to_string(&svg_path)
       .map_err(|e| if e.kind() == ErrorKind::NotFound {
@@ -225,6 +225,29 @@ impl Contents {
     let it = Item { faces, descs, outline, desc_hidden,
                     itemname: name.to_string() };
     Ok(Box::new(it))
+  }
+
+  #[throws(MgmtError)]
+  fn list_glob(&self, pat: &str) -> Vec<ItemEnquiryResult> {
+    let pat = glob::Pattern::new(pat).map_err(|pe| MgmtError::BadGlob {
+      pat: pat.to_string(), msg: pe.msg.to_string() })?;
+    let mut out = vec![];
+    for (k,v) in &self.items {
+      if !pat.matches(&k) { continue }
+      let loaded = match self.load1(v, &k) {
+        Err(SpecError::LibraryItemNotFound) => continue,
+        e@ Err(_) => e?,
+        Ok(r) => r,
+      };
+      let f0bbox = loaded.bbox_approx();
+      let ier = ItemEnquiryResult {
+        itemname: k.clone(),
+        f0bbox,
+        f0desc: loaded.describe_html(Some(Default::default())),
+      };
+      out.push(ier);
+    }
+    out
   }
 }
 
