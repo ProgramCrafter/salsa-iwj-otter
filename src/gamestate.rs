@@ -88,10 +88,45 @@ pub trait Outline : Send + Debug {
   fn bbox_approx(&self) -> [Pos;2];
 }
 
+pub type UoKey = char;
+
+pub struct UoDescription {
+  pub def_key: UoKey,
+  pub opname: String,
+  pub desc: Html,
+}
+
+impl UoDescription {
+  pub fn new_flip() -> UoDescription { UoDescription {
+    def_key: 'f'.into(),
+    opname: "flip".to_string(),
+    desc: Html::lit("flip"),
+  } }
+}
+
+#[throws(ApiPieceOpError)]
+pub fn ui_operation_flip(gs: &mut GameState, player: PlayerId,
+                         piece: PieceId, lens: &dyn Lens,
+                         def_key: UoKey, nfaces: RawFaceId)
+                         -> PieceUpdateFromOp {
+  let pl = gs.players.byid(player)?;
+  let pc = gs.pieces.byid_mut(piece)?;
+  pc.face = (pc.face.into::<RawFaceId>() % nfaces).into();
+  (PieceUpdateOp::Modify(()), LogEntry { html: Html(format!(
+    "{} flipped {}",
+    &htmlescape::encode_minimal(&pl.nick),
+    pc.describe_pri(&lens.log_pri(piece, pc)).0))})
+}
+
 #[typetag::serde]
 pub trait Piece : Outline + Send + Debug {
   fn resolve_spec_face(&self, face : Option<FaceId>)
                        -> Result<FaceId,SpecError>;
+  fn ui_operations<'p>(&'p self) -> Result<Option<
+      Box<dyn ExactSizeIterator<Item=&UoDescription> +'p
+          >>, IE>;
+  fn ui_operation(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
+                  def_key: char, lens: &dyn Lens) -> PieceUpdateResult;
 
   // #[throws] doesn't work here for some reason
   fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) -> IR;

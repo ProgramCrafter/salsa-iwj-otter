@@ -143,6 +143,25 @@ impl Piece for SimpleShape {
     face
   }
 
+  #[throws(IE)]
+  fn ui_operations(&self) -> Box<dyn ExactSizeIterator<Item=&UoDescription>> {
+    if self.colours.len() > 1 {
+      Box::new(iter::once(UoDescription::new_flip()))
+    } else {
+      Box::new(iter::empty())
+    }
+  }
+
+  #[throws(ApiPieceOpError)]
+  fn ui_operation(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
+                  def_key: UoKey, lens: &dyn Lens) -> PieceUpdateFromOp {
+    if let Some(got) =
+      ui_operation_flip(gs,player,piece,def_key,lens,
+                        self.colours().into())? { return got }
+    throw!(OE::BadOperation)
+  }
+  
+
   fn itemname(&self) -> &str { &self.itemname }
 }
 
