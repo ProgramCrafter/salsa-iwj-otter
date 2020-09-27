@@ -151,8 +151,12 @@ my $method_fn = ${*::}{"method_$method"};
 
 my $methodlic_fn = ${*::}{"methodlic_$method"};
 my $licpath = "$basename/LICENCE";
-my $licfile = new IO::File "$licpath.tmp", '>' or die $!;
-print $licfile <<END, $methodlic_fn->($scraper), <<END or die $!;
+
+my $method_lictext = $methodlic_fn->($scraper);
+if (defined $method_lictext) {
+  my $licfile = new IO::File "$licpath.tmp", '>' or die $!;
+
+  print $licfile <<END, $method_lictext, <<END or die $!;
 SPDX-License-Identifier: ${ \ $scraper->('spdx') }
 (applies to the contents of this directory unless otherwise stated)
 
@@ -160,7 +164,8 @@ END
 
 The download was done by media-scraper, controlled by $input.
 END
-close $licfile or die $!;
+  close $licfile or die $!;
+}
 
 my $makepath = "$basename/files.make";
 my $makefile = new IO::File "$makepath.tmp", '>' or die $!;
@@ -203,11 +208,14 @@ END
 
 close $makefile or die $!;
 
-my $cmp = compare("$licpath.tmp", $licpath);
-die if $cmp < 0;
-if ($cmp) {
-  rename "$licpath.tmp", $licpath or die $!;
-} else {
-  remove "$licpath.tmp";
+if (defined($method_lictext)) {
+  my $cmp = compare("$licpath.tmp", $licpath);
+  die if $cmp < 0;
+  if ($cmp) {
+    rename "$licpath.tmp", $licpath or die $!;
+  } else {
+    remove "$licpath.tmp";
+  }
 }
+
 rename "$makepath.tmp", $makepath or die $!;
