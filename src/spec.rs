@@ -17,7 +17,11 @@ use crate::error::display_as_debug;
 
 pub type Coord = isize;
 
-pub type Pos = [Coord; 2];
+#[derive(Clone,Copy,Debug,Serialize,Deserialize,Hash)]
+#[derive(Eq,PartialEq,Ord,PartialOrd)]
+#[serde(transparent)]
+pub struct PosC<T> (pub [T; 2]);
+pub type Pos = PosC<Coord>;
 
 #[derive(Clone,Eq,PartialEq,Ord,PartialOrd,Hash,Serialize,Deserialize)]
 #[serde(transparent)]
@@ -103,6 +107,84 @@ pub mod piece_specs {
     pub faces : IndexVec<FaceId,ColourSpec>,
   }
 
+}
+
+//---------- Pos ----------
+
+pub mod pos_traits {
+  use std::ops::{Add,Sub,Mul,Neg,AddAssign,SubAssign};
+  use crate::imports::*;
+
+  impl<T:Add<T,Output=T>+Copy+Clone+Debug> Add<PosC<T>> for PosC<T> {
+    type Output = PosC<T>;
+    fn add(self, rhs: PosC<T>) -> PosC<T> {
+      PosC(
+        itertools::zip_eq(
+          self.0.iter().cloned(),
+          rhs .0.iter().cloned(),
+        ).map(|(a,b)| a + b)
+          .collect::<ArrayVec<_>>().into_inner().unwrap()
+      )
+    }
+  }
+
+  impl<T:Sub<T,Output=T>+Copy+Clone+Debug> Sub<PosC<T>> for PosC<T> {
+    type Output = PosC<T>;
+    fn sub(self, rhs: PosC<T>) -> PosC<T> {
+      PosC(
+        itertools::zip_eq(
+          self.0.iter().cloned(),
+          rhs .0.iter().cloned(),
+        ).map(|(a,b)| a - b)
+          .collect::<ArrayVec<_>>().into_inner().unwrap()
+      )
+    }
+  }
+
+  impl<T:Add<T,Output=T>+Copy+Clone+Debug> AddAssign<PosC<T>> for PosC<T> {
+    fn add_assign(&mut self, rhs: PosC<T>) {
+      *self = *self + rhs;
+    }
+  }
+
+  impl<T:Sub<T,Output=T>+Copy+Clone+Debug> SubAssign<PosC<T>> for PosC<T> {
+    fn sub_assign(&mut self, rhs: PosC<T>) {
+      *self = *self - rhs;
+    }
+  }
+
+  impl<T:Mul<T,Output=T>+Copy+Clone+Debug> Mul<T> for PosC<T> {
+    type Output = PosC<T>;
+    fn mul(self, rhs: T) -> PosC<T> {
+      PosC(
+        self.0.iter().cloned().map(|a| a * rhs)
+          .collect::<ArrayVec<_>>().into_inner().unwrap()
+      )
+    }
+  }
+
+  impl<T:Neg<Output=T>+Copy+Clone+Debug> Neg for PosC<T> {
+    type Output = Self;
+    fn neg(self) -> Self {
+      PosC(
+        self.0.iter().cloned().map(|a| -a)
+          .collect::<ArrayVec<_>>().into_inner().unwrap()
+      )
+    }
+  }
+
+  impl<T:Copy+Clone+Debug> PosC<T> {
+    pub fn map<U:Copy+Clone+Debug, F: FnMut(T) -> U>(self, f: F) -> PosC<U> {
+      PosC(
+        self.0.iter().cloned().map(f)
+          .collect::<ArrayVec<_>>().into_inner().unwrap()
+      )
+    }
+  }
+
+  impl PosC<Coord> {
+    pub fn promote(&self) -> PosC<f64> { self.map(|v| v as f64) }
+  }
 }
 
 //---------- Implementation ----------

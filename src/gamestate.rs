@@ -29,7 +29,7 @@ pub struct ZCoord(pub f64);
 #[serde(transparent)]
 pub struct Html (pub String);
 
-pub const DEFAULT_TABLE_SIZE : Pos = [ 400, 200 ];
+pub const DEFAULT_TABLE_SIZE : Pos = PosC([ 400, 200 ]);
 
 // ---------- general data types ----------
 
@@ -171,12 +171,12 @@ impl ClampTable for Pos {
   fn clamped(self, range: Pos) -> (Pos, bool) {
     let mut output = ArrayVec::new();
     let mut did = false;
-    for (npos, tdid) in self.iter().zip(range.iter())
+    for (npos, tdid) in self.0.iter().zip(range.0.iter())
       .map(|(&pos, &rng)| pos.clamped(rng)) {
       output.push(npos);
       did |= tdid;
     }
-    (output.into_inner().unwrap(), did)
+    (PosC(output.into_inner().unwrap()), did)
   }
 }
 

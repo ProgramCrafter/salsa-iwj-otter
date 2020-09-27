@@ -28,8 +28,8 @@ from_instance_lock_error!{MgmtError}
 const USERLIST : &str = "/etc/userlist";
 const CREATE_PIECES_MAX : u32 = 300;
 
-const DEFAULT_POS_START : Pos = [20,20];
-const DEFAULT_POS_DELTA : Pos = [5,5];
+const DEFAULT_POS_START : Pos = PosC([20,20]);
+const DEFAULT_POS_DELTA : Pos = PosC([5,5]);
 
 pub struct CommandListener {
   listener : UnixListener,
@@ -152,7 +152,7 @@ fn execute_game_insn(cs: &CommandStream,
       (U{ pcs: vec![],
           log: vec![ LogEntry {
             html: Html(format!("The table was resized to {}x{}",
-                               size[0], size[1])),
+                               size.0[0], size.0[1])),
           }],
           raw: Some(vec![ PreparedUpdateEntry::SetTableSize(size) ]) },
        Fine)
@@ -281,8 +281,7 @@ fn execute_game_insn(cs: &CommandStream,
         let piece = gs.pieces.as_mut(modperm).insert(pc);
         ig.pieces.as_mut(modperm).insert(piece, p);
         updates.push((piece, PieceUpdateOp::Insert(())));
-        pos[0] += posd[0];
-        pos[1] += posd[1];
+        pos += posd;
       }
 
       (U{ pcs: updates,

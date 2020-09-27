@@ -741,10 +741,10 @@ mod library_add {
       }
       Good([a, b]) => {
         // todo: take account of the space used by the markers themselves
-        let lhs = min(a[0], b[0]);
-        let rhs = max(a[0], b[0]);
-        let top = min(a[1], b[1]);
-        let bot = max(a[1], b[1]);
+        let lhs = min(a.0[0], b.0[0]);
+        let rhs = max(a.0[0], b.0[0]);
+        let top = min(a.0[1], b.0[1]);
+        let bot = max(a.0[1], b.0[1]);
         Placement {
           lhs, rhs, top, bot,
           cline_upto: lhs,

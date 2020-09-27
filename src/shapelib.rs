@@ -451,7 +451,7 @@ impl Outline for Circle {
   }
   fn bbox_approx(&self) -> [Pos;2] {
     let d = (self.diam * 0.5).ceil() as Coord;
-    [[-d,-d], [d, d]]
+    [PosC([-d,-d]), PosC([d, d])]
   }
 }
 
@@ -479,31 +479,27 @@ impl CircleDefn {
 }
 
 #[derive(Serialize,Deserialize,Debug)]
-pub struct Square { pub xy: [f64;2] }
+pub struct Square { pub xy: PosC<f64> }
 
 #[typetag::serde(name="Square")]
 impl Outline for Square {
   #[throws(IE)]
   fn surround_path(&self, _pri : &PieceRenderInstructions) -> Html {
-    let size : ArrayVec<_> =
-      self.xy.iter().map(|s| s * SELECT_SCALE)
-      .collect();
-    svg_rectangle_path(size.into_inner().unwrap())?
+    let size = self.xy * SELECT_SCALE;
+    svg_rectangle_path(size)?
   }
   #[throws(IE)]
   fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
                       -> Option<Coord> {
-    let smallest : f64 = self.xy.iter().cloned()
+    let smallest : f64 = self.xy.0.iter().cloned()
       .map(OrderedFloat::from).min().unwrap().into();
     Some((smallest * 0.5) as Coord)
   }
   fn bbox_approx(&self) -> [Pos;2] {
-    let pos : Pos = self.xy.iter().map(
+    let pos : Pos = (self.xy * 0.5).map(
       |v| ((v * 0.5).ceil()) as Coord
-    ).collect::<ArrayVec<_>>().into_inner().unwrap();
-    let neg : Pos = pos.iter().map(
-      |v| -v
-    ).collect::<ArrayVec<_>>().into_inner().unwrap();
+    );
+    let neg = -pos;
     [ neg, pos ]
   }
 }
@@ -523,12 +519,14 @@ impl OutlineDefn for SquareDefn {
 impl SquareDefn {
   #[throws(LibraryLoadError)]
   fn get(group: &GroupData) -> Square {
-    match group.d.size.as_slice() {
-      &[s] => Square { xy: [s,s] },
-      s if s.len() == 2 => Square { xy: s.try_into().unwrap() },
-      size => throw!(LLE::WrongNumberOfSizeDimensions
-                     { got: size.len(), expected : [1,2]}),
-    }
+    Square { xy: PosC(
+      match group.d.size.as_slice() {
+        &[s] => [s,s],
+        s if s.len() == 2 => s.try_into().unwrap(),
+        size => throw!(LLE::WrongNumberOfSizeDimensions
+                       { got: size.len(), expected : [1,2]}),
+      }
+    )}
   }
 }
 
