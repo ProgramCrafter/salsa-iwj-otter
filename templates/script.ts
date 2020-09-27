@@ -699,4 +699,6 @@ function loaded(xhr: XMLHttpRequest){
   startup();
 }
 
+// xxx scroll of log messages to bottom does not always work somehow
+
 doload();

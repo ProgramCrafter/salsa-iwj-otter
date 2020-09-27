@@ -778,7 +778,7 @@ mod library_add {
           self.top = self.cbot;
           self.clhs = self.lhs;
         };
-        self.cbot = min(self.cbot, self.top - h);
+        self.cbot = min(self.cbot, self.top + h);
         if self.cbot > self.bot { None? }
 
         let ttopleft = PosC([tlhs, self.top]);
@@ -794,6 +794,7 @@ mod library_add {
     let mut exitcode = 0;
     let mut insns = vec![];
     for (ix, it) in items.iter().enumerate() {
+      dbg!(&it.itemname);
       if let Some(already) = &already {
         if already.contains(&it.itemname) { continue }
       }
