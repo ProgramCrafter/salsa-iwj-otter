@@ -114,9 +114,9 @@ type TV = toml::Value;
 type SE = SpecError;
 
 #[derive(Debug,Serialize,Deserialize)]
-struct ItemSpec {
-  lib: String,
-  item: String,
+pub struct ItemSpec {
+  pub lib: String,
+  pub item: String,
 }
 
 define_index_type!{ pub struct DescId = u8; }

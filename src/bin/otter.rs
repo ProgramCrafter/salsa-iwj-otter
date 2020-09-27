@@ -572,17 +572,23 @@ mod library_add {
 
   #[derive(Default,Debug)]
   struct Args {
+    adjust_markers: Option<bool>,
     name: String,
     lib: String,
     pat: String,
   }
 
+  impl Args {
+    fn adjust_markers(&self) -> bool { self.adjust_markers.unwrap_or(true) }
+  }
+
   fn subargs(sa: &mut Args) -> ArgumentParser {
     use argparse::*;
     let mut ap = ArgumentParser::new();
-/*      .add_option(&["--no-add-markers"],StoreOption,
-                  "reset the players and access too");
-*/
+    ap.refer(&mut sa.adjust_markers)
+      .add_option(&["--no-adjust-markers"],StoreConst(Some(false)),
+                  "do not adjust the number of insertion markers, just fail")
+      .add_option(&["--adjust-markers"],StoreConst(Some(true)),"");
     ap.refer(&mut sa.name).required()
       .add_argument("TABLE-NAME",Store,"table name");
     ap.refer(&mut sa.lib).required()
@@ -593,6 +599,8 @@ mod library_add {
   }
 
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+    const MAGIC : &str = "mgmt-library-load-marker";
+
     let args = parse_args::<Args,_>(args, &subargs, None, None);
     let mut chan = ConnForGame {
       conn: connect(&ma)?,
@@ -600,9 +608,43 @@ mod library_add {
       how: MgmtGameUpdateMode::Online,
     };
     let markers = chan.get_pieces()?.into_iter().filter(
-      |p| p.itemname == "mgmt-library-load-marker"
+      |p| p.itemname == MAGIC
     ).collect::<Vec<_>>();
-    dbg!(&markers);
+
+    dbg!(&markers, &args);
+
+    #[derive(Debug)]
+    enum Situation {
+      Poor(Vec<Insn>),
+      Good(),
+    };
+    use Situation::*;
+
+    const WANTED : usize = 2;
+    let situation = if markers.len() < WANTED {
+      let to_add = WANTED - markers.len();
+      let spec = shapelib::ItemSpec {
+        lib: "wikimedia".to_string(), // todo: make an argument
+        item: MAGIC.to_string(),
+      };
+      let spec = PiecesSpec {
+        pos: None,
+        posd: None,
+        count: Some(to_add as u32),
+        face: None,
+        info: Box::new(spec),
+      };
+      Poor(vec![ Insn::AddPieces(spec) ])
+    } else if markers.len() > WANTED {
+      let insns = markers[WANTED..].iter()
+        .map(|p| Insn::DeletePiece(p.piece))
+        .collect();
+      Poor(insns)
+    } else {
+      Good()
+    };
+    dbg!(&situation);
+
     Ok(())
   }
 
