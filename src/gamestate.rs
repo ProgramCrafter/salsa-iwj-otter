@@ -47,7 +47,7 @@ pub struct GameState {
   pub pieces : Pieces,
   pub players : PlayerMap,
   pub gen : Generation,
-  pub log : Vec<(Generation,Arc<LogEntry>)>,
+  pub log : Vec<(Generation,Arc<LogEntry>)>, // xxx expiry
   pub max_z : ZCoord,
 }
 
