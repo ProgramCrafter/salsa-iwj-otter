@@ -35,6 +35,12 @@ pub struct CommandListener {
   listener : UnixListener,
 }
 
+struct Who;
+impl Display for Who {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) { write!(f, "The facilitator")? }
+}
+
 // ========== management API ==========
 
 // ---------- management command implementations
@@ -133,6 +139,7 @@ fn execute_game_insn(cs: &CommandStream,
   use MgmtGameResponse::*;
   type Insn = MgmtGameInstruction;
   type Resp = MgmtGameResponse;
+  let who = &cs.who;
   fn readonly(_ig: &InstanceGuard, resp: Resp) -> ExecuteGameInsnResults {
     (U{ pcs: vec![], log: vec![], raw: None }, resp)
   }
@@ -156,7 +163,7 @@ fn execute_game_insn(cs: &CommandStream,
         Err(ME::AlreadyExists)?;
       }
       let logentry = LogEntry {
-        html: Html(format!("The facilitator added a player: {}",
+        html: Html(format!("{} added a player: {}", &who,
                       htmlescape::encode_minimal(&pl.nick))),
       };
       let (player, logentry) = ig.player_new(pl, logentry)?;
@@ -182,7 +189,7 @@ fn execute_game_insn(cs: &CommandStream,
       let old_state = ig.player_remove(player)?;
       (U{ pcs: vec![],
           log: old_state.iter().map(|pl| LogEntry {
-            html: Html(format!("The facilitator removed a player: {}",
+            html: Html(format!("{} removed a player: {}", &who,
                           htmlescape::encode_minimal(&pl.nick))),
           }).collect(),
           raw: None},
@@ -280,8 +287,7 @@ fn execute_game_insn(cs: &CommandStream,
 
       (U{ pcs: updates,
           log: vec![ LogEntry {
-            html: Html(format!("The facilitator added {} pieces",
-                               count)),
+            html: Html(format!("{} added {} pieces", &who, count)),
           }],
           raw: None },
        Fine)
@@ -374,7 +380,7 @@ impl UpdateHandler {
   }
 
   #[throws(SVGProcessingError)]
-  fn complete(self, _cs: &CommandStream, g: &mut InstanceGuard) {
+  fn complete(self, cs: &CommandStream, g: &mut InstanceGuard) {
     use UpdateHandler::*;
     match self {
       Bulk(bulk) => {
@@ -386,7 +392,7 @@ impl UpdateHandler {
 
         if bulk.logs {
           buf.log_updates(vec![LogEntry {
-            html: Html::lit("The facilitator (re)configured the game")
+            html: Html(format!("{} (re)configured the game", &cs.who))
           }]);
         }
 
@@ -406,6 +412,7 @@ struct CommandStream<'d> {
   desc : &'d str,
   scope : Option<ManagementScope>,
   chan : MgmtChannel,
+  who: Who,
 }
 
 impl CommandStream<'_> {
@@ -494,6 +501,7 @@ impl CommandListener {
         let cs = CommandStream {
           scope: None, desc: &desc,
           chan, euid: euid.map(Uid::from_raw),
+          who: Who,
         };
         cs.mainloop()?;
         
