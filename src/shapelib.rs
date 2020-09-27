@@ -13,6 +13,7 @@ pub use crate::imports::*;
 
 #[derive(Debug)]
 pub struct Contents {
+  libname: String,
   dirname: String,
   items: HashMap<String /* item (name) */, ItemData>,
 }
@@ -179,13 +180,18 @@ impl ItemSpec {
   fn load(&self) -> Result<Box<dyn Piece>,SpecError> {
     let libs = GLOBAL.shapelibs.read().unwrap(); 
     let lib = libs.get(&self.lib).ok_or(SE::LibraryNotFound)?;
-    let idata = lib.items.get(&self.item).ok_or(SE::LibraryItemNotFound)?;
+    lib.load1(&self.item)?;
+  }
 
-    let svg_path = format!("{}/{}.usvg", lib.dirname, &self.item);
+impl Contents {
+  fn load1(&self, name: &str) -> Result<Box<dyn Piece>,SpecError> {
+    let idata = lib.items.get(name).ok_or(SE::LibraryItemNotFound)?;
+
+    let svg_path = format!("{}/{}.usvg", lib.dirname, &name);
     let svg_data = fs::read_to_string(&svg_path)
       .map_err(|e| if e.kind() == ErrorKind::NotFound {
         warn!("library item lib={} itme={} data file {:?} not found",
-              &self.lib, &self.item, &svg_path);
+              &self.libname, &name, &svg_path);
         SE::LibraryItemNotFound
       } else {
         let m = "error accessing/reading library item data file";
@@ -207,7 +213,7 @@ impl ItemSpec {
     let face = ItemFace { svg: Html(svg_data), desc, centre, scale };
     let faces = index_vec![ face ];
     let it = Item { faces, descs, outline, desc_hidden,
-                    itemname: self.item.clone() };
+                    itemname: name.clone() };
     Ok(Box::new(it))
   }
 }
