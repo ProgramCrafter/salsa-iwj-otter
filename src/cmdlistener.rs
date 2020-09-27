@@ -280,7 +280,7 @@ fn execute_game_insn(cs: &CommandStream,
 
       (U{ pcs: updates,
           log: vec![ LogEntry {
-            html: Html(format!("The facilitaror added {} pieces",
+            html: Html(format!("The facilitator added {} pieces",
                                count)),
           }],
           raw: None },
