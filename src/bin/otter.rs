@@ -765,20 +765,53 @@ mod library_add {
 
     impl Placement {
       /// If returns None, has already maybe tried to take some space
-      fn place(&mut self, bbox: &[Pos;2]) -> Option<Pos> {
+      fn place(&mut self, bbox: &[Pos;2], pieces: &Vec<MgmtGamePieceInfo>)
+               -> Option<Pos> {
         let PosC([w,h]) = bbox[1] - bbox[0];
 
+        let mut did_newline = false;
         let (ncbot, tlhs) = 'search : loop {
           let ncbot = max(self.cbot, self.top + h);
           if ncbot > self.bot { None? }
-          let tlhs = self.clhs;
+          let mut any_clash_bot = None;
+
           'within_line: loop {
+            let tlhs = self.clhs;
             self.clhs += w;
             if self.clhs > self.rhs { break 'within_line }
+
+            if let Some((nclhs, clash_bot)) = pieces.iter()
+              .filter_map(|p| {
+                let tl = p.pos + p.bbox[0];
+                let br = p.pos + p.bbox[1];
+                if
+                  tl.0[0] >= self.clhs ||
+                  tl.0[1] >= ncbot     ||
+                  br.0[0] <= tlhs      ||
+                  br.0[1] <= self.top
+                {
+                  None
+                } else {
+                  eprintln!(
+                    "at {:?} tlhs={} ncbot={} avoiding {} tl={:?} br={:?}",
+                    &self, tlhs, ncbot,
+                    &p.itemname, &tl, &br);
+                  Some((br.0[0], br.0[1]))
+                }
+              }).next() {
+                self.clhs = nclhs;
+                any_clash_bot = Some(clash_bot);
+                continue 'within_line;
+              }
+            
             break 'search (ncbot, tlhs);
           }
           // line is full
           self.top = self.cbot;
+          if did_newline {
+            self.top = any_clash_bot?; // if not, will never fit
+          }
+          did_newline = true;
           self.clhs = self.lhs;
           // if we are simply too wide, we'll just loop until off the bottom
         };
@@ -796,11 +829,11 @@ mod library_add {
     let mut exitcode = 0;
     let mut insns = vec![];
     for (ix, it) in items.iter().enumerate() {
-      dbg!(&it.itemname);
+      eprintln!("item {}  {:?}", &it.itemname, &it.f0bbox);
       if let Some(already) = &already {
         if already.contains(&it.itemname) { continue }
       }
-      let pos = match placement.place(&items[0].f0bbox) {
+      let pos = match placement.place(&items[0].f0bbox, &pieces) {
         Some(pos) => pos,
         None => {
           let m = format!("out of space after {} at {}",
