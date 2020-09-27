@@ -108,8 +108,7 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
 
   match (||{
     let p = g_pieces.get(piece).ok_or(OnlineError::PieceGone)?;
-    let pc = gs.pieces.byid_mut(piece)
-      .map_err(|()| OnlineError::PieceGone)?;
+    let pc = gs.pieces.byid_mut(piece)?;
 
     let q_gen = form.gen;
     let u_gen =
@@ -166,8 +165,8 @@ impl ApiPieceOp for ApiPieceGrab {
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
         p: &dyn Piece, lens: &dyn Lens)
         -> (PieceUpdateOp<()>, Vec<LogEntry>) {
-    let pl = gs.players.byid(player).unwrap();
-    let pc = gs.pieces.byid_mut(piece).unwrap();
+    let pl = gs.players.byid(player)?;
+    let pc = gs.pieces.byid_mut(piece)?;
 
     if pc.held.is_some() { throw!(OnlineError::PieceHeld) }
     pc.held = Some(player);

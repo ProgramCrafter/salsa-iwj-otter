@@ -136,8 +136,8 @@ impl<T> IdForById for T where T : AccessId {
 }
 
 impl IdForById for PieceId {
-  type Error = ();
-  const ERROR : () = ();
+  type Error = OE;
+  const ERROR : OE = OE::PieceGone;
 }
 
 #[macro_export]
