@@ -134,8 +134,6 @@ sub method_wikimedia ($$$) {
     my $data_url = cfg_affixes $scraper, 'data_url', $hash_prefix.$rfilename;
     run_curl $datalog, $ldest, $data_url;
     close $datalog or die $!;
-    return <<END;
-END
   };
 }
 
