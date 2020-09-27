@@ -178,7 +178,7 @@ pub struct Global {
   config  : RwLock<Arc<ServerConfig>>,
   dirty   : Mutex<VecDeque<InstanceRef>>,
   save_area_lock : Mutex<Option<File>>,
-  pub shapelibs : RwLock<HashMap<String,shapelib::Contents>>,
+  pub shapelibs : RwLock<shapelib::Registry>,
 }
 
 #[derive(Debug)]

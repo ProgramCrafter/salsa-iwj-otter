@@ -11,6 +11,8 @@ pub use crate::imports::*;
 //  Item           } once loaded and part of a game,
 //  Outline        }  no Arc's as we serialise/deserialize during save/load
 
+pub type Registry = HashMap<String,shapelib::Contents>;
+
 #[derive(Debug)]
 pub struct Contents {
   libname: String,
@@ -184,11 +186,20 @@ impl Piece for Item {
   fn itemname(&self) -> &str { &self.itemname }
 }
 
+use rental::common::RentRef;
+
+#[throws(SpecError)]
+pub fn libs_lookup(libname: &str) -> RentRef<RwLockReadGuard<'static, Registry>, Contents> {
+  let libs = GLOBAL.shapelibs.read().unwrap();
+  RentRef::try_new(libs,|libs|Ok({
+    libs.get(libname).ok_or(SE::LibraryNotFound)?
+  })).map_err::<SpecError,_>(|e:rental::RentalError<_,_>|e.0)?
+}
+
 impl ItemSpec {
   #[throws(SpecError)]
   pub fn load(&self) -> Box<dyn Piece> {
-    let libs = GLOBAL.shapelibs.read().unwrap(); 
-    let lib = libs.get(&self.lib).ok_or(SE::LibraryNotFound)?;
+    let lib = libs_lookup(&self.lib)?;
     let idata = lib.items.get(&self.item).ok_or(SE::LibraryItemNotFound)?;
     lib.load1(idata, &self.item)?
   }

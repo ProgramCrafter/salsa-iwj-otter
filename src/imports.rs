@@ -10,7 +10,7 @@ pub use std::fmt::Formatter;
 pub use std::fmt::{self,Display,Debug};
 pub use std::thread;
 pub use std::time::Duration;
-pub use std::sync::{Arc,Mutex,MutexGuard,RwLock,Condvar};
+pub use std::sync::{Arc,Mutex,MutexGuard,RwLock,RwLockReadGuard,Condvar};
 pub use std::collections::{HashMap,hash_map,HashSet};
 pub use std::borrow::Borrow;
 pub use std::convert::{TryFrom,TryInto};
