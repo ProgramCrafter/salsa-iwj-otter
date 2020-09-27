@@ -21,7 +21,7 @@ struct SessionRenderContext {
 struct SessionPieceContext {
   id: VisiblePieceId,
   pos: Pos,
-  info: String,
+  info: String, // SessionPieceLoadJson as JSON
 }
 
 #[derive(Serialize,Debug)]
@@ -29,6 +29,7 @@ struct SessionPieceLoadJson<'r> {
   held : &'r Option<PlayerId>,
   z : ZCoord,
   zg : Generation,
+  uos: &'r [UoDescription],
 }
 
 #[derive(Serialize,Debug)]
@@ -104,6 +105,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
         held : &pr.held,
         z  : pr.zlevel.z,
         zg : pr.zlevel.zg,
+        uos : &p.ui_operations()?,
       };
 
       let for_piece = SessionPieceContext {
