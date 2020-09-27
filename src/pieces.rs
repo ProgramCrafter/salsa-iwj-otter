@@ -113,6 +113,7 @@ impl Outline for SimpleShape {
                        -> Result<Html,IE>;
       fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
                           -> Result<Option<Coord>,IE>;
+      fn bbox_approx(&self) -> [Pos;2];
     }
   }
 }

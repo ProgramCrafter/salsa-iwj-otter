@@ -139,11 +139,19 @@ struct Item {
   outline: Box<dyn Outline>,
 }
 
+#[derive(Debug,Clone,Serialize,Deserialize)]
+struct ItemEnquiryResult {
+  pub itemname: String,
+  pub bbbox: [Pos; 2],
+  pub f0desc: Html,
+}
+
 #[typetag::serde(name="Lib")]
 impl Outline for Item { delegate! { to self.outline {
   fn surround_path(&self, pri : &PieceRenderInstructions) -> Result<Html, IE>;
   fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
                       -> Result<Option<Coord>, IE>;
+  fn bbox_approx(&self) -> [Pos; 2];
 }}}
 
 #[typetag::serde(name="Lib")]
@@ -407,6 +415,10 @@ impl Outline for Circle {
                       -> Option<Coord> {
     Some((self.diam * 0.5) as Coord)
   }
+  fn bbox_approx(&self) -> [Pos;2] {
+    let d = (self.diam * 0.5).ceil() as Coord;
+    [[-d,-d], [d, d]]
+  }
 }
 
 #[derive(Deserialize,Debug)]
@@ -450,6 +462,15 @@ impl Outline for Square {
     let smallest : f64 = self.xy.iter().cloned()
       .map(OrderedFloat::from).min().unwrap().into();
     Some((smallest * 0.5) as Coord)
+  }
+  fn bbox_approx(&self) -> [Pos;2] {
+    let pos : Pos = self.xy.iter().map(
+      |v| ((v * 0.5).ceil()) as Coord
+    ).collect::<ArrayVec<_>>().into_inner().unwrap();
+    let neg : Pos = pos.iter().map(
+      |v| -v
+    ).collect::<ArrayVec<_>>().into_inner().unwrap();
+    [ neg, pos ]
   }
 }
 

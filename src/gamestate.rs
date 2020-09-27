@@ -85,6 +85,7 @@ pub trait Outline : Send + Debug {
   fn surround_path(&self, pri : &PieceRenderInstructions) -> Result<Html, IE>;
   fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
                       -> Result<Option<Coord>, IE>;
+  fn bbox_approx(&self) -> [Pos;2];
 }
 
 #[typetag::serde]
