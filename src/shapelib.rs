@@ -540,15 +540,17 @@ impl TryFrom<String> for FileList {
     for (lno,l) in s.lines().enumerate() {
       let l = l.trim();
       if l=="" || l.starts_with("#") { continue }
-      let mut words = l.splitn(3, |c:char| c.is_ascii_whitespace());
+      let mut remain = &*l;
       let mut n = ||{
-        words.next().ok_or(LLE::FilesListLineMissingWhitespace(lno))
-          .map(|s| s.to_owned())
+        let ws = remain.find(char::is_whitespace)
+          .ok_or(LLE::FilesListLineMissingWhitespace(lno))?;
+        let (l, r) = remain.split_at(ws);
+        remain = r.trim_start();
+        Ok::<_,LLE>(l.to_owned())
       };
       let item_spec = n()?;
       let _r_file_spec = n()?;
-      let desc = Html(n()?);
-      assert!(n().is_err());
+      let desc = Html(remain.to_owned());
       o.push(FileData{ item_spec, r_file_spec: (), desc  });
     }
     Ok(FileList(o))
