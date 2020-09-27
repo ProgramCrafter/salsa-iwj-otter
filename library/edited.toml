@@ -1,0 +1,14 @@
+# Copyright 2020 Ian Jackson
+# SPDX-License-Identifier: AGPL-3.0-or-later OR CC-BY-SA-3.0
+# There is NO WARRANTY.
+
+[scraper]
+method = "none"
+
+[group.chess-board]
+size = [242, 246]
+centre = [121, 123]
+scale = 1.0
+files = """
+chess-board	Chess_board_blank	the chessboard
+"""
