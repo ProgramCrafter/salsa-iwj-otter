@@ -68,7 +68,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         scoped_name : name,
       };
 
-      let gref = Instance::new(name, gs, Default::default())?;
+      let gref = Instance::new(name, gs)?;
       let mut ig = gref.lock()?;
 
       execute_for_game(cs, &mut ig, insns, MgmtGameUpdateMode::Bulk)
@@ -223,7 +223,9 @@ fn execute_game_insn(cs: &CommandStream,
     }
 
     DeletePiece(piece) => {
-      let p = ig.pieces.remove(piece).ok_or(ME::PieceNotFound)?;
+      let modperm = ig.modify_pieces();
+      let p = ig.pieces.as_mut(modperm)
+        .remove(piece).ok_or(ME::PieceNotFound)?;
       let gs = &mut ig.gs;
       let pc = gs.pieces.remove(piece);
       let desc_html = p.describe_html(Some(Default::default()));
@@ -238,6 +240,7 @@ fn execute_game_insn(cs: &CommandStream,
     },
 
     AddPieces(PiecesSpec{ pos,posd,count,face,info }) => {
+      let modperm = ig.modify_pieces();
       let ig = &mut **ig;
       let gs = &mut ig.gs;
       let count = count.unwrap_or(1);
@@ -262,7 +265,7 @@ fn execute_game_insn(cs: &CommandStream,
           throw!(SpecError::PosOffTable);
         }
         let piece = gs.pieces.insert(pc);
-        ig.pieces.insert(piece, p);
+        ig.pieces.as_mut(modperm).insert(piece, p);
         updates.push((piece, PieceUpdateOp::Insert(())));
         pos[0] += posd[0];
         pos[1] += posd[1];

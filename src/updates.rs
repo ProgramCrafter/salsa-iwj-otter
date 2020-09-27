@@ -300,9 +300,9 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
     let (update, piece) = match (
       gs.pieces.byid_mut(piece),
-      self.g.pieces.byid(piece),
+      self.g.pieces.get(piece),
     ) {
-      (Ok(pc), Ok(p)) => {
+      (Ok(pc), Some(p)) => {
         gs.max_z.update_max(pc.zlevel.z);
 
         if self.by_client != pc.lastclient {

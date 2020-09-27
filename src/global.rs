@@ -20,8 +20,6 @@ const GAME_SAVE_LAG : Duration = Duration::from_millis(500);
 #[repr(transparent)]
 pub struct RawTokenVal(str);
 
-pub type PiecesLoaded = SecondarySlotMap<PieceId,Box<dyn Piece>>;
-
 // ---------- public data structure ----------
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -43,6 +41,13 @@ pub struct Instance {
   pub tokens_players : TokenRegistry<PlayerId>,
   pub tokens_clients : TokenRegistry<ClientId>,
 }
+
+#[derive(Debug,Serialize,Deserialize)]
+#[serde(transparent)]
+pub struct PiecesLoaded (ActualPiecesLoaded);
+pub type ActualPiecesLoaded = SecondarySlotMap<PieceId,Box<dyn Piece>>;
+#[derive(Copy,Clone,Debug)]
+pub struct ModifyingPieces(());
 
 #[derive(Debug,Clone,Deserialize,Serialize)]
 #[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
@@ -174,6 +179,7 @@ pub struct Global {
 pub struct InstanceContainer {
   live : bool,
   game_dirty : bool,
+  access_dirty : bool,
   g : Instance,
 }
 
@@ -238,13 +244,14 @@ impl Instance {
   /// Returns `None` if a game with this name already exists
   #[allow(clippy::new_ret_no_self)]
   #[throws(MgmtError)]
-  pub fn new(name: InstanceName, gs: GameState, pieces: PiecesLoaded)
+  pub fn new(name: InstanceName, gs: GameState)
              -> InstanceRef {
     let name = Arc::new(name);
 
     let g = Instance {
       name : name.clone(),
-      gs, pieces,
+      gs,
+      pieces : PiecesLoaded(Default::default()),
       clients : Default::default(),
       updates : Default::default(),
       tokens_players : Default::default(),
@@ -254,6 +261,7 @@ impl Instance {
     let cont = InstanceContainer {
       live : true,
       game_dirty : false,
+      access_dirty : false,
       g,
     };
 
@@ -530,6 +538,17 @@ impl InstanceGuard<'_> {
     out
   }
 
+  pub fn modify_pieces(&mut self) -> ModifyingPieces {
+    self.save_game_and_access_later();
+    // want this to be borrowed from self, so that we tie it properly
+    // to the same game.  But in practice we don't expect to write
+    // bugs where we get different games mixed up.  Borrowing self
+    // from the caller's pov is troublesome beczuse ultimately the
+    // caller will need to manipulate various fields of Instance (so
+    // we mustn't have a borrow of it).
+    ModifyingPieces(())
+  }
+
   fn token_register<Id:AccessId>(
     &mut self,
     token: RawToken,
@@ -554,6 +573,7 @@ impl InstanceGuard<'_> {
       !remove
     });
   }
+
 }
 
 // ---------- save/load ----------
@@ -636,6 +656,9 @@ impl InstanceGuard<'_> {
 
   #[throws(InternalError)]
   pub fn save_game_now(&mut self) {
+    if self.c.access_dirty {
+      self.save_access_now()?;
+    }
     self.save_something("g-", |s,w| {
       rmp_serde::encode::write_named(w, &s.c.g.gs)
     })?;
@@ -660,6 +683,7 @@ impl InstanceGuard<'_> {
       let isa = InstanceSaveAccesses { pieces, tokens_players };
       rmp_serde::encode::write_named(w, &isa)
     })?;
+    self.c.access_dirty = false;
     info!("saved accesses for {:?}", &self.name);
   }
 
@@ -688,7 +712,7 @@ impl InstanceGuard<'_> {
         })().context(lockfile).context("lock global save area")?);
       }
     }
-    let InstanceSaveAccesses::<String,PiecesLoaded>
+    let InstanceSaveAccesses::<String,ActualPiecesLoaded>
     { mut tokens_players, mut pieces } = Self::load_something(&name, "a-")
       .or_else(|e| {
         if let InternalError::Anyhow(ae) = &e {
@@ -723,7 +747,8 @@ impl InstanceGuard<'_> {
     );
 
     let g = Instance {
-      gs, pieces, updates,
+      gs, updates,
+      pieces: PiecesLoaded(pieces),
       name: name.clone(),
       clients : Default::default(),
       tokens_clients : Default::default(),
@@ -732,6 +757,7 @@ impl InstanceGuard<'_> {
     let cont = InstanceContainer {
       live: true,
       game_dirty: false,
+      access_dirty: false,
       g,
     };
     let gref = InstanceRef(Arc::new(Mutex::new(cont)));
@@ -870,6 +896,18 @@ pub fn record_token<Id : AccessId> (
   token
 }
 
+// ========== instance pieces data access ==========
+
+impl PiecesLoaded {
+  pub fn get(&self, piece: PieceId) -> Option<&Box<dyn Piece>> {
+    self.0.get(piece)
+  }
+
+  pub fn as_mut(&mut self, _: ModifyingPieces) -> &mut ActualPiecesLoaded {
+    &mut self.0
+  }
+}
+
 // ========== background maintenance ==========
 
 // ---------- delayed game save ----------
@@ -879,6 +917,12 @@ impl InstanceGuard<'_> {
     if self.c.game_dirty { return }
     GLOBAL.dirty.lock().unwrap().push_back(self.gref.clone());
     self.c.game_dirty = true;
+  }
+
+  pub fn save_game_and_access_later(&mut self) {
+    if self.c.access_dirty { return }
+    self.save_game_later();
+    self.c.access_dirty = true;
   }
 }
 
