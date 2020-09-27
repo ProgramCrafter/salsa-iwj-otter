@@ -580,29 +580,41 @@ mod reset_game {
 
 //---------- library-list ----------
 
+#[derive(Debug)]
+struct TableLibGlobArgs {
+  name: String,
+  pat: shapelib::ItemSpec,
+}
+
+impl Default for TableLibGlobArgs { fn default() -> Self { Self {
+  name: default(),
+  pat: shapelib::ItemSpec { lib: default(), item: default() },
+} } }
+
+impl TableLibGlobArgs {
+  fn add_arguments<'ap, 'tlg : 'ap>(
+    &'tlg mut self,
+    ap: &'_ mut ArgumentParser<'ap>
+  ) {
+    use argparse::*;
+    ap.refer(&mut self.name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
+    ap.refer(&mut self.pat.lib).required()
+      .add_argument("LIB-NAME",Store,"library name");
+    ap.refer(&mut self.pat.item).required()
+      .add_argument("ITEM-GLOB-PATTERN",Store,"item glob pattern");
+  }
+}
+
 mod library_list {
   use super::*;
 
-  #[derive(Debug)]
-  struct Args {
-    name: String,
-    pat: shapelib::ItemSpec,
-  }
-
-  impl Default for Args { fn default() -> Args { Args {
-    name: default(),
-    pat: shapelib::ItemSpec { lib: default(), item: default() },
-  } } }
+  type Args = TableLibGlobArgs;
 
   fn subargs(sa: &mut Args) -> ArgumentParser {
     use argparse::*;
     let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
-    ap.refer(&mut sa.pat.lib).required()
-      .add_argument("LIB-NAME",Store,"library name");
-    ap.refer(&mut sa.pat.item).required()
-      .add_argument("ITEM-GLOB-PATTERN",Store,"item glob pattern");
+    sa.add_arguments(&mut ap);
     ap
   }
 
@@ -636,10 +648,8 @@ mod library_add {
 
   #[derive(Default,Debug)]
   struct Args {
+    tlg: TableLibGlobArgs,
     adjust_markers: Option<bool>,
-    name: String,
-    lib: String,
-    pat: String,
   }
 
   impl Args {
@@ -653,12 +663,7 @@ mod library_add {
       .add_option(&["--no-adjust-markers"],StoreConst(Some(false)),
                   "do not adjust the number of insertion markers, just fail")
       .add_option(&["--adjust-markers"],StoreConst(Some(true)),"");
-    ap.refer(&mut sa.name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
-    ap.refer(&mut sa.lib).required()
-      .add_argument("LIB-NAME",Store,"library name");
-    ap.refer(&mut sa.pat).required()
-      .add_argument("ITEM-GLOB-PATTERN",Store,"item glob pattern");
+    sa.tlg.add_arguments(&mut ap);
     ap
   }
 
@@ -668,7 +673,7 @@ mod library_add {
     let args = parse_args::<Args,_>(args, &subargs, None, None);
     let mut chan = ConnForGame {
       conn: connect(&ma)?,
-      name: args.name.clone(),
+      name: args.tlg.name.clone(),
       how: MgmtGameUpdateMode::Online,
     };
     let markers = chan.get_pieces()?.into_iter().filter(
@@ -748,6 +753,9 @@ mod library_add {
       }
     };
     dbg!(&placement);
+
+    let items = chan.list_items(&args.tlg.pat);
+    dbg!(&items);
 
     Ok(())
   }
