@@ -694,7 +694,7 @@ mod library_add {
       None
     };
 
-    dbg!(&markers, &args, &already);
+    if ma.verbose > 2 { dbg!(&markers, &args, &already); }
 
     #[derive(Debug)]
     enum Situation {
@@ -729,7 +729,7 @@ mod library_add {
       let good : ArrayVec<_> = markers.iter().map(|p| p.pos).collect();
       Good(good.into_inner().unwrap())
     };
-    dbg!(&situation);
+    if ma.verbose > 2 { dbg!(&situation); }
 
     #[derive(Debug)]
     struct Placement {
@@ -744,8 +744,8 @@ mod library_add {
                          markers.len(), msg));
         }
         chan.alter_game(insns, None)?;
-        println!("updated game: {}\n\
-                  please adjust markers as desired and run again",
+        eprintln!("updated game: {}\n\
+                   please adjust markers as desired and run again",
                  msg);
         return Ok(());
       }
@@ -761,11 +761,12 @@ mod library_add {
         }
       }
     };
-    dbg!(&placement);
+    if ma.verbose > 3 { dbg!(&placement); }
 
     impl Placement {
       /// If returns None, has already maybe tried to take some space
-      fn place(&mut self, bbox: &[Pos;2], pieces: &Vec<MgmtGamePieceInfo>)
+      fn place(&mut self, bbox: &[Pos;2],
+               pieces: &Vec<MgmtGamePieceInfo>, ma: &MainOpts)
                -> Option<Pos> {
         let PosC([w,h]) = bbox[1] - bbox[0];
 
@@ -792,10 +793,11 @@ mod library_add {
                 {
                   None
                 } else {
-                  eprintln!(
+                  if ma.verbose > 2 { eprintln!(
                     "at {:?} tlhs={} ncbot={} avoiding {} tl={:?} br={:?}",
                     &self, tlhs, ncbot,
-                    &p.itemname, &tl, &br);
+                    &p.itemname, &tl, &br
+                  )}
                   Some((br.0[0], br.0[1]))
                 }
               }).next() {
@@ -819,7 +821,7 @@ mod library_add {
         let ttopleft = PosC([tlhs, self.top]);
         let tnominal = ttopleft - bbox[0];
 
-        dbg!(&self, &tnominal);
+        if ma.verbose > 3 { dbg!(&self, &tnominal); }
         Some(tnominal)
       }
     }
@@ -829,11 +831,13 @@ mod library_add {
     let mut exitcode = 0;
     let mut insns = vec![];
     for (ix, it) in items.iter().enumerate() {
-      eprintln!("item {}  {:?}", &it.itemname, &it.f0bbox);
+      if ma.verbose > 2 { eprintln!(
+        "item {}  {:?}", &it.itemname, &it.f0bbox
+      )};
       if let Some(already) = &already {
         if already.contains(&it.itemname) { continue }
       }
-      let pos = match placement.place(&items[0].f0bbox, &pieces) {
+      let pos = match placement.place(&items[0].f0bbox, &pieces, &ma) {
         Some(pos) => pos,
         None => {
           let m = format!("out of space after {} at {}",
