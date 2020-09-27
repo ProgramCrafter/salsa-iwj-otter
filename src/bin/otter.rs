@@ -768,19 +768,18 @@ mod library_add {
       fn place(&mut self, bbox: &[Pos;2]) -> Option<Pos> {
         let PosC([w,h]) = bbox[1] - bbox[0];
 
-        let mut limit = 0..2;
-        let tlhs = loop {
-          limit.next()?; // item just too wide, maybe
+        let (ncbot, tlhs) = loop {
+          let ncbot = max(self.cbot, self.top + h);
+          if ncbot > self.bot { None? }
           let tlhs = self.clhs;
           self.clhs += w;
-          if self.clhs <= self.rhs { break tlhs }
+          if self.clhs <= self.rhs { break (ncbot, tlhs) }
           // line is full
           self.top = self.cbot;
           self.clhs = self.lhs;
+          // if we are simply too wide, we'll just loop until off the bottom
         };
-        self.cbot = max(self.cbot, self.top + h);
-        if self.cbot > self.bot { None? }
-
+        self.cbot = ncbot;
         let ttopleft = PosC([tlhs, self.top]);
         let tnominal = ttopleft - bbox[0];
 
