@@ -13,6 +13,7 @@ default: debug
 CARGO ?= cargo
 CARGO_TARGET_DIR ?= target
 USVG ?= usvg
+USVG_OPTIONS = "--sans-serif-family=DejaVu Sans"
 
 ifneq (,$(wildcard(../Cargo.nail)))
 NAILING_CARGO = nailing-cargo
@@ -37,7 +38,7 @@ endif
 include $(wildcard library/*/files.make)
 
 USVG_PROCESSOR = usvg-processor
-LIBRARY_PROCESS_SVG = ./$(USVG_PROCESSOR) $@ $(wordlist 1,2,$^) '$(USVG)'
+LIBRARY_PROCESS_SVG = ./$(USVG_PROCESSOR) $@ $(wordlist 1,2,$^) '$(USVG) $(USVG_OPTIONS)'
 $(LIBRARY_FILES): $(USVG_PROCESSOR) Makefile
 
 assets: templates/script.js libraries
