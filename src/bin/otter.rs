@@ -565,6 +565,56 @@ mod reset_game {
   )}
 }
 
+//---------- library-list ----------
+
+mod library_list {
+  use super::*;
+
+  #[derive(Debug)]
+  struct Args {
+    name: String,
+    pat: shapelib::ItemSpec,
+  }
+
+  impl Default for Args { fn default() -> Args { Args {
+    name: default(),
+    pat: shapelib::ItemSpec { lib: default(), item: default() },
+  } } }
+
+  fn subargs(sa: &mut Args) -> ArgumentParser {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
+    ap.refer(&mut sa.pat.lib).required()
+      .add_argument("LIB-NAME",Store,"library name");
+    ap.refer(&mut sa.pat.item).required()
+      .add_argument("ITEM-GLOB-PATTERN",Store,"item glob pattern");
+    ap
+  }
+
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+    let args = parse_args::<Args,_>(args, &subargs, None, None);
+    let mut chan = ConnForGame {
+      conn: connect(&ma)?,
+      name: args.name.clone(),
+      how: MgmtGameUpdateMode::Bulk,
+    };
+
+    let cmd = MgmtCommand::LibraryListByGlob { glob: args.pat.clone() };
+    let items = chan.cmd(&cmd)?;
+    dbg!(&items);
+
+    Ok(())
+  }
+
+  inventory::submit!{Subcommand(
+    "library-list",
+    "List pieces in the shape libraries",
+    call,
+  )}
+}
+
 //---------- library-sdd ----------
 
 mod library_add {

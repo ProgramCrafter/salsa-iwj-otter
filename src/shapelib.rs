@@ -116,7 +116,7 @@ type LLE = LibraryLoadError;
 type TV = toml::Value;
 type SE = SpecError;
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct ItemSpec {
   pub lib: String,
   pub item: String,

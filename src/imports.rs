@@ -114,6 +114,8 @@ pub use crate::shapelib;
 
 pub use nix::unistd::Uid;
 
+pub fn default<T:Default>() -> T { Default::default() }
+
 pub type E = anyhow::Error;
 pub type AE = anyhow::Error;
 
