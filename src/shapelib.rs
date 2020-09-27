@@ -123,13 +123,14 @@ pub struct ItemSpec {
 }
 
 define_index_type!{ pub struct DescId = u8; }
+define_index_type!{ pub struct SvgId = u8; }
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Copy,Clone,Debug,Serialize,Deserialize)]
 struct ItemFace {
-  svg: Html,
+  svg: SvgId,
   desc: DescId,
   centre: [f64; 2],
-  scale: f64,
+  scale: [f64; 2],
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -137,6 +138,7 @@ struct Item {
   itemname: String,
   faces: IndexVec<FaceId, ItemFace>,
   desc_hidden: DescId,
+  svgs: IndexVec<SvgId, Html>,
   descs: IndexVec<DescId, Html>,
   outline: Box<dyn Outline>,
 }
@@ -163,10 +165,11 @@ impl Piece for Item {
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) {
     let face = &self.faces[pri.face];
+    let svgd = &self.svgs[face.svg];
     write!(&mut f.0,
-           r##"<g transform="scale({}) translate({} {})">{}</g>"##,
-           face.scale, -face.centre[0], -face.centre[1],
-           face.svg.0)?;
+           r##"<g transform="scale({} {}) translate({} {})">{}</g>"##,
+           face.scale[0], face.scale[1], -face.centre[0], -face.centre[1],
+           svgd.0)?;
   }
   #[throws(IE)]
   fn svg_x_defs(&self, _f: &mut Html, _pri : &PieceRenderInstructions) {
@@ -221,16 +224,26 @@ impl Contents {
       .map_err(|e| SE::InternalError(format!("rechecking outline: {}",&e)))?;
     let outline = idata.group.d.outline.load(&idata.group)?;
 
-    // xxx do something with flip
+    let mut svgs = IndexVec::with_capacity(1);
+    let svg = svgs.push(Html(svg_data));
 
     let mut descs = index_vec![ ];
     let desc = descs.push(idata.d.desc.clone());
     let desc_hidden = desc; // todo
+    descs.shrink_to_fit();
+
     let centre = idata.group.d.centre;
     let scale = idata.group.d.scale;
-    let face = ItemFace { svg: Html(svg_data), desc, centre, scale };
-    let faces = index_vec![ face ];
-    let it = Item { faces, descs, outline, desc_hidden,
+
+    let mut face = ItemFace { svg, desc, centre, scale: [scale,scale] };
+    let mut faces = index_vec![ face ];
+    if idata.group.d.flip {
+      face.scale[0] *= -1.;
+      faces.push(face);
+    }
+    faces.shrink_to_fit();
+
+    let it = Item { faces, descs, svgs, outline, desc_hidden,
                     itemname: name.to_string() };
     Ok(Box::new(it))
   }
