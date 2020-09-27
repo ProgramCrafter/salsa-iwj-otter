@@ -158,12 +158,7 @@ impl Outline for Item { delegate! { to self.outline {
 
 #[typetag::serde(name="Lib")]
 impl Piece for Item {
-  #[throws(SpecError)]
-  fn resolve_spec_face(&self, face: Option<FaceId>) -> FaceId {
-    let face = face.unwrap_or_default();
-    self.faces.get(face).ok_or(SpecError::FaceNotFound)?;
-    face
-  }
+  fn nfaces(&self) -> RawFaceId { self.faces.len().try_into().unwrap() }
 
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) {

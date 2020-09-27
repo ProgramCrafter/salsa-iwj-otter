@@ -265,11 +265,59 @@ impl ApiPieceOp for ApiPieceMove {
   }
 }
 
+const DEFKEY_FLIP : UoKey = 'f';
+
+#[derive(Debug,Serialize,Deserialize)]
+struct ApiPieceUo (UoKey);
+#[post("/_/api/k", format="json", data="<form>")]
+#[throws(OE)]
+fn api_uo(form : Json<ApiPiece<ApiPieceUo>>) -> impl response::Responder<'static> {
+  api_piece_op(form)
+}
+impl ApiPieceOp for ApiPieceUo {
+  #[throws(ApiPieceOpError)]
+  fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
+        p: &dyn Piece, lens: &dyn Lens)
+        -> (PieceUpdateOp<()>, Vec<LogEntry>) {
+    let def_key = self.0;
+
+    '_normal_global_ops__not_loop: loop {
+      let pc = gs.pieces.byid_mut(piece)?;
+      let pl = gs.players.byid(player)?;
+      let _: Impossible = match def_key {
+
+        DEFKEY_FLIP => {
+          let nfaces = p.nfaces();
+          pc.face = (RawFaceId::from(pc.face) % nfaces).into();
+          return (PieceUpdateOp::Modify(()),
+                  vec![ LogEntry { html: Html(format!(
+                    "{} flipped {}",
+                    &htmlescape::encode_minimal(&pl.nick),
+                    p.describe_pri(&lens.log_pri(piece, pc)).0
+                  )) }])
+        },
+
+        _ => break,
+      };
+    }
+
+    '_abnormal_global_ops__notloop: loop {
+      let _: Impossible = match def_key {
+
+        _ => break,
+      };
+    }
+
+    p.ui_operation(gs, player, piece, def_key, lens)?
+  }
+}
+
 pub fn mount(rocket_instance: Rocket) -> Rocket {
   rocket_instance.mount("/", routes![
     api_grab,
     api_ungrab,
     api_raise,
     api_move,
+    api_uo,
   ])
 }

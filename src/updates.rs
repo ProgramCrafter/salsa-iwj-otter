@@ -59,6 +59,7 @@ pub struct PreparedPieceState {
   pub held : Option<PlayerId>,
   pub z : ZCoord,
   pub zg : Generation,
+  pub uos: Vec<UoDescription>,
 }
 
 // ---------- piece updates ----------

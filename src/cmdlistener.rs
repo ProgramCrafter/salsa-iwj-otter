@@ -265,7 +265,10 @@ fn execute_game_insn(cs: &CommandStream,
       let mut pos = pos.unwrap_or(DEFAULT_POS_START);
       for i in 0..count {
         let p = info.load()?;
-        let face = p.resolve_spec_face(face)?;
+        let face = face.unwrap_or_default();
+        if p.nfaces() <= face.into() {
+          throw!(SpecError::FaceNotFound);
+        }
         let z = ZCoord(gs.max_z.0 + (i + 1) as f64);
         let pc = PieceState {
           held: None,

@@ -90,43 +90,26 @@ pub trait Outline : Send + Debug {
 
 pub type UoKey = char;
 
+#[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct UoDescription {
   pub def_key: UoKey,
   pub opname: String,
   pub desc: Html,
 }
 
-impl UoDescription {
-  pub fn new_flip() -> UoDescription { UoDescription {
-    def_key: 'f'.into(),
-    opname: "flip".to_string(),
-    desc: Html::lit("flip"),
-  } }
-}
-
-#[throws(ApiPieceOpError)]
-pub fn ui_operation_flip(gs: &mut GameState, player: PlayerId,
-                         piece: PieceId, lens: &dyn Lens,
-                         def_key: UoKey, nfaces: RawFaceId)
-                         -> PieceUpdateFromOp {
-  let pl = gs.players.byid(player)?;
-  let pc = gs.pieces.byid_mut(piece)?;
-  pc.face = (pc.face.into::<RawFaceId>() % nfaces).into();
-  (PieceUpdateOp::Modify(()), LogEntry { html: Html(format!(
-    "{} flipped {}",
-    &htmlescape::encode_minimal(&pl.nick),
-    pc.describe_pri(&lens.log_pri(piece, pc)).0))})
-}
-
 #[typetag::serde]
 pub trait Piece : Outline + Send + Debug {
-  fn resolve_spec_face(&self, face : Option<FaceId>)
-                       -> Result<FaceId,SpecError>;
-  fn ui_operations<'p>(&'p self) -> Result<Option<
-      Box<dyn ExactSizeIterator<Item=&UoDescription> +'p
-          >>, IE>;
-  fn ui_operation(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
-                  def_key: char, lens: &dyn Lens) -> PieceUpdateResult;
+  fn nfaces(&self) -> RawFaceId;
+
+  #[throws(InternalError)]
+  fn add_ui_operations(&self, _upd: &mut Vec<UoDescription>) { }
+
+  fn ui_operation(&self,
+                  _gs: &mut GameState, _player: PlayerId, _piece: PieceId,
+                  _def_key: char, _lens: &dyn Lens)
+                  -> PieceUpdateResult {
+    throw!(OE::BadOperation)
+  }
 
   // #[throws] doesn't work here for some reason
   fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) -> IR;
@@ -243,6 +226,7 @@ impl PieceState {
       svg        : p.make_defs(pri)?,
       z          : self.zlevel.z,
       zg         : self.zlevel.zg,
+      uos        : p.ui_operations()?,
     }
   }
 }
@@ -250,6 +234,7 @@ impl PieceState {
 pub trait PieceExt {
   fn make_defs(&self, pri : &PieceRenderInstructions) -> Result<Html,IE>;
   fn describe_pri(&self, pri : &PieceRenderInstructions) -> Html;
+  fn ui_operations(&self) -> Result<Vec<UoDescription>, IE>;
 }
 
 impl<T> PieceExt for T where T: Piece + ?Sized {
@@ -275,6 +260,20 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
 
   fn describe_pri(&self, pri : &PieceRenderInstructions) -> Html {
     self.describe_html(Some(pri.face))
+  }
+
+  #[throws(InternalError)]
+  fn ui_operations(&self) -> Vec<UoDescription> {
+    let mut out = vec![];
+    if self.nfaces() > 1 {
+      out.push(UoDescription {
+        def_key: 'f'.into(),
+        opname: "flip".to_string(),
+        desc: Html::lit("flip"),
+      })
+    }
+    self.add_ui_operations(&mut out)?;
+    out
   }
 }
 

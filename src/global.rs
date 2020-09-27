@@ -1051,7 +1051,6 @@ pub fn client_expire_old_clients() {
   }
   for gref in expire.drain(..) {
     struct Now(HashSet<ClientId>);
-    enum Impossible { }
     impl ClientIterator for Now {
       type Ret = Impossible;
       fn old(&mut self, client: ClientId)

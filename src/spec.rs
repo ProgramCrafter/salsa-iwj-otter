@@ -31,6 +31,7 @@ pub type RawFaceId = u8;
 define_index_type! {
   #[derive(Default)]
   pub struct FaceId = RawFaceId;
+  IMPL_RAW_CONVERSIONS = true;
 }
 
 #[derive(Serialize,Deserialize)]
