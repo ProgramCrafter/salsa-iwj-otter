@@ -177,17 +177,19 @@ impl Piece for Item {
 }
 
 impl ItemSpec {
-  fn load(&self) -> Result<Box<dyn Piece>,SpecError> {
+  #[throws(SpecError)]
+  fn load(&self) -> Box<dyn Piece> {
     let libs = GLOBAL.shapelibs.read().unwrap(); 
     let lib = libs.get(&self.lib).ok_or(SE::LibraryNotFound)?;
-    lib.load1(&self.item)?;
+    lib.load1(&self.item)?
   }
+}
 
 impl Contents {
   fn load1(&self, name: &str) -> Result<Box<dyn Piece>,SpecError> {
-    let idata = lib.items.get(name).ok_or(SE::LibraryItemNotFound)?;
+    let idata = self.items.get(name).ok_or(SE::LibraryItemNotFound)?;
 
-    let svg_path = format!("{}/{}.usvg", lib.dirname, &name);
+    let svg_path = format!("{}/{}.usvg", self.dirname, &name);
     let svg_data = fs::read_to_string(&svg_path)
       .map_err(|e| if e.kind() == ErrorKind::NotFound {
         warn!("library item lib={} itme={} data file {:?} not found",
@@ -213,7 +215,7 @@ impl Contents {
     let face = ItemFace { svg: Html(svg_data), desc, centre, scale };
     let faces = index_vec![ face ];
     let it = Item { faces, descs, outline, desc_hidden,
-                    itemname: name.clone() };
+                    itemname: name.to_string() };
     Ok(Box::new(it))
   }
 }
@@ -262,6 +264,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
   f.read_to_string(&mut s).map_err(ioe)?;
   let toplevel : toml::Value = s.parse()?;
   let mut l = Contents {
+    libname: libname.to_string(),
     items: HashMap::new(),
     dirname: dirname.to_string(),
   };
