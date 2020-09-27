@@ -178,7 +178,7 @@ impl Piece for Item {
 
 impl ItemSpec {
   #[throws(SpecError)]
-  fn load(&self) -> Box<dyn Piece> {
+  pub fn load(&self) -> Box<dyn Piece> {
     let libs = GLOBAL.shapelibs.read().unwrap(); 
     let lib = libs.get(&self.lib).ok_or(SE::LibraryNotFound)?;
     lib.load1(&self.item)?
