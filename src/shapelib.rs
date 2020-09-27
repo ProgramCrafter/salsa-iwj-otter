@@ -186,14 +186,14 @@ impl Piece for Item {
   fn itemname(&self) -> &str { &self.itemname }
 }
 
-use rental::common::RentRef;
-
 #[throws(SpecError)]
-pub fn libs_lookup(libname: &str) -> RentRef<RwLockReadGuard<'static, Registry>, Contents> {
+pub fn libs_lookup(libname: &str)
+                   -> RentRef<RwLockReadGuard<'static, Registry>,
+                              Contents> {
   let libs = GLOBAL.shapelibs.read().unwrap();
-  RentRef::try_new(libs,|libs|Ok({
+  RentRef::try_new(libs,|libs| Ok::<_,SpecError>({
     libs.get(libname).ok_or(SE::LibraryNotFound)?
-  })).map_err::<SpecError,_>(|e:rental::RentalError<_,_>|e.0)?
+  })).map_err(|e|e.0)?
 }
 
 impl ItemSpec {

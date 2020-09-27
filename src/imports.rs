@@ -90,6 +90,9 @@ pub use delegate::delegate;
 
 pub use itertools::Itertools;
 
+pub use rental::RentalError;
+pub use rental::common::RentRef;
+
 pub use ordered_float::OrderedFloat;
 
 pub use crate::global::*;
