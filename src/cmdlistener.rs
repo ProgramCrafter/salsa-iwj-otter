@@ -227,7 +227,7 @@ fn execute_game_insn(cs: &CommandStream,
       let p = ig.pieces.as_mut(modperm)
         .remove(piece).ok_or(ME::PieceNotFound)?;
       let gs = &mut ig.gs;
-      let pc = gs.pieces.remove(piece);
+      let pc = gs.pieces.as_mut(modperm).remove(piece);
       let desc_html = p.describe_html(Some(Default::default()));
       if let Some(pc) = pc { p.delete_hook(&pc, gs); }
       (U{ pcs: vec![(piece, PieceUpdateOp::Delete())],
@@ -264,7 +264,7 @@ fn execute_game_insn(cs: &CommandStream,
         if let (_, true) = pc.pos.clamped(gs.table_size) {
           throw!(SpecError::PosOffTable);
         }
-        let piece = gs.pieces.insert(pc);
+        let piece = gs.pieces.as_mut(modperm).insert(pc);
         ig.pieces.as_mut(modperm).insert(piece, p);
         updates.push((piece, PieceUpdateOp::Insert(())));
         pos[0] += posd[0];

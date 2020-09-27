@@ -44,7 +44,7 @@ pub struct ZLevel {
 #[derive(Debug,Serialize,Deserialize)]
 pub struct GameState {
   pub table_size : Pos,
-  pub pieces : DenseSlotMap<PieceId,PieceState>,
+  pub pieces : Pieces,
   pub players : PlayerMap,
   pub gen : Generation,
   pub log : Vec<(Generation,Arc<LogEntry>)>,
@@ -195,6 +195,7 @@ impl Debug for Html {
 }
 
 // ---------- game state - rendering etc. ----------
+
 
 impl PieceState {
   #[throws(IE)]

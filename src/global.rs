@@ -7,6 +7,7 @@
 use crate::imports::*;
 
 use std::sync::PoisonError;
+use slotmap::dense as sm;
 
 // ---------- newtypes and type aliases ----------
 
@@ -48,6 +49,11 @@ pub struct PiecesLoaded (ActualPiecesLoaded);
 pub type ActualPiecesLoaded = SecondarySlotMap<PieceId,Box<dyn Piece>>;
 #[derive(Copy,Clone,Debug)]
 pub struct ModifyingPieces(());
+
+#[derive(Debug,Serialize,Deserialize,Default)]
+#[serde(transparent)]
+pub struct Pieces (pub(in crate::global) ActualPieces);
+type ActualPieces = DenseSlotMap<PieceId,PieceState>;
 
 #[derive(Debug,Clone,Deserialize,Serialize)]
 #[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
@@ -408,7 +414,9 @@ impl InstanceGuard<'_> {
       }
     }
     undo.push(Box::new(|ig| for &piece in &updated_pieces {
-      ig.c.g.gs.pieces[piece].held = Some(oldplayer)
+      (||Some({
+        ig.c.g.gs.pieces.get_mut(piece)?.held = Some(oldplayer);
+      }))();
     }));
 
     // Handle gs.log:
@@ -433,7 +441,9 @@ impl InstanceGuard<'_> {
 
     (||{
       for &piece in &updated_pieces {
-        self.c.g.gs.pieces[piece].gen = self.c.g.gs.gen;
+        (||Some({
+          self.c.g.gs.pieces.get_mut(piece)?.gen = self.c.g.gs.gen;
+        }))();
       }
 
       let lens = TransparentLens { };
@@ -730,8 +740,8 @@ impl InstanceGuard<'_> {
       for mut p in gs.pieces.values_mut() {
         p.lastclient = Default::default();
       }
-      gs.pieces.retain(|k,_v| pieces.contains_key(k));
-      pieces.retain(|k,_v| gs.pieces.contains_key(k));
+      gs.pieces.0.retain(|k,_v| pieces.contains_key(k));
+      pieces.retain(|k,_v| gs.pieces.0.contains_key(k));
 
       gs
     };
@@ -906,6 +916,50 @@ impl PiecesLoaded {
   pub fn as_mut(&mut self, _: ModifyingPieces) -> &mut ActualPiecesLoaded {
     &mut self.0
   }
+}
+
+// ---------- gamestate pieces table ----------
+
+impl Deref for Pieces {
+  type Target = ActualPieces;
+  fn deref(&self) -> &ActualPieces { &self.0 }
+}
+
+impl Pieces {
+  pub fn get_mut(&mut self, piece: PieceId) -> Option<&mut PieceState> {
+    self.0.get_mut(piece)
+  }
+  pub fn values_mut(&mut self) -> sm::ValuesMut<PieceId, PieceState> {
+    self.0.values_mut()
+  }
+  pub fn as_mut(&mut self, _: ModifyingPieces) -> &mut ActualPieces {
+    &mut self.0
+  }
+}
+
+impl ById for Pieces {
+  type Id = PieceId;
+  type Entry = PieceState;
+  type Error = OnlineError;
+  #[throws(OE)]
+  fn byid(&self, piece: PieceId) -> &PieceState {
+    self.get(piece).ok_or(OE::PieceGone)?
+  }
+  #[throws(OE)]
+  fn byid_mut(&mut self, piece: PieceId) -> &mut PieceState {
+    self.get_mut(piece).ok_or(OE::PieceGone)?
+  }
+}
+
+/*impl<'p> IntoIterator for &'p Pieces {
+  type Item = (PieceId, &'p PieceState);
+  type IntoIter = sm::Iter<'p, PieceId, PieceState>;
+  fn into_iter(self) -> Self::IntoIter { (&self.0).into_iter() }
+}*/
+impl<'p> IntoIterator for &'p mut Pieces {
+  type Item = (PieceId, &'p mut PieceState);
+  type IntoIter = sm::IterMut<'p, PieceId, PieceState>;
+  fn into_iter(self) -> Self::IntoIter { (&mut self.0).into_iter() }
 }
 
 // ========== background maintenance ==========
