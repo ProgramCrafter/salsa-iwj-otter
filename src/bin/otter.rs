@@ -650,6 +650,7 @@ mod library_add {
   struct Args {
     tlg: TableLibGlobArgs,
     adjust_markers: Option<bool>,
+    incremental: bool,
   }
 
   impl Args {
@@ -663,6 +664,11 @@ mod library_add {
       .add_option(&["--no-adjust-markers"],StoreConst(Some(false)),
                   "do not adjust the number of insertion markers, just fail")
       .add_option(&["--adjust-markers"],StoreConst(Some(true)),"");
+    ap.refer(&mut sa.incremental)
+      .add_option(&["--incremental"],StoreConst(true),
+                  "do not place pieces already on the board; \
+                   if they don't all fit, place as many as possible")
+      .add_option(&["--no-incremental"],StoreConst(false),"");
     sa.tlg.add_arguments(&mut ap);
     ap
   }
@@ -676,11 +682,18 @@ mod library_add {
       name: args.tlg.name.clone(),
       how: MgmtGameUpdateMode::Online,
     };
-    let markers = chan.get_pieces()?.into_iter().filter(
-      |p| p.itemname == MAGIC
-    ).collect::<Vec<_>>();
+    let pieces = chan.get_pieces()?;
+    let markers = pieces.iter().filter(|p| p.itemname == MAGIC)
+      .collect::<Vec<_>>();
 
-    dbg!(&markers, &args);
+    let already = if args.incremental { Some(
+      pieces.iter().map(|p| &p.itemname)
+        .collect::<HashSet<_>>()
+    )} else {
+      None
+    };
+
+    dbg!(&markers, &args, &already);
 
     #[derive(Debug)]
     enum Situation {
@@ -775,9 +788,14 @@ mod library_add {
       }
     }
 
-    let items = chan.list_items(&args.tlg.pat)?;
-    placement.place(&items[0].f0bbox);
-    //dbg!(&items);
+    let _items = chan.list_items(&args.tlg.pat)?;
+/*
+    for it in &items {
+      let pos = match placement.place(&items[0].f0bbox) {
+        Some(pos) => pos,
+        None if 
+        .ok_or(anyhow::error!("*/
+    //dbg!(&items)
 
     Ok(())
   }
