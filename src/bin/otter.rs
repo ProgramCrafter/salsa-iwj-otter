@@ -53,6 +53,7 @@ impl<'x, T, F: FnMut(&str) -> Result<T,String>>
   }
 }
 
+const EXIT_SPACE :    i32 =  2;
 const EXIT_USAGE :    i32 = 12;
 const EXIT_DISASTER : i32 = 16;
 
@@ -788,16 +789,46 @@ mod library_add {
       }
     }
 
-    let _items = chan.list_items(&args.tlg.pat)?;
-/*
-    for it in &items {
+    let items = chan.list_items(&args.tlg.pat)?;
+
+    let mut exitcode = 0;
+    let mut insns = vec![];
+    for (ix, it) in items.iter().enumerate() {
+      if let Some(already) = &already {
+        if already.contains(&it.itemname) { continue }
+      }
       let pos = match placement.place(&items[0].f0bbox) {
         Some(pos) => pos,
-        None if 
-        .ok_or(anyhow::error!("*/
-    //dbg!(&items)
+        None => {
+          let m = format!("out of space after {} at {}",
+                          &ix, &it.itemname);
+          exitcode = EXIT_SPACE;
+          if args.incremental {
+            println!("stopping: {}", &m);
+            break;
+          } else {
+            eprintln!("error: {}", &m);
+            exit(exitcode);
+          }
+        },
+      };
+      let spec = shapelib::ItemSpec {
+        lib: args.tlg.pat.lib.clone(),
+        item: it.itemname.clone(),
+      };
+      let spec = PiecesSpec {
+        pos: Some(pos),
+        posd: None, count: Some(1), face: None,
+        info: Box::new(spec),
+      };
+      let insn = Insn::AddPieces(spec);
+      insns.push(insn);
+    }
 
-    Ok(())
+    let count = insns.len();
+    chan.alter_game(insns, None)?;
+    println!("added {} pieces", count);
+    exit(exitcode);
   }
 
   inventory::submit!{Subcommand(
