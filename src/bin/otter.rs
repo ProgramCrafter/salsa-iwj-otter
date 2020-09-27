@@ -719,15 +719,11 @@ mod library_add {
 
     #[derive(Debug)]
     struct Placement {
-      top: Coord,
-      bot: Coord,
-      rhs: Coord,
-      lhs: Coord,
-      cline_upto: Coord,
-      cline_bottom: Coord,
+      lhs: Coord, top: Coord, rhs: Coord, bot: Coord,
+      clhs: Coord, cbot: Coord, // current line
     };
 
-    let placement = match situation {
+    let mut placement = match situation {
       Poor(insns, msg) => {
         if !args.adjust_markers() {
           throw!(anyhow!("only {} markers, wanted {}",
@@ -747,15 +743,41 @@ mod library_add {
         let bot = max(a.0[1], b.0[1]);
         Placement {
           lhs, rhs, top, bot,
-          cline_upto: lhs,
-          cline_bottom: top,
+          clhs: lhs, cbot: top,
         }
       }
     };
     dbg!(&placement);
 
-    let items = chan.list_items(&args.tlg.pat);
-    dbg!(&items);
+    impl Placement {
+      /// If returns None, has already maybe tried to take some space
+      fn place(&mut self, bbox: &[Pos;2]) -> Option<Pos> {
+        let PosC([w,h]) = bbox[1] - bbox[0];
+
+        let mut limit = 0..2;
+        let tlhs = loop {
+          limit.next()?; // item just too wide, maybe
+          let tlhs = self.clhs;
+          self.clhs += w;
+          if self.clhs <= self.rhs { break tlhs }
+          // line is full
+          self.top = self.cbot;
+          self.clhs = self.lhs;
+        };
+        self.cbot = min(self.cbot, h);
+        if self.cbot > self.bot { None? }
+
+        let ttopleft = PosC([tlhs, self.top]);
+        let tnominal = ttopleft - bbox[0];
+
+        dbg!(&self, &tnominal);
+        Some(tnominal)
+      }
+    }
+
+    let items = chan.list_items(&args.tlg.pat)?;
+    placement.place(&items[0].f0bbox);
+    //dbg!(&items);
 
     Ok(())
   }
