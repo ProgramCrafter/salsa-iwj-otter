@@ -313,6 +313,19 @@ impl ConnForGame {
       wat => Err(anyhow!("ListPieces => {:?}", &wat))?,
     }
   }
+
+  #[throws(AE)]
+  fn list_items(&mut self, pat: &shapelib::ItemSpec)
+                -> Vec<shapelib::ItemEnquiryData> {
+    let cmd = MgmtCommand::LibraryListByGlob { glob: pat.clone() };
+    let mut items = match self.cmd(&cmd)? {
+      MgmtResponse::LibraryItems(items) => items,
+      wat => Err(anyhow!("unexpected LibraryListByGlob response: {:?}",
+                         &wat))?,
+    };
+    items.sort();
+    items
+  }
 }
 
 #[throws(E)]
@@ -601,13 +614,7 @@ mod library_list {
       how: MgmtGameUpdateMode::Bulk,
     };
 
-    let cmd = MgmtCommand::LibraryListByGlob { glob: args.pat.clone() };
-    let mut items = match chan.cmd(&cmd)? {
-      MgmtResponse::LibraryItems(items) => items,
-      wat => Err(anyhow!("unexpected LibraryListByGlob response: {:?}",
-                         &wat))?,
-    };
-    items.sort();
+    let items = chan.list_items(&args.pat)?;
     for it in &items {
       println!("{:20}  {}", it.itemname, it.f0desc.0);
     }
