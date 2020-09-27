@@ -76,6 +76,9 @@ sub cfg_affixes ($$$) {
     .($cfg->("${keybase}_suffix") // '');
 }
 
+sub method_none { return sub { } }
+sub methodlic_none { undef }
+
 sub methodlic_wikimedia ($) {
   my ($scraper) = @_;
   return <<END;
