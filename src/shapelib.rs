@@ -394,7 +394,7 @@ pub fn load() {
 }
 
 #[derive(Serialize,Deserialize,Debug)]
-struct Circle { diam: f64 }
+pub struct Circle { pub diam: f64 }
 
 #[typetag::serde(name="Circle")]
 impl Outline for Circle {
@@ -433,7 +433,7 @@ impl CircleDefn {
 }
 
 #[derive(Serialize,Deserialize,Debug)]
-struct Square { xy: [f64;2] }
+pub struct Square { pub xy: [f64;2] }
 
 #[typetag::serde(name="Square")]
 impl Outline for Square {

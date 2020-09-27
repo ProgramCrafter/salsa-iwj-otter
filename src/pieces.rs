@@ -13,10 +13,9 @@ type ColourMap = IndexVec<FaceId,Colour>;
 struct SimpleShape {
   desc : Html,
   path : Html,
-  scaled_path : Html,
-  approx_dia : Coord,
   colours : ColourMap,
   itemname: String,
+  outline: Box<dyn Outline>,
 }
 
 pub const SELECT_SCALE : f64 = 1.1;
@@ -108,16 +107,16 @@ pub fn svg_rectangle_path([x, y] : [f64;2]) -> Html {
 
 #[typetag::serde]
 impl Outline for SimpleShape {
-  #[throws(IE)]
-  fn surround_path(&self, _pri : &PieceRenderInstructions) -> Html {
-    self.scaled_path.clone()
-  }
-  #[throws(IE)]
-  fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
-                      -> Option<Coord> {
-    Some(self.approx_dia / 2)
+  delegate! {
+    to self.outline {
+      fn surround_path(&self, _pri : &PieceRenderInstructions)
+                       -> Result<Html,IE>;
+      fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
+                          -> Result<Option<Coord>,IE>;
+    }
   }
 }
+
 #[typetag::serde]
 impl Piece for SimpleShape {
   #[throws(IE)]
@@ -147,17 +146,17 @@ impl Piece for SimpleShape {
 }
 
 impl SimpleShape {
-  fn new_from_path(desc: Html, path: Html, approx_dia: Coord,
+  fn new_from_path(desc: Html, path: Html,
                    faces: &IndexVec<FaceId,ColourSpec>,
+                   outline: Box<dyn Outline>,
                    itemname: String)
                    -> Result<Box<dyn Piece>,SpecError> {
-    let scaled_path = svg_rescale_path(&path, SELECT_SCALE)?;
     let colours = faces
       .iter()
       .map(|s| s.try_into())
       .collect::<Result<_,SpecError>>()?;
     Ok(Box::new(SimpleShape {
-      scaled_path, desc, approx_dia, path, colours, itemname
+      desc, path, colours, itemname, outline,
     }))
   }
 }
@@ -166,11 +165,12 @@ impl SimpleShape {
 impl PieceSpec for piece_specs::Disc {
   #[throws(SpecError)]
   fn load(&self) -> Box<dyn Piece> {
+    let outline = Box::new(shapelib::Circle { diam: self.diam as f64 });
     let path = svg_circle_path(self.diam as f64)?;
     let itemname = self.itemname.clone()
       .unwrap_or_else(||"simple-disc".to_string());
-    SimpleShape::new_from_path(Html::lit("circle"), path, self.diam,
-                               &self.faces, itemname)?
+    SimpleShape::new_from_path(Html::lit("circle"), path,
+                               &self.faces, outline, itemname)?
   }
 }
 
@@ -183,10 +183,11 @@ impl PieceSpec for piece_specs::Square {
       [x, y] => (x,y),
       _ => throw!(SpecError::ImproperSizeSpec),
     };
+    let outline = Box::new(shapelib::Square { xy: [x as f64, y as f64] });
     let path = svg_rectangle_path([x as f64, y as f64])?;
     let itemname = self.itemname.clone()
       .unwrap_or_else(||"simple-square".to_string());
-    SimpleShape::new_from_path(Html::lit("square"), path, (x+y+1)/2,
-                               &self.faces, itemname)?
+    SimpleShape::new_from_path(Html::lit("square"), path,
+                               &self.faces, outline, itemname)?
   }
 } 
