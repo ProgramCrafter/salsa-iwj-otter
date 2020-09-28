@@ -85,7 +85,7 @@ arrayvec = "0"
 #rocket = "0.4"
 rocket_contrib = { version = "0.4", default-features=false, features=["tera_templates","helmet","json","serve"], git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket-contrib" }
 
-rocket = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket" }
+rocket = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket", features = ["sse"] }
 
 percent-encoding = "2"
 
@@ -105,7 +105,7 @@ argparse = "0.2"
 inventory = "0.1"
 
 [patch.crates-io]
-rocket = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket" }
+rocket = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket", features = ["sse"] }
 rocket_codegen = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket-codegen" }
 rocket_http = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket-http" }
 rocket_contrib = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket-contrib", default-features=false, features=["tera_templates","helmet","json"] }
