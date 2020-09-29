@@ -88,10 +88,14 @@ pub trait Outline : Send + Debug {
   fn bbox_approx(&self) -> [Pos;2];
 }
 
+#[derive(Debug,Copy,Clone,Serialize,Deserialize)]
+pub enum UoKind { Global, Piece, }
+
 pub type UoKey = char;
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct UoDescription {
+  pub kind: UoKind,
   pub def_key: UoKey,
   pub opname: String,
   pub desc: Html,
@@ -264,6 +268,7 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
     let mut out = vec![];
     if self.nfaces() > 1 {
       out.push(UoDescription {
+        kind: UoKind::Global,
         def_key: 'f'.into(),
         opname: "flip".to_string(),
         desc: Html::lit("flip"),
