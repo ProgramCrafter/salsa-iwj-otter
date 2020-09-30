@@ -419,14 +419,6 @@ impl<'r> Drop for PrepareUpdatesBuffer<'r> {
 type WRC = WhatResponseToClientOp;
 
 impl PreparedUpdate {
-  fn is_client(by_client: &IsResponseToClientOp,
-               ref_client: ClientId) -> Option<ClientSequence> {
-    match by_client {
-      &Some((_,c,cseq)) if c == ref_client => Some(cseq),
-      _ => None,
-    }
-  }
-
   pub fn for_transmit(&self, dest : ClientId) -> TransmitUpdate {
     type ESVU = ErrorSignaledViaUpdate;
     type PUE = PreparedUpdateEntry;
@@ -442,19 +434,19 @@ impl PreparedUpdate {
             Exactly(TransmitUpdateEntry<'u>),
             Piece,
           };
-          let ftg = if let Some(cseq) = Self::is_client(&by_client, dest) {
-            match by_client.unwrap().0 {
-              WRC::Predictable => FTG::Recorded(cseq, None),
-              WRC::UpdateSvg => FTG::Recorded(cseq, ns()),
-              WRC::Unpredictable => if let Some(ns) = ns() {
+          let ftg = match by_client {
+            None                                     => FTG::Piece,
+            Some((_,u_client,_)) if u_client != dest => FTG::Piece,
+            Some((WRC::Predictable  ,_,cseq)) => FTG::Recorded(cseq, None),
+            Some((WRC::UpdateSvg    ,_,cseq)) => FTG::Recorded(cseq, ns()),
+            Some((WRC::Unpredictable,_,cseq)) => {
+              if let Some(ns) = ns() {
                 FTG::Exactly(TUE::RecordedUnpredictable { piece, cseq, ns })
               } else {
                 error!("internal error: for_transmit PreparedUpdateEntry::Piece with RecordedUnpredictable but PieceOp no NS");
                 FTG::Piece
               }
             }
-          } else {
-            FTG::Piece
           };
           match ftg {
             FTG::Recorded(cseq, ns) => {
