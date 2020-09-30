@@ -42,8 +42,7 @@ pub struct PreparedUpdate {
 #[derive(Debug)]
 pub enum PreparedUpdateEntry {
   Piece {
-    client : ClientId,
-    sameclient_cseq : ClientSequence,
+    by_client: IsResponseToClientOp<(ClientId, ClientSequence)>,
     piece : VisiblePieceId,
     op : PieceUpdateOp<PreparedPieceState>,
   },
@@ -90,10 +89,16 @@ enum TransmitUpdateEntry<'u> {
     piece : VisiblePieceId,
     cseq : ClientSequence,
     zg : Option<Generation>,
+    svg: Option<&'u Html>, // IsResponseToClientOp::UpdateSvg
   },
   Piece {
     piece : VisiblePieceId,
     op : PieceUpdateOp<&'u PreparedPieceState>,
+  },
+  RecordedUnpredictable {
+    piece : VisiblePieceId,
+    cseq : ClientSequence,
+    ns: &'u PreparedPieceState,
   },
   SetTableSize(Pos),
   Log (&'u LogEntry),
@@ -234,25 +239,35 @@ impl<NS> PieceUpdateOp<NS> {
 pub struct PrepareUpdatesBuffer<'r> {
   g : &'r mut Instance,
   us : Vec<PreparedUpdateEntry>,
-  by_client : ClientId,
-  cseq : ClientSequence,
+  by_client : IsResponseToClientOp<(ClientId, ClientSequence)>,
   gen : Option<Generation>,
+}
+
+#[derive(Debug,Copy,Clone)]
+pub enum IsResponseToClientOp<T> {
+  /// In PROTOCOL.md terms, a Server update
+  No,
+  /// In PROTOCOL.md terms, a Client update
+  Predictable(T),
+  /// In PROTOCOL.md terms, a Client update which also updates
+  /// the visible piece image (which is just server-controlled).
+  UpdateSvg(T),
+  /// In PROTOCOL.md terms, a Client update which results in
+  /// an immediate Server update.  When the client knows this
+  /// is going to happen it can help the user avoid conflicts.
+  Unpredictable(T),
 }
 
 impl<'r> PrepareUpdatesBuffer<'r> {
   pub fn new(g: &'r mut Instance,
-             by_client: Option<(ClientId, ClientSequence)>,
+             by_client: IsResponseToClientOp<(ClientId, ClientSequence)>,
              estimate: Option<usize>) -> Self
   {
-    let by_client = by_client.unwrap_or(
-      (Default::default(), ClientSequence(0))
-    );
     let us = estimate.map_or(vec![], Vec::with_capacity);
 
     PrepareUpdatesBuffer {
       gen: None,
-      by_client: by_client.0, cseq: by_client.1,
-      us, g,
+      by_client, us, g,
     }
   }
 
@@ -265,7 +280,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   }
 
   fn new_for_error(ig: &'r mut Instance) -> Self {
-    Self::new(ig, None, Some(1))
+    Self::new(ig, IsResponseToClientOp::No, Some(1))
   }
   pub fn piece_report_error(ig: &mut Instance,
                             error: PieceOpError, piece: PieceId,
@@ -299,6 +314,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   fn piece_update_fallible(&mut self, piece: PieceId,
                            update: PieceUpdateOp<()>,
                            lens: &dyn Lens) -> PreparedUpdateEntry {
+    type IRC = IsResponseToClientOp<(ClientId, ClientSequence)>;
+
     let gen = self.gen();
     let gs = &mut self.g.gs;
 
@@ -309,9 +326,14 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       (Ok(pc), Some(p)) => {
         gs.max_z.update_max(pc.zlevel.z);
 
-        if self.by_client != pc.lastclient {
+        if let Some(new_lastclient) = match self.by_client {
+          IRC::Predictable((tclient,_)) |
+          IRC::UpdateSvg((tclient,_))
+            => if tclient == pc.lastclient { None } else { Some(tclient) }
+          _ => Some(Default::default()),
+        } {
           pc.gen_before_lastclient = pc.gen;
-          pc.lastclient = self.by_client;
+          pc.lastclient = new_lastclient;
         }
         pc.gen = gen;
         let pri_for_all = lens.svg_pri(piece,pc,Default::default());
@@ -333,8 +355,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
     PreparedUpdateEntry::Piece {
       piece,
-      client : self.by_client,
-      sameclient_cseq : self.cseq,
+      by_client : self.by_client,
       op : update,
     }
   }
@@ -391,7 +412,21 @@ impl<'r> Drop for PrepareUpdatesBuffer<'r> {
 
 // ---------- for traansmission ----------
 
+type IRC = IsResponseToClientOp<(ClientId, ClientSequence)>;
+
 impl PreparedUpdate {
+  fn is_client(by_client: &IsResponseToClientOp<(ClientId, ClientSequence)>,
+               ref_client: ClientId) -> Option<ClientSequence> {
+    use IsResponseToClientOp::*;
+    let &(c,cseq) = match by_client {
+      Predictable  (x) => x,
+      UpdateSvg    (x) => x,
+      Unpredictable(x) => x,
+      No               => return None,
+    };
+    if c == ref_client { Some(cseq) } else { None }
+  }
+
   pub fn for_transmit(&self, dest : ClientId) -> TransmitUpdate {
     type ESVU = ErrorSignaledViaUpdate;
     type PUE = PreparedUpdateEntry;
@@ -400,13 +435,36 @@ impl PreparedUpdate {
     for u in &self.us {
       trace!("for_transmit to={:?} {:?}", dest, &u);
       let ue = match u {
-        &PUE::Piece { piece, client, sameclient_cseq : cseq, ref op }
-        if client == dest => {
-          let zg = op.new_z_generation();
-          TUE::Recorded { piece, cseq, zg }
-        },
-        &PUE::Piece { piece, ref op, .. } => {
-          TUE::Piece { piece, op: op.map_ref_new_state() }
+        &PUE::Piece { piece, by_client, ref op } => {
+          let ns = ||op.new_state();
+          enum FTG<'u> {
+            Recorded(ClientSequence, Option<&'u PreparedPieceState>),
+            Exactly(TransmitUpdateEntry<'u>),
+            Piece,
+          };
+          let ftg = if let Some(cseq) = Self::is_client(&by_client, dest) {
+            match by_client {
+              IRC::Predictable(_) => FTG::Recorded(cseq, None),
+              IRC::UpdateSvg(_) => FTG::Recorded(cseq, ns()),
+              IRC::Unpredictable(_) => if let Some(ns) = ns() {
+                FTG::Exactly(TUE::RecordedUnpredictable { piece, cseq, ns })
+              } else {
+                error!("internal error: for_transmit PreparedUpdateEntry::Piece with RecordedUnpredictable but PieceOp no NS");
+                FTG::Piece
+              }
+              _ => unreachable!(),
+            }
+          } else {
+            FTG::Piece
+          };
+          match ftg {
+            FTG::Recorded(cseq, ns) => {
+              let zg = op.new_z_generation();
+              TUE::Recorded { piece, cseq, zg, svg: ns.map(|ns| &ns.svg) }
+            },
+            FTG::Piece => TUE::Piece { piece, op: op.map_ref_new_state() },
+            FTG::Exactly(x) => x,
+          }
         },
         PUE::Log(logent) => {
           TUE::Log(&logent)
