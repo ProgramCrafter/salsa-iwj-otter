@@ -47,9 +47,11 @@ type Pos = [number, number];
 type ClientSeq = number;
 type Generation = number;
 type UoKind = "Global"| "Piece" | "ClientExtra" | "GlobalExtra";
+type WhatResponseToClientOp = "Predictable" | "Unpredictable" | "UpdateSVG";
 
 type UoDescription = {
   kind: UoKind;
+  wrc: WhatResponseToClientOp,
   def_key: string,
   opname: string,
   desc: string,
@@ -670,6 +672,7 @@ function recompute_keybindings() {
     opname: 'wrest',
     desc: 'Enter wresting mode',
     targets: null,
+    wrc: 'Predictable',
   }
   var uo_keys = Object.keys(uo_map);
   uo_keys.sort(function (ak,bk) {
