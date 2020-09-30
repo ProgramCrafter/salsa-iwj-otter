@@ -208,6 +208,72 @@ function piece_element(base: string, piece: PieceId): SVGGraphicsElement | null
   return svg_element(base+piece);
 }
 
+// ----- key handling -----
+
+function recompute_keybindings() {
+  uo_map = Object.create(null);
+  for (let piece of Object.keys(pieces)) {
+    let p = pieces[piece];
+    if (p.held != us) continue;
+    for (var uo of p.uos) {
+      let currently = uo_map[uo.def_key];
+      if (currently === null) continue;
+      if (currently !== undefined) {
+	if (currently.opname != uo.opname) {
+	  uo_map[uo.def_key] = null;
+	  continue;
+	}
+      } else {
+	currently = {
+	  targets: [],
+	  ...uo
+	};
+	uo_map[uo.def_key] = currently;
+      }
+      currently.desc = currently.desc < uo.desc ? currently.desc : uo.desc;
+      currently.targets!.push(piece);
+    }
+  }
+  uo_map['W'] = {
+    kind: 'ClientExtra',
+    def_key: 'W',
+    opname: 'wrest',
+    desc: 'Enter wresting mode',
+    targets: null,
+    wrc: 'Predictable',
+  }
+  var uo_keys = Object.keys(uo_map);
+  uo_keys.sort(function (ak,bk) {
+    let a = uo_map[ak]!;
+    let b = uo_map[bk]!;
+    return uo_kind_prec[a.kind] - uo_kind_prec[b.kind]
+      || ak.localeCompare(bk);
+  });
+  let out = document.createElement('div');
+  out.setAttribute('class','uokeys');
+  for (var kk of uo_keys) {
+    let uo = uo_map[kk]!;
+    let ent = document.createElement('div');
+    ent.setAttribute('class','uokey-'+uo.kind);
+    ent.innerHTML = '<b>' + kk + '</b> ' + uo.desc;
+    out.appendChild(ent);
+  }
+  uos_node.firstChild!.replaceWith(out);
+}
+
+function some_keydown(e: KeyboardEvent) {
+  // https://developer.mozilla.org/en-US/docs/Web/API/Document/keydown_event
+  // says to do this, something to do with CJK composition.
+  // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent
+  // says that keyCode is deprecated
+  // my tsc says this isComposing thing doesn't exist.  wat.
+  if ((e as any).isComposing /* || e.keyCode === 229 */) return;
+
+  let uo = uo_map[e.key];
+  if (uo === undefined) return;
+
+  console.log('KEY UO', e, uo);
+}
 
 // ----- clicking/dragging pieces -----
 
@@ -642,57 +708,6 @@ function test_swap_stack() {
   window.setTimeout(test_swap_stack, 1000);
 }
 
-function recompute_keybindings() {
-  uo_map = Object.create(null);
-  for (let piece of Object.keys(pieces)) {
-    let p = pieces[piece];
-    if (p.held != us) continue;
-    for (var uo of p.uos) {
-      let currently = uo_map[uo.def_key];
-      if (currently === null) continue;
-      if (currently !== undefined) {
-	if (currently.opname != uo.opname) {
-	  uo_map[uo.def_key] = null;
-	  continue;
-	}
-      } else {
-	currently = {
-	  targets: [],
-	  ...uo
-	};
-	uo_map[uo.def_key] = currently;
-      }
-      currently.desc = currently.desc < uo.desc ? currently.desc : uo.desc;
-      currently.targets!.push(piece);
-    }
-  }
-  uo_map['W'] = {
-    kind: 'ClientExtra',
-    def_key: 'W',
-    opname: 'wrest',
-    desc: 'Enter wresting mode',
-    targets: null,
-    wrc: 'Predictable',
-  }
-  var uo_keys = Object.keys(uo_map);
-  uo_keys.sort(function (ak,bk) {
-    let a = uo_map[ak]!;
-    let b = uo_map[bk]!;
-    return uo_kind_prec[a.kind] - uo_kind_prec[b.kind]
-      || ak.localeCompare(bk);
-  });
-  let out = document.createElement('div');
-  out.setAttribute('class','uokeys');
-  for (var kk of uo_keys) {
-    let uo = uo_map[kk]!;
-    let ent = document.createElement('div');
-    ent.setAttribute('class','uokey-'+uo.kind);
-    ent.innerHTML = '<b>' + kk + '</b> ' + uo.desc;
-    out.appendChild(ent);
-  }
-  uos_node.firstChild!.replaceWith(out);
-}
-
 function startup() {
   var body = document.getElementById("main-body")!;
   ctoken = body.dataset.ctoken!;
@@ -761,8 +776,8 @@ function startup() {
     })
   }
   recompute_keybindings();
-
-//  test_swap_stack();
+  space.addEventListener('mousedown', some_mousedown);
+  space.addEventListener('keydown',   some_keydown);
 }
 
 function doload(){
