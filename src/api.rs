@@ -141,7 +141,7 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
     },
     Ok((update, logents)) => {
       let mut buf = PrepareUpdatesBuffer::new(g,
-               IsResponseToClientOp::Predictable((client, form.cseq)),
+          Some((WhatResponseToClientOp::Predictable, client, form.cseq)),
                                               Some(1 + logents.len()));
       
       buf.piece_update(piece, update, &lens);

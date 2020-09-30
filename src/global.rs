@@ -448,8 +448,7 @@ impl InstanceGuard<'_> {
 
       let lens = TransparentLens { };
       let estimate = updated_pieces.len() + 1;
-      let mut buf = PrepareUpdatesBuffer::new(
-        self, IsResponseToClientOp::No , Some(estimate));
+      let mut buf = PrepareUpdatesBuffer::new(self, None , Some(estimate));
       for &piece in &updated_pieces {
         buf.piece_update(piece, PieceUpdateOp::Modify(()), &lens);
       }

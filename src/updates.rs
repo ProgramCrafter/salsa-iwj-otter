@@ -42,7 +42,7 @@ pub struct PreparedUpdate {
 #[derive(Debug)]
 pub enum PreparedUpdateEntry {
   Piece {
-    by_client: IsResponseToClientOp<(ClientId, ClientSequence)>,
+    by_client: IsResponseToClientOp,
     piece : VisiblePieceId,
     op : PieceUpdateOp<PreparedPieceState>,
   },
@@ -239,28 +239,32 @@ impl<NS> PieceUpdateOp<NS> {
 pub struct PrepareUpdatesBuffer<'r> {
   g : &'r mut Instance,
   us : Vec<PreparedUpdateEntry>,
-  by_client : IsResponseToClientOp<(ClientId, ClientSequence)>,
+  by_client : IsResponseToClientOp,
   gen : Option<Generation>,
 }
 
+/// In PROTOCOL.md terms, None is a Server update
+type IsResponseToClientOp = Option<(
+  WhatResponseToClientOp,
+  ClientId,
+  ClientSequence,
+)>;
 #[derive(Debug,Copy,Clone)]
-pub enum IsResponseToClientOp<T> {
-  /// In PROTOCOL.md terms, a Server update
-  No,
+pub enum WhatResponseToClientOp {
   /// In PROTOCOL.md terms, a Client update
-  Predictable(T),
+  Predictable,
   /// In PROTOCOL.md terms, a Client update which also updates
   /// the visible piece image (which is just server-controlled).
-  UpdateSvg(T),
+  UpdateSvg,
   /// In PROTOCOL.md terms, a Client update which results in
   /// an immediate Server update.  When the client knows this
   /// is going to happen it can help the user avoid conflicts.
-  Unpredictable(T),
+  Unpredictable,
 }
 
 impl<'r> PrepareUpdatesBuffer<'r> {
   pub fn new(g: &'r mut Instance,
-             by_client: IsResponseToClientOp<(ClientId, ClientSequence)>,
+             by_client: IsResponseToClientOp,
              estimate: Option<usize>) -> Self
   {
     let us = estimate.map_or(vec![], Vec::with_capacity);
@@ -280,7 +284,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   }
 
   fn new_for_error(ig: &'r mut Instance) -> Self {
-    Self::new(ig, IsResponseToClientOp::No, Some(1))
+    Self::new(ig, None, Some(1))
   }
   pub fn piece_report_error(ig: &mut Instance,
                             error: PieceOpError, piece: PieceId,
@@ -314,7 +318,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   fn piece_update_fallible(&mut self, piece: PieceId,
                            update: PieceUpdateOp<()>,
                            lens: &dyn Lens) -> PreparedUpdateEntry {
-    type IRC = IsResponseToClientOp<(ClientId, ClientSequence)>;
+    type WRC = WhatResponseToClientOp;
 
     let gen = self.gen();
     let gs = &mut self.g.gs;
@@ -327,8 +331,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
         gs.max_z.update_max(pc.zlevel.z);
 
         if let Some(new_lastclient) = match self.by_client {
-          IRC::Predictable((tclient,_)) |
-          IRC::UpdateSvg((tclient,_))
+          Some((WRC::Predictable,tclient,_)) |
+          Some((WRC::UpdateSvg,  tclient,_))
             => if tclient == pc.lastclient { None } else { Some(tclient) }
           _ => Some(Default::default()),
         } {
@@ -412,19 +416,15 @@ impl<'r> Drop for PrepareUpdatesBuffer<'r> {
 
 // ---------- for traansmission ----------
 
-type IRC = IsResponseToClientOp<(ClientId, ClientSequence)>;
+type WRC = WhatResponseToClientOp;
 
 impl PreparedUpdate {
-  fn is_client(by_client: &IsResponseToClientOp<(ClientId, ClientSequence)>,
+  fn is_client(by_client: &IsResponseToClientOp,
                ref_client: ClientId) -> Option<ClientSequence> {
-    use IsResponseToClientOp::*;
-    let &(c,cseq) = match by_client {
-      Predictable  (x) => x,
-      UpdateSvg    (x) => x,
-      Unpredictable(x) => x,
-      No               => return None,
-    };
-    if c == ref_client { Some(cseq) } else { None }
+    match by_client {
+      &Some((_,c,cseq)) if c == ref_client => Some(cseq),
+      _ => None,
+    }
   }
 
   pub fn for_transmit(&self, dest : ClientId) -> TransmitUpdate {
@@ -443,16 +443,15 @@ impl PreparedUpdate {
             Piece,
           };
           let ftg = if let Some(cseq) = Self::is_client(&by_client, dest) {
-            match by_client {
-              IRC::Predictable(_) => FTG::Recorded(cseq, None),
-              IRC::UpdateSvg(_) => FTG::Recorded(cseq, ns()),
-              IRC::Unpredictable(_) => if let Some(ns) = ns() {
+            match by_client.unwrap().0 {
+              WRC::Predictable => FTG::Recorded(cseq, None),
+              WRC::UpdateSvg => FTG::Recorded(cseq, ns()),
+              WRC::Unpredictable => if let Some(ns) = ns() {
                 FTG::Exactly(TUE::RecordedUnpredictable { piece, cseq, ns })
               } else {
                 error!("internal error: for_transmit PreparedUpdateEntry::Piece with RecordedUnpredictable but PieceOp no NS");
                 FTG::Piece
               }
-              _ => unreachable!(),
             }
           } else {
             FTG::Piece

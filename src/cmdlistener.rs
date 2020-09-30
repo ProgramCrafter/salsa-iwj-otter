@@ -370,8 +370,7 @@ impl UpdateHandler {
       },
       Online => {
         let estimate = updates.pcs.len() + updates.log.len();
-        let irc = IsResponseToClientOp::No;
-        let mut buf = PrepareUpdatesBuffer::new(g, irc, Some(estimate));
+        let mut buf = PrepareUpdatesBuffer::new(g, None, Some(estimate));
         for (upiece, uuop) in updates.pcs {
           let lens = TransparentLens { };
           buf.piece_update(upiece, uuop, &lens);
@@ -387,8 +386,7 @@ impl UpdateHandler {
     use UpdateHandler::*;
     match self {
       Bulk(bulk) => {
-        let irc = IsResponseToClientOp::No;
-        let mut buf = PrepareUpdatesBuffer::new(g, irc, None);
+        let mut buf = PrepareUpdatesBuffer::new(g, None, None);
         for (upiece, uuop) in bulk.pieces {
           let lens = TransparentLens { };
           buf.piece_update(upiece, uuop, &lens);
