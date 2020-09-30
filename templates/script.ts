@@ -47,7 +47,7 @@ type Pos = [number, number];
 type ClientSeq = number;
 type Generation = number;
 type UoKind = "Global"| "Piece" | "ClientExtra" | "GlobalExtra";
-type WhatResponseToClientOp = "Predictable" | "Unpredictable" | "UpdateSVG";
+type WhatResponseToClientOp = "Predictable" | "Unpredictable" | "UpdateSvg";
 
 type UoDescription = {
   kind: UoKind;
@@ -270,9 +270,15 @@ function some_keydown(e: KeyboardEvent) {
   if ((e as any).isComposing /* || e.keyCode === 229 */) return;
 
   let uo = uo_map[e.key];
-  if (uo === undefined) return;
+  if (uo === undefined || uo === null) return;
 
   console.log('KEY UO', e, uo);
+  if (uo.targets === null) {
+    return;
+  }
+  if (uo.wrc! == 'UpdateSvg' || uo.wrc! == 'Predictable') {
+    
+  }
 }
 
 // ----- clicking/dragging pieces -----
