@@ -7,8 +7,17 @@
      SPDX-License-Identifier: AGPL-3.0-or-later
      There is NO WARRANTY. -->
 <style>
-  div.uokeys: { }
-  div.uokey: { }
+  div.uokeys { display: flex; flex-wrap: wrap; }
+  div[class|=uokey] {
+    outline: 1px solid #000;
+    margin: 1px;
+    padding-left: 5px;
+    padding-right: 6.5px;
+  }
+  div.uokey-ClientExtra {
+    margin-left: auto;
+    margin-top: auto;
+  }
 </style>
 <h1>Hi {{nick | escape}}!</h1>
 <pre id="error"></pre>

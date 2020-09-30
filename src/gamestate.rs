@@ -89,7 +89,7 @@ pub trait Outline : Send + Debug {
 }
 
 #[derive(Debug,Copy,Clone,Serialize,Deserialize)]
-pub enum UoKind { Global, Piece, }
+pub enum UoKind { Global, Piece, GlobalExtra, }
 
 pub type UoKey = char;
 
@@ -274,6 +274,12 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
         desc: Html::lit("flip"),
       })
     }
+    out.push(UoDescription {
+      kind: UoKind::GlobalExtra,
+      def_key: 'l'.into(),
+      opname: "lower".to_string(),
+      desc: Html::lit("lower (send to bottom)"),
+    });
     self.add_ui_operations(&mut out)?;
     out
   }

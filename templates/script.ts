@@ -46,7 +46,7 @@ type PlayerId = string;
 type Pos = [number, number];
 type ClientSeq = number;
 type Generation = number;
-type UoKind = "Global"| "Piece" | "ClientExtra";
+type UoKind = "Global"| "Piece" | "ClientExtra" | "GlobalExtra";
 
 type UoDescription = {
   kind: UoKind;
@@ -103,6 +103,7 @@ var status_node : HTMLElement;
 var uos_node : HTMLElement;
 
 const uo_kind_prec : { [kind: string]: number } = {
+  'GlobalExtra' :  50,
   'Global'      : 100,
   'Piece'       : 200,
   'ClientExtra' : 500,
@@ -640,6 +641,7 @@ function test_swap_stack() {
 }
 
 function recompute_keybindings() {
+  uo_map = Object.create(null);
   for (let piece of Object.keys(pieces)) {
     let p = pieces[piece];
     if (p.held != us) continue;
@@ -681,8 +683,8 @@ function recompute_keybindings() {
   for (var kk of uo_keys) {
     let uo = uo_map[kk]!;
     let ent = document.createElement('div');
-    ent.setAttribute('class','uokey');
-    ent.innerHTML = '<b>' + kk + '</bb>' + uo.desc;
+    ent.setAttribute('class','uokey-'+uo.kind);
+    ent.innerHTML = '<b>' + kk + '</b> ' + uo.desc;
     out.appendChild(ent);
   }
   uos_node.firstChild!.replaceWith(out);
@@ -755,6 +757,7 @@ function startup() {
       update_oe : (e as any).className,
     })
   }
+  recompute_keybindings();
 
 //  test_swap_stack();
 }
