@@ -6,6 +6,10 @@
  <!-- Copyright 2020 Ian Jackson
      SPDX-License-Identifier: AGPL-3.0-or-later
      There is NO WARRANTY. -->
+<style>
+  div.uokeys: { }
+  div.uokey: { }
+</style>
 <h1>Hi {{nick | escape}}!</h1>
 <pre id="error"></pre>
 <p>
@@ -31,6 +35,9 @@
 {%- endfor %}
     </svg>
 
+  <div id="uos" style="height: 100px;">
+    <dev></div>
+  </div>
   <div id="log" style="overflow-y: scroll; height: 200px;">
 {% for ent in log %}
     <div>{{ ent.1.html | safe }}</div>

@@ -46,12 +46,25 @@ type PlayerId = string;
 type Pos = [number, number];
 type ClientSeq = number;
 type Generation = number;
+type UoKind = "Global"| "Piece" | "ClientExtra";
+
+type UoDescription = {
+  kind: UoKind;
+  def_key: string,
+  opname: string,
+  desc: string,
+}
+
+type UoRecord = UoDescription & {
+  targets: PieceId[] | null,
+}
 
 type PieceInfo = {
   held : PlayerId | null,
   cseq : number | null,
   z : number,
   zg : Generation,
+  uos : UoDescription[],
   uelem : SVGGraphicsElement,
   delem : SVGGraphicsElement,
   pelem : SVGGraphicsElement,
@@ -59,7 +72,7 @@ type PieceInfo = {
   last_seen_moved : DOMHighResTimeStamp | null, // non-0 means halo'd
 }
 
-let pieces : { [typeid: string]: PieceInfo } = Object.create(null);
+let pieces : { [piece: string]: PieceInfo } = Object.create(null);
 
 type MessageHandler = (op: Object) => void;
 type PieceHandler = (piece: PieceId, p: PieceInfo, info: Object) => void;
@@ -79,6 +92,7 @@ var us : string;
 var gen = 0;
 var cseq : ClientSeq = 0;
 var ctoken : string;
+var uo_map : { [k: string]: UoRecord | null } = Object.create(null);
 
 var svg_ns : string;
 var space : SVGGraphicsElement;
@@ -86,6 +100,13 @@ var pieces_marker : SVGGraphicsElement;
 var defs_marker : SVGGraphicsElement;
 var logdiv : HTMLElement;
 var status_node : HTMLElement;
+var uos_node : HTMLElement;
+
+const uo_kind_prec : { [kind: string]: number } = {
+  'Global'      : 100,
+  'Piece'       : 200,
+  'ClientExtra' : 500,
+}
 
 type PlayerInfo = {
   dasharray : string,
@@ -275,10 +296,12 @@ function drag_mousedown(e : MouseEvent) {
 function set_grab(piece: PieceId, p: PieceInfo, owner: PlayerId) {
   p.held = owner;
   redisplay_ancillaries(piece,p);
+  recompute_keybindings();
 }
 function set_ungrab(piece: PieceId, p: PieceInfo) {
   p.held = null;
   redisplay_ancillaries(piece,p);
+  recompute_keybindings();
 }
 
 function clear_halo(piece: PieceId, p: PieceInfo) {
@@ -439,6 +462,7 @@ type PieceStateMessage = {
   pos: Pos,
   z: number,
   zg: Generation,
+  uos: UoDescription[],
 }
 
 pieceops.Modify = <PieceHandler>function
@@ -462,9 +486,11 @@ function piece_modify(piece: PieceId, p: PieceInfo, info: PieceStateMessage,
   piece_set_zlevel(piece,p, (oldtop_piece)=>{
     p.z  = info.z;
     p.zg = info.zg;
+    p.uos = info.uos;
   });
   piece_checkconflict_nrda(piece,p,conflict_expected);
   redisplay_ancillaries(piece,p);
+  recompute_keybindings();
   console.log('MODIFY DONE');
 }
 
@@ -613,6 +639,55 @@ function test_swap_stack() {
   window.setTimeout(test_swap_stack, 1000);
 }
 
+function recompute_keybindings() {
+  for (let piece of Object.keys(pieces)) {
+    let p = pieces[piece];
+    if (p.held != us) continue;
+    for (var uo of p.uos) {
+      let currently = uo_map[uo.def_key];
+      if (currently === null) continue;
+      if (currently !== undefined) {
+	if (currently.opname != uo.opname) {
+	  uo_map[uo.def_key] = null;
+	  continue;
+	}
+      } else {
+	currently = {
+	  targets: [],
+	  ...uo
+	};
+	uo_map[uo.def_key] = currently;
+      }
+      currently.desc = currently.desc < uo.desc ? currently.desc : uo.desc;
+      currently.targets!.push(piece);
+    }
+  }
+  uo_map['W'] = {
+    kind: 'ClientExtra',
+    def_key: 'W',
+    opname: 'wrest',
+    desc: 'Enter wresting mode',
+    targets: null,
+  }
+  var uo_keys = Object.keys(uo_map);
+  uo_keys.sort(function (ak,bk) {
+    let a = uo_map[ak]!;
+    let b = uo_map[bk]!;
+    return uo_kind_prec[a.kind] - uo_kind_prec[b.kind]
+      || ak.localeCompare(bk);
+  });
+  let out = document.createElement('div');
+  out.setAttribute('class','uokeys');
+  for (var kk of uo_keys) {
+    let uo = uo_map[kk]!;
+    let ent = document.createElement('div');
+    ent.setAttribute('class','uokey');
+    ent.innerHTML = '<b>' + kk + '</bb>' + uo.desc;
+    out.appendChild(ent);
+  }
+  uos_node.firstChild!.replaceWith(out);
+}
+
 function startup() {
   var body = document.getElementById("main-body")!;
   ctoken = body.dataset.ctoken!;
@@ -624,6 +699,7 @@ function startup() {
   let dataload = JSON.parse(body.dataset.load!);
   players = dataload.players!;
   delete body.dataset.load;
+  uos_node = document.getElementById("uos")!;
 
   space = svg_element('space')!;
   pieces_marker = svg_element("pieces_marker")!;
