@@ -99,6 +99,7 @@ pub struct UoDescription {
   pub def_key: UoKey,
   pub opname: String,
   pub desc: Html,
+  pub wrc: WhatResponseToClientOp,
 }
 
 #[typetag::serde]
@@ -110,7 +111,8 @@ pub trait Piece : Outline + Send + Debug {
 
   fn ui_operation(&self,
                   _gs: &mut GameState, _player: PlayerId, _piece: PieceId,
-                  _def_key: char, _lens: &dyn Lens)
+                  _opname: &str, _wrc: WhatResponseToClientOp,
+                  _lens: &dyn Lens)
                   -> PieceUpdateResult {
     throw!(OE::BadOperation)
   }
@@ -265,9 +267,12 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
 
   #[throws(InternalError)]
   fn ui_operations(&self) -> Vec<UoDescription> {
+    type WRC = WhatResponseToClientOp;
+
     let mut out = vec![];
     if self.nfaces() > 1 {
       out.push(UoDescription {
+        wrc: WRC::UpdateSvg,
         kind: UoKind::Global,
         def_key: 'f'.into(),
         opname: "flip".to_string(),
@@ -276,6 +281,7 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
     }
     out.push(UoDescription {
       kind: UoKind::GlobalExtra,
+      wrc: WRC::Predictable,
       def_key: 'l'.into(),
       opname: "lower".to_string(),
       desc: Html::lit("lower (send to bottom)"),

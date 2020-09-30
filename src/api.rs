@@ -4,6 +4,8 @@
 
 use crate::imports::*;
 
+type WRC = WhatResponseToClientOp;
+
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiPiece<O : ApiPieceOp> {
   ctoken : RawToken,
@@ -120,8 +122,8 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
     if pc.held != None && pc.held != Some(player) {
       throw!(OnlineError::PieceHeld)
     };
-    let (update, logents) = form.op.op(gs,player,piece,p.as_ref(),&lens)?;
-    Ok::<_,ApiPieceOpError>((update, logents))
+    let (wrc, update, logents) = form.op.op(gs,player,piece,p.as_ref(),&lens)?;
+    Ok::<_,ApiPieceOpError>((wrc, update, logents))
   })() {
     Err(ReportViaUpdate(poe)) => {
       PrepareUpdatesBuffer::piece_report_error(
@@ -139,9 +141,9 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       warn!("api_piece_op ERROR {:?}: {:?}", &form, &err);
       Err(err)?;
     },
-    Ok((update, logents)) => {
+    Ok((wrc, update, logents)) => {
       let mut buf = PrepareUpdatesBuffer::new(g,
-          Some((WhatResponseToClientOp::Predictable, client, form.cseq)),
+                                              Some((wrc, client, form.cseq)),
                                               Some(1 + logents.len()));
       
       buf.piece_update(piece, update, &lens);
@@ -165,8 +167,7 @@ fn api_grab(form : Json<ApiPiece<ApiPieceGrab>>)
 impl ApiPieceOp for ApiPieceGrab {
   #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
-        p: &dyn Piece, lens: &dyn Lens)
-        -> (PieceUpdateOp<()>, Vec<LogEntry>) {
+        p: &dyn Piece, lens: &dyn Lens) -> PieceUpdateFromOp {
     let pl = gs.players.byid(player)?;
     let pc = gs.pieces.byid_mut(piece)?;
 
@@ -181,7 +182,8 @@ impl ApiPieceOp for ApiPieceGrab {
                      p.describe_pri(&lens.log_pri(piece, pc)).0)),
     };
 
-    (update, vec![logent])
+    (WhatResponseToClientOp::Predictable,
+     update, vec![logent])
   }
 }
 
@@ -197,8 +199,7 @@ fn api_ungrab(form : Json<ApiPiece<ApiPieceUngrab>>)
 impl ApiPieceOp for ApiPieceUngrab {
   #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
-        p: &dyn Piece, lens: &dyn Lens)
-        -> (PieceUpdateOp<()>, Vec<LogEntry>) {
+        p: &dyn Piece, lens: &dyn Lens) -> PieceUpdateFromOp {
     let pl = gs.players.byid(player).unwrap();
     let pc = gs.pieces.byid_mut(piece).unwrap();
 
@@ -213,7 +214,8 @@ impl ApiPieceOp for ApiPieceUngrab {
                      p.describe_pri(&lens.log_pri(piece, pc)).0)),
     };
 
-    (update, vec![logent])
+    (WhatResponseToClientOp::Predictable,
+     update, vec![logent])
   }
 }
 
@@ -230,12 +232,12 @@ fn api_raise(form : Json<ApiPiece<ApiPieceRaise>>)
 impl ApiPieceOp for ApiPieceRaise {
   #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, _: PlayerId, piece: PieceId,
-        _p: &dyn Piece, _: &dyn Lens)
-        -> (PieceUpdateOp<()>, Vec<LogEntry>) {
+        _p: &dyn Piece, _: &dyn Lens) -> PieceUpdateFromOp {
     let pc = gs.pieces.byid_mut(piece).unwrap();
     pc.zlevel = ZLevel { z : self.z, zg : gs.gen };
     let update = PieceUpdateOp::SetZLevel(pc.zlevel);
-    (update, vec![])
+    (WhatResponseToClientOp::Predictable,
+     update, vec![])
   }
 }
 
@@ -249,8 +251,7 @@ fn api_move(form : Json<ApiPiece<ApiPieceMove>>) -> impl response::Responder<'st
 impl ApiPieceOp for ApiPieceMove {
   #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, _: PlayerId, piece: PieceId,
-        _p: &dyn Piece, _lens: &dyn Lens)
-        -> (PieceUpdateOp<()>, Vec<LogEntry>) {
+        _p: &dyn Piece, _lens: &dyn Lens) -> PieceUpdateFromOp {
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let (pos, clamped) = self.0.clamped(gs.table_size);
     let logents = vec![];
@@ -262,14 +263,15 @@ impl ApiPieceOp for ApiPieceMove {
       ));
     }
     let update = PieceUpdateOp::Move(self.0);
-    (update, logents)
+    (WhatResponseToClientOp::Predictable,
+     update, logents)
   }
 }
 
 const DEFKEY_FLIP : UoKey = 'f';
 
 #[derive(Debug,Serialize,Deserialize)]
-struct ApiPieceUo (UoKey);
+struct ApiPieceUo { opname: String, wrc: WhatResponseToClientOp }
 #[post("/_/api/k", format="json", data="<form>")]
 #[throws(OE)]
 fn api_uo(form : Json<ApiPiece<ApiPieceUo>>) -> impl response::Responder<'static> {
@@ -278,24 +280,23 @@ fn api_uo(form : Json<ApiPiece<ApiPieceUo>>) -> impl response::Responder<'static
 impl ApiPieceOp for ApiPieceUo {
   #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
-        p: &dyn Piece, lens: &dyn Lens)
-        -> (PieceUpdateOp<()>, Vec<LogEntry>) {
-    let def_key = self.0;
-
+        p: &dyn Piece, lens: &dyn Lens) -> PieceUpdateFromOp {
     '_normal_global_ops__not_loop: loop {
       let pc = gs.pieces.byid_mut(piece)?;
       let pl = gs.players.byid(player)?;
-      let _: Impossible = match def_key {
+      let _: Impossible = match (self.opname.as_str(), self.wrc) {
 
-        DEFKEY_FLIP => {
+        ("flip", wrc@ WRC::UpdateSvg) => {
           let nfaces = p.nfaces();
           pc.face = (RawFaceId::from(pc.face) % nfaces).into();
-          return (PieceUpdateOp::Modify(()),
-                  vec![ LogEntry { html: Html(format!(
-                    "{} flipped {}",
-                    &htmlescape::encode_minimal(&pl.nick),
-                    p.describe_pri(&lens.log_pri(piece, pc)).0
-                  )) }])
+          return (
+            wrc,
+            PieceUpdateOp::Modify(()),
+            vec![ LogEntry { html: Html(format!(
+              "{} flipped {}",
+              &htmlescape::encode_minimal(&pl.nick),
+              p.describe_pri(&lens.log_pri(piece, pc)).0
+            )) }])
         },
 
         _ => break,
@@ -303,13 +304,13 @@ impl ApiPieceOp for ApiPieceUo {
     }
 
     '_abnormal_global_ops__notloop: loop {
-      let _: Impossible = match def_key {
+      let _: Impossible = match self {
 
         _ => break,
       };
     }
 
-    p.ui_operation(gs, player, piece, def_key, lens)?
+    p.ui_operation(gs, player, piece, &self.opname, self.wrc, lens)?
   }
 }
 

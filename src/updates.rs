@@ -72,7 +72,8 @@ pub enum PieceUpdateOp<NS> {
   SetZLevel(ZLevel),
 }
 
-pub type PieceUpdateFromOp = (PieceUpdateOp<()>, Vec<LogEntry>);
+pub type PieceUpdateFromOp = (WhatResponseToClientOp,
+                              PieceUpdateOp<()>, Vec<LogEntry>);
 pub type PieceUpdateResult = Result<PieceUpdateFromOp, ApiPieceOpError>;
 
 // ---------- for traansmission ----------
@@ -249,7 +250,7 @@ type IsResponseToClientOp = Option<(
   ClientId,
   ClientSequence,
 )>;
-#[derive(Debug,Copy,Clone)]
+#[derive(Debug,Copy,Clone,Serialize,Deserialize)]
 pub enum WhatResponseToClientOp {
   /// In PROTOCOL.md terms, a Client update
   Predictable,
