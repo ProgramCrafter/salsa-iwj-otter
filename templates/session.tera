@@ -42,7 +42,7 @@
       <defs id="defs{{ piece.0 }}">{{ piece.1 }}</defs>
 {%- endfor %}
     </svg>
-
+<p>
   <div id="uos" style="height: 100px;">
     <dev></div>
   </div>

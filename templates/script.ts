@@ -777,7 +777,7 @@ function startup() {
   }
   recompute_keybindings();
   space.addEventListener('mousedown', some_mousedown);
-  space.addEventListener('keydown',   some_keydown);
+  document.addEventListener('keydown',   some_keydown);
 }
 
 function doload(){
