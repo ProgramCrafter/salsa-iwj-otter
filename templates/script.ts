@@ -96,6 +96,7 @@ var gen = 0;
 var cseq : ClientSeq = 0;
 var ctoken : string;
 var uo_map : { [k: string]: UoRecord | null } = Object.create(null);
+var keyops_pieces : { [opname: string]: (uo: UoRecord) => void } = Object();
 
 var svg_ns : string;
 var space : SVGGraphicsElement;
@@ -290,16 +291,25 @@ function some_keydown(e: KeyboardEvent) {
   if (uo === undefined || uo === null) return;
 
   console.log('KEY UO', e, uo);
-  if (uo.targets === null) {
+  if (uo.kind == 'Client' || uo.kind == 'ClientExtra') {
+    let f = keyops_pieces[uo.opname];
     // xxx 'wrest'
+    // xxx 'lower'
+    f(uo);
     return;
   }
-  // xxx 'lower'
   if (!(uo.kind == 'Global' || uo.kind == 'GlobalExtra'))
     throw 'bad kind '+uo.kind;
 
-  if (uo.wrc! == 'UpdateSvg' || uo.wrc! == 'Predictable') {
-    
+  if (uo.wrc == 'UpdateSvg' || uo.wrc == 'Predictable') {
+    for (var piece of uo.targets!) {
+      let p = pieces[piece]!;
+      api_piece(api, 'k', piece, p, { opname: uo.opname, wrc: uo.wrc });
+      if (uo.wrc == 'UpdateSvg') {
+	p.cseq_updatesvg = p.cseq;
+	redisplay_ancillaries(piece,p);
+      }
+    }
   }
 }
 
@@ -428,13 +438,19 @@ function redisplay_ancillaries(piece: PieceId, p: PieceInfo) {
     }
   }
 
-  if (p.last_seen_moved != null) {
-    let nelem = ancillary_node(piece, 'yellow');
+  let halo_colour = null;
+  if (p.cseq_updatesvg != null) {
+    halo_colour = 'purple';
+  } else if (p.last_seen_moved != null) {
+    halo_colour = 'yellow';
+  }
+  if (halo_colour != null) {
+    let nelem = ancillary_node(piece, halo_colour);
     if (p.held != null) {
       nelem.setAttributeNS(null,'stroke-width','2px');
     }
     p.pelem.prepend(nelem);
-  }
+  } 
   if (p.held != null) {
     let da = players[p.held!]!.dasharray;
     let nelem = ancillary_node(piece, 'black');
@@ -677,12 +693,21 @@ pieceops.SetZLevel = <PieceHandler>function
 }
 
 messages.Recorded = <MessageHandler>function
-(j: { piece: PieceId, cseq: ClientSeq, gen: Generation,
-      zg: Generation|null } ) {
+(j: { piece: PieceId, cseq: ClientSeq, gen: Generation
+      zg: Generation|null, svg: string | null } ) {
   let piece = j.piece;
   let p = pieces[piece]!;
   if (p.cseq != null && j.cseq >= p.cseq) {
     p.cseq = null;
+  }
+  if (p.cseq_updatesvg != null && j.cseq >= p.cseq_updatesvg) {
+    p.cseq_updatesvg = null;
+    redisplay_ancillaries(piece,p);
+  }
+  if (j.svg != null) {
+    p.delem.innerHTML = j.svg;
+    p.pelem= piece_element('piece',piece)!;
+    redisplay_ancillaries(piece,p);
   }
   if (j.zg != null) {
     var zg_new = j.zg; // type narrowing doesn't propagate :-/

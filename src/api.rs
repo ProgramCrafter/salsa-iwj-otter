@@ -288,7 +288,7 @@ impl ApiPieceOp for ApiPieceUo {
 
         ("flip", wrc@ WRC::UpdateSvg) => {
           let nfaces = p.nfaces();
-          pc.face = (RawFaceId::from(pc.face) % nfaces).into();
+          pc.face = ((RawFaceId::from(pc.face) + 1) % nfaces).into();
           return (
             wrc,
             PieceUpdateOp::Modify(()),
