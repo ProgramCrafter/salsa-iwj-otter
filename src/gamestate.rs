@@ -279,13 +279,6 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
         desc: Html::lit("flip"),
       })
     }
-    out.push(UoDescription {
-      kind: UoKind::GlobalExtra,
-      wrc: WRC::Predictable,
-      def_key: 'l'.into(),
-      opname: "lower".to_string(),
-      desc: Html::lit("lower (send to bottom)"),
-    });
     self.add_ui_operations(&mut out)?;
     out
   }

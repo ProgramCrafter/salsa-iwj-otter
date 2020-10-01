@@ -46,7 +46,7 @@ type PlayerId = string;
 type Pos = [number, number];
 type ClientSeq = number;
 type Generation = number;
-type UoKind = "Global"| "Piece" | "ClientExtra" | "GlobalExtra";
+type UoKind = 'Client' | "Global"| "Piece" | "ClientExtra" | "GlobalExtra";
 type WhatResponseToClientOp = "Predictable" | "Unpredictable" | "UpdateSvg";
 
 type UoDescription = {
@@ -64,6 +64,7 @@ type UoRecord = UoDescription & {
 type PieceInfo = {
   held : PlayerId | null,
   cseq : number | null,
+  cseq_updatesvg : number | null,
   z : number,
   zg : Generation,
   uos : UoDescription[],
@@ -212,9 +213,11 @@ function piece_element(base: string, piece: PieceId): SVGGraphicsElement | null
 
 function recompute_keybindings() {
   uo_map = Object.create(null);
+  let all_targets = [];
   for (let piece of Object.keys(pieces)) {
     let p = pieces[piece];
     if (p.held != us) continue;
+    all_targets.push(piece);
     for (var uo of p.uos) {
       let currently = uo_map[uo.def_key];
       if (currently === null) continue;
@@ -234,14 +237,28 @@ function recompute_keybindings() {
       currently.targets!.push(piece);
     }
   }
-  uo_map['W'] = {
-    kind: 'ClientExtra',
+  let add_uo = function(targets: PieceId[] | null, uo: UoDescription) {
+    uo_map[uo.def_key] = {
+      targets: targets,
+      ...uo
+    };
+  };
+  if (all_targets.length) {
+    add_uo(all_targets, {
+      def_key: 'l',
+      kind: 'Client',
+      wrc: 'Predictable',
+      opname: "lower",
+      desc: "lower (send to bottom)",
+    });
+  }
+  add_uo(null, {
     def_key: 'W',
+    kind: 'ClientExtra',
     opname: 'wrest',
     desc: 'Enter wresting mode',
-    targets: null,
     wrc: 'Predictable',
-  }
+  });
   var uo_keys = Object.keys(uo_map);
   uo_keys.sort(function (ak,bk) {
     let a = uo_map[ak]!;
@@ -274,8 +291,13 @@ function some_keydown(e: KeyboardEvent) {
 
   console.log('KEY UO', e, uo);
   if (uo.targets === null) {
+    // xxx 'wrest'
     return;
   }
+  // xxx 'lower'
+  if (!(uo.kind == 'Global' || uo.kind == 'GlobalExtra'))
+    throw 'bad kind '+uo.kind;
+
   if (uo.wrc! == 'UpdateSvg' || uo.wrc! == 'Predictable') {
     
   }
