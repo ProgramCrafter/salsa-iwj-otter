@@ -715,6 +715,7 @@ mod library_add {
         posd: None,
         count: Some(to_add as u32),
         face: None,
+        pinned: Some(false),
         info: Box::new(spec),
       };
       Poor(vec![ Insn::AddPieces(spec) ],
@@ -858,7 +859,7 @@ mod library_add {
       };
       let spec = PiecesSpec {
         pos: Some(pos),
-        posd: None, count: Some(1), face: None,
+        posd: None, count: Some(1), face: None, pinned: Some(false),
         info: Box::new(spec),
       };
       let insn = Insn::AddPieces(spec);

@@ -57,6 +57,7 @@ pub struct PieceState {
   pub face : FaceId,
   pub held : Option<PlayerId>,
   pub zlevel : ZLevel,
+  pub pinned: bool,
   pub gen : Generation,
   pub lastclient : ClientId,
   pub gen_before_lastclient : Generation,
@@ -230,6 +231,7 @@ impl PieceState {
       svg        : p.make_defs(pri)?,
       z          : self.zlevel.z,
       zg         : self.zlevel.zg,
+      pinned     : self.pinned,
       uos        : p.ui_operations()?,
     }
   }

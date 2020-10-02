@@ -85,6 +85,7 @@ pub struct PiecesSpec {
   pub posd : Option<Pos>,
   pub count : Option<u32>,
   pub face : Option<FaceId>,
+  pub pinned: Option<bool>,
   #[serde(flatten)]
   pub info : Box<dyn PieceSpec>,
 }

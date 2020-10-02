@@ -253,7 +253,7 @@ fn execute_game_insn(cs: &CommandStream,
        Fine)
     },
 
-    AddPieces(PiecesSpec{ pos,posd,count,face,info }) => {
+    AddPieces(PiecesSpec{ pos,posd,count,face,pinned,info }) => {
       let modperm = ig.modify_pieces();
       let ig = &mut **ig;
       let gs = &mut ig.gs;
@@ -275,6 +275,7 @@ fn execute_game_insn(cs: &CommandStream,
           zlevel: ZLevel { z, zg: gs.gen },
           lastclient: Default::default(),
           gen_before_lastclient: Generation(0),
+          pinned: pinned.unwrap_or(false),
           gen: gs.gen,
           pos, face,
         };
