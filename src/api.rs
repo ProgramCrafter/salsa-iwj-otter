@@ -21,6 +21,13 @@ trait ApiPieceOp : Debug {
         p: &dyn Piece,
         lens: &dyn Lens /* used for LogEntry and PieceId but not Pos */)
         -> PieceUpdateFromOp;
+
+  #[throws(OnlineError)]
+  fn check_held(&self, pc: &PieceState, player: PlayerId) {
+    if pc.held != None && pc.held != Some(player) {
+      throw!(OnlineError::PieceHeld)
+    }
+  }
 }
 
 #[derive(Error,Debug)]
@@ -119,9 +126,7 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       else { pc.gen };
 
     if u_gen > q_gen { throw!(PieceOpError::Conflict) }
-    if pc.held != None && pc.held != Some(player) {
-      throw!(OnlineError::PieceHeld)
-    };
+    form.op.check_held(pc,player)?;
     let (wrc, update, logents) = form.op.op(gs,player,piece,p.as_ref(),&lens)?;
     Ok::<_,ApiPieceOpError>((wrc, update, logents))
   })() {
