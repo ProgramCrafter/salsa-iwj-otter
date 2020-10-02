@@ -350,22 +350,14 @@ function some_mousedown(e : MouseEvent) {
   if (e.button != 0) { return }
   if (e.altKey) { return }
   if (e.metaKey) { return }
-  if (e.shiftKey) {
-    if (e.ctrlKey) {
-      return;
-    } else {
-      // group select
-    }
+  if (e.ctrlKey) {
+    return;
   } else {
-    if (e.ctrlKey) {
-      // region indication
-    } else {
-      drag_mousedown(e);
-    }
+    drag_mousedown(e, e.shiftKey);
   }
 }
 
-function drag_mousedown(e : MouseEvent) {
+function drag_mousedown(e : MouseEvent, shifted: boolean) {
   var target = e.target as SVGGraphicsElement; // we check this just now!
   var piece = target.dataset.piece!;
   if (!piece) { return; }
@@ -376,6 +368,15 @@ function drag_mousedown(e : MouseEvent) {
 
   drag_pieces = [];
   if (held == null) {
+    if (!shifted) {
+      for (let tpiece of Object.keys(pieces)) {
+	let tp = pieces[tpiece]!;
+	if (tp.held == us) {
+	  set_ungrab(tpiece,tp);
+	  api_piece(api, 'ungrab', tpiece,tp, { });
+	}
+      }
+    }
     dragging = DRAGGING.MAYBE_GRAB;
     drag_add_piece(piece,p);
     set_grab(piece,p, us);
