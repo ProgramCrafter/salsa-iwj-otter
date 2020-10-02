@@ -5,3 +5,4 @@ templates/CC-BY-SA-3.0
 templates/CC-BY-SA-4.0
 save/lock
 /library/*/*.usvg
+*.tmp
