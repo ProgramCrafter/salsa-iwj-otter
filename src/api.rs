@@ -320,8 +320,9 @@ fn api_pin(form : Json<ApiPiece<ApiPiecePin>>) -> impl response::Responder<'stat
   api_piece_op(form)
 }
 impl ApiPieceOp for ApiPiecePin {
+  #[throws(ApiPieceOpError)]
   fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
-        p: &dyn Piece, lens: &dyn Lens) -> Result<PieceUpdateFromOp,ApiPieceOpError> {
+        p: &dyn Piece, lens: &dyn Lens) -> PieceUpdateFromOp {
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let pl = gs.players.byid(player).unwrap();
     pc.pinned = self.0;
@@ -332,8 +333,8 @@ impl ApiPieceOp for ApiPiecePin {
       if pc.pinned { "pinned" } else { "unpinned" },
       p.describe_pri(&lens.log_pri(piece, pc)).0
     ))}];
-    Ok((WhatResponseToClientOp::Predictable,
-     update, logents))
+    (WhatResponseToClientOp::Predictable,
+     update, logents)
   }
 }
 
