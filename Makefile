@@ -41,7 +41,10 @@ USVG_PROCESSOR = usvg-processor
 LIBRARY_PROCESS_SVG = ./$(USVG_PROCESSOR) $@ $(wordlist 1,2,$^) '$(USVG) $(USVG_OPTIONS)'
 $(LIBRARY_FILES): $(USVG_PROCESSOR) Makefile
 
-assets: templates/script.js libraries
+assets: templates/script.js templates/LICENCE.txt libraries
+
+templates/LICENCE.txt: templates/%.txt: %
+	cp $< $@.new && mv -f $@.new $@
 
 libraries: $(LIBRARY_FILES)
 

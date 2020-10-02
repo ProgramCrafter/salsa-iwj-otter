@@ -24,7 +24,7 @@ fn index() -> Template {
   Template::render("test",&c)
 }
 
-const RESOURCES : &[&str] = &["script.js", "style.css"];
+const RESOURCES : &[&str] = &["script.js", "style.css", "LICENCE.txt"];
 
 #[derive(Debug)]
 struct CheckedResourceLeaf { pub safe : &'static str }
