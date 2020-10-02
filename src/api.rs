@@ -312,6 +312,31 @@ impl ApiPieceOp for ApiPieceMove {
   }
 }
 
+#[derive(Debug,Serialize,Deserialize)]
+struct ApiPiecePin (bool);
+#[post("/_/api/pin", format="json", data="<form>")]
+#[throws(OE)]
+fn api_pin(form : Json<ApiPiece<ApiPiecePin>>) -> impl response::Responder<'static> {
+  api_piece_op(form)
+}
+impl ApiPieceOp for ApiPiecePin {
+  fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
+        p: &dyn Piece, lens: &dyn Lens) -> Result<PieceUpdateFromOp,ApiPieceOpError> {
+    let pc = gs.pieces.byid_mut(piece).unwrap();
+    let pl = gs.players.byid(player).unwrap();
+    pc.pinned = self.0;
+    let update = PieceUpdateOp::Modify(());
+    let logents = vec![ LogEntry { html: Html(format!(
+      "{} {} {}",
+      &htmlescape::encode_minimal(&pl.nick),
+      if pc.pinned { "pinned" } else { "unpinned" },
+      p.describe_pri(&lens.log_pri(piece, pc)).0
+    ))}];
+    Ok((WhatResponseToClientOp::Predictable,
+     update, logents))
+  }
+}
+
 const DEFKEY_FLIP : UoKey = 'f';
 
 #[derive(Debug,Serialize,Deserialize)]
