@@ -193,6 +193,45 @@ impl ApiPieceOp for ApiPieceGrab {
 }
 
 #[derive(Debug,Serialize,Deserialize)]
+struct ApiPieceWrest {
+}
+#[post("/_/api/wrest", format="json", data="<form>")]
+#[throws(OE)]
+fn api_wrest(form : Json<ApiPiece<ApiPieceWrest>>)
+            -> impl response::Responder<'static> {
+  api_piece_op(form)
+}
+impl ApiPieceOp for ApiPieceWrest {
+  #[throws(OnlineError)]
+  fn check_held(&self, _pc: &PieceState, _player: PlayerId) { }
+
+  #[throws(ApiPieceOpError)]
+  fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
+        p: &dyn Piece, lens: &dyn Lens) -> PieceUpdateFromOp {
+    let pl = gs.players.byid(player)?;
+    let pc = gs.pieces.byid_mut(piece)?;
+    let pcs = p.describe_pri(&lens.log_pri(piece, pc)).0;
+
+    let was = pc.held;
+    pc.held = Some(player);
+    let was = was.and_then(|p| gs.players.get(p));    
+
+    let update = PieceUpdateOp::Modify(());
+
+    let pls = &htmlescape::encode_minimal(&pl.nick);
+
+    let logent = LogEntry { html : Html(match was {
+        Some(was) => format!("{} wrested {} from {}", pls, pcs,
+                             &htmlescape::encode_minimal(&was.nick)),
+        None => format!("{} wrested {}", pls, pcs),
+    })};
+
+    (WhatResponseToClientOp::Predictable,
+     update, vec![logent])
+  }
+}
+
+#[derive(Debug,Serialize,Deserialize)]
 struct ApiPieceUngrab {
 }
 #[post("/_/api/ungrab", format="json", data="<form>")]
@@ -325,6 +364,7 @@ pub fn mount(rocket_instance: Rocket) -> Rocket {
     api_ungrab,
     api_raise,
     api_move,
+    api_wrest,
     api_uo,
   ])
 }

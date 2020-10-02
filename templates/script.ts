@@ -375,7 +375,16 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   let held = p.held;
 
   drag_pieces = [];
-  if (held == null) {
+  if (held == us) {
+    dragging = DRAGGING.MAYBE_UNGRAB;
+    drag_add_piece(piece,p); // contrive to have this one first
+    for (let tpiece of Object.keys(pieces)) {
+      if (tpiece == piece) continue;
+      let tp = pieces[tpiece]!;
+      if (tp.held != us) continue;
+      drag_add_piece(tpiece,tp);
+    }
+  } else if (held == null || wresting) {
     if (!shifted) {
       for (let tpiece of Object.keys(pieces)) {
 	let tp = pieces[tpiece]!;
@@ -388,16 +397,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     dragging = DRAGGING.MAYBE_GRAB;
     drag_add_piece(piece,p);
     set_grab(piece,p, us);
-    api_piece(api, 'grab', piece,p, { });
-  } else if (held == us) {
-    dragging = DRAGGING.MAYBE_UNGRAB;
-    drag_add_piece(piece,p); // contrive to have this one first
-    for (let tpiece of Object.keys(pieces)) {
-      if (tpiece == piece) continue;
-      let tp = pieces[tpiece]!;
-      if (tp.held != us) continue;
-      drag_add_piece(tpiece,tp);
-    }
+    api_piece(api, wresting ? 'wrest' : 'grab', piece,p, { });
   } else {
     add_log_message('That piece is held by another player.');
     return;
