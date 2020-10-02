@@ -1,10 +1,9 @@
 <!-- Copyright 2020 Ian Jackson
      SPDX-License-Identifier: AGPL-3.0-or-later
-     There is NO WARRANTY.
-     Source code for this running version is at /src -->
+     There is NO WARRANTY. -->
 <html>
 <head>
-<link rel="license" href="/_/LICENCE.txt">
+<link rel="license" href="/_/libre.html">
 </head>
 <body id="loading_body">
 <h1 id="loading_token" data-ptoken="{{ ptoken }}">Loading!</h1>

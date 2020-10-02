@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <title>otter - Free Software, source code, legal</title>
+  </head>
+<body>
+
+<h1>otter - Online TableTop Environment Renderer</h1>
+<p>
+  This server is running otter, the Online TableTop Environment
+  Renderer.
+<p>
+  otter is Free Software, according to the <a href="AGPLv3">GNU Affero General
+  Public License, version 3</a> or (at your option) any later version.
+  There is NO WARRANTY.
+<p>
+  You can download <a href="/_/src/">source code for this running server
+  version</a>.  That includes the source code for all the included
+  game piece pictures (shape libraries).
+<p>
+  The shape libraries have a variety of licences.
+  All those included with otter are available under at least
+  <a href="CC-BY-SA-3.0">CC-BY-SA 3.0</a> or
+  <a href="CC-BY-SA-4.0">CC-BY-SA 4.0</a>.
+  Check the source in "view source" in your browser, or the browser
+  Developer Tools (in Firefox, use Inspector);
+  that will also tell you the library piece filename.
+  If you want to edit them you will probably
+  want to start with the actual source code,
+  because the SVG pieces as sent by the server have generally
+  been fed though an SVG distiller.
+<p>
+  <a href="/_/LICENCE">Further information about licensing</a>
+  etc. is available here, and of course also in the source code.
+</body>
+</html>

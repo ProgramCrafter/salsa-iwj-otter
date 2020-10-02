@@ -1,4 +1,4 @@
-{# -*- HTML -*- -#}<body id="main-body" 
+<body id="main-body" {# -*- HTML -*- -#}
       data-ctoken="{{ctoken}}"
       data-us="{{player}}"
       data-gen="{{gen}}"
@@ -51,26 +51,7 @@
 
 <hr>
 <address>
-  This server is running otter, the Online TableTop Environment
-  Renderer.
-<p>
-  otter is Free Software, according to the GNU Affero General
-  Public License, version 3 or (at your option) any later version.
-  There is NO WARRANTY.
-  You can download <a href="/src/">source code for this running server
-  version</a>.  That includes the source code for all the included
-  game piece pictures (shape libraries).
-<p>
-  The shape libraries have a variety of licences.  All those included
-  with otter are available under at least CC-BY-SA 3.0 or CC-BY-SA
-  4.0.  Check the source in "view source" in your browser, or the
-  browser Developer Tools (in Firefox, use Inspector); that will also
-  tell you the library piece filename.  If you want to edit them you
-  will probably want to start with the actual source code, because the
-  SVG pieces as sent by the server have generally been fed though an
-  SVG distiller.
-<p>
-  <a href="/_/LICENCE.txt">Further information about licensing</a>
-  etc. is available here, and of course also in the source code.
-</body>
-</html>
+This server is running otter, the Online TableTop Environment
+Renderer.  otter and its shape (piece picture) libraries
+are <a href="/_/libre">Free Software</a> and come with NO
+WARRANTY.

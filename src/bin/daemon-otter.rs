@@ -11,6 +11,7 @@
 
 use rocket::{get,routes};
 use rocket_contrib::serve::StaticFiles;
+use rocket::response::Content;
 
 use otter::imports::*;
 
@@ -24,10 +25,22 @@ fn index() -> Template {
   Template::render("test",&c)
 }
 
-const RESOURCES : &[&str] = &["script.js", "style.css", "LICENCE.txt"];
+const RESOURCES : &[(&'static str, ContentType)] = &[
+  ("script.js",    ContentType::JavaScript),
+  ("style.css",    ContentType::JavaScript),
+  ("LICENCE",      ContentType::Plain),
+  ("libre",        ContentType::HTML),
+  ("AGPLv3",       ContentType::Plain),
+  ("CC-BY-SA-3.0", ContentType::Plain),
+  ("CC-BY-SA-4.0", ContentType::Plain),
+];
 
 #[derive(Debug)]
-struct CheckedResourceLeaf { pub safe : &'static str }
+struct CheckedResourceLeaf {
+  safe_leaf: &'static str,
+  ctype: ContentType,
+}
+
 #[derive(Error,Debug)]
 #[error("not a valid resource path")]
 struct UnknownResource{}
@@ -35,8 +48,10 @@ struct UnknownResource{}
 impl<'r> FromParam<'r> for CheckedResourceLeaf {
   type Error = UnknownResource;
   fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
-    for &safe in RESOURCES {
-      if safe == param.as_str() { return Ok(CheckedResourceLeaf{ safe }) }
+    for &(safe_leaf, ref ctype) in RESOURCES {
+      if safe_leaf == param.as_str() {
+        return Ok(CheckedResourceLeaf { safe_leaf, ctype: ctype.clone() })
+      }
     }
     Err(UnknownResource{})
   }
@@ -71,8 +86,10 @@ fn updates<'r>(ctoken : InstanceAccess<ClientId>, gen: u64,
 }  
 
 #[get("/_/<leaf>")]
-fn resource(leaf : CheckedResourceLeaf) -> io::Result<NamedFile> {
-  NamedFile::open(format!("{}/{}", config().template_dir, leaf.safe))
+#[throws(io::Error)]
+fn resource<'r>(leaf : CheckedResourceLeaf) -> impl Responder<'r> {
+  let path = format!("{}/{}", config().template_dir, leaf.safe_leaf);
+  Content(leaf.ctype, NamedFile::open(path)?)
 }  
 
 #[throws(StartupError)]
@@ -145,7 +162,7 @@ fn main() {
       resource,
       updates,
     ])
-    .mount("/src", StaticFiles::from(bundled_sources))
+    .mount("/_/src", StaticFiles::from(bundled_sources))
     ;
 
   let r = otter::session::mount(r);
