@@ -9,10 +9,15 @@ open STDOUT, '>', "$out.tmp" or die $!;
 open L, '<', $lic or die $!;
 open STDIN, "<", $in or die $!;
 
+$!=0; my $git = `git rev-parse HEAD`;       die "$? $!" if $! || $?;
+$!=0; my $plus = `git status --porcelain`;  die "$? $!" if $! || $?;
+chomp $git; chomp $plus;
+$git .= "+" if length $plus;
+
 sub add_lic () {
   while (<L>) {
     next unless m{^\s*SPDX-License-Identifier:\s+(\S.*?)\s*$};
-    print "<!-- otter $out $1, see $lic -->\n" or die $!;
+    print "<!-- otter.git#$git $out $1, see $lic -->\n" or die $!;
     return;
   }
   die "no spdx in $lic ?";
