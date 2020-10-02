@@ -43,6 +43,11 @@
   <div id="uos" style="height: 100px;">
     <dev></div>
   </div>
+<div class="uokeys">
+<div class="uokey"><strong>Mouse</strong> select/deselect/drag</div>
+<div class="uokey"><strong>shift</strong> multiple selection</div>
+</div>
+<p>
   <div id="log" style="overflow-y: scroll; height: 200px;">
 {% for ent in log %}
     <div>{{ ent.1.html | safe }}</div>
