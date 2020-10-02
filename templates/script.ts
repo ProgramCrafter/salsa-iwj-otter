@@ -96,7 +96,7 @@ var gen = 0;
 var cseq : ClientSeq = 0;
 var ctoken : string;
 var uo_map : { [k: string]: UoRecord | null } = Object.create(null);
-var keyops_pieces : { [opname: string]: (uo: UoRecord) => void } = Object();
+var keyops_local : { [opname: string]: (uo: UoRecord) => void } = Object();
 
 var svg_ns : string;
 var space : SVGGraphicsElement;
@@ -105,6 +105,7 @@ var defs_marker : SVGGraphicsElement;
 var logdiv : HTMLElement;
 var status_node : HTMLElement;
 var uos_node : HTMLElement;
+var wresting: boolean;
 
 const uo_kind_prec : { [kind: string]: number } = {
   'GlobalExtra' :  50,
@@ -257,7 +258,7 @@ function recompute_keybindings() {
     def_key: 'W',
     kind: 'ClientExtra',
     opname: 'wrest',
-    desc: 'Enter wresting mode',
+    desc: wresting ? 'Exit wresting mode' : 'Enter wresting mode',
     wrc: 'Predictable',
   });
   var uo_keys = Object.keys(uo_map);
@@ -292,7 +293,7 @@ function some_keydown(e: KeyboardEvent) {
 
   console.log('KEY UO', e, uo);
   if (uo.kind == 'Client' || uo.kind == 'ClientExtra') {
-    let f = keyops_pieces[uo.opname];
+    let f = keyops_local[uo.opname];
     // xxx 'wrest'
     // xxx 'lower'
     f(uo);
@@ -311,6 +312,13 @@ function some_keydown(e: KeyboardEvent) {
       }
     }
   }
+}
+
+keyops_local['wrest'] = function (uo: UoRecord) {
+  wresting = !wresting;
+  document.getElementById('wresting-warning')!.innerHTML = !wresting ? "" :
+      " <strong>(wresting mode!)</strong>";
+  recompute_keybindings();
 }
 
 // ----- clicking/dragging pieces -----

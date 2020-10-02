@@ -16,7 +16,7 @@
     margin-top: auto;
   }
 </style>
-<h1>Hi {{nick | escape}}!</h1>
+<h1>Hi {{nick | escape}}<span id="wresting-warning"></div></h1>
 <pre id="error"></pre>
 <p>
 <div id="status">nothing</div>
