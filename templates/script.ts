@@ -67,6 +67,7 @@ type PieceInfo = {
   cseq_updatesvg : number | null,
   z : number,
   zg : Generation,
+  pinned: boolean,
   uos : UoDescription[],
   uelem : SVGGraphicsElement,
   delem : SVGGraphicsElement,
@@ -253,6 +254,29 @@ function recompute_keybindings() {
       opname: "lower",
       desc: "lower (send to bottom)",
     });
+  }
+  if (all_targets.length) {
+    let got = 0;
+    for (let t of all_targets) {
+      got |= 1 << Number(pieces[t]!.pinned);
+    }
+    if (got == 1) {
+      add_uo(all_targets, {
+	def_key: 'P',
+	kind: 'ClientExtra',
+	opname: 'pin',
+	desc: 'Pin to table',
+	wrc: 'Predictable',
+      });
+    } else if (got == 2) {
+      add_uo(all_targets, {
+	def_key: 'P',
+	kind: 'ClientExtra',
+	opname: 'unpin',
+	desc: 'Unpin from table',
+	wrc: 'Predictable',
+      });
+    }
   }
   add_uo(null, {
     def_key: 'W',
@@ -584,6 +608,7 @@ type PieceStateMessage = {
   pos: Pos,
   z: number,
   zg: Generation,
+  pinned: boolean,
   uos: UoDescription[],
 }
 
@@ -605,6 +630,7 @@ function piece_modify(piece: PieceId, p: PieceInfo, info: PieceStateMessage,
   p.uelem.setAttributeNS(null, "x", info.pos[0]+"");
   p.uelem.setAttributeNS(null, "y", info.pos[1]+"");
   p.held = info.held;
+  p.pinned = info.pinned;
   piece_set_zlevel(piece,p, (oldtop_piece)=>{
     p.z  = info.z;
     p.zg = info.zg;
