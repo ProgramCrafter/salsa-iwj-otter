@@ -4,16 +4,15 @@
       data-gen="{{gen}}"
       data-load="{{ load | escape }}">
 <style>
-  div.uokeys { display: flex; flex-wrap: wrap; }
+  div[class=uos] { display: flex; flex-wrap: wrap; }
   div[class|=uokey] {
     outline: 1px solid #000;
     margin: 1px;
     padding-left: 5px;
     padding-right: 6.5px;
   }
-  div.uokey-ClientExtra {
-    margin-left: auto;
-    margin-top: auto;
+  div[class=uokey-ClientExtra] {
+    align-self: end;
   }
 </style>
 <h1>Hi {{nick | escape}}<span id="wresting-warning"></div></h1>
@@ -40,13 +39,13 @@
 {%- endfor %}
     </svg>
 <p>
-  <div id="uos" style="height: 100px;">
-    <dev></div>
+  <div id="uos" class="uos" style="height: 100px;">
+    <div class="uos-mid" id="uos-mid" style="margin-left: auto; margin-top: auto;"></div>
   </div>
-<div class="uokeys">
-<div class="uokey"><strong>Mouse</strong> select/deselect/drag</div>
-<div class="uokey"><strong>shift</strong> multiple selection</div>
-</div>
+  <div class="uos">
+    <div class="uokey"><strong>Mouse</strong> select/deselect/drag</div>
+    <div class="uokey"><strong>shift</strong> multiple selection</div>
+  </div>
 <p>
   <div id="log" style="overflow-y: scroll; height: 200px;">
 {% for ent in log %}

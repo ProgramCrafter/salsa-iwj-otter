@@ -110,6 +110,7 @@ var wresting: boolean;
 
 const uo_kind_prec : { [kind: string]: number } = {
   'GlobalExtra' :  50,
+  'Client'      :  70,
   'Global'      : 100,
   'Piece'       : 200,
   'ClientExtra' : 500,
@@ -292,16 +293,28 @@ function recompute_keybindings() {
     return uo_kind_prec[a.kind] - uo_kind_prec[b.kind]
       || ak.localeCompare(bk);
   });
-  let out = document.createElement('div');
-  out.setAttribute('class','uokeys');
+  let mid_elem = null;
+  for (let celem = uos_node.firstElementChild;
+       celem != null;
+       celem = nextelem) {
+    var nextelem = celem.nextElementSibling
+    let cid = celem.getAttribute("id");
+    if (cid == "uos-mid") mid_elem = celem;
+    else if (celem.getAttribute("class") == 'uos-mid') ;
+    else celem.remove();
+  }
   for (var kk of uo_keys) {
     let uo = uo_map[kk]!;
+    let prec = uo_kind_prec[uo.kind];
     let ent = document.createElement('div');
     ent.setAttribute('class','uokey-'+uo.kind);
     ent.innerHTML = '<b>' + kk + '</b> ' + uo.desc;
-    out.appendChild(ent);
+    if (prec < 400) {
+      uos_node.insertBefore(ent, mid_elem);
+    } else {
+      uos_node.appendChild(ent);
+    }
   }
-  uos_node.firstChild!.replaceWith(out);
 }
 
 function some_keydown(e: KeyboardEvent) {
