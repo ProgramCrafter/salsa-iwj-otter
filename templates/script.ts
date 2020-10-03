@@ -355,7 +355,8 @@ function some_keydown(e: KeyboardEvent) {
 keyops_local['wrest'] = function (uo: UoRecord) {
   wresting = !wresting;
   document.getElementById('wresting-warning')!.innerHTML = !wresting ? "" :
-      " <strong>(wresting mode!)</strong>";
+    " <strong>(wresting mode!)</strong>";
+  ungrab_all();
   recompute_keybindings();
 }
 
@@ -438,13 +439,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     }
   } else if (held == null || wresting) {
     if (!shifted) {
-      for (let tpiece of Object.keys(pieces)) {
-	let tp = pieces[tpiece]!;
-	if (tp.held == us) {
-	  set_ungrab(tpiece,tp);
-	  api_piece(api, 'ungrab', tpiece,tp, { });
-	}
-      }
+      ungrab_all();
     }
     dragging = DRAGGING.MAYBE_GRAB;
     drag_add_piece(piece,p);
@@ -459,6 +454,16 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
 
   window.addEventListener('mousemove', drag_mousemove, true);
   window.addEventListener('mouseup',   drag_mouseup,   true);
+}
+
+function ungrab_all() {
+  for (let tpiece of Object.keys(pieces)) {
+    let tp = pieces[tpiece]!;
+    if (tp.held == us) {
+	  set_ungrab(tpiece,tp);
+      api_piece(api, 'ungrab', tpiece,tp, { });
+    }
+  }
 }
 
 function set_grab(piece: PieceId, p: PieceInfo, owner: PlayerId) {
