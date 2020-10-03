@@ -359,6 +359,19 @@ keyops_local['wrest'] = function (uo: UoRecord) {
   recompute_keybindings();
 }
 
+keyops_local['pin'  ] = function (uo) { pin_unpin(uo, true ); }
+keyops_local['unpin'] = function (uo) { pin_unpin(uo, false); }
+
+function pin_unpin(uo: UoRecord, newpin: boolean) {
+  for (let piece of uo.targets!) {
+    let p = pieces[piece]!;
+    p.pinned = newpin;
+    api_piece(api, 'pin', piece,p, newpin);
+    redisplay_ancillaries(piece,p);
+  }
+  recompute_keybindings();
+}
+
 // ----- clicking/dragging pieces -----
 
 type DragInfo = {
@@ -491,7 +504,7 @@ function redisplay_ancillaries(piece: PieceId, p: PieceInfo) {
   } else if (p.last_seen_moved != null) {
     halo_colour = 'yellow';
   } else if (p.held != null && p.pinned) {
-    halo_colour = 'white';
+    halo_colour = '#8cf';
   }
   if (halo_colour != null) {
     let nelem = ancillary_node(piece, halo_colour);

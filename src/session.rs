@@ -29,6 +29,7 @@ struct SessionPieceLoadJson<'r> {
   held : &'r Option<PlayerId>,
   z : ZCoord,
   zg : Generation,
+  pinned : bool,
   uos: &'r [UoDescription],
 }
 
@@ -105,6 +106,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
         held : &pr.held,
         z  : pr.zlevel.z,
         zg : pr.zlevel.zg,
+        pinned : pr.pinned,
         uos : &p.ui_operations()?,
       };
 

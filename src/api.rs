@@ -1,4 +1,4 @@
-p// Copyright 2020 Ian Jackson
+// Copyright 2020 Ian Jackson
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
@@ -391,6 +391,7 @@ pub fn mount(rocket_instance: Rocket) -> Rocket {
     api_raise,
     api_move,
     api_wrest,
+    api_pin,
     api_uo,
   ])
 }
