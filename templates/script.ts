@@ -420,9 +420,10 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   var target = e.target as SVGGraphicsElement; // we check this just now!
   var piece = target.dataset.piece!;
   if (!piece) { return; }
+  let p = pieces[piece]!;
+  if (p.pinned && !wresting) return;
   drag_cancel();
 
-  let p = pieces[piece]!;
   let held = p.held;
 
   drag_pieces = [];
