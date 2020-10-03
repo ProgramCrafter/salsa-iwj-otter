@@ -300,7 +300,7 @@ function recompute_keybindings() {
     var nextelem = celem.nextElementSibling
     let cid = celem.getAttribute("id");
     if (cid == "uos-mid") mid_elem = celem;
-    else if (celem.getAttribute("class") == 'uos-mid') ;
+    else if (celem.getAttribute("class") == 'uos-mid') { }
     else celem.remove();
   }
   for (var kk of uo_keys) {
@@ -490,6 +490,8 @@ function redisplay_ancillaries(piece: PieceId, p: PieceInfo) {
     halo_colour = 'purple';
   } else if (p.last_seen_moved != null) {
     halo_colour = 'yellow';
+  } else if (p.held != null && p.pinned) {
+    halo_colour = 'white';
   }
   if (halo_colour != null) {
     let nelem = ancillary_node(piece, halo_colour);
