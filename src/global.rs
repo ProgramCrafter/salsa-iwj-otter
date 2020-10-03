@@ -1006,7 +1006,7 @@ pub fn game_flush_task() {
   }
 }
 
-// ---------- client expiry ----------
+// ---------- client expiry ---------- xxx not working
 
 pub fn client_expire_old_clients() {
   fn lock_even_poisoned(gref: &InstanceRef) -> MutexGuard<InstanceContainer> {
