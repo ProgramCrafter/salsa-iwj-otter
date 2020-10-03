@@ -419,10 +419,9 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   var piece = target.dataset.piece!;
   if (!piece) { return; }
   let p = pieces[piece]!;
-  if (p.pinned && !wresting && p.held!=us) return;
-  drag_cancel();
-
   let held = p.held;
+
+  drag_cancel();
 
   drag_pieces = [];
   if (held == us) {
@@ -434,7 +433,11 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       if (tp.held != us) continue;
       drag_add_piece(tpiece,tp);
     }
-  } else if (held == null || wresting) {
+  } else if (held == null) {
+    if (p.pinned && !wresting) {
+      add_log_message('That piece is pinned to the table.');
+      return;
+    }
     if (!shifted) {
       ungrab_all();
     }
