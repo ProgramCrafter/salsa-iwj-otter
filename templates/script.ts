@@ -559,7 +559,7 @@ function drag_mousemove(e: MouseEvent) {
       if (dragraise > 0 && ddr2 >= dragraise*dragraise) {
 	dragging |= DRAGGING.RAISED;
 	console.log('CHECK RAISE ', dragraise, dragraise*dragraise, ddr2);
-	piece_set_zlevel(piece,p, (oldtop_piece) => {
+	piece_set_zlevel(piece,p, (oldbot_piece, oldtop_piece) => {
 	  let oldtop_p = pieces[oldtop_piece]!;
 	  let z = oldtop_p.z + 1;
 	  p.z = z;
@@ -666,7 +666,7 @@ function piece_modify(piece: PieceId, p: PieceInfo, info: PieceStateMessage,
   p.uelem.setAttributeNS(null, "y", info.pos[1]+"");
   p.held = info.held;
   p.pinned = info.pinned;
-  piece_set_zlevel(piece,p, (oldtop_piece)=>{
+  piece_set_zlevel(piece,p, (oldbot_piece, oldtop_piece)=>{
     p.z  = info.z;
     p.zg = info.zg;
     p.uos = info.uos;
@@ -693,7 +693,8 @@ pieceops.Insert = <PieceHandler>function
 */
 
 function piece_set_zlevel(piece: PieceId, p: PieceInfo,
-			  modify : (oldtop_piece: PieceId) => void) {
+       modify : (oldbot_piece: PieceId, oldtop_piece: PieceId) => void
+			 ) {
   // Calls modify, which should set .z and/or .gz, and/or
   // make any necessary API call.
   //
@@ -705,7 +706,10 @@ function piece_set_zlevel(piece: PieceId, p: PieceInfo,
   let oldtop_elem = (defs_marker.previousElementSibling! as
 		     unknown as SVGGraphicsElement);
   let oldtop_piece = oldtop_elem.dataset.piece!;
-  modify(oldtop_piece);
+  let oldbot_elem = (pieces_marker.nextElementSibling! as
+                     unknown as SVGGraphicsElement);
+  let oldbot_piece = oldbot_elem.dataset.piece!;
+  modify(oldbot_piece, oldtop_piece);
 
   let ins_before = defs_marker
   let earlier_elem;
@@ -755,7 +759,7 @@ pieceops.Move = <PieceHandler>function
 
 pieceops.SetZLevel = <PieceHandler>function
 (piece,p, info: { z: number, zg: Generation }) {
-  piece_set_zlevel(piece,p, (oldtop_piece)=>{
+  piece_set_zlevel(piece,p, (oldbot_piece, oldtop_piece)=>{
     let oldtop_p = pieces[oldtop_piece]!;
     p.z  = info.z;
     p.zg = info.zg;
@@ -781,7 +785,7 @@ messages.Recorded = <MessageHandler>function
   }
   if (j.zg != null) {
     var zg_new = j.zg; // type narrowing doesn't propagate :-/
-    piece_set_zlevel(piece,p, (oldtop_piece: PieceId)=>{
+    piece_set_zlevel(piece,p, (oldbot_piece, oldtop_piece: PieceId)=>{
       p.zg = zg_new;
     });
   }
