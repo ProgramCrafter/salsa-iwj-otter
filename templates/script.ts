@@ -295,7 +295,7 @@ function recompute_keybindings() {
   for (let celem = uos_node.firstElementChild;
        celem != null;
        celem = nextelem) {
-    var nextelem = celem.nextElementSibling
+    var nextelem = celem.nextElementSibling;
     let cid = celem.getAttribute("id");
     if (cid == "uos-mid") mid_elem = celem;
     else if (celem.getAttribute("class") == 'uos-mid') { }
@@ -330,7 +330,6 @@ function some_keydown(e: KeyboardEvent) {
   console.log('KEY UO', e, uo);
   if (uo.kind == 'Client' || uo.kind == 'ClientExtra') {
     let f = keyops_local[uo.opname];
-    // xxx 'lower'
     f(uo);
     return;
   }
@@ -347,6 +346,212 @@ function some_keydown(e: KeyboardEvent) {
       }
     }
   }
+}
+
+keyops_local['lower'] = function (uo: UoRecord) {
+  // This is a bit subtle.  We don't want to lower below pinned pieces
+  // (unless we are pinned too, or the user is wresting).  But maybe
+  // the pinned pieces aren't already at the bottom.  For now we will
+  // declare that all pinned pieces "should" be below all non-pinned
+  // ones.  Not as an invariant, but as a thing we will do here to try
+  // to make a sensible result.  We implement this as follows: if we
+  // find pinned pieces above non-pinned pieces, we move those pinned
+  // pieces to the bottom too, just below us, preserving their
+  // relative order.
+  //
+  // Disregarding pinned targets:
+  //
+  // Z     <some stuff not including any unpinned targets>
+  // Z
+  //       topmost unpinned target         *
+  // B (
+  // B     unpinned non-target
+  // B |   unpinned target                 *
+  // B |   pinned non-target, mis-stacked  *
+  // B )*
+  // B
+  //       bottommost unpinned non-target
+  //        if that is below topmost unpinned target
+  //            <- tomove_unpinned: insert targets from * here       Q ->
+  //            <- tomove_misstacked: insert non-targets from * here Q->
+  // A
+  // A     pinned things (nomove_pinned)
+  //            <- tomove_pinned: insert all pinned targets here P ->
+  //
+  // When wresting, treat all targets as pinned.
+
+  function target_treat_pinned(p: PieceInfo) => boolean {
+    wresting || p.pinned;
+  }
+
+  type Todo = {
+    piece: PieceId,
+    p: PieceInfo,
+    pinned: boolean,
+  };
+  let targets_todo = Object.create(null);
+  let n_targets_todo_unpinned = 0;
+
+  for (let piece of uo.targets!) {
+    let p = pieces[piece]!;
+    let pinned = target_treat_pinned(p);
+    targets_todo[piece] = { p, piece, pinned, };
+    if (!pinned) { n_targets_todo_unpinned++; }
+  }
+
+  type Entry = {
+    piece: PieceId,
+    p: PieceInfo,
+  };
+  // bottom of the stack order first
+  let tomove_unpinned = [];
+  let tomove_misstacked = [];
+  let nomove_pinned = [];
+  let tomove_pinned = [];
+  let bottommost_unpinned = null;
+
+  let walk = pieces_marker;
+  for (;;) { // starting at the bottom of the stack order
+    if (Object.keys(targets_todo).length == 0) break;
+    walk = walk.nextElementSibling;  if (walk == null) break;
+    let piece = walk.datsset.piece;  if (piece == null) break;
+
+    let todo = targets_todo[piece];
+    if (todo) {
+      delete targets_todo[piece];
+      if (!todo.pinned) n_targets_todo_unpinned--;
+      (todo.pinned ? tomove_pinned : tomove_unpinned).push(todo);
+      continue;
+    }
+
+    if (n_targets_todo_unpinned == 0) // only pinned targets left, state Z
+      continue;
+
+    let p = pieces[piece]!;
+    if (bottommost_unpinned = null) { // state A
+      if (!p.pinned) {
+	// state A -> Z
+	bottommost_unpinned = { p, piece };
+      } else {
+	nomove_pinned.push { p, piece };
+      }
+      continue;
+    }
+
+    // state B
+    if (p.pinned)
+      tomove_misstacked.push({ p, piece, pinned: p.pinned, });
+  }
+
+  let q_count = tomove_unpinned.length + tomove_misstacked.length;
+  let z_top =
+      bottommost_unpinned ? bottommost_unpinned.p.z :
+      walk.dataset.piece != null ? pieces[walk.dataset.piece!].p.z :
+      // rather a lack of things we are not adjusting!
+      q_count;
+
+  type ArrayEntry = {
+    content: Entry[],
+    why: string,
+  };
+  type PlanEntry = {
+    arrays: Entry[],
+    z_top: number || null,
+    z_step: number,
+  };
+  let plan = [];
+
+  if (nomove_pinned.length > 0) {
+    let z_bot = nomove_pinned[nomove_pinned.length-1].p.z;
+    let z_step = (z_top - z_bot) / (q_count+1);
+    let macheps = 1e-16;
+    //let minposflt = 1e-308;
+    let force_positive = 1e-150; // roughly sqrt(minopsflt)
+    let ratio = z_step / (Math.abs(z_top) + Math.abs(z_bot) + force_positive);
+    let restack = ratio < macheps * 256; // at least 8 goes of halving
+    if (restack) {
+      restack = nomove_pinned.every(function (e) {
+	e.p.held == null || e.p.held == us
+      });
+      if (!restack) {
+	if (ratio < macheps) {
+	  add_log_message(
+ 'Cannot lower - stack renumbering prevented by other player grasp(s).'
+	  );
+	  return;
+	} else if (ratio < macheps * 16) { // 4 goes of halving
+	  add_log_message(
+ 'Stack renumbering wanted (needed soon), but prevented by other player grasp(s).'
+	  );
+	}
+      }
+    }
+    if (restack) {
+      let pe = {
+	arrays: [tomove_unpinned, tomove_misstacked, nomove_pinned],
+	z_top,
+	z_step: 1.0,
+      }
+      z_top = undef;
+    } else {
+      let pe = {
+	arrays: [tomove_unpinned, tomove_misstacked],
+	z_top,
+	z_step,
+      };
+      z_top = nomove_pinned[0].p.z;
+    }
+    plan.push(pe);
+  }
+
+  plan.push({
+    arrays: [tomove_pinned],
+    z_top,
+    z_step: 1.0,
+  });
+
+  for (let pe of plan) {
+    for (let ent of pe.array) {
+      if (ent.held != null && ent.held != us) {
+	
+
+  z_top = undef;
+  for (let pe of plan) {
+    if (pe.z_top != null) z_top = pe.z_top;
+    
+    
+    for (let 
+
+	[tomove_unpinned
+	
+
+    if (z_step > 1e-10) {
+      plan.push(tomove_unpinned + tomove_misstacked
+      // erk!  need to renumber
+      
+
+  let z_bot =
+      
+      
+
+      ||
+      (
+	piece: walk.dataset.piece,
+	p: 
+      } : null)
+      ||
+      null;
+  
+  ZZ
+  
+  
+       ZZ
+	: null) ||
+      
+      !|= null) bottommost_unpinned) 
+  
+    
+    let pinned = treat
 }
 
 keyops_local['wrest'] = function (uo: UoRecord) {
