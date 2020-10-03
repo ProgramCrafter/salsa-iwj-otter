@@ -81,8 +81,8 @@ impl Read for UpdateReader {
 
     if self.init_confirmation_send.next().is_some() {
       write!(buf, "event: commsworking\n\
-                   data: server online {} {} G{}\n\n",
-             self.player, self.client, self.to_send)?;
+                   data: server online {} {} G{} U{}\n\n",
+             self.player, self.client, ig.gs.gen, self.to_send)?;
     }
 
     let pu = &mut ig.updates.get_mut(self.player)
@@ -165,8 +165,9 @@ impl Read for UpdateReader {
         .map_err(|e| self.wn.trouble("cv / mutex poison",&e))?.0;
 
       write!(buf, "event: commsworking\n\
-                   data: server online {} {} G{} K{}\n\n",
-             self.player, self.client, self.to_send, self.keepalives)?;
+                   data: server online {} {} G{} U{} K{}\n\n",
+             self.player, self.client, ig.gs.gen,
+             self.to_send, self.keepalives)?;
       self.keepalives += Wrapping(1);
 /*
       write!(buf,": keepalive\n\n")?; */
