@@ -6,8 +6,6 @@
 
 // xxx deployment note: need a whole bunch of domains for SSE conn limit
 
-// xxx some way to choose faces / rotate
-
 // elemnts for a piece
 //
 // In svg toplevel
@@ -332,7 +330,6 @@ function some_keydown(e: KeyboardEvent) {
   console.log('KEY UO', e, uo);
   if (uo.kind == 'Client' || uo.kind == 'ClientExtra') {
     let f = keyops_local[uo.opname];
-    // xxx 'wrest'
     // xxx 'lower'
     f(uo);
     return;

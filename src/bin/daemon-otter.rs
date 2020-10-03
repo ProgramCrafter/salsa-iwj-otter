@@ -2,11 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-// xxx need button(s) to cause players to release grabs ?
-
-// xxx chess pieces & board
-// xxx way to stop board moving
-
 #![feature(proc_macro_hygiene, decl_macro)]
 
 use rocket::{get,routes};
