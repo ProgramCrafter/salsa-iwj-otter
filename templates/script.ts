@@ -307,11 +307,12 @@ function recompute_keybindings() {
     let uo = uo_map[kk]!;
     let prec = uo_kind_prec[uo.kind];
     let ent = document.createElement('div');
-    ent.setAttribute('class','uokey-'+uo.kind);
     ent.innerHTML = '<b>' + kk + '</b> ' + uo.desc;
     if (prec < 400) {
+      ent.setAttribute('class','uokey-l');
       uos_node.insertBefore(ent, mid_elem);
     } else {
+      ent.setAttribute('class','uokey-r');
       uos_node.appendChild(ent);
     }
   }
