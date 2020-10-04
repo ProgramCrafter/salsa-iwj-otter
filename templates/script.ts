@@ -63,7 +63,7 @@ type PieceInfo = {
   held : PlayerId | null,
   cseq : number | null,
   cseq_updatesvg : number | null,
-  z : number,
+  z : Bigfloat,
   zg : Generation,
   pinned: boolean,
   uos : UoDescription[],
@@ -347,7 +347,7 @@ function some_keydown(e: KeyboardEvent) {
     }
   }
 }
-
+/*
 keyops_local['lower'] = function (uo: UoRecord) {
   // This is a bit subtle.  We don't want to lower below pinned pieces
   // (unless we are pinned too, or the user is wresting).  But maybe
@@ -553,6 +553,7 @@ keyops_local['lower'] = function (uo: UoRecord) {
     
     let pinned = treat
 }
+*/
 
 keyops_local['wrest'] = function (uo: UoRecord) {
   wresting = !wresting;
@@ -766,7 +767,7 @@ function drag_mousemove(e: MouseEvent) {
 	console.log('CHECK RAISE ', dragraise, dragraise*dragraise, ddr2);
 	piece_set_zlevel(piece,p, (oldtop_piece) => {
 	  let oldtop_p = pieces[oldtop_piece]!;
-	  let z = oldtop_p.z + 1;
+	  let z = Bigfloats.add(oldtop_p.z, 1);
 	  p.z = z;
 	  api_piece(api, "setz", piece,p, { z: z });
 	});
@@ -846,7 +847,7 @@ type PieceStateMessage = {
   svg: string,
   held: PlayerId,
   pos: Pos,
-  z: number,
+  z: Bigfloat,
   zg: Generation,
   pinned: boolean,
   uos: UoDescription[],
@@ -959,7 +960,7 @@ pieceops.Move = <PieceHandler>function
 }
 
 pieceops.SetZLevel = <PieceHandler>function
-(piece,p, info: { z: number, zg: Generation }) {
+(piece,p, info: { z: Bigfloat, zg: Generation }) {
   piece_set_zlevel(piece,p, (oldtop_piece)=>{
     let oldtop_p = pieces[oldtop_piece]!;
     p.z  = info.z;

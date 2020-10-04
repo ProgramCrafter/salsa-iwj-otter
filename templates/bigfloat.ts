@@ -79,9 +79,9 @@ namespace Bigfloats {
   export function pack(v: Unpacked): Packed {
     function hex16(x: number) { return ('000' + x.toString(16)).slice(-4); }
     function hex48(x: Limb) {
-      return (hex16(Math.floor(x / 0x100000000)) + '_' +
-	      hex16(           x &  0xffff0000)  + '_' +
-	      hex16(           x &  0x0000ffff)        );
+      return (hex16(Math.floor(x / 0x100000000)       ) + '_' +
+	      hex16(          (x &  0xffff0000) >> 16 ) + '_' +
+	      hex16(           x &  0x0000ffff        )        );
     }
     return (
       (v.sign < 0 ? '!' : '+') +
@@ -139,6 +139,12 @@ namespace Bigfloats {
       }
       step=1;
     }
+  }
+
+  export function add(p: Bigfloat, step: number): Bigfloat {
+    let v = unpack(p);
+    add_to_limb(v, 0, step * 0x10000);
+    return pack(v);
   }
 
   export function iter_upto(ap: Packed, bp: Packed, count: number):

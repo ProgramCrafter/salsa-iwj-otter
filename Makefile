@@ -41,6 +41,9 @@ USVG_PROCESSOR = usvg-processor
 LIBRARY_PROCESS_SVG = ./$(USVG_PROCESSOR) $@ $(wordlist 1,2,$^) '$(USVG) $(USVG_OPTIONS)'
 $(LIBRARY_FILES): $(USVG_PROCESSOR) Makefile
 
+TS_SRCS= script bigfloat
+TS_SRC_FILES= $(addprefix templates/,$(addsuffix .ts,$(TS_SRCS)))
+
 LITFILES= LICENCE AGPLv3
 TXTFILES= CC-BY-SA-3.0 CC-BY-SA-4.0
 
@@ -77,8 +80,8 @@ $(CARGO_TARGET_DIR)/debug/server:
 $(CARGO_TARGET_DIR)/release/server:
 	$(CARGO) build --release
 
-templates/%.js: templates/%.ts tsconfig.json
-	tsc --outfile $@.tmp $< 2>&1 \
+templates/script.js: $(TS_SRC_FILES) tsconfig.json
+	tsc --outfile $@.tmp $(TS_SRC_FILES) 2>&1 \
 	| perl -pe 's/\((\d+),(\d+)\):/:$$1:$$2:/'; \
 	test "$${PIPESTATUS[*]}" = "0 0"
 	mv -f $@.tmp $@
