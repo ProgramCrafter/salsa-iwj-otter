@@ -263,16 +263,17 @@ fn execute_game_insn(cs: &CommandStream,
 
       let mut updates = Vec::with_capacity(count as usize);
       let mut pos = pos.unwrap_or(DEFAULT_POS_START);
-      for i in 0..count {
+      let mut z = gs.max_z.clone_mut();
+      for _ in 0..count {
         let p = info.load()?;
         let face = face.unwrap_or_default();
         if p.nfaces() <= face.into() {
           throw!(SpecError::FaceNotFound);
         }
-        let z = gs.max_z.add(i + 1);
+        z.add(1);
         let pc = PieceState {
           held: None,
-          zlevel: ZLevel { z, zg: gs.gen },
+          zlevel: ZLevel { z: (&z).try_into()?, zg: gs.gen },
           lastclient: Default::default(),
           gen_before_lastclient: Generation(0),
           pinned: pinned.unwrap_or(false),
@@ -325,7 +326,7 @@ fn execute_for_game(cs: &CommandStream, ig: &mut InstanceGuard,
 
 #[derive(Debug,Default)]
 struct UpdateHandlerBulk {
-  pieces : slotmap::SparseSecondaryMap<PieceId, PieceUpdateOp<()>>,
+  pieces : slotmap::SparseSecondaryMap<PieceId, PieceUpdateOp<(),()>>,
   logs : bool,
   raw : Vec<PreparedUpdateEntry>,
 }

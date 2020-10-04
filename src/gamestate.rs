@@ -19,11 +19,7 @@ pub struct Generation (pub u64);
 
 visible_slotmap_key!{ VisiblePieceId('.') }
 
-#[derive(Debug,Copy,Clone,PartialEq,PartialOrd)]
-#[derive(Serialize,Deserialize,Default)]
-#[serde(into="f64")]
-#[serde(try_from="f64")]
-pub struct ZCoord(f64);
+pub type ZCoord = Bigfloat;
 
 #[derive(Clone,Serialize,Deserialize,Eq,Ord,PartialEq,PartialOrd)]
 #[serde(transparent)]
@@ -33,7 +29,7 @@ pub const DEFAULT_TABLE_SIZE : Pos = PosC([ 400, 200 ]);
 
 // ---------- general data types ----------
 
-#[derive(Debug,Copy,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
+#[derive(Debug,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
 pub struct ZLevel {
   pub z: ZCoord,
   pub zg: Generation,
@@ -155,35 +151,6 @@ impl Display for Generation {
   }
 }
 
-impl TryFrom<f64> for ZCoord {
-  type Error = OnlineError;
-  #[throws(OnlineError)]
-  fn try_from(v: f64) -> ZCoord {
-    if !v.is_finite() { throw!(OnlineError::InvalidZCoord) }
-    ZCoord(v)
-  }
-}
-impl From<ZCoord> for f64 {
-  fn from(v: ZCoord) -> f64 { v.0 }
-}
-impl Ord for ZCoord {
-  fn cmp(&self, other: &Self) -> cmp::Ordering {
-    self.0.partial_cmp(&other.0).unwrap()
-  }
-}
-impl Eq for ZCoord { }
-impl Display for ZCoord {
-  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-    Display::fmt(&self.0,f)
-  }
-}
-
-impl ZCoord {
-  pub fn add(&self, v: u32) -> ZCoord {
-    ZCoord(self.0 + (v as f64))
-  }
-}
-
 pub trait ClampTable : Sized {
   fn clamped(self, range: Self) -> (Self, bool);
 }
@@ -235,7 +202,7 @@ impl PieceState {
       pos        : self.pos,
       held       : self.held,
       svg        : p.make_defs(pri)?,
-      z          : self.zlevel.z,
+      z          : self.zlevel.z.clone(),
       zg         : self.zlevel.zg,
       pinned     : self.pinned,
       uos        : p.ui_operations()?,

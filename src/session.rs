@@ -104,7 +104,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
 
       let for_info = SessionPieceLoadJson {
         held : &pr.held,
-        z  : pr.zlevel.z,
+        z  : pr.zlevel.z.clone(),
         zg : pr.zlevel.zg,
         pinned : pr.pinned,
         uos : &p.ui_operations()?,

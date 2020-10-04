@@ -393,7 +393,7 @@ impl InstanceGuard<'_> {
       // These parts are straightforward and correct
       table_size : self.c.g.gs.table_size,
       gen : self.c.g.gs.gen,
-      max_z : self.gs.max_z,
+      max_z : self.gs.max_z.clone(),
       players,
       // These have special handling
       log : Default::default(),

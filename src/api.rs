@@ -278,8 +278,8 @@ impl ApiPieceOp for ApiPieceRaise {
   fn op(&self, gs: &mut GameState, _: PlayerId, piece: PieceId,
         _p: &dyn Piece, _: &dyn Lens) -> PieceUpdateFromOp {
     let pc = gs.pieces.byid_mut(piece).unwrap();
-    pc.zlevel = ZLevel { z : self.z, zg : gs.gen };
-    let update = PieceUpdateOp::SetZLevel(pc.zlevel);
+    pc.zlevel = ZLevel { z : self.z.clone(), zg : gs.gen };
+    let update = PieceUpdateOp::SetZLevel(());
     (WhatResponseToClientOp::Predictable,
      update, vec![])
   }

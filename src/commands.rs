@@ -92,6 +92,7 @@ pub enum MgmtError {
   PieceNotFound,
   LimitExceeded,
   ServerFailure(String),
+  ZCoordinateOverflow(#[from] bigfloat::Overflow),
   BadGlob { pat: String, msg: String },
   BadSpec(#[from] SpecError),
 }

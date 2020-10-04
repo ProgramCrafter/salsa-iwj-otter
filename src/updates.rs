@@ -16,7 +16,7 @@ pub struct ClientSequence(u64);
 
 #[derive(Debug)] // not Default
 pub struct ExecuteGameChangeUpdates {
-  pub pcs: Vec<(PieceId,PieceUpdateOp<()>)>,
+  pub pcs: Vec<(PieceId,PieceUpdateOp<(),()>)>,
   pub log: Vec<LogEntry>,
   pub raw: Option<Vec<PreparedUpdateEntry>>,
 }
@@ -44,7 +44,7 @@ pub enum PreparedUpdateEntry {
   Piece {
     by_client: IsResponseToClientOp,
     piece : VisiblePieceId,
-    op : PieceUpdateOp<PreparedPieceState>,
+    op : PieceUpdateOp<PreparedPieceState,ZLevel>,
   },
   SetTableSize(Pos),
   Log (Arc<LogEntry>),
@@ -65,16 +65,16 @@ pub struct PreparedPieceState {
 // ---------- piece updates ----------
 
 #[derive(Debug,Serialize)]
-pub enum PieceUpdateOp<NS> {
+pub enum PieceUpdateOp<NS,ZL> {
   Delete(),
   Insert(NS),
   Modify(NS),
   Move(Pos),
-  SetZLevel(ZLevel),
+  SetZLevel(ZL),
 }
 
 pub type PieceUpdateFromOp = (WhatResponseToClientOp,
-                              PieceUpdateOp<()>, Vec<LogEntry>);
+                              PieceUpdateOp<(),()>, Vec<LogEntry>);
 pub type PieceUpdateResult = Result<PieceUpdateFromOp, ApiPieceOpError>;
 
 // ---------- for traansmission ----------
@@ -95,7 +95,7 @@ enum TransmitUpdateEntry<'u> {
   },
   Piece {
     piece : VisiblePieceId,
-    op : PieceUpdateOp<&'u PreparedPieceState>,
+    op : PieceUpdateOp<&'u PreparedPieceState, &'u ZLevel>,
   },
   RecordedUnpredictable {
     piece : VisiblePieceId,
@@ -187,7 +187,7 @@ impl PreparedUpdateEntry {
 
 // ---------- PieceUpdatesOp ----------
 
-impl<NS> PieceUpdateOp<NS> {
+impl<NS,ZC> PieceUpdateOp<NS,ZC> {
   pub fn new_state(&self) -> Option<&NS> {
     use PieceUpdateOp::*;
     match self {
@@ -198,8 +198,10 @@ impl<NS> PieceUpdateOp<NS> {
       SetZLevel(_) => None,
     }
   }
-  pub fn try_map_new_state<NS2,E:Error, F: FnOnce(NS) -> Result<NS2,E>>
-    (self, f:F) -> Result<PieceUpdateOp<NS2>,E>
+  pub fn try_map<NS2, ZC2, E:Error,
+                 F: FnOnce(NS) -> Result<NS2,E>,
+                 G: FnOnce(ZC) -> Result<ZC2,E>
+                 > (self, f:F, g:G) -> Result<PieceUpdateOp<NS2,ZC2>,E>
   {
     use PieceUpdateOp::*;
     Ok(match self {
@@ -207,33 +209,41 @@ impl<NS> PieceUpdateOp<NS> {
       Insert(ns) => Insert(f(ns)?),
       Modify(ns) => Modify(f(ns)?),
       Move(pos) => Move(pos),
-      SetZLevel(zl) => SetZLevel(zl),
+      SetZLevel(zl) => SetZLevel(g(zl)?),
     })
   }
-  pub fn map_ref_new_state(&self) -> PieceUpdateOp<&NS> {
+  pub fn map_ref(&self) -> PieceUpdateOp<&NS,&ZC> {
     use PieceUpdateOp::*;
     match self {
       Delete() => Delete(),
       Insert(ns) => Insert(ns),
       Modify(ns) => Modify(ns),
       Move(pos) => Move(*pos),
-      SetZLevel(zl) => SetZLevel(*zl),
+      SetZLevel(zl) => SetZLevel(zl),
     }
   }
-  pub fn map_new_state<NS2,F: FnOnce(NS) -> NS2>(self, f:F)
-                            -> PieceUpdateOp<NS2> {
+  pub fn map<NS2,ZC2,
+             F: FnOnce(NS) -> NS2,
+             G: FnOnce(ZC) -> ZC2
+             > (self, f:F, g:G) -> PieceUpdateOp<NS2,ZC2>
+  {
     #[derive(Error,Debug)]
     enum Never { }
-    self.try_map_new_state(|ns| <Result<_,Never>>::Ok(f(ns))).unwrap()
+    self.try_map(
+      |ns| <Result<_,Never>>::Ok(f(ns)),
+      |zc| <Result<_,Never>>::Ok(g(zc)),
+    ).unwrap()
   }
-  pub fn new_z_generation(&self) -> Option<Generation> {
+  pub fn new_z_generation(&self) -> Option<Generation>
+    where ZC: Borrow<ZLevel>
+  {
     use PieceUpdateOp::*;
     match self {
       Delete() => None,
       Insert(_) => None,
       Modify(_) => None,
       Move(_) => None,
-      SetZLevel(ZLevel{zg,..}) => Some(*zg),
+      SetZLevel(l) => Some(l.borrow().zg),
     }
   }
 }
@@ -318,7 +328,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
   #[throws(InternalError)]
   fn piece_update_fallible(&mut self, piece: PieceId,
-                           update: PieceUpdateOp<()>,
+                           update: PieceUpdateOp<(),()>,
                            lens: &dyn Lens) -> PreparedUpdateEntry {
     type WRC = WhatResponseToClientOp;
 
@@ -330,7 +340,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       self.g.pieces.get(piece),
     ) {
       (Ok(pc), Some(p)) => {
-        gs.max_z.update_max(pc.zlevel.z);
+        gs.max_z.update_max(&pc.zlevel.z);
 
         if let Some(new_lastclient) = match self.by_client {
           Some((WRC::Predictable,tclient,_)) |
@@ -344,12 +354,15 @@ impl<'r> PrepareUpdatesBuffer<'r> {
         pc.gen = gen;
         let pri_for_all = lens.svg_pri(piece,pc,Default::default());
 
-        let update = update.try_map_new_state(
-          |_|{
+        let update = update.try_map(
+          |()|{
             let mut ns = pc.prep_piecestate(p.as_ref(), &pri_for_all)?;
             lens.massage_prep_piecestate(&mut ns);
             <Result<_,InternalError>>::Ok(ns)
           },
+          |()|{
+            Ok(pc.zlevel.clone())
+          }
         )?;
 
         (update, pri_for_all.id)
@@ -366,7 +379,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     }
   }
 
-  pub fn piece_update(&mut self, piece: PieceId, update: PieceUpdateOp<()>,
+  pub fn piece_update(&mut self, piece: PieceId, update: PieceUpdateOp<(),()>,
                       lens: &dyn Lens) {
     // Caller needs us to be infallible since it is too late by
     // this point to back out a game state change.
@@ -455,7 +468,7 @@ impl PreparedUpdate {
               let zg = op.new_z_generation();
               TUE::Recorded { piece, cseq, zg, svg: ns.map(|ns| &ns.svg) }
             },
-            FTG::Piece => TUE::Piece { piece, op: op.map_ref_new_state() },
+            FTG::Piece => TUE::Piece { piece, op: op.map_ref() },
             FTG::Exactly(x) => x,
           }
         },

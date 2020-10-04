@@ -19,7 +19,7 @@ pub use std::str::FromStr;
 pub use std::iter;
 pub use std::iter::repeat_with;
 pub use std::collections::VecDeque;
-pub use std::num::Wrapping;
+pub use std::num::{Wrapping, TryFromIntError};
 pub use std::cmp::{self,min,max,Ordering};
 pub use std::error::Error;
 pub use std::marker::PhantomData;
@@ -111,6 +111,7 @@ pub use crate::utils::*;
 pub use crate::spec::*;
 pub use crate::debugreader::DebugReader;
 pub use crate::shapelib;
+pub use crate::bigfloat::{self, Bigfloat};
 
 pub use nix::unistd::Uid;
 

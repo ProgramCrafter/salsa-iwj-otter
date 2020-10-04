@@ -42,6 +42,9 @@ mod innards {
   #[serde(try_from="&str")]
   pub struct Bigfloat(Innards);
 
+  unsafe impl Send for Bigfloat { }
+  unsafe impl Sync for Bigfloat { }
+
   type Innards = NonNull<u8>;
 
   pub(in super)
@@ -79,13 +82,25 @@ mod innards {
 
   impl Bigfloat {
     pub(in super)
-    fn from_parts(sign: Sign, exp: Sz, limbs: &[Limb]) -> Bigfloat {
-      let nlimbs : Sz = limbs.len().try_into().expect("limb count overflow");
+    fn from_limbs<L, I>(sign: Sign, exp: Sz, nlimbs: Sz, mut limbs: I)
+                        -> Bigfloat 
+    where L: Into<Limb> + Debug,
+          I: Iterator<Item=L>
+    {
       unsafe {
         let p = alloc::alloc(layout(nlimbs));
         let (p_header, p_limbs) = ptrs(p);
         ptr::write(p_header, Header { sign, exp, nlimbs });
-        ptr::copy_nonoverlapping(limbs.as_ptr(), p_limbs, nlimbs as usize);
+        let mut count = 0..(nlimbs as usize);
+        loop {
+          match (limbs.next(), count.next()) {
+            (None, None) => break,
+            (Some(l), Some(i)) => {
+              p_limbs.add(i).write(l.into());
+            },
+            x => panic!("unexpected {:?}", x),
+          }
+        }
         Bigfloat(NonNull::new(p).unwrap())
       }
     }
@@ -102,13 +117,19 @@ mod innards {
 
     #[allow(dead_code)] // xxx
     pub(in super)
-    fn as_mut_limbs(&self) -> (&Header, &mut [Limb]) {
+    fn as_mut_limbs(&mut self) -> (&Header, &mut [Limb]) {
       unsafe {
         let (h, l) = ptrs(self.0.as_ptr());
         let h = h.as_mut().unwrap();
         let limbs = slice::from_raw_parts_mut(l, h.nlimbs as usize);
         (h, limbs)
       }
+    }
+
+    pub(in super)
+    fn from_parts(sign: Sign, exp: Sz, limbs: &[Limb]) -> Bigfloat {
+      let nlimbs : Sz = limbs.len().try_into().expect("limb count overflow");
+      Self::from_limbs(sign, exp, nlimbs, limbs.iter().cloned())
     }
   }
 
@@ -135,6 +156,12 @@ mod innards {
     }
   }
 
+}
+
+impl Default for Bigfloat {
+  fn default() -> Bigfloat {
+    Bigfloat::from_parts(Pos, 0, &[default()])
+  }
 }
 
 impl From<LimbVal> for Limb {
@@ -221,6 +248,26 @@ impl Bigfloat {
       l.iter().cloned().map(Into::into).collect();
     let limbs = Deque::from_parts(-(exp as isize), limbs_vec);
     Mutable { sign, limbs }
+  }
+}
+
+#[derive(Error,Debug,Copy,Clone,Serialize,Deserialize)]
+pub struct Overflow;
+display_as_debug!(Overflow);
+
+impl From<TryFromIntError> for Overflow {
+  fn from(_: TryFromIntError) -> Overflow { Overflow }
+}
+
+impl TryFrom<&Mutable> for Bigfloat {
+  type Error = Overflow;
+  #[throws(Overflow)]
+  fn try_from(m: &Mutable) -> Bigfloat {
+    let exp = (-m.limbs.counter()).try_into()?;
+    let nlimbs = m.limbs.len().try_into()?;
+    let slices = m.limbs.inner().as_slices();
+    let it = slices.0.iter().chain(slices.1.iter()).cloned();
+    Bigfloat::from_limbs(m.sign, exp, nlimbs, it)
   }
 }
 
