@@ -21,11 +21,14 @@ use innards::Header;
 #[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq,Default)]
 struct Limb (pub [u16;3]);
 
+type LimbVal = u64;
+
+use vecdeque_stableix::Deque;
+
 #[derive(Clone,Debug)]
 pub struct Mutable {
   sign: Sign,
-  exp: isize,
-  limbs: Vec<Limb>,
+  limbs: Deque<LimbVal, isize>,
 }
 
 mod innards {
@@ -134,19 +137,19 @@ mod innards {
 
 }
 
-impl From<u64> for Limb {
-  fn from(u: u64) -> Limb {
+impl From<LimbVal> for Limb {
+  fn from(u: LimbVal) -> Limb {
     assert_eq!(0, u >> 48);
     Limb([ ((u >> 32) & 0xffff) as u16,
            ((u >> 16) & 0xffff) as u16,
            ((u >>  0) & 0xffff) as u16 ])
   }
 }
-impl From<Limb> for u64 {
-  fn from(l: Limb) -> u64 {
-    ((l.0[0] as u64) << 32) |
-    ((l.0[1] as u64) << 16) |
-    ((l.0[2] as u64) <<  0)
+impl From<Limb> for LimbVal {
+  fn from(l: Limb) -> LimbVal {
+    ((l.0[0] as LimbVal) << 32) |
+    ((l.0[1] as LimbVal) << 16) |
+    ((l.0[2] as LimbVal) <<  0)
   }
 }
 
@@ -214,11 +217,10 @@ impl Bigfloat {
 
   pub fn clone_mut(&self) -> Mutable {
     let (&Header { sign, exp, .. }, l) = self.as_parts();
-    Mutable {
-      sign,
-      exp: exp as isize,
-      limbs: l.iter().map(|l| *l).collect(),
-    }
+    let limbs_vec : VecDeque<LimbVal> =
+      l.iter().cloned().map(Into::into).collect();
+    let limbs = Deque::from_parts(-(exp as isize), limbs_vec);
+    Mutable { sign, limbs }
   }
 }
 
@@ -232,13 +234,13 @@ impl Mutable {
     self.ensure_limb_exists(i);
     let mut added : isize = 0;
     loop {
-      let nv : u64 = self.limbs[i as usize].into();
+      let nv : u64 = self.limbs[i].into();
       let nv = nv + (rhs as u64);
       if nv < LIMB_MODULUS {
-        self.limbs[i as usize] = nv.into();
+        self.limbs[i] = nv.into();
         return added;
       }
-      self.limbs[i as usize] = (nv & LIMB_MASK).into();
+      self.limbs[i] = (nv & LIMB_MASK).into();
       i -= 1;
       added += self.extend_left_so_index_valid(i);
       rhs = 1;
@@ -247,7 +249,7 @@ impl Mutable {
 
   fn ensure_limb_exists(&mut self, i: isize) {
     if self.limbs.len() <= (i as usize) {
-      self.limbs.resize((i+1) as usize, default())
+      self.limbs.inner_mut().resize((i+1) as usize, default())
     }
   }
 
@@ -256,7 +258,7 @@ impl Mutable {
     let new_limb_val = match self.sign { Pos => 0, Neg => LIMB_MASK, };
     loop {
       if i >= 0 { return added; }
-      self.limbs.insert(0, new_limb_val.into());
+      self.limbs.push_front(new_limb_val.into());
       added += 1;
       i += 1;
     }
