@@ -119,14 +119,60 @@ impl Bigfloat {
 impl Bigfloat {
   #[throws(as Option)]
   fn from_str(s: &str) -> Self {
-    let mut s = s.as_bytes();
-    let mut s = s.iter();
-    let sign = match *s.next()? {
-      b'+' => Pos,
-      b'!' => Neg,
+    struct P<'s> (&'s str);
+    impl P<'_> {
+      #[throws(as Option)]
+      fn hex16(&mut self) -> u16 {
+        const L : usize = 4;
+        if self.0.len() < L { None? }
+        let (l, r) = self.0.split_at(L);
+        self.0 = r;
+        Sz::from_str_radix(l, 16).ok()?
+      }
+
+      #[throws(as Option)]
+      fn next(&mut self) -> char {
+        let r = self.0.chars().next()?;
+        self.0 = &self.0[1..];
+        r
+      }
+
+      #[throws(as Option)]
+      fn hex16_(&mut self) -> u16 {
+        let r = self.hex16()?;
+        if !matches!(self.next(), Some('_')) { None? }
+        r
+      }
+    }
+
+    let mut p = P(s);
+    let sign = match p.next()? {
+      '+' => Pos,
+      '!' => Neg,
       _ => None?,
     };
-    let limbs = vec![];
+    let exp = p.hex16();
+
+    let mut limbs = Vec::with_capacity(p.0.len() / 15);
+    loop {
+      match p.next() {
+        None => break,
+        Some(' ') => (),
+        _ => None?,
+      };
+      limbs.push([
+        p.hex16_()?,
+        p.hex16_()?,
+        p.hex16()?,
+      ]);
+    }
     Bigfloat::from_parts(sign, 0, &limbs)
+  }
+}
+
+#[cfg(test)]
+mod test {
+  #[test]
+  fn bfparse() {
   }
 }
