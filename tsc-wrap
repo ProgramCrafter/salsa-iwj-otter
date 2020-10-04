@@ -1,0 +1,30 @@
+#!/bin/bash
+set -e
+
+out="$1"; shift
+tsconfig="$1"; shift
+
+files_json='['
+for f in "$@"; do
+	files_json="${files_json}\"$f\", "
+done
+files_json="$files_json]"
+
+our_tsconfig=".tsconfig.${out##*/}.json"
+
+x () {
+    echo "+ $*" >&2;
+    "$@";
+}
+
+sed <"$tsconfig" >"$our_tsconfig" '/^ *"files":/ s#:.*#:'"$files_json"'#'
+
+x tsc --outfile "$out.1.tmp" -p "$our_tsconfig" 2>&1 \
+| perl -pe 's/\((\d+),(\d+)\):/:$1:$2:/' >&2
+test "${PIPESTATUS[*]}" = "0 0"
+
+sed    <"$out.1.tmp" '/^[a-z]/,$d' > "$out".tmp
+sed    <"$1"         '/^[a-z]/,$d' >>"$out".tmp
+sed -n <"$out.1.tmp" '/^[a-z]/,$p' >> "$out".tmp
+
+mv -f "$out".tmp "$out"

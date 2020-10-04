@@ -80,13 +80,8 @@ $(CARGO_TARGET_DIR)/debug/server:
 $(CARGO_TARGET_DIR)/release/server:
 	$(CARGO) build --release
 
-templates/script.js: tsconfig.json $(TS_SRC_FILES)
-	sed <tsconfig.json >.tsconfig.json \
-		'/^ *"files":/ s#:.*#:[$(foreach f,$(TS_SRC_FILES),"$f",)]#'
-	tsc --outfile $@.tmp -p .tsconfig.json 2>&1 \
-	| perl -pe 's/\((\d+),(\d+)\):/:$$1:$$2:/'; \
-	test "$${PIPESTATUS[*]}" = "0 0"
-	mv -f $@.tmp $@
+templates/script.js: tsc-wrap tsconfig.json $(TS_SRC_FILES)
+	./tsc-wrap $@ tsconfig.json $(TS_SRC_FILES)
 
 DEPLOY_ARCH=x86_64-unknown-linux-musl
 DEPLOY_RELEASE=debug
