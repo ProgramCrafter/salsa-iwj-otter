@@ -131,6 +131,7 @@ namespace Bigfloats {
     for (;;) {
       v.limbs[i] = Math.floor(v.limbs[i] + step);
       if (v.limbs[i] < LIMB_MODULUS) return totadj;
+      v.limbs[i] %= LIMB_MODULUS;
       i--;
       if (i < 0) {
 	if (v.sign < 0) { v.sign = +1; return totadj; }
