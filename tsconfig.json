@@ -8,6 +8,8 @@
             "dom"
         ],
         "strict": true,
-        "target": "es2015"
-    }
+        "target": "es2015",
+        "removeComments": false,
+    },
+    "files": "--substituted by Makefile--",
 }

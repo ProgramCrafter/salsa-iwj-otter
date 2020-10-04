@@ -6,3 +6,4 @@ templates/CC-BY-SA-4.0
 save/lock
 /library/*/*.usvg
 *.tmp
+.tsconfig.json

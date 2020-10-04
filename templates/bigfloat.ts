@@ -62,6 +62,7 @@ namespace Bigfloats {
 
   export function unpack(p: Packed): Unpacked {
     let head = p.match(UNPACK_HEAD_RE);
+    if (head == null) throw('unpack Bigfloat '+p);
     UNPACK_LIMB_RE.lastIndex = 0;
     let limbs = [];
     let m;
@@ -116,8 +117,8 @@ namespace Bigfloats {
     let newlimb = ms_limb_from_sign(v);
     let adj = 0;
     while (i < 0) {
-      this.limbs.unshift(newlimb);
-      this.exponent++;
+      v.limbs.unshift(newlimb);
+      v.exponent++;
       i++;
       adj++;
     }
@@ -160,7 +161,7 @@ namespace Bigfloats {
       let ib = bv.exponent - e;
       if (ia >= av.limbs.length && ib >= bv.limbs.length) {
 	// Oh actually these numbers are equal!
-	return function(){ return this.pack(); }
+	return function(){ return pack(av); }
       }
       let la = limb_lookup(av,ia);
       let lb = limb_lookup(bv,ib);
@@ -169,7 +170,7 @@ namespace Bigfloats {
 
       let current = clone(av);
       let i = ia + extend_left_so_index_valid(current, ia);
-      let step; // floating!
+      let step : number; // actual floating point!
       if (avail > count+1) {
 	step = avail / (count+1);
       } else {
