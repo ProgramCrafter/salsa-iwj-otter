@@ -273,43 +273,42 @@ impl TryFrom<&Mutable> for Bigfloat {
 
 impl Mutable {
   pub fn add(&mut self, rhs: u32) {
-    self.add_to_limb(0, rhs);
+    self.add_to_limb(0, rhs << 16);
   }
 
-  fn add_to_limb(&mut self, mut i: isize, mut rhs: u32) -> isize {
+  fn add_to_limb(&mut self, mut i: isize, mut rhs: u32) {
     // returns amount by which other indices now need updating
-    self.ensure_limb_exists(i);
-    let mut added : isize = 0;
     loop {
+      self.extend_so_index_valid(i);
       let nv : u64 = self.limbs[i].into();
       let nv = nv + (rhs as u64);
       if nv < LIMB_MODULUS {
         self.limbs[i] = nv.into();
-        return added;
+        return;
       }
       self.limbs[i] = (nv & LIMB_MASK).into();
+      if i == self.limbs.front_index() && self.sign == Neg {
+        self.sign = Pos;
+        // equivalent to adding 1 to the nonexistent front word ffff
+        return;
+      }
       i -= 1;
-      added += self.extend_left_so_index_valid(i);
       rhs = 1;
     }
   }
 
-  fn ensure_limb_exists(&mut self, i: isize) {
-    if self.limbs.len() <= (i as usize) {
-      self.limbs.inner_mut().resize((i+1) as usize, default())
+  fn extend_so_index_valid(&mut self, i: isize) {
+    while i >= self.limbs.end_index() {
+      self.limbs.push_back(default());
+    }
+    let new_limb_val = match self.sign { Pos => 0, Neg => LIMB_MASK, };
+    while i < self.limbs.front_index() {
+      self.limbs.push_front(new_limb_val.into());
     }
   }
 
-  fn extend_left_so_index_valid(&mut self, mut i: isize) -> isize {
-    let mut added = 0;
-    let new_limb_val = match self.sign { Pos => 0, Neg => LIMB_MASK, };
-    loop {
-      if i >= 0 { return added; }
-      self.limbs.push_front(new_limb_val.into());
-      added += 1;
-      i += 1;
-    }
-  }
+  #[throws(Overflow)]
+  pub fn repack(&self) -> Bigfloat { self.try_into()? }
 }
 
 impl Display for Bigfloat {
@@ -391,6 +390,10 @@ impl Serialize for Bigfloat {
 mod test {
   use super::*;
 
+  fn bf(s: &str) -> Bigfloat {
+    Bigfloat::from_str(s).unwrap()
+  }
+
   #[test]
   fn bfparse() {
     let s = "!0000 ffff_ffff_fff0";
@@ -405,16 +408,28 @@ mod test {
 
   #[test]
   fn equality() {
-    assert!( Bigfloat::from_str("!0000 ffff_ffff_fff0") <
-             Bigfloat::from_str("!0000 ffff_ffff_fff3") );
+    assert!( bf("!0000 ffff_ffff_fff0") <
+             bf("!0000 ffff_ffff_fff3") );
     
-    assert!( Bigfloat::from_str("!0001 ffff_ffff_ffff") <
-             Bigfloat::from_str("!0000 ffff_ffff_0000") );
+    assert!( bf("!0001 ffff_ffff_ffff") <
+             bf("!0000 ffff_ffff_0000") );
     
-    assert!( Bigfloat::from_str("+0000 ffff_ffff_0000") <
-             Bigfloat::from_str("+0001 ffff_ffff_ffff") );
+    assert!( bf("+0000 ffff_ffff_0000") <
+             bf("+0001 ffff_ffff_ffff") );
     
-    assert!( Bigfloat::from_str("+0000 ffff_ffff_0000") <
-             Bigfloat::from_str("+0000 ffff_ffff_0000 1234_ffff_0000") );
+    assert!( bf("+0000 ffff_ffff_0000") <
+             bf("+0000 ffff_ffff_0000 1234_ffff_0000") );
+  }
+
+  #[test]
+  fn addition() {
+    let mut m = Bigfloat::from_str("!0000 ffff_fff0_fff0")
+      .unwrap().clone_mut();
+    let mut a = |rhs| {
+      m.add(rhs);
+      format!("{}", m.repack().unwrap())
+    };
+    assert_eq!(a(0x02), "!0000 ffff_fff2_fff0");
+    assert_eq!(a(0x20), "+0000 0000_0012_fff0");
   }
 }
