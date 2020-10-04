@@ -66,7 +66,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         players : Default::default(),
         log : Default::default(),
         gen : Generation(0),
-        max_z: ZCoord(0.),
+        max_z: default(),
       };
 
       let name = InstanceName {
@@ -269,7 +269,7 @@ fn execute_game_insn(cs: &CommandStream,
         if p.nfaces() <= face.into() {
           throw!(SpecError::FaceNotFound);
         }
-        let z = ZCoord(gs.max_z.0 + (i + 1) as f64);
+        let z = gs.max_z.add(i + 1);
         let pc = PieceState {
           held: None,
           zlevel: ZLevel { z, zg: gs.gen },

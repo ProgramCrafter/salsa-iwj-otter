@@ -20,10 +20,10 @@ pub struct Generation (pub u64);
 visible_slotmap_key!{ VisiblePieceId('.') }
 
 #[derive(Debug,Copy,Clone,PartialEq,PartialOrd)]
-#[derive(Serialize,Deserialize)]
+#[derive(Serialize,Deserialize,Default)]
 #[serde(into="f64")]
 #[serde(try_from="f64")]
-pub struct ZCoord(pub f64);
+pub struct ZCoord(f64);
 
 #[derive(Clone,Serialize,Deserialize,Eq,Ord,PartialEq,PartialOrd)]
 #[serde(transparent)]
@@ -175,6 +175,12 @@ impl Eq for ZCoord { }
 impl Display for ZCoord {
   fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
     Display::fmt(&self.0,f)
+  }
+}
+
+impl ZCoord {
+  pub fn add(&self, v: u32) -> ZCoord {
+    ZCoord(self.0 + (v as f64))
   }
 }
 
