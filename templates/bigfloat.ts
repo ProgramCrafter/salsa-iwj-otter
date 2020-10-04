@@ -65,7 +65,9 @@ class Bigfloat {
   }
 
   private extend_left() {
-    this.limbs.unshift(Bigfloat.l0_value(this.limbs[0]));
+    let l0 = this.limbs[0] > Bigfloat.LIMB_NEGATIVE
+	? Bigfloat.LIMB_MODULUS-1 : 0;
+    this.limbs.unshift(l0);
     this.exponent++;
   }
   
