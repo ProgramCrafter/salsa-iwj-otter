@@ -19,7 +19,8 @@ mod innards {
   use super::*;
   use std::mem::{self, align_of, size_of};
   use std::ptr::{self, NonNull};
-  use std::alloc::{alloc, Layout};
+  use std::alloc::{self, Layout};
+  use std::slice;
 
   pub type Innards = NonNull<u8>;
 
@@ -41,24 +42,73 @@ mod innards {
     l_align * ((h_size + l_align - 1) / l_align)
   };
 
+  fn layout(nlimbs: Sz) -> Layout {
+    let limbs_nbytes : usize = size_of::<Limb>() * (nlimbs as usize);
+    let all_nbytes = OFFSET + limbs_nbytes;
+    let align = max(align_of::<Header>(), align_of::<Limb>());
+    Layout::from_size_align(all_nbytes, align).unwrap()
+  }
+
+  fn ptrs(p: *mut u8) -> (*mut Header, *mut Limb) { unsafe {
+    let p_header : *mut Header = mem::transmute(p);
+    let p_limbs  : *mut Limb   = mem::transmute(p.add(OFFSET));
+    (p_header, p_limbs)
+  } }
+
   impl Bigfloat {
-    pub(in super) fn from_parts(sign: Sign, exp: Sz, limbs: &[Limb]) -> Bigfloat {
-      let nlimbs_u = limbs.len();
-      let nlimbs_sz : Sz = nlimbs_u.try_into().expect("limb count overflow");
-      let limbs_nbytes = nlimbs_u * size_of::<Limb>();
-      let all_nbytes = OFFSET + limbs_nbytes;
-      let align = max(align_of::<Header>(), align_of::<Limb>());
-      let layout = Layout::from_size_align(all_nbytes, align).unwrap();
+    pub(in super)
+    fn from_parts(sign: Sign, exp: Sz, limbs: &[Limb]) -> Bigfloat {
+      let nlimbs : Sz = limbs.len().try_into().expect("limb count overflow");
       unsafe {
-        let p = alloc(layout);
-        let p_header : *mut Header = mem::transmute(p);
-        let p_limbs  : *mut Limb   = mem::transmute(p.add(OFFSET));
-        ptr::write(p_header, Header { sign, exp, nlimbs: nlimbs_sz });
-        ptr::copy_nonoverlapping(limbs.as_ptr(), p_limbs, nlimbs_u);
+        let p = alloc::alloc(layout(nlimbs));
+        let (p_header, p_limbs) = ptrs(p);
+        ptr::write(p_header, Header { sign, exp, nlimbs });
+        ptr::copy_nonoverlapping(limbs.as_ptr(), p_limbs, nlimbs.into());
+        Bigfloat(NonNull::new(p).unwrap())
+      }
+    }
+
+    fn as_parts(&self) -> (&Header, &[Limb]) {
+      unsafe {
+        let (h, l) = ptrs(self.0.as_ptr());
+        let h = h.as_ref().unwrap();
+        let limbs = slice::from_raw_parts(l, h.nlimbs.into());
+        (h, limbs)
+      }
+    }
+    fn as_mut_limbs(&self) -> (&Header, &mut [Limb]) {
+      unsafe {
+        let (h, l) = ptrs(self.0.as_ptr());
+        let h = h.as_mut().unwrap();
+        let limbs = slice::from_raw_parts_mut(l, h.nlimbs.into());
+        (h, limbs)
+      }
+    }
+  }
+
+  impl Drop for Bigfloat {
+    fn drop(&mut self) {
+      let (h, _) = self.as_parts();
+      let nlimbs = h.nlimbs;
+      unsafe {
+        alloc::dealloc(self.0.as_mut(), layout(nlimbs));
+      }
+    }
+  }
+
+  impl Clone for Bigfloat {
+    fn clone(&self) -> Bigfloat {
+      unsafe {
+        let (h, _) = self.as_parts();
+        let nlimbs = h.nlimbs;
+        let layout = layout(nlimbs);
+        let p = alloc::alloc(layout);
+        ptr::copy_nonoverlapping(self.0.as_ptr(), p, layout.size());
         Bigfloat(NonNull::new(p).unwrap())
       }
     }
   }
+
 }
 /*/
 impl Bigfloat {
