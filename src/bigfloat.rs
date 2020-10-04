@@ -24,10 +24,11 @@ mod innards {
 
   pub type Innards = NonNull<u8>;
 
+  pub(in super)
   struct Header {
-    sign: Sign,
-    exp: Sz,
-    nlimbs: Sz,
+    pub sign: Sign,
+    pub exp: Sz,
+    pub nlimbs: Sz,
   }
 
   #[repr(C)]
@@ -68,6 +69,7 @@ mod innards {
       }
     }
 
+    pub(in super)
     fn as_parts(&self) -> (&Header, &[Limb]) {
       unsafe {
         let (h, l) = ptrs(self.0.as_ptr());
@@ -76,6 +78,8 @@ mod innards {
         (h, limbs)
       }
     }
+
+    pub(in super)
     fn as_mut_limbs(&self) -> (&Header, &mut [Limb]) {
       unsafe {
         let (h, l) = ptrs(self.0.as_ptr());
@@ -166,13 +170,45 @@ impl Bigfloat {
         p.hex16()?,
       ]);
     }
+    if limbs.is_empty() { None? }
     Bigfloat::from_parts(sign, 0, &limbs)
   }
 }
 
+impl Display for Bigfloat {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) {
+    let (h,ls) = self.as_parts();
+    write!(f, "{}{:04x}",
+           match h.sign { Pos => '+', Neg => '!', },
+           h.exp)?;
+    for l in ls {
+      write!(f, " {:04x}_{:04x}_{:04x}", l[0], l[1], l[2])?;
+    }
+  }
+}
+impl Debug for Bigfloat {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) {
+    write!(f, r#"Bf""#)?;
+    <Bigfloat as Display>::fmt(self, f)?;
+    write!(f, r#"""#)?;
+  }    
+}
+
 #[cfg(test)]
 mod test {
+  use super::*;
+
   #[test]
   fn bfparse() {
+    let s = "!0000 ffff_ffff_fff0";
+    let b = Bigfloat::from_str(s).unwrap();
+    let b2 = b.clone();
+    assert_eq!(format!("{}", &b), s);
+    mem::drop(b);
+    assert_eq!(format!("{}", &b2), s);
+    assert_eq!(format!("{:?}", &b2),
+               format!(r#"Bf"{}""#, &b2));
   }
 }
