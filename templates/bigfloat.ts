@@ -71,6 +71,47 @@ class Bigfloat {
     this.exponent++;
   }
   
+  iter_incdec(stepsign: number): () => Bigfloat {
+    // stepsign should be roughly -1 or +1
+    let start = this.clone();
+    let i = this.exponent;
+    while (i < 0) {
+      start.extend_left();
+      i++;
+    }
+    while (start.limbs.length <= i) {
+      start.limb.push(0);
+    }
+    let delta = stepsign * 0x000001000000;
+    return function(){
+      for (;;) {
+	start.limbs[i] += delta;
+	let j=i;
+	for (;;) {
+	  let new = Bigfloat.limb_mask(start_limbs[j]);
+	  if (sstart_limbs[j] != new) {
+	    start.limbs[j] = new;
+	    j--;
+	  } else if (j==0 &&
+		     (start_limbs[j] < Bigfoot.LIMB_NEGATIVE ||
+		      start_limbs[j] >= Bigfoot.LIMB_NEGATIVE))
+	    
+		     
+	    while (j<0) {
+	      start.extend_left();
+	      j++;
+	    )
+	    start.limbs[j] += Math.sign(stepsign);
+	  } else {
+	    
+	  
+	      
+	    if (start_limbs[j] < Bigfloat.LIMB_MODULUS) 
+	      
+	if (it>0 && start.limbs[it] > 
+    }
+  }
+
   iter_upto(endv: Bigfloat, count: number): () => Bigfloat {
     // next() can be called count times
     // to produce values > this, < endv
