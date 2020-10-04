@@ -7,12 +7,15 @@ enum Sign { Neg, Pos, }
 use Sign::*;
 
 type Sz = u16;
-type Limb = [u16;3];
 
 const CHARS_HEADER : usize = 5;
 const CHARS_PER_LIMB : usize = 15;
 
 pub use innards::Bigfloat;
+
+#[repr(transparent)]
+#[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
+struct Limb (pub [u16;3]);
 
 mod innards {
   use super::*;
@@ -169,11 +172,11 @@ impl Bigfloat {
         Some(' ') => (),
         _ => None?,
       };
-      limbs.push([
+      limbs.push(Limb([
         p.hex16_()?,
         p.hex16_()?,
         p.hex16()?,
-      ]);
+      ]));
     }
     if limbs.is_empty() { None? }
     Bigfloat::from_parts(sign, exp, &limbs)
@@ -186,6 +189,15 @@ impl Bigfloat {
     write!(&mut s, "{}", self).unwrap();
     s
   }
+
+/*
+  fn add(&self, v: u32) -> Bigfloat {
+    let (h, l) = self.as_parts();
+    let l : Vec<_> = l.collect();
+
+    fn add_to_limb(&self, v: u32, );
+  }
+*/
 }
 
 impl Display for Bigfloat {
@@ -196,7 +208,7 @@ impl Display for Bigfloat {
            match h.sign { Pos => '+', Neg => '!', },
            h.exp)?;
     for l in ls {
-      write!(f, " {:04x}_{:04x}_{:04x}", l[0], l[1], l[2])?;
+      write!(f, " {:04x}_{:04x}_{:04x}", l.0[0], l.0[1], l.0[2])?;
     }
   }
 }
