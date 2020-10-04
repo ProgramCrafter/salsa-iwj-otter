@@ -65,6 +65,9 @@ cargo-debug cargo-release:: cargo-%: $(CARGO_TARGET_DIR)/%/server
 .PHONY: $(CARGO_TARGET_DIR)/debug/server
 .PHONY: $(CARGO_TARGET_DIR)/release/server
 
+check: cargo-check js-check
+	@echo 'All tests passed.'
+
 extra-debug:
 extra-release: bundled-sources
 
@@ -74,14 +77,24 @@ $(CARGO_TARGET_DIR)/bundled-sources: $(BUNDLE_SOURCES)
 	@echo Bundled sources.
 .PHONY: bundle-sources $(CARGO_TARGET_DIR)/bundled-sources
 
+cargo-check:
+	$(CARGO) test
+
 $(CARGO_TARGET_DIR)/debug/server:
 	$(CARGO) build
 
 $(CARGO_TARGET_DIR)/release/server:
 	$(CARGO) build --release
 
-templates/script.js: tsc-wrap tsconfig.json $(TS_SRC_FILES)
-	./tsc-wrap $@ tsconfig.json $(TS_SRC_FILES)
+templates/%.js: tsc-wrap tsconfig.json
+	./tsc-wrap $@ tsconfig.json $(filter %.ts,$^)
+
+templates/script.js: $(TS_SRC_FILES)
+templates/bigfloat-tests.js: templates/bigfloat.ts templates/bigfloat-tests.ts
+
+js-check: templates/bigfloat-tests.js
+	nodejs <$<
+	@echo 'nodejs check $< ok'
 
 DEPLOY_ARCH=x86_64-unknown-linux-musl
 DEPLOY_RELEASE=debug
