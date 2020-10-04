@@ -8,36 +8,170 @@
 // operations available!
 
 
-// Representation requirements:
-//    CBOR is binary and compact
-//    JSON is not lossy
-// Nice-to-haves:
-//    JSON 
+// Representation, and model, ought to have these properties
+//     CBOR is binary and compact
+//  *  JSON is not lossy
+//  *  JSON is human-comprehensible
+//  *  JavaScript can compare efficiently
+//     JavaScript can do arithmetic efficiently
+//  *  Limb size is 48 for fast JS arithmetic
+//     Limb size is small for not being too full of padding
+//  *  Limb size is big so step algorithm rarely encounters limb boundaries
+//
+// Many of these are not compatible (in theory extending
+// the serde data model might help a bit, but not completely).
+// We choose those properties marked with "*".
+//
+// Transport, and main JS, representation is a string:
+//   SEEEE VVVV_VVVV_VVVV VVVV_VVVV_VVVV ...
+// where
+//   S = ! or +
+//   EEEE = 16 bit exponent (hex)
+//   VVVV = 16 bits of mantissa, two's complement
+// Value represented is
+//    0x0.VVVV...VVVV * 2^0xEEEE
+//  - 0x1.0           * 2^0eEEEE if S is !
+// Mantissa comes in 48-bit groups, at least one sucb
+//
+// This is 20 bytes of string for a 1-limb number, which
+// would be 64 bits if we made it as compact as possible.
 
+type Bigfloat = Bigfloats.Packed;
 
-type Bigfloat_Json = number[];
+namespace Bigfloats {
+  type Json = string;
+  export type Packed = string & { readonly phantom: unique symbol };
 
-class Bigfloat {
-  // syntqax:
-  //   [!] EEEE ! VVVVVVVV
+  export function from_json(s: Json): Packed { return s as Packed; }
+  export function to_json(p: Packed): Json { return p; }
 
+  const LIMB_BIT      : number = 48;
+  const LIMB_NEGATIVE : number =  0x800000000000;
+  const LIMB_MODULUS  : number = 0x1000000000000;
 
-  exponent: number;
-  limbs: number[]; // BE, limbs are each in [ 0, 2^48 )
-  // binary point is just before limbs[0]
-  // exponent is in limbs
-  // sign bit is top bit of limbs[0]
-  // always at least one limb
+  var UNPACK_HEAD_RE = /^([!\+])([0-9a-f]{4}) /;
+  var UNPACK_LIMB_RE = / ([0-9a-f]{4})_([0-9a-f]{4})_([0-9a-f]{4})/g;
 
-  static LIMB_BIT      : number = 48;
-  private static LIMB_NEGATIVE : number =  0x800000000000;
-  private static LIMB_MODULUS  : number = 0x1000000000000;
+  type Limb = number;
 
-  constructor(j: Bigfloat_Json) {
-    this.exponent = j[0];
-    this.limbs = j.slice(1);
+  type Unpacked = {
+    sign: number,
+    exponent: number,
+    limbs: Limb[], // BE
+  };
+
+  function unpack(p: Packed): Unpacked {
+    let head = p.match(UNPACK_HEAD_RE);
+    UNPACK_LIMB_RE.lastIndex = 0;
+    let limbs = [];
+    let m;
+    while (m = UNPACK_LIMB_RE.exec(p)) {
+      m[0] = '0x';
+      limbs.push(+m.join(''));
+    }
+    return {
+      sign: head[1] == '!' ? -1 : +1,
+      exponent: +('0x' + head[2]),
+      limbs,
+    };
   }
-  to_json(): Bigfloat_Json { return [this.exponent].concat(this.limbs); }
+
+  function pack(v: Unpacked): Packed {
+    function hex16(v: number) { return '000' + v.toString(16).slice(-4); }
+    function hex48(v: Limb) {
+      return (hex16(v / 0x100000000) + '_' +
+	      hex16(v &  0xffff0000) + '_' +
+	      hex16(v /  0x0000ffff));
+    }
+    return (
+      (v.sign < 0 ? '!' : '+') +
+	hex16(v.exponent) + ' ' +
+	v.limbs.map(hex48).join(' ')
+    ) as Packed;
+  }
+ 
+  function ms_limb_from_sign(v: Unpacked): Limb {
+    return (v.sign < 0 ? LIMB_MODULUS-1 : 0);
+  }
+
+  function limb_lookup(v: Unpacked, i: Limb): number {
+    if (i >= v.limbs.length) return 0;
+    if (i < 0) return ms_limb_from_sign(v);
+    return v.limbs[i];
+  }
+
+  function limb_mask(v: Limb): Limb {
+    return (v + LIMB_MODULUS*2) % LIMB_MODULUS;
+  }
+
+  function clone(v: Unpacked): Unpacked {
+    return {
+      limbs: v.limbs.slice(),      
+      ...v
+    }
+  }
+
+  function extend_left_so_index_valid(v: Unpacked, i: number): number {
+    let newlimb = ms_limb_from_sign(v);
+    while (i < 0) {
+      this.limbs.unshift(newlimb);
+      this.exponent++;
+      i++;
+    }
+    return i;
+  }
+
+  export function iter_upto(ap: Packed, bp: Packed, count: number):
+  () => Packed {
+    let av = unpack(ap);
+    let bv = unpack(bp);
+    // result can be called count times to produce values > av, < bv
+    let e_out = Math.max(av.exponent, bv.exponent);
+    for (let e = e_out;
+	 ;
+	 e--) {
+      let ia = av.exponent - e;
+      let ib = bv.exponent - e;
+      if (ia >= av.limbs.length && ib >= bv.limbs.length) {
+	// Oh actually these numbers are equal!
+	return function(){ return this.pack(); }
+      }
+      let la = limb_lookup(av,ia);
+      let lb = limb_lookup(bv,ib);
+      if (la == lb) continue;
+      let avail = limb_mask(lb - la);
+
+      let current = clone(av);
+      let i = extend_left_so_index_valid(current, ia);
+      let step; // floating!
+      if (avail > count+1) {
+	step = avail / (count+1);
+      } else {
+	current.limbs[i] += Math.floor(avail / 2);
+	step = LIMB_MODULUS / (count+1);
+	i++;
+	current.limbs.length = i;
+	current.limbs[i] = 0;
+      }
+      return function() {
+	current.limbs[i] += step;
+	current.limbs[i] = limb_mask(Math.floor(current.limbs[i]));
+	return pack(current);
+      }
+    }
+  }
+
+
+}
+/*
+
+  class Bigfloat {
+  exponent: number | null;
+  limbs: number[] | null;
+// BE, limbs are each in [ 0, 2^48 )
+  // binary point is just before limbs[0]
+
+
 
   private static l0_value(l0: number): number {
     return l0 > Bigfloat.LIMB_NEGATIVE ? l0 - Bigfloat.LIMB_MODULUS : l0;
@@ -123,45 +257,5 @@ class Bigfloat {
 	if (it>0 && start.limbs[it] > 
     }
   }
-
-  iter_upto(endv: Bigfloat, count: number): () => Bigfloat {
-    // next() can be called count times
-    // to produce values > this, < endv
-    let e_out = Math.max(this.exponent, endv.exponent);
-    for (let e = e_out;
-	 ;
-	 e--) {
-      let it = this.exponent - e;
-      let ie = endv.exponent - e;
-      if (it >= this.limbs.length && ie >= endv.limbs.length) {
-	// Oh actually these numbers are equal!
-	return function(){ return this.clone(); }
-      }
-      let lt = this.limb_lookup(it)
-      let le = endv.limb_lookup(ie)
-      if (lt == le) continue;
-
-      let avail = Bigfloat.limb_mask(le - lt);
-      let start = this.clone();
-      while (it < 0) {
-	start.extend_left();
-	it++;
-      }
-      let step; // floating!
-      if (avail > count+1) {
-	step = avail / (count+1);
-      } else {
-	start.limbs[it] += Math.floor(avail / 2);
-	step = Bigfloat.LIMB_MODULUS / (count+1);
-	it++;
-	start.limbs.length = it;
-	start.limbs[it] = 0;
-      }
-      return function() {
-	start.limbs[it] += step;
-	start.limbs[it] = Bigfloat.limb_mask(Math.floor(start.limbs[it]));
-	return start.clone();
-      }
-    }
-  }
 }
+*/
