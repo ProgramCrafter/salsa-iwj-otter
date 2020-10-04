@@ -60,7 +60,7 @@ namespace Bigfloats {
     limbs: Limb[], // BE
   };
 
-  function unpack(p: Packed): Unpacked {
+  export function unpack(p: Packed): Unpacked {
     let head = p.match(UNPACK_HEAD_RE);
     UNPACK_LIMB_RE.lastIndex = 0;
     let limbs = [];
@@ -76,12 +76,12 @@ namespace Bigfloats {
     };
   }
 
-  function pack(v: Unpacked): Packed {
-    function hex16(v: number) { return '000' + v.toString(16).slice(-4); }
-    function hex48(v: Limb) {
-      return (hex16(v / 0x100000000) + '_' +
-	      hex16(v &  0xffff0000) + '_' +
-	      hex16(v /  0x0000ffff));
+  export function pack(v: Unpacked): Packed {
+    function hex16(x: number) { return ('000' + x.toString(16)).slice(-4); }
+    function hex48(x: Limb) {
+      return (hex16(Math.floor(x / 0x100000000)) + '_' +
+	      hex16(           x &  0xffff0000)  + '_' +
+	      hex16(           x &  0x0000ffff)        );
     }
     return (
       (v.sign < 0 ? '!' : '+') +
@@ -112,13 +112,33 @@ namespace Bigfloats {
   }
 
   function extend_left_so_index_valid(v: Unpacked, i: number): number {
+    // returns adjustment to apply to index
     let newlimb = ms_limb_from_sign(v);
+    let adj = 0;
     while (i < 0) {
       this.limbs.unshift(newlimb);
       this.exponent++;
       i++;
+      adj++;
     }
-    return i;
+    return adj;
+  }
+
+  function add_to_limb(v: Unpacked, i: number, step: number): number {
+    // returns adjustment to apply to index
+    let totadj = 0;
+    for (;;) {
+      v.limbs[i] = Math.floor(v.limbs[i] + step);
+      if (v.limbs[i] < LIMB_MODULUS) return totadj;
+      i--;
+      if (i < 0) {
+	if (v.sign < 0) { v.sign = +1; return totadj; }
+	let adj = extend_left_so_index_valid(v, i);
+	i += adj;
+	totadj += adj;
+      }
+      step=1;
+    }
   }
 
   export function iter_upto(ap: Packed, bp: Packed, count: number):
@@ -142,20 +162,19 @@ namespace Bigfloats {
       let avail = limb_mask(lb - la);
 
       let current = clone(av);
-      let i = extend_left_so_index_valid(current, ia);
+      let i = ia + extend_left_so_index_valid(current, ia);
       let step; // floating!
       if (avail > count+1) {
 	step = avail / (count+1);
       } else {
-	current.limbs[i] += Math.floor(avail / 2);
+	i += add_to_limb(current, i, avail / 2);
 	step = LIMB_MODULUS / (count+1);
 	i++;
 	current.limbs.length = i;
 	current.limbs[i] = 0;
       }
       return function() {
-	current.limbs[i] += step;
-	current.limbs[i] = limb_mask(Math.floor(current.limbs[i]));
+	i += add_to_limb(current, i, step);
 	return pack(current);
       }
     }
