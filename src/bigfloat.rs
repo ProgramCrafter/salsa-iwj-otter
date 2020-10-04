@@ -1,10 +1,5 @@
 // See bigfloat.ts
 
-#![allow(unused_variables)]
-#![allow(dead_code)]
-#![allow(unused_mut)]
-#![allow(unused_imports)]
-
 use crate::imports::*;
 
 enum Sign { Pos, Neg, }
@@ -39,6 +34,7 @@ mod innards {
   }
 
   #[repr(C)]
+  #[allow(dead_code)] // this is for documentation purposes
   struct Repr {
     h: Header,
     limbs: [Limb],
@@ -86,6 +82,7 @@ mod innards {
       }
     }
 
+    #[allow(dead_code)] // xxx
     pub(in super)
     fn as_mut_limbs(&self) -> (&Header, &mut [Limb]) {
       unsafe {
@@ -162,7 +159,7 @@ impl Bigfloat {
       '!' => Neg,
       _ => None?,
     };
-    let exp = p.hex16();
+    let exp = p.hex16()?;
 
     let mut limbs = Vec::with_capacity(p.0.len() / CHARS_PER_LIMB);
     loop {
@@ -178,7 +175,7 @@ impl Bigfloat {
       ]);
     }
     if limbs.is_empty() { None? }
-    Bigfloat::from_parts(sign, 0, &limbs)
+    Bigfloat::from_parts(sign, exp, &limbs)
   }
 
   fn to_string(&self) -> String {
