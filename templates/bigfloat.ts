@@ -7,6 +7,8 @@
 // This is a really really shonky BigFloat with only a handful of
 // operations available!
 
+type Bigfloat_Json = number[];
+
 class Bigfloat {
   exponent: number;
   limbs: number[]; // BE, limbs are each in [ 0, 2^48 )
@@ -16,13 +18,14 @@ class Bigfloat {
   // always at least one limb
 
   static LIMB_BIT      : number = 48;
-  private static LIMB_NEGATIVE : number = 1<<47;
-  private static LIMB_MODULUS  : number = 1<<48;
+  private static LIMB_NEGATIVE : number =  0x800000000000;
+  private static LIMB_MODULUS  : number = 0x1000000000000;
 
-  constructor(j: { e: number, l: number[] }) {
-    this.exponent = j.e;
-    this.limbs = j.l;
+  constructor(j: Bigfloat_Json) {
+    this.exponent = j[0];
+    this.limbs = j.slice(1);
   }
+  to_json(): Bigfloat_Json { return [this.exponent].concat(this.limbs); }
 
   private static l0_value(l0: number): number {
     return l0 > Bigfloat.LIMB_NEGATIVE ? l0 - Bigfloat.LIMB_MODULUS : l0;
@@ -33,6 +36,10 @@ class Bigfloat {
     if (i >= 0) return this.limbs[i];
     let l0 = this.limbs[0];
     return (l0 < Bigfloat.LIMB_NEGATIVE ? 0 : Bigfloat.LIMB_MODULUS-1);
+  }
+
+  private static limb_mask(v: number): number {
+    return (v + Bigfloat.LIMB_MODULUS*2) % Bigfloat.LIMB_MODULUS;
   }
 
   cmp(other: Bigfloat): number {
@@ -48,10 +55,13 @@ class Bigfloat {
   }
 
   clone(): Bigfloat {
-    return new Bigfloat({
-      e: this.exponent,
-      l: this.limbs.slice(),
-    });
+    return (Object as any).assign(
+      Object.create(Object.getPrototypeOf(this)),
+      {
+	limbs: this.limbs.slice(),
+	...this
+      }
+    );
   }
 
   private extend_left() {
@@ -66,9 +76,9 @@ class Bigfloat {
     for (let e = e_out;
 	 ;
 	 e--) {
-      let it = e - this.exponent;
-      let ie = e - endv.exponent;
-      if (it > this.limbs.length && ie > endv.limbs.length) {
+      let it = this.exponent - e;
+      let ie = endv.exponent - e;
+      if (it >= this.limbs.length && ie >= endv.limbs.length) {
 	// Oh actually these numbers are equal!
 	return function(){ return this.clone(); }
       }
@@ -76,7 +86,7 @@ class Bigfloat {
       let le = endv.limb_lookup(ie)
       if (lt == le) continue;
 
-      let avail = (le - lt) & (Bigfloat.LIMB_MODULUS-1);
+      let avail = Bigfloat.limb_mask(le - lt);
       let start = this.clone();
       while (it < 0) {
 	start.extend_left();
@@ -86,16 +96,15 @@ class Bigfloat {
       if (avail > count+1) {
 	step = avail / (count+1);
       } else {
-	start[it] += (avail>>1);
+	start.limbs[it] += Math.floor(avail / 2);
 	step = Bigfloat.LIMB_MODULUS / (count+1);
 	it++;
 	start.limbs.length = it;
-	start[it] = 0;
+	start.limbs[it] = 0;
       }
       return function() {
-	start[it] += step;
-	start[it] = Math.floor(start[it]);
-	start[it] &= (Bigfloat.LIMB_MODULUS-1);
+	start.limbs[it] += step;
+	start.limbs[it] = Bigfloat.limb_mask(Math.floor(start.limbs[it]));
 	return start.clone();
       }
     }
