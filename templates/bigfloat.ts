@@ -64,7 +64,7 @@ class Bigfloat {
     // to produce values > this, < endv
     let e_out = Math.max(this.exponent, endv.exponent);
     for (let e = e_out;
-	 e;
+	 ;
 	 e--) {
       let it = e - this.exponent;
       let ie = e - endv.exponent;
