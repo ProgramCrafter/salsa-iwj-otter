@@ -7,9 +7,21 @@
 // This is a really really shonky BigFloat with only a handful of
 // operations available!
 
+
+// Representation requirements:
+//    CBOR is binary and compact
+//    JSON is not lossy
+// Nice-to-haves:
+//    JSON 
+
+
 type Bigfloat_Json = number[];
 
 class Bigfloat {
+  // syntqax:
+  //   [!] EEEE ! VVVVVVVV
+
+
   exponent: number;
   limbs: number[]; // BE, limbs are each in [ 0, 2^48 )
   // binary point is just before limbs[0]
