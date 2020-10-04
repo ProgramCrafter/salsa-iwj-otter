@@ -68,43 +68,43 @@ pub struct Client {
   pub lastseen : Instant,
 }
 
-/// KINDS OF PERSISTENT STATE
-///
-///               TokenTable   TokenTable    GameState    Instance GameState
-///                <ClientId>   <PlayerId>    .players    .pieces  .pieces
-///
-///   Saved        No           a-*           g-*         a-*      g-*
-///   Spec TOML    Absent       table, ish    table       game     game
-///
-///
-/// UPDATE RELIABILITY/PERSISTENCE RULES
-///
-/// From the caller's point of view
-///
-/// We offer atomic creation/modification/destruction of:
-///
-///    * Games (roughtly, a map from InstanceName to GameState;
-///             includes any player)
-///
-///    * Player access tokens, for an existing (game, player)
-///
-///    * Clients (for an existing (game, player)
-///
-/// We also offer atomic destruction of:
-///
-///    * Games
-///
-///    * Players
-///
-/// All of the above, except clients, are persistent, in the sense
-/// that a server restart will preserve them.  See above.
-///
-/// The general code gets mutable access to the GameState.  We offer
-/// post-hoc saving of a modified game.  This should not be used for
-/// player changes.  For other changes, if the save fails, a server
-/// restart may be a rewind.  This relaxation of the rules is
-/// necessary avoid complicated three-phase commit on GameState update
-/// for routine game events.
+// KINDS OF PERSISTENT STATE
+//
+//               TokenTable   TokenTable    GameState    Instance GameState
+//                <ClientId>   <PlayerId>    .players    .pieces  .pieces
+//
+//   Saved        No           a-*           g-*         a-*      g-*
+//   Spec TOML    Absent       table, ish    table       game     game
+//
+//
+// UPDATE RELIABILITY/PERSISTENCE RULES
+//
+// From the caller's point of view
+//
+// We offer atomic creation/modification/destruction of:
+//
+//    * Games (roughtly, a map from InstanceName to GameState;
+//             includes any player)
+//
+//    * Player access tokens, for an existing (game, player)
+//
+//    * Clients (for an existing (game, player)
+//
+// We also offer atomic destruction of:
+//
+//    * Games
+//
+//    * Players
+//
+// All of the above, except clients, are persistent, in the sense
+// that a server restart will preserve them.  See above.
+//
+// The general code gets mutable access to the GameState.  We offer
+// post-hoc saving of a modified game.  This should not be used for
+// player changes.  For other changes, if the save fails, a server
+// restart may be a rewind.  This relaxation of the rules is
+// necessary avoid complicated three-phase commit on GameState update
+// for routine game events.
 //
 // IMPLEMENTATION
 //
