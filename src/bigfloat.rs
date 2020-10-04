@@ -13,7 +13,14 @@ use Sign::*;
 type Sz = u16;
 type Limb = [u16;3];
 
-pub struct Bigfloat(innards::Innards);
+#[derive(Serialize)]//,Deserialize
+#[serde(transparent)]
+pub struct Bigfloat(#[serde(serialize_with="serialize")] Innards);
+
+const CHARS_HEADER : usize = 5;
+const CHARS_PER_LIMB : usize = 15;
+
+use innards::Innards;
 
 mod innards {
   use super::*;
@@ -157,7 +164,7 @@ impl Bigfloat {
     };
     let exp = p.hex16();
 
-    let mut limbs = Vec::with_capacity(p.0.len() / 15);
+    let mut limbs = Vec::with_capacity(p.0.len() / CHARS_PER_LIMB);
     loop {
       match p.next() {
         None => break,
@@ -172,6 +179,14 @@ impl Bigfloat {
     }
     if limbs.is_empty() { None? }
     Bigfloat::from_parts(sign, 0, &limbs)
+  }
+
+  fn to_string(&self) -> String {
+    let (h, _) = self.as_parts();
+    let n = CHARS_HEADER + CHARS_PER_LIMB * (h.nlimbs as usize);
+    let mut s = String::with_capacity(n);
+    write!(&mut s, "{}", self).unwrap();
+    s
   }
 }
 
@@ -195,6 +210,26 @@ impl Debug for Bigfloat {
     write!(f, r#"""#)?;
   }    
 }
+
+fn serialize<S:Serializer>(v: &Innards, s: S) -> Result<S::Ok, S::Error> {
+  let d = Bigfloat(*v).to_string();
+  s.serialize_str(&d)
+}
+
+#[derive(Error,Clone,Copy,Debug)]
+#[error("error parsing bigfloat (z value)")]
+struct ParseError;
+/*
+impl TryFrom<&str> for Bigfloat {
+  type Error = ParseError;
+  #[throws(ParseError)]
+  fn try_from(s: &str) -> Bigfloat { }
+}
+impl From<&Bigfloat> for String {
+  fn from(v: &Bigfloat) -> String { }
+}
+*/
+
 
 #[cfg(test)]
 mod test {
