@@ -6,16 +6,27 @@ use crate::imports::*;
 enum Sign { Neg, Pos, }
 use Sign::*;
 
-type Sz = u16;
+type Sz = i16;
 
 const CHARS_HEADER : usize = 5;
 const CHARS_PER_LIMB : usize = 15;
 
+const LIMB_MODULUS : u64 = 0x1_0000_0000_0000;
+const LIMB_MASK    : u64 = LIMB_MODULUS-1;
+
 pub use innards::Bigfloat;
+use innards::Header;
 
 #[repr(transparent)]
-#[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
+#[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq,Default)]
 struct Limb (pub [u16;3]);
+
+#[derive(Clone,Debug)]
+pub struct Mutable {
+  sign: Sign,
+  exp: isize,
+  limbs: Vec<Limb>,
+}
 
 mod innards {
   use super::*;
@@ -71,7 +82,7 @@ mod innards {
         let p = alloc::alloc(layout(nlimbs));
         let (p_header, p_limbs) = ptrs(p);
         ptr::write(p_header, Header { sign, exp, nlimbs });
-        ptr::copy_nonoverlapping(limbs.as_ptr(), p_limbs, nlimbs.into());
+        ptr::copy_nonoverlapping(limbs.as_ptr(), p_limbs, nlimbs as usize);
         Bigfloat(NonNull::new(p).unwrap())
       }
     }
@@ -81,7 +92,7 @@ mod innards {
       unsafe {
         let (h, l) = ptrs(self.0.as_ptr());
         let h = h.as_ref().unwrap();
-        let limbs = slice::from_raw_parts(l, h.nlimbs.into());
+        let limbs = slice::from_raw_parts(l, h.nlimbs as usize);
         (h, limbs)
       }
     }
@@ -92,7 +103,7 @@ mod innards {
       unsafe {
         let (h, l) = ptrs(self.0.as_ptr());
         let h = h.as_mut().unwrap();
-        let limbs = slice::from_raw_parts_mut(l, h.nlimbs.into());
+        let limbs = slice::from_raw_parts_mut(l, h.nlimbs as usize);
         (h, limbs)
       }
     }
@@ -139,12 +150,6 @@ impl From<Limb> for u64 {
   }
 }
 
-/*/
-impl Bigfloat {
-  fn from_parts(sign: Sign, exp: Sz, limbs: &[Limb]) {
-    Bigfloat(Innards::from_parts(sign, exp, limbs))
-*/
-
 impl Bigfloat {
   #[throws(as Option)]
   fn from_str(s: &str) -> Self {
@@ -156,7 +161,7 @@ impl Bigfloat {
         if self.0.len() < L { None? }
         let (l, r) = self.0.split_at(L);
         self.0 = r;
-        Sz::from_str_radix(l, 16).ok()?
+        u16::from_str_radix(l, 16).ok()?
       }
 
       #[throws(as Option)]
@@ -196,7 +201,7 @@ impl Bigfloat {
       ]));
     }
     if limbs.is_empty() { None? }
-    Bigfloat::from_parts(sign, exp, &limbs)
+    Bigfloat::from_parts(sign, exp as Sz, &limbs)
   }
 
   fn to_string(&self) -> String {
@@ -207,14 +212,55 @@ impl Bigfloat {
     s
   }
 
-/*
-  fn add(&self, v: u32) -> Bigfloat {
-    let (h, l) = self.as_parts();
-    let l : Vec<_> = l.collect();
-
-    fn add_to_limb(&self, v: u32, );
+  pub fn clone_mut(&self) -> Mutable {
+    let (&Header { sign, exp, .. }, l) = self.as_parts();
+    Mutable {
+      sign,
+      exp: exp as isize,
+      limbs: l.iter().map(|l| *l).collect(),
+    }
   }
-*/
+}
+
+impl Mutable {
+  pub fn add(&mut self, rhs: u32) {
+    self.add_to_limb(0, rhs);
+  }
+
+  fn add_to_limb(&mut self, mut i: isize, mut rhs: u32) -> isize {
+    // returns amount by which other indices now need updating
+    self.ensure_limb_exists(i);
+    let mut added : isize = 0;
+    loop {
+      let nv : u64 = self.limbs[i as usize].into();
+      let nv = nv + (rhs as u64);
+      if nv < LIMB_MODULUS {
+        self.limbs[i as usize] = nv.into();
+        return added;
+      }
+      self.limbs[i as usize] = (nv & LIMB_MASK).into();
+      i -= 1;
+      added += self.extend_left_so_index_valid(i);
+      rhs = 1;
+    }
+  }
+
+  fn ensure_limb_exists(&mut self, i: isize) {
+    if self.limbs.len() <= (i as usize) {
+      self.limbs.resize((i+1) as usize, default())
+    }
+  }
+
+  fn extend_left_so_index_valid(&mut self, mut i: isize) -> isize {
+    let mut added = 0;
+    let new_limb_val = match self.sign { Pos => 0, Neg => LIMB_MASK, };
+    loop {
+      if i >= 0 { return added; }
+      self.limbs.insert(0, new_limb_val.into());
+      added += 1;
+      i += 1;
+    }
+  }
 }
 
 impl Display for Bigfloat {
