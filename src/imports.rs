@@ -20,7 +20,7 @@ pub use std::iter;
 pub use std::iter::repeat_with;
 pub use std::collections::VecDeque;
 pub use std::num::Wrapping;
-pub use std::cmp::{self,min,max};
+pub use std::cmp::{self,min,max,Ordering};
 pub use std::error::Error;
 pub use std::marker::PhantomData;
 pub use std::ops::{Deref,DerefMut};

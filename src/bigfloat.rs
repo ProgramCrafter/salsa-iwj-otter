@@ -2,7 +2,8 @@
 
 use crate::imports::*;
 
-enum Sign { Pos, Neg, }
+#[derive(Copy,Clone,Debug,Ord,Eq,PartialOrd,PartialEq)]
+enum Sign { Neg, Pos, }
 use Sign::*;
 
 type Sz = u16;
@@ -208,6 +209,41 @@ impl Debug for Bigfloat {
   }    
 }
 
+impl Ord for Bigfloat {
+  fn cmp(&self, other: &Bigfloat) -> Ordering {
+    let (ah, al) = self.as_parts();
+    let (bh, bl) = other.as_parts();
+
+    {
+
+      ah.sign.cmp(&bh.sign)
+
+    }.then_with(||{
+
+      let mut x = ah.exp.cmp(&bh.exp);
+      if ah.sign == Neg { x = x.reverse() }
+      x
+
+    }.then_with(||{
+
+      al.cmp(bl)
+
+    }))
+  }
+}
+impl PartialOrd for Bigfloat {
+  fn partial_cmp(&self, other: &Bigfloat) -> Option<Ordering> {
+    Some(self.cmp(other))
+  }
+}
+impl Eq for Bigfloat {
+}
+impl PartialEq for Bigfloat {
+  fn eq(&self, other: &Bigfloat) -> bool {
+    self.cmp(other) == Ordering::Equal
+  }
+}
+
 #[derive(Error,Clone,Copy,Debug)]
 #[error("error parsing bigfloat (z value)")]
 pub struct ParseError;
@@ -241,5 +277,20 @@ mod test {
     assert_eq!(format!("{}", &b2), s);
     assert_eq!(format!("{:?}", &b2),
                format!(r#"Bf"{}""#, &b2));
+  }
+
+  #[test]
+  fn equality() {
+    assert!( Bigfloat::from_str("!0000 ffff_ffff_fff0") <
+             Bigfloat::from_str("!0000 ffff_ffff_fff3") );
+    
+    assert!( Bigfloat::from_str("!0001 ffff_ffff_ffff") <
+             Bigfloat::from_str("!0000 ffff_ffff_0000") );
+    
+    assert!( Bigfloat::from_str("+0000 ffff_ffff_0000") <
+             Bigfloat::from_str("+0001 ffff_ffff_ffff") );
+    
+    assert!( Bigfloat::from_str("+0000 ffff_ffff_0000") <
+             Bigfloat::from_str("+0000 ffff_ffff_0000 1234_ffff_0000") );
   }
 }
