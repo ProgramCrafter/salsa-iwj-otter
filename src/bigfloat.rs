@@ -13,14 +13,10 @@ use Sign::*;
 type Sz = u16;
 type Limb = [u16;3];
 
-#[derive(Serialize)]//,Deserialize
-#[serde(transparent)]
-pub struct Bigfloat(#[serde(serialize_with="serialize")] Innards);
-
 const CHARS_HEADER : usize = 5;
 const CHARS_PER_LIMB : usize = 15;
 
-use innards::Innards;
+pub use innards::Bigfloat;
 
 mod innards {
   use super::*;
@@ -29,7 +25,11 @@ mod innards {
   use std::alloc::{self, Layout};
   use std::slice;
 
-  pub type Innards = NonNull<u8>;
+  #[derive(Deserialize)]//,Serialize
+  #[serde(try_from="&str")]
+  pub struct Bigfloat(Innards);
+
+  type Innards = NonNull<u8>;
 
   pub(in super)
   struct Header {
@@ -211,25 +211,24 @@ impl Debug for Bigfloat {
   }    
 }
 
-fn serialize<S:Serializer>(v: &Innards, s: S) -> Result<S::Ok, S::Error> {
-  let d = Bigfloat(*v).to_string();
-  s.serialize_str(&d)
-}
-
 #[derive(Error,Clone,Copy,Debug)]
 #[error("error parsing bigfloat (z value)")]
-struct ParseError;
-/*
+pub struct ParseError;
+
 impl TryFrom<&str> for Bigfloat {
   type Error = ParseError;
   #[throws(ParseError)]
-  fn try_from(s: &str) -> Bigfloat { }
+  fn try_from(s: &str) -> Bigfloat {
+    Bigfloat::from_str(s).ok_or(ParseError)?
+  }
 }
-impl From<&Bigfloat> for String {
-  fn from(v: &Bigfloat) -> String { }
-}
-*/
 
+impl Serialize for Bigfloat {
+  fn serialize<S:Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+    let d = self.to_string();
+    s.serialize_str(&d)
+  }
+}
 
 #[cfg(test)]
 mod test {
