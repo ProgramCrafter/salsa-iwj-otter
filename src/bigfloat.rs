@@ -122,6 +122,23 @@ mod innards {
   }
 
 }
+
+impl From<u64> for Limb {
+  fn from(u: u64) -> Limb {
+    assert_eq!(0, u >> 48);
+    Limb([ ((u >> 32) & 0xffff) as u16,
+           ((u >> 16) & 0xffff) as u16,
+           ((u >>  0) & 0xffff) as u16 ])
+  }
+}
+impl From<Limb> for u64 {
+  fn from(l: Limb) -> u64 {
+    ((l.0[0] as u64) << 32) |
+    ((l.0[1] as u64) << 16) |
+    ((l.0[2] as u64) <<  0)
+  }
+}
+
 /*/
 impl Bigfloat {
   fn from_parts(sign: Sign, exp: Sz, limbs: &[Limb]) {
