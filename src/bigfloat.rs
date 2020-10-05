@@ -420,13 +420,18 @@ mod test {
 
   #[test]
   fn addition() {
-    let mut m = Bigfloat::from_str("!0000 ffff_fff0_fff0")
-      .unwrap().clone_mut();
-    let mut a = |rhs| {
-      m.add(rhs);
-      format!("{}", m.repack().unwrap())
-    };
-    assert_eq!(a(0x02), "!0000 ffff_fff2_fff0");
-    assert_eq!(a(0x20), "+0000 0000_0012_fff0");
+    fn mk(s: &str) -> super::Mutable { bf(s).clone_mut() }
+    impl Mutable {
+      fn chk(mut self, rhs: u32, exp: &str) -> Self {
+        self.add(rhs);
+        let got = self.repack().unwrap();
+        assert_eq!(got.to_string(), exp);
+        self
+      }
+    }
+    mk("!0000 ffff_fff0_fff0")
+      .chk(0x02, "!0000 ffff_fff2_fff0")
+      .chk(0x20, "+0000 0000_0012_fff0")
+      ;
   }
 }
