@@ -146,7 +146,7 @@ namespace Bigfloats {
 
   export function add(p: Bigfloat, step: number): Bigfloat {
     let v = unpack(p);
-    add_to_limb(v, 0, step * 0x10000);
+    add_to_limb(v, v.exponent, step * 0x10000);
     return pack(v);
   }
 
