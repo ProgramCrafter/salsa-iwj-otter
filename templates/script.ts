@@ -347,7 +347,7 @@ function some_keydown(e: KeyboardEvent) {
     }
   }
 }
-/*
+
 keyops_local['lower'] = function (uo: UoRecord) {
   // This is a bit subtle.  We don't want to lower below pinned pieces
   // (unless we are pinned too, or the user is wresting).  But maybe
@@ -380,8 +380,8 @@ keyops_local['lower'] = function (uo: UoRecord) {
   //
   // When wresting, treat all targets as pinned.
 
-  function target_treat_pinned(p: PieceInfo) => boolean {
-    wresting || p.pinned;
+  function target_treat_pinned(p: PieceInfo): boolean {
+    return wresting || p.pinned;;
   }
 
   type Todo = {
@@ -404,17 +404,19 @@ keyops_local['lower'] = function (uo: UoRecord) {
     p: PieceInfo,
   };
   // bottom of the stack order first
-  let tomove_unpinned = [];
-  let tomove_misstacked = [];
-  let nomove_pinned = [];
-  let tomove_pinned = [];
-  let bottommost_unpinned = null;
+  let tomove_unpinned     : Entry[] = [];
+  let tomove_misstacked   : Entry[] = [];
+  let nomove_pinned       : Entry[] = [];
+  let tomove_pinned       : Entry[] = [];
+  let bottommost_unpinned : Entry | null = null;
 
   let walk = pieces_marker;
   for (;;) { // starting at the bottom of the stack order
     if (Object.keys(targets_todo).length == 0) break;
-    walk = walk.nextElementSibling;  if (walk == null) break;
-    let piece = walk.datsset.piece;  if (piece == null) break;
+    let new_walk = walk.nextElementSibling;
+    if (new_walk == null) break;
+    walk = new_walk as SVGGraphicsElement;
+    let piece = walk.dataset.piece;  if (piece == null) break;
 
     let todo = targets_todo[piece];
     if (todo) {
@@ -433,20 +435,20 @@ keyops_local['lower'] = function (uo: UoRecord) {
 	// state A -> Z
 	bottommost_unpinned = { p, piece };
       } else {
-	nomove_pinned.push { p, piece };
+	nomove_pinned.push({ p, piece });
       }
       continue;
     }
 
     // state B
     if (p.pinned)
-      tomove_misstacked.push({ p, piece, pinned: p.pinned, });
+      tomove_misstacked.push({ p, piece });
   }
 
   let q_count = tomove_unpinned.length + tomove_misstacked.length;
   let z_top =
       bottommost_unpinned ? bottommost_unpinned.p.z :
-      walk.dataset.piece != null ? pieces[walk.dataset.piece!].p.z :
+      walk.dataset.piece != null ? pieces[walk.dataset.piece!].z :
       // rather a lack of things we are not adjusting!
       q_count;
 
@@ -456,60 +458,28 @@ keyops_local['lower'] = function (uo: UoRecord) {
   };
   type PlanEntry = {
     arrays: Entry[],
-    z_top: number || null,
-    z_step: number,
+    z_top: number | undefined,
+    z_bot: number | undefined,
   };
   let plan = [];
 
   if (nomove_pinned.length > 0) {
     let z_bot = nomove_pinned[nomove_pinned.length-1].p.z;
-    let z_step = (z_top - z_bot) / (q_count+1);
-    let macheps = 1e-16;
-    //let minposflt = 1e-308;
-    let force_positive = 1e-150; // roughly sqrt(minopsflt)
-    let ratio = z_step / (Math.abs(z_top) + Math.abs(z_bot) + force_positive);
-    let restack = ratio < macheps * 256; // at least 8 goes of halving
-    if (restack) {
-      restack = nomove_pinned.every(function (e) {
-	e.p.held == null || e.p.held == us
-      });
-      if (!restack) {
-	if (ratio < macheps) {
-	  add_log_message(
- 'Cannot lower - stack renumbering prevented by other player grasp(s).'
-	  );
-	  return;
-	} else if (ratio < macheps * 16) { // 4 goes of halving
-	  add_log_message(
- 'Stack renumbering wanted (needed soon), but prevented by other player grasp(s).'
-	  );
-	}
-      }
-    }
-    if (restack) {
-      let pe = {
-	arrays: [tomove_unpinned, tomove_misstacked, nomove_pinned],
-	z_top,
-	z_step: 1.0,
-      }
-      z_top = undef;
-    } else {
-      let pe = {
-	arrays: [tomove_unpinned, tomove_misstacked],
-	z_top,
-	z_step,
-      };
-      z_top = nomove_pinned[0].p.z;
-    }
+    let pe = {
+      arrays: [tomove_unpinned, tomove_misstacked],
+      z_top,
+      z_bot,
+    };
+    z_top = nomove_pinned[0].p.z;
     plan.push(pe);
   }
 
   plan.push({
     arrays: [tomove_pinned],
     z_top,
-    z_step: 1.0,
+    z_bot: undefined,
   });
-
+/*
   for (let pe of plan) {
     for (let ent of pe.array) {
       if (ent.held != null && ent.held != us) {
@@ -552,8 +522,8 @@ keyops_local['lower'] = function (uo: UoRecord) {
   
     
     let pinned = treat
-}
 */
+}
 
 keyops_local['wrest'] = function (uo: UoRecord) {
   wresting = !wresting;
