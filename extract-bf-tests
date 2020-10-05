@@ -6,8 +6,11 @@ sub chk_repr ($) {
   print "assert_eq($p, Bigfloats.pack(Bigfloats.unpack($p as any)));\n";
 }
 
+my $sre = qr{\"[^"]+\"};
+
 while (<>) {
   next unless m/^mod test/..0;
   my $l = $_;
-  $l =~ s{bf\((\"[^"]+\")\)}{ chk_repr($1) }ge;
+  $l =~ s{bf\(($sre)\)}{ chk_repr($1) }ge;
+  
 }
