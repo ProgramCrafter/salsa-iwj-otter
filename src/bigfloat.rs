@@ -270,15 +270,15 @@ impl TryFrom<&Mutable> for Bigfloat {
 
 impl Mutable {
   pub fn add(&mut self, rhs: u32) {
-    self.add_to_limb(0, rhs << 16);
+    self.add_to_limb(0, (rhs as LimbVal) << 16);
   }
 
-  fn add_to_limb(&mut self, mut i: isize, mut rhs: u32) {
+  fn add_to_limb(&mut self, mut i: isize, mut rhs: LimbVal) {
     // returns amount by which other indices now need updating
     loop {
       self.extend_so_index_valid(i);
       let nv : u64 = self.limbs[i].into();
-      let nv = nv + (rhs as u64);
+      let nv = nv + rhs;
       if nv < LIMB_MODULUS {
         self.limbs[i] = nv.into();
         return;
@@ -432,6 +432,10 @@ mod test {
     mk("!0000 ffff_fff0_fff0")
       .chk(0x02, "!0000 ffff_fff2_fff0")
       .chk(0x20, "+0000 0000_0012_fff0")
+      ;
+    mk("+0000 c123_5678_abc9")
+      .chk(0x071112222, "+0001 0000_0000_0001 3234_789a_abc9")
+      .chk(0x011112222, "+0001 0000_0000_0001 4345_9abc_abc9")
       ;
   }
 }
