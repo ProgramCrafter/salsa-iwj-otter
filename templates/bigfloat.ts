@@ -80,10 +80,11 @@ namespace Bigfloats {
   export function pack(v: Unpacked): Packed {
     function hex16(x: number) { return ('000' + x.toString(16)).slice(-4); }
     function hex48(x: Limb) {
-      return (hex16(Math.floor(x / 0x100000000)       ) + '_' +
-	      hex16(          (x &  0xffff0000) >> 16 ) + '_' +
-	      hex16(           x &  0x0000ffff        )        );
+      return (hex16(Math.floor(x        / 0x100000000 ) ) + '_' +
+	      hex16(          (x >> 16) &  0x0000ffff   ) + '_' +
+	      hex16(           x        &  0x0000ffff   )       );
     }
+//# console.log('pack', v);
     return (
       (v.sign < 0 ? '!' : '+') +
 	hex16(v.exponent) + ' ' +
@@ -181,6 +182,7 @@ namespace Bigfloats {
 	current.limbs.length = i;
 	current.limbs[i] = 0;
       }
+//# console.log('will iter',current,step,avail);
       return function() {
 	i += add_to_limb(current, i, step);
 	return pack(current);
