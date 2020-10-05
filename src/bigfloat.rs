@@ -86,7 +86,7 @@ mod innards {
 
   impl Bigfloat {
     pub(in super)
-    fn from_limbs<L, I>(sign: Sign, exp: Sz, nlimbs: Sz, mut limbs: I)
+    fn from_limbs<L, I>(sign: Sign, exp: Sz, nlimbs: Sz, limbs: I)
                         -> Bigfloat 
     where L: Into<Limb> + Debug,
           I: Iterator<Item=L>
@@ -95,15 +95,8 @@ mod innards {
         let p = alloc::alloc(layout(nlimbs));
         let (p_header, p_limbs) = ptrs(p);
         ptr::write(p_header, Header { sign, exp, nlimbs });
-        let mut count = 0..(nlimbs as usize);
-        loop {
-          match (limbs.next(), count.next()) {
-            (None, None) => break,
-            (Some(l), Some(i)) => {
-              p_limbs.add(i).write(l.into());
-            },
-            x => panic!("unexpected {:?}", x),
-          }
+        for (l, i) in limbs.zip_eq(0..(nlimbs as usize)) {
+          p_limbs.add(i).write(l.into());
         }
         Bigfloat(NonNull::new(p).unwrap())
       }
