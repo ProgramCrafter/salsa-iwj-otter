@@ -1,5 +1,6 @@
 templates/script.js
 templates/bigfloat-tests.js
+templates/bigfloat-tests-auto.ts
 templates/LICENCE
 templates/AGPLv3
 templates/CC-BY-SA-3.0

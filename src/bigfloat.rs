@@ -385,6 +385,7 @@ impl Serialize for Bigfloat {
 
 #[cfg(test)]
 mod test {
+  // everything from here on is seded by the js test extractor!
   use super::*;
 
   fn bf(s: &str) -> Bigfloat {
