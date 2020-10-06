@@ -22,19 +22,40 @@
 // the serde data model might help a bit, but not completely).
 // We choose those properties marked with "*".
 //
-// Transport, and main JS, representation is a string:
-//   SEEEE VVVV_VVVV_VVVV VVVV_VVVV_VVVV ...
+// Main representation is a string:
+//   VVVVVVVVVV_VVVVVVVVVV ...]
 // where
-//   S = ! or +
-//   EEEE = 16 bit exponent (hex)
-//   VVVV = 16 bits of mantissa, two's complement
+//   VVVVVVVVVV = 50 bits in lowercase base32hex ("0-9a-..."), unsigned
+// Value is a whole number of 50-bit groups ("limbs"), at least one sucb.
+//
+// Supported operations are:
+//
+//    Total ordering
+//       Values are compared lexically.
+//       (So, NNNN_NNNN_NNNN < NNNN_NNNN_NNNN.0000_0000_0000)
+//
+//    Select initial value:
+//       8000_0000_0000
+//
+//    Pick a value (or a specified number of values) strictly
+//    in between any two existing values.
+//
+//       Find first limb that they differ, divide intervening
+//       limb values evenly; if this is less than an increment
+//       of 1 per limb, choose a halfway value rounding down,
+//       and add a limb
+//       
+
+the space up
+//       
+//
+//    Pick a value earlier or later than a specified value.
+//
+// 
 // Value represented is
 //    0x0.VVVV...VVVV * 2^0xEEEE
 //  - 0x1.0           * 2^0eEEEE if S is !
-// Mantissa comes in 48-bit groups, at least one sucb
 //
-// This is 20 bytes of string for a 1-limb number, which
-// would be 64 bits if we made it as compact as possible.
 
 type Bigfloat = Bigfloats.Packed;
 
