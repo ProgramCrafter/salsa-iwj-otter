@@ -178,7 +178,11 @@ impl TryFrom<&Mutable> for Bigfloat {
         p[0] = if v < 10 { b'0' + v } else { (b'a' - 10) + v };
         l >>= BITS_PER_DIGIT;
       }
-      if let Some(p) = w.get_mut(TEXT_PER_LIMB) { *p = b'_'; }
+      if let Some(p) = w.get_mut(DIGITS_PER_LIMB) {
+        *p = b'_';
+      } else {
+        break;
+      }
       w = &mut w[TEXT_PER_LIMB..];
     }
     bf
@@ -192,12 +196,12 @@ impl Bigfloat {
     let nomlen = s.len() + 1;
     if nomlen % TEXT_PER_LIMB !=0 { None? }
     for lt in s.chunks(TEXT_PER_LIMB) {
-      if !lt.iter().all(
+      if !lt[0..DIGITS_PER_LIMB].iter().all(
         |c: &u8| {
           (b'0'..=b'9').contains(&c) ||
           (b'a'..=b'v').contains(&c)
         }) { None? }
-      match lt.get(DIGITS_PER_LIMB) { None | Some(b'_') => (), _ => None? };
+      match lt[DIGITS_PER_LIMB..] { [] | [b'_'] => (), _ => None? };
     }
     Bigfloat::alloc_copy(s).ok()?
   }
@@ -241,9 +245,10 @@ impl Mutable {
 
       if (||{
         loop {
-          let nv = self.limbs.get(i)? + delta;
+          let nv = self.limbs[i] + delta;
           self.limbs[i] = nv & LIMB_MASK;
           if nv < LIMB_MODULUS { return Some(()) }
+          if i == 0 { return None }
           i -= 1;
           delta = 1;
         }
@@ -251,11 +256,11 @@ impl Mutable {
 
       // undo
       loop {
-        i += 1;
         if i >= self.limbs.len() { break }
         else if i == self.limbs.len()-1 { delta = DELTA; }
             let nv = self.limbs[i] - delta;
         self.limbs[i] = nv & LIMB_MASK;
+        i += 1;
       }
       self.limbs.push(0);
       self.limbs.push(0);
@@ -339,6 +344,21 @@ mod test {
     assert_eq!(format!("{}", &b2), s);
     assert_eq!(format!("{:?}", &b2),
                format!(r#"Bf"{}""#, &b2));
+    fn bad(s: &str) { assert_eq!(None, Bigfloat::from_str(s)); }
+    bad("");
+    bad("0");
+    bad("000000000_0000000000");
+    bad("0000000000_000000000");
+    bad("#000000000_0000000000");
+    bad("000000000#_0000000000");
+    bad("0000000000#0000000000");
+    bad("0000000000_000000000#");
+    bad("Z000000000_#000000000");
+    bad("A000000000_#000000000");
+    bad("w000000000_#000000000");
+    bad("/000000000_#000000000");
+    bad(":000000000_#000000000");
+    bad("`000000000_#000000000");
   }
 
   #[test]
@@ -359,11 +379,11 @@ mod test {
         assert_eq!(got.to_string(), exp);
         self
       }
-    }
+    }/*
     mk("000000000a")
       .tinc("000100000a")
-      .tinc("000100000a")
-      ;
+      .tinc("000200000a")
+      ;*/
     mk("vvvvvvvvvv")
       .tinc("vvvvvvvvvv_0000000000_0001000000")
       ;
