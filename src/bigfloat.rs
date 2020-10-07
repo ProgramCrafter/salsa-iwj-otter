@@ -12,28 +12,24 @@ use Sign::*;
 
 type Sz = i16;
 
-const CHARS_HEADER : usize = 5;
-const CHARS_PER_LIMB : usize = 15;
 
-const LIMB_MODULUS : u64 = 0x1_0000_0000_0000;
-const LIMB_MASK    : u64 = LIMB_MODULUS-1;
+const BITS_PER_DIGIT : usize = 5;
+const DIGITS_PER_LIMB : usize = 10;
+const DEFAULT_TEXT  : [u8] = b"gggggggggg";
+
+const DELTA : LimbVal = 0x4000_0000;
+
+const BITS_PER_LIMB : usize = BITS_PER_DIGIT * DIGITS_PER_LIMB;
+const DIGIT_MASK : LimbVal = (1 << BITS_PER_DIGIT) - 1;
+const TEXT_PER_LIMB : usize = IGITS_PER_LIMB + 1;
+const LIMB_MODULUS : LimbVal = 1 << BITS_PER_LIMB;
+const LIMB_MASK    : LimbVal = LIMB_MODULUS-1;
 
 pub use innards::Bigfloat;
-use innards::Header;
-
-#[repr(transparent)]
-#[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq,Default)]
-struct Limb (pub [u16;3]);
 
 type LimbVal = u64;
 
 use vecdeque_stableix::Deque;
-
-#[derive(Clone,Debug)]
-pub struct Mutable {
-  sign: Sign,
-  limbs: Deque<LimbVal, isize>,
-}
 
 mod innards {
   use super::*;
@@ -42,100 +38,105 @@ mod innards {
   use std::alloc::{self, Layout};
   use std::slice;
 
-  #[derive(Deserialize)]//,Serialize
+  #[derive(Deserialize,Serialize)]
   #[serde(try_from="&str")]
+  #[serde(into="&str")]
   pub struct Bigfloat(Innards);
 
   unsafe impl Send for Bigfloat { }
   unsafe impl Sync for Bigfloat { }
 
   type Innards = NonNull<u8>;
+  type Length = u16;
+  type Tail1 = u8;
 
   pub(in super)
   struct Header {
-    pub sign: Sign,
-    pub exp: Sz,
-    pub nlimbs: Sz,
+    pub taillen: u16,
   }
 
   #[repr(C)]
   #[allow(dead_code)] // this is for documentation purposes
   struct Repr {
     h: Header,
-    limbs: [Limb],
+    d: [Tail1],
   }
 
   const OFFSET : usize = {
     let h_size = size_of::<Header>();
-    let l_align = align_of::<Limb>();
+    let l_align = align_of::<Tail1>();
     l_align * ((h_size + l_align - 1) / l_align)
   };
 
-  fn layout(nlimbs: Sz) -> Layout {
-    let limbs_nbytes : usize = size_of::<Limb>() * (nlimbs as usize);
-    let all_nbytes = OFFSET + limbs_nbytes;
-    let align = max(align_of::<Header>(), align_of::<Limb>());
-    Layout::from_size_align(all_nbytes, align).unwrap()
+  fn layout(len: Taillen) -> (usize, Layout) {
+    let tail_nbytes : usize = size_of::<Tail1>() * (len as usize);
+    let all_nbytes = OFFSET + tail_nbytes;
+    let align = max(align_of::<Header>(), align_of::<Tail1>());
+    (all_nbytes, Layout::from_size_align(all_nbytes, align).unwrap())
   }
 
-  fn ptrs(p: *mut u8) -> (*mut Header, *mut Limb) { unsafe {
+  fn ptrs(p: *mut u8) -> (*mut Header, *mut Tail1) { unsafe {
     let p_header : *mut Header = mem::transmute(p);
-    let p_limbs  : *mut Limb   = mem::transmute(p.add(OFFSET));
-    (p_header, p_limbs)
+    let p_tail   : *mut Tail1  = mem::transmute(p.add(OFFSET));
+    (p_header, p_tail)
   } }
 
   impl Bigfloat {
-    pub(in super)
-    fn from_limbs<L, I>(sign: Sign, exp: Sz, nlimbs: Sz, limbs: I)
-                        -> Bigfloat 
-    where L: Into<Limb> + Debug,
-          I: Iterator<Item=L>
+    unsafe fn alloc_unsafe<F>(taillen: Taillen, f:F) -> Bigfloat
+    where F: FnOnce(t: *mut Tail1, taillen: usize)
     {
       unsafe {
-        let p = alloc::alloc(layout(nlimbs));
-        let (p_header, p_limbs) = ptrs(p);
-        ptr::write(p_header, Header { sign, exp, nlimbs });
-        for (l, i) in limbs.zip_eq(0..(nlimbs as usize)) {
-          p_limbs.add(i).write(l.into());
-        }
+        let p = alloc::alloc(layout(taillen).0);
+        let (p_header, p_tail) = ptrs(p);
+        ptr::write(p_header, Header { taillen });
+        f(p_tail, h.taillen as usize);
         Bigfloat(NonNull::new(p).unwrap())
       }
     }
+  
+    pub(in super)
+    fn alloc(taillen: Taillen) -> Bigfloat {
+      unsafe {
+        alloc_unsafe(|t : *mut [MaybeUninit]: l: usize| {
+          ptr::write_bytes(t, 0, l);
+        })
+      }
+    }
 
     pub(in super)
-    fn as_parts(&self) -> (&Header, &[Limb]) {
+    fn alloc_copy(tail: &[Tail1]) -> Result<Bigfloat, Overflow> {
+      let taillen = tail.try_into().ok_or(Overflow)?;
       unsafe {
-        let (h, l) = ptrs(self.0.as_ptr());
+        alloc_unsafe(|t : *mut [MaybeUninit]: l: usize| {
+          ptr::write(t, tail.as_ptr(), 0);
+        })
+      }
+    }
+
+    pub(in super)
+    fn tail(&self) -> &[Tail1] {
+      unsafe {
+        let (h, t) = ptrs(self.0.as_ptr());
         let h = h.as_ref().unwrap();
-        let limbs = slice::from_raw_parts(l, h.nlimbs as usize);
-        (h, limbs)
+        slice::from_raw_parts(t, h.taillen as usize);
       }
     }
 
-    #[allow(dead_code)] // xxx
     pub(in super)
-    fn as_mut_limbs(&mut self) -> (&Header, &mut [Limb]) {
+    fn tail_mut(&mut self) -> &mut [Tail1] {
       unsafe {
-        let (h, l) = ptrs(self.0.as_ptr());
-        let h = h.as_mut().unwrap();
-        let limbs = slice::from_raw_parts_mut(l, h.nlimbs as usize);
-        (h, limbs)
+        let (h, t) = ptrs(self.0.as_ptr());
+        slice::from_raw_parts_mut(t, h.taillen as usize);
       }
-    }
-
-    pub(in super)
-    fn from_parts(sign: Sign, exp: Sz, limbs: &[Limb]) -> Bigfloat {
-      let nlimbs : Sz = limbs.len().try_into().expect("limb count overflow");
-      Self::from_limbs(sign, exp, nlimbs, limbs.iter().cloned())
     }
   }
 
   impl Drop for Bigfloat {
     fn drop(&mut self) {
       let (h, _) = self.as_parts();
-      let nlimbs = h.nlimbs;
+      let taillen = h.taillen;
       unsafe {
-        alloc::dealloc(self.0.as_mut(), layout(nlimbs));
+        alloc::dealloc(self.0.as_mut(), layout(taillen).0);
       }
     }
   }
@@ -144,10 +145,10 @@ mod innards {
     fn clone(&self) -> Bigfloat {
       unsafe {
         let (h, _) = self.as_parts();
-        let nlimbs = h.nlimbs;
-        let layout = layout(nlimbs);
-        let p = alloc::alloc(layout);
-        ptr::copy_nonoverlapping(self.0.as_ptr(), p, layout.size());
+        let taillen = h.taillen;
+        let layout = layout(taillen);
+        let (all_bytes, p) = alloc::alloc(layout);
+        ptr::copy_nonoverlapping(self.0.as_ptr(), p, all_bytes);
         Bigfloat(NonNull::new(p).unwrap())
       }
     }
@@ -157,94 +158,70 @@ mod innards {
 
 impl Default for Bigfloat {
   fn default() -> Bigfloat {
-    Bigfloat::from_parts(Pos, 0, &[default()])
+    Bigfloat::alloc_copy(DEFAULT_VAL).unwrap();
   }
 }
 
-impl From<LimbVal> for Limb {
-  fn from(u: LimbVal) -> Limb {
-    assert_eq!(0, u >> 48);
-    Limb([ ((u >> 32) & 0xffff) as u16,
-           ((u >> 16) & 0xffff) as u16,
-           ((u >>  0) & 0xffff) as u16 ])
-  }
+#[derive(Clone,Debug)]
+pub struct Mutable {
+  limbs: Vec<LimbVal>,
 }
-impl From<Limb> for LimbVal {
-  fn from(l: Limb) -> LimbVal {
-    ((l.0[0] as LimbVal) << 32) |
-    ((l.0[1] as LimbVal) << 16) |
-    ((l.0[2] as LimbVal) <<  0)
+
+impl TryFrom<&Mutable> for Bigfloat {
+  type Error = Overflow;
+  #[throws(Overflow)]
+  fn try_from(m: &Mutable) -> Bigfloat {
+    let taillen = (m.limbs.len() * CHARS_PER_LIMB - 1).try_into()?;
+    let mut bf = Bigfloat::alloc(taillen);
+    let (_, mut w) = bf.as_mut_tail();
+    for &mut l in m.limbs {
+      if l >= LIMB_MODULUS { Overflow? };
+      for p in w[0..DIGITS_PER_LIMB].rchunks_exact_mut(1) {
+        let v = l & DIGIT_MASK;
+        p[0] = if v < 10 { b'0' + v } else { (b'a' - 10) + v };
+        l >>= BITS_PER_DIGIT;
+      }
+      w[TEXT_PER_LIMB] = '_';
+      w = &mut w[TEXT_PER_LIMB..];
+    }
+    bf
   }
 }
 
 impl Bigfloat {
   #[throws(as Option)]
   fn from_str(s: &str) -> Self {
-    struct P<'s> (&'s str);
-    impl P<'_> {
-      #[throws(as Option)]
-      fn hex16(&mut self) -> u16 {
-        const L : usize = 4;
-        if self.0.len() < L { None? }
-        let (l, r) = self.0.split_at(L);
-        self.0 = r;
-        u16::from_str_radix(l, 16).ok()?
-      }
-
-      #[throws(as Option)]
-      fn next(&mut self) -> char {
-        let r = self.0.chars().next()?;
-        self.0 = &self.0[1..];
-        r
-      }
-
-      #[throws(as Option)]
-      fn hex16_(&mut self) -> u16 {
-        let r = self.hex16()?;
-        if !matches!(self.next(), Some('_')) { None? }
-        r
-      }
+    let s = s.as_bytes();
+    let nomlen = s.len + 1;
+    if nomlen % TEXT_PER_LIMB !=0 { None? }
+    for lt in s.chunks(TEXT_PER_LIMB) {
+      if !lt.iter().all(|&c|
+                        b'0'..=b'9'.contains(c) ||
+                        b'a'..=b'v'.contains(c)) { None? }
+      match lt.get(DIGITS_PER_LIMB) { None | Some('_') => (), _ => None? };
     }
-
-    let mut p = P(s);
-    let sign = match p.next()? {
-      '+' => Pos,
-      '!' => Neg,
-      _ => None?,
-    };
-    let exp = p.hex16()?;
-
-    let mut limbs = Vec::with_capacity(p.0.len() / CHARS_PER_LIMB);
-    loop {
-      match p.next() {
-        None => break,
-        Some(' ') => (),
-        _ => None?,
-      };
-      limbs.push(Limb([
-        p.hex16_()?,
-        p.hex16_()?,
-        p.hex16()?,
-      ]));
+    Bigfloat::alloc_copy(s)
+  }
+    
+  fn clone_mut(&self) -> Mutable {
+    let tail = self.tail();
+    let nlimbs = (tail + 1) / TEXT_PER_LIMB;
+    let limbs = Vec::with_capacity(nlimbs+2);
+    for lt in tail.chunks(TEXT_PER_LIMB) {
+      let s = str::from_utf8(lt).unwrap();
+      let v = LimbVal::from_str_radix(s, 1 << BITS_PER_LIMB);
+      limbs.push(v);
     }
-    if limbs.is_empty() { None? }
-    Bigfloat::from_parts(sign, exp as Sz, &limbs)
+    Mutable { limbs }
+  }
+
+  fn as_str(&self) -> String {
+    let tail = self.tail();
+    str::from_utf8(tail).unwrap();
   }
 
   fn to_string(&self) -> String {
-    let (h, _) = self.as_parts();
-    let n = CHARS_HEADER + CHARS_PER_LIMB * (h.nlimbs as usize);
-    let mut s = String::with_capacity(n);
-    write!(&mut s, "{}", self).unwrap();
-    s
-  }
-
-  pub fn clone_mut(&self) -> Mutable {
-    let (&Header { sign, exp, .. }, l) = self.as_parts();
-    let limbs_vec : VecDeque<LimbVal> =
-      l.iter().cloned().map(Into::into).collect();
-    let limbs = Deque::from_parts(-(exp as isize), limbs_vec);
-    Mutable { sign, limbs }
+    self.as_str().to_string()
   }
 }
 
@@ -256,52 +233,35 @@ impl From<TryFromIntError> for Overflow {
   fn from(_: TryFromIntError) -> Overflow { Overflow }
 }
 
-impl TryFrom<&Mutable> for Bigfloat {
-  type Error = Overflow;
-  #[throws(Overflow)]
-  fn try_from(m: &Mutable) -> Bigfloat {
-    let exp = (-m.limbs.counter()).try_into()?;
-    let nlimbs = m.limbs.len().try_into()?;
-    let slices = m.limbs.inner().as_slices();
-    let it = slices.0.iter().chain(slices.1.iter()).cloned();
-    Bigfloat::from_limbs(m.sign, exp, nlimbs, it)
-  }
-}
-
 impl Mutable {
-  pub fn add(&mut self, rhs: u32) {
-    self.add_to_limb(0, (rhs as LimbVal) << 16);
-  }
+  #[throws(Overflow)]
+  pub fn larger(&mut self) -> Bigfloat {
+    'attempt: loop {
+      let mut i = self.limbs.len() - 1;
+      let mut delta = DELTA;
 
-  fn add_to_limb(&mut self, mut i: isize, mut rhs: LimbVal) {
-    // returns amount by which other indices now need updating
-    loop {
-      self.extend_so_index_valid(i);
-      let nv : u64 = self.limbs[i].into();
-      let nv = nv + rhs;
-      if nv < LIMB_MODULUS {
-        self.limbs[i] = nv.into();
-        return;
-      }
-      self.limbs[i] = (nv & LIMB_MASK).into();
-      if i == self.limbs.front_index() && self.sign == Neg {
-        self.sign = Pos;
-        // equivalent to adding 1 to the nonexistent front word ffff
-        return;
-      }
-      i -= 1;
-      rhs = 1;
-    }
-  }
+      if (||{
+        loop {
+          let nv = self.limbs.get(i)? + delta;
+          self.limbs[i] = nv & LIMB_MASK;
+          if nv < LIMB_MODULUS { return Some(()) }
+          i--;
+          delta = 1;
+        }
+      })() == Some(()) { break 'attempt }
 
-  fn extend_so_index_valid(&mut self, i: isize) {
-    while i >= self.limbs.end_index() {
-      self.limbs.push_back(default());
+      // undo
+      loop {
+        i++;
+        if i >= self.limbs.len() { break }
+        else if i == self.limbs.len()-1 { delta = DELTA; }
+            let nv = self.limbs[i] - delta;
+        self.limbs[i] = nv & LIMB_MASK;
+      }
+      self.limbs.push(0);
+      self.limbs.push(0);
     }
-    let new_limb_val = match self.sign { Pos => 0, Neg => LIMB_MASK, };
-    while i < self.limbs.front_index() {
-      self.limbs.push_front(new_limb_val.into());
-    }
+    self.into()?
   }
 
   #[throws(Overflow)]
@@ -311,13 +271,7 @@ impl Mutable {
 impl Display for Bigfloat {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut Formatter) {
-    let (h,ls) = self.as_parts();
-    write!(f, "{}{:04x}",
-           match h.sign { Pos => '+', Neg => '!', },
-           h.exp)?;
-    for l in ls {
-      write!(f, " {:04x}_{:04x}_{:04x}", l.0[0], l.0[1], l.0[2])?;
-    }
+    write!(f, self.as_str())?
   }
 }
 impl Debug for Bigfloat {
@@ -331,24 +285,9 @@ impl Debug for Bigfloat {
 
 impl Ord for Bigfloat {
   fn cmp(&self, other: &Bigfloat) -> Ordering {
-    let (ah, al) = self.as_parts();
-    let (bh, bl) = other.as_parts();
-
-    {
-
-      ah.sign.cmp(&bh.sign)
-
-    }.then_with(||{
-
-      let mut x = ah.exp.cmp(&bh.exp);
-      if ah.sign == Neg { x = x.reverse() }
-      x
-
-    }.then_with(||{
-
-      al.cmp(bl)
-
-    }))
+    let (at) = self.as_tail();
+    let (bt) = other.as_tail();
+    at.cmp(bt)
   }
 }
 impl PartialOrd for Bigfloat {
@@ -375,13 +314,19 @@ impl TryFrom<&str> for Bigfloat {
     Bigfloat::from_str(s).ok_or(ParseError)?
   }
 }
-
-impl Serialize for Bigfloat {
-  fn serialize<S:Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-    let d = self.to_string();
-    s.serialize_str(&d)
+impl From<Bigfloat> for &str {
+  fn from(bf: &Bigfloat) -> &str {
+    bf.as_str()
   }
 }
+
+/*
+impl Serialize for Bigfloat {
+  fn serialize<S:Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+    s.serialize_str(self.as_str())
+  }
+}
+*/
 
 #[cfg(test)]
 mod test {
