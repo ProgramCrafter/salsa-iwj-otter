@@ -6,30 +6,23 @@
 
 use crate::imports::*;
 
-#[derive(Copy,Clone,Debug,Ord,Eq,PartialOrd,PartialEq)]
-enum Sign { Neg, Pos, }
-use Sign::*;
-
-type Sz = i16;
-
-
 const BITS_PER_DIGIT : usize = 5;
 const DIGITS_PER_LIMB : usize = 10;
-const DEFAULT_TEXT  : [u8] = b"gggggggggg";
+const DEFAULT_TEXT  : &[u8] = b"gggggggggg";
 
 const DELTA : LimbVal = 0x4000_0000;
 
 const BITS_PER_LIMB : usize = BITS_PER_DIGIT * DIGITS_PER_LIMB;
 const DIGIT_MASK : LimbVal = (1 << BITS_PER_DIGIT) - 1;
-const TEXT_PER_LIMB : usize = IGITS_PER_LIMB + 1;
+const TEXT_PER_LIMB : usize = DIGITS_PER_LIMB + 1;
 const LIMB_MODULUS : LimbVal = 1 << BITS_PER_LIMB;
 const LIMB_MASK    : LimbVal = LIMB_MODULUS-1;
 
-pub use innards::Bigfloat;
+#[derive(Deserialize)]
+#[serde(try_from="&str")]
+pub struct Bigfloat(innards::Innards);
 
 type LimbVal = u64;
-
-use vecdeque_stableix::Deque;
 
 mod innards {
   use super::*;
@@ -38,16 +31,11 @@ mod innards {
   use std::alloc::{self, Layout};
   use std::slice;
 
-  #[derive(Deserialize,Serialize)]
-  #[serde(try_from="&str")]
-  #[serde(into="&str")]
-  pub struct Bigfloat(Innards);
-
   unsafe impl Send for Bigfloat { }
   unsafe impl Sync for Bigfloat { }
 
-  type Innards = NonNull<u8>;
-  type Length = u16;
+  pub(in super) type Innards = NonNull<u8>;
+  type Taillen = u16;
   type Tail1 = u8;
 
   pub(in super)
@@ -83,13 +71,14 @@ mod innards {
 
   impl Bigfloat {
     unsafe fn alloc_unsafe<F>(taillen: Taillen, f:F) -> Bigfloat
-    where F: FnOnce(t: *mut Tail1, taillen: usize)
+    where F: FnOnce(*mut Tail1)
     {
+      #[allow(unused_unsafe)] // unsafe block in unsafe fn
       unsafe {
-        let p = alloc::alloc(layout(taillen).0);
+        let p = alloc::alloc(layout(taillen).1);
         let (p_header, p_tail) = ptrs(p);
         ptr::write(p_header, Header { taillen });
-        f(p_tail, h.taillen as usize);
+        f(p_tail);
         Bigfloat(NonNull::new(p).unwrap())
       }
     }
@@ -97,18 +86,19 @@ mod innards {
     pub(in super)
     fn alloc(taillen: Taillen) -> Bigfloat {
       unsafe {
-        alloc_unsafe(|t : *mut [MaybeUninit]: l: usize| {
-          ptr::write_bytes(t, 0, l);
+        Bigfloat::alloc_unsafe(taillen, |nt : *mut Tail1| {
+          ptr::write_bytes(nt, 0, taillen as usize);
         })
       }
     }
 
+    #[throws(Overflow)]
     pub(in super)
-    fn alloc_copy(tail: &[Tail1]) -> Result<Bigfloat, Overflow> {
-      let taillen = tail.try_into().ok_or(Overflow)?;
+    fn alloc_copy(tail: &[Tail1]) -> Bigfloat {
+      let taillen = tail.len().try_into()?;
       unsafe {
-        alloc_unsafe(|t : *mut [MaybeUninit]: l: usize| {
-          ptr::write(t, tail.as_ptr(), 0);
+        Bigfloat::alloc_unsafe(taillen, |nt : *mut Tail1| {
+          ptr::copy_nonoverlapping(tail.as_ptr(), nt, taillen as usize);
         })
       }
     }
@@ -118,7 +108,7 @@ mod innards {
       unsafe {
         let (h, t) = ptrs(self.0.as_ptr());
         let h = h.as_ref().unwrap();
-        slice::from_raw_parts(t, h.taillen as usize);
+        slice::from_raw_parts(t, h.taillen as usize)
       }
     }
 
@@ -126,28 +116,35 @@ mod innards {
     fn tail_mut(&mut self) -> &mut [Tail1] {
       unsafe {
         let (h, t) = ptrs(self.0.as_ptr());
-        slice::from_raw_parts_mut(t, h.taillen as usize);
+        let h = h.as_ref().unwrap();
+        slice::from_raw_parts_mut(t, h.taillen as usize)
+      }
+    }
+
+    fn layout(&self) -> (usize, Layout) {
+      unsafe {
+        let (h, _) = ptrs(self.0.as_ptr());
+        let h = h.as_ref().unwrap();
+        let taillen = h.taillen;
+        layout(taillen)
       }
     }
   }
 
   impl Drop for Bigfloat {
     fn drop(&mut self) {
-      let (h, _) = self.as_parts();
-      let taillen = h.taillen;
+      let layout = self.layout().1;
       unsafe {
-        alloc::dealloc(self.0.as_mut(), layout(taillen).0);
+        alloc::dealloc(self.0.as_mut(), layout);
       }
     }
   }
 
   impl Clone for Bigfloat {
     fn clone(&self) -> Bigfloat {
+      let (all_bytes, layout) = self.layout();
       unsafe {
-        let (h, _) = self.as_parts();
-        let taillen = h.taillen;
-        let layout = layout(taillen);
-        let (all_bytes, p) = alloc::alloc(layout);
+        let p = alloc::alloc(layout);
         ptr::copy_nonoverlapping(self.0.as_ptr(), p, all_bytes);
         Bigfloat(NonNull::new(p).unwrap())
       }
@@ -158,7 +155,7 @@ mod innards {
 
 impl Default for Bigfloat {
   fn default() -> Bigfloat {
-    Bigfloat::alloc_copy(DEFAULT_VAL).unwrap();
+    Bigfloat::alloc_copy(DEFAULT_TEXT).unwrap()
   }
 }
 
@@ -171,17 +168,17 @@ impl TryFrom<&Mutable> for Bigfloat {
   type Error = Overflow;
   #[throws(Overflow)]
   fn try_from(m: &Mutable) -> Bigfloat {
-    let taillen = (m.limbs.len() * CHARS_PER_LIMB - 1).try_into()?;
+    let taillen = (m.limbs.len() * TEXT_PER_LIMB - 1).try_into()?;
     let mut bf = Bigfloat::alloc(taillen);
-    let (_, mut w) = bf.as_mut_tail();
-    for &mut l in m.limbs {
-      if l >= LIMB_MODULUS { Overflow? };
+    let mut w = bf.tail_mut();
+    for mut l in m.limbs.iter().cloned() {
+      if l >= LIMB_MODULUS { throw!(Overflow) };
       for p in w[0..DIGITS_PER_LIMB].rchunks_exact_mut(1) {
-        let v = l & DIGIT_MASK;
+        let v = (l & DIGIT_MASK) as u8;
         p[0] = if v < 10 { b'0' + v } else { (b'a' - 10) + v };
         l >>= BITS_PER_DIGIT;
       }
-      w[TEXT_PER_LIMB] = '_';
+      if let Some(p) = w.get_mut(TEXT_PER_LIMB) { *p = b'_'; }
       w = &mut w[TEXT_PER_LIMB..];
     }
     bf
@@ -190,37 +187,39 @@ impl TryFrom<&Mutable> for Bigfloat {
 
 impl Bigfloat {
   #[throws(as Option)]
-  fn from_str(s: &str) -> Self {
+  pub fn from_str(s: &str) -> Self {
     let s = s.as_bytes();
-    let nomlen = s.len + 1;
+    let nomlen = s.len() + 1;
     if nomlen % TEXT_PER_LIMB !=0 { None? }
     for lt in s.chunks(TEXT_PER_LIMB) {
-      if !lt.iter().all(|&c|
-                        b'0'..=b'9'.contains(c) ||
-                        b'a'..=b'v'.contains(c)) { None? }
-      match lt.get(DIGITS_PER_LIMB) { None | Some('_') => (), _ => None? };
+      if !lt.iter().all(
+        |c: &u8| {
+          (b'0'..=b'9').contains(&c) ||
+          (b'a'..=b'v').contains(&c)
+        }) { None? }
+      match lt.get(DIGITS_PER_LIMB) { None | Some(b'_') => (), _ => None? };
     }
-    Bigfloat::alloc_copy(s)
+    Bigfloat::alloc_copy(s).ok()?
   }
-    
-  fn clone_mut(&self) -> Mutable {
+
+  pub fn clone_mut(&self) -> Mutable {
     let tail = self.tail();
-    let nlimbs = (tail + 1) / TEXT_PER_LIMB;
-    let limbs = Vec::with_capacity(nlimbs+2);
+    let nlimbs = (tail.len() + 1) / TEXT_PER_LIMB;
+    let mut limbs = Vec::with_capacity(nlimbs+2);
     for lt in tail.chunks(TEXT_PER_LIMB) {
       let s = str::from_utf8(lt).unwrap();
-      let v = LimbVal::from_str_radix(s, 1 << BITS_PER_LIMB);
+      let v = LimbVal::from_str_radix(s, 1 << BITS_PER_DIGIT).unwrap();
       limbs.push(v);
     }
     Mutable { limbs }
   }
 
-  fn as_str(&self) -> String {
+  pub fn as_str(&self) -> &str {
     let tail = self.tail();
-    str::from_utf8(tail).unwrap();
+    str::from_utf8(tail).unwrap()
   }
 
-  fn to_string(&self) -> String {
+  pub fn to_string(&self) -> String {
     self.as_str().to_string()
   }
 }
@@ -235,7 +234,7 @@ impl From<TryFromIntError> for Overflow {
 
 impl Mutable {
   #[throws(Overflow)]
-  pub fn larger(&mut self) -> Bigfloat {
+  pub fn increment(&mut self) -> Bigfloat {
     'attempt: loop {
       let mut i = self.limbs.len() - 1;
       let mut delta = DELTA;
@@ -245,14 +244,14 @@ impl Mutable {
           let nv = self.limbs.get(i)? + delta;
           self.limbs[i] = nv & LIMB_MASK;
           if nv < LIMB_MODULUS { return Some(()) }
-          i--;
+          i -= 1;
           delta = 1;
         }
       })() == Some(()) { break 'attempt }
 
       // undo
       loop {
-        i++;
+        i += 1;
         if i >= self.limbs.len() { break }
         else if i == self.limbs.len()-1 { delta = DELTA; }
             let nv = self.limbs[i] - delta;
@@ -261,7 +260,7 @@ impl Mutable {
       self.limbs.push(0);
       self.limbs.push(0);
     }
-    self.into()?
+    self.repack()?
   }
 
   #[throws(Overflow)]
@@ -271,7 +270,7 @@ impl Mutable {
 impl Display for Bigfloat {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut Formatter) {
-    write!(f, self.as_str())?
+    write!(f, "{}", self.as_str())?
   }
 }
 impl Debug for Bigfloat {
@@ -285,8 +284,8 @@ impl Debug for Bigfloat {
 
 impl Ord for Bigfloat {
   fn cmp(&self, other: &Bigfloat) -> Ordering {
-    let (at) = self.as_tail();
-    let (bt) = other.as_tail();
+    let at = self.tail();
+    let bt = other.tail();
     at.cmp(bt)
   }
 }
@@ -314,19 +313,12 @@ impl TryFrom<&str> for Bigfloat {
     Bigfloat::from_str(s).ok_or(ParseError)?
   }
 }
-impl From<Bigfloat> for &str {
-  fn from(bf: &Bigfloat) -> &str {
-    bf.as_str()
-  }
-}
 
-/*
 impl Serialize for Bigfloat {
   fn serialize<S:Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
     s.serialize_str(self.as_str())
   }
 }
-*/
 
 #[cfg(test)]
 mod test {
@@ -339,7 +331,7 @@ mod test {
 
   #[test]
   fn bfparse() {
-    let s = "!0000 ffff_ffff_fff0";
+    let s = "gg0123abcd_0123456789";
     let b = Bigfloat::from_str(s).unwrap();
     let b2 = b.clone();
     assert_eq!(format!("{}", &b), s);
@@ -351,38 +343,32 @@ mod test {
 
   #[test]
   fn equality() {
-    assert!( bf("!0000 ffff_ffff_fff0") <
-             bf("!0000 ffff_ffff_fff3") );
+    assert!( bf("gg0123abcd_0123456789") <
+             bf("gg0123abcd_012345678a") );
     
-    assert!( bf("!0001 ffff_ffff_ffff") <
-             bf("!0000 ffff_ffff_0000") );
-    
-    assert!( bf("+0000 ffff_ffff_0000") <
-             bf("+0001 ffff_ffff_ffff") );
-    
-    assert!( bf("+0000 ffff_ffff_0000") <
-             bf("+0000 ffff_ffff_0000 1234_ffff_0000") );
+    assert!( bf("gg0123abcd") <
+             bf("gg0123abcd_012345678a") );
   }
 
   #[test]
   fn addition() {
     fn mk(s: &str) -> super::Mutable { bf(s).clone_mut() }
     impl Mutable {
-      fn chk(mut self, rhs: u32, exp: &str) -> Self {
-        self.add(rhs);
-        let got = self.repack().unwrap();
+      fn tinc(mut self, exp: &str) -> Self {
+        let got = self.increment().unwrap();
         assert_eq!(got.to_string(), exp);
         self
       }
     }
-    mk("!0000 ffff_fff0_fff0")
-      .chk(0x02, "!0000 ffff_fff2_fff0")
-      .chk(0x20, "+0000 0000_0012_fff0")
+    mk("000000000a")
+      .tinc("000100000a")
+      .tinc("000100000a")
       ;
-    mk("+0000 c123_5678_abc9")
-      .chk(0x71112222, "+0001 0000_0000_0001 3234_789a_abc9")
-      .chk(0x71112222, "+0001 0000_0000_0001 a345_9abc_abc9")
-      .chk(0x60000000, "+0001 0000_0000_0002 0345_9abc_abc9")
+    mk("vvvvvvvvvv")
+      .tinc("vvvvvvvvvv_0000000000_0001000000")
+      ;
+    mk("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234")
+      .tinc("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234_0000000000_0001000000")
       ;
   }
 }

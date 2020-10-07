@@ -270,10 +270,9 @@ fn execute_game_insn(cs: &CommandStream,
         if p.nfaces() <= face.into() {
           throw!(SpecError::FaceNotFound);
         }
-        z.add(1);
         let pc = PieceState {
           held: None,
-          zlevel: ZLevel { z: (&z).try_into()?, zg: gs.gen },
+          zlevel: ZLevel { z: z.increment()?, zg: gs.gen },
           lastclient: Default::default(),
           gen_before_lastclient: Generation(0),
           pinned: pinned.unwrap_or(false),
