@@ -351,18 +351,19 @@ mod test {
     fn bad(s: &str) { assert_eq!(None, Bigfloat::from_str(s)); }
     bad("");
     bad("0");
-    bad("000000000_0000000000");
-    bad("0000000000_000000000");
-    bad("#000000000_0000000000");
-    bad("000000000#_0000000000");
-    bad("0000000000#0000000000");
-    bad("0000000000_000000000#");
-    bad("Z000000000_#000000000");
-    bad("A000000000_#000000000");
-    bad("w000000000_#000000000");
-    bad("/000000000_#000000000");
-    bad(":000000000_#000000000");
-    bad("`000000000_#000000000");
+    bad("aaaaaaaa0_aaaaaaaa00");
+    bad("aaaaaaaa0_aaaaaaaa00");
+    bad("aaaaaaaa00_aaaaaaaa0");
+    bad("#aaaaaaaa0_aaaaaaaa00");
+    bad("aaaaaaaa0#_aaaaaaaa00");
+    bad("aaaaaaaa00#aaaaaaaa00");
+    bad("aaaaaaaa00_aaaaaaaa0#");
+    bad("Zaaaaaaaa0_#aaaaaaaa0");
+    bad("Aaaaaaaaa0_#aaaaaaaa0");
+    bad("waaaaaaaa0_#aaaaaaaa0");
+    bad("/aaaaaaaa0_#aaaaaaaa0");
+    bad(":aaaaaaaa0_#aaaaaaaa0");
+    bad("`aaaaaaaa0_#aaaaaaaa0");
   }
 
   #[test]
