@@ -10,19 +10,22 @@ const BITS_PER_DIGIT : usize = 5;
 const DIGITS_PER_LIMB : usize = 10;
 const DEFAULT_TEXT  : &[u8] = b"gggggggggg";
 
-const DELTA : LimbVal = 0x4000_0000;
+const DELTA : LimbVal = Wrapping(0x4000_0000);
+const ZERO : LimbVal = Wrapping(0);
+const ONE : LimbVal = Wrapping(1);
 
 const BITS_PER_LIMB : usize = BITS_PER_DIGIT * DIGITS_PER_LIMB;
-const DIGIT_MASK : LimbVal = (1 << BITS_PER_DIGIT) - 1;
+const DIGIT_MASK : LimbVal = Wrapping((1u64 << BITS_PER_DIGIT) - 1);
 const TEXT_PER_LIMB : usize = DIGITS_PER_LIMB + 1;
-const LIMB_MODULUS : LimbVal = 1 << BITS_PER_LIMB;
-const LIMB_MASK    : LimbVal = LIMB_MODULUS-1;
+const LIMB_MODULUS : LimbVal = Wrapping(1u64 << BITS_PER_LIMB);
+const LIMB_MASK    : LimbVal = Wrapping((1u64 << BITS_PER_LIMB)-1);
 
 #[derive(Deserialize)]
 #[serde(try_from="&str")]
 pub struct Bigfloat(innards::Innards);
 
-type LimbVal = u64;
+type RawLimbVal = u64;
+type LimbVal = Wrapping<RawLimbVal>;
 
 mod innards {
   use super::*;
@@ -174,7 +177,7 @@ impl TryFrom<&Mutable> for Bigfloat {
     for mut l in m.limbs.iter().cloned() {
       if l >= LIMB_MODULUS { throw!(Overflow) };
       for p in w[0..DIGITS_PER_LIMB].rchunks_exact_mut(1) {
-        let v = (l & DIGIT_MASK) as u8;
+        let v = (l & DIGIT_MASK).0 as u8;
         p[0] = if v < 10 { b'0' + v } else { (b'a' - 10) + v };
         l >>= BITS_PER_DIGIT;
       }
@@ -212,8 +215,8 @@ impl Bigfloat {
     let mut limbs = Vec::with_capacity(nlimbs+2);
     for lt in tail.chunks(TEXT_PER_LIMB) {
       let s = str::from_utf8(lt).unwrap();
-      let v = LimbVal::from_str_radix(s, 1 << BITS_PER_DIGIT).unwrap();
-      limbs.push(v);
+      let v = RawLimbVal::from_str_radix(s, 1 << BITS_PER_DIGIT).unwrap();
+      limbs.push(Wrapping(v));
     }
     Mutable { limbs }
   }
@@ -250,7 +253,7 @@ impl Mutable {
           if nv < LIMB_MODULUS { return Some(()) }
           if i == 0 { return None }
           i -= 1;
-          delta = 1;
+          delta = ONE;
         }
       })() == Some(()) { break 'attempt }
 
@@ -258,12 +261,12 @@ impl Mutable {
       loop {
         if i >= self.limbs.len() { break }
         else if i == self.limbs.len()-1 { delta = DELTA; }
-            let nv = self.limbs[i] - delta;
+        let nv = self.limbs[i] - delta;
         self.limbs[i] = nv & LIMB_MASK;
         i += 1;
       }
-      self.limbs.push(0);
-      self.limbs.push(0);
+      self.limbs.push(ZERO);
+      self.limbs.push(ZERO);
     }
     self.repack()?
   }
