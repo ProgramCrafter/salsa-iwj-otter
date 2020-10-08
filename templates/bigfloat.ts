@@ -75,61 +75,31 @@ namespace Bigfloats {
   export function from_json(s: Json): Packed { return s as Packed; }
   export function to_json(p: Packed): Json { return p; }
 
-  const LIMB_BIT      : number = 48;
-  const LIMB_NEGATIVE : number =  0x800000000000;
-  const LIMB_MODULUS  : number = 0x1000000000000;
-
+  const LIMB_BIT      : number = 50;
+  const LIMB_MODULUS  : number = 0x4000000000000;
+  const LIMB_DIGITS   : number = 10;
+  const RADIX         : number = 32;
+  const DELTA         : number = 0x40000000;
+/*
   var UNPACK_HEAD_RE = /^([!\+])([0-9a-f]{4}) /;
   var UNPACK_LIMB_RE = / ([0-9a-f]{4})_([0-9a-f]{4})_([0-9a-f]{4})/g;
-
+*/
   type Limb = number;
 
-  type Unpacked = {
-    sign: number,
-    exponent: number,
-    limbs: Limb[], // BE
-  };
+  type Unpacked = { limbs: Limb[], };
 
   export function unpack(p: Packed): Unpacked {
-    let head = p.match(UNPACK_HEAD_RE);
-    if (head == null) throw('unpack Bigfloat '+p);
-    UNPACK_LIMB_RE.lastIndex = 0;
     let limbs = [];
-    let m;
-    while (m = UNPACK_LIMB_RE.exec(p)) {
-      m[0] = '0x';
-      limbs.push(+m.join(''));
+    for (var lt of p.split('_')) {
+      limbs.push(parseInt(lt, RADIX));
     }
-    return {
-      sign: head[1] == '!' ? -1 : +1,
-      exponent: +('0x' + head[2]),
-      limbs,
-    };
+    return { limbs };
   }
 
   export function pack(v: Unpacked): Packed {
-    function hex16(x: number) { return ('000' + x.toString(16)).slice(-4); }
-    function hex48(x: Limb) {
-      return (hex16(Math.floor(x        / 0x100000000 ) ) + '_' +
-	      hex16(          (x >> 16) &  0x0000ffff   ) + '_' +
-	      hex16(           x        &  0x0000ffff   )       );
-    }
-//# console.log('pack', v);
-    return (
-      (v.sign < 0 ? '!' : '+') +
-	hex16(v.exponent) + ' ' +
-	v.limbs.map(hex48).join(' ')
-    ) as Packed;
-  }
- 
-  function ms_limb_from_sign(v: Unpacked): Limb {
-    return (v.sign < 0 ? LIMB_MODULUS-1 : 0);
-  }
-
-  function limb_lookup(v: Unpacked, i: Limb): number {
-    if (i >= v.limbs.length) return 0;
-    if (i < 0) return ms_limb_from_sign(v);
-    return v.limbs[i];
+    return v.limbs.map(
+      l => (l + LIMB_MODULUS).toString(RADIX).slice(-LIMB_DIGITS)
+    ).join('_') as Packed;
   }
 
   function limb_mask(v: Limb): Limb {
@@ -137,90 +107,67 @@ namespace Bigfloats {
   }
 
   function clone(v: Unpacked): Unpacked {
-    return {
-      limbs: v.limbs.slice(),      
-      ...v
-    }
+    return { limbs: v.limbs.slice() };
   }
 
-  function extend_left_so_index_valid(v: Unpacked, i: number): number {
-    // returns adjustment to apply to index
-    let newlimb = ms_limb_from_sign(v);
-    let adj = 0;
-    while (i < 0) {
-      v.limbs.unshift(newlimb);
-      v.exponent++;
-      i++;
-      adj++;
-    }
-    return adj;
-  }
-
-  function add_to_limb(v: Unpacked, i: number, step: number): number {
-    // returns adjustment to apply to index
-    let totadj = 0;
+  export function increment(p: Bigfloat): Bigfloat {
     for (;;) {
-      v.limbs[i] = Math.floor(v.limbs[i] + step);
-      if (v.limbs[i] < LIMB_MODULUS) return totadj;
-      v.limbs[i] %= LIMB_MODULUS;
+      let v = unpack(p);
+      if (add_with_carry(v, v.limbs.length-1, DELTA))
+	return pack(v);
+      v.limbs.push(0);
+      v.limbs.push(0);
+    }
+  }
+
+  function add_with_carry(v: Unpacked, i: number, step: number): boolean {
+    for (;;) {
+      v.limbs[i] = v.limbs[i] + step;
+      if (v.limbs[i] < LIMB_MODULUS) return true;
       i--;
-      if (i < 0) {
-	if (v.sign < 0) { v.sign = +1; return totadj; }
-	let adj = extend_left_so_index_valid(v, i);
-	i += adj;
-	totadj += adj;
-      }
+      if (i < 0) return false;
       step=1;
     }
   }
 
-  export function add(p: Bigfloat, step: number): Bigfloat {
-    let v = unpack(p);
-    add_to_limb(v, v.exponent, step * 0x10000);
-    return pack(v);
+  function limb_val_lookup(v: Unpacked, i: Limb): number {
+    if (i >= v.limbs.length) return 0;
+    return v.limbs[i];
   }
 
   export function iter_upto(ap: Packed, bp: Packed, count: number):
   () => Packed {
+    // result can be called count times to produce values > av, < bv
     let av = unpack(ap);
     let bv = unpack(bp);
-    // result can be called count times to produce values > av, < bv
-    let e_out = Math.max(av.exponent, bv.exponent);
-    for (let e = e_out;
+    for (let i = 0;
 	 ;
-	 e--) {
-      let ia = av.exponent - e;
-      let ib = bv.exponent - e;
-      if (ia >= av.limbs.length && ib >= bv.limbs.length) {
+	 i++) {
+      if (i >= av.limbs.length && i >= bv.limbs.length) {
 	// Oh actually these numbers are equal!
 	return function(){ return pack(av); }
       }
-      let la = limb_lookup(av,ia);
-      let lb = limb_lookup(bv,ib);
+      let la = limb_val_lookup(av,i);
+      let lb = limb_val_lookup(bv,i);
       if (la == lb) continue;
+    
       let avail = limb_mask(lb - la);
-
       let current = clone(av);
-      let i = ia + extend_left_so_index_valid(current, ia);
       let step : number; // actual floating point!
       if (avail > count+1) {
 	step = avail / (count+1);
       } else {
-	i += add_to_limb(current, i, avail / 2);
-	step = LIMB_MODULUS / (count+1);
+	current.limbs.push(0);
 	i++;
-	current.limbs.length = i;
-	current.limbs[i] = 0;
+	step = LIMB_MODULUS / (count+1);
       }
-//# console.log('will iter',current,step,avail);
+      step = Math.floor(step);
       return function() {
-	i += add_to_limb(current, i, step);
+	current.limbs[i] += step;
 	return pack(current);
       }
     }
   }
-
-
 }
 /*
 
