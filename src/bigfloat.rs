@@ -214,7 +214,7 @@ impl Bigfloat {
     let nlimbs = (tail.len() + 1) / TEXT_PER_LIMB;
     let mut limbs = Vec::with_capacity(nlimbs+2);
     for lt in tail.chunks(TEXT_PER_LIMB) {
-      let s = str::from_utf8(lt).unwrap();
+      let s = str::from_utf8(&lt[0..DIGITS_PER_LIMB]).unwrap();
       let v = RawLimbVal::from_str_radix(s, 1 << BITS_PER_DIGIT).unwrap();
       limbs.push(Wrapping(v));
     }
@@ -343,6 +343,7 @@ mod test {
     let b = Bigfloat::from_str(s).unwrap();
     let b2 = b.clone();
     assert_eq!(format!("{}", &b), s);
+    assert_eq!(format!("{}", &b.clone_mut().repack().unwrap()), s);
     mem::drop(b);
     assert_eq!(format!("{}", &b2), s);
     assert_eq!(format!("{:?}", &b2),
