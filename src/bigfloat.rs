@@ -206,6 +206,7 @@ impl Bigfloat {
         }) { None? }
       match lt[DIGITS_PER_LIMB..] { [] | [b'_'] => (), _ => None? };
     }
+    if &s[s.len() - DIGITS_PER_LIMB.. ] == b"0000000000" { None? }
     Bigfloat::alloc_copy(s).ok()?
   }
 
@@ -351,6 +352,8 @@ mod test {
     fn bad(s: &str) { assert_eq!(None, Bigfloat::from_str(s)); }
     bad("");
     bad("0");
+    bad("0000000000");
+    bad("0000000000_0000000000");
     bad("aaaaaaaa0_aaaaaaaa00");
     bad("aaaaaaaa0_aaaaaaaa00");
     bad("aaaaaaaa00_aaaaaaaa0");
