@@ -24,5 +24,4 @@ pub mod utils;
 pub mod mgmtchannel;
 pub mod debugreader;
 pub mod shapelib;
-pub mod bigfloat;
 #[path="slotmap-slot-idx.rs"] pub mod slotmap_slot_idx;

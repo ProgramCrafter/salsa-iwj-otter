@@ -11,7 +11,6 @@ version = "0.0.1"
 edition = "2018"
 
 [workspace]
-members = ["zcoord"]
 
 [dependencies]
 #lazy_static = "1.0.0"
@@ -22,6 +21,8 @@ members = ["zcoord"]
 #pin-utils = "0.1.0-alpha.4"
 # ^ this strange version + Cargo seems to make me have to specify it
 # exactly.  futures-rs/Cargo.toml does it this way, so ok ?
+
+otter-zcoord = { path = "zcoord" }
 
 anyhow = "1"
 thiserror = "1"

@@ -7,3 +7,8 @@ license = "AGPL-3.0-or-later"
 version = "0.0.1"
 edition = "2018"
 
+[dependencies]
+
+serde = { version = "1", features = ["derive","rc"] }
+fehler = "1"
+thiserror = "1"

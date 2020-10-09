@@ -19,8 +19,6 @@ pub struct Generation (pub u64);
 
 visible_slotmap_key!{ VisiblePieceId('.') }
 
-pub type ZCoord = Bigfloat;
-
 #[derive(Clone,Serialize,Deserialize,Eq,Ord,PartialEq,PartialOrd)]
 #[serde(transparent)]
 pub struct Html (pub String);
