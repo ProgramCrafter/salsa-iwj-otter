@@ -112,8 +112,7 @@ pub use crate::spec::*;
 pub use crate::debugreader::DebugReader;
 pub use crate::shapelib;
 
-pub use otter_zcoord as zcoord;
-pub use zcoord::ZCoord;
+pub use zcoord::{self, ZCoord};
 
 pub use nix::unistd::Uid;
 
