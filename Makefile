@@ -13,6 +13,8 @@ default: debug
 #---------- funky macros etc. ----------
 
 cr = $(addprefix --,$(filter-out debug,$1))
+rsrcs = $(shell \
+    find $1 \( -name Cargo.toml -o -name Cargo.lock -o -name \*.rs \) )
 
 #---------- programs and config variables ----------
 
@@ -87,24 +89,38 @@ extra-release: bundled-sources
 
 DR=debug release
 CARGOES=$(foreach t,/ /wasm-,$(addprefix $t,check $(DR)))
+rstamp:=@mkdir -p cargo; touch $@
 
-X := $(shell echo >&2 PHONY $(addprefix cargo, $(CARGOES)))
+$(addprefix cargo/,$(DR)):: cargo/%: $(call rsrcs,. ! -path './wasm/*')
+	$(CARGO) build $(call cr,$*)
+	$(rstamp)
 
-.PHONY: $(addprefix cargo, $(CARGOES))
+cargo/check: $(call $(csrcs,.))
+	$(CARGO) test
+	$(rstamp)
 
-$(addprefix cargo/,$(DR)):: cargo/%:
-	$(CARGO) test $(call cr,$*)
-
-$(addprefix cargo/wasm-,$(DR)):: cargo/wasm-%:
+$(addprefix cargo/wasm-,$(DR)):: cargo/wasm-%: $(call rsrcs, zcoord wasm)
+	: $@ out of date $?
 	$(CARGO) -TWASM build -p otter-wasm $(call cr,$*)
+	$(rstamp)
 
-cargo/deploy-build:
+cargo/deploy-build: $(call rsrcs,.)
 	$(CARGO) -T$(DEPLOY_ARCH) build $(call cr,$(DEPLOY_RELEASE))
+	$(rstamp)
 
 #---------- wasm ----------
 
-#WASM_ASSETS := $(addprefix otter_wasm,.js _bg.wasm)
-#WASM_OUTPUTS := $(addprefix otter_wasm,.d.ts 
+WASM_ASSETS := $(addprefix otter_wasm,.js _bg.wasm)
+WASM_OUTPUTS := $(addprefix otter_wasm,.d.ts)
+
+$(WASM_ASSETS) $(WASM_OUTPUTS): wasm-pack
+.PHONY: wasm-pack
+wasm-pack: cargo/wasm-release
+
+real/wasm-pack: 
+
+wasm-pack:
+	$(MAKE) real/$@
 
 #---------- bundle-sources ----------
 
