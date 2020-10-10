@@ -96,7 +96,7 @@ cargo-wasm: cargo-wasm-release
 
 wasm-pack: stamp/wasm-pack
 
-assets: js libraries $(FILEASSETS)
+assets: js libraries stamp/wasm-pack $(FILEASSETS)
 
 js: templates/script.js
 
@@ -194,7 +194,8 @@ templates/script.js: $(TS_SRC_FILES)
 #	nodejs <$<
 #	@echo 'nodejs check $< ok'
 
-templates/otter_wasm.ns.d.ts: $(WASM_PACKED)/otter_wasm.d.ts Makefile
+templates/otter_wasm.ns.d.ts: $(WASM_PACKED)/otter_wasm.d.ts \
+				stamp/wasm-pack Makefile
 	set -e; exec >$@.tmp; 				\
 	echo 'declare namespace wasm_bindgen {'; 	\
 	sed 's/^export default function init/export function init/' <$<; \
