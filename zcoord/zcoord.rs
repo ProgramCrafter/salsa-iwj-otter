@@ -491,7 +491,7 @@ mod test {
   }
 
   #[test]
-  fn equality() {
+  fn inequality() {
     assert!( bf("gg0123abcd_0123456789") <
              bf("gg0123abcd_012345678a") );
     
