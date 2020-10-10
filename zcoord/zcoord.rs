@@ -58,10 +58,10 @@
 //    Pick a value earlier than a specified value.
 //
 //       Try to subtract delta from rightmost nonzero limb, with
-//       borrow.  If this would underflow, or would leave leftmost
-//       limb equal to 0000000000, start again: decrement rightmost
-//       nonzero limb by 1, with borrow, then add two limbs
-//       vvvvvvvvvv, and redo.
+//       borrow.  If this would underflow, or would change leftmost
+//       limb to 0000000000, start again: decrement rightmost nonzero
+//       limb by 1, with borrow, then add two limbs vvvvvvvvvv, and
+//       redo.
 
 use std::cmp::{Ordering, max};
 use std::convert::{TryFrom, TryInto};
@@ -77,22 +77,24 @@ use thiserror::Error;
 const BITS_PER_DIGIT : usize = 5;
 const DIGITS_PER_LIMB : usize = 10;
 
+type RawLimbVal = u64;
+type LimbVal = Wrapping<RawLimbVal>;
+
 const DELTA : LimbVal = Wrapping(0x4000_0000);
 const ZERO : LimbVal = Wrapping(0);
 const ONE : LimbVal = Wrapping(1);
 
+const RAW_LIMB_MODULUS : RawLimbVal = 1u64 << BITS_PER_LIMB;
+
 const BITS_PER_LIMB : usize = BITS_PER_DIGIT * DIGITS_PER_LIMB;
 const DIGIT_MASK : LimbVal = Wrapping((1u64 << BITS_PER_DIGIT) - 1);
 const TEXT_PER_LIMB : usize = DIGITS_PER_LIMB + 1;
-const LIMB_MODULUS : LimbVal = Wrapping(1u64 << BITS_PER_LIMB);
-const LIMB_MASK    : LimbVal = Wrapping((1u64 << BITS_PER_LIMB)-1);
+const LIMB_MODULUS : LimbVal = Wrapping(RAW_LIMB_MODULUS);
+const LIMB_MASK    : LimbVal = Wrapping(RAW_LIMB_MODULUS-1);
 
 #[derive(Deserialize)]
 #[serde(try_from="&str")]
 pub struct ZCoord(innards::Innards);
-
-type RawLimbVal = u64;
-type LimbVal = Wrapping<RawLimbVal>;
 
 #[derive(Error,Clone,Copy,Debug)]
 #[error("error parsing zcoord (z value)")]
@@ -127,37 +129,70 @@ impl From<TryFromIntError> for Overflow {
   fn from(_: TryFromIntError) -> Overflow { Overflow }
 }
 
+trait IncDecOffset {
+  const INIT_DELTA  : LimbVal;
+  const CARRY_DELTA : LimbVal;
+  const NEW_LIMBS   : LimbVal;
+  fn check_underflow(m: &Mutable, i: usize, nv: LimbVal) -> Option<()>;
+}
+
+struct IncDecInc;
+impl IncDecOffset for IncDecInc {
+  const INIT_DELTA  : LimbVal = DELTA;
+  const CARRY_DELTA : LimbVal = ONE;
+  const NEW_LIMBS   : LimbVal = ZERO;
+  #[throws(as Option)]
+  fn check_underflow(_: &Mutable, _: usize, _: LimbVal) { }
+}
+
+struct IncDecDec;
+impl IncDecOffset for IncDecDec {
+  const INIT_DELTA  : LimbVal = Wrapping(DELTA.0.wrapping_neg());
+  const CARRY_DELTA : LimbVal = Wrapping(ONE  .0.wrapping_neg());
+  const NEW_LIMBS   : LimbVal = LIMB_MASK;
+  #[throws(as Option)]
+  fn check_underflow(_: &Mutable, i: usize, nv: LimbVal) {
+    if i == 0 && nv == ZERO { throw!() }
+  }
+}
+
 impl Mutable {
   #[throws(Overflow)]
-  pub fn increment(&mut self) -> ZCoord {
+  fn incdec<ID:IncDecOffset>(&mut self, _: ID) -> ZCoord {
     'attempt: loop {
       let mut i = self.limbs.len() - 1;
-      let mut delta = DELTA;
+      let mut delta = ID::INIT_DELTA;
 
       if (||{
         loop {
           let nv = self.limbs[i] + delta;
           self.limbs[i] = nv & LIMB_MASK;
+          ID::check_underflow(self, i, nv)?;
           if nv < LIMB_MODULUS { return Some(()) }
           if i == 0 { return None }
           i -= 1;
-          delta = ONE;
+          delta = ID::CARRY_DELTA;
         }
       })() == Some(()) { break 'attempt }
 
       // undo
       loop {
         if i >= self.limbs.len() { break }
-        else if i == self.limbs.len()-1 { delta = DELTA; }
+        else if i == self.limbs.len()-1 { delta = ID::INIT_DELTA; }
         let nv = self.limbs[i] - delta;
         self.limbs[i] = nv & LIMB_MASK;
         i += 1;
       }
-      self.limbs.push(ZERO);
-      self.limbs.push(ZERO);
+      self.limbs.push(ID::NEW_LIMBS);
+      self.limbs.push(ID::NEW_LIMBS);
     }
     self.repack()?
   }
+
+  #[throws(Overflow)]
+  pub fn increment(&mut self) -> ZCoord { self.incdec(IncDecInc)? }
+  #[throws(Overflow)]
+  pub fn decrement(&mut self) -> ZCoord { self.incdec(IncDecDec)? }
 
   #[throws(Overflow)]
   pub fn repack(&self) -> ZCoord { self.try_into()? }
