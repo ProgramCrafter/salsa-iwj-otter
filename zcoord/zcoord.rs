@@ -503,11 +503,13 @@ mod test {
   fn addition() {
     fn mk(s: &str) -> super::Mutable { bf(s).clone_mut() }
     impl Mutable {
-      fn tinc(mut self, exp: &str) -> Self {
-        let got = self.increment().unwrap();
+      fn tincdec(mut self, exp: &str, id: IncDecOffset) -> Self {
+        let got = self.incdec(id).unwrap();
         assert_eq!(got.to_string(), exp);
         self
       }
+      fn tinc(mut self, exp: &str) -> Self { self.tincdec(exp, IncDecInc) }
+      fn tdec(mut self, exp: &str) -> Self { self.tincdec(exp, IncDecDec) }
     }
     mk("000000000a")
       .tinc("000100000a")
@@ -518,6 +520,21 @@ mod test {
       ;
     mk("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234")
       .tinc("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234_0000000000_0001000000")
+      ;
+
+    mk("000000000a")
+      .tinc("000100000a")
+      .tinc("000200000a")
+      ;
+    mk("vvvvvvvvvv")
+      .tinc("vvvvvvvvvv_0000000000_0001000000")
+      ;
+    mk("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234")
+      .tinc("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234_0000000000_0001000000")
+      ;
+    mk("000000000a")
+      .tinc("000100000a")
+      .tinc("000200000a")
       ;
   }
 }
