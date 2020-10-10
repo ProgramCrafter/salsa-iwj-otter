@@ -22,6 +22,9 @@ CARGO_TARGET_DIR ?= target
 USVG ?= usvg
 USVG_OPTIONS = "--sans-serif-family=DejaVu Sans"
 
+WASM_PACK ?= wasm-pack
+WASM_PACK_OPTIONS = --cargo-path=/bin/echo
+
 BUNDLE_SOURCES ?= bundle-rust-sources
 
 DEPLOY_ARCH=x86_64-unknown-linux-musl
@@ -58,6 +61,7 @@ endef
 
 $(eval $(call lp,BUNDLE_SOURCES,bundle-sources,debug,bundle-rust-sources))
 $(eval $(call lp,USVG,resvg,release,usvg))
+$(eval $(call lp,WASM_PACK,wasm-pack,debug,wasm-pack))
 
 #---------- variables defining bits of source etc. ----------
 
@@ -81,15 +85,26 @@ extra-release: bundled-sources
 
 #---------- cargo ----------
 
-CARGOES=$(foreach t, / /wasm-			, \
-	$(addprefix $t,				, \
-	check debug release))
+DR=debug release
+CARGOES=$(foreach t,/ /wasm-,$(addprefix $t,check $(DR)))
+
+X := $(shell echo >&2 PHONY $(addprefix cargo, $(CARGOES)))
 
 .PHONY: $(addprefix cargo, $(CARGOES))
 
-cargo/check cargo/debug:: cargo/%:; $(CARGO) test $(call cr,$*)
-cargo/wasm-%:; $(CARGO) -TWASM build -p otter-wasm $(call cr,$*)
-cargo/deploy-build: $(CARGO) -T$(DEPLOY_ARCH) build $(call cr,$(DEPLOY_RELEASE))
+$(addprefix cargo/,$(DR)):: cargo/%:
+	$(CARGO) test $(call cr,$*)
+
+$(addprefix cargo/wasm-,$(DR)):: cargo/wasm-%:
+	$(CARGO) -TWASM build -p otter-wasm $(call cr,$*)
+
+cargo/deploy-build:
+	$(CARGO) -T$(DEPLOY_ARCH) build $(call cr,$(DEPLOY_RELEASE))
+
+#---------- wasm ----------
+
+#WASM_ASSETS := $(addprefix otter_wasm,.js _bg.wasm)
+#WASM_OUTPUTS := $(addprefix otter_wasm,.d.ts 
 
 #---------- bundle-sources ----------
 
