@@ -20,19 +20,26 @@ fn index() -> Template {
   Template::render("test",&c)
 }
 
-const RESOURCES : &[(&'static str, ContentType)] = &[
-  ("script.js",    ContentType::JavaScript),
-  ("style.css",    ContentType::JavaScript),
-  ("LICENCE",      ContentType::Plain),
-  ("libre",        ContentType::HTML),
-  ("AGPLv3",       ContentType::Plain),
-  ("CC-BY-SA-3.0", ContentType::Plain),
-  ("CC-BY-SA-4.0", ContentType::Plain),
+#[derive(Copy,Clone,Debug)]
+enum ResourceLocation { Main, Wasm(&'static str), }
+type RL = ResourceLocation;
+
+const RESOURCES : &[(&'static str, ResourceLocation, ContentType)] = &[
+  ("script.js",    RL::Main,                       ContentType::JavaScript),
+  ("style.css",    RL::Main,                       ContentType::JavaScript),
+  ("LICENCE",      RL::Main,                       ContentType::Plain),
+  ("libre",        RL::Main,                       ContentType::HTML),
+  ("AGPLv3",       RL::Main,                       ContentType::Plain),
+  ("CC-BY-SA-3.0", RL::Main,                       ContentType::Plain),
+  ("CC-BY-SA-4.0", RL::Main,                       ContentType::Plain),
+  ("wasm.wasm",    RL::Wasm("otter_wasm_bg.wasm"), ContentType::WASM),
+  ("wasm.js",      RL::Wasm("otter_wasm.js"),      ContentType::JavaScript),
 ];
 
 #[derive(Debug)]
 struct CheckedResourceLeaf {
   safe_leaf: &'static str,
+  locn: ResourceLocation,
   ctype: ContentType,
 }
 
@@ -43,9 +50,12 @@ struct UnknownResource{}
 impl<'r> FromParam<'r> for CheckedResourceLeaf {
   type Error = UnknownResource;
   fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
-    for &(safe_leaf, ref ctype) in RESOURCES {
+    for &(safe_leaf, locn, ref ctype) in RESOURCES {
       if safe_leaf == param.as_str() {
-        return Ok(CheckedResourceLeaf { safe_leaf, ctype: ctype.clone() })
+        return Ok(CheckedResourceLeaf {
+          safe_leaf, locn,
+          ctype: ctype.clone(),
+        })
       }
     }
     Err(UnknownResource{})
@@ -83,7 +93,10 @@ fn updates<'r>(ctoken : InstanceAccess<ClientId>, gen: u64,
 #[get("/_/<leaf>")]
 #[throws(io::Error)]
 fn resource<'r>(leaf : CheckedResourceLeaf) -> impl Responder<'r> {
-  let path = format!("{}/{}", config().template_dir, leaf.safe_leaf);
+  let path = match leaf.locn {
+    RL::Main => format!("{}/{}", config().template_dir, leaf.safe_leaf),
+    RL::Wasm(s) => format!("{}/{}", config().wasm_dir, s),
+  };
   Content(leaf.ctype, NamedFile::open(path)?)
 }  
 

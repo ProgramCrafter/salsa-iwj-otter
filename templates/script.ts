@@ -74,6 +74,8 @@ type PieceInfo = {
   last_seen_moved : DOMHighResTimeStamp | null, // non-0 means halo'd
 }
 
+let wasm : wasm_bindgen.InitOutput;
+
 let pieces : { [piece: string]: PieceInfo } = Object.create(null);
 
 type MessageHandler = (op: Object) => void;
@@ -1008,6 +1010,11 @@ function test_swap_stack() {
 }
 
 function startup() {
+  console.log('STARTUP');
+  let mut = wasm_bindgen.mutable('4200000000');
+  let y = mut.next();
+  console.log('FOO', mut, y);
+
   var body = document.getElementById("main-body")!;
   ctoken = body.dataset.ctoken!;
   us = body.dataset.us!;
@@ -1079,6 +1086,9 @@ function startup() {
   document.addEventListener('keydown',   some_keydown);
 }
 
+declare var wasm_input : any;
+var wasm_promise : Promise<any>;;
+
 function doload(){
   console.log('DOLOAD');
   var elem = document.getElementById('loading_token')!;
@@ -1086,13 +1096,19 @@ function doload(){
   xhr_post_then('/_/session', 
 		JSON.stringify({ ptoken : ptoken }),
 		loaded);
+
+  wasm_promise = wasm_input
+    .then(wasm_bindgen);
 }
 
 function loaded(xhr: XMLHttpRequest){
   console.log('LOADED');
   var body = document.getElementById('loading_body')!;
-  body.outerHTML = xhr.response;
-  startup();
+  wasm_promise.then((got_wasm) => {
+    wasm = got_wasm;
+    body.outerHTML = xhr.response;
+    startup();
+  });
 }
 
 // xxx scroll of log messages to bottom does not always work somehow

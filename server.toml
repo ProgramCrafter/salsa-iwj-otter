@@ -10,6 +10,7 @@
 save_directory = "/home/rustcargo/Rustup/Game/server"
 template_dir = "/home/ian/Rustup/Game/server/templates"
 bundled_sources = "/home/rustcargo/Rustup/Game/server/target/bundled-sources"
+wasm_dir = "/home/rustcargo/Rustup/Game/server/target/packed-wasm"
 
 shapelibs = [ "/home/ian/Rustup/Game/server/library/*.toml" ]
 

@@ -5,6 +5,7 @@ templates/LICENCE
 templates/AGPLv3
 templates/CC-BY-SA-3.0
 templates/CC-BY-SA-4.0
+templates/otter_wasm.ns.d.ts
 save/lock
 /library/*/*.usvg
 *.tmp

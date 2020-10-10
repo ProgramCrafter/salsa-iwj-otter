@@ -135,6 +135,13 @@ stamp/wasm-pack: stamp/cargo.wasm-release
 		--out-dir=../target/packed-wasm wasm -t no-modules --release
 	$(stamp)
 
+# There is some kind of bug in wasm-pack's version of wasm-opt, which
+# can be avoided by running --dev instead (but also then using the
+# debug rust built).  IME this happened when trying to return a u64,
+# so maybe bigints are affected?  (Which I don't want to use anyway.)
+# See
+#    https://github.com/WebAssembly/binaryen/issues/3006
+
 #---------- bundle-sources ----------
 
 bundled-sources: $(TARGET_DIR)/bundled-sources
@@ -158,7 +165,7 @@ $(LIBRARY_FILES): $(USVG_PROCESSOR) $(USVG_BINARY) Makefile
 TS_SRCS= script bigfloat
 TS_SRC_FILES= \
 	../webassembly-types/webassembly.d.ts \
-	$(addprefix $(WASM_PACKED)/,otter_wasm.d.ts) \
+	templates/otter_wasm.ns.d.ts \
 	$(addprefix templates/,$(addsuffix .ts,$(TS_SRCS)))
 
 LITFILES= LICENCE AGPLv3
@@ -177,6 +184,13 @@ templates/bigfloat-tests-auto.ts: extract-bf-tests src/bigfloat.rs
 js-check: templates/bigfloat-tests.js
 	nodejs <$<
 	@echo 'nodejs check $< ok'
+
+templates/otter_wasm.ns.d.ts: $(WASM_PACKED)/otter_wasm.d.ts Makefile
+	set -e; exec >$@.tmp; 				\
+	echo 'declare namespace wasm_bindgen {'; 	\
+	sed 's/^export default function init/export function init/' <$<; \
+	echo '}'
+	mv -v $@.tmp $@
 
 #---------- other templates ----------
 

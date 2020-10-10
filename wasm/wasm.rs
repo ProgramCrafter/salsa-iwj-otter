@@ -17,5 +17,5 @@ pub fn mutable(s: String) -> ZCoordIterator {
 
 #[wasm_bindgen]
 impl ZCoordIterator {
-  pub fn next(&mut self) -> () { }
+  pub fn next(&mut self) -> u32 { 42 }
 }
