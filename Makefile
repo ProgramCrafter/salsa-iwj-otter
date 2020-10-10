@@ -113,7 +113,7 @@ stamp/cargo.%: $(call rsrcs,. ! -path './wasm/*')
 	$(CARGO) build $(call cr,$*)
 	$(stamp)
 
-stamp/cargo.check: $(call $(csrcs,.))
+stamp/cargo.check: $(call rsrcs,.)
 	$(CARGO) test
 	$(stamp)
 

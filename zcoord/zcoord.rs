@@ -508,11 +508,11 @@ mod test {
         assert_eq!(got.to_string(), exp);
         self
       }
-    }/*
+    }
     mk("000000000a")
       .tinc("000100000a")
       .tinc("000200000a")
-      ;*/
+      ;
     mk("vvvvvvvvvv")
       .tinc("vvvvvvvvvv_0000000000_0001000000")
       ;
