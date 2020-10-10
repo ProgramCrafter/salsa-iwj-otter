@@ -82,7 +82,7 @@ WASM := wasm32-unknown-unknown
 
 #---------- toplevel aggregate targets ----------
 
-check: stamp/cargo.check js-check
+check: stamp/cargo.check
 	@echo 'All tests passed.'
 
 debug release:: %: stamp/cargo.% assets extra-%
@@ -184,15 +184,15 @@ templates/%.js: tsc-wrap tsconfig.json
 	./tsc-wrap $@ tsconfig.json $(filter %.ts,$^)
 
 templates/script.js: $(TS_SRC_FILES)
-templates/bigfloat-tests.js: templates/bigfloat.ts \
-	templates/bigfloat-tests.ts templates/bigfloat-tests-auto.ts
+#templates/bigfloat-tests.js: templates/bigfloat.ts \
+#	templates/bigfloat-tests.ts templates/bigfloat-tests-auto.ts
 
-templates/bigfloat-tests-auto.ts: extract-bf-tests src/bigfloat.rs
-	./$^ >$@.tmp && mv -f $@.tmp $@
+#templates/bigfloat-tests-auto.ts: extract-bf-tests src/bigfloat.rs
+#	./$^ >$@.tmp && mv -f $@.tmp $@
 
-js-check: templates/bigfloat-tests.js
-	nodejs <$<
-	@echo 'nodejs check $< ok'
+#js-check: templates/bigfloat-tests.js
+#	nodejs <$<
+#	@echo 'nodejs check $< ok'
 
 templates/otter_wasm.ns.d.ts: $(WASM_PACKED)/otter_wasm.d.ts Makefile
 	set -e; exec >$@.tmp; 				\
