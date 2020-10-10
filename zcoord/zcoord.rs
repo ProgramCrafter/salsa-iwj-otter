@@ -515,6 +515,8 @@ mod test {
     assert_eq!(format!("{}", &start), "g000000000");
     start.clone_mut()
       .tinc("g001000000");
+    start.clone_mut()
+      .tdec("fvvv000000");
 
     mk("000000000a")
       .tinc("000100000a")
