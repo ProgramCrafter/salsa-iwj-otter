@@ -43,8 +43,9 @@ CARGO = $(NAILING_CARGO)
 BUILD_SUBDIR ?= ../Build
 TARGET_DIR = $(BUILD_SUBDIR)/$(notdir $(PWD))/target
 
+NAILING_CARGO_JUST_RUN ?= $(NAILING_CARGO) --just-run -q ---
 BUNDLE_SOURCES_CMD ?= $(NAILING_CARGO) --- $(BUNDLE_SOURCES)
-USVG_CMD ?= $(NAILING_CARGO) --just-run -q --- $(USVG)
+USVG_CMD ?= $(NAILING_CARGO_JUST_RUN) $(USVG)
 WASM_PACK_CMD ?= $(NAILING_CARGO) --linkfarm=git --- $(WASM_PACK)
 
 endif # Cargo.nail
@@ -64,6 +65,7 @@ $(shell echo >&2 'Makefile: lp: Using program $4 from $(BUILD_SUBDIR)/$2')
 $1 := $(abspath $(BUILD_SUBDIR)/$2/target/$3/$4)
 $(abspath $(BUILD_SUBDIR)/$2/target/$3/$4):; cd ../$2 && $$(CARGO) build $(call cr,$3)
 )
+bundled-sources:: bundled-sources/$2
 endef
 
 $(eval $(call lp,BUNDLE_SOURCES,bundle-sources,debug,bundle-rust-sources))
@@ -144,11 +146,18 @@ stamp/wasm-pack: stamp/cargo.wasm-release
 
 #---------- bundle-sources ----------
 
-bundled-sources: $(TARGET_DIR)/bundled-sources
-$(TARGET_DIR)/bundled-sources: $(BUNDLE_SOURCES)
-	$(BUNDLE_SOURCES_CMD) --output $(abspath $@)
+bundled-sources:: bundled-sources/otter
+
+bundled-sources/%: $(BUNDLE_SOURCES)
+	set -e; d=$(abspath $(TARGET_DIR)/bundled-sources); \
+	$(NAILING_CARGO_JUST_RUN) mkdir -p $$d; \
+	$(if $(filter-out otter,$*), cd ../$*;) \
+	$(BUNDLE_SOURCES_CMD) --output $$d/$*
+
+.PHONY: bundled-sources/%
+
+bundled-sources::
 	@echo Bundled sources.
-.PHONY: bundle-sources $(TARGET_DIR)/bundled-sources
 
 #---------- svg processing ----------
 
