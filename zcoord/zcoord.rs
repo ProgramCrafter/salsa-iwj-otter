@@ -452,8 +452,8 @@ mod innards {
 
 #[cfg(test)]
 mod test {
-  // everything from here on is seded by the js test extractor!
   use super::*;
+  use std::mem;
 
   fn bf(s: &str) -> ZCoord {
     ZCoord::from_str(s).unwrap()
@@ -500,20 +500,24 @@ mod test {
   }
 
   #[test]
-  fn addition() {
+  fn incdec() {
     fn mk(s: &str) -> super::Mutable { bf(s).clone_mut() }
     impl Mutable {
-      fn tincdec(mut self, exp: &str, id: IncDecOffset) -> Self {
+      fn tincdec<ID:IncDecOffset>(mut self, exp: &str, id: ID) -> Self {
         let got = self.incdec(id).unwrap();
         assert_eq!(got.to_string(), exp);
         self
       }
-      fn tinc(mut self, exp: &str) -> Self { self.tincdec(exp, IncDecInc) }
-      fn tdec(mut self, exp: &str) -> Self { self.tincdec(exp, IncDecDec) }
+      fn tinc(self, exp: &str) -> Self { self.tincdec(exp, IncDecInc) }
+      fn tdec(self, exp: &str) -> Self { self.tincdec(exp, IncDecDec) }
     }
     mk("000000000a")
       .tinc("000100000a")
       .tinc("000200000a")
+      .tdec("000100000a")
+      .tdec("000000000a")
+      .tdec("000000000a_vvvvvvvvvv_vvvuvvvvvv")
+      .tdec("000000000a_vvvvvvvvvv_vvvtvvvvvv")
       ;
     mk("vvvvvvvvvv")
       .tinc("vvvvvvvvvv_0000000000_0001000000")

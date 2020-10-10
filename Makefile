@@ -85,11 +85,14 @@ WASM := wasm32-unknown-unknown
 check: stamp/cargo.check
 	@echo 'All tests passed.'
 
+doc: cargo-doc
+
 debug release:: %: stamp/cargo.% assets extra-%
 
 cargo: cargo-debug cargo-wasm-release
 
-cargo-debug cargo-release cargo-check cargo-wasm-debug cargo-wasm-release:: \
+cargo-debug cargo-release cargo-check cargo-doc \
+cargo-wasm-debug cargo-wasm-release:: \
 cargo-%: stamp/cargo.%
 
 cargo-wasm: cargo-wasm-release
@@ -114,7 +117,11 @@ stamp/cargo.%: $(call rsrcs,. ! -path './wasm/*')
 	$(stamp)
 
 stamp/cargo.check: $(call rsrcs,.)
-	$(CARGO) test
+	$(CARGO) test --workspace
+	$(stamp)
+
+stamp/cargo.doc: $(call rsrcs,.)
+	$(CARGO) doc --workspace
 	$(stamp)
 
 $(addprefix stamp/cargo.wasm-,$(DR)):: \
