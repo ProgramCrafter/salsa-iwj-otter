@@ -521,24 +521,21 @@ mod test {
       ;
     mk("vvvvvvvvvv")
       .tinc("vvvvvvvvvv_0000000000_0001000000")
+      .tdec("vvvvvvvvvv_0000000000_0000000000")
       ;
     mk("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234")
       .tinc("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234_0000000000_0001000000")
       ;
-
-    mk("000000000a")
-      .tinc("000100000a")
-      .tinc("000200000a")
+    mk("0000000000_0000000000_0001012340")
+      .tdec("0000000000_0000000000_0000012340")
+      .tdec("0000000000_0000000000_0000012340_vvvvvvvvvv_vvvuvvvvvv")
       ;
+
     mk("vvvvvvvvvv")
       .tinc("vvvvvvvvvv_0000000000_0001000000")
       ;
     mk("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234")
       .tinc("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234_0000000000_0001000000")
-      ;
-    mk("000000000a")
-      .tinc("000100000a")
-      .tinc("000200000a")
       ;
   }
 }
