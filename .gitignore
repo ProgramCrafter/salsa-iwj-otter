@@ -9,4 +9,4 @@ save/lock
 /library/*/*.usvg
 *.tmp
 .tsconfig.*.json
-cargo/*
+stamp/*

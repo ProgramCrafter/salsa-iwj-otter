@@ -15,6 +15,7 @@ default: debug
 cr = $(addprefix --,$(filter-out debug,$1))
 rsrcs = $(shell \
     find $1 \( -name Cargo.toml -o -name Cargo.lock -o -name \*.rs \) )
+stamp=@mkdir -p stamp; touch $@
 
 #---------- programs and config variables ----------
 
@@ -75,10 +76,17 @@ WASM := wasm32-unknown-unknown
 
 #---------- toplevel aggregate targets ----------
 
-check: cargo/check js-check
+check: stamp/cargo.check js-check
 	@echo 'All tests passed.'
 
-debug release:: %: cargo/% assets extra-%
+debug release:: %: stamp/cargo.% assets extra-%
+
+cargo: cargo-debug cargo-wasm-release
+
+cargo-debug cargo-release cargo-check cargo-wasm-debug cargo-wasm-release:: \
+cargo-%: stamp/cargo.%
+
+cargo-wasm: cargo-wasm-release
 
 assets: templates/script.js libraries $(FILEASSETS)
 
@@ -88,25 +96,25 @@ extra-release: bundled-sources
 #---------- cargo ----------
 
 DR=debug release
-CARGOES=$(foreach t,/ /wasm-,$(addprefix $t,check $(DR)))
-rstamp:=@mkdir -p cargo; touch $@
+CARGOES=$(foreach t, wasm-,$(addprefix $t,check $(DR)))
 
-$(addprefix cargo/,$(DR)):: cargo/%: $(call rsrcs,. ! -path './wasm/*')
+$(addprefix stamp/cargo.,$(DR)):: \
+stamp/cargo.%: $(call rsrcs,. ! -path './wasm/*')
 	$(CARGO) build $(call cr,$*)
-	$(rstamp)
+	$(stamp)
 
-cargo/check: $(call $(csrcs,.))
+stamp/cargo.check: $(call $(csrcs,.))
 	$(CARGO) test
-	$(rstamp)
+	$(stamp)
 
-$(addprefix cargo/wasm-,$(DR)):: cargo/wasm-%: $(call rsrcs, zcoord wasm)
-	: $@ out of date $?
+$(addprefix stamp/cargo.wasm-,$(DR)):: \
+stamp/cargo.wasm-%: $(call rsrcs, zcoord wasm)
 	$(CARGO) -TWASM build -p otter-wasm $(call cr,$*)
-	$(rstamp)
+	$(stamp)
 
-cargo/deploy-build: $(call rsrcs,.)
+stamp/cargo.deploy-build: $(call rsrcs,.)
 	$(CARGO) -T$(DEPLOY_ARCH) build $(call cr,$(DEPLOY_RELEASE))
-	$(rstamp)
+	$(stamp)
 
 #---------- wasm ----------
 
@@ -176,7 +184,7 @@ libraries: $(LIBRARY_FILES)
 
 DEPLOY_BASE=Otter@login.chiark.greenend.org.uk:/volatile/Otter
 
-deploy: cargo/deploy-build bundled-sources
+deploy: stamp/cargo.deploy-build bundled-sources
 	rsync -zv --progress $(addprefix $(DEPLOY_TARGET_DIR)/,$(PROGRAMS)) $(DEPLOY_BASE)/bin/
 	rsync -rv --progress $(CARGO_TARGET_DIR)/bundled-sources/. $(DEPLOY_BASE)/bundled-sources
 
