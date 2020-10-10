@@ -90,3 +90,7 @@ Some individual files are dual-licenced and say
 Those files are available under the MIT-0 permissive licence when
 taken separately, but when distributed as part of otter, they are
 AGPLv3+.
+
+The imported git subtree webassembly-types/ is by 01Alchemist and is
+available under the MIT licence (SPDX "MIT").  Again, when distributed
+as part of otter, this is AGPLv3+.
