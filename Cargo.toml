@@ -14,96 +14,54 @@ edition = "2018"
 members = ["wasm"]
 
 [dependencies]
-#lazy_static = "1.0.0"
-#apigpio = "0"
-#tokio = { version = "0.2", features = ["full"] }
-#futures-util = "0.3"
-
-#pin-utils = "0.1.0-alpha.4"
-# ^ this strange version + Cargo seems to make me have to specify it
-# exactly.  futures-rs/Cargo.toml does it this way, so ok ?
 
 otter-zcoord = { path = "zcoord" }
 
 anyhow = "1"
-thiserror = "1"
-
-itertools = "0.9"
-
-rand = "0"
-
-regex = "1"
-#arrayvec = "0"
-
-# ambassador = "0.2"
+argparse = "0.2"
+arrayvec = "0"
 delegate = "0.4"
-
-#toml = "0.5"
+failure = "0.1.8" # for pwd
+fehler = "1"
+flexi_logger = { version = "0.15", features = [ "specfile" ] }
+fs2 = "0.4"
+glob = "0.3"
+hashlink = { version = "0.5", features = ["serde_impl"] }
+htmlescape = "0.3"
+index_vec = { version = "0.1.1", features = ['serde'] }
+inventory = "0.1"
+itertools = "0.9"
+lazy_static = "1"
+log = "0.4"
+nix = "0.18"
+num-traits = "0.2"
+ordered-float = "2"
+percent-encoding = "2"
+pwd = "1"
+rand = "0"
+regex = "1"
+rental = "0.5"
+rmp = "0.8"
+rmp-serde = "0.14"
+rocket_cors = "0.5"
 serde = { version = "1", features = ["derive","rc"] }
 serde_json = "1"
-
-htmlescape = "0.3"
-
-lazy_static = "1"
-
 slotmap = { version = "0.4", features = ['serde'] }
-fehler = "1"
-
-index_vec = { version = "0.1.1", features = ['serde'] }
-
-num-traits = "0.2"
-
-typetag = "0.1.6"
-#inventory = "0.1"
-
-ordered-float = "2"
-
-rmp-serde = "0.14"
-rmp = "0.8"
-
-log = "0.4"
-flexi_logger = { version = "0.15", features = [ "specfile" ] }
-
-uds = "0"
-pwd = "1"
-failure = "0.1.8" # for pwd
-
-rental = "0.5"
-
-fs2 = "0.4"
-nix = "0.18"
-
-#libc = "0.2"
-
-glob = "0.3"
-
+thiserror = "1"
 toml = "0.5"
+typetag = "0.1.6"
+uds = "0"
+vecdeque-stableix = "1"
 
-rocket_cors = "0.5"
-
-arrayvec = "0"
+# ambassador = "0.2"
+# generic-array = "0.12"
+# hmac = "0.7"
+# libc = "0.2"
+# sha2 = "0.8"
 
 #rocket = "0.4"
 rocket_contrib = { version = "0.4", default-features=false, features=["tera_templates","helmet","json","serve"], git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket-contrib" }
-
 rocket = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket", features = ["sse"] }
-
-percent-encoding = "2"
-
-vecdeque-stableix = "1"
-
-#hmac = "0.7"
-#base64 = "0.10"
-#sha2 = "0.8"
-#generic-array = "0.12"
-
-hashlink = { version = "0.5", features = ["serde_impl"] }
-
-#clap = "2"
-#structopt = "0.3"
-argparse = "0.2"
-
-inventory = "0.1"
 
 [patch.crates-io]
 rocket = { git = "file:///home/ian/Rustup/Game/rocket/.git", branch = "Game-rocket", features = ["sse"] }
