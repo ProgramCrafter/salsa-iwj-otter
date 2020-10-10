@@ -265,7 +265,7 @@ impl Serialize for ZCoord {
 //
 // We can panic if this code is buggy, but not compromise safety.
 
-const DEFAULT_TEXT  : &[u8] = b"gggggggggg";
+const DEFAULT_TEXT  : &[u8] = b"g000000000";
 
 impl Default for ZCoord {
   fn default() -> ZCoord {
@@ -511,6 +511,11 @@ mod test {
       fn tinc(self, exp: &str) -> Self { self.tincdec(exp, IncDecInc) }
       fn tdec(self, exp: &str) -> Self { self.tincdec(exp, IncDecDec) }
     }
+    let start : ZCoord = Default::default();
+    assert_eq!(format!("{}", &start), "g000000000");
+    start.clone_mut()
+      .tinc("g001000000");
+
     mk("000000000a")
       .tinc("000100000a")
       .tinc("000200000a")
