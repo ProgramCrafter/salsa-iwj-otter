@@ -14,3 +14,8 @@ const X : &'static str = "invalid value passed to wasm";
 pub fn mutable(s: String) -> ZCoordIterator {
   ZCoordIterator(ZCoord::from_str(&s).ok_or(X)?.clone_mut())
 }
+
+#[wasm_bindgen]
+impl ZCoordIterator {
+  pub fn next(&mut self) -> () { }
+}
