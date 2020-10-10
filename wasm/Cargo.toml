@@ -1,0 +1,17 @@
+
+[package]
+name = "otter-wasm"
+authors = ["Ian Jackson <ijackson@chiark.greenend.org.uk>"]
+license = "AGPL-3.0-or-later"
+
+version = "0.0.1"
+edition = "2018"
+
+[lib]
+name = "otter_wasm"
+path = "wasm.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+otter-zcoord = { path = "../zcoord" }
+wasm-bindgen = "0.2"
