@@ -738,18 +738,27 @@ mod test {
 
   #[test]
   fn range(){
-    fn nxt(i: &mut RangeIterator, exp: &str) {
-      let got = i.next().unwrap();
-      assert_eq!(got.to_string(), exp);
-      assert_eq!(got, bf(exp));
+    struct It {
+      i: RangeIterator,
+      last: ZCoord,
+    }
+    impl It {
+      fn nxt(&mut self, exp: &str) {
+        let got = self.i.next().unwrap();
+        assert_eq!(got.to_string(), exp);
+        assert_eq!(got, bf(exp));
+        assert!(got > self.last);
+        self.last = got.clone();
+      }
     }
     let x = bf("3333333333_vvvvvvvvv0").clone_mut();
     let y = bf("3333333334_0000000040").clone_mut();
-    let mut i = x.range_upto(&y, 4).unwrap();
-    nxt(&mut i, "3333333334");
-    nxt(&mut i, "3333333334_0000000010");
-    nxt(&mut i, "3333333334_0000000020");
-    nxt(&mut i, "3333333334_0000000030");
-    assert_eq!(i.next(), None);
+    let i = x.range_upto(&y, 4).unwrap();
+    let mut it = It { i, last: x.repack().unwrap() };
+    it.nxt("3333333334");
+    it.nxt("3333333334_0000000010");
+    it.nxt("3333333334_0000000020");
+    it.nxt("3333333334_0000000030");
+    assert_eq!(it.i.next(), None);
   }
 }
