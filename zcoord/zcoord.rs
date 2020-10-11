@@ -129,7 +129,12 @@ pub struct Mutable {
 
 impl ZCoord {
   pub fn clone_mut(&self) -> Mutable {
-    let tail = self.tail();
+    Mutable::from_u8_unchecked(self.tail())
+  }
+}
+
+impl Mutable {
+  fn from_u8_unchecked(tail: &[u8]) -> Mutable {
     let nlimbs = (tail.len() + 1) / TEXT_PER_LIMB;
     let mut limbs = Vec::with_capacity(nlimbs+2);
     for lt in tail.chunks(TEXT_PER_LIMB) {
@@ -374,6 +379,12 @@ impl Mutable {
       (Some(a), Some(b)) => mk( Mutable::range_upto(&a,&b,count)? ),
     }
   }
+
+  #[throws(as Option)]
+  pub fn from_str(s: &str) -> Mutable {
+    let tail = ZCoord::checked(s)?;
+    Mutable::from_u8_unchecked(tail)
+  }
 }
 
 //---------- main features of a Zcoord ----------
@@ -453,7 +464,7 @@ impl Default for ZCoord {
 
 impl ZCoord {
   #[throws(as Option)]
-  pub fn check_str(s: &str) {
+  fn checked(s: &str) -> &[u8] {
     let s = s.as_bytes();
     let nomlen = s.len() + 1;
     if nomlen % TEXT_PER_LIMB !=0 { None? }
@@ -466,13 +477,18 @@ impl ZCoord {
       match lt[DIGITS_PER_LIMB..] { [] | [b'_'] => (), _ => None? };
     }
     if &s[s.len() - DIGITS_PER_LIMB.. ] == b"0000000000" { None? }
+    s
+  }
+
+  #[throws(as Option)]
+  pub fn check_str(s: &str) {
+    Self::checked(s)?;
   }
 
   #[throws(as Option)]
   pub fn from_str(s: &str) -> Self {
-    ZCoord::check_str(s)?;
-    let s = s.as_bytes();
-    ZCoord::alloc_copy(s).ok()?
+    let tail = ZCoord::checked(s)?;
+    ZCoord::alloc_copy(tail).ok()?
   }
 }
 
