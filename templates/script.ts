@@ -59,11 +59,13 @@ type UoRecord = UoDescription & {
   targets: PieceId[] | null,
 }
 
+type ZCoord = string;
+
 type PieceInfo = {
   held : PlayerId | null,
   cseq : number | null,
   cseq_updatesvg : number | null,
-  z : Bigfloat,
+  z : ZCoord,
   zg : Generation,
   pinned: boolean,
   uos : UoDescription[],
@@ -819,7 +821,7 @@ type PieceStateMessage = {
   svg: string,
   held: PlayerId,
   pos: Pos,
-  z: Bigfloat,
+  z: ZCoord,
   zg: Generation,
   pinned: boolean,
   uos: UoDescription[],
@@ -932,7 +934,7 @@ pieceops.Move = <PieceHandler>function
 }
 
 pieceops.SetZLevel = <PieceHandler>function
-(piece,p, info: { z: Bigfloat, zg: Generation }) {
+(piece,p, info: { z: ZCoord, zg: Generation }) {
   piece_set_zlevel(piece,p, (oldtop_piece)=>{
     let oldtop_p = pieces[oldtop_piece]!;
     p.z  = info.z;

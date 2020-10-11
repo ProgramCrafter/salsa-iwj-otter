@@ -178,7 +178,7 @@ $(LIBRARY_FILES): $(USVG_PROCESSOR) $(USVG_BINARY) Makefile
 
 #---------- typescript ----------
 
-TS_SRCS= script bigfloat
+TS_SRCS= script
 TS_SRC_FILES= \
 	webassembly-types/webassembly.d.ts \
 	templates/otter_wasm.ns.d.ts \
