@@ -158,14 +158,14 @@ impl AddSubOffset for AddSubInc {
 
 struct AddSubDec;
 impl AddSubOffset for AddSubDec {
-  fn init_delta(&self) -> LimbVal { Wrapping(DELTA.0.wrapping_neg()) }
+  fn init_delta(&self) -> LimbVal { -DELTA }
   const CARRY_DELTA : LimbVal = Wrapping(ONE  .0.wrapping_neg());
   const NEW_LIMBS   : LimbVal = LIMB_MASK;
   #[throws(as Option)]
   fn check_underflow(_: &Mutable, i: usize, nv: LimbVal) {
     if i == 0 && nv == ZERO { throw!() }
   }
-  fn final_undo_delta() -> LimbVal { ZERO - DELTA + ONE }
+  fn final_undo_delta() -> LimbVal { -DELTA + ONE }
 }
 
 impl Mutable {
