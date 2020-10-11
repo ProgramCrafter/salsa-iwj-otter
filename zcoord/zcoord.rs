@@ -144,7 +144,10 @@ pub trait AddSubOffset {
   fn check_nospace(i: usize) { if i == 0 { throw!() } }
   fn start_limb(&self, m: &Mutable) -> usize { m.limbs.len() - 1 }
   fn final_undo_delta() -> LimbVal;
+  const SEALED_TRAIT : Sealed;
 }
+
+pub struct Sealed(());
 
 struct AddSubInc;
 impl AddSubOffset for AddSubInc {
@@ -154,6 +157,7 @@ impl AddSubOffset for AddSubInc {
   #[throws(as Option)]
   fn check_underflow(_: &Mutable, _: usize, _: LimbVal) { }
   fn final_undo_delta() -> LimbVal { DELTA }
+  const SEALED_TRAIT : Sealed = Sealed(());
 }
 
 struct AddSubDec;
@@ -166,6 +170,7 @@ impl AddSubOffset for AddSubDec {
     if i == 0 && nv == ZERO { throw!() }
   }
   fn final_undo_delta() -> LimbVal { -DELTA + ONE }
+  const SEALED_TRAIT : Sealed = Sealed(());
 }
 
 impl Mutable {
@@ -254,6 +259,7 @@ impl AddSubOffset for AddSubRangeDelta {
   fn check_nospace(i: usize) { assert_ne!(i, 0) }
   fn start_limb(&self, _: &Mutable) -> usize { self.i }
   fn final_undo_delta() -> LimbVal { panic!() }
+  const SEALED_TRAIT : Sealed = Sealed(());
 }
 
 impl Mutable {
