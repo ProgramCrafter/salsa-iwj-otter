@@ -12,10 +12,16 @@ trait WasmError {
   fn e(self) -> JsValue;
 }
 
+fn mkstr(s: &str) -> JsValue {
+  let s : Vec<u16> = s.encode_utf16().collect();
+  let jss = js_sys::JsString::from_char_code(&s);
+  jss.into()
+}
+
 impl<E> WasmError for E where E: Display {
   fn e(self) -> JsValue {
     let s = format!("{}", self);
-    JsValue::from_str(&s)
+    mkstr(&s)
   }
 }
 
@@ -36,7 +42,14 @@ pub fn check(packed: &JsValue) {
   ZCoord::check_str(&s).ok_or(zcoord::ParseError).e()?;
 }
 
-const X : &'static str = "invalid value passed to wasm";
+#[wasm_bindgen]
+pub fn jsstring(x: u32) -> JsValue {
+  let s = format!("hi!{:?}",x);
+  //  JsValue::from_str(&s);
+  mkstr(&s)
+}
+
+//const X : &'static str = "invalid value passed to wasm";
 /*
 #[throws(JsValue)]
 #[wasm_bindgen]
