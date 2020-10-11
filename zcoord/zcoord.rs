@@ -149,8 +149,8 @@ pub trait AddSubOffset {
 
 pub struct Sealed(());
 
-struct AddSubInc;
-impl AddSubOffset for AddSubInc {
+pub struct Inrement;
+impl AddSubOffset for Inrement {
   fn init_delta(&self) -> LimbVal { DELTA }
   const CARRY_DELTA      : LimbVal = ONE;
   const NEW_LIMBS        : LimbVal = ZERO;
@@ -160,8 +160,8 @@ impl AddSubOffset for AddSubInc {
   const SEALED_TRAIT : Sealed = Sealed(());
 }
 
-struct AddSubDec;
-impl AddSubOffset for AddSubDec {
+pub struct Decrement;
+impl AddSubOffset for Decrement {
   fn init_delta(&self) -> LimbVal { -DELTA }
   const CARRY_DELTA : LimbVal = Wrapping(ONE  .0.wrapping_neg());
   const NEW_LIMBS   : LimbVal = LIMB_MASK;
@@ -207,9 +207,9 @@ impl Mutable {
   }
 
   #[throws(Overflow)]
-  pub fn increment(&mut self) -> ZCoord { self.addsub(&AddSubInc)? }
+  pub fn increment(&mut self) -> ZCoord { self.addsub(&Inrement)? }
   #[throws(Overflow)]
-  pub fn decrement(&mut self) -> ZCoord { self.addsub(&AddSubDec)? }
+  pub fn decrement(&mut self) -> ZCoord { self.addsub(&Decrement)? }
 
   #[throws(Overflow)]
   pub fn repack(&self) -> ZCoord {
@@ -644,10 +644,8 @@ mod test {
         assert_eq!(got.to_string(), exp);
         self
       }
-      fn tinc(self, exp: &str) -> Self { self.tincdec(exp, AddSubInc) }
-      fn tdec(self, exp: &str) -> Self { 
-eprintln!("tdec");
-self.tincdec(exp, AddSubDec) }
+      fn tinc(self, exp: &str) -> Self { self.tincdec(exp, Inrement) }
+      fn tdec(self, exp: &str) -> Self { self.tincdec(exp, Decrement) }
     }
     let start : ZCoord = Default::default();
     assert_eq!(format!("{}", &start), "g000000000");
