@@ -135,7 +135,7 @@ impl From<TryFromIntError> for Overflow {
   fn from(_: TryFromIntError) -> Overflow { Overflow }
 }
 
-trait AddSubOffset {
+pub trait AddSubOffset {
   fn init_delta(&self) -> LimbVal;
   const CARRY_DELTA      : LimbVal;
   const NEW_LIMBS        : LimbVal;
@@ -233,14 +233,14 @@ impl Mutable {
   }
 }
 
-pub type RangeIterator = std::iter::Take<RangeIteratorCore>;
+pub type RangeIterator = std::iter::Take<IteratorCore<AddSubRangeDelta>>;
 
-pub struct RangeIteratorCore {
+pub struct IteratorCore<ASO> {
   current: Mutable,
-  aso: AddSubRangeDelta,
+  aso: ASO,
 }
 
-struct AddSubRangeDelta {
+pub struct AddSubRangeDelta {
   i: usize,
   step: LimbVal,
 }
@@ -267,7 +267,8 @@ impl Mutable {
   }
 
   #[throws(RangeBackwards)]
-  fn range_core(a: &Mutable, b: &Mutable, count: u32) -> RangeIteratorCore {
+  fn range_core(a: &Mutable, b: &Mutable, count: u32)
+                -> IteratorCore<AddSubRangeDelta> {
     type ASRD = AddSubRangeDelta;
     let count = count as RawLimbVal;
     let mut current = a.clone();
@@ -318,7 +319,7 @@ impl Mutable {
       current.limbs[i] = init;
       break 'ok ASRD { i, step: Wrapping(step) };
     } };
-    RangeIteratorCore { current, aso }
+    IteratorCore { current, aso }
   }
 
   #[throws(RangeBackwards)]
@@ -327,7 +328,7 @@ impl Mutable {
   }
 }
 
-impl Iterator for RangeIteratorCore {
+impl<ASO:AddSubOffset> Iterator for IteratorCore<ASO> {
   type Item = ZCoord;
   #[throws(as Option)]
   fn next(&mut self) -> ZCoord {
@@ -335,7 +336,7 @@ impl Iterator for RangeIteratorCore {
     self.current.repack().unwrap()
   }
 }
-impl ExactSizeIterator for RangeIteratorCore {
+impl ExactSizeIterator for IteratorCore<AddSubRangeDelta> {
   fn len(&self) -> usize { return usize::MAX }
 }
 
