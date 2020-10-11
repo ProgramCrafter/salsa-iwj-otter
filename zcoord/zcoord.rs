@@ -202,7 +202,26 @@ impl Mutable {
   pub fn decrement(&mut self) -> ZCoord { self.addsub(&AddSubDec)? }
 
   #[throws(Overflow)]
-  pub fn repack(&self) -> ZCoord { self.try_into()? }
+  pub fn repack(&self) -> ZCoord {
+    let taillen = (self.limbs.len() * TEXT_PER_LIMB - 1).try_into()?;
+    let mut bf = ZCoord::alloc(taillen);
+    let mut w = bf.tail_mut();
+    for mut l in self.limbs.iter().cloned() {
+      if l >= LIMB_MODULUS { throw!(Overflow) };
+      for p in w[0..DIGITS_PER_LIMB].rchunks_exact_mut(1) {
+        let v = (l & DIGIT_MASK).0 as u8;
+        p[0] = if v < 10 { b'0' + v } else { (b'a' - 10) + v };
+        l >>= BITS_PER_DIGIT;
+      }
+      if let Some(p) = w.get_mut(DIGITS_PER_LIMB) {
+        *p = b'_';
+      } else {
+        break;
+      }
+      w = &mut w[TEXT_PER_LIMB..];
+    }
+    bf
+  }
 }
 
 pub type RangeIterator = std::iter::Take<RangeIteratorCore>;
@@ -407,26 +426,7 @@ impl ZCoord {
 impl TryFrom<&Mutable> for ZCoord {
   type Error = Overflow;
   #[throws(Overflow)]
-  fn try_from(m: &Mutable) -> ZCoord {
-    let taillen = (m.limbs.len() * TEXT_PER_LIMB - 1).try_into()?;
-    let mut bf = ZCoord::alloc(taillen);
-    let mut w = bf.tail_mut();
-    for mut l in m.limbs.iter().cloned() {
-      if l >= LIMB_MODULUS { throw!(Overflow) };
-      for p in w[0..DIGITS_PER_LIMB].rchunks_exact_mut(1) {
-        let v = (l & DIGIT_MASK).0 as u8;
-        p[0] = if v < 10 { b'0' + v } else { (b'a' - 10) + v };
-        l >>= BITS_PER_DIGIT;
-      }
-      if let Some(p) = w.get_mut(DIGITS_PER_LIMB) {
-        *p = b'_';
-      } else {
-        break;
-      }
-      w = &mut w[TEXT_PER_LIMB..];
-    }
-    bf
-  }
+  fn try_from(m: &Mutable) -> ZCoord { m.repack()? }
 }
 
 //---------- innards, unsafe ----------
