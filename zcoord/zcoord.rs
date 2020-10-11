@@ -688,14 +688,18 @@ mod test {
   #[test]
   fn incdec() {
     fn mk(s: &str) -> super::Mutable { bf(s).clone_mut() }
+    use core::cmp::Ordering::{Greater,Less};
     impl Mutable {
-      fn tincdec<ASO:AddSubOffset>(mut self, exp: &str, aso: ASO) -> Self {
+      fn tincdec<ASO:AddSubOffset>(mut self, exp: &str, aso: ASO,
+                                   exp_ord: Ordering) -> Self {
+        let before = self.repack().unwrap();
         let got = self.addsub(&aso).unwrap();
         assert_eq!(got.to_string(), exp);
+        assert_eq!(got.cmp(&before), exp_ord);
         self
       }
-      fn tinc(self, exp: &str) -> Self { self.tincdec(exp, Increment) }
-      fn tdec(self, exp: &str) -> Self { self.tincdec(exp, Decrement) }
+      fn tinc(self, e: &str) -> Self { self.tincdec(e, Increment, Greater) }
+      fn tdec(self, e: &str) -> Self { self.tincdec(e, Decrement, Less)    }
     }
     let start : ZCoord = Default::default();
     assert_eq!(format!("{}", &start), "g000000000");
