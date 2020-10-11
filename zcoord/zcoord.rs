@@ -98,23 +98,23 @@ const LIMB_MASK    : LimbVal = Wrapping(RAW_LIMB_MODULUS-1);
 #[serde(try_from="&str")]
 pub struct ZCoord(innards::Innards);
 
-#[derive(Error,Clone,Copy,Debug)]
+#[derive(Error,Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize)]
 #[error("error parsing Z coordinate")]
 pub struct ParseError;
 
-#[derive(Error,Clone,Copy,Debug)]
+#[derive(Error,Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize)]
 #[error("Z coordinate range has end before start, cannot iterate")]
 pub struct RangeBackwards;
 
-#[derive(Error,Clone,Copy,Debug)]
+#[derive(Error,Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize)]
 #[error("Z coordinate range has neither end, cannot iterate")]
 pub struct TotallyUnboundedRange;
 
-#[derive(Error,Debug,Copy,Clone,Serialize,Deserialize)]
+#[derive(Error,Debug,Copy,Clone,Eq,PartialEq,Serialize,Deserialize)]
 #[error("Z coordinate overflow")]
 pub struct Overflow;
 
-#[derive(Error,Clone,Copy,Debug)]
+#[derive(Error,Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize)]
 pub enum LogicError {
   #[error("{0}")] RangeTotallyUnbounded(#[from] TotallyUnboundedRange),
   #[error("{0}")] RangeBackwards       (#[from] RangeBackwards       ),
@@ -351,10 +351,9 @@ impl Mutable {
 
 impl<ASO:AddSubOffset> Iterator for IteratorCore<ASO> {
   type Item = ZCoord;
-  #[throws(as Option)]
-  fn next(&mut self) -> ZCoord {
+  fn next(&mut self) -> Option<ZCoord> {
     self.current.addsub(&self.aso).unwrap();
-    self.current.repack().unwrap()
+    Some(self.current.repack().unwrap())
   }
 }
 impl ExactSizeIterator for IteratorCore<AddSubRangeDelta> {
@@ -380,7 +379,7 @@ impl Mutable {
     }
   }
 
-  #[throws(as Option)]
+  #[throws(ParseError)]
   pub fn from_str(s: &str) -> Mutable {
     let tail = ZCoord::checked(s)?;
     Mutable::from_u8_unchecked(tail)
@@ -439,9 +438,7 @@ impl PartialEq for ZCoord {
 impl TryFrom<&str> for ZCoord {
   type Error = ParseError;
   #[throws(ParseError)]
-  fn try_from(s: &str) -> ZCoord {
-    ZCoord::from_str(s).ok_or(ParseError)?
-  }
+  fn try_from(s: &str) -> ZCoord { ZCoord::from_str(s)? }
 }
 
 impl Serialize for ZCoord {
@@ -463,32 +460,39 @@ impl Default for ZCoord {
 }
 
 impl ZCoord {
-  #[throws(as Option)]
+  #[throws(ParseError)]
   fn checked(s: &str) -> &[u8] {
     let s = s.as_bytes();
     let nomlen = s.len() + 1;
-    if nomlen % TEXT_PER_LIMB !=0 { None? }
+    if nomlen % TEXT_PER_LIMB !=0 { throw!(ParseError) }
+    let _ : innards::Taillen = (nomlen / TEXT_PER_LIMB).try_into()
+      .map_err(|_:TryFromIntError| ParseError)?;
     for lt in s.chunks(TEXT_PER_LIMB) {
       if !lt[0..DIGITS_PER_LIMB].iter().all(
         |c: &u8| {
           (b'0'..=b'9').contains(&c) ||
           (b'a'..=b'v').contains(&c)
-        }) { None? }
-      match lt[DIGITS_PER_LIMB..] { [] | [b'_'] => (), _ => None? };
+        }) { throw!(ParseError) }
+      match lt[DIGITS_PER_LIMB..] {
+        [] | [b'_'] => (),
+        _ => throw!(ParseError)
+      };
     }
-    if &s[s.len() - DIGITS_PER_LIMB.. ] == b"0000000000" { None? }
+    if &s[s.len() - DIGITS_PER_LIMB.. ] == b"0000000000" {
+      throw!(ParseError)
+    }
     s
   }
 
-  #[throws(as Option)]
+  #[throws(ParseError)]
   pub fn check_str(s: &str) {
     Self::checked(s)?;
   }
 
-  #[throws(as Option)]
+  #[throws(ParseError)]
   pub fn from_str(s: &str) -> Self {
     let tail = ZCoord::checked(s)?;
-    ZCoord::alloc_copy(tail).ok()?
+    ZCoord::alloc_copy(tail).unwrap()
   }
 }
 
@@ -511,7 +515,7 @@ mod innards {
   unsafe impl Sync for ZCoord { }
 
   pub(in super) type Innards = NonNull<u8>;
-  type Taillen = u16;
+  pub type Taillen = u16;
   type Tail1 = u8;
 
   pub(in super)
@@ -651,7 +655,7 @@ mod test {
     assert_eq!(format!("{}", &b2), s);
     assert_eq!(format!("{:?}", &b2),
                format!(r#"Bf"{}""#, &b2));
-    fn bad(s: &str) { assert_eq!(None, ZCoord::from_str(s)); }
+    fn bad(s: &str) { assert_eq!(Err(ParseError), ZCoord::from_str(s)); }
     bad("");
     bad("0");
     bad("0000000000");

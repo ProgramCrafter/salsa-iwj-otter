@@ -34,7 +34,7 @@ pub fn check(packed: &JsValue) {
   let s = packed.as_string().ok_or(
     "packed Z coordinate wrong JS type (not a string)",
   ).e()?;
-  ZCoord::check_str(&s).ok_or(zcoord::ParseError).e()?;
+  ZCoord::check_str(&s).e()?;
 }
 
 //const X : &'static str = "invalid value passed to wasm";
