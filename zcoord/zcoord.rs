@@ -453,7 +453,7 @@ impl Default for ZCoord {
 
 impl ZCoord {
   #[throws(as Option)]
-  pub fn from_str(s: &str) -> Self {
+  pub fn check_str(s: &str) {
     let s = s.as_bytes();
     let nomlen = s.len() + 1;
     if nomlen % TEXT_PER_LIMB !=0 { None? }
@@ -466,6 +466,12 @@ impl ZCoord {
       match lt[DIGITS_PER_LIMB..] { [] | [b'_'] => (), _ => None? };
     }
     if &s[s.len() - DIGITS_PER_LIMB.. ] == b"0000000000" { None? }
+  }
+
+  #[throws(as Option)]
+  pub fn from_str(s: &str) -> Self {
+    ZCoord::check_str(s)?;
+    let s = s.as_bytes();
     ZCoord::alloc_copy(s).ok()?
   }
 }
