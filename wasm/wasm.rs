@@ -30,20 +30,19 @@ impl<E:Display, V> WasmResult<V> for Result<V, E> {
 #[throws(JsValue)]
 #[wasm_bindgen]
 pub fn check(packed: &JsValue) {
-  let s = packed.as_string().ok_or_else(
-    ||format!("packed Z coordinate wrong JS type (not a string): {:?}",
-              packed)
+  let s = packed.as_string().ok_or(
+    "packed Z coordinate wrong JS type (not a string)",
   ).e()?;
   ZCoord::check_str(&s).ok_or(zcoord::ParseError).e()?;
 }
 
 const X : &'static str = "invalid value passed to wasm";
-
+/*
 #[throws(JsValue)]
 #[wasm_bindgen]
 pub fn mutable(s: String) -> ZCoordIterator {
   ZCoordIterator(ZCoord::from_str(&s).ok_or(X)?.clone_mut())
-}
+}*/
 
 #[wasm_bindgen]
 impl ZCoordIterator {
