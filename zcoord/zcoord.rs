@@ -106,9 +106,19 @@ pub struct ParseError;
 #[error("Z coordinate range has end before start, cannot iterate")]
 pub struct RangeBackwards;
 
+#[derive(Error,Clone,Copy,Debug)]
+#[error("Z coordinate range has neither end, cannot iterate")]
+pub struct TotallyUnboundedRange;
+
 #[derive(Error,Debug,Copy,Clone,Serialize,Deserialize)]
 #[error("Z coordinate overflow")]
 pub struct Overflow;
+
+#[derive(Error,Clone,Copy,Debug)]
+pub enum LogicError {
+  #[error("{0}")] RangeTotallyUnbounded(#[from] TotallyUnboundedRange),
+  #[error("{0}")] RangeBackwards       (#[from] RangeBackwards       ),
+}
 
 //---------- Mutabel ----------
 
@@ -149,8 +159,8 @@ pub trait AddSubOffset {
 
 pub struct Sealed(());
 
-pub struct Inrement;
-impl AddSubOffset for Inrement {
+pub struct Increment;
+impl AddSubOffset for Increment {
   fn init_delta(&self) -> LimbVal { DELTA }
   const CARRY_DELTA      : LimbVal = ONE;
   const NEW_LIMBS        : LimbVal = ZERO;
@@ -207,7 +217,7 @@ impl Mutable {
   }
 
   #[throws(Overflow)]
-  pub fn increment(&mut self) -> ZCoord { self.addsub(&Inrement)? }
+  pub fn increment(&mut self) -> ZCoord { self.addsub(&Increment)? }
   #[throws(Overflow)]
   pub fn decrement(&mut self) -> ZCoord { self.addsub(&Decrement)? }
 
@@ -346,9 +356,23 @@ impl ExactSizeIterator for IteratorCore<AddSubRangeDelta> {
   fn len(&self) -> usize { return usize::MAX }
 }
 
+pub type BoxedIterator = Box<dyn Iterator<Item=ZCoord>>;
+
 impl Mutable {
   pub fn iter<ASO:AddSubOffset>(self, aso: ASO) -> IteratorCore<ASO> {
     IteratorCore { current: self, aso }
+  }
+  #[throws(LogicError)]
+  pub fn some_range(a: Option<&Mutable>, b: Option<&Mutable>, count: u32)
+                    -> BoxedIterator {
+    fn mk<T:'static + Iterator<Item=ZCoord>>(x: T) -> BoxedIterator
+        { Box::new(x) }
+    match (a, b) {
+      (None,    None   ) => throw!(TotallyUnboundedRange),
+      (Some(a), None   ) => mk( a.clone().iter(Increment) ),
+      (None,    Some(b)) => mk( b.clone().iter(Decrement) ),
+      (Some(a), Some(b)) => mk( Mutable::range_upto(&a,&b,count)? ),
+    }
   }
 }
 
@@ -644,7 +668,7 @@ mod test {
         assert_eq!(got.to_string(), exp);
         self
       }
-      fn tinc(self, exp: &str) -> Self { self.tincdec(exp, Inrement) }
+      fn tinc(self, exp: &str) -> Self { self.tincdec(exp, Increment) }
       fn tdec(self, exp: &str) -> Self { self.tincdec(exp, Decrement) }
     }
     let start : ZCoord = Default::default();
