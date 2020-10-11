@@ -340,6 +340,12 @@ impl ExactSizeIterator for IteratorCore<AddSubRangeDelta> {
   fn len(&self) -> usize { return usize::MAX }
 }
 
+impl Mutable {
+  pub fn iter<ASO:AddSubOffset>(self, aso: ASO) -> IteratorCore<ASO> {
+    IteratorCore { current: self, aso }
+  }
+}
+
 //---------- main features of a Zcoord ----------
 
 impl ZCoord {
