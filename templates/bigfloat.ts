@@ -68,44 +68,11 @@ namespace Bigfloats {
     }
   }
 
-  function limb_val_lookup(v: Unpacked, i: Limb): number {
-    if (i >= v.limbs.length) return 0;
-    return v.limbs[i];
   }
 
   export function iter_upto(ap: Packed, bp: Packed, count: number):
   () => Packed {
     // result can be called count times to produce values > av, < bv
-    let av = unpack(ap);
-    let bv = unpack(bp);
-    for (let i = 0;
-	 ;
-	 i++) {
-      if (i >= av.limbs.length && i >= bv.limbs.length) {
-	// Oh actually these numbers are equal!
-	return function(){ return pack(av); }
-      }
-      let la = limb_val_lookup(av,i);
-      let lb = limb_val_lookup(bv,i);
-      if (la == lb) continue;
-    
-      let avail = limb_mask(lb - la);
-      let current = clone(av);
-      let step : number; // actual floating point!
-      if (avail > count+1) {
-	step = avail / (count+1);
-      } else {
-	current.limbs.push(0);
-	i++;
-	step = LIMB_MODULUS / (count+1);
-      }
-      step = Math.floor(step);
-      return function() {
-	current.limbs[i] += step;
-	return pack(current);
-      }
-    }
-  }
 }
 /*
 

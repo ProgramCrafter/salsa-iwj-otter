@@ -97,8 +97,16 @@ const LIMB_MASK    : LimbVal = Wrapping(RAW_LIMB_MODULUS-1);
 pub struct ZCoord(innards::Innards);
 
 #[derive(Error,Clone,Copy,Debug)]
-#[error("error parsing zcoord (z value)")]
+#[error("error parsing Z coordinate")]
 pub struct ParseError;
+
+#[derive(Error,Clone,Copy,Debug)]
+#[error("Z coordinate range has end before start, cannot iterate")]
+pub struct RangeBackwards;
+
+#[derive(Error,Debug,Copy,Clone,Serialize,Deserialize)]
+#[error("Z coordinate overflow")]
+pub struct Overflow;
 
 //---------- Mutabel ----------
 
@@ -120,10 +128,6 @@ impl ZCoord {
     Mutable { limbs }
   }
 }
-
-#[derive(Error,Debug,Copy,Clone,Serialize,Deserialize)]
-#[error("Z coordinate overflow")]
-pub struct Overflow;
 
 impl From<TryFromIntError> for Overflow {
   fn from(_: TryFromIntError) -> Overflow { Overflow }
@@ -196,6 +200,70 @@ impl Mutable {
 
   #[throws(Overflow)]
   pub fn repack(&self) -> ZCoord { self.try_into()? }
+}
+
+pub type RangeIterator = std::iter::Take<RangeIteratorCore>;
+
+pub struct RangeIteratorCore {
+  current: Mutable,
+  i: usize,
+  step: LimbVal,
+}
+
+impl Mutable {
+  fn limb_val_lookup(&self, i: usize) -> LimbVal {
+    *self.limbs.get(i).unwrap_or(&ZERO)
+  }
+
+  #[throws(RangeBackwards)]
+  fn range_core(a: &Mutable, b: &Mutable, count: u32) -> RangeIteratorCore {
+    let count = count as RawLimbVal;
+    let mut i = 0;
+    let current = a.clone();
+    loop {
+      if i >= a.limbs.len() && i >= b.limbs.len() {
+	// Oh actually these numbers are equal!
+	break RangeIteratorCore { current, i: 0, step: ZERO };
+      }
+      let la = a.limb_val_lookup(i);
+      let lb = b.limb_val_lookup(i);
+      if la == lb { continue }
+      if la > lb { throw!(RangeBackwards) }
+
+      let mut current = current;
+      let wantgaps = count+1;
+      let avail = lb.0 - la.0;
+      let (step, init);
+      if avail > wantgaps {
+	step = avail / wantgaps;
+        init = la;
+      } else {
+	i += 1;
+	step = (RAW_LIMB_MODULUS-1) / wantgaps;
+        init = ZERO;
+      }
+      current.limbs.resize(i+1, ZERO);
+      current.limbs[i] = init;
+      break RangeIteratorCore { current, i, step: Wrapping(step) };
+    }
+  }
+
+  #[throws(RangeBackwards)]
+  pub fn range(&self, other: &Mutable, count: u32) -> RangeIterator {
+    Mutable::range_core(self, other, count)?.take(count as usize)
+  }
+}
+
+impl Iterator for RangeIteratorCore {
+  type Item = ZCoord;
+  #[throws(as Option)]
+  fn next(&mut self) -> ZCoord {
+    self.current.limbs[self.i] += self.step;
+    self.current.repack().unwrap()
+  }
+}
+impl ExactSizeIterator for RangeIteratorCore {
+  fn len(&self) -> usize { return usize::MAX }
 }
 
 //---------- main features of a Zcoord ----------
