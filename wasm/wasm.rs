@@ -56,3 +56,7 @@ pub fn canary(s: &str) -> JsString {
   //  https://github.com/WebAssembly/binaryen/issues/3006
   format!("WASM {}", s).into()
 }
+
+//#[cfg(feature = "wee_alloc")]
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
