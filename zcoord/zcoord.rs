@@ -24,6 +24,7 @@
 // where
 //   VVVVVVVVVV = 50 bits in lowercase base32hex ("0-9a-..."), unsigned
 // Value is a whole number of 50-bit groups ("limbs"), at least one sucb.
+// The value "0000000000" is forbidden.
 //
 // The abstract value is completed by an infinite number of zero
 // limbs to the right.  Trailing zero limbs are forbidden in the
@@ -40,8 +41,7 @@
 //    Pick a value (or "n" values) strictly in between any two
 //    existing values.
 //
-//       Find first limb that they differ.  Divide intervening values
-//       for tht limb evenly (ie divide the range by n+1).  If this
+//       Find first limb that they differ.    If this
 //       leaves less than an increment of 1 per output value, do
 //       differently: choose a value halfway (rounding down) for the
 //       first differeing limb, and add a new limb, whose whole range
@@ -133,25 +133,28 @@ impl From<TryFromIntError> for Overflow {
   fn from(_: TryFromIntError) -> Overflow { Overflow }
 }
 
-trait IncDecOffset {
-  const INIT_DELTA  : LimbVal;
+trait AddSubOffset {
+  fn init_delta(&self) -> LimbVal;
   const CARRY_DELTA : LimbVal;
   const NEW_LIMBS   : LimbVal;
   fn check_underflow(m: &Mutable, i: usize, nv: LimbVal) -> Option<()>;
+  #[throws(as Option)]
+  fn check_nospace(i: usize) { if i == 0 { throw!() } }
+  fn start_limb(&self, m: &Mutable) -> usize { m.limbs.len() - 1 }
 }
 
-struct IncDecInc;
-impl IncDecOffset for IncDecInc {
-  const INIT_DELTA  : LimbVal = DELTA;
+struct AddSubInc;
+impl AddSubOffset for AddSubInc {
+  fn init_delta(&self) -> LimbVal { DELTA }
   const CARRY_DELTA : LimbVal = ONE;
   const NEW_LIMBS   : LimbVal = ZERO;
   #[throws(as Option)]
   fn check_underflow(_: &Mutable, _: usize, _: LimbVal) { }
 }
 
-struct IncDecDec;
-impl IncDecOffset for IncDecDec {
-  const INIT_DELTA  : LimbVal = Wrapping(DELTA.0.wrapping_neg());
+struct AddSubDec;
+impl AddSubOffset for AddSubDec {
+  fn init_delta(&self) -> LimbVal { Wrapping(DELTA.0.wrapping_neg()) }
   const CARRY_DELTA : LimbVal = Wrapping(ONE  .0.wrapping_neg());
   const NEW_LIMBS   : LimbVal = LIMB_MASK;
   #[throws(as Option)]
@@ -162,41 +165,41 @@ impl IncDecOffset for IncDecDec {
 
 impl Mutable {
   #[throws(Overflow)]
-  fn incdec<ID:IncDecOffset>(&mut self, _: ID) -> ZCoord {
+  fn addsub<ASO:AddSubOffset>(&mut self, aso: &ASO) -> ZCoord {
     'attempt: loop {
-      let mut i = self.limbs.len() - 1;
-      let mut delta = ID::INIT_DELTA;
+      let mut i = aso.start_limb(self);
+      let mut delta = aso.init_delta();
 
       if (||{
         loop {
           let nv = self.limbs[i] + delta;
           self.limbs[i] = nv & LIMB_MASK;
-          ID::check_underflow(self, i, nv)?;
+          ASO::check_underflow(self, i, nv)?;
           if nv < LIMB_MODULUS { return Some(()) }
-          if i == 0 { return None }
+          ASO::check_nospace(i)?;
           i -= 1;
-          delta = ID::CARRY_DELTA;
+          delta = ASO::CARRY_DELTA;
         }
       })() == Some(()) { break 'attempt }
 
       // undo
       loop {
         if i >= self.limbs.len() { break }
-        else if i == self.limbs.len()-1 { delta = ID::INIT_DELTA; }
+        else if i == self.limbs.len()-1 { delta = aso.init_delta(); }
         let nv = self.limbs[i] - delta;
         self.limbs[i] = nv & LIMB_MASK;
         i += 1;
       }
-      self.limbs.push(ID::NEW_LIMBS);
-      self.limbs.push(ID::NEW_LIMBS);
+      self.limbs.push(ASO::NEW_LIMBS);
+      self.limbs.push(ASO::NEW_LIMBS);
     }
     self.repack()?
   }
 
   #[throws(Overflow)]
-  pub fn increment(&mut self) -> ZCoord { self.incdec(IncDecInc)? }
+  pub fn increment(&mut self) -> ZCoord { self.addsub(&AddSubInc)? }
   #[throws(Overflow)]
-  pub fn decrement(&mut self) -> ZCoord { self.incdec(IncDecDec)? }
+  pub fn decrement(&mut self) -> ZCoord { self.addsub(&AddSubDec)? }
 
   #[throws(Overflow)]
   pub fn repack(&self) -> ZCoord { self.try_into()? }
@@ -206,46 +209,87 @@ pub type RangeIterator = std::iter::Take<RangeIteratorCore>;
 
 pub struct RangeIteratorCore {
   current: Mutable,
+  aso: AddSubRangeDelta,
+}
+
+struct AddSubRangeDelta {
   i: usize,
   step: LimbVal,
+}
+impl AddSubOffset for AddSubRangeDelta {
+  fn init_delta(&self) -> LimbVal { self.step }
+  const CARRY_DELTA : LimbVal = ONE;
+  const NEW_LIMBS   : LimbVal = ZERO;
+  #[throws(as Option)]
+  fn check_underflow(_: &Mutable, _: usize, _: LimbVal) { }
+  #[throws(as Option)]
+  fn check_nospace(i: usize) { assert_ne!(i, 0) }
+  fn start_limb(&self, _: &Mutable) -> usize { self.i }
 }
 
 impl Mutable {
   fn limb_val_lookup(&self, i: usize) -> LimbVal {
     *self.limbs.get(i).unwrap_or(&ZERO)
   }
+  fn extend_to_limb(&mut self, i: usize) {
+    if self.limbs.len() < i {
+      self.limbs.resize(i+1, ZERO);
+    }
+  }
 
   #[throws(RangeBackwards)]
   fn range_core(a: &Mutable, b: &Mutable, count: u32) -> RangeIteratorCore {
+    type ASRD = AddSubRangeDelta;
     let count = count as RawLimbVal;
-    let mut i = 0;
-    let current = a.clone();
-    loop {
+    let mut current = a.clone();
+    let mut borrowing = false;
+    let aso = 'ok: loop { for i in 0.. {
       if i >= a.limbs.len() && i >= b.limbs.len() {
 	// Oh actually these numbers are equal!
-	break RangeIteratorCore { current, i: 0, step: ZERO };
+	break 'ok ASRD { i: 0, step: ZERO };
       }
+      current.extend_to_limb(i);
+
       let la = a.limb_val_lookup(i);
       let lb = b.limb_val_lookup(i);
       if la == lb { continue }
-      if la > lb { throw!(RangeBackwards) }
 
-      let mut current = current;
       let wantgaps = count+1;
-      let avail = lb.0 - la.0;
+      let avail = (lb.0 as i64) - (la.0 as i64)
+        + if borrowing { RAW_LIMB_MODULUS as i64 } else { 0};
+      if avail < 0 { throw!(RangeBackwards) }
+      let avail = avail as u64;
+
+      if avail < 2 {
+        // Only 1 difference in this limb and the next.  We are
+        // goint to have to borrow, and, later, add with carry.
+        borrowing = true;
+        continue;
+      }
+      // avail might be up to 2x limb range
+
+      let mut i = i;
       let (step, init);
-      if avail > wantgaps {
+      if avail >= wantgaps {
+        // Evenly divide intervening values for this, the first
+        // differeing limb
 	step = avail / wantgaps;
+        // ^ if count==0, wantgaps==1 and step is perhaps still too large,
+        //   but in that case our next() will never be called, so fine
         init = la;
       } else {
+        // Not enough space here, but we can pick a unique value for
+        // this limb, and divide the next limb evenly
+        current.limbs[i] = la + Wrapping(avail/2);
 	i += 1;
 	step = (RAW_LIMB_MODULUS-1) / wantgaps;
         init = ZERO;
       }
-      current.limbs.resize(i+1, ZERO);
+      current.extend_to_limb(i);
       current.limbs[i] = init;
-      break RangeIteratorCore { current, i, step: Wrapping(step) };
-    }
+      break 'ok ASRD { i, step: Wrapping(step) };
+    } };
+    RangeIteratorCore { current, aso }
   }
 
   #[throws(RangeBackwards)]
@@ -258,7 +302,7 @@ impl Iterator for RangeIteratorCore {
   type Item = ZCoord;
   #[throws(as Option)]
   fn next(&mut self) -> ZCoord {
-    self.current.limbs[self.i] += self.step;
+    self.current.addsub(&self.aso).unwrap();
     self.current.repack().unwrap()
   }
 }
@@ -542,6 +586,7 @@ mod test {
     bad("");
     bad("0");
     bad("0000000000");
+    bad("1111111111_0000000000");
     bad("0000000000_0000000000");
     bad("aaaaaaaa0_aaaaaaaa00");
     bad("aaaaaaaa0_aaaaaaaa00");
@@ -571,13 +616,13 @@ mod test {
   fn incdec() {
     fn mk(s: &str) -> super::Mutable { bf(s).clone_mut() }
     impl Mutable {
-      fn tincdec<ID:IncDecOffset>(mut self, exp: &str, id: ID) -> Self {
-        let got = self.incdec(id).unwrap();
+      fn tincdec<ASO:AddSubOffset>(mut self, exp: &str, aso: ASO) -> Self {
+        let got = self.addsub(&aso).unwrap();
         assert_eq!(got.to_string(), exp);
         self
       }
-      fn tinc(self, exp: &str) -> Self { self.tincdec(exp, IncDecInc) }
-      fn tdec(self, exp: &str) -> Self { self.tincdec(exp, IncDecDec) }
+      fn tinc(self, exp: &str) -> Self { self.tincdec(exp, AddSubInc) }
+      fn tdec(self, exp: &str) -> Self { self.tincdec(exp, AddSubDec) }
     }
     let start : ZCoord = Default::default();
     assert_eq!(format!("{}", &start), "g000000000");
@@ -616,13 +661,17 @@ mod test {
 
   #[test]
   fn range(){
-    let x = bf("vvvvvvvvv0").clone_mut();
-    let y = bf("0000000040").clone_mut();
+    fn nxt(i: &mut RangeIterator, exp: &str) {
+      let got = i.next().unwrap().to_string();
+      assert_eq!(got, exp);
+    }
+    let x = bf("3333333333_vvvvvvvvv0").clone_mut();
+    let y = bf("3333333334_0000000040").clone_mut();
     let mut i = x.range_upto(&y, 4).unwrap();
-    assert_eq!(i.next().unwrap().to_string(), "0000000000");
-    assert_eq!(i.next().unwrap().to_string(), "0000000010");
-    assert_eq!(i.next().unwrap().to_string(), "0000000020");
-    assert_eq!(i.next().unwrap().to_string(), "0000000030");
+    nxt(&mut i, "3333333334_0000000000");
+    nxt(&mut i, "3333333334_0000000010");
+    nxt(&mut i, "3333333334_0000000020");
+    nxt(&mut i, "3333333334_0000000030");
     assert_eq!(i.next(), None);
   }
 }
