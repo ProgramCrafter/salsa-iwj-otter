@@ -63,6 +63,8 @@
 //       limb by 1, with borrow, then add two limbs vvvvvvvvvv, and
 //       redo.
 
+#![feature(slice_strip)]
+
 use std::cmp::{Ordering, max};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self, Debug, Display, Formatter};
@@ -203,10 +205,14 @@ impl Mutable {
 
   #[throws(Overflow)]
   pub fn repack(&self) -> ZCoord {
-    let taillen = (self.limbs.len() * TEXT_PER_LIMB - 1).try_into()?;
+    let mut limbs = self.limbs.as_slice();
+    while let Some(l) = limbs.strip_suffix(&[ZERO]) { limbs = l }
+
+    let taillen = (limbs.len() * TEXT_PER_LIMB - 1).try_into()?;
     let mut bf = ZCoord::alloc(taillen);
     let mut w = bf.tail_mut();
-    for mut l in self.limbs.iter().cloned() {
+
+    for mut l in limbs.iter().cloned() {
       if l >= LIMB_MODULUS { throw!(Overflow) };
       for p in w[0..DIGITS_PER_LIMB].rchunks_exact_mut(1) {
         let v = (l & DIGIT_MASK).0 as u8;
@@ -641,7 +647,7 @@ mod test {
       ;
     mk("vvvvvvvvvv")
       .tinc("vvvvvvvvvv_0000000000_0001000000")
-      .tdec("vvvvvvvvvv_0000000000_0000000000")
+      .tdec("vvvvvvvvvv")
       ;
     mk("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234")
       .tinc("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234_0000000000_0001000000")
@@ -662,13 +668,14 @@ mod test {
   #[test]
   fn range(){
     fn nxt(i: &mut RangeIterator, exp: &str) {
-      let got = i.next().unwrap().to_string();
-      assert_eq!(got, exp);
+      let got = i.next().unwrap();
+      assert_eq!(got.to_string(), exp);
+      assert_eq!(got, bf(exp));
     }
     let x = bf("3333333333_vvvvvvvvv0").clone_mut();
     let y = bf("3333333334_0000000040").clone_mut();
     let mut i = x.range_upto(&y, 4).unwrap();
-    nxt(&mut i, "3333333334_0000000000");
+    nxt(&mut i, "3333333334");
     nxt(&mut i, "3333333334_0000000010");
     nxt(&mut i, "3333333334_0000000020");
     nxt(&mut i, "3333333334_0000000030");
