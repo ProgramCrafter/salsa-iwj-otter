@@ -31,7 +31,8 @@ impl<E:Display, V> WasmResult<V> for Result<V, E> {
 #[wasm_bindgen]
 pub fn check(packed: &JsValue) {
   let s = packed.as_string().ok_or_else(
-    ||"packed Z coordinate wrong JS type (not a string)"
+    ||format!("packed Z coordinate wrong JS type (not a string): {:?}",
+              packed)
   ).e()?;
   ZCoord::check_str(&s).ok_or(zcoord::ParseError).e()?;
 }
