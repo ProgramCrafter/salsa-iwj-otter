@@ -1013,11 +1013,7 @@ function test_swap_stack() {
 
 function startup() {
   console.log('STARTUP');
-//  let mut = wasm_bindgen.mutable('4200000000');
-//  let y = mut.next();
-//  console.log('FOO', mut, y);
-  let x = wasm_bindgen.jsstring(12);
-  console.log(x);
+  console.log(wasm_bindgen.canary("OK"));
 
   var body = document.getElementById("main-body")!;
   ctoken = body.dataset.ctoken!;
