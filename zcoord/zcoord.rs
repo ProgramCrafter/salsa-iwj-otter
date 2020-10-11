@@ -249,7 +249,7 @@ impl Mutable {
   }
 
   #[throws(RangeBackwards)]
-  pub fn range(&self, other: &Mutable, count: u32) -> RangeIterator {
+  pub fn range_upto(&self, other: &Mutable, count: u32) -> RangeIterator {
     Mutable::range_core(self, other, count)?.take(count as usize)
   }
 }
@@ -612,5 +612,17 @@ mod test {
     mk("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234")
       .tinc("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234_0000000000_0001000000")
       ;
+  }
+
+  #[test]
+  fn range(){
+    let x = bf("vvvvvvvvv0").clone_mut();
+    let y = bf("0000000040").clone_mut();
+    let mut i = x.range_upto(&y, 4).unwrap();
+    assert_eq!(i.next().unwrap().to_string(), "0000000000");
+    assert_eq!(i.next().unwrap().to_string(), "0000000010");
+    assert_eq!(i.next().unwrap().to_string(), "0000000020");
+    assert_eq!(i.next().unwrap().to_string(), "0000000030");
+    assert_eq!(i.next(), None);
   }
 }

@@ -13,14 +13,6 @@ let x : any;
 let y : any
 let i : any
 
-x = "!0000 ffff_ffff_fff0" as any;
-y = "!0000 0000_0000_0040" as any;
-i = Bigfloats.iter_upto(x, y, 4);
-
-assert_eq(i(), "+0000 0000_0000_0000");
-assert_eq(i(), "+0000 0000_0000_0010");
-assert_eq(i(), "+0000 0000_0000_0020");
-assert_eq(i(), "+0000 0000_0000_0030");
 
 x = "!0000 ffff_ffff_fffe" as any;
 y = "!0000 0000_0000_0001" as any;
