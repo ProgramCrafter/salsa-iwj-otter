@@ -137,21 +137,23 @@ impl From<TryFromIntError> for Overflow {
 
 trait AddSubOffset {
   fn init_delta(&self) -> LimbVal;
-  const CARRY_DELTA : LimbVal;
-  const NEW_LIMBS   : LimbVal;
+  const CARRY_DELTA      : LimbVal;
+  const NEW_LIMBS        : LimbVal;
   fn check_underflow(m: &Mutable, i: usize, nv: LimbVal) -> Option<()>;
   #[throws(as Option)]
   fn check_nospace(i: usize) { if i == 0 { throw!() } }
   fn start_limb(&self, m: &Mutable) -> usize { m.limbs.len() - 1 }
+  fn final_undo_delta() -> LimbVal;
 }
 
 struct AddSubInc;
 impl AddSubOffset for AddSubInc {
   fn init_delta(&self) -> LimbVal { DELTA }
-  const CARRY_DELTA : LimbVal = ONE;
-  const NEW_LIMBS   : LimbVal = ZERO;
+  const CARRY_DELTA      : LimbVal = ONE;
+  const NEW_LIMBS        : LimbVal = ZERO;
   #[throws(as Option)]
   fn check_underflow(_: &Mutable, _: usize, _: LimbVal) { }
+  fn final_undo_delta() -> LimbVal { DELTA }
 }
 
 struct AddSubDec;
@@ -163,6 +165,7 @@ impl AddSubOffset for AddSubDec {
   fn check_underflow(_: &Mutable, i: usize, nv: LimbVal) {
     if i == 0 && nv == ZERO { throw!() }
   }
+  fn final_undo_delta() -> LimbVal { ZERO - DELTA + ONE }
 }
 
 impl Mutable {
@@ -187,7 +190,7 @@ impl Mutable {
       // undo
       loop {
         if i >= self.limbs.len() { break }
-        else if i == self.limbs.len()-1 { delta = aso.init_delta(); }
+        else if i == aso.start_limb(self) { delta = ASO::final_undo_delta(); }
         let nv = self.limbs[i] - delta;
         self.limbs[i] = nv & LIMB_MASK;
         i += 1;
@@ -250,6 +253,7 @@ impl AddSubOffset for AddSubRangeDelta {
   #[throws(as Option)]
   fn check_nospace(i: usize) { assert_ne!(i, 0) }
   fn start_limb(&self, _: &Mutable) -> usize { self.i }
+  fn final_undo_delta() -> LimbVal { panic!() }
 }
 
 impl Mutable {
@@ -628,7 +632,9 @@ mod test {
         self
       }
       fn tinc(self, exp: &str) -> Self { self.tincdec(exp, AddSubInc) }
-      fn tdec(self, exp: &str) -> Self { self.tincdec(exp, AddSubDec) }
+      fn tdec(self, exp: &str) -> Self { 
+eprintln!("tdec");
+self.tincdec(exp, AddSubDec) }
     }
     let start : ZCoord = Default::default();
     assert_eq!(format!("{}", &start), "g000000000");
@@ -642,8 +648,8 @@ mod test {
       .tinc("000200000a")
       .tdec("000100000a")
       .tdec("000000000a")
-      .tdec("000000000a_vvvvvvvvvv_vvvuvvvvvv")
-      .tdec("000000000a_vvvvvvvvvv_vvvtvvvvvv")
+      .tdec("0000000009_vvvvvvvvvv_vvvuvvvvvv")
+      .tdec("0000000009_vvvvvvvvvv_vvvtvvvvvv")
       ;
     mk("vvvvvvvvvv")
       .tinc("vvvvvvvvvv_0000000000_0001000000")
@@ -654,7 +660,7 @@ mod test {
       ;
     mk("0000000000_0000000000_0001012340")
       .tdec("0000000000_0000000000_0000012340")
-      .tdec("0000000000_0000000000_0000012340_vvvvvvvvvv_vvvuvvvvvv")
+      .tdec("0000000000_0000000000_000001233v_vvvvvvvvvv_vvvuvvvvvv")
       ;
 
     mk("vvvvvvvvvv")
