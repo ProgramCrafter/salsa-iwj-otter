@@ -81,9 +81,10 @@ impl ZCoordIterator {
 }
 
 #[wasm_bindgen]
-pub fn canary(s: &str) -> JsString {
+pub fn setup(s: &str) -> JsString {
   // returning String produces a wasm-opt error, as here
   //  https://github.com/WebAssembly/binaryen/issues/3006
+  console_error_panic_hook::set_once();
   format!("WASM {}", s).into()
 }
 

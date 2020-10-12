@@ -19,4 +19,4 @@ js-sys = "0.3"
 fehler = "1"
 thiserror = "1"
 wee_alloc = "0.4"
-#wee_alloc = { version = "0.4.5", optional = true }
+console_error_panic_hook = "0.1"
