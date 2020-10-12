@@ -15,7 +15,7 @@ trait WasmError {
   fn e(self) -> JsValue;
 }
 
-impl<E> WasmError for E where E: Display {
+impl<E> WasmError for E where E: Display+Copy {
   fn e(self) -> JsValue {
     let s = format!("{}", self);
     JsValue::from_str(&s)
@@ -26,7 +26,7 @@ trait WasmResult<V> {
   fn e(self) -> Result<V,JsValue>;
 }
 
-impl<E:Display, V> WasmResult<V> for Result<V, E> {
+impl<E:Display+Copy, V> WasmResult<V> for Result<V, E> {
   fn e(self) -> Result<V, JsValue> { self.map_err(WasmError::e) }
 }
 
