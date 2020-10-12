@@ -76,6 +76,8 @@ use thiserror::Error;
 
 //---------- core definitions ----------
 
+pub type RangeCount = u32;
+
 const BITS_PER_DIGIT : usize = 5;
 const DIGITS_PER_LIMB : usize = 10;
 
@@ -288,7 +290,7 @@ impl Mutable {
   }
 
   #[throws(RangeBackwards)]
-  fn range_core(a: &Mutable, b: &Mutable, count: u32)
+  fn range_core(a: &Mutable, b: &Mutable, count: RangeCount)
                 -> IteratorCore<AddSubRangeDelta> {
     type ASRD = AddSubRangeDelta;
     let count = count as RawLimbVal;
@@ -344,7 +346,8 @@ impl Mutable {
   }
 
   #[throws(RangeBackwards)]
-  pub fn range_upto(&self, other: &Mutable, count: u32) -> RangeIterator {
+  pub fn range_upto(&self, other: &Mutable, count: RangeCount)
+                    -> RangeIterator {
     Mutable::range_core(self, other, count)?.take(count as usize)
   }
 }
@@ -367,8 +370,8 @@ impl Mutable {
     IteratorCore { current: self, aso }
   }
   #[throws(LogicError)]
-  pub fn some_range(a: Option<&Mutable>, b: Option<&Mutable>, count: u32)
-                    -> BoxedIterator {
+  pub fn some_range(a: Option<&Mutable>, b: Option<&Mutable>,
+                    count: RangeCount) -> BoxedIterator {
     fn mk<T:'static + Iterator<Item=ZCoord>>(x: T) -> BoxedIterator
         { Box::new(x) }
     match (a, b) {

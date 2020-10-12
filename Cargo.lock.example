@@ -1015,6 +1015,7 @@ dependencies = [
  "fehler",
  "js-sys",
  "otter-zcoord",
+ "thiserror",
  "wasm-bindgen",
  "wee_alloc",
 ]

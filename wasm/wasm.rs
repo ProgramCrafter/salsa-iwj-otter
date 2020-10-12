@@ -1,13 +1,15 @@
 
-use wasm_bindgen::prelude::*;
-use fehler::throws;
 use std::fmt::Display;
+use fehler::throws;
 use js_sys::JsString;
+use thiserror::Error;
+use wasm_bindgen::prelude::*;
 
-use zcoord::ZCoord;
+use zcoord::{ZCoord,Mutable};
 
-#[wasm_bindgen]
-pub struct ZCoordIterator (zcoord::Mutable);
+#[derive(Error,Clone,Copy,Debug,Eq,PartialEq)]
+#[error("packed Z coordinate wrong JS type (not a string)")]
+pub struct JsZCoordTypeError;
 
 trait WasmError {
   fn e(self) -> JsValue;
@@ -29,25 +31,46 @@ impl<E:Display, V> WasmResult<V> for Result<V, E> {
 }
 
 #[throws(JsValue)]
-#[wasm_bindgen]
-pub fn check(packed: &JsValue) {
-  let s = packed.as_string().ok_or(
-    "packed Z coordinate wrong JS type (not a string)",
-  ).e()?;
-  ZCoord::check_str(&s).e()?;
+fn get_packed_str(js: &JsValue) -> String {
+  js.as_string().ok_or(JsZCoordTypeError).e()?
 }
 
-//const X : &'static str = "invalid value passed to wasm";
-/*
 #[throws(JsValue)]
 #[wasm_bindgen]
-pub fn mutable(s: String) -> ZCoordIterator {
-  ZCoordIterator(ZCoord::from_str(&s).ok_or(X)?.clone_mut())
-}*/
+pub fn check(packed: &JsValue) {
+  ZCoord::check_str(&get_packed_str(packed)?).e()?;
+}
+
+#[wasm_bindgen]
+pub struct ZCoordIterator (zcoord::BoxedIterator);
+
+#[throws(JsValue)]
+#[wasm_bindgen]
+pub fn range(a: &JsValue, b: &JsValue, count: zcoord::RangeCount)
+             -> ZCoordIterator {
+  #[throws(JsValue)]
+  fn get1(js: &JsValue) -> Option<Mutable> {
+    if js.is_null() { return None }
+    let s = get_packed_str(js)?;
+    let m = Mutable::from_str(&s).e()?;
+    Some(m)
+  }
+
+  let a = get1(a)?;
+  let b = get1(b)?;
+  let inner = Mutable::some_range(a.as_ref(),b.as_ref(),count).e()?;
+  ZCoordIterator(inner)
+}
 
 #[wasm_bindgen]
 impl ZCoordIterator {
-  pub fn next(&mut self) -> u32 { 42 }
+  pub fn next(&mut self) -> JsValue {
+    let packed = match self.0.next() {
+      None => return JsValue::NULL,
+      Some(p) => p,
+    };
+    packed.to_string().into()
+  }
 }
 
 #[wasm_bindgen]
