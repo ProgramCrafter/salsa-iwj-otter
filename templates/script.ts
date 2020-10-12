@@ -741,7 +741,7 @@ function drag_mousemove(e: MouseEvent) {
 	console.log('CHECK RAISE ', dragraise, dragraise*dragraise, ddr2);
 	piece_set_zlevel(piece,p, (oldtop_piece) => {
 	  let oldtop_p = pieces[oldtop_piece]!;
-	  let z = "42" as any; // xxx Bigfloats.add(oldtop_p.z, 1);
+	  let z = wasm_bindgen.increment(oldtop_p.z);
 	  p.z = z;
 	  api_piece(api, "setz", piece,p, { z: z });
 	});

@@ -41,6 +41,13 @@ pub fn check(packed: &JsValue) {
   ZCoord::check_str(&get_packed_str(packed)?).e()?;
 }
 
+#[throws(JsValue)]
+#[wasm_bindgen]
+pub fn increment(packed: &JsValue) -> JsValue {
+  let mut m = Mutable::from_str(&get_packed_str(packed)?).e()?;
+  m.increment().e()?.to_string().into()
+}
+
 #[wasm_bindgen]
 pub struct ZCoordIterator (zcoord::BoxedIterator);
 
