@@ -14,7 +14,13 @@ struct SessionRenderContext {
   defs : Vec<(VisiblePieceId,Html)>,
   nick : String,
   load : String,
-  log : Vec<Arc<CommittedLogEntry>>,
+  log : Vec<SessionFormattedLogEntry>,
+}
+
+#[derive(Debug,Serialize)]
+struct SessionFormattedLogEntry {
+  when: String,
+  logent: Arc<CommittedLogEntry>,
 }
 
 #[derive(Serialize,Debug)]
@@ -88,6 +94,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
     }
 
     let pl = ig.gs.players.byid_mut(player)?;
+    let tz = &ig.updates.byid(player)?.tz;
     let mut pieces : Vec<_> = ig.gs.pieces.iter().collect();
 
     pieces.sort_by_key(|(_,pr)| &pr.zlevel);
@@ -122,7 +129,10 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
     let src = SessionRenderContext {
       ctoken,
       gen : ig.gs.gen,
-      log : ig.gs.log.iter().map(|(_,logent)| logent.clone()).collect(),
+      log : ig.gs.log.iter().map(|(_, logent)|{
+        let when = logent.when.render(tz);
+        SessionFormattedLogEntry { when, logent: logent.clone() }
+      }).collect(),
       table_size : ig.gs.table_size,
       player,
       defs : alldefs,
