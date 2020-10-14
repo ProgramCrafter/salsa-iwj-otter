@@ -104,7 +104,7 @@ var svg_ns : string;
 var space : SVGGraphicsElement;
 var pieces_marker : SVGGraphicsElement;
 var defs_marker : SVGGraphicsElement;
-var logdiv : HTMLElement;
+var log_elem : HTMLElement;
 var status_node : HTMLElement;
 var uos_node : HTMLElement;
 var wresting: boolean;
@@ -779,11 +779,15 @@ function drag_cancel() {
 
 messages.Log = <MessageHandler>function
 (j: { when: string, logent: { html: string } }) {
-  add_log_message(j.when + '|' + j.logent.html);
+  add_timestamped_log_message(j.when, j.logent.html);
 }
 
 function add_log_message(msg_html: string) {
-  var lastent = logdiv.lastElementChild;
+  add_timestamped_log_message('', msg_html);
+}
+
+function add_timestamped_log_message(ts_html: string, msg_html: string) {
+  var lastent = log_elem.lastElementChild;
   var in_scrollback =
     lastent == null ||
     // inspired by
@@ -793,19 +797,27 @@ function add_log_message(msg_html: string) {
       (() => {
 	let le_top = lastent.getBoundingClientRect()!.top;
 	let le_bot = lastent.getBoundingClientRect()!.bottom;
-	let ld_bot = logdiv.getBoundingClientRect()!.bottom;
+	let ld_bot = log_elem.getBoundingClientRect()!.bottom;
 	console.log("ADD_LOG_MESSAGE bboxes: le t b, bb",
 		    le_top, le_bot, ld_bot);
 	return 0.5 * (le_bot + le_top) > ld_bot;
       })();
 
   console.log('ADD LOG MESSAGE ',in_scrollback, msg_html);
-  var nelem = document.createElement('div');
-  nelem.innerHTML = msg_html;
-  logdiv.appendChild(nelem);
+  var tr = document.createElement('tr');
+
+  function add_td(html: string) {
+    var td = document.createElement('td');
+    td.innerHTML = html;
+    tr.appendChild(td);
+  }
+
+  add_td(ts_html);
+  add_td(msg_html);
+  log_elem.appendChild(tr);
 
   if (!in_scrollback) {
-    lastent = logdiv.lastElementChild!;
+    lastent = log_elem.lastElementChild!;
     lastent.scrollIntoView();
   }
 }
@@ -1026,7 +1038,7 @@ function startup() {
   gen = +body.dataset.gen!;
   status_node = document.getElementById('status')!;
   status_node.innerHTML = 'js-done';
-  logdiv = document.getElementById("log")!;
+  log_elem = document.getElementById("log")!;
   let dataload = JSON.parse(body.dataset.load!);
   players = dataload.players!;
   delete body.dataset.load;
