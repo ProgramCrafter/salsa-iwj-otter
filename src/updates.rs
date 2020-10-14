@@ -105,8 +105,16 @@ enum TransmitUpdateEntry<'u> {
   },
   SetTableSize(Pos),
   #[serde(serialize_with="serialize_logentry")]
-  Log (&'u Timezone, &'u CommittedLogEntry),
+  Log(TransmitUpdateLogEntry<'u>),
   Error(&'u ErrorSignaledViaUpdate),
+}
+
+type TransmitUpdateLogEntry<'u> = (&'u Timezone, &'u CommittedLogEntry);
+
+#[derive(Debug,Serialize)]
+struct FormattedLogEntry<'u> {
+  when: String,
+  logent: &'u LogEntry,
 }
 
 // ========== implementation ==========
@@ -480,7 +488,7 @@ impl PreparedUpdate {
           }
         },
         PUE::Log(logent) => {
-          TUE::Log(&tz, &logent)
+          TUE::Log((&tz, &logent))
         },
         &PUE::SetTableSize(size) => {
           TUE::SetTableSize(size)
@@ -502,11 +510,16 @@ impl PreparedUpdate {
   }
 }
 
-fn serialize_logentry<S:Serializer>(tz: &Timezone, logent: &CommittedLogEntry,
+impl<'u> Into<FormattedLogEntry<'u>> for TransmitUpdateLogEntry<'u> {
+  fn into(self) -> FormattedLogEntry<'u> {
+    let (tz, logent) = self;
+    let when = logent.when.render(&tz);
+    FormattedLogEntry { when, logent: &logent.logent }
+  }
+}
+
+fn serialize_logentry<S:Serializer>(&(tz,logent): &TransmitUpdateLogEntry,
                                     s:S) -> Result<S::Ok, S::Error> {
-  let mut tup = s.serialize_tuple(2)?;
-  let ts = logent.when.render(&tz);
-  tup.serialize_element(&ts)?;
-  tup.serialize_element(&logent.logent)?;
-  tup.end()
+  let f : FormattedLogEntry = (tz, logent).into();
+  f.serialize(s)
 }
