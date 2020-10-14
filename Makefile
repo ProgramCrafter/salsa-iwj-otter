@@ -180,9 +180,9 @@ $(LIBRARY_FILES): $(USVG_PROCESSOR) $(USVG_BINARY) Makefile
 
 TS_SRCS= script
 TS_SRC_FILES= \
+	$(addprefix templates/,$(addsuffix .ts,$(TS_SRCS))) \
 	webassembly-types/webassembly.d.ts \
-	templates/otter_wasm.ns.d.ts \
-	$(addprefix templates/,$(addsuffix .ts,$(TS_SRCS)))
+	templates/otter_wasm.ns.d.ts
 
 LITFILES= LICENCE AGPLv3
 TXTFILES= CC-BY-SA-3.0 CC-BY-SA-4.0
