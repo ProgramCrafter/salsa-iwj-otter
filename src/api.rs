@@ -199,8 +199,6 @@ struct ApiPieceWrest {
 #[throws(OE)]
 fn api_wrest(form : Json<ApiPiece<ApiPieceWrest>>)
             -> impl response::Responder<'static> {
-  // xxx wresting does not seem to work, maybe client isn't doing it?
-  //   ony for held pieces; works for pinned ones
   // xxx pinning should send to back
   api_piece_op(form)
 }
