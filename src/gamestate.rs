@@ -23,6 +23,10 @@ visible_slotmap_key!{ VisiblePieceId('.') }
 #[serde(transparent)]
 pub struct Html (pub String);
 
+#[derive(Copy,Clone,Debug,Serialize,Deserialize,Eq,Ord,PartialEq,PartialOrd)]
+#[serde(transparent)]
+pub struct Timestamp(pub u64); /* time_t */
+
 pub const DEFAULT_TABLE_SIZE : Pos = PosC([ 400, 200 ]);
 
 // ---------- general data types ----------
@@ -41,7 +45,7 @@ pub struct GameState {
   pub pieces : Pieces,
   pub players : PlayerMap,
   pub gen : Generation,
-  pub log : Vec<(Generation,Arc<LogEntry>)>, // xxx expiry
+  pub log : Vec<(Generation, Timestamp, Arc<LogEntry>)>, // xxx expiry
   pub max_z : ZCoord,
 }
 
@@ -146,6 +150,18 @@ impl Generation {
 impl Display for Generation {
   fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
     Display::fmt(&self.0,f)
+  }
+}
+
+impl Timestamp {
+  /// Always >= previously
+  pub fn now() -> Timestamp {
+    use std::time::SystemTime;
+    let now = SystemTime::now()
+      .duration_since(SystemTime::UNIX_EPOCH)
+      .unwrap()
+      .as_secs();
+    Timestamp(now)
   }
 }
 

@@ -14,7 +14,7 @@ struct SessionRenderContext {
   defs : Vec<(VisiblePieceId,Html)>,
   nick : String,
   load : String,
-  log : Vec<(Generation,Arc<LogEntry>)>,
+  log : Vec<(Generation, Timestamp, Arc<LogEntry>)>,
 }
 
 #[derive(Serialize,Debug)]

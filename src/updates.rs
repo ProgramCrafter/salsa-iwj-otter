@@ -402,7 +402,11 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     for logentry in logents {
       let logentry = Arc::new(logentry);
       let gen = self.gen();
-      self.g.gs.log.push((gen, logentry.clone()));
+      let now = Timestamp::now();
+      let when = iter::once(now).chain(
+        self.g.gs.log.last().map(|l| l.1)
+      ).max().unwrap();
+      self.g.gs.log.push((gen, when, logentry.clone()));
       self.us.push(PreparedUpdateEntry::Log(logentry));
     }
   }

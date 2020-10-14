@@ -50,7 +50,7 @@
 <p>
   <div id="log" style="overflow-y: scroll; height: 200px;">
 {% for ent in log %}
-    <div>{{ ent.1.html | safe }}</div>
+    <div>{{ ent.2.html | safe }}</div>
 {%- endfor %}
   </div>
 
