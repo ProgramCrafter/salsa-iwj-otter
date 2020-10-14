@@ -175,5 +175,8 @@ fn main() {
 
   let r = otter::session::mount(r);
   let r = otter::api::mount(r);
+
+  thread::spawn(client_periodic_expiry);
+
   r.launch();
 }

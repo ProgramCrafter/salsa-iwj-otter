@@ -1001,9 +1001,9 @@ pub fn game_flush_task() {
   }
 }
 
-// ---------- client expiry ---------- xxx not working
+// ---------- client expiry ----------
 
-pub fn client_expire_old_clients() {
+fn client_expire_old_clients() {
   fn lock_even_poisoned(gref: &InstanceRef) -> MutexGuard<InstanceContainer> {
     match gref.0.lock() {
       Ok(g) => g,
@@ -1060,6 +1060,13 @@ pub fn client_expire_old_clients() {
     c.g.clients.retain(|c,_| !now.0.contains(&c));
     let mut gref = InstanceGuard { c, gref: gref.clone() };
     gref.tokens_deregister_for_id::<ClientId,_>(|c| now.0.contains(&c));
+  }
+}
+
+pub fn client_periodic_expiry() {
+  loop {
+    sleep(MAX_CLIENT_INACTIVITY);
+    client_expire_old_clients();
   }
 }
 

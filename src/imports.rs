@@ -8,7 +8,7 @@ pub use std::io::ErrorKind;
 pub use std::fmt::Write as _;
 pub use std::fmt::Formatter;
 pub use std::fmt::{self,Display,Debug};
-pub use std::thread;
+pub use std::thread::{self,sleep};
 pub use std::time::Duration;
 pub use std::sync::{Arc,Mutex,MutexGuard,RwLock,RwLockReadGuard,Condvar};
 pub use std::collections::{HashMap,hash_map,HashSet};
