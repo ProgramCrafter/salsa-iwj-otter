@@ -207,11 +207,6 @@ const PRIVATE_Y : PrivateCaller = PrivateCaller(());
 
 // ========== implementations ==========
 
-/*
-impl Borrow<str> for RawToken {
-  fn borrow(&self) -> &str { &self.0 }
-}*/
-
 impl RawTokenVal {
   // str is [u8] with a funny hat on, so &str is pointer + byte count.
   // nomicon says &SomeStruct([T]) is pointer plus number of elements.
