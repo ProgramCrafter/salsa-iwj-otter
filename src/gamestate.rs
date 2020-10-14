@@ -45,7 +45,7 @@ pub struct GameState {
   pub pieces : Pieces,
   pub players : PlayerMap,
   pub gen : Generation,
-  pub log : Vec<(Generation, Timestamp, Arc<LogEntry>)>, // xxx expiry
+  pub log : Vec<(Generation, Arc<CommittedLogEntry>)>, // xxx expiry
   pub max_z : ZCoord,
 }
 
@@ -71,6 +71,12 @@ pub struct PlayerState {
 #[derive(Debug,Serialize,Deserialize)]
 pub struct LogEntry {
   pub html : Html,
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+pub struct CommittedLogEntry {
+  pub when: Timestamp,
+  pub logent: LogEntry,
 }
 
 // ---------- piece trait, and rendering ----------

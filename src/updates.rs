@@ -47,7 +47,7 @@ pub enum PreparedUpdateEntry {
     op : PieceUpdateOp<PreparedPieceState,ZLevel>,
   },
   SetTableSize(Pos),
-  Log (Arc<LogEntry>),
+  Log (Arc<CommittedLogEntry>),
   Error (Option<ClientId> /* none: all */, ErrorSignaledViaUpdate),
 }
 
@@ -103,7 +103,7 @@ enum TransmitUpdateEntry<'u> {
     ns: &'u PreparedPieceState,
   },
   SetTableSize(Pos),
-  Log (&'u LogEntry),
+  Log (&'u CommittedLogEntry),
   Error(&'u ErrorSignaledViaUpdate),
 }
 
@@ -175,7 +175,7 @@ impl PreparedUpdateEntry {
         op.new_state().map(|x| x.svg.0.as_bytes().len()).unwrap_or(0)
       },
       Log(logent) => {
-        logent.html.0.as_bytes().len() * 3
+        logent.logent.html.0.as_bytes().len() * 28
       },
       SetTableSize(_) |
       Error(_,_) => {
@@ -399,15 +399,15 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   }
 
   pub fn log_updates(&mut self, logents: Vec<LogEntry>) {
-    for logentry in logents {
-      let logentry = Arc::new(logentry);
-      let gen = self.gen();
-      let now = Timestamp::now();
+    let now = Timestamp::now();
+    for logent in logents {
       let when = iter::once(now).chain(
-        self.g.gs.log.last().map(|l| l.1)
+        self.g.gs.log.last().map(|l| l.1.when)
       ).max().unwrap();
-      self.g.gs.log.push((gen, when, logentry.clone()));
-      self.us.push(PreparedUpdateEntry::Log(logentry));
+      let logent = Arc::new(CommittedLogEntry { when, logent });
+      let gen = self.gen();
+      self.g.gs.log.push((gen, logent.clone()));
+      self.us.push(PreparedUpdateEntry::Log(logent));
     }
   }
 

@@ -14,7 +14,7 @@ struct SessionRenderContext {
   defs : Vec<(VisiblePieceId,Html)>,
   nick : String,
   load : String,
-  log : Vec<(Generation, Timestamp, Arc<LogEntry>)>,
+  log : Vec<Arc<CommittedLogEntry>>,
 }
 
 #[derive(Serialize,Debug)]
@@ -122,7 +122,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
     let src = SessionRenderContext {
       ctoken,
       gen : ig.gs.gen,
-      log : ig.gs.log.clone(),
+      log : ig.gs.log.iter().map(|(_,logent)| logent.clone()).collect(),
       table_size : ig.gs.table_size,
       player,
       defs : alldefs,

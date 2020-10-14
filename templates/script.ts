@@ -44,6 +44,7 @@ type ClientSeq = number;
 type Generation = number;
 type UoKind = 'Client' | "Global"| "Piece" | "ClientExtra" | "GlobalExtra";
 type WhatResponseToClientOp = "Predictable" | "Unpredictable" | "UpdateSvg";
+type Timestamp = number; // unix time_t, will break in 285My
 
 type UoDescription = {
   kind: UoKind;
@@ -777,8 +778,8 @@ function drag_cancel() {
 // ----- logs -----
 
 messages.Log = <MessageHandler>function
-(j: { html: string }) {
-  add_log_message(j.html);
+(j: { when: Timestamp, logent: { html: string } }) {
+  add_log_message(j.when + '|' + j.logent.html);
 }
 
 function add_log_message(msg_html: string) {
