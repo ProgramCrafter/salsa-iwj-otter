@@ -1115,6 +1115,7 @@ function loaded(xhr: XMLHttpRequest){
   });
 }
 
-// xxx scroll of log messages to bottom does not always work somehow
+// todo scroll of log messages to bottom did not always work somehow
+//    think I have fixed this with approximation
 
 doload();
