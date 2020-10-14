@@ -613,7 +613,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       if (tp.held != us) continue;
       drag_add_piece(tpiece,tp);
     }
-  } else if (held == null) {
+  } else if (held == null || wresting) {
     if (p.pinned && !wresting) {
       add_log_message('That piece is pinned to the table.');
       return;
