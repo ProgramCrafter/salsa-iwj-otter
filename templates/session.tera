@@ -12,6 +12,10 @@
     padding-right: 6.5px;
     align-self: start;
   }
+  td[class=logts] {
+    padding-right: 5px;
+    text-align: right;
+  }
   div[class=uokey-r] {
     align-self: end;
   }
@@ -48,10 +52,12 @@
     <div class="uokey"><strong>shift</strong> multiple selection</div>
   </div>
 <p>
-  <div id="log" style="overflow-y: scroll; height: 200px;">
+  <div style="overflow-y: scroll; height: 200px;">
+  <table id="log">
 {% for ent in log %}
-    <div>{{ent.when}}: {{ ent.logent.logent.html | safe }}</div>
+    <tr><td class="logts">{{ent.when}}</td><td>{{ ent.logent.logent.html | safe }}</td></tr>
 {%- endfor %}
+  </table>
   </div>
 
 <hr>
