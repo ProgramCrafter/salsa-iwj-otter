@@ -48,9 +48,10 @@ struct FlushWouldBlockError{}
 
 impl UpdateReaderWN {
   #[throws(io::Error)]
-  fn write_next<U>(&mut self, mut buf: &mut U, next: &PreparedUpdate)
+  fn write_next<U>(&mut self, mut buf: &mut U, tz: &Timezone,
+                   next: &PreparedUpdate)
                    where U : Write {
-    let tu = next.for_transmit(self.client);
+    let tu = next.for_transmit(tz, self.client);
 
     write!(buf, "data: ")?;
     serde_json::to_writer(&mut buf, &tu)?;
@@ -123,7 +124,7 @@ impl Read for UpdateReader {
         }
         self.overflow = {
           let mut overflow = Vec::with_capacity(next_len);
-          self.wn.write_next(&mut overflow, &next)
+          self.wn.write_next(&mut overflow, &pu.tz, &next)
             .map_err(|e| self.wn.trouble("overflow.write_next",&e))?;
           debug!("overflow {} {}, len={}",
                  &self.wn.player, &self.wn.client, &overflow.len());
@@ -132,7 +133,7 @@ impl Read for UpdateReader {
         continue;
       }
 
-      self.wn.write_next(&mut buf, &next)
+      self.wn.write_next(&mut buf, &pu.tz, &next)
         .map_err(|e| self.wn.trouble("UpdateReader.write_next",&e))?;
 
       let before = next.when - UPDATE_EXPIRE;

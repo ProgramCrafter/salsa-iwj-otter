@@ -30,6 +30,7 @@ pub type PlayerUpdatesLog =
 pub struct PlayerUpdates {
   log : PlayerUpdatesLog,
   cv : Arc<Condvar>,
+  pub tz: Timezone,
 }
 
 #[derive(Debug)]
@@ -103,7 +104,8 @@ enum TransmitUpdateEntry<'u> {
     ns: &'u PreparedPieceState,
   },
   SetTableSize(Pos),
-  Log (&'u CommittedLogEntry),
+  #[serde(serialize_with="serialize_logentry")]
+  Log (&'u Timezone, &'u CommittedLogEntry),
   Error(&'u ErrorSignaledViaUpdate),
 }
 
@@ -117,11 +119,11 @@ pub struct PlayerUpdatesBuildContext {
 }
 
 impl PlayerUpdatesBuildContext {
-  pub fn new(&self) -> PlayerUpdates {
+  pub fn new(&self, tz: Timezone) -> PlayerUpdates {
     let mut log = StableIndexVecDeque::with_capacity(50);
     log.push_back(self.u1.clone());
     let cv = Default::default();
-    PlayerUpdates { log, cv }
+    PlayerUpdates { log, tz, cv }
   }
 }
 
@@ -438,7 +440,8 @@ impl<'r> Drop for PrepareUpdatesBuffer<'r> {
 type WRC = WhatResponseToClientOp;
 
 impl PreparedUpdate {
-  pub fn for_transmit(&self, dest : ClientId) -> TransmitUpdate {
+  pub fn for_transmit<'u>(&'u self, tz: &'u Timezone, dest : ClientId)
+                      -> TransmitUpdate<'u> {
     type ESVU = ErrorSignaledViaUpdate;
     type PUE = PreparedUpdateEntry;
     type TUE<'u> = TransmitUpdateEntry<'u>;
@@ -477,7 +480,7 @@ impl PreparedUpdate {
           }
         },
         PUE::Log(logent) => {
-          TUE::Log(&logent)
+          TUE::Log(&tz, &logent)
         },
         &PUE::SetTableSize(size) => {
           TUE::SetTableSize(size)
@@ -497,4 +500,13 @@ impl PreparedUpdate {
     };
     TransmitUpdate(self.gen, ents)
   }
+}
+
+fn serialize_logentry<S:Serializer>(tz: &Timezone, logent: &CommittedLogEntry,
+                                    s:S) -> Result<S::Ok, S::Error> {
+  let mut tup = s.serialize_tuple(2)?;
+  let ts = logent.when.render(&tz);
+  tup.serialize_element(&ts)?;
+  tup.serialize_element(&logent.logent)?;
+  tup.end()
 }

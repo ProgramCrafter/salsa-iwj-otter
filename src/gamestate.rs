@@ -27,6 +27,9 @@ pub struct Html (pub String);
 #[serde(transparent)]
 pub struct Timestamp(pub u64); /* time_t */
 
+#[derive(Clone,Debug,Default,Serialize,Deserialize)]
+pub struct Timezone { } // todo
+
 pub const DEFAULT_TABLE_SIZE : Pos = PosC([ 400, 200 ]);
 
 // ---------- general data types ----------
@@ -168,6 +171,10 @@ impl Timestamp {
       .unwrap()
       .as_secs();
     Timestamp(now)
+  }
+
+  pub fn render(&self, tz: &Timezone) -> String {
+    format!("TS{}(@{:?})", self.0, tz)
   }
 }
 

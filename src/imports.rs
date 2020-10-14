@@ -41,6 +41,7 @@ pub use fehler::{throws,throw};
 
 pub use serde::{Serialize,Deserialize,de::DeserializeOwned};
 pub use serde::{Serializer,Deserializer};
+pub use serde::ser::SerializeTuple;
 
 pub use rocket_contrib::helmet::*;
 pub use rocket_contrib::templates::Template;
@@ -92,6 +93,9 @@ pub use itertools::Itertools;
 
 pub use rental::RentalError;
 pub use rental::common::RentRef;
+
+pub use serde_with;
+pub use serde_with::serde_as;
 
 pub use ordered_float::OrderedFloat;
 

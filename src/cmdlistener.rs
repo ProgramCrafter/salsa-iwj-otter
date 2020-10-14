@@ -166,7 +166,7 @@ fn execute_game_insn(cs: &CommandStream,
         html: Html(format!("{} added a player: {}", &who,
                       htmlescape::encode_minimal(&pl.nick))),
       };
-      let (player, logentry) = ig.player_new(pl, logentry)?;
+      let (player, logentry) = ig.player_new(pl, Timezone{}, logentry)?;
       (U{ pcs: vec![],
           log: vec![ logentry ],
           raw: None },

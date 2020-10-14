@@ -778,7 +778,7 @@ function drag_cancel() {
 // ----- logs -----
 
 messages.Log = <MessageHandler>function
-(j: { when: Timestamp, logent: { html: string } }) {
+(j: { when: string, logent: { html: string } }) {
   add_log_message(j.when + '|' + j.logent.html);
 }
 

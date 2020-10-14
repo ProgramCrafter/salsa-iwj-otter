@@ -1057,6 +1057,7 @@ dependencies = [
  "rocket_cors",
  "serde",
  "serde_json",
+ "serde_with",
  "slotmap",
  "thiserror",
  "toml 0.5.6",

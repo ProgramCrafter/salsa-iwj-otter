@@ -193,6 +193,12 @@ pub struct InstanceContainer {
 struct InstanceSaveAccesses<RawTokenStr, PiecesLoadedRef> {
   pieces: PiecesLoadedRef,
   tokens_players: Vec<(RawTokenStr, PlayerId)>,
+  aplayers: SecondarySlotMap<PlayerId, PlayerSaveAccess>,
+}
+
+#[derive(Debug,Default,Serialize,Deserialize)]
+struct PlayerSaveAccess {
+  tz: Timezone,
 }
 
 display_as_debug!{InstanceLockError}
@@ -352,7 +358,7 @@ impl InstanceGuard<'_> {
   /// caller is responsible for logging; threading it through
   /// proves the caller has a log entry.
   #[throws(MgmtError)]
-  pub fn player_new(&mut self, newplayer: PlayerState,
+  pub fn player_new(&mut self, newplayer: PlayerState, tz: Timezone,
                     logentry: LogEntry) -> (PlayerId, LogEntry) {
     // saving is fallible, but we can't attempt to save unless
     // we have a thing to serialise with the player in it
@@ -366,7 +372,7 @@ impl InstanceGuard<'_> {
     })?;
     (||{
       let pu_bc = PlayerUpdates::new_begin(&self.c.g.gs);
-      self.c.g.updates.insert(player, pu_bc.new());
+      self.c.g.updates.insert(player, pu_bc.new(tz));
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
     (player, logentry)
   }
@@ -685,7 +691,11 @@ impl InstanceGuard<'_> {
           .flatten()
           .collect()
       };
-      let isa = InstanceSaveAccesses { pieces, tokens_players };
+      let aplayers = s.c.g.updates.iter().map(
+        |(player, PlayerUpdates { tz, .. })|
+        (player, PlayerSaveAccess { tz: tz.clone() })
+      ).collect();
+      let isa = InstanceSaveAccesses { pieces, tokens_players, aplayers };
       rmp_serde::encode::write_named(w, &isa)
     })?;
     self.c.access_dirty = false;
@@ -718,7 +728,8 @@ impl InstanceGuard<'_> {
       }
     }
     let InstanceSaveAccesses::<String,ActualPiecesLoaded>
-    { mut tokens_players, mut pieces } = Self::load_something(&name, "a-")
+    { mut tokens_players, mut pieces, mut aplayers }
+    = Self::load_something(&name, "a-")
       .or_else(|e| {
         if let InternalError::Anyhow(ae) = &e {
           if let Some(ioe) = ae.downcast_ref::<io::Error>() {
@@ -744,7 +755,8 @@ impl InstanceGuard<'_> {
     let mut updates : SecondarySlotMap<_,_> = Default::default();
     let pu_bc = PlayerUpdates::new_begin(&gs);
     for player in gs.players.keys() {
-      updates.insert(player, pu_bc.new());
+      let aplayer = aplayers.remove(player).unwrap_or_default();
+      updates.insert(player, pu_bc.new(aplayer.tz));
     }
     let name = Arc::new(name);
     tokens_players.retain(
