@@ -16,3 +16,4 @@ path = "zcoord.rs"
 serde = { version = "1", features = ["derive","rc"] }
 fehler = "1"
 thiserror = "1"
+serde_with = "1"
