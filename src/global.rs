@@ -1045,6 +1045,7 @@ fn client_expire_old_clients() {
     }
   }
   for gref in expire.drain(..) {
+    #[derive(Debug)]
     struct Now(HashSet<ClientId>);
     impl ClientIterator for Now {
       type Ret = Impossible;
@@ -1059,6 +1060,7 @@ fn client_expire_old_clients() {
     let (mut c, _) = now.iter(&gref, max_age);
     c.g.clients.retain(|c,_| !now.0.contains(&c));
     let mut gref = InstanceGuard { c, gref: gref.clone() };
+    debug!("expiring client {:?}", &now);
     gref.tokens_deregister_for_id::<ClientId,_>(|c| now.0.contains(&c));
   }
 }
