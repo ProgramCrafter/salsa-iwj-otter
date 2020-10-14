@@ -790,10 +790,12 @@ function add_log_message(msg_html: string) {
     // rejected
       //   https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API
       (() => {
+	let le_top = lastent.getBoundingClientRect()!.top;
 	let le_bot = lastent.getBoundingClientRect()!.bottom;
 	let ld_bot = logdiv.getBoundingClientRect()!.bottom;
-	console.log("ADD_LOG_MESSAGE bboxes: le, bb", le_bot, ld_bot);
-	return le_bot > ld_bot;
+	console.log("ADD_LOG_MESSAGE bboxes: le t b, bb",
+		    le_top, le_bot, ld_bot);
+	return 0.5 * (le_bot + le_top) > ld_bot;
       })();
 
   console.log('ADD LOG MESSAGE ',in_scrollback, msg_html);
