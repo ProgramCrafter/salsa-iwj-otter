@@ -71,7 +71,7 @@ use std::fmt::{self, Debug, Display, Formatter};
 use std::num::{TryFromIntError, Wrapping};
 use std::str;
 use fehler::{throw, throws};
-use serde::{Serialize, Serializer, Deserialize};
+use serde::{Serialize, Serializer, Deserialize, Deserializer};
 use thiserror::Error;
 
 //---------- core definitions ----------
@@ -96,8 +96,6 @@ const TEXT_PER_LIMB : usize = DIGITS_PER_LIMB + 1;
 const LIMB_MODULUS : LimbVal = Wrapping(RAW_LIMB_MODULUS);
 const LIMB_MASK    : LimbVal = Wrapping(RAW_LIMB_MODULUS-1);
 
-#[derive(Deserialize)]
-#[serde(try_from="&str")]
 pub struct ZCoord(innards::Innards);
 
 #[derive(Error,Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize)]
@@ -447,6 +445,25 @@ impl TryFrom<&str> for ZCoord {
 impl Serialize for ZCoord {
   fn serialize<S:Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
     s.serialize_str(self.as_str())
+  }
+}
+
+impl<'de> Deserialize<'de> for ZCoord {
+  fn deserialize<D:Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+    use serde::de::{Visitor, Error, Unexpected};
+    struct V;
+    impl<'de> Visitor<'de> for V {
+      type Value = ZCoord;
+      fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "a z coordinate (as a string)")
+      }
+      fn visit_str<E:Error>(self, s: &str) -> Result<Self::Value, E> {
+        ZCoord::from_str(s).map_err(|ParseError| Error::invalid_value(
+          Unexpected::Str(s), &self
+        ))
+      }
+    }
+    d.deserialize_str(V)
   }
 }
 
