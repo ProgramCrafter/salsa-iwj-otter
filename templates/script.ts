@@ -788,9 +788,13 @@ function add_log_message(msg_html: string) {
     // inspired by
     //   https://stackoverflow.com/questions/487073/how-to-check-if-element-is-visible-after-scrolling/21627295#21627295
     // rejected
-    //   https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API
-    lastent.getBoundingClientRect()!.bottom >
-    logdiv.getBoundingClientRect()!.bottom;
+      //   https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API
+      (() => {
+	let le = lastent.getBoundingClientRect()!.bottom;
+	let ld = logdiv.getBoundingClientRect()!.bottom;
+	console.log("ADD_LOG_MESSAGE bboxes: le, bb", le, ld);
+	return le > ld;
+      })();
 
   console.log('ADD LOG MESSAGE ',in_scrollback, msg_html);
   var nelem = document.createElement('div');
