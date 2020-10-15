@@ -43,6 +43,9 @@ pub use serde::{Serialize,Deserialize,de::DeserializeOwned};
 pub use serde::{Serializer,Deserializer};
 pub use serde::ser::SerializeTuple;
 
+pub use serde_with::DeserializeFromStr;
+pub use serde_with::SerializeDisplay;
+
 pub use rocket_contrib::helmet::*;
 pub use rocket_contrib::templates::Template;
 
