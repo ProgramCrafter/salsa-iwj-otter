@@ -174,7 +174,24 @@ impl Timestamp {
   }
 
   pub fn render(&self, tz: &Timezone) -> String {
-    format!("TS{}(@{:?})", self.0, tz)
+    #[derive(Error,Debug)]
+    enum E {
+      #[from] SystemTime(SystemTimeError);
+      #[from] Other(&'static str);
+    };
+
+    (||{
+      let then = SytemTime::UNIX_EPOCH.checked_add(
+        Duration::from_secs(tz.0)
+      ).ok_or("SystemTime wrap error!")?;
+      let elapsed = then.elapsed()?;
+      if elapsed > 86400/2 {
+        
+      }
+      let now = SystemTime::now();
+      let elapsed = now.duration_since(then);
+      
+      None => format!("TS{}(@{:?})", self.0, tz)
   }
 }
 
