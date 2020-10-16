@@ -21,10 +21,35 @@ impl Timezone {
   pub fn name(&self) -> &str {
     &self.0.name
   }
-  #[throws(fmt::Error)]
-  pub fn format<W: fmt::Write>(&self, ts: Timestamp, w: &mut W) {
-    write!(w, "TS{:?}(@{:?})", ts, &self)?
-//        let ctz = chrono::offset::Utc;
+
+  // Oh my god this API is awful!
+
+  #[throws(as Option)]
+  fn format_tz<'r, TZ: chrono::TimeZone>(
+    tz: &TZ, ts: Timestamp, fmt: &'r str
+  ) -> chrono::format::DelayedFormat<chrono::format::StrftimeItems<'r>>
+    where <TZ as chrono::TimeZone>::Offset : Display
+  {
+    use chrono::DateTime;
+    let dt = tz.timestamp_opt(ts.0.try_into().ok()?, 0).single()?;
+    DateTime::format(&dt, fmt)
+  }
+
+  pub fn format(&self, ts: Timestamp) -> String {
+    match (||{
+      let fmt = "%Y-%m-%d %H:%M:%S %z";
+      let df = match &self.0.ctz {
+        Some(ctz) => Timezone::format_tz(ctz,                  ts, fmt),
+        None      => Timezone::format_tz(&chrono::offset::Utc, ts, fmt),
+      }
+      .ok_or_else(
+        || format!("timestamp {} out of range!", &ts.0)
+      )?;
+      Ok(format!("{}", df))
+    })() {
+      Ok(s) => s,
+      Err(s) => s,
+    }
   }
 
   pub fn default_todo() -> Self {
