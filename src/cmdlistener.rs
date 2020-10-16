@@ -170,7 +170,7 @@ fn execute_game_insn(cs: &CommandStream,
         .unwrap_or("");
       let tz = match Timezone::from_str(timezone) {
         Ok(tz) => tz,
-        Err(x) => x, // x is of type !
+        Err(x) => match x { },
       };
       let (player, logentry) = ig.player_new(pl.st, tz, logentry)?;
       (U{ pcs: vec![],

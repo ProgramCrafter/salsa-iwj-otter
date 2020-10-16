@@ -43,8 +43,8 @@ type MemoTable = Option<HashMap<String, Timezone>>;
 static MEMO: RwLock<MemoTable> = const_rwlock(None);
 
 impl FromStr for Timezone {
-  type Err = !;
-  #[throws(!)]
+  type Err = Impossible;
+  #[throws(Impossible)]
   fn from_str(name: &str) -> Self {
     if name.is_empty() { return default() }
 

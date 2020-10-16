@@ -126,7 +126,9 @@ pub use nix::unistd::Uid;
 
 pub fn default<T:Default>() -> T { Default::default() }
 
+#[derive(Debug,Copy,Clone)]
 pub enum Impossible { }
+display_as_debug!(Impossible);
 
 pub type E = anyhow::Error;
 pub type AE = anyhow::Error;
