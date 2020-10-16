@@ -39,11 +39,17 @@ pub enum MgmtGameInstruction {
   AddPieces(PiecesSpec),
   DeletePiece(PieceId),
 
-  AddPlayer(PlayerState),
+  AddPlayer(MgmtPlayerState),
   RemovePlayer(PlayerId),
   ResetPlayerAccesses { players: Vec<PlayerId> },
   ReportPlayerAccesses { players: Vec<PlayerId> },
   SetFixedPlayerAccess { player: PlayerId, token: RawToken },
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+pub struct MgmtPlayerState {
+  pub timezone: Option<String>,
+  #[serde(flatten)] pub st: PlayerState,
 }
 
 #[derive(Debug,Serialize,Deserialize)]

@@ -9,10 +9,10 @@ use parking_lot::{RwLock, const_rwlock};
 #[derive(SerializeDisplay)]
 #[derive(DeserializeFromStr)]
 #[derive(Clone,Debug)]
-pub struct Timezone (Arc<ChronoTz>);
+pub struct Timezone (Arc<TzInfo>);
 
 #[derive(Clone,Debug,Default)]
-struct ChronoTz {
+struct TzInfo {
   name: String,
   ctz: Option<chrono_tz::Tz>,
 }
@@ -60,11 +60,11 @@ impl FromStr for Timezone {
       let name = name.to_string();
       match chrono_tz::Tz::from_str(&name) {
         Ok(ctz) => {
-          Arc::new(ChronoTz { name, ctz: Some(ctz) })
+          Arc::new(TzInfo { name, ctz: Some(ctz) })
         },
         Err(emsg) => {
           error!("Error loading timezone {:?}: {}, using UTC", name, emsg);
-          Arc::new(ChronoTz { name, ctz: None })
+          Arc::new(TzInfo { name, ctz: None })
         },
       }
     };
@@ -77,6 +77,6 @@ impl FromStr for Timezone {
 
 impl Default for Timezone {
   fn default() -> Self {
-    Timezone(Arc::new(ChronoTz { ctz: None, name: default() }))
+    Timezone(Arc::new(TzInfo { ctz: None, name: default() }))
   }
 }

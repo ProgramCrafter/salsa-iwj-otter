@@ -361,9 +361,16 @@ fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
         Err(anyhow!("duplicate player nick {:?} in spec", &pspec.nick))?;
       }
       st.new = true;
+      let timezone = pspec.timezone.as_ref().or(
+        spec.timezone.as_ref()
+      ).cloned();
+      // ^ todo use client program timezone?
       if !st.old {
-        insns.push(MgmtGameInstruction::AddPlayer(PlayerState {
-          nick: pspec.nick.clone()
+        insns.push(MgmtGameInstruction::AddPlayer(MgmtPlayerState {
+          timezone,
+          st: PlayerState {
+            nick: pspec.nick.clone(),
+          },
         }));
       }
     }

@@ -56,11 +56,13 @@ display_as_debug!{SpecError}
 #[derive(Debug,Serialize,Deserialize)]
 pub struct TableSpec {
   pub players : Vec<PlayerSpec>,
+  pub timezone: Option<String>, // default for player timezones
 }
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct PlayerSpec {
   pub nick: String,
+  pub timezone: Option<String>,
   #[serde(flatten)]
   pub access: Option<Box<dyn PlayerAccessSpec>>,
 }

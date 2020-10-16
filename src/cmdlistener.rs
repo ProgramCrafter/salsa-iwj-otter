@@ -159,15 +159,20 @@ fn execute_game_insn(cs: &CommandStream,
     }
 
     Insn::AddPlayer(pl) => {
-      if ig.gs.players.values().any(|p| p.nick == pl.nick) {
+      if ig.gs.players.values().any(|p| p.nick == pl.st.nick) {
         Err(ME::AlreadyExists)?;
       }
       let logentry = LogEntry {
         html: Html(format!("{} added a player: {}", &who,
-                      htmlescape::encode_minimal(&pl.nick))),
+                      htmlescape::encode_minimal(&pl.st.nick))),
       };
-      let tz = Timezone::default_todo();
-      let (player, logentry) = ig.player_new(pl, tz, logentry)?;
+      let timezone = pl.timezone.as_ref().map(String::as_str)
+        .unwrap_or("");
+      let tz = match Timezone::from_str(timezone) {
+        Ok(tz) => tz,
+        Err(x) => x, // x is of type !
+      };
+      let (player, logentry) = ig.player_new(pl.st, tz, logentry)?;
       (U{ pcs: vec![],
           log: vec![ logentry ],
           raw: None },
