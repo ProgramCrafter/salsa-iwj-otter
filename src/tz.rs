@@ -9,97 +9,74 @@ use parking_lot::{RwLock, const_rwlock};
 #[derive(SerializeDisplay)]
 #[derive(DeserializeFromStr)]
 #[derive(Clone,Debug)]
-pub struct Timezone (Arc<dyn TimeFormatter>);
+pub struct Timezone (Arc<ChronoTz>);
 
-impl Timezone {
-  delegate! { to self.0 {
-    pub fn format(&self, ts: Timestamp, f: &mut Formatter) -> fmt::Result;
-  } }
+#[derive(Clone,Debug,Default)]
+struct ChronoTz {
+  name: String,
+  ctz: Option<chrono_tz::Tz>,
 }
+  
+impl Timezone {
+  pub fn name(&self) -> &str {
+    &self.0.name
+  }
+  #[throws(fmt::Error)]
+  pub fn format<W: fmt::Write>(&self, ts: Timestamp, w: &mut W) {
+    write!(w, "TS{:?}(@{:?})", ts, &self)?
+//        let ctz = chrono::offset::Utc;
+  }
 
-pub trait TimeFormatter : Debug + Sync + Send {
-  fn format(&self, ts: Timestamp, f: &mut Formatter) -> fmt::Result;
-  fn name(&self) -> &str;
+  pub fn default_todo() -> Self {
+    Timezone::from_str("").unwrap()
+  }
 }
 
 impl Display for Timezone {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut Formatter) {
-    write!(f, "{}", self.0.name())?;
+    write!(f, "{}", &self.0.name)?;
   }
 }
 
-#[derive(Clone,Debug,Default,Serialize,Deserialize)]
-struct ChronoTz<TZ: chrono::TimeZone> {
-  name: String,
-  ctz: TZ,
-}
-  
-impl<TZ: chrono::TimeZone + Debug + Sync + Send> TimeFormatter for ChronoTz<TZ> {
-  fn name(&self) -> &str { &self.name() }
-
-  #[throws(fmt::Error)]
-  fn format<W: io::Write>(&self, ts: Timestamp, f: &mut W) {
-    write!(f, "TS{}(@{:?})", ts, &self);
-
-/*    #[derive(Error,Debug)]
-    enum E {
-      #[from] SystemTime(SystemTimeError);
-      #[from] Other(&'static str);
-    };
-
-    (||{
-      let then = SytemTime::UNIX_EPOCH.checked_add(
-        Duration::from_secs(tz.0)
-      ).ok_or("SystemTime wrap error!")?;
-      let elapsed = then.elapsed()?;
-      if elapsed > 86400/2 {
-        
-      }
-      let now = SystemTime::now();
-      let elapsed = now.duration_since(then);
-      
-      None => format!("TS{}(@{:?})", self.0, tz)
-  }
-*/
-
-  }
-}
-
-static memo: RwLock<Option<HashMap<String, Timezone>>> = const_rwlock(None);
+type MemoTable = Option<HashMap<String, Timezone>>;
+static MEMO: RwLock<MemoTable> = const_rwlock(None);
 
 impl FromStr for Timezone {
   type Err = !;
   #[throws(!)]
   fn from_str(name: &str) -> Self {
-    let get = |memor| memor?.get(name).map(Clone::clone);
-    if let Some(got) = get(memo(), name) { return got }
+    if name.is_empty() { return default() }
+
+    let get = |memor: &MemoTable| memor.as_ref()?.get(name).map(Clone::clone);
+    if let Some(got) = get(&MEMO.read()) { return got }
 
     // slow path
-    let memow = memo.write();
-    if let Some(got) = get(memow) { return got }
+    let mut memow = MEMO.write();
+    if let Some(got) = get(&memow) { return got }
 
     // really slow path
-    let name = name.to_string();
-    let out = match chrono_tz::Tz::from_str(name) {
-      Ok(ctz) => {
-        Arc::new(ChronoTz { ctz, name })
-      },
-      Err(emsg) => {
-        error!("Error loading timezone {:?}: {}, using UTC", name, emsg);
-        let ctz = chrono::offset::Utc;
-        Arc::new(ChronoTz { ctz, name })
-      },
+    let out = {
+      let name = name.to_string();
+      match chrono_tz::Tz::from_str(&name) {
+        Ok(ctz) => {
+          Arc::new(ChronoTz { name, ctz: Some(ctz) })
+        },
+        Err(emsg) => {
+          error!("Error loading timezone {:?}: {}, using UTC", name, emsg);
+          Arc::new(ChronoTz { name, ctz: None })
+        },
+      }
     };
+    let out = Timezone(out);
     memow.get_or_insert_with(default)
-      .set(name.to_string(), out.clone());
+      .insert(name.to_string(), out.clone());
     out
   }
 }
 
 impl Default for Timezone {
   fn default() -> Self {
-        let ctz = chrono::offset::Utc;
-    Arc::new(ChronoTz { ctz, name: default() })
+    Timezone(Arc::new(ChronoTz { ctz: None, name: default() }))
   }
 }

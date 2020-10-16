@@ -171,7 +171,7 @@ impl Timestamp {
   }
 
   pub fn render(&self, tz: &Timezone) -> String {
-    let s = String::with_capacity(30);
+    let mut s = String::with_capacity(30);
     tz.format(*self, &mut s).unwrap();
     s
   }
