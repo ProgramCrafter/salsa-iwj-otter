@@ -35,6 +35,8 @@ pub use std::env;
 pub use std::process::exit;
 pub use std::borrow::Cow;
 
+pub use boolinator::Boolinator as _;
+
 pub use thiserror::Error;
 pub use anyhow::{Context,anyhow};
 pub use fehler::{throws,throw};

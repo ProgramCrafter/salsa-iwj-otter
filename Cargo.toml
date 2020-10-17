@@ -20,6 +20,7 @@ otter-zcoord = { path = "zcoord" }
 anyhow = "1"
 argparse = "0.2"
 arrayvec = "0"
+boolinator = "2"
 chrono = "0.4"
 chrono-tz = "0.5"
 delegate = "0.4"

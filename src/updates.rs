@@ -412,11 +412,11 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     let now = Timestamp::now();
     for logent in logents {
       let when = iter::once(now).chain(
-        self.g.gs.log.last().map(|l| l.1.when)
+        self.g.gs.log.back().map(|l| l.1.when)
       ).max().unwrap();
       let logent = Arc::new(CommittedLogEntry { when, logent });
       let gen = self.gen();
-      self.g.gs.log.push((gen, logent.clone()));
+      self.g.gs.log.push_back((gen, logent.clone()));
       self.us.push(PreparedUpdateEntry::Log(logent));
     }
   }

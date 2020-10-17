@@ -45,7 +45,7 @@ pub struct GameState {
   pub pieces : Pieces,
   pub players : PlayerMap,
   pub gen : Generation,
-  pub log : Vec<(Generation, Arc<CommittedLogEntry>)>, // xxx expiry
+  pub log : VecDeque<(Generation, Arc<CommittedLogEntry>)>, // xxx expiry
   pub max_z : ZCoord,
 }
 
@@ -217,7 +217,6 @@ impl Debug for Html {
 
 // ---------- game state - rendering etc. ----------
 
-
 impl PieceState {
   #[throws(IE)]
   pub fn prep_piecestate(&self, p: &dyn Piece, pri : &PieceRenderInstructions)
@@ -280,6 +279,31 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
     }
     self.add_ui_operations(&mut out)?;
     out
+  }
+}
+
+// ---------- log expiry ==========
+
+impl GameState {
+  pub fn expire_old_logs(&mut self, cutoff: Timestamp) {
+    fn want_trim(gs: &GameState, cutoff: Timestamp) -> bool {
+      (||{
+        let e = gs.log.get(1)?;
+        (e.1.when < cutoff).as_option()
+      })().is_some()
+    };
+
+    if want_trim(self, cutoff) {
+      while want_trim(self, cutoff) {
+        self.log.pop_front();
+      }
+      let front = self.log.front_mut().unwrap();
+      let front = &mut front.1;
+      let logent = LogEntry {
+        html: Html::lit("Earlier log entries expired."),
+      };
+      *front = Arc::new(CommittedLogEntry { logent, when: front.when });
+    }
   }
 }
 
