@@ -43,10 +43,10 @@ pub struct ZLevel {
 pub struct GameState {
   pub table_size : Pos,
   pub pieces : Pieces,
-  pub players : PlayerMap,
   pub gen : Generation,
   pub log : VecDeque<(Generation, Arc<CommittedLogEntry>)>,
   pub max_z : ZCoord,
+  pub players : DenseSlotMap<PlayerId, AccountName>>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -61,11 +61,8 @@ pub struct PieceState {
   pub gen_before_lastclient : Generation,
 }
 
-pub type PlayerMap = DenseSlotMap<PlayerId,PlayerState>;
-
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct PlayerState {
-  pub nick : String,
 }
 
 #[derive(Debug,Serialize,Deserialize)]

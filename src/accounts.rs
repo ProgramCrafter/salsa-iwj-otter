@@ -4,6 +4,8 @@
 
 use crate::imports::*;
 
+use parking_lot::{RwLock, const_rwlock};
+
 #[derive(Debug,Clone,Deserialize,Serialize)]
 #[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
 pub enum AccountScope {
@@ -70,3 +72,13 @@ impl FromStr for ScopedName {
     ScopedName { scope, scoped_name }
   }
 }
+
+#[deerive(Serialize,Deserialize)]
+pub struct AccountRecord {
+  pub nick: String,
+  pub timezone: String,
+  pub access: Box<dyn PlayerAccessSpec>,
+}
+
+static ACCOUNTS : RwLock<Option<HashMap<AccountName, AccountRecord>>>
+  = const_rwlock_new(None);

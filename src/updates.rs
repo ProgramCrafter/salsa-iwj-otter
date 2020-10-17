@@ -30,7 +30,6 @@ pub type PlayerUpdatesLog =
 pub struct PlayerUpdates {
   log : PlayerUpdatesLog,
   cv : Arc<Condvar>,
-  pub tz: Timezone,
 }
 
 #[derive(Debug)]

@@ -35,9 +35,20 @@ pub struct Instance {
   pub gs : GameState,
   pub pieces : PiecesLoaded,
   pub clients : DenseSlotMap<ClientId,Client>,
-  pub updates : SecondarySlotMap<PlayerId, PlayerUpdates>,
+  pub players : SecondarySlotMap<PlayerId, PlayerRecord>,
   pub tokens_players : TokenRegistry<PlayerId>,
   pub tokens_clients : TokenRegistry<ClientId>,
+}
+
+pub struct PlayerRecord {
+  pub u: PlayerUpdates,
+  pub st: PlayerState,
+}
+
+pub struct PlayerState {
+  pub account: AccountName,
+  pub nick: String,
+  pub tz: Timezone,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
