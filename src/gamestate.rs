@@ -302,7 +302,7 @@ impl GameState {
       let front = self.log.front_mut().unwrap();
       let front = &mut front.1;
       let logent = LogEntry {
-        html: Html::lit("Earlier log entries expired."),
+        html: Html::lit("[Earlier log entries expired]"),
       };
       *front = Arc::new(CommittedLogEntry { logent, when: front.when });
     }
