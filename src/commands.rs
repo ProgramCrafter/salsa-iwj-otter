@@ -46,6 +46,10 @@ pub enum MgmtGameInstruction {
   SetFixedPlayerAccess { player: PlayerId, token: RawToken },
 }
 
+// xxx self-add players
+// xxx permission system
+// xxx facilitator name?
+
 #[derive(Debug,Serialize,Deserialize)]
 pub struct MgmtPlayerState {
   pub timezone: Option<String>,
