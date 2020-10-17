@@ -247,6 +247,13 @@ impl InstanceRef {
     if !c.live { throw!(InstanceLockError::GameBeingDestroyed) }
     InstanceGuard { c, gref: self.clone() }
   }
+
+  fn lock_even_poisoned(&self) -> MutexGuard<InstanceContainer> {
+    match self.0.lock() {
+      Ok(g) => g,
+      Err(poison) => poison.into_inner(),
+    }
+  }
 }
 
 impl Instance {
@@ -1018,13 +1025,6 @@ pub fn game_flush_task() {
 // ---------- client expiry ----------
 
 fn client_expire_old_clients() {
-  fn lock_even_poisoned(gref: &InstanceRef) -> MutexGuard<InstanceContainer> {
-    match gref.0.lock() {
-      Ok(g) => g,
-      Err(poison) => poison.into_inner(),
-    }
-  }
-
   let mut expire = vec![];
   let max_age = Instant::now() - MAX_CLIENT_INACTIVITY;
 
@@ -1032,7 +1032,7 @@ fn client_expire_old_clients() {
     type Ret;
     fn iter<'g>(&mut self, gref: &'g InstanceRef, max_age: Instant)
             -> (MutexGuard<'g, InstanceContainer>, Option<Self::Ret>) {
-      let c = lock_even_poisoned(gref);
+      let c = gref.lock_even_poisoned();
       let ret = 'ret: loop {
         for (client, cl) in &c.g.clients {
           if cl.lastseen > max_age { continue }
@@ -1083,6 +1083,33 @@ pub fn client_periodic_expiry() {
   loop {
     sleep(MAX_CLIENT_INACTIVITY);
     client_expire_old_clients();
+  }
+}
+
+// ---------- log expiry ----------
+
+fn global_expire_old_logs() {
+  let cutoff = Timestamp(Timestamp::now().0 - MAX_LOG_AGE.as_secs());
+
+  let mut want_expire = vec![];
+
+  let read = GLOBAL.games.read().unwrap();
+  for gref in read.values() {
+    if gref.lock_even_poisoned().g.gs.want_expire_some_logs(cutoff) {
+      want_expire.push(gref.clone())
+    }
+  }
+  drop(read);
+
+  for gref in want_expire.drain(..) {
+    gref.lock_even_poisoned().g.gs.do_expire_old_logs(cutoff);
+  }
+}
+
+pub fn logs_periodic_expiry() {
+  loop {
+    sleep(MAX_LOG_AGE/10);
+    global_expire_old_logs();
   }
 }
 

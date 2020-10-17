@@ -285,16 +285,18 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
 // ---------- log expiry ==========
 
 impl GameState {
-  pub fn expire_old_logs(&mut self, cutoff: Timestamp) {
-    fn want_trim(gs: &GameState, cutoff: Timestamp) -> bool {
-      (||{
-        let e = gs.log.get(1)?;
-        (e.1.when < cutoff).as_option()
-      })().is_some()
-    };
+  pub fn want_expire_some_logs(&self, cutoff: Timestamp) -> bool {
+    (||{
+      let e = self.log.get(1)?;
+      (e.1.when < cutoff).as_option()
+    })().is_some()
+  }
 
-    if want_trim(self, cutoff) {
-      while want_trim(self, cutoff) {
+  pub fn do_expire_old_logs(&mut self, cutoff: Timestamp) {
+    let want_trim = |gs: &GameState| gs.want_expire_some_logs(cutoff);
+
+    if want_trim(self) {
+      while want_trim(self) {
         self.log.pop_front();
       }
       let front = self.log.front_mut().unwrap();
