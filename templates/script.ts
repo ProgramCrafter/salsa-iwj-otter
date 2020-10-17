@@ -813,8 +813,8 @@ function add_timestamped_log_message(ts_html: string, msg_html: string) {
     return td;
   }
 
-  add_td(ts_html).setAttribute("class", 'logts')
   add_td(msg_html);
+  add_td(ts_html).setAttribute("class", 'logts')
   log_elem.appendChild(tr);
 
   if (!in_scrollback) {

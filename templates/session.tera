@@ -12,8 +12,11 @@
     padding-right: 6.5px;
     align-self: start;
   }
+  table[id=log] {
+    width: 100%;
+  }
   td[class=logts] {
-    padding-right: 5px;
+    padding-left: 5px;
     text-align: right;
   }
   div[class=uokey-r] {
@@ -55,7 +58,7 @@
   <div style="overflow-y: scroll; height: 200px;">
   <table id="log">
 {% for ent in log %}
-    <tr><td class="logts">{{ent.when}}</td><td>{{ ent.logent.logent.html | safe }}</td></tr>
+    <tr><td>{{ ent.logent.logent.html | safe }}</td><td class="logts">{{ent.when}}</td></tr>
 {%- endfor %}
   </table>
   </div>
