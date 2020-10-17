@@ -49,6 +49,7 @@ pub struct PlayerState {
   pub account: AccountName,
   pub nick: String,
   pub tz: Timezone,
+  pub tokens_revealed: Vec<String>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]

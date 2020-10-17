@@ -9,9 +9,11 @@ use fehler::throws;
 use index_vec::{define_index_type,IndexVec};
 use crate::gamestate::PieceSpec;
 use std::fmt::Debug;
+use std::collections::hash_set::HashSet;
 use implementation::PlayerAccessSpec;
 use thiserror::Error;
 use crate::error::display_as_debug;
+use crate::accounts::AccountName;
 
 //---------- common types ----------
 
@@ -55,7 +57,7 @@ display_as_debug!{SpecError}
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct TableSpec {
-  pub players : Vec<ScopedName>,
+  pub players : Vec<AccountName>,
   pub acl : Acl<TablePermission>
 }
 
@@ -75,6 +77,22 @@ enum TablePermission {
   RemovePlayer,
   ChangeACL,
 }
+
+//---------- player accesses, should perhaps be in commands.rs ----------
+
+#[derive(Debug,Serialize,Deserialize)]
+pub struct PlayerAccessUnset;
+
+#[derive(Debug,Serialize,Deserialize)]
+struct FixedToken { token: RawToken }
+
+#[derive(Debug,Serialize,Deserialize)]
+struct UrlOnStdout;
+
+//#[derive(Debug,Serialize,Deserialize)]
+//struct TokenByEmail { email: String };
+// xxx ^ implement this
+// xxx ^ 
 
 //---------- Game TOML file ----------
 
@@ -216,32 +234,46 @@ pub mod implementation {
 
   #[typetag::serde(tag="access")]
   pub trait PlayerAccessSpec : Debug {
-    fn token_mgi(&self, _player: PlayerId) -> Option<MgmtGameInstruction> {
+    fn client_mgi(&self, _player: &PlayerId) -> Option<MgmtGameInstruction> {
       None
     }
-    fn deliver_tokens(&self, ps: &PlayerSpec, tokens: &[RawToken])
-                      -> Result<(),AE>;
+    fn server_deliver(&self, ps: &PlayerState, token: &AccessTokenReport)
+                      -> Result<Option<&AccessTokenReport>, AE> {
+      Ok(None)
+    }
+    fn client_deliver(&self, ps: &PlayerState, token: &AccessTokenReport)
+                      -> Result<(),AE> {
+      panic!()
+    }
+  }
+
+  #[typetag::serde]
+  impl PlayerAccessSpec for PlayerAccessUnset {
   }
 
   #[typetag::serde]
   impl PlayerAccessSpec for FixedToken {
-    fn token_mgi(&self, player: PlayerId) -> Option<MgmtGameInstruction> {
+    fn client_mgi(&self, player: PlayerId) -> Option<MgmtGameInstruction> {
       Some(Insn::SetFixedPlayerAccess {
         player,
         token: self.token.clone(),
       })
     }
-    #[throws(AE)]
-    fn deliver_tokens(&self, _ps: &PlayerSpec, _tokens: &[RawToken]) { }
   }
 
   #[typetag::serde]
-  impl PlayerAccessSpec for TokenOnStdout {
+  impl PlayerAccessSpec for UrlOnStdout {
     #[throws(AE)]
-    fn deliver_tokens(&self, ps: &PlayerSpec, tokens: &[RawToken]) {
-      for token in tokens {
-        println!("access nick={:?} token={}", &ps.nick, token.0);
-      }
+    fn client_mgi(&self, player: PlayerId) -> Option<MgmtGameInstruction> {
+      Some(Insn::ReportPlayerAccesses(player))
+    }
+    fn server_deliver(&self, ps: &PlayerState, token: &AccessTokenReport)
+                      -> Result<Option<&AccessTokenReport>, AE> {
+      Some(token)
+    }
+    fn client_deliver(&self, ps: &PlayerState, token: &AccessTokenReport) {
+      println!("access account={} nick={:?} url:\n{}",
+               &ps.account, &ps.nick, token.url);
     }
   }
 

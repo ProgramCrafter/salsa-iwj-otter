@@ -6,6 +6,8 @@ use crate::imports::*;
 
 use parking_lot::{RwLock, const_rwlock};
 
+pub type AccountName = ScopedName;
+
 #[derive(Debug,Clone,Deserialize,Serialize)]
 #[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
 pub enum AccountScope {
@@ -73,7 +75,7 @@ impl FromStr for ScopedName {
   }
 }
 
-#[deerive(Serialize,Deserialize)]
+#[derive(Serialize,Deserialize)]
 pub struct AccountRecord {
   pub nick: String,
   pub timezone: String,

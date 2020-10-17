@@ -50,18 +50,6 @@ pub struct AccountDetails {
 //  GameRunnerResetToken,
 //}
 
-#[derive(Debug,Serialize,Deserialize)]
-struct FixedToken { token: RawToken }
-
-#[derive(Debug,Serialize,Deserialize)]
-struct TokenOnStdout;
-
-//#[derive(Debug,Serialize,Deserialize)]
-//struct TokenByEmail { email: String };
-// xxx ^ implement this
-// xxx ^ 
-
-
 
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtResponse {
@@ -82,9 +70,10 @@ pub enum MgmtGameInstruction {
   AddPieces(PiecesSpec),
   DeletePiece(PieceId),
 
-  ResetPlayerAccesses { players: Vec<PlayerId> },
-  ReportPlayerAccesses { players: Vec<PlayerId> },
+  ResetPlayerAccess(PlayerId),
+  RedeliverPlayerAccess(PlayerId),
   SetFixedPlayerAccess { player: PlayerId, token: RawToken },
+  // xxx ^ immpl should check that PlayerState mentions Fixed
 
   AddPlayer(MgmtPlayerDetails),
   UpdatePlayer(MgmtPlayerDetails),
@@ -109,7 +98,12 @@ pub enum MgmtGameResponse {
   Pieces(Vec<MgmtGamePieceInfo>),
 
   AddPlayer(PlayerId),
-  PlayerAccessTokens(Vec<Vec<RawToken>>),
+  PlayerAccessToken(Option<AccessTokenReport>),
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+pub struct AccessTokenReport {
+  pub url: String,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
