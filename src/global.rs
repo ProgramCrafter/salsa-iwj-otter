@@ -25,12 +25,7 @@ pub struct RawTokenVal(str);
 
 // ---------- public data structure ----------
 
-#[derive(Debug,Serialize,Deserialize)]
-#[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
-pub struct InstanceName {
-  pub scope: ManagementScope,
-  pub scoped_name: String,
-}
+pub type InstanceName = ScopedName;
 
 #[derive(Debug,Clone)]
 pub struct InstanceRef (Arc<Mutex<InstanceContainer>>);
@@ -56,13 +51,6 @@ pub struct ModifyingPieces(());
 #[serde(transparent)]
 pub struct Pieces (pub(in crate::global) ActualPieces);
 type ActualPieces = DenseSlotMap<PieceId,PieceState>;
-
-#[derive(Debug,Clone,Deserialize,Serialize)]
-#[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
-pub enum ManagementScope {
-  Server,
-  Unix { user : String /* username, so filename-safe */ },
-}
 
 #[derive(Debug)] 
 pub struct Client {
@@ -339,7 +327,7 @@ impl Instance {
       );
   }
 
-  pub fn list_names(scope: Option<&ManagementScope>)
+  pub fn list_names(scope: Option<&AccountScope>)
                     -> Vec<Arc<InstanceName>> {
     let games = GLOBAL.games.read().unwrap();
     let out : Vec<Arc<InstanceName>> =
@@ -609,14 +597,12 @@ enum SavefilenameParseResult {
 }
 
 fn savefilename(name: &InstanceName, prefix: &str, suffix: &str) -> String {
-  let scope_prefix = { use ManagementScope::*; match &name.scope {
-    Server => format!(""),
-    Unix{user} => { format!("{}:", user) },
-  } };
-  [ config().save_directory.as_str(), &"/", prefix, scope_prefix.as_ref() ]
+  const ENCODE : percent_encoding::AsciiSet =
+    percent_encoding::NON_ALPHANUMERIC.remove(b':');
+
+  [ config().save_directory.as_str(), &"/", prefix ]
     .iter().map(Deref::deref)
-    .chain( utf8_percent_encode(&name.scoped_name,
-                                &percent_encoding::NON_ALPHANUMERIC) )
+    .chain( utf8_percent_encode(&format!("{}", name), &ENCODE ))
     .chain([ suffix ].iter().map(Deref::deref))
     .collect()
 }
@@ -632,21 +618,14 @@ fn savefilename_parse(leaf: &[u8]) -> SavefilenameParseResult {
   };
   let after_ftype_prefix = rhs;
   let rhs = str::from_utf8(rhs)?;
-  let (rhs, scope) = match rhs.find(':') {
-    None => {
-      (rhs, ManagementScope::Server)
-    },
-    Some(colon) => {
-      let (lhs, rhs) = rhs.split_at(colon);
-      assert_eq!(rhs.chars().next(), Some(':'));
-      (rhs, ManagementScope::Unix { user: lhs.to_owned() })
-    },
-  };
   if rhs.rfind('.').is_some() { return TempToDelete }
-  let scoped_name = percent_decode_str(rhs).decode_utf8()?.into();
+
+  let name : String = percent_decode_str(rhs).decode_utf8()?.into();
+  let name = ScopedName::from_str(&name)?;
+
   GameFile {
     access_leaf : [ b"a-", after_ftype_prefix ].concat(),
-    name : InstanceName { scope, scoped_name },
+    name,
   }
 }
 

@@ -14,6 +14,7 @@ use std::cell::Cell;
 type E = anyhow::Error;
 type Insn = MgmtGameInstruction;
 type Resp = MgmtGameResponse;
+type AS = AccountScope;
 
 use argparse::action::ParseResult::Parsed;
 
@@ -59,7 +60,7 @@ const EXIT_DISASTER : i32 = 16;
 
 #[derive(Debug,Default)]
 struct MainOpts {
-  scope: Option<ManagementScope>,
+  scope: Option<AccountScope>,
   socket_path: Option<String>,
   verbose: i32,
 }
@@ -147,10 +148,10 @@ fn main() {
 
     let mut scope = ap.refer(&mut ma.opts.scope);
     scope.add_option(&["--scope-server"],
-                     StoreConst(Some(ManagementScope::Server)),
+                     StoreConst(Some(AS::Server)),
                      "use Server scope");
     scope.metavar("USER").add_option(&["--scope-unix-user"],
-                     MapStore(|user| Ok(Some(ManagementScope::Unix {
+                     MapStore(|user| Ok(Some(AS::Unix {
                        user: user.into()
                      }))),
                      "use specified unix user scope");
@@ -174,7 +175,7 @@ fn main() {
       let user = env::var("USER").map_err(|e| ArgumentParseError(
         format!("--scope-unix needs USER env var: {}", &e)
       ))?;
-      *scope = Some(ManagementScope::Unix { user });
+      *scope = Some(AS::Unix { user });
     }
     if ma.config_filename.is_some() || ma.opts.socket_path.is_none() {
       ServerConfig::read(ma.config_filename.as_ref().map(String::as_str))

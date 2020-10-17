@@ -25,6 +25,8 @@ use MgmtError::*;
 type ME = MgmtError;
 from_instance_lock_error!{MgmtError}
 
+type AS = AccountScope;
+
 const USERLIST : &str = "/etc/userlist";
 const CREATE_PIECES_MAX : u32 = 300;
 
@@ -69,7 +71,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         max_z: default(),
       };
 
-      let name = InstanceName {
+      let name = ScopedName {
         scope : cs.get_scope()?.clone(),
         scoped_name : name,
       };
@@ -94,7 +96,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     ListGames { all } => {
       let scope = if all == Some(true) {
         let _authorise : AuthorisedSatisfactory =
-          authorise_scope(cs, &ManagementScope::Server)?;
+          authorise_scope(cs, &AS::Server)?;
         None
       } else {
         let scope = cs.get_scope()?;
@@ -106,7 +108,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     },
 
     MgmtCommand::AlterGame { name, insns, how} => {
-      let name = InstanceName {
+      let name = ScopedName {
         scope: cs.get_scope()?.clone(),
         scoped_name: name
       };
@@ -228,9 +230,9 @@ fn execute_game_insn(cs: &CommandStream,
 
     SetFixedPlayerAccess { player, token } => {
       let authorised : AuthorisedSatisfactory =
-        authorise_scope(cs, &ManagementScope::Server)?;
+        authorise_scope(cs, &AS::Server)?;
       let authorised = match authorised.into_inner() {
-        ManagementScope::Server => Authorised::<RawToken>::authorise(),
+        AS::Server => Authorised::<RawToken>::authorise(),
         _ => panic!(),
       };
       ig.player_access_register_fixed(
@@ -419,7 +421,7 @@ impl UpdateHandler {
 struct CommandStream<'d> {
   euid : Result<Uid, ConnectionEuidDiscoverEerror>,
   desc : &'d str,
-  scope : Option<ManagementScope>,
+  scope : Option<AccountScope>,
   chan : MgmtChannel,
   who: Who,
 }
@@ -443,7 +445,7 @@ impl CommandStream<'_> {
   }
 
   #[throws(MgmtError)]
-  fn get_scope(&self) -> &ManagementScope {
+  fn get_scope(&self) -> &AccountScope {
     self.scope.as_ref().ok_or(NoScope)?
   }
 }
@@ -554,31 +556,31 @@ impl CommandStream<'_> {
 }
 
 #[throws(MgmtError)]
-fn authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
+fn authorise_scope(cs: &CommandStream, wanted: &AccountScope)
                    -> AuthorisedSatisfactory {
   do_authorise_scope(cs, wanted)
     .map_err(|e| cs.map_auth_err(e))?
 }
 
 #[throws(AuthorisationError)]
-fn do_authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
+fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
                    -> AuthorisedSatisfactory {
-  type AS<T> = (T, ManagementScope);
+  type AS<T> = (T, AccountScope);
 
   match &wanted {
 
-    ManagementScope::Server => {
+    AccountScope::Server => {
       let y : AS<
         Authorised<(Passwd,Uid)>,
       > = {
         let ok = cs.authorised_uid(None,None)?;
         (ok,
-         ManagementScope::Server)
+         AccountScope::Server)
       };
       return y.into()
     },
 
-    ManagementScope::Unix { user: wanted } => {
+    AccountScope::Unix { user: wanted } => {
       let y : AS<
         Authorised<(Passwd,Uid)>,
       > = {
@@ -633,7 +635,7 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &ManagementScope)
         let info = xinfo.as_deref();
         let ok = cs.authorised_uid(authorised_for, info)?;
         (ok,
-         ManagementScope::Unix { user: pwent.name })
+         AccountScope::Unix { user: pwent.name })
       };
       y.into()
     },
@@ -655,21 +657,21 @@ mod authproofs {
 
   pub struct Authorised<A> (PhantomData<A>);
   //struct AuthorisedScope<A> (Authorised<A>, ManagementScope);
-  pub struct AuthorisedSatisfactory (ManagementScope);
+  pub struct AuthorisedSatisfactory (AccountScope);
 
   impl AuthorisedSatisfactory {
-    pub fn into_inner(self) -> ManagementScope { self.0 }
+    pub fn into_inner(self) -> AccountScope { self.0 }
   }
 
   impl<T> Authorised<T> {
     pub fn authorise() -> Authorised<T> { Authorised(PhantomData) }
   }
 
-  impl<T> From<(Authorised<T>, ManagementScope)> for AuthorisedSatisfactory {
-    fn from((_,s): (Authorised<T>, ManagementScope)) -> Self { Self(s) }
+  impl<T> From<(Authorised<T>, AccountScope)> for AuthorisedSatisfactory {
+    fn from((_,s): (Authorised<T>, AccountScope)) -> Self { Self(s) }
   }
-  impl<T,U> From<((Authorised<T>, Authorised<U>), ManagementScope)> for AuthorisedSatisfactory {
-    fn from(((..),s): ((Authorised<T>, Authorised<U>), ManagementScope)) -> Self { Self(s) }
+  impl<T,U> From<((Authorised<T>, Authorised<U>), AccountScope)> for AuthorisedSatisfactory {
+    fn from(((..),s): ((Authorised<T>, Authorised<U>), AccountScope)) -> Self { Self(s) }
   }
 
   impl From<anyhow::Error> for AuthorisationError {

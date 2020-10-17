@@ -25,4 +25,5 @@ pub mod mgmtchannel;
 pub mod debugreader;
 pub mod shapelib;
 pub mod tz;
+pub mod accounts;
 #[path="slotmap-slot-idx.rs"] pub mod slotmap_slot_idx;

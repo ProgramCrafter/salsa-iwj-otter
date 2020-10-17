@@ -7,7 +7,7 @@ use crate::imports::*;
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtCommand {
   Noop,
-  SetScope(ManagementScope),
+  SetScope(AccountScope),
   CreateGame { name: String, insns: Vec<MgmtGameInstruction> },
   ListGames { all: Option<bool>, },
   AlterGame {
