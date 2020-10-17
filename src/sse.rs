@@ -218,11 +218,11 @@ pub fn content(iad : InstanceAccessDetails<ClientId>, gen: Generation)
     let _g = &mut g.gs;
     let cl = g.clients.byid(client)?;
     let player = cl.player;
-    trace!("updates content iad={:?} player={:?} cl={:?} updates={:?}",
-           &iad, &player, &cl, &g.updates);
+    trace!("updates content iad={:?} player={:?} cl={:?}",
+           &iad, &player, &cl);
     let gref = iad.gref.clone();
 
-    let log = &g.updates.byid(player)?.read_log();
+    let log = &g.iplayers.byid(player)?.u.read_log();
 
     let to_send = match log.into_iter().rev()
       .find(|(_,update)| update.gen <= gen) {

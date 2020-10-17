@@ -54,10 +54,13 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
   match cmd {
     Noop => Fine,
 
-    SetScope(wanted_scope) => {
+    SetAccount(wanted_account) => {
       let authorised : AuthorisedSatisfactory =
-        authorise_scope(cs, &wanted_scope)?;
-      cs.scope = Some(authorised.into_inner());
+        authorise_scope(cs, &wanted_account.scope)?;
+      cs.account = ScopedName {
+        scope: Some(authorised.into_inner()),
+        scoped_nmae: wanted_account.scoped_name,
+      };
       Fine
     },
 
@@ -212,23 +215,22 @@ fn execute_game_insn(cs: &CommandStream,
       Resp::Info(info)
     }),
 
-    ResetPlayerAccesses { players } => {
-      let tokens = ig.players_access_reset(&players)?
-        .drain(0..).map(|token| vec![token]).collect();
+    ResetPlayerAccess(player) => {
+      let token = ig.players_access_reset(player)?;
       (U{ pcs: vec![],
           log: vec![],
           raw: None },
-       PlayerAccessTokens(tokens))
+       PlayerAccessToken(token))
     }
 
-    ReportPlayerAccesses { players } => {
-      let tokens = ig.players_access_report(&players)?;
+    RedeliverPlayerAccess(player) => {
+      let token = ig.players_access_redeliver(player)?;
       (U{ pcs: vec![],
           log: vec![],
           raw: None },
-       PlayerAccessTokens(tokens))
+       PlayerAccessToken(token))
     },
-
+/*
     SetFixedPlayerAccess { player, token } => {
       let authorised : AuthorisedSatisfactory =
         authorise_scope(cs, &AS::Server)?;
@@ -244,6 +246,7 @@ fn execute_game_insn(cs: &CommandStream,
           raw: None},
        Fine)
     }
+*/
 
     DeletePiece(piece) => {
       let modperm = ig.modify_pieces();
@@ -422,7 +425,7 @@ impl UpdateHandler {
 struct CommandStream<'d> {
   euid : Result<Uid, ConnectionEuidDiscoverEerror>,
   desc : &'d str,
-  scope : Option<AccountScope>,
+  account : Option<AccountName>,
   chan : MgmtChannel,
   who: Who,
 }

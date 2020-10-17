@@ -110,14 +110,14 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   cl.lastseen = Instant::now();
   let player = cl.player;
   let gs = &mut g.gs;
-  let g_pieces = &g.pieces;
+  let ipieces = &g.ipieces;
   let _ = gs.players.byid(player)?;
   let lens = TransparentLens { };
   let piece = lens.decode_visible_pieceid(form.piece, player);
   use ApiPieceOpError::*;
 
   match (||{
-    let p = g_pieces.get(piece).ok_or(OnlineError::PieceGone)?;
+    let p = ipieces.get(piece).ok_or(OnlineError::PieceGone)?;
     let pc = gs.pieces.byid_mut(piece)?;
 
     let q_gen = form.gen;

@@ -126,11 +126,11 @@ pub struct PlayerUpdatesBuildContext {
 }
 
 impl PlayerUpdatesBuildContext {
-  pub fn new(&self, tz: Timezone) -> PlayerUpdates {
+  pub fn new(&self) -> PlayerUpdates {
     let mut log = StableIndexVecDeque::with_capacity(50);
     log.push_back(self.u1.clone());
     let cv = Default::default();
-    PlayerUpdates { log, tz, cv }
+    PlayerUpdates { log, cv }
   }
 }
 

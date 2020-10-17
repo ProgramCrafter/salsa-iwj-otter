@@ -33,23 +33,23 @@ pub struct InstanceRef (Arc<Mutex<InstanceContainer>>);
 pub struct Instance {
   pub name : Arc<InstanceName>,
   pub gs : GameState,
-  pub pieces : PiecesLoaded,
+  pub ipieces : PiecesLoaded,
   pub clients : DenseSlotMap<ClientId,Client>,
-  pub players : SecondarySlotMap<PlayerId, PlayerRecord>,
+  pub iplayers : SecondarySlotMap<PlayerId, PlayerRecord>,
   pub tokens_players : TokenRegistry<PlayerId>,
   pub tokens_clients : TokenRegistry<ClientId>,
 }
 
 pub struct PlayerRecord {
   pub u: PlayerUpdates,
-  pub st: PlayerState,
+  pub pst: PlayerState,
 }
 
+#[derive(Debug,Serialize,Deserialize)]
 pub struct PlayerState {
   pub account: AccountName,
   pub nick: String,
   pub tz: Timezone,
-  pub tokens_revealed: Vec<String>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -195,12 +195,7 @@ pub struct InstanceContainer {
 struct InstanceSaveAccesses<RawTokenStr, PiecesLoadedRef> {
   pieces: PiecesLoadedRef,
   tokens_players: Vec<(RawTokenStr, PlayerId)>,
-  aplayers: SecondarySlotMap<PlayerId, PlayerSaveAccess>,
-}
-
-#[derive(Debug,Default,Serialize,Deserialize)]
-struct PlayerSaveAccess {
-  tz: Timezone,
+  aplayers: SecondarySlotMap<PlayerId, PlayerState>,
 }
 
 display_as_debug!{InstanceLockError}
@@ -267,9 +262,9 @@ impl Instance {
     let g = Instance {
       name : name.clone(),
       gs,
-      pieces : PiecesLoaded(Default::default()),
+      ipieces : PiecesLoaded(Default::default()),
       clients : Default::default(),
-      updates : Default::default(),
+      iplayers : Default::default(),
       tokens_players : Default::default(),
       tokens_clients : Default::default(),
     };
@@ -371,17 +366,30 @@ impl InstanceGuard<'_> {
                     logentry: LogEntry) -> (PlayerId, LogEntry) {
     // saving is fallible, but we can't attempt to save unless
     // we have a thing to serialise with the player in it
-    if self.c.g.gs.players.values().any(|pl| pl.nick == newplayer.nick) {
+    if self.c.g.gs.players.values().any(|a| a == &newplayer.account) {
       Err(MgmtError::AlreadyExists)?;
     }
-    let player = self.c.g.gs.players.insert(newplayer);
-    self.save_game_now().map_err(|e|{
+    if self.c.g.iplayers.values().any(|pl| pl.pst.nick == newplayer.nick) {
+      Err(MgmtError::NickCollision)?;
+    }
+    let player = self.c.g.gs.players.insert(newplayer.account.clone());
+    let u = PlayerUpdates::new_begin(&self.c.g.gs).new();
+    let record = PlayerRecord { u, pst: newplayer };
+    self.c.g.iplayers.insert(player, record);
+
+    (||{
+      self.save_game_now()?;
+      self.save_access_now()?;
+      Ok(())
+    })().map_err(|e|{
+      self.c.g.iplayers.remove(player);
       self.c.g.gs.players.remove(player);
+      // Perhaps we leave the g-* file with this player recorded,
+      // but this will be ignored when we load.
       e
     })?;
     (||{
-      let pu_bc = PlayerUpdates::new_begin(&self.c.g.gs);
-      self.c.g.updates.insert(player, pu_bc.new(tz));
+      
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
     (player, logentry)
   }
@@ -470,8 +478,9 @@ impl InstanceGuard<'_> {
         if remove { clients_to_remove.insert(k); }
         !remove
       });
-      if let Some(mut updates) = self.updates.remove(oldplayer) {
-        updates. push(PreparedUpdate {
+      if let Some(PlayerRecord { u: mut updates, .. })
+        = self.iplayers.remove(oldplayer) {
+        updates.push(PreparedUpdate {
           gen: self.c.g.gs.gen,
           when: Instant::now(),
           us : vec![ PreparedUpdateEntry::Error(
@@ -497,6 +506,8 @@ impl InstanceGuard<'_> {
                                       player: PlayerId, token: RawToken,
                                       _safe: Authorised<RawToken>
   ) {
+    // xxx call this function when access changes
+
     self.tokens_deregister_for_id(|id:PlayerId| id==player);
     let iad = InstanceAccessDetails {
       gref : self.gref.clone(),
@@ -507,27 +518,47 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(MgmtError)]
-  pub fn players_access_reset(&mut self, players: &[PlayerId])
-                             -> Vec<RawToken> {
-      // xxx disconnect everyone when token changes
-    for &player in players {
-      self.c.g.gs.players.get(player).ok_or(MgmtError::PlayerNotFound)?;
-    }
+  pub fn player_access_reset(&mut self, player: PlayerId)
+                             -> Option<AccessTokenReport> {
+    let pst = self.c.g.players.get(player)
+      .ok_or(MgmtError::PlayerNotFound)?
+      .pst;
     self.save_access_now()?;
-    let mut tokens = vec![];
-    for &player in players {
-      let iad = InstanceAccessDetails {
-        gref : self.gref.clone(),
-        ident : player
-      };
-      let token = RawToken::new_random();
-      self.token_register(token.clone(), iad);
-      tokens.push(token);
-    }
-    self.save_access_now()?;
-    // If the save fails, we don't return the token so no-one can use
-    // it.  Therefore we don't need to bother deleting it.
-    tokens
+
+    let access = {
+      let acct = AccountRecord::lookup_mut(&pst.account)?
+        .ok_or(MgmtError::AccountNotFound)?;
+      let access = acct.access;
+      let desc = access.describe_html();
+      let now = Timestamp::now();
+      access.entry(desc)
+        .or_insert(TokenRevelation {
+          latest: now,
+          earliest: now,
+        })
+        .latest = now;
+      access.clone()
+    };
+
+    let token = access
+      .override_token()
+      .unwrap_or_else(||{
+        RawToken::new_random()
+        // xxx disconnect everyone else
+      });
+
+    let iad = InstanceAccessDetails {
+      gref : self.gref.clone(),
+      ident : player
+    };
+    self.token_register(token.clone(), iad);
+
+    let report = AccessTokenReport {
+      url: format!("http://localhost:8000/{}", token.url), // xxx
+    };
+    let report = access
+      .server_deliver(&pst, &report);
+    report.cloned()
   }
 
   #[throws(MgmtError)]
@@ -692,9 +723,9 @@ impl InstanceGuard<'_> {
           .flatten()
           .collect()
       };
-      let aplayers = s.c.g.updates.iter().map(
-        |(player, PlayerUpdates { tz, .. })|
-        (player, PlayerSaveAccess { tz: tz.clone() })
+      let aplayers = s.c.g.iplayers.iter().map(
+        |(player, PlayerRecord { pst, .. })|
+        (player, pst)
       ).collect();
       let isa = InstanceSaveAccesses { pieces, tokens_players, aplayers };
       rmp_serde::encode::write_named(w, &isa)
@@ -729,7 +760,7 @@ impl InstanceGuard<'_> {
       }
     }
     let InstanceSaveAccesses::<String,ActualPiecesLoaded>
-    { mut tokens_players, mut pieces, mut aplayers }
+    { mut tokens_players, mut ipieces, mut aplayers }
     = Self::load_something(&name, "a-")
       .or_else(|e| {
         if let InternalError::Anyhow(ae) = &e {
@@ -742,31 +773,44 @@ impl InstanceGuard<'_> {
         Err(e)
       })?;
 
-    let gs = {
-      let mut gs : GameState = Self::load_something(&name, "g-")?;
-      for mut p in gs.pieces.values_mut() {
-        p.lastclient = Default::default();
-      }
-      gs.pieces.0.retain(|k,_v| pieces.contains_key(k));
-      pieces.retain(|k,_v| gs.pieces.0.contains_key(k));
+    let mut gs : GameState = Self::load_something(&name, "g-")?;
 
-      gs
-    };
-
-    let mut updates : SecondarySlotMap<_,_> = Default::default();
-    let pu_bc = PlayerUpdates::new_begin(&gs);
-    for player in gs.players.keys() {
-      let aplayer = aplayers.remove(player).unwrap_or_default();
-      updates.insert(player, pu_bc.new(aplayer.tz));
+    fn discard_mismatches<K:slotmap::Key, V1, V2>(
+      primary:   &mut DenseSlotMap<K, V1>,
+      secondary: &mut SecondarySlotMap<K, V2>,
+    ) {
+      primary.retain(|k,_v| secondary.contains_key(k));
+      secondary.retain(|k,_v| primary.contains_key(k));
     }
+
+    discard_mismatches(&mut gs.players, &mut aplayers);
+    discard_mismatches(&mut gs.pieces,  &mut ipieces);
+  
+    let pu_bc = PlayerUpdates::new_begin(&gs);
+
+    let iplayers = {
+      let a = aplayers;
+      a.drain()
+    }.map(|pst| {
+      let u = pu_bc.new();
+      PlayerRecord { u, pst }
+    }).collect();
+
+    for mut p in gs.pieces.values_mut() {
+      p.lastclient = Default::default();
+      if let Some(held) = p.held {
+        if !gs.players.has_key(held) { p.held = None }
+      }
+    }
+
     let name = Arc::new(name);
     tokens_players.retain(
       |&(_,player)| gs.players.contains_key(player)
     );
 
     let g = Instance {
-      gs, updates,
-      pieces: PiecesLoaded(pieces),
+      gs, iplayers,
+      ipieces: PiecesLoaded(ipieces),
       name: name.clone(),
       clients : Default::default(),
       tokens_clients : Default::default(),

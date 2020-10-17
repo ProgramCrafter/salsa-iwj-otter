@@ -4,7 +4,8 @@
 
 use crate::imports::*;
 
-use parking_lot::{RwLock, const_rwlock};
+use parking_lot::{RwLock, const_rwlock,
+                  MappedRwLockReadGuard, MappedRwLockWriteGuard};
 
 pub type AccountName = ScopedName;
 
@@ -17,7 +18,7 @@ pub enum AccountScope {
 
 type AS = AccountScope;
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 #[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
 #[derive(DeserializeFromStr,SerializeDisplay)]
 pub struct ScopedName {
@@ -79,8 +80,30 @@ impl FromStr for ScopedName {
 pub struct AccountRecord {
   pub nick: String,
   pub timezone: String,
-  pub access: Box<dyn PlayerAccessSpec>,
+  pub access: Arc<dyn PlayerAccessSpec>,
+  pub tokens_revealed: HashMap<Html, TokenRevelation>,
+}
+
+#[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
+pub struct TokenRevelation {
+  latest: Timestamp,
+  earliest: Timestamp,
 }
 
 static ACCOUNTS : RwLock<Option<HashMap<AccountName, AccountRecord>>>
-  = const_rwlock_new(None);
+  = const_rwlock(None);
+
+impl AccountRecord {
+  fn lookup(account: AccountName)
+            -> Option<MappedRwLockReadGuard<'static, AccountRecord>> {
+    ACCOUNTS.read().map(
+      |accounts| accounts?.get(account)
+    )
+  }
+  fn lookup_mut(account: AccountName)
+            -> Option<MappedRwLockWriteGuard<'static, AccountRecord>> {
+    ACCOUNTS.write().map(
+      |accounts| accounts?.get(account)
+    )
+  }
+}

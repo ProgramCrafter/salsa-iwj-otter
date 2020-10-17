@@ -10,10 +10,11 @@ use index_vec::{define_index_type,IndexVec};
 use crate::gamestate::PieceSpec;
 use std::fmt::Debug;
 use std::collections::hash_set::HashSet;
-use implementation::PlayerAccessSpec;
 use thiserror::Error;
 use crate::error::display_as_debug;
 use crate::accounts::AccountName;
+
+pub use implementation::PlayerAccessSpec;
 
 //---------- common types ----------
 
@@ -234,14 +235,18 @@ pub mod implementation {
 
   #[typetag::serde(tag="access")]
   pub trait PlayerAccessSpec : Debug {
-    fn client_mgi(&self, _player: &PlayerId) -> Option<MgmtGameInstruction> {
+    fn override_token(&self) -> Option<&RawToken> {
+      // xxx check this on setting access
       None
     }
-    fn server_deliver(&self, ps: &PlayerState, token: &AccessTokenReport)
+    fn client_mgi(&self, _player: PlayerId) -> Option<MgmtGameInstruction> {
+      None
+    }
+    fn server_deliver(&self, pst: &PlayerState, token: &AccessTokenReport)
                       -> Result<Option<&AccessTokenReport>, AE> {
       Ok(None)
     }
-    fn client_deliver(&self, ps: &PlayerState, token: &AccessTokenReport)
+    fn client_deliver(&self, pst: &PlayerState, token: &AccessTokenReport)
                       -> Result<(),AE> {
       panic!()
     }
@@ -253,6 +258,9 @@ pub mod implementation {
 
   #[typetag::serde]
   impl PlayerAccessSpec for FixedToken {
+    fn override_token(&self) -> Option<&RawToken> {
+      Some(self.token)
+    }
     fn client_mgi(&self, player: PlayerId) -> Option<MgmtGameInstruction> {
       Some(Insn::SetFixedPlayerAccess {
         player,
@@ -263,14 +271,15 @@ pub mod implementation {
 
   #[typetag::serde]
   impl PlayerAccessSpec for UrlOnStdout {
-    #[throws(AE)]
     fn client_mgi(&self, player: PlayerId) -> Option<MgmtGameInstruction> {
       Some(Insn::ReportPlayerAccesses(player))
     }
+    #[throws(AE)]
     fn server_deliver(&self, ps: &PlayerState, token: &AccessTokenReport)
-                      -> Result<Option<&AccessTokenReport>, AE> {
+                      -> Option<&AccessTokenReport> {
       Some(token)
     }
+    #[throws(AE)]
     fn client_deliver(&self, ps: &PlayerState, token: &AccessTokenReport) {
       println!("access account={} nick={:?} url:\n{}",
                &ps.account, &ps.nick, token.url);

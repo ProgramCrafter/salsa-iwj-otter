@@ -71,9 +71,8 @@ pub enum MgmtGameInstruction {
   DeletePiece(PieceId),
 
   ResetPlayerAccess(PlayerId),
+  // xxx ^ prevent use of Fixed when not wanted
   RedeliverPlayerAccess(PlayerId),
-  SetFixedPlayerAccess { player: PlayerId, token: RawToken },
-  // xxx ^ immpl should check that PlayerState mentions Fixed
 
   AddPlayer(MgmtPlayerDetails),
   UpdatePlayer(MgmtPlayerDetails),
@@ -140,9 +139,11 @@ pub enum MgmtError {
   AuthorisationError,
   NoScope,
   AlreadyExists,
+  NickCollision,
   GameBeingDestroyed,
   GameNotFound,
   GameCorrupted,
+  AccountNotFound,
   PlayerNotFound,
   PieceNotFound,
   LimitExceeded,
