@@ -497,6 +497,7 @@ impl InstanceGuard<'_> {
   #[throws(MgmtError)]
   pub fn players_access_reset(&mut self, players: &[PlayerId])
                              -> Vec<RawToken> {
+      // xxx disconnect everyone when token changes
     for &player in players {
       self.c.g.gs.players.get(player).ok_or(MgmtError::PlayerNotFound)?;
     }

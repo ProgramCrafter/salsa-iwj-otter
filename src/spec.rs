@@ -55,23 +55,26 @@ display_as_debug!{SpecError}
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct TableSpec {
-  pub players : Vec<PlayerSpec>,
-  pub timezone: Option<String>, // default for player timezones
+  pub players : Vec<ScopedName>,
+  pub acl : Acl<TablePermission>
 }
 
-#[derive(Debug,Serialize,Deserialize)]
-pub struct PlayerSpec {
-  pub nick: String,
-  pub timezone: Option<String>,
-  #[serde(flatten)]
-  pub access: Option<Box<dyn PlayerAccessSpec>>,
+pub type Acl<Perm> = Vec<AclEntry<Perm>>;
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct AclEntry<Perm> {
+  pub account_glob: String,
+  pub allow: HashSet<Perm>,
+  pub deny: HashSet<Perm>,
 }
 
-#[derive(Debug,Serialize,Deserialize)]
-struct FixedToken { token: RawToken }
-
-#[derive(Debug,Serialize,Deserialize)]
-struct TokenOnStdout;
+#[derive(Debug,Clone,Copy,Serialize,Deserialize)]
+enum TablePermission {
+  AddPlayer,
+  ChangePieces,
+  RemovePlayer,
+  ChangeACL,
+}
 
 //---------- Game TOML file ----------
 

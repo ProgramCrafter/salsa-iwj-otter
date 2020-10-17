@@ -7,18 +7,61 @@ use crate::imports::*;
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtCommand {
   Noop,
-  SetScope(AccountScope),
-  CreateGame { name: String, insns: Vec<MgmtGameInstruction> },
-  ListGames { all: Option<bool>, },
+
+  CreateAccont(AccountDetails),
+  UpdateAccont(AccountDetails),
+  DeleteAccount(AccountDetails),
+
+  SetAccount(ScopedName),
+
+  CreateGame {
+    game: ScopedName,
+    insns: Vec<MgmtGameInstruction>,
+  },
+  ListGames {
+    all: Option<bool>, // in same scope by default
+  },
   AlterGame {
-    // todo option scope, access control
-    name: String, insns: Vec<MgmtGameInstruction>,
+    game: ScopedName,
+    insns: Vec<MgmtGameInstruction>,
     how: MgmtGameUpdateMode,
   },
+
   LibraryListByGlob {
     glob: shapelib::ItemSpec,
   },
 }
+
+//---------- Accounts file ----------
+
+#[derive(Debug,Serialize,Deserialize)]
+pub struct AccountDetails {
+  pub account: ScopedName,
+  pub nick: String,
+  pub timezone: Option<String>,
+  #[serde(flatten)]
+  pub access: Option<Box<dyn PlayerAccessSpec>>,
+//  pub invite: Acl<AccountPerm>,   todo
+}
+
+//#[derive(Debug,Clone,Copy,Serialize,Deserialize)]
+//enum AccountPerm {
+//  InviteToGame,
+//  GameRunnerResetToken,
+//}
+
+#[derive(Debug,Serialize,Deserialize)]
+struct FixedToken { token: RawToken }
+
+#[derive(Debug,Serialize,Deserialize)]
+struct TokenOnStdout;
+
+//#[derive(Debug,Serialize,Deserialize)]
+//struct TokenByEmail { email: String };
+// xxx ^ implement this
+// xxx ^ 
+
+
 
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtResponse {
@@ -39,21 +82,23 @@ pub enum MgmtGameInstruction {
   AddPieces(PiecesSpec),
   DeletePiece(PieceId),
 
-  AddPlayer(MgmtPlayerState),
-  RemovePlayer(PlayerId),
   ResetPlayerAccesses { players: Vec<PlayerId> },
   ReportPlayerAccesses { players: Vec<PlayerId> },
   SetFixedPlayerAccess { player: PlayerId, token: RawToken },
+
+  AddPlayer(MgmtPlayerDetails),
+  UpdatePlayer(MgmtPlayerDetails),
+  RemovePlayer(ScopedName),
+  BlockPlayer(String),
 }
 
-// xxx self-add players
-// xxx permission system
 // xxx facilitator name?
 
 #[derive(Debug,Serialize,Deserialize)]
-pub struct MgmtPlayerState {
+pub struct MgmtPlayerDetails {
+  pub account: ScopedName,
   pub timezone: Option<String>,
-  #[serde(flatten)] pub st: PlayerState,
+  pub nick: Option<String>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -70,7 +115,13 @@ pub enum MgmtGameResponse {
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct MgmtGameResponseGameInfo {
   pub table_size: Pos,
-  pub players: PlayerMap,
+  pub players: DenseSlotMap<PlayerId, MgmtPlayerInfo>,
+}
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct MgmtPlayerInfo {
+  pub account: ScopedName,
+  pub nick: String,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]

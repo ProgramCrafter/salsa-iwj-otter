@@ -182,6 +182,7 @@ fn execute_game_insn(cs: &CommandStream,
     },
 
     Insn::ListPieces => readonly(ig, {
+      // xxx put something in log
       let pieces = ig.gs.pieces.iter().map(|(piece,p)|{
         let &PieceState { pos, face, .. } = p;
         let pinfo = ig.pieces.get(piece)?;
