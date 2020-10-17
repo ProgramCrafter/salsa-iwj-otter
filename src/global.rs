@@ -1102,7 +1102,9 @@ fn global_expire_old_logs() {
   drop(read);
 
   for gref in want_expire.drain(..) {
-    gref.lock_even_poisoned().g.gs.do_expire_old_logs(cutoff);
+    let mut g = gref.lock_even_poisoned();
+    info!("expiring old log entries in {:?}", &g.g.name);
+    g.g.gs.do_expire_old_logs(cutoff);
   }
 }
 
