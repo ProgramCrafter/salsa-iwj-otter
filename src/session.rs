@@ -94,7 +94,8 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
     }
 
     let pl = ig.gs.players.byid_mut(player)?;
-    let tz = &ig.updates.byid(player)?.tz;
+    let ipl = ig.iplayers.byid(player)?;
+    let tz = &ipl.pst.tz;
     let mut pieces : Vec<_> = ig.gs.pieces.iter().collect();
 
     pieces.sort_by_key(|(_,pr)| &pr.zlevel);
@@ -104,7 +105,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
         id : make_pieceid_visible(gpid),
         face : pr.face,
       };
-      let p = if let Some(p) = ig.pieces.get(gpid) { p }
+      let p = if let Some(p) = ig.ipieces.get(gpid) { p }
       else { continue /* was deleted */ };
       let defs = p.make_defs(&pri)?;
       alldefs.push((pri.id, defs));
@@ -137,10 +138,11 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       player,
       defs : alldefs,
       uses,
-      nick : pl.nick.clone(),
+      nick : ipl.pst.nick.clone(),
       load : serde_json::to_string(&DataLoad {
         players : load_players,
       }).map_err(|e| InternalError::JSONEncode(e))?,
+      // xxx show account accesses
     };
     trace!("SessionRenderContext {:?}", &src);
     (src, client)

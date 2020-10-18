@@ -100,7 +100,7 @@ pub enum MgmtGameResponse {
   PlayerAccessToken(Option<AccessTokenReport>),
 }
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct AccessTokenReport {
   pub url: String,
 }
@@ -151,6 +151,7 @@ pub enum MgmtError {
   ZCoordinateOverflow(#[from] zcoord::Overflow),
   BadGlob { pat: String, msg: String },
   BadSpec(#[from] SpecError),
+  TokenDeliveryFailed(#[from] TokenDeliveryError),
 }
 impl Display for MgmtError {
   #[throws(fmt::Error)]
@@ -158,6 +159,8 @@ impl Display for MgmtError {
     use MgmtError::*;
     match self {
       ServerFailure(s) => write!(f, "ServerFailure: {}", &s)?,
+      TokenDeliveryFailed(tde) =>
+        write!(f, "access token delivery failed: {}", &tde)?,
       _ => <Self as Debug>::fmt(self,f)?,
     }
   }

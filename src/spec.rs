@@ -13,6 +13,7 @@ use std::collections::hash_set::HashSet;
 use thiserror::Error;
 use crate::error::display_as_debug;
 use crate::accounts::AccountName;
+use std::hash::Hash;
 
 pub use implementation::PlayerAccessSpec;
 
@@ -65,13 +66,14 @@ pub struct TableSpec {
 pub type Acl<Perm> = Vec<AclEntry<Perm>>;
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
-pub struct AclEntry<Perm> {
+pub struct AclEntry<Perm: Eq + Hash> {
   pub account_glob: String,
   pub allow: HashSet<Perm>,
   pub deny: HashSet<Perm>,
 }
 
 #[derive(Debug,Clone,Copy,Serialize,Deserialize)]
+#[derive(Hash,Eq,PartialEq,Ord,PartialOrd)]
 enum TablePermission {
   AddPlayer,
   ChangePieces,
@@ -221,6 +223,8 @@ pub mod implementation {
   use crate::imports::*;
   type Insn = crate::commands::MgmtGameInstruction;
 
+  type TDE = TokenDeliveryError;
+
   pub fn raw_token_debug_as_str(s: &str, f: &mut fmt::Formatter)
                                 -> fmt::Result {
     let len = min(5, s.len() / 2);
@@ -243,12 +247,16 @@ pub mod implementation {
       None
     }
     fn server_deliver(&self, pst: &PlayerState, token: &AccessTokenReport)
-                      -> Result<Option<&AccessTokenReport>, AE> {
+                      -> Result<Option<&AccessTokenReport>, TDE> {
       Ok(None)
     }
     fn client_deliver(&self, pst: &PlayerState, token: &AccessTokenReport)
-                      -> Result<(),AE> {
+                      -> Result<(), TDE> {
       panic!()
+    }
+    fn describe_html(&self) -> Html {
+      let inner = Html::from_txt(&format!("{:?}", self));
+      Html(format!("<code>{}</code>", inner.0))
     }
   }
 
@@ -259,7 +267,7 @@ pub mod implementation {
   #[typetag::serde]
   impl PlayerAccessSpec for FixedToken {
     fn override_token(&self) -> Option<&RawToken> {
-      Some(self.token)
+      Some(&self.token)
     }
     fn client_mgi(&self, player: PlayerId) -> Option<MgmtGameInstruction> {
       Some(Insn::SetFixedPlayerAccess {
@@ -274,12 +282,12 @@ pub mod implementation {
     fn client_mgi(&self, player: PlayerId) -> Option<MgmtGameInstruction> {
       Some(Insn::ReportPlayerAccesses(player))
     }
-    #[throws(AE)]
+    #[throws(TDE)]
     fn server_deliver(&self, ps: &PlayerState, token: &AccessTokenReport)
                       -> Option<&AccessTokenReport> {
       Some(token)
     }
-    #[throws(AE)]
+    #[throws(TDE)]
     fn client_deliver(&self, ps: &PlayerState, token: &AccessTokenReport) {
       println!("access account={} nick={:?} url:\n{}",
                &ps.account, &ps.nick, token.url);

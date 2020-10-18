@@ -346,7 +346,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
     let (update, piece) = match (
       gs.pieces.byid_mut(piece),
-      self.g.pieces.get(piece),
+      self.g.ipieces.get(piece),
     ) {
       (Ok(pc), Some(p)) => {
         gs.max_z.update_max(&pc.zlevel.z);
@@ -435,7 +435,9 @@ impl<'r> Drop for PrepareUpdatesBuffer<'r> {
       let update = Arc::new(update);
       trace!("PrepareUpdatesBuffer update {:?}", &update);
 
-      for (_tplayer, tplupdates) in &mut self.g.updates {
+      for (_tplayer, PlayerRecord { u: tplupdates, .. })
+        in &mut self.g.iplayers
+      {
         tplupdates.push(update.clone());
       }
     }

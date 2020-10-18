@@ -15,12 +15,19 @@ struct ApiPiece<O : ApiPieceOp> {
   op : O,
 }
 
+struct ApiPieceOpArgs<'a> {
+  gs: &'a mut GameState,
+  player: PlayerId,
+  pst: &'a PlayerState,
+  piece: PieceId,
+  p: &'a dyn Piece,
+  iplayers: &'a SecondarySlotMap<PlayerId, PlayerRecord>,
+  lens: &'a dyn Lens /* used for LogEntry and PieceId but not Pos */
+}
+
 trait ApiPieceOp : Debug {
   #[throws(ApiPieceOpError)]
-  fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
-        p: &dyn Piece,
-        lens: &dyn Lens /* used for LogEntry and PieceId but not Pos */)
-        -> PieceUpdateFromOp;
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp;
 
   #[throws(OnlineError)]
   fn check_held(&self, pc: &PieceState, player: PlayerId) {
@@ -111,6 +118,8 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   let player = cl.player;
   let gs = &mut g.gs;
   let ipieces = &g.ipieces;
+  let iplayers = &g.iplayers;
+  let pst = &iplayers.byid(player)?.pst;
   let _ = gs.players.byid(player)?;
   let lens = TransparentLens { };
   let piece = lens.decode_visible_pieceid(form.piece, player);
@@ -127,7 +136,12 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
 
     if u_gen > q_gen { throw!(PieceOpError::Conflict) }
     form.op.check_held(pc,player)?;
-    let (wrc, update, logents) = form.op.op(gs,player,piece,p.as_ref(),&lens)?;
+    let (wrc, update, logents) =
+      form.op.op(ApiPieceOpArgs {
+        gs, player, pst, piece, iplayers,
+        p: p.as_ref(),
+        lens: &lens,
+      })?;
     Ok::<_,ApiPieceOpError>((wrc, update, logents))
   })() {
     Err(ReportViaUpdate(poe)) => {
@@ -171,8 +185,8 @@ fn api_grab(form : Json<ApiPiece<ApiPieceGrab>>)
 }
 impl ApiPieceOp for ApiPieceGrab {
   #[throws(ApiPieceOpError)]
-  fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
-        p: &dyn Piece, lens: &dyn Lens) -> PieceUpdateFromOp {
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
+    let ApiPieceOpArgs { gs,player,pst,piece,p,lens, .. } = a;
     let pl = gs.players.byid(player)?;
     let pc = gs.pieces.byid_mut(piece)?;
 
@@ -183,7 +197,7 @@ impl ApiPieceOp for ApiPieceGrab {
 
     let logent = LogEntry {
       html : Html(format!("{} grasped {}",
-                     &htmlescape::encode_minimal(&pl.nick),
+                     &htmlescape::encode_minimal(&pst.nick),
                      p.describe_pri(&lens.log_pri(piece, pc)).0)),
     };
 
@@ -207,23 +221,23 @@ impl ApiPieceOp for ApiPieceWrest {
   fn check_held(&self, _pc: &PieceState, _player: PlayerId) { }
 
   #[throws(ApiPieceOpError)]
-  fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
-        p: &dyn Piece, lens: &dyn Lens) -> PieceUpdateFromOp {
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
+    let ApiPieceOpArgs { gs,player,pst,piece,p,lens,iplayers, .. } = a;
     let pl = gs.players.byid(player)?;
     let pc = gs.pieces.byid_mut(piece)?;
     let pcs = p.describe_pri(&lens.log_pri(piece, pc)).0;
 
     let was = pc.held;
     pc.held = Some(player);
-    let was = was.and_then(|p| gs.players.get(p));    
+    let was = was.and_then(|p| iplayers.get(p));    
 
     let update = PieceUpdateOp::Modify(());
 
-    let pls = &htmlescape::encode_minimal(&pl.nick);
+    let pls = &htmlescape::encode_minimal(&pst.nick);
 
     let logent = LogEntry { html : Html(match was {
         Some(was) => format!("{} wrested {} from {}", pls, pcs,
-                             &htmlescape::encode_minimal(&was.nick)),
+                             &htmlescape::encode_minimal(&was.pst.nick)),
         None => format!("{} wrested {}", pls, pcs),
     })};
 
@@ -243,8 +257,8 @@ fn api_ungrab(form : Json<ApiPiece<ApiPieceUngrab>>)
 }
 impl ApiPieceOp for ApiPieceUngrab {
   #[throws(ApiPieceOpError)]
-  fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
-        p: &dyn Piece, lens: &dyn Lens) -> PieceUpdateFromOp {
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
+    let ApiPieceOpArgs { gs,player,pst,piece,p,lens, .. } = a;
     let pl = gs.players.byid(player).unwrap();
     let pc = gs.pieces.byid_mut(piece).unwrap();
 
@@ -255,7 +269,7 @@ impl ApiPieceOp for ApiPieceUngrab {
 
     let logent = LogEntry {
       html : Html(format!("{} released {}",
-                     &htmlescape::encode_minimal(&pl.nick),
+                     &htmlescape::encode_minimal(&pst.nick),
                      p.describe_pri(&lens.log_pri(piece, pc)).0)),
     };
 
@@ -276,8 +290,8 @@ fn api_raise(form : Json<ApiPiece<ApiPieceRaise>>)
 }
 impl ApiPieceOp for ApiPieceRaise {
   #[throws(ApiPieceOpError)]
-  fn op(&self, gs: &mut GameState, _: PlayerId, piece: PieceId,
-        _p: &dyn Piece, _: &dyn Lens) -> PieceUpdateFromOp {
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
+    let ApiPieceOpArgs { gs,player,pst,piece,p,lens, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
     pc.zlevel = ZLevel { z : self.z.clone(), zg : gs.gen };
     let update = PieceUpdateOp::SetZLevel(());
@@ -295,8 +309,8 @@ fn api_move(form : Json<ApiPiece<ApiPieceMove>>) -> impl response::Responder<'st
 }
 impl ApiPieceOp for ApiPieceMove {
   #[throws(ApiPieceOpError)]
-  fn op(&self, gs: &mut GameState, _: PlayerId, piece: PieceId,
-        _p: &dyn Piece, _lens: &dyn Lens) -> PieceUpdateFromOp {
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
+    let ApiPieceOpArgs { gs,player,pst,piece,p,lens, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let (pos, clamped) = self.0.clamped(gs.table_size);
     let logents = vec![];
@@ -322,15 +336,15 @@ fn api_pin(form : Json<ApiPiece<ApiPiecePin>>) -> impl response::Responder<'stat
 }
 impl ApiPieceOp for ApiPiecePin {
   #[throws(ApiPieceOpError)]
-  fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
-        p: &dyn Piece, lens: &dyn Lens) -> PieceUpdateFromOp {
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
+    let ApiPieceOpArgs { gs,player,pst,piece,p,lens, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let pl = gs.players.byid(player).unwrap();
     pc.pinned = self.0;
     let update = PieceUpdateOp::Modify(());
     let logents = vec![ LogEntry { html: Html(format!(
       "{} {} {}",
-      &htmlescape::encode_minimal(&pl.nick),
+      &htmlescape::encode_minimal(&pst.nick),
       if pc.pinned { "pinned" } else { "unpinned" },
       p.describe_pri(&lens.log_pri(piece, pc)).0
     ))}];
@@ -350,8 +364,8 @@ fn api_uo(form : Json<ApiPiece<ApiPieceUo>>) -> impl response::Responder<'static
 }
 impl ApiPieceOp for ApiPieceUo {
   #[throws(ApiPieceOpError)]
-  fn op(&self, gs: &mut GameState, player: PlayerId, piece: PieceId,
-        p: &dyn Piece, lens: &dyn Lens) -> PieceUpdateFromOp {
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
+    let ApiPieceOpArgs { gs,player,pst,piece,p,lens, .. } = a;
     '_normal_global_ops__not_loop: loop {
       let pc = gs.pieces.byid_mut(piece)?;
       let pl = gs.players.byid(player)?;
@@ -365,7 +379,7 @@ impl ApiPieceOp for ApiPieceUo {
             PieceUpdateOp::Modify(()),
             vec![ LogEntry { html: Html(format!(
               "{} flipped {}",
-              &htmlescape::encode_minimal(&pl.nick),
+              &htmlescape::encode_minimal(&pst.nick),
               p.describe_pri(&lens.log_pri(piece, pc)).0
             )) }])
         },

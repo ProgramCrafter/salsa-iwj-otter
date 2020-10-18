@@ -47,6 +47,10 @@ pub enum InternalError {
   Anyhow(#[from] anyhow::Error),
 }
 
+#[derive(Error,Debug)]
+pub enum TokenDeliveryError {
+}
+
 impl From<InternalError> for SpecError {
   fn from(ie: InternalError) -> SpecError {
     SpecError::InternalError(format!("{:?}",ie))

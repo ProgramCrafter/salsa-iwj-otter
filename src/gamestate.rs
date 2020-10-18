@@ -19,7 +19,7 @@ pub struct Generation (pub u64);
 
 visible_slotmap_key!{ VisiblePieceId('.') }
 
-#[derive(Clone,Serialize,Deserialize,Eq,Ord,PartialEq,PartialOrd)]
+#[derive(Clone,Serialize,Deserialize,Hash,Eq,Ord,PartialEq,PartialOrd)]
 #[serde(transparent)]
 pub struct Html (pub String);
 
@@ -198,7 +198,11 @@ impl ClampTable for Pos {
 }
 
 impl Html {
+  // todo convert to display_as but I need to write display_as::typed::Is
   pub fn lit(s: &str) -> Self { Html(s.to_owned()) }
+  pub fn from_txt(s: &str) -> Self {
+    Html(htmlescape::encode_minimal(&s))
+  }
 }
 
 impl Debug for Html {

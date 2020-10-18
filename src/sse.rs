@@ -86,8 +86,9 @@ impl Read for UpdateReader {
              self.player, self.client, ig.gs.gen, self.to_send)?;
     }
 
-    let pu = &mut ig.updates.get_mut(self.player)
+    let iplayer = &mut ig.iplayers.get_mut(self.player)
       .ok_or_else(|| self.trouble("player gonee",()))?;
+    let pu = &mut iplayer.u;
 
     loop {
       if let Some(ref mut overflow) = self.overflow {
@@ -124,7 +125,7 @@ impl Read for UpdateReader {
         }
         self.overflow = {
           let mut overflow = Vec::with_capacity(next_len);
-          self.wn.write_next(&mut overflow, &pu.tz, &next)
+          self.wn.write_next(&mut overflow, &iplayer.pst.tz, &next)
             .map_err(|e| self.wn.trouble("overflow.write_next",&e))?;
           debug!("overflow {} {}, len={}",
                  &self.wn.player, &self.wn.client, &overflow.len());
@@ -133,7 +134,7 @@ impl Read for UpdateReader {
         continue;
       }
 
-      self.wn.write_next(&mut buf, &pu.tz, &next)
+      self.wn.write_next(&mut buf, &iplayer.pst.tz, &next)
         .map_err(|e| self.wn.trouble("UpdateReader.write_next",&e))?;
 
       let before = next.when - UPDATE_EXPIRE;
