@@ -243,11 +243,9 @@ pub mod implementation {
       // xxx check this on setting access
       None
     }
-    fn client_mgi(&self, _player: PlayerId) -> Option<MgmtGameInstruction> {
-      None
-    }
-    fn server_deliver(&self, pst: &PlayerState, token: &AccessTokenReport)
-                      -> Result<Option<&AccessTokenReport>, TDE> {
+    fn server_deliver<'t>(&self, pst: &PlayerState,
+                          token: &'t AccessTokenReport)
+                          -> Result<Option<&'t AccessTokenReport>, TDE> {
       Ok(None)
     }
     fn client_deliver(&self, pst: &PlayerState, token: &AccessTokenReport)
@@ -269,22 +267,14 @@ pub mod implementation {
     fn override_token(&self) -> Option<&RawToken> {
       Some(&self.token)
     }
-    fn client_mgi(&self, player: PlayerId) -> Option<MgmtGameInstruction> {
-      Some(Insn::SetFixedPlayerAccess {
-        player,
-        token: self.token.clone(),
-      })
-    }
   }
 
   #[typetag::serde]
   impl PlayerAccessSpec for UrlOnStdout {
-    fn client_mgi(&self, player: PlayerId) -> Option<MgmtGameInstruction> {
-      Some(Insn::ReportPlayerAccesses(player))
-    }
     #[throws(TDE)]
-    fn server_deliver(&self, ps: &PlayerState, token: &AccessTokenReport)
-                      -> Option<&AccessTokenReport> {
+    fn server_deliver<'t>(&self, ps: &PlayerState,
+                          token: &'t AccessTokenReport)
+                          -> Option<&'t AccessTokenReport> {
       Some(token)
     }
     #[throws(TDE)]

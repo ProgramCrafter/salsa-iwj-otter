@@ -137,7 +137,7 @@ pub enum MgmtGameUpdateMode {
 pub enum MgmtError {
   ParseFailed(String),
   AuthorisationError,
-  NoScope,
+  SpecifyAccount,
   AlreadyExists,
   NickCollision,
   GameBeingDestroyed,

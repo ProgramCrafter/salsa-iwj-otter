@@ -55,8 +55,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     Noop => Fine,
 
     SetAccount(wanted_account) => {
-      let authorised : AuthorisedSatisfactory =
-        authorise_scope(cs, &wanted_account.scope)?;
+      let authorised = authorise_scope(cs, &wanted_account.scope)?;
       cs.account = ScopedName {
         scope: Some(authorised.into_inner()),
         scoped_nmae: wanted_account.scoped_name,
@@ -64,7 +63,9 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine
     },
 
-    CreateGame { name, insns } => {
+    CreateGame { game, insns } => {
+      let authorised = authorise_scope(cs, &game.scope)?;
+
       let gs = crate::gamestate::GameState {
         table_size : DEFAULT_TABLE_SIZE,
         pieces : Default::default(),
@@ -74,12 +75,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         max_z: default(),
       };
 
-      let name = ScopedName {
-        scope : cs.get_scope()?.clone(),
-        scoped_name : name,
-      };
-
-      let gref = Instance::new(name, gs)?;
+      let gref = Instance::new(game, gs, authorised)?;
       let mut ig = gref.lock()?;
 
       execute_for_game(cs, &mut ig, insns, MgmtGameUpdateMode::Bulk)
@@ -97,15 +93,13 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     },
 
     ListGames { all } => {
-      let scope = if all == Some(true) {
-        let _authorise : AuthorisedSatisfactory =
-          authorise_scope(cs, &AS::Server)?;
-        None
+      let (scope, authorised) = if all == Some(true) {
+        let auth = authorise_scope(cs, &AS::Server)?;
+        (None, auth)
       } else {
-        let scope = cs.get_scope()?;
-        Some(scope)
+        cs.current_account()?;
       };
-      let mut games = Instance::list_names(scope);
+      let mut games = Instance::list_names(scope, authorised);
       games.sort_unstable();
       GamesList(games)
     },
@@ -425,7 +419,7 @@ impl UpdateHandler {
 struct CommandStream<'d> {
   euid : Result<Uid, ConnectionEuidDiscoverEerror>,
   desc : &'d str,
-  account : Option<AccountName>,
+  account : Option<(AccountName, Authorised<AccountName>)>,
   chan : MgmtChannel,
   who: Who,
 }
@@ -449,8 +443,10 @@ impl CommandStream<'_> {
   }
 
   #[throws(MgmtError)]
-  fn get_scope(&self) -> &AccountScope {
-    self.scope.as_ref().ok_or(NoScope)?
+  fn current_account(&self) -> (&AccountName, Authorised<AccountName>) {
+    self.scope.as_ref()
+      .ok_or(ME::SpecifyAccount)?
+      .map(|(account,auth)| (account,*auth))
   }
 }
 
@@ -561,34 +557,34 @@ impl CommandStream<'_> {
 
 #[throws(MgmtError)]
 fn authorise_scope(cs: &CommandStream, wanted: &AccountScope)
-                   -> AuthorisedSatisfactory {
+                   -> Authorised<AccountScope> {
   do_authorise_scope(cs, wanted)
     .map_err(|e| cs.map_auth_err(e))?
 }
 
 #[throws(AuthorisationError)]
 fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
-                   -> AuthorisedSatisfactory {
-  type AS<T> = (T, AccountScope);
-
+                   -> Authorised<AccountScope> {
   match &wanted {
 
     AccountScope::Server => {
-      let y : AS<
-        Authorised<(Passwd,Uid)>,
-      > = {
-        let ok = cs.authorised_uid(None,None)?;
-        (ok,
-         AccountScope::Server)
+      let y : Authorised<(Passwd,Uid)> = {
+        cs.authorised_uid(None,None)?;
       };
-      return y.into()
+      y.therefore_ok()
     },
 
     AccountScope::Unix { user: wanted } => {
-      let y : AS<
-        Authorised<(Passwd,Uid)>,
-      > = {
+      struct InUserList;
+
+      let y : Authorised<(Passwd,Uid,InUserList)> = {
+
         struct AuthorisedIf { authorised_for : Option<Uid> };
+
+        const SERVER_ONLY : (AuthorisedIf, Authorised<InUserList>) = (
+          AuthorisedIf { authorised_for: None },
+          Authorised::authorised(InUserList),
+        );
 
         let pwent = Passwd::from_name(&wanted)
           .map_err(
@@ -600,25 +596,29 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
               "requested username {:?} not found", &wanted
             ))
           )?;
+        let pwent_ok = Authorised::authorised(pwent);
 
-        let (in_userlist, xinfo) = (||{ <Result<_,AE>>::Ok({
+        let ((uid, in_userlist_ok), xinfo) = (||{ <Result<_,AE>>::Ok({
           let allowed = BufReader::new(match File::open(USERLIST) {
             Err(e) if e.kind() == ErrorKind::NotFound => {
               return Ok((
-                AuthorisedIf{ authorised_for: None },
+                SERVER_ONLY,
                 Some(format!(" user list {} does not exist", USERLIST))
               ))
             },
             r => r,            
           }?);
+          
           allowed
             .lines()
             .filter_map(|le| match le {
               Ok(l) if l.trim() == wanted => Some(
                 Ok((
-                  AuthorisedIf{ authorised_for: Some(
+                  (AuthorisedIf{ authorised_for: Some(
                     Uid::from_raw(pwent.uid)
-                  ) },
+                  )},
+                   Authorised::authorised(InUserList),
+                  ),
                   None
                 ))
               ),
@@ -628,20 +628,19 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
             .next()
             .unwrap_or_else(
               || Ok((
-                AuthorisedIf{ authorised_for: None },
+                SERVER_ONLY,
                 Some(format!(" requested username {:?} not in {}",
                              &wanted, USERLIST)),
               ))
             )?
         })})()?;
 
-        let AuthorisedIf{ authorised_for } = in_userlist;
         let info = xinfo.as_deref();
-        let ok = cs.authorised_uid(authorised_for, info)?;
-        (ok,
-         AccountScope::Unix { user: pwent.name })
+        let uid_ok = cs.authorised_uid(uid.authorised_for, info)?;
+      
+        (pwent_ok, uid_ok, in_userlist_ok).combine()
       };
-      y.into()
+      y.therefore_ok()
     },
 
   }
@@ -660,22 +659,14 @@ mod authproofs {
   pub struct AuthorisationError(pub String);
 
   pub struct Authorised<A> (PhantomData<A>);
-  //struct AuthorisedScope<A> (Authorised<A>, ManagementScope);
-  pub struct AuthorisedSatisfactory (AccountScope);
 
-  impl AuthorisedSatisfactory {
-    pub fn into_inner(self) -> AccountScope { self.0 }
+  impl<T> Authorised<T> {
+    pub const fn authorise_any() -> Authorised<T> { Authorised(PhantomData) }
+    pub const fn authorised(v: &T) -> Authorised<T> { Authorised(PhantomData) }
   }
 
   impl<T> Authorised<T> {
-    pub fn authorise() -> Authorised<T> { Authorised(PhantomData) }
-  }
-
-  impl<T> From<(Authorised<T>, AccountScope)> for AuthorisedSatisfactory {
-    fn from((_,s): (Authorised<T>, AccountScope)) -> Self { Self(s) }
-  }
-  impl<T,U> From<((Authorised<T>, Authorised<U>), AccountScope)> for AuthorisedSatisfactory {
-    fn from(((..),s): ((Authorised<T>, Authorised<U>), AccountScope)) -> Self { Self(s) }
+    pub fn therefore_ok<U>(self) -> Authorised<U> { Authorised(PhantomData) }
   }
 
   impl From<anyhow::Error> for AuthorisationError {
@@ -687,5 +678,18 @@ mod authproofs {
     fn from(e: ConnectionEuidDiscoverEerror) -> AuthorisationError {
       AuthorisationError(format!("{}",e))
     }
+  }
+
+  pub trait AuthorisedCombine {
+    type Output;
+    fn combine(self) -> Authorised<Self::Output> { Authorised(PhantomData) }
+  }
+  impl<A,B> AuthorisedCombine
+    for (Authorised<A>, Authorised<B>) {
+    type Output = Authorised<(A, B)>;
+  }
+  impl<A,B,C> AuthorisedCombine
+    for (Authorised<A>, Authorised<B>, Authorised<C>) {
+    type Output = Authorised<(A, B, C)>;
   }
 }

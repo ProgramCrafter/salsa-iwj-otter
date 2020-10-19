@@ -255,7 +255,7 @@ impl Instance {
   /// Returns `None` if a game with this name already exists
   #[allow(clippy::new_ret_no_self)]
   #[throws(MgmtError)]
-  pub fn new(name: InstanceName, gs: GameState)
+  pub fn new(name: InstanceName, gs: GameState, _: Authorised<InstanceName>)
              -> InstanceRef {
     let name = Arc::new(name);
 
@@ -301,7 +301,8 @@ impl Instance {
   }
 
   #[throws(MgmtError)]
-  pub fn lookup_by_name(name: &InstanceName) -> InstanceRef {
+  pub fn lookup_by_name(name: &InstanceName, _: Authorised<InstanceName>)
+                        -> InstanceRef {
     GLOBAL.games.read().unwrap()
       .get(name)
       .ok_or(MgmtError::GameNotFound)?
@@ -309,7 +310,7 @@ impl Instance {
   }
 
   #[throws(InternalError)]
-  pub fn destroy_game(mut g: InstanceGuard) {
+  pub fn destroy_game(mut g: InstanceGuard, _: Authorised<InstanceName>) {
     let a_savefile = savefilename(&g.name, "a-", "");
 
     let mut gw = GLOBAL.games.write().unwrap();
@@ -334,7 +335,7 @@ impl Instance {
       );
   }
 
-  pub fn list_names(scope: Option<&AccountScope>)
+  pub fn list_names(scope: Option<&AccountScope>, _: Authorised<AccountScope>)
                     -> Vec<Arc<InstanceName>> {
     let games = GLOBAL.games.read().unwrap();
     let out : Vec<Arc<InstanceName>> =

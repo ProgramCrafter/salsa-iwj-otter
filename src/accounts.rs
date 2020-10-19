@@ -101,19 +101,21 @@ pub fn save_accounts_now() -> Result<(), InternalError> {
 }
 
 impl AccountRecord {
-  pub fn lookup(account: &AccountName)
+  pub fn lookup(account: &AccountName,  _: Authorised<AccountName>)
             -> Option<MappedRwLockReadGuard<'static, AccountRecord>> {
     ACCOUNTS.read().map(
       |accounts| accounts?.get(account)
     )
   }
-  pub fn lookup_mut_caller_must_save(account: &AccountName)
+  pub fn lookup_mut_caller_must_save(account: &AccountName,
+                                      _: Authorised<AccountName>)
             -> Option<MappedRwLockWriteGuard<'static, AccountRecord>> {
     ACCOUNTS.write().map(
       |accounts| accounts?.get(account)
     )
   }
-  pub fn with_entry_mut<T, F>(account: &AccountName, f: F)
+  pub fn with_entry_mut<T, F>(account: &AccountName, f: F,
+                              _: Authorised<AccountName>)
                               -> Result<T, (InternalError, T)>
   where F: FnOnce(Option<&mut AccountRecord>) -> T
   {
