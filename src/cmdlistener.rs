@@ -77,9 +77,10 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       };
 
       let gref = Instance::new(game, gs, authorised)?;
-      let mut ig = gref.lock()?;
+      let ig = gref.lock()?;
 
-      execute_for_game(cs, &mut ig, insns, MgmtGameUpdateMode::Bulk)
+      execute_for_game(cs, &mut Unauthorised::of(ig),
+                       insns, MgmtGameUpdateMode::Bulk)
         .map_err(|e|{
           let name = ig.name.clone();
           Instance::destroy_game(ig, authorised)
@@ -94,13 +95,15 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     },
 
     ListGames { all } => {
-      let (scope, authorised) = if all == Some(true) {
+      let (scope, auth) = if all == Some(true) {
         let auth = authorise_scope(cs, &AS::Server)?;
         (None, auth)
       } else {
-        cs.current_account()?;
+        let (account, auth) = cs.account.as_ref()
+          .ok_or(ME::SpecifyAccount)?;
+        (Some(&account.scope), *auth)
       };
-      let mut games = Instance::list_names(scope, authorised);
+      let mut games = Instance::list_names(scope, auth);
       games.sort_unstable();
       GamesList(games)
     },
@@ -128,7 +131,8 @@ type ExecuteGameInsnResults = (
 
 #[throws(ME)]
 fn execute_game_insn(cs: &CommandStream,
-                     ig: &mut InstanceGuard, update: MgmtGameInstruction)
+                     ig: &mut Unauthorised<InstanceGuard, InstanceName>,
+                     update: MgmtGameInstruction)
                      -> ExecuteGameInsnResults {
   type U = ExecuteGameChangeUpdates;
   use MgmtGameInstruction::*;
@@ -304,7 +308,8 @@ fn execute_game_insn(cs: &CommandStream,
 // ---------- how to execute game commands & handle their updates ----------
 
 #[throws(ME)]
-fn execute_for_game(cs: &CommandStream, ig: &mut InstanceGuard,
+fn execute_for_game(cs: &CommandStream,
+                    ig: &mut Unauthorised<InstanceGuard, InstanceName>,
                     mut insns: Vec<MgmtGameInstruction>,
                     how: MgmtGameUpdateMode) -> MgmtResponse {
   let mut uh = UpdateHandler::from_how(how);
@@ -416,7 +421,7 @@ impl UpdateHandler {
 struct CommandStream<'d> {
   euid : Result<Uid, ConnectionEuidDiscoverEerror>,
   desc : &'d str,
-  account : Option<(AccountName, Authorisation<AccountName>)>,
+  account : Option<(AccountName, Authorisation<AccountScope>)>,
   chan : MgmtChannel,
   who: Who,
 }
