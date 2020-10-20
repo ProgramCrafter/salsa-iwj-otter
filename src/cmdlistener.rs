@@ -56,15 +56,16 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
     SetAccount(wanted_account) => {
       let authorised = authorise_scope(cs, &wanted_account.scope)?;
-      cs.account = ScopedName {
-        scope: Some(authorised.into_inner()),
-        scoped_nmae: wanted_account.scoped_name,
-      };
+      cs.account = Some((
+        wanted_account,
+        authorised.therefore_ok(),
+      ));
       Fine
     },
 
     CreateGame { game, insns } => {
       let authorised = authorise_scope(cs, &game.scope)?;
+      let authorised : Authorisation<AccountName> = authorised.therefore_ok();
 
       let gs = crate::gamestate::GameState {
         table_size : DEFAULT_TABLE_SIZE,
@@ -81,7 +82,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       execute_for_game(cs, &mut ig, insns, MgmtGameUpdateMode::Bulk)
         .map_err(|e|{
           let name = ig.name.clone();
-          Instance::destroy_game(ig)
+          Instance::destroy_game(ig, authorised)
             .unwrap_or_else(|e| warn!(
               "failed to tidy up failecd creation of {:?}: {:?}",
               &name, &e
@@ -104,12 +105,8 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       GamesList(games)
     },
 
-    MgmtCommand::AlterGame { name, insns, how} => {
-      let name = ScopedName {
-        scope: cs.get_scope()?.clone(),
-        scoped_name: name
-      };
-      let gref = Instance::lookup_by_name(&name)?;
+    MgmtCommand::AlterGame { game, insns, how } => {
+      let gref = Instance::lookup_by_name_unauth(&game)?;
       let mut g = gref.lock()?;
       execute_for_game(cs, &mut g, insns, how)?
     },
@@ -229,7 +226,7 @@ fn execute_game_insn(cs: &CommandStream,
       let authorised : AuthorisedSatisfactory =
         authorise_scope(cs, &AS::Server)?;
       let authorised = match authorised.into_inner() {
-        AS::Server => Authorised::<RawToken>::authorise(),
+        AS::Server => Authorisation::<RawToken>::authorise(),
         _ => panic!(),
       };
       ig.player_access_register_fixed(
@@ -419,7 +416,7 @@ impl UpdateHandler {
 struct CommandStream<'d> {
   euid : Result<Uid, ConnectionEuidDiscoverEerror>,
   desc : &'d str,
-  account : Option<(AccountName, Authorised<AccountName>)>,
+  account : Option<(AccountName, Authorisation<AccountName>)>,
   chan : MgmtChannel,
   who: Who,
 }
@@ -443,7 +440,7 @@ impl CommandStream<'_> {
   }
 
   #[throws(MgmtError)]
-  fn current_account(&self) -> (&AccountName, Authorised<AccountName>) {
+  fn current_account(&self) -> (&AccountName, Authorisation<AccountName>) {
     self.scope.as_ref()
       .ok_or(ME::SpecifyAccount)?
       .map(|(account,auth)| (account,*auth))
@@ -534,14 +531,14 @@ pub struct ConnectionEuidDiscoverEerror(String);
 impl CommandStream<'_> {
   #[throws(AuthorisationError)]
   fn authorised_uid(&self, wanted: Option<Uid>, xinfo: Option<&str>)
-                    -> Authorised<(Passwd,Uid),> {
+                    -> Authorisation<(Passwd,Uid),> {
     let client_euid = *self.euid.as_ref().map_err(|e| e.clone())?;
     let server_uid = Uid::current();
     if client_euid.is_root() ||
        client_euid == server_uid ||
        Some(client_euid) == wanted
     {
-      return Authorised::authorise();
+      return Authorisation::authorise();
     }
     throw!(anyhow!("{}: euid mismatch: client={:?} server={:?} wanted={:?}{}",
                    &self.desc, client_euid, server_uid, wanted,
@@ -557,18 +554,18 @@ impl CommandStream<'_> {
 
 #[throws(MgmtError)]
 fn authorise_scope(cs: &CommandStream, wanted: &AccountScope)
-                   -> Authorised<AccountScope> {
+                   -> Authorisation<AccountScope> {
   do_authorise_scope(cs, wanted)
     .map_err(|e| cs.map_auth_err(e))?
 }
 
 #[throws(AuthorisationError)]
 fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
-                   -> Authorised<AccountScope> {
+                   -> Authorisation<AccountScope> {
   match &wanted {
 
     AccountScope::Server => {
-      let y : Authorised<(Passwd,Uid)> = {
+      let y : Authorisation<(Passwd,Uid)> = {
         cs.authorised_uid(None,None)?;
       };
       y.therefore_ok()
@@ -577,13 +574,13 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
     AccountScope::Unix { user: wanted } => {
       struct InUserList;
 
-      let y : Authorised<(Passwd,Uid,InUserList)> = {
+      let y : Authorisation<(Passwd,Uid,InUserList)> = {
 
         struct AuthorisedIf { authorised_for : Option<Uid> };
 
-        const SERVER_ONLY : (AuthorisedIf, Authorised<InUserList>) = (
+        const SERVER_ONLY : (AuthorisedIf, Authorisation<InUserList>) = (
           AuthorisedIf { authorised_for: None },
-          Authorised::authorised(InUserList),
+          Authorisation::authorised(&InUserList),
         );
 
         let pwent = Passwd::from_name(&wanted)
@@ -596,7 +593,7 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
               "requested username {:?} not found", &wanted
             ))
           )?;
-        let pwent_ok = Authorised::authorised(pwent);
+        let pwent_ok = Authorisation::authorised(pwent);
 
         let ((uid, in_userlist_ok), xinfo) = (||{ <Result<_,AE>>::Ok({
           let allowed = BufReader::new(match File::open(USERLIST) {
@@ -617,7 +614,7 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
                   (AuthorisedIf{ authorised_for: Some(
                     Uid::from_raw(pwent.uid)
                   )},
-                   Authorised::authorised(InUserList),
+                   Authorisation::authorised(InUserList),
                   ),
                   None
                 ))
@@ -649,24 +646,38 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
 use authproofs::*;
 use authproofs::AuthorisationError;
 
-pub use authproofs::Authorised;
+pub use authproofs::Authorisation;
+pub use authproofs::Unauthorised;
 
 mod authproofs {
   use crate::imports::*;
+
+  #[derive(Debug,Copy,Clone)]
+  pub struct Unauthorised<T,A> (T, PhantomData<A>);
+  impl<T,A> Unauthorised<T,A> {
+    pub fn of(t: T) -> Self { Unauthorised(t, PhantomData) }
+    pub fn by(self, _auth: Authorisation<A>) -> T { self.0 }
+  }
+  impl<T,A> From<T> for Unauthorised<T,A> {
+    fn from(t: T) -> Self { Self::of(t) }
+  }
 
   #[derive(Error,Debug)]
   #[error("internal AuthorisationError {0}")]
   pub struct AuthorisationError(pub String);
 
-  pub struct Authorised<A> (PhantomData<A>);
+  pub struct Authorisation<A> (PhantomData<A>);
 
-  impl<T> Authorised<T> {
-    pub const fn authorise_any() -> Authorised<T> { Authorised(PhantomData) }
-    pub const fn authorised(v: &T) -> Authorised<T> { Authorised(PhantomData) }
-  }
-
-  impl<T> Authorised<T> {
-    pub fn therefore_ok<U>(self) -> Authorised<U> { Authorised(PhantomData) }
+  impl<T> Authorisation<T> {
+    pub const fn authorise_any() -> Authorisation<T> {
+      Authorisation(PhantomData)
+    }
+    pub const fn authorised(v: &T) -> Authorisation<T> {
+      Authorisation(PhantomData)
+    }
+    pub fn therefore_ok<U>(self) -> Authorisation<U> {
+      Authorisation(PhantomData)
+    }
   }
 
   impl From<anyhow::Error> for AuthorisationError {
@@ -680,16 +691,18 @@ mod authproofs {
     }
   }
 
-  pub trait AuthorisedCombine {
+  pub trait AuthorisationCombine {
     type Output;
-    fn combine(self) -> Authorised<Self::Output> { Authorised(PhantomData) }
+    fn combine(self) -> Authorisation<Self::Output> {
+      Authorisation(PhantomData)
+    }
   }
-  impl<A,B> AuthorisedCombine
-    for (Authorised<A>, Authorised<B>) {
-    type Output = Authorised<(A, B)>;
+  impl<A,B> AuthorisationCombine
+    for (Authorisation<A>, Authorisation<B>) {
+    type Output = Authorisation<(A, B)>;
   }
-  impl<A,B,C> AuthorisedCombine
-    for (Authorised<A>, Authorised<B>, Authorised<C>) {
-    type Output = Authorised<(A, B, C)>;
+  impl<A,B,C> AuthorisationCombine
+    for (Authorisation<A>, Authorisation<B>, Authorisation<C>) {
+    type Output = Authorisation<(A, B, C)>;
   }
 }

@@ -251,11 +251,19 @@ impl InstanceRef {
   }
 }
 
+impl<A> Unauthorised<InstanceRef, A> {
+  #[throws(InstanceLockError)]
+  pub fn lock(&self) -> Unauthorised<InstanceGuard<'_>, A> {
+    let must_not_escape = self.by(Authorisation::authorise_any());
+    Unauthorised::of(must_not_escape.lock()?)
+  }
+}
+
 impl Instance {
   /// Returns `None` if a game with this name already exists
   #[allow(clippy::new_ret_no_self)]
   #[throws(MgmtError)]
-  pub fn new(name: InstanceName, gs: GameState, _: Authorised<InstanceName>)
+  pub fn new(name: InstanceName, gs: GameState, _: Authorisation<InstanceName>)
              -> InstanceRef {
     let name = Arc::new(name);
 
@@ -301,16 +309,25 @@ impl Instance {
   }
 
   #[throws(MgmtError)]
-  pub fn lookup_by_name(name: &InstanceName, _: Authorised<InstanceName>)
+  pub fn lookup_by_name_unauth(name: &InstanceName)
+                               -> Unauthorised<InstanceRef, InstanceName> {
+    Unauthorised::of(
+      GLOBAL.games.read().unwrap()
+        .get(name)
+        .ok_or(MgmtError::GameNotFound)?
+        .clone()
+        .into()
+    )
+  }
+
+  #[throws(MgmtError)]
+  pub fn lookup_by_name(name: &InstanceName, auth: Authorisation<InstanceName>)
                         -> InstanceRef {
-    GLOBAL.games.read().unwrap()
-      .get(name)
-      .ok_or(MgmtError::GameNotFound)?
-      .clone()
+    Self::lookup_by_name_unauth(name)?.by(auth)
   }
 
   #[throws(InternalError)]
-  pub fn destroy_game(mut g: InstanceGuard, _: Authorised<InstanceName>) {
+  pub fn destroy_game(mut g: InstanceGuard, _: Authorisation<InstanceName>) {
     let a_savefile = savefilename(&g.name, "a-", "");
 
     let mut gw = GLOBAL.games.write().unwrap();
@@ -335,7 +352,8 @@ impl Instance {
       );
   }
 
-  pub fn list_names(scope: Option<&AccountScope>, _: Authorised<AccountScope>)
+  pub fn list_names(scope: Option<&AccountScope>,
+                    _: Authorisation<AccountScope>)
                     -> Vec<Arc<InstanceName>> {
     let games = GLOBAL.games.read().unwrap();
     let out : Vec<Arc<InstanceName>> =
@@ -511,7 +529,7 @@ impl InstanceGuard<'_> {
   #[throws(MgmtError)]
   pub fn player_access_register_fixed(&mut self,
                                       player: PlayerId, token: RawToken,
-                                      _safe: Authorised<RawToken>
+                                      _safe: Authorisation<RawToken>
   ) {
     // xxx get rid of this or something ?
     self.tokens_deregister_for_id(|id:PlayerId| id==player);
@@ -524,7 +542,8 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(MgmtError)]
-  pub fn player_access_reset(&mut self, player: PlayerId)
+  pub fn player_access_reset(&mut self, player: PlayerId,
+                             authorised: Authorisation<AccountName>)
                              -> Option<AccessTokenReport> {
     // xxx call this function when access changes
 
@@ -533,7 +552,10 @@ impl InstanceGuard<'_> {
       .pst;
     self.save_access_now()?;
 
-    let access = AccountRecord::with_entry_mut(&pst.account, |acct|{
+    let access = AccountRecord::with_entry_mut(
+      &pst.account, authorised,
+      |acct|
+    {
       let acct = acct.ok_or(MgmtError::AccountNotFound)?;
       let access = acct.access;
       let desc = access.describe_html();
