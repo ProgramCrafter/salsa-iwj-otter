@@ -14,6 +14,7 @@ use thiserror::Error;
 use crate::error::display_as_debug;
 use crate::accounts::AccountName;
 use std::hash::Hash;
+use num_derive::{ToPrimitive, FromPrimitive};
 
 pub use implementation::PlayerAccessSpec;
 
@@ -74,7 +75,8 @@ pub struct AclEntry<Perm: Eq + Hash> {
 
 #[derive(Debug,Clone,Copy,Serialize,Deserialize)]
 #[derive(Hash,Eq,PartialEq,Ord,PartialOrd)]
-enum TablePermission {
+#[derive(FromPrimitive,ToPrimitive)]
+pub enum TablePermission {
   AddPlayer,
   ChangePieces,
   RemovePlayer,
@@ -222,6 +224,8 @@ pub mod implementation {
   use super::*;
   use crate::imports::*;
   type Insn = crate::commands::MgmtGameInstruction;
+
+  impl loaded_acl::Perm for TablePermission { }
 
   type TDE = TokenDeliveryError;
 

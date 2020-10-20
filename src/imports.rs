@@ -105,6 +105,8 @@ pub use serde_with::serde_as;
 
 pub use ordered_float::OrderedFloat;
 
+pub use either::{Either,Left,Right};
+
 pub use crate::global::*;
 pub use crate::gamestate::*;
 pub use crate::pieces::*;
@@ -123,7 +125,7 @@ pub use crate::debugreader::DebugReader;
 pub use crate::shapelib;
 pub use crate::tz::*;
 pub use crate::accounts::*;
-pub use crate::accounts::loaded_acl::{self,LoadedAcl};
+pub use crate::accounts::loaded_acl::{self,LoadedAcl,PermSet};
 
 pub use zcoord::{self, ZCoord};
 

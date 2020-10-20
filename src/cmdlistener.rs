@@ -157,7 +157,7 @@ fn execute_game_insn(cs: &CommandStream,
 
   fn readonly<F: FnOnce(&mut InstanceGuard) -> ExecuteGameInsnResults>(
     cs: &CommandStream,
-    ig: &Unauthorised<InstanceGuard>,
+    ig: &Unauthorised<InstanceGuard, InstanceName>,
     p: PermSet<TablePermission>,
     f: F) -> ExecuteGameInsnResults
   {
@@ -569,6 +569,16 @@ impl CommandStream<'_> {
           self.desc, ae.0);
     MgmtError::AuthorisationError
   }
+}
+
+#[throws(MgmtError)]
+fn authorise_by_account(cs: &CommandStream, wanted: &AccountScope)
+                        -> Authorisation<AccountScope> {
+  let currently = &cs.account.as_ref()?.account;
+  if currently == wanted {
+    return Authorisation::authorised(currently);
+  }
+  throw!(MgmtError::AuthorisationError)
 }
 
 #[throws(MgmtError)]

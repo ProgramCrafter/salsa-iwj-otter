@@ -140,7 +140,7 @@ pub mod loaded_acl {
   use crate::imports::*;
 
   pub trait Perm : FromPrimitive + ToPrimitive
-    + Copy + Eq + Hash + Sync + Send { }
+    + Copy + Eq + Hash + Sync + Send + 'static { }
 
   #[derive(Copy,Clone,Debug)]
   pub struct PermSet<P: Perm> (u64, PhantomData<&'static P>);
@@ -157,8 +157,8 @@ pub mod loaded_acl {
   #[derive(Debug,Clone)]
   struct LoadedAclEntry<P: Perm> {
     pat: glob::Pattern,
-    allow: Bitmap,
-    deny: Bitmap,
+    allow: PermSet<P>,
+    deny: PermSet<P>,
     ptype: PhantomData<&'static P>,
   }
 
@@ -170,14 +170,15 @@ pub mod loaded_acl {
     ptype: PhantomData<&'static P>,
   }
 
-  impl<P:Perm> LoadedAcl<P> {
-    fn entries(&'s self) -> impl Iterator<Item=AclEntryRef<'s>> {
-      self.owner_account.map(
+  impl<'e, P:Perm> EffectiveAcl<'e, P> {
+    fn entries(&self) -> impl Iterator<Item=AclEntryRef<'_, P>> {
+      self.owner_account.iter().map(
         |owner|
-        AclEntryRef { pat: Left(owner), allow: !0, deny: 0, ptype }
-      ).chain(self.entries.map(
-        |LoadedAclEntry { pat, allow, deny }|
-        AclEntryRef { pat: Left(pat), allow: allow.0, deny: deny.0 }
+        AclEntryRef { pat: Left(owner), allow: !0, deny: 0,
+                      ptype: PhantomData }
+      ).chain(self.acl.0.iter().map(
+        |&LoadedAclEntry { ref pat, ref allow, ref deny, ptype }|
+        AclEntryRef { pat: Right(pat), allow: allow.0, deny: deny.0, ptype }
       ))
     }
 
@@ -194,17 +195,19 @@ pub mod loaded_acl {
         needed &= !allow;
         if needed == 0 { return Ok(()) }
       }
-      Err(ME::PermissionDenied)
+      Err(MgmtError::PermissionDenied)
     }
   }
 
-  impl<P:Perm> From<I> for PermSet<P> where I: IntoIterator<Item=&P> {
+  impl<'i, P:Perm, I> From<I> for PermSet<P>
+  where I: IntoIterator<Item=&'i P>
+  {
     fn from(i: I) -> Self {
       i.into_iter().fold(0, |b, i| b | i.to_u64().unwrap())
     }
   }
 
-  fn unpack<P:Perm>(unpacked: Bitmap) -> HashSet<P> {
+  fn unpack<P:Perm>(unpacked: PermSet<P>) -> HashSet<P> {
     let mut s = HashSet::new();
     for n in 0.. {
       let v = match FromPrimitive::from_u64(n) { Some(v) => v, None => break };

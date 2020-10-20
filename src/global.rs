@@ -254,7 +254,7 @@ impl InstanceRef {
 
 impl<A> Unauthorised<InstanceGuard<'_>, A> {
   #[throws(MgmtError)]
-  pub fn check_acl(&mut self, p: PermSet<TablePermissions>)
+  pub fn check_acl(&mut self, p: PermSet<TablePermission>)
                    -> &mut InstanceGuard {
     let auth = {
       let acl = self.by(Authorisation::authorise_any()).acl;
