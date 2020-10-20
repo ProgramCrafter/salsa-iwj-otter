@@ -1015,6 +1015,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "num-derive"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f09b9841adb6b5e1f89ef7087ea636e0fd94b2851f887c1e3eb5d5f8228fab3"
+dependencies = [
+ "proc-macro2 1.0.24",
+ "quote 1.0.7",
+ "syn 1.0.44",
+]
+
+[[package]]
 name = "num-integer"
 version = "0.1.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1088,6 +1099,7 @@ dependencies = [
  "lazy_static",
  "log 0.4.11",
  "nix",
+ "num-derive",
  "num-traits",
  "ordered-float",
  "otter-zcoord",
