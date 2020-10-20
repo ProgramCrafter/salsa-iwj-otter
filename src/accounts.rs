@@ -133,3 +133,103 @@ impl AccountRecord {
     panic!("xxx")
   }
 }
+
+//---------- acl handling ----------
+
+pub mod loaded_acl {
+  use crate::imports::*;
+
+  pub trait Perm : FromPrimitive + ToPrimitive
+    + Copy + Eq + Hash + Sync + Send { }
+
+  #[derive(Copy,Clone,Debug)]
+  pub struct PermSet<P: Perm> (u64, PhantomData<&'static P>);
+
+  #[derive(Debug,Clone)]
+  pub struct EffectiveAcl<'i, P: Perm> {
+    pub owner_account: Option<&'i str>,
+    pub acl: LoadedAcl<P>,
+  }
+
+  #[derive(Debug,Clone)]
+  pub struct LoadedAcl<P: Perm> (Vec<LoadedAclEntry<P>>);
+
+  #[derive(Debug,Clone)]
+  struct LoadedAclEntry<P: Perm> {
+    pat: glob::Pattern,
+    allow: Bitmap,
+    deny: Bitmap,
+    ptype: PhantomData<&'static P>,
+  }
+
+  #[derive(Debug)]
+  struct AclEntryRef<'r, P: Perm> {
+    pat: Either<&'r str, &'r glob::Pattern>,
+    allow: u64,
+    deny: u64,
+    ptype: PhantomData<&'static P>,
+  }
+
+  impl<P:Perm> LoadedAcl<P> {
+    fn entries(&'s self) -> impl Iterator<Item=AclEntryRef<'s>> {
+      self.owner_account.map(
+        |owner|
+        AclEntryRef { pat: Left(owner), allow: !0, deny: 0, ptype }
+      ).chain(self.entries.map(
+        |LoadedAclEntry { pat, allow, deny }|
+        AclEntryRef { pat: Left(pat), allow: allow.0, deny: deny.0 }
+      ))
+    }
+
+    #[throws(MgmtError)]
+    fn check(&self, account_name: &str, p: PermSet<P>) {
+      let mut needed = p.0;
+      assert!(needed != 0);
+      for AclEntryRef { pat, allow, deny } in self.entries() {
+        if !match pat {
+          Left(owner) => owner == account_name,
+          Right(pat) => pat.matches(account_name),
+        } { continue }
+        if needed & deny != 0 { break }
+        needed &= !allow;
+        if needed == 0 { return Ok(()) }
+      }
+      Err(ME::PermissionDenied)
+    }
+  }
+
+  impl<P:Perm> From<I> for PermSet<P> where I: IntoIterator<Item=&P> {
+    fn from(i: I) -> Self {
+      i.into_iter().fold(0, |b, i| b | i.to_u64().unwrap())
+    }
+  }
+
+  fn unpack<P:Perm>(unpacked: Bitmap) -> HashSet<P> {
+    let mut s = HashSet::new();
+    for n in 0.. {
+      let v = match FromPrimitive::from_u64(n) { Some(v) => v, None => break };
+      if unpacked & n != 0 { s.insert(v) }
+    }
+    s
+  }
+
+  impl<P:Perm> From<Acl<P>> for LoadedAcl<P> {
+    fn from(acl: Acl<P>) -> LoadedAcl<P> {
+      let ents = acl.into_iter().map(
+        |AclEntry { account_glob, allow, deny }|
+        LoadedAclEntry { account_glob, allow: allow.into(), deny: deny.into() }
+      ).collect();
+      LoadedAcl(ents)
+    }
+  }
+
+  impl<P:Perm> From<LoadedAcl<P>> for Acl<P> {
+    fn from(acl: LoadedAcl<P>) -> Acl<P> {
+      let LoadedAcl(ents) = acl;
+      ents.into_iter().map(
+        |LoadedAclEntry { account_glob, allow, deny }|
+        AclEntry { account_glob, allow: unpack(allow), deny: unpack(deny) }
+      ).collect()
+    }
+  }
+}

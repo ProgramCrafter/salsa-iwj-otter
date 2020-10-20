@@ -38,6 +38,7 @@ pub struct Instance {
   pub iplayers : SecondarySlotMap<PlayerId, PlayerRecord>,
   pub tokens_players : TokenRegistry<PlayerId>,
   pub tokens_clients : TokenRegistry<ClientId>,
+  pub acl: Acl<TablePermission>,
 }
 
 pub struct PlayerRecord {
@@ -248,6 +249,18 @@ impl InstanceRef {
       Ok(g) => g,
       Err(poison) => poison.into_inner(),
     }
+  }
+}
+
+impl<A> Unauthorised<InstanceGuard<'_>, A> {
+  #[throws(MgmtError)]
+  pub fn check_acl(&mut self, p: PermSet<TablePermissions>)
+                   -> &mut InstanceGuard {
+    let auth = {
+      let acl = self.by(Authorisation::authorise_any()).acl;
+      acl.check(p)?;
+    };
+    self.by_mut(auth);
   }
 }
 

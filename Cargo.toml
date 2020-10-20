@@ -24,6 +24,7 @@ boolinator = "2"
 chrono = "0.4"
 chrono-tz = "0.5"
 delegate = "0.4"
+either = "1"
 failure = "0.1.8" # for pwd
 fehler = "1"
 flexi_logger = { version = "0.15", features = [ "specfile" ] }

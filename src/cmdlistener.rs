@@ -43,6 +43,21 @@ impl Display for Who {
   fn fmt(&self, f: &mut Formatter) { write!(f, "The facilitator")? }
 }
 
+struct CommandStream<'d> {
+  euid : Result<Uid, ConnectionEuidDiscoverEerror>,
+  desc : &'d str,
+  account : Option<AccountSpecified>,
+  chan : MgmtChannel,
+  who: Who,
+}
+
+#[derive(Debug,Clone)]
+struct AccountSpecified {
+  name: ScopedName,
+  cooked: String,
+  auth: Authorisation<AccountScope>,
+}
+
 // ========== management API ==========
 
 // ---------- management command implementations
@@ -55,7 +70,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     Noop => Fine,
 
     SetAccount(wanted_account) => {
-      let authorised = authorise_scope(cs, &wanted_account.scope)?;
+      let authorised = authorise_scope_direct(cs, &wanted_account.scope)?;
       cs.account = Some((
         wanted_account,
         authorised.therefore_ok(),
@@ -64,8 +79,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     },
 
     CreateGame { game, insns } => {
-      let authorised = authorise_scope(cs, &game.scope)?;
-      let authorised : Authorisation<AccountName> = authorised.therefore_ok();
+      let authorised = authorise_by_account(cs, &game.scope)?;
 
       let gs = crate::gamestate::GameState {
         table_size : DEFAULT_TABLE_SIZE,
@@ -96,7 +110,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
     ListGames { all } => {
       let (scope, auth) = if all == Some(true) {
-        let auth = authorise_scope(cs, &AS::Server)?;
+        let auth = authorise_scope_direct(cs, &AS::Server)?;
         (None, auth)
       } else {
         let (account, auth) = cs.account.as_ref()
@@ -140,7 +154,15 @@ fn execute_game_insn(cs: &CommandStream,
   type Insn = MgmtGameInstruction;
   type Resp = MgmtGameResponse;
   let who = &cs.who;
-  fn readonly(_ig: &InstanceGuard, resp: Resp) -> ExecuteGameInsnResults {
+
+  fn readonly<F: FnOnce(&mut InstanceGuard) -> ExecuteGameInsnResults>(
+    cs: &CommandStream,
+    ig: &Unauthorised<InstanceGuard>,
+    p: PermSet<TablePermission>,
+    f: F) -> ExecuteGameInsnResults
+  {
+    let ig = ig.check_acl(&cs.account.as_ref()?.cooked)?;
+    let resp = f(ig);
     (U{ pcs: vec![], log: vec![], raw: None }, resp)
   }
 
@@ -418,14 +440,6 @@ impl UpdateHandler {
 
 // ---------- core listener implementation ----------
 
-struct CommandStream<'d> {
-  euid : Result<Uid, ConnectionEuidDiscoverEerror>,
-  desc : &'d str,
-  account : Option<(AccountName, Authorisation<AccountScope>)>,
-  chan : MgmtChannel,
-  who: Who,
-}
-
 impl CommandStream<'_> {
   #[throws(CSE)]
   pub fn mainloop(mut self) {
@@ -558,8 +572,9 @@ impl CommandStream<'_> {
 }
 
 #[throws(MgmtError)]
-fn authorise_scope(cs: &CommandStream, wanted: &AccountScope)
-                   -> Authorisation<AccountScope> {
+fn authorise_scope_direct(cs: &CommandStream, wanted: &AccountScope)
+                          -> Authorisation<AccountScope> {
+  // Usually, use authorise_by_account
   do_authorise_scope(cs, wanted)
     .map_err(|e| cs.map_auth_err(e))?
 }

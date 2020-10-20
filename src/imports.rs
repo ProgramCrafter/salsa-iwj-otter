@@ -87,7 +87,7 @@ pub use arrayvec::ArrayVec;
 pub use log::{trace,debug,info,warn,error};
 pub use log::log;
 
-pub use num_traits::Bounded;
+pub use num_traits::{Bounded, FromPrimitive, ToPrimitive};
 
 pub use flexi_logger::{LogSpecification};
 
@@ -123,6 +123,7 @@ pub use crate::debugreader::DebugReader;
 pub use crate::shapelib;
 pub use crate::tz::*;
 pub use crate::accounts::*;
+pub use crate::accounts::loaded_acl::{self,LoadedAcl};
 
 pub use zcoord::{self, ZCoord};
 
