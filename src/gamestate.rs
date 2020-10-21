@@ -61,10 +61,6 @@ pub struct PieceState {
   pub gen_before_lastclient : Generation,
 }
 
-#[derive(Debug,Clone,Serialize,Deserialize)]
-pub struct PlayerState {
-}
-
 #[derive(Debug,Serialize,Deserialize)]
 pub struct LogEntry {
   pub html : Html,

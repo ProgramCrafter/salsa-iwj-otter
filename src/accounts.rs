@@ -184,8 +184,13 @@ impl AccountRecord {
 pub mod loaded_acl {
   use crate::imports::*;
 
-  pub trait Perm : FromPrimitive + ToPrimitive
-    + Copy + Eq + Hash + Sync + Send + 'static { }
+  pub trait Perm : FromPrimitive + ToPrimitive +
+    Copy + Eq + Hash + Sync + Send + 'static
+  {
+    type Auth;
+    const NOT_FOUND : MgmtError;
+    const TEST_EXISTENCE : Self;
+  }
 
   #[derive(Copy,Clone,Debug)]
   pub struct PermSet<P: Perm> (u64, PhantomData<&'static P>);
@@ -197,7 +202,14 @@ pub mod loaded_acl {
   }
 
   #[derive(Debug,Clone)]
+  #[derive(Serialize,Deserialize)]
+  #[serde(from="Acl")]
+  #[serde(into="Acl")]
   pub struct LoadedAcl<P: Perm> (Vec<LoadedAclEntry<P>>);
+
+  impl<P:Perm> Default for LoadedAcl<P> {
+    fn default() -> Self { LoadedAcl(default()) }
+  }
 
   #[derive(Debug,Clone)]
   struct LoadedAclEntry<P: Perm> {
@@ -228,19 +240,25 @@ pub mod loaded_acl {
     }
 
     #[throws(MgmtError)]
-    fn check(&self, account_name: &str, p: PermSet<P>) {
+    fn check(&self, subject: &str, p: PermSet<P>) -> Authorisation<P::Auth> {
       let mut needed = p.0;
       assert!(needed != 0);
+      let test_existence = P::test_existence().to_primitive();
+      needed |= test_existence;
       for AclEntryRef { pat, allow, deny } in self.entries() {
         if !match pat {
-          Left(owner) => owner == account_name,
-          Right(pat) => pat.matches(account_name),
+          Left(owner) => owner == subject,
+          Right(pat) => pat.matches(subject),
         } { continue }
         if needed & deny != 0 { break }
-        needed &= !allow;
-        if needed == 0 { return Ok(()) }
+        if allow != 0 { needed &= !(allow | test_existence) }
+        if needed == 0 { return Ok(Authorisation::authorise_any()) }
       }
-      Err(MgmtError::PermissionDenied)
+      Err(if needed & test_existence != 0 {
+        P::NOT_FOUND
+      } else {
+        MgmtError::PermissionDenied
+      })
     }
   }
 

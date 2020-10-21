@@ -108,7 +108,7 @@ pub struct AccessTokenReport {
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct MgmtGameResponseGameInfo {
   pub table_size: Pos,
-  pub players: DenseSlotMap<PlayerId, MgmtPlayerInfo>,
+  pub players: SecondarySlotMap<PlayerId, MgmtPlayerInfo>,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
@@ -121,6 +121,12 @@ pub struct MgmtPlayerInfo {
 pub struct MgmtGamePieceInfo {
   pub piece: PieceId,
   pub itemname: String,
+  #[serde(flatten)]
+  pub visible: Option<MgmtGamePieceVisibleInfo>,
+}
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct MgmtGamePieceVisibleInfo {
   pub pos: Pos,
   pub face: FaceId,
   pub desc_html: Html,
@@ -137,6 +143,7 @@ pub enum MgmtGameUpdateMode {
 pub enum MgmtError {
   ParseFailed(String),
   AuthorisationError,
+  ParameterMissing,
   SpecifyAccount,
   AlreadyExists,
   NickCollision,

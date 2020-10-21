@@ -77,6 +77,8 @@ pub struct AclEntry<Perm: Eq + Hash> {
 #[derive(Hash,Eq,PartialEq,Ord,PartialOrd)]
 #[derive(FromPrimitive,ToPrimitive)]
 pub enum TablePermission {
+  TestExistence,
+  ViewPublic,
   AddPlayer,
   ChangePieces,
   RemovePlayer,
@@ -225,7 +227,11 @@ pub mod implementation {
   use crate::imports::*;
   type Insn = crate::commands::MgmtGameInstruction;
 
-  impl loaded_acl::Perm for TablePermission { }
+  impl loaded_acl::Perm for TablePermission {
+    type Auth = InstanceName;
+    const TEST_EXISTENCE : Self = TablePermission::TestExistence;
+    const NOT_FOUND : MgmtError = MgmtError::GameNotFound;
+  }
 
   type TDE = TokenDeliveryError;
 

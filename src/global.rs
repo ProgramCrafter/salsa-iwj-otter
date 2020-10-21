@@ -27,8 +27,8 @@ pub struct RawTokenVal(str);
 
 #[derive(Clone,Debug,Hash,Eq,PartialEq,Ord,PartialOrd)]
 pub struct InstanceName {
-  account: AccountName,
-  game: String,
+  pub account: AccountName,
+  pub game: String,
 }
 
 #[derive(Debug,Clone)]
@@ -201,6 +201,7 @@ struct InstanceSaveAccesses<RawTokenStr, PiecesLoadedRef> {
   ipieces: PiecesLoadedRef,
   tokens_players: Vec<(RawTokenStr, PlayerId)>,
   aplayers: SecondarySlotMap<PlayerId, PlayerState>,
+  acl: Acl<TablePermission>,
 }
 
 display_as_debug!{InstanceLockError}
@@ -316,23 +317,21 @@ impl Instance {
 
   #[throws(MgmtError)]
   pub fn lookup_by_name_unauth(name: &InstanceName)
-                               -> (Unauthorised<InstanceRef, InstanceName>,
-                                   &InstanceName)
+      -> Unauthorised<InstanceRef, InstanceName>
   {
-    (Unauthorised::of(
+    Unauthorised::of(
       GLOBAL.games.read().unwrap()
         .get(name)
         .ok_or(MgmtError::GameNotFound)?
         .clone()
         .into()
-    ),
-     name)
+    )
   }
 
   #[throws(MgmtError)]
   pub fn lookup_by_name(name: &InstanceName, auth: Authorisation<InstanceName>)
                         -> InstanceRef {
-    Self::lookup_by_name_unauth(name)?.0.by(auth)
+    Self::lookup_by_name_unauth(name)?.by(auth)
   }
 
   #[throws(InternalError)]
@@ -786,7 +785,10 @@ impl InstanceGuard<'_> {
         |(player, PlayerRecord { pst, .. })|
         (player, pst.clone())
       ).collect();
-      let isa = InstanceSaveAccesses { ipieces, tokens_players, aplayers };
+      let acl = s.c.g.acl.into();
+      let isa = InstanceSaveAccesses {
+        ipieces, tokens_players, aplayers, acl
+      };
       rmp_serde::encode::write_named(w, &isa)
     })?;
     self.c.access_dirty = false;
@@ -805,7 +807,7 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(StartupError)]
-  fn load_game(name: InstanceName) -> InstanceRef {
+  fn load_game(name: InstanceName) -> Option<InstanceRef> {
     {
       let mut st = GLOBAL.save_area_lock.lock().unwrap();
       let st = &mut *st;
@@ -818,19 +820,22 @@ impl InstanceGuard<'_> {
         })().context(lockfile).context("lock global save area")?);
       }
     }
+
     let InstanceSaveAccesses::<String,ActualPiecesLoaded>
-    { mut tokens_players, mut ipieces, mut aplayers }
-    = Self::load_something(&name, "a-")
-      .or_else(|e| {
-        if let InternalError::Anyhow(ae) = &e {
-          if let Some(ioe) = ae.downcast_ref::<io::Error>() {
-            if ioe.kind() == io::ErrorKind::NotFound {
-              return Ok(Default::default())
-            }
-          }
-        }
-        Err(e)
-      })?;
+    { mut tokens_players, mut ipieces, mut aplayers, acl }
+    = match Self::load_something(&name, "a-") {
+      Ok(data) => data,
+      Err(e) => if (||{
+        let ae = match &e { InternalError::Anyhow(ae) => Some(ae), _=>None }?;
+        let ioe = ae.downcast_ref::<io::Error>()?;
+        let is_enoent = ioe.kind() == io::ErrorKind::NotFound;
+        is_enoent.as_option()
+      })().is_some() {
+        return None;
+      } else {
+        throw!(e);
+      },
+    };
 
     let mut gs : GameState = Self::load_something(&name, "g-")?;
 
@@ -869,6 +874,7 @@ impl InstanceGuard<'_> {
 
     let g = Instance {
       gs, iplayers,
+      acl: acl.into(),
       ipieces: PiecesLoaded(ipieces),
       name: name.clone(),
       clients : Default::default(),
@@ -898,7 +904,7 @@ impl InstanceGuard<'_> {
     drop(g);
     GLOBAL.games.write().unwrap().insert(name.clone(), gref.clone());
     info!("loadewd {:?}", &name);
-    gref
+    Some(gref)
   }
 }
 
