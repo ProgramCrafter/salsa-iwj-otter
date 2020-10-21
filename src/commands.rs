@@ -12,17 +12,17 @@ pub enum MgmtCommand {
   UpdateAccont(AccountDetails),
   DeleteAccount(AccountDetails),
 
-  SetAccount(ScopedName),
+  SetAccount(AccountName),
 
   CreateGame {
-    game: ScopedName,
+    game: InstanceName,
     insns: Vec<MgmtGameInstruction>,
   },
   ListGames {
     all: Option<bool>, // in same scope by default
   },
   AlterGame {
-    game: ScopedName,
+    game: InstanceName,
     insns: Vec<MgmtGameInstruction>,
     how: MgmtGameUpdateMode,
   },
@@ -36,7 +36,7 @@ pub enum MgmtCommand {
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct AccountDetails {
-  pub account: ScopedName,
+  pub account: AccountName,
   pub nick: String,
   pub timezone: Option<String>,
   #[serde(flatten)]
@@ -76,7 +76,7 @@ pub enum MgmtGameInstruction {
 
   AddPlayer(MgmtPlayerDetails),
   UpdatePlayer(MgmtPlayerDetails),
-  RemovePlayer(ScopedName),
+  RemovePlayer(AccountName),
   BlockPlayer(String),
 }
 
@@ -84,7 +84,7 @@ pub enum MgmtGameInstruction {
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct MgmtPlayerDetails {
-  pub account: ScopedName,
+  pub account: AccountName,
   pub timezone: Option<String>,
   pub nick: Option<String>,
 }
@@ -113,7 +113,7 @@ pub struct MgmtGameResponseGameInfo {
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct MgmtPlayerInfo {
-  pub account: ScopedName,
+  pub account: AccountName,
   pub nick: String,
 }
 

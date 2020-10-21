@@ -25,7 +25,11 @@ pub struct RawTokenVal(str);
 
 // ---------- public data structure ----------
 
-pub type InstanceName = ScopedName;
+#[derive(Clone,Debug,Hash,Eq,PartialEq,Ord,PartialOrd)]
+pub struct InstanceName {
+  account: AccountName,
+  game: String,
+}
 
 #[derive(Debug,Clone)]
 pub struct InstanceRef (Arc<Mutex<InstanceContainer>>);
@@ -38,7 +42,7 @@ pub struct Instance {
   pub iplayers : SecondarySlotMap<PlayerId, PlayerRecord>,
   pub tokens_players : TokenRegistry<PlayerId>,
   pub tokens_clients : TokenRegistry<ClientId>,
-  pub acl: Acl<TablePermission>,
+  pub acl: LoadedAcl<TablePermission>,
 }
 
 pub struct PlayerRecord {
@@ -252,18 +256,6 @@ impl InstanceRef {
   }
 }
 
-impl<A> Unauthorised<InstanceGuard<'_>, A> {
-  #[throws(MgmtError)]
-  pub fn check_acl(&mut self, p: PermSet<TablePermission>)
-                   -> &mut InstanceGuard {
-    let auth = {
-      let acl = self.by(Authorisation::authorise_any()).acl;
-      acl.check(p)?;
-    };
-    self.by_mut(auth);
-  }
-}
-
 impl<A> Unauthorised<InstanceRef, A> {
   #[throws(InstanceLockError)]
   pub fn lock(&self) -> Unauthorised<InstanceGuard<'_>, A> {
@@ -276,13 +268,14 @@ impl Instance {
   /// Returns `None` if a game with this name already exists
   #[allow(clippy::new_ret_no_self)]
   #[throws(MgmtError)]
-  pub fn new(name: InstanceName, gs: GameState, _: Authorisation<InstanceName>)
+  pub fn new(name: InstanceName, gs: GameState,
+             acl: LoadedAcl<TablePermission>, _: Authorisation<InstanceName>)
              -> InstanceRef {
     let name = Arc::new(name);
 
     let g = Instance {
       name : name.clone(),
-      gs,
+      gs, acl,
       ipieces : PiecesLoaded(Default::default()),
       clients : Default::default(),
       iplayers : Default::default(),
@@ -323,20 +316,23 @@ impl Instance {
 
   #[throws(MgmtError)]
   pub fn lookup_by_name_unauth(name: &InstanceName)
-                               -> Unauthorised<InstanceRef, InstanceName> {
-    Unauthorised::of(
+                               -> (Unauthorised<InstanceRef, InstanceName>,
+                                   &InstanceName)
+  {
+    (Unauthorised::of(
       GLOBAL.games.read().unwrap()
         .get(name)
         .ok_or(MgmtError::GameNotFound)?
         .clone()
         .into()
-    )
+    ),
+     name)
   }
 
   #[throws(MgmtError)]
   pub fn lookup_by_name(name: &InstanceName, auth: Authorisation<InstanceName>)
                         -> InstanceRef {
-    Self::lookup_by_name_unauth(name)?.by(auth)
+    Self::lookup_by_name_unauth(name)?.0.by(auth)
   }
 
   #[throws(InternalError)]
@@ -365,13 +361,13 @@ impl Instance {
       );
   }
 
-  pub fn list_names(scope: Option<&AccountScope>,
-                    _: Authorisation<AccountScope>)
+  pub fn list_names(account: Option<&AccountName>,
+                    _: Authorisation<AccountName>)
                     -> Vec<Arc<InstanceName>> {
     let games = GLOBAL.games.read().unwrap();
     let out : Vec<Arc<InstanceName>> =
       games.keys()
-      .filter(|k| scope == None || scope == Some(&k.scope))
+      .filter(|k| account == None || account == Some(&k.account))
       .cloned()
       .collect();
     out
@@ -386,6 +382,28 @@ impl Deref for InstanceGuard<'_> {
 }
 impl DerefMut for InstanceGuard<'_> {
   fn deref_mut(&mut self) -> &mut Instance { &mut self.c.g }
+}
+
+impl FromStr for InstanceName {
+  type Err = InvalidScopedName;
+  #[throws(InvalidScopedName)]
+  fn from_str(s: &str) -> Self {
+    let (scope, [subaccount, game]) = AccountScope::parse_name(s)?;
+    InstanceName {
+      account: AccountName { scope, subaccount },
+      game,
+    }
+  }
+}
+
+impl Display for InstanceName {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut fmt::Formatter) {
+    self.account.scope.display_name(
+      &[ self.account.subaccount.as_str(), self.game.as_str() ],
+      |s| f.write_str(s)
+    )?
+  }
 }
 
 // ---------- Player and token functionality ----------
@@ -685,12 +703,9 @@ enum SavefilenameParseResult {
 }
 
 fn savefilename(name: &InstanceName, prefix: &str, suffix: &str) -> String {
-  const ENCODE : percent_encoding::AsciiSet =
-    percent_encoding::NON_ALPHANUMERIC.remove(b':');
-
   [ config().save_directory.as_str(), &"/", prefix ]
     .iter().map(Deref::deref)
-    .chain( utf8_percent_encode(&format!("{}", name), &ENCODE ))
+    .chain(iter::once( name.to_string().as_str() ))
     .chain([ suffix ].iter().map(Deref::deref))
     .collect()
 }
@@ -706,10 +721,10 @@ fn savefilename_parse(leaf: &[u8]) -> SavefilenameParseResult {
   };
   let after_ftype_prefix = rhs;
   let rhs = str::from_utf8(rhs)?;
-  if rhs.rfind('.').is_some() { return TempToDelete }
+  let rcomp = rhs.rsplitn(2, ':').next().unwrap();
+  if rcomp.find('.').is_some() { return TempToDelete }
 
-  let name : String = percent_decode_str(rhs).decode_utf8()?.into();
-  let name = ScopedName::from_str(&name)?;
+  let name = InstanceName::from_str(&rhs)?;
 
   GameFile {
     access_leaf : [ b"a-", after_ftype_prefix ].concat(),

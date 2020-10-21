@@ -4,6 +4,7 @@
 
 #![feature(proc_macro_hygiene, decl_macro)]
 #![feature(slice_strip)]
+#![feature(min_const_generics)]
 
 #![allow(clippy::redundant_closure_call)]
 

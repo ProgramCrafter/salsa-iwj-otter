@@ -7,8 +7,6 @@ use crate::imports::*;
 use parking_lot::{RwLock, const_rwlock,
                   MappedRwLockReadGuard, MappedRwLockWriteGuard};
 
-pub type AccountName = ScopedName;
-
 #[derive(Debug,Clone,Deserialize,Serialize)]
 #[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
 pub enum AccountScope {
@@ -21,28 +19,83 @@ type AS = AccountScope;
 #[derive(Debug,Clone)]
 #[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
 #[derive(DeserializeFromStr,SerializeDisplay)]
-pub struct ScopedName {
+pub struct AccountName {
   pub scope: AccountScope,
-  pub scoped_name: String,
+  pub subaccount: String,
 }
 
-impl Display for ScopedName {
-  #[throws(fmt::Error)]
-  /// Return value is parseable but not filesystem- or html-safe
-  fn fmt(&self, f: &mut fmt::Formatter) {
-    match &self.scope {
+impl AccountScope {
+  /// Return value is parseable and filesystem- and html-safe
+  #[throws(E)]
+  pub fn display_name<'out,
+                  NS: IntoIterator<Item=&'out &'out str>,
+                  E,
+                  F: FnMut(&str) -> Result<(),E>
+                  >
+    (&'out self, ns: NS, f: F)
+  {
+    const ENCODE : percent_encoding::AsciiSet =
+      percent_encoding::NON_ALPHANUMERIC.remove(b':');
+
+    let mut out = String::new();
+    match &self {
       AS::Server => {
-        write!(f, "server")?
+        f("server")?;
       },
       AS::Unix { user } => {
-        assert_eq!(user.find('.'), None);
-        write!(f, "unix:{}", user)?;
+        f("unix")?;
+        f(":")?;
+        f(user)?;
       },
     };
-    match self.scoped_name.as_str() {
-      "" => {},
-      suffix => write!(f, ":{}", &suffix)?,
+    for n in ns {
+      for frag in utf8_percent_encode(n, &ENCODE) {
+        f(frag)?;
+      }
+    }
+  }
+
+  #[throws(InvalidScopedName)]
+  pub fn parse_name<const N: usize>(s: &str) -> (AccountScope, [String; N]) {
+    let mut split = s.split(':');
+
+    let scope = {
+      let next = ||{
+        split.next()
+          .ok_or(InvalidScopedName::MissingScopeComponent)
+      };
+      let kind = next();
+      match kind {
+        "server" => {
+          AccountScope::Server
+        },
+        "unix" => {
+          let user = next().to_owned();
+          AccountScope::Unix { user }
+        },
+        _ => {
+          throw!(InvalidScopedName::UnknownScopeKind)
+        },
+      }
     };
+
+    let strings = ArrayVec::new();
+    while let Some(s) = split.next() {
+      let s = percent_decode_str(s).decode_utf8()?.into();
+      strings.try_push(s)
+        .map_err(|_| InvalidScopedName::TooManyComponents)?;
+    }
+    let strings = strings.into_inner()
+      .map_err(|_| InvalidScopedName::TooFewComponents)?;
+    (scope, strings)
+  }
+}
+
+impl Display for AccountName {
+  #[throws(fmt::Error)]
+  /// Return value is parseable, and filesystem- and html-safeb
+  fn fmt(&self, f: &mut fmt::Formatter) {
+    self.scope.display_name(&[ &self.subaccount ], |s| f.write(s))
   }
 }
 
@@ -50,29 +103,21 @@ impl Display for ScopedName {
 pub enum InvalidScopedName {
   #[error("Unknown scope kind (expected unix or server)")]
   UnknownScopeKind,
+  #[error("Missing scope component (scope scheme, or scope element)")]
+  MissingScopeComponent,
+  #[error("Too few components for scope")]
+  TooFewComponents,
+  #[error("Too many components for scope")]
+  TooManyComponents,
 }
 
-impl FromStr for ScopedName {
+impl FromStr for AccountName {
   type Err = InvalidScopedName;
 
   #[throws(InvalidScopedName)]
   fn from_str(s: &str) -> Self {
-    let (kind, rhs) = s.split_at_delim(':');
-    let (scope, scoped_name) = match kind {
-      "server" => {
-        (AccountScope::Server, rhs)
-      },
-      "unix" => {
-        let (user, rhs) = s.split_at_delim(':');
-        let user = user.to_owned();
-        (AccountScope::Unix { user }, rhs)
-      },
-      _ => {
-        throw!(InvalidScopedName::UnknownScopeKind)
-      },
-    };
-    let scoped_name = scoped_name.to_string();
-    ScopedName { scope, scoped_name }
+    let (scope, [scoped_name]) = AccountScope::parse_name(s)?;
+    AccountName { scope, scoped_name }
   }
 }
 
@@ -148,7 +193,7 @@ pub mod loaded_acl {
   #[derive(Debug,Clone)]
   pub struct EffectiveAcl<'i, P: Perm> {
     pub owner_account: Option<&'i str>,
-    pub acl: LoadedAcl<P>,
+    pub acl: &'i LoadedAcl<P>,
   }
 
   #[derive(Debug,Clone)]

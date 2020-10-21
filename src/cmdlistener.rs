@@ -53,8 +53,8 @@ struct CommandStream<'d> {
 
 #[derive(Debug,Clone)]
 struct AccountSpecified {
-  name: ScopedName,
-  cooked: String,
+  account: AccountName,
+  cooked: String, // account.to_string()
   auth: Authorisation<AccountScope>,
 }
 
@@ -568,6 +568,22 @@ impl CommandStream<'_> {
     warn!("command connection {}: authorisation error: {}",
           self.desc, ae.0);
     MgmtError::AuthorisationError
+  }
+
+
+  #[throws(MgmtError)]
+  pub fn check_acl(&mut self,
+                   ig: &mut Unauthorised<InstanceRef, InstanceName>,
+                   p: PermSet<TablePermission>) -> &mut InstanceGuard {
+    let auth = {
+      let acl = self.by(Authorisation::authorise_any()).acl;
+      let eacl = EffectiveAcl {
+        owner_account : &self.account?.to_string(),
+        acl : &acl,
+      };
+      eacl.check(p)?;
+    };
+    self.by_mut(auth);
   }
 }
 
