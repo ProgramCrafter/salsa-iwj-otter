@@ -613,42 +613,20 @@ impl InstanceGuard<'_> {
       ident : player
     };
     self.token_register(token.clone(), iad);
+    self.access_redeliver(player, token, authorised)?
+  }
 
+  #[throws(MgmtError)]
+  fn access_redeliver(&mut self, player: PlayerId,
+                      token: &RawToken,
+                      authorised: Authorisation<AccountName>)
+                      -> Option<AccessTokenReport> {
     let report = AccessTokenReport {
       url: format!("http://localhost:8000/{}", token.0), // xxx
     };
     let report = access
       .server_deliver(&pst, &report)?;
     report.cloned()
-  }
-
-  #[throws(MgmtError)]
-  pub fn players_access_report(&mut self, players: &[PlayerId])
-                               -> Vec<Vec<RawToken>> {
-    let mut wanted = {
-      let mut wanted = SecondarySlotMap::new();
-      for &player in players {
-        wanted.insert(player, vec![]);
-      }
-      let global = GLOBAL.players.read().unwrap();
-      for token in &self.tokens_players.tr {
-        (||{
-          let iad = global.get(token)?;
-          let e = wanted.get_mut(iad.ident)?;
-          e.push(token.clone());
-          Some(())
-        })();
-      }
-      wanted
-    };
-    #[allow(clippy::or_fun_call)]
-    let out = players.iter().map(|&player| {
-      let mut tokens = wanted.remove(player)
-        .unwrap_or(vec![] /* dupe, somehow */);
-      tokens.sort_unstable();
-      tokens
-    }).collect();
-    out
   }
 
   pub fn modify_pieces(&mut self) -> ModifyingPieces {

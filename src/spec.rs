@@ -81,6 +81,8 @@ pub enum TablePermission {
   ViewPublic,
   AddPlayer,
   ChangePieces,
+  ResetOthersAccess,
+  RedeliverOthersAccess,
   RemovePlayer,
   ChangeACL,
 }

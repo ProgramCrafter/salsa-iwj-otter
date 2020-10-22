@@ -59,6 +59,14 @@ struct AccountSpecified {
   auth: Authorisation<AccountName>,
 }
 
+enum PermissionCheckHow<'p> {
+  Instance,
+  InstanceOrOnlyAffectedAccount(&'p AccountName),
+  InstanceOrOnlyAffectedPlayer(PlayerId),
+}
+
+type PCH<'p> = PermissionCheckHow<'p>;
+
 // ========== management API ==========
 
 // ---------- management command implementations
@@ -173,11 +181,28 @@ fn execute_game_insn(cs: &CommandStream,
     (U{ pcs: vec![], log: vec![], raw: None }, resp)
   }
 
+  impl<'cs> CommandStream<'cs> {
+    #[throws(MgmtError)]
+    fn check_acl_manip_player_access(
+      &mut self,
+      ig: &mut Unauthorised<InstanceGuard, InstanceName>,
+      player: PlayerId,
+      perm: TablePermission,
+    ) -> (&mut InstanceGuard, Authorisation<AccountName>) {
+      let (ig, auth) = self.check_acl(ig,
+                            PCH::InstanceOrOnlyAffectedPlayer(player),
+                                      &[perm])?;
+      fn auth_map(n: &InstanceName) -> &AccountName { &n.account }
+      let auth = auth.map(&auth_map);
+      (ig, auth)
+    }
+  }
+
   let y = match update {
     Noop { } => readonly(cs,ig, &[], |ig| Fine),
 
     Insn::SetTableSize(size) => {
-      let ig = cs.check_acl(ig, &[TP::ChangePieces])?;
+      let ig = cs.check_acl(ig, PCH::Instance, &[TP::ChangePieces])?.0;
       ig.gs.table_size = size;
       (U{ pcs: vec![],
           log: vec![ LogEntry {
@@ -190,7 +215,7 @@ fn execute_game_insn(cs: &CommandStream,
 
     Insn::AddPlayer(add) => {
       // todo some kind of permissions check for player too
-      let ig = cs.check_acl(ig, &[TP::AddPlayer])?;
+      let ig = cs.check_acl(ig, PCH::Instance, &[TP::AddPlayer])?.0;
       let nick = add.nick.ok_or(ME::ParameterMissing)?;
       let logentry = LogEntry {
         html: Html(format!("{} added a player: {}", &who,
@@ -240,7 +265,9 @@ fn execute_game_insn(cs: &CommandStream,
 
     RemovePlayer(account) => {
       // todo let you remove yourself unconditionally
-      let ig = cs.check_acl(ig, &[TP::RemovePlayer])?;
+      let ig = cs.check_acl(ig,
+                            PCH::InstanceOrOnlyAffectedAccount(&account),
+                            &[TP::RemovePlayer])?.0;
       let player = ig.gs.players.iter()
         .filter_map(|(k,v)| if v == &account { Some(k) } else { None })
         .next()
@@ -277,7 +304,10 @@ fn execute_game_insn(cs: &CommandStream,
     }),
 
     ResetPlayerAccess(player) => {
-      let token = ig.player_access_reset(player)?;
+      let (ig, auth) = cs.check_acl_manip_player_access
+        (ig, player, TP::ResetOthersAccess)?;
+
+      let token = ig.player_access_reset(player, auth)?;
       (U{ pcs: vec![],
           log: vec![],
           raw: None },
@@ -285,6 +315,9 @@ fn execute_game_insn(cs: &CommandStream,
     }
 
     RedeliverPlayerAccess(player) => {
+      let (ig, auth) = cs.check_acl_manip_player_access
+        (ig, player, TP::RedeliverOthersAccess)?;
+
       let token = ig.player_access_redeliver(player)?;
       (U{ pcs: vec![],
           log: vec![],
@@ -614,14 +647,44 @@ impl CommandStream<'_> {
           self.desc, ae.0);
     MgmtError::AuthorisationError
   }
+}
 
 
+impl CommandStream<'_> {
   #[throws(MgmtError)]
   pub fn check_acl<P: Into<PermSet<TablePermission>>>(
     &mut self,
     ig: &mut Unauthorised<InstanceGuard, InstanceName>,
+    how: PermissionCheckHow<'_>,
     p: P,
-  ) -> &mut InstanceGuard {
+  ) -> (&mut InstanceGuard, Authorisation<InstanceName>) {
+
+    let subject_is = |object_account|{
+      if let Some(ref subject_account_spec) = self.account {
+        if subject_account_spec.account == object_account {
+          let auth : Authorisation<InstanceName>
+            = Authorisation::authorise_any();
+          return auth;
+        }
+      }
+      return None;
+    };
+      
+    if let Some(auth) = match how {
+      PCH::InstanceOrOnlyAffectedAccount(object_account) => {
+        subject_is(object_account) 
+      },
+      PCH::InstanceOrOnlyAffectedPlayer(object_player) => {
+        if let Some(object_account) = ig.gs.players.get(object_player) {
+          subject_is(object_account)
+        } else {
+          None
+        }
+      },
+    } {
+      return self.by_mut(auth);
+    }
+
     let p = p.into();
     let auth = {
       let subject = &self.account.as_ref()?.cooked;
@@ -632,7 +695,7 @@ impl CommandStream<'_> {
       };
       eacl.check(subject, p)?
     };
-    self.by_mut(auth);
+    (self.by_mut(auth), auth)
   }
 }
 
@@ -773,6 +836,9 @@ mod authproofs {
     }
     pub fn therefore_ok<U>(self) -> Authorisation<U> {
       Authorisation(PhantomData)
+    }
+
+    pub fn map<U>(self, f: &fn(&T) -> &U) -> Authorisation<U> {
     }
   }
 
