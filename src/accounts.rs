@@ -5,6 +5,7 @@
 use crate::imports::*;
 
 use parking_lot::{RwLock, const_rwlock,
+                  RwLockReadGuard, RwLockWriteGuard,
                   MappedRwLockReadGuard, MappedRwLockWriteGuard};
 
 #[derive(Debug,Clone,Deserialize,Serialize)]
@@ -139,6 +140,7 @@ pub struct AccountRecord {
 }
 
 #[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
+#[derive(Serialize,Deserialize)]
 pub struct TokenRevelation {
   pub latest: Timestamp,
   pub earliest: Timestamp,
@@ -156,25 +158,31 @@ pub fn save_accounts_now() -> Result<(), InternalError> {
 
 impl AccountRecord {
   pub fn lookup(account: &AccountName,  _: Authorisation<AccountName>)
-            -> Option<MappedRwLockReadGuard<'static, AccountRecord>> {
-    ACCOUNTS.read().map(
-      |accounts| accounts?.get(account)
-    )
+                -> Option<MappedRwLockReadGuard<'static, AccountRecord>> {
+    RwLockReadGuard::try_map(
+      ACCOUNTS.read(),
+      |accounts: &Option<HashMap<_,_>>| -> Option<_> {
+        accounts.as_ref()?.get(account)
+      }
+    ).ok()
   }
   pub fn lookup_mut_caller_must_save(account: &AccountName,
                                       _: Authorisation<AccountName>)
             -> Option<MappedRwLockWriteGuard<'static, AccountRecord>> {
-    ACCOUNTS.write().map(
-      |accounts| accounts?.get(account)
-    )
+    RwLockWriteGuard::try_map(
+      ACCOUNTS.write(),
+      |accounts: &mut Option<HashMap<_,_>>| -> Option<_> {
+        accounts.as_mut()?.get_mut(account)
+      }
+    ).ok()
   }
   pub fn with_entry_mut<T, F>(account: &AccountName,
-                              _: Authorisation<AccountName>,
+                              auth: Authorisation<AccountName>,
                               f: F)
                               -> Result<T, (InternalError, T)>
   where F: FnOnce(Option<&mut AccountRecord>) -> T
   {
-    let entry = AccountRecord::lookup_mut_caller_must_save(account);
+    let entry = AccountRecord::lookup_mut_caller_must_save(account, auth);
     let output = f(*entry);
     let ok = if entry.is_some() { save_accounts_now() } else { Ok(()) };
     match ok {
