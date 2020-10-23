@@ -161,9 +161,7 @@ impl AccountRecord {
                 -> Option<MappedRwLockReadGuard<'static, AccountRecord>> {
     RwLockReadGuard::try_map(
       ACCOUNTS.read(),
-      |accounts: &Option<HashMap<_,_>>| -> Option<_> {
-        accounts.as_ref()?.get(account)
-      }
+      |accounts| accounts.as_ref()?.get(account)
     ).ok()
   }
   pub fn lookup_mut_caller_must_save(account: &AccountName,
@@ -171,9 +169,7 @@ impl AccountRecord {
             -> Option<MappedRwLockWriteGuard<'static, AccountRecord>> {
     RwLockWriteGuard::try_map(
       ACCOUNTS.write(),
-      |accounts: &mut Option<HashMap<_,_>>| -> Option<_> {
-        accounts.as_mut()?.get_mut(account)
-      }
+      |accounts| accounts.as_mut()?.get_mut(account)
     ).ok()
   }
   pub fn with_entry_mut<T, F>(account: &AccountName,
