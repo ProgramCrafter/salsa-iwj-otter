@@ -179,7 +179,7 @@ impl AccountRecord {
   where F: FnOnce(Option<&mut AccountRecord>) -> T
   {
     let entry = AccountRecord::lookup_mut_caller_must_save(account, auth);
-    let output = f(*entry);
+    let output = f(entry.as_deref_mut());
     let ok = if entry.is_some() { save_accounts_now() } else { Ok(()) };
     match ok {
       Ok(()) => Ok(output),
@@ -216,8 +216,8 @@ pub mod loaded_acl {
 
   #[derive(Debug,Clone)]
   #[derive(Serialize,Deserialize)]
-  #[serde(from="Acl")]
-  #[serde(into="Acl")]
+  #[serde(from="Acl<P>")]
+  #[serde(into="Acl<P>")]
   pub struct LoadedAcl<P: Perm> (Vec<LoadedAclEntry<P>>);
 
   impl<P:Perm> Default for LoadedAcl<P> {
@@ -257,21 +257,21 @@ pub mod loaded_acl {
                  -> Authorisation<P::Auth> {
       let mut needed = p.0;
       assert!(needed != 0);
-      let test_existence = P::test_existence().to_primitive();
+      let test_existence = P::TEST_EXISTENCE.to_u64().unwrap();
       needed |= test_existence;
-      for AclEntryRef { pat, allow, deny } in self.entries() {
+      for AclEntryRef { pat, allow, deny, .. } in self.entries() {
         if !match pat {
           Left(owner) => owner == subject,
           Right(pat) => pat.matches(subject),
         } { continue }
         if needed & deny != 0 { break }
         if allow != 0 { needed &= !(allow | test_existence) }
-        if needed == 0 { return Ok(Authorisation::authorise_any()) }
+        if needed == 0 { return Authorisation::authorise_any() }
       }
-      Err(if needed & test_existence != 0 {
+      throw!(if needed & test_existence != 0 {
         P::NOT_FOUND
       } else {
-        MgmtError::PermissionDenied
+        MgmtError::AuthorisationError
       })
     }
   }
