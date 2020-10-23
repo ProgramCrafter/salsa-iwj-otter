@@ -47,7 +47,7 @@ pub enum InternalError {
   Anyhow(#[from] anyhow::Error),
 }
 
-#[derive(Error,Debug)]
+#[derive(Clone,Error,Debug,Serialize,Deserialize)]
 pub enum TokenDeliveryError {
 }
 

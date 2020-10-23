@@ -28,6 +28,7 @@ pub struct RawTokenVal(str);
 // ---------- public data structure ----------
 
 #[derive(Clone,Debug,Hash,Eq,PartialEq,Ord,PartialOrd)]
+#[derive(Serialize,Deserialize)]
 pub struct InstanceName {
   pub account: AccountName,
   pub game: String,

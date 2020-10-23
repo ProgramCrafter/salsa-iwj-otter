@@ -150,16 +150,18 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 // ---------- game command implementations ----------
 
 type ExecuteGameInsnResults<'r> = (
-  &'r mut InstanceGuard,
   ExecuteGameChangeUpdates,
   MgmtGameResponse,
+  &'r mut InstanceGuard<'r>,
 );
 
 //#[throws(ME)]
-fn execute_game_insn(cs: &CommandStream,
-                     ig: &mut Unauthorised<InstanceGuard, InstanceName>,
-                     update: MgmtGameInstruction)
-                     -> Result<ExecuteGameInsnResults,ME> {
+fn execute_game_insn<'ig>(
+  cs: &'ig CommandStream,
+  ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
+  update: MgmtGameInstruction)
+  -> Result<ExecuteGameInsnResults<'ig> ,ME>
+{
   type U = ExecuteGameChangeUpdates;
   use MgmtGameInstruction::*;
   use MgmtGameResponse::*;
@@ -168,29 +170,30 @@ fn execute_game_insn(cs: &CommandStream,
   let who = &cs.who;
 
   #[throws(MgmtError)]
-  fn readonly<F: FnOnce(&InstanceGuard) -> MgmtGameResponse,
+  fn readonly<'ig,
+              F: FnOnce(&InstanceGuard) -> MgmtGameResponse,
               P: Into<PermSet<TablePermission>>>
   
     (
-      cs: &CommandStream,
-      ig: &mut Unauthorised<InstanceGuard, InstanceName>,
+      cs: &'ig CommandStream,
+      ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
       p: P,
       f: F
-    ) -> ExecuteGameInsnResults
+    ) -> ExecuteGameInsnResults<'ig>
   {
     let (ig, _) = cs.check_acl(ig, PCH::Instance, p)?;
     let resp = f(ig);
-    (U{ pcs: vec![], log: vec![], raw: None }, resp)
+    (U{ pcs: vec![], log: vec![], raw: None }, resp, ig)
   }
 
   impl<'cs> CommandStream<'cs> {
     #[throws(MgmtError)]
-    fn check_acl_manip_player_access(
+    fn check_acl_manip_player_access<'ig>(
       &mut self,
-      ig: &mut Unauthorised<InstanceGuard, InstanceName>,
+      ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
       player: PlayerId,
       perm: TablePermission,
-    ) -> (&mut InstanceGuard, Authorisation<AccountName>) {
+    ) -> (&'ig mut InstanceGuard<'ig>, Authorisation<AccountName>) {
       let (ig, auth) = self.check_acl(ig,
                             PCH::InstanceOrOnlyAffectedPlayer(player),
                                       &[perm])?;
@@ -213,7 +216,7 @@ fn execute_game_insn(cs: &CommandStream,
                                size.0[0], size.0[1])),
           }],
           raw: Some(vec![ PreparedUpdateEntry::SetTableSize(size) ]) },
-       Fine)
+       Fine, ig)
     }
 
     Insn::AddPlayer(add) => {
@@ -239,7 +242,7 @@ fn execute_game_insn(cs: &CommandStream,
       (U{ pcs: vec![],
           log: vec![ logentry ],
           raw: None },
-       Resp::AddPlayer(player))
+       Resp::AddPlayer(player), ig)
     },
 
     Insn::ListPieces => readonly(cs,ig, &[TP::ViewPublic], |ig|{
@@ -282,7 +285,7 @@ fn execute_game_insn(cs: &CommandStream,
                           htmlescape::encode_minimal(&pl.nick))),
           }).collect(),
           raw: None},
-       Fine)
+       Fine, ig)
     },
 
     Insn::Info => readonly(cs,ig, &[TP::ViewPublic], |ig|{
@@ -314,7 +317,7 @@ fn execute_game_insn(cs: &CommandStream,
       (U{ pcs: vec![],
           log: vec![],
           raw: None },
-       PlayerAccessToken(token))
+       PlayerAccessToken(token), ig)
     }
 
     RedeliverPlayerAccess(player) => {
@@ -325,7 +328,7 @@ fn execute_game_insn(cs: &CommandStream,
       (U{ pcs: vec![],
           log: vec![],
           raw: None },
-       PlayerAccessToken(token))
+       PlayerAccessToken(token), ig)
     },
 /*
     SetFixedPlayerAccess { player, token } => {
@@ -359,12 +362,12 @@ fn execute_game_insn(cs: &CommandStream,
                           desc_html.0)),
           }],
           raw: None },
-       Fine)
+       Fine, ig)
     },
 
     AddPieces(PiecesSpec{ pos,posd,count,face,pinned,info }) => {
-      let (ig, modperm, _) = cs.check_acl_modify_pieces(ig)?;
-      let ig = &mut **ig;
+      let (ig_g, modperm, _) = cs.check_acl_modify_pieces(ig)?;
+      let ig = &mut **ig_g;
       let gs = &mut ig.gs;
       let count = count.unwrap_or(1);
       if count > CREATE_PIECES_MAX { throw!(LimitExceeded) }
@@ -402,7 +405,7 @@ fn execute_game_insn(cs: &CommandStream,
             html: Html(format!("{} added {} pieces", &who, count)),
           }],
           raw: None },
-       Fine)
+       Fine, ig_g)
     },
   };
   Ok(y)
@@ -411,22 +414,28 @@ fn execute_game_insn(cs: &CommandStream,
 // ---------- how to execute game commands & handle their updates ----------
 
 #[throws(ME)]
-fn execute_for_game(cs: &CommandStream,
-                    ig: &mut Unauthorised<InstanceGuard, InstanceName>,
-                    mut insns: Vec<MgmtGameInstruction>,
-                    how: MgmtGameUpdateMode) -> MgmtResponse {
+fn execute_for_game<'ig>(
+  cs: &'ig CommandStream,
+  igu: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
+  mut insns: Vec<MgmtGameInstruction>,
+  how: MgmtGameUpdateMode) -> MgmtResponse
+{
   let mut uh = UpdateHandler::from_how(how);
   let mut responses = Vec::with_capacity(insns.len());
+  let mut iga = None;
   let ok = (||{
     for insn in insns.drain(0..) {
-      let (updates, resp) = execute_game_insn(cs, ig, insn)?;
+      let (updates, resp, ig) = execute_game_insn(cs, igu, insn)?;
       uh.accumulate(ig, updates)?;
       responses.push(resp);
+      iga = Some(ig);
     }
-    uh.complete(cs,ig)?;
+    if let Some(ig) = iga { uh.complete(cs,ig)?; }
     Ok(None)
   })();
-  ig.save_game_now()?;
+  if let Some(ig) = iga {
+    ig.save_game_now()?;
+  }
   MgmtResponse::AlterGame {
     responses,
     error: ok.unwrap_or_else(Some)
@@ -540,10 +549,8 @@ impl CommandStream<'_> {
   }
 
   #[throws(MgmtError)]
-  fn current_account(&self) -> (&AccountName, Authorisation<AccountName>) {
-    self.scope.as_ref()
-      .ok_or(ME::SpecifyAccount)?
-      .map(|(account,auth)| (account,*auth))
+  fn current_account(&self) -> &AccountSpecified {
+    self.account.as_ref().ok_or(ME::SpecifyAccount)?
   }
 }
 
@@ -607,7 +614,7 @@ impl CommandListener {
         let chan = MgmtChannel::new(conn)?;
 
         let cs = CommandStream {
-          scope: None, desc: &desc,
+          account: None, desc: &desc,
           chan, euid: euid.map(Uid::from_raw),
           who: Who,
         };
@@ -631,14 +638,14 @@ pub struct ConnectionEuidDiscoverEerror(String);
 impl CommandStream<'_> {
   #[throws(AuthorisationError)]
   fn authorised_uid(&self, wanted: Option<Uid>, xinfo: Option<&str>)
-                    -> Authorisation<(Passwd,Uid),> {
+                    -> Authorisation<Uid> {
     let client_euid = *self.euid.as_ref().map_err(|e| e.clone())?;
     let server_uid = Uid::current();
     if client_euid.is_root() ||
        client_euid == server_uid ||
        Some(client_euid) == wanted
     {
-      return Authorisation::authorise();
+      return Authorisation::authorised(&client_euid);
     }
     throw!(anyhow!("{}: euid mismatch: client={:?} server={:?} wanted={:?}{}",
                    &self.desc, client_euid, server_uid, wanted,
@@ -655,73 +662,93 @@ impl CommandStream<'_> {
 
 impl CommandStream<'_> {
   #[throws(MgmtError)]
-  pub fn check_acl_modify_pieces(
+  pub fn check_acl_modify_pieces<'ig>(
     &mut self,
-    ig: &mut Unauthorised<InstanceGuard, InstanceName>,
-  ) -> (&mut InstanceGuard, ModifyingPieces, Authorisation<InstanceName>)
+    ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
+  ) -> (&'ig mut InstanceGuard<'ig>,
+        ModifyingPieces,
+        Authorisation<InstanceName>)
   {
     let p = &[TP::ChangePieces];
-    let (ig, auth) = self.check_acl(self, PCH::Instance, p)?;
+    let (ig, auth) = self.check_acl(ig, PCH::Instance, p)?;
     let modperm = ig.modify_pieces();
     (ig, modperm, auth)
   }
   
   #[throws(MgmtError)]
-  pub fn check_acl<P: Into<PermSet<TablePermission>>>(
+  pub fn check_acl<'ig, P: Into<PermSet<TablePermission>>>(
     &mut self,
-    ig: &mut Unauthorised<InstanceGuard, InstanceName>,
+    ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
     how: PermissionCheckHow<'_>,
     p: P,
-  ) -> (&mut InstanceGuard, Authorisation<InstanceName>)
+  ) -> (&'ig mut InstanceGuard<'ig>, Authorisation<InstanceName>)
   {
-    let subject_is = |object_account|{
-      if let Some(ref subject_account_spec) = self.account {
-        if subject_account_spec.account == object_account {
-          let auth : Authorisation<InstanceName>
-            = Authorisation::authorise_any();
-          return auth;
+    #[throws(MgmtError)]
+    fn get_auth(cs: &CommandStream,
+                ig: &mut Unauthorised<InstanceGuard, InstanceName>,
+                how: PermissionCheckHow<'_>,
+                p: PermSet<TablePermission>)
+                -> Authorisation<InstanceName>
+    {
+      let subject_is = |object_account: &AccountName|{
+        if let Some(ref subject_account_spec) = cs.account {
+          if &subject_account_spec.account == object_account {
+            let auth : Authorisation<InstanceName>
+              = Authorisation::authorise_any();
+            return Some(auth);
+          }
         }
-      }
-      return None;
-    };
+        return None;
+      };
       
-    if let Some(auth) = match how {
-      PCH::InstanceOrOnlyAffectedAccount(object_account) => {
-        subject_is(object_account) 
-      },
-      PCH::InstanceOrOnlyAffectedPlayer(object_player) => {
-        if let Some(object_account) = ig.gs.players.get(object_player) {
+      if let Some(auth) = match how {
+        PCH::InstanceOrOnlyAffectedAccount(object_account) => {
           subject_is(object_account)
-        } else {
-          None
-        }
-      },
-    } {
-      return self.by_mut(auth);
+        },
+        PCH::InstanceOrOnlyAffectedPlayer(object_player) => {
+          if let Some(object_account) =
+            ig
+            .by(Authorisation::authorise_any())
+            .gs
+            .players.get(object_player)
+          {
+            subject_is(object_account)
+          } else {
+            None
+          }
+        },
+      } {
+        return auth;
+      }
+
+      let auth = {
+        let subject = &cs.current_account()?.cooked;
+        let (acl, owner) = {
+          let ig = ig.by(Authorisation::authorise_any());
+          (&ig.acl, &ig.name.account)
+        };
+        let eacl = EffectiveAcl {
+          owner_account : Some(&owner.to_string()),
+          acl : acl,
+        };
+        eacl.check(subject, p)?
+      };
+      auth
     }
 
-    let p = p.into();
-    let auth = {
-      let subject = &self.account.as_ref()?.cooked;
-      let acl = self.by(Authorisation::authorise_any()).acl;
-      let eacl = EffectiveAcl {
-        owner_account : &self.account?.to_string(),
-        acl : &acl,
-      };
-      eacl.check(subject, p)?
-    };
-    (self.by_mut(auth), auth)
+    let auth = get_auth(self, ig, how, p.into())?;
+    (ig.by_mut(auth), auth)
   }
 }
 
 #[throws(MgmtError)]
 fn authorise_by_account(cs: &CommandStream, wanted: &InstanceName)
                         -> Authorisation<InstanceName> {
-  let currently = &cs.account.as_ref()?.account;
-  if currently == wanted.account {
-    return Authorisation::authorised(wanted);
+  let currently = &cs.current_account()?;
+  if currently.account != wanted.account {
+    throw!(MgmtError::AuthorisationError)
   }
-  throw!(MgmtError::AuthorisationError)
+  Authorisation::authorised(wanted)
 }
 
 #[throws(MgmtError)]
@@ -738,8 +765,8 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
   match &wanted {
 
     AccountScope::Server => {
-      let y : Authorisation<(Passwd,Uid)> = {
-        cs.authorised_uid(None,None)?;
+      let y : Authorisation<Uid> = {
+        cs.authorised_uid(None,None)?
       };
       y.therefore_ok()
     },
@@ -766,7 +793,7 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
               "requested username {:?} not found", &wanted
             ))
           )?;
-        let pwent_ok = Authorisation::authorised(pwent);
+        let pwent_ok = Authorisation::authorised(&pwent);
 
         let ((uid, in_userlist_ok), xinfo) = (||{ <Result<_,AE>>::Ok({
           let allowed = BufReader::new(match File::open(USERLIST) {
@@ -787,7 +814,7 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
                   (AuthorisedIf{ authorised_for: Some(
                     Uid::from_raw(pwent.uid)
                   )},
-                   Authorisation::authorised(InUserList),
+                   Authorisation::authorised(&InUserList),
                   ),
                   None
                 ))
@@ -830,6 +857,8 @@ mod authproofs {
   impl<T,A> Unauthorised<T,A> {
     pub fn of(t: T) -> Self { Unauthorised(t, PhantomData) }
     pub fn by(self, _auth: Authorisation<A>) -> T { self.0 }
+    pub fn by_ref(&self,     _auth: Authorisation<A>) -> &    T { &    self.0 }
+    pub fn by_mut(&mut self, _auth: Authorisation<A>) -> &mut T { &mut self.0 }
   }
   impl<T,A> From<T> for Unauthorised<T,A> {
     fn from(t: T) -> Self { Self::of(t) }
@@ -868,7 +897,7 @@ mod authproofs {
     }
   }
 
-  pub trait AuthorisationCombine {
+  pub trait AuthorisationCombine : Sized {
     type Output;
     fn combine(self) -> Authorisation<Self::Output> {
       Authorisation(PhantomData)
@@ -876,10 +905,10 @@ mod authproofs {
   }
   impl<A,B> AuthorisationCombine
     for (Authorisation<A>, Authorisation<B>) {
-    type Output = Authorisation<(A, B)>;
+    type Output = (A, B);
   }
   impl<A,B,C> AuthorisationCombine
     for (Authorisation<A>, Authorisation<B>, Authorisation<C>) {
-    type Output = Authorisation<(A, B, C)>;
+    type Output = (A, B, C);
   }
 }

@@ -64,13 +64,13 @@ impl AccountScope {
         split.next()
           .ok_or(InvalidScopedName::MissingScopeComponent)
       };
-      let kind = next();
+      let kind = next()?;
       match kind {
         "server" => {
           AccountScope::Server
         },
         "unix" => {
-          let user = next().to_owned();
+          let user = next()?.to_owned();
           AccountScope::Unix { user }
         },
         _ => {
@@ -81,7 +81,9 @@ impl AccountScope {
 
     let strings = ArrayVec::new();
     while let Some(s) = split.next() {
-      let s = percent_decode_str(s).decode_utf8()?.into();
+      let s = percent_decode_str(s).decode_utf8()
+        .map_err(|_| InvalidScopedName::BadUTF8)?
+        .into();
       strings.try_push(s)
         .map_err(|_| InvalidScopedName::TooManyComponents)?;
     }
@@ -109,6 +111,8 @@ pub enum InvalidScopedName {
   TooFewComponents,
   #[error("Too many components for scope")]
   TooManyComponents,
+  #[error("bad (percent-encoded) UTF-8")]
+  BadUTF8,
 }
 
 impl FromStr for AccountName {
@@ -240,7 +244,8 @@ pub mod loaded_acl {
     }
 
     #[throws(MgmtError)]
-    fn check(&self, subject: &str, p: PermSet<P>) -> Authorisation<P::Auth> {
+    pub fn check(&self, subject: &str, p: PermSet<P>)
+                 -> Authorisation<P::Auth> {
       let mut needed = p.0;
       assert!(needed != 0);
       let test_existence = P::test_existence().to_primitive();
