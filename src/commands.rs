@@ -152,6 +152,7 @@ pub enum MgmtError {
   GameCorrupted,
   AccountNotFound,
   PlayerNotFound,
+  AuthorisationUninitialised,
   PieceNotFound,
   LimitExceeded,
   ServerFailure(String),

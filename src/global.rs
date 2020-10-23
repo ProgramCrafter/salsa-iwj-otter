@@ -9,6 +9,8 @@ use crate::imports::*;
 use std::sync::PoisonError;
 use slotmap::dense as sm;
 
+type ME = MgmtError;
+
 // ---------- newtypes and type aliases ----------
 
 visible_slotmap_key!{ ClientId('C') }
@@ -572,15 +574,13 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(MgmtError)]
-  pub fn player_access_reset(&mut self, player: PlayerId,
-                             authorised: Authorisation<AccountName>)
-                             -> Option<AccessTokenReport> {
-    // xxx call this function when access changes
-
+  fn player_access_reset_redeliver(&mut self, player: PlayerId,
+                                   authorised: Authorisation<AccountName>,
+                                   reset: bool)
+                                   -> Option<AccessTokenReport> {
     let pst = self.c.g.iplayers.get(player)
       .ok_or(MgmtError::PlayerNotFound)?
       .pst;
-    self.save_access_now()?;
 
     let access = AccountRecord::with_entry_mut(
       &pst.account, authorised,
@@ -600,33 +600,76 @@ impl InstanceGuard<'_> {
       Ok::<_,MgmtError>(access.clone())
     }).map_err(|(e,_)|e)??;
 
-    let token = access
-      .override_token()
-      .cloned()
-      .unwrap_or_else(||{
-        RawToken::new_random()
-        // xxx disconnect everyone else
-      });
+    if reset {
+      self.save_access_now()?;
+    }
 
-    let iad = InstanceAccessDetails {
-      gref : self.gref.clone(),
-      ident : player
+    let token : RawToken = if reset {
+      
+      let token = access
+        .override_token()
+        .cloned()
+        .unwrap_or_else(||{
+          RawToken::new_random()
+          // xxx disconnect everyone else
+        });
+        
+      let iad = InstanceAccessDetails {
+        gref : self.gref.clone(),
+        ident : player
+      };
+      self.token_register(token.clone(), iad);
+
+      token
+
+    } else {
+
+      let tokens : ArrayVec<[&RawToken;2]> = {
+        let players = GLOBAL.players.read().unwrap();
+        self.tokens_players.tr.iter().
+          filter(|&token| (||{
+            let iad = players.get(token)?;
+            if iad.ident != player { return None }
+            if ! Arc::ptr_eq(&iad.gref.0, &self.gref.0) { return None }
+            Some(())
+          })() == Some(()))
+          .take(2)
+          .collect()
+      };
+
+      let token = match tokens.as_slice() {
+        [] => throw!(ME::AuthorisationUninitialised),
+        [&token] => token,
+        _ => {
+          warn!("duplicate token for {}", player);
+          throw!(ME::ServerFailure("duplicate token".to_string()));
+        },
+      };
+
+      token.clone()
     };
-    self.token_register(token.clone(), iad);
-    self.access_redeliver(player, token, authorised)?
-  }
 
-  #[throws(MgmtError)]
-  fn access_redeliver(&mut self, player: PlayerId,
-                      token: &RawToken,
-                      authorised: Authorisation<AccountName>)
-                      -> Option<AccessTokenReport> {
     let report = AccessTokenReport {
       url: format!("http://localhost:8000/{}", token.0), // xxx
     };
     let report = access
       .server_deliver(&pst, &report)?;
     report.cloned()
+  }
+
+  #[throws(MgmtError)]
+  pub fn player_access_reset(&mut self, player: PlayerId,
+                             auth: Authorisation<AccountName>)
+                             -> Option<AccessTokenReport> {
+    // xxx call this function when access method changes
+    self.player_access_reset_redeliver(player, auth, true)?
+  }
+
+  #[throws(MgmtError)]
+  pub fn player_access_redeliver(&mut self, player: PlayerId,
+                                 auth: Authorisation<AccountName>)
+                                 -> Option<AccessTokenReport> {
+    self.player_access_reset_redeliver(player, auth, false)?
   }
 
   pub fn modify_pieces(&mut self) -> ModifyingPieces {

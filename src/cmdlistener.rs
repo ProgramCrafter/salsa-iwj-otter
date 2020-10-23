@@ -176,7 +176,7 @@ fn execute_game_insn(cs: &CommandStream,
       f: F
     ) -> ExecuteGameInsnResults
   {
-    let ig = cs.check_acl(p)?;
+    let ig = cs.check_acl(ig, PCH::InstanceOnly, p)?;
     let resp = f(ig);
     (U{ pcs: vec![], log: vec![], raw: None }, resp)
   }
@@ -318,7 +318,7 @@ fn execute_game_insn(cs: &CommandStream,
       let (ig, auth) = cs.check_acl_manip_player_access
         (ig, player, TP::RedeliverOthersAccess)?;
 
-      let token = ig.player_access_redeliver(player)?;
+      let token = ig.player_access_redeliver(player, auth)?;
       (U{ pcs: vec![],
           log: vec![],
           raw: None },
@@ -343,8 +343,8 @@ fn execute_game_insn(cs: &CommandStream,
 */
 
     DeletePiece(piece) => {
-      let modperm = ig.modify_pieces();
-      let p = ig.pieces.as_mut(modperm)
+      let (ig, modperm, _) = cs.check_acl_modify_pieces(ig)?;
+      let p = ig.ipieces.as_mut(modperm)
         .remove(piece).ok_or(ME::PieceNotFound)?;
       let gs = &mut ig.gs;
       let pc = gs.pieces.as_mut(modperm).remove(piece);
@@ -360,7 +360,7 @@ fn execute_game_insn(cs: &CommandStream,
     },
 
     AddPieces(PiecesSpec{ pos,posd,count,face,pinned,info }) => {
-      let modperm = ig.modify_pieces();
+      let (ig, modperm, _) = cs.check_acl_modify_pieces(ig)?;
       let ig = &mut **ig;
       let gs = &mut ig.gs;
       let count = count.unwrap_or(1);
@@ -389,7 +389,7 @@ fn execute_game_insn(cs: &CommandStream,
           throw!(SpecError::PosOffTable);
         }
         let piece = gs.pieces.as_mut(modperm).insert(pc);
-        ig.pieces.as_mut(modperm).insert(piece, p);
+        ig.ipieces.as_mut(modperm).insert(piece, p);
         updates.push((piece, PieceUpdateOp::Insert(())));
         pos += posd;
       }
@@ -652,13 +652,25 @@ impl CommandStream<'_> {
 
 impl CommandStream<'_> {
   #[throws(MgmtError)]
+  pub fn check_acl_modify_pieces(
+    &mut self,
+    ig: &mut Unauthorised<InstanceGuard, InstanceName>,
+  ) -> (&mut InstanceGuard, ModifyingPieces, Authorisation<InstanceName>)
+  {
+    let p = &[TP::ChangePieces];
+    let (ig, auth) = self.check_acl(self, PCH::Instance, p)?;
+    let modperm = ig.modify_pieces();
+    (ig, modperm, auth)
+  }
+  
+  #[throws(MgmtError)]
   pub fn check_acl<P: Into<PermSet<TablePermission>>>(
     &mut self,
     ig: &mut Unauthorised<InstanceGuard, InstanceName>,
     how: PermissionCheckHow<'_>,
     p: P,
-  ) -> (&mut InstanceGuard, Authorisation<InstanceName>) {
-
+  ) -> (&mut InstanceGuard, Authorisation<InstanceName>)
+  {
     let subject_is = |object_account|{
       if let Some(ref subject_account_spec) = self.account {
         if subject_account_spec.account == object_account {
