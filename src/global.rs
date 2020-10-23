@@ -390,7 +390,9 @@ impl FromStr for InstanceName {
   type Err = InvalidScopedName;
   #[throws(InvalidScopedName)]
   fn from_str(s: &str) -> Self {
-    let (scope, [subaccount, game]) = AccountScope::parse_name(s)?;
+    let names : [_;2] = Default::default();
+    let scope = AccountScope::parse_name(s, &mut names)?;
+    let [subaccount, game] = names;
     InstanceName {
       account: AccountName { scope, subaccount },
       game,

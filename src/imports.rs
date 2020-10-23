@@ -96,6 +96,7 @@ pub use hashlink::LinkedHashMap;
 pub use delegate::delegate;
 
 pub use itertools::Itertools;
+pub use itertools::EitherOrBoth;
 
 pub use rental::RentalError;
 pub use rental::common::RentRef;

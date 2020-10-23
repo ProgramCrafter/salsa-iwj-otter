@@ -56,7 +56,7 @@ impl AccountScope {
   }
 
   #[throws(InvalidScopedName)]
-  pub fn parse_name<const N: usize>(s: &str) -> (AccountScope, [String; N]) {
+  pub fn parse_name(s: &str, names_out: &mut [String]) -> AccountScope {
     let mut split = s.split(':');
 
     let scope = {
@@ -79,17 +79,20 @@ impl AccountScope {
       }
     };
 
-    let strings = ArrayVec::new();
-    while let Some(s) = split.next() {
-      let s = percent_decode_str(s).decode_utf8()
-        .map_err(|_| InvalidScopedName::BadUTF8)?
-        .into();
-      strings.try_push(s)
-        .map_err(|_| InvalidScopedName::TooManyComponents)?;
+    for eb in names_out.iter_mut().zip_longest(split) {
+      use EitherOrBoth::*;
+      match eb {
+        Both(out, got) => {
+          *out = percent_decode_str(got)
+            .decode_utf8()
+            .map_err(|_| InvalidScopedName::BadUTF8)?
+            .into();
+        },
+        Left(_out) => throw!(InvalidScopedName::TooFewComponents),
+        Right(_got) => throw!(InvalidScopedName::TooFewComponents),
+      };
     }
-    let strings = strings.into_inner()
-      .map_err(|_| InvalidScopedName::TooFewComponents)?;
-    (scope, strings)
+    scope
   }
 }
 
@@ -97,7 +100,7 @@ impl Display for AccountName {
   #[throws(fmt::Error)]
   /// Return value is parseable, and filesystem- and html-safeb
   fn fmt(&self, f: &mut fmt::Formatter) {
-    self.scope.display_name(&[ &self.subaccount ], |s| f.write(s))
+    self.scope.display_name(&[ self.subaccount.as_str() ], |s| f.write_str(s))
   }
 }
 
@@ -120,8 +123,10 @@ impl FromStr for AccountName {
 
   #[throws(InvalidScopedName)]
   fn from_str(s: &str) -> Self {
-    let (scope, [scoped_name]) = AccountScope::parse_name(s)?;
-    AccountName { scope, scoped_name }
+    let subaccount = default();
+    let names = std::slice::from_mut(&mut subaccount);
+    let scope = AccountScope::parse_name(s, names)?;
+    AccountName { scope, subaccount }
   }
 }
 
