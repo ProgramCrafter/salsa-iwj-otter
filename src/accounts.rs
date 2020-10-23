@@ -268,36 +268,56 @@ pub mod loaded_acl {
         if allow != 0 { needed &= !(allow | test_existence) }
         if needed == 0 { return Authorisation::authorise_any() }
       }
-      throw!(if needed & test_existence != 0 {
+      Err(if needed & test_existence != 0 {
         P::NOT_FOUND
       } else {
         MgmtError::AuthorisationError
-      })
+      })?
     }
   }
 
-  impl<'i, P:Perm, I> From<I> for PermSet<P>
-  where I: IntoIterator<Item=&'i P>
+  impl<'i,
+       P: Perm,
+       II: Borrow<P>,
+       I: IntoIterator<Item=II>
+       >
+    From<I> for PermSet<P>
   {
     fn from(i: I) -> Self {
-      i.into_iter().fold(0, |b, i| b | i.to_u64().unwrap())
+      PermSet(
+        i.into_iter().fold(0, |b, i| b | i.borrow().to_u64().unwrap()),
+        PhantomData,
+      )
     }
   }
 
-  fn unpack<P:Perm>(unpacked: PermSet<P>) -> HashSet<P> {
+  fn unpack<P:Perm>(packed: PermSet<P>) -> HashSet<P> {
     let mut s = HashSet::new();
     for n in 0.. {
       let v = match FromPrimitive::from_u64(n) { Some(v) => v, None => break };
-      if unpacked & n != 0 { s.insert(v) }
+      if packed.0 & n != 0 { s.insert(v); }
     }
     s
   }
 
   impl<P:Perm> From<Acl<P>> for LoadedAcl<P> {
     fn from(acl: Acl<P>) -> LoadedAcl<P> {
-      let ents = acl.into_iter().map(
+      let ents = acl.ents.into_iter().filter_map(
         |AclEntry { account_glob, allow, deny }|
-        LoadedAclEntry { account_glob, allow: allow.into(), deny: deny.into() }
+        {
+          let pat = glob::Pattern::new(&account_glob)
+            .ok().or_else(||{
+              eprintln!("discarding malformed acl glob pattern {:?}",
+                        account_glob);
+              None
+            })?;
+          Some(LoadedAclEntry {
+            pat,
+            allow: allow.into(),
+            deny: deny.into(),
+            ptype: PhantomData,
+          })
+        }
       ).collect();
       LoadedAcl(ents)
     }
@@ -306,10 +326,14 @@ pub mod loaded_acl {
   impl<P:Perm> From<LoadedAcl<P>> for Acl<P> {
     fn from(acl: LoadedAcl<P>) -> Acl<P> {
       let LoadedAcl(ents) = acl;
-      ents.into_iter().map(
-        |LoadedAclEntry { account_glob, allow, deny }|
-        AclEntry { account_glob, allow: unpack(allow), deny: unpack(deny) }
-      ).collect()
+      Acl { ents: ents.into_iter().map(
+        |LoadedAclEntry { pat, allow, deny, .. }|
+        AclEntry {
+          account_glob: pat.to_string(),
+          allow: unpack(allow),
+          deny: unpack(deny),
+        }
+      ).collect() }
     }
   }
 }

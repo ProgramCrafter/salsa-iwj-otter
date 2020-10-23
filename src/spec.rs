@@ -64,11 +64,16 @@ pub struct TableSpec {
   pub acl : Acl<TablePermission>
 }
 
-pub type Acl<Perm> = Vec<AclEntry<Perm>>;
+type RawAcl<Perm> = Vec<AclEntry<Perm>>;
+
+#[derive(Debug,Clone)]
+#[derive(Deserialize)]
+#[serde(try_from="RawAcl<Perm>")]
+pub struct Acl<Perm: Eq + Hash> { pub ents: RawAcl<Perm> }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct AclEntry<Perm: Eq + Hash> {
-  pub account_glob: String,
+  pub account_glob: String, // checked
   pub allow: HashSet<Perm>,
   pub deny: HashSet<Perm>,
 }
@@ -228,6 +233,22 @@ pub mod implementation {
   use super::*;
   use crate::imports::*;
   type Insn = crate::commands::MgmtGameInstruction;
+
+  impl<P: Eq + Hash> Default for Acl<P> {
+    fn default() -> Self { Acl { ents: default() } }
+  }
+
+  impl<P: Eq + Hash + Serialize> Serialize for Acl<P> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error>
+    { self.ents.serialize(s) }
+  }
+
+  impl<P: Eq + Hash> From<RawAcl<P>> for Acl<P> {
+    fn from(ents: RawAcl<P>) -> Self {
+      // xxx check
+      Acl { ents }
+    }
+  }
 
   impl loaded_acl::Perm for TablePermission {
     type Auth = InstanceName;
