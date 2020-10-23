@@ -149,7 +149,8 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
 // ---------- game command implementations ----------
 
-type ExecuteGameInsnResults = (
+type ExecuteGameInsnResults<'r> = (
+  &'r mut InstanceGuard,
   ExecuteGameChangeUpdates,
   MgmtGameResponse,
 );
@@ -166,17 +167,18 @@ fn execute_game_insn(cs: &CommandStream,
   type Resp = MgmtGameResponse;
   let who = &cs.who;
 
+  #[throws(MgmtError)]
   fn readonly<F: FnOnce(&InstanceGuard) -> MgmtGameResponse,
               P: Into<PermSet<TablePermission>>>
   
     (
       cs: &CommandStream,
-      ig: &Unauthorised<InstanceGuard, InstanceName>,
+      ig: &mut Unauthorised<InstanceGuard, InstanceName>,
       p: P,
       f: F
     ) -> ExecuteGameInsnResults
   {
-    let ig = cs.check_acl(ig, PCH::InstanceOnly, p)?;
+    let (ig, _) = cs.check_acl(ig, PCH::Instance, p)?;
     let resp = f(ig);
     (U{ pcs: vec![], log: vec![], raw: None }, resp)
   }
@@ -193,13 +195,14 @@ fn execute_game_insn(cs: &CommandStream,
                             PCH::InstanceOrOnlyAffectedPlayer(player),
                                       &[perm])?;
       fn auth_map(n: &InstanceName) -> &AccountName { &n.account }
-      let auth = auth.map(&auth_map);
+//      let auth_map = |n: &InstanceName| -> &AccountName { &n.account };
+      let auth = auth.map(auth_map);
       (ig, auth)
     }
   }
 
   let y = match update {
-    Noop { } => readonly(cs,ig, &[], |ig| Fine),
+    Noop { } => readonly(cs,ig, &[], |ig| Fine)?,
 
     Insn::SetTableSize(size) => {
       let ig = cs.check_acl(ig, PCH::Instance, &[TP::ChangePieces])?.0;
@@ -261,7 +264,7 @@ fn execute_game_insn(cs: &CommandStream,
         })
       }).flatten().collect();
       Resp::Pieces(pieces)
-    }),
+    })?,
 
     RemovePlayer(account) => {
       // todo let you remove yourself unconditionally
@@ -301,7 +304,7 @@ fn execute_game_insn(cs: &CommandStream,
       let table_size = ig.gs.table_size;
       let info = MgmtGameResponseGameInfo { table_size, players };
       Resp::Info(info)
-    }),
+    })?,
 
     ResetPlayerAccess(player) => {
       let (ig, auth) = cs.check_acl_manip_player_access
@@ -840,17 +843,17 @@ mod authproofs {
   pub struct Authorisation<A> (PhantomData<A>);
 
   impl<T> Authorisation<T> {
-    pub const fn authorise_any() -> Authorisation<T> {
-      Authorisation(PhantomData)
-    }
     pub const fn authorised(v: &T) -> Authorisation<T> {
       Authorisation(PhantomData)
+    }
+    pub fn map<U>(self, f: fn(&T) -> &U) -> Authorisation<U> {
+      self.therefore_ok()
     }
     pub fn therefore_ok<U>(self) -> Authorisation<U> {
       Authorisation(PhantomData)
     }
-
-    pub fn map<U>(self, f: &fn(&T) -> &U) -> Authorisation<U> {
+    pub const fn authorise_any() -> Authorisation<T> {
+      Authorisation(PhantomData)
     }
   }
 
