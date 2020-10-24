@@ -102,6 +102,20 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       AccountRecord::insert_entry(account, auth, record)?;
       Fine
     }
+/*
+    UpdateAccont(AccountDetails { account, nick, timezone, access }) => {
+      let auth = authorise_for_account(cs, &account)?;
+      let access = access.map(Into::into);
+      
+        .unwrap_or_else(|| Arc::new(PlayerAccessUnset) as Arc<_>);
+      let record = AccountRecord {
+        nick, access,
+        timezone: timezone.unwrap_or_default(),
+        tokens_revealed: default(),
+      };
+      AccountRecord::insert_entry(account, auth, record)?;
+      Fine
+    }*/
 
     SetAccount(wanted_account) => {
       let auth = authorise_scope_direct(cs, &wanted_account.scope)?;
@@ -355,23 +369,6 @@ fn execute_game_insn<'ig>(
           raw: None },
        PlayerAccessToken(token), ig)
     },
-/*
-    SetFixedPlayerAccess { player, token } => {
-      let authorised : AuthorisedSatisfactory =
-        authorise_scope(cs, &AS::Server)?;
-      let authorised = match authorised.into_inner() {
-        AS::Server => Authorisation::<RawToken>::authorise(),
-        _ => panic!(),
-      };
-      ig.player_access_register_fixed(
-        player, token, authorised
-      )?;
-      (U{ pcs: vec![],
-          log: vec![],
-          raw: None},
-       Fine)
-    }
-*/
 
     DeletePiece(piece) => {
       let (ig, modperm, _) = cs.check_acl_modify_pieces(ig)?;

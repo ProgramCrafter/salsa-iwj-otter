@@ -8,6 +8,11 @@ use parking_lot::{RwLock, const_rwlock,
                   RwLockReadGuard, RwLockWriteGuard,
                   MappedRwLockReadGuard, MappedRwLockWriteGuard};
 
+slotmap::new_key_type!{
+//  #[derive(Serialize,Deserialize,Debug)] xxx
+  pub struct AccountId;
+}
+
 #[derive(Debug,Clone,Deserialize,Serialize)]
 #[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
 pub enum AccountScope {
@@ -147,8 +152,14 @@ pub struct TokenRevelation {
   pub earliest: Timestamp,
 }
 
-static ACCOUNTS : RwLock<Option<HashMap<AccountName, AccountRecord>>>
-  = const_rwlock(None);
+#[derive(Debug)]
+#[derive(Serialize,Deserialize)]
+struct Accounts {
+  names: HashMap<AccountName, AccountId>,
+  records: DenseSlotMap<AccountId, AccountRecord>,
+}
+
+static ACCOUNTS : RwLock<Option<Accounts>> = const_rwlock(None);
 
 // xxx load, incl reveleation expiry
 // xxx periodic token reveleation expiry
@@ -173,14 +184,24 @@ impl AccountRecord {
       |accounts| accounts.as_mut()?.get_mut(account)
     ).ok()
   }
+
+  #[throws(MgmtError)]
   pub fn with_entry_mut<T, F>(account: &AccountName,
                               auth: Authorisation<AccountName>,
                               f: F)
                               -> Result<T, (InternalError, T)>
-  where F: FnOnce(Option<&mut AccountRecord>) -> T
+  where F: FnOnce(&mut AccountRecord) -> T
   {
-    let entry = AccountRecord::lookup_mut_caller_must_save(account, auth);
-    let output = f(entry.as_deref_mut());
+    let entry = AccountRecord::lookup_mut_caller_must_save(account, auth)
+      .ok_or(MgmtError::AccountNotFound)?;
+    let old_access = entry.access.clone();
+    let output = f(entry);
+    let mut ok = true;
+    if ! Arc::ptr_eq(old_access, entry.access) {
+// xxx actually do this
+//      invalidate_all_tokens_for_account(accid)
+//        .dont_just_questionmark
+    }
     let ok = if entry.is_some() { save_accounts_now() } else { Ok(()) };
     match ok {
       Ok(()) => Ok(output),

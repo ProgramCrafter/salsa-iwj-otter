@@ -164,6 +164,7 @@ pub struct TokenRegistry<Id: AccessId> {
 pub struct InstanceAccessDetails<Id> {
   pub gref : InstanceRef,
   pub ident : Id,
+  pub accid : AccountId,
 }
 
 #[derive(Clone,Debug)]
@@ -562,21 +563,6 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(MgmtError)]
-  pub fn player_access_register_fixed(&mut self,
-                                      player: PlayerId, token: RawToken,
-                                      _safe: Authorisation<RawToken>
-  ) {
-    // xxx get rid of this or something ?
-    self.tokens_deregister_for_id(|id:PlayerId| id==player);
-    let iad = InstanceAccessDetails {
-      gref : self.gref.clone(),
-      ident : player
-    };
-    self.token_register(token, iad);
-    self.save_access_now()?;
-  }
-
-  #[throws(MgmtError)]
   fn player_access_reset_redeliver(&mut self, player: PlayerId,
                                    authorised: Authorisation<AccountName>,
                                    reset: bool)
@@ -587,9 +573,8 @@ impl InstanceGuard<'_> {
 
     let access = AccountRecord::with_entry_mut(
       &pst.account, authorised,
-      |acct|
+      |acct, acctid|
     {
-      let acct = acct.ok_or(MgmtError::AccountNotFound)?;
       let access = acct.access;
       let desc = access.describe_html();
       let now = Timestamp::now();
@@ -601,7 +586,7 @@ impl InstanceGuard<'_> {
         .latest = now;
       acct.expire_tokens_revealed();
       Ok::<_,MgmtError>(access.clone())
-    }).map_err(|(e,_)|e)??;
+    })?.map_err(|(e,_)|e)??;
 
     if reset {
       self.save_access_now()?;
