@@ -32,6 +32,7 @@ fs2 = "0.4"
 glob = "0.3"
 hashlink = { version = "0.5", features = ["serde_impl"] }
 htmlescape = "0.3"
+if_chain = "1"
 index_vec = { version = "0.1.1", features = ['serde'] }
 inventory = "0.1"
 itertools = "0.9"
