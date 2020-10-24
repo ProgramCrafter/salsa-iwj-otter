@@ -16,6 +16,7 @@ pub enum AccountScope {
 }
 
 type AS = AccountScope;
+type ME = MgmtError;
 
 #[derive(Debug,Clone)]
 #[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
@@ -188,9 +189,9 @@ impl AccountRecord {
   }
 
   #[throws(MgmtError)]
-  pub fn insert_entry<T, F>(account: AccountName,
-                            _auth: Authorisation<AccountName>,
-                            data: AccountRecord)
+  pub fn insert_entry(account: AccountName,
+                      _auth: Authorisation<AccountName>,
+                      data: AccountRecord)
   {
     let entry = ACCOUNTS.write().unwrap_or_default().entry(account);
     use hash_map::Entry::*;

@@ -7,6 +7,7 @@ use crate::imports::*;
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtCommand {
   Noop,
+  SetSuperuser(bool),
 
   CreateAccont(AccountDetails),
   UpdateAccont(AccountDetails),

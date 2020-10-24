@@ -48,6 +48,7 @@ struct CommandStream<'d> {
   euid : Result<Uid, ConnectionEuidDiscoverEerror>,
   desc : &'d str,
   account : Option<AccountSpecified>,
+  superuser: Option<Authorisation<authproofs::Global>>,
   chan : MgmtChannel,
   who: Who,
 }
@@ -78,6 +79,30 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
   match cmd {
     Noop => Fine,
 
+    SetSuperuser(enable) => {
+      if !enable {
+        cs.superuser = None;
+      } else {
+        let auth = authorise_scope_direct(cs, &AccountScope::Server)?;
+        cs.superuser = Some(auth.therefore_ok());
+      }
+      Fine
+    },
+
+    CreateAccont(AccountDetails { account, nick, timezone, access }) => {
+      let auth = authorise_for_account(cs, &account)?;
+      let access = access
+        .map(Into::into)
+        .unwrap_or_else(|| Arc::new(PlayerAccessUnset) as Arc<_>);
+      let record = AccountRecord {
+        nick, access,
+        timezone: timezone.unwrap_or_default(),
+        tokens_revealed: default(),
+      };
+      AccountRecord::insert_entry(account, auth, record)?;
+      Fine
+    }
+
     SetAccount(wanted_account) => {
       let auth = authorise_scope_direct(cs, &wanted_account.scope)?;
       cs.account = Some(AccountSpecified {
@@ -87,10 +112,6 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       });
       Fine
     },
-
-    CreateAccont(AccountDetails) => {
-      let authorised = authorise_for_account(cs, &game)?;
-    }
 
     CreateGame { game, insns } => {
       let authorised = authorise_by_account(cs, &game)?;
@@ -620,6 +641,7 @@ impl CommandListener {
         let cs = CommandStream {
           account: None, desc: &desc,
           chan, euid: euid.map(Uid::from_raw),
+          superuser: None,
           who: Who,
         };
         cs.mainloop()?;
@@ -665,6 +687,10 @@ impl CommandStream<'_> {
 
 
 impl CommandStream<'_> {
+  pub fn is_superuser<T:Serialize>(&self) -> Option<Authorisation<T>> {
+    self.superuser.map(Into::into)
+  }
+  
   #[throws(MgmtError)]
   pub fn check_acl_modify_pieces<'ig>(
     &mut self,
@@ -746,13 +772,22 @@ impl CommandStream<'_> {
 }
 
 #[throws(MgmtError)]
-fn authorise_by_account(cs: &CommandStream, wanted: &InstanceName)
-                        -> Authorisation<InstanceName> {
+fn authorise_for_account(cs: &CommandStream, wanted: &AccountName)
+                        -> Authorisation<AccountName> {
+  if let Some(y) = cs.is_superuser() { return y }
+
   let currently = &cs.current_account()?;
-  if currently.account != wanted.account {
+  if &currently.account != wanted {
     throw!(MgmtError::AuthorisationError)
   }
   Authorisation::authorised(wanted)
+}
+
+#[throws(MgmtError)]
+fn authorise_by_account(cs: &CommandStream, wanted: &InstanceName)
+                        -> Authorisation<InstanceName> {
+  authorise_for_account(cs, &wanted.account)?
+    .therefore_ok()
 }
 
 #[throws(MgmtError)]
@@ -766,6 +801,8 @@ fn authorise_scope_direct(cs: &CommandStream, wanted: &AccountScope)
 #[throws(AuthorisationError)]
 fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
                    -> Authorisation<AccountScope> {
+  if let Some(y) = cs.is_superuser() { return y }
+
   match &wanted {
 
     AccountScope::Server => {
@@ -856,6 +893,9 @@ pub use authproofs::Unauthorised;
 mod authproofs {
   use crate::imports::*;
 
+  #[derive(Copy,Clone,Debug)]
+  pub struct Global;
+
   #[derive(Debug,Copy,Clone)]
   pub struct Unauthorised<T,A> (T, PhantomData<A>);
   impl<T,A> Unauthorised<T,A> {
@@ -887,6 +927,13 @@ mod authproofs {
     }
     pub const fn authorise_any() -> Authorisation<T> {
       Authorisation(PhantomData)
+    }
+  }
+
+  impl<T:Serialize> From<Authorisation<Global>> for Authorisation<T> {
+    // ^ we need a bound not met by Global or we conflict with From<T> for T
+    fn from(global: Authorisation<Global>) -> Self {
+      global.therefore_ok()
     }
   }
 
