@@ -152,7 +152,7 @@ pub struct TokenRevelation {
   pub earliest: Timestamp,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Default)]
 #[derive(Serialize,Deserialize)]
 struct Accounts {
   names: HashMap<AccountName, AccountId>,
@@ -235,21 +235,18 @@ impl AccountRecord {
                               -> Result<T, (InternalError, T)>
   where F: FnOnce(&mut AccountRecord, AccountId) -> T
   {
-    let entry = AccountRecord::lookup_mut_caller_must_save(account, auth)
+    let (entry, acctid)
+      = AccountRecord::lookup_mut_caller_must_save(account, auth)
       .ok_or(MgmtError::AccountNotFound)?;
     let old_access = entry.access.clone();
-    let output = f(entry);
+    let output = f(&mut *entry, acctid);
     let mut ok = true;
-    if_chain!{
-      if let Some(entry) = entry;
-      if Arc::ptr_eq(old_access, entry.access);
-      then {
+    if ! Arc::ptr_eq(&old_access, &entry.access) {
       // xxx actually do this
 //      invalidate_all_tokens_for_account(accid)
 //        .dont_just_questionmark
-      }
     };
-    let ok = if entry.is_some() { save_accounts_now() } else { Ok(()) };
+    let ok = save_accounts_now();
     match ok {
       Ok(()) => Ok(output),
       Err(e) => Err((e, output))
@@ -261,7 +258,12 @@ impl AccountRecord {
                       _auth: Authorisation<AccountName>,
                       data: AccountRecord)
   {
-    let entry = ACCOUNTS.write().unwrap_or_default().entry(account);
+    let accounts = ACCOUNTS.write();
+    use hash_map::Entry::*;
+    match accounts.names.get(account) {
+      Occupied(oe) => accounts.records.oe.value()
+
+    .get_or_insert_with(default).entry(account);
     use hash_map::Entry::*;
     let ve = match entry {
       Occupied(_) => throw!(ME::AlreadyExists),
