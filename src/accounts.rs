@@ -165,7 +165,7 @@ impl AccountRecord {
     ).ok()
   }
   pub fn lookup_mut_caller_must_save(account: &AccountName,
-                                      _: Authorisation<AccountName>)
+                                      _auth: Authorisation<AccountName>)
             -> Option<MappedRwLockWriteGuard<'static, AccountRecord>> {
     RwLockWriteGuard::try_map(
       ACCOUNTS.write(),
@@ -185,6 +185,21 @@ impl AccountRecord {
       Ok(()) => Ok(output),
       Err(e) => Err((e, output))
     }
+  }
+
+  #[throws(MgmtError)]
+  pub fn insert_entry<T, F>(account: AccountName,
+                            _auth: Authorisation<AccountName>,
+                            data: AccountRecord)
+  {
+    let entry = ACCOUNTS.write().unwrap_or_default().entry(account);
+    use hash_map::Entry::*;
+    let ve = match entry {
+      Occupied(_) => throw!(ME::AlreadyExists),
+      Vacant(ve) => ve,
+    };
+    ve.insert(data);
+    save_accounts_now()?;
   }
 
   pub fn expire_tokens_revealed(&mut self) {

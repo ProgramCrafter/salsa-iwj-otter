@@ -88,6 +88,10 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine
     },
 
+    CreateAccont(AccountDetails) => {
+      let authorised = authorise_for_account(cs, &game)?;
+    }
+
     CreateGame { game, insns } => {
       let authorised = authorise_by_account(cs, &game)?;
 
