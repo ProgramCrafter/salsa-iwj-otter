@@ -108,6 +108,8 @@ pub use ordered_float::OrderedFloat;
 
 pub use either::{Either,Left,Right};
 
+pub use if_chain::if_chain;
+
 pub use crate::global::*;
 pub use crate::gamestate::*;
 pub use crate::pieces::*;

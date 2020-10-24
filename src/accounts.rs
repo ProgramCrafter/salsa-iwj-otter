@@ -137,7 +137,7 @@ impl FromStr for AccountName {
   }
 }
 
-#[derive(Serialize,Deserialize)]
+#[derive(Serialize,Deserialize,Debug)]
 pub struct AccountRecord {
   pub nick: String,
   pub timezone: String,
@@ -168,21 +168,64 @@ pub fn save_accounts_now() -> Result<(), InternalError> {
   panic!("xxx")
 }
 
-impl AccountRecord {
-  pub fn lookup(account: &AccountName,  _: Authorisation<AccountName>)
-                -> Option<MappedRwLockReadGuard<'static, AccountRecord>> {
-    RwLockReadGuard::try_map(
-      ACCOUNTS.read(),
-      |accounts| accounts.as_ref()?.get(account)
-    ).ok()
+#[derive(Default,Debug)]
+struct LookupHelper {
+  acctid_r: Option<AccountId>,
+}
+
+impl LookupHelper {
+  #[throws(as Option)]
+  fn get(&mut self, accounts: &Accounts, account: &AccountName) -> AccountId {
+    let acctid = *accounts.names.get(account)?;
+    self.acctid_r = Some(acctid);
+    acctid
   }
-  pub fn lookup_mut_caller_must_save(account: &AccountName,
-                                      _auth: Authorisation<AccountName>)
-            -> Option<MappedRwLockWriteGuard<'static, AccountRecord>> {
-    RwLockWriteGuard::try_map(
-      ACCOUNTS.write(),
-      |accounts| accounts.as_mut()?.get_mut(account)
-    ).ok()
+/*
+  fn finish<T, E>(self) -> impl FnOnce(<T,E>) -> Option<(T, AccountId)>
+  {
+    move |got: Result<T,E>| Some((got.ok()?, self.acctid_r?))
+  }
+*/
+  fn wrap<T, E>(self, got: Result<T,E>) -> Option<(T, AccountId)> {
+    Some((got.ok()?, self.acctid_r?))
+  }
+}
+
+impl AccountRecord {
+  pub fn bulk_check(names: &[&AccountName]) -> Vec<Option<AccountId>> {
+    let accounts = ACCOUNTS.read();
+    names.iter().map(|&name|{
+      accounts.as_ref()?.names.get(name).map(|&acctid| acctid)
+    }).collect()
+  }
+
+  pub fn lookup(account: &AccountName,  _: Authorisation<AccountName>)
+                -> Option<(MappedRwLockReadGuard<'static, AccountRecord>,
+                           AccountId)>
+  {
+    let mut helper : LookupHelper = default();
+    helper.wrap(
+      RwLockReadGuard::try_map(ACCOUNTS.read(), |accounts| {
+        let accounts = accounts.as_ref()?;
+        let acctid = helper.get(accounts, account)?;
+        accounts.records.get(acctid)
+      })
+    )
+  }
+
+  pub fn lookup_mut_caller_must_save
+    ( account: &AccountName, _auth: Authorisation<AccountName>)
+    -> Option<(MappedRwLockWriteGuard<'static, AccountRecord>,
+               AccountId)>
+  {
+    let mut helper : LookupHelper = default();
+    helper.wrap(
+      RwLockWriteGuard::try_map(ACCOUNTS.write(), |accounts| {
+        let accounts = accounts.as_mut()?;
+        let acctid = helper.get(accounts, account)?;
+        accounts.records.get_mut(acctid)
+      })
+    )
   }
 
   #[throws(MgmtError)]
@@ -190,18 +233,22 @@ impl AccountRecord {
                               auth: Authorisation<AccountName>,
                               f: F)
                               -> Result<T, (InternalError, T)>
-  where F: FnOnce(&mut AccountRecord) -> T
+  where F: FnOnce(&mut AccountRecord, AccountId) -> T
   {
     let entry = AccountRecord::lookup_mut_caller_must_save(account, auth)
       .ok_or(MgmtError::AccountNotFound)?;
     let old_access = entry.access.clone();
     let output = f(entry);
     let mut ok = true;
-    if ! Arc::ptr_eq(old_access, entry.access) {
-// xxx actually do this
+    if_chain!{
+      if let Some(entry) = entry;
+      if Arc::ptr_eq(old_access, entry.access);
+      then {
+      // xxx actually do this
 //      invalidate_all_tokens_for_account(accid)
 //        .dont_just_questionmark
-    }
+      }
+    };
     let ok = if entry.is_some() { save_accounts_now() } else { Ok(()) };
     match ok {
       Ok(()) => Ok(output),

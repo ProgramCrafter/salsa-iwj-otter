@@ -164,7 +164,7 @@ pub struct TokenRegistry<Id: AccessId> {
 pub struct InstanceAccessDetails<Id> {
   pub gref : InstanceRef,
   pub ident : Id,
-  pub accid : AccountId,
+  pub acctid : AccountId,
 }
 
 #[derive(Clone,Debug)]
@@ -571,7 +571,7 @@ impl InstanceGuard<'_> {
       .ok_or(MgmtError::PlayerNotFound)?
       .pst;
 
-    let access = AccountRecord::with_entry_mut(
+    let (access, acctid) = AccountRecord::with_entry_mut(
       &pst.account, authorised,
       |acct, acctid|
     {
@@ -585,7 +585,7 @@ impl InstanceGuard<'_> {
         })
         .latest = now;
       acct.expire_tokens_revealed();
-      Ok::<_,MgmtError>(access.clone())
+      Ok::<_,MgmtError>((access.clone(), acctid))
     })?.map_err(|(e,_)|e)??;
 
     if reset {
@@ -604,7 +604,8 @@ impl InstanceGuard<'_> {
         
       let iad = InstanceAccessDetails {
         gref : self.gref.clone(),
-        ident : player
+        ident : player,
+        acctid
       };
       self.token_register(token.clone(), iad);
 
@@ -877,9 +878,18 @@ impl InstanceGuard<'_> {
     }
 
     let name = Arc::new(name);
-    tokens_players.retain(
-      |&(_,player)| gs.players.contains_key(player)
-    );
+    let (tokens_players, acctids_players) = {
+      let mut tokens = Vec::with_capacity(tokens_players.len());
+      let mut acctnames = Vec::with_capacity(tokens_players.len());
+      for (token, player) in tokens_players { if_chain! {
+        if let Some(name) = gs.players.get(player);
+        then {
+          tokens.push((token, player));
+          acctnames.push(name);
+        }
+      }}
+      (tokens, AccountRecord::bulk_check(&acctnames))
+    };
 
     let g = Instance {
       gs, iplayers,
@@ -902,13 +912,18 @@ impl InstanceGuard<'_> {
       g.tokens_players.tr.insert(RawToken(token.clone()));
     }
     let mut global = GLOBAL.players.write().unwrap();
-    for (token, player) in tokens_players.drain(0..) {
+    for ((token, player), acctid) in
+      tokens_players.drain(0..)
+      .zip(acctids_players)
+    { if_chain!{
+      if let Some(acctid) = acctid;
       let iad = InstanceAccessDetails {
+        acctid,
         gref : gref.clone(),
         ident : player,
       };
-      global.insert(RawToken(token), iad);
-    }
+      then { global.insert(RawToken(token), iad); }
+    } }
     drop(global);
     drop(g);
     GLOBAL.games.write().unwrap().insert(name.clone(), gref.clone());

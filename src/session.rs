@@ -65,6 +65,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
     let ciad = InstanceAccessDetails {
       gref : iad.gref.clone(),
       ident : client,
+      acctid: iad.acctid,
     };
     let ctoken = record_token(&mut ig, ciad)?;
     let ig = &mut *ig;

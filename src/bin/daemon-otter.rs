@@ -118,6 +118,7 @@ fn main() {
 
   shapelib::load()?;
 
+  load_accounts()?;
   load_games()?;
 
   let cl = CommandListener::new()?;
