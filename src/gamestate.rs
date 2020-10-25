@@ -46,7 +46,7 @@ pub struct GameState {
   pub gen : Generation,
   pub log : VecDeque<(Generation, Arc<CommittedLogEntry>)>,
   pub max_z : ZCoord,
-  pub players : DenseSlotMap<PlayerId, AccountName>,
+  pub players : DenseSlotMap<PlayerId, String /* nick */>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]

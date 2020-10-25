@@ -55,7 +55,7 @@ struct CommandStream<'d> {
 
 #[derive(Debug,Clone)]
 struct AccountSpecified {
-  account: AccountName,
+  notional_account: AccountName, // might not exist
   cooked: String, // account.to_string()
   auth: Authorisation<AccountName>,
 }
@@ -116,6 +116,12 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       })
         ?
         .map_err(|(e,_)|e) ?
+    }
+
+    DeleteAccount(account) => {
+      let auth = authorise_for_account(cs, &account)?;
+      AccountRecord::remove_entry(&account auth)?;
+      Fine
     }
 
     SetAccount(wanted_account) => {
@@ -207,7 +213,7 @@ fn execute_game_insn<'ig>(
   use MgmtGameResponse::*;
   type Insn = MgmtGameInstruction;
   type Resp = MgmtGameResponse;
-  let who = &cs.who;
+  let who = &cs.who; // todo show player nick when it's a player
 
   #[throws(MgmtError)]
   fn readonly<'ig,
@@ -310,7 +316,6 @@ fn execute_game_insn<'ig>(
     })?,
 
     RemovePlayer(account) => {
-      // todo let you remove yourself unconditionally
       let ig = cs.check_acl(ig,
                             PCH::InstanceOrOnlyAffectedAccount(&account),
                             &[TP::RemovePlayer])?.0;

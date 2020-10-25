@@ -141,8 +141,8 @@ impl FromStr for AccountName {
 pub struct AccountRecord {
   pub nick: String,
   pub timezone: String,
-  pub access: Arc<dyn PlayerAccessSpec>,
   pub tokens_revealed: HashMap<Html, TokenRevelation>,
+  access: Arc<dyn PlayerAccessSpec>,
 }
 
 #[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
@@ -231,6 +231,7 @@ impl AccountRecord {
   #[throws(MgmtError)]
   pub fn with_entry_mut<T, F>(account: &AccountName,
                               auth: Authorisation<AccountName>,
+                              set_access: Option<Arc<dyn PlayerAccessSpec>>,
                               f: F)
                               -> Result<T, (InternalError, T)>
   where F: FnOnce(&mut AccountRecord, AccountId) -> T
@@ -238,14 +239,12 @@ impl AccountRecord {
     let (entry, acctid)
       = AccountRecord::lookup_mut_caller_must_save(account, auth)
       .ok_or(MgmtError::AccountNotFound)?;
-    let old_access = entry.access.clone();
+
+    if let Some(new_access) = set_access() {
+      invalidate_all_tokens_for_account(acctid)?;
+      entry.access = new_access;
+    }      
     let output = f(&mut *entry, acctid);
-    let mut ok = true;
-    if ! Arc::ptr_eq(&old_access, &entry.access) {
-      // xxx actually do this
-//      invalidate_all_tokens_for_account(accid)
-//        .dont_just_questionmark
-    };
     let ok = save_accounts_now();
     match ok {
       Ok(()) => Ok(output),
@@ -276,6 +275,25 @@ impl AccountRecord {
         }
       }
     }
+    save_accounts_now()?;
+  }
+
+  #[throws(MgmtError)]
+  pub fn remove_entry(account: &AccountName,
+                      _auth: Authorisation<AccountName>)
+  {
+    let accounts = ACCOUNTS.write();
+    let oe = if_chain! {
+      if let Some(accounts) = accounts.as_mut();
+      let entry = accounts.names.entry(account);
+      if let hash_map::Entry::Occupied(oe) = entry;
+      then { oe }
+      else { throw!(AccountNotFound) }
+    };
+    let acctid = *oe.key();
+    process_all_players_for_account(acctid, InstanceGuard::player_remove)?;
+    oe.remove();
+    accounts.records.remove(acctid);
     save_accounts_now()?;
   }
 

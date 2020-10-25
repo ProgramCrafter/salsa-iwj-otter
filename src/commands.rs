@@ -11,9 +11,9 @@ pub enum MgmtCommand {
 
   CreateAccont(AccountDetails),
   UpdateAccont(AccountDetails),
-  DeleteAccount(AccountDetails),
+  DeleteAccount(AccountName),
 
-  SetAccount(AccountName),
+  SetAccount(AccountName), // success does not mean account exists
 
   CreateGame {
     game: InstanceName,
@@ -26,6 +26,9 @@ pub enum MgmtCommand {
     game: InstanceName,
     insns: Vec<MgmtGameInstruction>,
     how: MgmtGameUpdateMode,
+  },
+  DestroyGame {
+    game: InstanceName,
   },
 
   LibraryListByGlob {

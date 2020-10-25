@@ -55,8 +55,7 @@ pub struct PlayerRecord {
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct PlayerState {
-  pub account: AccountName,
-  pub nick: String,
+  pub acctid: AccountId,
   pub tz: Timezone,
 }
 
@@ -181,7 +180,7 @@ lazy_static! {
 
 #[derive(Default)]
 pub struct Global {
-  // lock hierarchy: InstanceContainer < games < {players, clients}
+  // lock hierarchy: games < InstanceContainer < {players, clients}
   // (in order of criticality (perf impact); outermost first, innermost last)
   games   : RwLock<HashMap<Arc<InstanceName>,InstanceRef>>,
   players : RwLock<TokenTable<PlayerId>>,
@@ -343,6 +342,7 @@ impl Instance {
     let a_savefile = savefilename(&g.name, "a-", "");
 
     let mut gw = GLOBAL.games.write().unwrap();
+    // xxx lock order wrong, this function should unlock and then relock
     let g_file = savefilename(&g.name, "g-", "");
     fs::remove_file(&g_file).context("remove").context(g_file)?;
 
@@ -560,6 +560,12 @@ impl InstanceGuard<'_> {
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
 
     Ok((old_account, old_pst))
+  }
+
+  #[throws(InternalError)]
+  pub fn invalidate_tokens(&mut self, player: PlayerId) {
+    let old_tokens = self.tokens_players.get(player).clone();
+    xxx much of middle of the infallible bit of player_remove
   }
 
   #[throws(MgmtError)]
@@ -1045,6 +1051,25 @@ pub fn record_token<Id : AccessId> (
   let token = RawToken::new_random();
   ig.token_register(token.clone(), iad);
   token
+}
+
+#[throws(E)]
+pub fn process_all_players_for_account<
+    E: Error,
+    F: FnMut(&mut InstanceGuard, player: PlayerId) -> Result<(),E>
+    >
+  (acctid: AccountId, f: F)
+{
+  let games = GLOBAL.games.write().unlock();
+  for gref in games.values() {
+    let ig = gref.lock();
+    let remove : Vec<_> = ig.iplayers.filter_map(|(player,pr)| {
+      if pr.pst.acctid == acctid { Some(player) } else { None }
+    }).collect();
+    for player in remove.drain(..) {
+      f(player)?;
+    }
+  }
 }
 
 // ========== instance pieces data access ==========
