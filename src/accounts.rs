@@ -256,20 +256,26 @@ impl AccountRecord {
   #[throws(MgmtError)]
   pub fn insert_entry(account: AccountName,
                       _auth: Authorisation<AccountName>,
-                      data: AccountRecord)
+                      new_record: AccountRecord)
   {
     let accounts = ACCOUNTS.write();
     use hash_map::Entry::*;
-    match accounts.names.get(account) {
-      Occupied(oe) => accounts.records.oe.value()
-
-    .get_or_insert_with(default).entry(account);
-    use hash_map::Entry::*;
-    let ve = match entry {
-      Occupied(_) => throw!(ME::AlreadyExists),
-      Vacant(ve) => ve,
-    };
-    ve.insert(data);
+    let accounts = accounts.get_or_insert_with(default);
+    let name_entry = accounts.names.entry(account);
+    if_chain!{
+      if let Occupied(oe) = name_entry;
+      let acctid = *oe.get();
+      if let Some(old_record) = accounts.records.get_mut(acctid);
+      then {
+        *old_record = new_record;
+      } else {
+        let acctid = accounts.records.insert(new_record);
+        match name_entry {
+          Vacant(ve) => { ve.insert(acctid); }
+          Occupied(oe) => { oe.insert(acctid); }
+        }
+      }
+    }
     save_accounts_now()?;
   }
 
