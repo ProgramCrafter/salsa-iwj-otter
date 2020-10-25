@@ -91,9 +91,9 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
     CreateAccont(AccountDetails { account, nick, timezone, access }) => {
       let auth = authorise_for_account(cs, &account)?;
-      let access = access
-        .map(Into::into)
+      let access = access.map(Into::into)
         .unwrap_or_else(|| Arc::new(PlayerAccessUnset) as Arc<_>);
+      let nick = nick.unwrap_or_else(|| account.to_string());
       let record = AccountRecord {
         nick, access,
         timezone: timezone.unwrap_or_default(),
@@ -102,20 +102,21 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       AccountRecord::insert_entry(account, auth, record)?;
       Fine
     }
-/*
+
     UpdateAccont(AccountDetails { account, nick, timezone, access }) => {
       let auth = authorise_for_account(cs, &account)?;
-      let access = access.map(Into::into);
-      
-        .unwrap_or_else(|| Arc::new(PlayerAccessUnset) as Arc<_>);
-      let record = AccountRecord {
-        nick, access,
-        timezone: timezone.unwrap_or_default(),
-        tokens_revealed: default(),
-      };
-      AccountRecord::insert_entry(account, auth, record)?;
-      Fine
-    }*/
+      AccountRecord::with_entry_mut(&account, auth, |record, acctid|{
+        fn update_from<T>(spec: Option<T>, record: &mut T) {
+          if let Some(new) = spec { *record = new; }
+        }
+        update_from(nick,                   &mut record.nick    );
+        update_from(timezone,               &mut record.timezone);
+        update_from(access.map(Into::into), &mut record.access  );
+        Fine
+      })
+        ?
+        .map_err(|(e,_)|e) ?
+    }
 
     SetAccount(wanted_account) => {
       let auth = authorise_scope_direct(cs, &wanted_account.scope)?;

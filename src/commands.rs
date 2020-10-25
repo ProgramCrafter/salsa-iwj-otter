@@ -38,7 +38,7 @@ pub enum MgmtCommand {
 #[derive(Debug,Serialize,Deserialize)]
 pub struct AccountDetails {
   pub account: AccountName,
-  pub nick: String,
+  pub nick: Option<String>,
   pub timezone: Option<String>,
   #[serde(flatten)]
   pub access: Option<Box<dyn PlayerAccessSpec>>,
