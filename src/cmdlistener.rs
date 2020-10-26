@@ -120,7 +120,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
     DeleteAccount(account) => {
       let auth = authorise_for_account(cs, &account)?;
-      AccountRecord::remove_entry(&account auth)?;
+      AccountRecord::remove_entry(&account, auth)?;
       Fine
     }
 

@@ -449,6 +449,30 @@ impl InstanceGuard<'_> {
     (player, logentry)
   }
 
+  pub fn remove_clients(&mut self,
+                        player: PlayerId,
+                        signal: ErrorSignaledViaUpdate) {
+    let mut clients_to_remove = HashSet::new();
+    self.clients.retain(|k,v| {
+      let remove = v.player == oldplayer;
+      if remove { clients_to_remove.insert(k); }
+      !remove
+    });
+
+    let gen = self.c.g.gs.gen;
+    if let Some(iplayer) = self.iplayers.get_mut(player) {
+      iplayer.u.push(PreparedUpdate {
+        gen,
+        when: Instant::now(),
+        us : vec![ PreparedUpdateEntry::Error(
+          None,
+          signal,
+        )],
+      });
+    };
+    self.tokens_deregister_for_id(|id| clients_to_remove.contains(&id));
+  }
+
   //  #[throws(ServerFailure)]
   //  https://github.com/withoutboats/fehler/issues/62
   pub fn player_remove(&mut self, oldplayer: PlayerId)
@@ -528,29 +552,10 @@ impl InstanceGuard<'_> {
       }
       buf.finish();
 
-      let mut clients_to_remove = HashSet::new();
-      self.clients.retain(|k,v| {
-        let remove = v.player == oldplayer;
-        if remove { clients_to_remove.insert(k); }
-        !remove
-      });
-      let pst = if let Some(PlayerRecord { u: mut updates, pst })
-        = self.iplayers.remove(oldplayer)
-      {
-        updates.push(PreparedUpdate {
-          gen: self.c.g.gs.gen,
-          when: Instant::now(),
-          us : vec![ PreparedUpdateEntry::Error(
-            None,
-            ErrorSignaledViaUpdate::PlayerRemoved
-          )],
-        });
-        Some(pst)
-      } else {
-        None
-      };
+      self.remove_clients(player, ErrorSignaledViaUpdate::PlayerRemoved);
       self.tokens_deregister_for_id(|id:PlayerId| id==oldplayer);
-      self.tokens_deregister_for_id(|id| clients_to_remove.contains(&id));
+      let iplayer = self.iplayers.remove(oldplayer);
+      let pst = iplayer.map(|iplayer| iplayer.pst);
       self.save_access_now().unwrap_or_else(
         |e| warn!(
           "trouble garbage collecting accesses for deleted player: {:?}",
@@ -565,7 +570,16 @@ impl InstanceGuard<'_> {
   #[throws(InternalError)]
   pub fn invalidate_tokens(&mut self, player: PlayerId) {
     let old_tokens = self.tokens_players.get(player).clone();
-    xxx much of middle of the infallible bit of player_remove
+    self.tokens_deregister_for_id(|id:PlayerId| id==oldplayer);
+    save_access_now().map_err(|e|{
+      // oof
+      self.tokens.players.insert(player, old_tokens);
+      e
+    })?;
+    // ppoint of no return
+    (||{
+      self.remove_clients(player, ErrorSignaledViaUpdate::TokenRevoked);
+    })(); // <- No ?, ensures that IEFE is infallible (barring panics)
   }
 
   #[throws(MgmtError)]
@@ -1056,7 +1070,7 @@ pub fn record_token<Id : AccessId> (
 #[throws(E)]
 pub fn process_all_players_for_account<
     E: Error,
-    F: FnMut(&mut InstanceGuard, player: PlayerId) -> Result<(),E>
+    F: FnMut(&mut InstanceGuard, PlayerId) -> Result<(),E>
     >
   (acctid: AccountId, f: F)
 {

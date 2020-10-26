@@ -61,6 +61,7 @@ impl From<InternalError> for SpecError {
 pub enum ErrorSignaledViaUpdate {
   InternalError,
   PlayerRemoved,
+  TokenRevoked,
   PieceOpError {
     piece: VisiblePieceId,
     error: PieceOpError,
