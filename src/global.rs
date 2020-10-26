@@ -454,7 +454,7 @@ impl InstanceGuard<'_> {
                         signal: ErrorSignaledViaUpdate) {
     let mut clients_to_remove = HashSet::new();
     self.clients.retain(|k,v| {
-      let remove = v.player == oldplayer;
+      let remove = v.player == player;
       if remove { clients_to_remove.insert(k); }
       !remove
     });
@@ -552,7 +552,7 @@ impl InstanceGuard<'_> {
       }
       buf.finish();
 
-      self.remove_clients(player, ErrorSignaledViaUpdate::PlayerRemoved);
+      self.remove_clients(oldplayer, ErrorSignaledViaUpdate::PlayerRemoved);
       self.tokens_deregister_for_id(|id:PlayerId| id==oldplayer);
       let iplayer = self.iplayers.remove(oldplayer);
       let pst = iplayer.map(|iplayer| iplayer.pst);
@@ -570,8 +570,8 @@ impl InstanceGuard<'_> {
   #[throws(InternalError)]
   pub fn invalidate_tokens(&mut self, player: PlayerId) {
     let old_tokens = self.tokens_players.get(player).clone();
-    self.tokens_deregister_for_id(|id:PlayerId| id==oldplayer);
-    save_access_now().map_err(|e|{
+    self.tokens_deregister_for_id(|id:PlayerId| id==player);
+    self.save_access_now().map_err(|e|{
       // oof
       self.tokens.players.insert(player, old_tokens);
       e

@@ -241,7 +241,8 @@ impl AccountRecord {
       .ok_or(MgmtError::AccountNotFound)?;
 
     if let Some(new_access) = set_access() {
-      invalidate_all_tokens_for_account(acctid)?;
+      process_all_players_for_account(acctid,
+                                      InstanceGuard::invalidate_tokens)?;
       entry.access = new_access;
     }      
     let output = f(&mut *entry, acctid);
@@ -288,7 +289,7 @@ impl AccountRecord {
       let entry = accounts.names.entry(account);
       if let hash_map::Entry::Occupied(oe) = entry;
       then { oe }
-      else { throw!(AccountNotFound) }
+      else { throw!(ME::AccountNotFound) }
     };
     let acctid = *oe.key();
     process_all_players_for_account(acctid, InstanceGuard::player_remove)?;
