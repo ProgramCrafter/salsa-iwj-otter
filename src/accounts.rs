@@ -168,33 +168,14 @@ pub fn save_accounts_now() -> Result<(), InternalError> {
   panic!("xxx")
 }
 
-pub type Mut<'l> = (
-  MappedRwLockWriteGuard<'l, AccountRecord>,
-  MappedRwLockWriteGuard<'l, AccountName>,
-  AccountId,
-);
-
-trait AccountNameOrId {
-  fn initial_lookup(Self, accounts: &Accounts) -> Option<AccountId>;
-}
-
-impl<'n> AccountNameOrId for &'n AccountName {
-  #[throws(as Option)]
-  fn lookup_mut(self, accounts: &RwLockWriteGuard<Accounts>) -> AccountLookupMut {
-    let acctid = *accounts.names.get(self)?;
-    
-}
-
 #[derive(Default,Debug)]
-struct LookupHelper<'d> {
+struct LookupHelper {
   acctid_r: Option<AccountId>,
 }
 
-impl<'d, K:AccountNameOrId> LookupHelper<'d, K> {
+impl LookupHelper {
   #[throws(as Option)]
-  fn get(&mut self, accounts: &Accounts, key: K) -> AccountId {
-    let acctid = key.initial_lookup(accounts)?;
-    let name = *accounts.records.
+  fn get(&mut self, accounts: &Accounts, account: &AccountName) -> AccountId {
     let acctid = *accounts.names.get(account)?;
     self.acctid_r = Some(acctid);
     acctid
@@ -218,7 +199,7 @@ impl AccountRecord {
     }).collect()
   }
 
-  pub fn lookup<K:AccountNameOrId>(key: K,  _: Authorisation<AccountName>)
+  pub fn lookup(account: &AccountName,  _: Authorisation<AccountName>)
                 -> Option<(MappedRwLockReadGuard<'static, AccountRecord>,
                            AccountId)>
   {
@@ -232,9 +213,10 @@ impl AccountRecord {
     )
   }
 
-  pub fn lookup_mut_caller_must_save<K:AccountNameOrId>
-    ( key: &K, _auth: Authorisation<AccountName>)
-    -> Option<Mut>
+  pub fn lookup_mut_caller_must_save
+    ( account: &AccountName, _auth: Authorisation<AccountName>)
+    -> Option<(MappedRwLockWriteGuard<'static, AccountRecord>,
+               AccountId)>
   {
     let mut helper : LookupHelper = default();
     helper.wrap(
