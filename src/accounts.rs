@@ -139,11 +139,16 @@ impl FromStr for AccountName {
 
 #[derive(Serialize,Deserialize,Debug)]
 pub struct AccountRecord {
+  pub account: Arc<AccountName>,
   pub nick: String,
   pub timezone: String,
   pub tokens_revealed: HashMap<Html, TokenRevelation>,
-  access: Arc<dyn PlayerAccessSpec>,
+  pub access: AccessRecord,
 }
+
+#[derive(Serialize,Deserialize,Debug)]
+#[serde(transparent)]
+struct AccessRecord (Arc<dyn PlayerAccessSpec>);
 
 #[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
 #[derive(Serialize,Deserialize)]
@@ -155,17 +160,38 @@ pub struct TokenRevelation {
 #[derive(Debug,Default)]
 #[derive(Serialize,Deserialize)]
 struct Accounts {
-  names: HashMap<AccountName, AccountId>,
+  names: HashMap<Arc<AccountName>, AccountId>,
   records: DenseSlotMap<AccountId, AccountRecord>,
 }
 
 static ACCOUNTS : RwLock<Option<Accounts>> = const_rwlock(None);
+
+impl Deref for AccessRecord {
+  type Target = Arc<dyn PlayerAccessSpec>;
+  fn deref(&self) -> &Self::Target { return &self.0 }
+}
 
 // xxx load, incl reveleation expiry
 // xxx periodic token reveleation expiry
 
 pub fn save_accounts_now() -> Result<(), InternalError> {
   panic!("xxx")
+}
+
+trait AccountNameOrId : Copy {
+  fn initial_lookup(self, accounts: &Accounts) -> Option<AccountId>;
+}
+
+impl<'n> AccountNameOrId for &'n AccountName {
+  #[throws(as Option)]
+  fn initial_lookup(self, accounts: &Accounts) -> AccountId {
+    *accounts.names.get(self)?
+  }
+}
+
+impl AccountNameOrId for AccountId {
+  #[throws(as Option)]
+  fn initial_lookup(self, _: &Accounts) -> AccountId { self }
 }
 
 #[derive(Default,Debug)]
@@ -175,8 +201,9 @@ struct LookupHelper {
 
 impl LookupHelper {
   #[throws(as Option)]
-  fn get(&mut self, accounts: &Accounts, account: &AccountName) -> AccountId {
-    let acctid = *accounts.names.get(account)?;
+  fn get<K: AccountNameOrId>(&mut self, accounts: &Accounts, key: &K)
+                             -> AccountId {
+    let acctid = key.initial_lookup(accounts)?;
     self.acctid_r = Some(acctid);
     acctid
   }
@@ -192,14 +219,17 @@ impl LookupHelper {
 }
 
 impl AccountRecord {
-  pub fn bulk_check(names: &[&AccountName]) -> Vec<Option<AccountId>> {
+  pub fn bulk_check<K:AccountNameOrId>(keys: &[K]) -> Vec<Option<AccountId>> {
     let accounts = ACCOUNTS.read();
-    names.iter().map(|&name|{
-      accounts.as_ref()?.names.get(name).map(|&acctid| acctid)
+    keys.iter().map(|&key|{
+      let accounts = accounts.as_ref()?;
+      let acctid = key.initial_lookup(accounts)?;
+      let _record = accounts.records.get(acctid)?;
+      Some(acctid)
     }).collect()
   }
 
-  pub fn lookup(account: &AccountName,  _: Authorisation<AccountName>)
+  pub fn lookup<K: AccountNameOrId>(key: K,  _: Authorisation<AccountName>)
                 -> Option<(MappedRwLockReadGuard<'static, AccountRecord>,
                            AccountId)>
   {
@@ -207,14 +237,14 @@ impl AccountRecord {
     helper.wrap(
       RwLockReadGuard::try_map(ACCOUNTS.read(), |accounts| {
         let accounts = accounts.as_ref()?;
-        let acctid = helper.get(accounts, account)?;
+        let acctid = helper.get(accounts, key)?;
         accounts.records.get(acctid)
       })
     )
   }
 
-  pub fn lookup_mut_caller_must_save
-    ( account: &AccountName, _auth: Authorisation<AccountName>)
+  pub fn lookup_mut_caller_must_save<K: AccountNameOrId>
+    ( key: &K, _auth: Authorisation<AccountName>)
     -> Option<(MappedRwLockWriteGuard<'static, AccountRecord>,
                AccountId)>
   {
@@ -222,22 +252,27 @@ impl AccountRecord {
     helper.wrap(
       RwLockWriteGuard::try_map(ACCOUNTS.write(), |accounts| {
         let accounts = accounts.as_mut()?;
-        let acctid = helper.get(accounts, account)?;
+        let acctid = helper.get(accounts, key)?;
         accounts.records.get_mut(acctid)
       })
     )
   }
 
   #[throws(MgmtError)]
-  pub fn with_entry_mut<T, F>(account: &AccountName,
-                              auth: Authorisation<AccountName>,
-                              set_access: Option<Arc<dyn PlayerAccessSpec>>,
-                              f: F)
-                              -> Result<T, (InternalError, T)>
-  where F: FnOnce(&mut AccountRecord, AccountId) -> T
+  pub fn with_entry_mut
+    <T,
+     K: AccountNameOrId,
+     F: FnOnce(&mut AccountRecord, AccountId) -> T
+     >(
+      key: K,
+      auth: Authorisation<AccountName>,
+      set_access: Option<Arc<dyn PlayerAccessSpec>>,
+      f: F
+    )
+    -> Result<T, (InternalError, T)>
   {
     let (entry, acctid)
-      = AccountRecord::lookup_mut_caller_must_save(account, auth)
+      = AccountRecord::lookup_mut_caller_must_save(key, auth)
       .ok_or(MgmtError::AccountNotFound)?;
 
     if let Some(new_access) = set_access() {

@@ -597,7 +597,7 @@ impl InstanceGuard<'_> {
       .pst;
 
     let (access, acctid) = AccountRecord::with_entry_mut(
-      &pst.account, authorised, None,
+      pst.acctid, authorised, None,
       |acct, acctid|
     {
       let access = acct.access;
@@ -887,7 +887,7 @@ impl InstanceGuard<'_> {
   
     let pu_bc = PlayerUpdates::new_begin(&gs);
 
-    let iplayers = {
+    let iplayers : SecondarySlotMap<PlayerId, PlayerRecord> = {
       let a = aplayers;
       a.drain()
     }.map(|(player, pst)| {
@@ -905,15 +905,15 @@ impl InstanceGuard<'_> {
     let name = Arc::new(name);
     let (tokens_players, acctids_players) = {
       let mut tokens = Vec::with_capacity(tokens_players.len());
-      let mut acctnames = Vec::with_capacity(tokens_players.len());
+      let mut acctids = Vec::with_capacity(tokens_players.len());
       for (token, player) in tokens_players { if_chain! {
-        if let Some(name) = gs.players.get(player);
+        if let Some(record) = iplayers.get(player);
         then {
           tokens.push((token, player));
-          acctnames.push(name);
+          acctids.push(record.pst.acctid);
         }
       }}
-      (tokens, AccountRecord::bulk_check(&acctnames))
+      (tokens, AccountRecord::bulk_check(&acctids))
     };
 
     let g = Instance {
@@ -1079,14 +1079,15 @@ pub fn process_all_players_for_account<
     >
   (acctid: AccountId, f: F)
 {
-  let games = GLOBAL.games.write().unlock();
+  let games = GLOBAL.games.write().unwrap();
   for gref in games.values() {
-    let ig = gref.lock();
-    let remove : Vec<_> = ig.iplayers.filter_map(|(player,pr)| {
+    let c = gref.lock_even_poisoned();
+    let remove : Vec<_> = c.g.iplayers.iter().filter_map(|(player,pr)| {
       if pr.pst.acctid == acctid { Some(player) } else { None }
     }).collect();
+    let ig = InstanceGuard { gref: gref.clone(), c };
     for player in remove.drain(..) {
-      f(player)?;
+      f(&mut ig, player)?;
     }
   }
 }
