@@ -417,17 +417,17 @@ impl InstanceGuard<'_> {
   /// caller is responsible for logging; threading it through
   /// proves the caller has a log entry.
   #[throws(MgmtError)]
-  pub fn player_new(&mut self, newplayer: PlayerState, tz: Timezone,
+  pub fn player_new(&mut self, newnick: String, newplayer: PlayerState,
                     logentry: LogEntry) -> (PlayerId, LogEntry) {
     // saving is fallible, but we can't attempt to save unless
     // we have a thing to serialise with the player in it
-    if self.c.g.gs.players.values().any(|a| a == &newplayer.account) {
-      Err(MgmtError::AlreadyExists)?;
-    }
-    if self.c.g.iplayers.values().any(|pl| pl.pst.nick == newplayer.nick) {
+    if self.c.g.gs.players.values().any(|oldnick| oldnick == &newnick) {
       Err(MgmtError::NickCollision)?;
     }
-    let player = self.c.g.gs.players.insert(newplayer.account.clone());
+    if self.c.g.iplayers.values().any(|r| r.pst.acctid == newplayer.acctid) {
+      Err(MgmtError::AlreadyExists)?;
+    }
+    let player = self.c.g.gs.players.insert(newnick);
     let u = PlayerUpdates::new_begin(&self.c.g.gs).new();
     let record = PlayerRecord { u, pst: newplayer };
     self.c.g.iplayers.insert(player, record);
@@ -476,7 +476,7 @@ impl InstanceGuard<'_> {
   //  #[throws(ServerFailure)]
   //  https://github.com/withoutboats/fehler/issues/62
   pub fn player_remove(&mut self, oldplayer: PlayerId)
-                       -> Result<(Option<AccountName>, Option<PlayerState>),
+                       -> Result<(Option<String>, Option<PlayerState>),
                                  InternalError> {
     // We have to filter this player out of everything
     // Then save
@@ -564,7 +564,7 @@ impl InstanceGuard<'_> {
       pst
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
 
-    Ok((old_account, old_pst))
+    Ok((old_nick, old_pst))
   }
 
   #[throws(InternalError)]
