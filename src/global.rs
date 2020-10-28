@@ -484,7 +484,7 @@ impl InstanceGuard<'_> {
     // We make a copy so if the save fails, we can put everything back
 
     let mut players = self.c.g.gs.players.clone();
-    let old_account = players.remove(oldplayer);
+    let old_nick = players.remove(oldplayer);
 
     // New state
     let mut gs = GameState {
@@ -569,11 +569,16 @@ impl InstanceGuard<'_> {
 
   #[throws(InternalError)]
   pub fn invalidate_tokens(&mut self, player: PlayerId) {
-    let old_tokens = self.tokens_players.get(player).clone();
+    let old_tokens = TokenRegistry {
+      tr: self.tokens_players.tr.clone(),
+      id: self.tokens_players.id,
+    };
     self.tokens_deregister_for_id(|id:PlayerId| id==player);
     self.save_access_now().map_err(|e|{
-      // oof
-      self.tokens.players.insert(player, old_tokens);
+      // oof, the tokens are already out of the global map, but
+      // not saved, so they might come back.  We need to leave
+      // them here so they can be deleted later.
+      self.tokens_players = old_tokens;
       e
     })?;
     // ppoint of no return
