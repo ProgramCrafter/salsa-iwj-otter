@@ -597,7 +597,7 @@ impl InstanceGuard<'_> {
       .pst;
 
     let (access, acctid) = AccountRecord::with_entry_mut(
-      &pst.account, authorised,
+      &pst.account, authorised, None,
       |acct, acctid|
     {
       let access = acct.access;
