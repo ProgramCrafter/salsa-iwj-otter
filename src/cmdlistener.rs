@@ -268,6 +268,7 @@ fn execute_game_insn<'ig>(
     Insn::AddPlayer(add) => {
       // todo some kind of permissions check for player too
       let ig = cs.check_acl(ig, PCH::Instance, &[TP::AddPlayer])?.0;
+      let record = AccountRecord::lookup(&add.account)?;
       let nick = add.nick.ok_or(ME::ParameterMissing)?;
       let logentry = LogEntry {
         html: Html(format!("{} added a player: {}", &who,
@@ -279,10 +280,12 @@ fn execute_game_insn<'ig>(
         Ok(tz) => tz,
         Err(x) => match x { },
       };
-      let st = PlayerState {
-        tz,
-        account: add.account,
+      let gpl = GPlayerState {
         nick: nick.to_string(),
+      };
+      let ipl = IPlayerState {
+        account: add.account,
+        tz,
       };
       let (player, logentry) = ig.player_new(st, tz, logentry)?;
       (U{ pcs: vec![],

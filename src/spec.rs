@@ -276,12 +276,16 @@ pub mod implementation {
       // xxx check this on setting access
       None
     }
-    fn server_deliver<'t>(&self, pst: &PlayerState,
+    fn server_deliver<'t>(&self,
+                          ipl: &IPlayerState,
+                          gpl: &GPlayerState,
                           token: &'t AccessTokenReport)
                           -> Result<Option<&'t AccessTokenReport>, TDE> {
       Ok(None)
     }
-    fn client_deliver(&self, pst: &PlayerState, token: &AccessTokenReport)
+    fn client_deliver(&self,
+                      pd: &MgmtPlayerDetails,
+                      token: &AccessTokenReport)
                       -> Result<(), TDE> {
       panic!()
     }
@@ -305,15 +309,19 @@ pub mod implementation {
   #[typetag::serde]
   impl PlayerAccessSpec for UrlOnStdout {
     #[throws(TDE)]
-    fn server_deliver<'t>(&self, ps: &PlayerState,
+    fn server_deliver<'t>(&self,
+                          ipl: &IPlayerState,
+                          gpl: &GPlayerState,
                           token: &'t AccessTokenReport)
                           -> Option<&'t AccessTokenReport> {
       Some(token)
     }
     #[throws(TDE)]
-    fn client_deliver(&self, ps: &PlayerState, token: &AccessTokenReport) {
+    fn client_deliver(&self,
+                      pd: &MgmtPlayerDetails,
+                      token: &AccessTokenReport) {
       println!("access account={} nick={:?} url:\n{}",
-               &ps.account, &ps.nick, token.url);
+               &pd.account, &pd.nick, token.url);
     }
   }
 

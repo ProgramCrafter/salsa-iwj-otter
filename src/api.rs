@@ -18,7 +18,7 @@ struct ApiPiece<O : ApiPieceOp> {
 struct ApiPieceOpArgs<'a> {
   gs: &'a mut GameState,
   player: PlayerId,
-  pst: &'a PlayerState,
+  pst: &'a IPlayerState,
   piece: PieceId,
   p: &'a dyn Piece,
   iplayers: &'a SecondarySlotMap<PlayerId, PlayerRecord>,

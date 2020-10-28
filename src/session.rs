@@ -94,7 +94,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       });
     }
 
-    let pl = ig.gs.players.byid_mut(player)?;
+    let gpl = ig.gs.players.byid_mut(player)?;
     let ipl = ig.iplayers.byid(player)?;
     let tz = &ipl.pst.tz;
     let mut pieces : Vec<_> = ig.gs.pieces.iter().collect();
@@ -139,7 +139,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       player,
       defs : alldefs,
       uses,
-      nick : ipl.pst.nick.clone(),
+      nick : gpl.nick.clone(),
       load : serde_json::to_string(&DataLoad {
         players : load_players,
       }).map_err(|e| InternalError::JSONEncode(e))?,

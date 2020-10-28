@@ -50,11 +50,11 @@ pub struct Instance {
 
 pub struct PlayerRecord {
   pub u: PlayerUpdates,
-  pub pst: PlayerState,
+  pub pst: IPlayerState,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
-pub struct PlayerState {
+pub struct IPlayerState {
   pub acctid: AccountId,
   pub tz: Timezone,
 }
@@ -180,15 +180,26 @@ lazy_static! {
 
 #[derive(Default)]
 pub struct Global {
-  // lock hierarchy: games < InstanceContainer < {players, clients}
-  // (in order of criticality (perf impact); outermost first, innermost last)
+  // lock hierarchy: all of these are in order of acquisition
+  // (in order of lock acquisition (L first), so also in order of criticality
+  // (perf impact); outermost first, innermost last)
+
+  // slow global locks:
+  save_area_lock : Mutex<Option<File>>,
+  // <- accounts::accounts ->
   games   : RwLock<HashMap<Arc<InstanceName>,InstanceRef>>,
+
+  // per-game lock:
+  // <- InstanceContainer ->
+  pub shapelibs : RwLock<shapelib::Registry>,
+
+  // inner locks which the game needs:
+  dirty   : Mutex<VecDeque<InstanceRef>>,
+  config  : RwLock<Arc<ServerConfig>>,
+
+  // fast global lookups
   players : RwLock<TokenTable<PlayerId>>,
   clients : RwLock<TokenTable<ClientId>>,
-  config  : RwLock<Arc<ServerConfig>>,
-  dirty   : Mutex<VecDeque<InstanceRef>>,
-  save_area_lock : Mutex<Option<File>>,
-  pub shapelibs : RwLock<shapelib::Registry>,
 }
 
 #[derive(Debug)]
@@ -203,7 +214,7 @@ pub struct InstanceContainer {
 struct InstanceSaveAccesses<RawTokenStr, PiecesLoadedRef> {
   ipieces: PiecesLoadedRef,
   tokens_players: Vec<(RawTokenStr, PlayerId)>,
-  aplayers: SecondarySlotMap<PlayerId, PlayerState>,
+  aplayers: SecondarySlotMap<PlayerId, IPlayerState>,
   acl: Acl<TablePermission>,
 }
 
@@ -417,7 +428,7 @@ impl InstanceGuard<'_> {
   /// caller is responsible for logging; threading it through
   /// proves the caller has a log entry.
   #[throws(MgmtError)]
-  pub fn player_new(&mut self, newnick: String, newplayer: PlayerState,
+  pub fn player_new(&mut self, newnick: String, newplayer: IPlayerState,
                     logentry: LogEntry) -> (PlayerId, LogEntry) {
     // saving is fallible, but we can't attempt to save unless
     // we have a thing to serialise with the player in it
@@ -476,7 +487,7 @@ impl InstanceGuard<'_> {
   //  #[throws(ServerFailure)]
   //  https://github.com/withoutboats/fehler/issues/62
   pub fn player_remove(&mut self, oldplayer: PlayerId)
-                       -> Result<(Option<String>, Option<PlayerState>),
+                       -> Result<(Option<String>, Option<IPlayerState>),
                                  InternalError> {
     // We have to filter this player out of everything
     // Then save
