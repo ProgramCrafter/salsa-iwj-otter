@@ -125,7 +125,7 @@ impl Read for UpdateReader {
         }
         self.overflow = {
           let mut overflow = Vec::with_capacity(next_len);
-          self.wn.write_next(&mut overflow, &iplayer.pst.tz, &next)
+          self.wn.write_next(&mut overflow, &iplayer.ipl.tz, &next)
             .map_err(|e| self.wn.trouble("overflow.write_next",&e))?;
           debug!("overflow {} {}, len={}",
                  &self.wn.player, &self.wn.client, &overflow.len());
@@ -134,7 +134,7 @@ impl Read for UpdateReader {
         continue;
       }
 
-      self.wn.write_next(&mut buf, &iplayer.pst.tz, &next)
+      self.wn.write_next(&mut buf, &iplayer.ipl.tz, &next)
         .map_err(|e| self.wn.trouble("UpdateReader.write_next",&e))?;
 
       let before = next.when - UPDATE_EXPIRE;

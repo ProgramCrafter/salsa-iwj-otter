@@ -95,8 +95,8 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
     }
 
     let gpl = ig.gs.players.byid_mut(player)?;
-    let ipl = ig.iplayers.byid(player)?;
-    let tz = &ipl.pst.tz;
+    let pr = ig.iplayers.byid(player)?;
+    let tz = &pr.ipl.tz;
     let mut pieces : Vec<_> = ig.gs.pieces.iter().collect();
 
     pieces.sort_by_key(|(_,pr)| &pr.zlevel);

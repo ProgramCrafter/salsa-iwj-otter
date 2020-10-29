@@ -148,7 +148,7 @@ pub struct AccountRecord {
 
 #[derive(Serialize,Deserialize,Debug)]
 #[serde(transparent)]
-struct AccessRecord (Arc<dyn PlayerAccessSpec>);
+pub struct AccessRecord (Arc<dyn PlayerAccessSpec>);
 
 #[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
 #[derive(Serialize,Deserialize)]
@@ -172,6 +172,14 @@ pub struct AccountsGuard (MutexGuard<'static, Accounts>);
 impl Deref for AccessRecord {
   type Target = Arc<dyn PlayerAccessSpec>;
   fn deref(&self) -> &Self::Target { return &self.0 }
+}
+
+impl AccessRecord {
+  pub fn new_unset() -> Self{ Self( Arc::new(PlayerAccessUnset) ) }
+}
+
+impl From<Box<dyn PlayerAccessSpec>> for AccessRecord {
+  fn from(spec: Box<dyn PlayerAccessSpec>) -> Self { Self(spec.into()) }
 }
 
 // xxx load, incl reveleation expiry
@@ -222,17 +230,23 @@ impl LookupHelper {
 }
 
 impl AccountsGuard {
+  pub fn lock() -> Self { Self(ACCOUNTS.lock()) }
+
+  pub fn check<K:AccountNameOrId>(
+    &self,
+    key: K
+  ) -> Option<AccountId> {
+    let accounts = self.as_ref()?;
+    let acctid = key.initial_lookup(accounts)?;
+    let _record = accounts.records.get(acctid)?;
+    Some(acctid)
+  }
+
   pub fn bulk_check<K:AccountNameOrId>(
     &self,
     keys: &[K]
   ) -> Vec<Option<AccountId>> {
-    let accounts = ACCOUNTS.read();
-    keys.iter().map(|&key|{
-      let accounts = accounts.as_ref()?;
-      let acctid = key.initial_lookup(accounts)?;
-      let _record = accounts.records.get(acctid)?;
-      Some(acctid)
-    }).collect()
+    keys.iter().map(|&key| self.check(key)).collect()
   }
 
   pub fn lookup<K: AccountNameOrId>(
@@ -299,13 +313,12 @@ impl AccountsGuard {
 
   #[throws(MgmtError)]
   pub fn insert_entry(&mut self,
-                      account: AccountName,
-                      _auth: Authorisation<AccountName>,
-                      new_record: AccountRecord)
+                      new_record: AccountRecord,
+                      _auth: Authorisation<AccountName>)
   {
     use hash_map::Entry::*;
     let accounts = self.get_or_insert_with(default);
-    let name_entry = accounts.names.entry(account);
+    let name_entry = accounts.names.entry(new_record.account.clone());
     if_chain!{
       if let Occupied(oe) = name_entry;
       let acctid = *oe.get();

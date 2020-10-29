@@ -1103,7 +1103,7 @@ pub fn process_all_players_for_account<
   for gref in games.values() {
     let c = gref.lock_even_poisoned();
     let remove : Vec<_> = c.g.iplayers.iter().filter_map(|(player,pr)| {
-      if pr.pst.acctid == acctid { Some(player) } else { None }
+      if pr.ipl.acctid == acctid { Some(player) } else { None }
     }).collect();
     let ig = InstanceGuard { gref: gref.clone(), c };
     for player in remove.drain(..) {

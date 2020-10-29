@@ -90,28 +90,31 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     },
 
     CreateAccont(AccountDetails { account, nick, timezone, access }) => {
-      let auth = authorise_for_account(cs, &account)?;
+      let mut ag = AccountsGuard::lock();
+      let auth = authorise_for_account(&ag, cs, &account)?;
       let access = access.map(Into::into)
-        .unwrap_or_else(|| Arc::new(PlayerAccessUnset) as Arc<_>);
+        .unwrap_or_else(|| AccessRecord::new_unset());
       let nick = nick.unwrap_or_else(|| account.to_string());
+      let account = account.to_owned().into();
       let record = AccountRecord {
-        nick, access,
+        account, nick, access,
         timezone: timezone.unwrap_or_default(),
         tokens_revealed: default(),
       };
-      AccountRecord::insert_entry(account, auth, record)?;
+      ag.insert_entry(record, auth)?;
       Fine
     }
 
     UpdateAccont(AccountDetails { account, nick, timezone, access }) => {
-      let auth = authorise_for_account(cs, &account)?;
-      AccountRecord::with_entry_mut(&account, auth, |record, acctid|{
+      let mut ag = AccountsGuard::lock();
+      let auth = authorise_for_account(&ag, cs, &account)?;
+      let access = access.map(Into::into);
+      ag.with_entry_mut(&account, auth, access, |record, acctid|{
         fn update_from<T>(spec: Option<T>, record: &mut T) {
           if let Some(new) = spec { *record = new; }
         }
         update_from(nick,                   &mut record.nick    );
         update_from(timezone,               &mut record.timezone);
-        update_from(access.map(Into::into), &mut record.access  );
         Fine
       })
         ?
@@ -119,15 +122,16 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     }
 
     DeleteAccount(account) => {
-      let auth = authorise_for_account(cs, &account)?;
-      AccountRecord::remove_entry(&account, auth)?;
+      let mut ag = AccountsGuard::lock();
+      let auth = authorise_for_account(&ag, cs, &account)?;
+      ag.remove_entry(&account, auth)?;
       Fine
     }
 
     SetAccount(wanted_account) => {
       let auth = authorise_scope_direct(cs, &wanted_account.scope)?;
       cs.account = Some(AccountSpecified {
-        account: wanted_account,
+        notional_account: wanted_account,
         cooked: wanted_account.to_string(),
         auth: auth.therefore_ok(),
       });
@@ -170,9 +174,10 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         let auth = authorise_scope_direct(cs, &AS::Server)?;
         (None, auth.therefore_ok())
       } else {
-        let AccountSpecified { account, auth, .. } = cs.account.as_ref()
+        let AccountSpecified { notional_account, auth, .. } =
+          cs.account.as_ref()
           .ok_or(ME::SpecifyAccount)?;
-        (Some(account), *auth)
+        (Some(notional_account), *auth)
       };
       let mut games = Instance::list_names(scope, auth);
       games.sort_unstable();
@@ -266,9 +271,12 @@ fn execute_game_insn<'ig>(
     }
 
     Insn::AddPlayer(add) => {
-      // todo some kind of permissions check for player too
+      let ag = AccountsGuard::lock();
+      let player_auth = Authorisation::authorise_any();
+      // ^ todo some kind of permissions check for player too
       let ig = cs.check_acl(ig, PCH::Instance, &[TP::AddPlayer])?.0;
-      let record = AccountRecord::lookup(&add.account)?;
+      let (record, acctid) = ag.lookup(&add.account, player_auth)
+        .ok_or(ME::AccountNotFound)?;
       let nick = add.nick.ok_or(ME::ParameterMissing)?;
       let logentry = LogEntry {
         html: Html(format!("{} added a player: {}", &who,
@@ -284,10 +292,10 @@ fn execute_game_insn<'ig>(
         nick: nick.to_string(),
       };
       let ipl = IPlayerState {
-        account: add.account,
+        acctid,
         tz,
       };
-      let (player, logentry) = ig.player_new(gpl, ipl, tz, logentry)?;
+      let (player, logentry) = ig.player_new(gpl, ipl, logentry)?;
       (U{ pcs: vec![],
           log: vec![ logentry ],
           raw: None },
@@ -319,11 +327,13 @@ fn execute_game_insn<'ig>(
     })?,
 
     RemovePlayer(account) => {
+      let accounts = AccountsGuard::lock();
       let ig = cs.check_acl(ig,
                             PCH::InstanceOrOnlyAffectedAccount(&account),
                             &[TP::RemovePlayer])?.0;
-      let player = ig.gs.players.iter()
-        .filter_map(|(k,v)| if v == &account { Some(k) } else { None })
+      let acctid = accounts.check(&account)?;
+      let player = ig.g.iplayers.iter()
+        .filter_map(|(k,v)| if v.acctid == acctid { Some(k) } else { None })
         .next()
         .ok_or(ME::PlayerNotFound)?;
       let (_, old_state) = ig.player_remove(player)?;
@@ -778,7 +788,8 @@ impl CommandStream<'_> {
 }
 
 #[throws(MgmtError)]
-fn authorise_for_account(cs: &CommandStream, wanted: &AccountName)
+fn authorise_for_account(_accounts: &AccountsGuard,
+                         cs: &CommandStream, wanted: &AccountName)
                         -> Authorisation<AccountName> {
   if let Some(y) = cs.is_superuser() { return y }
 
