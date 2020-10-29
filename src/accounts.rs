@@ -4,9 +4,9 @@
 
 use crate::imports::*;
 
-use parking_lot::{RwLock, const_rwlock,
-                  RwLockReadGuard, RwLockWriteGuard,
-                  MappedRwLockReadGuard, MappedRwLockWriteGuard};
+use parking_lot::{Mutex, const_mutex,
+                  MutexGuard,
+                  MappedMutexGuard};
 
 slotmap::new_key_type!{
 //  #[derive(Serialize,Deserialize,Debug)] xxx
@@ -164,7 +164,10 @@ struct Accounts {
   records: DenseSlotMap<AccountId, AccountRecord>,
 }
 
-static ACCOUNTS : RwLock<Option<Accounts>> = const_rwlock(None);
+static ACCOUNTS : Mutex<Option<Accounts>> = const_mutex(None);
+
+#[derive(Debug)]
+pub struct AccountsGuard (MutexGuard<'static, Accounts>);
 
 impl Deref for AccessRecord {
   type Target = Arc<dyn PlayerAccessSpec>;
@@ -174,7 +177,7 @@ impl Deref for AccessRecord {
 // xxx load, incl reveleation expiry
 // xxx periodic token reveleation expiry
 
-pub fn save_accounts_now() -> Result<(), InternalError> {
+pub fn save_accounts_now(_: &AccountsGuard) -> Result<(), InternalError> {
   panic!("xxx")
 }
 
@@ -218,8 +221,11 @@ impl LookupHelper {
   }
 }
 
-impl AccountRecord {
-  pub fn bulk_check<K:AccountNameOrId>(keys: &[K]) -> Vec<Option<AccountId>> {
+impl AccountsGuard {
+  pub fn bulk_check<K:AccountNameOrId>(
+    &self,
+    keys: &[K]
+  ) -> Vec<Option<AccountId>> {
     let accounts = ACCOUNTS.read();
     keys.iter().map(|&key|{
       let accounts = accounts.as_ref()?;
@@ -229,9 +235,11 @@ impl AccountRecord {
     }).collect()
   }
 
-  pub fn lookup<K: AccountNameOrId>(key: K,  _: Authorisation<AccountName>)
-                -> Option<(MappedRwLockReadGuard<'static, AccountRecord>,
-                           AccountId)>
+  pub fn lookup<K: AccountNameOrId>(
+    &self,
+    key: K,  _: Authorisation<AccountName>
+  ) -> Option<(MappedMutexGuard<'static, AccountRecord>,
+               AccountId)>
   {
     let mut helper : LookupHelper = default();
     helper.wrap(
@@ -243,14 +251,15 @@ impl AccountRecord {
     )
   }
 
-  pub fn lookup_mut_caller_must_save<K: AccountNameOrId>
-    ( key: &K, _auth: Authorisation<AccountName>)
-    -> Option<(MappedRwLockWriteGuard<'static, AccountRecord>,
+  pub fn lookup_mut_caller_must_save<'a, K: AccountNameOrId>(
+    self: &'a mut AccountsGuard,
+    key: &K, _auth: Authorisation<AccountName>
+  ) -> Option<(MappedMutexGuard<'a, AccountRecord>,
                AccountId)>
   {
     let mut helper : LookupHelper = default();
     helper.wrap(
-      RwLockWriteGuard::try_map(ACCOUNTS.write(), |accounts| {
+      MutexGuard::try_map(ACCOUNTS.write(), |accounts| {
         let accounts = accounts.as_mut()?;
         let acctid = helper.get(accounts, key)?;
         accounts.records.get_mut(acctid)
@@ -264,6 +273,7 @@ impl AccountRecord {
      K: AccountNameOrId,
      F: FnOnce(&mut AccountRecord, AccountId) -> T
      >(
+      &mut self,
       key: K,
       auth: Authorisation<AccountName>,
       set_access: Option<Arc<dyn PlayerAccessSpec>>,
@@ -271,8 +281,7 @@ impl AccountRecord {
     )
     -> Result<T, (InternalError, T)>
   {
-    let (entry, acctid)
-      = AccountRecord::lookup_mut_caller_must_save(key, auth)
+    let (entry, acctid) = self.lookup_mut_caller_must_save(key, auth)
       .ok_or(MgmtError::AccountNotFound)?;
 
     if let Some(new_access) = set_access() {
@@ -289,13 +298,13 @@ impl AccountRecord {
   }
 
   #[throws(MgmtError)]
-  pub fn insert_entry(account: AccountName,
+  pub fn insert_entry(&mut self,
+                      account: AccountName,
                       _auth: Authorisation<AccountName>,
                       new_record: AccountRecord)
   {
-    let accounts = ACCOUNTS.write();
     use hash_map::Entry::*;
-    let accounts = accounts.get_or_insert_with(default);
+    let accounts = self.get_or_insert_with(default);
     let name_entry = accounts.names.entry(account);
     if_chain!{
       if let Occupied(oe) = name_entry;
@@ -315,7 +324,8 @@ impl AccountRecord {
   }
 
   #[throws(MgmtError)]
-  pub fn remove_entry(account: &AccountName,
+  pub fn remove_entry(&mut self,
+                      account: &AccountName,
                       _auth: Authorisation<AccountName>)
   {
     let accounts = ACCOUNTS.write();
@@ -332,7 +342,9 @@ impl AccountRecord {
     accounts.records.remove(acctid);
     save_accounts_now()?;
   }
+}
 
+impl AccountRecord {
   pub fn expire_tokens_revealed(&mut self) {
     panic!("xxx")
   }

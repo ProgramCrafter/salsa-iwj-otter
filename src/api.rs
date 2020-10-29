@@ -18,7 +18,6 @@ struct ApiPiece<O : ApiPieceOp> {
 struct ApiPieceOpArgs<'a> {
   gs: &'a mut GameState,
   player: PlayerId,
-  pst: &'a IPlayerState,
   piece: PieceId,
   p: &'a dyn Piece,
   iplayers: &'a SecondarySlotMap<PlayerId, PlayerRecord>,
@@ -119,7 +118,7 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   let gs = &mut g.gs;
   let ipieces = &g.ipieces;
   let iplayers = &g.iplayers;
-  let pst = &iplayers.byid(player)?.pst;
+  let ipl = &iplayers.byid(player)?.ipl;
   let _ = gs.players.byid(player)?;
   let lens = TransparentLens { };
   let piece = lens.decode_visible_pieceid(form.piece, player);
@@ -138,7 +137,7 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
     form.op.check_held(pc,player)?;
     let (wrc, update, logents) =
       form.op.op(ApiPieceOpArgs {
-        gs, player, pst, piece, iplayers,
+        gs, player, piece, iplayers,
         p: p.as_ref(),
         lens: &lens,
       })?;

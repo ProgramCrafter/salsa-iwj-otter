@@ -287,7 +287,7 @@ fn execute_game_insn<'ig>(
         account: add.account,
         tz,
       };
-      let (player, logentry) = ig.player_new(st, tz, logentry)?;
+      let (player, logentry) = ig.player_new(gpl, ipl, tz, logentry)?;
       (U{ pcs: vec![],
           log: vec![ logentry ],
           raw: None },

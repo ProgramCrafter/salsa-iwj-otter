@@ -50,7 +50,7 @@ pub struct Instance {
 
 pub struct PlayerRecord {
   pub u: PlayerUpdates,
-  pub pst: IPlayerState,
+  pub ipl: IPlayerState,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
@@ -428,19 +428,19 @@ impl InstanceGuard<'_> {
   /// caller is responsible for logging; threading it through
   /// proves the caller has a log entry.
   #[throws(MgmtError)]
-  pub fn player_new(&mut self, newnick: String, newplayer: IPlayerState,
+  pub fn player_new(&mut self, gnew: GPlayerState, inew: IPlayerState,
                     logentry: LogEntry) -> (PlayerId, LogEntry) {
     // saving is fallible, but we can't attempt to save unless
     // we have a thing to serialise with the player in it
-    if self.c.g.gs.players.values().any(|oldnick| oldnick == &newnick) {
+    if self.c.g.gs.players.values().any(|old| old.nick == gnew.nick) {
       Err(MgmtError::NickCollision)?;
     }
-    if self.c.g.iplayers.values().any(|r| r.pst.acctid == newplayer.acctid) {
+    if self.c.g.iplayers.values().any(|r| r.ipl.acctid == inew.acctid) {
       Err(MgmtError::AlreadyExists)?;
     }
-    let player = self.c.g.gs.players.insert(newnick);
+    let player = self.c.g.gs.players.insert(gnew);
     let u = PlayerUpdates::new_begin(&self.c.g.gs).new();
-    let record = PlayerRecord { u, pst: newplayer };
+    let record = PlayerRecord { u, ipl: inew };
     self.c.g.iplayers.insert(player, record);
 
     (||{
@@ -487,7 +487,7 @@ impl InstanceGuard<'_> {
   //  #[throws(ServerFailure)]
   //  https://github.com/withoutboats/fehler/issues/62
   pub fn player_remove(&mut self, oldplayer: PlayerId)
-                       -> Result<(Option<String>, Option<IPlayerState>),
+                       -> Result<(Option<GPlayerState>, Option<IPlayerState>),
                                  InternalError> {
     // We have to filter this player out of everything
     // Then save
@@ -495,7 +495,7 @@ impl InstanceGuard<'_> {
     // We make a copy so if the save fails, we can put everything back
 
     let mut players = self.c.g.gs.players.clone();
-    let old_nick = players.remove(oldplayer);
+    let old_gpl = players.remove(oldplayer);
 
     // New state
     let mut gs = GameState {
@@ -548,7 +548,7 @@ impl InstanceGuard<'_> {
     // point of no return
     mem::drop(undo);
 
-    let old_pst = (||{
+    let old_ipl = (||{
       for &piece in &updated_pieces {
         (||Some({
           self.c.g.gs.pieces.get_mut(piece)?.gen = self.c.g.gs.gen;
@@ -566,16 +566,16 @@ impl InstanceGuard<'_> {
       self.remove_clients(oldplayer, ErrorSignaledViaUpdate::PlayerRemoved);
       self.tokens_deregister_for_id(|id:PlayerId| id==oldplayer);
       let iplayer = self.iplayers.remove(oldplayer);
-      let pst = iplayer.map(|iplayer| iplayer.pst);
+      let ipl = iplayer.map(|iplayer| iplayer.ipl);
       self.save_access_now().unwrap_or_else(
         |e| warn!(
           "trouble garbage collecting accesses for deleted player: {:?}",
           &e)
       );
-      pst
+      ipl
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
 
-    Ok((old_nick, old_pst))
+    Ok((old_gpl, old_ipl))
   }
 
   #[throws(InternalError)]
@@ -599,16 +599,20 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(MgmtError)]
-  fn player_access_reset_redeliver(&mut self, player: PlayerId,
+  fn player_access_reset_redeliver(&mut self,
+                                   accounts: &mut AccountsGuard,
+                                   player: PlayerId,
                                    authorised: Authorisation<AccountName>,
                                    reset: bool)
                                    -> Option<AccessTokenReport> {
-    let pst = self.c.g.iplayers.get(player)
+    let ipl = self.c.g.iplayers.get(player)
       .ok_or(MgmtError::PlayerNotFound)?
-      .pst;
+      .ipl;
+    let gpl = self.c.g.gs.players.get(player)
+      .ok_or(MgmtError::PlayerNotFound)?;
 
-    let (access, acctid) = AccountRecord::with_entry_mut(
-      pst.acctid, authorised, None,
+    let (access, acctid) = accounts.with_entry_mut(
+      ipl.acctid, authorised, None,
       |acct, acctid|
     {
       let access = acct.access;
@@ -678,23 +682,27 @@ impl InstanceGuard<'_> {
       url: format!("http://localhost:8000/{}", token.0), // xxx
     };
     let report = access
-      .server_deliver(&pst, &report)?;
+      .server_deliver(&gpl, &ipl, &report)?;
     report.cloned()
   }
 
   #[throws(MgmtError)]
-  pub fn player_access_reset(&mut self, player: PlayerId,
+  pub fn player_access_reset(&mut self,
+                             accounts: &mut AccountsGuard,
+                             player: PlayerId,
                              auth: Authorisation<AccountName>)
                              -> Option<AccessTokenReport> {
     // xxx call this function when access method changes
-    self.player_access_reset_redeliver(player, auth, true)?
+    self.player_access_reset_redeliver(accounts, player, auth, true)?
   }
 
   #[throws(MgmtError)]
-  pub fn player_access_redeliver(&mut self, player: PlayerId,
+  pub fn player_access_redeliver(&mut self,
+                                 accounts: &mut AccountsGuard,
+                                 player: PlayerId,
                                  auth: Authorisation<AccountName>)
                                  -> Option<AccessTokenReport> {
-    self.player_access_reset_redeliver(player, auth, false)?
+    self.player_access_reset_redeliver(accounts, player, auth, false)?
   }
 
   pub fn modify_pieces(&mut self) -> ModifyingPieces {
@@ -828,8 +836,8 @@ impl InstanceGuard<'_> {
           .collect()
       };
       let aplayers = s.c.g.iplayers.iter().map(
-        |(player, PlayerRecord { pst, .. })|
-        (player, pst.clone())
+        |(player, PlayerRecord { ipl, .. })|
+        (player, ipl.clone())
       ).collect();
       let acl = s.c.g.acl.into();
       let isa = InstanceSaveAccesses {
@@ -853,7 +861,8 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(StartupError)]
-  fn load_game(name: InstanceName) -> Option<InstanceRef> {
+  fn load_game(accounts: &AccountsGuard,
+               name: InstanceName) -> Option<InstanceRef> {
     {
       let mut st = GLOBAL.save_area_lock.lock().unwrap();
       let st = &mut *st;
@@ -901,9 +910,9 @@ impl InstanceGuard<'_> {
     let iplayers : SecondarySlotMap<PlayerId, PlayerRecord> = {
       let a = aplayers;
       a.drain()
-    }.map(|(player, pst)| {
+    }.map(|(player, ipl)| {
       let u = pu_bc.new();
-      (player, PlayerRecord { u, pst })
+      (player, PlayerRecord { u, ipl })
     }).collect();
 
     for mut p in gs.pieces.values_mut() {
@@ -921,10 +930,10 @@ impl InstanceGuard<'_> {
         if let Some(record) = iplayers.get(player);
         then {
           tokens.push((token, player));
-          acctids.push(record.pst.acctid);
+          acctids.push(record.ipl.acctid);
         }
       }}
-      (tokens, AccountRecord::bulk_check(&acctids))
+      (tokens, accounts.bulk_check(&acctids))
     };
 
     let g = Instance {
@@ -969,7 +978,7 @@ impl InstanceGuard<'_> {
 }
 
 #[throws(anyhow::Error)]
-pub fn load_games() {
+pub fn load_games(accounts: &mut AccountsGuard) {
   enum AFState { Found(PathBuf), Used };
   use AFState::*;
   use SavefilenameParseResult::*;
@@ -992,7 +1001,7 @@ pub fn load_games() {
           );
         },
         GameFile { access_leaf, name } => {
-          InstanceGuard::load_game(name)?;
+          InstanceGuard::load_game(accounts, name)?;
           a_leaves.insert(access_leaf, Used);
         },
       }
