@@ -45,6 +45,8 @@ pub enum InternalError {
   JSONEncode(serde_json::Error),
   #[error("Server error {0:?}")]
   Anyhow(#[from] anyhow::Error),
+  #[error("Game contains only partial data for player, or account missing")]
+  PartialPlayerData,
 }
 
 #[derive(Clone,Error,Debug,Serialize,Deserialize)]

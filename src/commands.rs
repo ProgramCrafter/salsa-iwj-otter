@@ -154,7 +154,7 @@ pub enum MgmtError {
   GameBeingDestroyed,
   GameNotFound,
   GameCorrupted,
-  AccountNotFound,
+  AccountNotFound(#[from] AccountNotFound),
   PlayerNotFound,
   AuthorisationUninitialised,
   PieceNotFound,

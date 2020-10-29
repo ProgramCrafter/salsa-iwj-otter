@@ -4,9 +4,7 @@
 
 use crate::imports::*;
 
-use parking_lot::{Mutex, const_mutex,
-                  MutexGuard,
-                  MappedMutexGuard};
+use parking_lot::{Mutex, const_mutex, MutexGuard};
 
 slotmap::new_key_type!{
 //  #[derive(Serialize,Deserialize,Debug)] xxx
@@ -22,6 +20,11 @@ pub enum AccountScope {
 
 type AS = AccountScope;
 type ME = MgmtError;
+
+#[derive(Error,Debug,Clone,Copy,Serialize,Deserialize)]
+#[derive(Hash,Ord,Eq,PartialOrd,PartialEq)]
+#[error("Account not found")]
+pub struct AccountNotFound;
 
 #[derive(Debug,Clone)]
 #[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
@@ -167,7 +170,7 @@ struct Accounts {
 static ACCOUNTS : Mutex<Option<Accounts>> = const_mutex(None);
 
 #[derive(Debug)]
-pub struct AccountsGuard (MutexGuard<'static, Accounts>);
+pub struct AccountsGuard (MutexGuard<'static, Option<Accounts>>);
 
 impl Deref for AccessRecord {
   type Target = Arc<dyn PlayerAccessSpec>;
@@ -205,80 +208,57 @@ impl AccountNameOrId for AccountId {
   fn initial_lookup(self, _: &Accounts) -> AccountId { self }
 }
 
-#[derive(Default,Debug)]
-struct LookupHelper {
-  acctid_r: Option<AccountId>,
-}
-
-impl LookupHelper {
-  #[throws(as Option)]
-  fn get<K: AccountNameOrId>(&mut self, accounts: &Accounts, key: &K)
-                             -> AccountId {
-    let acctid = key.initial_lookup(accounts)?;
-    self.acctid_r = Some(acctid);
-    acctid
-  }
-/*
-  fn finish<T, E>(self) -> impl FnOnce(<T,E>) -> Option<(T, AccountId)>
-  {
-    move |got: Result<T,E>| Some((got.ok()?, self.acctid_r?))
-  }
-*/
-  fn wrap<T, E>(self, got: Result<T,E>) -> Option<(T, AccountId)> {
-    Some((got.ok()?, self.acctid_r?))
-  }
-}
-
 impl AccountsGuard {
   pub fn lock() -> Self { Self(ACCOUNTS.lock()) }
 
+  #[throws(AccountNotFound)]
   pub fn check<K:AccountNameOrId>(
     &self,
     key: K
-  ) -> Option<AccountId> {
-    let accounts = self.as_ref()?;
-    let acctid = key.initial_lookup(accounts)?;
-    let _record = accounts.records.get(acctid)?;
-    Some(acctid)
+  ) -> AccountId {
+    (||{
+      let accounts = self.0.as_ref()?;
+      let acctid = key.initial_lookup(accounts)?;
+      let _record = accounts.records.get(acctid)?;
+      Some(acctid)
+    })().ok_or(AccountNotFound)?
   }
 
   pub fn bulk_check<K:AccountNameOrId>(
     &self,
     keys: &[K]
   ) -> Vec<Option<AccountId>> {
-    keys.iter().map(|&key| self.check(key)).collect()
+    keys.iter().map(|&key| self.check(key).ok()).collect()
   }
 
-  pub fn lookup<K: AccountNameOrId>(
-    &self,
-    key: K,  _: Authorisation<AccountName>
-  ) -> Option<(MappedMutexGuard<'static, AccountRecord>,
-               AccountId)>
+  #[throws(AccountNotFound)]
+  pub fn lookup<K: AccountNameOrId>(&self, key: K)
+                                    -> (&AccountRecord, AccountId)
   {
-    let mut helper : LookupHelper = default();
-    helper.wrap(
-      RwLockReadGuard::try_map(ACCOUNTS.read(), |accounts| {
-        let accounts = accounts.as_ref()?;
-        let acctid = helper.get(accounts, key)?;
-        accounts.records.get(acctid)
-      })
-    )
+    (||{
+      let accounts = self.0.as_ref()?;
+      let acctid = key.initial_lookup(accounts)?;
+      Some((accounts.records.get(acctid)?, acctid))
+    })().ok_or(AccountNotFound)?
   }
 
-  pub fn lookup_mut_caller_must_save<'a, K: AccountNameOrId>(
-    self: &'a mut AccountsGuard,
-    key: &K, _auth: Authorisation<AccountName>
-  ) -> Option<(MappedMutexGuard<'a, AccountRecord>,
-               AccountId)>
+  #[throws(as Option)]
+  pub fn _lookup_mut<K: AccountNameOrId>(&mut self, key: K,
+                                         _auth: Authorisation<AccountName>)
+                                         -> (&mut AccountRecord, AccountId)
   {
-    let mut helper : LookupHelper = default();
-    helper.wrap(
-      MutexGuard::try_map(ACCOUNTS.write(), |accounts| {
-        let accounts = accounts.as_mut()?;
-        let acctid = helper.get(accounts, key)?;
-        accounts.records.get_mut(acctid)
-      })
-    )
+    let accounts = self.0.as_mut()?;
+    let acctid = key.initial_lookup(accounts)?;
+    (accounts.records.get_mut(acctid)?, acctid)
+  }
+
+  #[throws(AccountNotFound)]
+  pub fn lookup_mut_caller_must_save<K: AccountNameOrId>(
+    &mut self,
+    key: K, auth: Authorisation<AccountName>
+  ) -> (&mut AccountRecord, AccountId)
+  {
+    self._lookup_mut(key, auth).ok_or(AccountNotFound)?
   }
 
   #[throws(MgmtError)]
@@ -295,8 +275,7 @@ impl AccountsGuard {
     )
     -> Result<T, (InternalError, T)>
   {
-    let (entry, acctid) = self.lookup_mut_caller_must_save(key, auth)
-      .ok_or(MgmtError::AccountNotFound)?;
+    let (entry, acctid) = self.lookup_mut_caller_must_save(key, auth)?;
 
     if let Some(new_access) = set_access() {
       process_all_players_for_account(acctid,
@@ -341,12 +320,11 @@ impl AccountsGuard {
                       account: &AccountName,
                       _auth: Authorisation<AccountName>)
   {
-    let accounts = ACCOUNTS.write();
-    let oe = if_chain! {
-      if let Some(accounts) = accounts.as_mut();
+    let (accounts, oe) = if_chain! {
+      if let Some(accounts) = self.0.as_mut();
       let entry = accounts.names.entry(account);
       if let hash_map::Entry::Occupied(oe) = entry;
-      then { oe }
+      then { (accounts, oe) }
       else { throw!(ME::AccountNotFound) }
     };
     let acctid = *oe.key();

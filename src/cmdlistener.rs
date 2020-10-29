@@ -60,13 +60,13 @@ struct AccountSpecified {
   auth: Authorisation<AccountName>,
 }
 
-enum PermissionCheckHow<'p> {
+enum PermissionCheckHow {
   Instance,
-  InstanceOrOnlyAffectedAccount(&'p AccountName),
+  InstanceOrOnlyAffectedAccount(AccountId),
   InstanceOrOnlyAffectedPlayer(PlayerId),
 }
 
-type PCH<'p> = PermissionCheckHow<'p>;
+type PCH = PermissionCheckHow;
 
 // ========== management API ==========
 
@@ -91,7 +91,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
     CreateAccont(AccountDetails { account, nick, timezone, access }) => {
       let mut ag = AccountsGuard::lock();
-      let auth = authorise_for_account(&ag, cs, &account)?;
+      let auth = authorise_for_account(cs, &ag, &account)?;
       let access = access.map(Into::into)
         .unwrap_or_else(|| AccessRecord::new_unset());
       let nick = nick.unwrap_or_else(|| account.to_string());
@@ -107,7 +107,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
     UpdateAccont(AccountDetails { account, nick, timezone, access }) => {
       let mut ag = AccountsGuard::lock();
-      let auth = authorise_for_account(&ag, cs, &account)?;
+      let auth = authorise_for_account(cs, &ag, &account)?;
       let access = access.map(Into::into);
       ag.with_entry_mut(&account, auth, access, |record, acctid|{
         fn update_from<T>(spec: Option<T>, record: &mut T) {
@@ -123,7 +123,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
     DeleteAccount(account) => {
       let mut ag = AccountsGuard::lock();
-      let auth = authorise_for_account(&ag, cs, &account)?;
+      let auth = authorise_for_account(cs, &ag, &account)?;
       ag.remove_entry(&account, auth)?;
       Fine
     }
@@ -139,7 +139,8 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     },
 
     CreateGame { game, insns } => {
-      let authorised = authorise_by_account(cs, &game)?;
+      let ag = AccountsGuard::lock();
+      let authorised = authorise_by_account(cs, &ag, &game)?;
 
       let gs = crate::gamestate::GameState {
         table_size : DEFAULT_TABLE_SIZE,
@@ -154,7 +155,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       let gref = Instance::new(game, gs, acl, authorised)?;
       let ig = gref.lock()?;
 
-      execute_for_game(cs, &mut Unauthorised::of(ig),
+      execute_for_game(cs, &ag, &mut Unauthorised::of(ig),
                        insns, MgmtGameUpdateMode::Bulk)
         .map_err(|e|{
           let name = ig.name.clone();
@@ -185,9 +186,10 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     },
 
     MgmtCommand::AlterGame { game, insns, how } => {
+      let ag = AccountsGuard::lock();
       let gref = Instance::lookup_by_name_unauth(&game)?;
       let mut g = gref.lock()?;
-      execute_for_game(cs, &mut g, insns, how)?
+      execute_for_game(cs, &ag, &mut g, insns, how)?
     },
 
     LibraryListByGlob { glob: spec } => {
@@ -209,6 +211,7 @@ type ExecuteGameInsnResults<'r> = (
 //#[throws(ME)]
 fn execute_game_insn<'ig>(
   cs: &'ig CommandStream,
+  ag: &'_ AccountsGuard,
   ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
   update: MgmtGameInstruction)
   -> Result<ExecuteGameInsnResults<'ig> ,ME>
@@ -222,18 +225,19 @@ fn execute_game_insn<'ig>(
 
   #[throws(MgmtError)]
   fn readonly<'ig,
-              F: FnOnce(&InstanceGuard) -> MgmtGameResponse,
+              F: FnOnce(&InstanceGuard) -> Result<MgmtGameResponse,ME>,
               P: Into<PermSet<TablePermission>>>
   
     (
       cs: &'ig CommandStream,
+      ag: &AccountsGuard,
       ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
       p: P,
       f: F
     ) -> ExecuteGameInsnResults<'ig>
   {
-    let (ig, _) = cs.check_acl(ig, PCH::Instance, p)?;
-    let resp = f(ig);
+    let (ig, _) = cs.check_acl(ag, ig, PCH::Instance, p)?;
+    let resp = f(ig)?;
     (U{ pcs: vec![], log: vec![], raw: None }, resp, ig)
   }
 
@@ -241,11 +245,12 @@ fn execute_game_insn<'ig>(
     #[throws(MgmtError)]
     fn check_acl_manip_player_access<'ig>(
       &mut self,
+      ag: &AccountsGuard,
       ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
       player: PlayerId,
       perm: TablePermission,
     ) -> (&'ig mut InstanceGuard<'ig>, Authorisation<AccountName>) {
-      let (ig, auth) = self.check_acl(ig,
+      let (ig, auth) = self.check_acl(ag, ig,
                             PCH::InstanceOrOnlyAffectedPlayer(player),
                                       &[perm])?;
       fn auth_map(n: &InstanceName) -> &AccountName { &n.account }
@@ -256,10 +261,10 @@ fn execute_game_insn<'ig>(
   }
 
   let y = match update {
-    Noop { } => readonly(cs,ig, &[], |ig| Fine)?,
+    Noop { } => readonly(cs,ag,ig, &[], |ig| Ok(Fine))?,
 
     Insn::SetTableSize(size) => {
-      let ig = cs.check_acl(ig, PCH::Instance, &[TP::ChangePieces])?.0;
+      let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
       ig.gs.table_size = size;
       (U{ pcs: vec![],
           log: vec![ LogEntry {
@@ -271,12 +276,9 @@ fn execute_game_insn<'ig>(
     }
 
     Insn::AddPlayer(add) => {
-      let ag = AccountsGuard::lock();
-      let player_auth = Authorisation::authorise_any();
-      // ^ todo some kind of permissions check for player too
-      let ig = cs.check_acl(ig, PCH::Instance, &[TP::AddPlayer])?.0;
-      let (record, acctid) = ag.lookup(&add.account, player_auth)
-        .ok_or(ME::AccountNotFound)?;
+      // todo some kind of permissions check for player too
+      let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::AddPlayer])?.0;
+      let (record, acctid) = ag.lookup(&add.account)?;
       let nick = add.nick.ok_or(ME::ParameterMissing)?;
       let logentry = LogEntry {
         html: Html(format!("{} added a player: {}", &who,
@@ -302,7 +304,7 @@ fn execute_game_insn<'ig>(
        Resp::AddPlayer(player), ig)
     },
 
-    Insn::ListPieces => readonly(cs,ig, &[TP::ViewPublic], |ig|{
+    Insn::ListPieces => readonly(cs,ag,ig, &[TP::ViewPublic], |ig|{
       // xxx put something in log
       let pieces = ig.gs.pieces.iter().map(|(piece,p)|{
         let &PieceState { pos, face, .. } = p;
@@ -323,55 +325,59 @@ fn execute_game_insn<'ig>(
           }
         })
       }).flatten().collect();
-      Resp::Pieces(pieces)
+      Ok(Resp::Pieces(pieces))
     })?,
 
     RemovePlayer(account) => {
-      let accounts = AccountsGuard::lock();
-      let ig = cs.check_acl(ig,
-                            PCH::InstanceOrOnlyAffectedAccount(&account),
+      let acctid = ag.check(&account)?;
+      let ig = cs.check_acl(ag, ig,
+                            PCH::InstanceOrOnlyAffectedAccount(acctid),
                             &[TP::RemovePlayer])?.0;
-      let acctid = accounts.check(&account)?;
-      let player = ig.g.iplayers.iter()
-        .filter_map(|(k,v)| if v.acctid == acctid { Some(k) } else { None })
+      let player = ig.iplayers.iter()
+        .filter(|(_,v)| v.ipl.acctid == acctid)
+        .map(|(k,_)| k)
         .next()
         .ok_or(ME::PlayerNotFound)?;
-      let (_, old_state) = ig.player_remove(player)?;
+      let record = ig.player_remove(player).unwrap();
+      let gpl = ig.gs.players.remove(player)
+        .ok_or(InternalError::PartialPlayerData)?;
       (U{ pcs: vec![],
-          log: old_state.iter().map(|pl| LogEntry {
+          log: vec![ LogEntry {
             html: Html(format!("{} removed a player: {}", &who,
-                          htmlescape::encode_minimal(&pl.nick))),
-          }).collect(),
+                          htmlescape::encode_minimal(&gpl.nick))),
+          }],
           raw: None},
        Fine, ig)
     },
 
-    Insn::Info => readonly(cs,ig, &[TP::ViewPublic], |ig|{
+    Insn::Info => readonly(cs,ag,ig, &[TP::ViewPublic], |ig|{
       let players = ig.gs.players.iter().map(
-        |(player, &account)| {
-          let account = account.clone();
-          let info = match ig.iplayers.get(player) {
-            Some(pl) => MgmtPlayerInfo {
-              account,
-              nick: pl.pst.nick.clone(),
-            },
-            None => MgmtPlayerInfo {
-              account,
-              nick: format!("<missing from iplayers table!>"),
-            },
-          };
-          (player, info)
-        }).collect();
+        |(player, &gpl)| {
+          let nick = gpl.nick.clone();
+          if_chain! {
+            if let Some(ipr) = ig.iplayers.get(player);
+            let ipl = &ipr.ipl;
+            if let Ok((arecord, acctid)) = ag.lookup(ipl.acctid);
+            then { Ok((player, MgmtPlayerInfo {
+              account: (*arecord.account).clone(),
+              nick,
+            })) }
+            else {
+              throw!(InternalError::PartialPlayerData)
+            }
+          }
+        }
+      ).collect::<Result<SecondarySlotMap<_,_>,ME>>()?;
       let table_size = ig.gs.table_size;
       let info = MgmtGameResponseGameInfo { table_size, players };
-      Resp::Info(info)
+      Ok(Resp::Info(info))
     })?,
 
     ResetPlayerAccess(player) => {
       let (ig, auth) = cs.check_acl_manip_player_access
-        (ig, player, TP::ResetOthersAccess)?;
+        (ag, ig, player, TP::ResetOthersAccess)?;
 
-      let token = ig.player_access_reset(player, auth)?;
+      let token = ig.player_access_reset(&mut ag, player, auth)?;
       (U{ pcs: vec![],
           log: vec![],
           raw: None },
@@ -380,9 +386,9 @@ fn execute_game_insn<'ig>(
 
     RedeliverPlayerAccess(player) => {
       let (ig, auth) = cs.check_acl_manip_player_access
-        (ig, player, TP::RedeliverOthersAccess)?;
+        (ag, ig, player, TP::RedeliverOthersAccess)?;
 
-      let token = ig.player_access_redeliver(player, auth)?;
+      let token = ig.player_access_redeliver(&mut ag, player, auth)?;
       (U{ pcs: vec![],
           log: vec![],
           raw: None },
@@ -390,7 +396,7 @@ fn execute_game_insn<'ig>(
     },
 
     DeletePiece(piece) => {
-      let (ig, modperm, _) = cs.check_acl_modify_pieces(ig)?;
+      let (ig, modperm, _) = cs.check_acl_modify_pieces(ag, ig)?;
       let p = ig.ipieces.as_mut(modperm)
         .remove(piece).ok_or(ME::PieceNotFound)?;
       let gs = &mut ig.gs;
@@ -407,7 +413,7 @@ fn execute_game_insn<'ig>(
     },
 
     AddPieces(PiecesSpec{ pos,posd,count,face,pinned,info }) => {
-      let (ig_g, modperm, _) = cs.check_acl_modify_pieces(ig)?;
+      let (ig_g, modperm, _) = cs.check_acl_modify_pieces(ag, ig)?;
       let ig = &mut **ig_g;
       let gs = &mut ig.gs;
       let count = count.unwrap_or(1);
@@ -457,6 +463,7 @@ fn execute_game_insn<'ig>(
 #[throws(ME)]
 fn execute_for_game<'ig>(
   cs: &'ig CommandStream,
+  ag: &AccountsGuard,
   igu: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
   mut insns: Vec<MgmtGameInstruction>,
   how: MgmtGameUpdateMode) -> MgmtResponse
@@ -466,7 +473,7 @@ fn execute_for_game<'ig>(
   let mut iga = None;
   let ok = (||{
     for insn in insns.drain(0..) {
-      let (updates, resp, ig) = execute_game_insn(cs, igu, insn)?;
+      let (updates, resp, ig) = execute_game_insn(cs, ag, igu, insn)?;
       uh.accumulate(ig, updates)?;
       responses.push(resp);
       iga = Some(ig);
@@ -710,13 +717,14 @@ impl CommandStream<'_> {
   #[throws(MgmtError)]
   pub fn check_acl_modify_pieces<'ig>(
     &mut self,
+    ag: &AccountsGuard,
     ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
   ) -> (&'ig mut InstanceGuard<'ig>,
         ModifyingPieces,
         Authorisation<InstanceName>)
   {
     let p = &[TP::ChangePieces];
-    let (ig, auth) = self.check_acl(ig, PCH::Instance, p)?;
+    let (ig, auth) = self.check_acl(ag, ig, PCH::Instance, p)?;
     let modperm = ig.modify_pieces();
     (ig, modperm, auth)
   }
@@ -724,43 +732,45 @@ impl CommandStream<'_> {
   #[throws(MgmtError)]
   pub fn check_acl<'ig, P: Into<PermSet<TablePermission>>>(
     &mut self,
+    ag: &AccountsGuard,
     ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
-    how: PermissionCheckHow<'_>,
+    how: PermissionCheckHow,
     p: P,
   ) -> (&'ig mut InstanceGuard<'ig>, Authorisation<InstanceName>)
   {
     #[throws(MgmtError)]
     fn get_auth(cs: &CommandStream,
+                ag: &AccountsGuard,
                 ig: &mut Unauthorised<InstanceGuard, InstanceName>,
-                how: PermissionCheckHow<'_>,
+                how: PermissionCheckHow,
                 p: PermSet<TablePermission>)
                 -> Authorisation<InstanceName>
     {
-      let subject_is = |object_account: &AccountName|{
-        if let Some(ref subject_account_spec) = cs.account {
-          if &subject_account_spec.account == object_account {
-            let auth : Authorisation<InstanceName>
-              = Authorisation::authorise_any();
-            return Some(auth);
-          }
+      let current_account = cs.current_account()?;
+      let (_subject_record, subject_acctid) =
+        ag.lookup(&current_account.notional_account)?;
+//      let subject_account = &*subject_record.account;
+
+      let subject_is = |object_acctid: AccountId|{
+        if subject_acctid == object_acctid {
+          let auth : Authorisation<InstanceName>
+            = Authorisation::authorise_any();
+          return Some(auth);
         }
         return None;
       };
-      
+
       if let Some(auth) = match how {
-        PCH::InstanceOrOnlyAffectedAccount(object_account) => {
-          subject_is(object_account)
+        PCH::InstanceOrOnlyAffectedAccount(object_acctid) => {
+          subject_is(object_acctid)
         },
         PCH::InstanceOrOnlyAffectedPlayer(object_player) => {
-          if let Some(object_account) =
-            ig
-            .by(Authorisation::authorise_any())
-            .gs
-            .players.get(object_player)
-          {
-            subject_is(object_account)
-          } else {
-            None
+          if_chain!{
+            if let Some(object_ipr) =
+              ig.by(Authorisation::authorise_any()).iplayers
+              .get(object_player);
+            then { subject_is(object_ipr.ipl.acctid) }
+            else { None }
           }
         },
       } {
@@ -768,7 +778,7 @@ impl CommandStream<'_> {
       }
 
       let auth = {
-        let subject = &cs.current_account()?.cooked;
+        let subject = &current_account.cooked;
         let (acl, owner) = {
           let ig = ig.by(Authorisation::authorise_any());
           (&ig.acl, &ig.name.account)
@@ -782,28 +792,32 @@ impl CommandStream<'_> {
       auth
     }
 
-    let auth = get_auth(self, ig, how, p.into())?;
+    let auth = get_auth(self, ag, ig, how, p.into())?;
     (ig.by_mut(auth), auth)
   }
 }
 
 #[throws(MgmtError)]
-fn authorise_for_account(_accounts: &AccountsGuard,
-                         cs: &CommandStream, wanted: &AccountName)
+fn authorise_for_account(cs: &CommandStream,
+                         _accounts: &AccountsGuard,
+                         wanted: &AccountName)
                         -> Authorisation<AccountName> {
   if let Some(y) = cs.is_superuser() { return y }
 
   let currently = &cs.current_account()?;
-  if &currently.account != wanted {
+  if &currently.notional_account != wanted {
     throw!(MgmtError::AuthorisationError)
   }
-  Authorisation::authorised(wanted)
+  currently.auth
 }
 
 #[throws(MgmtError)]
-fn authorise_by_account(cs: &CommandStream, wanted: &InstanceName)
+fn authorise_by_account(cs: &CommandStream, ag: &AccountsGuard,
+                        wanted: &InstanceName)
                         -> Authorisation<InstanceName> {
-  authorise_for_account(cs, &wanted.account)?
+  let account = &wanted.account;
+  ag.check(account)?;
+  authorise_for_account(cs, ag, account)?
     .therefore_ok()
 }
 
