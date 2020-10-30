@@ -188,10 +188,6 @@ impl From<Box<dyn PlayerAccessSpec>> for AccessRecord {
 // xxx load, incl reveleation expiry
 // xxx periodic token reveleation expiry
 
-pub fn save_accounts_now(_: &AccountsGuard) -> Result<(), InternalError> {
-  panic!("xxx")
-}
-
 trait AccountNameOrId : Copy {
   fn initial_lookup(self, accounts: &Accounts) -> Option<AccountId>;
 }
@@ -277,13 +273,13 @@ impl AccountsGuard {
   {
     let (entry, acctid) = self.lookup_mut_caller_must_save(key, auth)?;
 
-    if let Some(new_access) = set_access() {
+    if let Some(new_access) = set_access {
       process_all_players_for_account(acctid,
                                       InstanceGuard::invalidate_tokens)?;
-      entry.access = new_access;
+      entry.access = AccessRecord(new_access);
     }      
     let output = f(&mut *entry, acctid);
-    let ok = save_accounts_now();
+    let ok = self.save_accounts_now();
     match ok {
       Ok(()) => Ok(output),
       Err(e) => Err((e, output))
@@ -296,7 +292,7 @@ impl AccountsGuard {
                       _auth: Authorisation<AccountName>)
   {
     use hash_map::Entry::*;
-    let accounts = self.get_or_insert_with(default);
+    let accounts = self.0.get_or_insert_with(default);
     let name_entry = accounts.names.entry(new_record.account.clone());
     if_chain!{
       if let Occupied(oe) = name_entry;
@@ -312,7 +308,7 @@ impl AccountsGuard {
         }
       }
     }
-    save_accounts_now()?;
+    self.save_accounts_now()?;
   }
 
   #[throws(MgmtError)]
@@ -331,7 +327,11 @@ impl AccountsGuard {
     process_all_players_for_account(acctid, InstanceGuard::player_remove)?;
     oe.remove();
     accounts.records.remove(acctid);
-    save_accounts_now()?;
+    self.save_accounts_now()?;
+  }
+
+  pub fn save_accounts_now(&self) -> Result<(), InternalError> {
+    panic!("xxx")
   }
 }
 
