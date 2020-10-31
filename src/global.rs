@@ -263,7 +263,7 @@ impl InstanceRef {
     InstanceGuard { c, gref: self.clone() }
   }
 
-  fn lock_even_poisoned(&self) -> MutexGuard<InstanceContainer> {
+  pub fn lock_even_poisoned(&self) -> MutexGuard<InstanceContainer> {
     match self.0.lock() {
       Ok(g) => g,
       Err(poison) => poison.into_inner(),
@@ -349,19 +349,20 @@ impl Instance {
   }
 
   #[throws(InternalError)]
-  pub fn destroy_game(mut g: InstanceGuard, _: Authorisation<InstanceName>) {
-    let a_savefile = savefilename(&g.name, "a-", "");
+  pub fn destroy_game(mut g: MutexGuard<InstanceContainer>,
+                      _: Authorisation<InstanceName>) {
+    let a_savefile = savefilename(&g.g.name, "a-", "");
 
     let mut gw = GLOBAL.games.write().unwrap();
     // xxx lock order wrong, this function should unlock and then relock
-    let g_file = savefilename(&g.name, "g-", "");
+    let g_file = savefilename(&g.g.name, "g-", "");
     fs::remove_file(&g_file).context("remove").context(g_file)?;
 
     (||{ // Infallible:
-      g.c.live = false;
-      gw.remove(&g.name);
-      InstanceGuard::forget_all_tokens(&mut g.tokens_clients);
-      InstanceGuard::forget_all_tokens(&mut g.tokens_players);
+      g.live = false;
+      gw.remove(&g.g.name);
+      InstanceGuard::forget_all_tokens(&mut g.g.tokens_clients);
+      InstanceGuard::forget_all_tokens(&mut g.g.tokens_players);
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
 
     (||{ // Best effort:

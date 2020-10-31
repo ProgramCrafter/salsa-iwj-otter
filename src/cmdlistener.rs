@@ -140,7 +140,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
     CreateGame { game, insns } => {
       let ag = AccountsGuard::lock();
-      let authorised = authorise_by_account(cs, &ag, &game)?;
+      let auth = authorise_by_account(cs, &ag, &game)?;
 
       let gs = crate::gamestate::GameState {
         table_size : DEFAULT_TABLE_SIZE,
@@ -152,14 +152,15 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       };
 
       let acl = default();
-      let gref = Instance::new(game, gs, acl, authorised)?;
+      let gref = Instance::new(game, gs, acl, auth)?;
       let ig = gref.lock()?;
 
       execute_for_game(cs, &ag, &mut Unauthorised::of(ig),
                        insns, MgmtGameUpdateMode::Bulk)
         .map_err(|e|{
           let name = ig.name.clone();
-          Instance::destroy_game(ig, authorised)
+          let InstanceGuard { c, .. } = ig;
+          Instance::destroy_game(c, auth)
             .unwrap_or_else(|e| warn!(
               "failed to tidy up failecd creation of {:?}: {:?}",
               &name, &e
@@ -191,6 +192,15 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       let mut g = gref.lock()?;
       execute_for_game(cs, &ag, &mut g, insns, how)?
     },
+
+    DestroyGame { game } => {
+      let ag = AccountsGuard::lock();
+      let auth = authorise_by_account(cs, &ag, &game)?;
+      let gref = Instance::lookup_by_name(&game, auth)?;
+      let ig = gref.lock_even_poisoned();
+      Instance::destroy_game(ig, auth)?;
+      Fine
+    }
 
     LibraryListByGlob { glob: spec } => {
       let lib = shapelib::libs_lookup(&spec.lib)?;
