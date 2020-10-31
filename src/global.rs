@@ -579,7 +579,7 @@ impl<'ig> InstanceGuard<'ig> {
   }
 
   #[throws(InternalError)]
-  pub fn invalidate_tokens(&'ig mut self, player: PlayerId) {
+  pub fn invalidate_tokens(&mut self, player: PlayerId) {
     let old_tokens = TokenRegistry {
       tr: self.tokens_players.tr.clone(),
       id: self.tokens_players.id,
@@ -1094,8 +1094,9 @@ pub fn record_token<Id : AccessId> (
 
 #[throws(E)]
 pub fn process_all_players_for_account<
+    'i, 'j : 'i,
     E: Error,
-    F: FnMut(&mut InstanceGuard, PlayerId) -> Result<(),E>
+    F: FnMut(&'i mut InstanceGuard<'j>, PlayerId) -> Result<(),E>
     >
   (acctid: AccountId, f: F)
 {
