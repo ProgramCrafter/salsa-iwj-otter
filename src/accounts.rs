@@ -316,16 +316,17 @@ impl AccountsGuard {
                       account: &AccountName,
                       _auth: Authorisation<AccountName>)
   {
-    let (accounts, oe) = if_chain! {
+    let (accounts, acctid) = if_chain! {
       if let Some(accounts) = self.0.as_mut();
-      let entry = accounts.names.entry(account);
-      if let hash_map::Entry::Occupied(oe) = entry;
-      then { (accounts, oe) }
-      else { throw!(ME::AccountNotFound) }
+      if let Some(&acctid) = accounts.names.get(account);
+      then { (accounts, acctid) }
+      else { throw!(AccountNotFound) }
     };
-    let acctid = *oe.key();
-    process_all_players_for_account(acctid, InstanceGuard::player_remove)?;
-    oe.remove();
+    process_all_players_for_account(acctid, |ig,player| {
+      ig.player_remove(player)?;
+      Ok::<_,ME>(())
+    })?;
+    accounts.names.remove(account);
     accounts.records.remove(acctid);
     self.save_accounts_now()?;
   }
