@@ -424,7 +424,7 @@ impl Display for InstanceName {
 
 // ---------- Player and token functionality ----------
 
-impl InstanceGuard<'_> {
+impl<'ig> InstanceGuard<'ig> {
   /// caller is responsible for logging; threading it through
   /// proves the caller has a log entry.
   #[throws(MgmtError)]
@@ -579,7 +579,7 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(InternalError)]
-  pub fn invalidate_tokens(&mut self, player: PlayerId) {
+  pub fn invalidate_tokens(&'ig mut self, player: PlayerId) {
     let old_tokens = TokenRegistry {
       tr: self.tokens_players.tr.clone(),
       id: self.tokens_players.id,
