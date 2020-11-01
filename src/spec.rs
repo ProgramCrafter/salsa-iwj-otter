@@ -284,7 +284,7 @@ pub mod implementation {
       Ok(None)
     }
     fn client_deliver(&self,
-                      pd: &MgmtPlayerDetails,
+                      pi: &MgmtPlayerInfo,
                       token: &AccessTokenReport)
                       -> Result<(), TDE> {
       panic!()
@@ -318,10 +318,10 @@ pub mod implementation {
     }
     #[throws(TDE)]
     fn client_deliver(&self,
-                      pd: &MgmtPlayerDetails,
+                      pi: &MgmtPlayerInfo,
                       token: &AccessTokenReport) {
       println!("access account={} nick={:?} url:\n{}",
-               &pd.account, &pd.nick, token.url);
+               &pi.account, &pi.nick, token.url);
     }
   }
 

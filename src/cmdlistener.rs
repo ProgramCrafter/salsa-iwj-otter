@@ -285,16 +285,19 @@ fn execute_game_insn<'ig>(
        Fine, ig)
     }
 
-    Insn::AddPlayer(add) => {
+    Insn::AddPlayer {
+      account,
+      details: MgmtPlayerDetails { timezone, nick }
+    } => {
       // todo some kind of permissions check for player too
       let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::AddPlayer])?.0;
-      let (record, acctid) = ag.lookup(&add.account)?;
-      let nick = add.nick.ok_or(ME::ParameterMissing)?;
+      let (record, acctid) = ag.lookup(&account)?;
+      let nick = nick.ok_or(ME::ParameterMissing)?;
       let logentry = LogEntry {
         html: Html(format!("{} added a player: {}", &who,
                       htmlescape::encode_minimal(&nick))),
       };
-      let timezone = add.timezone.as_ref().map(String::as_str)
+      let timezone = timezone.as_ref().map(String::as_str)
         .unwrap_or("");
       let tz = match Timezone::from_str(timezone) {
         Ok(tz) => tz,
@@ -731,9 +734,10 @@ impl CommandStream<'_> {
   {
     let (ipl_unauth, gpl_unauth) = {
       let ig = ig.by(Authorisation::authorise_any());
-      (ig.iplayers.get(player)?, ig.gs.gplayers.get(player)?)
+      (ig.iplayers.get(player).ok_or(ME::PlayerNotFound)?,
+       ig.gs.players.get(player).ok_or(ME::PlayerNotFound)?)
     };
-    let how = PCH::InstanceOrOnlyAffectedAccount(ipl_unauth.acctid);
+    let how = PCH::InstanceOrOnlyAffectedAccount(ipl_unauth.ipl.acctid);
     let (ig, auth) = self.check_acl(ag, ig, how, p)?;
     (ig, auth)
   }
