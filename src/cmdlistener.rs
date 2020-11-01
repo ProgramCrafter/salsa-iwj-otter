@@ -1010,9 +1010,7 @@ mod authproofs {
 
   #[derive(Debug)]
   pub struct Authorisation<A> (PhantomData<*const A>);
-  impl<A> Clone for Authorisation<A> { fn clone(&self) -> Self {
-    Self(PhantomData)
-  } }
+  impl<A> Clone for Authorisation<A> { fn clone(&self) -> Self { *self } }
   impl<A> Copy for Authorisation<A> { }
 
   impl<T> Authorisation<T> {
