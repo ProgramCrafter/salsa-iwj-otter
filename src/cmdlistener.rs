@@ -233,6 +233,13 @@ fn execute_game_insn<'ig>(
   type Resp = MgmtGameResponse;
   let who = &cs.who; // todo show player nick when it's a player
 
+  fn tz_from_str(s: &str) -> Timezone {
+    match Timezone::from_str(s) {
+      Ok(tz) => tz,
+      Err(x) => match x { },
+    }
+  }
+
   #[throws(MgmtError)]
   fn readonly<'ig,
               F: FnOnce(&InstanceGuard) -> Result<MgmtGameResponse,ME>,
@@ -299,10 +306,7 @@ fn execute_game_insn<'ig>(
       };
       let timezone = timezone.as_ref().map(String::as_str)
         .unwrap_or("");
-      let tz = match Timezone::from_str(timezone) {
-        Ok(tz) => tz,
-        Err(x) => match x { },
-      };
+      let tz = tz_from_str(&timezone);
       let gpl = GPlayerState {
         nick: nick.to_string(),
       };
@@ -326,16 +330,17 @@ fn execute_game_insn<'ig>(
         let itemname = pinfo.itemname().to_string();
         let bbox = pinfo.bbox_approx();
         let lens = TransparentLens { };
+        #[allow(irrefutable_let_patterns)]
+        let visible = if let TransparentLens { } = lens {
+          Some(MgmtGamePieceVisibleInfo {
+            pos, face, desc_html, bbox
+          })
+        } else {
+          None
+        };
         Some(MgmtGamePieceInfo {
           piece, itemname,
-          visible:
-          if let TransparentLens { } = lens {
-            Some(MgmtGamePieceVisibleInfo {
-              pos, face, desc_html, bbox
-            })
-          } else {
-            None
-          }
+          visible
         })
       }).flatten().collect();
       Ok(Resp::Pieces(pieces))
@@ -354,6 +359,34 @@ fn execute_game_insn<'ig>(
           log: vec![ LogEntry {
             html: Html(format!("{} removed a player: {}", &who, &show)),
           }],
+          raw: None},
+       Fine, ig)
+    },
+
+    UpdatePlayer {
+      player,
+      details: MgmtPlayerDetails { nick, timezone },
+    } => {
+      let ig = cs.check_acl_modify_player(ag, ig, player,
+                                          &[TP::ModifyOtherPlayer])?.0;
+      let ipr = ig.iplayers.byid_mut(player)?;
+      let gpl = ig.gs.players.byid_mut(player)?;
+      let mut log = vec![];
+      if let Some(new_nick) = nick {
+        ig.check_new_nick(&new_nick)?;
+        log.push(LogEntry {
+          html: Html(format!("{} changed {}'s nick to {}",
+                             &who,
+                             htmlescape::encode_minimal(&gpl.nick),
+                             htmlescape::encode_minimal(&new_nick))),
+        });
+        gpl.nick = new_nick;
+      }
+      if let Some(new_timezone) = timezone {
+        ipr.ipl.tz = tz_from_str(&new_timezone);
+      }
+      (U{ log,
+          pcs: vec![],
           raw: None},
        Fine, ig)
     },
@@ -734,8 +767,7 @@ impl CommandStream<'_> {
   {
     let (ipl_unauth, gpl_unauth) = {
       let ig = ig.by(Authorisation::authorise_any());
-      (ig.iplayers.get(player).ok_or(ME::PlayerNotFound)?,
-       ig.gs.players.get(player).ok_or(ME::PlayerNotFound)?)
+      (ig.iplayers.byid(player)?, ig.gs.players.byid(player)?)
     };
     let how = PCH::InstanceOrOnlyAffectedAccount(ipl_unauth.ipl.acctid);
     let (ig, auth) = self.check_acl(ag, ig, how, p)?;
@@ -801,6 +833,7 @@ impl CommandStream<'_> {
             else { None }
           }
         },
+        PCH::Instance => None,
       } {
         return auth;
       }

@@ -44,6 +44,12 @@ pub enum ApiPieceOpError {
 }
 display_as_debug!(ApiPieceOpError);
 
+impl From<PlayerNotFound> for ApiPieceOpError {
+  fn from(x: PlayerNotFound) -> ApiPieceOpError {
+    ApiPieceOpError::ReportViaResponse(x.into())
+  }
+}
+
 pub trait Lens : Debug {
   fn pieceid2visible(&self, piece: PieceId) -> VisiblePieceId;
   fn log_pri(&self, piece: PieceId, pc: &PieceState)
@@ -89,7 +95,7 @@ impl<'r> Responder<'r> for OnlineError {
     use OnlineError::*;
     let status = match self {
       ServerFailure(_) => Status::InternalServerError,
-      NoClient | NoPlayer | GameBeingDestroyed
+      NoClient | NoPlayer(_) | GameBeingDestroyed
         => Status::NotFound,
       OnlineError::PieceHeld | OnlineError::PieceGone
         => Status::Conflict,

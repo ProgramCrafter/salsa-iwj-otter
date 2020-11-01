@@ -11,7 +11,7 @@ pub enum OnlineError {
   #[error("client session not recognised (terminated by server?)")]
   NoClient,
   #[error("player not part of game (removed?)")]
-  NoPlayer,
+  NoPlayer(#[from] PlayerNotFound),
   #[error("invalid Z coordinate")]
   InvalidZCoord,
   #[error("Server operational problems - consult administrator: {0:?}")]
@@ -140,8 +140,8 @@ some_slotmap!{DenseSlotMap}
 some_slotmap!{SecondarySlotMap}
 
 impl<T> IdForById for T where T : AccessId {
-  type Error = OE;
-  const ERROR : OE = <Self as AccessId>::ERROR;
+  type Error = T::Error;
+  const ERROR : Self::Error = <Self as AccessId>::ERROR;
 }
 
 impl IdForById for PieceId {

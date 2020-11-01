@@ -433,9 +433,7 @@ impl<'ig> InstanceGuard<'ig> {
                     logentry: LogEntry) -> (PlayerId, LogEntry) {
     // saving is fallible, but we can't attempt to save unless
     // we have a thing to serialise with the player in it
-    if self.c.g.gs.players.values().any(|old| old.nick == gnew.nick) {
-      Err(MgmtError::NickCollision)?;
-    }
+    self.check_new_nick(&gnew.nick)?;
     if self.c.g.iplayers.values().any(|r| r.ipl.acctid == inew.acctid) {
       Err(MgmtError::AlreadyExists)?;
     }
@@ -459,6 +457,13 @@ impl<'ig> InstanceGuard<'ig> {
       
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
     (player, logentry)
+  }
+
+  #[throws(MgmtError)]
+  pub fn check_new_nick(&mut self, new_nick: &str) {
+    if self.c.g.gs.players.values().any(|old| old.nick == new_nick) {
+      Err(MgmtError::NickCollision)?;
+    }
   }
 
   pub fn remove_clients(&mut self,
@@ -606,11 +611,8 @@ impl<'ig> InstanceGuard<'ig> {
                                    authorised: Authorisation<AccountName>,
                                    reset: bool)
                                    -> Option<AccessTokenReport> {
-    let ipl = self.c.g.iplayers.get(player)
-      .ok_or(MgmtError::PlayerNotFound)?
-      .ipl;
-    let gpl = self.c.g.gs.players.get(player)
-      .ok_or(MgmtError::PlayerNotFound)?;
+    let ipl = self.c.g.iplayers.byid(player)?.ipl;
+    let gpl = self.c.g.gs.players.byid(player)?;
 
     let (access, acctid) = accounts.with_entry_mut(
       ipl.acctid, authorised, None,
@@ -1026,14 +1028,22 @@ pub fn load_games(accounts: &mut AccountsGuard) {
 pub type TokenTable<Id> = HashMap<RawToken, InstanceAccessDetails<Id>>;
 
 pub trait AccessId : Copy + Clone + 'static {
+  type Error : Into<OnlineError>;
+  const ERROR : Self::Error;
   fn global_tokens(_:PrivateCaller) -> &'static RwLock<TokenTable<Self>>;
   fn tokens_registry(ig: &mut Instance, _:PrivateCaller)
                      -> &mut TokenRegistry<Self>;
-  const ERROR : OnlineError;
 }
 
+#[derive(Debug,Copy,Clone,Eq,PartialEq,Ord,PartialOrd)]
+#[derive(Serialize,Deserialize)]
+#[derive(Error)]
+#[error("Player not found")]
+pub struct PlayerNotFound;
+
 impl AccessId for PlayerId {
-  const ERROR : OnlineError = NoPlayer;
+  type Error = PlayerNotFound;
+  const ERROR : PlayerNotFound = PlayerNotFound;
   fn global_tokens(_: PrivateCaller) -> &'static RwLock<TokenTable<Self>> {
     &GLOBAL.players
   }
@@ -1043,6 +1053,7 @@ impl AccessId for PlayerId {
   }
 }
 impl AccessId for ClientId {
+  type Error = OnlineError;
   const ERROR : OnlineError = NoClient;
   fn global_tokens(_: PrivateCaller) -> &'static RwLock<TokenTable<Self>> {
     &GLOBAL.clients
@@ -1065,13 +1076,13 @@ impl RawToken {
 }
 
 pub fn lookup_token<Id : AccessId>(s : &RawTokenVal)
-      -> Result<InstanceAccessDetails<Id>, OE> {
+      -> Result<InstanceAccessDetails<Id>, Id::Error> {
   Id::global_tokens(PRIVATE_Y).read().unwrap().get(s).cloned()
     .ok_or(Id::ERROR)
 }
 
 impl<'r, Id> FromParam<'r> for InstanceAccess<'r, Id>
-  where Id : AccessId
+  where Id : AccessId, OE : From<Id::Error>
 {
   type Error = OE;
   #[throws(OE)]
