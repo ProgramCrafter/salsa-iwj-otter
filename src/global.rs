@@ -273,8 +273,8 @@ impl InstanceRef {
 
 impl<A> Unauthorised<InstanceRef, A> {
   #[throws(InstanceLockError)]
-  pub fn lock(&self) -> Unauthorised<InstanceGuard<'_>, A> {
-    let must_not_escape = self.by(Authorisation::authorise_any());
+  pub fn lock<'r>(&'r self) -> Unauthorised<InstanceGuard<'r>, A> {
+    let must_not_escape = self.by_ref(Authorisation::authorise_any());
     Unauthorised::of(must_not_escape.lock()?)
   }
 }
