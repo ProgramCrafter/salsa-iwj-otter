@@ -154,8 +154,10 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       let acl = default();
       let gref = Instance::new(game, gs, acl, auth)?;
       let ig = gref.lock()?;
+      let mut igu = Unauthorised::of(ig);
 
-      execute_for_game(cs, &ag, &mut Unauthorised::of(ig),
+      let resp =
+      execute_for_game(cs, &ag, &mut igu,
                        insns, MgmtGameUpdateMode::Bulk)
         .map_err(|e|{
           let name = ig.name.clone();
@@ -168,7 +170,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
           e
         })?;
 
-      Fine
+      resp
     },
 
     ListGames { all } => {
@@ -212,19 +214,19 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
 // ---------- game command implementations ----------
 
-type ExecuteGameInsnResults<'r> = (
+type ExecuteGameInsnResults<'igr, 'ig : 'igr> = (
   ExecuteGameChangeUpdates,
   MgmtGameResponse,
-  &'r mut InstanceGuard<'r>,
+  &'igr mut InstanceGuard<'ig>,
 );
 
 //#[throws(ME)]
-fn execute_game_insn<'ig>(
-  cs: &'ig CommandStream,
+fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
+  cs: &'cs CommandStream,
   ag: &'_ AccountsGuard,
-  ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
+  ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
   update: MgmtGameInstruction)
-  -> Result<ExecuteGameInsnResults<'ig> ,ME>
+  -> Result<ExecuteGameInsnResults<'igr, 'ig> ,ME>
 {
   type U = ExecuteGameChangeUpdates;
   use MgmtGameInstruction::*;
@@ -241,17 +243,17 @@ fn execute_game_insn<'ig>(
   }
 
   #[throws(MgmtError)]
-  fn readonly<'ig,
+  fn readonly<'igr, 'ig : 'igr, 'cs,
               F: FnOnce(&InstanceGuard) -> Result<MgmtGameResponse,ME>,
               P: Into<PermSet<TablePermission>>>
   
     (
-      cs: &'ig CommandStream,
+      cs: &'cs CommandStream,
       ag: &AccountsGuard,
-      ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
+      ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
       p: P,
       f: F
-    ) -> ExecuteGameInsnResults<'ig>
+    ) -> ExecuteGameInsnResults<'igr, 'ig>
   {
     let (ig, _) = cs.check_acl(ag, ig, PCH::Instance, p)?;
     let resp = f(ig)?;
@@ -260,13 +262,13 @@ fn execute_game_insn<'ig>(
 
   impl<'cs> CommandStream<'cs> {
     #[throws(MgmtError)]
-    fn check_acl_manip_player_access<'ig>(
+    fn check_acl_manip_player_access<'igr, 'ig : 'igr>(
       &mut self,
       ag: &AccountsGuard,
-      ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
+      ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
       player: PlayerId,
       perm: TablePermission,
-    ) -> (&'ig mut InstanceGuard<'ig>, Authorisation<AccountName>) {
+    ) -> (&'igr mut InstanceGuard<'ig>, Authorisation<AccountName>) {
       let (ig, auth) = self.check_acl(ag, ig,
                             PCH::InstanceOrOnlyAffectedPlayer(player),
                                       &[perm])?;
@@ -502,10 +504,10 @@ fn execute_game_insn<'ig>(
 // ---------- how to execute game commands & handle their updates ----------
 
 #[throws(ME)]
-fn execute_for_game<'ig>(
-  cs: &'ig CommandStream,
+fn execute_for_game<'cs, 'igr, 'ig : 'igr>(
+  cs: &'cs CommandStream,
   ag: &AccountsGuard,
-  igu: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
+  igu: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
   mut insns: Vec<MgmtGameInstruction>,
   how: MgmtGameUpdateMode) -> MgmtResponse
 {
@@ -756,13 +758,14 @@ impl CommandStream<'_> {
   }
   
   #[throws(MgmtError)]
-  pub fn check_acl_modify_player<'ig, P: Into<PermSet<TablePermission>>>(
+  pub fn check_acl_modify_player<'igr, 'ig : 'igr,
+                                 P: Into<PermSet<TablePermission>>>(
     &mut self,
     ag: &AccountsGuard,
-    ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
+    ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
     player: PlayerId,
     p: P,
-  ) -> (&'ig mut InstanceGuard<'ig>,
+  ) -> (&'igr mut InstanceGuard<'ig>,
         Authorisation<InstanceName>)
   {
     let ipl_unauth = {
@@ -775,11 +778,11 @@ impl CommandStream<'_> {
   }
   
   #[throws(MgmtError)]
-  pub fn check_acl_modify_pieces<'ig>(
+  pub fn check_acl_modify_pieces<'igr, 'ig : 'igr>(
     &mut self,
     ag: &AccountsGuard,
-    ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
-  ) -> (&'ig mut InstanceGuard<'ig>,
+    ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
+  ) -> (&'igr mut InstanceGuard<'ig>,
         ModifyingPieces,
         Authorisation<InstanceName>)
   {
@@ -790,13 +793,13 @@ impl CommandStream<'_> {
   }
 
   #[throws(MgmtError)]
-  pub fn check_acl<'ig, P: Into<PermSet<TablePermission>>>(
+  pub fn check_acl<'igr, 'ig : 'igr, P: Into<PermSet<TablePermission>>>(
     &mut self,
     ag: &AccountsGuard,
-    ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
+    ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
     how: PermissionCheckHow,
     p: P,
-  ) -> (&'ig mut InstanceGuard<'ig>, Authorisation<InstanceName>)
+  ) -> (&'igr mut InstanceGuard<'ig>, Authorisation<InstanceName>)
   {
     #[throws(MgmtError)]
     fn get_auth(cs: &CommandStream,
@@ -1005,7 +1008,7 @@ mod authproofs {
   pub struct AuthorisationError(pub String);
 
   #[derive(Debug,Copy,Clone)]
-  pub struct Authorisation<A> (PhantomData<A>);
+  pub struct Authorisation<A> (PhantomData<*const A>);
 
   impl<T> Authorisation<T> {
     pub const fn authorised(_v: &T) -> Authorisation<T> {
