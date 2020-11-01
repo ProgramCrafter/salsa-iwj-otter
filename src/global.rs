@@ -844,7 +844,7 @@ impl InstanceGuard<'_> {
         |(player, PlayerRecord { ipl, .. })|
         (player, ipl.clone())
       ).collect();
-      let acl = s.c.g.acl.into();
+      let acl = (&s.c.g.acl).into();
       let isa = InstanceSaveAccesses {
         ipieces, tokens_players, aplayers, acl
       };
@@ -943,7 +943,7 @@ impl InstanceGuard<'_> {
 
     let g = Instance {
       gs, iplayers,
-      acl: acl.into(),
+      acl: (&acl).into(),
       ipieces: PiecesLoaded(ipieces),
       name: name.clone(),
       clients : Default::default(),

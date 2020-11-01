@@ -440,7 +440,7 @@ pub mod loaded_acl {
     }
   }
 
-  fn unpack<P:Perm>(packed: PermSet<P>) -> HashSet<P> {
+  fn unpack<P:Perm>(packed: &PermSet<P>) -> HashSet<P> {
     let mut s = HashSet::new();
     for n in 0.. {
       let v = match FromPrimitive::from_u64(n) { Some(v) => v, None => break };
@@ -451,6 +451,12 @@ pub mod loaded_acl {
 
   impl<P:Perm> From<Acl<P>> for LoadedAcl<P> {
     fn from(acl: Acl<P>) -> LoadedAcl<P> {
+      (&acl).into()
+    }
+  }
+
+  impl<P:Perm> From<&Acl<P>> for LoadedAcl<P> {
+    fn from(acl: &Acl<P>) -> LoadedAcl<P> {
       let ents = acl.ents.into_iter().filter_map(
         |AclEntry { account_glob, allow, deny }|
         {
@@ -474,6 +480,12 @@ pub mod loaded_acl {
 
   impl<P:Perm> From<LoadedAcl<P>> for Acl<P> {
     fn from(acl: LoadedAcl<P>) -> Acl<P> {
+      (&acl).into()
+    }
+  }
+
+  impl<P:Perm> From<&LoadedAcl<P>> for Acl<P> {
+    fn from(acl: &LoadedAcl<P>) -> Acl<P> {
       let LoadedAcl(ents) = acl;
       Acl { ents: ents.into_iter().map(
         |LoadedAclEntry { pat, allow, deny, .. }|
