@@ -273,8 +273,10 @@ impl AccountsGuard {
     let (entry, acctid) = self.lookup_mut_caller_must_save(key, auth)?;
 
     if let Some(new_access) = set_access {
-      process_all_players_for_account(acctid,
-                                      InstanceGuard::invalidate_tokens)?;
+      process_all_players_for_account(
+        acctid,
+        |ig, player| ig.invalidate_tokens(player)
+      )?;
       entry.access = AccessRecord(new_access);
     }      
     let output = f(&mut *entry, acctid);

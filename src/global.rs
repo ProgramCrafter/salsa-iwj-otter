@@ -1108,11 +1108,10 @@ pub fn record_token<Id : AccessId> (
 
 #[throws(E)]
 pub fn process_all_players_for_account<
-    'i, 'j : 'i,
     E: Error,
-    F: FnMut(&'i mut InstanceGuard<'j>, PlayerId) -> Result<(),E>
+    F: FnMut(&mut InstanceGuard<'_>, PlayerId) -> Result<(),E>
     >
-  (acctid: AccountId, f: F)
+  (acctid: AccountId, mut f: F)
 {
   let games = GLOBAL.games.write().unwrap();
   for gref in games.values() {
@@ -1120,8 +1119,8 @@ pub fn process_all_players_for_account<
     let remove : Vec<_> = c.g.iplayers.iter().filter_map(|(player,pr)| {
       if pr.ipl.acctid == acctid { Some(player) } else { None }
     }).collect();
-    let ig = InstanceGuard { gref: gref.clone(), c };
-    for player in remove.drain(..) {
+    let mut ig = InstanceGuard { gref: gref.clone(), c };
+    for player in remove.into_iter() {
       f(&mut ig, player)?;
     }
   }
