@@ -278,15 +278,15 @@ pub mod implementation {
       None
     }
     fn server_deliver<'t>(&self,
-                          gpl: &GPlayerState,
-                          ipl: &IPlayerState,
-                          token: &'t AccessTokenReport)
+                          _gpl: &GPlayerState,
+                          _ipl: &IPlayerState,
+                          _token: &'t AccessTokenReport)
                           -> Result<Option<&'t AccessTokenReport>, TDE> {
       Ok(None)
     }
     fn client_deliver(&self,
-                      pi: &MgmtPlayerInfo,
-                      token: &AccessTokenReport)
+                      _pi: &MgmtPlayerInfo,
+                      _token: &AccessTokenReport)
                       -> Result<(), TDE> {
       panic!()
     }
@@ -311,8 +311,8 @@ pub mod implementation {
   impl PlayerAccessSpec for UrlOnStdout {
     #[throws(TDE)]
     fn server_deliver<'t>(&self,
-                          gpl: &GPlayerState,
-                          ipl: &IPlayerState,
+                          _gpl: &GPlayerState,
+                          _ipl: &IPlayerState,
                           token: &'t AccessTokenReport)
                           -> Option<&'t AccessTokenReport> {
       Some(token)

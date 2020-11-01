@@ -47,7 +47,6 @@ impl AccountScope {
     const ENCODE : percent_encoding::AsciiSet =
       percent_encoding::NON_ALPHANUMERIC.remove(b':');
 
-    let mut out = String::new();
     match &self {
       AS::Server => {
         f("server")?;

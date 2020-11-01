@@ -109,7 +109,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       let mut ag = AccountsGuard::lock();
       let auth = authorise_for_account(cs, &ag, &account)?;
       let access = access.map(Into::into);
-      ag.with_entry_mut(&account, auth, access, |record, acctid|{
+      ag.with_entry_mut(&account, auth, access, |record, _acctid|{
         fn update_from<T>(spec: Option<T>, record: &mut T) {
           if let Some(new) = spec { *record = new; }
         }
@@ -278,7 +278,7 @@ fn execute_game_insn<'ig>(
   }
 
   let y = match update {
-    Noop { } => readonly(cs,ag,ig, &[], |ig| Ok(Fine))?,
+    Noop { } => readonly(cs,ag,ig, &[], |_| Ok(Fine))?,
 
     Insn::SetTableSize(size) => {
       let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
@@ -298,7 +298,7 @@ fn execute_game_insn<'ig>(
     } => {
       // todo some kind of permissions check for player too
       let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::AddPlayer])?.0;
-      let (record, acctid) = ag.lookup(&account)?;
+      let (_arecord, acctid) = ag.lookup(&account)?;
       let nick = nick.ok_or(ME::ParameterMissing)?;
       let logentry = LogEntry {
         html: Html(format!("{} added a player: {}", &who,
@@ -349,7 +349,7 @@ fn execute_game_insn<'ig>(
     RemovePlayer { player } => {
       let ig = cs.check_acl_modify_player(ag, ig, player,
                                           &[TP::RemovePlayer])?.0;
-      let (gpl, ipl) = ig.player_remove(player)?;
+      let (gpl, _ipl) = ig.player_remove(player)?;
       let show = if let Some(gpl) = gpl {
         htmlescape::encode_minimal(&gpl.nick)
       } else {
@@ -398,7 +398,7 @@ fn execute_game_insn<'ig>(
           if_chain! {
             if let Some(ipr) = ig.iplayers.get(player);
             let ipl = &ipr.ipl;
-            if let Ok((arecord, acctid)) = ag.lookup(ipl.acctid);
+            if let Ok((arecord, _)) = ag.lookup(ipl.acctid);
             then { Ok((player, MgmtPlayerInfo {
               account: (*arecord.account).clone(),
               nick,
@@ -765,9 +765,9 @@ impl CommandStream<'_> {
   ) -> (&'ig mut InstanceGuard<'ig>,
         Authorisation<InstanceName>)
   {
-    let (ipl_unauth, gpl_unauth) = {
+    let ipl_unauth = {
       let ig = ig.by(Authorisation::authorise_any());
-      (ig.iplayers.byid(player)?, ig.gs.players.byid(player)?)
+      ig.iplayers.byid(player)?
     };
     let how = PCH::InstanceOrOnlyAffectedAccount(ipl_unauth.ipl.acctid);
     let (ig, auth) = self.check_acl(ag, ig, how, p)?;
@@ -1008,10 +1008,10 @@ mod authproofs {
   pub struct Authorisation<A> (PhantomData<A>);
 
   impl<T> Authorisation<T> {
-    pub const fn authorised(v: &T) -> Authorisation<T> {
+    pub const fn authorised(_v: &T) -> Authorisation<T> {
       Authorisation(PhantomData)
     }
-    pub fn map<U>(self, f: fn(&T) -> &U) -> Authorisation<U> {
+    pub fn map<U>(self, _f: fn(&T) -> &U) -> Authorisation<U> {
       self.therefore_ok()
     }
     pub fn therefore_ok<U>(self) -> Authorisation<U> {

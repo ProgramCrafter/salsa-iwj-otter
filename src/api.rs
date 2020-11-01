@@ -124,7 +124,7 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   let gs = &mut g.gs;
   let ipieces = &g.ipieces;
   let iplayers = &g.iplayers;
-  let ipl = &iplayers.byid(player)?.ipl;
+  let _ = iplayers.byid(player)?;
   let _ = gs.players.byid(player)?;
   let lens = TransparentLens { };
   let piece = lens.decode_visible_pieceid(form.piece, player);
@@ -227,7 +227,7 @@ impl ApiPieceOp for ApiPieceWrest {
 
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
-    let ApiPieceOpArgs { gs,player,piece,p,lens,iplayers, .. } = a;
+    let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
     let gpl = gs.players.byid(player)?;
     let pc = gs.pieces.byid_mut(piece)?;
     let pcs = p.describe_pri(&lens.log_pri(piece, pc)).0;
@@ -296,7 +296,7 @@ fn api_raise(form : Json<ApiPiece<ApiPieceRaise>>)
 impl ApiPieceOp for ApiPieceRaise {
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
-    let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
+    let ApiPieceOpArgs { gs,piece, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
     pc.zlevel = ZLevel { z : self.z.clone(), zg : gs.gen };
     let update = PieceUpdateOp::SetZLevel(());
@@ -315,7 +315,7 @@ fn api_move(form : Json<ApiPiece<ApiPieceMove>>) -> impl response::Responder<'st
 impl ApiPieceOp for ApiPieceMove {
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
-    let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
+    let ApiPieceOpArgs { gs,piece, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let (pos, clamped) = self.0.clamped(gs.table_size);
     let logents = vec![];
