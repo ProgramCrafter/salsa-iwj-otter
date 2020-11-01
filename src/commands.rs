@@ -78,17 +78,15 @@ pub enum MgmtGameInstruction {
   // xxx ^ prevent use of Fixed when not wanted
   RedeliverPlayerAccess(PlayerId),
 
-  AddPlayer(MgmtPlayerDetails),
-  UpdatePlayer(MgmtPlayerDetails),
-  RemovePlayer(AccountName),
-  BlockPlayer(String),
+  AddPlayer { account: AccountName, details: MgmtPlayerDetails },
+  UpdatePlayer { player: PlayerId, details: MgmtPlayerDetails },
+  RemovePlayer { player: PlayerId },
 }
 
 // xxx facilitator name?
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct MgmtPlayerDetails {
-  pub account: AccountName,
   pub timezone: Option<String>,
   pub nick: Option<String>,
 }

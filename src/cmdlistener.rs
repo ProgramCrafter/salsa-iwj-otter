@@ -338,23 +338,18 @@ fn execute_game_insn<'ig>(
       Ok(Resp::Pieces(pieces))
     })?,
 
-    RemovePlayer(account) => {
-      let acctid = ag.check(&account)?;
-      let ig = cs.check_acl(ag, ig,
-                            PCH::InstanceOrOnlyAffectedAccount(acctid),
-                            &[TP::RemovePlayer])?.0;
-      let player = ig.iplayers.iter()
-        .filter(|(_,v)| v.ipl.acctid == acctid)
-        .map(|(k,_)| k)
-        .next()
-        .ok_or(ME::PlayerNotFound)?;
-      let record = ig.player_remove(player).unwrap();
-      let gpl = ig.gs.players.remove(player)
-        .ok_or(InternalError::PartialPlayerData)?;
+    RemovePlayer { player } => {
+      let ig = cs.check_acl_modify_player(ag, ig, player,
+                                          &[TP::RemovePlayer])?.0;
+      let (gpl, ipl) = ig.player_remove(player)?;
+      let show = if let Some(gpl) = gpl {
+        htmlescape::encode_minimal(&gpl.nick)
+      } else {
+        "<i>partial data?!</i>".to_string()
+      };
       (U{ pcs: vec![],
           log: vec![ LogEntry {
-            html: Html(format!("{} removed a player: {}", &who,
-                          htmlescape::encode_minimal(&gpl.nick))),
+            html: Html(format!("{} removed a player: {}", &who, &show)),
           }],
           raw: None},
        Fine, ig)
@@ -725,6 +720,25 @@ impl CommandStream<'_> {
   }
   
   #[throws(MgmtError)]
+  pub fn check_acl_modify_player<'ig, P: Into<PermSet<TablePermission>>>(
+    &mut self,
+    ag: &AccountsGuard,
+    ig: &'ig mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
+    player: PlayerId,
+    p: P,
+  ) -> (&'ig mut InstanceGuard<'ig>,
+        Authorisation<InstanceName>)
+  {
+    let (ipl_unauth, gpl_unauth) = {
+      let ig = ig.by(Authorisation::authorise_any());
+      (ig.iplayers.get(player)?, ig.gs.gplayers.get(player)?)
+    };
+    let how = PCH::InstanceOrOnlyAffectedAccount(ipl_unauth.acctid);
+    let (ig, auth) = self.check_acl(ag, ig, how, p)?;
+    (ig, auth)
+  }
+  
+  #[throws(MgmtError)]
   pub fn check_acl_modify_pieces<'ig>(
     &mut self,
     ag: &AccountsGuard,
@@ -738,7 +752,7 @@ impl CommandStream<'_> {
     let modperm = ig.modify_pieces();
     (ig, modperm, auth)
   }
-  
+
   #[throws(MgmtError)]
   pub fn check_acl<'ig, P: Into<PermSet<TablePermission>>>(
     &mut self,
