@@ -882,7 +882,7 @@ impl InstanceGuard<'_> {
     }
 
     let InstanceSaveAccesses::<String,ActualPiecesLoaded>
-    { mut tokens_players, mut ipieces, mut aplayers, acl }
+    { tokens_players, mut ipieces, mut aplayers, acl }
     = match Self::load_something(&name, "a-") {
       Ok(data) => data,
       Err(e) => if (||{
@@ -907,14 +907,14 @@ impl InstanceGuard<'_> {
       secondary.retain(|k,_v| primary.contains_key(k));
     }
 
-    discard_mismatches(&mut gs.players, &mut aplayers);
-    discard_mismatches(&mut gs.pieces,  &mut ipieces);
+    discard_mismatches(&mut gs.players,  &mut aplayers);
+    discard_mismatches(&mut gs.pieces.0, &mut ipieces);
   
     let pu_bc = PlayerUpdates::new_begin(&gs);
 
     let iplayers : SecondarySlotMap<PlayerId, PlayerRecord> = {
       let a = aplayers;
-      a.drain()
+      a.into_iter()
     }.map(|(player, ipl)| {
       let u = pu_bc.new();
       (player, PlayerRecord { u, ipl })
@@ -928,7 +928,7 @@ impl InstanceGuard<'_> {
     }
 
     let name = Arc::new(name);
-    let (tokens_players, acctids_players) = {
+    let (mut tokens_players, acctids_players) = {
       let mut tokens = Vec::with_capacity(tokens_players.len());
       let mut acctids = Vec::with_capacity(tokens_players.len());
       for (token, player) in tokens_players { if_chain! {
