@@ -154,12 +154,13 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       let acl = default();
       let gref = Instance::new(game, gs, acl, auth)?;
       let ig = gref.lock()?;
-      let mut igu = Unauthorised::of(ig);
+      let mut ig = Unauthorised::of(ig);
 
       let resp =
-      execute_for_game(cs, &ag, &mut igu,
+      execute_for_game(cs, &ag, &mut ig,
                        insns, MgmtGameUpdateMode::Bulk)
         .map_err(|e|{
+          let ig = ig.by(Authorisation::authorise_any());
           let name = ig.name.clone();
           let InstanceGuard { c, .. } = ig;
           Instance::destroy_game(c, auth)
@@ -1007,8 +1008,12 @@ mod authproofs {
   #[error("internal AuthorisationError {0}")]
   pub struct AuthorisationError(pub String);
 
-  #[derive(Debug,Copy,Clone)]
+  #[derive(Debug)]
   pub struct Authorisation<A> (PhantomData<*const A>);
+  impl<A> Clone for Authorisation<A> { fn clone(&self) -> Self {
+    Self(PhantomData)
+  } }
+  impl<A> Copy for Authorisation<A> { }
 
   impl<T> Authorisation<T> {
     pub const fn authorised(_v: &T) -> Authorisation<T> {
@@ -1058,3 +1063,5 @@ mod authproofs {
     type Output = (A, B, C);
   }
 }
+
+
