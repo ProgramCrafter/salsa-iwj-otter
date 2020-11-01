@@ -403,7 +403,7 @@ impl FromStr for InstanceName {
   type Err = InvalidScopedName;
   #[throws(InvalidScopedName)]
   fn from_str(s: &str) -> Self {
-    let names : [_;2] = Default::default();
+    let mut names : [_;2] = Default::default();
     let scope = AccountScope::parse_name(s, &mut names)?;
     let [subaccount, game] = names;
     InstanceName {
@@ -611,14 +611,13 @@ impl<'ig> InstanceGuard<'ig> {
                                    authorised: Authorisation<AccountName>,
                                    reset: bool)
                                    -> Option<AccessTokenReport> {
-    let ipl = self.c.g.iplayers.byid(player)?.ipl;
-    let gpl = self.c.g.gs.players.byid(player)?;
+    let acctid = self.c.g.iplayers.byid(player)?.ipl.acctid;
 
     let (access, acctid) = accounts.with_entry_mut(
-      ipl.acctid, authorised, None,
+      acctid, authorised, None,
       |acct, acctid|
     {
-      let access = acct.access;
+      let access = acct.access.clone();
       let desc = access.describe_html();
       let now = Timestamp::now();
       acct.tokens_revealed.entry(desc)
@@ -628,7 +627,7 @@ impl<'ig> InstanceGuard<'ig> {
         })
         .latest = now;
       acct.expire_tokens_revealed();
-      Ok::<_,MgmtError>((access.clone(), acctid))
+      Ok::<_,MgmtError>((access, acctid))
     })?.map_err(|(e,_)|e)??;
 
     if reset {
@@ -671,15 +670,18 @@ impl<'ig> InstanceGuard<'ig> {
 
       let token = match tokens.as_slice() {
         [] => throw!(ME::AuthorisationUninitialised),
-        [&token] => token,
+        [token] => token,
         _ => {
           warn!("duplicate token for {}", player);
           throw!(ME::ServerFailure("duplicate token".to_string()));
         },
       };
 
-      token.clone()
+      (*token).clone()
     };
+
+    let ipl = &self.c.g.iplayers.byid(player)?.ipl;
+    let gpl = self.c.g.gs.players.byid(player)?;
 
     let report = AccessTokenReport {
       url: format!("http://localhost:8000/{}", token.0), // xxx
