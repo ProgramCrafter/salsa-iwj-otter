@@ -131,8 +131,8 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     SetAccount(wanted_account) => {
       let auth = authorise_scope_direct(cs, &wanted_account.scope)?;
       cs.account = Some(AccountSpecified {
-        notional_account: wanted_account,
         cooked: wanted_account.to_string(),
+        notional_account: wanted_account,
         auth: auth.therefore_ok(),
       });
       Fine
