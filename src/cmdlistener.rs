@@ -515,7 +515,7 @@ fn execute_for_game<'cs, 'igr, 'ig : 'igr>(
   let mut uh = UpdateHandler::from_how(how);
   let mut responses = Vec::with_capacity(insns.len());
   let mut iga = None;
-  let ok = (||{
+  let res = (||{
     for insn in insns.drain(0..) {
       let (updates, resp, ig) = execute_game_insn(cs, ag, igu, insn)?;
       uh.accumulate(ig, updates)?;
@@ -530,7 +530,7 @@ fn execute_for_game<'cs, 'igr, 'ig : 'igr>(
   }
   MgmtResponse::AlterGame {
     responses,
-    error: ok.unwrap_or_else(Some)
+    error: res.unwrap_or_else(Some)
   }
 }
 
