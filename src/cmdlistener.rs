@@ -215,7 +215,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
 // ---------- game command implementations ----------
 
-type ExecuteGameInsnResults<'igr, 'ig : 'igr> = (
+type ExecuteGameInsnResults<'igr, 'ig> = (
   ExecuteGameChangeUpdates,
   MgmtGameResponse,
   &'igr mut InstanceGuard<'ig>,
@@ -514,19 +514,19 @@ fn execute_for_game<'cs, 'igr, 'ig : 'igr>(
 {
   let mut uh = UpdateHandler::from_how(how);
   let mut responses = Vec::with_capacity(insns.len());
-  let mut iga = None;
+  let mut auth = None;
   let res = (||{
     for insn in insns.drain(0..) {
       let (updates, resp, ig) = execute_game_insn(cs, ag, igu, insn)?;
       uh.accumulate(ig, updates)?;
       responses.push(resp);
-      iga = Some(ig);
+      auth = Some(Authorisation::authorised(&*ig.name));
     }
-    if let Some(ig) = iga { uh.complete(cs,ig)?; }
+    if let Some(auth) = auth { uh.complete(cs, igu.by_mut(auth))?; }
     Ok(None)
   })();
-  if let Some(ig) = iga {
-    ig.save_game_now()?;
+  if let Some(auth) = auth {
+    igu.by_mut(auth).save_game_now()?;
   }
   MgmtResponse::AlterGame {
     responses,
@@ -770,7 +770,7 @@ impl CommandStream<'_> {
         Authorisation<InstanceName>)
   {
     let ipl_unauth = {
-      let ig = ig.by(Authorisation::authorise_any());
+      let ig = ig.by_ref(Authorisation::authorise_any());
       ig.iplayers.byid(player)?
     };
     let how = PCH::InstanceOrOnlyAffectedAccount(ipl_unauth.ipl.acctid);
@@ -831,7 +831,7 @@ impl CommandStream<'_> {
         PCH::InstanceOrOnlyAffectedPlayer(object_player) => {
           if_chain!{
             if let Some(object_ipr) =
-              ig.by(Authorisation::authorise_any()).iplayers
+              ig.by_ref(Authorisation::authorise_any()).iplayers
               .get(object_player);
             then { subject_is(object_ipr.ipl.acctid) }
             else { None }
@@ -845,13 +845,12 @@ impl CommandStream<'_> {
       let auth = {
         let subject = &current_account.cooked;
         let (acl, owner) = {
-          let ig = ig.by(Authorisation::authorise_any());
+          let ig = ig.by_ref(Authorisation::authorise_any());
           (&ig.acl, &ig.name.account)
         };
-        let eacl = EffectiveAcl {
-          owner_account : Some(&owner.to_string()),
-          acl : acl,
-        };
+        let owner_account = owner.to_string();
+        let owner_account = Some(owner_account.as_str());
+        let eacl = EffectiveAcl { owner_account, acl };
         eacl.check(subject, p)?
       };
       auth

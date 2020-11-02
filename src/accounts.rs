@@ -42,7 +42,7 @@ impl AccountScope {
                   E,
                   F: FnMut(&str) -> Result<(),E>
                   >
-    (&'out self, ns: NS, f: F)
+    (&'out self, ns: NS, mut f: F)
   {
     const ENCODE : percent_encoding::AsciiSet =
       percent_encoding::NON_ALPHANUMERIC.remove(b':');
@@ -69,7 +69,7 @@ impl AccountScope {
     let mut split = s.split(':');
 
     let scope = {
-      let next = ||{
+      let mut next = ||{
         split.next()
           .ok_or(InvalidScopedName::MissingScopeComponent)
       };
@@ -109,7 +109,9 @@ impl Display for AccountName {
   #[throws(fmt::Error)]
   /// Return value is parseable, and filesystem- and html-safeb
   fn fmt(&self, f: &mut fmt::Formatter) {
-    self.scope.display_name(&[ self.subaccount.as_str() ], |s| f.write_str(s))
+    self.scope.display_name(&[
+      self.subaccount.as_str()
+    ], |s| f.write_str(s))?
   }
 }
 
@@ -132,7 +134,7 @@ impl FromStr for AccountName {
 
   #[throws(InvalidScopedName)]
   fn from_str(s: &str) -> Self {
-    let subaccount = default();
+    let mut subaccount = default();
     let names = std::slice::from_mut(&mut subaccount);
     let scope = AccountScope::parse_name(s, names)?;
     AccountName { scope, subaccount }
@@ -161,7 +163,7 @@ pub struct TokenRevelation {
 
 #[derive(Debug,Default)]
 #[derive(Serialize,Deserialize)]
-struct Accounts {
+pub struct Accounts {
   names: HashMap<Arc<AccountName>, AccountId>,
   records: DenseSlotMap<AccountId, AccountRecord>,
 }
@@ -187,7 +189,7 @@ impl From<Box<dyn PlayerAccessSpec>> for AccessRecord {
 // xxx load, incl reveleation expiry
 // xxx periodic token reveleation expiry
 
-trait AccountNameOrId : Copy {
+pub trait AccountNameOrId : Copy {
   fn initial_lookup(self, accounts: &Accounts) -> Option<AccountId>;
 }
 
@@ -294,9 +296,9 @@ impl AccountsGuard {
   {
     use hash_map::Entry::*;
     let accounts = self.0.get_or_insert_with(default);
-    let name_entry = accounts.names.entry(new_record.account.clone());
+    let mut name_entry = accounts.names.entry(new_record.account.clone());
     if_chain!{
-      if let Occupied(oe) = name_entry;
+      if let Occupied(ref mut oe) = name_entry;
       let acctid = *oe.get();
       if let Some(old_record) = accounts.records.get_mut(acctid);
       then {
@@ -305,7 +307,7 @@ impl AccountsGuard {
         let acctid = accounts.records.insert(new_record);
         match name_entry {
           Vacant(ve) => { ve.insert(acctid); }
-          Occupied(oe) => { oe.insert(acctid); }
+          Occupied(ref mut oe) => { oe.insert(acctid); }
         }
       }
     }
@@ -453,12 +455,6 @@ pub mod loaded_acl {
 
   impl<P:Perm> From<Acl<P>> for LoadedAcl<P> {
     fn from(acl: Acl<P>) -> LoadedAcl<P> {
-      (&acl).into()
-    }
-  }
-
-  impl<P:Perm> From<&Acl<P>> for LoadedAcl<P> {
-    fn from(acl: &Acl<P>) -> LoadedAcl<P> {
       let ents = acl.ents.into_iter().filter_map(
         |AclEntry { account_glob, allow, deny }|
         {
@@ -482,19 +478,13 @@ pub mod loaded_acl {
 
   impl<P:Perm> From<LoadedAcl<P>> for Acl<P> {
     fn from(acl: LoadedAcl<P>) -> Acl<P> {
-      (&acl).into()
-    }
-  }
-
-  impl<P:Perm> From<&LoadedAcl<P>> for Acl<P> {
-    fn from(acl: &LoadedAcl<P>) -> Acl<P> {
       let LoadedAcl(ents) = acl;
       Acl { ents: ents.into_iter().map(
         |LoadedAclEntry { pat, allow, deny, .. }|
         AclEntry {
           account_glob: pat.to_string(),
-          allow: unpack(allow),
-          deny: unpack(deny),
+          allow: unpack(&allow),
+          deny: unpack(&deny),
         }
       ).collect() }
     }

@@ -20,7 +20,6 @@ struct ApiPieceOpArgs<'a> {
   player: PlayerId,
   piece: PieceId,
   p: &'a dyn Piece,
-  iplayers: &'a SecondarySlotMap<PlayerId, PlayerRecord>,
   lens: &'a dyn Lens /* used for LogEntry and PieceId but not Pos */
 }
 
@@ -143,7 +142,7 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
     form.op.check_held(pc,player)?;
     let (wrc, update, logents) =
       form.op.op(ApiPieceOpArgs {
-        gs, player, piece, iplayers,
+        gs, player, piece,
         p: p.as_ref(),
         lens: &lens,
       })?;
