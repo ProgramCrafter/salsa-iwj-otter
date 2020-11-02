@@ -20,6 +20,7 @@ pub enum AccountScope {
 
 type AS = AccountScope;
 type ME = MgmtError;
+type IE = InternalError;
 
 #[derive(Error,Debug,Clone,Copy,Serialize,Deserialize)]
 #[derive(Hash,Ord,Eq,PartialOrd,PartialEq)]
@@ -285,7 +286,7 @@ impl AccountsGuard {
     let ok = self.save_accounts_now();
     match ok {
       Ok(()) => Ok(output),
-      Err(e) => Err((e, output))
+      Err(e) => Err((e.into(), output))
     }
   }
 
@@ -334,9 +335,61 @@ impl AccountsGuard {
     self.save_accounts_now()?;
   }
 
-  pub fn save_accounts_now(&self) -> Result<(), InternalError> {
-    panic!("xxx")
+  #[throws(AccountsSaveError)]
+  pub fn save_accounts_now(&self) {
+    let accounts = self.0.as_ref().expect("loaded");
+    let main = save_path();
+    let tmp = format!("{}.tmp", &main);
+    let f = fs::File::create(&tmp)?;
+    let f = BufWriter::new(f);
+    rmp_serde::encode::write_named(&mut f, &accounts)?;
+    f.flush()?;
+    let f = f.into_inner().map_err(|e| {
+      io::Error::new(e.error().kind(), e)
+    })?;
+    f.sync_data()?;
+    f.close()?;
+    fs::rename(&tmp, &main)?;
   }
+}
+
+#[derive(Error,Debug)]
+pub enum AccountsSaveError {
+  #[error("Error writing/installing file: {0}")]
+  IO(#[from] io::Error),
+  #[error("Error encoding msgpack: {0}")]
+  Encode(#[from] rmp_serde::encode::Error)
+}
+
+const ACCOUNTS_FILE : &str = "accounts";
+
+fn save_path() -> String {
+  format!("{}/{}", config().save_directory, &ACCOUNTS_FILE)
+}
+
+#[throws(StartupError)]
+pub fn load_accounts() {
+  let ag = AccountsGuard::lock();
+  assert!(ag.0.is_none());
+  let path = save_path();
+  let f = fs::File::open(&path);
+  let f = match f {
+    Ok(f) => f,
+    Err(e) if e.kind() == io::ErrorKind::NotFound => return,
+    e@ Err(_) => e.with_context(|| path.clone())?,
+  };
+  let f = BufReader::new(f);
+  let accounts : Accounts = rmp_serde::decode::from_read(&mut f)?;
+  let chk = |acctid: AccountId, account: &AccountName| if_chain! {
+    if accounts.names.get(account) == Some(&acctid);
+    if let Some(got_record) = accounts.records.get(acctid);
+    if got_record.account = account;
+    then { Ok(()) }
+    else { Err(IE::AccountsCorrupted(acctid, account.clone())) }
+  };
+  for (account, acctid) in &accounts.names { chk(*acctid, account) }
+  for (acctid, account) in &accounts.records { chk(*acctid, account) }
+  *ag = accounts;
 }
 
 impl AccountRecord {

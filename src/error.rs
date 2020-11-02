@@ -4,6 +4,8 @@
 
 use crate::imports::*;
 
+type IE = InternalError;
+
 #[derive(Error,Debug)]
 pub enum OnlineError {
   #[error("Game in process of being destroyed")]
@@ -31,6 +33,10 @@ from_instance_lock_error!{OnlineError}
 pub enum InternalError {
   #[error("Game corrupted by previous crash")]
   GameCorrupted,
+  #[error("Accounts file corrupted for acctid={0:?} account={1:?}")]
+  AccountsCorrupted(AccountId, Arc<AccountName>),
+  #[error("Error saving accounts file: {0}")]
+  AccountsSaveError(#[from] AccountsSaveError),
   #[error("Server MessagePack encoding error {0}")]
   MessagePackEncodeFail(#[from] rmp_serde::encode::Error),
   #[error("Server MessagePack decoding error (game load failed) {0}")]
@@ -58,7 +64,6 @@ impl From<InternalError> for SpecError {
     SpecError::InternalError(format!("{:?}",ie))
   }
 }
-
 #[derive(Error,Debug,Serialize,Clone)]
 pub enum ErrorSignaledViaUpdate {
   InternalError,
@@ -176,4 +181,8 @@ impl From<SVGProcessingError> for SpecError {
   fn from(se: SVGProcessingError) -> SpecError {
     InternalError::SVGProcessingFailed(se).into()
   }
+}
+
+impl From<AccountsSaveError> for MgmtError {
+  fn from(ase: AccountsSaveError) -> MgmtError { IE::from(ase).into() }
 }
