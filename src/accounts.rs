@@ -341,7 +341,7 @@ impl AccountsGuard {
     let main = save_path();
     let tmp = format!("{}.tmp", &main);
     let f = fs::File::create(&tmp)?;
-    let f = BufWriter::new(f);
+    let mut f = BufWriter::new(f);
     rmp_serde::encode::write_named(&mut f, &accounts)?;
     f.flush()?;
     let f = f.into_inner().map_err(|e| {
@@ -369,7 +369,7 @@ fn save_path() -> String {
 
 #[throws(StartupError)]
 pub fn load_accounts() {
-  let ag = AccountsGuard::lock();
+  let mut ag = AccountsGuard::lock();
   assert!(ag.0.is_none());
   let path = save_path();
   let f = fs::File::open(&path);
@@ -378,18 +378,18 @@ pub fn load_accounts() {
     Err(e) if e.kind() == io::ErrorKind::NotFound => return,
     e@ Err(_) => e.with_context(|| path.clone())?,
   };
-  let f = BufReader::new(f);
+  let mut f = BufReader::new(f);
   let accounts : Accounts = rmp_serde::decode::from_read(&mut f)?;
-  let chk = |acctid: AccountId, account: &AccountName| if_chain! {
+  let chk = |acctid: AccountId, account: &Arc<AccountName>| if_chain! {
     if accounts.names.get(account) == Some(&acctid);
     if let Some(got_record) = accounts.records.get(acctid);
-    if got_record.account = account;
+    if &got_record.account == account;
     then { Ok(()) }
     else { Err(IE::AccountsCorrupted(acctid, account.clone())) }
   };
-  for (account, acctid) in &accounts.names { chk(*acctid, account) }
-  for (acctid, account) in &accounts.records { chk(*acctid, account) }
-  *ag = accounts;
+  for (account, acctid) in &accounts.names { chk(*acctid, account)?; }
+  for (acctid, record) in &accounts.records { chk(acctid, &record.account)?; }
+  *ag.0 = Some(accounts);
 }
 
 impl AccountRecord {
