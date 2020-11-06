@@ -104,6 +104,13 @@ impl AccountScope {
     }
     scope
   }
+
+  pub fn default_nick(&self) -> String {
+    match self {
+      AS::Server => "*SERVER*".into(),
+      AS::Unix { user } => user.clone(),
+    }
+  }
 }
 
 impl Display for AccountName {

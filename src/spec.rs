@@ -60,8 +60,16 @@ display_as_debug!{SpecError}
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct TableSpec {
-  pub players : Vec<AccountName>,
-  pub acl : Acl<TablePermission>
+  #[serde(default)] pub players: Vec<TablePlayerSpec>,
+  #[serde(default)] pub acl: Acl<TablePermission>,
+  pub timezone: Option<String>,
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+pub struct TablePlayerSpec {
+  account: AccountName,
+  nick: Option<String>,
+  timezone: Option<String>,
 }
 
 type RawAcl<Perm> = Vec<AclEntry<Perm>>;
