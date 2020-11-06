@@ -397,7 +397,7 @@ fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
       if ma.verbose >= 1 {
         eprintln!("removing old player {:?}", &nick);
       }
-      insns.push(Insn::RemovePlayer(st.id));
+      insns.push(Insn::RemovePlayer { player: st.id });
     }
 
     let mut added_players = HashSet::new();
