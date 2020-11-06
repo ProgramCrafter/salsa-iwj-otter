@@ -58,10 +58,11 @@ const EXIT_SPACE :    i32 =  2;
 const EXIT_USAGE :    i32 = 12;
 const EXIT_DISASTER : i32 = 16;
 
-#[derive(Debug,Default)]
+#[derive(Debug)]
 struct MainOpts {
-  scope: Option<AccountScope>,
-  socket_path: Option<String>,
+  account: AccountName,
+  scope: AccountName,
+  socket_path: String,
   verbose: i32,
 }
 
@@ -83,12 +84,12 @@ impl From<anyhow::Error> for ArgumentParseError {
   }
 }
 
-fn parse_args<T,F>(
+fn parse_args<T,U,F>(
   args: Vec<String>,
   apmaker: &F,
-  completer: Option<&dyn Fn(&mut T) -> Result<(), ArgumentParseError>>,
+  completer: &dyn Fn(T) -> Result<U, ArgumentParseError>,
   extra_help: Option<&dyn Fn(&mut dyn Write) -> Result<(), io::Error>>,
-) -> T
+) -> U
 where T: Default,
       F: Fn(&mut T) -> ArgumentParser,
 {
@@ -116,75 +117,90 @@ where T: Default,
     });
   }
   mem::drop(ap);
-  if let Some(completer) = completer {
-    completer(&mut parsed).unwrap_or_else(|e:ArgumentParseError| {
-      let ap = apmaker(&mut parsed);
+  let completed  =
+    completer(parsed).unwrap_or_else(|e:ArgumentParseError| {
+      let ap = apmaker(&mut Default::default());
       ap.error(&us, &e.0, &mut stderr);
       exit(EXIT_USAGE);
     });
-  }
-  parsed
+  completed
 }
 
 fn main() {
   #[derive(Default,Debug)]
-  struct MainArgs {
-    opts: MainOpts,
+  struct RawMainArgs {
+    account: Option<AccountName>,
+    scope: Option<AccountScope>,
+    socket_path: Option<String>,
+    verbose: i32,
     config_filename: Option<String>,
     subcommand: String,
     subargs: Vec<String>,
   };
-  let ma = parse_args::<MainArgs,_>(
+  let (subcommand, subargs, mo) = parse_args::<RawMainArgs,_,_>(
     env::args().collect(),
-  &|ma|{
+  &|rma|{
     use argparse::*;
     let mut ap = ArgumentParser::new();
     ap.stop_on_first_argument(true);
     ap.silence_double_dash(true);
-    ap.refer(&mut ma.subcommand).required().add_argument("SUBCOMMAND",Store,
+    ap.refer(&mut rma.subcommand).required().add_argument("SUBCOMMAND",Store,
                                       "subcommand");
-    ap.refer(&mut ma.subargs).add_argument("...",Collect,
+    ap.refer(&mut rma.subargs).add_argument("...",Collect,
                                    "subcommand options/arguments");
 
-    let mut scope = ap.refer(&mut ma.opts.scope);
-    scope.add_option(&["--scope-server"],
-                     StoreConst(Some(AS::Server)),
-                     "use Server scope");
-    scope.metavar("USER").add_option(&["--scope-unix-user"],
-                     MapStore(|user| Ok(Some(AS::Unix {
-                       user: user.into()
-                     }))),
-                     "use specified unix user scope");
-    scope.add_option(&["--scope-unix"],
-                     StoreConst(None),
-                     "use unix user $USER scope (default)");
-    ap.refer(&mut ma.opts.socket_path)
+    let mut account = ap.refer(&mut rma.account);
+    account.metavar("ACCOUNT").add_option(&["--account"],
+                     StoreOption,
+                     "use account ACCOUNT (default: unix:<current user>:)");
+    let mut scope = ap.refer(&mut rma.scope);
+    scope.metavar("SCOPE").add_option(&["--scope"],
+                     StoreOption,
+                     "use scope SCOPE (default: scope of ACCOUNT)");
+    ap.refer(&mut rma.socket_path)
       .add_option(&["--socket"], StoreOption,
                   "specify server socket path");
-    ap.refer(&mut ma.config_filename)
+    ap.refer(&mut rma.config_filename)
       .add_option(&["-C","--config"], StoreOption,
                   "specify server config file (used for finding socket)");
-    let mut verbose = ap.refer(&mut ma.opts.verbose);
+    let mut verbose = ap.refer(&mut rma.verbose);
     verbose.add_option(&["-q","--quiet"], StoreConst(-1),
                        "set verbosity to error messages only");
     verbose.add_option(&["-v","--verbose"], IncrBy(1),
        "increase verbosity (default is short progress messages)");
     ap
-  }, Some(&|ma| {
-    if let ref mut scope @None = ma.opts.scope {
+  }, Some(|RawMainArgs {
+      account, scope, socket_path, verbose, config_filename,
+      subcommand, subargs,
+  }|{
+    let account : AccountName = account.map(Ok).unwrap_or_else(||{
       let user = env::var("USER").map_err(|e| ArgumentParseError(
-        format!("--scope-unix needs USER env var: {}", &e)
+        format!("default account needs USER env var: {}", &e)
       ))?;
-      *scope = Some(AS::Unix { user });
-    }
-    if ma.config_filename.is_some() || ma.opts.socket_path.is_none() {
-      ServerConfig::read(ma.config_filename.as_ref().map(String::as_str))
-        .context("read config file")?;
-    }
-    ma.opts.socket_path.get_or_insert_with(
-      || config().command_socket.clone()
-    );
-    Ok(())
+      Ok(AccountName {
+        scope: AS::Unix { user },
+        subaccount: "".into(),
+      })
+    })?;
+    let scope = scope.unwrap_or_else(|| account.scope.clone());
+    let mut config_store = None;
+    let config = ||{
+      config_store.unwrap_or_else(||{
+        ServerConfig::read(config_filename.as_ref().map(String::as_str))
+          .context("read config file")?;
+        Ok(())
+      })?;
+      Ok(otter::global::config())
+    };
+    let socket_path = socket_path.map(Ok).unwrap_or_else(||{
+      Ok(config()?.command_socket.clone())
+    })?;
+    Ok((subcommand, subargs, MainOpts {
+      account,
+      scope,
+      socket_path,
+      verbose,
+    }))
   }), Some(&|w|{
     writeln!(w, "\nSubcommands:")?;
     let maxlen = inventory::iter::<Subcommand>.into_iter()
@@ -197,20 +213,20 @@ fn main() {
   }));
 
   let sc = inventory::iter::<Subcommand>.into_iter()
-    .filter(|Subcommand(found,_,_)| found == &ma.subcommand)
+    .filter(|Subcommand(found,_,_)| found == &subcommand)
     .next()
     .unwrap_or_else(||{
-      eprintln!("subcommand `{}' not recognised", &ma.subcommand);
+      eprintln!("subcommand `{}' not recognised", &subcommand);
       exit(EXIT_USAGE);
     });
   let Subcommand(_,_,call) = sc;
 
-  let mut subargs = ma.subargs;
+  let mut subargs = subargs;
   subargs.insert(0, format!("{} {}",
                             env::args().next().unwrap(),
-                            &ma.subcommand));
+                            &subcommand));
 
-  call(sc, ma.opts, subargs).expect("execution error");
+  call(sc, mo, subargs).expect("execution error");
 }
 
 struct Conn {
@@ -261,7 +277,7 @@ impl ConnForGame {
                 -> Vec<MgmtGameResponse> {
     let insns_len = insns.len();
     let cmd = MgmtCommand::AlterGame {
-      name: self.name.clone(), how: self.how,
+      game: self.name.clone(), how: self.how,
       insns
     };
     let responses = match self.cmd(&cmd)? {
@@ -337,7 +353,7 @@ fn connect(ma: &MainOpts) -> Conn {
     .with_context(||socket_path.clone()).context("connect to server")?; 
   let chan = MgmtChannel::new(unix)?;
   let mut chan = Conn { chan };
-  chan.cmd(&MgmtCommand::SetScope(ma.scope.clone().unwrap()))?;
+  chan.cmd(&MgmtCommand::SetAccount(ma.account.clone().unwrap()))?;
   chan
 }
 
@@ -369,8 +385,8 @@ fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
       // ^ todo use client program timezone?
       if !st.old {
         insns.push(MgmtGameInstruction::AddPlayer {
-          account,
-          MgmtPlayerDetails {
+          account: &spec.account,
+          details: MgmtPlayerDetails {
             nick,
             timezone,
           },

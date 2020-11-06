@@ -399,6 +399,15 @@ impl DerefMut for InstanceGuard<'_> {
   fn deref_mut(&mut self) -> &mut Instance { &mut self.c.g }
 }
 
+impl FromStr for AccountScope {
+  type Err = InvalidScopedName;
+  #[throws(InvalidScopedName)]
+  fn from_str(s: &str) -> Self {
+    let scope = AccountScope::parse_name(s, &mut [])?;
+    scope
+  }
+}
+
 impl FromStr for InstanceName {
   type Err = InvalidScopedName;
   #[throws(InvalidScopedName)]

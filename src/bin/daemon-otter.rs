@@ -119,7 +119,7 @@ fn main() {
   shapelib::load()?;
 
   load_accounts()?;
-  load_games()?;
+  load_games(&mut AccountsGuard::lock())?;
 
   let cl = CommandListener::new()?;
   cl.spawn()?;
