@@ -104,9 +104,12 @@ impl AccountScope {
     }
     scope
   }
+}
 
+impl AccountName {
   pub fn default_nick(&self) -> String {
-    match self {
+    if self.subaccount != "" { return self.subaccount.clone() }
+    match &self.scope {
       AS::Server => "*SERVER*".into(),
       AS::Unix { user } => user.clone(),
     }

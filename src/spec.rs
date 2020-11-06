@@ -67,9 +67,9 @@ pub struct TableSpec {
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct TablePlayerSpec {
-  account: AccountName,
-  nick: Option<String>,
-  timezone: Option<String>,
+  pub account: AccountName,
+  pub nick: Option<String>,
+  pub timezone: Option<String>,
 }
 
 type RawAcl<Perm> = Vec<AclEntry<Perm>>;

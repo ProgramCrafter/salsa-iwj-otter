@@ -257,7 +257,7 @@ impl Conn {
 
 struct ConnForGame {
   pub conn: Conn,
-  pub name: String,
+  pub name: InstanceName,
   pub how: MgmtGameUpdateMode,
 }
 impl Deref for ConnForGame {
@@ -346,12 +346,11 @@ impl ConnForGame {
 
 #[throws(E)]
 fn connect(ma: &MainOpts) -> Conn {
-  let socket_path = ma.socket_path.as_ref().unwrap();
-  let unix = UnixStream::connect(&socket_path)
-    .with_context(||socket_path.clone()).context("connect to server")?; 
+  let unix = UnixStream::connect(&ma.socket_path)
+    .with_context(||ma.socket_path.clone()).context("connect to server")?; 
   let chan = MgmtChannel::new(unix)?;
   let mut chan = Conn { chan };
-  chan.cmd(&MgmtCommand::SetAccount(ma.account.clone().unwrap()))?;
+  chan.cmd(&MgmtCommand::SetAccount(ma.account.clone()))?;
   chan
 }
 
@@ -371,7 +370,7 @@ fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
 
     let mut insns = vec![];
     for pspec in &spec.players {
-      let nick = pspec.unwrap_or(|| pspec.account.default_nick());
+      let nick = pspec.nick.unwrap_or_else(|| pspec.account.default_nick());
       let st = nick2st.entry(nick.clone()).or_default();
       if st.new {
         Err(anyhow!("duplicate player nick {:?} in spec", &nick))?;
@@ -383,9 +382,9 @@ fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
       // ^ todo use client program timezone?
       if !st.old {
         insns.push(MgmtGameInstruction::AddPlayer {
-          account: &spec.account,
+          account: pspec.account.clone(),
           details: MgmtPlayerDetails {
-            nick,
+            nick: Some(nick),
             timezone,
           },
         });
