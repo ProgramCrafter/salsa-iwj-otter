@@ -15,6 +15,7 @@ type E = anyhow::Error;
 type Insn = MgmtGameInstruction;
 type Resp = MgmtGameResponse;
 type AS = AccountScope;
+type APE = ArgumentParseError;
 
 use argparse::action::ParseResult::Parsed;
 
@@ -61,7 +62,7 @@ const EXIT_DISASTER : i32 = 16;
 #[derive(Debug)]
 struct MainOpts {
   account: AccountName,
-  scope: AccountName,
+  scope: AccountScope,
   socket_path: String,
   verbose: i32,
 }
@@ -84,14 +85,12 @@ impl From<anyhow::Error> for ArgumentParseError {
   }
 }
 
-fn parse_args<T,U,F>(
+fn parse_args<T:Default,U>(
   args: Vec<String>,
-  apmaker: &F,
+  apmaker: &dyn Fn(&mut T) -> ArgumentParser,
   completer: &dyn Fn(T) -> Result<U, ArgumentParseError>,
   extra_help: Option<&dyn Fn(&mut dyn Write) -> Result<(), io::Error>>,
 ) -> U
-where T: Default,
-      F: Fn(&mut T) -> ArgumentParser,
 {
   let mut parsed = Default::default();
   let ap = apmaker(&mut parsed);
@@ -137,7 +136,7 @@ fn main() {
     subcommand: String,
     subargs: Vec<String>,
   };
-  let (subcommand, subargs, mo) = parse_args::<RawMainArgs,_,_>(
+  let (subcommand, subargs, mo) = parse_args::<RawMainArgs,_>(
     env::args().collect(),
   &|rma|{
     use argparse::*;
@@ -169,11 +168,11 @@ fn main() {
     verbose.add_option(&["-v","--verbose"], IncrBy(1),
        "increase verbosity (default is short progress messages)");
     ap
-  }, Some(|RawMainArgs {
+  }, &|RawMainArgs {
       account, scope, socket_path, verbose, config_filename,
       subcommand, subargs,
   }|{
-    let account : AccountName = account.map(Ok).unwrap_or_else(||{
+    let account : AccountName = account.map(Ok::<_,APE>).unwrap_or_else(||{
       let user = env::var("USER").map_err(|e| ArgumentParseError(
         format!("default account needs USER env var: {}", &e)
       ))?;
@@ -183,16 +182,15 @@ fn main() {
       })
     })?;
     let scope = scope.unwrap_or_else(|| account.scope.clone());
-    let mut config_store = None;
+    let mut config_store : Option<Result<Arc<ServerConfig>,APE>> = None;
     let config = ||{
-      config_store.unwrap_or_else(||{
+      Ok::<_,APE>(&config_store.unwrap_or_else(||{
         ServerConfig::read(config_filename.as_ref().map(String::as_str))
           .context("read config file")?;
-        Ok(())
-      })?;
-      Ok(otter::global::config())
+        Ok(otter::global::config())
+      })?)
     };
-    let socket_path = socket_path.map(Ok).unwrap_or_else(||{
+    let socket_path = socket_path.map(Ok::<_,APE>).unwrap_or_else(||{
       Ok(config()?.command_socket.clone())
     })?;
     Ok((subcommand, subargs, MainOpts {
@@ -201,7 +199,7 @@ fn main() {
       socket_path,
       verbose,
     }))
-  }), Some(&|w|{
+  }, Some(&|w|{
     writeln!(w, "\nSubcommands:")?;
     let maxlen = inventory::iter::<Subcommand>.into_iter()
       .map(|Subcommand(verb,_,_)| verb.len())
