@@ -300,7 +300,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
       details: MgmtPlayerDetails { timezone, nick }
     } => {
       // todo some kind of permissions check for player too
-      let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::AddPlayer])?.0;
+      let (ig, auth) = cs.check_acl(ag, ig, PCH::Instance, &[TP::AddPlayer])?;
       let (_arecord, acctid) = ag.lookup(&account)?;
       let nick = nick.ok_or(ME::ParameterMissing)?;
       let logentry = LogEntry {
@@ -318,10 +318,14 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
         tz,
       };
       let (player, logentry) = ig.player_new(gpl, ipl, logentry)?;
+
+      let atr = ig.player_access_reset(ag, player, auth.therefore_ok())?;
+
       (U{ pcs: vec![],
           log: vec![ logentry ],
           raw: None },
-       Resp::AddPlayer(player), ig)
+       Resp::AddPlayer { account, nick, player, token: atr },
+       ig)
     },
 
     Insn::ListPieces => readonly(cs,ag,ig, &[TP::ViewPublic], |ig|{

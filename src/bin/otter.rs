@@ -400,11 +400,11 @@ fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
       insns.push(Insn::RemovePlayer { player: st.id });
     }
 
-    let mut added_players = HashSet::new();
+    let mut added_players = vec![];
     chan.alter_game(insns, Some(&mut |response| {
       match response {
-        &Resp::AddPlayer(player) => {
-          added_players.insert(player);
+        &Resp::AddPlayer { player, nick, token, .. } => {
+          added_players.push((player, nick, token));
         },
         _ => { },
       };
@@ -414,7 +414,7 @@ fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
     (added_players,)
   };
 
-  // ensure players have access tokens
+  // report any new access tokens
   {
     let (_, nick2id) = chan.get_info()?;
     let mut insns = vec![];

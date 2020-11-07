@@ -98,7 +98,10 @@ pub enum MgmtGameResponse {
 
   Pieces(Vec<MgmtGamePieceInfo>),
 
-  AddPlayer(PlayerId),
+  AddPlayer {
+    account: AccountName, nick: String,
+    player: PlayerId, token: Option<AccessTokenReport>,
+  },
   PlayerAccessToken(Option<AccessTokenReport>),
 }
 
