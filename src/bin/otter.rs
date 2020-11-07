@@ -354,8 +354,40 @@ fn connect(ma: &MainOpts) -> Conn {
   chan
 }
 
+const PLAYER_ALWAYS_PERMS : &[Perm] = [
+  TP::TestExistence,
+  TP::ViewPublic,
+  TP::AddPlayer,
+];
+
+const PLAYER_DEFAULT_PERMS : &[Perm] = [
+      TP::ChangePiecse
+];
+
 fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
-               spec: &TableSpec) -> Result<(),AE> {
+               spec: &TableSpec, purge_old_players: bool) -> Result<(),AE> {
+  let TableSpec { players, player_perms, timezone } = spec;
+  let mut player_perms = player_perms.clone()
+    .unwrap_or(PLAYER_DEFAULT_PERMS.iter().collect());
+  player_perms.extend(PLAYER_ALWAYS_PERMS.iter());
+
+  let mut acl =
+    players.iter().map(|tps| AclEntry {
+      account_glob: tps.account_glob();
+      allow: player_perms.clone(),
+      deny: default()
+    })
+    .chain(
+      spec.acl.iter()
+    )
+    .collect();
+
+  let mut insns = vec![];
+  insns.push(MGI::SetACL { acl });
+  isnns.push(MGI::SetTimezone { tz: timezone.clone() });
+
+
+
   let (_, nick2id) = chan.get_info()?;
 
   #[derive(Default)]
@@ -366,7 +398,6 @@ fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
     .map(|(nick,id)| (nick, St { id, old: true, new: false }))
     .collect();
 
-  let mut insns = vec![];
   for pspec in &spec.players {
     let nick = pspec.nick.unwrap_or_else(|| pspec.account.default_nick());
     let st = nick2st.entry(nick.clone()).or_default();

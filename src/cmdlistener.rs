@@ -295,17 +295,16 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
        Fine, ig)
     }
 
-    Insn::AddPlayer {
-      account,
+    Insn::JoinGame {
       details: MgmtPlayerDetails { timezone, nick }
     } => {
-      // todo some kind of permissions check for player too
+      let account = &cs.current_account()?.notional_account;
+      let (_arecord, acctid) = ag.lookup(account)?;
       let (ig, auth) = cs.check_acl(ag, ig, PCH::Instance, &[TP::AddPlayer])?;
-      let (_arecord, acctid) = ag.lookup(&account)?;
       let nick = nick.ok_or(ME::ParameterMissing)?;
       let logentry = LogEntry {
-        html: Html(format!("{} added a player: {}", &who,
-                      htmlescape::encode_minimal(&nick))),
+        html: Html(format!("{} ({}) joined the game",
+                           &nick, &account)),
       };
       let timezone = timezone.as_ref().map(String::as_str)
         .unwrap_or("");
@@ -324,7 +323,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
       (U{ pcs: vec![],
           log: vec![ logentry ],
           raw: None },
-       Resp::AddPlayer { account, nick, player, token: atr },
+       Resp::JoinGame { nick, player, token: atr },
        ig)
     },
 

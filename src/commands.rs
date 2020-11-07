@@ -78,9 +78,12 @@ pub enum MgmtGameInstruction {
   // xxx ^ prevent use of Fixed when not wanted
   RedeliverPlayerAccess(PlayerId),
 
-  AddPlayer { account: AccountName, details: MgmtPlayerDetails },
+  JoinGame { details: MgmtPlayerDetails },
   UpdatePlayer { player: PlayerId, details: MgmtPlayerDetails },
   RemovePlayer { player: PlayerId },
+
+  SetACL { acl: Acl<TablePermission> },
+  SetTimezone { tz: String },
 }
 
 // xxx facilitator name?
@@ -98,9 +101,10 @@ pub enum MgmtGameResponse {
 
   Pieces(Vec<MgmtGamePieceInfo>),
 
-  AddPlayer {
-    #[serede(flatten)] info: MgmtPlayerInfo,
-    player: PlayerId, token: Option<AccessTokenReport>,
+  JoinGame {
+    nick: String,
+    player: PlayerId,
+    token: Option<AccessTokenReport>,
   },
   PlayerAccessToken(Option<AccessTokenReport>),
 }

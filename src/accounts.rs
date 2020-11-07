@@ -46,7 +46,7 @@ impl AccountScope {
     (&'out self, ns: NS, mut f: F)
   {
     const ENCODE : percent_encoding::AsciiSet =
-      percent_encoding::NON_ALPHANUMERIC.remove(b':');
+      percent_encoding::NON_ALPHANUMERIC;
 
     match &self {
       AS::Server => {
@@ -59,6 +59,7 @@ impl AccountScope {
       },
     };
     for n in ns {
+      f(":")?;
       for frag in utf8_percent_encode(n, &ENCODE) {
         f(frag)?;
       }

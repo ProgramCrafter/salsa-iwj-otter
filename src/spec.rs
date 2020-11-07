@@ -61,14 +61,15 @@ display_as_debug!{SpecError}
 #[derive(Debug,Serialize,Deserialize)]
 pub struct TableSpec {
   #[serde(default)] pub players: Vec<TablePlayerSpec>,
-  #[serde(default)] pub acl: Acl<TablePermission>,
+  pub player_perms: Option<HashSet<Perm>>,
+  #[serde(default)] pub acl: Acl<AclEntry>,
   pub timezone: Option<String>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
 #[serde(rename_all="snake_case")]
 pub enum TablePlayerSpec {
-  Account(String),
+  Account(AccountName),
   AccountGlob(String),
   Local(String),
   AllLocal,
@@ -264,6 +265,23 @@ pub mod implementation {
     type Auth = InstanceName;
     const TEST_EXISTENCE : Self = TablePermission::TestExistence;
     const NOT_FOUND : MgmtError = MgmtError::GameNotFound;
+  }
+
+  impl TablePlayerSpec {
+    fn account_glob(&self) -> String {
+      fn scope_glob(scope: AccountScope) -> String {
+        foramt!("{}:*", &scope)
+      }
+      match self {
+        Account(account) => account.to_string(),
+        AccountGlob(s) => s.clone(),
+        Local(user) => scope_glob(AS::Unix { user: user.clone() }),
+        AllLocal => {
+          // abuse that usernames are not encoded
+          scope_glob(AS::Unix { user: "*".clone() })
+        },
+      }
+    }
   }
 
   type TDE = TokenDeliveryError;
