@@ -356,104 +356,64 @@ fn connect(ma: &MainOpts) -> Conn {
 
 fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
                spec: &TableSpec) -> Result<(),AE> {
-  // create missing players and delete old players
-  let (added_players,) = {
-    let (_, nick2id) = chan.get_info()?;
+  let (_, nick2id) = chan.get_info()?;
 
-    #[derive(Default)]
-    struct St { id: PlayerId, old: bool, new: bool };
+  #[derive(Default)]
+  struct St { id: PlayerId, old: bool, new: bool };
 
-    let mut nick2st : HashMap<_,_> = {nick2id}
-      .drain()
-      .map(|(nick,id)| (nick, St { id, old: true, new: false }))
-      .collect();
+  let mut nick2st : HashMap<_,_> = {nick2id}
+  .drain()
+    .map(|(nick,id)| (nick, St { id, old: true, new: false }))
+    .collect();
 
-    let mut insns = vec![];
-    for pspec in &spec.players {
-      let nick = pspec.nick.unwrap_or_else(|| pspec.account.default_nick());
-      let st = nick2st.entry(nick.clone()).or_default();
-      if st.new {
-        Err(anyhow!("duplicate player nick {:?} in spec", &nick))?;
-      }
-      st.new = true;
-      let timezone = pspec.timezone.as_ref().or(
-        spec.timezone.as_ref()
-      ).cloned();
-      // ^ todo use client program timezone?
-      if !st.old {
-        insns.push(MgmtGameInstruction::AddPlayer {
-          account: pspec.account.clone(),
-          details: MgmtPlayerDetails {
-            nick: Some(nick),
-            timezone,
-          },
-        });
-      }
+  let mut insns = vec![];
+  for pspec in &spec.players {
+    let nick = pspec.nick.unwrap_or_else(|| pspec.account.default_nick());
+    let st = nick2st.entry(nick.clone()).or_default();
+    if st.new {
+      Err(anyhow!("duplicate player nick {:?} in spec", &nick))?;
     }
-
-    for (nick, st) in nick2st {
-      if st.new { continue }
-      if !st.old { continue }
-      if ma.verbose >= 1 {
-        eprintln!("removing old player {:?}", &nick);
-      }
-      insns.push(Insn::RemovePlayer { player: st.id });
-    }
-
-    let mut added_players = vec![];
-    chan.alter_game(insns, Some(&mut |response| {
-      match response {
-        &Resp::AddPlayer { player, nick, token, .. } => {
-          added_players.push((player, nick, token));
+    st.new = true;
+    let timezone = pspec.timezone.as_ref().or(
+      spec.timezone.as_ref()
+    ).cloned();
+    // ^ todo use client program timezone?
+    if !st.old {
+      insns.push(MgmtGameInstruction::AddPlayer {
+        account: pspec.account.clone(),
+        details: MgmtPlayerDetails {
+          nick: Some(nick),
+          timezone,
         },
-        _ => { },
-      };
-      Ok(())
-    }))?;
+      });
+    }
+  }
 
-    (added_players,)
-  };
+  for (nick, st) in nick2st {
+    if st.new { continue }
+    if !st.old { continue }
+    if ma.verbose >= 1 {
+      eprintln!("removing old player {:?}", &nick);
+    }
+    insns.push(Insn::RemovePlayer { player: st.id });
+  }
+
+  let mut added_players = vec![];
+  chan.alter_game(insns, Some(&mut |response| {
+    match response {
+      &Resp::AddPlayer { info, player, token } => {
+        added_players.push((info.clone(), token.clone()));
+      },
+      _ => { },
+    };
+    Ok(())
+  }))?;
 
   // report any new access tokens
-  {
-    let (_, nick2id) = chan.get_info()?;
-    let mut insns = vec![];
-    let mut resetreport = vec![];
-    let mut resetspecs = vec![];
-    for pspec in &spec.players {
-      let player = *nick2id.get(&pspec.nick)
-        .ok_or_else(||anyhow!("player {:?} vanished or renamed!",
-                              &pspec.nick))?;
-      if let Some(access) = &pspec.access {
-        match access.token_mgi(player) {
-          Some(insn) => insns.push(insn),
-          None if added_players.contains(&player) => {
-            resetreport.push(player);
-            resetspecs.push((pspec, access));
-          },
-          None => (),
-        }
-      };
-    }
-    insns.push(MgmtGameInstruction::ResetPlayerAccesses {
-      players: resetreport.clone(),
-    });
-    let mut got_tokens = None;
-    chan.alter_game(insns, Some(&mut |response| {
-      if let MgmtGameResponse::PlayerAccessTokens(tokens) = response {
-        got_tokens = Some(tokens.clone());
-      }
-      Ok(())
-    }))?;
-    let got_tokens = match got_tokens {
-      Some(t) if t.len() == resetreport.len() => t,
-      wat => Err(anyhow!("Did not get expected ReportPlayerAccesses! {:?}",
-                         &wat))?,
-    };
-    for ((pspec, access), ptokens)
-      in resetspecs.iter().zip(got_tokens.iter()) {
-      access.deliver_tokens(&pspec, &ptokens)
-          .with_context(||format!("deliver tokens for nick={:?}",
+  for (info, token) in added_players {
+    
+  access.deliver_tokens(&pspec, &ptokens)
+        .with_context(||format!("deliver tokens for nick={:?}",
                                   &pspec.nick))?;
     }
   }

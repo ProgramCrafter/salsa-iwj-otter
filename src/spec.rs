@@ -66,10 +66,12 @@ pub struct TableSpec {
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-pub struct TablePlayerSpec {
-  pub account: AccountName,
-  pub nick: Option<String>,
-  pub timezone: Option<String>,
+#[serde(rename_all="snake_case")]
+pub enum TablePlayerSpec {
+  Account(String),
+  AccountGlob(String),
+  Local(String),
+  AllLocal,
 }
 
 type RawAcl<Perm> = Vec<AclEntry<Perm>>;
