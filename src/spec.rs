@@ -74,7 +74,7 @@ pub enum TablePlayerSpec {
   AllLocal,
 }
 
-type RawAcl<Perm> = Vec<AclEntry<Perm>>;
+pub type RawAcl<Perm> = Vec<AclEntry<Perm>>;
 
 #[derive(Debug,Clone)]
 #[derive(Deserialize)]
@@ -270,7 +270,7 @@ pub mod implementation {
   }
 
   impl TablePlayerSpec {
-    fn account_glob(&self) -> String {
+    pub fn account_glob(&self) -> String {
       fn scope_glob(scope: AccountScope) -> String {
         let mut out = "".to_string();
         scope.display_name(&["*"], |s| Ok::<_,Impossible>(out += s)).unwrap();

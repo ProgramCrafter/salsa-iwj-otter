@@ -502,6 +502,18 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
        Fine, ig_g)
     },
 
+    ClearLog => {
+      let ag = AccountsGuard::lock();
+      let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Super])?;
+      ig.gs.log.clear();
+      (U{ pcs: vec![ ],
+          log: vec![ LogEntry {
+            html: Html(format!("{} cleared the log", &who)),
+          } ],
+          raw: None },
+       Fine, ig)
+    },
+
     SetACL { acl } => {
       let ag = AccountsGuard::lock();
       let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Super])?;

@@ -12,10 +12,11 @@ use std::cell::RefCell;
 use std::cell::Cell;
 
 type E = anyhow::Error;
-type Insn = MgmtGameInstruction;
-type Resp = MgmtGameResponse;
+type Insn = MgmtGameInstruction; // xxx MGI
+type Resp = MgmtGameResponse; // xxx MGR
 type AS = AccountScope;
 type APE = ArgumentParseError;
+type TP = TablePermission;
 
 use argparse::action::ParseResult::Parsed;
 
@@ -354,38 +355,39 @@ fn connect(ma: &MainOpts) -> Conn {
   chan
 }
 
-const PLAYER_ALWAYS_PERMS : &[Perm] = [
+const PLAYER_ALWAYS_PERMS : &[TablePermission] = &[
   TP::TestExistence,
   TP::ViewPublic,
   TP::AddPlayer,
 ];
 
-const PLAYER_DEFAULT_PERMS : &[Perm] = [
-      TP::ChangePiecse
+const PLAYER_DEFAULT_PERMS : &[TablePermission] = &[
+  TP::ChangePieces,
 ];
 
 fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
                spec: &TableSpec, purge_old_players: bool) -> Result<(),AE> {
-  let TableSpec { players, player_perms, timezone } = spec;
+  let TableSpec { players, player_perms, acl } = spec;
   let mut player_perms = player_perms.clone()
-    .unwrap_or(PLAYER_DEFAULT_PERMS.iter().collect());
+    .unwrap_or(PLAYER_DEFAULT_PERMS.iter().cloned().collect());
   player_perms.extend(PLAYER_ALWAYS_PERMS.iter());
 
-  let mut acl =
+  let mut acl : RawAcl<_> =
     players.iter().map(|tps| AclEntry {
-      account_glob: tps.account_glob();
+      account_glob: tps.account_glob(),
       allow: player_perms.clone(),
-      deny: default()
+      deny: default(),
     })
     .chain(
-      spec.acl.iter()
+      spec.acl.ents.iter().cloned()
     )
     .collect();
 
+  let acl = acl.try_into()?;
+
   let mut insns = vec![];
-  insns.push(MGI::ClearLog);
-  insns.push(MGI::SetACL { acl });
-  isnns.push(MGI::SetTimezone { tz: timezone.clone() });
+  insns.push(Insn::ClearLog);
+  insns.push(Insn::SetACL { acl });
 
 /*
 
