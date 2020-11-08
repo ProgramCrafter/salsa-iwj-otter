@@ -63,9 +63,18 @@ const EXIT_DISASTER : i32 = 16;
 #[derive(Debug)]
 struct MainOpts {
   account: AccountName,
-  scope: AccountScope,
+  gaccount: AccountName,
   socket_path: String,
   verbose: i32,
+}
+
+impl MainOpts {
+  pub fn instance_name(&self, table_name: &str) -> InstanceName {
+    InstanceName {
+      account: self.gaccount.clone(),
+      game: table_name.into(),
+    }
+  }
 }
 
 struct Subcommand (
@@ -132,7 +141,7 @@ fn main() {
   #[derive(Default,Debug)]
   struct RawMainArgs {
     account: Option<AccountName>,
-    scope: Option<AccountScope>,
+    gaccount: Option<AccountName>,
     socket_path: Option<String>,
     verbose: i32,
     config_filename: Option<String>,
@@ -155,10 +164,10 @@ fn main() {
     account.metavar("ACCOUNT").add_option(&["--account"],
                      StoreOption,
                      "use account ACCOUNT (default: unix:<current user>:)");
-    let mut scope = ap.refer(&mut rma.scope);
-    scope.metavar("SCOPE").add_option(&["--scope"],
+    let mut gaccount = ap.refer(&mut rma.gaccount);
+    gaccount.metavar("GAME-ACCOUNT").add_option(&["--game-name-account"],
                      StoreOption,
-                     "use scope SCOPE (default: scope of ACCOUNT)");
+                     "manipulate game in GAME-ACCOUNT rather than ACCOUNT");
     ap.refer(&mut rma.socket_path)
       .add_option(&["--socket"], StoreOption,
                   "specify server socket path");
@@ -172,7 +181,7 @@ fn main() {
        "increase verbosity (default is short progress messages)");
     ap
   }, &|RawMainArgs {
-      account, scope, socket_path, verbose, config_filename,
+      account, gaccount, socket_path, verbose, config_filename,
       subcommand, subargs,
   }|{
     let account : AccountName = account.map(Ok::<_,APE>).unwrap_or_else(||{
@@ -184,7 +193,7 @@ fn main() {
         subaccount: "".into(),
       })
     })?;
-    let scope = scope.unwrap_or_else(|| account.scope.clone());
+    let gaccount = gaccount.unwrap_or_else(|| account.clone());
     let mut config_store : Option<Result<Arc<ServerConfig>,APE>> = None;
     let config = ||{
       Ok::<_,APE>(&config_store.unwrap_or_else(||{
@@ -198,7 +207,7 @@ fn main() {
     })?;
     Ok((subcommand, subargs, MainOpts {
       account,
-      scope,
+      gaccount,
       socket_path,
       verbose,
     }))
@@ -260,7 +269,7 @@ impl Conn {
 
 struct ConnForGame {
   pub conn: Conn,
-  pub name: InstanceName,
+  pub game: InstanceName,
   pub how: MgmtGameUpdateMode,
 }
 impl Deref for ConnForGame {
@@ -278,7 +287,7 @@ impl ConnForGame {
                 -> Vec<MgmtGameResponse> {
     let insns_len = insns.len();
     let cmd = MgmtCommand::AlterGame {
-      game: self.name.clone(), how: self.how,
+      game: self.game.clone(), how: self.how,
       insns
     };
     let responses = match self.cmd(&cmd)? {
@@ -360,7 +369,7 @@ fn connect(ma: &MainOpts) -> Conn {
 const PLAYER_ALWAYS_PERMS : &[TablePermission] = &[
   TP::TestExistence,
   TP::ViewPublic,
-  TP::AddPlayer,
+  TP::Play,
 ];
 
 const PLAYER_DEFAULT_PERMS : &[TablePermission] = &[
@@ -477,14 +486,14 @@ mod create_table {
 
   #[derive(Default,Debug)]
   struct Args {
-    name: String,
+    table_name: String,
     file: String,
   }
 
   fn subargs(sa: &mut Args) -> ArgumentParser {
     use argparse::*;
     let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.name).required()
+    ap.refer(&mut sa.table_name).required()
       .add_argument("TABLE-NAME",Store,"table name");
     ap.refer(&mut sa.file).required()
       .add_argument("TABLE-SPEC-TOML",Store,"table spec");
@@ -500,10 +509,7 @@ mod create_table {
 
     chan.cmd(&MgmtCommand::CreateGame {
       insns,
-      game: InstanceName {
-        game: args.name.clone(),
-        account: ma.account.clone(),
-      },
+      game: ma.instance_name(&args.table_name),
     })?;
 
     if ma.verbose >= 0 {
@@ -525,7 +531,7 @@ mod reset_game {
 
   #[derive(Default,Debug)]
   struct Args {
-    name: String,
+    table_name: String,
     game_file: String,
     table_file: Option<String>,
   }
@@ -536,7 +542,7 @@ mod reset_game {
     ap.refer(&mut sa.table_file)
       .add_option(&["--reset-table"],StoreOption,
                   "reset the players and access too");
-    ap.refer(&mut sa.name).required()
+    ap.refer(&mut sa.table_name).required()
       .add_argument("TABLE-NAME",Store,"table name");
     ap.refer(&mut sa.game_file).required()
       .add_argument("GAME-SPEC-TOML",Store,"game spec");
@@ -544,10 +550,10 @@ mod reset_game {
   }
 
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
-    let args = parse_args::<Args,_>(args, &subargs, None, None);
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ConnForGame {
       conn: connect(&ma)?,
-      name: args.name.clone(),
+      game: ma.instance_name(&args.table_name),
       how: MgmtGameUpdateMode::Bulk,
     };
     let game : GameSpec = read_spec(&args.game_file, "game spec")?;
@@ -555,7 +561,7 @@ mod reset_game {
     if let Some(table_file) = args.table_file {
       let table_spec = read_spec(&table_file, "table spec")?;
       chan.cmd(&MgmtCommand::CreateGame {
-        name: args.name.clone(),
+        game: chan.game.clone(),
         insns: vec![],
       }).map(|_|()).or_else(|e| {
         if let Some(&MgmtError::AlreadyExists) = e.downcast_ref() {
@@ -601,12 +607,12 @@ mod reset_game {
 
 #[derive(Debug)]
 struct TableLibGlobArgs {
-  name: String,
+  table_name: String,
   pat: shapelib::ItemSpec,
 }
 
 impl Default for TableLibGlobArgs { fn default() -> Self { Self {
-  name: default(),
+  table_name: default(),
   pat: shapelib::ItemSpec { lib: default(), item: default() },
 } } }
 
@@ -616,7 +622,7 @@ impl TableLibGlobArgs {
     ap: &'_ mut ArgumentParser<'ap>
   ) {
     use argparse::*;
-    ap.refer(&mut self.name).required()
+    ap.refer(&mut self.table_name).required()
       .add_argument("TABLE-NAME",Store,"table name");
     ap.refer(&mut self.pat.lib).required()
       .add_argument("LIB-NAME",Store,"library name");
@@ -638,10 +644,10 @@ mod library_list {
   }
 
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
-    let args = parse_args::<Args,_>(args, &subargs, None, None);
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ConnForGame {
       conn: connect(&ma)?,
-      name: args.name.clone(),
+      game: ma.instance_name(&args.table_name),
       how: MgmtGameUpdateMode::Bulk,
     };
 
@@ -695,10 +701,10 @@ mod library_add {
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     const MAGIC : &str = "mgmt-library-load-marker";
 
-    let args = parse_args::<Args,_>(args, &subargs, None, None);
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ConnForGame {
       conn: connect(&ma)?,
-      name: args.tlg.name.clone(),
+      game: ma.instance_name(&args.tlg.table_name),
       how: MgmtGameUpdateMode::Online,
     };
     let pieces = chan.get_pieces()?;
