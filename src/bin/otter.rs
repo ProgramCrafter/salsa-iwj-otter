@@ -751,7 +751,12 @@ mod library_add {
       Poor(insns,
            "surplus marker(s) removed")
     } else {
-      let good : ArrayVec<_> = markers.iter().map(|p| p.pos).collect();
+      let mut good : ArrayVec<_> = default();
+      for p in &markers {
+        good.push(p.visible.as_ref().ok_or_else(
+          || anyhow!("library marker(s) with hidden position!")
+        )?.pos);
+      }
       Good(good.into_inner().unwrap())
     };
     if ma.verbose > 2 { dbg!(&situation); }
@@ -808,8 +813,8 @@ mod library_add {
 
             if let Some((nclhs, clash_bot)) = pieces.iter()
               .filter_map(|p| {
-                let tl = p.pos + p.bbox[0];
-                let br = p.pos + p.bbox[1];
+                let tl = p.visible?.pos + p.visible?.bbox[0];
+                let br = p.visible?.pos + p.visible?.bbox[1];
                 if
                   tl.0[0] >= self.clhs ||
                   tl.0[1] >= ncbot     ||
