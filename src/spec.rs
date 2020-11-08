@@ -61,8 +61,8 @@ display_as_debug!{SpecError}
 #[derive(Debug,Serialize,Deserialize)]
 pub struct TableSpec {
   #[serde(default)] pub players: Vec<TablePlayerSpec>,
-  pub player_perms: Option<HashSet<Perm>>,
-  #[serde(default)] pub acl: Acl<AclEntry>,
+  pub player_perms: Option<HashSet<TablePermission>>,
+  #[serde(default)] pub acl: Acl<TablePermission>,
   pub timezone: Option<String>,
 }
 
@@ -245,6 +245,9 @@ pub mod implementation {
   use super::*;
   use crate::imports::*;
 
+  type AS = AccountScope;
+  type TPS = TablePlayerSpec;
+
   impl<P: Eq + Hash> Default for Acl<P> {
     fn default() -> Self { Acl { ents: default() } }
   }
@@ -270,15 +273,17 @@ pub mod implementation {
   impl TablePlayerSpec {
     fn account_glob(&self) -> String {
       fn scope_glob(scope: AccountScope) -> String {
-        foramt!("{}:*", &scope)
+        let mut out = "".to_string();
+        scope.display_name(&["*"], |s| Ok::<_,Impossible>(out += s)).unwrap();
+        out
       }
       match self {
-        Account(account) => account.to_string(),
-        AccountGlob(s) => s.clone(),
-        Local(user) => scope_glob(AS::Unix { user: user.clone() }),
-        AllLocal => {
+        TPS::Account(account) => account.to_string(),
+        TPS::AccountGlob(s) => s.clone(),
+        TPS::Local(user) => scope_glob(AS::Unix { user: user.clone() }),
+        TPS::AllLocal => {
           // abuse that usernames are not encoded
-          scope_glob(AS::Unix { user: "*".clone() })
+          scope_glob(AS::Unix { user: "*".into() })
         },
       }
     }

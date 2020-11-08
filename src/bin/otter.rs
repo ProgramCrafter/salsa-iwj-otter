@@ -386,7 +386,7 @@ fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
   insns.push(MGI::SetACL { acl });
   isnns.push(MGI::SetTimezone { tz: timezone.clone() });
 
-
+/*
 
   let (_, nick2id) = chan.get_info()?;
 
@@ -448,7 +448,7 @@ fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
                                   &pspec.nick))?;
     }
   }
-
+*/
   Ok(())
 }
 

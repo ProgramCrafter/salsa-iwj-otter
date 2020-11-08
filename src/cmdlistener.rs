@@ -501,6 +501,19 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
           raw: None },
        Fine, ig_g)
     },
+
+    SetACL { acl } => {
+      let ag = AccountsGuard::lock();
+      let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::ChangeACL])?;
+      ig.acl = acl.into();
+      (U{ pcs: vec![ ],
+          log: vec![ LogEntry {
+            html: Html(format!("{} set the table access control list",
+                               &who)),
+          } ],
+          raw: None },
+       Fine, ig)
+    },
   };
   Ok(y)
 }
