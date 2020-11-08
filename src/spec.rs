@@ -94,12 +94,11 @@ pub struct AclEntry<Perm: Eq + Hash> {
 pub enum TablePermission {
   TestExistence,
   ViewPublic,
-  AddPlayer,
+  Play,
   ChangePieces,
   ResetOthersAccess,
   RedeliverOthersAccess,
   ModifyOtherPlayer,
-  RemovePlayer,
   Super,
 }
 

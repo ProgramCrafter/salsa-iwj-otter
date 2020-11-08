@@ -300,7 +300,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
     } => {
       let account = &cs.current_account()?.notional_account;
       let (_arecord, acctid) = ag.lookup(account)?;
-      let (ig, auth) = cs.check_acl(ag, ig, PCH::Instance, &[TP::AddPlayer])?;
+      let (ig, auth) = cs.check_acl(ag, ig, PCH::Instance, &[TP::Play])?;
       let nick = nick.ok_or(ME::ParameterMissing)?;
       let logentry = LogEntry {
         html: Html(format!("{} ({}) joined the game",
@@ -351,23 +351,6 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
       }).flatten().collect();
       Ok(Resp::Pieces(pieces))
     })?,
-
-    RemovePlayer { player } => {
-      let ig = cs.check_acl_modify_player(ag, ig, player,
-                                          &[TP::RemovePlayer])?.0;
-      let (gpl, _ipl) = ig.player_remove(player)?;
-      let show = if let Some(gpl) = gpl {
-        htmlescape::encode_minimal(&gpl.nick)
-      } else {
-        "<i>partial data?!</i>".to_string()
-      };
-      (U{ pcs: vec![],
-          log: vec![ LogEntry {
-            html: Html(format!("{} removed a player: {}", &who, &show)),
-          }],
-          raw: None},
-       Fine, ig)
-    },
 
     UpdatePlayer {
       player,
@@ -518,11 +501,50 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
       let ag = AccountsGuard::lock();
       let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Super])?;
       ig.acl = acl.into();
+      let mut log = vec![ LogEntry {
+        html: Html(format!("{} set the table access control list",
+                           &who)),
+      } ];
+
+      let eacl = EffectiveACL {
+        owner_account: &ig.account,
+        acl: &ig.acl,
+      };
+
+      #[throws(InternalError)]
+      fn remove_old_players(ag: &AccountsGuard, ig: &mut InstanceGuard,
+                            who: &str, eacl: &EffectiveACL<'_, TP>,
+                            log: &mut Vec<LogEntry>) {
+        let mut remove = vec![];
+        for (player, ipr) in ig.players {
+          if_chain! {
+            let acctid = ipr.ipl.acctid;
+            if let Some(record,_) = ag.lookup(acctid);
+            if let Ok(_) = eacl.check(&*record.name, &[TP::Play]);
+            then {
+              /* ok */
+            }
+            else {
+              remove.push(player);
+            }
+          };
+        };
+        for (gpl, _ipl) in ig.players_remove(&remove)? {
+          let show = if let Some(gpl) = gpl {
+            htmlescape::encode_minimal(&gpl.nick)
+          } else {
+            "<i>partial data?!</i>".to_string()
+          };
+          log.push(LogEntry {
+            html: Html(format!("{} removed a player {}", &who, &show)),
+          });
+        }
+      }
+
+      remove_old_players(ag, ig, &who, &eacl, &mut log)?;
+
       (U{ pcs: vec![ ],
-          log: vec![ LogEntry {
-            html: Html(format!("{} set the table access control list",
-                               &who)),
-          } ],
+          log,
           raw: None },
        Fine, ig)
     },
@@ -878,7 +900,7 @@ impl CommandStream<'_> {
         };
         let owner_account = owner.to_string();
         let owner_account = Some(owner_account.as_str());
-        let eacl = EffectiveAcl { owner_account, acl };
+        let eacl = EffectiveACL { owner_account, acl };
         eacl.check(subject, p)?
       };
       auth

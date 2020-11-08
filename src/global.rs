@@ -499,18 +499,21 @@ impl<'ig> InstanceGuard<'ig> {
     self.tokens_deregister_for_id(|id| clients_to_remove.contains(&id));
   }
 
-  //  #[throws(ServerFailure)]
+  //  #[throws(InternalError)]
   //  https://github.com/withoutboats/fehler/issues/62
-  pub fn player_remove(&mut self, oldplayer: PlayerId)
-                       -> Result<(Option<GPlayerState>, Option<IPlayerState>),
-                                 InternalError> {
+  pub fn players_remove(&mut self, oldplayers: HashSet<PlayerId>)
+                        ->
+    Result<Vec<
+        (Option<GPlayerState>, Option<IPlayerState>)
+        >, InternalError>
+  {
     // We have to filter this player out of everything
     // Then save
     // Then send updates
     // We make a copy so if the save fails, we can put everything back
 
     let mut players = self.c.g.gs.players.clone();
-    let old_gpl = players.remove(oldplayer);
+    let old_gpl = players.remove(oldplayers);
 
     // New state
     let mut gs = GameState {
@@ -530,16 +533,23 @@ impl<'ig> InstanceGuard<'ig> {
     // after all the things it will reference
     let mut undo : Vec<Box<dyn FnOnce(&mut InstanceGuard)>> = vec![];
 
+    let held_by_old = |p: PieceState| if_chain! {
+      if let Some(held) = p.held;
+      if oldplayers.contains(held);
+      then { true }
+      else { false }
+    };
+
     // Arrange gs.pieces
     for (piece,p) in &mut self.c.g.gs.pieces {
-      if p.held == Some(oldplayer) {
+      if held_by_old(p) {
         p.held = None;
         updated_pieces.push(piece);
       }
     }
     undo.push(Box::new(|ig| for &piece in &updated_pieces {
       (||Some({
-        ig.c.g.gs.pieces.get_mut(piece)?.held = Some(oldplayer);
+        held_by_old(ig.c.g.gs.pieces.get_mut(piece)?);
       }))();
     }));
 
@@ -578,9 +588,9 @@ impl<'ig> InstanceGuard<'ig> {
       }
       buf.finish();
 
-      self.remove_clients(oldplayer, ErrorSignaledViaUpdate::PlayerRemoved);
-      self.tokens_deregister_for_id(|id:PlayerId| id==oldplayer);
-      let iplayer = self.iplayers.remove(oldplayer);
+      self.remove_clients(oldplayers, ErrorSignaledViaUpdate::PlayerRemoved);
+      self.tokens_deregister_for_id(|id:PlayerId| oldplayers.contains(id));
+      let iplayer = self.iplayers.remove(oldplayers);
       let ipl = iplayer.map(|iplayer| iplayer.ipl);
       self.save_access_now().unwrap_or_else(
         |e| warn!(

@@ -426,7 +426,7 @@ pub mod loaded_acl {
   pub struct PermSet<P: Perm> (u64, PhantomData<&'static P>);
 
   #[derive(Debug,Clone)]
-  pub struct EffectiveAcl<'i, P: Perm> {
+  pub struct EffectiveACL<'i, P: Perm> {
     pub owner_account: Option<&'i str>,
     pub acl: &'i LoadedAcl<P>,
   }
@@ -457,7 +457,7 @@ pub mod loaded_acl {
     ptype: PhantomData<&'static P>,
   }
 
-  impl<'e, P:Perm> EffectiveAcl<'e, P> {
+  impl<'e, P:Perm> EffectiveACL<'e, P> {
     fn entries(&self) -> impl Iterator<Item=AclEntryRef<'_, P>> {
       self.owner_account.iter().map(
         |owner|

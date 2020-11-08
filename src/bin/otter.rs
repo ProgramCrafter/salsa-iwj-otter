@@ -126,6 +126,8 @@ fn parse_args<T:Default,U>(
   completed
 }
 
+pub fn ok_id<T,E>(t: T) -> Result<T,E> { Ok(t) }
+
 fn main() {
   #[derive(Default,Debug)]
   struct RawMainArgs {
@@ -365,8 +367,8 @@ const PLAYER_DEFAULT_PERMS : &[TablePermission] = &[
   TP::ChangePieces,
 ];
 
-fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
-               spec: &TableSpec, purge_old_players: bool) -> Result<(),AE> {
+#[throws(AE)]
+fn setup_table(ma: &MainOpts, spec: &TableSpec) -> Vec<Insn> {
   let TableSpec { players, player_perms, acl } = spec;
   let mut player_perms = player_perms.clone()
     .unwrap_or(PLAYER_DEFAULT_PERMS.iter().cloned().collect());
@@ -388,6 +390,10 @@ fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
   let mut insns = vec![];
   insns.push(Insn::ClearLog);
   insns.push(Insn::SetACL { acl });
+  insns
+}
+
+
 
 /*
 
@@ -452,8 +458,6 @@ fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
     }
   }
 */
-  Ok(())
-}
 
 #[throws(AE)]
 fn read_spec<T: DeserializeOwned>(filename: &str, what: &str) -> T {
@@ -489,21 +493,18 @@ mod create_table {
 
   #[throws(E)]
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
-    let args = parse_args::<Args,_>(args, &subargs, None, None);
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let spec : TableSpec = read_spec(&args.file, "table spec")?;
     let mut chan = connect(&ma)?;
+    let insns = setup_table(&ma, &spec)?;
 
     chan.cmd(&MgmtCommand::CreateGame {
-      name: args.name.clone(), insns: vec![]
+      insns,
+      game: InstanceName {
+        game: args.name.clone(),
+        account: ma.account.clone(),
+      },
     })?;
-
-    let mut chan = ConnForGame {
-      conn: chan,
-      name: args.name.clone(),
-      how: MgmtGameUpdateMode::Bulk,
-    };
-
-    setup_table(&ma, &mut chan, &spec)?;
 
     if ma.verbose >= 0 {
       eprintln!("create-table successful.  game still needs setup.");
@@ -563,8 +564,8 @@ mod reset_game {
         Err(e)
       })?;
 
-      setup_table(&ma, &mut chan, &table_spec)?;
-    }
+      setup_table(&ma, &table_spec)?; 
+   }
 
     let mut insns = vec![];
 
