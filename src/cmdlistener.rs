@@ -506,29 +506,32 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
                            &who)),
       } ];
 
-      let eacl = EffectiveACL {
-        owner_account: &ig.account,
-        acl: &ig.acl,
-      };
-
       #[throws(InternalError)]
       fn remove_old_players(ag: &AccountsGuard, ig: &mut InstanceGuard,
-                            who: &str, eacl: &EffectiveACL<'_, TP>,
-                            log: &mut Vec<LogEntry>) {
-        let mut remove = vec![];
-        for (player, ipr) in ig.players {
+                            who: &Who, log: &mut Vec<LogEntry>) {
+        let owner_account = ig.name.account.to_string();
+        let eacl = EffectiveACL {
+          owner_account: Some(&owner_account),
+          acl: &ig.acl,
+        };
+
+        let mut remove = HashSet::new();
+        for (player, ipr) in &ig.iplayers {
           if_chain! {
             let acctid = ipr.ipl.acctid;
-            if let Some(record,_) = ag.lookup(acctid);
-            if let Ok(_) = eacl.check(&*record.name, &[TP::Play]);
+            if let Ok((record,_)) = ag.lookup(acctid);
+            let perm = &[TP::Play];
+            if let Ok(_) = eacl.check(&record.account.to_string(),
+                                      perm.into());
             then {
               /* ok */
             }
             else {
-              remove.push(player);
+              remove.insert(player);
             }
           };
         };
+
         for (gpl, _ipl) in ig.players_remove(&remove)? {
           let show = if let Some(gpl) = gpl {
             htmlescape::encode_minimal(&gpl.nick)
@@ -541,7 +544,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
         }
       }
 
-      remove_old_players(ag, ig, &who, &eacl, &mut log)?;
+      remove_old_players(&ag, ig, who, &mut log)?;
 
       (U{ pcs: vec![ ],
           log,

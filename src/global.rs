@@ -476,32 +476,34 @@ impl<'ig> InstanceGuard<'ig> {
   }
 
   pub fn remove_clients(&mut self,
-                        player: PlayerId,
+                        players: &HashSet<PlayerId>,
                         signal: ErrorSignaledViaUpdate) {
     let mut clients_to_remove = HashSet::new();
     self.clients.retain(|k,v| {
-      let remove = v.player == player;
+      let remove = players.contains(&v.player);
       if remove { clients_to_remove.insert(k); }
       !remove
     });
 
     let gen = self.c.g.gs.gen;
-    if let Some(iplayer) = self.iplayers.get_mut(player) {
-      iplayer.u.push(PreparedUpdate {
-        gen,
-        when: Instant::now(),
-        us : vec![ PreparedUpdateEntry::Error(
-          None,
-          signal,
-        )],
-      });
-    };
+    for &player in players {
+      if let Some(iplayer) = self.iplayers.get_mut(player) {
+        iplayer.u.push(PreparedUpdate {
+          gen,
+          when: Instant::now(),
+          us : vec![ PreparedUpdateEntry::Error(
+            None,
+            signal.clone(),
+          )],
+        });
+      };
+    }
     self.tokens_deregister_for_id(|id| clients_to_remove.contains(&id));
   }
 
   //  #[throws(InternalError)]
   //  https://github.com/withoutboats/fehler/issues/62
-  pub fn players_remove(&mut self, oldplayers: HashSet<PlayerId>)
+  pub fn players_remove(&mut self, oldplayers: &HashSet<PlayerId>)
                         ->
     Result<Vec<
         (Option<GPlayerState>, Option<IPlayerState>)
@@ -513,7 +515,9 @@ impl<'ig> InstanceGuard<'ig> {
     // We make a copy so if the save fails, we can put everything back
 
     let mut players = self.c.g.gs.players.clone();
-    let old_gpl = players.remove(oldplayers);
+    let old_gpls : Vec<_> = oldplayers.iter().cloned().map(|oldplayer| {
+      players.remove(oldplayer)
+    }).collect();
 
     // New state
     let mut gs = GameState {
@@ -527,18 +531,18 @@ impl<'ig> InstanceGuard<'ig> {
       pieces : Default::default(),
     };
 
+    let held_by_old = |p: &PieceState| if_chain! {
+      if let Some(held) = p.held;
+      if oldplayers.contains(&held);
+      then { true }
+      else { false }
+    };
+
     let mut updated_pieces = vec![];
     
     // drop order is reverse of creation order, so create undo
     // after all the things it will reference
     let mut undo : Vec<Box<dyn FnOnce(&mut InstanceGuard)>> = vec![];
-
-    let held_by_old = |p: PieceState| if_chain! {
-      if let Some(held) = p.held;
-      if oldplayers.contains(held);
-      then { true }
-      else { false }
-    };
 
     // Arrange gs.pieces
     for (piece,p) in &mut self.c.g.gs.pieces {
@@ -573,7 +577,7 @@ impl<'ig> InstanceGuard<'ig> {
     // point of no return
     mem::drop(undo);
 
-    let old_ipl = (||{
+    let old_ipls = (||{
       for &piece in &updated_pieces {
         (||Some({
           self.c.g.gs.pieces.get_mut(piece)?.gen = self.c.g.gs.gen;
@@ -589,18 +593,24 @@ impl<'ig> InstanceGuard<'ig> {
       buf.finish();
 
       self.remove_clients(oldplayers, ErrorSignaledViaUpdate::PlayerRemoved);
-      self.tokens_deregister_for_id(|id:PlayerId| oldplayers.contains(id));
-      let iplayer = self.iplayers.remove(oldplayers);
-      let ipl = iplayer.map(|iplayer| iplayer.ipl);
+      self.tokens_deregister_for_id(|id:PlayerId| oldplayers.contains(&id));
+      let old_ipls : Vec<_> = oldplayers.iter().cloned().map(
+        |oldplayer| self.iplayers.remove(oldplayer)
+          .map(|ipr| ipr.ipl)
+      ).collect();
       self.save_access_now().unwrap_or_else(
         |e| warn!(
           "trouble garbage collecting accesses for deleted player: {:?}",
           &e)
       );
-      ipl
+      old_ipls
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
 
-    Ok((old_gpl, old_ipl))
+    let old = itertools::zip(
+      old_gpls,
+      old_ipls,
+    ).collect();
+    Ok(old)
   }
 
   #[throws(InternalError)]
@@ -619,7 +629,8 @@ impl<'ig> InstanceGuard<'ig> {
     })?;
     // ppoint of no return
     (||{
-      self.remove_clients(player, ErrorSignaledViaUpdate::TokenRevoked);
+      self.remove_clients(&[player].iter().cloned().collect(),
+                          ErrorSignaledViaUpdate::TokenRevoked);
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
   }
 

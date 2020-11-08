@@ -338,7 +338,7 @@ impl AccountsGuard {
       else { throw!(AccountNotFound) }
     };
     process_all_players_for_account(acctid, |ig,player| {
-      ig.player_remove(player)?;
+      ig.players_remove(&[player].iter().cloned().collect())?;
       Ok::<_,ME>(())
     })?;
     accounts.names.remove(account);

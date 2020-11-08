@@ -80,10 +80,10 @@ pub enum MgmtGameInstruction {
 
   JoinGame { details: MgmtPlayerDetails },
   UpdatePlayer { player: PlayerId, details: MgmtPlayerDetails },
-  RemovePlayer { player: PlayerId },
 
   ClearLog,
   SetACL { acl: Acl<TablePermission> },
+  // RemovePlayer { player: PlayerId },  todo, does a special setacl
 }
 
 // xxx facilitator name?
