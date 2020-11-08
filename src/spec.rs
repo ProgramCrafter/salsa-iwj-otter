@@ -63,7 +63,6 @@ pub struct TableSpec {
   #[serde(default)] pub players: Vec<TablePlayerSpec>,
   pub player_perms: Option<HashSet<TablePermission>>,
   #[serde(default)] pub acl: Acl<TablePermission>,
-  pub timezone: Option<String>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -101,7 +100,7 @@ pub enum TablePermission {
   RedeliverOthersAccess,
   ModifyOtherPlayer,
   RemovePlayer,
-  ChangeACL,
+  Super,
 }
 
 //---------- player accesses, should perhaps be in commands.rs ----------

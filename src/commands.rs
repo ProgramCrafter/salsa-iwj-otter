@@ -82,8 +82,8 @@ pub enum MgmtGameInstruction {
   UpdatePlayer { player: PlayerId, details: MgmtPlayerDetails },
   RemovePlayer { player: PlayerId },
 
+  ClearLog,
   SetACL { acl: Acl<TablePermission> },
-  SetTimezone { tz: String },
 }
 
 // xxx facilitator name?

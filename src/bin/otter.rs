@@ -383,6 +383,7 @@ fn setup_table(ma: &MainOpts, chan: &mut ConnForGame,
     .collect();
 
   let mut insns = vec![];
+  insns.push(MGI::ClearLog);
   insns.push(MGI::SetACL { acl });
   isnns.push(MGI::SetTimezone { tz: timezone.clone() });
 

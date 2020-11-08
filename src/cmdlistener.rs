@@ -504,7 +504,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
 
     SetACL { acl } => {
       let ag = AccountsGuard::lock();
-      let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::ChangeACL])?;
+      let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Super])?;
       ig.acl = acl.into();
       (U{ pcs: vec![ ],
           log: vec![ LogEntry {
