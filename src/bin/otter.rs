@@ -359,7 +359,7 @@ fn connect(ma: &MainOpts) -> Conn {
     .with_context(||ma.socket_path.clone()).context("connect to server")?; 
   let chan = MgmtChannel::new(unix)?;
   let mut chan = Conn { chan };
-  chan.cmd(&MgmtCommand::SetAccount(ma.account.clone()))?;
+  chan.cmd(&MgmtCommand::SelectAccount(ma.account.clone()))?;
   chan
 }
 

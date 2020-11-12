@@ -64,8 +64,8 @@ pub struct AccountRecord {
 #[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
 #[derive(Serialize,Deserialize)]
 pub struct TokenRevelation {
-  pub latest: Timestamp,
   pub earliest: Timestamp,
+  pub latest: Timestamp,
 }
 
 //---------- errors ----------

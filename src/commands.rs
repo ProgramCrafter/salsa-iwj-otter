@@ -13,7 +13,7 @@ pub enum MgmtCommand {
   UpdateAccont(AccountDetails),
   DeleteAccount(AccountName),
 
-  SetAccount(AccountName), // success does not mean account exists
+  SelectAccount(AccountName), // success does not mean account exists
 
   CreateGame {
     game: InstanceName,

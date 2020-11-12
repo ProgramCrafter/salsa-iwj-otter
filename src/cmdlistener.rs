@@ -128,7 +128,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine
     }
 
-    SetAccount(wanted_account) => {
+    SelectAccount(wanted_account) => {
       let auth = authorise_scope_direct(cs, &wanted_account.scope)?;
       cs.account = Some(AccountSpecified {
         cooked: wanted_account.to_string(),
