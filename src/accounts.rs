@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-// xxx load, incl reveleation expiry
-// xxx periodic token reveleation expiry
-
 use crate::imports::*;
 
 use parking_lot::{Mutex, const_mutex, MutexGuard};
@@ -424,12 +421,6 @@ pub fn load_accounts() {
   for (account, acctid) in &accounts.names { chk(*acctid, account)?; }
   for (acctid, record) in &accounts.records { chk(acctid, &record.account)?; }
   *ag.0 = Some(accounts);
-}
-
-impl AccountRecord {
-  pub fn expire_tokens_revealed(&mut self) {
-    panic!("xxx")
-  }
 }
 
 //---------- acl handling ----------

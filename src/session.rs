@@ -143,7 +143,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       load : serde_json::to_string(&DataLoad {
         players : load_players,
       }).map_err(|e| InternalError::JSONEncode(e))?,
-      // xxx show account accesses
+      // xxx show token revelations accesses
     };
     trace!("SessionRenderContext {:?}", &src);
     (src, client)

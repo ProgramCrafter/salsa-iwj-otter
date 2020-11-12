@@ -489,6 +489,16 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
       let ag = AccountsGuard::lock();
       let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Super])?;
       ig.gs.log.clear();
+      for ipr in ig.iplayers.values_mut() {
+        // todo: do this only if there are no hidden pieces?
+        let tr = &mut ipr.ipl.tokens_revealed;
+        let latest = tr.values()
+          .map(|trv| trv.latest)
+          .max();
+        if let Some(latest) = latest {
+          tr.retain(|_k, v| v.latest >= latest);
+        }
+      }
       (U{ pcs: vec![ ],
           log: vec![ LogEntry {
             html: Html(format!("{} cleared the log", &who)),

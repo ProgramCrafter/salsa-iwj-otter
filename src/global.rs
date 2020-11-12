@@ -653,8 +653,6 @@ impl<'ig> InstanceGuard<'ig> {
         account: (*acct.account).clone(),
         desc,
       };
-      // xxx show tokens revealed when joining game
-      // xxx clear tokens revealed when logs is cleared
       self.iplayers.byid_mut(player)?.ipl.tokens_revealed.entry(revk)
         .or_insert(TokenRevelationValue {
           latest: now,
