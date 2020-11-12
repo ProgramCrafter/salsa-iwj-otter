@@ -224,6 +224,7 @@ impl AccessRecord {
 }
 
 impl From<Box<dyn PlayerAccessSpec>> for AccessRecord {
+  // xxx get rid of this From impl and do a server permission check
   fn from(spec: Box<dyn PlayerAccessSpec>) -> Self { Self(spec.into()) }
 }
 

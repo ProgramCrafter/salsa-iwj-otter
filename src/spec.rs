@@ -314,7 +314,6 @@ pub mod implementation {
   #[typetag::serde(tag="access")]
   pub trait PlayerAccessSpec : Debug + Sync + Send {
     fn override_token(&self) -> Option<&RawToken> {
-      // xxx check this on setting access
       None
     }
     fn server_deliver<'t>(&self,
