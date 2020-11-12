@@ -99,7 +99,6 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       let record = AccountRecord {
         account, nick, access,
         timezone: timezone.unwrap_or_default(),
-        tokens_revealed: default(),
       };
       ag.insert_entry(record, auth)?;
       Fine
@@ -315,6 +314,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
       let ipl = IPlayerState {
         acctid,
         tz,
+        tokens_revealed: default(),
       };
       let (player, logentry) = ig.player_new(gpl, ipl, logentry)?;
 

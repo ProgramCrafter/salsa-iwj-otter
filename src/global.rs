@@ -56,6 +56,7 @@ pub struct PlayerRecord {
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct IPlayerState {
   pub acctid: AccountId,
+  pub tokens_revealed: HashMap<TokenRevelationKey, TokenRevelationValue>,
   pub tz: Timezone,
 }
 
@@ -641,7 +642,7 @@ impl<'ig> InstanceGuard<'ig> {
                                    authorised: Authorisation<AccountName>,
                                    reset: bool)
                                    -> Option<AccessTokenReport> {
-    let acctid = self.c.g.iplayers.byid(player)?.ipl.acctid;
+    let acctid = self.iplayers.byid(player)?.ipl.acctid;
 
     let (access, acctid) = accounts.with_entry_mut(
       acctid, authorised, None,
@@ -650,16 +651,19 @@ impl<'ig> InstanceGuard<'ig> {
       let access = acct.access.clone();
       let desc = access.describe_html();
       let now = Timestamp::now();
-      acct.tokens_revealed.entry(desc)
-        .or_insert(TokenRevelation {
+      let revk = TokenRevelationKey {
+        account: (*acct.account).clone(),
+        desc,
+      };
+      self.iplayers.byid_mut(player)?.ipl.tokens_revealed.entry(revk)
+        .or_insert(TokenRevelationValue {
           latest: now,
           earliest: now,
         })
         .latest = now;
-      acct.expire_tokens_revealed();
       Ok::<_,MgmtError>((access, acctid))
     })?.map_err(|(e,_)|e)??;
-
+    
     if reset {
       self.save_access_now()?;
     }

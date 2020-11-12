@@ -57,13 +57,19 @@ pub struct AccountRecord {
   pub account: Arc<AccountName>,
   pub nick: String,
   pub timezone: String,
-  pub tokens_revealed: HashMap<Html, TokenRevelation>,
   pub access: AccessRecord,
 }
 
-#[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
+#[derive(Clone,Debug,Hash,Ord,PartialOrd,Eq,PartialEq)]
 #[derive(Serialize,Deserialize)]
-pub struct TokenRevelation {
+pub struct TokenRevelationKey {
+  pub account: AccountName,
+  pub desc: Html,
+}
+
+#[derive(Copy,Clone,Debug)]
+#[derive(Serialize,Deserialize)]
+pub struct TokenRevelationValue {
   pub earliest: Timestamp,
   pub latest: Timestamp,
 }
