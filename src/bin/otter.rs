@@ -88,9 +88,9 @@ inventory::collect!(Subcommand);
 struct ArgumentParseError(String);
 display_as_debug!(ArgumentParseError);
 
-impl From<anyhow::Error> for ArgumentParseError {
-  fn from(ae: anyhow::Error) -> ArgumentParseError {
-    eprintln!("error during argument parsing/startup: {:?}\n", &ae);
+impl From<&anyhow::Error> for ArgumentParseError {
+  fn from(ae: &anyhow::Error) -> ArgumentParseError {
+    eprintln!("error during argument parsing/startup: {:?}\n", ae);
     exit(EXIT_USAGE);
   }
 }
@@ -201,7 +201,7 @@ fn main() {
       Ok::<_,AE>(otter::global::config())
     });
     let socket_path = socket_path.map(Ok::<_,APE>).unwrap_or_else(||{
-      Ok((*config)?.command_socket.clone())
+      Ok(config.as_ref()?.command_socket.clone())
     })?;
     Ok((subcommand, subargs, MainOpts {
       account,
@@ -381,7 +381,7 @@ fn setup_table(_ma: &MainOpts, spec: &TableSpec) -> Vec<Insn> {
     .unwrap_or(PLAYER_DEFAULT_PERMS.iter().cloned().collect());
   player_perms.extend(PLAYER_ALWAYS_PERMS.iter());
 
-  let mut acl : RawAcl<_> =
+  let acl : RawAcl<_> =
     players.iter().map(|tps| AclEntry {
       account_glob: tps.account_glob(),
       allow: player_perms.clone(),
@@ -558,8 +558,9 @@ mod reset_game {
 
     if let Some(table_file) = args.table_file {
       let table_spec = read_spec(&table_file, "table spec")?;
+      let game = chan.game.clone();
       chan.cmd(&MgmtCommand::CreateGame {
-        game: chan.game.clone(),
+        game,
         insns: vec![],
       }).map(|_|()).or_else(|e| {
         if let Some(&MgmtError::AlreadyExists) = e.downcast_ref() {
@@ -811,8 +812,9 @@ mod library_add {
 
             if let Some((nclhs, clash_bot)) = pieces.iter()
               .filter_map(|p| {
-                let tl = p.visible?.pos + p.visible?.bbox[0];
-                let br = p.visible?.pos + p.visible?.bbox[1];
+                let pv = p.visible.as_ref()?;
+                let tl = pv.pos + pv.bbox[0];
+                let br = pv.pos + pv.bbox[1];
                 if
                   tl.0[0] >= self.clhs ||
                   tl.0[1] >= ncbot     ||
