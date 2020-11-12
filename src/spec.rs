@@ -53,6 +53,8 @@ pub enum SpecError {
   PosOffTable,
   LibraryNotFound,
   LibraryItemNotFound,
+  AclInvalidAccountGlob,
+  AclEntryOverlappingAllowDeny,
 }
 display_as_debug!{SpecError}
 
@@ -116,7 +118,6 @@ struct UrlOnStdout;
 //#[derive(Debug,Serialize,Deserialize)]
 //struct TokenByEmail { email: String };
 // xxx ^ implement this
-// xxx ^ 
 
 //---------- Game TOML file ----------
 
@@ -244,6 +245,7 @@ pub mod implementation {
   use crate::imports::*;
 
   type AS = AccountScope;
+  type SE = SpecError;
   type TPS = TablePlayerSpec;
 
   impl<P: Eq + Hash> Default for Acl<P> {
@@ -255,9 +257,17 @@ pub mod implementation {
     { self.ents.serialize(s) }
   }
 
-  impl<P: Eq + Hash> From<RawAcl<P>> for Acl<P> {
-    fn from(ents: RawAcl<P>) -> Self {
-      // xxx check
+  impl<P: Eq + Hash> TryFrom<RawAcl<P>> for Acl<P> {
+    type Error = SpecError;
+    #[throws(SpecError)]
+    fn try_from(ents: RawAcl<P>) -> Self {
+      for ent in &ents {
+        glob::Pattern::new(&ent.account_glob)
+          .map_err(|_| SE::AclInvalidAccountGlob)?;
+        if ! ent.deny.is_disjoint(&ent.allow) {
+          throw!(SE::AclEntryOverlappingAllowDeny);
+        }
+      }
       Acl { ents }
     }
   }
