@@ -663,17 +663,17 @@ impl<'ig> InstanceGuard<'ig> {
     };
     
     if reset {
+      self.invalidate_tokens(player)?;
       self.save_access_now()?;
     }
 
     let token : RawToken = if reset {
-      
+
       let token = access
         .override_token()
         .cloned()
         .unwrap_or_else(||{
           RawToken::new_random()
-          // xxx disconnect everyone else
         });
         
       let iad = InstanceAccessDetails {
