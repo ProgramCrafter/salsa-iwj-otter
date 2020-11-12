@@ -639,15 +639,13 @@ impl<'ig> InstanceGuard<'ig> {
   fn player_access_reset_redeliver(&mut self,
                                    accounts: &mut AccountsGuard,
                                    player: PlayerId,
-                                   authorised: Authorisation<AccountName>,
+                                   _auth: Authorisation<AccountName>,
                                    reset: bool)
                                    -> Option<AccessTokenReport> {
     let acctid = self.iplayers.byid(player)?.ipl.acctid;
 
-    let (access, acctid) = accounts.with_entry_mut(
-      acctid, authorised, None,
-      |acct, acctid|
-    {
+    let access = {
+      let (acct, _) = accounts.lookup(acctid)?;
       let access = acct.access.clone();
       let desc = access.describe_html();
       let now = Timestamp::now();
@@ -655,14 +653,16 @@ impl<'ig> InstanceGuard<'ig> {
         account: (*acct.account).clone(),
         desc,
       };
+      // xxx show tokens revealed when joining game
+      // xxx clear tokens revealed when logs is cleared
       self.iplayers.byid_mut(player)?.ipl.tokens_revealed.entry(revk)
         .or_insert(TokenRevelationValue {
           latest: now,
           earliest: now,
         })
         .latest = now;
-      Ok::<_,MgmtError>((access, acctid))
-    })?.map_err(|(e,_)|e)??;
+      access
+    };
     
     if reset {
       self.save_access_now()?;
