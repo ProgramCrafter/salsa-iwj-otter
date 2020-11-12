@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
+// xxx load, incl reveleation expiry
+// xxx periodic token reveleation expiry
+
 use crate::imports::*;
 
 use parking_lot::{Mutex, const_mutex, MutexGuard};
 
+//---------- simple types ----------
+
 slotmap::new_key_type!{
-//  #[derive(Serialize,Deserialize,Debug)] xxx
   pub struct AccountId;
 }
 
@@ -22,11 +26,6 @@ type AS = AccountScope;
 type ME = MgmtError;
 type IE = InternalError;
 
-#[derive(Error,Debug,Clone,Copy,Serialize,Deserialize)]
-#[derive(Hash,Ord,Eq,PartialOrd,PartialEq)]
-#[error("Account not found")]
-pub struct AccountNotFound;
-
 #[derive(Debug,Clone)]
 #[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
 #[derive(DeserializeFromStr,SerializeDisplay)]
@@ -34,6 +33,77 @@ pub struct AccountName {
   pub scope: AccountScope,
   pub subaccount: String,
 }
+
+/// Record of acess for a player.  Newtype prevents mutable access
+/// without invalidating old tokens.
+#[derive(Serialize,Deserialize,Debug)]
+#[serde(transparent)]
+pub struct AccessRecord (Arc<dyn PlayerAccessSpec>);
+
+#[derive(Debug)]
+pub struct AccountsGuard (MutexGuard<'static, Option<Accounts>>);
+
+//---------- data structure
+
+#[derive(Debug,Default)]
+#[derive(Serialize,Deserialize)]
+pub struct Accounts {
+  names: HashMap<Arc<AccountName>, AccountId>,
+  records: DenseSlotMap<AccountId, AccountRecord>,
+}
+
+#[derive(Serialize,Deserialize,Debug)]
+pub struct AccountRecord {
+  pub account: Arc<AccountName>,
+  pub nick: String,
+  pub timezone: String,
+  pub tokens_revealed: HashMap<Html, TokenRevelation>,
+  pub access: AccessRecord,
+}
+
+#[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
+#[derive(Serialize,Deserialize)]
+pub struct TokenRevelation {
+  pub latest: Timestamp,
+  pub earliest: Timestamp,
+}
+
+//---------- errors ----------
+
+#[derive(Error,Debug,Clone,Copy,Serialize,Deserialize)]
+#[derive(Hash,Ord,Eq,PartialOrd,PartialEq)]
+#[error("Account not found")]
+pub struct AccountNotFound;
+
+#[derive(Error,Debug)]
+pub enum InvalidScopedName {
+  #[error("Unknown scope kind (expected unix or server)")]
+  UnknownScopeKind,
+  #[error("Missing scope component (scope scheme, or scope element)")]
+  MissingScopeComponent,
+  #[error("Too few components for scope")]
+  TooFewComponents,
+  #[error("Too many components for scope")]
+  TooManyComponents,
+  #[error("bad (percent-encoded) UTF-8")]
+  BadUTF8,
+}
+
+#[derive(Error,Debug)]
+pub enum AccountsSaveError {
+  #[error("Error writing/installing file: {0}")]
+  IO(#[from] io::Error),
+  #[error("Error encoding msgpack: {0}")]
+  Encode(#[from] rmp_serde::encode::Error)
+}
+
+//---------- consts/statics ----------
+
+static ACCOUNTS : Mutex<Option<Accounts>> = const_mutex(None);
+
+const ACCOUNTS_FILE : &str = "accounts";
+
+//---------- AccountScope and AccountName (ncl. string format) ----------
 
 impl AccountScope {
   /// Return value is parseable and filesystem- and html-safe
@@ -127,20 +197,6 @@ impl Display for AccountName {
   }
 }
 
-#[derive(Error,Debug)]
-pub enum InvalidScopedName {
-  #[error("Unknown scope kind (expected unix or server)")]
-  UnknownScopeKind,
-  #[error("Missing scope component (scope scheme, or scope element)")]
-  MissingScopeComponent,
-  #[error("Too few components for scope")]
-  TooFewComponents,
-  #[error("Too many components for scope")]
-  TooManyComponents,
-  #[error("bad (percent-encoded) UTF-8")]
-  BadUTF8,
-}
-
 impl FromStr for AccountName {
   type Err = InvalidScopedName;
 
@@ -153,37 +209,7 @@ impl FromStr for AccountName {
   }
 }
 
-#[derive(Serialize,Deserialize,Debug)]
-pub struct AccountRecord {
-  pub account: Arc<AccountName>,
-  pub nick: String,
-  pub timezone: String,
-  pub tokens_revealed: HashMap<Html, TokenRevelation>,
-  pub access: AccessRecord,
-}
-
-#[derive(Serialize,Deserialize,Debug)]
-#[serde(transparent)]
-pub struct AccessRecord (Arc<dyn PlayerAccessSpec>);
-
-#[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
-#[derive(Serialize,Deserialize)]
-pub struct TokenRevelation {
-  pub latest: Timestamp,
-  pub earliest: Timestamp,
-}
-
-#[derive(Debug,Default)]
-#[derive(Serialize,Deserialize)]
-pub struct Accounts {
-  names: HashMap<Arc<AccountName>, AccountId>,
-  records: DenseSlotMap<AccountId, AccountRecord>,
-}
-
-static ACCOUNTS : Mutex<Option<Accounts>> = const_mutex(None);
-
-#[derive(Debug)]
-pub struct AccountsGuard (MutexGuard<'static, Option<Accounts>>);
+//---------- AccessRecord ----------
 
 impl Deref for AccessRecord {
   type Target = Arc<dyn PlayerAccessSpec>;
@@ -198,8 +224,7 @@ impl From<Box<dyn PlayerAccessSpec>> for AccessRecord {
   fn from(spec: Box<dyn PlayerAccessSpec>) -> Self { Self(spec.into()) }
 }
 
-// xxx load, incl reveleation expiry
-// xxx periodic token reveleation expiry
+//---------- AccountsGuard and lookup ----------
 
 pub trait AccountNameOrId : Copy {
   fn initial_lookup(self, accounts: &Accounts) -> Option<AccountId>;
@@ -364,15 +389,7 @@ impl AccountsGuard {
   }
 }
 
-#[derive(Error,Debug)]
-pub enum AccountsSaveError {
-  #[error("Error writing/installing file: {0}")]
-  IO(#[from] io::Error),
-  #[error("Error encoding msgpack: {0}")]
-  Encode(#[from] rmp_serde::encode::Error)
-}
-
-const ACCOUNTS_FILE : &str = "accounts";
+//---------- load/save ----------
 
 fn save_path() -> String {
   format!("{}/{}", config().save_directory, &ACCOUNTS_FILE)
