@@ -128,7 +128,7 @@ fn parse_args<T:Default,U>(
   mem::drop(ap);
   let completed  =
     completer(parsed).unwrap_or_else(|e:ArgumentParseError| {
-      let ap = apmaker(&mut Default::default());
+      let ap = apmaker(&mut default());
       ap.error(&us, &e.0, &mut stderr);
       exit(EXIT_USAGE);
     });
@@ -194,16 +194,13 @@ fn main() {
       })
     })?;
     let gaccount = gaccount.unwrap_or_else(|| account.clone());
-    let mut config_store : Option<Result<Arc<ServerConfig>,APE>> = None;
-    let config = ||{
-      Ok::<_,APE>(&config_store.unwrap_or_else(||{
-        ServerConfig::read(config_filename.as_ref().map(String::as_str))
-          .context("read config file")?;
-        Ok(otter::global::config())
-      })?)
-    };
+    let config = Thunk::new(||{
+      ServerConfig::read(config_filename.as_ref().map(String::as_str))
+        .context("read config file")?;
+      Ok(otter::global::config())
+    });
     let socket_path = socket_path.map(Ok::<_,APE>).unwrap_or_else(||{
-      Ok(config()?.command_socket.clone())
+      Ok(config?.command_socket.clone())
     })?;
     Ok((subcommand, subargs, MainOpts {
       account,
@@ -377,7 +374,7 @@ const PLAYER_DEFAULT_PERMS : &[TablePermission] = &[
 ];
 
 #[throws(AE)]
-fn setup_table(ma: &MainOpts, spec: &TableSpec) -> Vec<Insn> {
+fn setup_table(_ma: &MainOpts, spec: &TableSpec) -> Vec<Insn> {
   let TableSpec { players, player_perms, acl } = spec;
   let mut player_perms = player_perms.clone()
     .unwrap_or(PLAYER_DEFAULT_PERMS.iter().cloned().collect());
@@ -390,7 +387,7 @@ fn setup_table(ma: &MainOpts, spec: &TableSpec) -> Vec<Insn> {
       deny: default(),
     })
     .chain(
-      spec.acl.ents.iter().cloned()
+      acl.ents.iter().cloned()
     )
     .collect();
 

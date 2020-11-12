@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
+use std::fmt::{self, Debug};
 use std::fs;
 use std::io;
+use std::ops::Deref;
 use std::os::unix::io::IntoRawFd;
 
 use fehler::{throw, throws};
@@ -52,3 +54,42 @@ impl LocalFileExt for fs::File {
     }
   }
 }
+
+// todo #[derive(Clone)]
+pub struct Thunk<U: Sync, F: Sync + FnOnce() -> U> (
+  lazy_init::LazyTransform<F, U>
+);
+
+impl<T: Sync, F: Sync + FnOnce() -> T> Debug for Thunk<T, F> where T: Debug{
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    match self.0.get() {
+      Some(inner) => write!(f, "Thunk({:?})", inner),
+      None        => write!(f, "Thunk(...)"),
+    }
+  }
+}
+
+impl<T: Sync, F: Sync + FnOnce() -> T> Thunk<T, F> {
+  pub fn new(f: F) -> Self {
+    Thunk(
+      lazy_init::LazyTransform::new(f)
+    )
+  }
+  pub fn force_eval(thunk: &Self) {
+    thunk.0.get_or_create(|f| f());
+  }
+  pub fn into_inner(thunk: Self) -> T {
+    Thunk::force_eval(&thunk);
+    thunk.0.into_inner().unwrap_or_else(|_|panic!())
+  }
+}
+
+impl<T: Sync, F: Sync + FnOnce() -> T> Deref for Thunk<T, F> {
+  type Target = T;
+  fn deref(&self) -> &T {
+    Thunk::force_eval(self);
+    self.0.get().unwrap()
+  }
+}
+
+// todo: DerefMut

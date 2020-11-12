@@ -855,6 +855,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a91d884b6667cd606bb5a69aa0c99ba811a115fc68915e7056ec08a46e93199a"
 
 [[package]]
+name = "lazy-init"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "671025f3cc9b5d5188eca51493d8097e6cd1dc3828e0a59f7befbaaf56e930ab"
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1110,6 +1116,7 @@ dependencies = [
  "index_vec",
  "inventory",
  "itertools",
+ "lazy-init",
  "lazy_static",
  "libc",
  "log 0.4.11",
