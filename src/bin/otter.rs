@@ -13,7 +13,6 @@ use std::cell::Cell;
 
 type E = anyhow::Error;
 type Insn = MgmtGameInstruction; // xxx MGI
-type Resp = MgmtGameResponse; // xxx MGR
 type AS = AccountScope;
 type APE = ArgumentParseError;
 type TP = TablePermission;
@@ -303,7 +302,7 @@ impl ConnForGame {
     }
     responses
   }
-
+/*
   fn get_info(&mut self) -> Result<
       (MgmtGameResponseGameInfo, HashMap<String,PlayerId>
       ),AE>
@@ -327,7 +326,7 @@ impl ConnForGame {
     }
     Ok((info, nick2id))
   }
-
+*/
   #[throws(AE)]
   fn get_pieces(&mut self) -> Vec<MgmtGamePieceInfo> {
     let insns = vec![ MgmtGameInstruction::ListPieces ];
