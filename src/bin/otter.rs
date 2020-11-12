@@ -128,7 +128,8 @@ fn parse_args<T:Default,U>(
   mem::drop(ap);
   let completed  =
     completer(parsed).unwrap_or_else(|e:ArgumentParseError| {
-      let ap = apmaker(&mut default());
+      let mut def = default();
+      let ap = apmaker(&mut def);
       ap.error(&us, &e.0, &mut stderr);
       exit(EXIT_USAGE);
     });
@@ -197,10 +198,10 @@ fn main() {
     let config = Thunk::new(||{
       ServerConfig::read(config_filename.as_ref().map(String::as_str))
         .context("read config file")?;
-      Ok(otter::global::config())
+      Ok::<_,AE>(otter::global::config())
     });
     let socket_path = socket_path.map(Ok::<_,APE>).unwrap_or_else(||{
-      Ok(config?.command_socket.clone())
+      Ok((*config)?.command_socket.clone())
     })?;
     Ok((subcommand, subargs, MainOpts {
       account,

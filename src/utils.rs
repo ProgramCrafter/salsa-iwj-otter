@@ -92,4 +92,12 @@ impl<T: Sync, F: Sync + FnOnce() -> T> Deref for Thunk<T, F> {
   }
 }
 
+impl<Y: Sync, E: Sync, F: Sync + FnOnce() -> Result<Y,E>>
+  From<Thunk<Result<Y,E>, F>> for Result<Y,E>
+{
+  fn from(thunk: Thunk<Result<Y,E>, F>) -> Result<Y,E> {
+    Thunk::into_inner(thunk)
+  }
+}
+
 // todo: DerefMut
