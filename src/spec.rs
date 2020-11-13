@@ -119,7 +119,7 @@ struct UrlOnStdout;
 
 //#[derive(Debug,Serialize,Deserialize)]
 //struct TokenByEmail { email: String };
-// xxx ^ implement this
+// todo ^ implement this
 
 //---------- Game TOML file ----------
 
