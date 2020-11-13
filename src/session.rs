@@ -135,9 +135,12 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       {
         let tr = &pr.ipl.tokens_revealed;
         let y = tr.len() > 1;
-        let l = tr.iter()
+        let mut l = tr.iter()
           .filter(move |_| y)
           .collect::<Vec<_>>();
+        l.sort_unstable_by_key(
+          |(trk,trv)| (trv.latest, trv.earliest, &trk.account, &trk.desc)
+        );
         l.into_iter()
           .map(|(trk,trv)|{
             let when = trv.latest;
