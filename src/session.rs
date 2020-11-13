@@ -134,9 +134,10 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
         .cloned(),
       {
         let tr = &pr.ipl.tokens_revealed;
+        let y = tr.len() > 1;
         tr.iter()
+          .filter(move |_| y)
         //        .sort
-        // what if only one
           .map(|(trk,trv)|{
             let when = trv.latest;
             let html = Html(format!(
