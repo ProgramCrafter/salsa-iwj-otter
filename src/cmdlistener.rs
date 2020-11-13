@@ -109,7 +109,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     UpdateAccont(AccountDetails { account, nick, timezone, access }) => {
       let mut ag = AccountsGuard::lock();
       let auth = authorise_for_account(cs, &ag, &account)?;
-      let access = access.map(Into::into);
+      let access = cs.accountrecord_from_spec(access)?;
       ag.with_entry_mut(&account, auth, access, |record, _acctid|{
         fn update_from<T>(spec: Option<T>, record: &mut T) {
           if let Some(new) = spec { *record = new; }

@@ -75,7 +75,6 @@ pub enum MgmtGameInstruction {
   DeletePiece(PieceId),
 
   ResetPlayerAccess(PlayerId),
-  // xxx ^ prevent use of Fixed when not wanted
   RedeliverPlayerAccess(PlayerId),
 
   JoinGame { details: MgmtPlayerDetails },

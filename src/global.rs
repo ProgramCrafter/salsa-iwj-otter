@@ -729,7 +729,6 @@ impl<'ig> InstanceGuard<'ig> {
                              player: PlayerId,
                              auth: Authorisation<AccountName>)
                              -> Option<AccessTokenReport> {
-    // xxx call this function when access method changes
     self.player_access_reset_redeliver(accounts, player, auth, true)?
   }
 

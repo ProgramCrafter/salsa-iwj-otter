@@ -311,7 +311,7 @@ impl AccountsGuard {
       &mut self,
       key: K,
       auth: Authorisation<AccountName>,
-      set_access: Option<Arc<dyn PlayerAccessSpec>>,
+      set_access: Option<AccessRecord>,
       f: F
     )
     -> Result<T, (InternalError, T)>
@@ -323,7 +323,7 @@ impl AccountsGuard {
         acctid,
         |ig, player| ig.invalidate_tokens(player)
       )?;
-      entry.access = AccessRecord(new_access);
+      entry.access = new_access;
     }      
     let output = f(&mut *entry, acctid);
     let ok = self.save_accounts_now();
