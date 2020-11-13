@@ -135,9 +135,10 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       {
         let tr = &pr.ipl.tokens_revealed;
         let y = tr.len() > 1;
-        tr.iter()
+        let l = tr.iter()
           .filter(move |_| y)
-        //        .sort
+          .collect::<Vec<_>>();
+        l.into_iter()
           .map(|(trk,trv)|{
             let when = trv.latest;
             let html = Html(format!(
