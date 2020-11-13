@@ -32,7 +32,7 @@ pub struct AccountName {
 }
 
 /// Record of acess for a player.  Newtype prevents mutable access
-/// without invalidating old tokens.
+/// without invalidating old tokens and permissions check.
 #[derive(Serialize,Deserialize,Debug)]
 #[serde(transparent)]
 pub struct AccessRecord (Arc<dyn PlayerAccessSpec>);
@@ -221,11 +221,14 @@ impl Deref for AccessRecord {
 
 impl AccessRecord {
   pub fn new_unset() -> Self{ Self( Arc::new(PlayerAccessUnset) ) }
-}
 
-impl From<Box<dyn PlayerAccessSpec>> for AccessRecord {
-  // xxx get rid of this From impl and do a server permission check
-  fn from(spec: Box<dyn PlayerAccessSpec>) -> Self { Self(spec.into()) }
+  #[throws(MgmtError)]
+  pub fn from_spec(spec: Box<dyn PlayerAccessSpec>,
+                   superuser: Option<AuthorisationSuperuser>)
+                   -> AccessRecord {
+    spec.check_spec_permission(superuser)?;
+    AccessRecord(spec.into())
+  }
 }
 
 //---------- AccountsGuard and lookup ----------

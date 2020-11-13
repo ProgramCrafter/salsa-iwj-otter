@@ -18,6 +18,8 @@ use num_derive::{ToPrimitive, FromPrimitive};
 
 pub use implementation::PlayerAccessSpec;
 
+type ME = crate::commands::MgmtError;
+
 //---------- common types ----------
 
 pub type Coord = isize;
@@ -316,6 +318,9 @@ pub mod implementation {
     fn override_token(&self) -> Option<&RawToken> {
       None
     }
+    #[throws(MgmtError)]
+    fn check_spec_permission(&self, _: Option<AuthorisationSuperuser>) {
+    }
     fn server_deliver<'t>(&self,
                           _gpl: &GPlayerState,
                           _ipl: &IPlayerState,
@@ -341,6 +346,10 @@ pub mod implementation {
 
   #[typetag::serde]
   impl PlayerAccessSpec for FixedToken {
+    #[throws(MgmtError)]
+    fn check_spec_permission(&self, auth: Option<AuthorisationSuperuser>) {
+      auth.ok_or(ME::SuperuserAuthorisationRequired)?
+    }
     fn override_token(&self) -> Option<&RawToken> {
       Some(&self.token)
     }

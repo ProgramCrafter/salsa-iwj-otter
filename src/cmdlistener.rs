@@ -34,6 +34,8 @@ const CREATE_PIECES_MAX : u32 = 300;
 const DEFAULT_POS_START : Pos = PosC([20,20]);
 const DEFAULT_POS_DELTA : Pos = PosC([5,5]);
 
+pub type AuthorisationSuperuser = Authorisation<authproofs::Global>;
+
 pub struct CommandListener {
   listener : UnixListener,
 }
@@ -48,7 +50,7 @@ struct CommandStream<'d> {
   euid : Result<Uid, ConnectionEuidDiscoverEerror>,
   desc : &'d str,
   account : Option<AccountSpecified>,
-  superuser: Option<Authorisation<authproofs::Global>>,
+  superuser: Option<AuthorisationSuperuser>,
   chan : MgmtChannel,
   who: Who,
 }
@@ -92,7 +94,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     CreateAccont(AccountDetails { account, nick, timezone, access }) => {
       let mut ag = AccountsGuard::lock();
       let auth = authorise_for_account(cs, &ag, &account)?;
-      let access = access.map(Into::into)
+      let access = cs.accountrecord_from_spec(access)?
         .unwrap_or_else(|| AccessRecord::new_unset());
       let nick = nick.unwrap_or_else(|| account.to_string());
       let account = account.to_owned().into();
@@ -922,6 +924,15 @@ impl CommandStream<'_> {
     let auth = get_auth(self, ag, ig, how, p.into())?;
     (ig.by_mut(auth), auth)
   }
+
+  #[throws(MgmtError)]
+  fn accountrecord_from_spec(&self, spec: Option<Box<dyn PlayerAccessSpec>>)
+                             -> Option<AccessRecord> {
+    spec
+      .map(|spec| AccessRecord::from_spec(spec, self.superuser))
+      .transpose()?
+  }
+
 }
 
 #[throws(MgmtError)]

@@ -152,6 +152,7 @@ pub enum MgmtGameUpdateMode {
 pub enum MgmtError {
   ParseFailed(String),
   AuthorisationError,
+  SuperuserAuthorisationRequired,
   ParameterMissing,
   SpecifyAccount,
   AlreadyExists,
