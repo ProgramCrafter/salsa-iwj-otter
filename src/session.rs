@@ -128,13 +128,16 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       uses.push(for_piece);
     }
 
+    let log = ig.gs.log.iter().map(|(_, logent)|{
+      let when = logent.when.render(tz);
+      SessionFormattedLogEntry { when, logent: logent.clone() }
+    }).collect();
+    // xxx show token revelations accesse
+
     let src = SessionRenderContext {
       ctoken,
       gen : ig.gs.gen,
-      log : ig.gs.log.iter().map(|(_, logent)|{
-        let when = logent.when.render(tz);
-        SessionFormattedLogEntry { when, logent: logent.clone() }
-      }).collect(),
+      log,
       table_size : ig.gs.table_size,
       player,
       defs : alldefs,
@@ -143,7 +146,6 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       load : serde_json::to_string(&DataLoad {
         players : load_players,
       }).map_err(|e| InternalError::JSONEncode(e))?,
-      // xxx show token revelations accesses
     };
     trace!("SessionRenderContext {:?}", &src);
     (src, client)
