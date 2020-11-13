@@ -132,17 +132,20 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       ig.gs.log.iter()
         .map(|(_, logent)| logent)
         .cloned(),
-      pr.ipl.tokens_revealed.iter()
-      //        .sort
+      {
+        let tr = &pr.ipl.tokens_revealed;
+        tr.iter()
+        //        .sort
         // what if only one
-        .map(|(trk,trv)|{
-          let when = trv.latest;
-          let html = Html(format!(
-            "player state accessed via {} [{}]",
-            &trk.desc.0, &trk.account
-          ));
-          Arc::new(CommittedLogEntry { when, logent: LogEntry { html } })
-        }),
+          .map(|(trk,trv)|{
+            let when = trv.latest;
+            let html = Html(format!(
+              "player state accessed via {} [{}]",
+              &trk.desc.0, &trk.account
+            ));
+            Arc::new(CommittedLogEntry { when, logent: LogEntry { html } })
+          })
+      },
     ).map(|logent|{
       let when = logent.when.render(tz);
       SessionFormattedLogEntry { when, logent }
