@@ -231,7 +231,8 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
   cs: &'cs CommandStream,
   ag: &'_ mut AccountsGuard,
   ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
-  update: MgmtGameInstruction)
+  update: MgmtGameInstruction,
+  who: &impl Display)
   -> Result<ExecuteGameInsnResults<'igr, 'ig> ,ME>
 {
   type U = ExecuteGameChangeUpdates;
@@ -239,7 +240,6 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
   use MgmtGameResponse::*;
   type Insn = MgmtGameInstruction;
   type Resp = MgmtGameResponse;
-  let who = &cs.who; // todo show player nick when it's a player
 
   fn tz_from_str(s: &str) -> Timezone {
     match Timezone::from_str(s) {
@@ -523,7 +523,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
 
       #[throws(InternalError)]
       fn remove_old_players(ag: &AccountsGuard, ig: &mut InstanceGuard,
-                            who: &Who, log: &mut Vec<LogEntry>) {
+                            who: &impl Display, log: &mut Vec<LogEntry>) {
         let owner_account = ig.name.account.to_string();
         let eacl = EffectiveACL {
           owner_account: Some(&owner_account),
@@ -583,9 +583,10 @@ fn execute_for_game<'cs, 'igr, 'ig : 'igr>(
   let mut uh = UpdateHandler::from_how(how);
   let mut responses = Vec::with_capacity(insns.len());
   let mut auth = None;
+  let who = Who;
   let res = (||{
     for insn in insns.drain(0..) {
-      let (updates, resp, ig) = execute_game_insn(cs, ag, igu, insn)?;
+      let (updates, resp, ig) = execute_game_insn(cs, ag, igu, insn, &who)?;
       uh.accumulate(ig, updates)?;
       responses.push(resp);
       auth = Some(Authorisation::authorised(&*ig.name));
