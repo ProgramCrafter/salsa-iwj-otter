@@ -334,7 +334,6 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
     },
 
     Insn::ListPieces => readonly(cs,ag,ig, &[TP::ViewPublic], |ig|{
-      // xxx put something in log
       let pieces = ig.gs.pieces.iter().map(|(piece,p)|{
         let &PieceState { pos, face, .. } = p;
         let pinfo = ig.ipieces.get(piece)?;
