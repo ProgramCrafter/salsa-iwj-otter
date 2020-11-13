@@ -128,10 +128,13 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       uses.push(for_piece);
     }
 
-    let log = ig.gs.log.iter().map(|(_, logent)|{
-      let when = logent.when.render(tz);
-      SessionFormattedLogEntry { when, logent: logent.clone() }
-    }).collect();
+    let log = itertools::chain(
+      ig.gs.log.iter().map(|(_, logent)|{
+        let when = logent.when.render(tz);
+        SessionFormattedLogEntry { when, logent: logent.clone() }
+      }),
+      iter::empty(),
+    ).collect();
     // xxx show token revelations accesse
 
     let src = SessionRenderContext {
