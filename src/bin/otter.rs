@@ -12,7 +12,7 @@ use std::cell::RefCell;
 use std::cell::Cell;
 
 type E = anyhow::Error;
-type Insn = MgmtGameInstruction; // xxx MGI
+type MGI = MgmtGameInstruction;
 type AS = AccountScope;
 type APE = ArgumentParseError;
 type TP = TablePermission;
@@ -374,7 +374,7 @@ const PLAYER_DEFAULT_PERMS : &[TablePermission] = &[
 ];
 
 #[throws(AE)]
-fn setup_table(_ma: &MainOpts, spec: &TableSpec) -> Vec<Insn> {
+fn setup_table(_ma: &MainOpts, spec: &TableSpec) -> Vec<MGI> {
   let TableSpec { players, player_perms, acl } = spec;
   let mut player_perms = player_perms.clone()
     .unwrap_or(PLAYER_DEFAULT_PERMS.iter().cloned().collect());
@@ -394,8 +394,8 @@ fn setup_table(_ma: &MainOpts, spec: &TableSpec) -> Vec<Insn> {
   let acl = acl.try_into()?;
 
   let mut insns = vec![];
-  insns.push(Insn::ClearLog);
-  insns.push(Insn::SetACL { acl });
+  insns.push(MGI::ClearLog);
+  insns.push(MGI::SetACL { acl });
   insns
 }
 
@@ -441,7 +441,7 @@ fn setup_table(_ma: &MainOpts, spec: &TableSpec) -> Vec<Insn> {
     if ma.verbose >= 1 {
       eprintln!("removing old player {:?}", &nick);
     }
-    insns.push(Insn::RemovePlayer { player: st.id });
+    insns.push(MGI::RemovePlayer { player: st.id });
   }
 
   let mut added_players = vec![];
@@ -578,12 +578,12 @@ mod reset_game {
     }
 
     if let Some(size) = game.table_size {
-      insns.push(Insn::SetTableSize(size));
+      insns.push(MGI::SetTableSize(size));
     }
 
     let mut game = game;
     for pspec in game.pieces.drain(..) {
-      insns.push(Insn::AddPieces(pspec));
+      insns.push(MGI::AddPieces(pspec));
     }
 
     chan.alter_game(insns, None)?;
@@ -720,7 +720,7 @@ mod library_add {
 
     #[derive(Debug)]
     enum Situation {
-      Poor(Vec<Insn>, &'static str),
+      Poor(Vec<MGI>, &'static str),
       Good([Pos; 2]),
     };
     use Situation::*;
@@ -740,11 +740,11 @@ mod library_add {
         pinned: Some(false),
         info: Box::new(spec),
       };
-      Poor(vec![ Insn::AddPieces(spec) ],
+      Poor(vec![ MGI::AddPieces(spec) ],
            "marker(s) created")
     } else if markers.len() > WANTED {
       let insns = markers[WANTED..].iter()
-        .map(|p| Insn::DeletePiece(p.piece))
+        .map(|p| MGI::DeletePiece(p.piece))
         .collect();
       Poor(insns,
            "surplus marker(s) removed")
@@ -890,7 +890,7 @@ mod library_add {
         posd: None, count: Some(1), face: None, pinned: Some(false),
         info: Box::new(spec),
       };
-      let insn = Insn::AddPieces(spec);
+      let insn = MGI::AddPieces(spec);
       insns.push(insn);
     }
 
