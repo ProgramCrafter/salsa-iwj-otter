@@ -7,6 +7,8 @@
 
 # USER=rustcargo target/debug/otter --config ~ian/Rustup/Game/server/server.toml --scope-server reset --reset-table ~ian/Rustup/Game/server/demo/test.table.toml dummy  ~ian/Rustup/Game/server/demo/test.game.toml
 
+public_url = "http://localhost:8000"
+
 save_directory = "/home/rustcargo/Rustup/Game/server"
 template_dir = "/home/ian/Rustup/Game/server/templates"
 bundled_sources = "/home/rustcargo/Rustup/Game/server/target/bundled-sources"

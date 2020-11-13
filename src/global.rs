@@ -719,9 +719,10 @@ impl<'ig> InstanceGuard<'ig> {
     let ipl = &self.c.g.iplayers.byid(player)?.ipl;
     let gpl = self.c.g.gs.players.byid(player)?;
 
-    let report = AccessTokenReport {
-      url: format!("http://localhost:8000/{}", token.0), // xxx
-    };
+    let url = format!("{}/{}",
+                      &config().public_url.trim_start_matches("/"),
+                      token.0);
+    let report = AccessTokenReport { url };
     let report = access
       .server_deliver(&gpl, &ipl, &report)?;
     report.cloned()
