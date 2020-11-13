@@ -108,9 +108,10 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
     UpdateAccont(AccountDetails { account, nick, timezone, access }) => {
       let mut ag = AccountsGuard::lock();
+      let mut games = games_lock();
       let auth = authorise_for_account(cs, &ag, &account)?;
       let access = cs.accountrecord_from_spec(access)?;
-      ag.with_entry_mut(&account, auth, access, |record, _acctid|{
+      ag.with_entry_mut(&mut games, &account, auth, access, |record, _acctid|{
         fn update_from<T>(spec: Option<T>, record: &mut T) {
           if let Some(new) = spec { *record = new; }
         }
@@ -124,8 +125,9 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
     DeleteAccount(account) => {
       let mut ag = AccountsGuard::lock();
+      let mut games = games_lock();
       let auth = authorise_for_account(cs, &ag, &account)?;
-      ag.remove_entry(&account, auth)?;
+      ag.remove_entry(&mut games, &account, auth)?;
       Fine
     }
 
@@ -141,6 +143,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
     CreateGame { game, insns } => {
       let mut ag = AccountsGuard::lock();
+      let mut games = games_lock();
       let auth = authorise_by_account(cs, &ag, &game)?;
 
       let gs = crate::gamestate::GameState {
@@ -153,7 +156,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       };
 
       let acl = default();
-      let gref = Instance::new(game, gs, acl, auth)?;
+      let gref = Instance::new(game, gs, &mut games, acl, auth)?;
       let ig = gref.lock()?;
       let mut ig = Unauthorised::of(ig);
 
@@ -164,7 +167,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
           let ig = ig.by(Authorisation::authorise_any());
           let name = ig.name.clone();
           let InstanceGuard { c, .. } = ig;
-          Instance::destroy_game(c, auth)
+          Instance::destroy_game(&mut games, c, auth)
             .unwrap_or_else(|e| warn!(
               "failed to tidy up failecd creation of {:?}: {:?}",
               &name, &e
@@ -199,10 +202,11 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
     DestroyGame { game } => {
       let mut ag = AccountsGuard::lock();
+      let mut games = games_lock();
       let auth = authorise_by_account(cs, &mut ag, &game)?;
       let gref = Instance::lookup_by_name(&game, auth)?;
       let ig = gref.lock_even_poisoned();
-      Instance::destroy_game(ig, auth)?;
+      Instance::destroy_game(&mut games, ig, auth)?;
       Fine
     }
 

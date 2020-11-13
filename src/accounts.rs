@@ -309,6 +309,7 @@ impl AccountsGuard {
      F: FnOnce(&mut AccountRecord, AccountId) -> T
      >(
       &mut self,
+      games: &mut GamesGuard,
       key: K,
       auth: Authorisation<AccountName>,
       set_access: Option<AccessRecord>,
@@ -320,6 +321,7 @@ impl AccountsGuard {
 
     if let Some(new_access) = set_access {
       process_all_players_for_account(
+        games,
         acctid,
         |ig, player| ig.invalidate_tokens(player)
       )?;
@@ -360,6 +362,7 @@ impl AccountsGuard {
 
   #[throws(MgmtError)]
   pub fn remove_entry(&mut self,
+                      games: &mut GamesGuard,
                       account: &AccountName,
                       _auth: Authorisation<AccountName>)
   {
@@ -369,7 +372,7 @@ impl AccountsGuard {
       then { (accounts, acctid) }
       else { throw!(AccountNotFound) }
     };
-    process_all_players_for_account(acctid, |ig,player| {
+    process_all_players_for_account(games, acctid, |ig,player| {
       ig.players_remove(&[player].iter().cloned().collect())?;
       Ok::<_,ME>(())
     })?;

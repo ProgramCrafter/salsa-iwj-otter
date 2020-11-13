@@ -102,6 +102,9 @@ fn resource<'r>(leaf : CheckedResourceLeaf) -> impl Responder<'r> {
 
 #[throws(StartupError)]
 fn main() {
+  // xxx test suite for cli at least
+  // todo test suite for web api
+
   let config_filename = env::args().nth(1);
   ServerConfig::read(config_filename.as_ref().map(String::as_str))?;
 
@@ -119,7 +122,7 @@ fn main() {
   shapelib::load()?;
 
   load_accounts()?;
-  load_games(&mut AccountsGuard::lock())?;
+  load_games(&mut AccountsGuard::lock(), &mut games_lock())?;
 
   let cl = CommandListener::new()?;
   cl.spawn()?;

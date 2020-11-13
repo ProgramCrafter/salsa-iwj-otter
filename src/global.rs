@@ -188,7 +188,7 @@ pub struct Global {
   // slow global locks:
   save_area_lock : Mutex<Option<File>>,
   // <- accounts::accounts ->
-  games   : RwLock<HashMap<Arc<InstanceName>,InstanceRef>>,
+  games_table: RwLock<GamesTable>,
 
   // per-game lock:
   // <- InstanceContainer ->
@@ -202,6 +202,9 @@ pub struct Global {
   players : RwLock<TokenTable<PlayerId>>,
   clients : RwLock<TokenTable<ClientId>>,
 }
+
+pub type GamesGuard = RwLockWriteGuard<'static, GamesTable>;
+pub type GamesTable = HashMap<Arc<InstanceName>,InstanceRef>;
 
 #[derive(Debug)]
 pub struct InstanceContainer {
@@ -285,6 +288,7 @@ impl Instance {
   #[allow(clippy::new_ret_no_self)]
   #[throws(MgmtError)]
   pub fn new(name: InstanceName, gs: GameState,
+             games: &mut GamesGuard,
              acl: LoadedAcl<TablePermission>, _: Authorisation<InstanceName>)
              -> InstanceRef {
     let name = Arc::new(name);
@@ -309,9 +313,6 @@ impl Instance {
     let gref = InstanceRef(Arc::new(Mutex::new(cont)));
     let mut ig = gref.lock()?;
 
-    // We hold the GLOBAL.games lock while we save the new game.
-    // That lock is not on the hot path.
-    let mut games = GLOBAL.games.write().unwrap();
     let entry = games.entry(name);
 
     use hash_map::Entry::*;
@@ -335,7 +336,7 @@ impl Instance {
       -> Unauthorised<InstanceRef, InstanceName>
   {
     Unauthorised::of(
-      GLOBAL.games.read().unwrap()
+      GLOBAL.games_table.read().unwrap()
         .get(name)
         .ok_or(MgmtError::GameNotFound)?
         .clone()
@@ -350,18 +351,17 @@ impl Instance {
   }
 
   #[throws(InternalError)]
-  pub fn destroy_game(mut g: MutexGuard<InstanceContainer>,
+  pub fn destroy_game(games: &mut GamesGuard,
+                      mut g: MutexGuard<InstanceContainer>,
                       _: Authorisation<InstanceName>) {
     let a_savefile = savefilename(&g.g.name, "a-", "");
 
-    let mut gw = GLOBAL.games.write().unwrap();
-    // xxx lock order wrong, this function should unlock and then relock
     let g_file = savefilename(&g.g.name, "g-", "");
     fs::remove_file(&g_file).context("remove").context(g_file)?;
 
     (||{ // Infallible:
       g.live = false;
-      gw.remove(&g.g.name);
+      games.remove(&g.g.name);
       InstanceGuard::forget_all_tokens(&mut g.g.tokens_clients);
       InstanceGuard::forget_all_tokens(&mut g.g.tokens_players);
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
@@ -380,7 +380,7 @@ impl Instance {
   pub fn list_names(account: Option<&AccountName>,
                     _: Authorisation<AccountName>)
                     -> Vec<Arc<InstanceName>> {
-    let games = GLOBAL.games.read().unwrap();
+    let games = GLOBAL.games_table.read().unwrap();
     let out : Vec<Arc<InstanceName>> =
       games.keys()
       .filter(|k| account == None || account == Some(&k.account))
@@ -388,6 +388,10 @@ impl Instance {
       .collect();
     out
   }
+}
+
+pub fn games_lock() -> RwLockWriteGuard<'static, GamesTable> {
+  GLOBAL.games_table.write().unwrap()
 }
 
 // ---------- Simple trait implementations ----------
@@ -898,6 +902,7 @@ impl InstanceGuard<'_> {
 
   #[throws(StartupError)]
   fn load_game(accounts: &AccountsGuard,
+               games: &mut GamesGuard,
                name: InstanceName) -> Option<InstanceRef> {
     {
       let mut st = GLOBAL.save_area_lock.lock().unwrap();
@@ -1007,14 +1012,15 @@ impl InstanceGuard<'_> {
     } }
     drop(global);
     drop(g);
-    GLOBAL.games.write().unwrap().insert(name.clone(), gref.clone());
+    games.insert(name.clone(), gref.clone());
     info!("loadewd {:?}", &name);
     Some(gref)
   }
 }
 
 #[throws(anyhow::Error)]
-pub fn load_games(accounts: &mut AccountsGuard) {
+pub fn load_games(accounts: &mut AccountsGuard,
+                  games: &mut GamesGuard) {
   enum AFState { Found(PathBuf), Used };
   use AFState::*;
   use SavefilenameParseResult::*;
@@ -1037,7 +1043,7 @@ pub fn load_games(accounts: &mut AccountsGuard) {
           );
         },
         GameFile { access_leaf, name } => {
-          InstanceGuard::load_game(accounts, name)?;
+          InstanceGuard::load_game(accounts, games, name)?;
           a_leaves.insert(access_leaf, Used);
         },
       }
@@ -1142,9 +1148,8 @@ pub fn process_all_players_for_account<
     E: Error,
     F: FnMut(&mut InstanceGuard<'_>, PlayerId) -> Result<(),E>
     >
-  (acctid: AccountId, mut f: F)
+  (games: &mut GamesGuard, acctid: AccountId, mut f: F)
 {
-  let games = GLOBAL.games.write().unwrap();
   for gref in games.values() {
     let c = gref.lock_even_poisoned();
     let remove : Vec<_> = c.g.iplayers.iter().filter_map(|(player,pr)| {
@@ -1281,7 +1286,7 @@ fn client_expire_old_clients() {
     fn old(&mut self, client: ClientId) -> Option<Self::Ret>;
   }
 
-  for gref in GLOBAL.games.read().unwrap().values() {
+  for gref in GLOBAL.games_table.read().unwrap().values() {
     struct Any;
     impl ClientIterator for Any {
       type Ret = ();
@@ -1328,7 +1333,7 @@ fn global_expire_old_logs() {
 
   let mut want_expire = vec![];
 
-  let read = GLOBAL.games.read().unwrap();
+  let read = GLOBAL.games_table.read().unwrap();
   for gref in read.values() {
     if gref.lock_even_poisoned().g.gs.want_expire_some_logs(cutoff) {
       want_expire.push(gref.clone())
