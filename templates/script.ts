@@ -541,6 +541,7 @@ keyops_local['pin'  ] = function (uo) { pin_unpin(uo, true ); }
 keyops_local['unpin'] = function (uo) { pin_unpin(uo, false); }
 
 function pin_unpin(uo: UoRecord, newpin: boolean) {
+  // xxx pinning should send to back
   for (let piece of uo.targets!) {
     let p = pieces[piece]!;
     p.pinned = newpin;

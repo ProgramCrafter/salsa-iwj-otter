@@ -217,7 +217,6 @@ struct ApiPieceWrest {
 #[throws(OE)]
 fn api_wrest(form : Json<ApiPiece<ApiPieceWrest>>)
             -> impl response::Responder<'static> {
-  // xxx pinning should send to back
   api_piece_op(form)
 }
 impl ApiPieceOp for ApiPieceWrest {
