@@ -128,6 +128,7 @@ pub use crate::spec::*;
 pub use crate::debugreader::DebugReader;
 pub use crate::shapelib;
 pub use crate::tz::*;
+pub use crate::config::*;
 pub use crate::accounts::*;
 pub use crate::accounts::loaded_acl::{self,LoadedAcl,EffectiveACL,PermSet};
 

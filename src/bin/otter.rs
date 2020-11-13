@@ -197,7 +197,7 @@ fn main() {
     let config = Thunk::new(||{
       ServerConfig::read(config_filename.as_ref().map(String::as_str))
         .context("read config file")?;
-      Ok::<_,AE>(otter::global::config())
+      Ok::<_,AE>(otter::config::config())
     });
     let socket_path = socket_path.map(Ok::<_,APE>).unwrap_or_else(||{
       Ok(config.as_ref()?.command_socket.clone())
