@@ -129,13 +129,24 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
     }
 
     let log = itertools::chain(
-      ig.gs.log.iter().map(|(_, logent)|{
-        let when = logent.when.render(tz);
-        SessionFormattedLogEntry { when, logent: logent.clone() }
-      }),
-      iter::empty(),
-    ).collect();
-    // xxx show token revelations accesse
+      ig.gs.log.iter()
+        .map(|(_, logent)| logent)
+        .cloned(),
+      pr.ipl.tokens_revealed.iter()
+      //        .sort
+        // what if only one
+        .map(|(trk,trv)|{
+          let when = trv.latest;
+          let html = Html(format!(
+            "player state accessed via {} [{}]",
+            &trk.desc.0, &trk.account
+          ));
+          Arc::new(CommittedLogEntry { when, logent: LogEntry { html } })
+        }),
+    ).map(|logent|{
+      let when = logent.when.render(tz);
+      SessionFormattedLogEntry { when, logent }
+    }).collect();
 
     let src = SessionRenderContext {
       ctoken,
