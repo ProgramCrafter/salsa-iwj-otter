@@ -85,8 +85,6 @@ pub enum MgmtGameInstruction {
   // RemovePlayer { player: PlayerId },  todo, does a special setacl
 }
 
-// xxx facilitator name?
-
 #[derive(Debug,Serialize,Deserialize)]
 pub struct MgmtPlayerDetails {
   pub timezone: Option<String>,

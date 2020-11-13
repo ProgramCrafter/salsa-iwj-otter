@@ -40,19 +40,12 @@ pub struct CommandListener {
   listener : UnixListener,
 }
 
-struct Who;
-impl Display for Who {
-  #[throws(fmt::Error)]
-  fn fmt(&self, f: &mut Formatter) { write!(f, "The facilitator")? }
-}
-
 struct CommandStream<'d> {
   euid : Result<Uid, ConnectionEuidDiscoverEerror>,
   desc : &'d str,
   account : Option<AccountSpecified>,
   superuser: Option<AuthorisationSuperuser>,
   chan : MgmtChannel,
-  who: Who,
 }
 
 #[derive(Debug,Clone)]
@@ -232,7 +225,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
   ag: &'_ mut AccountsGuard,
   ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
   update: MgmtGameInstruction,
-  who: &impl Display)
+  who: &Html)
   -> Result<ExecuteGameInsnResults<'igr, 'ig> ,ME>
 {
   type U = ExecuteGameChangeUpdates;
@@ -369,7 +362,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
         let gpl = ig.gs.players.byid_mut(player)?; 
         log.push(LogEntry {
           html: Html(format!("{} changed {}'s nick to {}",
-                             &who,
+                             &who.0,
                              htmlescape::encode_minimal(&gpl.nick),
                              htmlescape::encode_minimal(&new_nick))),
         });
@@ -484,7 +477,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
 
       (U{ pcs: updates,
           log: vec![ LogEntry {
-            html: Html(format!("{} added {} pieces", &who, count)),
+            html: Html(format!("{} added {} pieces", &who.0, count)),
           }],
           raw: None },
        Fine, ig_g)
@@ -506,7 +499,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
       }
       (U{ pcs: vec![ ],
           log: vec![ LogEntry {
-            html: Html(format!("{} cleared the log", &who)),
+            html: Html(format!("{} cleared the log", &who.0)),
           } ],
           raw: None },
        Fine, ig)
@@ -518,12 +511,12 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
       ig.acl = acl.into();
       let mut log = vec![ LogEntry {
         html: Html(format!("{} set the table access control list",
-                           &who)),
+                           &who.0)),
       } ];
 
       #[throws(InternalError)]
       fn remove_old_players(ag: &AccountsGuard, ig: &mut InstanceGuard,
-                            who: &impl Display, log: &mut Vec<LogEntry>) {
+                            who: &Html, log: &mut Vec<LogEntry>) {
         let owner_account = ig.name.account.to_string();
         let eacl = EffectiveACL {
           owner_account: Some(&owner_account),
@@ -554,7 +547,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
             "<i>partial data?!</i>".to_string()
           };
           log.push(LogEntry {
-            html: Html(format!("{} removed a player {}", &who, &show)),
+            html: Html(format!("{} removed a player {}", &who.0, &show)),
           });
         }
       }
@@ -583,7 +576,20 @@ fn execute_for_game<'cs, 'igr, 'ig : 'igr>(
   let mut uh = UpdateHandler::from_how(how);
   let mut responses = Vec::with_capacity(insns.len());
   let mut auth = None;
-  let who = Who;
+  let who = if_chain! {
+    let account = &cs.current_account()?.notional_account;
+    let ig = igu.by_ref(Authorisation::authorise_any());
+    if let Ok((_, acctid)) = ag.lookup(account);
+    if let Some((player,_)) = ig.iplayers.iter()
+      .filter(|(_,ipr)| ipr.ipl.acctid == acctid)
+      .next();
+    if let Some(gpl) = ig.gs.players.get(player);
+    then { Html(format!("{} [{}]",
+                        &htmlescape::encode_minimal(&gpl.nick),
+                        &account)) }
+    else { Html(format!("[{}]",
+                        &account)) }
+  };
   let res = (||{
     for insn in insns.drain(0..) {
       let (updates, resp, ig) = execute_game_insn(cs, ag, igu, insn, &who)?;
@@ -591,7 +597,7 @@ fn execute_for_game<'cs, 'igr, 'ig : 'igr>(
       responses.push(resp);
       auth = Some(Authorisation::authorised(&*ig.name));
     }
-    if let Some(auth) = auth { uh.complete(cs, igu.by_mut(auth))?; }
+    if let Some(auth) = auth { uh.complete(igu.by_mut(auth), &who)?; }
     Ok(None)
   })();
   if let Some(auth) = auth {
@@ -664,7 +670,9 @@ impl UpdateHandler {
   }
 
   #[throws(SVGProcessingError)]
-  fn complete(self, cs: &CommandStream, g: &mut InstanceGuard) {
+  fn complete(self,
+              g: &mut InstanceGuard,
+              who: &Html) {
     use UpdateHandler::*;
     match self {
       Bulk(bulk) => {
@@ -676,7 +684,7 @@ impl UpdateHandler {
 
         if bulk.logs {
           buf.log_updates(vec![LogEntry {
-            html: Html(format!("{} (re)configured the game", &cs.who))
+            html: Html(format!("{} (re)configured the game", &who.0))
           }]);
         }
 
@@ -778,7 +786,6 @@ impl CommandListener {
           account: None, desc: &desc,
           chan, euid: euid.map(Uid::from_raw),
           superuser: None,
-          who: Who,
         };
         cs.mainloop()?;
         
