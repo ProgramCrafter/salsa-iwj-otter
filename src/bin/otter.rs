@@ -55,14 +55,18 @@ impl<'x, T, F: FnMut(&str) -> Result<T,String>>
   }
 }
 
-const EXIT_SPACE :    i32 =  2;
-const EXIT_USAGE :    i32 = 12;
-const EXIT_DISASTER : i32 = 16;
+const EXIT_SPACE     : i32 =  2;
+const EXIT_SITUATION : i32 =  8;
+const EXIT_USAGE     : i32 = 12;
+const EXIT_DISASTER  : i32 = 16;
 
 #[derive(Debug)]
 struct MainOpts {
   account: AccountName,
   gaccount: AccountName,
+  nick: Option<String>,
+  timezone: Option<String>,
+  access: Option<Box<dyn PlayerAccessSpec>>,
   socket_path: String,
   verbose: i32,
 }
@@ -597,6 +601,109 @@ mod reset_game {
   inventory::submit!{Subcommand(
     "reset",
     "Reset the state of the game table",
+    call,
+  )}
+}
+
+//---------- join-game ----------
+
+mod join_game {
+  use super::*;
+
+  #[derive(Default,Debug)]
+  struct Args {
+    table_name: String,
+  }
+
+  fn subargs(sa: &mut Args) -> ArgumentParser {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.table_name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
+    ap
+  }
+
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
+
+    let conn = connect(&ma)?;
+
+    #[derive(Debug)]
+    struct Wantup(bool);
+    impl Wantup {
+      fn u<T:Clone>(&mut self, rhs: &Option<T>) -> Option<T> {
+        if rhs.is_some() { self.0 = true }
+        rhs.clone()
+      }
+    }
+    let mut wantup = Wantup(false);
+    let ad = AccountDetails {
+      account:  ma.account.clone(),
+      nick:     ma.nick.clone(),
+      timezone: wantup.y[&ma.timezone],
+      access:   wantup.u[&ma.access],
+    };
+
+    fn is_no_account<T>(r: &Result<T, anyhow::Error>) -> bool {
+      match r {
+        Err(e) if let Some(&ME::AccountNotFound) = e.downcast_ref() => true,
+        _ => false,
+      }
+    }
+    fn fail_need_access() -> Impossible {
+      eprintln!("Need to make your account and set your access token delivery method.  Please pass the --access option.");
+      exit(EXIT_SITUATION);
+    }
+
+    if wantup.0 {
+      let resp = conn.cmd(&MC::UpdateAccount(ad.clone()));
+      let resp = if is_no_account(&resp) {
+        if ad.access.is_none() { fail_need_access(); }
+        conn.cmd(&ME::CreateAccount(ad.clone()O))
+      } else {
+        resp
+      };
+      match resp {
+        Ok(MR::Fine) => (),
+        Ok(x) => anyhow!("unexpected response to UpdateAccount: {:?}", &x)?,
+        Err(x) => throw!(x),
+      }
+    }
+
+    let mut chan = ConnForGame {
+      conn,
+      game: ma.instance_name(&args.table_name),
+      how: MgmtGameUpdateMode::Online,
+    };
+
+    let insns = vec![
+      MGI::JoinGame { nick: ma.nick.clone() },
+    ];
+    let resp = chan.alter_game(insns, |_| Ok(()));
+    if is_no_account(&resp) { fail_need_access(); }
+    match resp? {
+      [MGR::JoinGame { nick, player. token }] => {
+        println!("joined game as player #{} {:?}",
+                 player.get_idx_version().0,
+                 &nick);
+        for l in &token.lines {
+          if l.contains(char::is_control) {
+            println!("Server token info contains control chars! {:?}",
+                     &l);
+          } else {
+            println!(" {}", &l);
+          }
+        }
+      }
+      x => anyhow!("unexpected response to JoinGame: {:?}", &x)?,
+    }
+
+    Ok(())
+  }
+
+  inventory::submit!{Subcommand(
+    "join-game",
+    "Join a game or reset access token (creating or updating account)",
     call,
   )}
 }

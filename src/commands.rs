@@ -20,7 +20,7 @@ pub enum MgmtCommand {
     insns: Vec<MgmtGameInstruction>,
   },
   ListGames {
-    all: Option<bool>, // in same scope by default
+    all: Option<bool>, // in scope of selected account by default
   },
   AlterGame {
     game: InstanceName,
@@ -87,7 +87,6 @@ pub enum MgmtGameInstruction {
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct MgmtPlayerDetails {
-  pub timezone: Option<String>,
   pub nick: Option<String>,
 }
 
@@ -101,14 +100,14 @@ pub enum MgmtGameResponse {
   JoinGame {
     nick: String,
     player: PlayerId,
-    token: Option<AccessTokenReport>,
+    token: AccessTokenReport,
   },
-  PlayerAccessToken(Option<AccessTokenReport>),
+  PlayerAccessToken(AccessTokenReport),
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct AccessTokenReport {
-  pub url: String,
+  lines: Vec<String>,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
