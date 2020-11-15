@@ -72,7 +72,7 @@ struct MainOpts {
   timezone: Option<String>,
   // xxx default to UrlOnStdout
   // xxx options for others
-  access: Box<dyn PlayerAccessSpec>,
+  access: Option<Box<dyn PlayerAccessSpec>>,
   socket_path: String,
   verbose: i32,
 }
@@ -152,8 +152,17 @@ fn main() {
   struct RawAccess(Box<dyn PlayerAccessSpec>);
   impl Clone for RawAccess {
     fn clone(&self) -> Self {
-      Self(serde_json::from_str(serde_json::to_string(&self.0)))
+      (||{
+        let s = serde_json::to_string(&self.0).context("ser")?;
+        let c = serde_json::from_str(&s).context("de")?;
+        Ok::<_,AE>(Self(c))
+      })()
+        .with_context(|| format!("clone {:?} via serde failed", self))
+        .unwrap()
     }
+  }
+  impl<T: PlayerAccessSpec + 'static> From<T> for RawAccess {
+    fn from(t: T) -> Self { RawAccess(Box::new(t)) }
   }
 
   #[derive(Default,Debug)]
@@ -161,6 +170,8 @@ fn main() {
     account: Option<AccountName>,
     gaccount: Option<AccountName>,
     socket_path: Option<String>,
+    nick: Option<String>,
+    timezone: Option<String>,
     access: Option<RawAccess>,
     verbose: i32,
     config_filename: Option<String>,
@@ -183,10 +194,21 @@ fn main() {
     account.metavar("ACCOUNT").add_option(&["--account"],
                      StoreOption,
                      "use account ACCOUNT (default: unix:<current user>:)");
-    let urloso = Some(RawAccess(Box::new(UrlOnStdout)));
+
+    ap.refer(&mut rma.nick).metavar("NICK").add_option(
+      &["--nick"],
+      StoreOption,
+      "use NICK as nick for joining games (now and in the future) \
+       (default: derive from account name");
+    ap.refer(&mut rma.timezone).metavar("TZ").add_option(
+      &["--timezone"],
+      StoreOption,
+      "display times in timezone TZ (Olson timezone name) \
+       (default is to use server's default timezone)");
+
     let mut access = ap.refer(&mut rma.access);
     access.add_option(&["--url-on-stdout"],
-                      StoreConst(urloso),
+                      StoreConst(Some(UrlOnStdout.into())),
                       "show game access url by printing to stdout");
     let mut gaccount = ap.refer(&mut rma.gaccount);
     gaccount.metavar("GAME-ACCOUNT").add_option(&["--game-name-account"],
@@ -210,9 +232,11 @@ fn main() {
     );
     ap
   }, &|RawMainArgs {
-      account, gaccount, access, socket_path, verbose, config_filename,
-      subcommand, subargs,
+    account, gaccount, nick, timezone,
+    access, socket_path, verbose, config_filename,
+    subcommand, subargs,
   }|{
+    let access = access.map(|RawAccess(a)| a);
     let account : AccountName = account.map(Ok::<_,APE>).unwrap_or_else(||{
       let user = env::var("USER").map_err(|e| ArgumentParseError(
         format!("default account needs USER env var: {}", &e)
@@ -234,6 +258,9 @@ fn main() {
     Ok((subcommand, subargs, MainOpts {
       account,
       gaccount,
+      access,
+      nick,
+      timezone,
       socket_path,
       verbose,
     }))
@@ -665,8 +692,8 @@ mod join_game {
     let ad = AccountDetails {
       account:  ma.account.clone(),
       nick:     ma.nick.clone(),
-      timezone: wantup.y[&ma.timezone],
-      access:   wantup.u[&ma.access],
+      timezone: wantup.u(&ma.timezone),
+      access:   wantup.u(&ma.access),
     };
 
     fn is_no_account<T>(r: &Result<T, anyhow::Error>) -> bool {
