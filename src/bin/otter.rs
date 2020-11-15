@@ -72,7 +72,7 @@ struct MainOpts {
   timezone: Option<String>,
   // xxx default to UrlOnStdout
   // xxx options for others
-  access: Option<Box<dyn PlayerAccessSpec>>,
+  access: Box<dyn PlayerAccessSpec>,
   socket_path: String,
   verbose: i32,
 }
@@ -153,6 +153,7 @@ fn main() {
     account: Option<AccountName>,
     gaccount: Option<AccountName>,
     socket_path: Option<String>,
+    access: Option<Box<dyn PlayerAccessSpec>>,
     verbose: i32,
     config_filename: Option<String>,
     subcommand: String,
@@ -174,6 +175,11 @@ fn main() {
     account.metavar("ACCOUNT").add_option(&["--account"],
                      StoreOption,
                      "use account ACCOUNT (default: unix:<current user>:)");
+    let urloso : Option<Box<dyn PlayerAccessSpec>> = Some(Box::new(UrlOnStdout));
+    let mut access = ap.refer(&mut rma.access);
+    access.add_option(&["--url-on-stdout"],
+                      StoreConst(urloso),
+                      "show game access url by printing to stdout");
     let mut gaccount = ap.refer(&mut rma.gaccount);
     gaccount.metavar("GAME-ACCOUNT").add_option(&["--game-name-account"],
                      StoreOption,
@@ -189,9 +195,14 @@ fn main() {
                        "set verbosity to error messages only");
     verbose.add_option(&["-v","--verbose"], IncrBy(1),
        "increase verbosity (default is short progress messages)");
+    access.metavar("TOKEN").add_option(
+      &["--fixed-token"],
+      MapStore(|s| Box::new(FixedToken { token: RawToken (s.to_string()) })),
+      "use fixed game access token TOKEN (for administrators only)r"
+    );
     ap
   }, &|RawMainArgs {
-      account, gaccount, socket_path, verbose, config_filename,
+      account, gaccount, access, socket_path, verbose, config_filename,
       subcommand, subargs,
   }|{
     let account : AccountName = account.map(Ok::<_,APE>).unwrap_or_else(||{

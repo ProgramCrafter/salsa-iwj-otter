@@ -112,10 +112,10 @@ pub enum TablePermission {
 pub struct PlayerAccessUnset;
 
 #[derive(Debug,Serialize,Deserialize)]
-struct FixedToken { token: RawToken }
+pub struct FixedToken { pub token: RawToken }
 
 #[derive(Debug,Serialize,Deserialize)]
-struct UrlOnStdout;
+pub struct UrlOnStdout;
 
 //#[derive(Debug,Serialize,Deserialize)]
 //struct TokenByEmail { email: String };
@@ -330,6 +330,7 @@ pub mod implementation {
       let inner = Html::from_txt(&format!("{:?}", self));
       Html(format!("<code>{}</code>", inner.0))
     }
+    fn clone_box(&self) 
   }
 
   #[typetag::serde]
