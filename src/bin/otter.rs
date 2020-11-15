@@ -66,6 +66,8 @@ struct MainOpts {
   gaccount: AccountName,
   nick: Option<String>,
   timezone: Option<String>,
+  // xxx default to UrlOnStdout
+  // xxx options for others
   access: Option<Box<dyn PlayerAccessSpec>>,
   socket_path: String,
   verbose: i32,

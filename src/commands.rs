@@ -9,8 +9,8 @@ pub enum MgmtCommand {
   Noop,
   SetSuperuser(bool),
 
-  CreateAccont(AccountDetails),
-  UpdateAccont(AccountDetails),
+  CreateAccount(AccountDetails),
+  UpdateAccount(AccountDetails),
   DeleteAccount(AccountName),
 
   SelectAccount(AccountName), // success does not mean account exists
@@ -106,9 +106,10 @@ pub enum MgmtGameResponse {
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
-pub struct AccessTokenReport {
-  lines: Vec<String>,
-}
+pub struct AccessTokenInfo { pub url: String }
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct AccessTokenReport { pub lines: Vec<String> }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct MgmtGameResponseGameInfo {
@@ -183,5 +184,14 @@ impl Display for MgmtError {
 impl From<InternalError> for MgmtError {
   fn from(e: InternalError) -> MgmtError {
     MgmtError::ServerFailure(format!("ServerFailure {}\n", &e))
+  }
+}
+
+impl AccessTokenInfo {
+  pub fn report(self) -> Vec<String> {
+    vec![
+      "Game access url:".to_string(),
+      self.url,
+    ]
   }
 }

@@ -645,7 +645,7 @@ impl<'ig> InstanceGuard<'ig> {
                                    player: PlayerId,
                                    _auth: Authorisation<AccountName>,
                                    reset: bool)
-                                   -> Option<AccessTokenReport> {
+                                   -> AccessTokenReport {
     let acctid = self.iplayers.byid(player)?.ipl.acctid;
 
     let access = {
@@ -722,10 +722,9 @@ impl<'ig> InstanceGuard<'ig> {
     let url = format!("{}/{}",
                       &config().public_url.trim_start_matches("/"),
                       token.0);
-    let report = AccessTokenReport { url };
-    let report = access
-      .server_deliver(&gpl, &ipl, &report)?;
-    report.cloned()
+    let info = AccessTokenInfo { url };
+    let report = access.deliver(&gpl, &ipl, info)?;
+    report
   }
 
   #[throws(MgmtError)]
@@ -733,7 +732,7 @@ impl<'ig> InstanceGuard<'ig> {
                              accounts: &mut AccountsGuard,
                              player: PlayerId,
                              auth: Authorisation<AccountName>)
-                             -> Option<AccessTokenReport> {
+                             -> AccessTokenReport {
     self.player_access_reset_redeliver(accounts, player, auth, true)?
   }
 
@@ -742,7 +741,7 @@ impl<'ig> InstanceGuard<'ig> {
                                  accounts: &mut AccountsGuard,
                                  player: PlayerId,
                                  auth: Authorisation<AccountName>)
-                                 -> Option<AccessTokenReport> {
+                                 -> AccessTokenReport {
     self.player_access_reset_redeliver(accounts, player, auth, false)?
   }
 

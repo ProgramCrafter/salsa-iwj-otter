@@ -321,19 +321,11 @@ pub mod implementation {
     #[throws(MgmtError)]
     fn check_spec_permission(&self, _: Option<AuthorisationSuperuser>) {
     }
-    fn server_deliver<'t>(&self,
-                          _gpl: &GPlayerState,
-                          _ipl: &IPlayerState,
-                          _token: &'t AccessTokenReport)
-                          -> Result<Option<&'t AccessTokenReport>, TDE> {
-      Ok(None)
-    }
-    fn client_deliver(&self,
-                      _pi: &MgmtPlayerInfo,
-                      _token: &AccessTokenReport)
-                      -> Result<(), TDE> {
-      panic!()
-    }
+    fn deliver(&self,
+               gpl: &GPlayerState,
+               ipl: &IPlayerState,
+               token: AccessTokenInfo)
+               -> Result<AccessTokenReport, TDE>;
     fn describe_html(&self) -> Html {
       let inner = Html::from_txt(&format!("{:?}", self));
       Html(format!("<code>{}</code>", inner.0))
@@ -342,6 +334,16 @@ pub mod implementation {
 
   #[typetag::serde]
   impl PlayerAccessSpec for PlayerAccessUnset {
+    #[throws(TokenDeliveryError)]
+    fn deliver(&self,
+               _gpl: &GPlayerState,
+               _ipl: &IPlayerState,
+               _token: AccessTokenInfo) -> AccessTokenReport {
+      AccessTokenReport { lines: vec![
+        "Player access not set, game not accessible to this player"
+          .to_string(),
+      ] }
+    }
   }
 
   #[typetag::serde]
@@ -353,24 +355,24 @@ pub mod implementation {
     fn override_token(&self) -> Option<&RawToken> {
       Some(&self.token)
     }
+    #[throws(TokenDeliveryError)]
+    fn deliver(&self,
+               _gpl: &GPlayerState,
+               _ipl: &IPlayerState,
+               _token: AccessTokenInfo) -> AccessTokenReport {
+      AccessTokenReport { lines: vec![ "Fixed access token".to_string() ] }
+    }
   }
 
   #[typetag::serde]
   impl PlayerAccessSpec for UrlOnStdout {
     #[throws(TDE)]
-    fn server_deliver<'t>(&self,
-                          _gpl: &GPlayerState,
-                          _ipl: &IPlayerState,
-                          token: &'t AccessTokenReport)
-                          -> Option<&'t AccessTokenReport> {
-      Some(token)
-    }
-    #[throws(TDE)]
-    fn client_deliver(&self,
-                      pi: &MgmtPlayerInfo,
-                      token: &AccessTokenReport) {
-      println!("access account={} nick={:?} url:\n{}",
-               &pi.account, &pi.nick, token.url);
+    fn deliver<'t>(&self,
+                   _gpl: &GPlayerState,
+                   _ipl: &IPlayerState,
+                   token: AccessTokenInfo)
+                   -> AccessTokenReport {
+      AccessTokenReport { lines: token.report() }
     }
   }
 

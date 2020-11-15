@@ -84,7 +84,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine
     },
 
-    CreateAccont(AccountDetails { account, nick, timezone, access }) => {
+    CreateAccount(AccountDetails { account, nick, timezone, access }) => {
       let mut ag = AccountsGuard::lock();
       let auth = authorise_for_account(cs, &ag, &account)?;
       let access = cs.accountrecord_from_spec(access)?
@@ -99,7 +99,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine
     }
 
-    UpdateAccont(AccountDetails { account, nick, timezone, access }) => {
+    UpdateAccount(AccountDetails { account, nick, timezone, access }) => {
       let mut ag = AccountsGuard::lock();
       let mut games = games_lock();
       let auth = authorise_for_account(cs, &ag, &account)?;
@@ -110,6 +110,13 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         }
         update_from(nick,                   &mut record.nick    );
         update_from(timezone,               &mut record.timezone);
+/*
+ xxx
+      if let Some(new_timezone) = timezone {
+        let ipr = ig.iplayers.byid_mut(player)?;
+       ipr.ipl.tz = tz_from_str(&new_timezone);
+      }
+*/
         Fine
       })
         ?
@@ -294,18 +301,20 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
     }
 
     Insn::JoinGame {
-      details: MgmtPlayerDetails { timezone, nick }
+      details: MgmtPlayerDetails { nick }
     } => {
       let account = &cs.current_account()?.notional_account;
-      let (_arecord, acctid) = ag.lookup(account)?;
+      let (arecord, acctid) = ag.lookup(account)?;
       let (ig, auth) = cs.check_acl(ag, ig, PCH::Instance, &[TP::Play])?;
       let nick = nick.ok_or(ME::ParameterMissing)?;
       let logentry = LogEntry {
         html: Html(format!("{} ({}) joined the game",
                            &nick, &account)),
       };
-      let timezone = timezone.as_ref().map(String::as_str)
-        .unwrap_or("");
+      let timezone = &arecord.timezone
+/*.as_ref().map(String::as_str)
+        .unwrap_or("");*/
+;
       let tz = tz_from_str(&timezone);
       let gpl = GPlayerState {
         nick: nick.to_string(),
@@ -352,7 +361,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
 
     UpdatePlayer {
       player,
-      details: MgmtPlayerDetails { nick, timezone },
+      details: MgmtPlayerDetails { nick },
     } => {
       let ig = cs.check_acl_modify_player(ag, ig, player,
                                           &[TP::ModifyOtherPlayer])?.0;
@@ -367,10 +376,6 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
                              htmlescape::encode_minimal(&new_nick))),
         });
         gpl.nick = new_nick;
-      }
-      if let Some(new_timezone) = timezone {
-        let ipr = ig.iplayers.byid_mut(player)?;
-       ipr.ipl.tz = tz_from_str(&new_timezone);
       }
       (U{ log,
           pcs: vec![],
