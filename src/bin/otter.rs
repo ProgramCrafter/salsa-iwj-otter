@@ -222,7 +222,9 @@ fn main() {
                       "show game access url by printing to stdout");
     access.metavar("TOKEN").add_option(
       &["--fixed-token"],
-      MapStore(|s| Ok(Some(AccessOpt(Box::new(FixedToken { token: RawToken (s.to_string()) }))))),
+      MapStore(|s| Ok(Some(
+        FixedToken { token: RawToken(s.to_string()) }.into()
+      ))),
       "use fixed game access token TOKEN (for administrators only)r"
     );
 
