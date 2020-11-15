@@ -15,7 +15,6 @@ type E = anyhow::Error;
 type AS = AccountScope;
 type APE = ArgumentParseError;
 type MC = MgmtCommand;
-type MR = MgmtResponse;
 type ME = MgmtError;
 type MGI = MgmtGameInstruction;
 type MGR = MgmtGameResponse;
@@ -59,10 +58,14 @@ impl<'x, T, F: FnMut(&str) -> Result<T,String>>
   }
 }
 
-const EXIT_SPACE     : i32 =  2;
-const EXIT_SITUATION : i32 =  8;
-const EXIT_USAGE     : i32 = 12;
-const EXIT_DISASTER  : i32 = 16;
+mod exits {
+  #![allow(dead_code)]
+  pub const EXIT_SPACE     : i32 =  2;
+  pub const EXIT_SITUATION : i32 =  8;
+  pub const EXIT_USAGE     : i32 = 12;
+  pub const EXIT_DISASTER  : i32 = 16;
+}
+use exits::*;
 
 #[derive(Debug)]
 struct MainOpts {
@@ -147,7 +150,7 @@ fn parse_args<T:Default,U>(
 
 pub fn ok_id<T,E>(t: T) -> Result<T,E> { Ok(t) }
 
-pub fn clone_via_serde<T: Debug + Serialize + Deserialize<'static>>
+pub fn clone_via_serde<T: Debug + Serialize + DeserializeOwned>
   (t: &T) -> T
 {
   (||{
@@ -217,6 +220,12 @@ fn main() {
     access.add_option(&["--url-on-stdout"],
                       StoreConst(Some(UrlOnStdout.into())),
                       "show game access url by printing to stdout");
+    access.metavar("TOKEN").add_option(
+      &["--fixed-token"],
+      MapStore(|s| Ok(Some(AccessOpt(Box::new(FixedToken { token: RawToken (s.to_string()) }))))),
+      "use fixed game access token TOKEN (for administrators only)r"
+    );
+
     let mut gaccount = ap.refer(&mut rma.gaccount);
     gaccount.metavar("GAME-ACCOUNT").add_option(&["--game-name-account"],
                      StoreOption,
@@ -232,11 +241,6 @@ fn main() {
                        "set verbosity to error messages only");
     verbose.add_option(&["-v","--verbose"], IncrBy(1),
        "increase verbosity (default is short progress messages)");
-    access.metavar("TOKEN").add_option(
-      &["--fixed-token"],
-      MapStore(|s| Ok(Some(AccessOpt(Box::new(FixedToken { token: RawToken (s.to_string()) }))))),
-      "use fixed game access token TOKEN (for administrators only)r"
-    );
     ap
   }, &|RawMainArgs {
     account, gaccount, nick, timezone,
@@ -705,7 +709,7 @@ mod join_game {
     fn is_no_account<T>(r: &Result<T, anyhow::Error>) -> bool {
       if_chain! {
         if let Err(e) = r;
-        if let Some(&ME::AccountNotFound) = e.downcast_ref();
+        if let Some(&ME::AccountNotFound(_)) = e.downcast_ref();
         then { return true }
         else { return false }
       }
@@ -732,7 +736,7 @@ mod join_game {
       if is_no_account(&resp) {
         ad.access.get_or_insert(Box::new(UrlOnStdout));
         desc = "CreateAccount";
-        resp = conn.cmd(&MC::CreateAccount(clone_via_serde(&ad)))
+        resp = chan.conn.cmd(&MC::CreateAccount(clone_via_serde(&ad)))
           .map(|_|());
       }
       resp.with_context(||format!("response to {}", &desc))?;
