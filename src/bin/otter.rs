@@ -148,12 +148,20 @@ fn parse_args<T:Default,U>(
 pub fn ok_id<T,E>(t: T) -> Result<T,E> { Ok(t) }
 
 fn main() {
+  #[derive(Debug)]
+  struct RawAccess(Box<dyn PlayerAccessSpec>);
+  impl Clone for RawAccess {
+    fn clone(&self) -> Self {
+      Self(serde_json::from_str(serde_json::to_string(&self.0)))
+    }
+  }
+
   #[derive(Default,Debug)]
   struct RawMainArgs {
     account: Option<AccountName>,
     gaccount: Option<AccountName>,
     socket_path: Option<String>,
-    access: Option<Box<dyn PlayerAccessSpec>>,
+    access: Option<RawAccess>,
     verbose: i32,
     config_filename: Option<String>,
     subcommand: String,
@@ -175,7 +183,7 @@ fn main() {
     account.metavar("ACCOUNT").add_option(&["--account"],
                      StoreOption,
                      "use account ACCOUNT (default: unix:<current user>:)");
-    let urloso : Option<Box<dyn PlayerAccessSpec>> = Some(Box::new(UrlOnStdout));
+    let urloso = Some(RawAccess(Box::new(UrlOnStdout)));
     let mut access = ap.refer(&mut rma.access);
     access.add_option(&["--url-on-stdout"],
                       StoreConst(urloso),
@@ -197,7 +205,7 @@ fn main() {
        "increase verbosity (default is short progress messages)");
     access.metavar("TOKEN").add_option(
       &["--fixed-token"],
-      MapStore(|s| Box::new(FixedToken { token: RawToken (s.to_string()) })),
+      MapStore(|s| Ok(Some(RawAccess(Box::new(FixedToken { token: RawToken (s.to_string()) }))))),
       "use fixed game access token TOKEN (for administrators only)r"
     );
     ap

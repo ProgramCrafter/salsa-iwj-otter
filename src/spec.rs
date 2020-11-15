@@ -330,7 +330,6 @@ pub mod implementation {
       let inner = Html::from_txt(&format!("{:?}", self));
       Html(format!("<code>{}</code>", inner.0))
     }
-    fn clone_box(&self) 
   }
 
   #[typetag::serde]
