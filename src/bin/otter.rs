@@ -12,9 +12,13 @@ use std::cell::RefCell;
 use std::cell::Cell;
 
 type E = anyhow::Error;
-type MGI = MgmtGameInstruction;
 type AS = AccountScope;
 type APE = ArgumentParseError;
+type MC = MgmtCommand;
+type MR = MgmtResponse;
+type ME = MgmtError;
+type MGI = MgmtGameInstruction;
+type MGR = MgmtGameResponse;
 type TP = TablePermission;
 
 use argparse::action::ParseResult::Parsed;
@@ -647,9 +651,11 @@ mod join_game {
     };
 
     fn is_no_account<T>(r: &Result<T, anyhow::Error>) -> bool {
-      match r {
-        Err(e) if let Some(&ME::AccountNotFound) = e.downcast_ref() => true,
-        _ => false,
+      if_chain! {
+        if let Err(e) = r;
+        if let Some(&ME::AccountNotFound) = e.downcast_ref();
+        then { return true }
+        else { return false }
       }
     }
     fn fail_need_access() -> Impossible {
@@ -661,7 +667,7 @@ mod join_game {
       let resp = conn.cmd(&MC::UpdateAccount(ad.clone()));
       let resp = if is_no_account(&resp) {
         if ad.access.is_none() { fail_need_access(); }
-        conn.cmd(&ME::CreateAccount(ad.clone()O))
+        conn.cmd(&ME::CreateAccount(ad.clone()))
       } else {
         resp
       };
@@ -684,7 +690,7 @@ mod join_game {
     let resp = chan.alter_game(insns, |_| Ok(()));
     if is_no_account(&resp) { fail_need_access(); }
     match resp? {
-      [MGR::JoinGame { nick, player. token }] => {
+      [MGR::JoinGame { nick, player, token }] => {
         println!("joined game as player #{} {:?}",
                  player.get_idx_version().0,
                  &nick);
