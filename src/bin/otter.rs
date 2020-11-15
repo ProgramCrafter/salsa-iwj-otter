@@ -72,7 +72,7 @@ struct MainOpts {
   timezone: Option<String>,
   // xxx default to UrlOnStdout
   // xxx options for others
-  access: Option<Box<dyn PlayerAccessSpec>>,
+  access: Option<AccessOpt>,
   socket_path: String,
   verbose: i32,
 }
@@ -147,24 +147,31 @@ fn parse_args<T:Default,U>(
 
 pub fn ok_id<T,E>(t: T) -> Result<T,E> { Ok(t) }
 
-fn main() {
-  #[derive(Debug)]
-  struct RawAccess(Box<dyn PlayerAccessSpec>);
-  impl Clone for RawAccess {
-    fn clone(&self) -> Self {
-      (||{
-        let s = serde_json::to_string(&self.0).context("ser")?;
-        let c = serde_json::from_str(&s).context("de")?;
-        Ok::<_,AE>(Self(c))
-      })()
-        .with_context(|| format!("clone {:?} via serde failed", self))
-        .unwrap()
-    }
-  }
-  impl<T: PlayerAccessSpec + 'static> From<T> for RawAccess {
-    fn from(t: T) -> Self { RawAccess(Box::new(t)) }
-  }
+pub fn clone_via_serde<T: Debug + Serialize + Deserialize<'static>>
+  (t: &T) -> T
+{
+  (||{
+    let s = serde_json::to_string(t).context("ser")?;
+    let c = serde_json::from_str(&s).context("de")?;
+    Ok::<_,AE>(c)
+  })()
+    .with_context(|| format!("clone {:?} via serde failed", t))
+    .unwrap()
+}
 
+#[derive(Debug)]
+struct AccessOpt(Box<dyn PlayerAccessSpec>);
+impl Clone for AccessOpt {
+  fn clone(&self) -> Self { Self(clone_via_serde(&self.0)) }
+}
+impl<T: PlayerAccessSpec + 'static> From<T> for AccessOpt {
+  fn from(t: T) -> Self { AccessOpt(Box::new(t)) }
+}
+impl From<AccessOpt> for Box<dyn PlayerAccessSpec> {
+  fn from(a: AccessOpt) -> Self { a.0 }
+}
+
+fn main() {
   #[derive(Default,Debug)]
   struct RawMainArgs {
     account: Option<AccountName>,
@@ -172,7 +179,7 @@ fn main() {
     socket_path: Option<String>,
     nick: Option<String>,
     timezone: Option<String>,
-    access: Option<RawAccess>,
+    access: Option<AccessOpt>,
     verbose: i32,
     config_filename: Option<String>,
     subcommand: String,
@@ -227,7 +234,7 @@ fn main() {
        "increase verbosity (default is short progress messages)");
     access.metavar("TOKEN").add_option(
       &["--fixed-token"],
-      MapStore(|s| Ok(Some(RawAccess(Box::new(FixedToken { token: RawToken (s.to_string()) }))))),
+      MapStore(|s| Ok(Some(AccessOpt(Box::new(FixedToken { token: RawToken (s.to_string()) }))))),
       "use fixed game access token TOKEN (for administrators only)r"
     );
     ap
@@ -236,7 +243,6 @@ fn main() {
     access, socket_path, verbose, config_filename,
     subcommand, subargs,
   }|{
-    let access = access.map(|RawAccess(a)| a);
     let account : AccountName = account.map(Ok::<_,APE>).unwrap_or_else(||{
       let user = env::var("USER").map_err(|e| ArgumentParseError(
         format!("default account needs USER env var: {}", &e)
@@ -689,11 +695,11 @@ mod join_game {
       }
     }
     let mut wantup = Wantup(false);
-    let ad = AccountDetails {
+    let mut ad = AccountDetails {
       account:  ma.account.clone(),
-      nick:     ma.nick.clone(),
+      nick:     wantup.u(&ma.nick),
       timezone: wantup.u(&ma.timezone),
-      access:   wantup.u(&ma.access),
+      access:   wantup.u(&ma.access).map(Into::into),
     };
 
     fn is_no_account<T>(r: &Result<T, anyhow::Error>) -> bool {
@@ -704,25 +710,6 @@ mod join_game {
         else { return false }
       }
     }
-    fn fail_need_access() -> Impossible {
-      eprintln!("Need to make your account and set your access token delivery method.  Please pass the --access option.");
-      exit(EXIT_SITUATION);
-    }
-
-    if wantup.0 {
-      let resp = conn.cmd(&MC::UpdateAccount(ad.clone()));
-      let resp = if is_no_account(&resp) {
-        if ad.access.is_none() { fail_need_access(); }
-        conn.cmd(&ME::CreateAccount(ad.clone()))
-      } else {
-        resp
-      };
-      match resp {
-        Ok(MR::Fine) => (),
-        Ok(x) => anyhow!("unexpected response to UpdateAccount: {:?}", &x)?,
-        Err(x) => throw!(x),
-      }
-    }
 
     let mut chan = ConnForGame {
       conn,
@@ -730,15 +717,36 @@ mod join_game {
       how: MgmtGameUpdateMode::Online,
     };
 
+    {
+      let mut desc;
+      let mut resp;
+      if wantup.0 {
+        desc = "UpdateAccount";
+        resp = chan.conn.cmd(&MC::UpdateAccount(clone_via_serde(&ad)))
+          .map(|_|());
+      } else {
+        desc = "AlterGame--Noop";
+        resp = chan.alter_game(vec![MGI::Noop], None)
+          .map(|_|());
+      };
+      if is_no_account(&resp) {
+        ad.access.get_or_insert(Box::new(UrlOnStdout));
+        desc = "CreateAccount";
+        resp = conn.cmd(&MC::CreateAccount(clone_via_serde(&ad)))
+          .map(|_|());
+      }
+      resp.with_context(||format!("response to {}", &desc))?;
+    }
+
     let insns = vec![
-      MGI::JoinGame { nick: ma.nick.clone() },
+      MGI::JoinGame { details: MgmtPlayerDetails { nick: ma.nick.clone() } },
     ];
-    let resp = chan.alter_game(insns, |_| Ok(()));
-    if is_no_account(&resp) { fail_need_access(); }
-    match resp? {
+    let resp = chan.alter_game(insns, None)?;
+
+    match resp.as_slice() {
       [MGR::JoinGame { nick, player, token }] => {
         println!("joined game as player #{} {:?}",
-                 player.get_idx_version().0,
+                 player.0.get_idx_version().0,
                  &nick);
         for l in &token.lines {
           if l.contains(char::is_control) {
@@ -749,7 +757,7 @@ mod join_game {
           }
         }
       }
-      x => anyhow!("unexpected response to JoinGame: {:?}", &x)?,
+      x => throw!(anyhow!("unexpected response to JoinGame: {:?}", &x)),
     }
 
     Ok(())
