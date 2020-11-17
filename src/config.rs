@@ -117,7 +117,7 @@ impl ServerConfig {
     let mut buf = String::new();
     File::open(&config_filename).with_context(||config_filename.to_string())?
       .read_to_string(&mut buf)?;
-    let config : ServerConfigSpec = toml::de::from_str(&buf)?;
+    let config : ServerConfigSpec = crate::toml::from_str(&buf)?;
     let config = config.try_into()?;
     set_config(config);
   }

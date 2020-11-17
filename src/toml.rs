@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-use std::convert::TryInto;
-use std::fmt::{self, Debug, Display};
+use std::fmt::{Debug, Display};
 use std::iter::Peekable;
 use std::slice;
 
@@ -15,17 +14,10 @@ use thiserror::Error;
 
 #[derive(Error,Debug)]
 pub enum Error {
+  #[error("deserialize failed (improper TOML structure?): {0}")]
   Custom(Box<str>),
-}
-
-impl Display for Error {
-  #[throws(fmt::Error)]
-  fn fmt(&self, f: &mut fmt::Formatter) {
-    type E = Error;
-    match self {
-      E::Custom(x) => write!(f, "toml::TomlDe::Error::Custom:{}", &x)?,
-    }
-  }
+  #[error("config file has invalid TOML syntax: {0}")]
+  TomlSyntax(#[from] toml::de::Error),
 }
 
 impl serde::de::Error for Error {
@@ -59,15 +51,18 @@ struct MA<'de> (Peekable<toml::map::Iter<'de>>);
 
 impl<'de> MapAccess<'de> for MA<'de> {
   type Error = Error;
-  #[throws(Error)]
   fn next_key_seed<K: DeserializeSeed<'de>>
-    (&mut self, seed: K) -> Option<K::Value>
+    (&mut self, seed: K) -> Result<Option<K::Value>, Error>
   {
-    if let Some((k, _v)) = self.0.peek() {
-      Some(seed.deserialize(k.as_str().into_deserializer())?)
+    Ok(if let Some((k, _v)) = self.0.peek() {
+      Some(seed.deserialize({
+        let q : serde::de::value::StrDeserializer<'_, Error> =
+          k.as_str().into_deserializer();
+        q
+      })?)
     } else {
       None
-    }
+    })
   }
   #[throws(Error)]
   fn next_value_seed<V: DeserializeSeed<'de>>
@@ -82,11 +77,11 @@ impl<'de> MapAccess<'de> for MA<'de> {
 fn visit<'de, V: Visitor<'de>>(v: V, tv: &'de toml::Value) -> V::Value {
   type TV = toml::Value;
   match tv {
-    TV::String(s) => v.visit_borrowed_str(s)?,
-    &TV::Integer(i) => v.visit_i64(i)?,
-    &TV::Float(f) => v.visit_f64(f)?,
-    &TV::Boolean(b) => v.visit_bool(b)?,
-    TV::Datetime(dt) => v.visit_str(&dt.to_string())?,
+    TV::String(s) => v.visit_borrowed_str::<Error>(s)?,
+    &TV::Integer(i) => v.visit_i64::<Error>(i)?,
+    &TV::Float(f) => v.visit_f64::<Error>(f)?,
+    &TV::Boolean(b) => v.visit_bool::<Error>(b)?,
+    TV::Datetime(dt) => v.visit_str::<Error>(&dt.to_string())?,
     TV::Array(a) => v.visit_seq(SA(a.as_slice().iter()))?,
     TV::Table(t) => v.visit_map(MA(t.iter().peekable()))?,
   }
@@ -114,8 +109,7 @@ pub fn from_value<'de, T: Deserialize<'de>> (tv: &'de toml::Value) -> T
 #[throws(Error)]
 pub fn from_str<T: DeserializeOwned> (s: &str) -> T
 {
-  let tv : toml::Value = s.try_into()
-    .map_err(|e| match e { })
-    ?;
+  let tv : toml::Value = s.parse()?;
+  eprintln!("TOML FROM STR {:?}", tv);
   from_value(&tv)?
 }
