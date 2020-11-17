@@ -82,6 +82,10 @@ fn visit<'de, V: Visitor<'de>>(v: V, tv: &'de toml::Value) -> V::Value {
   type TV = toml::Value;
   match tv {
     TV::String(s) => v.visit_borrowed_str(s)?,
+    &TV::Integer(i) => v.visit_i64(i)?,
+    &TV::Float(f) => v.visit_f64(f)?,
+    &TV::Boolean(b) => v.visit_bool(b)?,
+    TV::Datetime(dt) => v.visit_str(&dt.to_string())?,
     TV::Array(a) => v.visit_seq(SA(a.as_slice().iter()))?,
     TV::Table(t) => v.visit_map(MA(t.iter().peekable()))?,
   }
