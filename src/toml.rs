@@ -7,10 +7,16 @@ use std::iter::Peekable;
 use std::slice;
 
 use fehler::throws;
-use serde::forward_to_deserialize_any;
-use serde::de::{Deserialize, DeserializeOwned, Deserializer, DeserializeSeed};
-use serde::de::{IntoDeserializer, MapAccess, SeqAccess, Visitor};
+use if_chain::if_chain;
 use thiserror::Error;
+
+use serde::forward_to_deserialize_any;
+use serde::de::{
+  Deserialize, DeserializeOwned, Deserializer,
+  DeserializeSeed, EnumAccess,
+  IntoDeserializer, MapAccess,
+  SeqAccess, VariantAccess, Visitor
+};
 
 #[derive(Error,Debug)]
 pub enum Error {
@@ -24,6 +30,14 @@ impl serde::de::Error for Error {
   fn custom<X: Display>(x: X) -> Self {
     Error::Custom(x.to_string().into_boxed_str())
   }
+}
+
+fn str_deserialize<'de, S: DeserializeSeed<'de>>
+  (seed: S, k: &'de str) -> Result<S::Value, Error>
+{
+  seed.deserialize(
+    k.into_deserializer()
+  )
 }
 
 pub struct TomlDe<'de>(pub &'de toml::Value);
@@ -55,11 +69,7 @@ impl<'de> MapAccess<'de> for MA<'de> {
     (&mut self, seed: K) -> Result<Option<K::Value>, Error>
   {
     Ok(if let Some((k, _v)) = self.0.peek() {
-      Some(seed.deserialize({
-        let q : serde::de::value::StrDeserializer<'_, Error> =
-          k.as_str().into_deserializer();
-        q
-      })?)
+      Some(str_deserialize(seed, k)?)
     } else {
       None
     })
@@ -70,6 +80,43 @@ impl<'de> MapAccess<'de> for MA<'de> {
   {
     let (_k, v) = self.0.next().unwrap();
     seed.deserialize(TomlDe(v))?
+  }
+}
+
+struct EA<'de> { k: &'de str, v: &'de toml::Value }
+
+impl<'de> EnumAccess<'de> for EA<'de> {
+  type Error = Error;
+  type Variant = TomlDe<'de>;
+  #[throws(Error)]
+  fn variant_seed<V: DeserializeSeed<'de>>
+    (self, seed: V) -> (V::Value, TomlDe<'de>)
+  {
+    (str_deserialize(seed, self.k)?,
+     TomlDe(self.v))
+  }
+}
+
+impl<'de> VariantAccess<'de> for TomlDe<'de> {
+  type Error = Error;
+  #[throws(Error)]
+  fn unit_variant(self) { }
+
+  #[throws(Error)]
+  fn newtype_variant_seed<S: DeserializeSeed<'de>>
+    (self, seed: S) -> S::Value
+  {
+    seed.deserialize(self)?
+  }
+
+  #[throws(Error)]
+  fn tuple_variant<V: Visitor<'de>>(self, _: usize, v: V) -> V::Value {
+    visit(v, &self.0)?
+  }
+
+  #[throws(Error)]
+  fn struct_variant<V: Visitor<'de>>(self, _:&[&str], v: V) -> V::Value {
+    visit(v, &self.0)?
   }
 }
 
@@ -101,10 +148,27 @@ impl<'de> Deserializer<'de> for TomlDe<'de> {
     // the relevant struct key.
     visitor.visit_some(self)?
   }
+  #[throws(Error)]
+  fn deserialize_enum<V: Visitor<'de>>
+    (self, _:&str, _:&[&str], v: V) -> V::Value
+  {
+    type TV = toml::Value;
+    match &self.0 {
+      TV::String(s) => return v.visit_enum(s.as_str().into_deserializer()),
+      TV::Table(s) => if_chain! {
+        if let Some((k, v)) = s.next();
+        if let None = s.next();
+        then { return v.visit_enum(EA { k, v })? }
+      },
+      _ => {},
+    }
+    // hopefully the format will figure it out, or produce an error
+    visit(v, &self.0)?
+  }
   forward_to_deserialize_any! {
     bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
     bytes byte_buf unit unit_struct newtype_struct seq tuple
-    tuple_struct map struct enum identifier ignored_any
+    tuple_struct map struct identifier ignored_any
   }
 }
 
