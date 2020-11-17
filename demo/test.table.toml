@@ -4,12 +4,16 @@
 
 timezone = "Europe/London"
 
-[[players]]
-nick = "alice"
-access = "FixedToken"
-token = "kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe"
+#players = [ { account_glob = "server:*" } ]
 
 [[players]]
-nick = "bob"
-access = "FixedToken"
-token = "ccg9kzoTh758QrVE1xMY7BQWB36dNJTx"
+account_glob = "server:*"
+
+#nick = "alice"
+#access = "FixedToken"
+#token = "kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe"
+
+#[[players]]
+#nick = "bob"
+#access = "FixedToken"
+#token = "ccg9kzoTh758QrVE1xMY7BQWB36dNJTx"

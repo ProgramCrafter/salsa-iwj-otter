@@ -125,8 +125,10 @@ impl ServerConfig {
 
 impl Default for ServerConfig {
   fn default() -> ServerConfig {
-    let spec : ServerConfigSpec = toml::de::from_str("")
-      .expect("parse empty string as ServerConfigSpec");
+    let spec : ServerConfigSpec = toml::de::from_str(r#"
+      public_url = "XXX"
+      "#)
+      .expect("parse dummy config as ServerConfigSpec");
     spec.try_into().expect("empty spec into config")
   }
 }
