@@ -2,16 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-use std::fmt::{self, Display};
+use std::fmt::{self, Debug, Display};
 use std::iter::Peekable;
+use std::slice;
 
 use fehler::throws;
-use serde::de::{Deserializer, DeserializeSeed, MapAccess, SeqAccess, Visitor};
+use serde::forward_to_deserialize_any;
+use serde::de::{Deserializer, DeserializeSeed, IntoDeserializer};
+use serde::de::{MapAccess, SeqAccess, Visitor};
 use thiserror::Error;
 
 #[derive(Error,Debug)]
-enum Error {
-  Custom(Box<dyn Display>),
+pub enum Error {
+  Custom(Box<str>),
 }
 
 impl Display for Error {
@@ -19,18 +22,20 @@ impl Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter) {
     type E = Error;
     match self {
-      E::Custom(x) => write!(f, "toml::TomlDe::Error::Custom:{}", x)?,
+      E::Custom(x) => write!(f, "toml::TomlDe::Error::Custom:{}", &x)?,
     }
   }
 }
 
 impl serde::de::Error for Error {
-  fn custom<X: Display>(x: X) -> Self { Error::Custom(Box::new(x)) }
+  fn custom<X: Display>(x: X) -> Self {
+    Error::Custom(x.to_string().into_boxed_str())
+  }
 }
 
 pub struct TomlDe<'de>(pub &'de toml::Value);
 
-struct SA<'de> (&'de [toml::Value]);
+struct SA<'de> (slice::Iter<'de, toml::Value>);
 
 impl<'de> SeqAccess<'de> for SA<'de> {
   type Error = Error;
@@ -38,8 +43,11 @@ impl<'de> SeqAccess<'de> for SA<'de> {
   fn next_element_seed<T: DeserializeSeed<'de>>
     (&mut self, seed: T) -> Option<T::Value>
   {
-    let elem = (self.0).next()?;
-    Some(seed.deserialize(elem)?)
+    if let Some(elem) = (self.0).next() {
+      Some(seed.deserialize(TomlDe(elem))?)
+    } else {
+      None
+    }
   }
   fn size_hint(&self) -> Option<usize> {
     Some(self.0.len())
@@ -54,25 +62,28 @@ impl<'de> MapAccess<'de> for MA<'de> {
   fn next_key_seed<K: DeserializeSeed<'de>>
     (&mut self, seed: K) -> Option<K::Value>
   {
-    let (k, _v) = self.0.peek()?;
-    Some(seed.deserialize(k)?)
+    if let Some((k, _v)) = self.0.peek() {
+      Some(seed.deserialize(k.as_str().into_deserializer())?)
+    } else {
+      None
+    }
   }
   #[throws(Error)]
   fn next_value_seed<V: DeserializeSeed<'de>>
     (&mut self, seed: V) -> V::Value
   {
     let (_k, v) = self.0.next().unwrap();
-    seed.deserialize(v)?
+    seed.deserialize(TomlDe(v))?
   }
 }
 
 #[throws(Error)]
-fn visit<'de, V: Visitor<'de>>(v: &V, tv: &toml::Value) -> V::Value {
+fn visit<'de, V: Visitor<'de>>(v: V, tv: &'de toml::Value) -> V::Value {
   type TV = toml::Value;
   match tv {
     TV::String(s) => v.visit_borrowed_str(s)?,
-    TV::Array(a) => v.visit_seq(SA(a.as_slice()))?,
-    TV::Table(t) => v.visit_table(MA(t.iter().peekable()))?,
+    TV::Array(a) => v.visit_seq(SA(a.as_slice().iter()))?,
+    TV::Table(t) => v.visit_map(MA(t.iter().peekable()))?,
   }
 }
 
@@ -80,6 +91,11 @@ impl<'de> Deserializer<'de> for TomlDe<'de> {
   type Error = Error;
   #[throws(Error)]
   fn deserialize_any<V: Visitor<'de>>(self, visitor: V) -> V::Value {
-    visit(visitor, &self.0);
+    visit(visitor, &self.0)?
+  }
+  forward_to_deserialize_any! {
+    bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
+    bytes byte_buf option unit unit_struct newtype_struct seq tuple
+    tuple_struct map struct enum identifier ignored_any
   }
 }
