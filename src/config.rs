@@ -125,7 +125,7 @@ impl ServerConfig {
 
 impl Default for ServerConfig {
   fn default() -> ServerConfig {
-    let spec : ServerConfigSpec = toml::de::from_str(r#"
+    let spec : ServerConfigSpec = crate::toml::from_str(r#"
       public_url = "XXX"
       "#)
       .expect("parse dummy config as ServerConfigSpec");

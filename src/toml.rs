@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
+use std::convert::TryInto;
 use std::fmt::{self, Debug, Display};
 use std::iter::Peekable;
 use std::slice;
 
 use fehler::throws;
 use serde::forward_to_deserialize_any;
-use serde::de::{Deserializer, DeserializeSeed, IntoDeserializer};
-use serde::de::{MapAccess, SeqAccess, Visitor};
+use serde::de::{Deserialize, DeserializeOwned, Deserializer, DeserializeSeed};
+use serde::de::{IntoDeserializer, MapAccess, SeqAccess, Visitor};
 use thiserror::Error;
 
 #[derive(Error,Debug)]
@@ -102,4 +103,19 @@ impl<'de> Deserializer<'de> for TomlDe<'de> {
     bytes byte_buf option unit unit_struct newtype_struct seq tuple
     tuple_struct map struct enum identifier ignored_any
   }
+}
+
+#[throws(Error)]
+pub fn from_value<'de, T: Deserialize<'de>> (tv: &'de toml::Value) -> T
+{
+  Deserialize::deserialize(TomlDe(tv))?
+}
+
+#[throws(Error)]
+pub fn from_str<T: DeserializeOwned> (s: &str) -> T
+{
+  let tv : toml::Value = s.try_into()
+    .map_err(|e| match e { })
+    ?;
+  from_value(&tv)?
 }
