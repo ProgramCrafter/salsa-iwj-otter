@@ -539,7 +539,7 @@ fn read_spec<T: DeserializeOwned>(filename: &str, what: &str) -> T {
     let mut f = File::open(filename).context("open")?;
     let mut buf = String::new();
     f.read_to_string(&mut buf).context("read")?;
-    let spec : T = toml::de::from_str(&buf).context("parse")?;
+    let spec : T = otter::toml::from_str(&buf).context("parse")?;
     Ok::<_,AE>(spec)
   })().with_context(|| format!("read {} {:?}", what, filename))?
 }

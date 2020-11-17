@@ -93,9 +93,17 @@ impl<'de> Deserializer<'de> for TomlDe<'de> {
   fn deserialize_any<V: Visitor<'de>>(self, visitor: V) -> V::Value {
     visit(visitor, &self.0)?
   }
+  #[throws(Error)]
+  fn deserialize_option<V: Visitor<'de>>(self, visitor: V) -> V::Value {
+    // Option only works in structs, where it's represented by an
+    // absence of the key.  When we are called, we are either in a
+    // non-working context, or a context where we've already had
+    // the relevant struct key.
+    visitor.visit_some(self)?
+  }
   forward_to_deserialize_any! {
     bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
-    bytes byte_buf option unit unit_struct newtype_struct seq tuple
+    bytes byte_buf unit unit_struct newtype_struct seq tuple
     tuple_struct map struct enum identifier ignored_any
   }
 }
@@ -110,6 +118,6 @@ pub fn from_value<'de, T: Deserialize<'de>> (tv: &'de toml::Value) -> T
 pub fn from_str<T: DeserializeOwned> (s: &str) -> T
 {
   let tv : toml::Value = s.parse()?;
-  eprintln!("TOML FROM STR {:?}", tv);
+  dbg!(&tv);
   from_value(&tv)?
 }
