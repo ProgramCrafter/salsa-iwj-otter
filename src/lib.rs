@@ -27,4 +27,5 @@ pub mod shapelib;
 pub mod tz;
 pub mod accounts;
 pub mod config;
+pub mod toml;
 #[path="slotmap-slot-idx.rs"] pub mod slotmap_slot_idx;
