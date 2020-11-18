@@ -415,8 +415,11 @@ impl DerefMut for ConnForGame {
 impl ConnForGame {
   #[throws(AE)]
   fn join_game(&mut self, ma: &MainOpts) {
+    let nick = ma.nick.clone()
+      .or_else(|| Some(ma.account.default_nick()));
+
     let insns = vec![
-      MGI::JoinGame { details: MgmtPlayerDetails { nick: ma.nick.clone() } },
+      MGI::JoinGame { details: MgmtPlayerDetails { nick } },
     ];
     let resp = self.alter_game(insns, None)?;
 

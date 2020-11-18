@@ -310,9 +310,9 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
       let account = &cs.current_account()?.notional_account;
       let (arecord, acctid) = ag.lookup(account)?;
       let (ig, auth) = cs.check_acl(ag, ig, PCH::Instance, &[TP::Play])?;
-      let nick = nick.ok_or(ME::ParameterMissing)?;
+      let nick = nick.ok_or(ME::MustSpecifyNick)?;
       let logentry = LogEntry {
-        html: Html(format!("{} ({}) joined the game",
+        html: Html(format!("{} [{}] joined the game",
                            &nick, &account)),
       };
       let timezone = &arecord.timezone
