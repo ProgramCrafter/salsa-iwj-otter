@@ -483,6 +483,8 @@ keyops_local['lower'] = function (uo: UoRecord) {
     z_top,
     z_bot: undefined,
   });
+
+  // xxx actually implement this
 /*
   for (let pe of plan) {
     for (let ent of pe.array) {
