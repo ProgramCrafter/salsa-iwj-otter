@@ -690,7 +690,7 @@ mod reset_game {
       })?;
 
       setup_table(&ma, &table_spec)?; 
-   }
+    }
 
     let mut insns = vec![];
 
