@@ -544,6 +544,87 @@ fn read_spec<T: DeserializeOwned>(filename: &str, what: &str) -> T {
   })().with_context(|| format!("read {} {:?}", what, filename))?
 }
 
+#[throws(AE)]
+fn access_game(ma: &MainOpts, table_name: &String) -> ConnForGame {
+  let conn = connect(&ma)?;
+
+  #[derive(Debug)]
+  struct Wantup(bool);
+  impl Wantup {
+    fn u<T:Clone>(&mut self, rhs: &Option<T>) -> Option<T> {
+      if rhs.is_some() { self.0 = true }
+      rhs.clone()
+    }
+  }
+  let mut wantup = Wantup(false);
+  let mut ad = AccountDetails {
+    account:  ma.account.clone(),
+    nick:     wantup.u(&ma.nick),
+    timezone: wantup.u(&ma.timezone),
+    access:   wantup.u(&ma.access).map(Into::into),
+  };
+
+  fn is_no_account<T>(r: &Result<T, anyhow::Error>) -> bool {
+    if_chain! {
+      if let Err(e) = r;
+        if let Some(&ME::AccountNotFound(_)) = e.downcast_ref();
+      then { return true }
+      else { return false }
+    }
+  }
+  
+  let mut chan = ConnForGame {
+    conn,
+    game: ma.instance_name(table_name),
+    how: MgmtGameUpdateMode::Online,
+  };
+
+  {
+    let mut desc;
+    let mut resp;
+    if wantup.0 {
+      desc = "UpdateAccount";
+      resp = chan.conn.cmd(&MC::UpdateAccount(clone_via_serde(&ad)))
+        .map(|_|());
+    } else {
+      desc = "AlterGame--Noop";
+      resp = chan.alter_game(vec![MGI::Noop], None)
+        .map(|_|());
+    };
+    if is_no_account(&resp) {
+      ad.access.get_or_insert(Box::new(UrlOnStdout));
+      desc = "CreateAccount";
+      resp = chan.conn.cmd(&MC::CreateAccount(clone_via_serde(&ad)))
+        .map(|_|());
+    }
+    resp.with_context(||format!("response to {}", &desc))?;
+  }
+
+  let insns = vec![
+    MGI::JoinGame { details: MgmtPlayerDetails { nick: ma.nick.clone() } },
+  ];
+  let resp = chan.alter_game(insns, None)?;
+
+  match resp.as_slice() {
+    [MGR::JoinGame { nick, player, token }] => {
+      println!("joined game as player #{} {:?}",
+               player.0.get_idx_version().0,
+               &nick);
+      for l in &token.lines {
+        if l.contains(char::is_control) {
+          println!("Server token info contains control chars! {:?}",
+                   &l);
+        } else {
+          println!(" {}", &l);
+        }
+      }
+    }
+    x => throw!(anyhow!("unexpected response to JoinGame: {:?}", &x)),
+  }
+
+  chan
+}
+
 //---------- create-game ----------
 
 mod create_table {
@@ -689,83 +770,7 @@ mod join_game {
 
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-
-    let conn = connect(&ma)?;
-
-    #[derive(Debug)]
-    struct Wantup(bool);
-    impl Wantup {
-      fn u<T:Clone>(&mut self, rhs: &Option<T>) -> Option<T> {
-        if rhs.is_some() { self.0 = true }
-        rhs.clone()
-      }
-    }
-    let mut wantup = Wantup(false);
-    let mut ad = AccountDetails {
-      account:  ma.account.clone(),
-      nick:     wantup.u(&ma.nick),
-      timezone: wantup.u(&ma.timezone),
-      access:   wantup.u(&ma.access).map(Into::into),
-    };
-
-    fn is_no_account<T>(r: &Result<T, anyhow::Error>) -> bool {
-      if_chain! {
-        if let Err(e) = r;
-        if let Some(&ME::AccountNotFound(_)) = e.downcast_ref();
-        then { return true }
-        else { return false }
-      }
-    }
-
-    let mut chan = ConnForGame {
-      conn,
-      game: ma.instance_name(&args.table_name),
-      how: MgmtGameUpdateMode::Online,
-    };
-
-    {
-      let mut desc;
-      let mut resp;
-      if wantup.0 {
-        desc = "UpdateAccount";
-        resp = chan.conn.cmd(&MC::UpdateAccount(clone_via_serde(&ad)))
-          .map(|_|());
-      } else {
-        desc = "AlterGame--Noop";
-        resp = chan.alter_game(vec![MGI::Noop], None)
-          .map(|_|());
-      };
-      if is_no_account(&resp) {
-        ad.access.get_or_insert(Box::new(UrlOnStdout));
-        desc = "CreateAccount";
-        resp = chan.conn.cmd(&MC::CreateAccount(clone_via_serde(&ad)))
-          .map(|_|());
-      }
-      resp.with_context(||format!("response to {}", &desc))?;
-    }
-
-    let insns = vec![
-      MGI::JoinGame { details: MgmtPlayerDetails { nick: ma.nick.clone() } },
-    ];
-    let resp = chan.alter_game(insns, None)?;
-
-    match resp.as_slice() {
-      [MGR::JoinGame { nick, player, token }] => {
-        println!("joined game as player #{} {:?}",
-                 player.0.get_idx_version().0,
-                 &nick);
-        for l in &token.lines {
-          if l.contains(char::is_control) {
-            println!("Server token info contains control chars! {:?}",
-                     &l);
-          } else {
-            println!(" {}", &l);
-          }
-        }
-      }
-      x => throw!(anyhow!("unexpected response to JoinGame: {:?}", &x)),
-    }
-
+    let _chan = access_game(&ma, &args.table_name)?;
     Ok(())
   }
 
