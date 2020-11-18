@@ -83,9 +83,21 @@ struct MainOpts {
 
 impl MainOpts {
   pub fn instance_name(&self, table_name: &str) -> InstanceName {
-    InstanceName {
-      account: self.gaccount.clone(),
-      game: table_name.into(),
+    match table_name.strip_prefix(":") {
+      Some(rest) => {
+        InstanceName {
+          account: self.gaccount.clone(),
+          game: rest.into(),
+        }
+      }
+      None => {
+        table_name.parse().unwrap_or_else(|e|{
+          eprintln!(
+            "instance name must start with : or be valid full name: {}",
+            &e);
+          exit(EXIT_USAGE);
+        })
+      }
     }
   }
 }
