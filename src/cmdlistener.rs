@@ -109,7 +109,6 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         update_from(nick,                   &mut record.nick    );
         update_from(timezone,               &mut record.timezone);
 /*
- xxx
       if let Some(new_timezone) = timezone {
         let ipr = ig.iplayers.byid_mut(player)?;
        ipr.ipl.tz = tz_from_str(&new_timezone);
