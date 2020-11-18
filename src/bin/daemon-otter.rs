@@ -102,7 +102,7 @@ fn resource<'r>(leaf : CheckedResourceLeaf) -> impl Responder<'r> {
 
 #[throws(StartupError)]
 fn main() {
-  // xxx test suite for cli at least
+  // todo test suite for cli at least
   // todo test suite for web api
 
   let config_filename = env::args().nth(1);
