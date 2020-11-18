@@ -158,7 +158,7 @@ function json_report_error(error_for_json: Object) {
 function string_report_error(error_message: String) {
   let errornode = document.getElementById('error')!;
   errornode.textContent += '\nError (reloading may help?):' + error_message;
-  // xxx want to fix this for at least basic game reconfigs, auto-reload?
+  // todo want to fix this for at least basic game reconfigs, auto-reload?
 }
 
 function api(meth: string, data: Object) {
