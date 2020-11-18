@@ -86,7 +86,7 @@ pub use regex::Regex;
 pub use arrayvec::ArrayVec;
 
 pub use log::{trace,debug,info,warn,error};
-pub use log::log;
+pub use log::{log, log_enabled};
 
 pub use num_traits::{Bounded, FromPrimitive, ToPrimitive};
 

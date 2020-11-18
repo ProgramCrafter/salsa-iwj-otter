@@ -69,8 +69,6 @@ type PCH = PermissionCheckHow;
 
 #[throws(ME)]
 fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
-  info!("command connection {}: executing {:?}", &cs.desc, &cmd);
-
   match cmd {
     Noop => Fine,
 
@@ -715,10 +713,24 @@ impl CommandStream<'_> {
   pub fn mainloop(mut self) {
     loop {
       use MgmtChannelReadError::*;
-      let resp = match self.chan.read() {
-        Ok(cmd) => match execute(&mut self, cmd) {
-          Ok(resp) => resp,
-          Err(error) => MgmtResponse::Error { error },
+      let resp = match self.chan.read::<MgmtCommand>() {
+        Ok(cmd) => {
+          let cmd_s =
+            log_enabled!(log::Level::Info)
+            .as_some_from(|| format!("{:?}", &cmd))
+            .unwrap_or_default();
+          match execute(&mut self, cmd) {
+            Ok(resp) => {
+              info!("command connection {}: executed {:?}",
+                    &self.desc, cmd_s);
+              resp
+            },
+            Err(error) => {
+              info!("command connection {}: error {:?} from {:?}",
+                    &self.desc, &error, cmd_s);
+              MgmtResponse::Error { error }
+            },
+          }
         },
         Err(EOF) => break,
         Err(IO(e)) => Err(e).context("read command stream")?,
