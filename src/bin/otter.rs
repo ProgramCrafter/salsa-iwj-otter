@@ -676,6 +676,8 @@ mod reset_game {
     };
     let game : GameSpec = read_spec(&args.game_file, "game spec")?;
 
+    let mut insns = vec![];
+
     if let Some(table_file) = args.table_file {
       let table_spec = read_spec(&table_file, "table spec")?;
       let game = chan.game.clone();
@@ -689,10 +691,8 @@ mod reset_game {
         Err(e)
       })?;
 
-      setup_table(&ma, &table_spec)?; 
+      insns.extend(setup_table(&ma, &table_spec)?);
     }
-
-    let mut insns = vec![];
 
     for p in chan.get_pieces()? {
       insns.push(MgmtGameInstruction::DeletePiece(p.piece));

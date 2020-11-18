@@ -493,7 +493,6 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
     },
 
     ClearLog => {
-      let ag = AccountsGuard::lock();
       let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Super])?;
       ig.gs.log.clear();
       for ipr in ig.iplayers.values_mut() {
@@ -515,7 +514,6 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
     },
 
     SetACL { acl } => {
-      let ag = AccountsGuard::lock();
       let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Super])?;
       ig.acl = acl.into();
       let mut log = vec![ LogEntry {

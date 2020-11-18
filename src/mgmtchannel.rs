@@ -33,8 +33,8 @@ impl MgmtChannel {
   pub fn read<T:DeserializeOwned>(&mut self) -> T {
     use MgmtChannelReadError::*;
     let l = self.read.next().ok_or(EOF)??;
-    let v = serde_json::from_str(&l)
-      .map_err(|e| Parse(format!("{}", &e)))?;
+    let r = serde_json::from_str(&l);
+    let v = r.map_err(|e| Parse(format!("{}", &e)))?;
     v
   }
 
