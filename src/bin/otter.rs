@@ -837,11 +837,7 @@ mod library_add {
     const MAGIC : &str = "mgmt-library-load-marker";
 
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let mut chan = ConnForGame {
-      conn: access_account(&ma)?,
-      game: ma.instance_name(&args.table_name),
-      how: MgmtGameUpdateMode::Online,
-    };
+    let mut chan = access_game(&ma, &args.table_name)?;
     let pieces = chan.get_pieces()?;
     let markers = pieces.iter().filter(|p| p.itemname == MAGIC)
       .collect::<Vec<_>>();
