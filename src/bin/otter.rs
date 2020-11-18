@@ -360,6 +360,31 @@ impl DerefMut for ConnForGame {
 
 impl ConnForGame {
   #[throws(AE)]
+  fn join_game(&mut self, ma: &MainOpts) {
+    let insns = vec![
+      MGI::JoinGame { details: MgmtPlayerDetails { nick: ma.nick.clone() } },
+    ];
+    let resp = self.alter_game(insns, None)?;
+
+    match resp.as_slice() {
+      [MGR::JoinGame { nick, player, token }] => {
+        println!("joined game as player #{} {:?}",
+                 player.0.get_idx_version().0,
+                 &nick);
+        for l in &token.lines {
+          if l.contains(char::is_control) {
+            println!("Server token info contains control chars! {:?}",
+                     &l);
+          } else {
+            println!(" {}", &l);
+          }
+        }
+      }
+      x => throw!(anyhow!("unexpected response to JoinGame: {:?}", &x)),
+    }
+  }
+
+  #[throws(AE)]
   fn alter_game(&mut self, insns: Vec<MgmtGameInstruction>,
                 f: Option<&mut dyn FnMut(&MgmtGameResponse) -> Result<(),AE>>)
                 -> Vec<MgmtGameResponse> {
@@ -545,7 +570,7 @@ fn read_spec<T: DeserializeOwned>(filename: &str, what: &str) -> T {
 }
 
 #[throws(AE)]
-fn access_game(ma: &MainOpts, table_name: &String) -> ConnForGame {
+fn prep_access_game(ma: &MainOpts, table_name: &String) -> ConnForGame {
   let conn = connect(&ma)?;
 
   #[derive(Debug)]
@@ -600,74 +625,14 @@ fn access_game(ma: &MainOpts, table_name: &String) -> ConnForGame {
     resp.with_context(||format!("response to {}", &desc))?;
   }
 
-  let insns = vec![
-    MGI::JoinGame { details: MgmtPlayerDetails { nick: ma.nick.clone() } },
-  ];
-  let resp = chan.alter_game(insns, None)?;
-
-  match resp.as_slice() {
-    [MGR::JoinGame { nick, player, token }] => {
-      println!("joined game as player #{} {:?}",
-               player.0.get_idx_version().0,
-               &nick);
-      for l in &token.lines {
-        if l.contains(char::is_control) {
-          println!("Server token info contains control chars! {:?}",
-                   &l);
-        } else {
-          println!(" {}", &l);
-        }
-      }
-    }
-    x => throw!(anyhow!("unexpected response to JoinGame: {:?}", &x)),
-  }
-
   chan
 }
 
-//---------- create-game ----------
-
-mod create_table {
-  use super::*;
-
-  #[derive(Default,Debug)]
-  struct Args {
-    table_name: String,
-    file: String,
-  }
-
-  fn subargs(sa: &mut Args) -> ArgumentParser {
-    use argparse::*;
-    let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.table_name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
-    ap.refer(&mut sa.file).required()
-      .add_argument("TABLE-SPEC-TOML",Store,"table spec");
-    ap
-  }
-
-  #[throws(E)]
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
-    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let spec : TableSpec = read_spec(&args.file, "table spec")?;
-    let mut chan = connect(&ma)?;
-    let insns = setup_table(&ma, &spec)?;
-
-    chan.cmd(&MgmtCommand::CreateGame {
-      insns,
-      game: ma.instance_name(&args.table_name),
-    })?;
-
-    if ma.verbose >= 0 {
-      eprintln!("create-table successful.  game still needs setup.");
-    }
-  }
-
-  inventory::submit!{Subcommand(
-    "create-table",
-    "Create a new table",
-    call,
-  )}
+#[throws(AE)]
+fn access_game(ma: &MainOpts, table_name: &String) -> ConnForGame {
+  let mut chan = prep_access_game(ma, table_name)?;
+  chan.join_game(&ma)?;
+  chan
 }
 
 //---------- reset-game ----------
