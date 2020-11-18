@@ -70,7 +70,6 @@ use exits::*;
 #[derive(Debug)]
 struct MainOpts {
   account: AccountName,
-  gaccount: AccountName,
   nick: Option<String>,
   timezone: Option<String>,
   access: Option<AccessOpt>,
@@ -84,7 +83,7 @@ impl MainOpts {
     match table_name.strip_prefix(":") {
       Some(rest) => {
         InstanceName {
-          account: self.gaccount.clone(),
+          account: self.account.clone(),
           game: rest.into(),
         }
       }
@@ -189,7 +188,6 @@ fn main() {
   #[derive(Default,Debug)]
   struct RawMainArgs {
     account: Option<AccountName>,
-    gaccount: Option<AccountName>,
     socket_path: Option<String>,
     nick: Option<String>,
     timezone: Option<String>,
@@ -243,10 +241,6 @@ fn main() {
                       StoreConst(Some(PlayerAccessUnset.into())),
                       "do not show game access info (for testing only)");
 
-    let mut gaccount = ap.refer(&mut rma.gaccount);
-    gaccount.metavar("GAME-ACCOUNT").add_option(&["--game-name-account"],
-                     StoreOption,
-                     "manipulate game in GAME-ACCOUNT rather than ACCOUNT");
     ap.refer(&mut rma.socket_path)
       .add_option(&["--socket"], StoreOption,
                   "specify server socket path");
@@ -265,7 +259,7 @@ fn main() {
 
     ap
   }, &|RawMainArgs {
-    account, gaccount, nick, timezone,
+    account, nick, timezone,
     access, socket_path, verbose, config_filename, superuser,
     subcommand, subargs,
   }|{
@@ -278,7 +272,6 @@ fn main() {
         subaccount: "".into(),
       })
     })?;
-    let gaccount = gaccount.unwrap_or_else(|| account.clone());
     let config_filename = config_filename.or_else(||{
       match match env::current_exe()
         .map(|p| p.to_str().map(|s| s.to_string()))
@@ -316,7 +309,6 @@ fn main() {
     })?;
     Ok((subcommand, subargs, MainOpts {
       account,
-      gaccount,
       access,
       nick,
       timezone,
