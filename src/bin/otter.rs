@@ -330,6 +330,19 @@ impl Conn {
     };
     resp
   }
+
+  #[throws(AE)]
+  fn list_items(&mut self, pat: &shapelib::ItemSpec)
+                -> Vec<shapelib::ItemEnquiryData> {
+    let cmd = MgmtCommand::LibraryListByGlob { glob: pat.clone() };
+    let mut items = match self.cmd(&cmd)? {
+      MgmtResponse::LibraryItems(items) => items,
+      wat => Err(anyhow!("unexpected LibraryListByGlob response: {:?}",
+                         &wat))?,
+    };
+    items.sort();
+    items
+  }
 }
 
 struct ConnForGame {
@@ -405,19 +418,6 @@ impl ConnForGame {
       },
       wat => Err(anyhow!("ListPieces => {:?}", &wat))?,
     }
-  }
-
-  #[throws(AE)]
-  fn list_items(&mut self, pat: &shapelib::ItemSpec)
-                -> Vec<shapelib::ItemEnquiryData> {
-    let cmd = MgmtCommand::LibraryListByGlob { glob: pat.clone() };
-    let mut items = match self.cmd(&cmd)? {
-      MgmtResponse::LibraryItems(items) => items,
-      wat => Err(anyhow!("unexpected LibraryListByGlob response: {:?}",
-                         &wat))?,
-    };
-    items.sort();
-    items
   }
 }
 
@@ -784,24 +784,20 @@ mod join_game {
 //---------- library-list ----------
 
 #[derive(Debug)]
-struct TableLibGlobArgs {
-  table_name: String,
+struct LibGlobArgs {
   pat: shapelib::ItemSpec,
 }
 
-impl Default for TableLibGlobArgs { fn default() -> Self { Self {
-  table_name: default(),
+impl Default for LibGlobArgs { fn default() -> Self { Self {
   pat: shapelib::ItemSpec { lib: default(), item: default() },
 } } }
 
-impl TableLibGlobArgs {
+impl LibGlobArgs {
   fn add_arguments<'ap, 'tlg : 'ap>(
     &'tlg mut self,
     ap: &'_ mut ArgumentParser<'ap>
   ) {
     use argparse::*;
-    ap.refer(&mut self.table_name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
     ap.refer(&mut self.pat.lib).required()
       .add_argument("LIB-NAME",Store,"library name");
     ap.refer(&mut self.pat.item).required()
@@ -812,7 +808,7 @@ impl TableLibGlobArgs {
 mod library_list {
   use super::*;
 
-  type Args = TableLibGlobArgs;
+  type Args = LibGlobArgs;
 
   fn subargs(sa: &mut Args) -> ArgumentParser {
     use argparse::*;
@@ -823,11 +819,7 @@ mod library_list {
 
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let mut chan = ConnForGame {
-      conn: connect(&ma)?,
-      game: ma.instance_name(&args.table_name),
-      how: MgmtGameUpdateMode::Bulk,
-    };
+    let mut chan = connect(&ma)?;
 
     let items = chan.list_items(&args.pat)?;
     for it in &items {
@@ -851,7 +843,8 @@ mod library_add {
 
   #[derive(Default,Debug)]
   struct Args {
-    tlg: TableLibGlobArgs,
+    table_name: String,
+    tlg: LibGlobArgs,
     adjust_markers: Option<bool>,
     incremental: bool,
   }
@@ -863,6 +856,8 @@ mod library_add {
   fn subargs(sa: &mut Args) -> ArgumentParser {
     use argparse::*;
     let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.table_name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
     ap.refer(&mut sa.adjust_markers)
       .add_option(&["--no-adjust-markers"],StoreConst(Some(false)),
                   "do not adjust the number of insertion markers, just fail")
@@ -882,7 +877,7 @@ mod library_add {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ConnForGame {
       conn: connect(&ma)?,
-      game: ma.instance_name(&args.tlg.table_name),
+      game: ma.instance_name(&args.table_name),
       how: MgmtGameUpdateMode::Online,
     };
     let pieces = chan.get_pieces()?;
