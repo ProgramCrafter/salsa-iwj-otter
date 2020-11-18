@@ -141,6 +141,12 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine
     },
 
+    CheckAccount() => {
+      let ag = AccountsGuard::lock();
+      let _ok = ag.lookup(&cs.current_account()?.notional_account)?;
+      Fine
+    }
+
     CreateGame { game, insns } => {
       let mut ag = AccountsGuard::lock();
       let mut games = games_lock();
