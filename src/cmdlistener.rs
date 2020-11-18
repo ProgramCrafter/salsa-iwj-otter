@@ -141,7 +141,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine
     },
 
-    CheckAccount() => {
+    CheckAccount => {
       let ag = AccountsGuard::lock();
       let _ok = ag.lookup(&cs.current_account()?.notional_account)?;
       Fine

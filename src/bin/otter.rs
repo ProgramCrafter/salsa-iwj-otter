@@ -391,18 +391,15 @@ impl ConnForGame {
       let mut resp;
       if wantup.0 {
         desc = "UpdateAccount";
-        resp = self.conn.cmd(&MC::UpdateAccount(clone_via_serde(&ad)))
-          .map(|_|());
+        resp = self.conn.cmd(&MC::UpdateAccount(clone_via_serde(&ad)));
       } else {
-        desc = "AlterGame--Noop";
-        resp = self.alter_game(vec![MGI::Noop], None)
-          .map(|_|());
+        desc = "CheckAccount";
+        resp = self.conn.cmd(&MC::CheckAccount);
       };
       if is_no_account(&resp) {
         ad.access.get_or_insert(Box::new(UrlOnStdout));
         desc = "CreateAccount";
-        resp = self.conn.cmd(&MC::CreateAccount(clone_via_serde(&ad)))
-          .map(|_|());
+        resp = self.conn.cmd(&MC::CreateAccount(clone_via_serde(&ad)));
       }
       resp.with_context(||format!("response to {}", &desc))?;
     }

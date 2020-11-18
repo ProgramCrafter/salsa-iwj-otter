@@ -14,7 +14,7 @@ pub enum MgmtCommand {
   DeleteAccount(AccountName),
 
   SelectAccount(AccountName), // success does not mean account exists
-  CheckAccount(), // success *does* mean account exists and we have access
+  CheckAccount, // success *does* mean account exists and we have access
 
   CreateGame {
     game: InstanceName,
