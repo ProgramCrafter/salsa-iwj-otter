@@ -78,6 +78,7 @@ struct MainOpts {
   access: Option<AccessOpt>,
   socket_path: String,
   verbose: i32,
+  superuser: bool,
 }
 
 impl MainOpts {
@@ -185,6 +186,7 @@ fn main() {
     access: Option<AccessOpt>,
     verbose: i32,
     config_filename: Option<String>,
+    superuser: bool,
     subcommand: String,
     subargs: Vec<String>,
   };
@@ -243,10 +245,15 @@ fn main() {
                        "set verbosity to error messages only");
     verbose.add_option(&["-v","--verbose"], IncrBy(1),
        "increase verbosity (default is short progress messages)");
+
+    ap.refer(&mut rma.superuser)
+      .add_option(&["--super"], StoreTrue,
+                  "enable game server superuser access");
+
     ap
   }, &|RawMainArgs {
     account, gaccount, nick, timezone,
-    access, socket_path, verbose, config_filename,
+    access, socket_path, verbose, config_filename, superuser,
     subcommand, subargs,
   }|{
     let account : AccountName = account.map(Ok::<_,APE>).unwrap_or_else(||{
@@ -275,6 +282,7 @@ fn main() {
       timezone,
       socket_path,
       verbose,
+      superuser,
     }))
   }, Some(&|w|{
     writeln!(w, "\nSubcommands:")?;
@@ -498,7 +506,10 @@ fn connect(ma: &MainOpts) -> Conn {
     .with_context(||ma.socket_path.clone()).context("connect to server")?; 
   let chan = MgmtChannel::new(unix)?;
   let mut chan = Conn { chan };
-  chan.cmd(&MgmtCommand::SelectAccount(ma.account.clone()))?;
+  if ma.superuser {
+    chan.cmd(&MC::SetSuperuser(true))?;
+  }
+  chan.cmd(&MC::SelectAccount(ma.account.clone()))?;
   chan
 }
 
