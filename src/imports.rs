@@ -131,6 +131,7 @@ pub use crate::tz::*;
 pub use crate::config::*;
 pub use crate::accounts::*;
 pub use crate::accounts::loaded_acl::{self,LoadedAcl,EffectiveACL,PermSet};
+pub use crate::toml_de;
 
 pub use zcoord::{self, ZCoord};
 
