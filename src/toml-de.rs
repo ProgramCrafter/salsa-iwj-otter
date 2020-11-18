@@ -183,6 +183,6 @@ pub fn from_value<'de, T: Deserialize<'de>> (tv: &'de toml::Value) -> T
 pub fn from_str<T: DeserializeOwned> (s: &str) -> T
 {
   let tv : toml::Value = s.parse().map_err(Error::TomlSyntax)?;
-  dbg!(&tv);
+//  dbg!(&tv);
   from_value(&tv)?
 }
