@@ -23,7 +23,7 @@ pub enum Error {
   #[error("deserialize failed (improper TOML structure?): {0}")]
   Custom(Box<str>),
   #[error("config file has invalid TOML syntax: {0}")]
-  TomlSyntax(#[from] toml::de::Error),
+  TomlSyntax(toml::de::Error),
 }
 
 impl serde::de::Error for Error {
@@ -150,20 +150,21 @@ impl<'de> Deserializer<'de> for TomlDe<'de> {
   }
   #[throws(Error)]
   fn deserialize_enum<V: Visitor<'de>>
-    (self, _:&str, _:&[&str], v: V) -> V::Value
+    (self, _:&str, _:&[&str], vi: V) -> V::Value
   {
     type TV = toml::Value;
     match &self.0 {
-      TV::String(s) => return v.visit_enum(s.as_str().into_deserializer()),
+      TV::String(s) => return vi.visit_enum(s.as_str().into_deserializer())?,
       TV::Table(s) => if_chain! {
+        let mut s = s.iter();
         if let Some((k, v)) = s.next();
         if let None = s.next();
-        then { return v.visit_enum(EA { k, v })? }
+        then { return vi.visit_enum(EA { k, v }) }
       },
       _ => {},
     }
     // hopefully the format will figure it out, or produce an error
-    visit(v, &self.0)?
+    visit(vi, &self.0)?
   }
   forward_to_deserialize_any! {
     bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
@@ -181,7 +182,7 @@ pub fn from_value<'de, T: Deserialize<'de>> (tv: &'de toml::Value) -> T
 #[throws(Error)]
 pub fn from_str<T: DeserializeOwned> (s: &str) -> T
 {
-  let tv : toml::Value = s.parse()?;
+  let tv : toml::Value = s.parse().map_err(Error::TomlSyntax)?;
   dbg!(&tv);
   from_value(&tv)?
 }
