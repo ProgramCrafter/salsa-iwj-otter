@@ -616,14 +616,19 @@ fn read_spec<T: DeserializeOwned>(filename: &str, what: &str) -> T {
 }
 
 #[throws(AE)]
+fn access_account(ma: &MainOpts) -> Conn {
+  let mut conn = connect(&ma)?;
+  conn.prep_access_account(ma)?;
+  conn
+}
+
+#[throws(AE)]
 fn access_game(ma: &MainOpts, table_name: &String) -> ConnForGame {
-  let conn = connect(&ma)?;
   let mut chan = ConnForGame {
-    conn,
+    conn: access_account(ma)?,
     game: ma.instance_name(table_name),
     how: MgmtGameUpdateMode::Online,
   };
-  chan.prep_access_account(ma)?;
   chan.join_game(&ma)?;
   chan
 }
