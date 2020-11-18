@@ -360,6 +360,55 @@ impl DerefMut for ConnForGame {
 
 impl ConnForGame {
   #[throws(AE)]
+  fn prep_access_game(&mut self, ma: &MainOpts) {
+    #[derive(Debug)]
+    struct Wantup(bool);
+    impl Wantup {
+      fn u<T:Clone>(&mut self, rhs: &Option<T>) -> Option<T> {
+        if rhs.is_some() { self.0 = true }
+        rhs.clone()
+      }
+    }
+    let mut wantup = Wantup(false);
+    let mut ad = AccountDetails {
+      account:  ma.account.clone(),
+      nick:     wantup.u(&ma.nick),
+      timezone: wantup.u(&ma.timezone),
+      access:   wantup.u(&ma.access).map(Into::into),
+    };
+
+    fn is_no_account<T>(r: &Result<T, anyhow::Error>) -> bool {
+      if_chain! {
+        if let Err(e) = r;
+          if let Some(&ME::AccountNotFound(_)) = e.downcast_ref();
+        then { return true }
+        else { return false }
+      }
+    }
+
+    {
+      let mut desc;
+      let mut resp;
+      if wantup.0 {
+        desc = "UpdateAccount";
+        resp = self.conn.cmd(&MC::UpdateAccount(clone_via_serde(&ad)))
+          .map(|_|());
+      } else {
+        desc = "AlterGame--Noop";
+        resp = self.alter_game(vec![MGI::Noop], None)
+          .map(|_|());
+      };
+      if is_no_account(&resp) {
+        ad.access.get_or_insert(Box::new(UrlOnStdout));
+        desc = "CreateAccount";
+        resp = self.conn.cmd(&MC::CreateAccount(clone_via_serde(&ad)))
+          .map(|_|());
+      }
+      resp.with_context(||format!("response to {}", &desc))?;
+    }
+  }
+
+  #[throws(AE)]
   fn join_game(&mut self, ma: &MainOpts) {
     let insns = vec![
       MGI::JoinGame { details: MgmtPlayerDetails { nick: ma.nick.clone() } },
@@ -570,67 +619,14 @@ fn read_spec<T: DeserializeOwned>(filename: &str, what: &str) -> T {
 }
 
 #[throws(AE)]
-fn prep_access_game(ma: &MainOpts, table_name: &String) -> ConnForGame {
+fn access_game(ma: &MainOpts, table_name: &String) -> ConnForGame {
   let conn = connect(&ma)?;
-
-  #[derive(Debug)]
-  struct Wantup(bool);
-  impl Wantup {
-    fn u<T:Clone>(&mut self, rhs: &Option<T>) -> Option<T> {
-      if rhs.is_some() { self.0 = true }
-      rhs.clone()
-    }
-  }
-  let mut wantup = Wantup(false);
-  let mut ad = AccountDetails {
-    account:  ma.account.clone(),
-    nick:     wantup.u(&ma.nick),
-    timezone: wantup.u(&ma.timezone),
-    access:   wantup.u(&ma.access).map(Into::into),
-  };
-
-  fn is_no_account<T>(r: &Result<T, anyhow::Error>) -> bool {
-    if_chain! {
-      if let Err(e) = r;
-        if let Some(&ME::AccountNotFound(_)) = e.downcast_ref();
-      then { return true }
-      else { return false }
-    }
-  }
-  
   let mut chan = ConnForGame {
     conn,
     game: ma.instance_name(table_name),
     how: MgmtGameUpdateMode::Online,
   };
-
-  {
-    let mut desc;
-    let mut resp;
-    if wantup.0 {
-      desc = "UpdateAccount";
-      resp = chan.conn.cmd(&MC::UpdateAccount(clone_via_serde(&ad)))
-        .map(|_|());
-    } else {
-      desc = "AlterGame--Noop";
-      resp = chan.alter_game(vec![MGI::Noop], None)
-        .map(|_|());
-    };
-    if is_no_account(&resp) {
-      ad.access.get_or_insert(Box::new(UrlOnStdout));
-      desc = "CreateAccount";
-      resp = chan.conn.cmd(&MC::CreateAccount(clone_via_serde(&ad)))
-        .map(|_|());
-    }
-    resp.with_context(||format!("response to {}", &desc))?;
-  }
-
-  chan
-}
-
-#[throws(AE)]
-fn access_game(ma: &MainOpts, table_name: &String) -> ConnForGame {
-  let mut chan = prep_access_game(ma, table_name)?;
+  chan.prep_access_game(ma)?;
   chan.join_game(&ma)?;
   chan
 }
