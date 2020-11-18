@@ -332,35 +332,7 @@ impl Conn {
   }
 
   #[throws(AE)]
-  fn list_items(&mut self, pat: &shapelib::ItemSpec)
-                -> Vec<shapelib::ItemEnquiryData> {
-    let cmd = MgmtCommand::LibraryListByGlob { glob: pat.clone() };
-    let mut items = match self.cmd(&cmd)? {
-      MgmtResponse::LibraryItems(items) => items,
-      wat => Err(anyhow!("unexpected LibraryListByGlob response: {:?}",
-                         &wat))?,
-    };
-    items.sort();
-    items
-  }
-}
-
-struct ConnForGame {
-  pub conn: Conn,
-  pub game: InstanceName,
-  pub how: MgmtGameUpdateMode,
-}
-impl Deref for ConnForGame {
-  type Target = Conn;
-  fn deref(&self) -> &Conn { &self.conn }
-}
-impl DerefMut for ConnForGame {
-  fn deref_mut(&mut self) -> &mut Conn { &mut self.conn }
-}
-
-impl ConnForGame {
-  #[throws(AE)]
-  fn prep_access_game(&mut self, ma: &MainOpts) {
+  fn prep_access_account(&mut self, ma: &MainOpts) {
     #[derive(Debug)]
     struct Wantup(bool);
     impl Wantup {
@@ -391,20 +363,48 @@ impl ConnForGame {
       let mut resp;
       if wantup.0 {
         desc = "UpdateAccount";
-        resp = self.conn.cmd(&MC::UpdateAccount(clone_via_serde(&ad)));
+        resp = self.cmd(&MC::UpdateAccount(clone_via_serde(&ad)));
       } else {
         desc = "CheckAccount";
-        resp = self.conn.cmd(&MC::CheckAccount);
+        resp = self.cmd(&MC::CheckAccount);
       };
       if is_no_account(&resp) {
         ad.access.get_or_insert(Box::new(UrlOnStdout));
         desc = "CreateAccount";
-        resp = self.conn.cmd(&MC::CreateAccount(clone_via_serde(&ad)));
+        resp = self.cmd(&MC::CreateAccount(clone_via_serde(&ad)));
       }
       resp.with_context(||format!("response to {}", &desc))?;
     }
   }
 
+  #[throws(AE)]
+  fn list_items(&mut self, pat: &shapelib::ItemSpec)
+                -> Vec<shapelib::ItemEnquiryData> {
+    let cmd = MgmtCommand::LibraryListByGlob { glob: pat.clone() };
+    let mut items = match self.cmd(&cmd)? {
+      MgmtResponse::LibraryItems(items) => items,
+      wat => Err(anyhow!("unexpected LibraryListByGlob response: {:?}",
+                         &wat))?,
+    };
+    items.sort();
+    items
+  }
+}
+
+struct ConnForGame {
+  pub conn: Conn,
+  pub game: InstanceName,
+  pub how: MgmtGameUpdateMode,
+}
+impl Deref for ConnForGame {
+  type Target = Conn;
+  fn deref(&self) -> &Conn { &self.conn }
+}
+impl DerefMut for ConnForGame {
+  fn deref_mut(&mut self) -> &mut Conn { &mut self.conn }
+}
+
+impl ConnForGame {
   #[throws(AE)]
   fn join_game(&mut self, ma: &MainOpts) {
     let insns = vec![
@@ -623,7 +623,7 @@ fn access_game(ma: &MainOpts, table_name: &String) -> ConnForGame {
     game: ma.instance_name(table_name),
     how: MgmtGameUpdateMode::Online,
   };
-  chan.prep_access_game(ma)?;
+  chan.prep_access_account(ma)?;
   chan.join_game(&ma)?;
   chan
 }
