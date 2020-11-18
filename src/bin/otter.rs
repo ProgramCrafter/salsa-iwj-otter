@@ -638,6 +638,7 @@ mod reset_game {
     table_name: String,
     game_file: String,
     table_file: Option<String>,
+    join: bool,
   }
 
   fn subargs(sa: &mut Args) -> ArgumentParser {
@@ -646,6 +647,11 @@ mod reset_game {
     ap.refer(&mut sa.table_file).metavar("TABLE-SPEC-TOML")
       .add_option(&["--reset-table"],StoreOption,
                   "reset the players and access too");
+    ap.refer(&mut sa.join)
+      .add_option(&["--join"],StoreTrue,
+                    "join the game (default)")
+      .add_option(&["--no-join"],StoreFalse,
+                    "do not join the game");
     ap.refer(&mut sa.table_name).required()
       .add_argument("TABLE-NAME",Store,"table name");
     ap.refer(&mut sa.game_file).required()
