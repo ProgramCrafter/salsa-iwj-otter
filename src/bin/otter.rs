@@ -73,8 +73,6 @@ struct MainOpts {
   gaccount: AccountName,
   nick: Option<String>,
   timezone: Option<String>,
-  // xxx default to UrlOnStdout
-  // xxx options for others
   access: Option<AccessOpt>,
   socket_path: String,
   verbose: i32,
@@ -239,8 +237,11 @@ fn main() {
       MapStore(|s| Ok(Some(
         FixedToken { token: RawToken(s.to_string()) }.into()
       ))),
-      "use fixed game access token TOKEN (for administrators only)r"
+ "use fixed game access token TOKEN (for administrators, with --super, only)"
     );
+    access.add_option(&["--no-access-token"],
+                      StoreConst(Some(PlayerAccessUnset.into())),
+                      "do not show game access info (for testing only)");
 
     let mut gaccount = ap.refer(&mut rma.gaccount);
     gaccount.metavar("GAME-ACCOUNT").add_option(&["--game-name-account"],
