@@ -9,10 +9,12 @@ timezone = "Europe/London"
 [[players]]
 account_glob = "server:*"
 
-# USER=rustcargo  target/debug/otter --config ~ian/Rustup/Game/server/server.toml --account server: reset --reset-table ~ian/Rustup/Game/server/demo/test.table.toml dummy  ~ian/Rustup/Game/server/demo/test.game.toml
+# USER=rustcargo  target/debug/otter --config ~ian/Rustup/Game/server/server.toml --account server: reset --reset-table ~ian/Rustup/Game/server/demo/test.table.toml server::dummy  ~ian/Rustup/Game/server/demo/test.game.toml
 
-# USER=rustcargo target/debug/otter --config ~ian/Rustup/Game/server/server.toml --super --fixed-token kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe --account server:alice --game-name-account server: join-game dummy
+# USER=rustcargo target/debug/otter --config ~ian/Rustup/Game/server/server.toml --super --fixed-token kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe --account server:alice join-game server::dummy
 
 # USER=rustcargo target/debug/otter --config ~ian/Rustup/Game/server/server.toml --account server: library-list wikimedia \*
 
-# USER=rustcargo target/debug/otter --config ~ian/Rustup/Game/server/server.toml --account server: library-add dummy wikimedia chess-\*
+# USER=rustcargo target/debug/otter --config ~ian/Rustup/Game/server/server.toml --account server: library-add server::dummy wikimedia chess-\*
+
+# USER=rustcargo target/debug/otter --config ~ian/Rustup/Game/server/server.toml --account server:carol join-game server::dummy
