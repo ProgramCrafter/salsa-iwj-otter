@@ -624,13 +624,11 @@ fn access_account(ma: &MainOpts) -> Conn {
 
 #[throws(AE)]
 fn access_game(ma: &MainOpts, table_name: &String) -> ConnForGame {
-  let mut chan = ConnForGame {
+  ConnForGame {
     conn: access_account(ma)?,
     game: ma.instance_name(table_name),
     how: MgmtGameUpdateMode::Online,
-  };
-  chan.join_game(&ma)?;
-  chan
+  }
 }
 
 //---------- reset-game ----------
@@ -733,7 +731,8 @@ mod join_game {
 
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let _chan = access_game(&ma, &args.table_name)?;
+    let mut chan = access_game(&ma, &args.table_name)?;
+    chan.join_game(&ma)?;
     Ok(())
   }
 
