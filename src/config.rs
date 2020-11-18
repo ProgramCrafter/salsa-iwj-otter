@@ -4,7 +4,7 @@
 
 use crate::imports::*;
 
-const DEFAULT_CONFIG_FILENAME : &str = "server.toml";
+pub const DEFAULT_CONFIG_FILENAME : &str = "server.toml";
 
 const DEFAULT_SAVE_DIRECTORY : &str = "save";
 const DEFAULT_COMMAND_SOCKET : &str = "command.socket"; // in save dir

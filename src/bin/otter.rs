@@ -279,6 +279,33 @@ fn main() {
       })
     })?;
     let gaccount = gaccount.unwrap_or_else(|| account.clone());
+    let config_filename = config_filename.or_else(||{
+      match match env::current_exe()
+        .map(|p| p.to_str().map(|s| s.to_string()))
+      {
+        Err(e) => Err(format!(
+          "could not find current executable ({})", &e
+        )),
+        Ok(None) => Err(format!(
+          "current executable has non-UTF8 filename!"
+        )),
+        Ok(Some(basedir)) if basedir.rsplit('/').nth(1) == Some("bin") => Ok(
+          format!("{}/etc/{}", basedir, DEFAULT_CONFIG_FILENAME)
+        ),
+        Ok(_) => Err(format!(
+          "current executable is not in a directory called bin"
+        )),
+      } {
+        Err(whynot) => {
+          if verbose > 1 {
+            eprintln!("{}: looking for {} in current directory",
+                      &whynot, DEFAULT_CONFIG_FILENAME);
+          }
+          None
+        },
+        Ok(f) => Some(f),
+      }
+    });
     let config = Thunk::new(||{
       ServerConfig::read(config_filename.as_ref().map(String::as_str))
         .context("read config file")?;
