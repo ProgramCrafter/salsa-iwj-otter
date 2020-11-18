@@ -661,7 +661,7 @@ mod reset_game {
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ConnForGame {
-      conn: connect(&ma)?,
+      conn: access_account(&ma)?,
       game: ma.instance_name(&args.table_name),
       how: MgmtGameUpdateMode::Bulk,
     };
@@ -839,7 +839,7 @@ mod library_add {
 
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ConnForGame {
-      conn: connect(&ma)?,
+      conn: access_account(&ma)?,
       game: ma.instance_name(&args.table_name),
       how: MgmtGameUpdateMode::Online,
     };
