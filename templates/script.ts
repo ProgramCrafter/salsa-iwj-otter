@@ -384,11 +384,11 @@ keyops_local['lower'] = function (uo: UoRecord) {
   // B
   //       bottommost unpinned non-target
   //        if that is below topmost unpinned target
-  //            <- tomove_unpinned: insert targets from * here       Q ->
-  //            <- tomove_misstacked: insert non-targets from * here Q->
+  //            <- tomove_unpinned: insert targets from * here        Q ->
+  //            <- tomove_misstacked: insert non-targets from * here  Q->
   // A
   // A     pinned things (nomove_pinned)
-  //            <- tomove_pinned: insert all pinned targets here P ->
+  //            <- tomove_pinned: insert all pinned targets here      P ->
   //
   // When wresting, treat all targets as pinned.
 
@@ -472,64 +472,55 @@ function lower_pieces(targets_todo: LowerTodoList):
       // rather a lack of things we are not adjusting!
       wasm_bindgen.def_zcoord();
 
-  type ArrayEntry = {
-    content: Entry[],
-    why: string,
-  };
   type PlanEntry = {
-    arrays: ArrayEntry[],
-    z_top: ZCoord | undefined,
-    z_bot: ZCoord | undefined,
+    content: Entry[],
+    z_top: ZCoord | null,
+    z_bot: ZCoord | null,
   };
+
   let plan : PlanEntry[] = [];
 
-  if (nomove_pinned.length > 0) {
-    let z_bot : ZCoord = nomove_pinned[nomove_pinned.length-1].p.z;
-    let pe : PlanEntry = {
-      arrays: [{ content: tomove_unpinned,
-		 why: "to move, unpinned" },
-	       { content: tomove_misstacked,
-		 why: "to move, mis-stacked" },
-	      ],
-      z_top,
-      z_bot,
-    };
-    z_top = nomove_pinned[0].p.z;
-    plan.push(pe);
-  }
+  let partQ = tomove_unpinned.concat(tomove_misstacked);
+  let partP = tomove_pinned;
 
-  plan.push({
-    arrays: [{ content: tomove_pinned,
-	       why: "to move, pinned" }
-	    ],
-    z_top,
-    z_bot: undefined,
-  });
+  if (nomove_pinned.length == 0) {
+    plan.push({
+      content: partQ.concat(partP),
+      z_top,
+      z_bot : null,
+    });
+  } else {
+    plan.push({
+      content: partQ,
+      z_top,
+      z_bot: nomove_pinned[nomove_pinned.length-1].p.z,
+    }, {
+      content: partP,
+      z_top: nomove_pinned[0].p.z,
+      z_bot: null,
+    });
+  }
 
   for (const pe of plan) {
-    for (const ae of pe.arrays) {
-      for (const e of ae.content) {
-	if (e.p.held != null && e.p.held != us) {
-	  return "lowering would disturb a piece held by another player";
-	}
+    for (const e of pe.content) {
+      if (e.p.held != null && e.p.held != us) {
+	return "lowering would disturb a piece held by another player";
       }
     }
   }
 
+  // xxx this does not seem to actually lower it even if we then reload
+  // xxx we don't actually change our own stacking order by reordering
+  //     the elements
+
   z_top = null;
-  for (let pe of plan) {
+  for (const pe of plan) {
     if (pe.z_top != null) z_top = pe.z_top;
     let z_bot = pe.z_bot;
-    let count = 0;
-    for (let ae of pe.arrays) {
-      count += ae.content.length;
-    }
-    let zrange = wasm_bindgen.range(z_bot, z_top, count);
-    for (let ae of pe.arrays) {
-      for (let e of ae.content) {
-	let z = zrange.next();
-	api_piece(api, "setz", e.piece, e.p, { z });
-      }
+    let zrange = wasm_bindgen.range(z_bot, z_top, pe.content.length);
+    for (const e of pe.content) {
+      let z = zrange.next();
+      api_piece(api, "setz", e.piece, e.p, { z });
     }
   }
   return null;
