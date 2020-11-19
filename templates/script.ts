@@ -352,6 +352,14 @@ function some_keydown(e: KeyboardEvent) {
   }
 }
 
+type LowerTodoItem = {
+  piece: PieceId,
+  p: PieceInfo,
+  pinned: boolean,
+};
+
+type LowerTodoList = { [piece: string]: LowerTodoItem };
+
 keyops_local['lower'] = function (uo: UoRecord) {
   // This is a bit subtle.  We don't want to lower below pinned pieces
   // (unless we are pinned too, or the user is wresting).  But maybe
@@ -388,12 +396,7 @@ keyops_local['lower'] = function (uo: UoRecord) {
     return wresting || p.pinned;;
   }
 
-  type Todo = {
-    piece: PieceId,
-    p: PieceInfo,
-    pinned: boolean,
-  };
-  let targets_todo = Object.create(null);
+  let targets_todo : LowerTodoList = Object.create(null);
   let n_targets_todo_unpinned = 0;
 
   for (let piece of uo.targets!) {
@@ -402,7 +405,15 @@ keyops_local['lower'] = function (uo: UoRecord) {
     targets_todo[piece] = { p, piece, pinned, };
     if (!pinned) { n_targets_todo_unpinned++; }
   }
+  let problem = lower_pieces(targets_todo);
+  if (problem !== null) {
+    add_log_message('Cannot lower: ' + problem);
+  }
+}
 
+function lower_pieces(targets_todo: LowerTodoList):
+ string | null
+{
   type Entry = {
     piece: PieceId,
     p: PieceInfo,
@@ -413,6 +424,12 @@ keyops_local['lower'] = function (uo: UoRecord) {
   let nomove_pinned       : Entry[] = [];
   let tomove_pinned       : Entry[] = [];
   let bottommost_unpinned : Entry | null = null;
+
+  let n_targets_todo_unpinned = 0;
+  for (const piece of Object.keys(targets_todo)) {
+    let p = targets_todo[piece];
+    if (!p.pinned) n_targets_todo_unpinned++;
+  }
 
   let walk = pieces_marker;
   for (;;) { // starting at the bottom of the stack order
@@ -449,28 +466,31 @@ keyops_local['lower'] = function (uo: UoRecord) {
       tomove_misstacked.push({ p, piece });
   }
 
-  let q_count = tomove_unpinned.length + tomove_misstacked.length;
   let z_top =
       bottommost_unpinned ? bottommost_unpinned.p.z :
       walk.dataset.piece != null ? pieces[walk.dataset.piece!].z :
       // rather a lack of things we are not adjusting!
-      q_count;
+      wasm_bindgen.def_zcoord();
 
   type ArrayEntry = {
     content: Entry[],
     why: string,
   };
   type PlanEntry = {
-    arrays: Entry[],
-    z_top: number | undefined,
-    z_bot: number | undefined,
+    arrays: ArrayEntry[],
+    z_top: ZCoord | undefined,
+    z_bot: ZCoord | undefined,
   };
-  let plan = [];
+  let plan : PlanEntry[] = [];
 
   if (nomove_pinned.length > 0) {
-    let z_bot = nomove_pinned[nomove_pinned.length-1].p.z;
-    let pe = {
-      arrays: [tomove_unpinned, tomove_misstacked],
+    let z_bot : ZCoord = nomove_pinned[nomove_pinned.length-1].p.z;
+    let pe : PlanEntry = {
+      arrays: [{ content: tomove_unpinned,
+		 why: "to move, unpinned" },
+	       { content: tomove_misstacked,
+		 why: "to move, mis-stacked" },
+	      ],
       z_top,
       z_bot,
     };
@@ -479,56 +499,40 @@ keyops_local['lower'] = function (uo: UoRecord) {
   }
 
   plan.push({
-    arrays: [tomove_pinned],
+    arrays: [{ content: tomove_pinned,
+	       why: "to move, pinned" }
+	    ],
     z_top,
     z_bot: undefined,
   });
 
-  // xxx actually implement this
-/*
-  for (let pe of plan) {
-    for (let ent of pe.array) {
-      if (ent.held != null && ent.held != us) {
-	
+  for (const pe of plan) {
+    for (const ae of pe.arrays) {
+      for (const e of ae.content) {
+	if (e.p.held != null && e.p.held != us) {
+	  return "lowering would disturb a piece held by another player";
+	}
+      }
+    }
+  }
 
-  z_top = undef;
+  z_top = null;
   for (let pe of plan) {
     if (pe.z_top != null) z_top = pe.z_top;
-    
-    
-    for (let 
-
-	[tomove_unpinned
-	
-
-    if (z_step > 1e-10) {
-      plan.push(tomove_unpinned + tomove_misstacked
-      // erk!  need to renumber
-      
-
-  let z_bot =
-      
-      
-
-      ||
-      (
-	piece: walk.dataset.piece,
-	p: 
-      } : null)
-      ||
-      null;
-  
-  ZZ
-  
-  
-       ZZ
-	: null) ||
-      
-      !|= null) bottommost_unpinned) 
-  
-    
-    let pinned = treat
-*/
+    let z_bot = pe.z_bot;
+    let count = 0;
+    for (let ae of pe.arrays) {
+      count += ae.content.length;
+    }
+    let zrange = wasm_bindgen.range(z_bot, z_top, count);
+    for (let ae of pe.arrays) {
+      for (let e of ae.content) {
+	let z = zrange.next();
+	api_piece(api, "setz", e.piece, e.p, { z });
+      }
+    }
+  }
+  return null;
 }
 
 keyops_local['wrest'] = function (uo: UoRecord) {
