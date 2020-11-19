@@ -282,16 +282,16 @@ impl ApiPieceOp for ApiPieceUngrab {
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-struct ApiPieceRaise {
+struct ApiPieceSetZ {
   z : ZCoord,
 }
 #[post("/_/api/setz", format="json", data="<form>")]
 #[throws(OE)]
-fn api_raise(form : Json<ApiPiece<ApiPieceRaise>>)
+fn api_raise(form : Json<ApiPiece<ApiPieceSetZ>>)
             -> impl response::Responder<'static> {
   api_piece_op(form)
 }
-impl ApiPieceOp for ApiPieceRaise {
+impl ApiPieceOp for ApiPieceSetZ {
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
     let ApiPieceOpArgs { gs,piece, .. } = a;
