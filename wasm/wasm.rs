@@ -49,6 +49,12 @@ pub fn increment(packed: &JsValue) -> JsValue {
 }
 
 #[wasm_bindgen]
+pub fn def_zcoord() -> JsValue {
+  let z : ZCoord = Default::default();
+  z.to_string().into()
+}
+
+#[wasm_bindgen]
 pub struct ZCoordIterator (zcoord::BoxedIterator);
 
 #[throws(JsValue)]
