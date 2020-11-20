@@ -414,7 +414,7 @@ impl Display for ZCoord {
 impl Debug for ZCoord {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut Formatter) {
-    write!(f, r#"Bf""#)?;
+    write!(f, r#"Zc""#)?;
     <ZCoord as Display>::fmt(self, f)?;
     write!(f, r#"""#)?;
   }    
@@ -659,7 +659,7 @@ mod test {
     mem::drop(b);
     assert_eq!(format!("{}", &b2), s);
     assert_eq!(format!("{:?}", &b2),
-               format!(r#"Bf"{}""#, &b2));
+               format!(r#"Zc"{}""#, &b2));
     fn bad(s: &str) { assert_eq!(Err(ParseError), ZCoord::from_str(s)); }
     bad("");
     bad("0");
