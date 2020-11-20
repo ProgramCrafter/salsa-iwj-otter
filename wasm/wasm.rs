@@ -84,6 +84,9 @@ impl ZCoordIterator {
     };
     packed.to_string().into()
   }
+  pub fn debug(&self) -> JsValue {
+    format!("ZCoordIterator({:?})", &self.0).into()
+  }
 }
 
 #[wasm_bindgen]

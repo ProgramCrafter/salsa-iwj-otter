@@ -533,7 +533,7 @@ function lower_pieces(targets_todo: LowerTodoList):
     let z_bot = pe.z_bot;
     let zrange = wasm_bindgen.range(z_bot, z_top, pe.content.length);
     console.log('LOQER PLAN PE',
-		pe, z_bot, z_top, pe.content.length, zrange);
+		pe, z_bot, z_top, pe.content.length, zrange.debug());
     for (const e of pe.content) {
       let z = zrange.next();
       api_piece(api, "setz", e.piece, e.p, { z });

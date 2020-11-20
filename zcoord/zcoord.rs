@@ -168,6 +168,7 @@ pub trait AddSubOffset {
 
 pub struct Sealed(());
 
+#[derive(Debug)]
 pub struct Increment;
 impl AddSubOffset for Increment {
   fn init_delta(&self) -> LimbVal { DELTA }
@@ -179,6 +180,7 @@ impl AddSubOffset for Increment {
   const SEALED_TRAIT : Sealed = Sealed(());
 }
 
+#[derive(Debug)]
 pub struct Decrement;
 impl AddSubOffset for Decrement {
   fn init_delta(&self) -> LimbVal { -DELTA }
@@ -259,11 +261,13 @@ impl Mutable {
 
 pub type RangeIterator = std::iter::Take<IteratorCore<AddSubRangeDelta>>;
 
+#[derive(Debug)]
 pub struct IteratorCore<ASO> {
   current: Mutable,
   aso: ASO,
 }
 
+#[derive(Debug)]
 pub struct AddSubRangeDelta {
   i: usize,
   step: LimbVal,
@@ -365,7 +369,9 @@ impl ExactSizeIterator for IteratorCore<AddSubRangeDelta> {
   fn len(&self) -> usize { return usize::MAX }
 }
 
-pub type BoxedIterator = Box<dyn Iterator<Item=ZCoord>>;
+pub trait BoxedIteratorTrait : Iterator<Item=ZCoord> + Debug { }
+pub type BoxedIterator = Box<dyn BoxedIteratorTrait>;
+impl<T> BoxedIteratorTrait for T where T : Iterator<Item=ZCoord> + Debug { }
 
 impl Mutable {
   pub fn iter<ASO:AddSubOffset>(self, aso: ASO) -> IteratorCore<ASO> {
@@ -374,7 +380,7 @@ impl Mutable {
   #[throws(LogicError)]
   pub fn some_range(a: Option<&Mutable>, b: Option<&Mutable>,
                     count: RangeCount) -> BoxedIterator {
-    fn mk<T:'static + Iterator<Item=ZCoord>>(x: T) -> BoxedIterator
+    fn mk<T:'static + Debug + Iterator<Item=ZCoord>>(x: T) -> BoxedIterator
         { Box::new(x) }
     match (a, b) {
       (None,    None   ) => throw!(TotallyUnboundedRange),
