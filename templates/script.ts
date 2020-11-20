@@ -433,7 +433,18 @@ function lower_pieces(targets_todo: LowerTodoList):
 
   let walk = pieces_marker;
   for (;;) { // starting at the bottom of the stack order
-    if (Object.keys(targets_todo).length == 0) break;
+    if (n_targets_todo_unpinned == 0
+	&& bottommost_unpinned !== null) {
+      // no unpinned targets left, state Z, we can stop now
+      console.log('LOWER STATE Z FINISHED');
+      break;
+    }
+    if (Object.keys(targets_todo).length == 0 &&
+       bottommost_unpinned !== null) {
+      console.log('NO TARGETS BUT UNPINNED !=0', n_targets_todo_unpinned);
+      break;
+    }
+
     let new_walk = walk.nextElementSibling;
     if (new_walk == null) break;
     walk = new_walk as SVGGraphicsElement;
@@ -441,29 +452,30 @@ function lower_pieces(targets_todo: LowerTodoList):
 
     let todo = targets_todo[piece];
     if (todo) {
+      console.log('LOWER WALK', piece, 'TODO', todo.pinned);
       delete targets_todo[piece];
       if (!todo.pinned) n_targets_todo_unpinned--;
       (todo.pinned ? tomove_pinned : tomove_unpinned).push(todo);
       continue;
     }
 
-    if (n_targets_todo_unpinned == 0) // only pinned targets left, state Z
-      continue;
-
     let p = pieces[piece]!;
     if (bottommost_unpinned = null) { // state A
       if (!p.pinned) {
-	// state A -> Z
+	console.log('LOWER WALK', piece, 'STATE A -> Z');
 	bottommost_unpinned = { p, piece };
       } else {
+	console.log('LOWER WALK', piece, 'STATE A');
 	nomove_pinned.push({ p, piece });
       }
       continue;
     }
 
     // state B
-    if (p.pinned)
+    if (p.pinned) {
+      console.log('LOWER WALK', piece, 'STATE B');
       tomove_misstacked.push({ p, piece });
+    }
   }
 
   let z_top =

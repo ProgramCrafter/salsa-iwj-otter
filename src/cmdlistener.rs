@@ -477,6 +477,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
         if let (_, true) = pc.pos.clamped(gs.table_size) {
           throw!(SpecError::PosOffTable);
         }
+        if pc.zlevel.z > gs.max_z { gs.max_z = pc.zlevel.z.clone() }
         let piece = gs.pieces.as_mut(modperm).insert(pc);
         ig.ipieces.as_mut(modperm).insert(piece, p);
         updates.push((piece, PieceUpdateOp::Insert(())));
