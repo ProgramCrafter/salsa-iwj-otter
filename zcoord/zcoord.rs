@@ -88,7 +88,6 @@ const DIGITS_PER_LIMB : usize = 10;
 type RawLimbVal = u64;
 #[derive(Copy,Clone,Eq,PartialEq,Ord,PartialOrd)]
 #[derive(Neg,Add,BitAnd,Sub,Shr,ShrAssign)]
-#[derive(Debug)]
 pub struct LimbVal (Wrapping<RawLimbVal>);
 
 const DELTA : LimbVal = lv(0x4000_0000);
@@ -139,6 +138,12 @@ const fn lv(raw: RawLimbVal) -> LimbVal { LimbVal(Wrapping(raw)) }
 
 impl LimbVal {
   fn primitive(self) -> RawLimbVal { self.0.0 }
+}
+
+impl Debug for LimbVal {
+  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(),fmt::Error> {
+    write!(f, "{:x?}", self)
+  }
 }
 
 //---------- Mutabel ----------
