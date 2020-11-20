@@ -513,6 +513,8 @@ function lower_pieces(targets_todo: LowerTodoList):
     });
   }
 
+  console.log('LOWER PLAN', plan);
+
   for (const pe of plan) {
     for (const e of pe.content) {
       if (e.p.held != null && e.p.held != us) {
@@ -530,6 +532,8 @@ function lower_pieces(targets_todo: LowerTodoList):
     if (pe.z_top != null) z_top = pe.z_top;
     let z_bot = pe.z_bot;
     let zrange = wasm_bindgen.range(z_bot, z_top, pe.content.length);
+    console.log('LOQER PLAN PE',
+		pe, z_bot, z_top, pe.content.length, zrange);
     for (const e of pe.content) {
       let z = zrange.next();
       api_piece(api, "setz", e.piece, e.p, { z });
