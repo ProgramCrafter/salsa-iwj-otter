@@ -139,9 +139,9 @@ impl From<RawLimbVal> for LimbVal {
 const fn lv(raw: RawLimbVal) -> LimbVal { LimbVal(Wrapping(raw)) }
 
 impl LimbVal {
-  fn primitive(self) -> RawLimbVal { self.0.0 }
+  pub fn primitive(self) -> RawLimbVal { self.0.0 }
   /// return value is the top bits, shifted
-  fn to_str_buf(self, out: &mut [Tail1; DIGITS_PER_LIMB]) -> LimbVal {
+  pub fn to_str_buf(self, out: &mut [Tail1; DIGITS_PER_LIMB]) -> LimbVal {
     let mut l = self;
     for p in out.into_iter().rev() {
       let v = (l & DIGIT_MASK).primitive() as u8;
@@ -152,24 +152,26 @@ impl LimbVal {
   }
 }
 
-impl Debug for LimbVal {
+impl Display for LimbVal {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut fmt::Formatter) {
     let mut buf = [0u8; DIGITS_PER_LIMB];
     let lhs : RawLimbVal = self.to_str_buf(&mut buf).primitive();
-    write!(f, "lv(")?;
     if lhs != 0 {
       write!(f, "{:#x?}!", lhs)?;
     }
-    write!(f, "{})", str::from_utf8(&buf).unwrap())?;
+    write!(f, "{}", str::from_utf8(&buf).unwrap())?;
   }
 }
 
-/*impl Debug for LimbVal {
-  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(),fmt::Error> {
-    write!(f, "lv({:#x?})", self.primitive())
+impl Debug for LimbVal {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut fmt::Formatter) {
+    write!(f, "lv(")?;
+    Display::fmt(self, f)?;
+    write!(f, ")")?;
   }
-}*/
+}
 
 //---------- Mutabel ----------
 
