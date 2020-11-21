@@ -789,6 +789,7 @@ mod test {
       assert_eq!( &format!("{:?}", &l), &dbg );
     }
     chk(0x42, "0000000022");
+    chk(0x42 + RAW_LIMB_MODULUS * 0x33, "0x33!0000000022");
   }
 
   #[test]
