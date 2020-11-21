@@ -782,9 +782,13 @@ mod test {
 
   #[test]
   fn limb_debug() {
-    let l : LimbVal = 0x42.into();
-    assert_eq!( &format!("{:?}", &l),
-                "lv(0000000022)" );
+    fn chk(raw: RawLimbVal, disp: &str) {
+      let l : LimbVal = raw.into();
+      let dbg = format!("lv({})", &disp);
+      assert_eq!( &format!("{}",   &l), disp );
+      assert_eq!( &format!("{:?}", &l), &dbg );
+    }
+    chk(0x42, "0000000022");
   }
 
   #[test]
