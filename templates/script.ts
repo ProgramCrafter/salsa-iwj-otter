@@ -560,8 +560,13 @@ keyops_local['wrest'] = function (uo: UoRecord) {
   recompute_keybindings();
 }
 
-keyops_local['pin'  ] = function (uo) { pin_unpin(uo, true ); }
-keyops_local['unpin'] = function (uo) { pin_unpin(uo, false); }
+keyops_local['pin'  ] = function (uo) {
+  if (!lower_targets(uo)) return;
+  pin_unpin(uo, true);
+}
+keyops_local['unpin'] = function (uo) {
+  pin_unpin(uo, false);
+}
 
 function pin_unpin(uo: UoRecord, newpin: boolean) {
   for (let piece of uo.targets!) {
