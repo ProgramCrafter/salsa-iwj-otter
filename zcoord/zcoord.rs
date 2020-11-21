@@ -446,16 +446,17 @@ impl Mutable {
   pub fn some_range(a: Option<&Mutable>, b: Option<&Mutable>,
                     count: RangeCount) -> BoxedIterator {
     fn mk<T:'static + Debug + Iterator<Item=ZCoord>>(x: T) -> BoxedIterator
-        { Box::new(x) }
+    { Box::new(x) }
+    let c = count as usize;
     match (a, b) {
       (None,    None   ) => throw!(TotallyUnboundedRange),
-      (Some(a), None   ) => mk( a.clone().iter(Increment) ),
+      (Some(a), None   ) => mk( a.clone().iter(Increment).take(c) ),
       (Some(a), Some(b)) => mk( Mutable::range_upto(&a,&b,count)? ),
       (None,    Some(b)) => mk({
         let mut first = b.clone();
         first.addsub(&Decrement).unwrap();
         let (current, aso) = Mutable::range_core(&first, &b, count-1)?;
-        IteratorCore { current, aso, mr: MutateLast }.take(count as usize)
+        IteratorCore { current, aso, mr: MutateLast }.take(c)
       }),
     }
   }
@@ -867,18 +868,35 @@ mod test {
     impl It {
       fn nxt(&mut self, exp: Option<&str>) {
         let got = self.i.next();
-        let got_s = got.map(|s| s.to_string());
+        let got_s = got.as_ref().map(|s| s.to_string());
+        let got_s = got_s.as_ref().map(|s| s.as_str());
         assert_eq!(got_s, exp);
-        if let (Some(got), Some(exp)) = (got, exp) {
-          assert_eq!(got, bf(exp));
-          if let Some(last) = self.last { assert!(got > last); }
+        if let (Some(got), Some(exp)) = (&got, &exp) {
+          assert_eq!(got, &bf(exp));
+          if let Some(last) = &self.last { assert!(got > last); }
         }
         self.last = got.clone();
       }
     }
-    let mut it = mkr(Some("300000000"),Some("400000000"),3).unwrap();
-    it.nxt(Some("3e0000000"));
-    it.nxt(Some("3g0000000"));
-    it.nxt(Some("3p0000000"));
+    let mut it = mkr(Some("3000000000"),Some("4000000000"),3).unwrap();
+    it.nxt(Some("3800000000"));
+    it.nxt(Some("3g00000000"));
+    it.nxt(Some("3o00000000"));
+    it.nxt(None);
+    let mut it = mkr(Some("3000000000"),Some("4000000000"),1).unwrap();
+    it.nxt(Some("3g00000000"));
+    it.nxt(None);
+    let mut it = mkr(None, Some("4000000000"),2).unwrap();
+    it.nxt(Some("3vvv000000"));
+    it.nxt(Some("3vvvg00000"));
+    it.nxt(None);
+    let mut it = mkr(Some("4000000000"),None,2).unwrap();
+    it.nxt(Some("4001000000"));
+    it.nxt(Some("4002000000"));
+    it.nxt(None);
+    let x = mkr(None,None,2);
+    assert_eq!( x.err(), Some(
+      LogicError::RangeTotallyUnbounded(TotallyUnboundedRange)
+    ));
   }
 }
