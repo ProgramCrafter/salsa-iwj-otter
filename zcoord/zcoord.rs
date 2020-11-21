@@ -153,10 +153,23 @@ impl LimbVal {
 }
 
 impl Debug for LimbVal {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut fmt::Formatter) {
+    let mut buf = [0u8; DIGITS_PER_LIMB];
+    let lhs : RawLimbVal = self.to_str_buf(&mut buf).primitive();
+    write!(f, "lv(")?;
+    if lhs != 0 {
+      write!(f, "{:#x?}!", lhs)?;
+    }
+    write!(f, "{})", str::from_utf8(&buf).unwrap())?;
+  }
+}
+
+/*impl Debug for LimbVal {
   fn fmt(&self, f: &mut fmt::Formatter) -> Result<(),fmt::Error> {
     write!(f, "lv({:#x?})", self.primitive())
   }
-}
+}*/
 
 //---------- Mutabel ----------
 
@@ -769,7 +782,7 @@ mod test {
   fn limb_debug() {
     let l : LimbVal = 0x42.into();
     assert_eq!( &format!("{:?}", &l),
-                "lv(0x42)" );
+                "lv(0000000022)" );
   }
 
   #[test]
