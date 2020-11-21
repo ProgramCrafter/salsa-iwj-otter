@@ -224,7 +224,9 @@ libraries: $(LIBRARY_FILES)
 
 #---------- deployment ----------
 
-DEPLOY_BASE=ian@login.chiark.greenend.org.uk:/volatile/Otter
+DEPLOY_USER=ian@login.chiark.greenend.org.uk
+DEPLOY_BASE=$(DEPLOY_USER):/volatile/Otter
+DEPLOY_FINISH=/home/Otter/etc/deploy-finish
 
 deploy: stamp/cargo.deploy-build bundled-sources assets libraries
 	rsync -zv --progress $(addprefix $(DEPLOY_TARGET_DIR)/,$(PROGRAMS)) $(DEPLOY_BASE)/bin/
@@ -233,8 +235,7 @@ deploy: stamp/cargo.deploy-build bundled-sources assets libraries
 	rsync -r --delete --exclude=\*~ library $(DEPLOY_BASE)/.
 	rsync -r $(FILEASSETS) $(addprefix $(WASM_PACKED)/, $(WASM_ASSETS)) \
 		$(DEPLOY_BASE)/assets/
-	@echo
-	@echo Deployment file copies complete.
+	ssh -o BatchMode=true $(DEPLOY_USER) $(DEPLOY_FINISH)
 
 #$(DEPLOY_BASE)/bundled-sources
 
