@@ -531,9 +531,6 @@ function lower_pieces(targets_todo: LowerTodoList):
     }
   }
 
-  // xxx we don't actually change our own stacking order by reordering
-  //     the elements
-
   z_top = null;
   for (const pe of plan) {
     if (pe.z_top != null) z_top = pe.z_top;
@@ -542,8 +539,12 @@ function lower_pieces(targets_todo: LowerTodoList):
     console.log('LOQER PLAN PE',
 		pe, z_bot, z_top, pe.content.length, zrange.debug());
     for (const e of pe.content) {
-      let z = zrange.next();
-      api_piece(api, "setz", e.piece, e.p, { z });
+      let p = e.p;
+      piece_set_zlevel(e.piece, p, (oldtop_piece) => {
+	let z = zrange.next();
+	p.z = z;
+	api_piece(api, "setz", e.piece, e.p, { z });
+      });
     }
   }
   return null;
