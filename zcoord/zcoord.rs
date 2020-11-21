@@ -158,7 +158,7 @@ impl Display for LimbVal {
     let mut buf = [0u8; DIGITS_PER_LIMB];
     let lhs : RawLimbVal = self.to_str_buf(&mut buf).primitive();
     if lhs != 0 {
-      write!(f, "{:#x?}!", lhs)?;
+      write!(f, "{:#x?}_!_", lhs)?;
     }
     write!(f, "{}", str::from_utf8(&buf).unwrap())?;
   }
@@ -789,7 +789,8 @@ mod test {
       assert_eq!( &format!("{:?}", &l), &dbg );
     }
     chk(0x42, "0000000022");
-    chk(0x42 + RAW_LIMB_MODULUS * 0x33, "0x33!0000000022");
+    chk(0x42 + RAW_LIMB_MODULUS *   0x33,   "0x33_!_0000000022");
+    chk(0x42 + RAW_LIMB_MODULUS * 0x3fae, "0x3fae_!_0000000022");
   }
 
   #[test]
