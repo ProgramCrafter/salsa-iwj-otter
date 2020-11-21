@@ -494,7 +494,7 @@ function lower_pieces(targets_todo: LowerTodoList):
       wasm_bindgen.def_zcoord();
 
   type PlanEntry = {
-    content: Entry[],
+    content: Entry[], // bottom to top
     z_top: ZCoord | null,
     z_bot: ZCoord | null,
   };

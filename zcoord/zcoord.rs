@@ -407,8 +407,12 @@ impl Mutable {
     match (a, b) {
       (None,    None   ) => throw!(TotallyUnboundedRange),
       (Some(a), None   ) => mk( a.clone().iter(Increment) ),
-      (None,    Some(b)) => mk( b.clone().iter(Decrement) ),
       (Some(a), Some(b)) => mk( Mutable::range_upto(&a,&b,count)? ),
+      (None,    Some(b)) => mk({
+        let mut first = b.clone();
+        first.addsub(&Decrement).unwrap();
+        Mutable::range_upto(&first,&b,count)?
+      }),
     }
   }
 
