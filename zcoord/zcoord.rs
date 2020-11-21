@@ -141,11 +141,11 @@ const fn lv(raw: RawLimbVal) -> LimbVal { LimbVal(Wrapping(raw)) }
 impl LimbVal {
   fn primitive(self) -> RawLimbVal { self.0.0 }
   /// return value is the top bits, shifted
-  fn to_str_buf(self, out: &mut [Tail1]) -> LimbVal {
+  fn to_str_buf(self, out: &mut [Tail1; DIGITS_PER_LIMB]) -> LimbVal {
     let mut l = self;
-    for p in out[0..DIGITS_PER_LIMB].rchunks_exact_mut(1) {
+    for p in out.into_iter().rev() {
       let v = (l & DIGIT_MASK).primitive() as u8;
-      p[0] = if v < 10 { b'0' + v } else { (b'a' - 10) + v };
+      *p = if v < 10 { b'0' + v } else { (b'a' - 10) + v };
       l >>= BITS_PER_DIGIT;
     }
     l
@@ -277,7 +277,7 @@ impl Mutable {
 
     for l in limbs.iter().cloned() {
       if l >= LIMB_MODULUS { throw!(Overflow) };
-      l.to_str_buf(w);
+      l.to_str_buf((&mut w[0..DIGITS_PER_LIMB]).try_into().unwrap());
       if let Some(p) = w.get_mut(DIGITS_PER_LIMB) {
         *p = b'_';
       } else {
