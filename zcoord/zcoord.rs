@@ -72,6 +72,7 @@ use std::num::{TryFromIntError, Wrapping};
 use std::str;
 use std::str::FromStr;
 use fehler::{throw, throws};
+use derive_more::*;
 use serde::{Serialize, Deserialize};
 use thiserror::Error;
 use serde_with::DeserializeFromStr;
@@ -85,19 +86,22 @@ const BITS_PER_DIGIT : usize = 5;
 const DIGITS_PER_LIMB : usize = 10;
 
 type RawLimbVal = u64;
-type LimbVal = Wrapping<RawLimbVal>;
+#[derive(Copy,Clone,Eq,PartialEq,Ord,PartialOrd)]
+#[derive(Neg,Add,BitAnd,Sub,Shr,ShrAssign)]
+pub struct LimbVal (Wrapping<RawLimbVal>);
 
-const DELTA : LimbVal = Wrapping(0x4000_0000);
-const ZERO : LimbVal = Wrapping(0);
-const ONE : LimbVal = Wrapping(1);
+const DELTA : LimbVal = lv(0x4000_0000);
+const ZERO : LimbVal = lv(0);
+const ONE : LimbVal = lv(1);
+const MINUS_ONE : LimbVal = lv(-1i64 as u64);
 
 const RAW_LIMB_MODULUS : RawLimbVal = 1u64 << BITS_PER_LIMB;
 
 const BITS_PER_LIMB : usize = BITS_PER_DIGIT * DIGITS_PER_LIMB;
-const DIGIT_MASK : LimbVal = Wrapping((1u64 << BITS_PER_DIGIT) - 1);
+const DIGIT_MASK : LimbVal = lv((1u64 << BITS_PER_DIGIT) - 1);
 const TEXT_PER_LIMB : usize = DIGITS_PER_LIMB + 1;
-const LIMB_MODULUS : LimbVal = Wrapping(RAW_LIMB_MODULUS);
-const LIMB_MASK    : LimbVal = Wrapping(RAW_LIMB_MODULUS-1);
+const LIMB_MODULUS : LimbVal = lv(RAW_LIMB_MODULUS);
+const LIMB_MASK    : LimbVal = lv(RAW_LIMB_MODULUS-1);
 
 #[derive(DeserializeFromStr,SerializeDisplay)]
 pub struct ZCoord(innards::Innards);
@@ -124,6 +128,24 @@ pub enum LogicError {
   #[error("{0}")] RangeBackwards       (#[from] RangeBackwards       ),
 }
 
+//---------- LimbVal ----------
+
+impl From<RawLimbVal> for LimbVal {
+  fn from(raw: RawLimbVal) -> LimbVal { lv(raw) }
+}
+
+const fn lv(raw: RawLimbVal) -> LimbVal { LimbVal(Wrapping(raw)) }
+
+impl LimbVal {
+  fn primitive(self) -> RawLimbVal { self.0.0 }
+}
+
+impl Debug for LimbVal {
+  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(),fmt::Error> {
+    write!(f, "{:x?}", self)
+  }
+}
+
 //---------- Mutabel ----------
 
 #[derive(Clone,Debug)]
@@ -144,7 +166,7 @@ impl Mutable {
     for lt in tail.chunks(TEXT_PER_LIMB) {
       let s = str::from_utf8(&lt[0..DIGITS_PER_LIMB]).unwrap();
       let v = RawLimbVal::from_str_radix(s, 1 << BITS_PER_DIGIT).unwrap();
-      limbs.push(Wrapping(v));
+      limbs.push(v.into());
     }
     Mutable { limbs }
   }
@@ -184,7 +206,7 @@ impl AddSubOffset for Increment {
 pub struct Decrement;
 impl AddSubOffset for Decrement {
   fn init_delta(&self) -> LimbVal { -DELTA }
-  const CARRY_DELTA : LimbVal = Wrapping(ONE  .0.wrapping_neg());
+  const CARRY_DELTA : LimbVal = MINUS_ONE;
   const NEW_LIMBS   : LimbVal = LIMB_MASK;
   #[throws(as Option)]
   fn check_underflow(_: &Mutable, i: usize, nv: LimbVal) {
@@ -244,7 +266,7 @@ impl Mutable {
     for mut l in limbs.iter().cloned() {
       if l >= LIMB_MODULUS { throw!(Overflow) };
       for p in w[0..DIGITS_PER_LIMB].rchunks_exact_mut(1) {
-        let v = (l & DIGIT_MASK).0 as u8;
+        let v = (l & DIGIT_MASK).primitive() as u8;
         p[0] = if v < 10 { b'0' + v } else { (b'a' - 10) + v };
         l >>= BITS_PER_DIGIT;
       }
@@ -314,7 +336,7 @@ impl Mutable {
       if la == lb { continue }
 
       let wantgaps = count+1;
-      let avail = (lb.0 as i64) - (la.0 as i64)
+      let avail = (lb.primitive() as i64) - (la.primitive() as i64)
         + if borrowing { RAW_LIMB_MODULUS as i64 } else { 0};
       if avail < 0 { throw!(RangeBackwards) }
       let avail = avail as u64;
@@ -339,14 +361,14 @@ impl Mutable {
       } else {
         // Not enough space here, but we can pick a unique value for
         // this limb, and divide the next limb evenly
-        current.limbs[i] = la + Wrapping(avail/2);
+        current.limbs[i] = la + (avail/2).into();
 	i += 1;
 	step = (RAW_LIMB_MODULUS-1) / wantgaps;
         init = ZERO;
       }
       current.extend_to_limb(i);
       current.limbs[i] = init;
-      break 'ok ASRD { i, step: Wrapping(step) };
+      break 'ok ASRD { i, step: step.into() };
     } };
     IteratorCore { current, aso }
   }
