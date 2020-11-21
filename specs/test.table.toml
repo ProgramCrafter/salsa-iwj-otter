@@ -9,7 +9,7 @@ timezone = "Europe/London"
 [[players]]
 account_glob = "server:*"
 
-# USER=rustcargo  target/debug/otter --config ~ian/Rustup/Game/server/server.toml --account server: reset --reset-table ~ian/Rustup/Game/server/demo/test.table.toml server::dummy  ~ian/Rustup/Game/server/demo/demo.game.toml
+# USER=rustcargo  target/debug/otter --config ~ian/Rustup/Game/server/server.toml --account server: reset --reset-table ~ian/Rustup/Game/server/specs/test.table.toml server::dummy  ~ian/Rustup/Game/server/specs/demo.game.toml
 
 # USER=rustcargo target/debug/otter --config ~ian/Rustup/Game/server/server.toml --super --fixed-token kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe --account server:alice join-game server::dummy
 
