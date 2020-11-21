@@ -233,6 +233,7 @@ deploy: stamp/cargo.deploy-build bundled-sources assets libraries
 	rsync -r --delete --exclude=\*~ library $(DEPLOY_BASE)/.
 	rsync -r $(FILEASSETS) $(addprefix $(WASM_PACKED)/, $(WASM_ASSETS)) \
 		$(DEPLOY_BASE)/assets/
+	@echo
 	@echo Deployment file copies complete.
 
 #$(DEPLOY_BASE)/bundled-sources
