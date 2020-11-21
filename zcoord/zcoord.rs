@@ -142,7 +142,7 @@ impl LimbVal {
 
 impl Debug for LimbVal {
   fn fmt(&self, f: &mut fmt::Formatter) -> Result<(),fmt::Error> {
-    write!(f, "{:x?}", self)
+    write!(f, "lv({:#x?})", self.primitive())
   }
 }
 
@@ -707,6 +707,13 @@ mod test {
     bad("/aaaaaaaa0_#aaaaaaaa0");
     bad(":aaaaaaaa0_#aaaaaaaa0");
     bad("`aaaaaaaa0_#aaaaaaaa0");
+  }
+
+  #[test]
+  fn limb_debug() {
+    let l : LimbVal = 0x42.into();
+    assert_eq!( &format!("{:?}", &l),
+                "lv(0x42)" );
   }
 
   #[test]
