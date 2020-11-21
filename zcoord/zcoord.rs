@@ -82,6 +82,8 @@ use serde_with::SerializeDisplay;
 
 pub type RangeCount = u32;
 
+type Tail1 = u8;
+
 const BITS_PER_DIGIT : usize = 5;
 const DIGITS_PER_LIMB : usize = 10;
 
@@ -138,6 +140,16 @@ const fn lv(raw: RawLimbVal) -> LimbVal { LimbVal(Wrapping(raw)) }
 
 impl LimbVal {
   fn primitive(self) -> RawLimbVal { self.0.0 }
+  /// return value is the top bits, shifted
+  fn to_str_buf(self, out: &mut [Tail1]) -> LimbVal {
+    let mut l = self;
+    for p in out[0..DIGITS_PER_LIMB].rchunks_exact_mut(1) {
+      let v = (l & DIGIT_MASK).primitive() as u8;
+      p[0] = if v < 10 { b'0' + v } else { (b'a' - 10) + v };
+      l >>= BITS_PER_DIGIT;
+    }
+    l
+  }
 }
 
 impl Debug for LimbVal {
@@ -263,13 +275,9 @@ impl Mutable {
     let mut bf = ZCoord::alloc(taillen);
     let mut w = bf.tail_mut();
 
-    for mut l in limbs.iter().cloned() {
+    for l in limbs.iter().cloned() {
       if l >= LIMB_MODULUS { throw!(Overflow) };
-      for p in w[0..DIGITS_PER_LIMB].rchunks_exact_mut(1) {
-        let v = (l & DIGIT_MASK).primitive() as u8;
-        p[0] = if v < 10 { b'0' + v } else { (b'a' - 10) + v };
-        l >>= BITS_PER_DIGIT;
-      }
+      l.to_str_buf(w);
       if let Some(p) = w.get_mut(DIGITS_PER_LIMB) {
         *p = b'_';
       } else {
@@ -598,7 +606,6 @@ mod innards {
 
   pub(in super) type Innards = NonNull<u8>;
   pub type Taillen = u16;
-  type Tail1 = u8;
 
   pub(in super)
   struct Header {
