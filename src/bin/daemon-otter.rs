@@ -26,7 +26,6 @@ type RL = ResourceLocation;
 
 const RESOURCES : &[(&'static str, ResourceLocation, ContentType)] = &[
   ("script.js",    RL::Main,                       ContentType::JavaScript),
-  ("style.css",    RL::Main,                       ContentType::JavaScript),
   ("LICENCE",      RL::Main,                       ContentType::Plain),
   ("libre",        RL::Main,                       ContentType::HTML),
   ("AGPLv3",       RL::Main,                       ContentType::Plain),

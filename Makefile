@@ -78,6 +78,18 @@ $(eval $(call lp,WASM_PACK,wasm-pack,debug,wasm-pack))
 
 PROGRAMS=daemon-otter otter
 
+WASM_ASSETS := $(addprefix otter_wasm,.js _bg.wasm)
+WASM_OUTPUTS := $(addprefix otter_wasm,.d.ts)
+
+TS_SRCS= script
+TS_SRC_FILES= \
+	$(addprefix templates/,$(addsuffix .ts,$(TS_SRCS))) \
+	webassembly-types/webassembly.d.ts \
+	templates/otter_wasm.ns.d.ts
+
+LITFILES= LICENCE AGPLv3
+TXTFILES= CC-BY-SA-3.0 CC-BY-SA-4.0
+
 FILEASSETS = $(addprefix templates/,$(LITFILES) $(TXTFILES))
 
 WASM := wasm32-unknown-unknown
@@ -89,7 +101,7 @@ check: stamp/cargo.check
 
 doc: cargo-doc
 
-debug release:: %: stamp/cargo.% assets extra-%
+debug release:: %: stamp/cargo.% assets libraries extra-%
 
 cargo: cargo-debug cargo-wasm-release
 
@@ -101,7 +113,8 @@ cargo-wasm: cargo-wasm-release
 
 wasm-pack: stamp/wasm-pack
 
-assets: js libraries stamp/wasm-pack $(FILEASSETS)
+assets: js stamp/wasm-pack $(FILEASSETS)
+	: $(FILEASSETS) , $^
 
 js: templates/script.js
 
@@ -136,9 +149,6 @@ stamp/cargo.deploy-build: $(call rsrcs,.)
 	$(stamp)
 
 #---------- wasm ----------
-
-WASM_ASSETS := $(addprefix otter_wasm,.js _bg.wasm)
-WASM_OUTPUTS := $(addprefix otter_wasm,.d.ts)
 
 $(addprefix $(WASM_PACKED)/,$(WASM_ASSETS) $(WASM_OUTPUTS)): stamp/wasm-pack
 stamp/wasm-pack: stamp/cargo.wasm-release
@@ -180,15 +190,6 @@ $(LIBRARY_FILES): $(USVG_PROCESSOR) $(USVG_BINARY) Makefile
 
 #---------- typescript ----------
 
-TS_SRCS= script
-TS_SRC_FILES= \
-	$(addprefix templates/,$(addsuffix .ts,$(TS_SRCS))) \
-	webassembly-types/webassembly.d.ts \
-	templates/otter_wasm.ns.d.ts
-
-LITFILES= LICENCE AGPLv3
-TXTFILES= CC-BY-SA-3.0 CC-BY-SA-4.0
-
 templates/%.js: tsc-wrap tsconfig.json
 	./tsc-wrap $@ tsconfig.json $(filter %.ts,$^)
 
@@ -213,7 +214,7 @@ templates/otter_wasm.ns.d.ts: $(WASM_PACKED)/otter_wasm.d.ts \
 
 #---------- other templates ----------
 
-$(addprefix templates/,$(LITFILES)): templates/%: %;
+$(addprefix templates/,$(LITFILES)): templates/%: %
 	cp $< $@.new && mv -f $@.new $@
 
 $(addprefix templates/,$(TXTFILES)): templates/%: %.txt
@@ -225,9 +226,15 @@ libraries: $(LIBRARY_FILES)
 
 DEPLOY_BASE=ian@login.chiark.greenend.org.uk:/volatile/Otter
 
-deploy: stamp/cargo.deploy-build bundled-sources
+deploy: stamp/cargo.deploy-build bundled-sources assets libraries
 	rsync -zv --progress $(addprefix $(DEPLOY_TARGET_DIR)/,$(PROGRAMS)) $(DEPLOY_BASE)/bin/
 	rsync -rv --progress $(TARGET_DIR)/bundled-sources/. $(DEPLOY_BASE)/bundled-sources
+	rsync -rv --progress README.md $(DEPLOY_BASE)/.
+	rsync -rv --progress --delete --exclude=\*~ library/. $(DEPLOY_BASE)/library/.
+	rsync -rv --progress $(FILEASSETS) $(addprefix $(WASM_PACKED)/, $(WASM_ASSETS)) \
+		$(DEPLOY_BASE)/assets/
+
+#$(DEPLOY_BASE)/bundled-sources
 
 #---------- clean ----------
 
