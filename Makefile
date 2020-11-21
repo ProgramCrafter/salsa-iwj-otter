@@ -90,8 +90,9 @@ TS_SRC_FILES= \
 LITFILES= LICENCE AGPLv3
 TXTFILES= CC-BY-SA-3.0 CC-BY-SA-4.0
 
-FILEASSETS = $(addprefix templates/, libre $(LITFILES) $(TXTFILES)) \
-	$(wildcard templates/*.tera)
+FILEASSETS = $(addprefix templates/, libre script.js \
+			$(LITFILES) $(TXTFILES)) \
+		$(wildcard templates/*.tera)
 
 WASM := wasm32-unknown-unknown
 
