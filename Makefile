@@ -221,7 +221,7 @@ libraries: $(LIBRARY_FILES)
 
 #---------- deployment ----------
 
-DEPLOY_BASE=Otter@login.chiark.greenend.org.uk:/volatile/Otter
+DEPLOY_BASE=ian@login.chiark.greenend.org.uk:/volatile/Otter
 
 deploy: stamp/cargo.deploy-build bundled-sources
 	rsync -zv --progress $(addprefix $(DEPLOY_TARGET_DIR)/,$(PROGRAMS)) $(DEPLOY_BASE)/bin/
