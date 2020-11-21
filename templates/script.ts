@@ -361,6 +361,28 @@ type LowerTodoItem = {
 type LowerTodoList = { [piece: string]: LowerTodoItem };
 
 keyops_local['lower'] = function (uo: UoRecord) {
+  function target_treat_pinned(p: PieceInfo): boolean {
+    return wresting || p.pinned;;
+  }
+
+  let targets_todo : LowerTodoList = Object.create(null);
+  let n_targets_todo_unpinned = 0;
+
+  for (let piece of uo.targets!) {
+    let p = pieces[piece]!;
+    let pinned = target_treat_pinned(p);
+    targets_todo[piece] = { p, piece, pinned, };
+    if (!pinned) { n_targets_todo_unpinned++; }
+  }
+  let problem = lower_pieces(targets_todo);
+  if (problem !== null) {
+    add_log_message('Cannot lower: ' + problem);
+  }
+}
+
+function lower_pieces(targets_todo: LowerTodoList):
+ string | null
+{
   // This is a bit subtle.  We don't want to lower below pinned pieces
   // (unless we are pinned too, or the user is wresting).  But maybe
   // the pinned pieces aren't already at the bottom.  For now we will
@@ -392,28 +414,6 @@ keyops_local['lower'] = function (uo: UoRecord) {
   //
   // When wresting, treat all targets as pinned.
 
-  function target_treat_pinned(p: PieceInfo): boolean {
-    return wresting || p.pinned;;
-  }
-
-  let targets_todo : LowerTodoList = Object.create(null);
-  let n_targets_todo_unpinned = 0;
-
-  for (let piece of uo.targets!) {
-    let p = pieces[piece]!;
-    let pinned = target_treat_pinned(p);
-    targets_todo[piece] = { p, piece, pinned, };
-    if (!pinned) { n_targets_todo_unpinned++; }
-  }
-  let problem = lower_pieces(targets_todo);
-  if (problem !== null) {
-    add_log_message('Cannot lower: ' + problem);
-  }
-}
-
-function lower_pieces(targets_todo: LowerTodoList):
- string | null
-{
   type Entry = {
     piece: PieceId,
     p: PieceInfo,
