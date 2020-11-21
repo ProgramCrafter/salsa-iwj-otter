@@ -359,8 +359,10 @@ type LowerTodoItem = {
 
 type LowerTodoList = { [piece: string]: LowerTodoItem };
 
-keyops_local['lower'] = function (uo: UoRecord) {
-  function target_treat_pinned(p: PieceInfo): boolean {
+keyops_local['lower'] = function (uo: UoRecord) { lower_targets(uo); }
+
+function lower_targets(uo: UoRecord): boolean {
+   function target_treat_pinned(p: PieceInfo): boolean {
     return wresting || p.pinned;;
   }
 
@@ -376,7 +378,9 @@ keyops_local['lower'] = function (uo: UoRecord) {
   let problem = lower_pieces(targets_todo);
   if (problem !== null) {
     add_log_message('Cannot lower: ' + problem);
+    return false;
   }
+  return true;
 }
 
 function lower_pieces(targets_todo: LowerTodoList):
@@ -424,6 +428,7 @@ function lower_pieces(targets_todo: LowerTodoList):
   let tomove_pinned       : Entry[] = [];
   let bottommost_unpinned : Entry | null = null;
 
+  // xxx this duplicates stuff in keyops
   let n_targets_todo_unpinned = 0;
   for (const piece of Object.keys(targets_todo)) {
     let p = targets_todo[piece];
@@ -562,7 +567,6 @@ keyops_local['pin'  ] = function (uo) { pin_unpin(uo, true ); }
 keyops_local['unpin'] = function (uo) { pin_unpin(uo, false); }
 
 function pin_unpin(uo: UoRecord, newpin: boolean) {
-  // xxx pinning should send to back
   for (let piece of uo.targets!) {
     let p = pieces[piece]!;
     p.pinned = newpin;
