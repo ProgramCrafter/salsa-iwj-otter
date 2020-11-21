@@ -532,7 +532,6 @@ function lower_pieces(targets_todo: LowerTodoList):
     }
   }
 
-  // xxx this does not seem to actually lower it even if we then reload
   // xxx we don't actually change our own stacking order by reordering
   //     the elements
 
