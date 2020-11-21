@@ -281,12 +281,37 @@ impl Mutable {
   }
 }
 
-pub type RangeIterator = std::iter::Take<IteratorCore<AddSubRangeDelta>>;
+pub type RangeIterator = std::iter::Take<
+    IteratorCore<AddSubRangeDelta, MutateFirst>
+    >;
+
+pub trait MutateReturn {
+  fn op<T, U,
+        M : FnOnce(&mut T),
+        O : FnOnce(&T) -> U>
+    (x: &mut T,
+     m: M,
+     o: O) -> U;
+}
 
 #[derive(Debug)]
-pub struct IteratorCore<ASO> {
+pub struct MutateFirst;
+impl MutateReturn for MutateFirst {
+  fn op<T, U,
+        M : FnOnce(&mut T),
+        O : FnOnce(&T) -> U>
+    (x: &mut T, m: M, o: O) -> U
+  {
+    m(x);
+    o(x)
+  }
+}
+
+#[derive(Debug)]
+pub struct IteratorCore<ASO, MR> {
   current: Mutable,
   aso: ASO,
+  mr: MR,
 }
 
 #[derive(Debug)]
@@ -319,7 +344,7 @@ impl Mutable {
 
   #[throws(RangeBackwards)]
   fn range_core(a: &Mutable, b: &Mutable, count: RangeCount)
-                -> IteratorCore<AddSubRangeDelta> {
+                -> (Mutable, AddSubRangeDelta) {
     type ASRD = AddSubRangeDelta;
     let count = count as RawLimbVal;
     let mut current = a.clone();
@@ -370,21 +395,26 @@ impl Mutable {
       current.limbs[i] = init;
       break 'ok ASRD { i, step: step.into() };
     } };
-    IteratorCore { current, aso }
+    (current, aso)
   }
 
   #[throws(RangeBackwards)]
   pub fn range_upto(&self, other: &Mutable, count: RangeCount)
                     -> RangeIterator {
-    Mutable::range_core(self, other, count)?.take(count as usize)
+    let (current, aso) = Mutable::range_core(self, other, count)?;
+    IteratorCore { current, aso, mr: MutateFirst }.take(count as usize)
   }
 }
 
-impl<ASO:AddSubOffset> Iterator for IteratorCore<ASO> {
+impl<ASO:AddSubOffset, MR:MutateReturn> Iterator for IteratorCore<ASO, MR> {
   type Item = ZCoord;
   fn next(&mut self) -> Option<ZCoord> {
-    self.current.addsub(&self.aso).unwrap();
-    Some(self.current.repack().unwrap())
+    let aso = &self.aso;
+    Some(MR::op(
+      &mut self.current,
+      |current| { current.addsub(aso).unwrap(); },
+      |current| { current.repack().unwrap() },
+    ))
   }
 }
 
@@ -393,8 +423,10 @@ pub type BoxedIterator = Box<dyn BoxedIteratorTrait>;
 impl<T> BoxedIteratorTrait for T where T : Iterator<Item=ZCoord> + Debug { }
 
 impl Mutable {
-  pub fn iter<ASO:AddSubOffset>(self, aso: ASO) -> IteratorCore<ASO> {
-    IteratorCore { current: self, aso }
+  pub fn iter<ASO:AddSubOffset>(self, aso: ASO)
+                                -> IteratorCore<ASO, impl MutateReturn + Debug>
+  {
+    IteratorCore { current: self, aso, mr: MutateFirst }
   }
   #[throws(LogicError)]
   pub fn some_range(a: Option<&Mutable>, b: Option<&Mutable>,
