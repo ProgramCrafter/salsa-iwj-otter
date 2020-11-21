@@ -441,14 +441,21 @@ function lower_pieces(targets_todo: LowerTodoList):
     }
     if (Object.keys(targets_todo).length == 0 &&
        bottommost_unpinned !== null) {
-      console.log('NO TARGETS BUT UNPINNED !=0', n_targets_todo_unpinned);
+      console.log('LOWER NO TARGETS BUT UNPINNED!', n_targets_todo_unpinned);
       break;
     }
 
     let new_walk = walk.nextElementSibling;
-    if (new_walk == null) break;
+    if (new_walk == null) {
+      console.log('LOWER WALK NO SIBLING!');
+      break;
+    }
     walk = new_walk as SVGGraphicsElement;
-    let piece = walk.dataset.piece;  if (piece == null) break;
+    let piece = walk.dataset.piece;
+    if (piece == null) {
+      console.log('LOWER WALK REACHED TOP');
+      break;
+    }
 
     let todo = targets_todo[piece];
     if (todo) {
@@ -460,7 +467,7 @@ function lower_pieces(targets_todo: LowerTodoList):
     }
 
     let p = pieces[piece]!;
-    if (bottommost_unpinned = null) { // state A
+    if (bottommost_unpinned === null) { // state A
       if (!p.pinned) {
 	console.log('LOWER WALK', piece, 'STATE A -> Z');
 	bottommost_unpinned = { p, piece };
@@ -473,8 +480,10 @@ function lower_pieces(targets_todo: LowerTodoList):
 
     // state B
     if (p.pinned) {
-      console.log('LOWER WALK', piece, 'STATE B');
+      console.log('LOWER WALK', piece, 'STATE B MIS-STACKED');
       tomove_misstacked.push({ p, piece });
+    } else {
+      console.log('LOWER WALK', piece, 'STATE B');
     }
   }
 
