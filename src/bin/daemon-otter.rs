@@ -35,6 +35,10 @@ const RESOURCES : &[(&'static str, ResourceLocation, ContentType)] = &[
   ("wasm.js",      RL::Wasm("otter_wasm.js"),      ContentType::JavaScript),
 ];
 
+// xxx access of joined game does not work after server reload??
+// xxx need remove game
+// xxx trying to rejoin game just gives NickCollision, should be idempotent
+
 #[derive(Debug)]
 struct CheckedResourceLeaf {
   safe_leaf: &'static str,
