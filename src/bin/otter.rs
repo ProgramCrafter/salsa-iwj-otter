@@ -68,7 +68,7 @@ struct MainOpts {
   socket_path: String,
   verbose: i32,
   superuser: bool,
-  specs_dir: Option<String>,
+  spec_dir: String,
 }
 
 impl MainOpts {
@@ -99,7 +99,7 @@ struct Subcommand (
 );
 inventory::collect!(Subcommand);
 
-#[derive(Error,Debug)]
+#[derive(Error,Debug,Clone)]
 struct ArgumentParseError(String);
 display_as_debug!(ArgumentParseError);
 
@@ -177,17 +177,17 @@ impl From<AccessOpt> for Box<dyn PlayerAccessSpec> {
   fn from(a: AccessOpt) -> Self { a.0 }
 }
 
-#[derive(Error,Debug,Display)]
-struct ExecutableRelatedError(String);
+type ExecutableRelatedError = AE;
+fn ere(s: String) -> ExecutableRelatedError { anyhow!(s) }
 
 #[throws(ExecutableRelatedError)]
 pub fn find_executable() -> String {
   let e = env::current_exe()
-    .map_err(|e| ExecutableRelatedError(
+    .map_err(|e| ere(
       format!("could not find current executable ({})", &e)
     ))?;
   let s = e.to_str()
-    .ok_or_else(|| ExecutableRelatedError(
+    .ok_or_else(|| ere(
       format!("current executable has non-UTF8 filename!")
     ))?;
   s.into()
@@ -204,12 +204,13 @@ pub fn in_basedir(verbose: bool,
                   -> String
 {
   match (||{
-    let mut comps = from?.rsplit('/').skip(1);
+    let from = from?;
+    let mut comps = from.rsplit('/').skip(1);
     if_chain! {
       if Some(from_exp_in) == comps.next();
       if let Some(path) = comps.next();
-      then { Ok(path) }
-      else { Err(ExecutableRelatedError(
+      then { Ok(path.to_string()) }
+      else { Err(ere(
         format!("{} is not in a directory called {}", from_what, from_exp_in)
       )) }
     }
@@ -217,7 +218,7 @@ pub fn in_basedir(verbose: bool,
     Err(whynot) => {
       let r = format!("{}/{}", local_subdir, leaf);
       if verbose {
-        eprintln!("{}: looking for {} in {}", &whynot.0, now_what, &r);
+        eprintln!("{}: looking for {} in {}", &whynot, now_what, &r);
       }
       r
     }
@@ -311,24 +312,31 @@ fn main() {
     access, socket_path, verbose, config_filename, superuser,
     subcommand, subargs, spec_dir,
   }|{
-    let config_info = Thunk::new(move ||{
-      let config_filename = config_filename
-        .unwrap_or_else(||{
-          let exe = find_executable();
-          in_basedir(verbose > 1, exe, "current executable", "bin",
-                     "config file", "etc", DEFAULT_CONFIG_LEAFNAME,
-                     ".")
-        });
-      ServerConfig::read(Some(&config_filename))
-        .context("read config file")?;
-      Ok::<_,AE>((otter::config::config(), config_filename))
-    });
+    let config = Thunk::<Result<(Arc<ServerConfig>,String),APE>,_>::new(
+      move ||{
+        (||{
+          let config_filename = config_filename
+            .unwrap_or_else(||{
+              let exe = find_executable();
+              in_basedir(verbose > 1, exe, "current executable", "bin",
+                         "config file", "etc", DEFAULT_CONFIG_LEAFNAME,
+                         ".")
+            });
+          ServerConfig::read(Some(&config_filename))
+            .context("read config file")?;
+          Ok::<_,AE>((otter::config::config(), config_filename))
+        })().map_err(|e| ArgumentParseError(
+          format!("failed to find/load config: {}", &e)
+        ))
+      });
 
-    let spec_dir = spec_dir.unwrap_or_else(||{
-      let cfg = &config_info.as_ref()?.1;
-      let spec_dir = in_basedir(verbose > 1, cfg, "config filename", "etc",
-                 "game and table specs", "specs", "", ".")
-        .strip_suffix("/").to_string();
+    let spec_dir = spec_dir.map(Ok::<_,APE>).unwrap_or_else(||{
+      let cfgf = config.clone().map(|(_c,f)| f).map_err(Into::into);
+      let spec_dir = in_basedir(verbose > 1,
+                                cfgf, "config filename", "etc",
+                                "game and table specs", "specs", "",
+                                ".")
+        .trim_end_matches('/').to_string();
       Ok(spec_dir)
     })?;
 
@@ -343,7 +351,8 @@ fn main() {
     })?;
 
     let socket_path = socket_path.map(Ok::<_,APE>).unwrap_or_else(||{
-      Ok(config.as_ref()?.command_socket.clone())
+      Ok(config.clone()?
+         .0.command_socket.clone())
     })?;
     Ok((subcommand, subargs, MainOpts {
       account,
@@ -689,22 +698,37 @@ fn setup_table(_ma: &MainOpts, spec: &TableSpec) -> Vec<MGI> {
   }
 */
 
+trait SomeSpec {
+  const WHAT   : &'static str;
+  const FNCOMP : &'static str;
+}
+
+impl SomeSpec for GameSpec {
+  const WHAT   : &'static str = "game spec";
+  const FNCOMP : &'static str = "game";
+}
+
+impl SomeSpec for TableSpec {
+  const WHAT   : &'static str = "table spec";
+  const FNCOMP : &'static str = "table";
+}
+
 #[throws(AE)]
-fn read_spec<T: DeserializeOwned>(ma: &MainOpts, specname: &str,
-                                  kind: &str, what: &str) -> T {
+fn read_spec<T: DeserializeOwned + SomeSpec>
+  (ma: &MainOpts, specname: &str) -> T
+{
   let filename = if specname.contains('/') {
     specname.to_string()
   } else {
-    in_basedir(ma.basedir, "specs","specs",
-               format!("{}.{}.toml", specname, kind))
+    format!("{}/{}.{}.toml", &ma.spec_dir, specname, T::FNCOMP)
   };
   (||{
-    let mut f = File::open(filename).context("open")?;
+    let mut f = File::open(&filename).context("open")?;
     let mut buf = String::new();
     f.read_to_string(&mut buf).context("read")?;
     let spec : T = toml_de::from_str(&buf).context("parse")?;
     Ok::<_,AE>(spec)
-  })().with_context(|| format!("read {} {:?}", what, filename))?
+  })().with_context(|| format!("read {} {:?}", T::WHAT, &filename))?
 }
 
 #[throws(AE)]
@@ -758,12 +782,12 @@ mod reset_game {
       game: ma.instance_name(&args.table_name),
       how: MgmtGameUpdateMode::Bulk,
     };
-    let game : GameSpec = read_spec(&args.game_file, "game spec")?;
+    let game: GameSpec = read_spec(&ma, &args.game_file)?;
 
     let mut insns = vec![];
 
     if let Some(table_file) = args.table_file {
-      let table_spec = read_spec(&table_file, "table spec")?;
+      let table_spec = read_spec(&ma, &table_file)?;
       let game = chan.game.clone();
       chan.cmd(&MgmtCommand::CreateGame {
         game,
