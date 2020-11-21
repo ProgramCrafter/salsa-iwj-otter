@@ -150,13 +150,13 @@ fn default_basedir_from_executable(verbose: bool) -> Option<String> {
   })
 }
 
-fn in_basedir<F: Sync + FnOnce() -> Option<String>>
-  (basedir: &mut Thunk<Option<String>,F>,
+fn in_basedir
+  (basedir: Option<&String>,
    subdir: &str,
    localdir: &str,
    leaf: &str) -> String
 {
-  match basedir.as_ref() {
+  match basedir {
     Some(basedir) => format!("{}/{}/{}", basedir, subdir, leaf),
     None          => format!(   "{}/{}",        localdir, leaf),
   }
@@ -165,12 +165,15 @@ fn in_basedir<F: Sync + FnOnce() -> Option<String>>
 impl ServerConfig {
   #[throws(StartupError)]
   pub fn read(config_filename: Option<&str>, verbose: bool) {
-    let mut basedir = Thunk::new(
+    let basedir = Thunk::new(
       move || default_basedir_from_executable(verbose)
     );
-    let config_filename = config_filename.map(|s| s.to_string()).unwrap_or_else(
-      || in_basedir(&mut basedir, "etc", "", DEFAULT_CONFIG_FILENAME)
-    );
+    let config_filename = config_filename
+      .map(
+        |s| s.to_string()
+      ).unwrap_or_else(
+        || in_basedir(basedir.as_ref(), "etc", "", DEFAULT_CONFIG_FILENAME)
+      );
     let mut buf = String::new();
     File::open(&config_filename).with_context(||config_filename.to_string())?
       .read_to_string(&mut buf)?;
