@@ -8,7 +8,9 @@
 
 SHELL=/bin/bash
 
-default: debug
+default: all check
+all: debug doc
+everything: debug doc release check bundled-sources
 
 #---------- funky macros etc. ----------
 
