@@ -1115,6 +1115,7 @@ dependencies = [
  "chrono",
  "chrono-tz",
  "delegate",
+ "derive_more",
  "either",
  "failure",
  "fehler",

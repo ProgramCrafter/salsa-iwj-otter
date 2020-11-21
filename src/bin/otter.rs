@@ -7,6 +7,7 @@
 use otter::imports::*;
 use argparse::{self,ArgumentParser,action::{TypedAction,ParseResult}};
 use argparse::action::{Action,IFlagAction,IArgAction};
+use derive_more::Display;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::cell::Cell;
@@ -67,6 +68,7 @@ struct MainOpts {
   socket_path: String,
   verbose: i32,
   superuser: bool,
+  specs_dir: Option<String>,
 }
 
 impl MainOpts {
@@ -175,6 +177,56 @@ impl From<AccessOpt> for Box<dyn PlayerAccessSpec> {
   fn from(a: AccessOpt) -> Self { a.0 }
 }
 
+#[derive(Error,Debug,Display)]
+struct ExecutableRelatedError(String);
+
+#[throws(ExecutableRelatedError)]
+pub fn find_executable() -> String {
+  let e = env::current_exe()
+    .map_err(|e| ExecutableRelatedError(
+      format!("could not find current executable ({})", &e)
+    ))?;
+  let s = e.to_str()
+    .ok_or_else(|| ExecutableRelatedError(
+      format!("current executable has non-UTF8 filename!")
+    ))?;
+  s.into()
+}
+
+pub fn in_basedir(verbose: bool,
+                  from: Result<String,ExecutableRelatedError>,
+                  from_what: &str,
+                  from_exp_in: &str,
+                  now_what: &str,
+                  then_in: &str,
+                  leaf: &str,
+                  local_subdir: &str)
+                  -> String
+{
+  match (||{
+    let mut comps = from?.rsplit('/').skip(1);
+    if_chain! {
+      if Some(from_exp_in) == comps.next();
+      if let Some(path) = comps.next();
+      then { Ok(path) }
+      else { Err(ExecutableRelatedError(
+        format!("{} is not in a directory called {}", from_what, from_exp_in)
+      )) }
+    }
+  })() {
+    Err(whynot) => {
+      let r = format!("{}/{}", local_subdir, leaf);
+      if verbose {
+        eprintln!("{}: looking for {} in {}", &whynot.0, now_what, &r);
+      }
+      r
+    }
+    Ok(basedir) => {
+      format!("{}/{}/{}", basedir, then_in, leaf)
+    }
+  }
+}
+
 fn main() {
   #[derive(Default,Debug)]
   struct RawMainArgs {
@@ -188,6 +240,7 @@ fn main() {
     superuser: bool,
     subcommand: String,
     subargs: Vec<String>,
+    spec_dir: Option<String>,
   };
   let (subcommand, subargs, mo) = parse_args::<RawMainArgs,_>(
     env::args().collect(),
@@ -248,12 +301,37 @@ fn main() {
       .add_option(&["--super"], StoreTrue,
                   "enable game server superuser access");
 
+    ap.refer(&mut rma.spec_dir)
+      .add_option(&["--spec-dir"], StoreOption,
+                  "directory for table and game specs");
+
     ap
   }, &|RawMainArgs {
     account, nick, timezone,
     access, socket_path, verbose, config_filename, superuser,
-    subcommand, subargs,
+    subcommand, subargs, spec_dir,
   }|{
+    let config_info = Thunk::new(move ||{
+      let config_filename = config_filename
+        .unwrap_or_else(||{
+          let exe = find_executable();
+          in_basedir(verbose > 1, exe, "current executable", "bin",
+                     "config file", "etc", DEFAULT_CONFIG_LEAFNAME,
+                     ".")
+        });
+      ServerConfig::read(Some(&config_filename))
+        .context("read config file")?;
+      Ok::<_,AE>((otter::config::config(), config_filename))
+    });
+
+    let spec_dir = spec_dir.unwrap_or_else(||{
+      let cfg = &config_info.as_ref()?.1;
+      let spec_dir = in_basedir(verbose > 1, cfg, "config filename", "etc",
+                 "game and table specs", "specs", "", ".")
+        .strip_suffix("/").to_string();
+      Ok(spec_dir)
+    })?;
+
     let account : AccountName = account.map(Ok::<_,APE>).unwrap_or_else(||{
       let user = env::var("USER").map_err(|e| ArgumentParseError(
         format!("default account needs USER env var: {}", &e)
@@ -263,14 +341,7 @@ fn main() {
         subaccount: "".into(),
       })
     })?;
-    let config = Thunk::new(||{
-      ServerConfig::read(
-        config_filename.as_ref().map(String::as_str),
-        verbose > 1
-      )
-        .context("read config file")?;
-      Ok::<_,AE>(otter::config::config())
-    });
+
     let socket_path = socket_path.map(Ok::<_,APE>).unwrap_or_else(||{
       Ok(config.as_ref()?.command_socket.clone())
     })?;
@@ -282,6 +353,7 @@ fn main() {
       socket_path,
       verbose,
       superuser,
+      spec_dir,
     }))
   }, Some(&|w|{
     writeln!(w, "\nSubcommands:")?;
@@ -618,7 +690,14 @@ fn setup_table(_ma: &MainOpts, spec: &TableSpec) -> Vec<MGI> {
 */
 
 #[throws(AE)]
-fn read_spec<T: DeserializeOwned>(filename: &str, what: &str) -> T {
+fn read_spec<T: DeserializeOwned>(ma: &MainOpts, specname: &str,
+                                  kind: &str, what: &str) -> T {
+  let filename = if specname.contains('/') {
+    specname.to_string()
+  } else {
+    in_basedir(ma.basedir, "specs","specs",
+               format!("{}.{}.toml", specname, kind))
+  };
   (||{
     let mut f = File::open(filename).context("open")?;
     let mut buf = String::new();
@@ -659,13 +738,16 @@ mod reset_game {
   fn subargs(sa: &mut Args) -> ArgumentParser {
     use argparse::*;
     let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.table_file).metavar("TABLE-SPEC-TOML")
+    ap.refer(&mut sa.table_file)
+      .metavar("TABLE-SPEC[-TOML]")
       .add_option(&["--reset-table"],StoreOption,
                   "reset the players and access too");
     ap.refer(&mut sa.table_name).required()
       .add_argument("TABLE-NAME",Store,"table name");
     ap.refer(&mut sa.game_file).required()
-      .add_argument("GAME-SPEC-TOML",Store,"game spec");
+      .add_argument("GAME-SPEC[-TOML]",Store,
+ "game spec (path to .toml file, or found in specs directory if no '/')"
+      );
     ap
   }
 
