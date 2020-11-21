@@ -199,7 +199,6 @@ function api_piece(f: (meth: string, payload: Object) => void,
   f(meth, {
     ctoken : ctoken,
     piece : piece,
-    p : p,
     gen : gen,
     cseq : cseq,
     op : op,
