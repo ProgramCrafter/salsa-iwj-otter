@@ -106,7 +106,7 @@ fn main() {
   // todo test suite for web api
 
   let config_filename = env::args().nth(1);
-  ServerConfig::read(config_filename.as_ref().map(String::as_str))?;
+  ServerConfig::read(config_filename.as_ref().map(String::as_str), true)?;
 
   std::env::set_var("ROCKET_CLI_COLORS","off");
 

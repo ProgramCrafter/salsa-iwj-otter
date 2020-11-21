@@ -4,6 +4,11 @@
 
 use crate::imports::*;
 
+pub const EXIT_SPACE     : i32 =  2;
+pub const EXIT_SITUATION : i32 =  8;
+pub const EXIT_USAGE     : i32 = 12;
+pub const EXIT_DISASTER  : i32 = 16;
+
 pub const DEFAULT_CONFIG_FILENAME : &str = "server.toml";
 
 const DEFAULT_SAVE_DIRECTORY : &str = "save";
@@ -109,11 +114,63 @@ fn set_config(config: ServerConfig) {
   *GLOBAL.config.write().unwrap() = Arc::new(config)
 }
 
+fn default_basedir_from_executable(verbose: bool) -> Option<String> {
+  #[throws(StartupError)]
+  fn inner(verbose: bool) -> Option<String> {
+    match match env::current_exe()
+      .map(|p| p.to_str().map(|s| s.to_string()))
+    {
+      Err(e) => Err(format!(
+        "could not find current executable ({})", &e
+      )),
+      Ok(None) => Err(format!(
+        "current executable has non-UTF8 filename!"
+      )),
+      Ok(Some(basedir)) if basedir.rsplit('/').nth(1) == Some("bin") => Ok(
+        format!("{}/", basedir)
+      ),
+      Ok(_) => Err(format!(
+        "current executable is not in a directory called bin"
+      )),
+    } {
+      Err(whynot) => {
+        if verbose {
+          eprintln!("{}: looking for ancillary files in current directory",
+                    &whynot);
+        }
+        None
+      },
+      Ok(f) => Some(f),
+    }
+  }
+
+  inner(verbose).unwrap_or_else(|e|{
+    eprintln!("startup error finding installation pieces: {}", &e);
+    exit(EXIT_DISASTER)
+  })
+}
+
+fn in_basedir<F: Sync + FnOnce() -> Option<String>>
+  (basedir: &mut Thunk<Option<String>,F>,
+   subdir: &str,
+   localdir: &str,
+   leaf: &str) -> String
+{
+  match basedir.as_ref() {
+    Some(basedir) => format!("{}/{}/{}", basedir, subdir, leaf),
+    None          => format!(   "{}/{}",        localdir, leaf),
+  }
+}
+
 impl ServerConfig {
   #[throws(StartupError)]
-  pub fn read(config_filename: Option<&str>) {
-    let config_filename = config_filename
-      .unwrap_or_else(|| DEFAULT_CONFIG_FILENAME);
+  pub fn read(config_filename: Option<&str>, verbose: bool) {
+    let mut basedir = Thunk::new(
+      move || default_basedir_from_executable(verbose)
+    );
+    let config_filename = config_filename.map(|s| s.to_string()).unwrap_or_else(
+      || in_basedir(&mut basedir, "etc", "", DEFAULT_CONFIG_FILENAME)
+    );
     let mut buf = String::new();
     File::open(&config_filename).with_context(||config_filename.to_string())?
       .read_to_string(&mut buf)?;

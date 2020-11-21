@@ -58,15 +58,6 @@ impl<'x, T, F: FnMut(&str) -> Result<T,String>>
   }
 }
 
-mod exits {
-  #![allow(dead_code)]
-  pub const EXIT_SPACE     : i32 =  2;
-  pub const EXIT_SITUATION : i32 =  8;
-  pub const EXIT_USAGE     : i32 = 12;
-  pub const EXIT_DISASTER  : i32 = 16;
-}
-use exits::*;
-
 #[derive(Debug)]
 struct MainOpts {
   account: AccountName,
@@ -272,35 +263,11 @@ fn main() {
         subaccount: "".into(),
       })
     })?;
-    let config_filename = config_filename.or_else(||{
-      match match env::current_exe()
-        .map(|p| p.to_str().map(|s| s.to_string()))
-      {
-        Err(e) => Err(format!(
-          "could not find current executable ({})", &e
-        )),
-        Ok(None) => Err(format!(
-          "current executable has non-UTF8 filename!"
-        )),
-        Ok(Some(basedir)) if basedir.rsplit('/').nth(1) == Some("bin") => Ok(
-          format!("{}/etc/{}", basedir, DEFAULT_CONFIG_FILENAME)
-        ),
-        Ok(_) => Err(format!(
-          "current executable is not in a directory called bin"
-        )),
-      } {
-        Err(whynot) => {
-          if verbose > 1 {
-            eprintln!("{}: looking for {} in current directory",
-                      &whynot, DEFAULT_CONFIG_FILENAME);
-          }
-          None
-        },
-        Ok(f) => Some(f),
-      }
-    });
     let config = Thunk::new(||{
-      ServerConfig::read(config_filename.as_ref().map(String::as_str))
+      ServerConfig::read(
+        config_filename.as_ref().map(String::as_str),
+        verbose > 1
+      )
         .context("read config file")?;
       Ok::<_,AE>(otter::config::config())
     });
