@@ -11,6 +11,27 @@ unix shell account on the server.
 Right now Otter is in an alpha state.
 
 
+CREATING A GAME
+===============
+
+otter reset --reset-table local-users :test demo
+                         /^^^^^^^^^^^  ^^^\ ^^^^'~ game spec
+                         `table spec       game name
+
+Here "local-users" refers to the file "local-users.table.spec" in the
+Otter specs directory (/volatile/Otter/specs on chiark).  The table
+spec file handles access control (and some other global properties)
+This particular file says that all local shell account users may join
+the game.
+
+":test" is the game name.  It starts with a colon, which means
+implicitly "unix:<whoami>::test".  Other people have to name the game
+with the full name, with all three colons in it.
+
+"demo" refers to the file "demo.game.spec".  The "game spec" says what
+shape table is and what pieces there are.  This is a simple demo game.
+
+
 BUILDING
 ========
 

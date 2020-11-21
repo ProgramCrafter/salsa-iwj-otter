@@ -3,7 +3,7 @@
      There is NO WARRANTY. -->
 <html>
 <head>
-<link rel="license" href="/_/libre.html">
+<link rel="license" href="/_/libre">
 <script defer>let wasm_input = fetch('/_/wasm.wasm');</script>
 <script src="/_/wasm.js" defer></script>
 <script src="/_/script.js" defer></script>
