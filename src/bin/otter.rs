@@ -196,7 +196,7 @@ pub fn find_executable() -> String {
 pub fn in_basedir(verbose: bool,
                   from: Result<String,ExecutableRelatedError>,
                   from_what: &str,
-                  from_exp_in: &str,
+                  from_exp_in: &str, from_must_be_in_exp: bool,
                   now_what: &str,
                   then_in: &str,
                   leaf: &str,
@@ -205,14 +205,33 @@ pub fn in_basedir(verbose: bool,
 {
   match (||{
     let from = from?;
-    let mut comps = from.rsplit('/').skip(1);
-    if_chain! {
-      if Some(from_exp_in) == comps.next();
-      if let Some(path) = comps.next();
-      then { Ok(path.to_string()) }
-      else { Err(ere(
-        format!("{} is not in a directory called {}", from_what, from_exp_in)
-      )) }
+    if from_must_be_in_exp {
+      let mut comps = from.rsplitn(3,'/').skip(1);
+      if_chain! {
+        if Some(from_exp_in) == comps.next();
+        if let Some(path) = comps.next();
+        then { Ok(path.to_string()) }
+        else { Err(ere(
+          format!("{} is not in a directory called {}", from_what, from_exp_in)
+        )) }
+      }
+    } else {
+      let mut comps = from.rsplitn(2,'/');
+      if_chain! {
+        if let Some(dirname) = comps.nth(1);
+        let mut dir_comps = dirname.rsplitn(2,'/');
+        then {
+          if_chain! {
+            if Some(from_exp_in) == dir_comps.next();
+            if let Some(above) = dir_comps.next();
+            then { Ok(above.to_string()) }
+            else { Ok(dirname.to_string()) }
+          }
+        }
+        else {
+          Ok(from.to_string())
+        }
+      }
     }
   })() {
     Err(whynot) => {
@@ -318,7 +337,8 @@ fn main() {
           let config_filename = config_filename
             .unwrap_or_else(||{
               let exe = find_executable();
-              in_basedir(verbose > 1, exe, "current executable", "bin",
+              in_basedir(verbose > 1, exe, "current executable",
+                         "bin", true,
                          "config file", "etc", DEFAULT_CONFIG_LEAFNAME,
                          ".")
             });
@@ -333,7 +353,8 @@ fn main() {
     let spec_dir = spec_dir.map(Ok::<_,APE>).unwrap_or_else(||{
       let cfgf = config.clone().map(|(_c,f)| f).map_err(Into::into);
       let spec_dir = in_basedir(verbose > 1,
-                                cfgf, "config filename", "etc",
+                                cfgf, "config filename",
+                                "etc", false,
                                 "game and table specs", "specs", "",
                                 ".")
         .trim_end_matches('/').to_string();
