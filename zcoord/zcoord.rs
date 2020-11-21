@@ -387,9 +387,6 @@ impl<ASO:AddSubOffset> Iterator for IteratorCore<ASO> {
     Some(self.current.repack().unwrap())
   }
 }
-impl ExactSizeIterator for IteratorCore<AddSubRangeDelta> {
-  fn len(&self) -> usize { return usize::MAX }
-}
 
 pub trait BoxedIteratorTrait : Iterator<Item=ZCoord> + Debug { }
 pub type BoxedIterator = Box<dyn BoxedIteratorTrait>;
