@@ -367,13 +367,11 @@ function lower_targets(uo: UoRecord): boolean {
   }
 
   let targets_todo : LowerTodoList = Object.create(null);
-  let n_targets_todo_unpinned = 0;
 
   for (let piece of uo.targets!) {
     let p = pieces[piece]!;
     let pinned = target_treat_pinned(p);
     targets_todo[piece] = { p, piece, pinned, };
-    if (!pinned) { n_targets_todo_unpinned++; }
   }
   let problem = lower_pieces(targets_todo);
   if (problem !== null) {
@@ -428,7 +426,6 @@ function lower_pieces(targets_todo: LowerTodoList):
   let tomove_pinned       : Entry[] = [];
   let bottommost_unpinned : Entry | null = null;
 
-  // xxx this duplicates stuff in keyops
   let n_targets_todo_unpinned = 0;
   for (const piece of Object.keys(targets_todo)) {
     let p = targets_todo[piece];
