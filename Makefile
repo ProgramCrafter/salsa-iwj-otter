@@ -232,7 +232,7 @@ deploy: stamp/cargo.deploy-build bundled-sources assets libraries
 	rsync -zv --progress $(addprefix $(DEPLOY_TARGET_DIR)/,$(PROGRAMS)) $(DEPLOY_BASE)/bin/
 	rsync -rv --progress $(TARGET_DIR)/bundled-sources/. $(DEPLOY_BASE)/bundled-sources
 	rsync -r README.md $(DEPLOY_BASE)/.
-	rsync -r --delete --exclude=\*~ library $(DEPLOY_BASE)/.
+	rsync -r --delete --exclude=\*~ library specs $(DEPLOY_BASE)/.
 	rsync -r $(FILEASSETS) $(addprefix $(WASM_PACKED)/, $(WASM_ASSETS)) \
 		$(DEPLOY_BASE)/assets/
 	ssh -o BatchMode=true $(DEPLOY_USER) $(DEPLOY_FINISH)
