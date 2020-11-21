@@ -308,6 +308,20 @@ impl MutateReturn for MutateFirst {
 }
 
 #[derive(Debug)]
+pub struct MutateLast;
+impl MutateReturn for MutateLast {
+  fn op<T, U,
+        M : FnOnce(&mut T),
+        O : FnOnce(&T) -> U>
+    (x: &mut T, m: M, o: O) -> U
+  {
+    let u = o(x);
+    m(x);
+    u
+  }
+}
+
+#[derive(Debug)]
 pub struct IteratorCore<ASO, MR> {
   current: Mutable,
   aso: ASO,
@@ -440,7 +454,8 @@ impl Mutable {
       (None,    Some(b)) => mk({
         let mut first = b.clone();
         first.addsub(&Decrement).unwrap();
-        Mutable::range_upto(&first,&b,count)?
+        let (current, aso) = Mutable::range_core(&first, &b, count-1)?;
+        IteratorCore { current, aso, mr: MutateLast }.take(count as usize)
       }),
     }
   }
@@ -833,5 +848,37 @@ mod test {
     it.nxt("3333333334_0000000020");
     it.nxt("3333333334_0000000030");
     assert_eq!(it.i.next(), None);
+  }
+
+  #[test]
+  fn some_range(){
+    struct It {
+      i: BoxedIterator,
+      last: Option<ZCoord>,
+    }
+    #[throws(LogicError)]
+    fn mkr(a: Option<&str>, b: Option<&str>, count: RangeCount) -> It {
+      let a = a.map(|s:&str| s.parse::<ZCoord>().unwrap().clone_mut());
+      let b = b.map(|s:&str| s.parse::<ZCoord>().unwrap().clone_mut());
+      let last = a.as_ref().map(|m| m.repack().unwrap());
+      let i = Mutable::some_range(a.as_ref(), b.as_ref(), count)?;
+      It { i, last }
+    };
+    impl It {
+      fn nxt(&mut self, exp: Option<&str>) {
+        let got = self.i.next();
+        let got_s = got.map(|s| s.to_string());
+        assert_eq!(got_s, exp);
+        if let (Some(got), Some(exp)) = (got, exp) {
+          assert_eq!(got, bf(exp));
+          if let Some(last) = self.last { assert!(got > last); }
+        }
+        self.last = got.clone();
+      }
+    }
+    let mut it = mkr(Some("300000000"),Some("400000000"),3).unwrap();
+    it.nxt(Some("3e0000000"));
+    it.nxt(Some("3g0000000"));
+    it.nxt(Some("3p0000000"));
   }
 }
