@@ -68,6 +68,7 @@
 use std::cmp::{Ordering, max};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self, Debug, Display, Formatter};
+use std::iter;
 use std::num::{TryFromIntError, Wrapping};
 use std::str;
 use std::str::FromStr;
@@ -471,6 +472,7 @@ impl Mutable {
     fn mk<T:'static + Debug + Iterator<Item=ZCoord>>(x: T) -> BoxedIterator
     { Box::new(x) }
     let c = count as usize;
+    if c == 0 { return mk( iter::empty() ) }
     match (a, b) {
       (None,    None   ) => throw!(TotallyUnboundedRange),
       (Some(a), None   ) => mk( a.clone().iter(Increment).take(c) ),
@@ -926,5 +928,10 @@ mod test {
     assert_eq!( x.err(), Some(
       LogicError::RangeTotallyUnbounded(TotallyUnboundedRange)
     ));
+    let mut it = mkr(Some("fvvq000000"),Some("g026000000"),1).unwrap();
+    it.nxt(Some("g010000000"));
+    it.nxt(None);
+    let mut it = mkr(None,Some("fvvq000000"),0).unwrap();
+    it.nxt(None);
   }
 }
