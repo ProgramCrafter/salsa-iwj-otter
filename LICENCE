@@ -1,8 +1,8 @@
-This is "otter", Online TableTop Environment Renderer,
+This is "Otter", Online TableTop Environment Renderer,
 a multiplayer online tabletop gameplay system.
 
 
-"otter" is free software: you can redistribute it and/or modify
+"Otter" is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
@@ -18,14 +18,14 @@ If not, see <http://www.gnu.org/licenses/>.
 
 
 You can download the complete source code of a running instance of
-otter, by visiting the path /src.  There should be a link at the
+Otter, by visiting the path /src.  There should be a link at the
 bottom of the page.
 
 
 Shape libraries
 ---------------
 
-The shape librariues in library/ are *not* part of otter itself.  The
+The shape librariues in library/ are *not* part of Otter itself.  The
 files there have a variety of different licences, and are often
 multiply-licenced.  But all of these files are available under
 at least CC-BY-SA 3.0 or CC-BY-SA 4.0, so:
@@ -70,14 +70,14 @@ in the copyright notice, instead of the full licence grant text:
   SPDX-License-Identifier: AGPL-3.0-or-later
 As is conventional, this should be read as a licence grant.
 
-Contributions to otter are accepted based on the git commit
+Contributions to Otter are accepted based on the git commit
 Signed-off-by convention, by which the contributors' certify their
 contributions according to the Developer Certificate of Origin version
 1.1 - see the file DEVELOPER-CERTIFICATE.
 
 If you create a new file please be sure to add an appropriate licence
 header, probably something like this:
-// Copyright by contributors to the otter game system
+// Copyright by contributors to the Otter game system
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
@@ -88,9 +88,9 @@ Partial dual licence
 Some individual files are dual-licenced and say
   "MIT-0 OR AGPL-3.0-or-later"
 Those files are available under the MIT-0 permissive licence when
-taken separately, but when distributed as part of otter, they are
+taken separately, but when distributed as part of Otter, they are
 AGPLv3+.
 
 The imported git subtree webassembly-types/ is by 01Alchemist and is
 available under the MIT licence (SPDX "MIT").  Again, when distributed
-as part of otter, this is AGPLv3+.
+as part of Otter, this is AGPLv3+.

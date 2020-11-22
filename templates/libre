@@ -1,15 +1,15 @@
 <html>
   <head>
-    <title>otter - Free Software, source code, legal</title>
+    <title>Otter - Free Software, source code, legal</title>
   </head>
 <body>
 
-<h1>otter - Online TableTop Environment Renderer</h1>
+<h1>Otter - Online TableTop Environment Renderer</h1>
 <p>
-  This server is running otter, the Online TableTop Environment
+  This server is running Otter, the Online TableTop Environment
   Renderer.
 <p>
-  otter is Free Software, according to the <a href="AGPLv3">GNU Affero General
+  Otter is Free Software, according to the <a href="AGPLv3">GNU Affero General
   Public License, version 3</a> or (at your option) any later version.
   There is NO WARRANTY.
 <p>
@@ -18,7 +18,7 @@
   game piece pictures (shape libraries).
 <p>
   The shape libraries have a variety of licences.
-  All those included with otter are available under at least
+  All those included with Otter are available under at least
   <a href="CC-BY-SA-3.0">CC-BY-SA 3.0</a> or
   <a href="CC-BY-SA-4.0">CC-BY-SA 4.0</a>.
   Check the source in "view source" in your browser, or the browser
