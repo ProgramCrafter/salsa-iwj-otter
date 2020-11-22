@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+title="Otter source code"
+echo "<html><head><title>$title</title></head>"
+echo "<body><h1>$title</h1><ul>"
+for x in $@; do
+    echo "<li><a href=\"$x\">$x</a>"
+done
+echo '</ul><body></html>'

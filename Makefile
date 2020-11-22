@@ -7,6 +7,7 @@
 # make -j8 release
 
 SHELL=/bin/bash
+src=.
 
 default: all check
 all: debug
@@ -18,6 +19,11 @@ cr = $(addprefix --,$(filter-out debug,$1))
 rsrcs = $(shell \
     find $1 \( -name Cargo.toml -o -name Cargo.lock -o -name \*.rs \) )
 stamp=@mkdir -p stamp; touch $@
+
+BUNDLED_SOURCES_LIT = README.md LICENCE
+BUNDLED_SOURCES_FILES = index.html $(BUNDLED_SOURCES_LIT)
+BUNDLED_SOURCES_LINKS += $(BUNDLED_SOURCES_LIT) otter/
+BUNDLED_SOURCES += $(BUNDLED_SOURCES_FILES)
 
 #---------- programs and config variables ----------
 
@@ -68,6 +74,8 @@ $1 := $(abspath $(BUILD_SUBDIR)/$2/target/$3/$4)
 $(abspath $(BUILD_SUBDIR)/$2/target/$3/$4):; cd ../$2 && $$(CARGO) build $(call cr,$3)
 )
 bundled-sources:: bundled-sources/$2
+.PHONY: bundled-sources/$2
+BUNDLED_SOURCES_LINKS += $2/
 endef
 
 $(eval $(call lp,BUNDLE_SOURCES,bundle-sources,debug,bundle-rust-sources))
@@ -167,14 +175,27 @@ stamp/wasm-pack: stamp/cargo.wasm-release
 #---------- bundle-sources ----------
 
 bundled-sources:: bundled-sources/otter
+.PHONY: bundled-sources/otter
+
+TARGET_BUNDLED=$(TARGET_DIR)/bundled-sources
 
 bundled-sources/%: $(BUNDLE_SOURCES)
-	set -e; d=$(abspath $(TARGET_DIR)/bundled-sources); \
+	set -e; d=$(abspath $(TARGET_BUNDLED); \
 	$(NAILING_CARGO_JUST_RUN) mkdir -p $$d; \
 	$(if $(filter-out otter,$*), cd ../$*;) \
 	$(BUNDLE_SOURCES_CMD) --output $$d/$*
 
-.PHONY: bundled-sources/%
+bundled-sources:: $(addprefix $(TARGET_BUNDLED)/, $(BUNDLED_SOURCES_FILES))
+
+$(addprefix $(TARGET_BUNDLED)/, $(BUNDLED_SOURCES_LIT)): $(TARGET_BUNDLED)/%: %
+	$(NAILING_CARGO_JUST_RUN) cp $(abspath $(src))/$< $(abspath $@)
+
+$(TARGET_BUNDLED)/index.html: bundled-sources-make-index Makefile
+	$(NAILING_CARGO_JUST_RUN) sh -ec ' 			\
+		cd $(abspath $(src));				\
+		./$< >$@.tmp $(BUNDLED_SOURCES_LINKS);		\
+		mv -f $@.tmp $@;				\
+	'
 
 bundled-sources::
 	@echo Bundled sources.
