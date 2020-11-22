@@ -67,6 +67,10 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
       command_socket = format!("{}/{}", save_directory, command_socket);
     }
 
+    let public_url = public_url
+      .trim_end_matches('/')
+      .into();
+
     let debug = debug.unwrap_or(cfg!(debug_assertions));
     let rocket_workers = rocket_workers.unwrap_or(
       if debug { 20 } else { 1000 });
@@ -134,7 +138,7 @@ impl ServerConfig {
 impl Default for ServerConfig {
   fn default() -> ServerConfig {
     let spec : ServerConfigSpec = toml_de::from_str(r#"
-      public_url = "XXX"
+      public_url = "INTERNAL ERROR"
       "#)
       .expect("parse dummy config as ServerConfigSpec");
     spec.try_into().expect("empty spec into config")
