@@ -116,7 +116,6 @@ cargo-wasm: cargo-wasm-release
 wasm-pack: stamp/wasm-pack
 
 assets: js stamp/wasm-pack $(FILEASSETS)
-	: $(FILEASSETS) , $^
 
 js: templates/script.js
 
