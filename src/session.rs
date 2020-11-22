@@ -15,6 +15,7 @@ struct SessionRenderContext {
   nick : String,
   load : String,
   log : Vec<SessionFormattedLogEntry>,
+  sse_url_prefix : String,
 }
 
 #[derive(Debug,Serialize)]
@@ -156,6 +157,11 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       SessionFormattedLogEntry { when, logent }
     }).collect();
 
+    let sse_url_prefix = match &config().sse_wildcard_url {
+      Some((lhs, rhs)) => format!("{}{}{}", lhs, client, rhs),
+      None => "".into(),
+    };
+
     let src = SessionRenderContext {
       ctoken,
       gen : ig.gs.gen,
@@ -165,6 +171,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
       defs : alldefs,
       uses,
       nick : gpl.nick.clone(),
+      sse_url_prefix,
       load : serde_json::to_string(&DataLoad {
         players : load_players,
       }).map_err(|e| InternalError::JSONEncode(e))?,

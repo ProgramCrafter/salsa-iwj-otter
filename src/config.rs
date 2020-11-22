@@ -25,6 +25,7 @@ pub struct ServerConfigSpec {
   pub debug: Option<bool>,
   pub http_port: Option<u16>,
   pub public_url: String,
+  pub sse_wildcard_url: Option<String>,
   pub rocket_workers: Option<u16>,
   pub template_dir: Option<String>,
   pub wasm_dir: Option<String>,
@@ -40,6 +41,7 @@ pub struct ServerConfig {
   pub debug: bool,
   pub http_port: Option<u16>,
   pub public_url: String,
+  pub sse_wildcard_url: Option<(String, String)>,
   pub rocket_workers: u16,
   pub template_dir: String,
   pub wasm_dir: String,
@@ -54,7 +56,8 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
   fn try_from(spec: ServerConfigSpec) -> ServerConfig {
     let ServerConfigSpec {
       save_directory, command_socket, debug,
-      http_port, public_url, rocket_workers, template_dir, wasm_dir,
+      http_port, public_url, sse_wildcard_url, rocket_workers,
+      template_dir, wasm_dir,
       log, bundled_sources, shapelibs,
     } = spec;
 
@@ -70,6 +73,16 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
     let public_url = public_url
       .trim_end_matches('/')
       .into();
+
+    let sse_wildcard_url = sse_wildcard_url.map(|pat| {
+      let mut it = pat.splitn(2, '*');
+      let lhs = it.next().unwrap();
+      let rhs = it.next().ok_or_else(||anyhow!(
+        "sse_wildcard_url must containa '*'"
+      ))?;
+      let rhs = rhs.trim_end_matches('/');
+      Ok::<_,AE>((lhs.into(), rhs.into()))
+    }).transpose()?;
 
     let debug = debug.unwrap_or(cfg!(debug_assertions));
     let rocket_workers = rocket_workers.unwrap_or(
@@ -105,7 +118,8 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
 
     ServerConfig {
       save_directory, command_socket, debug,
-      http_port, public_url, rocket_workers, template_dir, wasm_dir,
+      http_port, public_url, sse_wildcard_url, rocket_workers,
+      template_dir, wasm_dir,
       log, bundled_sources, shapelibs,
     }
   }

@@ -2,6 +2,7 @@
       data-ctoken="{{ctoken}}"
       data-us="{{player}}"
       data-gen="{{gen}}"
+      data-sse-url-prefix="{{sse_url_prefix}}"
       data-load="{{ load | escape }}">
 <style>
   div[class=uos] { display: flex; flex-wrap: wrap; }
