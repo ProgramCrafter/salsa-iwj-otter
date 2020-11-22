@@ -37,8 +37,9 @@ const RESOURCES : &[(&'static str, ResourceLocation, ContentType)] = &[
 ];
 
 // xxx access of joined game does not work after server reload??
-// xxx need remove game
 // xxx trying to rejoin game just gives NickCollision, should be idempotent
+// xxx need remove game from cli
+// xxx need reset access from cli
 
 #[derive(Debug)]
 struct CheckedResourceLeaf {

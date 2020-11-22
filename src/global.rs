@@ -858,7 +858,7 @@ impl InstanceGuard<'_> {
       rmp_serde::encode::write_named(w, &s.c.g.gs)
     })?;
     self.c.game_dirty = false;
-    debug!("saved (now) {:?}", &self.name);
+    debug!("saved (now) {}", &self.name);
   }
 
   #[throws(InternalError)]
@@ -886,7 +886,7 @@ impl InstanceGuard<'_> {
       rmp_serde::encode::write_named(w, &isa)
     })?;
     self.c.access_dirty = false;
-    info!("saved accesses for {:?}", &self.name);
+    info!("saved accesses for {}", &self.name);
   }
 
   #[throws(InternalError)]
