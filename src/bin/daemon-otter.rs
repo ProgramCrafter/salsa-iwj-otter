@@ -7,6 +7,7 @@
 use rocket::{get,routes};
 use rocket_contrib::serve::StaticFiles;
 use rocket::response::Content;
+use rocket::fairing;
 
 use otter::imports::*;
 
@@ -103,6 +104,34 @@ fn resource<'r>(leaf : CheckedResourceLeaf) -> impl Responder<'r> {
   Content(leaf.ctype, NamedFile::open(path)?)
 }  
 
+#[derive(Debug,Copy,Clone)]
+struct ContentTypeFixup;
+impl fairing::Fairing for ContentTypeFixup {
+  fn info(&self) -> fairing::Info {
+    fairing::Info {
+      name: "ContentTypeFixup",
+      kind: fairing::Kind::Response,
+    }
+  }
+  fn on_response(&self, _: &Request<'_>, response: &mut Response<'_>) {
+    match response.content_type() {
+      None => {
+        response.set_header(ContentType::Plain);
+      },
+      Some(ct) if ct == ContentType::GZIP => {
+        // the only thing we serve with a .gz extension are the
+        // compressed source code tarballs
+        use rocket::http::hyper::header;
+        response.set_header(header::TransferEncoding(vec![
+          header::Encoding::Gzip,
+        ]));
+        response.set_header(ContentType::TAR);
+      },
+      _ => { /* hopefully OK */ },
+    }
+  }
+}
+
 #[throws(StartupError)]
 fn main() {
   // todo test suite for cli at least
@@ -170,6 +199,7 @@ fn main() {
   let rconfig = cbuilder.finalize()?;
 
   let r = rocket::custom(rconfig)
+    .attach(ContentTypeFixup)
     .attach(helmet)
     .attach(Template::fairing())
     .manage(cors_state)
