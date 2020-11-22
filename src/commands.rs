@@ -80,6 +80,7 @@ pub enum MgmtGameInstruction {
 
   JoinGame { details: MgmtPlayerDetails },
   UpdatePlayer { player: PlayerId, details: MgmtPlayerDetails },
+//  LeaveGame(PlayerId), xxx and in otter cli too
 
   ClearLog,
   SetACL { acl: Acl<TablePermission> },
