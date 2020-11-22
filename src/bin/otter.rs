@@ -299,7 +299,7 @@ fn main() {
       MapStore(|s| Ok(Some(
         FixedToken { token: RawToken(s.to_string()) }.into()
       ))),
- "use fixed game access token TOKEN (for administrators, with --super, only)"
+ "use fixed game access token TOKEN (for administrators, with --super, only; only \`reset', not \`redelivery', of tokens is possible)"
     );
     access.add_option(&["--no-access-token"],
                       StoreConst(Some(PlayerAccessUnset.into())),

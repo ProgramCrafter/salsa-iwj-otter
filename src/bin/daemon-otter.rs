@@ -36,9 +36,7 @@ const RESOURCES : &[(&'static str, ResourceLocation, ContentType)] = &[
   ("wasm.js",      RL::Wasm("otter_wasm.js"),      ContentType::JavaScript),
 ];
 
-// xxx trying to rejoin game just gives NickCollision, should be idempotent
 // xxx need remove game from cli
-// xxx need reset access from cli
 
 #[derive(Debug)]
 struct CheckedResourceLeaf {
