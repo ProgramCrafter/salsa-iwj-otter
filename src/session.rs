@@ -158,7 +158,11 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
     }).collect();
 
     let sse_url_prefix = match &config().sse_wildcard_url {
-      Some((lhs, rhs)) => format!("{}{}{}", lhs, client, rhs),
+      Some((lhs, rhs)) => {
+        let mut clpart = client.to_string();
+        clpart.make_ascii_lowercase();
+        format!("{}{}{}", lhs, clpart, rhs)
+      },
       None => "".into(),
     };
 

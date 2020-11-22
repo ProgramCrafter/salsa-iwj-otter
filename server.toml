@@ -8,6 +8,7 @@
 # USER=rustcargo target/debug/otter --config ~ian/Rustup/Game/server/server.toml --scope-server reset --reset-table ~ian/Rustup/Game/server/specs/test.table.toml dummy  ~ian/Rustup/Game/server/specs/test.game.toml
 
 public_url = "http://localhost:8000"
+#sse_wildcard_url = "http://*.sse.localhost:8000"
 
 save_directory = "/home/rustcargo/Rustup/Game/server"
 template_dir = "/home/ian/Rustup/Game/server/templates"

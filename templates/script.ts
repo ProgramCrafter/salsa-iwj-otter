@@ -1066,6 +1066,7 @@ function startup() {
   ctoken = body.dataset.ctoken!;
   us = body.dataset.us!;
   gen = +body.dataset.gen!;
+  let sse_url_prefix = body.dataset.sseUrlPrefix!;
   status_node = document.getElementById('status')!;
   status_node.innerHTML = 'js-done';
   log_elem = document.getElementById("log")!;
@@ -1093,7 +1094,7 @@ function startup() {
     redisplay_ancillaries(piece,p);
   }
 
-  var es = new EventSource("/_/updates/"+ctoken+'/'+gen);
+  var es = new EventSource(sse_url_prefix + "/_/updates/"+ctoken+'/'+gen);
   es.onmessage = function(event) {
     console.log('GOTEVE', event);
     var k;
