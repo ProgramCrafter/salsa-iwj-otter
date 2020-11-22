@@ -686,6 +686,7 @@ impl<'ig> InstanceGuard<'ig> {
         acctid
       };
       self.token_register(token.clone(), iad);
+      self.save_access_now()?;
 
       token
 
