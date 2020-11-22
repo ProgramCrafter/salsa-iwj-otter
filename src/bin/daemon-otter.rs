@@ -117,10 +117,12 @@ fn main() {
 
   flexi_logger::Logger::with(c.log.clone()).start()?;
 
-  let bundled_sources = &c.bundled_sources;
-  fs::metadata(format!("{}/", bundled_sources))
-    .with_context(||bundled_sources.clone())
-    .context("check bundled-sources directory")?;
+  {
+    let check = format!("{}/otter/index.html", &c.bundled_sources);
+    fs::metadata(&check)
+      .context(check.clone())
+      .context("check bundled-sources directory")?;
+  }
 
   shapelib::load()?;
 
@@ -177,7 +179,7 @@ fn main() {
       resource,
       updates,
     ])
-    .mount("/_/src", StaticFiles::from(bundled_sources))
+    .mount("/_/src", StaticFiles::from(&c.bundled_sources))
     ;
 
   let r = otter::session::mount(r);
