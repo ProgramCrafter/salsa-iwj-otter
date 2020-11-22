@@ -15,7 +15,9 @@
 <p>
   You can download <a href="/_/src/">source code for this running server
   version</a>.  That includes the source code for all the included
-  game piece pictures (shape libraries).
+  game piece pictures (shape libraries), and
+  <a href="/_/src/README.md">general information including build
+  and use instructions</a>.
 <p>
   The shape libraries have a variety of licences.
   All those included with Otter are available under at least
