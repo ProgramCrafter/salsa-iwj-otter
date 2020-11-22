@@ -515,34 +515,6 @@ impl DerefMut for ConnForGame {
 
 impl ConnForGame {
   #[throws(AE)]
-  fn join_game(&mut self, ma: &MainOpts) {
-    let nick = ma.nick.clone()
-      .or_else(|| Some(ma.account.default_nick()));
-
-    let insns = vec![
-      MGI::JoinGame { details: MgmtPlayerDetails { nick } },
-    ];
-    let resp = self.alter_game(insns, None)?;
-
-    match resp.as_slice() {
-      [MGR::JoinGame { nick, player, token }] => {
-        println!("joined game as player #{} {:?}",
-                 player.0.get_idx_version().0,
-                 &nick);
-        for l in &token.lines {
-          if l.contains(char::is_control) {
-            println!("Server token info contains control chars! {:?}",
-                     &l);
-          } else {
-            println!(" {}", &l);
-          }
-        }
-      }
-      x => throw!(anyhow!("unexpected response to JoinGame: {:?}", &x)),
-    }
-  }
-
-  #[throws(AE)]
   fn alter_game(&mut self, insns: Vec<MgmtGameInstruction>,
                 f: Option<&mut dyn FnMut(&MgmtGameResponse) -> Result<(),AE>>)
                 -> Vec<MgmtGameResponse> {
@@ -858,12 +830,16 @@ mod join_game {
 
   #[derive(Default,Debug)]
   struct Args {
+    reset_access: bool,
     table_name: String,
   }
 
   fn subargs(sa: &mut Args) -> ArgumentParser {
     use argparse::*;
     let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.reset_access)
+      .add_option(&["--reset"],StoreTrue,
+                  "generate and deliver new player access token");
     ap.refer(&mut sa.table_name).required()
       .add_argument("TABLE-NAME",Store,"table name");
     ap
@@ -872,7 +848,73 @@ mod join_game {
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = access_game(&ma, &args.table_name)?;
-    chan.join_game(&ma)?;
+
+    let players = {
+      let resp = chan.alter_game(vec![MGI::Info], None)?;
+      match resp.as_slice() {
+        [MGR::Info(MgmtGameResponseGameInfo { players, .. })] => players,
+        x => throw!(anyhow!("unexpected response to game Info: {:?}", &x)),
+      }.clone()
+    };
+
+    let mut insns = vec![];
+    match players.iter().filter(
+      |(_,mpi)| &mpi.account == &ma.account
+    ).next() {
+      None => {
+        let nick = ma.nick.clone()
+          .unwrap_or_else(|| ma.account.default_nick());
+        let details = MgmtPlayerDetails { nick: Some(nick) };
+        insns.push(MGI::JoinGame { details });
+      },
+      Some((player, mpi)) => {
+        println!("already in game, as player #{} {:?}",
+                 player.0.get_idx_version().0, &mpi.nick);
+        let MgmtPlayerInfo { nick, account:_ } = mpi;
+        if let Some(new_nick) = &ma.nick {
+          if nick != new_nick {
+            println!("changing nick to {:?}", &new_nick);
+            let details = MgmtPlayerDetails { nick: ma.nick.clone() };
+            insns.push(MGI::UpdatePlayer { player, details });
+          }
+        }          
+        if args.reset_access {
+          println!("resetting access token (invalidating other URLs)");
+          insns.push(MGI::ResetPlayerAccess(player));
+        } else {
+          println!("redelivering existing access token");
+          insns.push(MGI::RedeliverPlayerAccess(player));
+        }
+      },
+    };
+
+    fn deliver(token: &AccessTokenReport) {
+      for l in &token.lines {
+        if l.contains(char::is_control) {
+          println!("Server token info contains control chars! {:?}",
+                   &l);
+        } else {
+          println!(" {}", &l);
+        }
+      }
+    }
+
+    for resp in chan.alter_game(insns, None)? {
+      match resp {
+        MGR::JoinGame { nick, player, token } => {
+          println!("joined game as player #{} {:?}",
+                   player.0.get_idx_version().0,
+                   &nick);
+          deliver(&token);
+        },
+        MGR::PlayerAccessToken(token) => {
+          deliver(&token);
+        },
+        MGR::Fine => { },
+        _ => throw!(anyhow!("unexpected response to instruction(s)")),
+      }
+    }
+
     Ok(())
   }
 
