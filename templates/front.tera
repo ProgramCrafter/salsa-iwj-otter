@@ -1,0 +1,21 @@
+<html>
+  <head>
+    <title>Otter</title>
+  </head>
+<body>
+
+<h1>Otter - Online TableTop Environment Renderer</h1>
+<p>
+  This server is running Otter, the Online TableTop Environment
+  Renderer.
+<p>
+  To use this server, you need an access link.  Please visit
+  that link directly.
+<p>
+  For further information, see the <a href="/_/src/README.md">README</a>.
+<p>
+  Otter and its shape (piece picture) libraries
+  are <a href="/_/libre">Free Software</a> and come with NO
+  WARRANTY.
+</body>
+</html>

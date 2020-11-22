@@ -12,13 +12,13 @@ use rocket::fairing;
 use otter::imports::*;
 
 #[derive(Serialize,Debug)]
-struct TestRenderContext { }
+struct FrontPageRenderContext { }
 
 #[get("/")]
 #[throws(OE)]
 fn index() -> Template {
-  let c = TestRenderContext { };
-  Template::render("test",&c)
+  let c = FrontPageRenderContext { };
+  Template::render("front",&c)
 }
 
 #[derive(Copy,Clone,Debug)]
