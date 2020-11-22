@@ -402,7 +402,7 @@ impl AccountsGuard {
 //---------- load/save ----------
 
 fn save_path() -> String {
-  format!("{}/{}", config().save_directory, &ACCOUNTS_FILE)
+  format!("{}/{}", config().save_dir, &ACCOUNTS_FILE)
 }
 
 #[throws(StartupError)]

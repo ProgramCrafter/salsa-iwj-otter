@@ -10,7 +10,8 @@
 public_url = "http://localhost:8000"
 #sse_wildcard_url = "http://*.sse.localhost:8000"
 
-save_directory = "/home/rustcargo/Rustup/Game/server"
+save_dir = "/home/rustcargo/Rustup/Game/server"
+command_socket = "/home/rustcargo/Rustup/Game/server/command.socket"
 template_dir = "/home/ian/Rustup/Game/server/templates"
 bundled_sources = "/home/rustcargo/Rustup/Game/server/target/bundled-sources"
 wasm_dir = "/home/rustcargo/Rustup/Game/server/target/packed-wasm"

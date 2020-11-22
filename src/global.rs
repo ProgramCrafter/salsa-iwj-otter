@@ -796,7 +796,7 @@ enum SavefilenameParseResult {
 }
 
 fn savefilename(name: &InstanceName, prefix: &str, suffix: &str) -> String {
-  [ config().save_directory.as_str(), &"/", prefix ]
+  [ config().save_dir.as_str(), &"/", prefix ]
     .iter().map(Deref::deref)
     .chain(iter::once( name.to_string().as_str() ))
     .chain([ suffix ].iter().map(Deref::deref))
@@ -908,7 +908,7 @@ impl InstanceGuard<'_> {
       let mut st = GLOBAL.save_area_lock.lock().unwrap();
       let st = &mut *st;
       if st.is_none() {
-        let lockfile = format!("{}/lock", config().save_directory);
+        let lockfile = format!("{}/lock", config().save_dir);
         *st = Some((||{
           let file = File::create(&lockfile).context("open")?;
           file.try_lock_exclusive().context("lock")?;
@@ -1025,7 +1025,7 @@ pub fn load_games(accounts: &mut AccountsGuard,
   use AFState::*;
   use SavefilenameParseResult::*;
   let mut a_leaves = HashMap::new();
-  for de in fs::read_dir(&config().save_directory)? {
+  for de in fs::read_dir(&config().save_dir)? {
     let de = de?;
     let leaf = de.file_name();
     (||{

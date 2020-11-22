@@ -12,15 +12,10 @@ pub const EXIT_DISASTER  : i32 = 16;
 pub const DEFAULT_CONFIG_DIR      : &str = "/etc/otter";
 pub const DEFAULT_CONFIG_LEAFNAME : &str = "server.toml";
 
-const DEFAULT_SAVE_DIRECTORY : &str = "save";
-const DEFAULT_COMMAND_SOCKET : &str = "command.socket"; // in save dir
-const DEFAULT_TEMPLATE_DIR : &str = "templates";
-const DEFAULT_LIBRARY_DIR : &str = "library";
-const DEFAULT_WASM_DIR : &str = "target/packed-wasm";
-
 #[derive(Deserialize,Debug,Clone)]
 pub struct ServerConfigSpec {
-  pub save_directory: Option<String>,
+  pub base_dir: Option<String>,
+  pub save_dir: Option<String>,
   pub command_socket: Option<String>,
   pub debug: Option<bool>,
   pub http_port: Option<u16>,
@@ -36,7 +31,7 @@ pub struct ServerConfigSpec {
 
 #[derive(Debug,Clone)]
 pub struct ServerConfig {
-  pub save_directory: String,
+  pub save_dir: String,
   pub command_socket: String,
   pub debug: bool,
   pub http_port: Option<u16>,
@@ -55,20 +50,30 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
   #[throws(Self::Error)]
   fn try_from(spec: ServerConfigSpec) -> ServerConfig {
     let ServerConfigSpec {
-      save_directory, command_socket, debug,
+      base_dir, save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
       template_dir, wasm_dir,
       log, bundled_sources, shapelibs,
     } = spec;
 
-    let save_directory = save_directory
-      .unwrap_or_else(|| DEFAULT_SAVE_DIRECTORY.to_owned());
+    let defpath = |specd: Option<String>, leaf: &str| -> String {
+      specd.unwrap_or_else(|| match &base_dir {
+        Some(base) => format!("{}/{}", &base, &leaf),
+        None       => leaf.to_owned(),
+      })
+    };
 
-    let mut command_socket = command_socket
-      .unwrap_or_else(|| DEFAULT_COMMAND_SOCKET.to_owned());
-    if !command_socket.starts_with('/') {
-      command_socket = format!("{}/{}", save_directory, command_socket);
-    }
+    let save_dir        = defpath(save_dir,        "save"              );
+    let command_socket  = defpath(command_socket,  "var/command.socket");
+    let template_dir    = defpath(template_dir,    "assets"            );
+    let wasm_dir        = defpath(wasm_dir,        "assets"            );
+    let bundled_sources = defpath(bundled_sources, "bundled-sources"   );
+    const DEFAULT_LIBRARY_GLOB : &str = "library/*.toml";
+
+    let shapelibs = shapelibs.unwrap_or_else(||{
+      let glob = defpath(None, DEFAULT_LIBRARY_GLOB);
+      vec![ shapelib::Config1::PathGlob(glob) ]
+    });
 
     let public_url = public_url
       .trim_end_matches('/')
@@ -88,9 +93,6 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
     let rocket_workers = rocket_workers.unwrap_or(
       if debug { 20 } else { 1000 });
 
-    let template_dir = template_dir
-      .unwrap_or_else(|| DEFAULT_TEMPLATE_DIR.to_owned());
-
     let log = {
       use toml::Value::Table;
       match log {
@@ -106,18 +108,8 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
     let log = LogSpecification::from_toml(&log)
       .context("log specification")?;
 
-    let bundled_sources = bundled_sources
-      .unwrap_or_else(|| save_directory.clone());
-
-    let shapelibs = shapelibs.unwrap_or_else(
-      ||vec![ shapelib::Config1::PathGlob(
-        format!("{}/*.toml", DEFAULT_LIBRARY_DIR)
-      )]);
-
-    let wasm_dir = wasm_dir.unwrap_or_else(|| DEFAULT_WASM_DIR.to_owned());
-
     ServerConfig {
-      save_directory, command_socket, debug,
+      save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
       template_dir, wasm_dir,
       log, bundled_sources, shapelibs,
