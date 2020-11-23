@@ -8,7 +8,7 @@ method = "none"
 [group.chess-board]
 size = [242, 246]
 centre = [121, 123]
-scale = 0.35
+scale = 0.38
 outline = "Square"
 files = """
 chess-board	Chess_board_blank	the chessboard
