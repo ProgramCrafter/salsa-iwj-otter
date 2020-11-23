@@ -461,7 +461,8 @@ impl<'ig> InstanceGuard<'ig> {
   /// proves the caller has a log entry.
   #[throws(MgmtError)]
   pub fn player_new(&mut self, gnew: GPlayerState, inew: IPlayerState,
-                    logentry: LogEntry) -> (PlayerId, LogEntry) {
+                    logentry: LogEntry)
+                    -> (PlayerId, /* todo some game update,*/ LogEntry) {
     // saving is fallible, but we can't attempt to save unless
     // we have a thing to serialise with the player in it
     self.check_new_nick(&gnew.nick)?;
