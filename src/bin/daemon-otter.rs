@@ -36,8 +36,6 @@ const RESOURCES : &[(&'static str, ResourceLocation, ContentType)] = &[
   ("wasm.js",      RL::Wasm("otter_wasm.js"),      ContentType::JavaScript),
 ];
 
-// xxx need remove game from cli
-
 #[derive(Debug)]
 struct CheckedResourceLeaf {
   safe_leaf: &'static str,
