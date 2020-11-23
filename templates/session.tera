@@ -24,7 +24,7 @@
     align-self: end;
   }
 </style>
-<vid id="main">
+<div id="main">
 <div id="topblock">
 Hi {{nick | escape}} | <span id="wresting-warning"></span> |
 <span id="status">nothing</span>
