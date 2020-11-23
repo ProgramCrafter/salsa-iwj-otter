@@ -1,3 +1,142 @@
-# xxx
+# Copyright 2020 Ian Jackson
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# There is NO WARRANTY.
 
+# xxx
 # xxx also put this in the README.md
+
+table_size = [300, 200]
+
+[[pieces]]
+pos = [150,100]
+type = "Lib"
+lib = "edited"
+item = "chess-board"
+
+[[pieces]]
+pos = [145, 135]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-w-Q"
+posd = [-80, 0]
+count = 2
+
+[[pieces]]
+pos = [145,  65]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-b-Q"
+posd = [-80, 0]
+count = 2
+
+[[pieces]]
+pos = [155, 135]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-w-K"
+posd = [-80, 0]
+count = 2
+
+[[pieces]]
+pos = [155,  65]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-b-K"
+posd = [-80, 0]
+count = 2
+
+[[pieces]]
+pos = [165, 135]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-w-B"
+
+[[pieces]]
+pos = [165,  65]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-b-B"
+
+[[pieces]]
+pos = [135, 135]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-w-B"
+
+[[pieces]]
+pos = [135,  65]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-b-B"
+posd = [-80, 0]
+count = 2
+
+[[pieces]]
+pos = [125,  135]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-w-N"
+
+[[pieces]]
+pos = [175,  135]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-w-N"
+
+[[pieces]]
+pos = [125,  65]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-b-N"
+posd = [-80, 0]
+count = 2
+
+[[pieces]]
+pos = [175,  65]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-b-N"
+
+[[pieces]]
+pos = [115,  135]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-w-R"
+posd = [-80, 0]
+count = 2
+
+[[pieces]]
+pos = [185,  135]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-w-R"
+
+[[pieces]]
+pos = [115,  65]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-b-R"
+posd = [-80, 0]
+count = 2
+
+[[pieces]]
+pos = [185,  65]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-b-R"
+
+[[pieces]]
+pos = [115, 125]
+posd = [10, 0]
+count = 8
+type = "Lib"
+lib = "wikimedia"
+item = "chess-w-P"
+
+[[pieces]]
+pos = [115,  75]
+posd = [10, 0]
+count = 8
+type = "Lib"
+lib = "wikimedia"
+item = "chess-b-P"
