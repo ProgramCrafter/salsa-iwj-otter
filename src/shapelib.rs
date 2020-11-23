@@ -125,6 +125,8 @@ pub struct ItemSpec {
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct MultiSpec {
   pub lib: String,
+  #[serde(default)] pub prefix: String,
+  #[serde(default)] pub suffix: String,
   pub items: Vec<String>,
 }
 
@@ -288,7 +290,8 @@ impl PieceSpec for MultiSpec {
   fn load(&self, i: usize) -> Result<Box<dyn Piece>,SpecError> {
     let item = self.items.get(i).ok_or_else(
       || SE::InternalError(format!("item {:?} from {:?}", i, &self))
-    )?.clone();
+    )?;
+    let item = format!("{}{}{}", &self.prefix, item, &self.suffix);
     let lib = self.lib.clone();
     ItemSpec { lib, item }.load()
   }

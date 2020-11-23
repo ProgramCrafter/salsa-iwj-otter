@@ -12,131 +12,166 @@ pos = [150,100]
 type = "Lib"
 lib = "edited"
 item = "chess-board"
-
-[[pieces]]
-pos = [145, 135]
-type = "Lib"
-lib = "wikimedia"
-item = "chess-w-Q"
-posd = [-80, 0]
-count = 2
-
-[[pieces]]
-pos = [145,  65]
-type = "Lib"
-lib = "wikimedia"
-item = "chess-b-Q"
-posd = [-80, 0]
-count = 2
-
-[[pieces]]
-pos = [155, 135]
-type = "Lib"
-lib = "wikimedia"
-item = "chess-w-K"
-posd = [-80, 0]
-count = 2
-
-[[pieces]]
-pos = [155,  65]
-type = "Lib"
-lib = "wikimedia"
-item = "chess-b-K"
-posd = [-80, 0]
-count = 2
-
-[[pieces]]
-pos = [165, 135]
-type = "Lib"
-lib = "wikimedia"
-item = "chess-w-B"
-
-[[pieces]]
-pos = [165,  65]
-type = "Lib"
-lib = "wikimedia"
-item = "chess-b-B"
-
-[[pieces]]
-pos = [135, 135]
-type = "Lib"
-lib = "wikimedia"
-item = "chess-w-B"
-
-[[pieces]]
-pos = [135,  65]
-type = "Lib"
-lib = "wikimedia"
-item = "chess-b-B"
-posd = [-80, 0]
-count = 2
-
-[[pieces]]
-pos = [125,  135]
-type = "Lib"
-lib = "wikimedia"
-item = "chess-w-N"
-
-[[pieces]]
-pos = [175,  135]
-type = "Lib"
-lib = "wikimedia"
-item = "chess-w-N"
-
-[[pieces]]
-pos = [125,  65]
-type = "Lib"
-lib = "wikimedia"
-item = "chess-b-N"
-posd = [-80, 0]
-count = 2
-
-[[pieces]]
-pos = [175,  65]
-type = "Lib"
-lib = "wikimedia"
-item = "chess-b-N"
+pinned = true
 
 [[pieces]]
 pos = [115,  135]
-type = "Lib"
+type = "LibList"
 lib = "wikimedia"
-item = "chess-w-R"
-posd = [-80, 0]
-count = 2
+prefix = "chess-w-"
+items = ["R","N","B","Q","K","B","N","R"]
+posd = [10, 0]
 
 [[pieces]]
-pos = [185,  135]
+pos = [115,  65]
+type = "LibList"
+lib = "wikimedia"
+prefix = "chess-b-"
+items = ["R","N","B","Q","K","B","N","R"]
+posd = [10, 0]
+
+[[pieces]]
+pos = [115, 125]
 type = "Lib"
 lib = "wikimedia"
-item = "chess-w-R"
+item = "chess-w-P"
+posd = [10, 0]
+count = 8
 
 [[pieces]]
 pos = [115,  65]
 type = "Lib"
 lib = "wikimedia"
-item = "chess-b-R"
-posd = [-80, 0]
-count = 2
-
-[[pieces]]
-pos = [185,  65]
-type = "Lib"
-lib = "wikimedia"
-item = "chess-b-R"
-
-[[pieces]]
-pos = [115, 125]
+item = "chess-b-P"
 posd = [10, 0]
 count = 8
+
+
+[[pieces]]
+pos = [20, 75]
+type = "Disc"
+faces = ["#f88","#88f"]
+posd = [10, 0]
+diam = 7
+count = 8
+
+[[pieces]]
+pos = [20, 85]
+type = "Square"
+faces = ["yellow","#f4f"]
+posd = [10, 0]
+size = [7,7]
+count = 8
+
+[[pieces]]
+pos = [20, 95]
+type = "Square"
+faces = ["#ccc"]
+posd = [10, 0]
+size = [9,1]
+count = 8
+
+[[pieces]]
+pos = [20, 100]
+type = "Square"
+faces = ["#ccc"]
+posd = [10, 0]
+size = [9,1]
+count = 8
+
+[[pieces]]
+pos = [17, 110]
+type = "Square"
+faces = ["#ccc"]
+posd = [5, 0]
+size = [1,9]
+count = 16
+
+[[pieces]]
+pos = [20,  125]
+type = "LibList"
+lib = "wikimedia"
+prefix = "chess-w-"
+items = ["R","N","B","Q","K","B","N","R"]
+posd = [10, 0]
+
+[[pieces]]
+pos = [20,  135]
+type = "LibList"
+lib = "wikimedia"
+prefix = "chess-b-"
+items = ["R","N","B","Q","K","B","N","R"]
+posd = [10, 0]
+
+[[pieces]]
+pos = [20, 145]
 type = "Lib"
 lib = "wikimedia"
 item = "chess-w-P"
+posd = [10, 0]
+count = 4
 
 [[pieces]]
-pos = [115,  75]
-posd = [10, 0]
-count = 8
+pos = [60, 145]
 type = "Lib"
 lib = "wikimedia"
 item = "chess-b-P"
+posd = [10, 0]
+count = 4
+
+[[pieces]]
+pos = [210, 75]
+type = "LibList"
+lib = "wikimedia"
+prefix = "chess-r-"
+items = ["K","Q","R","R","B","B","ship","ship"]
+posd = [10, 0]
+
+[[pieces]]
+pos = [210, 85]
+type = "LibList"
+lib = "wikimedia"
+prefix = "chess-g-"
+items = ["K","Q","R","R","B","B","ship","ship"]
+posd = [10, 0]
+
+[[pieces]]
+pos = [210, 95]
+type = "LibList"
+lib = "wikimedia"
+prefix = "chess-y-"
+items = ["K","Q","R","R","B","B","ship","ship"]
+posd = [10, 0]
+
+[[pieces]]
+pos = [210, 115]
+type = "LibList"
+lib = "wikimedia"
+prefix = "chess-w-"
+items = ["commoner","elephant","knight-king","mann","zebra"]
+posd = [10, 0]
+
+[[pieces]]
+pos = [210, 125]
+type = "LibList"
+lib = "wikimedia"
+prefix = "chess-w-"
+items = ["commoner","elephant","knight-king","mann","zebra"]
+posd = [10, 0]
+
+[[pieces]]
+pos = [210, 135]
+type = "LibList"
+lib = "wikimedia"
+prefix = "chess-b-"
+items = ["commoner","elephant","knight-king","mann","zebra"]
+posd = [10, 0]
+
+[[pieces]]
+pos = [210, 145]
+type = "LibList"
+lib = "wikimedia"
+prefix = "chess-b-"
+items = ["commoner","elephant","knight-king","mann","zebra"]
+posd = [10, 0]
+
