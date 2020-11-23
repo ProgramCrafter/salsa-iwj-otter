@@ -75,9 +75,10 @@ files = """
 w-N	alt45	a white knight
 b-N	adt45	a black knight
 
-g-N	qgt45	a green chess knight
-r-N	qrt45	a red chess knight
-y-N	qyt45	a yellow chess knight
+# these seem to be more queens
+# g-N	qgt45	a green chess knight
+# r-N	qrt45	a red chess knight
+# y-N	qyt45	a yellow chess knight
 
 w-zebra		Zlt45	a white zebra piece
 b-zebra		Zdt45	a black zebra piece
