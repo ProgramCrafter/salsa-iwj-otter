@@ -36,6 +36,8 @@ with the full name, with all three colons in it.
 
 "demo" refers to the file "demo.game.spec".  The "game spec" says what
 shape table is and what pieces there are.  This is a simple demo game.
+There is also "penultima" which is a work-in-progress set of pieces
+suitable for fairy chess etc.
 
 See otter --help for some more options.
 
