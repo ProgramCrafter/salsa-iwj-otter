@@ -24,6 +24,7 @@
     align-self: end;
   }
 </style>
+<vid id="main">
 <div id="topblock">
 Hi {{nick | escape}} | <span id="wresting-warning"></span> |
 <span id="status">nothing</span>
@@ -64,6 +65,7 @@ Hi {{nick | escape}} | <span id="wresting-warning"></span> |
 {%- endfor %}
   </table>
   </div>
+</div>
 </div>
 
 <hr>
