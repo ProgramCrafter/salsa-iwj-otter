@@ -39,7 +39,7 @@ posd = [10, 0]
 count = 8
 
 [[pieces]]
-pos = [115,  65]
+pos = [115,  75]
 type = "Lib"
 lib = "wikimedia"
 item = "chess-b-P"
