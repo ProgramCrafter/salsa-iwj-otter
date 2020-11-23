@@ -29,7 +29,6 @@ Hi {{nick | escape}} | <span id="wresting-warning"></span> |
 <span id="status">nothing</span>
 <pre id="error"></pre>
 </div>
-<p>
     <svg id="space"
 	 xmlns="http://www.w3.org/2000/svg"
 	 viewBox="0 0 {{ table_size[0] }} {{ table_size[1] }}"
