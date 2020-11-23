@@ -17,6 +17,7 @@ type AS = AccountScope;
 type APE = ArgumentParseError;
 type MC = MgmtCommand;
 type ME = MgmtError;
+type MR = MgmtResponse;
 type MGI = MgmtGameInstruction;
 type MGR = MgmtGameResponse;
 type TP = TablePermission;
@@ -689,6 +690,46 @@ fn access_game(ma: &MainOpts, table_name: &String) -> ConnForGame {
     game: ma.instance_name(table_name),
     how: MgmtGameUpdateMode::Online,
   }
+}
+
+//---------- list-games ----------
+
+mod list_games {
+  use super::*;
+
+  #[derive(Default,Debug)]
+  struct Args {
+    all: bool,
+  }
+
+  fn subargs(sa: &mut Args) -> ArgumentParser {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.all)
+      .add_option(&["--all"],StoreTrue,
+                    "list all games, not just yours");
+    ap
+  }
+
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
+    let mut conn = connect(&ma)?;
+    let mut games = match conn.cmd(&MC::ListGames { all: Some(args.all) })? {
+      MR::GamesList(g) => g,
+      x => throw!(anyhow!("unexpected response to ListGames: {:?}", &x)),
+    };
+    games.sort();
+    for g in games {
+      println!("{}", &g);
+    }
+    Ok(())
+  }
+
+  inventory::submit!{Subcommand(
+    "list-games",
+    "List games",
+    call,
+  )}
 }
 
 //---------- reset-game ----------
