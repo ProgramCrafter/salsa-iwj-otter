@@ -24,11 +24,11 @@
     align-self: end;
   }
 </style>
-<h1>Hi {{nick | escape}}<span id="wresting-warning"></div></h1>
+<div id="topblock">
+Hi {{nick | escape}} | <span id="wresting-warning"></span> |
+<span id="status">nothing</span>
 <pre id="error"></pre>
-<p>
-<div id="status">nothing</div>
-
+</div>
 <p>
     <svg id="space"
 	 xmlns="http://www.w3.org/2000/svg"
@@ -47,6 +47,7 @@
       <defs id="defs{{ piece.0 }}">{{ piece.1 }}</defs>
 {%- endfor %}
     </svg>
+<div id="botblock">
 <p>
   <div id="uos" class="uos" style="height: 100px;">
     <div class="uos-mid" id="uos-mid" style="margin-left: auto; margin-top: auto;"></div>
@@ -63,6 +64,7 @@
 {%- endfor %}
   </table>
   </div>
+</div>
 
 <hr>
 <address>
