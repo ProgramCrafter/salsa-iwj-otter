@@ -544,13 +544,13 @@ impl<'ig> InstanceGuard<'ig> {
     // New state
     let mut gs = GameState {
       // These parts are straightforward and correct
-      table_size : self.c.g.gs.table_size,
-      gen : self.c.g.gs.gen,
-      max_z : self.gs.max_z.clone(),
+      table_size: self.c.g.gs.table_size,
+      gen: self.c.g.gs.gen,
+      max_z: self.gs.max_z.clone(),
       players,
       // These have special handling
-      log : Default::default(),
-      pieces : Default::default(),
+      log: default(),
+      pieces: default(),
     };
 
     let held_by_old = |p: &PieceState| if_chain! {
@@ -580,10 +580,11 @@ impl<'ig> InstanceGuard<'ig> {
     }));
 
     // Handle gs.log:
-    // Installs gs as the new game state, stealing the log
+    // Installs gs as the new game state, stealing the log and pieces
     let mut swap_things = |ig: &mut InstanceGuard| {
-      mem::swap(&mut ig.c.g.gs.log, &mut gs.log);
-      mem::swap(&mut ig.c.g.gs,     &mut gs,   );
+      mem::swap(&mut ig.c.g.gs.log,    &mut gs.log   );
+      mem::swap(&mut ig.c.g.gs.pieces, &mut gs.pieces);
+      mem::swap(&mut ig.c.g.gs,        &mut gs,   );
     };
     swap_things(self);
     undo.push(Box::new(swap_things));
