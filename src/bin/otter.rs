@@ -299,7 +299,7 @@ fn main() {
       MapStore(|s| Ok(Some(
         FixedToken { token: RawToken(s.to_string()) }.into()
       ))),
- "use fixed game access token TOKEN (for administrators, with --super, only; only \`reset', not \`redelivery', of tokens is possible)"
+ "use fixed game access token TOKEN (for administrators, with --super, only; only `reset', not `redelivery', of tokens is possible)"
     );
     access.add_option(&["--no-access-token"],
                       StoreConst(Some(PlayerAccessUnset.into())),
@@ -537,6 +537,23 @@ impl ConnForGame {
       }
     }
     responses
+  }
+
+  #[throws(AE)]
+  fn we_are_player(&mut self, ma: &MainOpts)
+                   -> Option<(PlayerId, MgmtPlayerInfo)>
+  {
+    let players = {
+      let resp = self.alter_game(vec![MGI::Info], None)?;
+      match resp.as_slice() {
+        [MGR::Info(MgmtGameResponseGameInfo { players, .. })] => players,
+        x => throw!(anyhow!("unexpected response to game Info: {:?}", &x)),
+      }.clone()
+    };
+
+    players.into_iter().filter(
+      |(_,mpi)| &mpi.account == &ma.account
+    ).next()
   }
 /*
   fn get_info(&mut self) -> Result<
@@ -849,18 +866,8 @@ mod join_game {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = access_game(&ma, &args.table_name)?;
 
-    let players = {
-      let resp = chan.alter_game(vec![MGI::Info], None)?;
-      match resp.as_slice() {
-        [MGR::Info(MgmtGameResponseGameInfo { players, .. })] => players,
-        x => throw!(anyhow!("unexpected response to game Info: {:?}", &x)),
-      }.clone()
-    };
-
     let mut insns = vec![];
-    match players.iter().filter(
-      |(_,mpi)| &mpi.account == &ma.account
-    ).next() {
+    match chan.we_are_player(&ma)? {
       None => {
         let nick = ma.nick.clone()
           .unwrap_or_else(|| ma.account.default_nick());
@@ -872,7 +879,7 @@ mod join_game {
                  player.0.get_idx_version().0, &mpi.nick);
         let MgmtPlayerInfo { nick, account:_ } = mpi;
         if let Some(new_nick) = &ma.nick {
-          if nick != new_nick {
+          if &nick != new_nick {
             println!("changing nick to {:?}", &new_nick);
             let details = MgmtPlayerDetails { nick: ma.nick.clone() };
             insns.push(MGI::UpdatePlayer { player, details });
@@ -921,6 +928,48 @@ mod join_game {
   inventory::submit!{Subcommand(
     "join-game",
     "Join a game or reset access token (creating or updating account)",
+    call,
+  )}
+}
+
+//---------- leave-game ----------
+
+mod leave_game {
+  use super::*;
+
+  #[derive(Default,Debug)]
+  struct Args {
+    table_name: String,
+  }
+
+  fn subargs(sa: &mut Args) -> ArgumentParser {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.table_name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
+    ap
+  }
+
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
+    let mut chan = access_game(&ma, &args.table_name)?;
+
+    let player = match chan.we_are_player(&ma)? {
+      None => {
+        println!("this account is not a player in that game");
+        exit(EXIT_NOTFOUND);
+      },
+      Some((player, _)) => player,
+    };
+
+    chan.alter_game(vec![MGI::LeaveGame(player)], None)?;
+
+    Ok(())
+  }
+
+  inventory::submit!{Subcommand(
+    "leave-game",
+    "Leave a game",
     call,
   )}
 }

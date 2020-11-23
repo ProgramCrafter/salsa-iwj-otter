@@ -5,6 +5,7 @@
 use crate::imports::*;
 
 pub const EXIT_SPACE     : i32 =  2;
+pub const EXIT_NOTFOUND  : i32 =  4;
 pub const EXIT_SITUATION : i32 =  8;
 pub const EXIT_USAGE     : i32 = 12;
 pub const EXIT_DISASTER  : i32 = 16;

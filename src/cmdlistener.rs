@@ -20,7 +20,6 @@ type CSE = anyhow::Error;
 
 use MgmtCommand::*;
 use MgmtResponse::*;
-use MgmtError::*;
 
 type ME = MgmtError;
 from_instance_lock_error!{MgmtError}
@@ -431,6 +430,38 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
        PlayerAccessToken(token), ig)
     },
 
+    LeaveGame(player) => {
+      let account = &cs.current_account()?.notional_account;
+      let (ig, _auth) = cs.check_acl_manip_player_access
+        (ag, ig, player, TP::ModifyOtherPlayer)?;
+
+      let got = ig.players_remove(&[player].iter().cloned().collect())?;
+
+      let (gpl, ipl) = got.into_iter().next()
+        .ok_or(PlayerNotFound)?;
+
+      let html = Html(
+        format!("{} [{}] left the game [{}]"
+                ,
+                (|| Some(gpl?.nick))()
+                .unwrap_or("<partial data!>".into())
+                ,
+                (||{
+                  let (record, _) = ag.lookup(ipl?.acctid).ok()?;
+                  Some(record.account.to_string())
+                })()
+                .unwrap_or("<account deleted>".into())
+                ,
+                &account
+                )
+      );
+
+      (U{ pcs: vec![],
+          log: vec![ LogEntry { html }],
+          raw: None },
+       Fine, ig)
+    },
+
     DeletePiece(piece) => {
       let (ig, modperm, _) = cs.check_acl_modify_pieces(ag, ig)?;
       let p = ig.ipieces.as_mut(modperm)
@@ -453,7 +484,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
       let ig = &mut **ig_g;
       let gs = &mut ig.gs;
       let count = count.unwrap_or(1);
-      if count > CREATE_PIECES_MAX { throw!(LimitExceeded) }
+      if count > CREATE_PIECES_MAX { throw!(ME::LimitExceeded) }
       let posd = posd.unwrap_or(DEFAULT_POS_DELTA);
 
       let mut updates = Vec::with_capacity(count as usize);
@@ -732,7 +763,7 @@ impl CommandStream<'_> {
         },
         Err(EOF) => break,
         Err(IO(e)) => Err(e).context("read command stream")?,
-        Err(Parse(s)) => MgmtResponse::Error { error : ParseFailed(s) },
+        Err(Parse(s)) => MgmtResponse::Error { error : ME::ParseFailed(s) },
       };
       self.chan.write(&resp).context("swrite command stream")?;
     }
