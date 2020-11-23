@@ -908,6 +908,39 @@ mod leave_game {
   )}
 }
 
+//---------- delete-game ----------
+
+mod delete_game {
+  use super::*;
+
+  #[derive(Default,Debug)]
+  struct Args {
+    table_name: String,
+  }
+
+  fn subargs(sa: &mut Args) -> ArgumentParser {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.table_name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
+    ap
+  }
+
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
+    let mut chan = access_game(&ma, &args.table_name)?;
+    let game = chan.game.clone();
+    chan.cmd(&MC::DestroyGame { game })?;
+    Ok(())
+  }
+
+  inventory::submit!{Subcommand(
+    "delete-game",
+    "Delete a game (throwing all the players out of it)",
+    call,
+  )}
+}
+
 //---------- library-list ----------
 
 #[derive(Debug)]

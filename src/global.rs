@@ -332,16 +332,33 @@ impl Instance {
   }
 
   #[throws(MgmtError)]
-  pub fn lookup_by_name_unauth(name: &InstanceName)
-      -> Unauthorised<InstanceRef, InstanceName>
+  pub fn lookup_by_name_locked_unauth
+    (games_table: &GamesTable, name: &InstanceName)
+     -> Unauthorised<InstanceRef, InstanceName>
   {
     Unauthorised::of(
-      GLOBAL.games_table.read().unwrap()
+      games_table
         .get(name)
         .ok_or(MgmtError::GameNotFound)?
         .clone()
         .into()
     )
+  }
+
+  #[throws(MgmtError)]
+  pub fn lookup_by_name_locked(games: &GamesTable,
+                               name: &InstanceName,
+                               auth: Authorisation<InstanceName>)
+                               -> InstanceRef {
+    Self::lookup_by_name_locked_unauth(games, name)?.by(auth)
+  }
+
+  #[throws(MgmtError)]
+  pub fn lookup_by_name_unauth(name: &InstanceName)
+      -> Unauthorised<InstanceRef, InstanceName>
+  {
+    let games = GLOBAL.games_table.read().unwrap();
+    Self::lookup_by_name_locked_unauth(&games, name)?
   }
 
   #[throws(MgmtError)]

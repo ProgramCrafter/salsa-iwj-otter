@@ -206,7 +206,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       let mut ag = AccountsGuard::lock();
       let mut games = games_lock();
       let auth = authorise_by_account(cs, &mut ag, &game)?;
-      let gref = Instance::lookup_by_name(&game, auth)?;
+      let gref = Instance::lookup_by_name_locked(&games, &game, auth)?;
       let ig = gref.lock_even_poisoned();
       Instance::destroy_game(&mut games, ig, auth)?;
       Fine
