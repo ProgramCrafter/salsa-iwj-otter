@@ -95,7 +95,7 @@ impl Read for UpdateReader {
       Some(x) => x,
       None => {
         let data = format!("event: player-gone\n\
-                            data: player-gone\n\n")
+                            data: No longer in the game\n\n")
           .into_bytes().into_boxed_slice();
         assert_eq!(self.ending_send, None);
         let ending = self.ending_send.get_or_insert(io::Cursor::new(data));
@@ -120,7 +120,7 @@ impl Read for UpdateReader {
         None => {
           if self.to_send < pu.read_log().front_index()
           && buf.len() == orig_wanted {
-            write!(buf, "event: updates_expired\ndata: {}\n\n",
+            write!(buf, "event: updates-expired\ndata: {}\n\n",
                    self.to_send)
               .map_err(|e| self.wn.trouble("notify updates expired", &e))?;
             debug!("updates expired for {} {}, telling client (#{})",

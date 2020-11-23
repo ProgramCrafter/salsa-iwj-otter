@@ -1118,7 +1118,12 @@ function startup() {
     console.log('GOTDATA', event);
     status_node.innerHTML = (event as any).data;
   });
-  es.addEventListener('updates_expired', function(event) {
+  es.addEventListener('player-gone', function(event) {
+    console.log('PLAYER-GONE', event);
+    status_node.innerHTML = (event as any).data;
+    es.close();
+  });
+  es.addEventListener('updates-expired', function(event) {
     console.log('UPDATES-EXPIRED', event);
     string_report_error('connection to server interrupted too long');
   });
