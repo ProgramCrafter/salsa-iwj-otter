@@ -8,6 +8,12 @@ It is accessed from a web browser running JavaScript.  The server runs
 on a convenationl Unix host.  Currently, joining a game requires a
 unix shell account on the server.
 
+The game does not have a built-in text chat system, nor any other
+communication other than via moving the game pieces.  I expect it to
+be used with a concurrent voice chat, or perhaps a concurrent text
+chat program.  Right now the arrangements for the chat must be agreed
+by the players without help from the Otter server.
+
 Right now Otter is in an alpha state.
 
 
@@ -30,6 +36,36 @@ with the full name, with all three colons in it.
 
 "demo" refers to the file "demo.game.spec".  The "game spec" says what
 shape table is and what pieces there are.  This is a simple demo game.
+
+See otter --help for some more options.
+
+
+MAKING YOUR OWN GAME
+====================
+
+If you want to use existing piece shapes that Otter already knows
+about, you can do this by providing a game.spec.toml file.  The format
+of these files is a TOML document representing a GameSpec as found in
+src/spec.rs in the Otter source code.
+
+todo: use rustdoc to provide this somewhere.
+
+Adding shapes
+-------------
+
+Otter uses SVGs.  The sources for the SVGs are all in the otter source
+tree, in the library/ directory.
+
+Some of these SVGs were scraped from Wikimedia.  The scraper machinery
+can perhaps be adapted to scrape SVGs from elsewhere.
+
+You can also add your own SVGs in the library/edited/ directory.
+If you do that, please make sure to include the actual source code.
+If you copied or adapted an SVG from somewhere, provide details.
+
+Contributions should be via git branch, eg a merge request on Salsa:
+  https://salsa.debian.org/iwj/otter
+
 
 
 BUILDING
