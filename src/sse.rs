@@ -31,10 +31,11 @@ struct UpdateReaderWN {
 struct UpdateReader {
   wn: UpdateReaderWN,
   overflow: Option<io::Cursor<Box<[u8]>>>,
-  need_flush : bool,
-  gref : InstanceRef,
-  keepalives : Wrapping<u32>,
-  init_confirmation_send : iter::Once<()>,
+  need_flush: bool,
+  gref: InstanceRef,
+  keepalives: Wrapping<u32>,
+  ending_send: Option<io::Cursor<Box<[u8]>>>,
+  init_confirmation_send: iter::Once<()>,
 }
 
 impl Deref for UpdateReader {
@@ -74,9 +75,13 @@ impl UpdateReaderWN {
 
 impl Read for UpdateReader {
   fn read(&mut self, orig_buf: &mut [u8]) -> Result<usize,io::Error> {
+    if let Some(ref mut ending) = self.ending_send {
+      return ending.read(orig_buf);
+    }
 
     let mut ig = self.gref.lock()
       .map_err(|e| self.trouble("game corrupted", &e))?;
+
     let orig_wanted = orig_buf.len();
     let mut buf = &mut *orig_buf;
 
@@ -86,8 +91,18 @@ impl Read for UpdateReader {
              self.player, self.client, ig.gs.gen, self.to_send)?;
     }
 
-    let iplayer = &mut ig.iplayers.get_mut(self.player)
-      .ok_or_else(|| self.trouble("player gonee",()))?;
+    let iplayer = &mut match ig.iplayers.get_mut(self.player) {
+      Some(x) => x,
+      None => {
+        let data = format!("event: player-gone\n\
+                            data: player-gone\n\n")
+          .into_bytes().into_boxed_slice();
+        assert_eq!(self.ending_send, None);
+        let ending = self.ending_send.get_or_insert(io::Cursor::new(data));
+        return ending.read(orig_buf);
+      },
+    };
+
     let pu = &mut iplayer.u;
 
     loop {
@@ -230,12 +245,13 @@ pub fn content(iad : InstanceAccessDetails<ClientId>, gen: Generation)
         None => UpdateId::min_value(),
         Some((mut i,_)) => { i.try_increment(); i },
       };
-    
+
     UpdateReader {
       need_flush : false,
       keepalives : Wrapping(0),
       overflow : None,
       gref,
+      ending_send : default(),
       init_confirmation_send : iter::once(()),
       wn : UpdateReaderWN {
         player, client, to_send,
