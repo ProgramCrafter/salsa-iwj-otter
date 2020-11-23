@@ -16,6 +16,7 @@ use pwd::Passwd;
 pub use crate::from_instance_lock_error;
 pub use std::os::unix::net::UnixStream;
 
+type SE = SpecError;
 type CSE = anyhow::Error;
 
 use MgmtCommand::*;
@@ -483,15 +484,31 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
       let (ig_g, modperm, _) = cs.check_acl_modify_pieces(ag, ig)?;
       let ig = &mut **ig_g;
       let gs = &mut ig.gs;
-      let count = count.unwrap_or(1);
-      if count > CREATE_PIECES_MAX { throw!(ME::LimitExceeded) }
+      let implicit : u32 = info.count()
+        .try_into().map_err(
+          |_| SE::InternalError(format!("implicit item count out of range"))
+        )?;
+      let count : Box<dyn ExactSizeIterator<Item=u32>> = match count {
+        Some(explicit) if implicit == 1 => {
+          Box::new((0..explicit).map(|_| 0))
+        },
+        Some(explicit) if implicit != explicit => {
+          throw!(SpecError::InconsistentPieceCount)
+        },
+        None | Some(_) => {
+          Box::new(0..implicit)
+        },
+      };
+
+      let count_len = count.len();
+      if count.len() > CREATE_PIECES_MAX as usize { throw!(ME::LimitExceeded) }
       let posd = posd.unwrap_or(DEFAULT_POS_DELTA);
 
-      let mut updates = Vec::with_capacity(count as usize);
+      let mut updates = Vec::with_capacity(count_len);
       let mut pos = pos.unwrap_or(DEFAULT_POS_START);
       let mut z = gs.max_z.clone_mut();
-      for _ in 0..count {
-        let p = info.load()?;
+      for piece_i in count {
+        let p = info.load(piece_i as usize)?;
         let face = face.unwrap_or_default();
         if p.nfaces() <= face.into() {
           throw!(SpecError::FaceNotFound);
@@ -517,7 +534,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
 
       (U{ pcs: updates,
           log: vec![ LogEntry {
-            html: Html(format!("{} added {} pieces", &who.0, count)),
+            html: Html(format!("{} added {} pieces", &who.0, count_len)),
           }],
           raw: None },
        Fine, ig_g)

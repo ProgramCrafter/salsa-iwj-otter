@@ -122,6 +122,12 @@ pub struct ItemSpec {
   pub item: String,
 }
 
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct MultiSpec {
+  pub lib: String,
+  pub items: Vec<String>,
+}
+
 define_index_type!{ pub struct DescId = u8; }
 define_index_type!{ pub struct SvgId = u8; }
 
@@ -271,8 +277,20 @@ impl Contents {
 
 #[typetag::serde(name="Lib")]
 impl PieceSpec for ItemSpec {
-  fn load(&self) -> Result<Box<dyn Piece>,SpecError> {
+  fn load(&self, _: usize) -> Result<Box<dyn Piece>,SpecError> {
     self.load()
+  }
+}
+
+#[typetag::serde(name="LibList")]
+impl PieceSpec for MultiSpec {
+  fn count(&self) -> usize { self.items.len() }
+  fn load(&self, i: usize) -> Result<Box<dyn Piece>,SpecError> {
+    let item = self.items.get(i).ok_or_else(
+      || SE::InternalError(format!("item {:?} from {:?}", i, &self))
+    )?.clone();
+    let lib = self.lib.clone();
+    ItemSpec { lib, item }.load()
   }
 }
 

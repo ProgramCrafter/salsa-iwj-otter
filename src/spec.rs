@@ -57,6 +57,7 @@ pub enum SpecError {
   LibraryItemNotFound,
   AclInvalidAccountGlob,
   AclEntryOverlappingAllowDeny,
+  InconsistentPieceCount,
 }
 display_as_debug!{SpecError}
 

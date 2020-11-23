@@ -157,7 +157,7 @@ impl SimpleShape {
 #[typetag::serde]
 impl PieceSpec for piece_specs::Disc {
   #[throws(SpecError)]
-  fn load(&self) -> Box<dyn Piece> {
+  fn load(&self, _: usize) -> Box<dyn Piece> {
     let outline = Box::new(shapelib::Circle { diam: self.diam as f64 });
     let path = svg_circle_path(self.diam as f64)?;
     let itemname = self.itemname.clone()
@@ -170,7 +170,7 @@ impl PieceSpec for piece_specs::Disc {
 #[typetag::serde]
 impl PieceSpec for piece_specs::Square {
   #[throws(SpecError)]
-  fn load(&self) -> Box<dyn Piece> {
+  fn load(&self, _: usize) -> Box<dyn Piece> {
     let xy = match *self.size.as_slice() {
       [s,]  => PosC([s,s]),
       [x,y] => PosC([x,y]),

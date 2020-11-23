@@ -141,7 +141,8 @@ pub struct PieceRenderInstructions {
 
 #[typetag::serde(tag="type")]
 pub trait PieceSpec : Debug {
-  fn load(&self) -> Result<Box<dyn Piece>,SpecError>;
+  fn count(&self) -> usize { 1 }
+  fn load(&self, i: usize) -> Result<Box<dyn Piece>,SpecError>;
 }
 
 // ========== implementations ==========
