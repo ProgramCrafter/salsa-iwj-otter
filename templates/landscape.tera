@@ -19,29 +19,33 @@
     margin-left: auto;
     margin-top: auto;
   }
+  pre[id=error] {
+    margin-bottom: 0;
+    margin-top: 0;
+  }
 </style>
-<table style="padding: 0; border-spacing: 0;">
-  <tr><td>{{ m::space() }}</td>
-      <td style="flex-direction: column; display: flex;">
+{{ m::errors() }}
+<div style="display: flex; flex-flow: row none;">
+  <div>{{ m::space() }}</div>
+  <div style="flex-direction: column; display: flex;">
       <div>
           {{ m::nick() }}
       </div><div>
 	  {{ m::status() }}<br/>
-      </div><div style="flex-grow: 100;"> foo bar
       </div><div>
           {{ m::wresting() }}<br/>
       </div><div>
-          {{ m::errors() }}
+          
       </div>
 	{{ m::uos() }}
 
-  <div id="log" style="overflow-y: scroll; height: 300px; flex-align: end;">
+  <div id="log" style="overflow-y: scroll; height: 600px;">
 {% for ent in log %}
     <span class="logts">{{ent.when}}</span><br/>
     {{ ent.logent.logent.html | safe }}<br/>
 {%- endfor %}
   </div>
-</td></tr>
-</table>
+</div>
+</div>
 
 {{ m::footer() }}
