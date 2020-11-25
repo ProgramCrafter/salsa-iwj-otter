@@ -1,101 +1,47 @@
-<body id="main-body" {# -*- HTML -*- -#}
-      data-ctoken="{{ctoken}}"
-      data-us="{{player}}"
-      data-gen="{{gen}}"
-      data-sse-url-prefix="{{sse_url_prefix}}"
-      data-load="{{ load | escape }}">
+{% import "macros" as m %}{# -*- HTML -*- -#}
+{{ m::header() }}
 <style>
-  div[class=uos] { display: flex; flex-wrap: wrap; }
+  div[class=uos] {
+    display: flex; flex-direction: column; flex-wrap: wrap;
+    flex-grow: 1;
+  }
   div[class|=uokey] {
     outline: 1px solid #000;
     margin: 1px;
-    padding-left: 5px;
-    padding-right: 6.5px;
-    align-self: start;
-  }
-  table[id=log] {
-    width: 100%;
-  }
-  td[class=logts] {
-//    padding-left: 5px;
-//    text-align: right;
   }
   div[class=uokey-r] {
     align-self: end;
   }
-  xdiv[id=main] {
-    display: grid;
-    grid: "S U"
-          "S L";
-    grid-template-columns: auto auto;
-    grid-template-rows: auto auto;
+  div[class=uokey-mid] {
+    align-self: end;
   }
-  xdiv[id=main] {
-    display: flex;
-    flex-flow: column wrap;
+  .uos-mid {
+    margin-left: auto;
+    margin-top: auto;
   }
-  xsvg[id=space] {
-    order: -1;
-    break-after: always;
-//display: black;
-//    height: 100%;
-  }
-  xsvg[id=space] { grid-area: S; }
-  xdiv[id=topblock] { grid-area: U; }
-  xdiv[id=botpblock] { grid-area: L; }
 </style>
-<table><tr><td rowspan="2">
-<div id="main">
-    <svg id="space"
-	 xmlns="http://www.w3.org/2000/svg"
-	 viewBox="0 0 {{ table_size[0] }} {{ table_size[1] }}"
-	 width="0 0 {{ table_size[0]*6 }}" height="{{ table_size[1]*6 }}"
-	 >
-      <rect fill="green" x="0" y="0"
-	    width="{{ table_size[0] }}" height="{{ table_size[1] }}"/>
-      <g id="pieces_marker"></g>
-{%- for piece in uses %}
-      <use id="use{{ piece.id }}" href="#piece{{ piece.id }}"
-	   x="{{ piece.pos[0] }}" y="{{ piece.pos[1] }}"
-	   data-piece="{{ piece.id }}" data-info="{{ piece.info | escape }}" />
-{%- endfor %}
-      <g id="defs_marker"></g>
-{%- for piece in defs %}
-      <defs id="defs{{ piece.0 }}">{{ piece.1 }}</defs>
-{%- endfor %}
-    </svg>
-</td><td>
-<div id="topblock">
-Hi {{nick | escape}} | <span id="wresting-warning"></span> |
-<span id="status">nothing</span>
-<pre id="error"></pre>
-</div>
-</td></tr><tr><td>
-<div id="botblock">
-<p>
-  <div id="uos" class="uos" style="height: 100px;">
-    <div class="uos-mid" id="uos-mid" style="margin-left: auto; margin-top: auto;"></div>
-  </div>
-  <div class="uos">
-    <div class="uokey"><strong>Mouse</strong> select/deselect/drag</div>
-    <div class="uokey"><strong>shift</strong> multiple selection</div>
-  </div>
-<p>
-  <div style="overflow-y: scroll; height: 200px;">
-  <table id="log">
-{% for ent in log %}
-<tr><td class="logts">{{ent.when}}</td></tr>
-    <tr><td>{{ ent.logent.logent.html | safe }}</td></tr>
-{%- endfor %}
-  </table>
-  </div>
-</div>
-</div>
-</td></tr></table>
+<table style="padding: 0; border-spacing: 0;">
+  <tr><td>{{ m::space() }}</td>
+      <td style="flex-direction: column; display: flex;">
+      <div>
+          {{ m::nick() }}
+      </div><div>
+	  {{ m::status() }}<br/>
+      </div><div style="flex-grow: 100;"> foo bar
+      </div><div>
+          {{ m::wresting() }}<br/>
+      </div><div>
+          {{ m::errors() }}
+      </div>
+	{{ m::uos() }}
 
-<hr>
-<address>
-This server is running Otter, the Online TableTop Environment
-Renderer.  Otter and its shape (piece picture) libraries
-are <a href="/_/libre">Free Software</a> and come with NO
-WARRANTY.
+  <div id="log" style="overflow-y: scroll; height: 300px; flex-align: end;">
+{% for ent in log %}
+    <span class="logts">{{ent.when}}</span><br/>
+    {{ ent.logent.logent.html | safe }}<br/>
+{%- endfor %}
+  </div>
+</td></tr>
+</table>
+
+{{ m::footer() }}
