@@ -22,10 +22,10 @@ shapelibs = [ "/home/ian/Rustup/Game/server/library/*.toml" ]
 global_level = 'debug'
 
 [log.modules]
-'hyper::server' = 'info'
 rocket = 'error'
 _ = "error" # rocket
 # ^ comment these two out to see Tera errors, *sigh*
+
+'hyper::server' = 'info'
 "game::debugreader" = 'info'
 #"game::updates" = 'trace'
-
