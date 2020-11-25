@@ -17,19 +17,35 @@
     width: 100%;
   }
   td[class=logts] {
-    padding-left: 5px;
-    text-align: right;
+//    padding-left: 5px;
+//    text-align: right;
   }
   div[class=uokey-r] {
     align-self: end;
   }
+  xdiv[id=main] {
+    display: grid;
+    grid: "S U"
+          "S L";
+    grid-template-columns: auto auto;
+    grid-template-rows: auto auto;
+  }
+  xdiv[id=main] {
+    display: flex;
+    flex-flow: column wrap;
+  }
+  xsvg[id=space] {
+    order: -1;
+    break-after: always;
+//display: black;
+//    height: 100%;
+  }
+  xsvg[id=space] { grid-area: S; }
+  xdiv[id=topblock] { grid-area: U; }
+  xdiv[id=botpblock] { grid-area: L; }
 </style>
+<table><tr><td rowspan="2">
 <div id="main">
-<div id="topblock">
-Hi {{nick | escape}} | <span id="wresting-warning"></span> |
-<span id="status">nothing</span>
-<pre id="error"></pre>
-</div>
     <svg id="space"
 	 xmlns="http://www.w3.org/2000/svg"
 	 viewBox="0 0 {{ table_size[0] }} {{ table_size[1] }}"
@@ -48,6 +64,13 @@ Hi {{nick | escape}} | <span id="wresting-warning"></span> |
       <defs id="defs{{ piece.0 }}">{{ piece.1 }}</defs>
 {%- endfor %}
     </svg>
+</td><td>
+<div id="topblock">
+Hi {{nick | escape}} | <span id="wresting-warning"></span> |
+<span id="status">nothing</span>
+<pre id="error"></pre>
+</div>
+</td></tr><tr><td>
 <div id="botblock">
 <p>
   <div id="uos" class="uos" style="height: 100px;">
@@ -61,12 +84,14 @@ Hi {{nick | escape}} | <span id="wresting-warning"></span> |
   <div style="overflow-y: scroll; height: 200px;">
   <table id="log">
 {% for ent in log %}
-    <tr><td>{{ ent.logent.logent.html | safe }}</td><td class="logts">{{ent.when}}</td></tr>
+<tr><td class="logts">{{ent.when}}</td></tr>
+    <tr><td>{{ ent.logent.logent.html | safe }}</td></tr>
 {%- endfor %}
   </table>
   </div>
 </div>
 </div>
+</td></tr></table>
 
 <hr>
 <address>
