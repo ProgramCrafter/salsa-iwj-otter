@@ -14,13 +14,6 @@ use otter::imports::*;
 #[derive(Serialize,Debug)]
 struct FrontPageRenderContext { }
 
-#[get("/")]
-#[throws(OE)]
-fn index() -> Template {
-  let c = FrontPageRenderContext { };
-  Template::render("front",&c)
-}
-
 #[derive(Copy,Clone,Debug)]
 enum ResourceLocation { Main, Wasm(&'static str), }
 type RL = ResourceLocation;
@@ -66,14 +59,30 @@ impl<'r> FromParam<'r> for CheckedResourceLeaf {
 struct LoadingRenderContext<'r> {
   ptoken : &'r RawTokenVal,
 }
-#[get("/<ptoken>")]
+#[get("/")]
 #[throws(OE)]
-fn loading(ptoken : InstanceAccess<PlayerId>) -> Template {
-  let c = LoadingRenderContext { ptoken : ptoken.raw_token };
-  Template::render("loading",&c)
+fn loading(ptoken: WholeQueryString) -> Template {
+  if let Some(ptoken) = ptoken.0 {
+    let c = LoadingRenderContext { ptoken : RawTokenVal::from_str(ptoken) };
+    Template::render("loading",&c)
+  } else {
+    let c = FrontPageRenderContext { };
+    Template::render("front",&c)
+  }
 }
 
-#[get("/_/updates/<ctoken>/<gen>")]
+struct WholeQueryString<'r>(pub Option<&'r str>);
+
+impl<'a,'r> FromRequest<'a,'r> for WholeQueryString<'a> {
+  type Error = Impossible;
+  fn from_request(r: &'a rocket::Request<'r>) -> rocket::Outcome<Self, (rocket::http::Status, <Self as rocket::request::FromRequest<'a, 'r>>::Error), ()> {
+    eprintln!("REQUEST uri={:?}", &r.uri());
+    let q = r.uri().query();
+    rocket::Outcome::Success(WholeQueryString(q))
+  }
+}
+
+#[get("/_/updates?<ctoken>&<gen>")]
 #[throws(OE)]
 fn updates<'r>(ctoken : InstanceAccess<ClientId>, gen: u64,
            cors: rocket_cors::Guard<'r>)
@@ -200,7 +209,6 @@ fn main() {
     .attach(Template::fairing())
     .manage(cors_state)
     .mount("/", routes![
-      index,
       loading,
       resource,
       updates,

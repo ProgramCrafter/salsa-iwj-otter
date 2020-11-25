@@ -187,7 +187,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
         &player, client, &c.nick, &c.ctoken,
         iad.gref.lock().ok().as_ref().map(|ig| &**ig));
 
-  Ok(Template::render("landscape",&c))
+  Ok(Template::render("session",&c))
 }
 
 pub fn mount(rocket_instance: Rocket) -> Rocket {

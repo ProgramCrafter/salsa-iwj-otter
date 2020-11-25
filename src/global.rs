@@ -238,7 +238,7 @@ impl RawTokenVal {
   // str is [u8] with a funny hat on, so &str is pointer + byte count.
   // nomicon says &SomeStruct([T]) is pointer plus number of elements.
   // So &str and &SomeStruct(str) have the same layout
-  fn from_str(s: &str) -> &RawTokenVal { unsafe { mem::transmute(s) } }
+  pub fn from_str(s: &str) -> &RawTokenVal { unsafe { mem::transmute(s) } }
 }
 
 impl Borrow<RawTokenVal> for RawToken {
@@ -739,8 +739,8 @@ impl<'ig> InstanceGuard<'ig> {
     let ipl = &self.c.g.iplayers.byid(player)?.ipl;
     let gpl = self.c.g.gs.players.byid(player)?;
 
-    let url = format!("{}/{}",
-                      &config().public_url.trim_start_matches("/"),
+    let url = format!("{}/?{}",
+                      &config().public_url.trim_end_matches("/"),
                       token.0);
     let info = AccessTokenInfo { url };
     let report = access.deliver(&gpl, &ipl, info)?;
@@ -1140,12 +1140,12 @@ pub fn lookup_token<Id : AccessId>(s : &RawTokenVal)
     .ok_or(Id::ERROR)
 }
 
-impl<'r, Id> FromParam<'r> for InstanceAccess<'r, Id>
+impl<'r, Id> FromFormValue<'r> for InstanceAccess<'r, Id>
   where Id : AccessId, OE : From<Id::Error>
 {
   type Error = OE;
   #[throws(OE)]
-  fn from_param(param: &'r RawStr) -> Self {
+  fn from_form_value(param: &'r RawStr) -> Self {
     let g = Id::global_tokens(PRIVATE_Y).read().unwrap();
     let token = RawTokenVal::from_str(param.as_str());
     let i = g.get(token).ok_or(Id::ERROR)?;

@@ -1096,7 +1096,9 @@ function startup() {
     redisplay_ancillaries(piece,p);
   }
 
-  var es = new EventSource(sse_url_prefix + "/_/updates/"+ctoken+'/'+gen);
+  var es = new EventSource(
+    sse_url_prefix + "/_/updates?ctoken="+ctoken+'&gen='+gen
+  );
   es.onmessage = function(event) {
     console.log('GOTEVE', event);
     var k;
