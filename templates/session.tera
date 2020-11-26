@@ -39,6 +39,7 @@
 <p>{{ m::uos() }}
 
 <p>
+<div id="logouter">
   <div style="overflow-y: scroll; height: 200px;">
     <table id="log">
       {% for ent in log %}
@@ -46,5 +47,6 @@
       {%- endfor %}
     </table>
   </div>
+</div>
 
 {{ m::footer() }}
