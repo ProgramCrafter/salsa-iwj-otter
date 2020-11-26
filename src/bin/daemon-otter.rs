@@ -57,13 +57,27 @@ impl<'r> FromParam<'r> for CheckedResourceLeaf {
 
 #[derive(Serialize,Debug)]
 struct LoadingRenderContext<'r> {
-  ptoken : &'r RawTokenVal,
+  ptoken: &'r RawTokenVal,
+  layout: PresentationLayout,
 }
 #[get("/")]
 #[throws(OE)]
-fn loading(ptoken: WholeQueryString) -> Template {
+fn loading_p(ptoken: WholeQueryString) -> Template {
+  loading(PresentationLayout::Portrait, ptoken)?
+}
+#[get("/l")]
+#[throws(OE)]
+fn loading_l(ptoken: WholeQueryString) -> Template {
+  loading(PresentationLayout::Landscape, ptoken)?
+}
+
+#[throws(OE)]
+fn loading(layout: PresentationLayout, ptoken: WholeQueryString) -> Template {
   if let Some(ptoken) = ptoken.0 {
-    let c = LoadingRenderContext { ptoken : RawTokenVal::from_str(ptoken) };
+    let c = LoadingRenderContext {
+      ptoken: RawTokenVal::from_str(ptoken),
+      layout,
+    };
     Template::render("loading",&c)
   } else {
     let c = FrontPageRenderContext { };
@@ -209,7 +223,8 @@ fn main() {
     .attach(Template::fairing())
     .manage(cors_state)
     .mount("/", routes![
-      loading,
+      loading_l,
+      loading_p,
       resource,
       updates,
     ])

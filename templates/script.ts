@@ -87,6 +87,7 @@ type PieceErrorHandler = (piece: PieceId, p: PieceInfo, m: PieceOpError)
   => boolean;
 interface DispatchTable<H> { [key: string]: H };
 
+var globalinfo_elem : HTMLElement;
 var general_timeout : number = 10000;
 var messages : DispatchTable<MessageHandler> = Object();
 var pieceops : DispatchTable<PieceHandler> = Object();
@@ -1148,9 +1149,11 @@ var wasm_promise : Promise<any>;;
 
 function doload(){
   console.log('DOLOAD');
+  globalinfo_elem = document.getElementById('global-info')!;
+  let layout = globalinfo_elem!.dataset!.layout!;
   var elem = document.getElementById('loading_token')!;
   var ptoken = elem.dataset.ptoken;
-  xhr_post_then('/_/session', 
+  xhr_post_then('/_/session/' + layout, 
 		JSON.stringify({ ptoken : ptoken }),
 		loaded);
 

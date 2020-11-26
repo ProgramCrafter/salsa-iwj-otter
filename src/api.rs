@@ -6,6 +6,28 @@ use crate::imports::*;
 
 type WRC = WhatResponseToClientOp;
 
+#[derive(Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize,EnumString)]
+pub enum PresentationLayout {
+  Portrait,
+  Landscape,
+}
+
+impl<'r> FromParam<'r> for PresentationLayout {
+  type Error = strum::ParseError;
+  fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
+    param.as_str().parse()
+  }
+}
+
+impl PresentationLayout {
+  pub fn template(self) -> &'static str {
+    match self {
+      PresentationLayout::Portrait => "session",
+      PresentationLayout::Landscape => "landscape",
+    }
+  }
+}
+
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiPiece<O : ApiPieceOp> {
   ctoken : RawToken,

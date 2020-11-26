@@ -53,8 +53,9 @@ struct DataLoadPlayer {
 struct SessionForm {
   ptoken : RawToken,
 }
-#[post("/_/session", format="json", data="<form>")]
-fn session(form : Json<SessionForm>) -> Result<Template,OE> {
+#[post("/_/session/<layout>", format="json", data="<form>")]
+fn session(form : Json<SessionForm>, layout: PresentationLayout)
+           -> Result<Template,OE> {
   // make session in this game, log a message to other players
   let iad = lookup_token(form.ptoken.borrow())?;
   let player = iad.ident;
@@ -187,7 +188,7 @@ fn session(form : Json<SessionForm>) -> Result<Template,OE> {
         &player, client, &c.nick, &c.ctoken,
         iad.gref.lock().ok().as_ref().map(|ig| &**ig));
 
-  Ok(Template::render("session",&c))
+  Ok(Template::render(layout.template(),&c))
 }
 
 pub fn mount(rocket_instance: Rocket) -> Rocket {

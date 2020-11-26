@@ -32,6 +32,7 @@ pub use std::mem;
 pub use std::os::unix;
 pub use std::time::Instant;
 pub use std::path::PathBuf;
+pub use std::string::ParseError;
 pub use std::os::unix::ffi::OsStrExt;
 pub use std::env;
 pub use std::process::exit;
@@ -111,6 +112,8 @@ pub use either::{Either,Left,Right};
 
 pub use if_chain::if_chain;
 
+pub use strum::EnumString;
+
 pub use crate::global::*;
 pub use crate::gamestate::*;
 pub use crate::pieces::*;
@@ -123,6 +126,7 @@ pub use crate::slotmap_slot_idx::*;
 pub use crate::cmdlistener::*;
 pub use crate::mgmtchannel::*;
 pub use crate::api::{Lens,TransparentLens,ApiPieceOpError};
+pub use crate::api::{PresentationLayout};
 pub use crate::utils::*;
 pub use crate::spec::*;
 pub use crate::debugreader::DebugReader;
