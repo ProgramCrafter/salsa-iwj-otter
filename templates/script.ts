@@ -110,7 +110,7 @@ var space : SVGGraphicsElement;
 var pieces_marker : SVGGraphicsElement;
 var defs_marker : SVGGraphicsElement;
 var log_elem : HTMLElement;
-var logouter_elem : HTMLElement;
+var logscroll_elem : HTMLElement;
 var status_node : HTMLElement;
 var uos_node : HTMLElement;
 var wresting: boolean;
@@ -832,7 +832,7 @@ function add_timestamped_log_message(ts_html: string, msg_html: string) {
       (() => {
 	let le_top = lastent.getBoundingClientRect()!.top;
 	let le_bot = lastent.getBoundingClientRect()!.bottom;
-	let ld_bot = logouter_elem.getBoundingClientRect()!.bottom;
+	let ld_bot = logscroll_elem.getBoundingClientRect()!.bottom;
 	console.log("ADD_LOG_MESSAGE bboxes: le t b, bb",
 		    le_top, le_bot, ld_bot);
 	return 0.5 * (le_bot + le_top) > ld_bot;
@@ -865,8 +865,9 @@ function add_timestamped_log_message(ts_html: string, msg_html: string) {
   log_elem.appendChild(ne);
 
   if (!in_scrollback) {
+    let by = ne.getBoundingClientRect()!.height;
     lastent = log_elem.lastElementChild!;
-    lastent.scrollIntoView();
+    logscroll_elem.scrollBy(0, by);
   }
 }
 
@@ -1087,7 +1088,7 @@ function startup() {
   let sse_url_prefix = body.dataset.sseUrlPrefix!;
   status_node = document.getElementById('status')!;
   status_node.innerHTML = 'js-done';
-  logouter_elem = document.getElementById("logouter")!;
+  logscroll_elem = document.getElementById("logscroll") || log_elem;
   log_elem = document.getElementById("log")!;
   let dataload = JSON.parse(body.dataset.load!);
   players = dataload.players!;

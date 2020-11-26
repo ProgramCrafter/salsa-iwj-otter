@@ -43,14 +43,12 @@
 <p>{{ m::uos() }}
 
 <p>
-<div id="logouter">
-  <div style="overflow-y: scroll; height: 200px;">
+  <div id="logscroll" style="overflow-y: scroll; height: 200px;">
     <table id="log">
       {% for ent in log %}
       <tr><td class="logmsg">{{ ent.logent.logent.html | safe }}</td><td class="logts">{{ent.when}}</td></tr>
       {%- endfor %}
     </table>
   </div>
-</div>
 </div>
 {{ m::footer() }}
