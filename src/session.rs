@@ -6,6 +6,7 @@ use crate::imports::*;
 
 #[derive(Serialize,Debug)]
 struct SessionRenderContext {
+  // xxx abbrev timestamps in Landscape
   ptoken : RawToken,
   ctoken : RawToken,
   player : PlayerId,

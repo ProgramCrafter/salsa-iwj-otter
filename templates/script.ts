@@ -1116,6 +1116,7 @@ function startup() {
 
   let lastlogent_s = '';
   if (layout == 'Landscape') {
+    // xxx this is wrong, use value provided by session.rs
     let lastent = log_elem.lastElementChild;
     if (lastent !== null) {
       lastlogent_s = lastent.firstElementChild!.innerHTML;
