@@ -40,7 +40,7 @@ Hi {{nick | escape}}
     <svg id="space"
 	 xmlns="http://www.w3.org/2000/svg"
 	 viewBox="0 0 {{ table_size[0] }} {{ table_size[1] }}"
-	 width="0 0 {{ table_size[0]*6 }}" height="{{ table_size[1]*6 }}"
+	 width="{{ table_size[0]*6 }}" height="{{ table_size[1]*6 }}"
 	 >
       <rect fill="green" x="0" y="0"
 	    width="{{ table_size[0] }}" height="{{ table_size[1] }}"/>
