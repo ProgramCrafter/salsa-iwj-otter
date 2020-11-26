@@ -7,6 +7,11 @@
       data-gen="{{gen}}"
       data-sse-url-prefix="{{sse_url_prefix}}"
       data-load="{{ load | escape }}">
+<style>
+  div[class=uos] {
+    background-color: #eef;
+  }
+</style>
 {% endmacro header %}
 
 {% macro nick() %}

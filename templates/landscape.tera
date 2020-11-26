@@ -22,11 +22,16 @@
     margin-bottom: 0;
     margin-top: 0;
   }
+  div[id=rhs-panel] {
+    display: flex;
+    margin-left: 3px;
+    flex-direction: column;
+  }
 </style>
 {{ m::errors() }}
 <div style="display: flex; flex-flow: row none;">
   <div>{{ m::space() }}</div>
-  <div style="flex-direction: column; display: flex;">
+  <div id="rhs-panel">
       <div>
           {{ m::nick() }}
       </div><div>
