@@ -8,7 +8,9 @@
 use if_chain::if_chain;
 use arrayvec::ArrayVec;
 
-pub fn timesting_abbreviate<'x>(base: &str, this: &'x str) -> (&'x str, bool) {
+pub fn timestring_abbreviate<'x>(base: &str, this: &'x str)
+                                 -> (&'x str, bool)
+{
   fn split(s: &str) -> ArrayVec<[&str; 3]> {
     s.splitn(3, ' ').collect()
   }

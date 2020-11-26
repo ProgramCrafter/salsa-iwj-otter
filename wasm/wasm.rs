@@ -90,6 +90,11 @@ impl ZCoordIterator {
 }
 
 #[wasm_bindgen]
+pub fn timestring_abbreviate(base: &str, now: &str) -> JsString {
+  zcoord::misc::timestring_abbreviate(base,now).0.into()
+}
+
+#[wasm_bindgen]
 pub fn setup(s: &str) -> JsString {
   // returning String produces a wasm-opt error, as here
   //  https://github.com/WebAssembly/binaryen/issues/3006
