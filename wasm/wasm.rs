@@ -90,8 +90,24 @@ impl ZCoordIterator {
 }
 
 #[wasm_bindgen]
-pub fn timestring_abbreviate(base: &str, now: &str) -> JsString {
-  zcoord::misc::timestring_abbreviate(base,now).0.into()
+pub struct TimestampAbbreviator {
+  last: String,
+}
+
+#[wasm_bindgen]
+pub fn timestamp_abbreviator(j: JsString) -> TimestampAbbreviator {
+  TimestampAbbreviator { last: j.into() }
+}
+
+#[wasm_bindgen]
+impl TimestampAbbreviator {
+  pub fn update(&mut self, now: &JsString) -> JsString {
+    let now: String = now.into();
+    let (abbrev, _) = zcoord::misc::timestring_abbreviate(&self.last, &now);
+    let abbrev = abbrev.into();
+    self.last = now;
+    abbrev
+  }
 }
 
 #[wasm_bindgen]

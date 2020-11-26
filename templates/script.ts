@@ -104,6 +104,7 @@ var cseq : ClientSeq = 0;
 var ctoken : string;
 var uo_map : { [k: string]: UoRecord | null } = Object.create(null);
 var keyops_local : { [opname: string]: (uo: UoRecord) => void } = Object();
+var last_log_ts: wasm_bindgen.TimestampAbbreviator;
 
 var svg_ns : string;
 var space : SVGGraphicsElement;
@@ -854,6 +855,7 @@ function add_timestamped_log_message(ts_html: string, msg_html: string) {
     add_thing('td', 'logmsg', msg_html);
     add_thing('td', 'logts',  ts_html);
   } else if (layout == 'Landscape') {
+    ts_html = last_log_ts.update(ts_html);
     ne = document.createElement('div');
     add_thing('span', 'logts',  ts_html);
     ne.appendChild(document.createElement('br'));
@@ -1111,6 +1113,15 @@ function startup() {
     pieces[piece] = p;
     redisplay_ancillaries(piece,p);
   }
+
+  let lastlogent_s = '';
+  if (layout == 'Landscape') {
+    let lastent = log_elem.lastElementChild;
+    if (lastent !== null) {
+      lastlogent_s = lastent.firstElementChild!.innerHTML;
+    }
+  }
+  last_log_ts = wasm_bindgen.timestamp_abbreviator(lastlogent_s);
 
   var es = new EventSource(
     sse_url_prefix + "/_/updates?ctoken="+ctoken+'&gen='+gen
