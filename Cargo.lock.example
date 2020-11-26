@@ -1186,8 +1186,10 @@ dependencies = [
 name = "otter-zcoord"
 version = "0.0.1"
 dependencies = [
+ "arrayvec",
  "derive_more",
  "fehler",
+ "if_chain",
  "serde",
  "serde_with",
  "thiserror",

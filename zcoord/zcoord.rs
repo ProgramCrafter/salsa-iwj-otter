@@ -79,6 +79,8 @@ use thiserror::Error;
 use serde_with::DeserializeFromStr;
 use serde_with::SerializeDisplay;
 
+mod misc;
+
 //---------- core definitions ----------
 
 pub type RangeCount = u32;

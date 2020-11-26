@@ -13,8 +13,10 @@ path = "zcoord.rs"
 
 [dependencies]
 
+arrayvec = "0"
 derive_more = "0.99"
 fehler = "1"
+if_chain = "1"
 thiserror = "1"
 serde = { version = "1", features = ["derive","rc"] }
 serde_with = "1"
