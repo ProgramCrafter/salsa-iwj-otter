@@ -865,9 +865,7 @@ function add_timestamped_log_message(ts_html: string, msg_html: string) {
   log_elem.appendChild(ne);
 
   if (!in_scrollback) {
-    let by = ne.getBoundingClientRect()!.height;
-    lastent = log_elem.lastElementChild!;
-    logscroll_elem.scrollBy(0, by);
+    logscroll_elem.scrollTop = logscroll_elem.scrollHeight;
   }
 }
 
@@ -1088,8 +1086,8 @@ function startup() {
   let sse_url_prefix = body.dataset.sseUrlPrefix!;
   status_node = document.getElementById('status')!;
   status_node.innerHTML = 'js-done';
-  logscroll_elem = document.getElementById("logscroll") || log_elem;
   log_elem = document.getElementById("log")!;
+  logscroll_elem = document.getElementById("logscroll") || log_elem;
   let dataload = JSON.parse(body.dataset.load!);
   players = dataload.players!;
   delete body.dataset.load;
