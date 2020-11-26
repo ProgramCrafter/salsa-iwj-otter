@@ -32,6 +32,8 @@
 {{ m::wresting() }}
 |
 {{ m::status() }}
+|
+<a href="/l?{{ ptoken }}">switch to landscape view</a>
 {{ m::errors() }}
 
 {{ m::space() }}

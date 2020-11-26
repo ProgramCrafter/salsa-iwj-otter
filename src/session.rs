@@ -6,6 +6,7 @@ use crate::imports::*;
 
 #[derive(Serialize,Debug)]
 struct SessionRenderContext {
+  ptoken : RawToken,
   ctoken : RawToken,
   player : PlayerId,
   gen : Generation,
@@ -177,6 +178,7 @@ fn session(form : Json<SessionForm>, layout: PresentationLayout)
       uses,
       nick : gpl.nick.clone(),
       sse_url_prefix,
+      ptoken: form.ptoken.clone(),
       load : serde_json::to_string(&DataLoad {
         players : load_players,
       }).map_err(|e| InternalError::JSONEncode(e))?,
