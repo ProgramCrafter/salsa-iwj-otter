@@ -46,9 +46,11 @@
 	{{ m::uos() }}
 
   <div id="log" style="overflow-y: scroll; height: 600px;">
-{% for ent in log %}
+  {% for ent in log %}
+    <div>
     <span class="logts">{{ent.when}}</span><br/>
-    {{ ent.logent.logent.html | safe }}<br/>
+    <span class="logmsg">{{ ent.logent.logent.html | safe }}<span><br/>
+    </div>
 {%- endfor %}
   </div>
 </div>

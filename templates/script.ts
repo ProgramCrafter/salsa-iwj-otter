@@ -47,6 +47,7 @@ type Generation = number;
 type UoKind = 'Client' | "Global"| "Piece" | "ClientExtra" | "GlobalExtra";
 type WhatResponseToClientOp = "Predictable" | "Unpredictable" | "UpdateSvg";
 type Timestamp = number; // unix time_t, will break in 285My
+type Layout = 'Portrait' | 'Landscape';
 
 type UoDescription = {
   kind: UoKind;
@@ -88,6 +89,7 @@ type PieceErrorHandler = (piece: PieceId, p: PieceInfo, m: PieceOpError)
 interface DispatchTable<H> { [key: string]: H };
 
 var globalinfo_elem : HTMLElement;
+var layout: Layout;
 var general_timeout : number = 10000;
 var messages : DispatchTable<MessageHandler> = Object();
 var pieceops : DispatchTable<PieceHandler> = Object();
@@ -835,19 +837,31 @@ function add_timestamped_log_message(ts_html: string, msg_html: string) {
 	return 0.5 * (le_bot + le_top) > ld_bot;
       })();
 
-  console.log('ADD LOG MESSAGE ',in_scrollback, msg_html);
-  var tr = document.createElement('tr');
+  console.log('ADD LOG MESSAGE ',in_scrollback, layout, msg_html);
 
-  function add_td(html: string) {
-    var td = document.createElement('td');
-    td.innerHTML = html;
-    tr.appendChild(td);
-    return td;
+  var ne : HTMLElement;
+
+  function add_thing(elemname: string, cl: string, html: string) {
+    var ie = document.createElement(elemname);
+    ie.innerHTML = html;
+    ie.setAttribute("class", cl);
+    ne.appendChild(ie);
   }
 
-  add_td(msg_html);
-  add_td(ts_html).setAttribute("class", 'logts')
-  log_elem.appendChild(tr);
+  if (layout == 'Portrait') {
+    ne = document.createElement('tr');
+    add_thing('td', 'logmsg', msg_html);
+    add_thing('td', 'logts',  ts_html);
+  } else if (layout == 'Landscape') {
+    ne = document.createElement('div');
+    add_thing('span', 'logts',  ts_html);
+    ne.appendChild(document.createElement('br'));
+    add_thing('span', 'logmsg', msg_html);
+    ne.appendChild(document.createElement('br'));
+  } else {
+    throw 'bad layout ' + layout;
+  }
+  log_elem.appendChild(ne);
 
   if (!in_scrollback) {
     lastent = log_elem.lastElementChild!;
@@ -1150,7 +1164,7 @@ var wasm_promise : Promise<any>;;
 function doload(){
   console.log('DOLOAD');
   globalinfo_elem = document.getElementById('global-info')!;
-  let layout = globalinfo_elem!.dataset!.layout!;
+  layout = globalinfo_elem!.dataset!.layout! as any;
   var elem = document.getElementById('loading_token')!;
   var ptoken = elem.dataset.ptoken;
   xhr_post_then('/_/session/' + layout, 
