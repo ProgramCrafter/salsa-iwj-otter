@@ -8,8 +8,14 @@
       data-sse-url-prefix="{{sse_url_prefix}}"
       data-load="{{ load | escape }}">
 <style>
-  div[class=uos] {
+  html {
     background-color: #eef;
+  }
+  .footer {
+    background-color: #ddf;
+  }
+  div[class=uos] {
+    background-color: white;
   }
 </style>
 {% endmacro header %}
@@ -62,10 +68,21 @@ Hi {{nick | escape}}
 {% endmacro uos %}
 
 {% macro footer() %}
-<hr>
-<address>
-This server is running Otter, the Online TableTop Environment
-Renderer.  Otter and its shape (piece picture) libraries
-are <a href="/_/libre">Free Software</a> and come with NO
-WARRANTY.
+  <div class="footer">
+    <div class="footer"; style="
+         height: 100vw;
+         width: 200vw;
+         left: -50vw;
+         overflow-y: visible;
+         position: absolute;
+         z-index: -1;
+     "><!-- this fills in the rest of the page, including the margins -->
+    </div>
+    <hr>
+    <address style="max-height: 100vh;">
+      This server is running Otter, the Online TableTop Environment
+      Renderer.  Otter and its shape (piece picture) libraries
+      are <a href="/_/libre">Free Software</a> and come with NO
+      WARRANTY.
+  </div>
 {% endmacro footer %}

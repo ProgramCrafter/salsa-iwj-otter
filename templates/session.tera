@@ -1,6 +1,9 @@
 {% import "macros" as m %}{# -*- HTML -*- -#}
 {{ m::header() }}
 <style>
+  body {
+    min-height: 100vw;
+  }
   div[class=uos] { display: flex; flex-wrap: wrap; }
   div[class|=uokey] {
     outline: 1px solid #000;
@@ -19,13 +22,14 @@
   div[class=uokey-r] {
     align-self: end;
   }
-  .uos {
+  div[id=uos] {
     height: 100px;
   }
   .uos-mid {
     flex-grow: 1;
   }
 </style>
+<div class="upper">
 {{ m::nick() }}
 |
 {{ m::wresting() }}
@@ -48,5 +52,5 @@
     </table>
   </div>
 </div>
-
+</div>
 {{ m::footer() }}

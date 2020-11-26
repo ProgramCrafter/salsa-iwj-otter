@@ -2,7 +2,9 @@
      SPDX-License-Identifier: AGPL-3.0-or-later
      There is NO WARRANTY. -->
 <html>
-<head>
+  <head>
+    <title>xxx game name - xxx nick - Otter
+    </title>
 <link rel="license" href="/_/libre">
 <script defer>let wasm_input = fetch('/_/wasm.wasm');</script>
 <script src="/_/wasm.js" defer></script>
