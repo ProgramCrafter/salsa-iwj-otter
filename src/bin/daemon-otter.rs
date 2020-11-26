@@ -65,6 +65,7 @@ struct LoadingRenderContext<'r> {
 fn loading_p(ptoken: WholeQueryString) -> Template {
   loading(PresentationLayout::Portrait, ptoken)?
 }
+// xxx also do p, make it an account/player property
 #[get("/l")]
 #[throws(OE)]
 fn loading_l(ptoken: WholeQueryString) -> Template {
