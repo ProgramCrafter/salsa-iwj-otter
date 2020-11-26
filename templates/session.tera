@@ -23,8 +23,7 @@
     height: 100px;
   }
   .uos-mid {
-    margin-left: auto;
-    margin-top: auto;
+    flex-grow: 1;
   }
 </style>
 {{ m::nick() }}

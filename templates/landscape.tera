@@ -3,6 +3,8 @@
 <style>
   div[class=uos] {
     display: flex; flex-direction: column; flex-wrap: wrap;
+  }
+  div[id=uos] {
     flex-grow: 1;
   }
   div[class|=uokey] {
@@ -10,14 +12,11 @@
     margin: 1px;
   }
   div[class=uokey-r] {
-    align-self: end;
   }
   div[class=uokey-mid] {
-    align-self: end;
   }
   .uos-mid {
-    margin-left: auto;
-    margin-top: auto;
+    flex-grow: 1;
   }
   pre[id=error] {
     margin-bottom: 0;
