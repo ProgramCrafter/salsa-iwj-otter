@@ -1478,8 +1478,9 @@ dependencies = [
 
 [[package]]
 name = "rocket"
-version = "0.4.5"
-source = "git+file:///home/ian/Rustup/Game/rocket/.git?branch=Game-rocket#a36f255db5079f66186822625e202907b0a865fa"
+version = "0.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4fc7e5d6aaa32ace6893ae8a1875688ca7b07d6c2428ae88e704c3623c8866e9"
 dependencies = [
  "atty",
  "base64 0.12.3",
@@ -1498,8 +1499,9 @@ dependencies = [
 
 [[package]]
 name = "rocket_codegen"
-version = "0.4.5"
-source = "git+file:///home/ian/Rustup/Game/rocket/.git?branch=Game-rocket-codegen#0775bdde13ea5253913c2d21938630f4230fa030"
+version = "0.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "519154b16df5fe552a8f9cd76a97793a9f5d58e34f186ab79c7b29ce1d009358"
 dependencies = [
  "devise",
  "glob 0.3.0",
@@ -1512,8 +1514,9 @@ dependencies = [
 
 [[package]]
 name = "rocket_contrib"
-version = "0.4.5"
-source = "git+file:///home/ian/Rustup/Game/rocket/.git?branch=Game-rocket-contrib#023e80804a8b5583c7ab828b5b4237b4d7a8b143"
+version = "0.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9465babd59cfb360669b60431db510f3dc3268d51ccd69fc9264e626681e596a"
 dependencies = [
  "glob 0.3.0",
  "log 0.4.11",
@@ -1543,8 +1546,9 @@ dependencies = [
 
 [[package]]
 name = "rocket_http"
-version = "0.4.5"
-source = "git+file:///home/ian/Rustup/Game/rocket/.git?branch=Game-rocket-http#ae2884c91a8b9916a3544c5e4ced78f10fa505e4"
+version = "0.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a9d087de7203c7a60a0ed5cd3a135b552dbfbed9932c52d49d083e8629935257"
 dependencies = [
  "cookie",
  "hyper",
