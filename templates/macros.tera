@@ -69,15 +69,20 @@ Hi {{nick | escape}}
 
 {% macro footer() %}
   <div class="footer">
+    <!--
+         this affects the document's overall scrollbars
+         which is not what we want.  so get rid of it for now
     <div class="footer"; style="
          height: 100vw;
          width: 200vw;
          left: -50vw;
-         overflow-y: visible;
+         overflow-y: clip;
          position: absolute;
          z-index: -1;
-     "><!-- this fills in the rest of the page, including the margins -->
+     "><!-- this fills in the rest of the page, including the margins
+         --x
     </div>
+    -->
     <hr>
     <address style="max-height: 100vh;">
       This server is running Otter, the Online TableTop Environment
