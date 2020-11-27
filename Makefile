@@ -17,7 +17,7 @@ everything: debug doc release check bundled-sources
 
 cr = $(addprefix --,$(filter-out debug,$1))
 rsrcs = $(shell \
-    find $1 \( -name Cargo.toml -o -name Cargo.lock -o -name \*.rs \) )
+    find $1 \( -name Cargo.toml -o -name Cargo.lock -o -name Cargo.lock.example -o -name \*.rs \) )
 stamp=@mkdir -p stamp; touch $@
 
 BUNDLED_SOURCES_LIT = README.md LICENCE
