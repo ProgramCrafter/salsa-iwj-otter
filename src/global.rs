@@ -545,6 +545,7 @@ impl<'ig> InstanceGuard<'ig> {
     // New state
     let mut gs = GameState {
       // These parts are straightforward and correct
+      table_colour: self.c.g.gs.table_colour.clone(),
       table_size: self.c.g.gs.table_size,
       gen: self.c.g.gs.gen,
       max_z: self.gs.max_z.clone(),

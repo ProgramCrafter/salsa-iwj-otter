@@ -42,7 +42,7 @@ Hi {{nick | escape}}
 	 viewBox="0 0 {{ table_size[0] }} {{ table_size[1] }}"
 	 width="{{ table_size[0]*6 }}" height="{{ table_size[1]*6 }}"
 	 >
-      <rect fill="green" x="0" y="0"
+      <rect fill="{{ table_colour }}" x="0" y="0"
 	    width="{{ table_size[0] }}" height="{{ table_size[1] }}"/>
       <g id="pieces_marker"></g>
 {%- for piece in uses %}

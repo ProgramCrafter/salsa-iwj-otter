@@ -6,6 +6,7 @@ use crate::imports::*;
 
 #[derive(Serialize,Debug)]
 struct SessionRenderContext {
+  table_colour: Colour,
   ptoken : RawToken,
   ctoken : RawToken,
   player : PlayerId,
@@ -185,6 +186,7 @@ fn session(form : Json<SessionForm>, layout: Option<PresentationLayout>)
     };
 
     let src = SessionRenderContext {
+      table_colour: ig.gs.table_colour.clone(),
       ctoken,
       gen : ig.gs.gen,
       log,

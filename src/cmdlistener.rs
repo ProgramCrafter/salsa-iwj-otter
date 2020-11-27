@@ -157,6 +157,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       let auth = authorise_by_account(cs, &ag, &game)?;
 
       let gs = crate::gamestate::GameState {
+        table_colour: Html::lit("green"),
         table_size : DEFAULT_TABLE_SIZE,
         pieces : Default::default(),
         players : Default::default(),

@@ -41,6 +41,7 @@ pub struct ZLevel {
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct GameState {
+  pub table_colour: Colour,
   pub table_size : Pos,
   pub pieces : Pieces,
   pub gen : Generation,
