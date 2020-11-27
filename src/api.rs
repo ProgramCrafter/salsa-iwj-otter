@@ -12,6 +12,8 @@ pub enum PresentationLayout {
   Landscape,
 }
 
+type PL = PresentationLayout;
+
 impl<'r> FromParam<'r> for PresentationLayout {
   type Error = strum::ParseError;
   fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
@@ -22,8 +24,14 @@ impl<'r> FromParam<'r> for PresentationLayout {
 impl PresentationLayout {
   pub fn template(self) -> &'static str {
     match self {
-      PresentationLayout::Portrait => "session",
-      PresentationLayout::Landscape => "landscape",
+      PL::Portrait => "session",
+      PL::Landscape => "landscape",
+    }
+  }
+  pub fn abbreviate_timestamps(self) -> bool {
+    match self {
+      PL::Portrait => false,
+      PL::Landscape => true,
     }
   }
 }

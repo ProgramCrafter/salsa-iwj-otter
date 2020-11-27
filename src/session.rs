@@ -6,7 +6,6 @@ use crate::imports::*;
 
 #[derive(Serialize,Debug)]
 struct SessionRenderContext {
-  // xxx abbrev timestamps in Landscape
   ptoken : RawToken,
   ctoken : RawToken,
   player : PlayerId,
@@ -132,6 +131,8 @@ fn session(form : Json<SessionForm>, layout: PresentationLayout)
       uses.push(for_piece);
     }
 
+    let mut timestamp_abbrev : Option<String> = None;
+
     let log = itertools::chain(
       ig.gs.log.iter()
         .map(|(_, logent)| logent)
@@ -156,7 +157,15 @@ fn session(form : Json<SessionForm>, layout: PresentationLayout)
           })
       },
     ).map(|logent|{
-      let when = logent.when.render(tz);
+      let mut when = logent.when.render(tz);
+      if layout.abbreviate_timestamps() {
+        let (abbrev, _) = zcoord::misc::timestring_abbreviate(
+          timestamp_abbrev.get_or_insert(default()),
+          &when
+        );
+        let abbrev = abbrev.into();
+        timestamp_abbrev = Some(mem::replace(&mut when, abbrev));
+      }
       SessionFormattedLogEntry { when, logent }
     }).collect();
 
