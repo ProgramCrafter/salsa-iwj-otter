@@ -59,8 +59,10 @@ type PlayerQueryString<'r> = WholeQueryString<InstanceAccess<'r, PlayerId>>;
 
 #[derive(Serialize,Debug)]
 struct LoadingRenderContext<'r> {
-  ptoken: &'r RawTokenVal,
+  game: String,
+  nick: String,
   layout: PresentationLayout,
+  ptoken: &'r RawTokenVal,
 }
 #[get("/")]
 #[throws(OE)]
@@ -83,6 +85,8 @@ fn loading(layout: Option<PresentationLayout>, ia: PlayerQueryString)
     let gpl = g.gs.players.byid(ia.i.ident)?;
     let layout = layout.unwrap_or(gpl.layout);
     let c = LoadingRenderContext {
+      nick: gpl.nick.clone(),
+      game: g.name.to_string(),
       ptoken: &ia.raw_token,
       layout,
     };
