@@ -894,6 +894,7 @@ type PieceStateMessage = {
 pieceops.Modify = <PieceHandler>function
 (piece: PieceId, p: PieceInfo, info: PieceStateMessage) {
   console.log('PIECE UPDATE MODIFY ',piece,info)
+  piece_note_moved(piece,p);
   piece_modify(piece, p, info, false);
 }
 
@@ -965,17 +966,7 @@ function piece_set_zlevel(piece: PieceId, p: PieceInfo,
     space.insertBefore(p.uelem, ins_before);
 }
 
-function piece_z_before(a: PieceInfo, b: PieceInfo) {
-  if (a.z  < b.z ) return true;
-  if (a.z  > b.z ) return false;
-  if (a.zg < b.zg) return true;
-  if (a.zg > b.zg) return false;
-  return false;
-}
-
-pieceops.Move = <PieceHandler>function
-(piece,p, info: Pos ) {
-  piece_checkconflict_nrda(piece,p,false);
+function piece_note_moved(piece: PieceId, p: PieceInfo) {
   let now = performance.now();
 
   let need_redisplay = p.last_seen_moved == null;
@@ -991,7 +982,22 @@ pieceops.Move = <PieceHandler>function
       redisplay_ancillaries(mr.piece,mr.p);
     }
   }
+
   movements.push({ piece: piece, p: p, this_motion: now });
+}
+
+function piece_z_before(a: PieceInfo, b: PieceInfo) {
+  if (a.z  < b.z ) return true;
+  if (a.z  > b.z ) return false;
+  if (a.zg < b.zg) return true;
+  if (a.zg > b.zg) return false;
+  return false;
+}
+
+pieceops.Move = <PieceHandler>function
+(piece,p, info: Pos ) {
+  piece_checkconflict_nrda(piece,p,false);
+  piece_note_moved(piece, p);
 
   p.uelem.setAttributeNS(null, "x", info[0]+"");
   p.uelem.setAttributeNS(null, "y", info[1]+"");
@@ -999,6 +1005,7 @@ pieceops.Move = <PieceHandler>function
 
 pieceops.SetZLevel = <PieceHandler>function
 (piece,p, info: { z: ZCoord, zg: Generation }) {
+  piece_note_moved(piece,p);
   piece_set_zlevel(piece,p, (oldtop_piece)=>{
     let oldtop_p = pieces[oldtop_piece]!;
     p.z  = info.z;
