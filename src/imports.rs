@@ -98,9 +98,6 @@ pub use delegate::delegate;
 pub use itertools::Itertools;
 pub use itertools::EitherOrBoth;
 
-pub use rental::RentalError;
-pub use rental::common::RentRef;
-
 pub use serde_with;
 pub use serde_with::serde_as;
 
