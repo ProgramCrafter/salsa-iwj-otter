@@ -44,6 +44,7 @@ pub struct AccountDetails {
   pub account: AccountName,
   pub nick: Option<String>,
   pub timezone: Option<String>,
+  pub layout: Option<PresentationLayout>,
   #[serde(flatten)]
   pub access: Option<Box<dyn PlayerAccessSpec>>,
 //  pub invite: Acl<AccountPerm>,   todo

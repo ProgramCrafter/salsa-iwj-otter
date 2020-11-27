@@ -55,6 +55,7 @@ pub struct AccountRecord {
   pub nick: String,
   pub timezone: String,
   pub access: AccessRecord,
+  pub layout: PresentationLayout,
 }
 
 #[derive(Clone,Debug,Hash,Ord,PartialOrd,Eq,PartialEq)]

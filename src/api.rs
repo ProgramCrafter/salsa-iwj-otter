@@ -36,6 +36,10 @@ impl PresentationLayout {
   }
 }
 
+impl Default for PresentationLayout {
+  fn default() -> Self { PL::Portrait }
+}
+
 pub struct AbbrevPresentationLayout(pub PresentationLayout);
 
 impl<'r> FromParam<'r> for AbbrevPresentationLayout {

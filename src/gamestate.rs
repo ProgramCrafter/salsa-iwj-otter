@@ -52,6 +52,7 @@ pub struct GameState {
 #[derive(Debug,Serialize,Deserialize,Clone)]
 pub struct GPlayerState {
   pub nick: String,
+  pub layout: PresentationLayout,
 }
 
 #[derive(Debug,Serialize,Deserialize)]

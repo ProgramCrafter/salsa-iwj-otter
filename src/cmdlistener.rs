@@ -82,22 +82,28 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine
     },
 
-    CreateAccount(AccountDetails { account, nick, timezone, access }) => {
+    CreateAccount(AccountDetails {
+      account, nick, timezone, access, layout
+    }) => {
       let mut ag = AccountsGuard::lock();
       let auth = authorise_for_account(cs, &ag, &account)?;
       let access = cs.accountrecord_from_spec(access)?
         .unwrap_or_else(|| AccessRecord::new_unset());
       let nick = nick.unwrap_or_else(|| account.to_string());
       let account = account.to_owned().into();
+      let layout = layout.unwrap_or_default();
       let record = AccountRecord {
         account, nick, access,
         timezone: timezone.unwrap_or_default(),
+        layout,
       };
       ag.insert_entry(record, auth)?;
       Fine
     }
 
-    UpdateAccount(AccountDetails { account, nick, timezone, access }) => {
+    UpdateAccount(AccountDetails {
+      account, nick, timezone, access, layout
+    }) => {
       let mut ag = AccountsGuard::lock();
       let mut games = games_lock();
       let auth = authorise_for_account(cs, &ag, &account)?;
@@ -108,6 +114,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         }
         update_from(nick,                   &mut record.nick    );
         update_from(timezone,               &mut record.timezone);
+        update_from(layout,                 &mut record.layout  );
 /*
       if let Some(new_timezone) = timezone {
         let ipr = ig.iplayers.byid_mut(player)?;
@@ -321,6 +328,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
       let tz = tz_from_str(&timezone);
       let gpl = GPlayerState {
         nick: nick.to_string(),
+        layout: arecord.layout,
       };
       let ipl = IPlayerState {
         acctid,

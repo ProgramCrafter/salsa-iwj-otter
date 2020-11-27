@@ -21,6 +21,7 @@ type MR = MgmtResponse;
 type MGI = MgmtGameInstruction;
 type MGR = MgmtGameResponse;
 type TP = TablePermission;
+type PL = PresentationLayout;
 
 use argparse::action::ParseResult::Parsed;
 
@@ -65,6 +66,7 @@ struct MainOpts {
   account: AccountName,
   nick: Option<String>,
   timezone: Option<String>,
+  layout: Option<PresentationLayout>,
   access: Option<AccessOpt>,
   socket_path: String,
   verbose: i32,
@@ -255,6 +257,7 @@ fn main() {
     socket_path: Option<String>,
     nick: Option<String>,
     timezone: Option<String>,
+    layout: Option<PresentationLayout>,
     access: Option<AccessOpt>,
     verbose: i32,
     config_filename: Option<String>,
@@ -290,6 +293,20 @@ fn main() {
       StoreOption,
       "display times in timezone TZ (Olson timezone name) \
        (default is to use server's default timezone)");
+    let mut layout = ap.refer(&mut rma.layout);
+    layout.add_option(
+      &["--layout-portrait"],
+      StoreConst(Some(PL::Portrait)),
+      "set account to display in portrait (by default)");
+    layout.add_option(
+      &["--layout-landscape"],
+      StoreConst(Some(PL::Landscape)),
+      "set account to display in landscape (by default)");
+    layout.add_option(
+      &["--layout-default"],
+      StoreConst(None),
+      "do not modify default layout");
+    
 
     let mut access = ap.refer(&mut rma.access);
     access.add_option(&["--url-on-stdout"],
@@ -330,7 +347,7 @@ fn main() {
   }, &|RawMainArgs {
     account, nick, timezone,
     access, socket_path, verbose, config_filename, superuser,
-    subcommand, subargs, spec_dir,
+    subcommand, subargs, spec_dir, layout,
   }|{
     let config = Thunk::<Result<(Arc<ServerConfig>,String),APE>,_>::new(
       move ||{
@@ -381,6 +398,7 @@ fn main() {
       access,
       nick,
       timezone,
+      layout,
       socket_path,
       verbose,
       superuser,
@@ -456,6 +474,7 @@ impl Conn {
       account:  ma.account.clone(),
       nick:     wantup.u(&ma.nick),
       timezone: wantup.u(&ma.timezone),
+      layout:   wantup.u(&ma.layout),
       access:   wantup.u(&ma.access).map(Into::into),
     };
 

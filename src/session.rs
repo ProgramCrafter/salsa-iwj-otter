@@ -56,12 +56,12 @@ struct SessionForm {
   ptoken : RawToken,
 }
 #[post("/_/session/<layout>", format="json", data="<form>")]
-fn session(form : Json<SessionForm>, layout: PresentationLayout)
+fn session(form : Json<SessionForm>, layout: Option<PresentationLayout>)
            -> Result<Template,OE> {
   // make session in this game, log a message to other players
   let iad = lookup_token(form.ptoken.borrow())?;
   let player = iad.ident;
-  let (c, client) = {
+  let (c, client, layout) = {
     let mut ig = iad.gref.lock()?;
     let cl = Client { player, lastseen: Instant::now() };
     let client = ig.clients.insert(cl);
@@ -72,6 +72,7 @@ fn session(form : Json<SessionForm>, layout: PresentationLayout)
       acctid: iad.acctid,
     };
     let ctoken = record_token(&mut ig, ciad)?;
+    ig.save_game_later(); // in case we changed anything eg gpl.layout
     let ig = &mut *ig;
 
     let mut uses = vec![];
@@ -101,6 +102,10 @@ fn session(form : Json<SessionForm>, layout: PresentationLayout)
     let gpl = ig.gs.players.byid_mut(player)?;
     let pr = ig.iplayers.byid(player)?;
     let tz = &pr.ipl.tz;
+    if let Some(layout) = layout {
+      gpl.layout = layout;
+    }
+    let layout = gpl.layout;
     let mut pieces : Vec<_> = ig.gs.pieces.iter().collect();
 
     pieces.sort_by_key(|(_,pr)| &pr.zlevel);
@@ -196,7 +201,7 @@ fn session(form : Json<SessionForm>, layout: PresentationLayout)
       }).map_err(|e| InternalError::JSONEncode(e))?,
     };
     trace!("SessionRenderContext {:?}", &src);
-    (src, client)
+    (src, client, layout)
   };
   info!("rendering /_/session for {:?} {:?} {:?} {:?} {:?}",
         &player, client, &c.nick, &c.ctoken,

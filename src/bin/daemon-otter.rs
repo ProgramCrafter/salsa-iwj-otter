@@ -63,19 +63,22 @@ struct LoadingRenderContext<'r> {
 #[get("/")]
 #[throws(OE)]
 fn loading_p(ptoken: WholeQueryString) -> Template {
-  loading(PresentationLayout::Portrait, ptoken)?
+  loading(None, ptoken)?
 }
 // xxx also do p, make it an account/player property
 #[get("/<layout>")]
 #[throws(OE)]
 fn loading_l(layout: AbbrevPresentationLayout, ptoken: WholeQueryString)
              -> Template {
-  loading(layout.0, ptoken)?
+  loading(Some(layout.0), ptoken)?
 }
 
 #[throws(OE)]
-fn loading(layout: PresentationLayout, ptoken: WholeQueryString) -> Template {
+fn loading(layout: Option<PresentationLayout>, ptoken: WholeQueryString)
+           -> Template
+{
   if let Some(ptoken) = ptoken.0 {
+    // xxx do something sensible if token mangled
     let c = LoadingRenderContext {
       ptoken: RawTokenVal::from_str(ptoken),
       layout,
