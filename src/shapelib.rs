@@ -4,6 +4,8 @@
 
 pub use crate::imports::*;
 
+use parking_lot::{RwLock, const_rwlock, RwLockReadGuard, MappedRwLockReadGuard};
+
 // Naming convention:
 //  *Data, *List   from toml etc. (processed if need be)
 //  *Defn          raw read from library toml file (where different from Info)
@@ -191,14 +193,19 @@ impl Piece for Item {
   
 }
 
+static SHAPELIBS : RwLock<Option<Registry>> = const_rwlock(None);
+
 #[throws(SpecError)]
 pub fn libs_lookup(libname: &str)
-                   -> RentRef<RwLockReadGuard<'static, Registry>,
-                              Contents> {
-  let libs = GLOBAL.shapelibs.read().unwrap();
-  RentRef::try_new(libs,|libs| Ok::<_,SpecError>({
-    libs.get(libname).ok_or(SE::LibraryNotFound)?
-  })).map_err(|e|e.0)?
+                   -> MappedRwLockReadGuard<'static, Contents> {
+  let libs = SHAPELIBS.read();
+  RwLockReadGuard::try_map( libs, |libs: &Option<Registry>| -> Option<_> {
+    (|| Some({
+      libs.as_ref()?.get(libname)?
+    }))()
+  })
+    .map_err(|_| SE::LibraryNotFound)
+    ?
 }
 
 impl ItemSpec {
@@ -398,7 +405,9 @@ pub struct Explicit1 {
 pub fn load1(l: &Explicit1) {
   let data = load_catalogue(&l.name, &l.dirname, &l.catalogue)?;
   let count = data.items.len();
-  GLOBAL.shapelibs.write().unwrap().insert(l.name.clone(), data);
+  SHAPELIBS.write()
+    .get_or_insert_with(default)
+    .insert(l.name.clone(), data);
   info!("loaded {} shapes in library {:?} from {:?} and {:?}",
         count, &l.name, &l.catalogue, &l.dirname);
 }

@@ -192,8 +192,6 @@ pub struct Global {
 
   // per-game lock:
   // <- InstanceContainer ->
-  pub shapelibs : RwLock<shapelib::Registry>,
-
   // inner locks which the game needs:
   dirty   : Mutex<VecDeque<InstanceRef>>,
   pub config: RwLock<Arc<ServerConfig>>,
