@@ -67,7 +67,6 @@ struct LoadingRenderContext<'r> {
 fn loading_p(ia: PlayerQueryString) -> Template {
   loading(None, ia)?
 }
-// xxx also do p, make it an account/player property
 #[get("/<layout>")]
 #[throws(OE)]
 fn loading_l(layout: AbbrevPresentationLayout, ia: PlayerQueryString)
@@ -83,7 +82,6 @@ fn loading(layout: Option<PresentationLayout>, ia: PlayerQueryString)
     let g = ia.i.gref.lock()?;
     let gpl = g.gs.players.byid(ia.i.ident)?;
     let layout = layout.unwrap_or(gpl.layout);
-    // xxx do something sensible if token mangled
     let c = LoadingRenderContext {
       ptoken: &ia.raw_token,
       layout,
@@ -99,8 +97,8 @@ struct WholeQueryString<T>(pub Option<T>);
 
 impl<'a,'r,T> FromRequest<'a,'r> for WholeQueryString<T>
   where T: 'a + FromFormValue<'a>,
-        <T as FromFormValue<'a>>::Error : Debug,
- for <'x> &'x <T as FromFormValue<'a>>::Error : Into<rocket::http::Status>,
+        T::Error : Debug,
+        for <'x> &'x T::Error : Into<rocket::http::Status>,
 {
   type Error = <T as FromFormValue<'a>>::Error;
   fn from_request(r: &'a rocket::Request<'r>)
