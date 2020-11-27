@@ -250,7 +250,7 @@ impl ApiPieceOp for ApiPieceGrab {
     if pc.held.is_some() { throw!(OnlineError::PieceHeld) }
     pc.held = Some(player);
     
-    let update = PieceUpdateOp::Modify(());
+    let update = PieceUpdateOp::ModifyQuiet(());
 
     let logent = LogEntry {
       html : Html(format!("{} grasped {}",

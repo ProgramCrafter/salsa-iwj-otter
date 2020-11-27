@@ -891,9 +891,15 @@ type PieceStateMessage = {
   uos: UoDescription[],
 }
 
+pieceops.ModifyQuiet = <PieceHandler>function
+(piece: PieceId, p: PieceInfo, info: PieceStateMessage) {
+  console.log('PIECE UPDATE MODIFY QUIET ',piece,info)
+  piece_modify(piece, p, info, false);
+}
+
 pieceops.Modify = <PieceHandler>function
 (piece: PieceId, p: PieceInfo, info: PieceStateMessage) {
-  console.log('PIECE UPDATE MODIFY ',piece,info)
+  console.log('PIECE UPDATE MODIFY LOuD ',piece,info)
   piece_note_moved(piece,p);
   piece_modify(piece, p, info, false);
 }

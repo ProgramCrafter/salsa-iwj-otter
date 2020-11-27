@@ -69,6 +69,7 @@ pub enum PieceUpdateOp<NS,ZL> {
   Delete(),
   Insert(NS),
   Modify(NS),
+  ModifyQuiet(NS),
   Move(Pos),
   SetZLevel(ZL),
 }
@@ -203,6 +204,7 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
       Delete() => None,
       Insert(ns) => Some(ns),
       Modify(ns) => Some(ns),
+      ModifyQuiet(ns) => Some(ns),
       Move(_) => None,
       SetZLevel(_) => None,
     }
@@ -217,6 +219,7 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
       Delete() => Delete(),
       Insert(ns) => Insert(f(ns)?),
       Modify(ns) => Modify(f(ns)?),
+      ModifyQuiet(ns) => ModifyQuiet(f(ns)?),
       Move(pos) => Move(pos),
       SetZLevel(zl) => SetZLevel(g(zl)?),
     })
@@ -227,6 +230,7 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
       Delete() => Delete(),
       Insert(ns) => Insert(ns),
       Modify(ns) => Modify(ns),
+      ModifyQuiet(ns) => ModifyQuiet(ns),
       Move(pos) => Move(*pos),
       SetZLevel(zl) => SetZLevel(zl),
     }
@@ -251,6 +255,7 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
       Delete() => None,
       Insert(_) => None,
       Modify(_) => None,
+      ModifyQuiet(_) => None,
       Move(_) => None,
       SetZLevel(l) => Some(l.borrow().zg),
     }
