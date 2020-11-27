@@ -2,16 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-// xxx
-// chiark:~> otter join-game unix:ijackson::test
-// already in game, as player #1 "ijackson"
-// redelivering existing access token
-// thread 'main' panicked at 'execution error: game alternations failed (maybe partially); response to: AlterGame { game: InstanceName { account: AccountName { scope: Unix { user: "ijackson" }, subaccount: "" }, game: "test" }, insns: [RedeliverPlayerAccess(1#1)], how: Online }
-// 
-// Caused by:
-//    AuthorisationUninitialised', src/bin/otter.rs:414:25
-
-
 #![allow(unused_imports)]
 
 use otter::imports::*;
