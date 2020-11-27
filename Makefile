@@ -41,6 +41,7 @@ BUNDLE_SOURCES ?= bundle-rust-sources
 DEPLOY_ARCH=x86_64-unknown-linux-musl
 DEPLOY_RELEASE=debug
 DEPLOY_TARGET_DIR=$(TARGET_DIR)/$(addsuffix /,$(DEPLOY_ARCH))$(DEPLOY_RELEASE)
+DEPLOY_BRANCH=deployed
 
 #---------- nailing-cargo ----------
 
@@ -258,6 +259,7 @@ deploy: stamp/cargo.deploy-build bundled-sources assets libraries
 	rsync -r $(FILEASSETS) $(addprefix $(WASM_PACKED)/, $(WASM_ASSETS)) \
 		$(DEPLOY_BASE)/assets/
 	ssh -o BatchMode=true $(DEPLOY_USER) $(DEPLOY_FINISH)
+	git branch -f $(DEPLOYED_BRANCH)
 
 #$(DEPLOY_BASE)/bundled-sources
 
