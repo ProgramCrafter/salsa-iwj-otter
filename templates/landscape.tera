@@ -37,7 +37,7 @@
       </div><div>
 	  {{ m::status() }}<br/>
       </div><div>
-          <a href="/?{{ ptoken }}">switch to portrait view</a>
+          <a href="/p?{{ ptoken }}">switch to portrait view</a>
       </div><div>
           {{ m::wresting() }}<br/>
       </div><div>
