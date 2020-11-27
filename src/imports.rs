@@ -126,7 +126,7 @@ pub use crate::slotmap_slot_idx::*;
 pub use crate::cmdlistener::*;
 pub use crate::mgmtchannel::*;
 pub use crate::api::{Lens,TransparentLens,ApiPieceOpError};
-pub use crate::api::{PresentationLayout};
+pub use crate::api::{PresentationLayout,AbbrevPresentationLayout};
 pub use crate::utils::*;
 pub use crate::spec::*;
 pub use crate::debugreader::DebugReader;

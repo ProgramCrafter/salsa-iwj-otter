@@ -66,10 +66,11 @@ fn loading_p(ptoken: WholeQueryString) -> Template {
   loading(PresentationLayout::Portrait, ptoken)?
 }
 // xxx also do p, make it an account/player property
-#[get("/l")]
+#[get("/<layout>")]
 #[throws(OE)]
-fn loading_l(ptoken: WholeQueryString) -> Template {
-  loading(PresentationLayout::Landscape, ptoken)?
+fn loading_l(layout: AbbrevPresentationLayout, ptoken: WholeQueryString)
+             -> Template {
+  loading(layout.0, ptoken)?
 }
 
 #[throws(OE)]
