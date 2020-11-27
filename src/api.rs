@@ -47,7 +47,7 @@ impl<'r> FromParam<'r> for AbbrevPresentationLayout {
   #[throws(Self::Error)]
   fn from_param(param: &'r RawStr) -> Self {
     AbbrevPresentationLayout(match param.as_str() {
-      "p "=> PL::Portrait,
+      "p" => PL::Portrait,
       "l" => PL::Landscape,
       _ => throw!(())
     })
