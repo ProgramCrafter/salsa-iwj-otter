@@ -134,13 +134,10 @@ impl Lens for TransparentLens {
   fn massage_prep_piecestate(&self, _ns : &mut PreparedPieceState) { }
 }
 
-impl<'r> Responder<'r> for OnlineError {
-  #[throws(Status)]
-  fn respond_to(self, req: &Request) -> Response<'r> {
-    let msg = format!("Online-layer error\n{:?}\n{}\n", self, self);
-    use rocket::http::Status;
+impl From<&OnlineError> for rocket::http::Status {
+  fn from(oe: &OnlineError) -> rocket::http::Status {
     use OnlineError::*;
-    let status = match self {
+    match oe {
       ServerFailure(_) => Status::InternalServerError,
       NoClient | NoPlayer(_) | GameBeingDestroyed
         => Status::NotFound,
@@ -148,7 +145,15 @@ impl<'r> Responder<'r> for OnlineError {
         => Status::Conflict,
       InvalidZCoord | BadOperation | BadJSON(_)
         => Status::BadRequest,
-    };
+    }
+  }
+}
+
+impl<'r> Responder<'r> for OnlineError {
+  #[throws(Status)]
+  fn respond_to(self, req: &Request) -> Response<'r> {
+    let msg = format!("Online-layer error\n{:?}\n{}\n", self, self);
+    let status = (&self).into();
     let mut resp = Responder::respond_to(msg,req).unwrap();
     resp.set_status(status);
     resp

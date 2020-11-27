@@ -55,6 +55,8 @@ impl<'r> FromParam<'r> for CheckedResourceLeaf {
   }
 }
 
+type PlayerQueryString<'r> = WholeQueryString<InstanceAccess<'r, PlayerId>>;
+
 #[derive(Serialize,Debug)]
 struct LoadingRenderContext<'r> {
   ptoken: &'r RawTokenVal,
@@ -62,25 +64,28 @@ struct LoadingRenderContext<'r> {
 }
 #[get("/")]
 #[throws(OE)]
-fn loading_p(ptoken: WholeQueryString) -> Template {
-  loading(None, ptoken)?
+fn loading_p(ia: PlayerQueryString) -> Template {
+  loading(None, ia)?
 }
 // xxx also do p, make it an account/player property
 #[get("/<layout>")]
 #[throws(OE)]
-fn loading_l(layout: AbbrevPresentationLayout, ptoken: WholeQueryString)
+fn loading_l(layout: AbbrevPresentationLayout, ia: PlayerQueryString)
              -> Template {
-  loading(Some(layout.0), ptoken)?
+  loading(Some(layout.0), ia)?
 }
 
 #[throws(OE)]
-fn loading(layout: Option<PresentationLayout>, ptoken: WholeQueryString)
+fn loading(layout: Option<PresentationLayout>, ia: PlayerQueryString)
            -> Template
 {
-  if let Some(ptoken) = ptoken.0 {
+  if let Some(ia) = ia.0 {
+    let g = ia.i.gref.lock()?;
+    let gpl = g.gs.players.byid(ia.i.ident)?;
+    let layout = layout.unwrap_or(gpl.layout);
     // xxx do something sensible if token mangled
     let c = LoadingRenderContext {
-      ptoken: RawTokenVal::from_str(ptoken),
+      ptoken: &ia.raw_token,
       layout,
     };
     Template::render("loading",&c)
@@ -90,14 +95,25 @@ fn loading(layout: Option<PresentationLayout>, ptoken: WholeQueryString)
   }
 }
 
-struct WholeQueryString<'r>(pub Option<&'r str>);
+struct WholeQueryString<T>(pub Option<T>);
 
-impl<'a,'r> FromRequest<'a,'r> for WholeQueryString<'a> {
-  type Error = Impossible;
-  fn from_request(r: &'a rocket::Request<'r>) -> rocket::Outcome<Self, (rocket::http::Status, <Self as rocket::request::FromRequest<'a, 'r>>::Error), ()> {
+impl<'a,'r,T> FromRequest<'a,'r> for WholeQueryString<T>
+  where T: 'a + FromFormValue<'a>,
+        <T as FromFormValue<'a>>::Error : Debug,
+ for <'x> &'x <T as FromFormValue<'a>>::Error : Into<rocket::http::Status>,
+{
+  type Error = <T as FromFormValue<'a>>::Error;
+  fn from_request(r: &'a rocket::Request<'r>)
+      -> rocket::Outcome<Self, (rocket::http::Status, Self::Error), ()>
+  {
     eprintln!("REQUEST uri={:?}", &r.uri());
-    let q = r.uri().query();
-    rocket::Outcome::Success(WholeQueryString(q))
+    match r.uri().query().map(|s| {
+      let s = RawStr::from_str(s);
+      FromFormValue::from_form_value(s)
+    }).transpose() {
+      Ok(v) => rocket::Outcome::Success(WholeQueryString(v)),
+      Err(e) => rocket::Outcome::Failure(((&e).into(), e)),
+    }
   }
 }
 
