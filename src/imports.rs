@@ -93,8 +93,6 @@ pub use num_traits::{Bounded, FromPrimitive, ToPrimitive};
 
 pub use flexi_logger::{LogSpecification};
 
-pub use hashlink::LinkedHashMap;
-
 pub use delegate::delegate;
 
 pub use itertools::Itertools;
