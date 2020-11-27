@@ -189,8 +189,6 @@ impl Piece for Item {
   }
 
   fn itemname(&self) -> &str { &self.itemname }
-
-  
 }
 
 static SHAPELIBS : RwLock<Option<Registry>> = const_rwlock(None);
