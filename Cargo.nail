@@ -7,7 +7,6 @@ server
 flexi_logger
 bundle-sources
 hashlink
-#rocket
 """
 
 [arch]
