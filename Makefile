@@ -41,7 +41,7 @@ BUNDLE_SOURCES ?= bundle-rust-sources
 DEPLOY_ARCH=x86_64-unknown-linux-musl
 DEPLOY_RELEASE=debug
 DEPLOY_TARGET_DIR=$(TARGET_DIR)/$(addsuffix /,$(DEPLOY_ARCH))$(DEPLOY_RELEASE)
-DEPLOY_BRANCH=deployed
+DEPLOYED_BRANCH=deployed
 
 #---------- nailing-cargo ----------
 
