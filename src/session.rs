@@ -43,6 +43,7 @@ struct SessionPieceLoadJson<'r> {
 
 #[derive(Serialize,Debug)]
 struct DataLoad {
+  last_log_ts: String,
   players : HashMap<PlayerId, DataLoadPlayer>,
 }
 #[derive(Serialize,Debug)]
@@ -190,7 +191,8 @@ fn session(form : Json<SessionForm>, layout: PresentationLayout)
       sse_url_prefix,
       ptoken: form.ptoken.clone(),
       load : serde_json::to_string(&DataLoad {
-        players : load_players,
+        players: load_players,
+        last_log_ts: timestamp_abbrev.unwrap_or_default(),
       }).map_err(|e| InternalError::JSONEncode(e))?,
     };
     trace!("SessionRenderContext {:?}", &src);

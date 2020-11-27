@@ -1112,15 +1112,7 @@ function startup() {
     redisplay_ancillaries(piece,p);
   }
 
-  let lastlogent_s = '';
-  if (layout == 'Landscape') {
-    // xxx this is wrong, use value provided by session.rs
-    let lastent = log_elem.lastElementChild;
-    if (lastent !== null) {
-      lastlogent_s = lastent.firstElementChild!.innerHTML;
-    }
-  }
-  last_log_ts = wasm_bindgen.timestamp_abbreviator(lastlogent_s);
+  last_log_ts = wasm_bindgen.timestamp_abbreviator(dataload.last_log_ts);
 
   var es = new EventSource(
     sse_url_prefix + "/_/updates?ctoken="+ctoken+'&gen='+gen
