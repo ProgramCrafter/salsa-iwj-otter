@@ -47,10 +47,6 @@ struct DataLoad {
   last_log_ts: String,
   players : HashMap<PlayerId, DataLoadPlayer>,
 }
-#[derive(Serialize,Debug)]
-struct DataLoadPlayer {
-  dasharray : String,
-}
 
 #[derive(Deserialize)]
 struct SessionForm {
@@ -81,23 +77,8 @@ fn session(form : Json<SessionForm>, layout: Option<PresentationLayout>)
 
     let mut load_players = HashMap::new();
     for (player, _pl) in &ig.gs.players {
-      let kd : slotmap::KeyData = player.into();
-      let n = kd.get_idx_version().0;
-      let n = if n != 0 { n.try_into().unwrap() }
-              else { ig.gs.players.capacity() };
-      assert!(n != 0);
-      let mut dasharray = String::with_capacity(n*3 + 4);
-      for dash in iter::once("3").chain(
-        iter::repeat("1").take(n-1))
-      {
-        write!(&mut dasharray, "{} 1 ", &dash).unwrap();
-      }
-      let spc = dasharray.pop();
-      assert_eq!(spc,Some(' '));
-
-      load_players.insert(player, DataLoadPlayer {
-        dasharray,
-      });
+      let dataload = DataLoadPlayer::from_player(ig, player);
+      load_players.insert(player, dataload);
     }
 
     let gpl = ig.gs.players.byid_mut(player)?;

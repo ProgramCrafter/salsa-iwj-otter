@@ -336,13 +336,13 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
         tz,
         tokens_revealed: default(),
       };
-      let (player, logentry) = ig.player_new(gpl, ipl, logentry)?;
+      let (player, update, logentry) = ig.player_new(gpl, ipl, logentry)?;
 
       let atr = ig.player_access_reset(ag, player, auth.therefore_ok())?;
 
       (U{ pcs: vec![],
           log: vec![ logentry ],
-          raw: None },
+          raw: Some(vec![ update ] )},
        Resp::JoinGame { nick, player, token: atr },
        ig)
     },
@@ -447,7 +447,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
 
       let got = ig.players_remove(&[player].iter().cloned().collect())?;
 
-      let (gpl, ipl) = got.into_iter().next()
+      let (gpl, ipl, update) = got.into_iter().next()
         .ok_or(PlayerNotFound)?;
 
       let html = Html(
@@ -468,7 +468,7 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
 
       (U{ pcs: vec![],
           log: vec![ LogEntry { html }],
-          raw: None },
+          raw: Some(vec![ update ]) },
        Fine, ig)
     },
 
@@ -580,7 +580,10 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
 
       #[throws(InternalError)]
       fn remove_old_players(ag: &AccountsGuard, ig: &mut InstanceGuard,
-                            who: &Html, log: &mut Vec<LogEntry>) {
+                            who: &Html,
+                            log: &mut Vec<LogEntry>)
+                            -> Vec<PreparedUpdateEntry>
+      {
         let owner_account = ig.name.account.to_string();
         let eacl = EffectiveACL {
           owner_account: Some(&owner_account),
@@ -604,7 +607,8 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
           };
         };
 
-        for (gpl, _ipl) in ig.players_remove(&remove)? {
+        let mut updates = Vec::new();
+        for (gpl, _ipl, update) in ig.players_remove(&remove)? {
           let show = if let Some(gpl) = gpl {
             htmlescape::encode_minimal(&gpl.nick)
           } else {
@@ -613,14 +617,17 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
           log.push(LogEntry {
             html: Html(format!("{} removed a player {}", &who.0, &show)),
           });
+          updates.push(update);
         }
+
+        updates
       }
 
-      remove_old_players(&ag, ig, who, &mut log)?;
+      let updates = remove_old_players(&ag, ig, who, &mut log)?;
 
       (U{ pcs: vec![ ],
           log,
-          raw: None },
+          raw: Some(updates) },
        Fine, ig)
     },
   };

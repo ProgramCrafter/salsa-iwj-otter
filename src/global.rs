@@ -10,6 +10,7 @@ use std::sync::PoisonError;
 use slotmap::dense as sm;
 
 type ME = MgmtError;
+type ESU = ErrorSignaledViaUpdate;
 
 // ---------- newtypes and type aliases ----------
 
@@ -460,7 +461,7 @@ impl<'ig> InstanceGuard<'ig> {
   #[throws(MgmtError)]
   pub fn player_new(&mut self, gnew: GPlayerState, inew: IPlayerState,
                     logentry: LogEntry)
-                    -> (PlayerId, /* todo some game update,*/ LogEntry) {
+                    -> (PlayerId, PreparedUpdateEntry, LogEntry) {
     // saving is fallible, but we can't attempt to save unless
     // we have a thing to serialise with the player in it
     self.check_new_nick(&gnew.nick)?;
@@ -470,6 +471,10 @@ impl<'ig> InstanceGuard<'ig> {
     let player = self.c.g.gs.players.insert(gnew);
     let u = PlayerUpdates::new_begin(&self.c.g.gs).new();
     let record = PlayerRecord { u, ipl: inew };
+    let update = PreparedUpdateEntry::AddPlayer {
+      player,
+      data: DataLoadPlayer::from_player(self, player),
+    };
     self.c.g.iplayers.insert(player, record);
 
     (||{
@@ -486,7 +491,7 @@ impl<'ig> InstanceGuard<'ig> {
     (||{
       
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
-    (player, logentry)
+    (player, update, logentry)
   }
 
   #[throws(MgmtError)]
@@ -524,10 +529,10 @@ impl<'ig> InstanceGuard<'ig> {
 
   //  #[throws(InternalError)]
   //  https://github.com/withoutboats/fehler/issues/62
-  pub fn players_remove(&mut self, oldplayers: &HashSet<PlayerId>)
+  pub fn players_remove(&mut self, old_players_set: &HashSet<PlayerId>)
                         ->
     Result<Vec<
-        (Option<GPlayerState>, Option<IPlayerState>)
+        (Option<GPlayerState>, Option<IPlayerState>, PreparedUpdateEntry)
         >, InternalError>
   {
     // We have to filter this player out of everything
@@ -536,7 +541,8 @@ impl<'ig> InstanceGuard<'ig> {
     // We make a copy so if the save fails, we can put everything back
 
     let mut players = self.c.g.gs.players.clone();
-    let old_gpls : Vec<_> = oldplayers.iter().cloned().map(|oldplayer| {
+    let old_players : Vec<_> = old_players_set.iter().cloned().collect();
+    let old_gpls : Vec<_> = old_players.iter().cloned().map(|oldplayer| {
       players.remove(oldplayer)
     }).collect();
 
@@ -555,7 +561,7 @@ impl<'ig> InstanceGuard<'ig> {
 
     let held_by_old = |p: &PieceState| if_chain! {
       if let Some(held) = p.held;
-      if oldplayers.contains(&held);
+      if old_players_set.contains(&held);
       then { true }
       else { false }
     };
@@ -615,9 +621,11 @@ impl<'ig> InstanceGuard<'ig> {
       }
       buf.finish();
 
-      self.remove_clients(oldplayers, ErrorSignaledViaUpdate::PlayerRemoved);
-      self.tokens_deregister_for_id(|id:PlayerId| oldplayers.contains(&id));
-      let old_ipls : Vec<_> = oldplayers.iter().cloned().map(
+      self.remove_clients(old_players_set, ESU::PlayerRemoved);
+      self.tokens_deregister_for_id(
+        |id:PlayerId| old_players_set.contains(&id)
+      );
+      let old_ipls : Vec<_> = old_players.iter().cloned().map(
         |oldplayer| self.iplayers.remove(oldplayer)
           .map(|ipr| ipr.ipl)
       ).collect();
@@ -629,10 +637,16 @@ impl<'ig> InstanceGuard<'ig> {
       old_ipls
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
 
-    let old = itertools::zip(
+    let updates = old_players.iter().cloned().map(
+      |player| PreparedUpdateEntry::RemovePlayer { player }
+    );
+
+    let old = izip!(
       old_gpls,
       old_ipls,
+      updates
     ).collect();
+
     Ok(old)
   }
 
@@ -653,7 +667,7 @@ impl<'ig> InstanceGuard<'ig> {
     // ppoint of no return
     (||{
       self.remove_clients(&[player].iter().cloned().collect(),
-                          ErrorSignaledViaUpdate::TokenRevoked);
+                          ESU::TokenRevoked);
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
   }
 

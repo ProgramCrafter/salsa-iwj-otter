@@ -47,6 +47,8 @@ pub enum PreparedUpdateEntry {
     op : PieceUpdateOp<PreparedPieceState,ZLevel>,
   },
   SetTableSize(Pos),
+  AddPlayer { player: PlayerId, data: DataLoadPlayer },
+  RemovePlayer { player: PlayerId },
   Log (Arc<CommittedLogEntry>),
   Error (Option<ClientId> /* none: all */, ErrorSignaledViaUpdate),
 }
@@ -60,6 +62,11 @@ pub struct PreparedPieceState {
   pub zg : Generation,
   pub pinned : bool,
   pub uos: Vec<UoDescription>,
+}
+
+#[derive(Serialize,Debug)]
+pub struct DataLoadPlayer {
+  dasharray : String,
 }
 
 // ---------- piece updates ----------
@@ -104,6 +111,8 @@ enum TransmitUpdateEntry<'u> {
     ns: &'u PreparedPieceState,
   },
   SetTableSize(Pos),
+  AddPlayer { player: PlayerId, data: &'u DataLoadPlayer },
+  RemovePlayer { player: PlayerId },
   #[serde(serialize_with="serialize_logentry")]
   Log(TransmitUpdateLogEntry<'u>),
   Error(&'u ErrorSignaledViaUpdate),
@@ -120,7 +129,6 @@ struct FormattedLogEntry<'u> {
 // ========== implementation ==========
 
 // ---------- prepared updates, queued in memory ----------
-
 
 pub struct PlayerUpdatesBuildContext {
   pub(self) u1: Arc<PreparedUpdate>,
@@ -187,10 +195,35 @@ impl PreparedUpdateEntry {
       Log(logent) => {
         logent.logent.html.0.as_bytes().len() * 28
       },
+      AddPlayer { player:_, data: DataLoadPlayer { dasharray } } => {
+        dasharray.as_bytes().len() + 100
+      },
       SetTableSize(_) |
+      RemovePlayer { player:_ } |
       Error(_,_) => {
         100
       },
+    }
+  }
+}
+
+impl DataLoadPlayer {
+  pub fn from_player(ig: &Instance, player: PlayerId) -> Self {
+    let kd : slotmap::KeyData = player.into();
+    let n = kd.get_idx_version().0;
+    let n = if n != 0 { n.try_into().unwrap() }
+    else { ig.gs.players.capacity() };
+    assert!(n != 0);
+    let mut dasharray = String::with_capacity(n*3 + 4);
+    for dash in iter::once("3").chain(
+      iter::repeat("1").take(n-1))
+    {
+      write!(&mut dasharray, "{} 1 ", &dash).unwrap();
+    }
+    let spc = dasharray.pop();
+    assert_eq!(spc,Some(' '));
+    DataLoadPlayer {
+      dasharray,
     }
   }
 }
@@ -498,6 +531,12 @@ impl PreparedUpdate {
         },
         &PUE::SetTableSize(size) => {
           TUE::SetTableSize(size)
+        },
+        &PUE::AddPlayer { player, ref data } => {
+          TUE::AddPlayer { player, data }
+        },
+        &PUE::RemovePlayer { player } => {
+          TUE::RemovePlayer { player }
         },
         PUE::Error(c, e) => {
           if *c == None || *c == Some(dest) {
