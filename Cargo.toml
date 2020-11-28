@@ -51,7 +51,6 @@ rand = "0"
 regex = "1"
 rmp = "0.8"
 rmp-serde = "0.14"
-rocket_cors = "0.5"
 serde = { version = "1", features = ["derive","rc"] }
 serde_json = "1"
 serde_with = "1"
@@ -63,10 +62,10 @@ typetag = "0.1.6"
 uds = "0"
 vecdeque-stableix = "1"
 
-# ambassador = "0.2"
-# generic-array = "0.12"
-# hmac = "0.7"
-# sha2 = "0.8"
-
 rocket = { version = "^0.4.6", features=["sse"] }
-rocket_contrib = { version = "0.4", default-features=false, features=["tera_templates","helmet","json","serve"] }
+rocket_cors = "0.5"
+
+[dependencies.rocket_contrib]
+version = "0.4"
+default-features = false
+features = ["tera_templates","helmet","json","serve"]

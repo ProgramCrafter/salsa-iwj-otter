@@ -13,10 +13,12 @@ path = "wasm.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+
 otter-zcoord = { path = "../zcoord" }
-wasm-bindgen = "0.2"
-js-sys = "0.3"
-fehler = "1"
-thiserror = "1"
-wee_alloc = "0.4"
+
 console_error_panic_hook = "0.1"
+fehler = "1"
+js-sys = "0.3"
+thiserror = "1"
+wasm-bindgen = "0.2"
+wee_alloc = "0.4"
