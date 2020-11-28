@@ -22,11 +22,13 @@ JOINING A GAME
 
 In the simplest case:
   otter join-game unix:<user>::<game-name>
+e.g.
+  otter join-game unix:ijackson::test
 
 See otter --help for further options, including setting your nick.
 
 Currently when a new player joins a game (with the `otter` command),
-all the other players must restart.
+all the other players must reload the page.
 
 
 CREATING A GAME
@@ -52,6 +54,9 @@ There is also "penultima" which is a work-in-progress set of pieces
 suitable for fairy chess etc.
 
 See otter --help for some more options.
+
+Currently, resetting a game (or otherwise adding or removing pieces)
+will mean all the players will get errors until they reload the page.
 
 
 MAKING YOUR OWN GAME
