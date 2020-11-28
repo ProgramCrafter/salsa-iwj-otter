@@ -809,6 +809,13 @@ function drag_cancel() {
   drag_pieces = [];
 }
 
+// ----- general -----
+
+messages.AddPlayer = <MessageHandler>function
+(j: { player: string, data: PlayerInfo }) {
+  players[j.player] = j.data;
+}
+
 // ----- logs -----
 
 messages.Log = <MessageHandler>function
