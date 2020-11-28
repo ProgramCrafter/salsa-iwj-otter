@@ -4,6 +4,23 @@
 
 use crate::imports::*;
 
+//---------- basic types ----------
+
+visible_slotmap_key!{ PlayerId('#') }
+
+slotmap::new_key_type!{
+  pub struct PieceId;
+}
+
+#[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
+#[derive(Serialize,Deserialize)]
+#[serde(transparent)]
+pub struct Generation (pub u64);
+
+visible_slotmap_key!{ VisiblePieceId('.') }
+
+//---------- command ----------
+
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtCommand {
   Noop,

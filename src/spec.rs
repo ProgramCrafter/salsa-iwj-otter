@@ -5,6 +5,8 @@
 // game specs
 
 use serde::{Serialize,Deserialize};
+use serde_with::DeserializeFromStr;
+use serde_with::SerializeDisplay;
 use fehler::throws;
 use index_vec::{define_index_type,IndexVec};
 use crate::gamestate::PieceSpec;
@@ -12,7 +14,6 @@ use std::fmt::Debug;
 use std::collections::hash_set::HashSet;
 use thiserror::Error;
 use crate::error::display_as_debug;
-use crate::accounts::AccountName;
 use std::hash::Hash;
 use num_derive::{ToPrimitive, FromPrimitive};
 
@@ -60,6 +61,27 @@ pub enum SpecError {
   InconsistentPieceCount,
 }
 display_as_debug!{SpecError}
+
+//---------- Accounts ----------
+
+slotmap::new_key_type!{
+  pub struct AccountId;
+}
+
+#[derive(Debug,Clone,Deserialize,Serialize)]
+#[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
+pub enum AccountScope {
+  Server,
+  Unix { user : String },
+}
+
+#[derive(Debug,Clone)]
+#[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
+#[derive(DeserializeFromStr,SerializeDisplay)]
+pub struct AccountName {
+  pub scope: AccountScope,
+  pub subaccount: String,
+}
 
 //---------- Table TOML file ----------
 
@@ -273,12 +295,6 @@ pub mod implementation {
       }
       Acl { ents }
     }
-  }
-
-  impl loaded_acl::Perm for TablePermission {
-    type Auth = InstanceName;
-    const TEST_EXISTENCE : Self = TablePermission::TestExistence;
-    const NOT_FOUND : MgmtError = MgmtError::GameNotFound;
   }
 
   impl TablePlayerSpec {

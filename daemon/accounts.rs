@@ -8,28 +8,9 @@ use parking_lot::{Mutex, const_mutex, MutexGuard};
 
 //---------- simple types ----------
 
-slotmap::new_key_type!{
-  pub struct AccountId;
-}
-
-#[derive(Debug,Clone,Deserialize,Serialize)]
-#[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
-pub enum AccountScope {
-  Server,
-  Unix { user : String },
-}
-
 type AS = AccountScope;
 type ME = MgmtError;
 type IE = InternalError;
-
-#[derive(Debug,Clone)]
-#[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
-#[derive(DeserializeFromStr,SerializeDisplay)]
-pub struct AccountName {
-  pub scope: AccountScope,
-  pub subaccount: String,
-}
 
 /// Record of acess for a player.  Newtype prevents mutable access
 /// without invalidating old tokens and permissions check.
@@ -574,5 +555,11 @@ pub mod loaded_acl {
         }
       ).collect() }
     }
+  }
+
+  impl Perm for spec::TablePermission {
+    type Auth = InstanceName;
+    const TEST_EXISTENCE : Self = TablePermission::TestExistence;
+    const NOT_FOUND : MgmtError = MgmtError::GameNotFound;
   }
 }
