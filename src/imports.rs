@@ -121,6 +121,4 @@ pub enum Impossible { }
 display_as_debug!(Impossible);
 
 pub type AE = anyhow::Error;
-
 pub type OE = OnlineError;
-
