@@ -120,7 +120,6 @@ pub fn default<T:Default>() -> T { Default::default() }
 pub enum Impossible { }
 display_as_debug!(Impossible);
 
-pub type E = anyhow::Error;
 pub type AE = anyhow::Error;
 
 pub type OE = OnlineError;

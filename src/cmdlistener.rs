@@ -844,7 +844,7 @@ impl CommandListener {
         #[derive(Error,Debug)]
         struct EuidLookupError(String);
         display_as_debug!{EuidLookupError}
-        impl From<&E> for EuidLookupError where E : Display {
+        impl<E> From<&E> for EuidLookupError where E : Display {
           fn from(e: &E) -> Self { EuidLookupError(format!("{}",e)) }
         }
 
