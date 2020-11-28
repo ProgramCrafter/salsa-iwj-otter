@@ -9,7 +9,7 @@ use rocket_contrib::serve::StaticFiles;
 use rocket::response::Content;
 use rocket::fairing;
 
-pub mod imports;
+use otter::imports::*;
 
 #[derive(Serialize,Debug)]
 struct FrontPageRenderContext { }

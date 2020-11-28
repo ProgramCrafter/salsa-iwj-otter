@@ -6,6 +6,19 @@ use crate::imports::*;
 
 // ---------- newtypes and type aliases ----------
 
+visible_slotmap_key!{ PlayerId('#') }
+
+slotmap::new_key_type!{
+  pub struct PieceId;
+}
+
+#[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
+#[derive(Serialize,Deserialize)]
+#[serde(transparent)]
+pub struct Generation (pub u64);
+
+visible_slotmap_key!{ VisiblePieceId('.') }
+
 #[derive(Clone,Serialize,Deserialize,Hash,Eq,Ord,PartialEq,PartialOrd)]
 #[serde(transparent)]
 pub struct Html (pub String);

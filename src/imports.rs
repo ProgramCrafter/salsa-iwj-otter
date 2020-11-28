@@ -87,18 +87,27 @@ pub use vecdeque_stableix::Deque as StableIndexVecDeque;
 
 pub use zcoord::{self, ZCoord};
 
+pub use crate::global::*;
+pub use crate::gamestate::*;
 pub use crate::pieces::*;
 pub use crate::keydata::*;
+pub use crate::updates::*;
+pub use crate::sse;
 pub use crate::error::*;
 pub use crate::commands::*;
 pub use crate::slotmap_slot_idx::*;
+pub use crate::cmdlistener::*;
 pub use crate::mgmtchannel::*;
+pub use crate::api::{Lens,TransparentLens,ApiPieceOpError};
+pub use crate::api::{PresentationLayout,AbbrevPresentationLayout};
 pub use crate::utils::*;
 pub use crate::spec::*;
 pub use crate::debugreader::DebugReader;
 pub use crate::shapelib;
 pub use crate::tz::*;
 pub use crate::config::*;
+pub use crate::accounts::*;
+pub use crate::accounts::loaded_acl::{self,LoadedAcl,EffectiveACL,PermSet};
 pub use crate::toml_de;
 
 pub type SecondarySlotMap<K,V> = slotmap::secondary::SecondaryMap<K,V>;
@@ -112,3 +121,4 @@ pub enum Impossible { }
 display_as_debug!(Impossible);
 
 pub type AE = anyhow::Error;
+pub type OE = OnlineError;
