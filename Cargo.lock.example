@@ -1156,6 +1156,61 @@ dependencies = [
 ]
 
 [[package]]
+name = "otter-daemon"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "argparse",
+ "arrayvec",
+ "boolinator",
+ "chrono",
+ "chrono-tz",
+ "delegate",
+ "derive_more",
+ "either",
+ "failure",
+ "fehler",
+ "flexi_logger",
+ "fs2",
+ "glob 0.3.0",
+ "htmlescape",
+ "if_chain",
+ "index_vec",
+ "inventory",
+ "itertools",
+ "lazy-init",
+ "lazy_static",
+ "libc",
+ "log 0.4.11",
+ "nix",
+ "num-derive",
+ "num-traits",
+ "ordered-float",
+ "otter",
+ "otter-zcoord",
+ "parking_lot",
+ "percent-encoding 2.1.0",
+ "pwd",
+ "rand",
+ "regex",
+ "rmp",
+ "rmp-serde",
+ "rocket",
+ "rocket_contrib",
+ "rocket_cors",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "slotmap",
+ "strum",
+ "thiserror",
+ "toml 0.5.7",
+ "typetag",
+ "uds",
+ "vecdeque-stableix",
+]
+
+[[package]]
 name = "otter-wasm"
 version = "0.0.1"
 dependencies = [

@@ -138,7 +138,7 @@ CARGOES=$(foreach t, wasm-,$(addprefix $t,check $(DR)))
 
 $(addprefix stamp/cargo.,$(DR)):: \
 stamp/cargo.%: $(call rsrcs,. ! -path './wasm/*')
-	$(CARGO) build $(call cr,$*)
+	$(CARGO) build $(call cr,$*) -p otter -p otter-daemon
 	$(stamp)
 
 stamp/cargo.check: $(call rsrcs,.)
@@ -155,7 +155,7 @@ stamp/cargo.wasm-%: $(call rsrcs, zcoord wasm Cargo.*)
 	$(stamp)
 
 stamp/cargo.deploy-build: $(call rsrcs,.)
-	$(CARGO) -T$(DEPLOY_ARCH) build $(call cr,$(DEPLOY_RELEASE))
+	$(CARGO) -T$(DEPLOY_ARCH) build $(call cr,$(DEPLOY_RELEASE)) -p otter -p otter-daemon
 	$(stamp)
 
 #---------- wasm ----------

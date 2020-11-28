@@ -3,19 +3,20 @@
 # There is NO WARRANTY.
 
 [package]
-name = "otter"
+name = "otter-daemon"
 authors = ["Ian Jackson <ijackson@chiark.greenend.org.uk>"]
 license = "AGPL-3.0-or-later"
 
 version = "0.0.1"
 edition = "2018"
 
-[workspace]
-members = ["wasm", "daemon"]
+[[bin]]
+name = "daemon-otter"
+path = "main.rs"
 
 [dependencies]
-
-otter-zcoord = { path = "zcoord" }
+otter = { path = ".." }
+otter-zcoord = { path = "../zcoord" }
 
 anyhow = "1"
 argparse = "0.2"
