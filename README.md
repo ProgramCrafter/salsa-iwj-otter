@@ -17,6 +17,18 @@ by the players without help from the Otter server.
 Right now Otter is in an alpha state.
 
 
+JOINING A GAME
+==============
+
+In the simplest case:
+  otter join-game unix:<user>::<game-name>
+
+See otter --help for further options, including setting your nick.
+
+Currently when a new player joins a game (with the `otter` command),
+all the other players must restart.
+
+
 CREATING A GAME
 ===============
 
@@ -79,11 +91,10 @@ branch
 
 You cannot build it just with `cargo`, you must use `make`.
 
-You will also need various other utilities and dependencies - in some
-cases, un-released dependencies or locally patched versions.  See
-`Cargo.nail` and `Makefile`.  On my own laptop deployment is done with
-`make deploy` which copies all the relevant sources into the
-`bundled-sources` directory, which is accessible via the Otter web UI.
+You will also need various other utilities and dependencies.  See
+below.  On my own laptop deployment is done with `make deploy` which
+copies all the relevant sources into the `bundled-sources` directory,
+which is accessible via the Otter web UI.  See the code in `Makefile`.
 
 Dependencies
 ------------
@@ -108,16 +119,6 @@ Dependencies
    source code of Rust projects.
 
 Weirdnesses:
-
- * `Cargo.nail` contains a list of sibling directories of my Otter
-   source tree, which on my machine is called `server`.  For several
-   of these I sent patches upstream which have generally been
-   accepted, but I need to tidy this up to switch to the upstream
-   version.
-
- * The Rocket dependency in `Cargo.toml` is completely mad due
-   to Cargo being awful.  I am hoping I can switch to an upstream
-   Rocket now.
 
  * For running on chiark I build with the Rust target
    `x86_64-unknown-linux-musl` which on my system is configured to
