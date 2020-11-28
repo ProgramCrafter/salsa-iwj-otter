@@ -44,7 +44,7 @@ pub use boolinator::Boolinator as _;
 pub use delegate::delegate;
 pub use either::{Either, Left, Right};
 pub use fehler::{throws, throw};
-pub use flexi_logger::{LogSpecification};
+pub use flexi_logger::{self, LogSpecification};
 pub use fs2::FileExt;
 pub use if_chain::if_chain;
 pub use index_vec::{define_index_type, index_vec, IndexVec, IndexSlice};
