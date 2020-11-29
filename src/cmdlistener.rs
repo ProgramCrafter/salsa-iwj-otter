@@ -304,8 +304,8 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
       ig.gs.table_size = size;
       (U{ pcs: vec![],
           log: vec![ LogEntry {
-            html: Html(format!("The table was resized to {}x{}",
-                               size.0[0], size.0[1])),
+            html: Html(format!("{} resized the table to {}x{}",
+                               &who.0, size.0[0], size.0[1])),
           }],
           raw: Some(vec![ PreparedUpdateEntry::SetTableSize(size) ]) },
        Fine, ig)
