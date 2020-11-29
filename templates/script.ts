@@ -1166,6 +1166,9 @@ function startup() {
   es.addEventListener('player-gone', function(event) {
     console.log('PLAYER-GONE', event);
     status_node.innerHTML = (event as any).data;
+    add_log_message('<strong>You are no longer in the game</strong>');
+    space.removeEventListener('mousedown', some_mousedown);
+    document.removeEventListener('keydown', some_keydown);
     es.close();
   });
   es.addEventListener('updates-expired', function(event) {
