@@ -3,6 +3,7 @@
 # There is NO WARRANTY.
 
 table_size = [300, 200]
+table_colour = "#bbd"
 
 [[pieces]]
 pos = [150,100]
@@ -63,7 +64,7 @@ count = 8
 [[pieces]]
 pos = [20, 95]
 type = "Square"
-faces = ["#ccc"]
+faces = ["#333"]
 posd = [10, 0]
 size = [9,1]
 count = 8
@@ -71,7 +72,7 @@ count = 8
 [[pieces]]
 pos = [20, 100]
 type = "Square"
-faces = ["#ccc"]
+faces = ["#333"]
 posd = [10, 0]
 size = [9,1]
 count = 8
@@ -79,7 +80,7 @@ count = 8
 [[pieces]]
 pos = [17, 110]
 type = "Square"
-faces = ["#ccc"]
+faces = ["#333"]
 posd = [5, 0]
 size = [1,9]
 count = 16
