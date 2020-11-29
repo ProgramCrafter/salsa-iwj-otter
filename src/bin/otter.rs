@@ -789,6 +789,7 @@ mod reset_game {
     let GameSpec {
       table_size,
       pieces,
+      table_colour,
     } = read_spec(&ma, &args.game_file)?;
 
     let mut insns = vec![];
@@ -815,6 +816,9 @@ mod reset_game {
 
     if let Some(table_size) = table_size {
       insns.push(MGI::SetTableSize(table_size));
+    }
+    if let Some(table_colour) = table_colour {
+      insns.push(MGI::SetTableColour(table_colour));
     }
 
     for pspec in pieces.into_iter() {

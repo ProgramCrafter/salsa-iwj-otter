@@ -311,6 +311,19 @@ fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
        Fine, ig)
     }
 
+    Insn::SetTableColour(colour) => {
+      let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
+      let colour : Colour = (&colour).try_into()?;
+      ig.gs.table_colour = colour.clone();
+      (U{ pcs: vec![],
+          log: vec![ LogEntry {
+            html: Html(format!("{} recoloured the tabletop to {}",
+                               &who.0, &colour.0)),
+          }],
+          raw: Some(vec![ PreparedUpdateEntry::SetTableColour(colour) ]) },
+       Fine, ig)
+    }
+
     Insn::JoinGame {
       details: MgmtPlayerDetails { nick }
     } => {

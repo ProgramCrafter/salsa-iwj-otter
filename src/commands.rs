@@ -71,6 +71,7 @@ pub enum MgmtGameInstruction {
   Noop,
   Info,
   SetTableSize(Pos),
+  SetTableColour(ColourSpec),
 
   ListPieces,
   AddPieces(PiecesSpec),

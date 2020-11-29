@@ -47,6 +47,7 @@ pub enum PreparedUpdateEntry {
     op : PieceUpdateOp<PreparedPieceState,ZLevel>,
   },
   SetTableSize(Pos),
+  SetTableColour(Colour),
   AddPlayer { player: PlayerId, data: DataLoadPlayer },
   RemovePlayer { player: PlayerId },
   Log (Arc<CommittedLogEntry>),
@@ -111,6 +112,7 @@ enum TransmitUpdateEntry<'u> {
     ns: &'u PreparedPieceState,
   },
   SetTableSize(Pos),
+  SetTableColour(&'u Colour),
   AddPlayer { player: PlayerId, data: &'u DataLoadPlayer },
   RemovePlayer { player: PlayerId },
   #[serde(serialize_with="serialize_logentry")]
@@ -197,6 +199,9 @@ impl PreparedUpdateEntry {
       },
       AddPlayer { player:_, data: DataLoadPlayer { dasharray } } => {
         dasharray.as_bytes().len() + 100
+      },
+      SetTableColour(colour) => {
+        colour.0.as_bytes().len() + 50
       },
       SetTableSize(_) |
       RemovePlayer { player:_ } |
@@ -531,6 +536,9 @@ impl PreparedUpdate {
         },
         &PUE::SetTableSize(size) => {
           TUE::SetTableSize(size)
+        },
+        PUE::SetTableColour(colour) => {
+          TUE::SetTableColour(colour)
         },
         &PUE::AddPlayer { player, ref data } => {
           TUE::AddPlayer { player, data }

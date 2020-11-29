@@ -44,6 +44,7 @@ define_index_type! {
 #[derive(Serialize,Deserialize)]
 #[derive(Debug,Default)]
 #[repr(transparent)]
+#[serde(transparent)]
 pub struct ColourSpec(String);
 
 #[derive(Error,Clone,Serialize,Deserialize,Debug)]
@@ -128,6 +129,7 @@ pub struct UrlOnStdout;
 pub struct GameSpec {
   pub table_size : Option<Pos>,
   pub pieces : Vec<PiecesSpec>,
+  pub table_colour: Option<ColourSpec>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
