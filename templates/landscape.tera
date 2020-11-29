@@ -32,18 +32,17 @@
 <div class="upper" style="display: flex; flex-flow: row none;">
   <div>{{ m::space() }}</div>
   <div id="rhs-panel">
-      <div>
-          {{ m::nick() }}
-      </div><div>
-	  {{ m::status() }}<br/>
-      </div><div>
-          <a href="/p?{{ ptoken }}">switch to portrait view</a>
-      </div><div>
-          {{ m::wresting() }}<br/>
-      </div><div>
+    <div>
+      {{ m::nick() }} |
+      {{ m::status() }}<br/>
+    </div><div>
+      <a href="/p?{{ ptoken }}">switch to portrait view</a>
+    </div><div>
+      {{ m::wresting() }}<br/>
+    </div><div>
           
-      </div>
-	{{ m::uos() }}
+    </div>
+    {{ m::uos() }}
 
 <div>
   <div id="log" style="overflow-y: scroll; height: 600px;">
