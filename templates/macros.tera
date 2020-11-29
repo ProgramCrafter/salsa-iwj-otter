@@ -32,6 +32,18 @@ Hi {{nick | escape}}
 <span id="status">nothing</span>
 {% endmacro status %}
 
+{% macro zoom() %}
+<span style="white-space: nowrap;"
+><button id="zoom-btn" disabled
+	 onclick="zoom_activate()"
+>Zoom</button
+><input id="zoom-val" 
+	type="number" max="1000" min="10" step="5" size="4" value="100"
+	oninput="zoom_enable()"
+>%<
+ /span>
+{% endmacro status %}
+
 {% macro errors() %}
 <pre id="error"></pre>
 {% endmacro errors %}

@@ -36,7 +36,8 @@
 |
 {{ m::status() }}
 |
-<a href="/l?{{ ptoken }}">switch to landscape view</a>
+<a href="/l?{{ ptoken }}">switch to landscape view</a> |
+{{ m::zoom() }}
 {{ m::errors() }}
 
 {{ m::space() }}

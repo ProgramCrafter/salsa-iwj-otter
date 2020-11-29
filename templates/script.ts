@@ -881,6 +881,18 @@ function add_timestamped_log_message(ts_html: string, msg_html: string) {
   }
 }
 
+// ----- zoom -----
+
+function zoom_enable() {
+  (document.getElementById("zoom-btn") as any).disabled = false;
+}
+
+function zoom_activate() {
+  let zoom_val = document.getElementById("zoom-val");
+  console.log(zoom_val);
+  (document.getElementById("zoom-btn") as any).disabled = true;
+}
+
 // ----- test counter, startup -----
 
 messages.Piece = <MessageHandler>function

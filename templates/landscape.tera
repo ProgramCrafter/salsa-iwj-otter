@@ -36,7 +36,8 @@
       {{ m::nick() }} |
       {{ m::status() }}<br/>
     </div><div>
-      <a href="/p?{{ ptoken }}">switch to portrait view</a>
+      <a href="/p?{{ ptoken }}">switch to portrait view</a> |
+      {{ m::zoom() }}
     </div><div>
       {{ m::wresting() }}<br/>
     </div><div>
