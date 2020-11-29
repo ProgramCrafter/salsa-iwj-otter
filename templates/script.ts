@@ -96,7 +96,7 @@ var piece_error_handlers : DispatchTable<PieceErrorHandler> = Object();
 var our_dnd_type = "text/puvnex-game-server-dummy";
 var api_queue : [string, Object][] = [];
 var api_posting = false;
-var us : string;
+var us : PlayerId;
 var gen = 0;
 var cseq : ClientSeq = 0;
 var ctoken : string;
@@ -814,6 +814,11 @@ function drag_cancel() {
 messages.AddPlayer = <MessageHandler>function
 (j: { player: string, data: PlayerInfo }) {
   players[j.player] = j.data;
+}
+
+messages.RemovePlayer = <MessageHandler>function
+(j: { player: string }) {
+  delete players[j.player];
 }
 
 // ----- logs -----
