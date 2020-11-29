@@ -786,7 +786,10 @@ mod reset_game {
       game: ma.instance_name(&args.table_name),
       how: MgmtGameUpdateMode::Bulk,
     };
-    let game: GameSpec = read_spec(&ma, &args.game_file)?;
+    let GameSpec {
+      table_size,
+      pieces,
+    } = read_spec(&ma, &args.game_file)?;
 
     let mut insns = vec![];
 
@@ -810,12 +813,11 @@ mod reset_game {
       insns.push(MgmtGameInstruction::DeletePiece(p.piece));
     }
 
-    if let Some(size) = game.table_size {
-      insns.push(MGI::SetTableSize(size));
+    if let Some(table_size) = table_size {
+      insns.push(MGI::SetTableSize(table_size));
     }
 
-    let mut game = game;
-    for pspec in game.pieces.drain(..) {
+    for pspec in pieces.into_iter() {
       insns.push(MGI::AddPieces(pspec));
     }
 
