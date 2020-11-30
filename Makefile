@@ -74,8 +74,7 @@ $(shell echo >&2 'Makefile: lp: Using program $4 from $(BUILD_SUBDIR)/$2')
 $1 := $(abspath $(BUILD_SUBDIR)/$2/target/$3/$4)
 $(abspath $(BUILD_SUBDIR)/$2/target/$3/$4):; cd ../$2 && $$(CARGO) build $(call cr,$3)
 )
-bundled-sources:: bundled-sources/$2
-.PHONY: bundled-sources/$2
+BUNDLED_SOURCES_DIRS += $2
 BUNDLED_SOURCES_LINKS += $2/
 endef
 
@@ -175,13 +174,15 @@ stamp/wasm-pack: stamp/cargo.wasm-release
 
 #---------- bundle-sources ----------
 
-bundled-sources:: bundled-sources/otter
-.PHONY: bundled-sources/otter
+BUNDLED_SOURCES_DIRS += otter
+
+bundled-sources:: $(addprefix bundled-sources/, $(BUNDLED_SOURCES_DIRS))
 
 TARGET_BUNDLED=$(TARGET_DIR)/bundled-sources
 
+$(addprefix bundled-sources/, $(BUNDLED_SOURCES_DIRS)): \
 bundled-sources/%: $(BUNDLE_SOURCES)
-	set -e; d=$(abspath $(TARGET_BUNDLED); \
+	set -e; d=$(abspath $(TARGET_BUNDLED)); \
 	$(NAILING_CARGO_JUST_RUN) mkdir -p $$d; \
 	$(if $(filter-out otter,$*), cd ../$*;) \
 	$(BUNDLE_SOURCES_CMD) --output $$d/$*
