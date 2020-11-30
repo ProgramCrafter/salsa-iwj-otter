@@ -6,7 +6,9 @@
       data-us="{{player}}"
       data-gen="{{gen}}"
       data-sse-url-prefix="{{sse_url_prefix}}"
-      data-load="{{ load | escape }}">
+      data-load="{{ load | escape }}"
+      style="transform-origin: top left;"
+      >
 <style>
   html {
     background-color: #eef;

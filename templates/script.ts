@@ -112,6 +112,8 @@ var log_elem : HTMLElement;
 var logscroll_elem : HTMLElement;
 var status_node : HTMLElement;
 var uos_node : HTMLElement;
+var zoom_val : HTMLInputElement;
+var zoom_btn : HTMLInputElement;
 var wresting: boolean;
 
 const uo_kind_prec : { [kind: string]: number } = {
@@ -883,14 +885,28 @@ function add_timestamped_log_message(ts_html: string, msg_html: string) {
 
 // ----- zoom -----
 
+function zoom_pct (): number | undefined {
+  let str = zoom_val.value;
+  let val = parseFloat(str);
+  if (isNaN(val)) {
+    return undefined;
+  } else {
+    return val;
+  }
+}
+
 function zoom_enable() {
-  (document.getElementById("zoom-btn") as any).disabled = false;
+  zoom_btn.disabled = (zoom_pct() === undefined);
 }
 
 function zoom_activate() {
-  let zoom_val = document.getElementById("zoom-val");
-  console.log(zoom_val);
-  (document.getElementById("zoom-btn") as any).disabled = true;
+  let pct = zoom_pct();
+  if (pct !== undefined) {
+    let fact = pct * 0.01;
+    (document.getElementsByTagName('body')[0] as HTMLElement)
+      .style.transform = 'scale('+fact+','+fact+')';
+  }
+  zoom_btn.disabled = true;
 }
 
 // ----- test counter, startup -----
@@ -1117,6 +1133,8 @@ function startup() {
   console.log(wasm_bindgen.setup("OK"));
 
   var body = document.getElementById("main-body")!;
+  zoom_btn = document.getElementById("zoom-btn") as any;
+  zoom_val = document.getElementById("zoom-val") as any;
   ctoken = body.dataset.ctoken!;
   us = body.dataset.us!;
   gen = +body.dataset.gen!;
