@@ -1156,19 +1156,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "otter-daemon"
-version = "0.0.1"
-dependencies = [
- "fehler",
- "otter",
- "otter-zcoord",
- "rocket",
- "rocket_contrib",
- "rocket_cors",
- "serde",
-]
-
-[[package]]
 name = "otter-wasm"
 version = "0.0.1"
 dependencies = [
