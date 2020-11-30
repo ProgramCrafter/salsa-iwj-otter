@@ -42,8 +42,7 @@ Hi {{nick | escape}}
 ><input id="zoom-val" 
 	type="number" max="1000" min="10" step="5" size="4" value="100"
 	oninput="zoom_enable()"
->%<
- /span>
+>%</span>
 {% endmacro status %}
 
 {% macro errors() %}
