@@ -103,6 +103,8 @@ var ctoken : string;
 var uo_map : { [k: string]: UoRecord | null } = Object.create(null);
 var keyops_local : { [opname: string]: (uo: UoRecord) => void } = Object();
 var last_log_ts: wasm_bindgen.TimestampAbbreviator;
+var last_zoom_factor : number = 1.0;
+var firefox_bug_zoom_factor_compensation : number = 1.0;
 
 var svg_ns : string;
 var space : SVGGraphicsElement;
@@ -744,8 +746,8 @@ function redisplay_ancillaries(piece: PieceId, p: PieceInfo) {
 
 function drag_mousemove(e: MouseEvent) {
   var ctm = space.getScreenCTM()!;
-  var ddx = (e.clientX - dcx!)/ctm.a;
-  var ddy = (e.clientY - dcy!)/ctm.d;
+  var ddx = (e.clientX - dcx!)/(ctm.a * firefox_bug_zoom_factor_compensation);
+  var ddy = (e.clientY - dcy!)/(ctm.d * firefox_bug_zoom_factor_compensation);
   var ddr2 = ddx*ddx + ddy*ddy;
   if (!(dragging & DRAGGING.YES)) {
     if (ddr2 > DRAGTHRESH) {
@@ -903,8 +905,19 @@ function zoom_activate() {
   let pct = zoom_pct();
   if (pct !== undefined) {
     let fact = pct * 0.01;
+    let last_ctm_a = space.getScreenCTM()!.a;
     (document.getElementsByTagName('body')[0] as HTMLElement)
       .style.transform = 'scale('+fact+','+fact+')';
+    if (fact != last_zoom_factor) {
+      if (last_ctm_a == space.getScreenCTM()!.a) {
+	console.log('FIREFOX GETSCREENCTM BUG');
+	firefox_bug_zoom_factor_compensation = fact;
+      } else {
+	console.log('No firefox getscreenctm bug');
+	firefox_bug_zoom_factor_compensation = 1.0;
+      }
+      last_zoom_factor = fact;
+    }
   }
   zoom_btn.disabled = true;
 }
