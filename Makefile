@@ -57,6 +57,13 @@ BUNDLE_SOURCES_CMD ?= $(NAILING_CARGO) --- $(BUNDLE_SOURCES)
 USVG_CMD ?= $(NAILING_CARGO_JUST_RUN) $(USVG)
 WASM_PACK_CMD ?= $(NAILING_CARGO) --linkfarm=git --- $(WASM_PACK)
 
+clean-nailing:
+	$(NAILING_CARGO_JUST_RUN) \
+ sh -c 'cd "$1"; find -mindepth 1 -maxdepth 1 -print0 | xargs -0r rm -rf --' \
+		$(abspath $(BUILD_SUBDIR)/$(notdir $(PWD)))
+
+else
+clean-nailing:
 endif # Cargo.nail
 
 BUILD_SUBDIR ?= ../Build
@@ -266,7 +273,7 @@ deploy: stamp/cargo.deploy-build bundled-sources assets libraries
 
 #---------- clean ----------
 
-clean:
+clean: clean-nailing
 	rm -f templates/script.js library/*/*.usvg stamp/*
 	rm -rf target
 	$(NAILING_CARGO_JUST_RUN) rm -rf target
