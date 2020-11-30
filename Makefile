@@ -193,7 +193,7 @@ $(addprefix $(TARGET_BUNDLED)/, $(BUNDLED_SOURCES_LIT)): $(TARGET_BUNDLED)/%: %
 
 $(TARGET_BUNDLED)/index.html: bundled-sources-make-index Makefile
 	$(NAILING_CARGO_JUST_RUN) sh -ec ' 			\
-		cd $(abspath $(src));				\
+		cd $(abspath $(src)); mkdir -p $(dir $@);	\
 		./$< >$@.tmp $(BUNDLED_SOURCES_LINKS);		\
 		mv -f $@.tmp $@;				\
 	'
