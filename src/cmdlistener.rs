@@ -984,6 +984,10 @@ impl CommandStream<'_> {
                 p: PermSet<TablePermission>)
                 -> Authorisation<InstanceName>
     {
+      if let Some(superuser) = cs.superuser {
+        return superuser.into();
+      }
+
       let current_account = cs.current_account()?;
       let (_subject_record, subject_acctid) =
         ag.lookup(&current_account.notional_account)?;

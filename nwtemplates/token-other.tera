@@ -7,8 +7,8 @@ has invited you to join the game
   {{ game_name }}
 
 You can play, directly, by visiting this link in a suitable browser.
-{% for l in token_lines %}
-{{ l }}
+{%- for l in token_lines %}
+  {{ l }}
 {%- endfor %}
 
 They have set for you the nickname, within the game, of
