@@ -435,8 +435,8 @@ pub mod implementation {
             unix_user: user,
             common,
           };
-          nwtemplates::render("token-unix", &data)
-        }
+          nwtemplates::render("token-unix.tera", &data)
+        },
         _ => {
           #[derive(Debug,Serialize)]
           struct Data<'r> {
@@ -448,8 +448,8 @@ pub mod implementation {
             account: account.to_string(),
             common,
           };
-          nwtemplates::render("token-other", &data)
-        }
+          nwtemplates::render("token-other.tera", &data)
+        },
       }.map_err(|e| anyhow!(e.to_string()))
         .context("render email template")?;
 
@@ -469,9 +469,11 @@ pub mod implementation {
       unsafe {
         command.pre_exec(|| {
           // https://github.com/rust-lang/rust/issues/79731
-          let r = libc::dup2(2,1);
-          if r == 0 { Ok(()) }
-          else { Err(io::Error::last_os_error()) }
+          match libc::dup2(2,1) {
+            1 => Ok(()),
+            -1 => Err(io::Error::last_os_error()),
+            x => panic!("dup2(2,1) gave {}", x),
+          }
         });
       }
       let st = command
