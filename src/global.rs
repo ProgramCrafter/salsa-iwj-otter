@@ -756,7 +756,7 @@ impl<'ig> InstanceGuard<'ig> {
                       &config().public_url.trim_end_matches("/"),
                       token.0);
     let info = AccessTokenInfo { url };
-    let report = access.deliver(&gpl, &ipl, info)?;
+    let report = access.deliver(&self.c.g, &gpl, &ipl, info)?;
     report
   }
 

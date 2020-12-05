@@ -7,7 +7,7 @@ has invited you to join the game
   {{ game_name }}
 
 You can play, directly, by visiting this link in a suitable browser.
-  {{ token_url }}
+{{ token_lines }}
 
 They have set for you the nickname, within the game, of
   {{ nick }}

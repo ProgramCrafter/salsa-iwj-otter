@@ -119,7 +119,7 @@ pub struct FixedToken { pub token: RawToken }
 #[derive(Debug,Serialize,Deserialize)]
 pub struct TokenByEmail {
   /// RFC822 recipient field syntax (therefore, ASCII)
-  pub addr: Sring,
+  pub addr: String,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -331,6 +331,7 @@ pub mod implementation {
     fn check_spec_permission(&self, _: Option<AuthorisationSuperuser>) {
     }
     fn deliver(&self,
+               g: &Instance,
                gpl: &GPlayerState,
                ipl: &IPlayerState,
                token: AccessTokenInfo)
@@ -345,6 +346,7 @@ pub mod implementation {
   impl PlayerAccessSpec for PlayerAccessUnset {
     #[throws(TokenDeliveryError)]
     fn deliver(&self,
+               _g: &Instance,
                _gpl: &GPlayerState,
                _ipl: &IPlayerState,
                _token: AccessTokenInfo) -> AccessTokenReport {
@@ -366,6 +368,7 @@ pub mod implementation {
     }
     #[throws(TokenDeliveryError)]
     fn deliver(&self,
+                   _g: &Instance,
                _gpl: &GPlayerState,
                _ipl: &IPlayerState,
                _token: AccessTokenInfo) -> AccessTokenReport {
@@ -377,6 +380,7 @@ pub mod implementation {
   impl PlayerAccessSpec for UrlOnStdout {
     #[throws(TDE)]
     fn deliver<'t>(&self,
+                   _g: &Instance,
                    _gpl: &GPlayerState,
                    _ipl: &IPlayerState,
                    token: AccessTokenInfo)
@@ -394,44 +398,80 @@ pub mod implementation {
                    ipl: &IPlayerState,
                    token: AccessTokenInfo)
                    -> AccessTokenReport {
-      let messagefile = tempfile::tempfile()?;
-
-      #[derive(Serialize)]
+      #[derive(Debug,Serialize)]
       struct CommonData<'r> {
         player_email: &'r str,
-        game_name: &'r str,
-        token_url: &'r str,
+        game_name: String,
         nick: &'r str,
+        token_lines: Vec<String>,
       };
       let common = CommonData {
         player_email: &self.addr,
-        game_name: &g.name,
-        token_url: &
+        game_name: g.name.to_string(),
+        token_lines: token.report(),
+        nick: &gpl.nick,
+      };
+
+      if self.addr.find(['\r','\n'] as &[char]).is_some() {
+        throw!(anyhow!("email address may not contain line endings"));
       }
 
       let message = match &ipl.account {
         AS::Unix { user } => {
-          struct Data {
-            pub gname:
-          }
-          
-          
-          write!(&mut message, r#"\
-"#,
-             &self.addr, &gname,
-             &ipl.account, &gname,
-                 
+          #[derive(Debug,Serialize)]
+          struct Data<'r> {
+            unix_user: &'r str,
+            #[serde(flatten)]
+            common: CommonData<'r>,
+          };
+          let data = Data {
+            unix_user: user,
+            common,
+          };
+          nwtemplates::render("token-unix", &data)
+        }
+        other => {
+          #[derive(Debug,Serialize)]
+          struct Data<'r> {
+            account: String,
+            #[serde(flatten)]
+            common: CommonData<'r>,
+          };
+          let data = Data {
+            account: other.to_string(),
+            common,
+          };
+          nwtemplates::render("token-other", &data)
+        }
+      }.context("render email template")?;
 
-      write!(&mut message, r#"\
-!      "#,
-             &self.addr, &gname,
-             &ipl.account, &gname,
-      let command = Command::new(&config().sendmail)
-        .args(&["-oee","-odb","-oi","--"])
-        .stdin(
-        
+      let messagefile = (||{
+        let messagefile = tempfile::tempfile().context("tempfile")?;
+        messagefile.write_all(message.as_bytes()).context("write")?;
+        messagefile.flush().context("flush")?;
+        messagefile.seek(SeekFrom::Start(0)).context("seek")?;
+        messagefile
+      })().context("write email to temporary file.")?;
+
+      let sendmail = &config().sendmail;
+      let command = Command::new(sendmail)
+        .args(&["-oee","-odb","-oi","-t","--"])
+        .stdin(messagefile)
+        .pre_exec(|| unsafe {
+          // https://github.com/rust-lang/rust/issues/79731
+          let r = libc::dup2(2,1);
+          assert_eq!(r, 1);
+        });
+      let st = command
+        .status()
+        .with_context(!! format!("run sendmail ({})", sendmail))?;
+      if !st.success()  {
+        throw!(format!("sendmail ({}) failed: {} ({})", sendmail, st, st));
+      }
       
-      AccessTokenReport { lines: todo!() }
+      AccessTokenReport { lines: vec![
+        "Token sent by email.".to_string()
+      ]}
     }
   }
 

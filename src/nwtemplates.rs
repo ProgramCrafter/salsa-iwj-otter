@@ -2,9 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-use parking_lot::RwLock;
+use crate::imports::*;
 
-static STATE : RwLock<Option<State>> = const_mutex(None);
+use parking_lot::{const_rwlock, RwLock, MappedRwLockReadGuard};
+
+static STATE : RwLock<Option<State>> = const_rwlock(None);
+
+struct State {
+  tera: tera::Tera,
+}
 
 #[throws(StartupError)]
 pub fn init() {
@@ -12,13 +18,13 @@ pub fn init() {
   assert!(guard.is_none());
   let glob = format!("{}/*.tera", config().nwtemplates);
   *guard = State {
-    tera: tera::new(&glob)?,
+    tera: tera::Tera::new(&glob)?,
   };
 }
 
 #[throws(tera::Error)]
-pub fn template_render<D: Serialize>(template_name: &str, data: &D) {
-  fn get_st() -> MappedRwLockReadGuard<State> {
+pub fn render<D: Serialize>(template_name: &str, data: &D) {
+  fn get_st() -> MappedRwLockReadGuard<'static, State> {
     STATE.read().as_ref().unwrap()
   }
   get_st().render(template_name, data)

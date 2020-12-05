@@ -7,7 +7,7 @@ Hi.  I'm inviting you to join the game
 on this Otter server.
 
 You can play, directly, by visiting this link in a suitable browser.
-  {{ token_url }}
+{{ token_lines }}
 
 I have set for you the nickname, within the game, of
   {{ nick }}

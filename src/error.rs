@@ -56,7 +56,17 @@ pub enum InternalError {
 }
 
 #[derive(Clone,Error,Debug,Serialize,Deserialize)]
-pub enum TokenDeliveryError {
+#[error("{0}")]
+pub struct TokenDeliveryError(String);
+impl From<anyhow::Error> for TokenDeliveryError {
+  fn from(a: anyhow::Error) -> TokenDeliveryError {
+    TokenDeliveryError(
+      a.chain()
+        .map(ToString::to_string)
+        .collect::<Vec<_>>()
+        .join(": ")
+    )
+  }
 }
 
 impl From<InternalError> for SpecError {
