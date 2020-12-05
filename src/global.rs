@@ -711,6 +711,8 @@ impl<'ig> InstanceGuard<'ig> {
         .collect()
     };
 
+    let reset = reset || current_tokens.is_empty();
+
     let token : RawToken = if reset {
       drop(current_tokens);
 
