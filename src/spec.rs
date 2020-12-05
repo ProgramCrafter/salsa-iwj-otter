@@ -331,6 +331,7 @@ pub mod implementation {
     fn check_spec_permission(&self, _: Option<AuthorisationSuperuser>) {
     }
     fn deliver(&self,
+               ag: &AccountsGuard,
                g: &Instance,
                gpl: &GPlayerState,
                ipl: &IPlayerState,
@@ -346,6 +347,7 @@ pub mod implementation {
   impl PlayerAccessSpec for PlayerAccessUnset {
     #[throws(TokenDeliveryError)]
     fn deliver(&self,
+               _ag: &AccountsGuard,
                _g: &Instance,
                _gpl: &GPlayerState,
                _ipl: &IPlayerState,
@@ -368,7 +370,8 @@ pub mod implementation {
     }
     #[throws(TokenDeliveryError)]
     fn deliver(&self,
-                   _g: &Instance,
+               _ag: &AccountsGuard,
+               _g: &Instance,
                _gpl: &GPlayerState,
                _ipl: &IPlayerState,
                _token: AccessTokenInfo) -> AccessTokenReport {
@@ -380,6 +383,7 @@ pub mod implementation {
   impl PlayerAccessSpec for UrlOnStdout {
     #[throws(TDE)]
     fn deliver<'t>(&self,
+                   _ag: &AccountsGuard,
                    _g: &Instance,
                    _gpl: &GPlayerState,
                    _ipl: &IPlayerState,
@@ -393,6 +397,7 @@ pub mod implementation {
   impl PlayerAccessSpec for TokenByEmail {
     #[throws(TDE)]
     fn deliver<'t>(&self,
+                   ag: &AccountsGuard,
                    g: &Instance,
                    gpl: &GPlayerState,
                    ipl: &IPlayerState,
@@ -412,11 +417,13 @@ pub mod implementation {
         nick: &gpl.nick,
       };
 
-      if self.addr.find(['\r','\n'] as &[char]).is_some() {
+      if self.addr.find((&['\r','\n']) as &[char]).is_some() {
         throw!(anyhow!("email address may not contain line endings"));
       }
 
-      let message = match &ipl.account {
+      let (account, _) = ag.lookup(ipl.acctid).context("find account")?;
+      let account = &account.account;
+      let message = match &account.scope {
         AS::Unix { user } => {
           #[derive(Debug,Serialize)]
           struct Data<'r> {
@@ -430,7 +437,7 @@ pub mod implementation {
           };
           nwtemplates::render("token-unix", &data)
         }
-        other => {
+        _ => {
           #[derive(Debug,Serialize)]
           struct Data<'r> {
             account: String,
@@ -438,35 +445,40 @@ pub mod implementation {
             common: CommonData<'r>,
           };
           let data = Data {
-            account: other.to_string(),
+            account: account.to_string(),
             common,
           };
           nwtemplates::render("token-other", &data)
         }
-      }.context("render email template")?;
+      }.map_err(|e| anyhow!(e.to_string()))
+        .context("render email template")?;
 
       let messagefile = (||{
-        let messagefile = tempfile::tempfile().context("tempfile")?;
+        let mut messagefile = tempfile::tempfile().context("tempfile")?;
         messagefile.write_all(message.as_bytes()).context("write")?;
         messagefile.flush().context("flush")?;
         messagefile.seek(SeekFrom::Start(0)).context("seek")?;
-        messagefile
+        Ok::<_,AE>(messagefile)
       })().context("write email to temporary file.")?;
 
       let sendmail = &config().sendmail;
-      let command = Command::new(sendmail)
+      let mut command = Command::new(sendmail);
+      command
         .args(&["-oee","-odb","-oi","-t","--"])
-        .stdin(messagefile)
-        .pre_exec(|| unsafe {
+        .stdin(messagefile);
+      unsafe {
+        command.pre_exec(|| {
           // https://github.com/rust-lang/rust/issues/79731
           let r = libc::dup2(2,1);
-          assert_eq!(r, 1);
+          if r == 0 { Ok(()) }
+          else { Err(io::Error::last_os_error()) }
         });
+      }
       let st = command
         .status()
-        .with_context(!! format!("run sendmail ({})", sendmail))?;
+        .with_context(|| format!("run sendmail ({})", sendmail))?;
       if !st.success()  {
-        throw!(format!("sendmail ({}) failed: {} ({})", sendmail, st, st));
+        throw!(anyhow!("sendmail ({}) failed: {} ({})", sendmail, st, st));
       }
       
       AccessTokenReport { lines: vec![

@@ -26,6 +26,7 @@ pub struct ServerConfigSpec {
   pub sse_wildcard_url: Option<String>,
   pub rocket_workers: Option<u16>,
   pub template_dir: Option<String>,
+  pub nwtemplate_dir: Option<String>,
   pub wasm_dir: Option<String>,
   pub log: Option<toml::Value>,
   pub bundled_sources: Option<String>,
@@ -43,6 +44,7 @@ pub struct ServerConfig {
   pub sse_wildcard_url: Option<(String, String)>,
   pub rocket_workers: u16,
   pub template_dir: String,
+  pub nwtemplate_dir: String,
   pub wasm_dir: String,
   pub log: LogSpecification,
   pub bundled_sources: String,
@@ -57,8 +59,8 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
     let ServerConfigSpec {
       base_dir, save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
-      template_dir, wasm_dir,
-      log, bundled_sources, shapelibs,
+      template_dir, nwtemplate_dir, wasm_dir,
+      log, bundled_sources, shapelibs, sendmail,
     } = spec;
 
     let defpath = |specd: Option<String>, leaf: &str| -> String {
@@ -72,6 +74,7 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
     let command_socket  = defpath(command_socket,  "var/command.socket");
     let template_dir    = defpath(template_dir,    "assets"            );
     let wasm_dir        = defpath(wasm_dir,        "assets"            );
+    let nwtemplate_dir  = defpath(nwtemplate_dir,  "nwtemplates"       );
     let bundled_sources = defpath(bundled_sources, "bundled-sources"   );
     const DEFAULT_LIBRARY_GLOB : &str = "library/*.toml";
 
@@ -79,6 +82,10 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
       let glob = defpath(None, DEFAULT_LIBRARY_GLOB);
       vec![ shapelib::Config1::PathGlob(glob) ]
     });
+
+    let sendmail = sendmail.unwrap_or_else(
+      || DEFAULT_SENDMAIL_PROGRAM.into()
+    );
 
     let public_url = public_url
       .trim_end_matches('/')
@@ -116,8 +123,8 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
     ServerConfig {
       save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
-      template_dir, wasm_dir,
-      log, bundled_sources, shapelibs,
+      template_dir, nwtemplate_dir, wasm_dir,
+      log, bundled_sources, shapelibs, sendmail,
     }
   }
 }

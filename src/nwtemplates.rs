@@ -4,7 +4,8 @@
 
 use crate::imports::*;
 
-use parking_lot::{const_rwlock, RwLock, MappedRwLockReadGuard};
+use parking_lot::{const_rwlock, RwLock, RwLockReadGuard};
+use parking_lot::{MappedRwLockReadGuard};
 
 static STATE : RwLock<Option<State>> = const_rwlock(None);
 
@@ -14,18 +15,26 @@ struct State {
 
 #[throws(StartupError)]
 pub fn init() {
-  let guard = STATE.write();
+  let mut guard = STATE.write();
   assert!(guard.is_none());
-  let glob = format!("{}/*.tera", config().nwtemplates);
-  *guard = State {
-    tera: tera::Tera::new(&glob)?,
-  };
+  let config = config();
+  let nwtemplate_dir = &config.nwtemplate_dir;
+  let glob = format!("{}/*.tera", nwtemplate_dir);
+  let tera = tera::Tera::new(&glob)
+    .map_err(|e| anyhow!("{}", e))
+    .context("load tamplates")
+    .with_context(|| nwtemplate_dir.to_string())?;
+
+  *guard = Some(State {
+    tera,
+  })
 }
 
 #[throws(tera::Error)]
-pub fn render<D: Serialize>(template_name: &str, data: &D) {
-  fn get_st() -> MappedRwLockReadGuard<'static, State> {
-    STATE.read().as_ref().unwrap()
+pub fn render<D: Serialize>(template_name: &str, data: &D) -> String {
+  fn get_tera() -> MappedRwLockReadGuard<'static, tera::Tera> {
+    let g = STATE.read();
+    RwLockReadGuard::map(g, |g| &g.as_ref().unwrap().tera)
   }
-  get_st().render(template_name, data)
+  get_tera().render(template_name, data)?
 }

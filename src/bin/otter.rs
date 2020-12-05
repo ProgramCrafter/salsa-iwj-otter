@@ -309,6 +309,13 @@ fn main() {
     
 
     let mut access = ap.refer(&mut rma.access);
+    access.metavar("EMAIL-ADDRESS").add_option(
+      &["--email"],
+      MapStore(|addr| Ok(Some(
+        TokenByEmail { addr: addr.to_string() }.into()
+      ))),
+      "send token by email, to EMAIL-ADDRESS (RFC822 recipient field syntax)"
+    );
     access.add_option(&["--url-on-stdout"],
                       StoreConst(Some(UrlOnStdout.into())),
                       "show game access url by printing to stdout");

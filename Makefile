@@ -266,6 +266,7 @@ deploy: stamp/cargo.deploy-build bundled-sources assets libraries
 	rsync -r --delete --exclude=\*~ library specs $(DEPLOY_BASE)/.
 	rsync -r $(FILEASSETS) $(addprefix $(WASM_PACKED)/, $(WASM_ASSETS)) \
 		$(DEPLOY_BASE)/assets/
+	rsync -r nwtemplates/*.tera $(DEPLOY_BASE)/nwtemplates/
 	ssh -o BatchMode=true $(DEPLOY_USER) $(DEPLOY_FINISH)
 	git branch -f $(DEPLOYED_BRANCH)
 
