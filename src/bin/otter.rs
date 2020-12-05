@@ -4,31 +4,31 @@
 
 #![allow(unused_imports)]
 
-use otter::imports::*;
+use std::cell::Cell;
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use argparse::{self,ArgumentParser,action::{TypedAction,ParseResult}};
 use argparse::action::{Action,IFlagAction,IArgAction};
 use derive_more::Display;
-use std::rc::Rc;
-use std::cell::RefCell;
-use std::cell::Cell;
 
-type E = anyhow::Error;
-type AS = AccountScope;
+use otter::imports::*;
+
 type APE = ArgumentParseError;
+type AS = AccountScope;
+type E = anyhow::Error;
 type MC = MgmtCommand;
 type ME = MgmtError;
-type MR = MgmtResponse;
 type MGI = MgmtGameInstruction;
 type MGR = MgmtGameResponse;
-type TP = TablePermission;
+type MR = MgmtResponse;
 type PL = PresentationLayout;
+type TP = TablePermission;
 
 use argparse::action::ParseResult::Parsed;
 
 #[derive(Clone)]
-struct MapStore<T, F: FnMut(&str) -> Result<T,String> > (
-  F
-);
+struct MapStore<T, F: FnMut(&str) -> Result<T, String>>(F);
 
 struct BoundMapStore<'r, T, F: FnMut(&str) -> Result<T,String>> {
   f: Rc<RefCell<F>>,
@@ -39,11 +39,10 @@ impl<'f,T,F> TypedAction<T> for MapStore<T,F>
 where F : 'f + Clone + FnMut(&str) -> Result<T,String>,
      'f : 'static // ideally TypedAction wuld have a lifetime parameter
 {
-  fn bind<'x>(&self, r: Rc<RefCell<&'x mut T>>) -> Action<'x>
-  {
+  fn bind<'x>(&self, r: Rc<RefCell<&'x mut T>>) -> Action<'x> {
     Action::Single(Box::new(BoundMapStore {
       f: Rc::new(RefCell::new(self.0.clone())),
-      r
+      r,
     }))
   }
 }
@@ -52,7 +51,7 @@ impl<'x, T, F: FnMut(&str) -> Result<T,String>>
   IArgAction for BoundMapStore<'x, T, F>
 {
   fn parse_arg(&self, arg: &str) -> ParseResult {
-    let v : T = match self.f.borrow_mut()(arg) {
+    let v: T = match self.f.borrow_mut()(arg) {
       Ok(r) => r,
       Err(e) => return ParseResult::Error(e),
     };
@@ -118,8 +117,7 @@ fn parse_args<T:Default,U>(
   apmaker: &dyn Fn(&mut T) -> ArgumentParser,
   completer: &dyn Fn(T) -> Result<U, ArgumentParseError>,
   extra_help: Option<&dyn Fn(&mut dyn Write) -> Result<(), io::Error>>,
-) -> U
-{
+) -> U {
   let mut parsed = Default::default();
   let ap = apmaker(&mut parsed);
   let us = args.get(0).expect("argv[0] must be provided!").clone();
@@ -144,8 +142,8 @@ fn parse_args<T:Default,U>(
     });
   }
   mem::drop(ap);
-  let completed  =
-    completer(parsed).unwrap_or_else(|e:ArgumentParseError| {
+  let completed  = completer(parsed)
+    .unwrap_or_else(|e:ArgumentParseError| {
       let mut def = default();
       let ap = apmaker(&mut def);
       ap.error(&us, &e.0, &mut stderr);
@@ -156,10 +154,8 @@ fn parse_args<T:Default,U>(
 
 pub fn ok_id<T,E>(t: T) -> Result<T,E> { Ok(t) }
 
-pub fn clone_via_serde<T: Debug + Serialize + DeserializeOwned>
-  (t: &T) -> T
-{
-  (||{
+pub fn clone_via_serde<T: Debug + Serialize + DeserializeOwned>(t: &T) -> T {
+  (|| {
     let s = serde_json::to_string(t).context("ser")?;
     let c = serde_json::from_str(&s).context("de")?;
     Ok::<_,AE>(c)
