@@ -403,6 +403,9 @@ pub mod implementation {
                    ipl: &IPlayerState,
                    token: AccessTokenInfo)
                    -> AccessTokenReport {
+      let sendmail = &config().sendmail;
+      let mut command = Command::new(sendmail);
+
       #[derive(Debug,Serialize)]
       struct CommonData<'r> {
         player_email: &'r str,
@@ -435,6 +438,7 @@ pub mod implementation {
             unix_user: user,
             common,
           };
+          command.args(&["-f", &user]);
           nwtemplates::render("token-unix.tera", &data)
         },
         _ => {
@@ -461,8 +465,6 @@ pub mod implementation {
         Ok::<_,AE>(messagefile)
       })().context("write email to temporary file.")?;
 
-      let sendmail = &config().sendmail;
-      let mut command = Command::new(sendmail);
       command
         .args(&["-oee","-odb","-oi","-t","--"])
         .stdin(messagefile);
