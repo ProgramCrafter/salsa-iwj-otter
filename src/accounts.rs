@@ -16,7 +16,7 @@ slotmap::new_key_type!{
 #[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]
 pub enum AccountScope {
   Server,
-  Unix { user : String },
+  Unix { user: String },
 }
 
 type AS = AccountScope;
@@ -35,10 +35,10 @@ pub struct AccountName {
 /// without invalidating old tokens and permissions check.
 #[derive(Serialize,Deserialize,Debug)]
 #[serde(transparent)]
-pub struct AccessRecord (Arc<dyn PlayerAccessSpec>);
+pub struct AccessRecord(Arc<dyn PlayerAccessSpec>);
 
 #[derive(Debug)]
-pub struct AccountsGuard (MutexGuard<'static, Option<Accounts>>);
+pub struct AccountsGuard(MutexGuard<'static, Option<Accounts>>);
 
 //---------- data structure
 

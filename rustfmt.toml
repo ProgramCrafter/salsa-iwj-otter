@@ -1,6 +1,6 @@
 merge_imports = false
 overflow_delimited_expr = true
-struct_field_align_threshold = 4
+struct_field_align_threshold = 0
 tab_spaces = 2
 unstable_features = true
 use_field_init_shorthand = true
