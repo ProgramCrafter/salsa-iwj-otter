@@ -394,11 +394,27 @@ pub mod implementation {
                    ipl: &IPlayerState,
                    token: AccessTokenInfo)
                    -> AccessTokenReport {
-      let message = tempfile::tempfile()?;
-      let gname = &g.name;
+      let messagefile = tempfile::tempfile()?;
 
-      match &ipl.account {
+      #[derive(Serialize)]
+      struct CommonData<'r> {
+        player_email: &'r str,
+        game_name: &'r str,
+        token_url: &'r str,
+        nick: &'r str,
+      };
+      let common = CommonData {
+        player_email: &self.addr,
+        game_name: &g.name,
+        token_url: &
+      }
+
+      let message = match &ipl.account {
         AS::Unix { user } => {
+          struct Data {
+            pub gname:
+          }
+          
           
           write!(&mut message, r#"\
 "#,
