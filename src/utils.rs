@@ -32,6 +32,29 @@ impl SplitAtDelim<char> for str {
   }
 }
 
+/*
+put trait OptionExt {
+  type Output;
+  fn get_or_try_insert_with<
+      E: Error,
+      F: FnOnce() -> Result<Output,E>,
+    >(&mut self, f: F) -> Result<&mut Output, E>;
+}
+
+impl<T> OptionExt for Option<T> {
+  type Output = T;
+  fn get_or_try_insert_with<E,F>
+    (&mut self, f: F) -> Result<&mut Output, E>
+    where E: Error, F: FnOnce() -> Result<Output,E>,
+  {
+    if self.is_none() {
+      *self = Some(f()?);
+    }
+    Ok(self.as_mut().unwrap())
+  }
+}
+*/
+
 // https://github.com/rust-lang/rust/issues/32255 :-(
 
 pub trait LocalFileExt {
