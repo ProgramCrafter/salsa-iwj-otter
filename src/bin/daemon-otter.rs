@@ -195,6 +195,7 @@ fn main() {
       .context("check bundled-sources directory")?;
   }
 
+  nwtemplates::init()?;
   shapelib::load()?;
 
   load_accounts()?;
