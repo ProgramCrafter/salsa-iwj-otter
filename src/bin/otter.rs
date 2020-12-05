@@ -459,7 +459,7 @@ impl Conn {
       },
       AlterGame { error: Some(error), .. } => {
         Err(error.clone()).context(format!(
-          "game alternations failed (maybe partially); response to: {:?}",
+          "game alterations failed (maybe partially); response to: {:?}",
           &cmd))?;
       },
     };
