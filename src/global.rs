@@ -697,8 +697,23 @@ impl<'ig> InstanceGuard<'ig> {
         .latest = now;
       access
     };
-    
+
+    let current_tokens : ArrayVec<[&RawToken;2]> = {
+      let players = GLOBAL.players.read().unwrap();
+      self.tokens_players.tr.iter().
+        filter(|&token| (||{
+          let iad = players.get(token)?;
+          if iad.ident != player { return None }
+          if ! Arc::ptr_eq(&iad.gref.0, &self.gref.0) { return None }
+          Some(())
+        })() == Some(()))
+        .take(2)
+        .collect()
+    };
+
     let token : RawToken = if reset {
+      drop(current_tokens);
+
       self.invalidate_tokens(player)?;
       self.save_access_now()?;
 
@@ -721,20 +736,7 @@ impl<'ig> InstanceGuard<'ig> {
 
     } else {
 
-      let tokens : ArrayVec<[&RawToken;2]> = {
-        let players = GLOBAL.players.read().unwrap();
-        self.tokens_players.tr.iter().
-          filter(|&token| (||{
-            let iad = players.get(token)?;
-            if iad.ident != player { return None }
-            if ! Arc::ptr_eq(&iad.gref.0, &self.gref.0) { return None }
-            Some(())
-          })() == Some(()))
-          .take(2)
-          .collect()
-      };
-
-      let token = match tokens.as_slice() {
+      let token = match current_tokens.as_slice() {
         [] => throw!(ME::AuthorisationUninitialised),
         [token] => token,
         _ => {
