@@ -739,7 +739,7 @@ impl<'ig> InstanceGuard<'ig> {
     } else {
 
       let token = match current_tokens.as_slice() {
-        [] => throw!(ME::AuthorisationUninitialised),
+        [] => panic!(), // this possibility was excluded earlier
         [token] => token,
         _ => {
           warn!("duplicate token for {}", player);
