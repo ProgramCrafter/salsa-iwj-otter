@@ -57,6 +57,7 @@ serde_with = "1"
 slotmap = { version = "0.4", features = ['serde'] }
 strum = { version = "0.20", features = ['derive'] }
 thiserror = "1"
+tempfile = "3"
 toml = "0.5"
 typetag = "0.1.6"
 uds = "0"

@@ -74,6 +74,8 @@ pub use rocket::{post, get, routes};
 pub use rocket_contrib::helmet::*;
 pub use rocket_contrib::json::Json;
 pub use rocket_contrib::templates::Template;
+pub use rocket_contrib::templates::Engines;
+pub use rocket_contrib::templates::tera::{self, Value};
 pub use serde::ser::SerializeTuple;
 pub use serde::{Serialize, Deserialize, de::DeserializeOwned};
 pub use serde::{Serializer, Deserializer};
@@ -83,7 +85,6 @@ pub use slotmap::dense::DenseSlotMap;
 pub use strum::EnumString;
 pub use thiserror::Error;
 pub use vecdeque_stableix::Deque as StableIndexVecDeque;
-
 pub use zcoord::{self, ZCoord};
 
 pub use crate::accounts::*;

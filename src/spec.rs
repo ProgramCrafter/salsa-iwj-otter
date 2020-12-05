@@ -117,6 +117,12 @@ pub struct PlayerAccessUnset;
 pub struct FixedToken { pub token: RawToken }
 
 #[derive(Debug,Serialize,Deserialize)]
+pub struct TokenByEmail {
+  /// RFC822 recipient field syntax (therefore, ASCII)
+  pub addr: Sring,
+}
+
+#[derive(Debug,Serialize,Deserialize)]
 pub struct UrlOnStdout;
 
 //#[derive(Debug,Serialize,Deserialize)]
@@ -376,6 +382,40 @@ pub mod implementation {
                    token: AccessTokenInfo)
                    -> AccessTokenReport {
       AccessTokenReport { lines: token.report() }
+    }
+  }
+
+  #[typetag::serde]
+  impl PlayerAccessSpec for TokenByEmail {
+    #[throws(TDE)]
+    fn deliver<'t>(&self,
+                   g: &Instance,
+                   gpl: &GPlayerState,
+                   ipl: &IPlayerState,
+                   token: AccessTokenInfo)
+                   -> AccessTokenReport {
+      let message = tempfile::tempfile()?;
+      let gname = &g.name;
+
+      match &ipl.account {
+        AS::Unix { user } => {
+          
+          write!(&mut message, r#"\
+"#,
+             &self.addr, &gname,
+             &ipl.account, &gname,
+                 
+
+      write!(&mut message, r#"\
+!      "#,
+             &self.addr, &gname,
+             &ipl.account, &gname,
+      let command = Command::new(&config().sendmail)
+        .args(&["-oee","-odb","-oi","--"])
+        .stdin(
+        
+      
+      AccessTokenReport { lines: todo!() }
     }
   }
 

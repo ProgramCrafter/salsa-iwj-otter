@@ -1,0 +1,16 @@
+From: Otter game server on behalf of <{{ unix_user }}}>
+To: {{ player_email }}
+Subject: Game access link {{ name }}
+
+Hi.  I'm inviting you to join the game
+  {{ game_name }}
+on this Otter server.
+
+You can play, directly, by visiting this link
+  {{ token_url }}
+
+I have set for you the nickname, within the game, of
+  {{ nick }}
+If you want that changing, please contact me.
+
+Regards.

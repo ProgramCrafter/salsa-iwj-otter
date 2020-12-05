@@ -13,6 +13,8 @@ pub const EXIT_DISASTER  : i32 = 16;
 pub const DEFAULT_CONFIG_DIR      : &str = "/etc/otter";
 pub const DEFAULT_CONFIG_LEAFNAME : &str = "server.toml";
 
+pub const DEFAULT_SENDMAIL_PROGRAM : &str = "/usr/sbin/sendmail";
+
 #[derive(Deserialize,Debug,Clone)]
 pub struct ServerConfigSpec {
   pub base_dir: Option<String>,
@@ -28,6 +30,7 @@ pub struct ServerConfigSpec {
   pub log: Option<toml::Value>,
   pub bundled_sources: Option<String>,
   pub shapelibs: Option<Vec<shapelib::Config1>>,
+  pub sendmail: Option<String>,
 }
 
 #[derive(Debug,Clone)]
@@ -44,6 +47,7 @@ pub struct ServerConfig {
   pub log: LogSpecification,
   pub bundled_sources: String,
   pub shapelibs: Vec<shapelib::Config1>,
+  pub sendmail: String,
 }
 
 impl TryFrom<ServerConfigSpec> for ServerConfig {
