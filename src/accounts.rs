@@ -416,8 +416,8 @@ pub fn load_accounts() {
     e@ Err(_) => e.with_context(|| path.clone())?,
   };
   let mut f = BufReader::new(f);
-  let accounts : Accounts = rmp_serde::decode::from_read(&mut f)?;
-  let chk = |acctid: AccountId, account: &Arc<AccountName>| if_chain! {
+  let accounts: Accounts = rmp_serde::decode::from_read(&mut f)?;
+  let chk = |acctid: AccountId, account: &Arc<AccountName>| if_chain!{
     if accounts.names.get(account) == Some(&acctid);
     if let Some(got_record) = accounts.records.get(acctid);
     if &got_record.account == account;
@@ -438,8 +438,8 @@ pub mod loaded_acl {
     Copy + Eq + Hash + Sync + Send + 'static
   {
     type Auth;
-    const NOT_FOUND : MgmtError;
-    const TEST_EXISTENCE : Self;
+    const NOT_FOUND: MgmtError;
+    const TEST_EXISTENCE: Self;
   }
 
   #[derive(Copy,Clone,Debug)]
