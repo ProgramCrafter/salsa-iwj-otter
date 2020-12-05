@@ -4,10 +4,10 @@
 
 #![feature(proc_macro_hygiene, decl_macro)]
 
-use rocket::{get,routes};
-use rocket_contrib::serve::StaticFiles;
-use rocket::response::Content;
 use rocket::fairing;
+use rocket::{get, routes};
+use rocket::response::Content;
+use rocket_contrib::serve::StaticFiles;
 
 use otter::imports::*;
 
@@ -48,7 +48,7 @@ impl<'r> FromParam<'r> for CheckedResourceLeaf {
         return Ok(CheckedResourceLeaf {
           safe_leaf, locn,
           ctype: ctype.clone(),
-        })
+        });
       }
     }
     Err(UnknownResource{})
@@ -90,10 +90,10 @@ fn loading(layout: Option<PresentationLayout>, ia: PlayerQueryString)
       ptoken: &ia.raw_token,
       layout,
     };
-    Template::render("loading",&c)
+    Template::render("loading", &c)
   } else {
     let c = FrontPageRenderContext { };
-    Template::render("front",&c)
+    Template::render("front", &c)
   }
 }
 
@@ -122,8 +122,8 @@ impl<'a,'r,T> FromRequest<'a,'r> for WholeQueryString<T>
 #[get("/_/updates?<ctoken>&<gen>")]
 #[throws(OE)]
 fn updates<'r>(ctoken : InstanceAccess<ClientId>, gen: u64,
-           cors: rocket_cors::Guard<'r>)
-           -> impl response::Responder<'r> {
+               cors: rocket_cors::Guard<'r>)
+               -> impl response::Responder<'r> {
   let gen = Generation(gen);
   let iad = ctoken.i;
   debug!("starting update stream {:?}", &iad);
@@ -131,20 +131,20 @@ fn updates<'r>(ctoken : InstanceAccess<ClientId>, gen: u64,
   let content = sse::content(iad, gen)?;
   let content = DebugReader(content, client);
   let content = response::Stream::chunked(content, 4096);
-  const CTYPE : &str = "text/event-stream; charset=utf-8";
+  const CTYPE: &str = "text/event-stream; charset=utf-8";
   let ctype = ContentType::parse_flexible(CTYPE).unwrap();
-  cors.responder(response::content::Content(ctype,content))
-}  
+  cors.responder(response::content::Content(ctype, content))
+}
 
 #[get("/_/<leaf>")]
 #[throws(io::Error)]
-fn resource<'r>(leaf : CheckedResourceLeaf) -> impl Responder<'r> {
+fn resource<'r>(leaf: CheckedResourceLeaf) -> impl Responder<'r> {
   let path = match leaf.locn {
     RL::Main => format!("{}/{}", config().template_dir, leaf.safe_leaf),
     RL::Wasm(s) => format!("{}/{}", config().wasm_dir, s),
   };
   Content(leaf.ctype, NamedFile::open(path)?)
-}  
+}
 
 #[derive(Debug,Copy,Clone)]
 struct ContentTypeFixup;
@@ -159,7 +159,7 @@ impl fairing::Fairing for ContentTypeFixup {
     match response.content_type() {
       None => {
         response.set_header(ContentType::Plain);
-      },
+      }
       Some(ct) if ct == ContentType::GZIP => {
         // the only thing we serve with a .gz extension are the
         // compressed source code tarballs
@@ -168,8 +168,8 @@ impl fairing::Fairing for ContentTypeFixup {
           header::Encoding::Gzip,
         ]));
         response.set_header(ContentType::TAR);
-      },
-      _ => { /* hopefully OK */ },
+      }
+      _ => { /* hopefully OK */ }
     }
   }
 }
@@ -182,7 +182,7 @@ fn main() {
   let config_filename = env::args().nth(1);
   ServerConfig::read(config_filename.as_ref().map(String::as_str))?;
 
-  std::env::set_var("ROCKET_CLI_COLORS","off");
+  std::env::set_var("ROCKET_CLI_COLORS", "off");
 
   let c = config();
 
