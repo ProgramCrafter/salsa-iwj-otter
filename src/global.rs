@@ -698,12 +698,9 @@ impl<'ig> InstanceGuard<'ig> {
       access
     };
     
-    if reset {
+    let token : RawToken = if reset {
       self.invalidate_tokens(player)?;
       self.save_access_now()?;
-    }
-
-    let token : RawToken = if reset {
 
       let token = access
         .override_token()
