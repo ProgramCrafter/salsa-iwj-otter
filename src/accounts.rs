@@ -98,14 +98,14 @@ pub enum AccountsSaveError {
   #[error("Error writing/installing file: {0}")]
   IO(#[from] io::Error),
   #[error("Error encoding msgpack: {0}")]
-  Encode(#[from] rmp_serde::encode::Error)
+  Encode(#[from] rmp_serde::encode::Error),
 }
 
 //---------- consts/statics ----------
 
-static ACCOUNTS : Mutex<Option<Accounts>> = const_mutex(None);
+static ACCOUNTS: Mutex<Option<Accounts>> = const_mutex(None);
 
-const ACCOUNTS_FILE : &str = "accounts";
+const ACCOUNTS_FILE: &str = "accounts";
 
 //---------- AccountScope and AccountName (ncl. string format) ----------
 
@@ -126,12 +126,12 @@ impl AccountScope {
     match &self {
       AS::Server => {
         f("server")?;
-      },
+      }
       AS::Unix { user } => {
         f("unix")?;
         f(":")?;
         f(user)?;
-      },
+      }
     };
     for n in ns {
       f(":")?;
@@ -158,10 +158,10 @@ impl AccountScope {
         "unix" => {
           let user = next()?.to_owned();
           AccountScope::Unix { user }
-        },
+        }
         _ => {
           throw!(InvalidScopedName::UnknownScopeKind)
-        },
+        }
       }
     };
 
@@ -173,7 +173,7 @@ impl AccountScope {
             .decode_utf8()
             .map_err(|_| InvalidScopedName::BadUTF8)?
             .into();
-        },
+        }
         Left(_out) => throw!(InvalidScopedName::TooFewComponents),
         Right(_got) => throw!(InvalidScopedName::TooFewComponents),
       };
@@ -235,7 +235,7 @@ impl AccessRecord {
 
 //---------- AccountsGuard and lookup ----------
 
-pub trait AccountNameOrId : Copy {
+pub trait AccountNameOrId: Copy {
   fn initial_lookup(self, accounts: &Accounts) -> Option<AccountId>;
 }
 
@@ -255,10 +255,7 @@ impl AccountsGuard {
   pub fn lock() -> Self { Self(ACCOUNTS.lock()) }
 
   #[throws(AccountNotFound)]
-  pub fn check<K:AccountNameOrId>(
-    &self,
-    key: K
-  ) -> AccountId {
+  pub fn check<K:AccountNameOrId>(&self, key: K) -> AccountId {
     (||{
       let accounts = self.0.as_ref()?;
       let acctid = key.initial_lookup(accounts)?;
@@ -328,12 +325,12 @@ impl AccountsGuard {
         |ig, player| ig.invalidate_tokens(player)
       )?;
       entry.access = new_access;
-    }      
+    }
     let output = f(&mut *entry, acctid);
     let ok = self.save_accounts_now();
     match ok {
       Ok(()) => Ok(output),
-      Err(e) => Err((e.into(), output))
+      Err(e) => Err((e.into(), output)),
     }
   }
 
