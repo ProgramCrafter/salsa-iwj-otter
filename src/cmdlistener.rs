@@ -785,8 +785,7 @@ impl CommandStream<'_> {
       use MgmtChannelReadError::*;
       let resp = match self.chan.read::<MgmtCommand>() {
         Ok(cmd) => {
-          let cmd_s =
-            log_enabled!(log::Level::Info)
+          let cmd_s = log_enabled!(log::Level::Info)
             .as_some_from(|| format!("{:?}", &cmd))
             .unwrap_or_default();
           match execute(&mut self, cmd) {
@@ -794,14 +793,14 @@ impl CommandStream<'_> {
               info!("command connection {}: executed {:?}",
                     &self.desc, cmd_s);
               resp
-            },
+            }
             Err(error) => {
               info!("command connection {}: error {:?} from {:?}",
                     &self.desc, &error, cmd_s);
               MgmtResponse::Error { error }
-            },
+            }
           }
-        },
+        }
         Err(EOF) => break,
         Err(IO(e)) => Err(e).context("read command stream")?,
         Err(Parse(s)) => MgmtResponse::Error { error : ME::ParseFailed(s) },
@@ -859,11 +858,11 @@ impl CommandListener {
         #[derive(Error,Debug)]
         struct EuidLookupError(String);
         display_as_debug!{EuidLookupError}
-        impl<E> From<&E> for EuidLookupError where E : Display {
-          fn from(e: &E) -> Self { EuidLookupError(format!("{}",e)) }
+        impl<E> From<&E> for EuidLookupError where E: Display {
+          fn from(e: &E) -> Self { EuidLookupError(format!("{}", e)) }
         }
 
-        let user_desc : String = (||{
+        let user_desc: String = (||{
           let euid = euid.clone()?;
           let pwent = Passwd::from_uid(euid);
           let show_username =
@@ -921,12 +920,11 @@ impl CommandStream<'_> {
   }
 }
 
-
 impl CommandStream<'_> {
   pub fn is_superuser<T:Serialize>(&self) -> Option<Authorisation<T>> {
     self.superuser.map(Into::into)
   }
-  
+
   #[throws(MgmtError)]
   pub fn check_acl_modify_player<'igr, 'ig : 'igr,
                                  P: Into<PermSet<TablePermission>>>(
@@ -946,16 +944,17 @@ impl CommandStream<'_> {
     let (ig, auth) = self.check_acl(ag, ig, how, p)?;
     (ig, auth)
   }
-  
+
   #[throws(MgmtError)]
-  pub fn check_acl_modify_pieces<'igr, 'ig : 'igr>(
+  pub fn check_acl_modify_pieces<'igr, 'ig: 'igr>(
     &self,
     ag: &AccountsGuard,
     ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
-  ) -> (&'igr mut InstanceGuard<'ig>,
-        ModifyingPieces,
-        Authorisation<InstanceName>)
-  {
+  ) -> (
+    &'igr mut InstanceGuard<'ig>,
+    ModifyingPieces,
+    Authorisation<InstanceName>,
+  ) {
     let p = &[TP::ChangePieces];
     let (ig, auth) = self.check_acl(ag, ig, PCH::Instance, p)?;
     let modperm = ig.modify_pieces();
@@ -963,14 +962,13 @@ impl CommandStream<'_> {
   }
 
   #[throws(MgmtError)]
-  pub fn check_acl<'igr, 'ig : 'igr, P: Into<PermSet<TablePermission>>>(
+  pub fn check_acl<'igr, 'ig: 'igr, P: Into<PermSet<TablePermission>>>(
     &self,
     ag: &AccountsGuard,
     ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
     how: PermissionCheckHow,
     p: P,
-  ) -> (&'igr mut InstanceGuard<'ig>, Authorisation<InstanceName>)
-  {
+  ) -> (&'igr mut InstanceGuard<'ig>, Authorisation<InstanceName>) {
     #[throws(MgmtError)]
     fn get_auth(cs: &CommandStream,
                 ag: &AccountsGuard,
@@ -990,7 +988,7 @@ impl CommandStream<'_> {
 
       let subject_is = |object_acctid: AccountId|{
         if subject_acctid == object_acctid {
-          let auth : Authorisation<InstanceName>
+          let auth: Authorisation<InstanceName>
             = Authorisation::authorise_any();
           return Some(auth);
         }
@@ -1009,7 +1007,7 @@ impl CommandStream<'_> {
             then { subject_is(object_ipr.ipl.acctid) }
             else { None }
           }
-        },
+        }
         PCH::Instance => None,
       } {
         return auth;
@@ -1040,15 +1038,17 @@ impl CommandStream<'_> {
       .map(|spec| AccessRecord::from_spec(spec, self.superuser))
       .transpose()?
   }
-
 }
 
 #[throws(MgmtError)]
-fn authorise_for_account(cs: &CommandStream,
-                         _accounts: &AccountsGuard,
-                         wanted: &AccountName)
-                        -> Authorisation<AccountName> {
-  if let Some(y) = cs.is_superuser() { return y }
+fn authorise_for_account(
+  cs: &CommandStream,
+  _accounts: &AccountsGuard,
+  wanted: &AccountName,
+) -> Authorisation<AccountName> {
+  if let Some(y) = cs.is_superuser() {
+    return y;
+  }
 
   let currently = &cs.current_account()?;
   if &currently.notional_account != wanted {
@@ -1087,7 +1087,7 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
         cs.authorised_uid(None,None)?
       };
       y.therefore_ok()
-    },
+    }
 
     AccountScope::Unix { user: wanted } => {
       struct InUserList;
@@ -1218,16 +1218,16 @@ mod authproofs {
 
   impl From<anyhow::Error> for AuthorisationError {
     fn from(a: anyhow::Error) -> AuthorisationError {
-      AuthorisationError(format!("{}",a))
+      AuthorisationError(format!("{}", a))
     }
   }
   impl From<ConnectionEuidDiscoverEerror> for AuthorisationError {
     fn from(e: ConnectionEuidDiscoverEerror) -> AuthorisationError {
-      AuthorisationError(format!("{}",e))
+      AuthorisationError(format!("{}", e))
     }
   }
 
-  pub trait AuthorisationCombine : Sized {
+  pub trait AuthorisationCombine: Sized {
     type Output;
     fn combine(self) -> Authorisation<Self::Output> {
       Authorisation(PhantomData)
