@@ -769,16 +769,15 @@ mod reset_game {
   fn subargs(sa: &mut Args) -> ArgumentParser {
     use argparse::*;
     let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.table_file)
-      .metavar("TABLE-SPEC[-TOML]")
+    ap.refer(&mut sa.table_file).metavar("TABLE-SPEC[-TOML]")
       .add_option(&["--reset-table"],StoreOption,
                   "reset the players and access too");
     ap.refer(&mut sa.table_name).required()
       .add_argument("TABLE-NAME",Store,"table name");
     ap.refer(&mut sa.game_file).required()
       .add_argument("GAME-SPEC[-TOML]",Store,
- "game spec (path to .toml file, or found in specs directory if no '/')"
-      );
+                    "game spec (path to .toml file, \
+                     or found in specs directory if no '/')");
     ap
   }
 
