@@ -731,12 +731,12 @@ impl UpdateHandler {
           };
           match ne {
             Some(ne) => { bulk.pieces.insert(upiece, ne); },
-            None     => { bulk.pieces.remove(upiece); },
+            None     => { bulk.pieces.remove(upiece);     },
           };
         }
         bulk.logs |= updates.log.len() != 0;
         bulk.raw.append(&mut raw);
-      },
+      }
       Online => {
         let estimate = updates.pcs.len() + updates.log.len();
         let mut buf = PrepareUpdatesBuffer::new(g, None, Some(estimate));
