@@ -4,19 +4,19 @@
 
 use crate::imports::*;
 
-use parking_lot::{RwLock, const_rwlock};
+use parking_lot::{const_rwlock, RwLock};
 
 #[derive(SerializeDisplay)]
 #[derive(DeserializeFromStr)]
 #[derive(Clone,Debug)]
-pub struct Timezone (Arc<TzInfo>);
+pub struct Timezone(Arc<TzInfo>);
 
 #[derive(Clone,Debug,Default)]
 struct TzInfo {
   name: String,
   ctz: Option<chrono_tz::Tz>,
 }
-  
+
 impl Timezone {
   pub fn name(&self) -> &str {
     &self.0.name
@@ -28,7 +28,7 @@ impl Timezone {
   fn format_tz<'r, TZ: chrono::TimeZone>(
     tz: &TZ, ts: Timestamp, fmt: &'r str
   ) -> chrono::format::DelayedFormat<chrono::format::StrftimeItems<'r>>
-    where <TZ as chrono::TimeZone>::Offset : Display
+    where <TZ as chrono::TimeZone>::Offset: Display
   {
     use chrono::DateTime;
     let dt = tz.timestamp_opt(ts.0.try_into().ok()?, 0).single()?;
@@ -90,7 +90,7 @@ impl FromStr for Timezone {
         Err(emsg) => {
           error!("Error loading timezone {:?}: {}, using UTC", name, emsg);
           Arc::new(TzInfo { name, ctz: None })
-        },
+        }
       }
     };
     let out = Timezone(out);

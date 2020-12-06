@@ -16,7 +16,7 @@ pub struct ClientSequence(u64);
 
 #[derive(Debug)] // not Default
 pub struct ExecuteGameChangeUpdates {
-  pub pcs: Vec<(PieceId,PieceUpdateOp<(),()>)>,
+  pub pcs: Vec<(PieceId, PieceUpdateOp<(), ()>)>,
   pub log: Vec<LogEntry>,
   pub raw: Option<Vec<PreparedUpdateEntry>>,
 }
@@ -28,23 +28,23 @@ pub type PlayerUpdatesLog =
 
 #[derive(Debug)]
 pub struct PlayerUpdates {
-  log : PlayerUpdatesLog,
-  cv : Arc<Condvar>,
+  log: PlayerUpdatesLog,
+  cv: Arc<Condvar>,
 }
 
 #[derive(Debug)]
 pub struct PreparedUpdate {
-  pub gen : Generation,
+  pub gen: Generation,
   pub when: Instant,
-  pub us : Vec<PreparedUpdateEntry>,
+  pub us: Vec<PreparedUpdateEntry>,
 }
 
 #[derive(Debug)]
 pub enum PreparedUpdateEntry {
   Piece {
     by_client: IsResponseToClientOp,
-    piece : VisiblePieceId,
-    op : PieceUpdateOp<PreparedPieceState,ZLevel>,
+    piece: VisiblePieceId,
+    op: PieceUpdateOp<PreparedPieceState, ZLevel>,
   },
   SetTableSize(Pos),
   SetTableColour(Colour),
@@ -56,18 +56,18 @@ pub enum PreparedUpdateEntry {
 
 #[derive(Debug,Clone,Serialize)]
 pub struct PreparedPieceState {
-  pub pos : Pos,
-  pub svg : Html,
-  pub held : Option<PlayerId>,
-  pub z : ZCoord,
-  pub zg : Generation,
-  pub pinned : bool,
+  pub pos: Pos,
+  pub svg: Html,
+  pub held: Option<PlayerId>,
+  pub z: ZCoord,
+  pub zg: Generation,
+  pub pinned: bool,
   pub uos: Vec<UoDescription>,
 }
 
 #[derive(Serialize,Debug)]
 pub struct DataLoadPlayer {
-  dasharray : String,
+  dasharray: String,
 }
 
 // ---------- piece updates ----------
@@ -97,18 +97,18 @@ pub struct TransmitUpdate<'u> (
 #[derive(Debug,Serialize)]
 enum TransmitUpdateEntry<'u> {
   Recorded {
-    piece : VisiblePieceId,
-    cseq : ClientSequence,
-    zg : Option<Generation>,
+    piece: VisiblePieceId,
+    cseq: ClientSequence,
+    zg: Option<Generation>,
     svg: Option<&'u Html>, // IsResponseToClientOp::UpdateSvg
   },
   Piece {
-    piece : VisiblePieceId,
-    op : PieceUpdateOp<&'u PreparedPieceState, &'u ZLevel>,
+    piece: VisiblePieceId,
+    op: PieceUpdateOp<&'u PreparedPieceState, &'u ZLevel>,
   },
   RecordedUnpredictable {
-    piece : VisiblePieceId,
-    cseq : ClientSequence,
+    piece: VisiblePieceId,
+    cseq: ClientSequence,
     ns: &'u PreparedPieceState,
   },
   SetTableSize(Pos),
@@ -148,7 +148,7 @@ impl PlayerUpdatesBuildContext {
 impl PlayerUpdates {
   pub fn new_begin(gs: &GameState) -> PlayerUpdatesBuildContext {
     let u1 = Arc::new(PreparedUpdate {
-      gen : gs.gen,
+      gen: gs.gen,
       when: Instant::now(),
       us: vec![],
     });

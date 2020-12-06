@@ -42,7 +42,7 @@ fn str_deserialize<'de, S: DeserializeSeed<'de>>
 
 pub struct TomlDe<'de>(pub &'de toml::Value);
 
-struct SA<'de> (slice::Iter<'de, toml::Value>);
+struct SA<'de>(slice::Iter<'de, toml::Value>);
 
 impl<'de> SeqAccess<'de> for SA<'de> {
   type Error = Error;
@@ -61,7 +61,7 @@ impl<'de> SeqAccess<'de> for SA<'de> {
   }
 }
 
-struct MA<'de> (Peekable<toml::map::Iter<'de>>);
+struct MA<'de>(Peekable<toml::map::Iter<'de>>);
 
 impl<'de> MapAccess<'de> for MA<'de> {
   type Error = Error;
@@ -161,7 +161,7 @@ impl<'de> Deserializer<'de> for TomlDe<'de> {
         if let None = s.next();
         then { return vi.visit_enum(EA { k, v }) }
       },
-      _ => {},
+      _ => {}
     }
     // hopefully the format will figure it out, or produce an error
     visit(vi, &self.0)?
@@ -174,15 +174,13 @@ impl<'de> Deserializer<'de> for TomlDe<'de> {
 }
 
 #[throws(Error)]
-pub fn from_value<'de, T: Deserialize<'de>> (tv: &'de toml::Value) -> T
-{
+pub fn from_value<'de, T: Deserialize<'de>>(tv: &'de toml::Value) -> T {
   Deserialize::deserialize(TomlDe(tv))?
 }
 
 #[throws(Error)]
-pub fn from_str<T: DeserializeOwned> (s: &str) -> T
-{
-  let tv : toml::Value = s.parse().map_err(Error::TomlSyntax)?;
+pub fn from_str<T: DeserializeOwned>(s: &str) -> T {
+  let tv: toml::Value = s.parse().map_err(Error::TomlSyntax)?;
 //  dbg!(&tv);
   from_value(&tv)?
 }
