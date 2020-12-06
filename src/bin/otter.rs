@@ -1123,7 +1123,7 @@ mod library_add {
     };
     use Situation::*;
 
-    const WANTED : usize = 2;
+    const WANTED: usize = 2;
     let situation = if markers.len() < WANTED {
       let to_add = WANTED - markers.len();
       let spec = shapelib::ItemSpec {
@@ -1147,7 +1147,7 @@ mod library_add {
       Poor(insns,
            "surplus marker(s) removed")
     } else {
-      let mut good : ArrayVec<_> = default();
+      let mut good: ArrayVec<_> = default();
       for p in &markers {
         good.push(p.visible.as_ref().ok_or_else(
           || anyhow!("library marker(s) with hidden position!")
@@ -1172,7 +1172,7 @@ mod library_add {
         chan.alter_game(insns, None)?;
         eprintln!("updated game: {}\n\
                    please adjust markers as desired and run again",
-                 msg);
+                  msg);
         return Ok(());
       }
       Good([a, b]) => {
