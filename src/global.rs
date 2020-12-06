@@ -1284,7 +1284,7 @@ pub fn game_flush_task() {
       match ig.save_game_now() {
         Ok(_) => {
           assert!(!ig.c.game_dirty);
-        },
+        }
         Err(e) => {
           // todo: notify the players
           error!("save error! name={:?}: {}", &ig.name, &e);
