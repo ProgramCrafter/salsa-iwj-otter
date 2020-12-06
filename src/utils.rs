@@ -11,13 +11,12 @@ use std::os::unix::io::IntoRawFd;
 use fehler::{throw, throws};
 use libc;
 
-pub trait OrdExt : Ord + Sized + Clone {
+pub trait OrdExt: Ord + Sized + Clone {
   fn update_max(&mut self, new: &Self) {
     if *new > *self { *self = new.clone() }
   }
 }
-impl<T> OrdExt for T where T : Ord + Sized + Clone {
-}
+impl<T> OrdExt for T where T: Ord + Sized + Clone { }
 
 pub trait SplitAtDelim<Delim> {
   fn split_at_delim(&self, delim: Delim) -> (&Self, &Self);
