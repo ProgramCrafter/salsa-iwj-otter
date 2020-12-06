@@ -10,16 +10,17 @@
 
 use otter::slotmap_slot_idx;
 
-const BATCH : usize = 128;
-const ITERS : usize = 10*1024*1024;
+const BATCH: usize = 128;
+const ITERS: usize = 10*1024*1024;
 
 fn main () {
-  let vol_i_buffer = [ 0x123456789abcdefu64; BATCH ];
-  let mut vol_o_buffer = [ 0xdeadbeef; BATCH ];
+fn main() {
+  let vol_i_buffer = [0x123456789abcdefu64; BATCH];
+  let mut vol_o_buffer = [0xdeadbeef; BATCH];
 
   for _it in 0..ITERS {
     let input = unsafe { std::ptr::read_volatile(&vol_i_buffer) };
-    let mut output = [ 0u32; BATCH ];
+    let mut output = [0u32; BATCH];
 
     for (&i,o) in input.iter().zip(output.iter_mut()) {
       let kd = slotmap::KeyData::from_ffi(i);

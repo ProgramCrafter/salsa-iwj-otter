@@ -1197,7 +1197,7 @@ mod library_add {
         let PosC([w,h]) = bbox[1] - bbox[0];
 
         let mut did_newline = false;
-        let (ncbot, tlhs) = 'search : loop {
+        let (ncbot, tlhs) = 'search: loop {
           let ncbot = max(self.cbot, self.top + h);
           if ncbot > self.bot { None? }
           let mut any_clash_bot = None;
@@ -1212,27 +1212,29 @@ mod library_add {
                 let pv = p.visible.as_ref()?;
                 let tl = pv.pos + pv.bbox[0];
                 let br = pv.pos + pv.bbox[1];
-                if
-                  tl.0[0] >= self.clhs ||
-                  tl.0[1] >= ncbot     ||
-                  br.0[0] <= tlhs      ||
-                  br.0[1] <= self.top
+                if tl.0[0] >= self.clhs
+                  || tl.0[1] >= ncbot
+                  || br.0[0] <= tlhs
+                  || br.0[1] <= self.top
                 {
                   None
                 } else {
-                  if ma.verbose > 2 { eprintln!(
-                    "at {:?} tlhs={} ncbot={} avoiding {} tl={:?} br={:?}",
-                    &self, tlhs, ncbot,
-                    &p.itemname, &tl, &br
-                  )}
+                  if ma.verbose > 2 {
+                    eprintln!(
+                      "at {:?} tlhs={} ncbot={} avoiding {} tl={:?} br={:?}",
+                      &self, tlhs, ncbot, &p.itemname, &tl, &br
+                    )
+                  }
                   Some((br.0[0], br.0[1]))
                 }
-              }).next() {
-                self.clhs = nclhs;
-                any_clash_bot = Some(clash_bot);
-                continue 'within_line;
-              }
-            
+              })
+              .next()
+            {
+              self.clhs = nclhs;
+              any_clash_bot = Some(clash_bot);
+              continue 'within_line;
+            }
+
             break 'search (ncbot, tlhs);
           }
           // line is full
@@ -1277,7 +1279,7 @@ mod library_add {
             eprintln!("error: {}", &m);
             exit(exitcode);
           }
-        },
+        }
       };
       let spec = shapelib::ItemSpec {
         lib: args.tlg.pat.lib.clone(),

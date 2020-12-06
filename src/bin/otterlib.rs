@@ -1,7 +1,7 @@
 pub use otter::imports::*;
 
 #[throws(anyhow::Error)]
-fn main(){
+fn main() {
   let mut a = env::args();
   a.next().unwrap();
   let name = a.next().unwrap();
