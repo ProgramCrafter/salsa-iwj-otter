@@ -381,7 +381,7 @@ fn main() {
       Ok(spec_dir)
     })?;
 
-    let account : AccountName = account.map(Ok::<_,APE>).unwrap_or_else(||{
+    let account: AccountName = account.map(Ok::<_,APE>).unwrap_or_else(||{
       let user = env::var("USER").map_err(|e| ArgumentParseError(
         format!("default account needs USER env var: {}", &e)
       ))?;
@@ -392,8 +392,10 @@ fn main() {
     })?;
 
     let socket_path = socket_path.map(Ok::<_,APE>).unwrap_or_else(||{
-      Ok(config.clone()?
-         .0.command_socket.clone())
+      Ok(
+        config.clone()?.0
+          .command_socket.clone()
+      )
     })?;
     Ok((subcommand, subargs, MainOpts {
       account,
