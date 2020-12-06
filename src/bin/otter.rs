@@ -914,11 +914,11 @@ mod join_game {
                    player.0.get_idx_version().0,
                    &nick);
           deliver(&token);
-        },
+        }
         MGR::PlayerAccessToken(token) => {
           deliver(&token);
-        },
-        MGR::Fine => { },
+        }
+        MGR::Fine => {}
         _ => throw!(anyhow!("unexpected response to instruction(s)")),
       }
     }
