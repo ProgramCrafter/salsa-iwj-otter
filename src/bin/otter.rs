@@ -457,8 +457,9 @@ impl Conn {
       AlterGame { error: Some(error), .. } => {
         Err(error.clone()).context(format!(
           "game alterations failed (maybe partially); response to: {:?}",
-          &cmd))?;
-      },
+          &cmd
+        ))?;
+      }
     };
     resp
   }
@@ -609,9 +610,7 @@ impl ConnForGame {
     let insns = vec![ MgmtGameInstruction::ListPieces ];
     let mut responses = self.alter_game(insns, None)?;
     match responses.as_mut_slice() {
-      [MgmtGameResponse::Pieces(pieces)] => {
-        return mem::take(pieces)
-      },
+      [MgmtGameResponse::Pieces(pieces)] => return mem::take(pieces),
       wat => Err(anyhow!("ListPieces => {:?}", &wat))?,
     }
   }
@@ -647,7 +646,7 @@ fn setup_table(_ma: &MainOpts, spec: &TableSpec) -> Vec<MGI> {
     .unwrap_or(PLAYER_DEFAULT_PERMS.iter().cloned().collect());
   player_perms.extend(PLAYER_ALWAYS_PERMS.iter());
 
-  let acl : RawAcl<_> =
+  let acl: RawAcl<_> =
     players.iter().map(|tps| AclEntry {
       account_glob: tps.account_glob(),
       allow: player_perms.clone(),
