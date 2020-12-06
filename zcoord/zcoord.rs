@@ -614,19 +614,20 @@ impl TryFrom<&Mutable> for ZCoord {
 //---------- innards, unsafe ----------
 
 mod innards {
-  use super::*;
+  use std::alloc::{self, Layout};
   use std::mem::{self, align_of, size_of};
   use std::ptr::{self, NonNull};
-  use std::alloc::{self, Layout};
   use std::slice;
+  use super::*;
 
   unsafe impl Send for ZCoord { }
   unsafe impl Sync for ZCoord { }
 
-  pub(in super) type Innards = NonNull<u8>;
+  pub(super)
+  type Innards = NonNull<u8>;
   pub type Taillen = u16;
 
-  pub(in super)
+  pub(super)
   struct Header {
     pub taillen: u16,
   }
@@ -638,14 +639,14 @@ mod innards {
     d: [Tail1],
   }
 
-  const OFFSET : usize = {
+  const OFFSET: usize = {
     let h_size = size_of::<Header>();
     let l_align = align_of::<Tail1>();
     l_align * ((h_size + l_align - 1) / l_align)
   };
 
   fn layout(len: Taillen) -> (usize, Layout) {
-    let tail_nbytes : usize = size_of::<Tail1>() * (len as usize);
+    let tail_nbytes: usize = size_of::<Tail1>() * (len as usize);
     let all_nbytes = OFFSET + tail_nbytes;
     let align = max(align_of::<Header>(), align_of::<Tail1>());
     (all_nbytes, Layout::from_size_align(all_nbytes, align).unwrap())
@@ -671,28 +672,28 @@ mod innards {
       }
     }
   
-    pub(in super)
+    pub(super)
     fn alloc(taillen: Taillen) -> ZCoord {
+
       unsafe {
-        ZCoord::alloc_unsafe(taillen, |nt : *mut Tail1| {
+        ZCoord::alloc_unsafe(taillen, |nt: *mut Tail1| {
           ptr::write_bytes(nt, 0, taillen as usize);
         })
       }
     }
 
     #[throws(Overflow)]
-    pub(in super)
+    pub(super)
     fn alloc_copy(tail: &[Tail1]) -> ZCoord {
       let taillen = tail.len().try_into()?;
       unsafe {
-        ZCoord::alloc_unsafe(taillen, |nt : *mut Tail1| {
+        ZCoord::alloc_unsafe(taillen, |nt: *mut Tail1| {
           ptr::copy_nonoverlapping(tail.as_ptr(), nt, taillen as usize);
         })
       }
     }
 
-    pub(in super)
-    fn tail(&self) -> &[Tail1] {
+    pub(super) fn tail(&self) -> &[Tail1] {
       unsafe {
         let (h, t) = ptrs(self.0.as_ptr());
         let h = h.as_ref().unwrap();
@@ -700,7 +701,7 @@ mod innards {
       }
     }
 
-    pub(in super)
+    pub(super)
     fn tail_mut(&mut self) -> &mut [Tail1] {
       unsafe {
         let (h, t) = ptrs(self.0.as_ptr());
@@ -787,7 +788,7 @@ mod test {
   #[test]
   fn limb_debug() {
     fn chk(raw: RawLimbVal, disp: &str) {
-      let l : LimbVal = raw.into();
+      let l: LimbVal = raw.into();
       let dbg = format!("lv({})", &disp);
       assert_eq!( &format!("{}",   &l), disp );
       assert_eq!( &format!("{:?}", &l), &dbg );
@@ -822,7 +823,7 @@ mod test {
       fn tinc(self, e: &str) -> Self { self.tincdec(e, Increment, Greater) }
       fn tdec(self, e: &str) -> Self { self.tincdec(e, Decrement, Less)    }
     }
-    let start : ZCoord = Default::default();
+    let start: ZCoord = Default::default();
     assert_eq!(format!("{}", &start), "g000000000");
     start.clone_mut()
       .tinc("g001000000");
@@ -858,7 +859,7 @@ mod test {
   }
 
   #[test]
-  fn range(){
+  fn range() {
     struct It {
       i: RangeIterator,
       last: ZCoord,
@@ -884,15 +885,15 @@ mod test {
   }
 
   #[test]
-  fn some_range(){
+  fn some_range() {
     struct It {
       i: BoxedIterator,
       last: Option<ZCoord>,
     }
     #[throws(LogicError)]
     fn mkr(a: Option<&str>, b: Option<&str>, count: RangeCount) -> It {
-      let a = a.map(|s:&str| s.parse::<ZCoord>().unwrap().clone_mut());
-      let b = b.map(|s:&str| s.parse::<ZCoord>().unwrap().clone_mut());
+      let a = a.map(|s: &str| s.parse::<ZCoord>().unwrap().clone_mut());
+      let b = b.map(|s: &str| s.parse::<ZCoord>().unwrap().clone_mut());
       let last = a.as_ref().map(|m| m.repack().unwrap());
       let i = Mutable::some_range(a.as_ref(), b.as_ref(), count)?;
       It { i, last }
