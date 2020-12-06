@@ -370,7 +370,7 @@ impl AddSubOffset for AddSubRangeDelta {
   fn check_nospace(i: usize) { assert_ne!(i, 0) }
   fn start_limb(&self, _: &Mutable) -> usize { self.i }
   fn final_undo_delta() -> LimbVal { panic!() }
-  const SEALED_TRAIT : Sealed = Sealed(());
+  const SEALED_TRAIT: Sealed = Sealed(());
 }
 
 impl Mutable {
