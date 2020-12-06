@@ -187,30 +187,30 @@ pub struct Global {
   // (perf impact); outermost first, innermost last)
 
   // slow global locks:
-  save_area_lock : Mutex<Option<File>>,
+  save_area_lock: Mutex<Option<File>>,
   // <- accounts::accounts ->
   games_table: RwLock<GamesTable>,
 
   // per-game lock:
   // <- InstanceContainer ->
   // inner locks which the game needs:
-  dirty   : Mutex<VecDeque<InstanceRef>>,
+  dirty: Mutex<VecDeque<InstanceRef>>,
   pub config: RwLock<Arc<ServerConfig>>,
 
   // fast global lookups
-  players : RwLock<TokenTable<PlayerId>>,
-  clients : RwLock<TokenTable<ClientId>>,
+  players: RwLock<TokenTable<PlayerId>>,
+  clients: RwLock<TokenTable<ClientId>>,
 }
 
 pub type GamesGuard = RwLockWriteGuard<'static, GamesTable>;
-pub type GamesTable = HashMap<Arc<InstanceName>,InstanceRef>;
+pub type GamesTable = HashMap<Arc<InstanceName>, InstanceRef>;
 
 #[derive(Debug)]
 pub struct InstanceContainer {
-  live : bool,
-  game_dirty : bool,
-  access_dirty : bool,
-  g : Instance,
+  live: bool,
+  game_dirty: bool,
+  access_dirty: bool,
+  g: Instance,
 }
 
 #[derive(Debug,Default,Serialize,Deserialize)]
@@ -229,7 +229,7 @@ impl<X> From<PoisonError<X>> for InstanceLockError {
 pub struct PrivateCaller(());
 // outsiders cannot construct this
 // workaround for inability to have private trait methods
-const PRIVATE_Y : PrivateCaller = PrivateCaller(());
+const PRIVATE_Y: PrivateCaller = PrivateCaller(());
 
 // ========== implementations ==========
 
@@ -433,7 +433,7 @@ impl FromStr for InstanceName {
   type Err = InvalidScopedName;
   #[throws(InvalidScopedName)]
   fn from_str(s: &str) -> Self {
-    let mut names : [_;2] = Default::default();
+    let mut names: [_;2] = default();
     let scope = AccountScope::parse_name(s, &mut names)?;
     let [subaccount, game] = names;
     InstanceName {
@@ -448,7 +448,7 @@ impl Display for InstanceName {
   fn fmt(&self, f: &mut fmt::Formatter) {
     self.account.scope.display_name(
       &[ self.account.subaccount.as_str(), self.game.as_str() ],
-      |s| f.write_str(s)
+      |s| f.write_str(s),
     )?
   }
 }
@@ -517,7 +517,7 @@ impl<'ig> InstanceGuard<'ig> {
         iplayer.u.push(PreparedUpdate {
           gen,
           when: Instant::now(),
-          us : vec![ PreparedUpdateEntry::Error(
+          us: vec![ PreparedUpdateEntry::Error(
             None,
             signal.clone(),
           )],
@@ -567,10 +567,10 @@ impl<'ig> InstanceGuard<'ig> {
     };
 
     let mut updated_pieces = vec![];
-    
+
     // drop order is reverse of creation order, so create undo
     // after all the things it will reference
-    let mut undo : Vec<Box<dyn FnOnce(&mut InstanceGuard)>> = vec![];
+    let mut undo: Vec<Box<dyn FnOnce(&mut InstanceGuard)>> = vec![];
 
     // Arrange gs.pieces
     for (piece,p) in &mut self.c.g.gs.pieces {
@@ -698,7 +698,7 @@ impl<'ig> InstanceGuard<'ig> {
       access
     };
 
-    let current_tokens : ArrayVec<[&RawToken;2]> = {
+    let current_tokens: ArrayVec<[&RawToken;2]> = {
       let players = GLOBAL.players.read().unwrap();
       self.tokens_players.tr.iter().
         filter(|&token| (||{
@@ -713,7 +713,7 @@ impl<'ig> InstanceGuard<'ig> {
 
     let reset = reset || current_tokens.is_empty();
 
-    let token : RawToken = if reset {
+    let token: RawToken = if reset {
       drop(current_tokens);
 
       self.invalidate_tokens(player)?;
@@ -744,7 +744,7 @@ impl<'ig> InstanceGuard<'ig> {
         _ => {
           warn!("duplicate token for {}", player);
           throw!(ME::ServerFailure("duplicate token".to_string()));
-        },
+        }
       };
 
       (*token).clone()
@@ -824,8 +824,8 @@ enum SavefilenameParseResult {
   AccessFile,
   TempToDelete,
   GameFile {
-    access_leaf : Vec<u8>,
-    name : InstanceName,
+    access_leaf: Vec<u8>,
+    name: InstanceName,
   },
 }
 
@@ -897,9 +897,9 @@ impl InstanceGuard<'_> {
 
   #[throws(InternalError)]
   fn save_access_now(&mut self) {
-    self.save_something("a-", |s,w| {
+    self.save_something("a-", |s, w| {
       let ipieces = &s.c.g.ipieces;
-      let tokens_players : Vec<(&str, PlayerId)> = {
+      let tokens_players: Vec<(&str, PlayerId)> = {
         let global_players = GLOBAL.players.read().unwrap();
         s.c.g.tokens_players.tr
           .iter()
@@ -967,7 +967,7 @@ impl InstanceGuard<'_> {
       },
     };
 
-    let mut gs : GameState = Self::load_something(&name, "g-")?;
+    let mut gs: GameState = Self::load_something(&name, "g-")?;
 
     fn discard_mismatches<K:slotmap::Key, V1, V2>(
       primary:   &mut DenseSlotMap<K, V1>,
@@ -1016,9 +1016,9 @@ impl InstanceGuard<'_> {
       acl: acl.into(),
       ipieces: PiecesLoaded(ipieces),
       name: name.clone(),
-      clients : Default::default(),
-      tokens_clients : Default::default(),
-      tokens_players : Default::default(),
+      clients: default(),
+      tokens_clients: default(),
+      tokens_players: default(),
     };
     let cont = InstanceContainer {
       live: true,
