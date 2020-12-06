@@ -875,7 +875,7 @@ mod join_game {
           .unwrap_or_else(|| ma.account.default_nick());
         let details = MgmtPlayerDetails { nick: Some(nick) };
         insns.push(MGI::JoinGame { details });
-      },
+      }
       Some((player, mpi)) => {
         println!("already in game, as player #{} {:?}",
                  player.0.get_idx_version().0, &mpi.nick);
@@ -886,7 +886,7 @@ mod join_game {
             let details = MgmtPlayerDetails { nick: ma.nick.clone() };
             insns.push(MGI::UpdatePlayer { player, details });
           }
-        }          
+        }
         if args.reset_access {
           println!("resetting access token (invalidating other URLs)");
           insns.push(MGI::ResetPlayerAccess(player));
@@ -894,14 +894,13 @@ mod join_game {
           println!("redelivering existing access token");
           insns.push(MGI::RedeliverPlayerAccess(player));
         }
-      },
+      }
     };
 
     fn deliver(token: &AccessTokenReport) {
       for l in &token.lines {
         if l.contains(char::is_control) {
-          println!("Server token info contains control chars! {:?}",
-                   &l);
+          println!("Server token info contains control chars! {:?}", &l);
         } else {
           println!(" {}", &l);
         }
