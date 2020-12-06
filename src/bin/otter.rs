@@ -303,23 +303,24 @@ fn main() {
                       "do not modify default layout");
 
     let mut access = ap.refer(&mut rma.access);
-    access.metavar("EMAIL-ADDRESS").add_option(
-      &["--email"],
-      MapStore(|addr| Ok(Some(
-        TokenByEmail { addr: addr.to_string() }.into()
-      ))),
-      "send token by email, to EMAIL-ADDRESS (RFC822 recipient field syntax)"
-    );
+    access.metavar("EMAIL-ADDRESS")
+      .add_option(&["--email"],
+                  MapStore(|addr| Ok(Some(
+                    TokenByEmail { addr: addr.to_string() }.into()
+                  ))),
+                  "send token by email, to EMAIL-ADDRESS \
+                   (RFC822 recipient field syntax)");
     access.add_option(&["--url-on-stdout"],
                       StoreConst(Some(UrlOnStdout.into())),
                       "show game access url by printing to stdout");
-    access.metavar("TOKEN").add_option(
-      &["--fixed-token"],
-      MapStore(|s| Ok(Some(
-        FixedToken { token: RawToken(s.to_string()) }.into()
-      ))),
- "use fixed game access token TOKEN (for administrators, with --super, only; only `reset', not `redelivery', of tokens is possible)"
-    );
+    access.metavar("TOKEN")
+      .add_option(&["--fixed-token"],
+                  MapStore(|s| Ok(Some(
+                    FixedToken { token: RawToken(s.to_string()) }.into()
+                  ))),
+                  "use fixed game access token TOKEN \
+                   (for administrators, with --super, only; \
+                   only `reset', not `redelivery', of tokens is possible)");
     access.add_option(&["--no-access-token"],
                       StoreConst(Some(PlayerAccessUnset.into())),
                       "do not show game access info (for testing only)");
