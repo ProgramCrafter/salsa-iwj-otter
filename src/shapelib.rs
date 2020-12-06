@@ -4,7 +4,8 @@
 
 pub use crate::imports::*;
 
-use parking_lot::{RwLock, const_rwlock, RwLockReadGuard, MappedRwLockReadGuard};
+use parking_lot::{const_rwlock, RwLock};
+use parking_lot::{MappedRwLockReadGuard, RwLockReadGuard};
 
 // Naming convention:
 //  *Data, *List   from toml etc. (processed if need be)
@@ -13,7 +14,7 @@ use parking_lot::{RwLock, const_rwlock, RwLockReadGuard, MappedRwLockReadGuard};
 //  Item           } once loaded and part of a game,
 //  Outline        }  no Arc's as we serialise/deserialize during save/load
 
-pub type Registry = HashMap<String,shapelib::Contents>;
+pub type Registry = HashMap<String, shapelib::Contents>;
 
 #[derive(Debug)]
 pub struct Contents {
@@ -59,7 +60,7 @@ struct GroupDefn {
 
 #[derive(Deserialize,Debug)]
 #[serde(try_from="String")]
-struct FileList (Vec<FileData>);
+struct FileList(Vec<FileData>);
 
 #[derive(Deserialize,Debug)]
 struct FileData {
@@ -77,7 +78,7 @@ trait OutlineDefn : Debug + Sync + Send {
 }
 
 #[derive(Error,Debug)]
-pub enum LibraryLoadError{ 
+pub enum LibraryLoadError {
   #[error(transparent)]
   TomlParseError(#[from] toml::de::Error),
   #[error("error reading/opening library file: {0}: {1}")]
@@ -97,7 +98,7 @@ pub enum LibraryLoadError{
   #[error("{:?}",&self)]
   WrongNumberOfSizeDimensions { got: usize, expected: [usize;2] },
   #[error("{:?}",&self)]
-  InheritMissingParent(String,String),
+  InheritMissingParent(String, String),
   #[error("{:?}",&self)]
   InheritDepthLimitExceeded(String),
   #[error("{:?}",&self)]
@@ -108,34 +109,36 @@ pub enum LibraryLoadError{
 
 impl LibraryLoadError {
   fn ought(self) -> InternalError {
-    InternalError::InternalLogicError(format!("{:?}",self))
+    InternalError::InternalLogicError(format!("{:?}", self))
   }
 }
 
-const INHERIT_DEPTH_LIMIT : u8 = 20;
+const INHERIT_DEPTH_LIMIT: u8 = 20;
 
 type LLE = LibraryLoadError;
 type TV = toml::Value;
 type SE = SpecError;
 
-#[derive(Debug,Clone,Serialize,Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ItemSpec {
   pub lib: String,
   pub item: String,
 }
 
-#[derive(Debug,Clone,Serialize,Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MultiSpec {
   pub lib: String,
-  #[serde(default)] pub prefix: String,
-  #[serde(default)] pub suffix: String,
+  #[serde(default)]
+  pub prefix: String,
+  #[serde(default)]
+  pub suffix: String,
   pub items: Vec<String>,
 }
 
-define_index_type!{ pub struct DescId = u8; }
-define_index_type!{ pub struct SvgId = u8; }
+define_index_type! { pub struct DescId = u8; }
+define_index_type! { pub struct SvgId = u8; }
 
-#[derive(Copy,Clone,Debug,Serialize,Deserialize)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 struct ItemFace {
   svg: SvgId,
   desc: DescId,
