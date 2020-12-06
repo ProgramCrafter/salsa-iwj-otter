@@ -13,8 +13,8 @@ pub enum MgmtChannelReadError {
 display_as_debug!{MgmtChannelReadError}
 
 pub struct MgmtChannel {
-  read : io::Lines<BufReader<Box<dyn Read>>>,
-  write : BufWriter<Box<dyn Write>>,
+  read: io::Lines<BufReader<Box<dyn Read>>>,
+  write: BufWriter<Box<dyn Write>>,
 }
 
 impl MgmtChannel {
@@ -46,7 +46,7 @@ impl MgmtChannel {
   }
 }
 
-pub trait IoTryClone : Sized {
+pub trait IoTryClone: Sized {
   fn try_clone(&self) -> io::Result<Self>;
 }
 

@@ -7,26 +7,27 @@
 
 #![allow(clippy::redundant_closure_call)]
 
-pub mod imports;
-pub mod global;
-pub mod pieces;
-pub mod gamestate;
-pub mod keydata;
-pub mod updates;
-pub mod sse;
-pub mod error;
-pub mod session;
+pub mod accounts;
 pub mod api;
-pub mod spec;
 pub mod cmdlistener;
 pub mod commands;
-pub mod utils;
-pub mod mgmtchannel;
-pub mod debugreader;
-pub mod shapelib;
-pub mod tz;
-pub mod accounts;
 pub mod config;
+pub mod debugreader;
+pub mod error;
+pub mod gamestate;
+pub mod global;
+pub mod imports;
+pub mod keydata;
+pub mod mgmtchannel;
 pub mod nwtemplates;
-#[path="toml-de.rs"] pub mod toml_de;
-#[path="slotmap-slot-idx.rs"] pub mod slotmap_slot_idx;
+pub mod pieces;
+pub mod session;
+pub mod shapelib;
+pub mod spec;
+pub mod sse;
+pub mod tz;
+pub mod updates;
+pub mod utils;
+
+#[path = "slotmap-slot-idx.rs"]   pub mod slotmap_slot_idx;
+#[path = "toml-de.rs"]            pub mod toml_de;
