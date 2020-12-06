@@ -6,8 +6,8 @@
 
 use crate::imports::*;
 
-use std::sync::PoisonError;
 use slotmap::dense as sm;
+use std::sync::PoisonError;
 
 type ME = MgmtError;
 type ESU = ErrorSignaledViaUpdate;
@@ -16,11 +16,11 @@ type ESU = ErrorSignaledViaUpdate;
 
 visible_slotmap_key!{ ClientId('C') }
 
-const MAX_CLIENT_INACTIVITY : Duration = Duration::from_secs(200);
+const MAX_CLIENT_INACTIVITY: Duration = Duration::from_secs(200);
 
-const GAME_SAVE_LAG : Duration = Duration::from_millis(500);
+const GAME_SAVE_LAG: Duration = Duration::from_millis(500);
 
-const MAX_LOG_AGE : Duration = Duration::from_secs(10 * 86400);
+const MAX_LOG_AGE: Duration = Duration::from_secs(10 * 86400);
 
 #[derive(Hash,Ord,PartialOrd,Eq,PartialEq,Serialize)]
 #[repr(transparent)]

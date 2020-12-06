@@ -86,9 +86,9 @@ pub struct CommittedLogEntry {
 // ---------- piece trait, and rendering ----------
 
 #[typetag::serde]
-pub trait Outline : Send + Debug {
-  fn surround_path(&self, pri : &PieceRenderInstructions) -> Result<Html, IE>;
-  fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
+pub trait Outline: Send + Debug {
+  fn surround_path(&self, pri: &PieceRenderInstructions) -> Result<Html, IE>;
+  fn thresh_dragraise(&self, pri: &PieceRenderInstructions)
                       -> Result<Option<Coord>, IE>;
   fn bbox_approx(&self) -> [Pos;2];
 }
@@ -108,7 +108,7 @@ pub struct UoDescription {
 }
 
 #[typetag::serde]
-pub trait Piece : Outline + Send + Debug {
+pub trait Piece: Outline + Send + Debug {
   fn nfaces(&self) -> RawFaceId;
 
   #[throws(InternalError)]
@@ -125,7 +125,7 @@ pub trait Piece : Outline + Send + Debug {
   // #[throws] doesn't work here for some reason
   fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) -> IR;
 
-  fn describe_html(&self, face : Option<FaceId>) -> Html;
+  fn describe_html(&self, face: Option<FaceId>) -> Html;
 
   fn delete_hook(&self, _p: &PieceState, _gs: &mut GameState)
                  -> ExecuteGameChangeUpdates { 
@@ -137,14 +137,14 @@ pub trait Piece : Outline + Send + Debug {
 
 #[derive(Debug,Copy,Clone)]
 pub struct PieceRenderInstructions {
-  pub id : VisiblePieceId,
-  pub face : FaceId,
+  pub id: VisiblePieceId,
+  pub face: FaceId,
 }
 
 #[typetag::serde(tag="type")]
-pub trait PieceSpec : Debug {
+pub trait PieceSpec: Debug {
   fn count(&self) -> usize { 1 }
-  fn load(&self, i: usize) -> Result<Box<dyn Piece>,SpecError>;
+  fn load(&self, i: usize) -> Result<Box<dyn Piece>, SpecError>;
 }
 
 // ========== implementations ==========
@@ -156,7 +156,7 @@ impl Generation {
 }
 impl Display for Generation {
   fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-    Display::fmt(&self.0,f)
+    Display::fmt(&self.0, f)
   }
 }
 
@@ -176,7 +176,7 @@ impl Timestamp {
   }
 }
 
-pub trait ClampTable : Sized {
+pub trait ClampTable: Sized {
   fn clamped(self, range: Self) -> (Self, bool);
 }
 
@@ -211,7 +211,7 @@ impl Html {
 
 impl Debug for Html {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    const MAX : usize = 23;
+    const MAX: usize = 23;
     if self.0.len() < MAX {
       write!(f, "<{}>", &self.0)
     } else {
@@ -239,14 +239,14 @@ impl PieceState {
 }
 
 pub trait PieceExt {
-  fn make_defs(&self, pri : &PieceRenderInstructions) -> Result<Html,IE>;
-  fn describe_pri(&self, pri : &PieceRenderInstructions) -> Html;
+  fn make_defs(&self, pri: &PieceRenderInstructions) -> Result<Html, IE>;
+  fn describe_pri(&self, pri: &PieceRenderInstructions) -> Html;
   fn ui_operations(&self) -> Result<Vec<UoDescription>, IE>;
 }
 
 impl<T> PieceExt for T where T: Piece + ?Sized {
   #[throws(IE)]
-  fn make_defs(&self, pri : &PieceRenderInstructions) -> Html {
+  fn make_defs(&self, pri: &PieceRenderInstructions) -> Html {
     let mut defs = Html(String::new());
     let dragraise = match self.thresh_dragraise(pri)? {
       Some(n) if n < 0 => throw!(SE::NegativeDragraise),
@@ -264,7 +264,7 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
     defs
   }
 
-  fn describe_pri(&self, pri : &PieceRenderInstructions) -> Html {
+  fn describe_pri(&self, pri: &PieceRenderInstructions) -> Html {
     self.describe_html(Some(pri.face))
   }
 
@@ -316,8 +316,8 @@ impl GameState {
 
 // ========== ad-hoc and temporary ==========
 
-pub fn make_pieceid_visible(p : PieceId) -> VisiblePieceId {
+pub fn make_pieceid_visible(p: PieceId) -> VisiblePieceId {
   // todo-lens need to do censorship mapping here
-  let kd : slotmap::KeyData = p.into();
+  let kd: slotmap::KeyData = p.into();
   VisiblePieceId(kd)
 }
