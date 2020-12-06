@@ -746,14 +746,12 @@ impl UpdateHandler {
         }
         buf.log_updates(updates.log);
         buf.raw_updates(raw);
-      },
+      }
     }
   }
 
   #[throws(SVGProcessingError)]
-  fn complete(self,
-              g: &mut InstanceGuard,
-              who: &Html) {
+  fn complete(self, g: &mut InstanceGuard, who: &Html) {
     use UpdateHandler::*;
     match self {
       Bulk(bulk) => {
@@ -765,13 +763,13 @@ impl UpdateHandler {
 
         if bulk.logs {
           buf.log_updates(vec![LogEntry {
-            html: Html(format!("{} (re)configured the game", &who.0))
+            html: Html(format!("{} (re)configured the game", &who.0)),
           }]);
         }
 
         buf.raw_updates(bulk.raw);
-      },
-      Online => { },
+      }
+      Online => {}
     }
   }
 }
