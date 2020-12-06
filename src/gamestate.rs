@@ -21,7 +21,7 @@ visible_slotmap_key!{ VisiblePieceId('.') }
 
 #[derive(Clone,Serialize,Deserialize,Hash,Eq,Ord,PartialEq,PartialOrd)]
 #[serde(transparent)]
-pub struct Html (pub String);
+pub struct Html(pub String);
 
 #[derive(Copy,Clone,Debug,Serialize,Deserialize,Eq,Ord,PartialEq,PartialOrd)]
 #[serde(transparent)]
