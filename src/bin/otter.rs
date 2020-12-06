@@ -269,40 +269,38 @@ fn main() {
     let mut ap = ArgumentParser::new();
     ap.stop_on_first_argument(true);
     ap.silence_double_dash(true);
-    ap.refer(&mut rma.subcommand).required().add_argument("SUBCOMMAND",Store,
-                                      "subcommand");
-    ap.refer(&mut rma.subargs).add_argument("...",Collect,
-                                   "subcommand options/arguments");
+
+    ap.refer(&mut rma.subcommand).required()
+      .add_argument("SUBCOMMAND", Store, "subcommand");
+    ap.refer(&mut rma.subargs)
+      .add_argument("...", Collect, "subcommand options/arguments");
 
     let mut account = ap.refer(&mut rma.account);
-    account.metavar("ACCOUNT").add_option(&["--account"],
-                     StoreOption,
-                     "use account ACCOUNT (default: unix:<current user>:)");
+    account.metavar("ACCOUNT")
+      .add_option(&["--account"],
+                  StoreOption,
+                  "use account ACCOUNT (default: unix:<current user>:)");
+    ap.refer(&mut rma.nick).metavar("NICK")
+      .add_option(&["--nick"],
+                  StoreOption,
+                  "use NICK as nick for joining games (now and in the future) \
+                   (default: derive from account name");
+    ap.refer(&mut rma.timezone).metavar("TZ")
+      .add_option(&["--timezone"],
+                  StoreOption,
+                  "display times in timezone TZ (Olson timezone name) \
+                   (default is to use server's default timezone)");
 
-    ap.refer(&mut rma.nick).metavar("NICK").add_option(
-      &["--nick"],
-      StoreOption,
-      "use NICK as nick for joining games (now and in the future) \
-       (default: derive from account name");
-    ap.refer(&mut rma.timezone).metavar("TZ").add_option(
-      &["--timezone"],
-      StoreOption,
-      "display times in timezone TZ (Olson timezone name) \
-       (default is to use server's default timezone)");
     let mut layout = ap.refer(&mut rma.layout);
-    layout.add_option(
-      &["--layout-portrait"],
-      StoreConst(Some(PL::Portrait)),
-      "set account to display in portrait (by default)");
-    layout.add_option(
-      &["--layout-landscape"],
-      StoreConst(Some(PL::Landscape)),
-      "set account to display in landscape (by default)");
-    layout.add_option(
-      &["--layout-default"],
-      StoreConst(None),
-      "do not modify default layout");
-    
+    layout.add_option(&["--layout-portrait"],
+                      StoreConst(Some(PL::Portrait)),
+                      "set account to display in portrait (by default)");
+    layout.add_option(&["--layout-landscape"],
+                      StoreConst(Some(PL::Landscape)),
+                      "set account to display in landscape (by default)");
+    layout.add_option(&["--layout-default"],
+                      StoreConst(None),
+                      "do not modify default layout");
 
     let mut access = ap.refer(&mut rma.access);
     access.metavar("EMAIL-ADDRESS").add_option(
