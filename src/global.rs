@@ -39,13 +39,13 @@ pub struct InstanceName {
 pub struct InstanceRef (Arc<Mutex<InstanceContainer>>);
 
 pub struct Instance {
-  pub name : Arc<InstanceName>,
-  pub gs : GameState,
-  pub ipieces : PiecesLoaded,
-  pub clients : DenseSlotMap<ClientId,Client>,
-  pub iplayers : SecondarySlotMap<PlayerId, PlayerRecord>,
-  pub tokens_players : TokenRegistry<PlayerId>,
-  pub tokens_clients : TokenRegistry<ClientId>,
+  pub name: Arc<InstanceName>,
+  pub gs: GameState,
+  pub ipieces: PiecesLoaded,
+  pub clients: DenseSlotMap<ClientId, Client>,
+  pub iplayers: SecondarySlotMap<PlayerId, PlayerRecord>,
+  pub tokens_players: TokenRegistry<PlayerId>,
+  pub tokens_clients: TokenRegistry<ClientId>,
   pub acl: LoadedAcl<TablePermission>,
 }
 
@@ -63,20 +63,20 @@ pub struct IPlayerState {
 
 #[derive(Debug,Serialize,Deserialize)]
 #[serde(transparent)]
-pub struct PiecesLoaded (ActualPiecesLoaded);
-pub type ActualPiecesLoaded = SecondarySlotMap<PieceId,Box<dyn Piece>>;
+pub struct PiecesLoaded(ActualPiecesLoaded);
+pub type ActualPiecesLoaded = SecondarySlotMap<PieceId, Box<dyn Piece>>;
 #[derive(Copy,Clone,Debug)]
 pub struct ModifyingPieces(());
 
 #[derive(Debug,Serialize,Deserialize,Default)]
 #[serde(transparent)]
-pub struct Pieces (pub(in crate::global) ActualPieces);
-type ActualPieces = DenseSlotMap<PieceId,PieceState>;
+pub struct Pieces(pub(in crate::global) ActualPieces);
+type ActualPieces = DenseSlotMap<PieceId, PieceState>;
 
-#[derive(Debug)] 
+#[derive(Debug)]
 pub struct Client {
-  pub player : PlayerId,
-  pub lastseen : Instant,
+  pub player: PlayerId,
+  pub lastseen: Instant,
 }
 
 // KINDS OF PERSISTENT STATE
@@ -151,33 +151,33 @@ pub struct Client {
 // `live` is `false`.
 #[derive(Debug)]
 pub struct InstanceGuard<'g> {
-  pub c : MutexGuard<'g,InstanceContainer>,
-  pub gref : InstanceRef,
+  pub c: MutexGuard<'g, InstanceContainer>,
+  pub gref: InstanceRef,
 }
 
 #[derive(Debug,Default)]
 pub struct TokenRegistry<Id: AccessId> {
-  tr : HashSet<RawToken>,
-  id : PhantomData<Id>,
+  tr: HashSet<RawToken>,
+  id: PhantomData<Id>,
 }
 
 #[derive(Clone,Debug)]
 pub struct InstanceAccessDetails<Id> {
-  pub gref : InstanceRef,
-  pub ident : Id,
-  pub acctid : AccountId,
+  pub gref: InstanceRef,
+  pub ident: Id,
+  pub acctid: AccountId,
 }
 
 #[derive(Clone,Debug)]
 pub struct InstanceAccess<'i, Id> {
-  pub raw_token : &'i RawTokenVal,
-  pub i : InstanceAccessDetails<Id>,
+  pub raw_token: &'i RawTokenVal,
+  pub i: InstanceAccessDetails<Id>,
 }
 
 // ========== internal data structures ==========
 
 lazy_static! {
-  pub static ref GLOBAL : Global = Default::default();
+  pub static ref GLOBAL: Global = default();
 }
 
 #[derive(Default)]
