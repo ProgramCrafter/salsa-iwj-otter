@@ -301,19 +301,15 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
 }
 
 pub struct PrepareUpdatesBuffer<'r> {
-  g : &'r mut Instance,
-  us : Vec<PreparedUpdateEntry>,
-  by_client : IsResponseToClientOp,
-  gen : Option<Generation>,
+  g: &'r mut Instance,
+  us: Vec<PreparedUpdateEntry>,
+  by_client: IsResponseToClientOp,
+  gen: Option<Generation>,
 }
 
 /// In PROTOCOL.md terms, None is a Server update
-type IsResponseToClientOp = Option<(
-  WhatResponseToClientOp,
-  ClientId,
-  ClientSequence,
-)>;
-#[derive(Debug,Copy,Clone,Serialize,Deserialize)]
+type IsResponseToClientOp = Option<(WhatResponseToClientOp, ClientId, ClientSequence)>;
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum WhatResponseToClientOp {
   /// In PROTOCOL.md terms, a Client update
   Predictable,
@@ -361,7 +357,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     let update = match update {
       PreparedUpdateEntry::Piece {
         piece,
-        op : PieceUpdateOp::Modify(state),
+        op: PieceUpdateOp::Modify(state),
         ..
       } => {
         PreparedUpdateEntry::Error(
@@ -530,22 +526,22 @@ impl PreparedUpdate {
             FTG::Piece => TUE::Piece { piece, op: op.map_ref() },
             FTG::Exactly(x) => x,
           }
-        },
+        }
         PUE::Log(logent) => {
           TUE::Log((&tz, &logent))
-        },
+        }
         &PUE::SetTableSize(size) => {
           TUE::SetTableSize(size)
-        },
+        }
         PUE::SetTableColour(colour) => {
           TUE::SetTableColour(colour)
-        },
+        }
         &PUE::AddPlayer { player, ref data } => {
           TUE::AddPlayer { player, data }
-        },
+        }
         &PUE::RemovePlayer { player } => {
           TUE::RemovePlayer { player }
-        },
+        }
         PUE::Error(c, e) => {
           if *c == None || *c == Some(dest) {
             TUE::Error(e)
