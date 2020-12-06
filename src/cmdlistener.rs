@@ -8,10 +8,10 @@ use crate::imports::*;
 
 // ---------- newtypes, type aliases, basic definitions ----------
 
+use pwd::Passwd;
 use std::os::unix::io::AsRawFd;
 use std::os::unix::net::UnixListener;
 use uds::UnixStreamExt;
-use pwd::Passwd;
 
 pub use crate::from_instance_lock_error;
 pub use std::os::unix::net::UnixStream;
@@ -28,24 +28,24 @@ from_instance_lock_error!{MgmtError}
 type AS = AccountScope;
 type TP = TablePermission;
 
-const USERLIST : &str = "/etc/userlist";
-const CREATE_PIECES_MAX : u32 = 300;
+const USERLIST: &str = "/etc/userlist";
+const CREATE_PIECES_MAX: u32 = 300;
 
-const DEFAULT_POS_START : Pos = PosC([20,20]);
-const DEFAULT_POS_DELTA : Pos = PosC([5,5]);
+const DEFAULT_POS_START: Pos = PosC([20,20]);
+const DEFAULT_POS_DELTA: Pos = PosC([5,5]);
 
 pub type AuthorisationSuperuser = Authorisation<authproofs::Global>;
 
 pub struct CommandListener {
-  listener : UnixListener,
+  listener: UnixListener,
 }
 
 struct CommandStream<'d> {
-  euid : Result<Uid, ConnectionEuidDiscoverEerror>,
-  desc : &'d str,
-  account : Option<AccountSpecified>,
+  euid: Result<Uid, ConnectionEuidDiscoverEerror>,
+  desc: &'d str,
+  account: Option<AccountSpecified>,
   superuser: Option<AuthorisationSuperuser>,
-  chan : MgmtChannel,
+  chan: MgmtChannel,
 }
 
 #[derive(Debug,Clone)]
@@ -143,7 +143,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         auth: auth.therefore_ok(),
       });
       Fine
-    },
+    }
 
     CheckAccount => {
       let ag = AccountsGuard::lock();
@@ -158,11 +158,11 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
       let gs = crate::gamestate::GameState {
         table_colour: Html::lit("green"),
-        table_size : DEFAULT_TABLE_SIZE,
-        pieces : Default::default(),
-        players : Default::default(),
-        log : Default::default(),
-        gen : Generation(0),
+        table_size: DEFAULT_TABLE_SIZE,
+        pieces: default(),
+        players: default(),
+        log: default(),
+        gen: Generation(0),
         max_z: default(),
       };
 
@@ -187,7 +187,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         })?;
 
       resp
-    },
+    }
 
     ListGames { all } => {
       let (scope, auth) = if all == Some(true) {
@@ -195,21 +195,20 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         (None, auth.therefore_ok())
       } else {
         let AccountSpecified { notional_account, auth, .. } =
-          cs.account.as_ref()
-          .ok_or(ME::SpecifyAccount)?;
+          cs.account.as_ref().ok_or(ME::SpecifyAccount)?;
         (Some(notional_account), *auth)
       };
       let mut games = Instance::list_names(scope, auth);
       games.sort_unstable();
       GamesList(games)
-    },
+    }
 
     MgmtCommand::AlterGame { game, insns, how } => {
       let mut ag = AccountsGuard::lock();
       let gref = Instance::lookup_by_name_unauth(&game)?;
       let mut g = gref.lock()?;
       execute_for_game(cs, &mut ag, &mut g, insns, how)?
-    },
+    }
 
     DestroyGame { game } => {
       let mut ag = AccountsGuard::lock();
@@ -225,7 +224,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       let lib = shapelib::libs_lookup(&spec.lib)?;
       let results = lib.list_glob(&spec.item)?;
       LibraryItems(results)
-    },
+    }
   }
 }
 
@@ -238,7 +237,7 @@ type ExecuteGameInsnResults<'igr, 'ig> = (
 );
 
 //#[throws(ME)]
-fn execute_game_insn<'cs, 'igr, 'ig : 'igr>(
+fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   cs: &'cs CommandStream,
   ag: &'_ mut AccountsGuard,
   ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,

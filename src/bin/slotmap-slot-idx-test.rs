@@ -13,7 +13,6 @@ use otter::slotmap_slot_idx;
 const BATCH: usize = 128;
 const ITERS: usize = 10*1024*1024;
 
-fn main () {
 fn main() {
   let vol_i_buffer = [0x123456789abcdefu64; BATCH];
   let mut vol_o_buffer = [0xdeadbeef; BATCH];
