@@ -85,7 +85,6 @@ pub struct CommittedLogEntry {
 
 // ---------- piece trait, and rendering ----------
 
-
 #[typetag::serde]
 pub trait Outline : Send + Debug {
   fn surround_path(&self, pri : &PieceRenderInstructions) -> Result<Html, IE>;
