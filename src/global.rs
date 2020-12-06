@@ -1066,20 +1066,20 @@ pub fn load_games(accounts: &mut AccountsGuard,
       let leaf = leaf.as_bytes();
       match savefilename_parse(leaf)? {
         NotGameFile => {
-        },
+        }
         TempToDelete => {
           fs::remove_file(de.path())
             .context("stale temporary file")?;
-        },
+        }
         AccessFile => {
           a_leaves.entry(leaf.to_owned()).or_insert_with(
             || Found(de.path())
           );
-        },
+        }
         GameFile { access_leaf, name } => {
           InstanceGuard::load_game(accounts, games, name)?;
           a_leaves.insert(access_leaf, Used);
-        },
+        }
       }
       <Result<_,anyhow::Error>>::Ok(())
     })().with_context(|| format!("leaf={:?}", leaf))?;
