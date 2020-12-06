@@ -1325,7 +1325,7 @@ fn client_expire_old_clients() {
     impl ClientIterator for Any {
       type Ret = ();
       fn old(&mut self, _client: ClientId) -> Option<()> {
-        return Some(())
+        Some(())
       }
     }
     if let (_, Some(())) = Any.iter(&gref, max_age) {
@@ -1337,8 +1337,7 @@ fn client_expire_old_clients() {
     struct Now(HashSet<ClientId>);
     impl ClientIterator for Now {
       type Ret = Impossible;
-      fn old(&mut self, client: ClientId)
-             -> Option<Impossible> {
+      fn old(&mut self, client: ClientId) -> Option<Impossible> {
         self.0.insert(client);
         None
       }
@@ -1384,7 +1383,7 @@ fn global_expire_old_logs() {
 
 pub fn logs_periodic_expiry() {
   loop {
-    sleep(MAX_LOG_AGE/10);
+    sleep(MAX_LOG_AGE / 10);
     global_expire_old_logs();
   }
 }
