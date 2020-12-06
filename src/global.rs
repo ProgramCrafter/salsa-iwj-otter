@@ -1100,8 +1100,8 @@ pub fn load_games(accounts: &mut AccountsGuard,
 
 pub type TokenTable<Id> = HashMap<RawToken, InstanceAccessDetails<Id>>;
 
-pub trait AccessId : Copy + Clone + 'static {
-  type Error : Into<OnlineError>;
+pub trait AccessId: Copy + Clone + 'static {
+  type Error: Into<OnlineError>;
   const ERROR : Self::Error;
   fn global_tokens(_:PrivateCaller) -> &'static RwLock<TokenTable<Self>>;
   fn tokens_registry(ig: &mut Instance, _:PrivateCaller)
@@ -1116,7 +1116,7 @@ pub struct PlayerNotFound;
 
 impl AccessId for PlayerId {
   type Error = PlayerNotFound;
-  const ERROR : PlayerNotFound = PlayerNotFound;
+  const ERROR: PlayerNotFound = PlayerNotFound;
   fn global_tokens(_: PrivateCaller) -> &'static RwLock<TokenTable<Self>> {
     &GLOBAL.players
   }
@@ -1127,7 +1127,7 @@ impl AccessId for PlayerId {
 }
 impl AccessId for ClientId {
   type Error = OnlineError;
-  const ERROR : OnlineError = NoClient;
+  const ERROR: OnlineError = NoClient;
   fn global_tokens(_: PrivateCaller) -> &'static RwLock<TokenTable<Self>> {
     &GLOBAL.clients
   }
@@ -1169,8 +1169,8 @@ impl<'r, Id> FromFormValue<'r> for InstanceAccess<'r, Id>
 
 #[throws(OE)]
 pub fn record_token<Id : AccessId> (
-  ig : &mut InstanceGuard,
-  iad : InstanceAccessDetails<Id>
+  ig: &mut InstanceGuard,
+  iad: InstanceAccessDetails<Id>
 ) -> RawToken {
   let token = RawToken::new_random();
   ig.token_register(token.clone(), iad);
