@@ -959,7 +959,7 @@ mod leave_game {
       None => {
         println!("this account is not a player in that game");
         exit(EXIT_NOTFOUND);
-      },
+      }
       Some((player, _)) => player,
     };
 
