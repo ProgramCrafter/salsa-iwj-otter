@@ -65,19 +65,20 @@
 
 #![feature(slice_strip)]
 
-use std::cmp::{Ordering, max};
+use std::cmp::{max, Ordering};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self, Debug, Display, Formatter};
 use std::iter;
 use std::num::{TryFromIntError, Wrapping};
 use std::str;
 use std::str::FromStr;
-use fehler::{throw, throws};
+
 use derive_more::*;
-use serde::{Serialize, Deserialize};
-use thiserror::Error;
+use fehler::{throw, throws};
+use serde::{Deserialize, Serialize};
 use serde_with::DeserializeFromStr;
 use serde_with::SerializeDisplay;
+use thiserror::Error;
 
 pub mod misc;
 
@@ -87,26 +88,26 @@ pub type RangeCount = u32;
 
 type Tail1 = u8;
 
-const BITS_PER_DIGIT : usize = 5;
-const DIGITS_PER_LIMB : usize = 10;
+const BITS_PER_DIGIT: usize = 5;
+const DIGITS_PER_LIMB: usize = 10;
 
 type RawLimbVal = u64;
 #[derive(Copy,Clone,Eq,PartialEq,Ord,PartialOrd)]
 #[derive(Neg,Add,BitAnd,Sub,Shr,ShrAssign)]
-pub struct LimbVal (Wrapping<RawLimbVal>);
+pub struct LimbVal(Wrapping<RawLimbVal>);
 
-const DELTA : LimbVal = lv(0x4000_0000);
-const ZERO : LimbVal = lv(0);
-const ONE : LimbVal = lv(1);
-const MINUS_ONE : LimbVal = lv(-1i64 as u64);
+const DELTA: LimbVal = lv(0x4000_0000);
+const ZERO: LimbVal = lv(0);
+const ONE: LimbVal = lv(1);
+const MINUS_ONE: LimbVal = lv(-1i64 as u64);
 
-const RAW_LIMB_MODULUS : RawLimbVal = 1u64 << BITS_PER_LIMB;
+const RAW_LIMB_MODULUS: RawLimbVal = 1u64 << BITS_PER_LIMB;
 
-const BITS_PER_LIMB : usize = BITS_PER_DIGIT * DIGITS_PER_LIMB;
-const DIGIT_MASK : LimbVal = lv((1u64 << BITS_PER_DIGIT) - 1);
-const TEXT_PER_LIMB : usize = DIGITS_PER_LIMB + 1;
-const LIMB_MODULUS : LimbVal = lv(RAW_LIMB_MODULUS);
-const LIMB_MASK    : LimbVal = lv(RAW_LIMB_MODULUS-1);
+const BITS_PER_LIMB: usize = BITS_PER_DIGIT * DIGITS_PER_LIMB;
+const DIGIT_MASK: LimbVal = lv((1u64 << BITS_PER_DIGIT) - 1);
+const TEXT_PER_LIMB: usize = DIGITS_PER_LIMB + 1;
+const LIMB_MODULUS: LimbVal = lv(RAW_LIMB_MODULUS);
+const LIMB_MASK: LimbVal = lv(RAW_LIMB_MODULUS - 1);
 
 #[derive(DeserializeFromStr,SerializeDisplay)]
 pub struct ZCoord(innards::Innards);
@@ -159,7 +160,7 @@ impl Display for LimbVal {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut fmt::Formatter) {
     let mut buf = [0u8; DIGITS_PER_LIMB];
-    let lhs : RawLimbVal = self.to_str_buf(&mut buf).primitive();
+    let lhs: RawLimbVal = self.to_str_buf(&mut buf).primitive();
     if lhs != 0 {
       write!(f, "{:#x?}_!_", lhs)?;
     }
@@ -192,7 +193,7 @@ impl ZCoord {
 impl Mutable {
   fn from_u8_unchecked(tail: &[u8]) -> Mutable {
     let nlimbs = (tail.len() + 1) / TEXT_PER_LIMB;
-    let mut limbs = Vec::with_capacity(nlimbs+2);
+    let mut limbs = Vec::with_capacity(nlimbs + 2);
     for lt in tail.chunks(TEXT_PER_LIMB) {
       let s = str::from_utf8(&lt[0..DIGITS_PER_LIMB]).unwrap();
       let v = RawLimbVal::from_str_radix(s, 1 << BITS_PER_DIGIT).unwrap();
@@ -215,7 +216,7 @@ pub trait AddSubOffset {
   fn check_nospace(i: usize) { if i == 0 { throw!() } }
   fn start_limb(&self, m: &Mutable) -> usize { m.limbs.len() - 1 }
   fn final_undo_delta() -> LimbVal;
-  const SEALED_TRAIT : Sealed;
+  const SEALED_TRAIT: Sealed;
 }
 
 pub struct Sealed(());
@@ -229,7 +230,7 @@ impl AddSubOffset for Increment {
   #[throws(as Option)]
   fn check_underflow(_: &Mutable, _: usize, _: LimbVal) { }
   fn final_undo_delta() -> LimbVal { DELTA }
-  const SEALED_TRAIT : Sealed = Sealed(());
+  const SEALED_TRAIT: Sealed = Sealed(());
 }
 
 #[derive(Debug)]
