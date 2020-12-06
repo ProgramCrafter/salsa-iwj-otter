@@ -4,10 +4,10 @@
 
 use crate::imports::*;
 
+use parking_lot::MappedRwLockReadGuard;
 use parking_lot::{const_rwlock, RwLock, RwLockReadGuard};
-use parking_lot::{MappedRwLockReadGuard};
 
-static STATE : RwLock<Option<State>> = const_rwlock(None);
+static STATE: RwLock<Option<State>> = const_rwlock(None);
 
 struct State {
   tera: tera::Tera,

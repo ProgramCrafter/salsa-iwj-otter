@@ -6,19 +6,19 @@
 
 use crate::imports::*;
 
-type ColourMap = IndexVec<FaceId,Colour>;
+type ColourMap = IndexVec<FaceId, Colour>;
 
 #[derive(Debug,Serialize,Deserialize)]
 // todo: this serialisation is rather large
 struct SimpleShape {
-  desc : Html,
-  path : Html,
-  colours : ColourMap,
+  desc: Html,
+  path: Html,
+  colours: ColourMap,
   itemname: String,
   outline: Box<dyn Outline>,
 }
 
-pub const SELECT_SCALE : f64 = 1.1;
+pub const SELECT_SCALE: f64 = 1.1;
 
 #[derive(Copy,Clone,Debug,Error,Serialize,Deserialize)]
 pub enum SVGProcessingError {
@@ -59,8 +59,8 @@ pub fn svg_rescale_path(input: &Html, scale: f64) -> Html {
       r
     }
   }
-  const ALWAYS_MAP : RotatingBitmap = RotatingBitmap::new(0x01, 1);
-  
+  const ALWAYS_MAP: RotatingBitmap = RotatingBitmap::new(0x01, 1);
+
   let mut out = String::new();
   let mut map = ALWAYS_MAP;
   let mut first = iter::once(());
@@ -74,7 +74,7 @@ pub fn svg_rescale_path(input: &Html, scale: f64) -> Html {
       "z"                   => map.reset(),
       v if v.starts_with(|s:char| s=='-' || s=='.' || s.is_ascii_digit()) => {
         if map.next() {
-          let v : f64 = v.parse()?;
+          let v: f64 = v.parse()?;
           write!(&mut out, "{}", v * scale)?;
           continue;
         }
@@ -84,7 +84,7 @@ pub fn svg_rescale_path(input: &Html, scale: f64) -> Html {
     write!(&mut out, "{}", w)?;
   }
 
-  trace!("rescaled by {}: {:?} as {:?}",scale,input,&out);
+  trace!("rescaled by {}: {:?} as {:?}", scale, input, &out);
   Html(out)
 }
 
