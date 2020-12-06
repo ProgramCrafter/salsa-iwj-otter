@@ -15,7 +15,7 @@ slotmap::new_key_type!{
 #[derive(Copy,Clone,Debug,Ord,PartialOrd,Eq,PartialEq)]
 #[derive(Serialize,Deserialize)]
 #[serde(transparent)]
-pub struct Generation (pub u64);
+pub struct Generation(pub u64);
 
 visible_slotmap_key!{ VisiblePieceId('.') }
 

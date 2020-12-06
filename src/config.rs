@@ -155,7 +155,7 @@ impl ServerConfig {
 
 impl Default for ServerConfig {
   fn default() -> ServerConfig {
-    let spec : ServerConfigSpec = toml_de::from_str(r#"
+    let spec: ServerConfigSpec = toml_de::from_str(r#"
       public_url = "INTERNAL ERROR"
       "#)
       .expect("parse dummy config as ServerConfigSpec");

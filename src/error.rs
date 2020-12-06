@@ -64,14 +64,14 @@ impl From<anyhow::Error> for TokenDeliveryError {
       a.chain()
         .map(ToString::to_string)
         .collect::<Vec<_>>()
-        .join(": ")
+        .join(": "),
     )
   }
 }
 
 impl From<InternalError> for SpecError {
   fn from(ie: InternalError) -> SpecError {
-    SpecError::InternalError(format!("{:?}",ie))
+    SpecError::InternalError(format!("{:?}", ie))
   }
 }
 #[derive(Error,Debug,Serialize,Clone)]
@@ -131,13 +131,13 @@ pub trait ById {
 pub trait IdForById {
   type Error;
   #[allow(clippy::declare_interior_mutable_const)]
-// https://github.com/rust-lang/rust-clippy/issues/3962#issuecomment-667957112
-  const ERROR : Self::Error;
+  // https://github.com/rust-lang/rust-clippy/issues/3962#issuecomment-667957112
+  const ERROR: Self::Error;
 }
 
 macro_rules! some_slotmap {
   ($slotmap:ident) => {
-    impl<I:IdForById+slotmap::Key, T> ById for $slotmap<I,T> {
+    impl<I: IdForById + slotmap::Key, T> ById for $slotmap<I,T> {
       type Id = I;
       type Entry = T;
       type Error = <I as IdForById>::Error;
