@@ -184,7 +184,7 @@ impl Piece for Item {
            face.scale[0], face.scale[1], -face.centre[0], -face.centre[1],
            svgd.0)?;
   }
-  fn describe_html(&self, face : Option<FaceId>) -> Html {
+  fn describe_html(&self, face: Option<FaceId>) -> Html {
     self.descs[ match face {
       Some(face) => self.faces[face].desc,
       None => self.desc_hidden,
@@ -194,7 +194,7 @@ impl Piece for Item {
   fn itemname(&self) -> &str { &self.itemname }
 }
 
-static SHAPELIBS : RwLock<Option<Registry>> = const_rwlock(None);
+static SHAPELIBS: RwLock<Option<Registry>> = const_rwlock(None);
 
 #[throws(SpecError)]
 pub fn libs_lookup(libname: &str)
