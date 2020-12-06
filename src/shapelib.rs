@@ -165,8 +165,8 @@ pub struct ItemEnquiryData {
 
 #[typetag::serde(name="Lib")]
 impl Outline for Item { delegate! { to self.outline {
-  fn surround_path(&self, pri : &PieceRenderInstructions) -> Result<Html, IE>;
-  fn thresh_dragraise(&self, pri : &PieceRenderInstructions)
+  fn surround_path(&self, pri: &PieceRenderInstructions) -> Result<Html, IE>;
+  fn thresh_dragraise(&self, pri: &PieceRenderInstructions)
                       -> Result<Option<Coord>, IE>;
   fn bbox_approx(&self) -> [Pos; 2];
 }}}
