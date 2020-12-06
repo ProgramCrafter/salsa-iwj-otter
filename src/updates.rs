@@ -193,21 +193,21 @@ impl PreparedUpdateEntry {
       Piece { ref op, .. } => {
         50 +
         op.new_state().map(|x| x.svg.0.as_bytes().len()).unwrap_or(0)
-      },
+      }
       Log(logent) => {
         logent.logent.html.0.as_bytes().len() * 28
-      },
+      }
       AddPlayer { player:_, data: DataLoadPlayer { dasharray } } => {
         dasharray.as_bytes().len() + 100
-      },
+      }
       SetTableColour(colour) => {
         colour.0.as_bytes().len() + 50
-      },
+      }
       SetTableSize(_) |
       RemovePlayer { player:_ } |
       Error(_,_) => {
         100
-      },
+      }
     }
   }
 }
