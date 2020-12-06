@@ -459,9 +459,9 @@ impl<ASO:AddSubOffset, MR:MutateReturn> Iterator for IteratorCore<ASO, MR> {
   }
 }
 
-pub trait BoxedIteratorTrait : Iterator<Item=ZCoord> + Debug { }
+pub trait BoxedIteratorTrait: Iterator<Item = ZCoord> + Debug { }
 pub type BoxedIterator = Box<dyn BoxedIteratorTrait>;
-impl<T> BoxedIteratorTrait for T where T : Iterator<Item=ZCoord> + Debug { }
+impl<T> BoxedIteratorTrait for T where T: Iterator<Item = ZCoord> + Debug {}
 
 impl Mutable {
   pub fn iter<ASO:AddSubOffset>(self, aso: ASO)
