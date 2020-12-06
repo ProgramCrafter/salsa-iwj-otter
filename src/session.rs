@@ -7,17 +7,17 @@ use crate::imports::*;
 #[derive(Serialize,Debug)]
 struct SessionRenderContext {
   table_colour: Colour,
-  ptoken : RawToken,
-  ctoken : RawToken,
-  player : PlayerId,
-  gen : Generation,
-  table_size : Pos,
-  uses : Vec<SessionPieceContext>,
-  defs : Vec<(VisiblePieceId,Html)>,
-  nick : String,
-  load : String,
-  log : Vec<SessionFormattedLogEntry>,
-  sse_url_prefix : String,
+  ptoken: RawToken,
+  ctoken: RawToken,
+  player: PlayerId,
+  gen: Generation,
+  table_size: Pos,
+  uses: Vec<SessionPieceContext>,
+  defs: Vec<(VisiblePieceId, Html)>,
+  nick: String,
+  load: String,
+  log: Vec<SessionFormattedLogEntry>,
+  sse_url_prefix: String,
 }
 
 #[derive(Debug,Serialize)]
@@ -35,22 +35,22 @@ struct SessionPieceContext {
 
 #[derive(Serialize,Debug)]
 struct SessionPieceLoadJson<'r> {
-  held : &'r Option<PlayerId>,
-  z : ZCoord,
-  zg : Generation,
-  pinned : bool,
+  held: &'r Option<PlayerId>,
+  z: ZCoord,
+  zg: Generation,
+  pinned: bool,
   uos: &'r [UoDescription],
 }
 
 #[derive(Serialize,Debug)]
 struct DataLoad {
   last_log_ts: String,
-  players : HashMap<PlayerId, DataLoadPlayer>,
+  players: HashMap<PlayerId, DataLoadPlayer>,
 }
 
 #[derive(Deserialize)]
 struct SessionForm {
-  ptoken : RawToken,
+  ptoken: RawToken,
 }
 #[post("/_/session/<layout>", format="json", data="<form>")]
 fn session(form : Json<SessionForm>, layout: Option<PresentationLayout>)
@@ -88,7 +88,7 @@ fn session(form : Json<SessionForm>, layout: Option<PresentationLayout>)
       gpl.layout = layout;
     }
     let layout = gpl.layout;
-    let mut pieces : Vec<_> = ig.gs.pieces.iter().collect();
+    let mut pieces: Vec<_> = ig.gs.pieces.iter().collect();
 
     pieces.sort_by_key(|(_,pr)| &pr.zlevel);
 
