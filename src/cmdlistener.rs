@@ -278,7 +278,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
   impl<'cs> CommandStream<'cs> {
     #[throws(MgmtError)]
-    fn check_acl_manip_player_access<'igr, 'ig : 'igr>(
+    fn check_acl_manip_player_access<'igr, 'ig: 'igr>(
       &self,
       ag: &AccountsGuard,
       ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
@@ -312,7 +312,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
     Insn::SetTableColour(colour) => {
       let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
-      let colour : Colour = (&colour).try_into()?;
+      let colour: Colour = (&colour).try_into()?;
       ig.gs.table_colour = colour.clone();
       (U{ pcs: vec![],
           log: vec![ LogEntry {
@@ -324,15 +324,14 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     }
 
     Insn::JoinGame {
-      details: MgmtPlayerDetails { nick }
+      details: MgmtPlayerDetails { nick },
     } => {
       let account = &cs.current_account()?.notional_account;
       let (arecord, acctid) = ag.lookup(account)?;
       let (ig, auth) = cs.check_acl(ag, ig, PCH::Instance, &[TP::Play])?;
       let nick = nick.ok_or(ME::MustSpecifyNick)?;
       let logentry = LogEntry {
-        html: Html(format!("{} [{}] joined the game",
-                           &nick, &account)),
+        html: Html(format!("{} [{}] joined the game", &nick, &account)),
       };
       let timezone = &arecord.timezone
 /*.as_ref().map(String::as_str)
@@ -392,7 +391,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let mut log = vec![];
       if let Some(new_nick) = nick {
         ig.check_new_nick(&new_nick)?;
-        let gpl = ig.gs.players.byid_mut(player)?; 
+        let gpl = ig.gs.players.byid_mut(player)?;
         log.push(LogEntry {
           html: Html(format!("{} changed {}'s nick to {}",
                              &who.0,
@@ -505,7 +504,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let (ig_g, modperm, _) = cs.check_acl_modify_pieces(ag, ig)?;
       let ig = &mut **ig_g;
       let gs = &mut ig.gs;
-      let implicit : u32 = info.count()
+      let implicit: u32 = info.count()
         .try_into().map_err(
           |_| SE::InternalError(format!("implicit item count out of range"))
         )?;
@@ -649,7 +648,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 // ---------- how to execute game commands & handle their updates ----------
 
 #[throws(ME)]
-fn execute_for_game<'cs, 'igr, 'ig : 'igr>(
+fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   cs: &'cs CommandStream,
   ag: &mut AccountsGuard,
   igu: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
@@ -688,16 +687,15 @@ fn execute_for_game<'cs, 'igr, 'ig : 'igr>(
   }
   MgmtResponse::AlterGame {
     responses,
-    error: res.unwrap_or_else(Some)
+    error: res.unwrap_or_else(Some),
   }
 }
 
-
 #[derive(Debug,Default)]
 struct UpdateHandlerBulk {
-  pieces : slotmap::SparseSecondaryMap<PieceId, PieceUpdateOp<(),()>>,
-  logs : bool,
-  raw : Vec<PreparedUpdateEntry>,
+  pieces: slotmap::SparseSecondaryMap<PieceId, PieceUpdateOp<(),()>>,
+  logs: bool,
+  raw: Vec<PreparedUpdateEntry>,
 }
 
 #[derive(Debug)]
