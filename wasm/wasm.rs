@@ -3,12 +3,13 @@
 // There is NO WARRANTY.
 
 use std::fmt::Display;
+
 use fehler::throws;
 use js_sys::JsString;
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
-use zcoord::{ZCoord,Mutable};
+use zcoord::{Mutable,ZCoord};
 
 #[derive(Error,Clone,Copy,Debug,Eq,PartialEq)]
 #[error("packed Z coordinate wrong JS type (not a string)")]
@@ -53,12 +54,12 @@ pub fn increment(packed: &JsValue) -> JsValue {
 
 #[wasm_bindgen]
 pub fn def_zcoord() -> JsValue {
-  let z : ZCoord = Default::default();
+  let z: ZCoord = Default::default();
   z.to_string().into()
 }
 
 #[wasm_bindgen]
-pub struct ZCoordIterator (zcoord::BoxedIterator);
+pub struct ZCoordIterator(zcoord::BoxedIterator);
 
 #[throws(JsValue)]
 #[wasm_bindgen]
@@ -74,7 +75,7 @@ pub fn range(a: &JsValue, b: &JsValue, count: zcoord::RangeCount)
 
   let a = get1(a)?;
   let b = get1(b)?;
-  let inner = Mutable::some_range(a.as_ref(),b.as_ref(),count).e()?;
+  let inner = Mutable::some_range(a.as_ref(), b.as_ref(), count).e()?;
   ZCoordIterator(inner)
 }
 

@@ -5,8 +5,8 @@
 // This is in this crate for convenience, not because it's to do with
 // Z coordinates.
 
-use if_chain::if_chain;
 use arrayvec::ArrayVec;
+use if_chain::if_chain;
 
 pub fn timestring_abbreviate<'x>(base: &str, this: &'x str)
                                  -> (&'x str, bool)
