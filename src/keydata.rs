@@ -24,17 +24,17 @@ macro_rules! display_consequential_impls {
 pub use crate::display_consequential_impls; // this is madness!
 
 #[throws(AE)]
-pub fn slotkey_parse(s : &str, sep : char) -> SKD {
+pub fn slotkey_parse(s: &str, sep: char) -> SKD {
   let e = || anyhow!("could not deserialise visibile piece id");
-  let mut i = s.splitn(2,sep).map(|s| s.parse().map_err(|_| e()));
-  let l : u32 = i.next().ok_or_else(e)??;
-  let h : u32 = i.next().ok_or_else(e)??;
+  let mut i = s.splitn(2, sep).map(|s| s.parse().map_err(|_| e()));
+  let l: u32 = i.next().ok_or_else(e)??;
+  let h: u32 = i.next().ok_or_else(e)??;
   let v = ((h as u64) << 32) | (l as u64);
   SKD::from_ffi(v)
 }
 
 #[throws(fmt::Error)]
-pub fn slotkey_write(k : SKD, sep : char, f : &mut fmt::Formatter) {
+pub fn slotkey_write(k: SKD, sep: char, f: &mut fmt::Formatter) {
   let v = k.as_ffi();
   write!(f, "{}{}{}", v & 0xffffffff, sep, v >> 32)?
 }
@@ -50,18 +50,18 @@ macro_rules! visible_slotmap_key {
 
     impl Display for $x {
       #[throws(fmt::Error)]
-      fn fmt(&self, f : &mut fmt::Formatter) { slotkey_write(self.0,$sep,f)? }
+      fn fmt(&self, f: &mut fmt::Formatter) { slotkey_write(self.0,$sep,f)? }
     }
 
     impl TryFrom<&str> for $x {
       type Error = AE;
       #[throws(AE)]
-      fn try_from(s : &str) -> $x { $x(slotkey_parse(s,$sep)?) }
+      fn try_from(s: &str) -> $x { $x(slotkey_parse(s,$sep)?) }
     }
     impl TryFrom<String> for $x {
       type Error = AE;
       #[throws(AE)]
-      fn try_from(s : String) -> $x { $x(slotkey_parse(&s,$sep)?) }
+      fn try_from(s: String) -> $x { $x(slotkey_parse(&s,$sep)?) }
     }
 
     impl slotmap::Key for $x { }
