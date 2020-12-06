@@ -4,6 +4,10 @@
 
 use crate::imports::*;
 
+type IE = InternalError;
+type IR = Result<(), IE>;
+type SE = SVGProcessingError;
+
 // ---------- newtypes and type aliases ----------
 
 visible_slotmap_key!{ PlayerId('#') }
@@ -42,12 +46,12 @@ pub struct ZLevel {
 #[derive(Debug,Serialize,Deserialize)]
 pub struct GameState {
   pub table_colour: Colour,
-  pub table_size : Pos,
-  pub pieces : Pieces,
-  pub gen : Generation,
-  pub log : VecDeque<(Generation, Arc<CommittedLogEntry>)>,
-  pub max_z : ZCoord,
-  pub players : DenseSlotMap<PlayerId, GPlayerState>,
+  pub table_size: Pos,
+  pub pieces: Pieces,
+  pub gen: Generation,
+  pub log: VecDeque<(Generation, Arc<CommittedLogEntry>)>,
+  pub max_z: ZCoord,
+  pub players: DenseSlotMap<PlayerId, GPlayerState>,
 }
 
 #[derive(Debug,Serialize,Deserialize,Clone)]
@@ -58,19 +62,19 @@ pub struct GPlayerState {
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct PieceState {
-  pub pos : Pos,
-  pub face : FaceId,
-  pub held : Option<PlayerId>,
-  pub zlevel : ZLevel,
+  pub pos: Pos,
+  pub face: FaceId,
+  pub held: Option<PlayerId>,
+  pub zlevel: ZLevel,
   pub pinned: bool,
-  pub gen : Generation,
-  pub lastclient : ClientId,
-  pub gen_before_lastclient : Generation,
+  pub gen: Generation,
+  pub lastclient: ClientId,
+  pub gen_before_lastclient: Generation,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct LogEntry {
-  pub html : Html,
+  pub html: Html,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -81,9 +85,6 @@ pub struct CommittedLogEntry {
 
 // ---------- piece trait, and rendering ----------
 
-type IE = InternalError;
-type IR = Result<(),IE>;
-type SE = SVGProcessingError;
 
 #[typetag::serde]
 pub trait Outline : Send + Debug {
