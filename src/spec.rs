@@ -4,17 +4,19 @@
 
 // game specs
 
-use serde::{Serialize,Deserialize};
-use fehler::throws;
-use index_vec::{define_index_type,IndexVec};
-use crate::gamestate::PieceSpec;
-use std::fmt::Debug;
 use std::collections::hash_set::HashSet;
-use thiserror::Error;
-use crate::error::display_as_debug;
-use crate::accounts::AccountName;
+use std::fmt::Debug;
 use std::hash::Hash;
-use num_derive::{ToPrimitive, FromPrimitive};
+
+use fehler::throws;
+use index_vec::{define_index_type, IndexVec};
+use num_derive::{FromPrimitive, ToPrimitive};
+use serde::{Deserialize, Serialize};
+use thiserror::Error;
+
+use crate::accounts::AccountName;
+use crate::error::display_as_debug;
+use crate::gamestate::PieceSpec;
 
 pub use implementation::PlayerAccessSpec;
 
@@ -27,12 +29,12 @@ pub type Coord = isize;
 #[derive(Clone,Copy,Debug,Serialize,Deserialize,Hash)]
 #[derive(Eq,PartialEq,Ord,PartialOrd)]
 #[serde(transparent)]
-pub struct PosC<T> (pub [T; 2]);
+pub struct PosC<T>(pub [T; 2]);
 pub type Pos = PosC<Coord>;
 
 #[derive(Clone,Eq,PartialEq,Ord,PartialOrd,Hash,Serialize,Deserialize)]
 #[serde(transparent)]
-pub struct RawToken (pub String);
+pub struct RawToken(pub String);
 
 pub type RawFaceId = u8;
 define_index_type! {
@@ -133,20 +135,20 @@ pub struct UrlOnStdout;
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct GameSpec {
-  pub table_size : Option<Pos>,
-  pub pieces : Vec<PiecesSpec>,
+  pub table_size: Option<Pos>,
+  pub pieces: Vec<PiecesSpec>,
   pub table_colour: Option<ColourSpec>,
 }
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PiecesSpec {
-  pub pos : Option<Pos>,
-  pub posd : Option<Pos>,
-  pub count : Option<u32>,
-  pub face : Option<FaceId>,
+  pub pos: Option<Pos>,
+  pub posd: Option<Pos>,
+  pub count: Option<u32>,
+  pub face: Option<FaceId>,
   pub pinned: Option<bool>,
   #[serde(flatten)]
-  pub info : Box<dyn PieceSpec>,
+  pub info: Box<dyn PieceSpec>,
 }
 
 //---------- Piece specs ----------
@@ -158,15 +160,15 @@ pub mod piece_specs {
   #[derive(Debug,Serialize,Deserialize)]
   pub struct Disc {
     pub itemname: Option<String>,
-    pub diam : Coord,
-    pub faces : IndexVec<FaceId,ColourSpec>,
+    pub diam: Coord,
+    pub faces: IndexVec<FaceId, ColourSpec>,
   }
 
   #[derive(Debug,Serialize,Deserialize)]
   pub struct Square {
     pub itemname: Option<String>,
-    pub size : Vec<Coord>,
-    pub faces : IndexVec<FaceId,ColourSpec>,
+    pub size: Vec<Coord>,
+    pub faces: IndexVec<FaceId, ColourSpec>,
   }
 
 }
@@ -285,8 +287,8 @@ pub mod implementation {
 
   impl loaded_acl::Perm for TablePermission {
     type Auth = InstanceName;
-    const TEST_EXISTENCE : Self = TablePermission::TestExistence;
-    const NOT_FOUND : MgmtError = MgmtError::GameNotFound;
+    const TEST_EXISTENCE: Self = TablePermission::TestExistence;
+    const NOT_FOUND: MgmtError = MgmtError::GameNotFound;
   }
 
   impl TablePlayerSpec {
@@ -303,7 +305,7 @@ pub mod implementation {
         TPS::AllLocal => {
           // abuse that usernames are not encoded
           scope_glob(AS::Unix { user: "*".into() })
-        },
+        }
       }
     }
   }
@@ -323,7 +325,7 @@ pub mod implementation {
   }
 
   #[typetag::serde(tag="access")]
-  pub trait PlayerAccessSpec : Debug + Sync + Send {
+  pub trait PlayerAccessSpec: Debug + Sync + Send {
     fn override_token(&self) -> Option<&RawToken> {
       None
     }
@@ -440,7 +442,7 @@ pub mod implementation {
           };
           command.args(&["-f", &user]);
           nwtemplates::render("token-unix.tera", &data)
-        },
+        }
         _ => {
           #[derive(Debug,Serialize)]
           struct Data<'r> {
@@ -481,10 +483,10 @@ pub mod implementation {
       let st = command
         .status()
         .with_context(|| format!("run sendmail ({})", sendmail))?;
-      if !st.success()  {
+      if !st.success() {
         throw!(anyhow!("sendmail ({}) failed: {} ({})", sendmail, st, st));
       }
-      
+
       AccessTokenReport { lines: vec![
         "Token sent by email.".to_string()
       ]}

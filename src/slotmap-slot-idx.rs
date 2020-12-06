@@ -46,8 +46,8 @@ impl KeyDataExt for slotmap::KeyData {
 /// Fails if the `slotmap::KeyData` `serde::ser::Serialize`
 /// representation has changed too much.  Should not be able to fail
 /// otherwise.
-pub fn keydata_extract(key : slotmap::KeyData) -> Result<(u32, u32), Error> {
-  let mut m : MainExtractor = std::default::Default::default();
+pub fn keydata_extract(key: slotmap::KeyData) -> Result<(u32, u32), Error> {
+  let mut m: MainExtractor = std::default::Default::default();
   key.serialize(&mut m)?;
   Ok(( m.idx    .ok_or(error(line!()))?,
        m.version.ok_or(error(line!()))? ))
@@ -67,10 +67,10 @@ impl std::error::Error for Error { }
 
 //---------- implementation.  avert your eyes ----------
 
-use serde::ser::{self,*};
-use std::line;
 use std::convert::TryFrom;
 use std::fmt;
+use std::line;
+use serde::ser::{self, *};
 
 #[derive(Default)]
 struct MainExtractor {
@@ -80,20 +80,20 @@ struct MainExtractor {
 
 struct ValueExtractor;
 
-type R<Return> = Result<Return,Error>;
+type R<Return> = Result<Return, Error>;
 type ROk = R<()>;
 use self::Error::*;
 
 fn error(line: u32) -> Error { Unexpected(TryFrom::try_from(line).unwrap()) }
 fn u<T>(line: u32) -> R<T> { Err(error(line)) }
 
-type Imp = Impossible<(),Error>;
+type Imp = Impossible<(), Error>;
 type RI = R<Imp>;
 
 impl Serializer for &mut MainExtractor {
   type Ok = ();
   type Error = Error;
-  
+
   type SerializeStruct = Self;
 
   type SerializeMap           = Imp;

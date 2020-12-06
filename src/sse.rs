@@ -15,17 +15,17 @@ use std::ops::Neg;
 #[derive(Copy,Clone,Debug,Eq,PartialEq,Ord,PartialOrd)]
 #[derive(Serialize,Deserialize)]
 #[serde(transparent)]
-pub struct UpdateId (i64);
+pub struct UpdateId(i64);
 
-const UPDATE_READER_SIZE : usize = 1024*32;
-const UPDATE_MAX_FRAMING_SIZE : usize = 200;
-const UPDATE_KEEPALIVE : Duration = Duration::from_secs(14);
-const UPDATE_EXPIRE : Duration = Duration::from_secs(66);
+const UPDATE_READER_SIZE: usize = 1024*32;
+const UPDATE_MAX_FRAMING_SIZE: usize = 200;
+const UPDATE_KEEPALIVE: Duration = Duration::from_secs(14);
+const UPDATE_EXPIRE: Duration = Duration::from_secs(66);
 
 struct UpdateReaderWN {
-  player : PlayerId,
-  client : ClientId,
-  to_send : UpdateId,
+  player: PlayerId,
+  client: ClientId,
+  to_send: UpdateId,
 }
 
 struct UpdateReader {
@@ -74,7 +74,7 @@ impl UpdateReaderWN {
 }
 
 impl Read for UpdateReader {
-  fn read(&mut self, orig_buf: &mut [u8]) -> Result<usize,io::Error> {
+  fn read(&mut self, orig_buf: &mut [u8]) -> Result<usize, io::Error> {
     if let Some(ref mut ending) = self.ending_send {
       return ending.read(orig_buf);
     }
@@ -201,7 +201,7 @@ impl Neg for UpdateId {
 
 impl Display for UpdateId {
   fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-    Display::fmt(&self.0,f)
+    Display::fmt(&self.0, f)
   }
 }
 

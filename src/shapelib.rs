@@ -287,7 +287,7 @@ impl Contents {
 
 #[typetag::serde(name="Lib")]
 impl PieceSpec for ItemSpec {
-  fn load(&self, _: usize) -> Result<Box<dyn Piece>,SpecError> {
+  fn load(&self, _: usize) -> Result<Box<dyn Piece>, SpecError> {
     self.load()
   }
 }
@@ -315,7 +315,7 @@ fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
   let group = group.as_table().ok_or_else(|| LLE::ExpectedTable(gp()))?;
 
   let parent_name = match group.get("inherit") {
-    None => { return Cow::Borrowed(group) },
+    None => { return Cow::Borrowed(group) }
     Some(p) => p,
   };
   let parent_name = parent_name
@@ -340,7 +340,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
   let mut f = BufReader::new(f);
   let mut s = String::new();
   f.read_to_string(&mut s).map_err(ioe)?;
-  let toplevel : toml::Value = s.parse()?;
+  let toplevel: toml::Value = s.parse()?;
   let mut l = Contents {
     libname: libname.to_string(),
     items: HashMap::new(),
@@ -355,7 +355,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
   for (groupname, gdefn) in groups {
     let gdefn = resolve_inherit(INHERIT_DEPTH_LIMIT,
                                 &groups, groupname, gdefn)?;
-    let gdefn : GroupDefn = TV::Table(gdefn.into_owned()).try_into()?;
+    let gdefn: GroupDefn = TV::Table(gdefn.into_owned()).try_into()?;
     let d = GroupDetails {
       size: gdefn.d.size.iter().map(|s| s * gdefn.d.scale).collect(),
       ..gdefn.d
@@ -381,7 +381,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
         H::Vacant(ve) => {
           debug!("loaded shape {} {}", libname, item_name);
           ve.insert(idata);
-        },
+        }
       };
     }
   }
@@ -445,7 +445,7 @@ impl Config1 {
         let results = glob::glob_with(pat, glob::MatchOptions {
           require_literal_separator: true,
           require_literal_leading_dot: true,
-          .. Default::default()
+          ..default()
         })
           .map_err(
             |glob::PatternError { pos, msg, .. }|
@@ -455,7 +455,8 @@ impl Config1 {
           .collect::<Result<Vec<_>, LLE>>()?;
 
         Box::new(results.into_iter())
-      },
+
+      }
     })
   }
 }
@@ -479,12 +480,11 @@ pub struct Circle { pub diam: f64 }
 #[typetag::serde(name="Circle")]
 impl Outline for Circle {
   #[throws(IE)]
-  fn surround_path(&self, _pri : &PieceRenderInstructions) -> Html {
+  fn surround_path(&self, _pri: &PieceRenderInstructions) -> Html {
     svg_circle_path(self.diam * SELECT_SCALE)?
   }
   #[throws(IE)]
-  fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
-                      -> Option<Coord> {
+  fn thresh_dragraise(&self, _pri: &PieceRenderInstructions) -> Option<Coord> {
     Some((self.diam * 0.5) as Coord)
   }
   fn bbox_approx(&self) -> [Pos;2] {
