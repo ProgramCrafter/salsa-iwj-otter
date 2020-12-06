@@ -244,7 +244,7 @@ impl AddSubOffset for Decrement {
     if i == 0 && nv == ZERO { throw!() }
   }
   fn final_undo_delta() -> LimbVal { -DELTA + ONE }
-  const SEALED_TRAIT : Sealed = Sealed(());
+  const SEALED_TRAIT: Sealed = Sealed(());
 }
 
 impl Mutable {
