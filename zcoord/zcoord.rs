@@ -522,7 +522,7 @@ impl Debug for ZCoord {
     write!(f, r#"Zc""#)?;
     <ZCoord as Display>::fmt(self, f)?;
     write!(f, r#"""#)?;
-  }    
+  }
 }
 
 impl Ord for ZCoord {
@@ -537,8 +537,7 @@ impl PartialOrd for ZCoord {
     Some(self.cmp(other))
   }
 }
-impl Eq for ZCoord {
-}
+impl Eq for ZCoord { }
 impl PartialEq for ZCoord {
   fn eq(&self, other: &ZCoord) -> bool {
     self.cmp(other) == Ordering::Equal
@@ -561,7 +560,7 @@ impl FromStr for ZCoord {
 //
 // We can panic if this code is buggy, but not compromise safety.
 
-const DEFAULT_TEXT  : &[u8] = b"g000000000";
+const DEFAULT_TEXT: &[u8] = b"g000000000";
 
 impl Default for ZCoord {
   fn default() -> ZCoord {
@@ -575,7 +574,7 @@ impl ZCoord {
     let s = s.as_bytes();
     let nomlen = s.len() + 1;
     if nomlen % TEXT_PER_LIMB !=0 { throw!(ParseError) }
-    let _ : innards::Taillen = (nomlen / TEXT_PER_LIMB).try_into()
+    let _: innards::Taillen = (nomlen / TEXT_PER_LIMB).try_into()
       .map_err(|_:TryFromIntError| ParseError)?;
     for lt in s.chunks(TEXT_PER_LIMB) {
       if !lt[0..DIGITS_PER_LIMB].iter().all(
@@ -588,7 +587,7 @@ impl ZCoord {
         _ => throw!(ParseError)
       };
     }
-    if &s[s.len() - DIGITS_PER_LIMB.. ] == b"0000000000" {
+    if &s[s.len() - DIGITS_PER_LIMB..] == b"0000000000" {
       throw!(ParseError)
     }
     s
