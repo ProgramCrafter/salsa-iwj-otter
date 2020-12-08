@@ -808,10 +808,11 @@ impl<'ig> InstanceGuard<'ig> {
   fn tokens_deregister_for_id<Id:AccessId, F: Fn(Id) -> bool
                               > (&mut self, oldid: F) {
     let mut tokens = AccessId::global_tokens(PRIVATE_Y).write().unwrap();
-    tokens.retain(|k,v| {
-      let remove = oldid(v.ident);
-      if remove { Id::tokens_registry(self, PRIVATE_Y).tr.remove(k); }
-      !remove
+    tokens.retain(|k,v| if_chain! {
+      if oldid(v.ident);
+      if Id::tokens_registry(self, PRIVATE_Y).tr.remove(k);
+      then { false }
+      else { true }
     });
   }
 
