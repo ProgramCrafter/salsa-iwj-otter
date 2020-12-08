@@ -16,7 +16,7 @@ chess-board	Chess_board_blank	the chessboard
 
 [group.chess-misc]
 size = [32]
-scale = 0.30
+scale = 0.38
 centre = [16,16]
 item_prefix = "chess-"
 outline = "Circle"
