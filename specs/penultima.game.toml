@@ -173,3 +173,20 @@ prefix = "chess-b-"
 items = ["commoner","elephant","knight-king","mann","zebra"]
 posd = [10, 0]
 
+
+[[pieces]]
+pos = [210, 155]
+type = "LibList"
+lib = "edited"
+prefix = "chess-w-"
+items = ["portal-orange", "portal-orange", "portal-blue", "portal-blue"]
+posd = [10, 0]
+
+[[pieces]]
+pos = [210, 165]
+type = "LibList"
+lib = "edited"
+prefix = "chess-b-"
+items = ["portal-orange", "portal-orange", "portal-blue", "portal-blue"]
+posd = [10, 0]
+

@@ -13,3 +13,16 @@ outline = "Square"
 files = """
 chess-board	Chess_board_blank	the chessboard
 """
+
+[group.chess-misc]
+size = [32]
+scale = 0.30
+centre = [16,16]
+item_prefix = "chess-"
+outline = "Circle"
+files = """
+b-portal-blue	portal-blue-black   a blue portal piece belonging to black
+w-portal-blue	portal-blue-white   a blue portal piece belonging to white
+b-portal-orange	portal-orange-black an orange portal piece belonging to black
+w-portal-orange	portal-orange-white an orange portal piece belonging to white
+"""
