@@ -12,6 +12,9 @@ use File::Compare;
 
 our $max_rate = 2; # per second
 
+# todo: allow to read size details out of svg (maybe in daemon-otter?)
+# todo: allow scraper method none to handle item vs filename mismatch
+
 #print Dumper($libinfo);
 
 open DEBUG, ">&STDERR" or die $!;
