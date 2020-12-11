@@ -3,9 +3,9 @@
 # There is NO WARRANTY.
 
 # /volatile/rustcargo/Rustup/Game/daemon-otter
-# target/debug/daemon-otter ~ian/Rustup/Game/server/server.toml
+# target/debug/daemon-otter ~ian/Rustup/Game/server/server-test-zealot.toml
 
-# USER=rustcargo target/debug/otter --config ~ian/Rustup/Game/server/server.toml --scope-server reset --reset-table ~ian/Rustup/Game/server/specs/test.table.toml dummy  ~ian/Rustup/Game/server/specs/test.game.toml
+# USER=rustcargo target/debug/otter --config ~ian/Rustup/Game/server/server-test-zealot.toml --scope-server reset --reset-table ~ian/Rustup/Game/server/specs/test.table.toml dummy  ~ian/Rustup/Game/server/specs/test.game.toml
 
 public_url = "http://localhost:8000"
 #sse_wildcard_url = "http://*.sse.localhost:8000"
