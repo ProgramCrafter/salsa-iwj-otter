@@ -87,12 +87,67 @@ Contributions should be via git branch, eg a merge request on Salsa:
 
 
 
-BUILDING
-========
+BUILDING AND TESTING
+====================
 
-Otter is not so easy to build.  You will want to start with the git
-branch
-  https://salsa.debian.org/iwj/otter
+These instructions have been tested on Debian buster.
+
+Setup
+-----
+
+You will need about 6Gby of disk space.
+
+1. 
+   sudo apt install build-essential git curl pkg-config libssl-dev node-typescript
+
+2. Install Rust.  This is most easily done with rustup:
+
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+and then follow the instructions about your PATH.  If this rune alarms
+you, see below about Rust privsep.
+
+3. Switch your Rust install to use Rust Nightly and add the WASM
+target:
+
+   rustup default nightly
+   rustup target add wasm32-unknown-unknown
+
+4. Install some build tools:
+
+   cargo install usvg
+   cargo install bundle-sources
+
+This will put them in ~/.cargo/bin, which the rustup curl rune above
+will have arranged to put on your PATH.
+
+5. Install the version of wasm-pack with the option I need, which
+upstream haven't taken (or refused) the MR for:
+
+  git clone https://github.com/ijackson/wasm-pack.git -b cargo-opts
+  cd wasm-pack
+  cargo install
+
+NB that wasm-pack will itself download and install more stuff when it
+is run by the otter Makefile.
+
+
+Build
+-----
+
+  git clone https://salsa.debian.org/iwj/otter
+  cd otter
+  make -j8
+
+
+
+   
+
+You will want to start with the git branch
+  
+
+You must use "make" to build the whole thing, although you can run
+"cargo build" to build the 
 
 You cannot build it just with `cargo`, you must use `make`.
 
