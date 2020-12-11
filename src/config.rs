@@ -36,7 +36,7 @@ pub struct ServerConfigSpec {
 
 #[derive(Debug,Clone)]
 pub struct ServerConfig {
-  pub save_dir: String,
+  save_dir: String,
   pub command_socket: String,
   pub debug: bool,
   pub http_port: Option<u16>,
@@ -150,6 +150,26 @@ impl ServerConfig {
     let config : ServerConfigSpec = toml_de::from_str(&buf)?;
     let config = config.try_into()?;
     set_config(config);
+  }
+
+  #[throws(AE)]
+  pub fn lock_save_area(&self) {
+    let mut st = GLOBAL.save_area_lock.lock().unwrap();
+    let st = &mut *st;
+    if st.is_none() {
+      let lockfile = format!("{}/lock", config().save_dir);
+      *st = Some((||{
+        let file = File::create(&lockfile).context("open")?;
+        file.try_lock_exclusive().context("lock")?;
+        Ok::<_,AE>(file)
+      })().context(lockfile).context("lock global save area")?);
+    }
+  }
+
+  pub fn save_dir(&self) -> &String {
+    let st = GLOBAL.save_area_lock.lock().unwrap();
+    let mut _f : &File = st.as_ref().unwrap();
+    &self.save_dir
   }
 }
 

@@ -187,7 +187,7 @@ pub struct Global {
   // (perf impact); outermost first, innermost last)
 
   // slow global locks:
-  save_area_lock: Mutex<Option<File>>,
+  pub save_area_lock: Mutex<Option<File>>,
   // <- accounts::accounts ->
   games_table: RwLock<GamesTable>,
 
@@ -831,7 +831,7 @@ enum SavefilenameParseResult {
 }
 
 fn savefilename(name: &InstanceName, prefix: &str, suffix: &str) -> String {
-  [ config().save_dir.as_str(), &"/", prefix ]
+  [ config().save_dir().as_str(), &"/", prefix ]
     .iter().map(Deref::deref)
     .chain(iter::once( name.to_string().as_str() ))
     .chain([ suffix ].iter().map(Deref::deref))
@@ -939,19 +939,6 @@ impl InstanceGuard<'_> {
   fn load_game(accounts: &AccountsGuard,
                games: &mut GamesGuard,
                name: InstanceName) -> Option<InstanceRef> {
-    {
-      let mut st = GLOBAL.save_area_lock.lock().unwrap();
-      let st = &mut *st;
-      if st.is_none() {
-        let lockfile = format!("{}/lock", config().save_dir);
-        *st = Some((||{
-          let file = File::create(&lockfile).context("open")?;
-          file.try_lock_exclusive().context("lock")?;
-          Ok::<_,AE>(file)
-        })().context(lockfile).context("lock global save area")?);
-      }
-    }
-
     let InstanceSaveAccesses::<String,ActualPiecesLoaded>
     { tokens_players, mut ipieces, mut aplayers, acl }
     = match Self::load_something(&name, "a-") {
@@ -1060,7 +1047,7 @@ pub fn load_games(accounts: &mut AccountsGuard,
   use AFState::*;
   use SavefilenameParseResult::*;
   let mut a_leaves = HashMap::new();
-  for de in fs::read_dir(&config().save_dir)? {
+  for de in fs::read_dir(&config().save_dir())? {
     let de = de?;
     let leaf = de.file_name();
     (||{

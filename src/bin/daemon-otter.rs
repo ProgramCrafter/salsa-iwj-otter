@@ -198,6 +198,7 @@ fn main() {
   nwtemplates::init()?;
   shapelib::load()?;
 
+  c.lock_save_area()?;
   load_accounts()?;
   load_games(&mut AccountsGuard::lock(), &mut games_lock())?;
 
