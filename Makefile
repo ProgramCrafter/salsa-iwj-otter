@@ -80,9 +80,9 @@ $(if $(wildcard $(BUILD_SUBDIR)/$2),
 $(shell echo >&2 'Makefile: lp: Using program $4 from $(BUILD_SUBDIR)/$2')
 $1 := $(abspath $(BUILD_SUBDIR)/$2/target/$3/$4)
 $(abspath $(BUILD_SUBDIR)/$2/target/$3/$4):; cd ../$2 && $$(CARGO) build $(call cr,$3)
-)
 BUNDLED_SOURCES_DIRS += $2
 BUNDLED_SOURCES_LINKS += $2/
+)
 endef
 
 $(eval $(call lp,BUNDLE_SOURCES,bundle-sources,debug,bundle-rust-sources))
