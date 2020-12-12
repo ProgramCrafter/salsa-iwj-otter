@@ -218,7 +218,7 @@ Apart from that, if you update JS or WASM code or Tera templates, you
 do not need to restart the server - it will pick up changes
 automatically.
 
-When testing, you do not need to `make bundled-sources' more than
+When testing, you do not need to `make bundled-sources` more than
 once, at the beginning.  So don't, because it's slow.  But you
 definitely should run it for every update if you make a deployment for
 other people to use.  Otherwise you might be running a privately
@@ -227,8 +227,8 @@ LICENCE.
 
 If you Do Something to the output from cargo, you should `rm stamp/*`,
 since the `Makefile` won't notice, otherwise, that, the relevant cargo
-rune(s) need to be re-run.  Deleting all the stamp files wastes only a
-handful of seconds (on my stupidly fast laptop).
+rune(s) need to be re-run.  Needlessly deleting all the stamp files
+wastes only a handful of seconds (on my stupidly fast laptop).
 
 
 Navigating the otter source code
@@ -284,7 +284,6 @@ executed - and, therefore, trusted:
  * Rust itself - again, pretty safe
  * Otter itself - well, I wrote this; up to you.
  * My branch of wasm-pack - I haven't audited what I started with.
-
  * 236 transitive dependencies of otter (from crates.io)
  * 50 transitive dependencies of bundle-sources
  * the transitive dependencies of resvg
