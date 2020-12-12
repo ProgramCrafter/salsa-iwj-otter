@@ -11,3 +11,6 @@ save/lock
 *.tmp
 .tsconfig.*.json
 stamp/*
+lock
+[ag]-*
+accounts
