@@ -11,6 +11,9 @@ save/lock
 *.tmp
 .tsconfig.*.json
 stamp/*
+/target
+*~
+Cargo.lock
 lock
 [ag]-*
 accounts
