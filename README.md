@@ -21,11 +21,15 @@ JOINING A GAME
 ==============
 
 In the simplest case:
+```
   otter join-game unix:<user>::<game-name>
+```
 e.g.
+```
   otter join-game unix:ijackson::test
+```
 
-See otter --help for further options, including setting your nick.
+See `otter --help` for further options, including setting your nick.
 
 Currently when a new player joins a game (with the `otter` command),
 all the other players must reload the page.
@@ -34,26 +38,28 @@ all the other players must reload the page.
 CREATING A GAME
 ===============
 
+```
 otter reset --reset-table local-users :test demo
                          /^^^^^^^^^^^  ^^^\ ^^^^'~ game spec
                          `table spec       game name
+```
 
-Here "local-users" refers to the file "local-users.table.spec" in the
-Otter specs directory (/volatile/Otter/specs on chiark).  The table
+Here `local-users` refers to the file `local-users.table.spec` in the
+Otter specs directory (`/volatile/Otter/specs` on chiark).  The table
 spec file handles access control (and some other global properties)
 This particular file says that all local shell account users may join
 the game.
 
-":test" is the game name.  It starts with a colon, which means
-implicitly "unix:<whoami>::test".  Other people have to name the game
+`:test` is the game name.  It starts with a colon, which means
+implicitly `unix:<whoami>::test`.  Other people have to name the game
 with the full name, with all three colons in it.
 
-"demo" refers to the file "demo.game.spec".  The "game spec" says what
+`demo` refers to the file `demo.game.spec`.  The "game spec" says what
 shape table is and what pieces there are.  This is a simple demo game.
-There is also "penultima" which is a work-in-progress set of pieces
+There is also `penultima` which is a work-in-progress set of pieces
 suitable for fairy chess etc.
 
-See otter --help for some more options.
+See `otter --help` for some more options.
 
 Currently, resetting a game (or otherwise adding or removing pieces)
 will mean all the players will get errors until they reload the page.
@@ -63,9 +69,9 @@ MAKING YOUR OWN GAME
 ====================
 
 If you want to use existing piece shapes that Otter already knows
-about, you can do this by providing a game.spec.toml file.  The format
-of these files is a TOML document representing a GameSpec as found in
-src/spec.rs in the Otter source code.
+about, you can do this by providing a `<something>.game.toml` file.
+The format of these files is a TOML document representing a GameSpec
+as found in `src/spec.rs` in the Otter source code.
 
 todo: use rustdoc to provide this somewhere.
 
@@ -74,7 +80,7 @@ ADDING SHAPES
 =============
 
 Otter uses SVGs.  The sources for the SVGs are all in the otter source
-tree, in the library/ directory.
+tree, in the `library/` directory.
 
 Unfortunately the mechanisms here are not yet particularly well
 documented.
@@ -87,10 +93,10 @@ If you do that, please make sure to include the actual source code.
 If you copied or adapted an SVG from somewhere, provide details.
 
 Contributions should be via git branch, eg a merge request on Salsa:
-  https://salsa.debian.org/iwj/otter
+[https://salsa.debian.org/iwj/otter](https://salsa.debian.org/iwj/otter)
 
 NB that shapes must come with a licence compatible with CC-BY-SA 4.0.
-See LICENCE for more information about copyright status.
+See `LICENCE` for more information about copyright status.
 
 
 BUILDING AND TESTING
@@ -105,9 +111,11 @@ Setup
 -----
 
 1. 
+```
      sudo apt install build-essential cpio git curl     \
                       pkg-config libssl-dev             \
                       node-typescript
+```
 
 2. Install Rust.  This is most easily done with rustup:
 
@@ -115,7 +123,7 @@ Setup
      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-   and then follow the instructions about your PATH.  If this rune
+   and then follow the instructions about your `PATH`.  If this rune
    alarms you, see below about Rust privsep.
 
 3. Switch your Rust install to use Rust Nightly and add the WASM
@@ -129,8 +137,9 @@ Setup
    Unfortunately, it is possible that the Rust nightly you find when
    you run this is missing some pieces.  The following is known to
    work (with otter from the time of writing):
-
+```
      rustup default nightly-2020-11-09
+```
 
 4. Install some build tools:
 
@@ -152,7 +161,7 @@ Setup
 ```
 
   NB that wasm-pack will itself download and install more stuff when
-  it is run by the otter Makefile.
+  it is run by the Otter Makefile.
 
 
 Build
@@ -175,14 +184,14 @@ In one shell:
 ```
 
 The server does not daemonise, and the default config there makes it
-quite verboxe.  So, in another shell:
+quite verbose.  So, in another shell:
 
 ```
-    target/debug/otter \
+    target/debug/otter                                               \
         --account server: --config server-test.toml --spec-dir=specs \
         reset --reset-table test server::test demo
 
-    target/debug/otter \
+    target/debug/otter                                               \
         --account server: --config server-test.toml --spec-dir=specs \
         join-game server::test
 ```
@@ -193,8 +202,8 @@ The URL printed can then be visited in a local browser.
 Resetting/restoring things after tests, updating server, etc.
 -------------------------------------------------------------
 
-After the server is updated, you can just ^C and restart it.  Games
-are constantly saved (although there is a 1s lag on the most
+After the server is updated, you can just `^C` and restart it.  Games
+are constantly saved (although there is an up-to-1s lag on the most
 frequently udpated game state).
 
 If you want to clear out the server state, delete the files `[ag]-*`
@@ -202,7 +211,7 @@ and `accounts`.  NB that you should do this with the server not
 running, because the server has most of that information in memory and
 will like to write it out again.
 
-If you update Typescript (JS code) you will need to rerun make to
+If you update Typescript (JS code) you will need to rerun `make` to
 rebuild the JS output.
 
 Apart from that, if you update JS or WASM code or Tera templates, you
@@ -215,6 +224,11 @@ definitely should run it for every update if you make a deployment for
 other people to use.  Otherwise you might be running a privately
 modified server without offering your users its source code.  See
 LICENCE.
+
+If you Do Something to the output from cargo, you should `rm stamp/*`,
+since the `Makefile` won't notice, otherwise, that, the relevant cargo
+rune(s) need to be re-run.  Deleting all the stamp files wastes only a
+handful of seconds (on my stupidly fast laptop).
 
 
 Navigating the otter source code
@@ -240,7 +254,8 @@ Navigating the otter source code
 * templates/script.ts
 
   The main Typescript (typed Javascript) code.  Otter's web
-  targets is earliest browser versions that support WebAssembly.
+  compatibility target is the earliest browser versions that properly
+  support WebAssembly.
 
 * `templates/session.tera`, `macros.tera`, etc.
 
@@ -305,7 +320,9 @@ Dependencies - apologia
    the web framework I am using.  The next version of Rocket (0.5.x),
    which is in development, will not need Nightly, but it will also be
    a serious compatibility break.  The existing Rocket (0.4.x) will
-   almost certainly never be ported to Stable Rust.  Sorry.
+   almost certainly never be ported to Stable Rust.  When Rocket 0.5.x
+   is out, porting Otter to it will go on my list - but it won't be
+   trivial.  Sorry.
 
  * The many dependencies of Otter
 
@@ -319,18 +336,19 @@ Dependencies - apologia
 
  * wasm-pack
 
-   This is a wrapper a program for manipulating WebAssembly files.  It
-   likes to run cargo and do god knows what.  I'm not sure it's buying
-   me much over whatever things it runs, so ideally it would be best
-   to replace this with calls to the underlying utilities and
+   This is a wrapper program for various utilities for manipulating
+   WebAssembly files, and their Typescript and Javascript glue, etc.
+   It likes to run cargo and do god knows what.  I'm not sure it's
+   buying me much over whatever things it runs, so ideally it would be
+   best to replace this with calls to the underlying utilities and
    libraries.  But there are some wrinkles, for example, some version
    coupling requirements that wasm-pack takes care of.  And to be
-   honest, I'm not sure precisely what it does so reproducing that in
-   the Makefile would be nontrivial.
+   honest, I'm not sure precisely what it does and understanding that
+   would be a necessary first step to reproducing it in the Makefile.
 
  * bundle-rust-sources
 
-   This needs to be properly released.
+   This is mine, but it needs to be properly released.
 
 
 Final weirdness
