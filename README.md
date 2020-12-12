@@ -98,7 +98,7 @@ Setup
 You will need about 6Gby of disk space.
 
 1. 
-   sudo apt install build-essential git curl pkg-config libssl-dev node-typescript
+   sudo apt install build-essential cpio git curl pkg-config libssl-dev node-typescript
 
 2. Install Rust.  This is most easily done with rustup:
 
@@ -137,24 +137,31 @@ Build
 
   git clone https://salsa.debian.org/iwj/otter
   cd otter
-  make -j8
+  make -j8 all bundled-sources
+
+
+Test
+----
+
+In one shell:
+
+   target/debug/daemon-otter server-test.toml
+
+The server does not daemonise, and the default config there makes it
+quite verboxe.  So, in another shell:
+
+   target/debug/otter --account server: --config server-test.toml --spec-dir=specs reset --reset-table test server::test demo
+
+   target/debug/otter --account server: --config server-test.toml --spec-dir=specs join-game server::test
+
+The URL printed, something like:
+
+  http://localhost:18056/?KRRUu7FosWe4WxvcyMoTEsgjHJ8p4Qf17aKHUIcApEQj0ialrX2gJJsjvGRBRATz
+
+can be visited in a local browser.
 
 
 
-   
-
-You will want to start with the git branch
-  
-
-You must use "make" to build the whole thing, although you can run
-"cargo build" to build the 
-
-You cannot build it just with `cargo`, you must use `make`.
-
-You will also need various other utilities and dependencies.  See
-below.  On my own laptop deployment is done with `make deploy` which
-copies all the relevant sources into the `bundled-sources` directory,
-which is accessible via the Otter web UI.  See the code in `Makefile`.
 
 Dependencies
 ------------
