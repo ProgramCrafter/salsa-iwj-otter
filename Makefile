@@ -45,7 +45,7 @@ DEPLOYED_BRANCH=deployed
 
 #---------- nailing-cargo ----------
 
-ifneq (,$(wildcard(../Cargo.nail)))
+ifneq (,$(wildcard ../Cargo.nail))
 
 NAILING_CARGO = nailing-cargo
 CARGO = $(NAILING_CARGO)
