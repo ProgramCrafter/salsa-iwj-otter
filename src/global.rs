@@ -1047,7 +1047,8 @@ pub fn load_games(accounts: &mut AccountsGuard,
   use AFState::*;
   use SavefilenameParseResult::*;
   let mut a_leaves = HashMap::new();
-  for de in fs::read_dir(&config().save_dir())? {
+  let save_dir = config().save_dir().clone();
+  for de in fs::read_dir(&save_dir).context(save_dir)? {
     let de = de?;
     let leaf = de.file_name();
     (||{
