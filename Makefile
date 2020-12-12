@@ -188,7 +188,7 @@ bundled-sources:: $(addprefix bundled-sources/, $(BUNDLED_SOURCES_DIRS))
 TARGET_BUNDLED=$(TARGET_DIR)/bundled-sources
 
 $(addprefix bundled-sources/, $(BUNDLED_SOURCES_DIRS)): \
-bundled-sources/%: $(BUNDLE_SOURCES)
+bundled-sources/%: $(wildcard $(BUNDLE_SOURCES))
 	set -e; d=$(abspath $(TARGET_BUNDLED)); \
 	$(NAILING_CARGO_JUST_RUN) mkdir -p $$d; \
 	$(if $(filter-out otter,$*), cd ../$*;) \
