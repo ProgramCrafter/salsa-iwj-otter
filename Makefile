@@ -157,7 +157,7 @@ stamp/cargo.doc: $(call rsrcs,.)
 
 $(addprefix stamp/cargo.wasm-,$(DR)):: \
 stamp/cargo.wasm-%: $(call rsrcs, zcoord wasm Cargo.*)
-	$(CARGO) -TWASM build -p otter-wasm $(call cr,$*)
+	$(CARGO) build --target $(WASM) -p otter-wasm $(call cr,$*)
 	$(stamp)
 
 stamp/cargo.deploy-build: $(call rsrcs,.)
