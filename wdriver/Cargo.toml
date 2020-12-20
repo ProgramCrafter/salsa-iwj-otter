@@ -10,6 +10,9 @@ license = "AGPL-3.0-or-later"
 version = "0.0.1"
 edition = "2018"
 
+[dependencies]
+thirtyfour_sync = "0.21"
+
 [lib]
 name = "otter_webdriver_tests"
 path = "lib.rs"
