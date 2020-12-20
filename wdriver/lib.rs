@@ -3,3 +3,12 @@
 // There is NO WARRANTY.
 
 #![cfg(test)]
+
+use fehler::throws;
+
+type AE = anyhow::Error;
+
+#[test]
+#[throws(AE)]
+fn simple(){
+}
