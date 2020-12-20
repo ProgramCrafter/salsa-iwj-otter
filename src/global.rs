@@ -1131,6 +1131,7 @@ impl RawToken {
     let mut rng = thread_rng();
     let token = RawToken (
       repeat_with(|| rng.sample(Alphanumeric))
+        .map(char::from)
         .take(64).collect()
     );
     token
