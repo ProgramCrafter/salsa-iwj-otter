@@ -13,7 +13,7 @@ path = "zcoord.rs"
 
 [dependencies]
 
-arrayvec = "0"
+arrayvec = "0.5"
 derive_more = "0.99"
 fehler = "1"
 if_chain = "1"
