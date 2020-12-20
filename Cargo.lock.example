@@ -1172,6 +1172,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "otter-webdriver-tests"
+version = "0.0.1"
+
+[[package]]
 name = "otter-zcoord"
 version = "0.0.1"
 dependencies = [

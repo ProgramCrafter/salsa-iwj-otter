@@ -11,7 +11,7 @@ version = "0.0.1"
 edition = "2018"
 
 [workspace]
-members = ["wasm"]
+members = ["wasm", "wdriver"]
 
 [dependencies]
 

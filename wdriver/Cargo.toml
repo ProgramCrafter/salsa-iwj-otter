@@ -1,0 +1,15 @@
+# Copyright 2020 Ian Jackson
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# There is NO WARRANTY.
+
+[package]
+name = "otter-webdriver-tests"
+authors = ["Ian Jackson <ijackson@chiark.greenend.org.uk>"]
+license = "AGPL-3.0-or-later"
+
+version = "0.0.1"
+edition = "2018"
+
+[lib]
+name = "otter_webdriver_tests"
+path = "lib.rs"
