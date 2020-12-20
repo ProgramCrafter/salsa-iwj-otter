@@ -1508,6 +1508,8 @@ dependencies = [
 name = "otter-webdriver-tests"
 version = "0.0.1"
 dependencies = [
+ "anyhow",
+ "fehler",
  "thirtyfour_sync",
 ]
 
