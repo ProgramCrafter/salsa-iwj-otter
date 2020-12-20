@@ -60,7 +60,7 @@ thiserror = "1"
 tempfile = "3"
 toml = "0.5"
 typetag = "0.1.6"
-uds = "0"
+uds = "0.2"
 vecdeque-stableix = "1"
 
 rocket = { version = "^0.4.6", features=["sse"] }
