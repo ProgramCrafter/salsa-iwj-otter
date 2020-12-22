@@ -10,9 +10,13 @@ fn main(){
 
   println!("hi! {:#?}", &s);
 
-  let mut c = Command::new("xdpyinfo");
-  let s = c
-    .spawn().context("spawn")?
-    .wait().context("wait")?;
-  println!("s = {:?}", &s);
+  for _ in 0..2 {
+    let mut c = Command::new("xdpyinfo");
+    let s = c
+      .spawn().context("spawn")?
+      .wait().context("wait")?;
+    println!("s = {:?}", &s);
+
+    std::thread::sleep_ms(500);
+  }
 }

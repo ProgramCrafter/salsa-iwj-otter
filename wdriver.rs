@@ -10,6 +10,7 @@ pub use void::Void;
 pub use std::env;
 pub use std::fs;
 pub use std::io::{BufRead, BufReader, ErrorKind, Write};
+pub use std::net::TcpStream;
 pub use std::os::unix::process::CommandExt;
 pub use std::os::unix::fs::DirBuilderExt;
 pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
@@ -105,14 +106,14 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> String {
 
 #[throws(AE)]
 fn prepare_xserver() {
-  const DISPLAY : &str = "12";
+  const DISPLAY : u16 = 12;
 
   let mut xcmd = Command::new("Xvfb");
   xcmd
     .args("-nolisten unix \
            -nolisten local \
            -listen inet6 \
-           -noreset \
+           -terminate \
            -displayfd 1".split(' '))
     .arg(format!(":{}", DISPLAY))
     .stdout(Stdio::piped());
@@ -128,7 +129,7 @@ fn prepare_xserver() {
   }
 
   match l {
-    Some(Ok(l)) if l == DISPLAY => { l },
+    Some(Ok(l)) if l == DISPLAY.to_string() => { l },
     Some(Ok(l)) => throw!(anyhow!(
       "Xfvb said {:?}, expected {:?}",
       l, DISPLAY
@@ -138,7 +139,11 @@ fn prepare_xserver() {
   };
 
   env::set_var("DISPLAY", format!("[::1]:{}", DISPLAY));
-  
+
+  let stream = TcpStream::connect(("::1", DISPLAY+6000))
+    .context("make keepalive connection to X server")?;
+
+  Box::leak(Box::new(stream));
 }
 
 #[throws(AE)]
