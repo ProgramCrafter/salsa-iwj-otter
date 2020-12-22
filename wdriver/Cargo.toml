@@ -17,4 +17,4 @@ thirtyfour_sync = "0.21"
 
 [lib]
 name = "otter_webdriver_tests"
-path = "lib.rs"
+path = "mod.rs"
