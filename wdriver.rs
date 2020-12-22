@@ -33,8 +33,6 @@ pub struct Setup {
   display: String,
 }
 
-const XSOCKETS : &str = "/tmp/.X11-unix";
-
 #[throws(AE)]
 fn reinvoke_via_bwrap(_opts: &Opts, current_exe: &str) -> Void {
   println!("running bwrap");
@@ -45,7 +43,6 @@ fn reinvoke_via_bwrap(_opts: &Opts, current_exe: &str) -> Void {
            --dev-bind / / \
            --tmpfs /tmp \
            --die-with-parent".split(" "))
-    .args(&["--dir", XSOCKETS])
     .arg(current_exe)
     .arg("--no-bwrap")
     .args(env::args_os().skip(1));
@@ -113,7 +110,12 @@ fn prepare_xserver1() -> impl FnOnce() -> Result<String, AE> {
 
   let mut xcmd = Command::new("Xvfb");
   xcmd
-    .args("-displayfd 1 :12".split(' '))
+    .args("-nolisten unix \
+           -nolisten local \
+           -listen inet6 \
+           -noreset \
+           -displayfd 1".split(' '))
+    .arg(format!(":{}", DISPLAY))
     .stdout(Stdio::piped());
   let mut child = xcmd.spawn()
     .context("spawn Xvfb")?;
