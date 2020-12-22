@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-#![cfg(test)]
+pub use fehler::throws;
 
-use fehler::throws;
-
-type AE = anyhow::Error;
+pub type AE = anyhow::Error;
