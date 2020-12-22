@@ -59,7 +59,7 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> String {
         if !m.is_dir() {
           throw!(anyhow!("existing object is not a directory"));
         }
-        if (m.st_mode() & 0o0102) != 0 {
+        if (m.st_mode() & 0o01002) != 0 {
           throw!(anyhow!(
             "existing directory mode {:#o} is sticky or world-writeable. \
              We use predictable pathnames so that would be a tmp race",
@@ -85,7 +85,7 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> String {
     .with_context(|| opts.tmp_dir.to_owned())
     .context("prepare/create tmp-dir")?;
 
-  let leaf = current_exe.rsplitn(1, '/').next().unwrap();
+  let leaf = current_exe.rsplitn(2, '/').next().unwrap();
   let our_tmpdir = format!("{}/{}", &opts.tmp_dir, &leaf);
   (||{
     match fs::remove_dir_all(&leaf) {
