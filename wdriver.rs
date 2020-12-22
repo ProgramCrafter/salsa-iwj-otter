@@ -30,7 +30,6 @@ struct Opts {
 #[derive(Debug,Clone)]
 pub struct Setup {
   tmp: String,
-  display: String,
 }
 
 #[throws(AE)]
@@ -105,7 +104,7 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> String {
 }
 
 #[throws(AE)]
-fn prepare_xserver1() -> impl FnOnce() -> Result<String, AE> {
+fn prepare_xserver1() -> impl FnOnce() -> Result<(), AE> {
   const DISPLAY : &str = "12";
 
   let mut xcmd = Command::new("Xvfb");
@@ -129,7 +128,7 @@ fn prepare_xserver1() -> impl FnOnce() -> Result<String, AE> {
       throw!(anyhow!("Xvfb failed to start: wait status = {}", &e));
     }
 
-    let l = match l {
+    match l {
       Some(Ok(l)) if l == DISPLAY => { l },
       Some(Ok(l)) => throw!(anyhow!(
         "Xfvb said {:?}, expected {:?}",
@@ -139,7 +138,9 @@ fn prepare_xserver1() -> impl FnOnce() -> Result<String, AE> {
       Some(Err(e)) => throw!(AE::from(e).context("failed to read from Xfvb")),
     };
 
-    Ok(l)
+    env::set_var("DISPLAY", format!("[::1]:{}", DISPLAY));
+
+    Ok(())
   }
 }
 
@@ -161,10 +162,9 @@ pub fn setup() -> Setup {
 
   let xserver1 = prepare_xserver1().context("setup X server")?;
 
-  let display = xserver1().context("wait for X server")?;
+  xserver1().context("wait for X server")?;
 
   Setup {
     tmp,
-    display,
   }
 }

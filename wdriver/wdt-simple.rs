@@ -9,4 +9,10 @@ fn main(){
   let s = setup()?;
 
   println!("hi! {:#?}", &s);
+
+  let mut c = Command::new("xdpyinfo");
+  let s = c
+    .spawn().context("spawn")?
+    .wait().context("wait")?;
+  println!("s = {:?}", &s);
 }
