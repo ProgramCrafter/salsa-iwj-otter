@@ -3,5 +3,6 @@
 // There is NO WARRANTY.
 
 pub use fehler::throws;
+pub use structopt::StructOpt;
 
 pub type AE = anyhow::Error;

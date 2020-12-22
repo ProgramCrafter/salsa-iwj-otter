@@ -4,6 +4,11 @@
 
 use otter_webdriver_tests::*;
 
+#[derive(StructOpt)]
+struct Opts {
+  
+}
+
 #[throws(AE)]
 fn main(){
   
