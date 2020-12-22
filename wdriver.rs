@@ -112,8 +112,10 @@ fn prepare_xserver() {
   xcmd
     .args("-nolisten unix \
            -nolisten local \
+           -listen inet \
            -listen inet6 \
            -terminate \
+           -wr \
            -displayfd 1".split(' '))
     .arg(format!(":{}", DISPLAY))
     .stdout(Stdio::piped());
@@ -138,12 +140,20 @@ fn prepare_xserver() {
     Some(Err(e)) => throw!(AE::from(e).context("failed to read from Xfvb")),
   };
 
-  env::set_var("DISPLAY", format!("[::1]:{}", DISPLAY));
+  let display = format!("[::1]:{}", DISPLAY);
+  env::set_var("DISPLAY", &display);
 
-  let stream = TcpStream::connect(("::1", DISPLAY+6000))
+  // Doesn't do IPv6 ??
+  let v4display = format!("127.0.0.1:{}", DISPLAY);
+  let (xconn, _) = x11rb::connect(Some(&v4display))
     .context("make keepalive connection to X server")?;
 
-  Box::leak(Box::new(stream));
+  // Sadly, if we die between spawning Xfvb, and here, we will
+  // permanently leak the whole Xfvb process (and the network
+  // namespace).  There doesn't seem to a way to avoid this without
+  // editing Xvfb,
+
+  Box::leak(Box::new(xconn));
 }
 
 #[throws(AE)]
