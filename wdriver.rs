@@ -9,14 +9,13 @@ pub use void::Void;
 
 pub use std::env;
 pub use std::fs;
-pub use std::io::{ErrorKind, Write};
+pub use std::io::{BufRead, BufReader, ErrorKind, Write};
 pub use std::os::unix::process::CommandExt;
 pub use std::os::unix::fs::DirBuilderExt;
 pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
-pub use std::process::Command;
+pub use std::process::{Command, Stdio};
 
 pub type AE = anyhow::Error;
-
 
 #[derive(Debug,Clone)]
 #[derive(StructOpt)]
@@ -31,17 +30,22 @@ struct Opts {
 #[derive(Debug,Clone)]
 pub struct Setup {
   tmp: String,
+  display: String,
 }
+
+const XSOCKETS : &str = "/tmp/.X11-unix";
 
 #[throws(AE)]
 fn reinvoke_via_bwrap(_opts: &Opts, current_exe: &str) -> Void {
   println!("running bwrap");
   
   let mut bcmd = Command::new("bwrap");
-  bcmd.args("--unshare-net \
-             --dev-bind / / \
-             --tmpfs /tmp \
-             --die-with-parent".split(" "))
+  bcmd
+    .args("--unshare-net \
+           --dev-bind / / \
+           --tmpfs /tmp \
+           --die-with-parent".split(" "))
+    .args(&["--dir", XSOCKETS])
     .arg(current_exe)
     .arg("--no-bwrap")
     .args(env::args_os().skip(1));
@@ -104,6 +108,40 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> String {
 }
 
 #[throws(AE)]
+fn prepare_xserver1() -> impl FnOnce() -> Result<String, AE> {
+  const DISPLAY : &str = "12";
+
+  let mut xcmd = Command::new("Xvfb");
+  xcmd
+    .args("-displayfd 1 :12".split(' '))
+    .stdout(Stdio::piped());
+  let mut child = xcmd.spawn()
+    .context("spawn Xvfb")?;
+  let mut report = BufReader::new(child.stdout.take().unwrap()).lines();
+
+  move ||{
+    let l = report.next();
+
+    let s = child.try_wait().context("check on Xvfb")?;
+    if let Some(e) = s {
+      throw!(anyhow!("Xvfb failed to start: wait status = {}", &e));
+    }
+
+    let l = match l {
+      Some(Ok(l)) if l == DISPLAY => { l },
+      Some(Ok(l)) => throw!(anyhow!(
+        "Xfvb said {:?}, expected {:?}",
+        l, DISPLAY
+      )),
+      None => throw!(anyhow!("EOF from Xvfb (but it's still running?")),
+      Some(Err(e)) => throw!(AE::from(e).context("failed to read from Xfvb")),
+    };
+
+    Ok(l)
+  }
+}
+
+#[throws(AE)]
 pub fn setup() -> Setup {
   let current_exe : String = env::current_exe()
     .context("find current executable")?
@@ -119,7 +157,12 @@ pub fn setup() -> Setup {
 
   let tmp = prepare_tmpdir(&opts, &current_exe)?;
 
+  let xserver1 = prepare_xserver1().context("setup X server")?;
+
+  let display = xserver1().context("wait for X server")?;
+
   Setup {
     tmp,
+    display,
   }
 }
