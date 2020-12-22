@@ -105,6 +105,27 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> String {
 }
 
 #[throws(AE)]
+fn fork_something_which_prints(mut cmd: Command) -> String {
+  let mut child = cmd.spawn().context("spawn")?;
+  let mut report = BufReader::new(child.stdout.take().unwrap()).lines();
+
+  let l = report.next();
+
+  let s = child.try_wait().context("check on spawned child")?;
+  if let Some(e) = s {
+    throw!(anyhow!("failed to start: wait status = {}", &e));
+  }
+
+  let l = match l {
+    Some(Ok(l)) => l,
+    None => throw!(anyhow!("EOF (but it's still running?")),
+    Some(Err(e)) => throw!(AE::from(e).context("failed to read")),
+  };
+
+  l
+}
+
+#[throws(AE)]
 fn prepare_xserver() {
   const DISPLAY : u16 = 12;
 
@@ -119,26 +140,15 @@ fn prepare_xserver() {
            -displayfd 1".split(' '))
     .arg(format!(":{}", DISPLAY))
     .stdout(Stdio::piped());
-  let mut child = xcmd.spawn()
-    .context("spawn Xvfb")?;
-  let mut report = BufReader::new(child.stdout.take().unwrap()).lines();
 
-  let l = report.next();
+  let l = fork_something_which_prints(xcmd).context("Xvfb")?;
 
-  let s = child.try_wait().context("check on Xvfb")?;
-  if let Some(e) = s {
-    throw!(anyhow!("Xvfb failed to start: wait status = {}", &e));
-  }
-
-  match l {
-    Some(Ok(l)) if l == DISPLAY.to_string() => { l },
-    Some(Ok(l)) => throw!(anyhow!(
+  if l != DISPLAY.to_string() {
+    throw!(anyhow!(
       "Xfvb said {:?}, expected {:?}",
       l, DISPLAY
-    )),
-    None => throw!(anyhow!("EOF from Xvfb (but it's still running?")),
-    Some(Err(e)) => throw!(AE::from(e).context("failed to read from Xfvb")),
-  };
+    ));
+  }
 
   let display = format!("[::1]:{}", DISPLAY);
   env::set_var("DISPLAY", &display);
