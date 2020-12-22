@@ -104,7 +104,7 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> String {
 }
 
 #[throws(AE)]
-fn prepare_xserver1() -> impl FnOnce() -> Result<(), AE> {
+fn prepare_xserver() {
   const DISPLAY : &str = "12";
 
   let mut xcmd = Command::new("Xvfb");
@@ -120,28 +120,25 @@ fn prepare_xserver1() -> impl FnOnce() -> Result<(), AE> {
     .context("spawn Xvfb")?;
   let mut report = BufReader::new(child.stdout.take().unwrap()).lines();
 
-  move ||{
-    let l = report.next();
+  let l = report.next();
 
-    let s = child.try_wait().context("check on Xvfb")?;
-    if let Some(e) = s {
-      throw!(anyhow!("Xvfb failed to start: wait status = {}", &e));
-    }
-
-    match l {
-      Some(Ok(l)) if l == DISPLAY => { l },
-      Some(Ok(l)) => throw!(anyhow!(
-        "Xfvb said {:?}, expected {:?}",
-        l, DISPLAY
-      )),
-      None => throw!(anyhow!("EOF from Xvfb (but it's still running?")),
-      Some(Err(e)) => throw!(AE::from(e).context("failed to read from Xfvb")),
-    };
-
-    env::set_var("DISPLAY", format!("[::1]:{}", DISPLAY));
-
-    Ok(())
+  let s = child.try_wait().context("check on Xvfb")?;
+  if let Some(e) = s {
+    throw!(anyhow!("Xvfb failed to start: wait status = {}", &e));
   }
+
+  match l {
+    Some(Ok(l)) if l == DISPLAY => { l },
+    Some(Ok(l)) => throw!(anyhow!(
+      "Xfvb said {:?}, expected {:?}",
+      l, DISPLAY
+    )),
+    None => throw!(anyhow!("EOF from Xvfb (but it's still running?")),
+    Some(Err(e)) => throw!(AE::from(e).context("failed to read from Xfvb")),
+  };
+
+  env::set_var("DISPLAY", format!("[::1]:{}", DISPLAY));
+  
 }
 
 #[throws(AE)]
@@ -160,9 +157,7 @@ pub fn setup() -> Setup {
 
   let tmp = prepare_tmpdir(&opts, &current_exe)?;
 
-  let xserver1 = prepare_xserver1().context("setup X server")?;
-
-  xserver1().context("wait for X server")?;
+  prepare_xserver().context("setup X server")?;
 
   Setup {
     tmp,
