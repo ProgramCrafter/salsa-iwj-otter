@@ -16,6 +16,7 @@ fehler = "1"
 thirtyfour_sync = "0.21"
 structopt = "0.3"
 void = "1"
+x11rb = "0.7"
 
 [lib]
 name = "otter_webdriver_tests"
