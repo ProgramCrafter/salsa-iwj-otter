@@ -15,6 +15,7 @@ anyhow = "1"
 fehler = "1"
 thirtyfour_sync = "0.21"
 structopt = "0.3"
+void = "1"
 
 [lib]
 name = "otter_webdriver_tests"

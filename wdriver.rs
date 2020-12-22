@@ -2,12 +2,124 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-pub use fehler::throws;
+pub use anyhow::{anyhow, Context};
+pub use fehler::{throw, throws};
 pub use structopt::StructOpt;
+pub use void::Void;
 
 pub use std::env;
-pub use std::io::Write;
+pub use std::fs;
+pub use std::io::{ErrorKind, Write};
 pub use std::os::unix::process::CommandExt;
+pub use std::os::unix::fs::DirBuilderExt;
+pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
 pub use std::process::Command;
 
 pub type AE = anyhow::Error;
+
+
+#[derive(Debug,Clone)]
+#[derive(StructOpt)]
+struct Opts {
+  #[structopt(long="--no-bwrap")]
+  no_bwrap: bool,
+
+  #[structopt(long="--tmp-dir", default_value="tmp")]
+  tmp_dir: String,
+}
+
+#[derive(Debug,Clone)]
+pub struct Setup {
+  tmp: String,
+}
+
+#[throws(AE)]
+fn reinvoke_via_bwrap(_opts: &Opts, current_exe: &str) -> Void {
+  println!("running bwrap");
+  
+  let mut bcmd = Command::new("bwrap");
+  bcmd.args("--unshare-net \
+             --dev-bind / / \
+             --tmpfs /tmp \
+             --die-with-parent".split(" "))
+    .arg(current_exe)
+    .arg("--no-bwrap")
+    .args(env::args_os().skip(1));
+
+  std::io::stdout().flush().context("flush stdout")?;
+  let e : AE = bcmd.exec().into();
+  throw!(e.context("exec bwrap"));
+}
+
+#[throws(AE)]
+fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> String {
+  (||{
+    match fs::metadata(&opts.tmp_dir) {
+      Ok(m) => {
+        if !m.is_dir() {
+          throw!(anyhow!("existing object is not a directory"));
+        }
+        if (m.st_mode() & 0o0102) != 0 {
+          throw!(anyhow!(
+            "existing directory mode {:#o} is sticky or world-writeable. \
+             We use predictable pathnames so that would be a tmp race",
+            m.st_mode()
+          ));
+        }
+      }
+      Err(e) if e.kind() == ErrorKind::NotFound => {
+        fs::create_dir(&opts.tmp_dir)
+          .context("create")?;
+      }
+      Err(e) => {
+        let e : AE = e.into();
+        throw!(e.context("stat existing directory"))
+      }
+    }
+
+    env::set_current_dir(&opts.tmp_dir)
+      .context("chdir into it")?;
+
+    Ok::<_,AE>(())
+  })()
+    .with_context(|| opts.tmp_dir.to_owned())
+    .context("prepare/create tmp-dir")?;
+
+  let leaf = current_exe.rsplitn(1, '/').next().unwrap();
+  let our_tmpdir = format!("{}/{}", &opts.tmp_dir, &leaf);
+  (||{
+    match fs::remove_dir_all(&leaf) {
+      Ok(()) => {},
+      Err(e) if e.kind() == ErrorKind::NotFound => {},
+      Err(e) => throw!(AE::from(e).context("remove previous directory")),
+    };
+    fs::DirBuilder::new().mode(0o700).create(&leaf)
+      .context("create fresh subdirectory")?;
+    Ok::<_,AE>(())
+  })()
+    .with_context(|| our_tmpdir.to_owned())
+    .context("prepare/create our tmp subdir")?;
+
+  our_tmpdir
+}
+
+#[throws(AE)]
+pub fn setup() -> Setup {
+  let current_exe : String = env::current_exe()
+    .context("find current executable")?
+    .to_str()
+    .ok_or_else(|| anyhow!("current executable path is not UTF-8 !"))?
+    .to_owned();
+
+  let opts = Opts::from_args();
+  if !opts.no_bwrap {
+    reinvoke_via_bwrap(&opts, &current_exe)
+      .context("reinvoke via bwrap")?;
+  }
+
+  let tmp = prepare_tmpdir(&opts, &current_exe)?;
+
+  Setup {
+    tmp,
+  }
+}
