@@ -33,6 +33,95 @@ pub struct Setup {
   tmp: String,
 }
 
+mod cleanup_notify {
+  use anyhow::Context;
+  use fehler::{throw, throws};
+  use libc::_exit;
+  use nix::{unistd::*, fcntl::OFlag};
+  use nix::sys::signal::*;
+  use void::Void;
+  use std::io;
+  use std::os::unix::io::RawFd;
+  use std::panic::catch_unwind;
+  use std::process::Command;
+  type AE = anyhow::Error;
+
+  pub struct Handle(RawFd);
+
+  #[throws(AE)]
+  fn mkpipe() -> (RawFd,RawFd) {
+    pipe2(OFlag::O_CLOEXEC)?
+  }
+
+  #[throws(io::Error)]
+  fn read_await(fd: RawFd) {
+    loop {
+      let mut buf = [0u8; 1];
+      match nix::unistd::read(fd, &mut buf) {
+        Ok(0) => break,
+        Ok(_) => throw!(io::Error::from_raw_os_error(libc::EINVAL)),
+        Err(nix::Error::Sys(nix::errno::Errno::EINTR)) => continue,
+        _ => throw!(io::Error::last_os_error()),
+      }
+    }
+  }
+
+  fn nix2io(_n: nix::Error) -> io::Error {
+    io::Error::last_os_error()
+  }
+
+  impl Handle {
+    #[throws(AE)]
+    pub fn new() -> Self {
+      let (reading_end, _writing_end) = mkpipe()
+        .context("create cleanup notify pipe")?;
+      // we leak the writing end, keeping it open only in this process
+      Handle(reading_end)
+    }
+
+    #[throws(AE)]
+    pub fn arm_hook(&self, cmd: &mut Command) { unsafe {
+      use std::os::unix::process::CommandExt;
+
+      let (reading_end, writing_end) = mkpipe()
+        .context("create permission to carry on pipe")?;
+
+      let notify_writing_end = self.0;
+      let all_signals = nix::sys::signal::SigSet::all();
+
+      cmd.pre_exec(move || -> Result<(), io::Error> {
+        let semidaemon = nix::unistd::getpid();
+
+        match fork().map_err(nix2io)? {
+          ForkResult::Child => {
+            let _ = catch_unwind(move || -> Void {
+              let _ = sigprocmask(
+                SigmaskHow::SIG_BLOCK,
+                Some(&all_signals),
+                None
+              );
+
+              let _ = close(writing_end);
+              let _ = read_await(notify_writing_end);
+              let _ = kill(semidaemon, SIGTERM);
+              _exit(0);
+            });
+            let _ = raise(SIGABRT);
+            _exit(127);
+          },
+          ForkResult::Parent{..} => {
+            // parent
+            close(writing_end).map_err(nix2io)?;
+            read_await(reading_end)?;
+          },
+        };
+
+        Ok(())
+      });
+    } }
+  }
+}
+
 #[throws(AE)]
 fn reinvoke_via_bwrap(_opts: &Opts, current_exe: &str) -> Void {
   println!("running bwrap");
@@ -105,8 +194,12 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> String {
 }
 
 #[throws(AE)]
-fn fork_something_which_prints(mut cmd: Command) -> String {
+fn fork_something_which_prints(mut cmd: Command,
+                               cln: &cleanup_notify::Handle)
+                               -> String
+{
   cmd.stdout(Stdio::piped());
+  cln.arm_hook(&mut cmd)?;
   let mut child = cmd.spawn().context("spawn")?;
   let mut report = BufReader::new(child.stdout.take().unwrap()).lines();
 
@@ -127,7 +220,7 @@ fn fork_something_which_prints(mut cmd: Command) -> String {
 }
 
 #[throws(AE)]
-fn prepare_xserver() {
+fn prepare_xserver(cln: &cleanup_notify::Handle) {
   const DISPLAY : u16 = 12;
 
   let mut xcmd = Command::new("Xvfb");
@@ -141,7 +234,7 @@ fn prepare_xserver() {
            -displayfd 1".split(' '))
     .arg(format!(":{}", DISPLAY));
 
-  let l = fork_something_which_prints(xcmd).context("Xvfb")?;
+  let l = fork_something_which_prints(xcmd, cln).context("Xvfb")?;
 
   if l != DISPLAY.to_string() {
     throw!(anyhow!(
@@ -167,10 +260,10 @@ fn prepare_xserver() {
 }
 
 #[throws(AE)]
-fn prepare_geckodriver() {
+fn prepare_geckodriver(cln: &cleanup_notify::Handle) {
   const EXPECTED : &str = "Listening on 127.0.0.1:4444";
   let cmd = Command::new("geckodriver");
-  let l = fork_something_which_prints(cmd).context("geckodriver")?;
+  let l = fork_something_which_prints(cmd, cln).context("geckodriver")?;
   let fields : Vec<_> = l.split('\t').skip(2).take(2).collect();
   let expected = ["INFO", EXPECTED];
   if fields != expected {
@@ -194,10 +287,12 @@ pub fn setup() -> Setup {
       .context("reinvoke via bwrap")?;
   }
 
+  let cln = cleanup_notify::Handle::new()?;
+
   let tmp = prepare_tmpdir(&opts, &current_exe)?;
 
-  prepare_xserver().context("setup X server")?;
-  prepare_geckodriver().context("setup webdriver serverr")?;
+  prepare_xserver(&cln).context("setup X server")?;
+  prepare_geckodriver(&cln).context("setup webdriver serverr")?;
 
   Setup {
     tmp,

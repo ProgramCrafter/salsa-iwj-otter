@@ -1556,6 +1556,8 @@ version = "0.0.1"
 dependencies = [
  "anyhow",
  "fehler",
+ "libc",
+ "nix 0.19.1",
  "structopt",
  "thirtyfour_sync",
  "void",

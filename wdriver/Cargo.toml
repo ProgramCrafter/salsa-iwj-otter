@@ -13,8 +13,10 @@ edition = "2018"
 [dependencies]
 anyhow = "1"
 fehler = "1"
-thirtyfour_sync = "0.21"
+libc = "0.2"
+nix = "0.19"
 structopt = "0.3"
+thirtyfour_sync = "0.21"
 void = "1"
 x11rb = "0.7"
 
