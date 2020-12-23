@@ -179,8 +179,15 @@ fn main() {
   // todo test suite for cli at least
   // todo test suite for web api
 
-  let config_filename = env::args().nth(1);
-  ServerConfig::read(config_filename.as_ref().map(String::as_str))?;
+  use structopt::StructOpt;
+  #[derive(StructOpt)]
+  struct Opts {
+    config_filename: Option<String>,
+  }
+
+  let opts = Opts::from_args();
+
+  ServerConfig::read(opts.config_filename.as_ref().map(String::as_str))?;
 
   std::env::set_var("ROCKET_CLI_COLORS", "off");
 
