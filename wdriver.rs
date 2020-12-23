@@ -216,6 +216,13 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> (String, String) {
     .ok_or_else(|| anyhow!("tmp path is not UTF-8"))?
     .to_owned();
 
+  env::set_var("HOME", &abstmp);
+  for v in "http_proxy https_proxy XAUTHORITY CDPATH \
+            SSH_AGENT_PID SSH_AUTH_SOCK WINDOWID WWW_HOME".split(' ')
+  {
+    env::remove_var(v);
+  }
+
   (our_tmpdir, abstmp)
 }
 
@@ -287,6 +294,11 @@ fn prepare_xserver(cln: &cleanup_notify::Handle, abstmp: &str) {
 }
 
 #[throws(AE)]
+fn prepare_gameserver() {
+  
+}
+
+#[throws(AE)]
 fn prepare_geckodriver(cln: &cleanup_notify::Handle) {
   const EXPECTED : &str = "Listening on 127.0.0.1:4444";
   let cmd = Command::new("geckodriver");
@@ -351,10 +363,14 @@ pub fn setup() -> Setup {
       .context("reinvoke via bwrap")?;
   }
 
+  eprintln!("pid = {}", nix::unistd::getpid());
+  std::thread::sleep_ms(3500);
+
   let cln = cleanup_notify::Handle::new()?;
   let (tmp, abstmp) = prepare_tmpdir(&opts, &current_exe)?;
 
   prepare_xserver(&cln, &abstmp).context("setup X server")?;
+  prepare_gameserver().context("setup game server")?;
 
   let final_hook = FinalInfoCollection;
 
