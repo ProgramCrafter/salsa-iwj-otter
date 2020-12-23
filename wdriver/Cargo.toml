@@ -11,6 +11,8 @@ version = "0.0.1"
 edition = "2018"
 
 [dependencies]
+otter = { path = ".." }
+
 anyhow = "1"
 fehler = "1"
 humantime = "2"

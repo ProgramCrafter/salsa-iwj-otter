@@ -22,6 +22,8 @@ pub use std::process::{Command, Stdio};
 pub use std::thread::sleep;
 pub use std::time;
 
+use otter::config::DAEMON_STARTUP_REPORT;
+
 pub const MS : time::Duration = time::Duration::from_millis(1);
 pub type AE = anyhow::Error;
 
@@ -372,15 +374,17 @@ _ = "error" # rocket
     .context(CONFIG).context("create server config")?;
 
   let server_exe = ds.subst("@target@/debug/daemon-otter");
+  let mut cmd = Command::new(&server_exe);
+  cmd
+    .arg("--report-startup")
+    .arg(CONFIG);
+
   (||{
-    let mut cmd = Command::new(&server_exe);
-    cmd
-      .arg("--report-startup")
-      .arg(CONFIG);
-    cln.arm_hook(&mut cmd)?;
-    cmd
-      .spawn().context("spawn")?;
-    // we leak it here
+    let l = fork_something_which_prints(cmd, cln)?;
+    if l != DAEMON_STARTUP_REPORT {
+      throw!(anyhow!("otter-daemon startup report {:?}, expected {:?}",
+                     &l, DAEMON_STARTUP_REPORT));
+    }
     Ok::<_,AE>(())
   })()
     .context(server_exe).context("game server")?;

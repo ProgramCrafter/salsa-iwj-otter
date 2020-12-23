@@ -1566,6 +1566,7 @@ dependencies = [
  "humantime",
  "libc",
  "nix 0.19.1",
+ "otter",
  "structopt",
  "thirtyfour_sync",
  "void",
