@@ -167,6 +167,20 @@ fn prepare_xserver() {
 }
 
 #[throws(AE)]
+fn prepare_geckodriver() {
+  const EXPECTED : &str = "Listening on 127.0.0.1:4444";
+  let cmd = Command::new("geckodriver");
+  let l = fork_something_which_prints(cmd).context("geckodriver")?;
+  let fields : Vec<_> = l.split('\t').skip(2).take(2).collect();
+  let expected = ["INFO", EXPECTED];
+  if fields != expected {
+    throw!(anyhow!("geckodriver did not report as expected \
+                    - got {:?}, expected {:?}",
+                   fields, &expected));
+  }
+}
+
+#[throws(AE)]
 pub fn setup() -> Setup {
   let current_exe : String = env::current_exe()
     .context("find current executable")?
@@ -183,6 +197,7 @@ pub fn setup() -> Setup {
   let tmp = prepare_tmpdir(&opts, &current_exe)?;
 
   prepare_xserver().context("setup X server")?;
+  prepare_geckodriver().context("setup webdriver serverr")?;
 
   Setup {
     tmp,
