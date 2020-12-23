@@ -177,7 +177,7 @@ mod cleanup_notify {
 
 #[throws(AE)]
 fn reinvoke_via_bwrap(_opts: &Opts, current_exe: &str) -> Void {
-  println!("running bwrap");
+  eprintln!("running bwrap");
   
   let mut bcmd = Command::new("bwrap");
   bcmd
