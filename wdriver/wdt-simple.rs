@@ -9,14 +9,4 @@ fn main(){
   let s = setup().always_context("setup")?;
 
   println!("hi! {:#?}", &s);
-
-  for _ in 0..2 {
-    let mut c = Command::new("xdpyinfo");
-    let s = c
-      .spawn().context("spawn")?
-      .wait().context("wait")?;
-    println!("s = {:?}", &s);
-
-    std::thread::sleep(500 * MS);
-  }
 }

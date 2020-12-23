@@ -27,6 +27,8 @@ use otter::config::DAEMON_STARTUP_REPORT;
 pub const MS : time::Duration = time::Duration::from_millis(1);
 pub type AE = anyhow::Error;
 
+pub const URL : &str = "http://localhost:8000";
+
 pub trait AlwaysContext<T,E> {
   fn always_context(self, msg: &'static str) -> anyhow::Result<T>;
 }
@@ -76,6 +78,7 @@ impl DirSubst {
       s
         .replace("@target@",   &format!("{}/target", &ds.start_dir))
         .replace("@srcbuild@", &ds.start_dir)
+        .replace("@url@",      &URL)
     }
     inner(self, s.as_ref())
   }
@@ -349,7 +352,7 @@ fn prepare_xserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
 #[throws(AE)]
 fn prepare_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
   let config = ds.subst(r##"
-public_url = "http://localhost:8000"
+public_url = "@url"
 base_dir = "@srcbuild@"
 command_socket = "command.socket"
 save_dir = "."
@@ -411,9 +414,11 @@ fn prepare_thirtyfour() {
     .context("create 34 WebDriver")?;
 //  driver.fullscreen_window()
 //    .context("fullscreen")?;
-  driver.get("http://localhost:")
-    .context("dummy navigation")?;
-  driver.screenshot(path::Path::new("test.png"))
+  driver.screenshot(path::Path::new("test1.png"))
+    .context("screenshot")?;
+  driver.get(URL)
+    .context("navigate to home page")?;
+  driver.screenshot(path::Path::new("test2.png"))
     .context("screenshot")?;
 }
 
