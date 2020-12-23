@@ -48,9 +48,9 @@ mod cleanup_notify {
 
   pub struct Handle(RawFd);
 
-  #[throws(AE)]
+  #[throws(io::Error)]
   fn mkpipe() -> (RawFd,RawFd) {
-    pipe2(OFlag::O_CLOEXEC)?
+    pipe2(OFlag::O_CLOEXEC).map_err(nix2io)?
   }
 
   #[throws(io::Error)]
@@ -83,14 +83,12 @@ mod cleanup_notify {
     pub fn arm_hook(&self, cmd: &mut Command) { unsafe {
       use std::os::unix::process::CommandExt;
 
-      let (reading_end, writing_end) = mkpipe()
-        .context("create permission to carry on pipe")?;
-
       let notify_writing_end = self.0;
       let all_signals = nix::sys::signal::SigSet::all();
 
       cmd.pre_exec(move || -> Result<(), io::Error> {
         let semidaemon = nix::unistd::getpid();
+        let (reading_end, writing_end) = mkpipe()?;
 
         match fork().map_err(nix2io)? {
           ForkResult::Child => {
