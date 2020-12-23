@@ -374,7 +374,9 @@ _ = "error" # rocket
   let server_exe = ds.subst("@target@/debug/daemon-otter");
   (||{
     let mut cmd = Command::new(&server_exe);
-    cmd.arg(CONFIG);
+    cmd
+      .arg("--report-startup")
+      .arg(CONFIG);
     cln.arm_hook(&mut cmd)?;
     cmd
       .spawn().context("spawn")?;

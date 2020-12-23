@@ -15,6 +15,8 @@ pub const DEFAULT_CONFIG_LEAFNAME : &str = "server.toml";
 
 pub const DEFAULT_SENDMAIL_PROGRAM : &str = "/usr/sbin/sendmail";
 
+pub const DAEMON_STARTUP_REPORT : &str = "otter-daemon started";
+
 #[derive(Deserialize,Debug,Clone)]
 pub struct ServerConfigSpec {
   pub base_dir: Option<String>,

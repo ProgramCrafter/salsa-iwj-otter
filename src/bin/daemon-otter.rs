@@ -174,6 +174,23 @@ impl fairing::Fairing for ContentTypeFixup {
   }
 }
 
+#[derive(Debug,Copy,Clone)]
+struct ReportStartup;
+impl fairing::Fairing for ReportStartup {
+  fn info(&self) -> fairing::Info {
+    fairing::Info {
+      name: "ReportStartup",
+      kind: fairing::Kind::Launch,
+    }
+  }
+  fn on_launch(&self, _rocket: &Rocket) {
+    println!("{}", DAEMON_STARTUP_REPORT);
+    std::io::stdout().flush().unwrap_or_else(
+      |e| warn!("failed to report started: {:?}", &e)
+    );
+  }
+}
+
 #[throws(StartupError)]
 fn main() {
   // todo test suite for cli at least
@@ -182,6 +199,9 @@ fn main() {
   use structopt::StructOpt;
   #[derive(StructOpt)]
   struct Opts {
+    #[structopt(long)]
+    report_startup: bool,
+
     config_filename: Option<String>,
   }
 
@@ -249,7 +269,7 @@ fn main() {
 
   let rconfig = cbuilder.finalize()?;
 
-  let r = rocket::custom(rconfig)
+  let mut r = rocket::custom(rconfig)
     .attach(ContentTypeFixup)
     .attach(helmet)
     .attach(Template::fairing())
@@ -262,6 +282,10 @@ fn main() {
     ])
     .mount("/_/src", StaticFiles::from(&c.bundled_sources))
     ;
+
+  if opts.report_startup {
+    r = r.attach(ReportStartup);
+  }
 
   let r = otter::session::mount(r);
   let r = otter::api::mount(r);
