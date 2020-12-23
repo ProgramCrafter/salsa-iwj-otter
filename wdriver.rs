@@ -70,10 +70,10 @@ pub struct DirSubst {
 
 impl DirSubst {
   fn subst<S:AsRef<str>>(&self, s:S) -> String {
-    fn inner(_ds: &DirSubst, s: &str) -> String {
+    fn inner(ds: &DirSubst, s: &str) -> String {
       s
-        .replace("@target@",   "../../")
-        .replace("@srcbbuild@","../../")
+        .replace("@target@",   &format!("{}/target", &ds.start_dir))
+        .replace("@srcbuild@", &ds.start_dir)
     }
     inner(self, s.as_ref())
   }
@@ -347,13 +347,11 @@ fn prepare_xserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
 #[throws(AE)]
 fn prepare_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
   let config = ds.subst(r##"
-base_dir = "."
+public_url = "http://localhost:8000"
+base_dir = "@srcbuild@"
 command_socket = "command.socket"
-bundled_sources = "@target@/bundled-sources"
 save_dir = "."
-template_dir = "@srcbuild@/templates"
-wasm_dir = "@target@/packed-wasm"
-shapelibs = [ "@srcbuild@/library/*.toml" ]
+bundled_sources = "@target@/bundled-sources"
 
 [log]
 global_level = 'debug'
