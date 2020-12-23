@@ -17,6 +17,6 @@ fn main(){
       .wait().context("wait")?;
     println!("s = {:?}", &s);
 
-    std::thread::sleep_ms(500);
+    std::thread::sleep(500 * MS);
   }
 }

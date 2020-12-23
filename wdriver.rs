@@ -19,7 +19,10 @@ pub use std::os::unix::fs::DirBuilderExt;
 pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
 pub use std::path;
 pub use std::process::{Command, Stdio};
+pub use std::thread::sleep;
+pub use std::time;
 
+pub const MS : time::Duration = time::Duration::from_millis(1);
 pub type AE = anyhow::Error;
 
 #[derive(Debug,Clone)]
@@ -30,6 +33,9 @@ struct Opts {
 
   #[structopt(long="--tmp-dir", default_value="tmp")]
   tmp_dir: String,
+
+  #[structopt(long="--pause", default_value="0ms")]
+  pause: humantime::Duration,
 }
 
 #[derive(Debug)]
@@ -364,7 +370,7 @@ pub fn setup() -> Setup {
   }
 
   eprintln!("pid = {}", nix::unistd::getpid());
-  std::thread::sleep_ms(3500);
+  sleep(opts.pause.into());
 
   let cln = cleanup_notify::Handle::new()?;
   let (tmp, abstmp) = prepare_tmpdir(&opts, &current_exe)?;

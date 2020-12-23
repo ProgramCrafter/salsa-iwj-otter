@@ -13,6 +13,7 @@ edition = "2018"
 [dependencies]
 anyhow = "1"
 fehler = "1"
+humantime = "2"
 libc = "0.2"
 nix = "0.19"
 structopt = "0.3"
