@@ -256,7 +256,7 @@ fn prepare_xserver(cln: &cleanup_notify::Handle, abstmp: &str) {
            -listen inet \
            -listen inet6 \
            -terminate \
-           -wr \
+           -retro \
            -displayfd 1".split(' '))
     .args(&["-fbdir", abstmp])
     .arg(format!(":{}", DISPLAY));
@@ -318,7 +318,7 @@ impl Drop for FinalInfoCollection {
       let mut cmd = Command::new("xwd");
       cmd.args("-root \
                 -silent \
-                -out final.xwd".split(' '));
+                -out final-xwd.xwd".split(' '));
       let s = cmd
         .spawn().context("spawn")?
         .wait().context("wait")?;
