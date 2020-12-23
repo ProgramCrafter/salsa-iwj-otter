@@ -17,6 +17,7 @@ pub use std::net::TcpStream;
 pub use std::os::unix::process::CommandExt;
 pub use std::os::unix::fs::DirBuilderExt;
 pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
+pub use std::path;
 pub use std::process::{Command, Stdio};
 
 pub type AE = anyhow::Error;
@@ -156,7 +157,7 @@ fn reinvoke_via_bwrap(_opts: &Opts, current_exe: &str) -> Void {
 }
 
 #[throws(AE)]
-fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> String {
+fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> (String, String) {
   (||{
     match fs::metadata(&opts.tmp_dir) {
       Ok(m) => {
@@ -197,14 +198,25 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> String {
       Err(e) if e.kind() == ErrorKind::NotFound => {},
       Err(e) => throw!(AE::from(e).context("remove previous directory")),
     };
-    fs::DirBuilder::new().mode(0o700).create(&leaf)
+
+    fs::DirBuilder::new().create(&leaf)
       .context("create fresh subdirectory")?;
+
+    env::set_current_dir(&leaf)
+      .context("chdir into it")?;
+
     Ok::<_,AE>(())
   })()
     .with_context(|| our_tmpdir.to_owned())
     .context("prepare/create our tmp subdir")?;
 
-  our_tmpdir
+  let abstmp =
+    env::current_dir().context("canonicalise our tmp subdi (getcwd)r")?
+    .to_str()
+    .ok_or_else(|| anyhow!("tmp path is not UTF-8"))?
+    .to_owned();
+
+  (our_tmpdir, abstmp)
 }
 
 #[throws(AE)]
@@ -234,7 +246,7 @@ fn fork_something_which_prints(mut cmd: Command,
 }
 
 #[throws(AE)]
-fn prepare_xserver(cln: &cleanup_notify::Handle) {
+fn prepare_xserver(cln: &cleanup_notify::Handle, abstmp: &str) {
   const DISPLAY : u16 = 12;
 
   let mut xcmd = Command::new("Xvfb");
@@ -246,6 +258,7 @@ fn prepare_xserver(cln: &cleanup_notify::Handle) {
            -terminate \
            -wr \
            -displayfd 1".split(' '))
+    .args(&["-fbdir", abstmp])
     .arg(format!(":{}", DISPLAY));
 
   let l = fork_something_which_prints(xcmd, cln).context("Xvfb")?;
@@ -299,6 +312,9 @@ fn prepare_thirtyfour() {
 impl Drop for FinalInfoCollection {
   fn drop(&mut self) {
     match (||{
+      fs::copy("Xvfb_screen0","final-auto.xwd")
+        .context("copy")?;
+
       let mut cmd = Command::new("xwd");
       cmd.args("-root \
                 -silent \
@@ -332,10 +348,9 @@ pub fn setup() -> Setup {
   }
 
   let cln = cleanup_notify::Handle::new()?;
+  let (tmp, abstmp) = prepare_tmpdir(&opts, &current_exe)?;
 
-  let tmp = prepare_tmpdir(&opts, &current_exe)?;
-
-  prepare_xserver(&cln).context("setup X server")?;
+  prepare_xserver(&cln, &abstmp).context("setup X server")?;
 
   let final_hook = FinalInfoCollection;
 
