@@ -6,7 +6,7 @@ use otter_webdriver_tests::*;
 
 #[throws(AE)]
 fn main(){
-  let s = setup()?;
+  let s = setup().always_context("setup")?;
 
   println!("hi! {:#?}", &s);
 

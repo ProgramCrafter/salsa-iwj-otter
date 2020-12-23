@@ -25,6 +25,20 @@ pub use std::time;
 pub const MS : time::Duration = time::Duration::from_millis(1);
 pub type AE = anyhow::Error;
 
+pub trait AlwaysContext<T,E> {
+  fn always_context(self, msg: &'static str) -> anyhow::Result<T>;
+}
+
+impl<T,E> AlwaysContext<T,E> for Result<T,E>
+where Self: anyhow::Context<T,E>
+{
+  fn always_context(self, msg: &'static str) -> anyhow::Result<T> {
+    let x = self.context(msg);
+    if x.is_ok() { eprintln!("completed {}.", msg) };
+    x
+  }
+}
+
 #[derive(Debug,Clone)]
 #[derive(StructOpt)]
 struct Opts {
@@ -375,13 +389,13 @@ pub fn setup() -> Setup {
   let cln = cleanup_notify::Handle::new()?;
   let (tmp, abstmp) = prepare_tmpdir(&opts, &current_exe)?;
 
-  prepare_xserver(&cln, &abstmp).context("setup X server")?;
-  prepare_gameserver().context("setup game server")?;
+  prepare_xserver(&cln, &abstmp).always_context("setup X server")?;
+  prepare_gameserver().always_context("setup game server")?;
 
   let final_hook = FinalInfoCollection;
 
-  prepare_geckodriver(&cln).context("setup webdriver serverr")?;
-  prepare_thirtyfour().context("prepare web session")?;
+  prepare_geckodriver(&cln).always_context("setup webdriver serverr")?;
+  prepare_thirtyfour().always_context("prepare web session")?;
 
   Setup {
     tmp,
