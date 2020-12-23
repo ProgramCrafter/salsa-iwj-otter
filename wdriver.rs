@@ -5,7 +5,10 @@
 pub use anyhow::{anyhow, Context};
 pub use fehler::{throw, throws};
 pub use structopt::StructOpt;
+pub use thirtyfour_sync as t4;
 pub use void::Void;
+
+pub use t4::WebDriverCommands;
 
 pub use std::env;
 pub use std::fs;
@@ -281,6 +284,15 @@ fn prepare_geckodriver(cln: &cleanup_notify::Handle) {
 }
 
 #[throws(AE)]
+fn prepare_thirtyfour() {
+  let caps = t4::DesiredCapabilities::firefox();
+  let driver = t4::WebDriver::new("http://localhost:4444", &caps)
+    .context("create 34 WebDriver")?;
+  driver.get("http://localhost:8000")
+    .context("dummy navigation")?;
+}
+
+#[throws(AE)]
 pub fn setup() -> Setup {
   let current_exe : String = env::current_exe()
     .context("find current executable")?
@@ -300,6 +312,7 @@ pub fn setup() -> Setup {
 
   prepare_xserver(&cln).context("setup X server")?;
   prepare_geckodriver(&cln).context("setup webdriver serverr")?;
+  prepare_thirtyfour().context("prepare web session")?;
 
   Setup {
     tmp,
