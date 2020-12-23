@@ -57,8 +57,26 @@ pub struct FinalInfoCollection;
 
 #[derive(Debug)]
 pub struct Setup {
-  tmp: String,
+  ds: DirSubst,
   final_hook: FinalInfoCollection,
+}
+
+#[derive(Clone,Debug)]
+pub struct DirSubst {
+  pub tmp: String,
+  pub abstmp: String,
+  pub start_dir: String,
+}
+
+impl DirSubst {
+  fn subst<S:AsRef<str>>(&self, s:S) -> String {
+    fn inner(_ds: &DirSubst, s: &str) -> String {
+      s
+        .replace("@target@",   "../../")
+        .replace("@srcbbuild@","../../")
+    }
+    inner(self, s.as_ref())
+  }
 }
 
 mod cleanup_notify {
@@ -177,7 +195,19 @@ fn reinvoke_via_bwrap(_opts: &Opts, current_exe: &str) -> Void {
 }
 
 #[throws(AE)]
-fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> (String, String) {
+fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> DirSubst {
+  #[throws(AE)]
+  fn getcwd() -> String {
+    env::current_dir()
+      .context("getcwd")?
+      .to_str()
+      .ok_or_else(|| anyhow!("path is not UTF-8"))?
+      .to_owned()
+  }
+
+  let start_dir = getcwd()
+    .context("canonicalise our invocation directory (getcwd)")?;
+
   (||{
     match fs::metadata(&opts.tmp_dir) {
       Ok(m) => {
@@ -231,10 +261,7 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> (String, String) {
     .context("prepare/create our tmp subdir")?;
 
   let abstmp =
-    env::current_dir().context("canonicalise our tmp subdi (getcwd)r")?
-    .to_str()
-    .ok_or_else(|| anyhow!("tmp path is not UTF-8"))?
-    .to_owned();
+    getcwd().context("canonicalise our tmp subdir (getcwd)")?;
 
   env::set_var("HOME", &abstmp);
   for v in "http_proxy https_proxy XAUTHORITY CDPATH \
@@ -243,7 +270,11 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> (String, String) {
     env::remove_var(v);
   }
 
-  (our_tmpdir, abstmp)
+  DirSubst {
+    tmp: our_tmpdir,
+    abstmp,
+    start_dir,
+  }
 }
 
 #[throws(AE)]
@@ -273,7 +304,7 @@ fn fork_something_which_prints(mut cmd: Command,
 }
 
 #[throws(AE)]
-fn prepare_xserver(cln: &cleanup_notify::Handle, abstmp: &str) {
+fn prepare_xserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
   const DISPLAY : u16 = 12;
 
   let mut xcmd = Command::new("Xvfb");
@@ -285,7 +316,7 @@ fn prepare_xserver(cln: &cleanup_notify::Handle, abstmp: &str) {
            -terminate \
            -retro \
            -displayfd 1".split(' '))
-    .args(&["-fbdir", abstmp])
+    .args(&["-fbdir", &ds.abstmp])
     .arg(format!(":{}", DISPLAY));
 
   let l = fork_something_which_prints(xcmd, cln).context("Xvfb")?;
@@ -314,8 +345,45 @@ fn prepare_xserver(cln: &cleanup_notify::Handle, abstmp: &str) {
 }
 
 #[throws(AE)]
-fn prepare_gameserver() {
-  
+fn prepare_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
+  let config = ds.subst(r##"
+base_dir = "."
+command_socket = "command.socket"
+bundled_sources = "@target@/bundled-sources"
+save_dir = "."
+template_dir = "@srcbuild@/templates"
+wasm_dir = "@target@/packed-wasm"
+shapelibs = [ "@srcbuild@/library/*.toml" ]
+
+[log]
+global_level = 'debug'
+
+[log.modules]
+rocket = 'error'
+_ = "error" # rocket
+# ^ comment these two out to see Tera errors, *sigh*
+
+'hyper::server' = 'info'
+"game::debugreader" = 'info'
+"game::updates" = 'trace'
+"##);
+
+  const CONFIG : &str = "server-config.toml";
+
+  fs::write(CONFIG, &config)
+    .context(CONFIG).context("create server config")?;
+
+  let server_exe = ds.subst("@target@/debug/daemon-otter");
+  (||{
+    let mut cmd = Command::new(&server_exe);
+    cmd.arg(CONFIG);
+    cln.arm_hook(&mut cmd)?;
+    cmd
+      .spawn().context("spawn")?;
+    // we leak it here
+    Ok::<_,AE>(())
+  })()
+    .context(server_exe).context("game server")?;
 }
 
 #[throws(AE)]
@@ -387,18 +455,18 @@ pub fn setup() -> Setup {
   sleep(opts.pause.into());
 
   let cln = cleanup_notify::Handle::new()?;
-  let (tmp, abstmp) = prepare_tmpdir(&opts, &current_exe)?;
+  let ds = prepare_tmpdir(&opts, &current_exe)?;
 
-  prepare_xserver(&cln, &abstmp).always_context("setup X server")?;
-  prepare_gameserver().always_context("setup game server")?;
+  prepare_xserver(&cln, &ds).always_context("setup X server")?;
+  prepare_gameserver(&cln, &ds).always_context("setup game server")?;
 
   let final_hook = FinalInfoCollection;
 
-  prepare_geckodriver(&cln).always_context("setup webdriver serverr")?;
+  prepare_geckodriver(&cln).always_context("setup webdriver server")?;
   prepare_thirtyfour().always_context("prepare web session")?;
 
   Setup {
-    tmp,
+    ds,
     final_hook
   }
 }
