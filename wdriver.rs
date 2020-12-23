@@ -31,9 +31,13 @@ struct Opts {
   tmp_dir: String,
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug)]
+pub struct FinalInfoCollection;
+
+#[derive(Debug)]
 pub struct Setup {
   tmp: String,
+  final_hook: FinalInfoCollection,
 }
 
 mod cleanup_notify {
@@ -292,6 +296,27 @@ fn prepare_thirtyfour() {
     .context("dummy navigation")?;
 }
 
+impl Drop for FinalInfoCollection {
+  fn drop(&mut self) {
+    match (||{
+      let mut cmd = Command::new("xwd");
+      cmd.args("-root \
+                -silent \
+                -out final.xwd".split(' '));
+      let s = cmd
+        .spawn().context("spawn")?
+        .wait().context("wait")?;
+      if !s.success() {
+        throw!(anyhow!("failed, waitstatus={}", &s));
+      }
+      Ok::<_,AE>(())
+    })() {
+      Ok(()) => eprintln!("taken screenshot"),
+      Err(e) => eprintln!("screenshot failed: {:#?}", &e),
+    }
+  }
+}
+
 #[throws(AE)]
 pub fn setup() -> Setup {
   let current_exe : String = env::current_exe()
@@ -311,10 +336,14 @@ pub fn setup() -> Setup {
   let tmp = prepare_tmpdir(&opts, &current_exe)?;
 
   prepare_xserver(&cln).context("setup X server")?;
+
+  let final_hook = FinalInfoCollection;
+
   prepare_geckodriver(&cln).context("setup webdriver serverr")?;
   prepare_thirtyfour().context("prepare web session")?;
 
   Setup {
     tmp,
+    final_hook
   }
 }
