@@ -37,8 +37,10 @@ mod cleanup_notify {
   use anyhow::Context;
   use fehler::{throw, throws};
   use libc::_exit;
+  use nix::errno::Errno::*;
   use nix::{unistd::*, fcntl::OFlag};
   use nix::sys::signal::*;
+  use nix::Error::Sys;
   use void::Void;
   use std::io;
   use std::os::unix::io::RawFd;
@@ -60,7 +62,7 @@ mod cleanup_notify {
       match nix::unistd::read(fd, &mut buf) {
         Ok(0) => break,
         Ok(_) => throw!(io::Error::from_raw_os_error(libc::EINVAL)),
-        Err(nix::Error::Sys(nix::errno::Errno::EINTR)) => continue,
+        Err(Sys(EINTR)) => continue,
         _ => throw!(io::Error::last_os_error()),
       }
     }
@@ -100,6 +102,13 @@ mod cleanup_notify {
               );
 
               let _ = close(writing_end);
+              for fd in 2.. {
+                if fd == notify_writing_end { continue }
+                let r = close(fd);
+                if fd >= writing_end && matches!(r, Err(Sys(EBADF))) {
+                  break;
+                }                  
+              }
               let _ = read_await(notify_writing_end);
               let _ = kill(semidaemon, SIGTERM);
               _exit(0);
