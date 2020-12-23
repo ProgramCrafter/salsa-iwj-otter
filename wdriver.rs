@@ -305,10 +305,12 @@ fn prepare_thirtyfour() {
   let caps = t4::DesiredCapabilities::firefox();
   let driver = t4::WebDriver::new("http://localhost:4444", &caps)
     .context("create 34 WebDriver")?;
-  driver.fullscreen_window()
-    .context("fullscreen")?;
-  driver.get("http://localhost:8000")
+//  driver.fullscreen_window()
+//    .context("fullscreen")?;
+  driver.get("http://localhost:")
     .context("dummy navigation")?;
+  driver.screenshot(path::Path::new("test.png"))
+    .context("screenshot")?;
 }
 
 impl Drop for FinalInfoCollection {
