@@ -106,6 +106,7 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> String {
 
 #[throws(AE)]
 fn fork_something_which_prints(mut cmd: Command) -> String {
+  cmd.stdout(Stdio::piped());
   let mut child = cmd.spawn().context("spawn")?;
   let mut report = BufReader::new(child.stdout.take().unwrap()).lines();
 
@@ -138,8 +139,7 @@ fn prepare_xserver() {
            -terminate \
            -wr \
            -displayfd 1".split(' '))
-    .arg(format!(":{}", DISPLAY))
-    .stdout(Stdio::piped());
+    .arg(format!(":{}", DISPLAY));
 
   let l = fork_something_which_prints(xcmd).context("Xvfb")?;
 
