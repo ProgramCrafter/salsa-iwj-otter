@@ -6,6 +6,7 @@ pub use anyhow::{anyhow, Context};
 pub use fehler::{throw, throws};
 pub use structopt::StructOpt;
 pub use thirtyfour_sync as t4;
+use nix::unistd::LinkatFlags;
 pub use void::Void;
 
 pub use t4::WebDriverCommands;
@@ -31,6 +32,7 @@ pub const URL : &str = "http://localhost:8000";
 
 pub trait AlwaysContext<T,E> {
   fn always_context(self, msg: &'static str) -> anyhow::Result<T>;
+  fn just_warn(self, msg: &'static str) -> Option<T>;
 }
 
 impl<T,E> AlwaysContext<T,E> for Result<T,E>
@@ -40,6 +42,15 @@ where Self: anyhow::Context<T,E>
     let x = self.context(msg);
     if x.is_ok() { eprintln!("completed {}.", msg) };
     x
+  }
+  fn just_warn(self, msg: &'static str) -> Option<T> {
+    match self {
+      Ok(x) => Some(x),
+      e@ Err(_) => {
+        eprintln!("warning: {:#}", e.context(msg).err().unwrap());
+        None
+      },
+    }
   }
 }
 
@@ -424,25 +435,10 @@ fn prepare_thirtyfour() {
 
 impl Drop for FinalInfoCollection {
   fn drop(&mut self) {
-    match (||{
-      fs::copy("Xvfb_screen0","final-auto.xwd")
-        .context("copy")?;
-
-      let mut cmd = Command::new("xwd");
-      cmd.args("-root \
-                -silent \
-                -out final-xwd.xwd".split(' '));
-      let s = cmd
-        .spawn().context("spawn")?
-        .wait().context("wait")?;
-      if !s.success() {
-        throw!(anyhow!("failed, waitstatus={}", &s));
-      }
-      Ok::<_,AE>(())
-    })() {
-      Ok(()) => eprintln!("taken screenshot"),
-      Err(e) => eprintln!("screenshot failed: {:#?}", &e),
-    }
+    nix::unistd::linkat(None, "Xvfb_screen0",
+                        None, "Xvfb_keep.xwd",
+                        LinkatFlags::NoSymlinkFollow)
+      .just_warn("preserve Xvfb screen");
   }
 }
 
