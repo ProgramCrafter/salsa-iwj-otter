@@ -8,5 +8,5 @@ use otter_webdriver_tests::*;
 fn main(){
   let s = setup().always_context("setup")?;
 
-  println!("hi! {:#?}", &s);
+  info!("hi! {:#?}", &s);
 }

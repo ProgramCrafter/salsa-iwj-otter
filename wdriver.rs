@@ -49,7 +49,7 @@ where Self: anyhow::Context<T,E>
     match self {
       Ok(x) => Some(x),
       e@ Err(_) => {
-        eprintln!("warning: {:#}", e.context(msg).err().unwrap());
+        warn!("{:#}", e.context(msg).err().unwrap());
         None
       },
     }
@@ -195,7 +195,7 @@ mod cleanup_notify {
 
 #[throws(AE)]
 fn reinvoke_via_bwrap(_opts: &Opts, current_exe: &str) -> Void {
-  eprintln!("running bwrap");
+  debug!("running bwrap");
   
   let mut bcmd = Command::new("bwrap");
   bcmd
@@ -467,7 +467,7 @@ pub fn setup() -> Setup {
       .context("reinvoke via bwrap")?;
   }
 
-  eprintln!("pid = {}", nix::unistd::getpid());
+  info!("pid = {}", nix::unistd::getpid());
   sleep(opts.pause.into());
 
   let cln = cleanup_notify::Handle::new()?;
