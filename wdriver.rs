@@ -32,6 +32,8 @@ pub type AE = anyhow::Error;
 
 pub const URL : &str = "http://localhost:8000";
 
+const CONFIG : &str = "server-config.toml";
+
 pub trait AlwaysContext<T,E> {
   fn always_context(self, msg: &'static str) -> anyhow::Result<T>;
   fn just_warn(self, msg: &'static str) -> Option<T>;
@@ -384,8 +386,6 @@ _ = "error" # rocket
 "game::updates" = 'trace'
 "##);
 
-  const CONFIG : &str = "server-config.toml";
-
   fs::write(CONFIG, &config)
     .context(CONFIG).context("create server config")?;
 
@@ -404,6 +404,10 @@ _ = "error" # rocket
     Ok::<_,AE>(())
   })()
     .context(server_exe).context("game server")?;
+}
+
+#[throws(AE)]
+pub fn prepare_game(_ds: &DirSubst) {
 }
 
 #[throws(AE)]
@@ -476,6 +480,7 @@ pub fn setup(exe_module_path: &str) -> Setup {
 
   prepare_xserver(&cln, &ds).always_context("setup X server")?;
   prepare_gameserver(&cln, &ds).always_context("setup game server")?;
+  prepare_game(&ds).context("setup game")?;
 
   let final_hook = FinalInfoCollection;
 
