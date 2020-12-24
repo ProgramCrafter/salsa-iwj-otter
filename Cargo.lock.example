@@ -486,6 +486,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "env_logger"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "54532e3223c5af90a6a757c90b5c5521564b07e5e7a958681bcd2afad421cdcd"
+dependencies = [
+ "atty",
+ "humantime",
+ "log 0.4.11",
+ "regex",
+ "termcolor",
+]
+
+[[package]]
 name = "erased-serde"
 version = "0.3.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1562,9 +1575,11 @@ name = "otter-webdriver-tests"
 version = "0.0.1"
 dependencies = [
  "anyhow",
+ "env_logger",
  "fehler",
  "humantime",
  "libc",
+ "log 0.4.11",
  "nix 0.19.1",
  "otter",
  "structopt",
@@ -2465,6 +2480,15 @@ dependencies = [
  "slug",
  "unic-segment",
  "url 1.7.2",
+]
+
+[[package]]
+name = "termcolor"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
+dependencies = [
+ "winapi-util",
 ]
 
 [[package]]

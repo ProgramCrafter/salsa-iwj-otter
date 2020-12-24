@@ -4,9 +4,11 @@
 
 pub use anyhow::{anyhow, Context};
 pub use fehler::{throw, throws};
+pub use log::{debug, error, info, trace, warn};
+pub use log::{log, log_enabled};
+pub use nix::unistd::LinkatFlags;
 pub use structopt::StructOpt;
 pub use thirtyfour_sync as t4;
-use nix::unistd::LinkatFlags;
 pub use void::Void;
 
 pub use t4::WebDriverCommands;
@@ -40,7 +42,7 @@ where Self: anyhow::Context<T,E>
 {
   fn always_context(self, msg: &'static str) -> anyhow::Result<T> {
     let x = self.context(msg);
-    if x.is_ok() { eprintln!("completed {}.", msg) };
+    if x.is_ok() { info!("completed {}.", msg) };
     x
   }
   fn just_warn(self, msg: &'static str) -> Option<T> {
@@ -444,6 +446,15 @@ impl Drop for FinalInfoCollection {
 
 #[throws(AE)]
 pub fn setup() -> Setup {
+  env_logger::Builder::new()
+    .format_timestamp_micros()
+    .format_level(true)
+    .filter_module("otter_webdriver_tests", log::LevelFilter::Debug)
+    .filter_level(log::LevelFilter::Info)
+    .parse_env("OTTER_WDT_LOG")
+    .init();
+  debug!("starting");
+
   let current_exe : String = env::current_exe()
     .context("find current executable")?
     .to_str()
