@@ -445,11 +445,12 @@ impl Drop for FinalInfoCollection {
 }
 
 #[throws(AE)]
-pub fn setup() -> Setup {
+pub fn setup(exe_module_path: &str) -> Setup {
   env_logger::Builder::new()
     .format_timestamp_micros()
     .format_level(true)
     .filter_module("otter_webdriver_tests", log::LevelFilter::Debug)
+    .filter_module(exe_module_path, log::LevelFilter::Debug)
     .filter_level(log::LevelFilter::Info)
     .parse_env("OTTER_WDT_LOG")
     .init();
