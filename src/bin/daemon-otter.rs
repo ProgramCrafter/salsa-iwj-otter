@@ -215,6 +215,8 @@ fn main() {
 
   flexi_logger::Logger::with(c.log.clone()).start()?;
 
+  debug!("resolved config: {:#?}", c);
+
   {
     let check = format!("{}/otter/index.html", &c.bundled_sources);
     fs::metadata(&check)

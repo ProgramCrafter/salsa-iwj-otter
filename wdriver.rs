@@ -7,6 +7,7 @@ pub use fehler::{throw, throws};
 pub use log::{debug, error, info, trace, warn};
 pub use log::{log, log_enabled};
 pub use nix::unistd::LinkatFlags;
+pub use regex::{Captures, Regex};
 pub use structopt::StructOpt;
 pub use thirtyfour_sync as t4;
 pub use void::Void;
@@ -15,6 +16,7 @@ pub use t4::WebDriverCommands;
 
 pub use std::env;
 pub use std::fs;
+pub use std::collections::hash_map::HashMap;
 pub use std::io::{BufRead, BufReader, ErrorKind, Write};
 pub use std::net::TcpStream;
 pub use std::os::unix::process::CommandExt;
@@ -85,17 +87,41 @@ pub struct DirSubst {
   pub tmp: String,
   pub abstmp: String,
   pub start_dir: String,
+  pub src: String,
 }
 
 impl DirSubst {
+  #[throws(AE)]
   fn subst<S:AsRef<str>>(&self, s:S) -> String {
+    #[throws(AE)]
     fn inner(ds: &DirSubst, s: &str) -> String {
-      s
-        .replace("@target@",   &format!("{}/target", &ds.start_dir))
-        .replace("@srcbuild@", &ds.start_dir)
-        .replace("@url@",      &URL)
+
+      let build = &ds.start_dir;
+      let target = format!("{}/target", &ds.start_dir);
+      let map : HashMap<_,_> = [
+        ("",       "@"),
+        ("src"   , &ds.src),
+        ("build" , build),
+        ("target", &target),
+      ].iter().map(|(k,v)| (k.to_owned(), *v)).collect();
+      let re = Regex::new(r"@(\w+)@").expect("bad re!");
+
+      let mut errs = vec![];
+      let out = re.replace_all(s, |caps: &regex::Captures| {
+        let n = caps.get(1).expect("$1 missing!").as_str();
+        map.get(n).unwrap_or_else(||{
+          errs.push(n.to_owned());
+          &""
+        })
+      });
+      if ! errs.is_empty() {
+        throw!(anyhow!("bad substitution(s) {:?} in {:?}",
+                       &errs, s));
+      }
+
+      out.into()
     }
-    inner(self, s.as_ref())
+    inner(self, s.as_ref())?
   }
 }
 
@@ -290,9 +316,18 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> DirSubst {
     env::remove_var(v);
   }
 
+  let manifest_var = "CARGO_MANIFEST_DIR";
+  let src : String = (|| Ok::<_,AE>(match env::var(manifest_var) {
+    Ok(dir) => dir.into(),
+    Err(env::VarError::NotPresent) => start_dir.clone(),
+    e@ Err(_) => throw!(e.context(manifest_var).err().unwrap()),
+  }))()
+    .context("find source code")?;
+
   DirSubst {
     tmp: our_tmpdir,
     abstmp,
+    src,
     start_dir,
   }
 }
@@ -367,11 +402,16 @@ fn prepare_xserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
 #[throws(AE)]
 fn prepare_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
   let config = ds.subst(r##"
+base_dir = "@build@"
 public_url = "@url"
-base_dir = "@srcbuild@"
-command_socket = "command.socket"
+
 save_dir = "."
+command_socket = "command.socket"
+template_dir = "@src@/templates"
+nwtemplate_dir = "@src@/nwtemplates"
 bundled_sources = "@target@/bundled-sources"
+wasm_dir = "@target@/packed-wasm"
+shapelibs = [ "@src@/library/*.toml" ]
 
 [log]
 global_level = 'debug'
@@ -384,12 +424,12 @@ _ = "error" # rocket
 'hyper::server' = 'info'
 "game::debugreader" = 'info'
 "game::updates" = 'trace'
-"##);
+"##)?;
 
   fs::write(CONFIG, &config)
     .context(CONFIG).context("create server config")?;
 
-  let server_exe = ds.subst("@target@/debug/daemon-otter");
+  let server_exe = ds.subst("@target@/debug/daemon-otter")?;
   let mut cmd = Command::new(&server_exe);
   cmd
     .arg("--report-startup")

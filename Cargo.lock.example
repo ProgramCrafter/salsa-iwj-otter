@@ -1582,6 +1582,7 @@ dependencies = [
  "log 0.4.11",
  "nix 0.19.1",
  "otter",
+ "regex",
  "structopt",
  "thirtyfour_sync",
  "void",
