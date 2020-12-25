@@ -213,7 +213,7 @@ fn main() {
 
   let c = config();
 
-  flexi_logger::Logger::with(c.log.clone()).start()?;
+  flexi_logger::Logger::with(log_config().clone()).start()?;
 
   debug!("resolved config: {:#?}", c);
 

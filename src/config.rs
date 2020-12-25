@@ -37,6 +37,12 @@ pub struct ServerConfigSpec {
 }
 
 #[derive(Debug,Clone)]
+pub struct WholeServerConfig {
+  server: Arc<ServerConfig>,
+  log: LogSpecification,
+}
+
+#[derive(Debug,Clone)]
 pub struct ServerConfig {
   save_dir: String,
   pub command_socket: String,
@@ -48,16 +54,15 @@ pub struct ServerConfig {
   pub template_dir: String,
   pub nwtemplate_dir: String,
   pub wasm_dir: String,
-  pub log: LogSpecification,
   pub bundled_sources: String,
   pub shapelibs: Vec<shapelib::Config1>,
   pub sendmail: String,
 }
 
-impl TryFrom<ServerConfigSpec> for ServerConfig {
+impl TryFrom<ServerConfigSpec> for WholeServerConfig {
   type Error = AE;
   #[throws(Self::Error)]
-  fn try_from(spec: ServerConfigSpec) -> ServerConfig {
+  fn try_from(spec: ServerConfigSpec) -> WholeServerConfig {
     let ServerConfigSpec {
       base_dir, save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
@@ -122,21 +127,28 @@ impl TryFrom<ServerConfigSpec> for ServerConfig {
     let log = LogSpecification::from_toml(&log)
       .context("log specification")?;
 
-    ServerConfig {
+    let server = ServerConfig {
       save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
       template_dir, nwtemplate_dir, wasm_dir,
-      log, bundled_sources, shapelibs, sendmail,
+      bundled_sources, shapelibs, sendmail,
+    };
+    WholeServerConfig {
+      server: Arc::new(server),
+      log,
     }
   }
 }
 
 pub fn config() -> Arc<ServerConfig> {
-  GLOBAL.config.read().unwrap().clone()
+  GLOBAL.config.read().unwrap().server.clone()
+}
+pub fn log_config() -> LogSpecification {
+  GLOBAL.config.read().unwrap().log.clone()
 }
 
-fn set_config(config: ServerConfig) {
-  *GLOBAL.config.write().unwrap() = Arc::new(config)
+fn set_config(whole: WholeServerConfig) {
+  *GLOBAL.config.write().unwrap() = whole;
 }
 
 impl ServerConfig {
@@ -149,9 +161,9 @@ impl ServerConfig {
     let mut buf = String::new();
     File::open(&config_filename).with_context(||config_filename.to_string())?
       .read_to_string(&mut buf)?;
-    let config : ServerConfigSpec = toml_de::from_str(&buf)?;
-    let config = config.try_into()?;
-    set_config(config);
+    let spec : ServerConfigSpec = toml_de::from_str(&buf)?;
+    let whole = spec.try_into()?;
+    set_config(whole);
   }
 
   #[throws(AE)]
@@ -175,8 +187,8 @@ impl ServerConfig {
   }
 }
 
-impl Default for ServerConfig {
-  fn default() -> ServerConfig {
+impl Default for WholeServerConfig {
+  fn default() -> WholeServerConfig {
     let spec: ServerConfigSpec = toml_de::from_str(r#"
       public_url = "INTERNAL ERROR"
       "#)
