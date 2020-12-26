@@ -110,11 +110,13 @@ impl DirSubst {
 
       let build = &ds.start_dir;
       let target = format!("{}/target", &ds.start_dir);
+      let specs  = format!("{}/specs" , &ds.src      );
       let map : HashMap<_,_> = [
         ("",       "@"),
         ("src"   , &ds.src),
         ("build" , build),
         ("target", &target),
+        ("specs",  &specs),
       ].iter().map(|(k,v)| (k.to_owned(), *v)).collect();
       let re = Regex::new(r"@(\w+)@").expect("bad re!");
 
@@ -134,6 +136,16 @@ impl DirSubst {
       out.into()
     }
     inner(self, s.as_ref())?
+  }
+
+  #[throws(AE)]
+  fn ss(&self, s: &str) -> Vec<String> {
+    self.subst(s)?
+      .trim()
+      .split(' ')
+      .filter(|s| !s.is_empty())
+      .map(str::to_string)
+      .collect()
   }
 }
 
@@ -458,8 +470,37 @@ _ = "error" # rocket
     .context(server_exe).context("game server")?;
 }
 
+impl DirSubst {
+  #[throws(AE)]
+  fn otter<S:AsRef<std::ffi::OsStr>>(&self, args: &[S]) {
+    let ds = self;
+    let exe = ds.subst("@target@/debug/otter")?;
+    (||{
+      let mut cmd = Command::new(&exe);
+      cmd
+        .args(&["--config", CONFIG])
+        .args(&*args);
+      let st = cmd
+        .spawn().context("spawn")?
+        .wait().context("wait")?;
+      if !st.success() {
+        throw!(anyhow!("wait status {}", &st));
+      }
+      Ok::<_,AE>(())
+    })()
+      .context(exe)
+      .context("run otter client")?;
+  }
+}
+
 #[throws(AE)]
-pub fn prepare_game(_ds: &DirSubst) {
+pub fn prepare_game(ds: &DirSubst) {
+  ds.otter(&ds.ss(
+    "--account server:                                  \
+     reset                                              \
+     --reset-table @specs@/test.table.toml              \
+                   server::dummy @specs@/demo.game.toml \
+    ")?).context("reset table")?;
 }
 
 #[throws(AE)]
