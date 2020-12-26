@@ -50,7 +50,7 @@ pub enum StaticUser {
 
 use StaticUser::*;
 
-const FIXED_TOKENS : (&str, &str) = [
+const FIXED_TOKENS : &[(StaticUser, &str)] = &[
   (Alice, "kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe"),
   (Bob  , "ccg9kzoTh758QrVE1xMY7BQWB36dNJTx"),
 ];
@@ -123,32 +123,36 @@ struct RawSubst(HashMap<String,String>);
 
 struct ExtendedSubst<'b, B: Subst, X: Subst>(&'b B, X);
 
-impl<T: AsRef<str>,
-     U: AsRef<str>,
-     L: Iterator<Item=(T,U)>>
-  From<&L> for RawSubst
+impl<T: ToOwned<Owned=String>,
+     U: ToOwned<Owned=String>,
+     L: IntoIterator<Item=(T,U)>>
+  From<L> for RawSubst
 {
-  fn from(l: &L) -> RawSubst {
-    let map = l.map(|(k,v)| (k.to_owned(), v.to_owned())).collect();
+  fn from(l: L) -> RawSubst {
+    let map = l.into_iter()
+      .map(|(k,v)| (k.to_owned(), v.to_owned())).collect();
     RawSubst(map)
   }
 }
 
 trait Subst : Sized {
   fn get(&self, kw: &str) -> Option<String>;
-  fn also<L: Into<RawSubst>>(&self, xl: &L) -> ExtendedSubst<Self, RawSubst> {
-    ExtendedSubst(self, Box::new(xl.into()));
+  fn also<L: Into<RawSubst>>(&self, xl: L) -> ExtendedSubst<Self, RawSubst> {
+    ExtendedSubst(self, xl.into())
   }
-  fn subst(&self, s: &dyn AsRef<str>) -> Result<String,AE> {
+
+  #[throws(AE)]
+  fn subst(&self, s: &dyn AsRef<str>) -> String {
     let s = s.as_ref();
     let re = Regex::new(r"@(\w+)@").expect("bad re!");
     let mut errs = vec![];
     let out = re.replace_all(s, |caps: &regex::Captures| {
-      let n = caps.get(1).expect("$1 missing!").as_str();
-      if n == "" { return &"" }
-      self.lookup(n).unwrap_or_else(||{
-        errs.push(n.to_owned());
-        &""
+      let kw = caps.get(1).expect("$1 missing!").as_str();
+      if kw == "" { return "".to_owned() }
+      let v = self.get(kw);
+      v.unwrap_or_else(||{
+        errs.push(kw.to_owned());
+        "".to_owned()
       })
     });
     if ! errs.is_empty() {
@@ -157,24 +161,31 @@ trait Subst : Sized {
     }
     out.into()
   }
+
+  #[throws(AE)]
+  fn ss(&self, s: &str) -> Vec<String> {
+    self.subst(&s)?
+      .trim()
+      .split(' ')
+      .filter(|s| !s.is_empty())
+      .map(str::to_string)
+      .collect()
+  }
 }
 
 impl Subst for RawSubst {
-  #[throws(AE)]
-  fn get(&self, kw: &str) -> String {
-    self.0.get(kw).to_owned()
+  fn get(&self, kw: &str) -> Option<String> {
+    self.0.get(kw).map(String::clone)
   }
 }
 
 impl<'b, B:Subst, X:Subst> Subst for ExtendedSubst<'b, B, X> {
-  #[throws(AE)]
-  fn get(&self, kw: &str) -> Option<&str> {
+  fn get(&self, kw: &str) -> Option<String> {
     self.1.get(kw).or_else(|| self.0.get(kw))
   }
 }
 
 impl Subst for DirSubst {
-  #[throws(AE)]
   fn get(&self, kw: &str) -> Option<String> {
     Some(match kw {
       "src"    => self.src.clone(),
@@ -183,26 +194,6 @@ impl Subst for DirSubst {
       "specs"  => format!("{}/specs" , &self.src      ),
       _ => return None,
     })
-  }
-}
-
-impl DirSubst {
-  #[throws(AE)]
-  fn subst<S:AsRef<str>>(&self, s:S) -> String {
-    
-
-
-
-  }
-
-  #[throws(AE)]
-  fn ss(&self, s: &str) -> Vec<String> {
-    self.subst(s)?
-      .trim()
-      .split(' ')
-      .filter(|s| !s.is_empty())
-      .map(str::to_string)
-      .collect()
   }
 }
 
@@ -482,7 +473,7 @@ fn prepare_xserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
 
 #[throws(AE)]
 fn prepare_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
-  let config = ds.subst(r##"
+  let config = ds.subst(&r##"
 base_dir = "@build@"
 public_url = "@url"
 
@@ -510,7 +501,7 @@ _ = "error" # rocket
   fs::write(CONFIG, &config)
     .context(CONFIG).context("create server config")?;
 
-  let server_exe = ds.subst("@target@/debug/daemon-otter")?;
+  let server_exe = ds.subst(&"@target@/debug/daemon-otter")?;
   let mut cmd = Command::new(&server_exe);
   cmd
     .arg("--report-startup")
@@ -531,7 +522,7 @@ impl DirSubst {
   #[throws(AE)]
   fn otter<S:AsRef<std::ffi::OsStr>>(&self, args: &[S]) {
     let ds = self;
-    let exe = ds.subst("@target@/debug/otter")?;
+    let exe = ds.subst(&"@target@/debug/otter")?;
     (||{
       let mut cmd = Command::new(&exe);
       cmd
