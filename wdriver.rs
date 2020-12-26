@@ -10,7 +10,7 @@ pub use nix::unistd::LinkatFlags;
 pub use num_derive::FromPrimitive;
 pub use regex::{Captures, Regex};
 pub use structopt::StructOpt;
-pub use strum::{EnumIter,IntoStaticStr};
+pub use strum::{EnumIter, EnumProperty, IntoEnumIterator, IntoStaticStr};
 pub use thirtyfour_sync as t4;
 pub use void::Void;
 
@@ -41,19 +41,12 @@ pub const URL : &str = "http://localhost:8000";
 const CONFIG : &str = "server-config.toml";
 
 #[derive(Copy,Clone,Debug,Eq,PartialEq,Ord,PartialOrd)]
-#[derive(FromPrimitive,EnumIter,IntoStaticStr)]
+#[derive(FromPrimitive,EnumIter,IntoStaticStr,EnumProperty)]
 #[strum(serialize_all = "snake_case")]
 pub enum StaticUser {
-  Alice,
-  Bob,
+  #[strum(props(Token="kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe"))] Alice,
+  #[strum(props(Token="ccg9kzoTh758QrVE1xMY7BQWB36dNJTx"))] Bob,
 }
-
-use StaticUser::*;
-
-const FIXED_TOKENS : &[(StaticUser, &str)] = &[
-  (Alice, "kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe"),
-  (Bob  , "ccg9kzoTh758QrVE1xMY7BQWB36dNJTx"),
-];
 
 pub trait AlwaysContext<T,E> {
   fn always_context(self, msg: &'static str) -> anyhow::Result<T>;
@@ -549,13 +542,19 @@ pub fn prepare_game(ds: &DirSubst) {
      --reset-table @specs@/test.table.toml              \
                    server::dummy @specs@/demo.game.toml \
     ")?).context("reset table")?;
-/*
-  for u in StaticUser::iter() {
-    ds.otter(&ds.ss(
-  }
 
-# USER=rustcargo target/debug/otter --config ~ian/Rustup/Game/server/server-test-zealot.toml --super --fixed-token  --account server:alice join-game server::dummy
-*/
+  for u in StaticUser::iter() {
+    let nick: &str = u.into();
+    let token = u.get_str("token").unwrap();
+    ds.otter(&ds
+             .also(&[("nick",  nick),
+                     ("token", token),
+             ])
+             .ss("--super                          \
+                  --account server:@nick@       \
+                  --fixed-token @token@         \
+                  join-game server::dummy"))?
+  }
 }
 
 #[throws(AE)]
