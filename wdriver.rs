@@ -29,6 +29,8 @@ pub use std::time;
 
 use otter::config::DAEMON_STARTUP_REPORT;
 
+pub type T4d = t4::WebDriver;
+
 pub const MS : time::Duration = time::Duration::from_millis(1);
 pub type AE = anyhow::Error;
 
@@ -38,22 +40,28 @@ const CONFIG : &str = "server-config.toml";
 
 pub trait AlwaysContext<T,E> {
   fn always_context(self, msg: &'static str) -> anyhow::Result<T>;
-  fn just_warn(self, msg: &'static str) -> Option<T>;
 }
 
 impl<T,E> AlwaysContext<T,E> for Result<T,E>
-where Self: anyhow::Context<T,E>
+where Self: anyhow::Context<T,E>,
 {
   fn always_context(self, msg: &'static str) -> anyhow::Result<T> {
     let x = self.context(msg);
     if x.is_ok() { info!("completed {}.", msg) };
     x
   }
-  fn just_warn(self, msg: &'static str) -> Option<T> {
+}
+
+pub trait JustWarn<T> {
+  fn just_warn(self) -> Option<T>;
+}
+
+impl<T> JustWarn<T> for Result<T,AE> {
+  fn just_warn(self) -> Option<T> {
     match self {
       Ok(x) => Some(x),
-      e@ Err(_) => {
-        warn!("{:#}", e.context(msg).err().unwrap());
+      Err(e) => {
+        warn!("{:#}", e);
         None
       },
     }
@@ -76,9 +84,13 @@ struct Opts {
 #[derive(Debug)]
 pub struct FinalInfoCollection;
 
+type ScreenShotCount = u32;
+
 #[derive(Debug)]
 pub struct Setup {
-  ds: DirSubst,
+  pub ds: DirSubst,
+  pub driver: T4d,
+  screenshot_count: ScreenShotCount,
   final_hook: FinalInfoCollection,
 }
 
@@ -465,18 +477,25 @@ fn prepare_geckodriver(cln: &cleanup_notify::Handle) {
 }
 
 #[throws(AE)]
-fn prepare_thirtyfour() {
+fn prepare_thirtyfour() -> (T4d, ScreenShotCount) {
+  let mut count = 0;
   let caps = t4::DesiredCapabilities::firefox();
-  let driver = t4::WebDriver::new("http://localhost:4444", &caps)
+  let mut driver = t4::WebDriver::new("http://localhost:4444", &caps)
     .context("create 34 WebDriver")?;
-//  driver.fullscreen_window()
-//    .context("fullscreen")?;
-  driver.screenshot(path::Path::new("test1.png"))
-    .context("screenshot")?;
+  screenshot(&mut driver, &mut count, "startup")?;
   driver.get(URL)
-    .context("navigate to home page")?;
-  driver.screenshot(path::Path::new("test2.png"))
-    .context("screenshot")?;
+    .context("navigate to front page")?;
+  screenshot(&mut driver, &mut count, "front")?;
+  (driver, count)
+}
+
+#[throws(AE)]
+fn screenshot(driver: &T4d, count: &mut ScreenShotCount, slug: &str) {
+  let path = format!("{:03}{}.png", count, slug);
+  *count += 1;
+  driver.screenshot(&path::PathBuf::from(&path))
+    .context(path)
+    .context("take screenshot")?;
 }
 
 impl Drop for FinalInfoCollection {
@@ -484,7 +503,23 @@ impl Drop for FinalInfoCollection {
     nix::unistd::linkat(None, "Xvfb_screen0",
                         None, "Xvfb_keep.xwd",
                         LinkatFlags::NoSymlinkFollow)
-      .just_warn("preserve Xvfb screen");
+      .context("preserve Xvfb screen")
+      .just_warn();
+  }
+}
+
+impl Setup {
+  #[throws(AE)]
+  fn screenshot(&mut self, slug: &str) {
+    screenshot(&self.driver, &mut self.screenshot_count, slug)?
+  }
+}
+
+impl Drop for Setup {
+  fn drop(&mut self) {
+    self.screenshot("final")
+      .context("in Setup::drop")
+      .just_warn();
   }
 }
 
@@ -525,10 +560,13 @@ pub fn setup(exe_module_path: &str) -> Setup {
   let final_hook = FinalInfoCollection;
 
   prepare_geckodriver(&cln).always_context("setup webdriver server")?;
-  prepare_thirtyfour().always_context("prepare web session")?;
+  let (driver, screenshot_count) =
+    prepare_thirtyfour().always_context("prepare web session")?;
 
   Setup {
     ds,
+    driver,
+    screenshot_count,
     final_hook
   }
 }
