@@ -7,8 +7,10 @@ pub use fehler::{throw, throws};
 pub use log::{debug, error, info, trace, warn};
 pub use log::{log, log_enabled};
 pub use nix::unistd::LinkatFlags;
+pub use num_derive::FromPrimitive;
 pub use regex::{Captures, Regex};
 pub use structopt::StructOpt;
+pub use strum::{EnumIter,IntoStaticStr};
 pub use thirtyfour_sync as t4;
 pub use void::Void;
 
@@ -37,6 +39,21 @@ pub type AE = anyhow::Error;
 pub const URL : &str = "http://localhost:8000";
 
 const CONFIG : &str = "server-config.toml";
+
+#[derive(Copy,Clone,Debug,Eq,PartialEq,Ord,PartialOrd)]
+#[derive(FromPrimitive,EnumIter,IntoStaticStr)]
+#[strum(serialize_all = "snake_case")]
+pub enum StaticUser {
+  Alice,
+  Bob,
+}
+
+use StaticUser::*;
+
+const FIXED_TOKENS : (&str, &str) = [
+  (Alice, "kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe"),
+  (Bob  , "ccg9kzoTh758QrVE1xMY7BQWB36dNJTx"),
+];
 
 pub trait AlwaysContext<T,E> {
   fn always_context(self, msg: &'static str) -> anyhow::Result<T>;
@@ -102,40 +119,80 @@ pub struct DirSubst {
   pub src: String,
 }
 
+struct RawSubst(HashMap<String,String>);
+
+struct ExtendedSubst<'b, B: Subst, X: Subst>(&'b B, X);
+
+impl<T: AsRef<str>,
+     U: AsRef<str>,
+     L: Iterator<Item=(T,U)>>
+  From<&L> for RawSubst
+{
+  fn from(l: &L) -> RawSubst {
+    let map = l.map(|(k,v)| (k.to_owned(), v.to_owned())).collect();
+    RawSubst(map)
+  }
+}
+
+trait Subst : Sized {
+  fn get(&self, kw: &str) -> Option<String>;
+  fn also<L: Into<RawSubst>>(&self, xl: &L) -> ExtendedSubst<Self, RawSubst> {
+    ExtendedSubst(self, Box::new(xl.into()));
+  }
+  fn subst(&self, s: &dyn AsRef<str>) -> Result<String,AE> {
+    let s = s.as_ref();
+    let re = Regex::new(r"@(\w+)@").expect("bad re!");
+    let mut errs = vec![];
+    let out = re.replace_all(s, |caps: &regex::Captures| {
+      let n = caps.get(1).expect("$1 missing!").as_str();
+      if n == "" { return &"" }
+      self.lookup(n).unwrap_or_else(||{
+        errs.push(n.to_owned());
+        &""
+      })
+    });
+    if ! errs.is_empty() {
+      throw!(anyhow!("bad substitution(s) {:?} in {:?}",
+                     &errs, s));
+    }
+    out.into()
+  }
+}
+
+impl Subst for RawSubst {
+  #[throws(AE)]
+  fn get(&self, kw: &str) -> String {
+    self.0.get(kw).to_owned()
+  }
+}
+
+impl<'b, B:Subst, X:Subst> Subst for ExtendedSubst<'b, B, X> {
+  #[throws(AE)]
+  fn get(&self, kw: &str) -> Option<&str> {
+    self.1.get(kw).or_else(|| self.0.get(kw))
+  }
+}
+
+impl Subst for DirSubst {
+  #[throws(AE)]
+  fn get(&self, kw: &str) -> Option<String> {
+    Some(match kw {
+      "src"    => self.src.clone(),
+      "build"  => self.start_dir.clone(),
+      "target" => format!("{}/target", &self.start_dir),
+      "specs"  => format!("{}/specs" , &self.src      ),
+      _ => return None,
+    })
+  }
+}
+
 impl DirSubst {
   #[throws(AE)]
   fn subst<S:AsRef<str>>(&self, s:S) -> String {
-    #[throws(AE)]
-    fn inner(ds: &DirSubst, s: &str) -> String {
+    
 
-      let build = &ds.start_dir;
-      let target = format!("{}/target", &ds.start_dir);
-      let specs  = format!("{}/specs" , &ds.src      );
-      let map : HashMap<_,_> = [
-        ("",       "@"),
-        ("src"   , &ds.src),
-        ("build" , build),
-        ("target", &target),
-        ("specs",  &specs),
-      ].iter().map(|(k,v)| (k.to_owned(), *v)).collect();
-      let re = Regex::new(r"@(\w+)@").expect("bad re!");
 
-      let mut errs = vec![];
-      let out = re.replace_all(s, |caps: &regex::Captures| {
-        let n = caps.get(1).expect("$1 missing!").as_str();
-        map.get(n).unwrap_or_else(||{
-          errs.push(n.to_owned());
-          &""
-        })
-      });
-      if ! errs.is_empty() {
-        throw!(anyhow!("bad substitution(s) {:?} in {:?}",
-                       &errs, s));
-      }
 
-      out.into()
-    }
-    inner(self, s.as_ref())?
   }
 
   #[throws(AE)]
@@ -501,6 +558,13 @@ pub fn prepare_game(ds: &DirSubst) {
      --reset-table @specs@/test.table.toml              \
                    server::dummy @specs@/demo.game.toml \
     ")?).context("reset table")?;
+/*
+  for u in StaticUser::iter() {
+    ds.otter(&ds.ss(
+  }
+
+# USER=rustcargo target/debug/otter --config ~ian/Rustup/Game/server/server-test-zealot.toml --super --fixed-token  --account server:alice join-game server::dummy
+*/
 }
 
 #[throws(AE)]
