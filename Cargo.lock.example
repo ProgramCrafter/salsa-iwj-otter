@@ -1584,6 +1584,7 @@ dependencies = [
  "num-derive",
  "num-traits",
  "otter",
+ "parking_lot",
  "regex",
  "structopt",
  "strum",

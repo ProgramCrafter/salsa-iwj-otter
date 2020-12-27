@@ -22,6 +22,7 @@ libc = "0.2"
 nix = "0.19"
 num-derive = "0.3"
 num-traits = "0.2"
+parking_lot = "0.11"
 regex = "1"
 structopt = "0.3"
 strum = { version = "0.20", features = ['derive'] }
