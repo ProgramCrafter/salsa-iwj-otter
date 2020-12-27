@@ -116,14 +116,15 @@ struct RawSubst(HashMap<String,String>);
 
 struct ExtendedSubst<'b, B: Subst, X: Subst>(&'b B, X);
 
-impl<T: ToOwned<Owned=String>,
-     U: ToOwned<Owned=String>,
-     L: IntoIterator<Item=(T,U)>>
+impl<'i,
+     T: AsRef<str> + 'i,
+     U: AsRef<str> + 'i,
+     L: IntoIterator<Item=&'i (T, U)>>
   From<L> for RawSubst
 {
   fn from(l: L) -> RawSubst {
     let map = l.into_iter()
-      .map(|(k,v)| (k.to_owned(), v.to_owned())).collect();
+      .map(|(k,v)| (k.as_ref().to_owned(), v.as_ref().to_owned())).collect();
     RawSubst(map)
   }
 }
@@ -545,15 +546,14 @@ pub fn prepare_game(ds: &DirSubst) {
 
   for u in StaticUser::iter() {
     let nick: &str = u.into();
-    let token = u.get_str("token").unwrap();
+    let token = u.get_str("Token").expect("StaticUser missing Token");
     ds.otter(&ds
-             .also(&[("nick",  nick),
-                     ("token", token),
-             ])
+             .also([("nick",  nick),
+                    ("token", token)].iter())
              .ss("--super                          \
                   --account server:@nick@       \
                   --fixed-token @token@         \
-                  join-game server::dummy"))?
+                  join-game server::dummy")?)?
   }
 }
 
