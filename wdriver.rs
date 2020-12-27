@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
+#![feature(unboxed_closures)]
+#![feature(fn_traits)]
+
 pub use anyhow::{anyhow, Context};
 pub use fehler::{throw, throws};
 pub use log::{debug, error, info, trace, warn};
 pub use log::{log, log_enabled};
 pub use nix::unistd::LinkatFlags;
 pub use num_derive::FromPrimitive;
+pub use parking_lot::{Mutex, MutexGuard};
 pub use regex::{Captures, Regex};
 pub use structopt::StructOpt;
 pub use strum::{EnumIter, EnumProperty, IntoEnumIterator, IntoStaticStr};
@@ -21,6 +25,7 @@ pub use std::fs;
 pub use std::collections::hash_map::HashMap;
 pub use std::io::{BufRead, BufReader, ErrorKind, Write};
 pub use std::net::TcpStream;
+pub use std::ops::Deref;
 pub use std::os::unix::process::CommandExt;
 pub use std::os::unix::fs::DirBuilderExt;
 pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
@@ -32,6 +37,7 @@ pub use std::time;
 use otter::config::DAEMON_STARTUP_REPORT;
 
 pub type T4d = t4::WebDriver;
+pub type WDE = t4::error::WebDriverError;
 
 pub const MS : time::Duration = time::Duration::from_millis(1);
 pub type AE = anyhow::Error;
@@ -95,11 +101,13 @@ struct Opts {
 pub struct FinalInfoCollection;
 
 type ScreenShotCount = u32;
+type WindowState = Option<String>;
 
 #[derive(Debug)]
 pub struct Setup {
   pub ds: DirSubst,
-  pub driver: T4d,
+  driver: T4d,
+  current_window: Mutex<WindowState>,
   screenshot_count: ScreenShotCount,
   final_hook: FinalInfoCollection,
 }
@@ -582,6 +590,101 @@ fn prepare_thirtyfour() -> (T4d, ScreenShotCount) {
     .context("navigate to front page")?;
   screenshot(&mut driver, &mut count, "front")?;
   (driver, count)
+}
+
+pub struct Window<'s> {
+  su: &'s Setup,
+  name: String,
+}
+
+pub struct WindowGuard<'g> {
+  w: &'g mut Window<'g>,
+  current: MutexGuard<'g, WindowState>,
+}
+
+#[throws(AE)]
+fn check_window_name_sanity(name: &str) -> &str {
+  todo!()
+}
+
+impl Setup {
+  #[throws(AE)]
+  pub fn new_window<'s>(&'s self, name: &str) -> Window<'s> {
+    let current = self.current_window.lock();
+    let name = check_window_name_sanity(name)?;
+    let window = (||{
+
+      *current = None; // we might change the current window
+
+      match self.su.driver.switch_to().window_name(name) {
+        Ok(()) => throw!(anyhow!("window already exists")),
+        Err(WDE::NoSuchWindow) => (),
+        e@ Err(_) => throw!(e
+                            .context("check for pre-existing window")
+                            .err().unwrap),
+      };
+
+      self.su.driver.execute_script(format!(
+        r#"window.open('', target='{}');"#,
+        name,
+      ))
+        .context("execute script to create window")?;
+
+      Ok::<_,AE>(Window { su: self, name: name.to_owned() })
+    })()
+      .context(name)
+      .context("create window")?;
+
+    drop(current);
+    window
+  }
+}
+
+// We want a nice syntax for calling WebDriver methods given
+// a Window.  This should take a lock, and switch to the window,
+// and release the lock after the method finishes.  Ie, we
+// need a guard object which derefs to WebDriver.
+//
+// Ideally, Deref on Window would let us return a guard object.
+// But it doesn't: Deref insists on us providing a borrow but
+// we have nothing to borrow from and there won't be any drop
+// glue for the reference.
+//
+// We could do `window().driver_method()` but then Window would have
+// to impl Fn.  That would involve either the unstable feature
+// `unboxed_closures` (letting us impl Fn ourselves) or the unstable
+// feature `type_alias_impl_trait` (so we can have Window be a closure
+// and give it a type name).
+//
+// `type_alias_impl_trait` seems to have many bugs and soundness holes
+// right now.  So that's out.
+//
+// The unboxed closures feature seems more stable.  It has one bug to
+// do with references (#42736) but that doesn't seem likely to bite.
+impl<'g> FnOnce<()> for Window<'g> {
+  type Output =  Result<WindowGuard<'g>,AE>;
+  #[throws(AE)]
+  extern "rust-call" fn call_once(self, _:()) -> WindowGuard<'g> {
+    self.call_mut(())
+  }
+}
+impl<'g> FnMut<()> for Window<'g> {
+  #[throws(AE)]
+  extern "rust-call" fn call_mut(&mut self, _:()) -> WindowGuard<'g> {
+    let current = self.su.current_window.lock();
+    if current != self.name {
+      self.su.driver.switch_to().window_name(self.name)
+        .context(self.name)
+        .context("switch to window")?;
+      *current = self.name.to_string();
+    }
+    WindowGuard { w: self, current }
+  }
+}
+
+impl<'g> Deref for WindowGuard<'g> {
+  type Target = T4d;
+  fn deref(&self) -> &T4d { &self.w.su.t4d }
 }
 
 #[throws(AE)]
