@@ -588,6 +588,11 @@ fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<String>) {
   screenshot(&mut driver, &mut count, "startup")?;
   driver.get(URL).context("navigate to front page")?;
   screenshot(&mut driver, &mut count, "front")?;
+
+  let t = Some(5_000 * MS);
+  driver.set_timeouts(t4::TimeoutConfiguration::new(t,t,t))
+    .context("set webdriver timeouts")?;
+
   (driver, count, window_names)
 }
 
