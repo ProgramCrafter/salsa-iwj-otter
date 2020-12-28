@@ -26,6 +26,7 @@ pub use std::fs;
 pub use std::collections::hash_map::HashMap;
 pub use std::convert::TryInto;
 pub use std::io::{BufRead, BufReader, ErrorKind, Write};
+pub use std::mem;
 pub use std::net::TcpStream;
 pub use std::ops::Deref;
 pub use std::os::unix::process::CommandExt;
@@ -112,6 +113,7 @@ pub struct Setup {
   current_window: WindowState,
   screenshot_count: ScreenShotCount,
   final_hook: FinalInfoCollection,
+  windows_squirreled: Vec<String>, // see Drop impl
 }
 
 #[derive(Clone,Debug)]
@@ -574,16 +576,19 @@ fn prepare_geckodriver(cln: &cleanup_notify::Handle) {
 }
 
 #[throws(AE)]
-fn prepare_thirtyfour() -> (T4d, ScreenShotCount) {
+fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<String>) {
   let mut count = 0;
   let caps = t4::DesiredCapabilities::firefox();
   let mut driver = t4::WebDriver::new("http://localhost:4444", &caps)
     .context("create 34 WebDriver")?;
+
+  const FRONT : &str = "front";
+  let window_names = vec![FRONT.into()];
+  driver.set_window_name(FRONT).context("set initial window name")?;
   screenshot(&mut driver, &mut count, "startup")?;
-  driver.get(URL)
-    .context("navigate to front page")?;
+  driver.get(URL).context("navigate to front page")?;
   screenshot(&mut driver, &mut count, "front")?;
-  (driver, count)
+  (driver, count, window_names)
 }
 
 #[derive(Debug)]
@@ -641,6 +646,7 @@ impl Setup {
       .with_context(|| name.to_owned())
       .context("create window")?;
 
+    self.windows_squirreled.push(name.to_owned());
     window
   }
 }
@@ -697,8 +703,11 @@ impl Drop for FinalInfoCollection {
 impl Drop for Setup {
   fn drop(&mut self) {
     (||{
-      for w in self.driver.window_handles()? {
-        let name = w.to_string();
+      for name in mem::take(&mut self.windows_squirreled) {
+        // This constructor is concurrency-hazardous.  It's only OK
+        // here because we have &mut self.  If there is only one
+        // Setup, there can be noone else with a Window with an
+        // identical name to be interfered with by us.
         let w = Window { name: name.clone() };
         self.w(&w)?.screenshot("final")
           .context(name)
@@ -749,7 +758,7 @@ pub fn setup(exe_module_path: &str) -> Setup {
   let final_hook = FinalInfoCollection;
 
   prepare_geckodriver(&cln).always_context("setup webdriver server")?;
-  let (driver, screenshot_count) =
+  let (driver, screenshot_count, windows_squirreled) =
     prepare_thirtyfour().always_context("prepare web session")?;
 
   Setup {
@@ -757,6 +766,7 @@ pub fn setup(exe_module_path: &str) -> Setup {
     driver,
     screenshot_count,
     current_window: None,
+    windows_squirreled,
     final_hook
   }
 }
