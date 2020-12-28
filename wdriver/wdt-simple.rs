@@ -11,7 +11,7 @@ fn main(){
   let w1 = su.new_window("alice")?;
   let url = su.ds.subst(&"@url@/?zonk")?;
   su.w(&w1)?.get(url)?;
-  su.w(&w1)?.screenshot("test alice")?;
+  su.w(&w1)?.screenshot("testalice")?;
 
   debug!("ok");
   info!("hi! {:#?}", &su.ds);

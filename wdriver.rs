@@ -6,6 +6,7 @@
 #![feature(fn_traits)]
 
 pub use anyhow::{anyhow, Context};
+pub use boolinator::Boolinator;
 pub use fehler::{throw, throws};
 pub use log::{debug, error, info, trace, warn};
 pub use log::{log, log_enabled};
@@ -599,13 +600,20 @@ pub struct Window {
 
 pub struct WindowGuard<'g> {
   su: &'g mut Setup,
-  #[allow(dead_code)]
   w: &'g Window,
 }
 
 #[throws(AE)]
 fn check_window_name_sanity(name: &str) -> &str {
-  // xxx
+  let e = || anyhow!("bad window name {:?}", &name);
+
+  name.chars().nth(0).ok_or(e())?
+    .is_ascii_alphanumeric().ok_or(e())?;
+
+  name.chars().all(
+    |c| c.is_ascii_alphanumeric() || c == '-' || c == '_'
+  ).ok_or(e())?;
+
   name
 }
 
@@ -644,44 +652,6 @@ impl Setup {
   }
 }
 
-// We want a nice syntax for calling WebDriver methods given
-// a Window.  This should take a lock, and switch to the window,
-// and release the lock after the method finishes.  Ie, we
-// need a guard object which derefs to WebDriver.
-//
-// Ideally, Deref on Window would let us return a guard object.
-// But it doesn't: Deref insists on us providing a borrow but
-// we have nothing to borrow from and there won't be any drop
-// glue for the reference.
-//
-// We could do `window().driver_method()` but then Window would have
-// to impl Fn.  That would involve either the unstable feature
-// `unboxed_closures` (letting us impl Fn ourselves) or the unstable
-// feature `type_alias_impl_trait` (so we can have Window be a closure
-// and give it a type name).
-//
-// `type_alias_impl_trait` seems to have many bugs and soundness holes
-// right now.  So that's out.
-//
-// The unboxed closures feature seems more stable.  It has one bug to
-// do with references (#42736) but that doesn't seem likely to bite.
-// However, the tracking issue is incomplete, and experimentation
-// shows that it has serious trouble handling a FnMut trait which
-// returns something borrowed from the implementor. #80421
-// 
-// This is a shame because we would like to write
-//    window()?.driver_method(...)?
-//
-// The operator precedence table has method calls very high.  We must
-// either use ( ), or a method call, or a suffix operator.  The suffix
-// operators are () ? [] `as`.  () is Fn.  `as` is not overloadable.
-// ? is is Try, whose operative method takes a value, not a reference.
-// [] needs a spurious argument.  That leaves these syntaxes:
-//    window.u()?.driver_method(...)?     verbose
-//    (&window)?.driver_method(...)?        impl Try for &Window
-//    (!&window)?.driver_method(...)?       impl Neg for &Window (or -)
-// of which .use() is the least bad.
-
 impl Setup {
   #[throws(AE)]
   pub fn w<'s>(&'s mut self, w: &'s Window) -> WindowGuard<'s> {
@@ -707,7 +677,8 @@ pub trait Screenshottable {
 impl<'g> Screenshottable for WindowGuard<'g> {
   #[throws(AE)]
   fn screenshot(&mut self, slug: &str) {
-    screenshot(&self.su.driver, &mut self.su.screenshot_count, slug)?
+    screenshot(&self.su.driver, &mut self.su.screenshot_count,
+               &format!("{}-{}", &self.w.name, slug))?
   }
 }
 
@@ -732,13 +703,19 @@ impl Drop for FinalInfoCollection {
 
 impl Drop for Setup {
   fn drop(&mut self) {
-    /*
-    self.screenshot("final")
-      .context("in Setup::drop")
+    (||{
+      for w in self.driver.window_handles()? {
+        let name = w.to_string();
+        let w = Window { name: name.clone() };
+        self.w(&w)?.screenshot("final")
+          .context(name)
+          .context("final screenshot")
+          .just_warn();
+      }
+      Ok::<_,AE>(())
+    })()
+      .context("screenshots, in Setup::drop")
       .just_warn();
-xxx
-*/
-
   }
 }
 

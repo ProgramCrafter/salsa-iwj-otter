@@ -1575,6 +1575,7 @@ name = "otter-webdriver-tests"
 version = "0.0.1"
 dependencies = [
  "anyhow",
+ "boolinator",
  "env_logger",
  "fehler",
  "humantime",
