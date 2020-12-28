@@ -1579,6 +1579,7 @@ dependencies = [
  "env_logger",
  "fehler",
  "humantime",
+ "if_chain",
  "libc",
  "log 0.4.11",
  "nix 0.19.1",

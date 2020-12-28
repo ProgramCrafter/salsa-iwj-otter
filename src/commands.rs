@@ -70,6 +70,7 @@ pub enum MgmtResponse {
 pub enum MgmtGameInstruction {
   Noop,
   Info,
+  /// For testing, mostly.
   Synch,
   SetTableSize(Pos),
   SetTableColour(ColourSpec),

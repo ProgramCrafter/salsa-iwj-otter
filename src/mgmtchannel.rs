@@ -17,6 +17,13 @@ pub struct MgmtChannel {
   write: BufWriter<Box<dyn Write>>,
 }
 
+impl Debug for MgmtChannel{ 
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut fmt::Formatter) {
+    f.write_str("MgmtChannel{...}")?
+  }
+}
+
 impl MgmtChannel {
   #[throws(AE)]
   pub fn connect(socket_path: &str) -> MgmtChannel {

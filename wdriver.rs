@@ -8,6 +8,7 @@
 pub use anyhow::{anyhow, Context};
 pub use boolinator::Boolinator;
 pub use fehler::{throw, throws};
+pub use if_chain::if_chain;
 pub use log::{debug, error, info, trace, warn};
 pub use log::{log, log_enabled};
 pub use nix::unistd::LinkatFlags;
@@ -37,9 +38,11 @@ pub use std::process::{Command, Stdio};
 pub use std::thread::sleep;
 pub use std::time;
 
+pub use otter::commands::{MgmtCommand, MgmtResponse};
+pub use otter::commands::{MgmtGameInstruction, MgmtGameResponse};
+pub use otter::commands::{MgmtGameUpdateMode};
+pub use otter::global::InstanceName;
 pub use otter::mgmtchannel::MgmtChannel;
-
-use otter::config::DAEMON_STARTUP_REPORT;
 
 pub type T4d = t4::WebDriver;
 pub type WDE = t4::error::WebDriverError;
@@ -49,6 +52,9 @@ pub type AE = anyhow::Error;
 
 pub const URL : &str = "http://localhost:8000";
 
+use otter::config::DAEMON_STARTUP_REPORT;
+
+const TABLE : &str = "server::dummy";
 const CONFIG : &str = "server-config.toml";
 
 #[derive(Copy,Clone,Debug,Eq,PartialEq,Ord,PartialOrd)]
@@ -111,6 +117,7 @@ type WindowState = Option<String>;
 #[derive(Debug)]
 pub struct Setup {
   pub ds: DirSubst,
+  pub mgmt_conn: MgmtChannel,
   driver: T4d,
   current_window: WindowState,
   screenshot_count: ScreenShotCount,
@@ -125,6 +132,8 @@ pub struct DirSubst {
   pub start_dir: String,
   pub src: String,
 }
+
+pub struct Instance(InstanceName);
 
 #[derive(Clone,Debug)]
 pub struct RawSubst(HashMap<String,String>);
@@ -571,13 +580,20 @@ impl DirSubst {
 }
 
 #[throws(AE)]
-pub fn prepare_game(ds: &DirSubst) {
-  ds.otter(&ds.ss(
+pub fn prepare_game(ds: &DirSubst, table: &str) -> InstanceName {
+  let subst = ds.also(&[("table", &table)]);
+  ds.otter(&subst.ss(
     "--account server:                                  \
      reset                                              \
      --reset-table @specs@/test.table.toml              \
-                   server::dummy @specs@/demo.game.toml \
+                   @table@ @specs@/demo.game.toml \
     ")?).context("reset table")?;
+
+  let instance : InstanceName = table.parse()
+    .with_context(|| table.to_owned())
+    .context("parse table name")?;
+
+  instance
 }
 
 #[throws(AE)]
@@ -618,6 +634,7 @@ fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<String>) {
 #[derive(Debug)]
 pub struct Window {
   name: String,
+  instance: InstanceName,
 }
 
 pub struct WindowGuard<'g> {
@@ -641,7 +658,8 @@ fn check_window_name_sanity(name: &str) -> &str {
 
 impl Setup {
   #[throws(AE)]
-  pub fn new_window<'s>(&'s mut self, name: &str) -> Window {
+  pub fn new_window<'s>(&'s mut self, instance: &Instance, name: &str)
+                        -> Window {
     let name = check_window_name_sanity(name)?;
     let window = (||{
 
@@ -665,7 +683,10 @@ impl Setup {
       ))
         .context("execute script to create window")?;
 
-      Ok::<_,AE>(Window { name: name.to_owned() })
+      Ok::<_,AE>(Window {
+        name: name.to_owned(),
+        instance: instance.0.clone(),
+      })
     })()
       .with_context(|| name.to_owned())
       .context("create window")?;
@@ -714,6 +735,28 @@ fn screenshot(driver: &T4d, count: &mut ScreenShotCount, slug: &str) {
     .context("take screenshot")?;
 }
 
+impl<'g> WindowGuard<'g> {
+  #[throws(AE)]
+  pub fn synch(&mut self) {
+    let cmd = MgmtCommand::AlterGame {
+      game: self.w.instance.clone(),
+      how: MgmtGameUpdateMode::Online,
+      insns: vec![ MgmtGameInstruction::Synch ],
+    };
+    let gen = if_chain!{
+      let resp = self.su.mgmt_conn.cmd(&cmd)?;
+      if let MgmtResponse::AlterGame {
+        error: None,
+        ref responses
+      } = resp;
+      if let [MgmtGameResponse::Synch(gen)] = responses[..];
+      then { gen }
+      else { throw!(anyhow!("unexpected resp to synch {:?}", resp)) }
+    };
+    dbg!(gen);
+  }
+}
+
 impl Drop for FinalInfoCollection {
   fn drop(&mut self) {
     nix::unistd::linkat(None, "Xvfb_screen0",
@@ -732,7 +775,10 @@ impl Drop for Setup {
         // here because we have &mut self.  If there is only one
         // Setup, there can be noone else with a Window with an
         // identical name to be interfered with by us.
-        let w = Window { name: name.clone() };
+        let w = Window {
+          name: name.clone(),
+          instance: TABLE.parse().context(TABLE)?,
+        };
         self.w(&w)?.screenshot("final")
           .context(name)
           .context("final screenshot")
@@ -746,7 +792,7 @@ impl Drop for Setup {
 }
 
 #[throws(AE)]
-pub fn setup(exe_module_path: &str) -> Setup {
+pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
   env_logger::Builder::new()
     .format_timestamp_micros()
     .format_level(true)
@@ -776,8 +822,12 @@ pub fn setup(exe_module_path: &str) -> Setup {
   let ds = prepare_tmpdir(&opts, &current_exe)?;
 
   prepare_xserver(&cln, &ds).always_context("setup X server")?;
-  prepare_gameserver(&cln, &ds).always_context("setup game server")?;
-  prepare_game(&ds).context("setup game")?;
+
+  let mgmt_conn =
+    prepare_gameserver(&cln, &ds).always_context("setup game server")?;
+
+  let instance_name =
+    prepare_game(&ds, "TABLE").context("setup game")?;
 
   let final_hook = FinalInfoCollection;
 
@@ -785,21 +835,25 @@ pub fn setup(exe_module_path: &str) -> Setup {
   let (driver, screenshot_count, windows_squirreled) =
     prepare_thirtyfour().always_context("prepare web session")?;
 
-  Setup {
+  (Setup {
     ds,
+    mgmt_conn,
     driver,
     screenshot_count,
     current_window: None,
     windows_squirreled,
-    final_hook
-  }
+    final_hook,
+  },
+   Instance(
+     instance_name
+   ))
 }
 
 impl Setup {
   #[throws(AE)]
-  pub fn setup_static_users(&mut self) -> Vec<Window> {
+  pub fn setup_static_users(&mut self, instance: &Instance) -> Vec<Window> {
     #[throws(AE)]
-    fn mk(su: &mut Setup, u: StaticUser) -> Window {
+    fn mk(su: &mut Setup, instance: &Instance, u: StaticUser) -> Window {
       let nick: &str = u.into();
       let token = u.get_str("Token").expect("StaticUser missing Token");
       let subst = su.ds.also([("nick",  nick),
@@ -809,14 +863,14 @@ impl Setup {
                        --account server:@nick@       \
                        --fixed-token @token@         \
                        join-game server::dummy")?)?;
-      let w = su.new_window(nick)?;
+      let w = su.new_window(instance, nick)?;
       let url = subst.subst("@url@/?@token@")?;
       su.w(&w)?.get(url)?;
       su.w(&w)?.screenshot("initial")?;
       w
     }
     StaticUser::iter().map(
-      |u| mk(self, u)
+      |u| mk(self, instance, u)
         .with_context(|| format!("{:?}", u))
         .context("make static user")
     )

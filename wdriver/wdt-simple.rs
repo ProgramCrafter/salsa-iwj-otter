@@ -6,9 +6,9 @@ use otter_webdriver_tests::*;
 
 #[throws(AE)]
 fn main(){
-  let mut su = setup(module_path!()).always_context("setup")?;
+  let (mut su, inst) = setup(module_path!()).always_context("setup")?;
   let [alice, bob] : [Window; 2] =
-    su.setup_static_users()?.try_into().unwrap();
+    su.setup_static_users(&inst)?.try_into().unwrap();
   debug!("ok {:?} {:?}", alice, bob);
 
 //  alice.synch()?;
