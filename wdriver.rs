@@ -26,7 +26,7 @@ pub use std::env;
 pub use std::fs;
 pub use std::collections::hash_map::HashMap;
 pub use std::convert::TryInto;
-pub use std::io::{BufRead, BufReader, ErrorKind, Write};
+pub use std::io::{self, BufRead, BufReader, ErrorKind, Write};
 pub use std::mem;
 pub use std::net::TcpStream;
 pub use std::ops::Deref;
@@ -35,7 +35,7 @@ pub use std::os::unix::fs::DirBuilderExt;
 pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
 pub use std::path;
 pub use std::process::{Command, Stdio};
-pub use std::thread::sleep;
+pub use std::thread::{self, sleep};
 pub use std::time;
 
 pub use otter::commands::{MgmtCommand, MgmtResponse};
@@ -434,28 +434,48 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> DirSubst {
 
 #[throws(AE)]
 fn fork_something_which_prints(mut cmd: Command,
-                               cln: &cleanup_notify::Handle)
+                               cln: &cleanup_notify::Handle,
+                               what: &str)
                                -> String
 {
-  cmd.stdout(Stdio::piped());
-  cln.arm_hook(&mut cmd)?;
-  let mut child = cmd.spawn().context("spawn")?;
-  let mut report = BufReader::new(child.stdout.take().unwrap()).lines();
+  (||{
+    cmd.stdout(Stdio::piped());
+    cln.arm_hook(&mut cmd)?;
+    let mut child = cmd.spawn().context("spawn")?;
+    let mut report = BufReader::new(child.stdout.take().unwrap())
+      .lines().fuse();
 
-  let l = report.next();
+    let l = report.next();
 
-  let s = child.try_wait().context("check on spawned child")?;
-  if let Some(e) = s {
-    throw!(anyhow!("failed to start: wait status = {}", &e));
-  }
+    let s = child.try_wait().context("check on spawned child")?;
+    if let Some(e) = s {
+      throw!(anyhow!("failed to start: wait status = {}", &e));
+    }
 
-  let l = match l {
-    Some(Ok(l)) => l,
-    None => throw!(anyhow!("EOF (but it's still running?")),
-    Some(Err(e)) => throw!(AE::from(e).context("failed to read")),
-  };
+    let l = match l {
+      Some(Ok(l)) => l,
+      None => throw!(anyhow!("EOF (but it's still running?")),
+      Some(Err(e)) => throw!(AE::from(e).context("failed to read")),
+    };
 
-  l
+    let what = what.to_owned();
+    thread::spawn(move|| (||{
+      for l in report {
+        let l : Result<String, io::Error> = l;
+        let l = l.context("reading further output")?;
+        const MAXLEN : usize = 200;
+        if l.len() <= MAXLEN {
+          println!("{} {}", what, l);
+        } else {
+          println!("{} {}...", what, &l[..MAXLEN-3]);
+        }
+      }
+      Ok::<_,AE>(())
+    })().context(what).just_warn()
+    );
+
+    Ok::<_,AE>(l)
+  })().with_context(|| what.to_owned())?
 }
 
 #[throws(AE)]
@@ -474,7 +494,7 @@ fn prepare_xserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
     .args(&["-fbdir", &ds.abstmp])
     .arg(format!(":{}", DISPLAY));
 
-  let l = fork_something_which_prints(xcmd, cln).context("Xvfb")?;
+  let l = fork_something_which_prints(xcmd, cln, "Xvfb")?;
 
   if l != DISPLAY.to_string() {
     throw!(anyhow!(
@@ -540,14 +560,14 @@ _ = "error" # rocket
     .arg(CONFIG);
 
   (||{
-    let l = fork_something_which_prints(cmd, cln)?;
+    let l = fork_something_which_prints(cmd, cln, &server_exe)?;
     if l != DAEMON_STARTUP_REPORT {
       throw!(anyhow!("otter-daemon startup report {:?}, expected {:?}",
                      &l, DAEMON_STARTUP_REPORT));
     }
     Ok::<_,AE>(())
   })()
-    .context(server_exe).context("game server")?;
+    .context("game server")?;
 
   let mut mgmt_conn = MgmtChannel::connect(
     &subst.subst("@command_socket@")?
@@ -605,8 +625,9 @@ pub fn prepare_game(ds: &DirSubst, table: &str) -> InstanceName {
 #[throws(AE)]
 fn prepare_geckodriver(cln: &cleanup_notify::Handle) {
   const EXPECTED : &str = "Listening on 127.0.0.1:4444";
-  let cmd = Command::new("geckodriver");
-  let l = fork_something_which_prints(cmd, cln).context("geckodriver")?;
+  let mut cmd = Command::new("geckodriver");
+  cmd.args(&["-v"]);
+  let l = fork_something_which_prints(cmd, cln, "geckodriver")?;
   let fields : Vec<_> = l.split('\t').skip(2).take(2).collect();
   let expected = ["INFO", EXPECTED];
   if fields != expected {
