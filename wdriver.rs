@@ -52,6 +52,7 @@ pub type AE = anyhow::Error;
 
 pub const URL : &str = "http://localhost:8000";
 
+use t4::Capabilities;
 use otter::config::DAEMON_STARTUP_REPORT;
 
 const TABLE : &str = "server::dummy";
@@ -629,7 +630,9 @@ pub fn prepare_game(ds: &DirSubst, table: &str) -> InstanceName {
 fn prepare_geckodriver(opts: &Opts, cln: &cleanup_notify::Handle) {
   const EXPECTED : &str = "Listening on 127.0.0.1:4444";
   let mut cmd = Command::new("geckodriver");
-  cmd.args(opts.geckodriver_args.split(' '));
+  if opts.geckodriver_args != "" {
+    cmd.args(opts.geckodriver_args.split(' '));
+  }
   let l = fork_something_which_prints(cmd, cln, "geckodriver")?;
   let fields : Vec<_> = l.split('\t').skip(2).take(2).collect();
   let expected = ["INFO", EXPECTED];
@@ -643,7 +646,11 @@ fn prepare_geckodriver(opts: &Opts, cln: &cleanup_notify::Handle) {
 #[throws(AE)]
 fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<String>) {
   let mut count = 0;
-  let caps = t4::DesiredCapabilities::firefox();
+  let mut caps = t4::DesiredCapabilities::firefox();
+  let prefs : HashMap<_,_> = [
+    ("devtools.console.stdout.content", true),
+  ].iter().cloned().collect();
+  caps.add("prefs", prefs)?;
   let mut driver = t4::WebDriver::new("http://localhost:4444", &caps)
     .context("create 34 WebDriver")?;
 
