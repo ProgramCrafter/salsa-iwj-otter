@@ -358,6 +358,18 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
        ig)
     },
 
+    Insn::Synch => {
+      let (mut ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Play])?;
+      let mut buf = PrepareUpdatesBuffer::new(&mut ig, None, None);
+      let gen = buf.gen();
+      drop(buf); // does update
+      (U{ pcs: vec![], // we handled the update ourselves,
+          log: vec![], // return no update info
+          raw: None },
+       Resp::Synch(gen),
+       ig)
+    },
+
     Insn::ListPieces => readonly(cs,ag,ig, &[TP::ViewPublic], |ig|{
       let pieces = ig.gs.pieces.iter().map(|(piece,p)|{
         let &PieceState { pos, face, .. } = p;

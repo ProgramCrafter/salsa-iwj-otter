@@ -10,6 +10,9 @@ fn main(){
   let [alice, bob] : [Window; 2] =
     su.setup_static_users()?.try_into().unwrap();
   debug!("ok {:?} {:?}", alice, bob);
+
+//  alice.synch()?;
+
   sleep(750 * MS);
   debug!("finishing");
 }

@@ -70,6 +70,7 @@ pub enum MgmtResponse {
 pub enum MgmtGameInstruction {
   Noop,
   Info,
+  Synch,
   SetTableSize(Pos),
   SetTableColour(ColourSpec),
 
@@ -98,6 +99,7 @@ pub struct MgmtPlayerDetails {
 pub enum MgmtGameResponse {
   Fine,
   Info(MgmtGameResponseGameInfo),
+  Synch(Generation),
 
   Pieces(Vec<MgmtGamePieceInfo>),
 
