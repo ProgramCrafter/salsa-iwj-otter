@@ -564,6 +564,8 @@ impl DirSubst {
     let mut args : Vec<&str> = vec![];
     args.extend(&["--config", CONFIG]);
     args.extend(xargs.iter().map(AsRef::as_ref));
+    let dbg = format!("running {} {:?}", &exe, &args);
+    debug!("{}", &dbg);
     (||{
       let mut cmd = Command::new(&exe);
       cmd.args(&args);
@@ -575,7 +577,7 @@ impl DirSubst {
       }
       Ok::<_,AE>(())
     })()
-      .context(exe)
+      .context(dbg)
       .context("run otter client")?;
   }
 }
@@ -828,7 +830,7 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
     prepare_gameserver(&cln, &ds).always_context("setup game server")?;
 
   let instance_name =
-    prepare_game(&ds, "TABLE").context("setup game")?;
+    prepare_game(&ds, TABLE).context("setup game")?;
 
   let final_hook = FinalInfoCollection;
 

@@ -11,7 +11,7 @@ fn main(){
     su.setup_static_users(&inst)?.try_into().unwrap();
   debug!("ok {:?} {:?}", alice, bob);
 
-//  alice.synch()?;
+  su.w(&alice)?.synch()?;
 
   sleep(750 * MS);
   debug!("finishing");
