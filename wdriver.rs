@@ -106,6 +106,9 @@ struct Opts {
 
   #[structopt(long="--pause", default_value="0ms")]
   pause: humantime::Duration,
+
+  #[structopt(long="--geckodriver-args", default_value="")]
+  geckodriver_args: String,
 }
 
 #[derive(Debug)]
@@ -623,10 +626,10 @@ pub fn prepare_game(ds: &DirSubst, table: &str) -> InstanceName {
 }
 
 #[throws(AE)]
-fn prepare_geckodriver(cln: &cleanup_notify::Handle) {
+fn prepare_geckodriver(opts: &Opts, cln: &cleanup_notify::Handle) {
   const EXPECTED : &str = "Listening on 127.0.0.1:4444";
   let mut cmd = Command::new("geckodriver");
-  cmd.args(&["-v"]);
+  cmd.args(opts.geckodriver_args.split(' '));
   let l = fork_something_which_prints(cmd, cln, "geckodriver")?;
   let fields : Vec<_> = l.split('\t').skip(2).take(2).collect();
   let expected = ["INFO", EXPECTED];
@@ -858,7 +861,7 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
 
   let final_hook = FinalInfoCollection;
 
-  prepare_geckodriver(&cln).always_context("setup webdriver server")?;
+  prepare_geckodriver(&opts, &cln).always_context("setup webdriver server")?;
   let (driver, screenshot_count, windows_squirreled) =
     prepare_thirtyfour().always_context("prepare web session")?;
 
