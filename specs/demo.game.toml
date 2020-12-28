@@ -2,28 +2,28 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # There is NO WARRANTY.
 
-table_size = [300, 100]
+table_size = [180, 60]
 
 [[pieces]]
-pos = [90,80]
+pos = [90,40]
 type = "Disc"
-diam = 20
+diam = 10
 faces = ["red","grey"]
 
 [[pieces]]
-pos = [90, 60]
+pos = [90, 20]
 type = "Square"
-size = [20]
+size = [10]
 faces = ["blue", "grey"]
 
 [[pieces]]
-pos = [200,40]
+pos = [150,40]
 type = "Lib"
 lib = "wikimedia"
 item = "chess-w-B"
 
 [[pieces]]
-pos = [210,40]
+pos = [160,40]
 type = "Lib"
 lib = "wikimedia"
 item = "chess-b-N"
