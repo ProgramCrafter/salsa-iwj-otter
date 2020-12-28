@@ -145,36 +145,43 @@ impl<'i,
   }
 }
 
-pub trait Subst : Clone + Sized {
+pub trait Subst {
   fn get(&self, kw: &str) -> Option<String>;
 
-  fn also<L: Into<RawSubst>>(&self, xl: L) -> ExtendedSubst<Self, RawSubst> {
+  fn also<L: Into<RawSubst>>(&self, xl: L) -> ExtendedSubst<Self, RawSubst>
+  where Self: Clone + Sized {
     ExtendedSubst(self.clone(), xl.into())
   }
 
   #[throws(AE)]
-  fn subst<S:AsRef<str>>(&self, s: &S) -> String {
-    let s = s.as_ref();
-    let re = Regex::new(r"@(\w+)@").expect("bad re!");
-    let mut errs = vec![];
-    let out = re.replace_all(s, |caps: &regex::Captures| {
-      let kw = caps.get(1).expect("$1 missing!").as_str();
-      if kw == "" { return "".to_owned() }
-      let v = self.get(kw);
-      v.unwrap_or_else(||{
-        errs.push(kw.to_owned());
-        "".to_owned()
-      })
-    });
-    if ! errs.is_empty() {
-      throw!(anyhow!("bad substitution(s) {:?} in {:?}",
-                     &errs, s));
+  fn subst<S: AsRef<str>>(&self, s: S) -> String 
+  where Self: Sized {
+    #[throws(AE)]
+    fn inner(self_: &dyn Subst, s: &dyn AsRef<str>) -> String {
+      let s = s.as_ref();
+      let re = Regex::new(r"@(\w+)@").expect("bad re!");
+      let mut errs = vec![];
+      let out = re.replace_all(s, |caps: &regex::Captures| {
+        let kw = caps.get(1).expect("$1 missing!").as_str();
+        if kw == "" { return "".to_owned() }
+        let v = self_.get(kw);
+        v.unwrap_or_else(||{
+          errs.push(kw.to_owned());
+          "".to_owned()
+        })
+      });
+      if ! errs.is_empty() {
+        throw!(anyhow!("bad substitution(s) {:?} in {:?}",
+                       &errs, s));
+      }
+      out.into()
     }
-    out.into()
+    inner(self, &s)?
   }
 
   #[throws(AE)]
-  fn ss(&self, s: &str) -> Vec<String> {
+  fn ss(&self, s: &str) -> Vec<String> 
+  where Self: Sized {
     self.subst(&s)?
       .trim()
       .split(' ')
@@ -489,7 +496,7 @@ fn prepare_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst)
   let subst = ds.also(&[
     ("command_socket", "command.socket"),
   ]);
-  let config = subst.subst(&r##"
+  let config = subst.subst(r##"
 base_dir = "@build@"
 public_url = "@url@"
 
