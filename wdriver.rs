@@ -24,6 +24,7 @@ pub use t4::WebDriverCommands;
 pub use std::env;
 pub use std::fs;
 pub use std::collections::hash_map::HashMap;
+pub use std::convert::TryInto;
 pub use std::io::{BufRead, BufReader, ErrorKind, Write};
 pub use std::net::TcpStream;
 pub use std::ops::Deref;
@@ -121,9 +122,11 @@ pub struct DirSubst {
   pub src: String,
 }
 
+#[derive(Clone,Debug)]
 pub struct RawSubst(HashMap<String,String>);
 
-pub struct ExtendedSubst<'b, B: Subst, X: Subst>(&'b B, X);
+#[derive(Clone,Debug)]
+pub struct ExtendedSubst<B: Subst, X: Subst>(B, X);
 
 impl<'i,
      T: AsRef<str> + 'i,
@@ -138,10 +141,11 @@ impl<'i,
   }
 }
 
-pub trait Subst : Sized {
+pub trait Subst : Clone + Sized {
   fn get(&self, kw: &str) -> Option<String>;
+
   fn also<L: Into<RawSubst>>(&self, xl: L) -> ExtendedSubst<Self, RawSubst> {
-    ExtendedSubst(self, xl.into())
+    ExtendedSubst(self.clone(), xl.into())
   }
 
   #[throws(AE)]
@@ -182,7 +186,7 @@ impl Subst for RawSubst {
   }
 }
 
-impl<'b, B:Subst, X:Subst> Subst for ExtendedSubst<'b, B, X> {
+impl<B:Subst, X:Subst> Subst for ExtendedSubst<B, X> {
   fn get(&self, kw: &str) -> Option<String> {
     self.1.get(kw).or_else(|| self.0.get(kw))
   }
@@ -524,7 +528,7 @@ _ = "error" # rocket
 
 impl DirSubst {
   #[throws(AE)]
-  fn otter<S:AsRef<std::ffi::OsStr>>(&self, args: &[S]) {
+  pub fn otter<S:AsRef<std::ffi::OsStr>>(&self, args: &[S]) {
     let ds = self;
     let exe = ds.subst(&"@target@/debug/otter")?;
     (||{
@@ -553,18 +557,6 @@ pub fn prepare_game(ds: &DirSubst) {
      --reset-table @specs@/test.table.toml              \
                    server::dummy @specs@/demo.game.toml \
     ")?).context("reset table")?;
-
-  for u in StaticUser::iter() {
-    let nick: &str = u.into();
-    let token = u.get_str("Token").expect("StaticUser missing Token");
-    ds.otter(&ds
-             .also([("nick",  nick),
-                    ("token", token)].iter())
-             .ss("--super                          \
-                  --account server:@nick@       \
-                  --fixed-token @token@         \
-                  join-game server::dummy")?)?
-  }
 }
 
 #[throws(AE)]
@@ -594,6 +586,7 @@ fn prepare_thirtyfour() -> (T4d, ScreenShotCount) {
   (driver, count)
 }
 
+#[derive(Debug)]
 pub struct Window {
   name: String,
 }
@@ -765,5 +758,34 @@ pub fn setup(exe_module_path: &str) -> Setup {
     screenshot_count,
     current_window: None,
     final_hook
+  }
+}
+
+impl Setup {
+  #[throws(AE)]
+  pub fn setup_static_users(&mut self) -> Vec<Window> {
+    #[throws(AE)]
+    fn mk(su: &mut Setup, u: StaticUser) -> Window {
+      let nick: &str = u.into();
+      let token = u.get_str("Token").expect("StaticUser missing Token");
+      let subst = su.ds.also([("nick",  nick),
+                              ("token", token)].iter());
+      su.ds.otter(&subst
+                  .ss("--super                          \
+                       --account server:@nick@       \
+                       --fixed-token @token@         \
+                       join-game server::dummy")?)?;
+      let w = su.new_window(nick)?;
+      let url = subst.subst(&"@url@/?@token@")?;
+      su.w(&w)?.get(url)?;
+      su.w(&w)?.screenshot("initial")?;
+      w
+    }
+    StaticUser::iter().map(
+      |u| mk(self, u)
+        .with_context(|| format!("{:?}", u))
+        .context("make static user")
+    )
+      .collect::<Result<Vec<Window>,AE>>()?
   }
 }

@@ -7,12 +7,7 @@ use otter_webdriver_tests::*;
 #[throws(AE)]
 fn main(){
   let mut su = setup(module_path!()).always_context("setup")?;
-
-  let w1 = su.new_window("alice")?;
-  let url = su.ds.subst(&"@url@/?zonk")?;
-  su.w(&w1)?.get(url)?;
-  su.w(&w1)?.screenshot("testalice")?;
-
-  debug!("ok");
-  info!("hi! {:#?}", &su.ds);
+  let [alice, bob] : [Window; 2] =
+    su.setup_static_users()?.try_into().unwrap();
+  debug!("ok {:?} {:?}", alice, bob);
 }
