@@ -549,11 +549,14 @@ _ = "error" # rocket
   })()
     .context(server_exe).context("game server")?;
 
-  let server_conn = MgmtChannel::connect(
+  let mut mgmt_conn = MgmtChannel::connect(
     &subst.subst("@command_socket@")?
   )?;
 
-  server_conn
+  mgmt_conn.cmd(&MgmtCommand::SetSuperuser(true))?;
+  mgmt_conn.cmd(&MgmtCommand::SelectAccount("server:".parse()?))?;  
+
+  mgmt_conn
 }
 
 impl DirSubst {
