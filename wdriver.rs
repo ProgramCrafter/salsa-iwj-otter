@@ -182,7 +182,7 @@ pub trait Subst {
   #[throws(AE)]
   fn ss(&self, s: &str) -> Vec<String> 
   where Self: Sized {
-    self.subst(&s)?
+    self.subst(s)?
       .trim()
       .split(' ')
       .filter(|s| !s.is_empty())
@@ -524,7 +524,7 @@ _ = "error" # rocket
   fs::write(CONFIG, &config)
     .context(CONFIG).context("create server config")?;
 
-  let server_exe = ds.subst(&"@target@/debug/daemon-otter")?;
+  let server_exe = ds.subst("@target@/debug/daemon-otter")?;
   let mut cmd = Command::new(&server_exe);
   cmd
     .arg("--report-startup")
@@ -541,7 +541,7 @@ _ = "error" # rocket
     .context(server_exe).context("game server")?;
 
   let server_conn = MgmtChannel::connect(
-    &subst.subst(&"@command_socket@")?
+    &subst.subst("@command_socket@")?
   )?;
 
   server_conn
@@ -551,7 +551,7 @@ impl DirSubst {
   #[throws(AE)]
   pub fn otter<S:AsRef<std::ffi::OsStr>>(&self, args: &[S]) {
     let ds = self;
-    let exe = ds.subst(&"@target@/debug/otter")?;
+    let exe = ds.subst("@target@/debug/otter")?;
     (||{
       let mut cmd = Command::new(&exe);
       cmd
@@ -810,7 +810,7 @@ impl Setup {
                        --fixed-token @token@         \
                        join-game server::dummy")?)?;
       let w = su.new_window(nick)?;
-      let url = subst.subst(&"@url@/?@token@")?;
+      let url = subst.subst("@url@/?@token@")?;
       su.w(&w)?.get(url)?;
       su.w(&w)?.screenshot("initial")?;
       w
