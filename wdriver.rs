@@ -604,27 +604,28 @@ pub struct WindowGuard<'g> {
 
 #[throws(AE)]
 fn check_window_name_sanity(name: &str) -> &str {
-  todo!()
+  // xxx
+  name
 }
 
 impl Setup {
   #[throws(AE)]
   pub fn new_window<'s>(&'s self, name: &str) -> Window<'s> {
-    let current = self.current_window.lock();
+    let mut current = self.current_window.lock();
     let name = check_window_name_sanity(name)?;
     let window = (||{
 
       *current = None; // we might change the current window
 
-      match self.su.driver.switch_to().window_name(name) {
+      match self.driver.switch_to().window_name(name) {
         Ok(()) => throw!(anyhow!("window already exists")),
-        Err(WDE::NoSuchWindow) => (),
+        Err(WDE::NoSuchWindow(_)) => (),
         e@ Err(_) => throw!(e
                             .context("check for pre-existing window")
-                            .err().unwrap),
+                            .err().unwrap()),
       };
 
-      self.su.driver.execute_script(format!(
+      self.driver.execute_script(&format!(
         r#"window.open('', target='{}');"#,
         name,
       ))
@@ -632,7 +633,7 @@ impl Setup {
 
       Ok::<_,AE>(Window { su: self, name: name.to_owned() })
     })()
-      .context(name)
+      .with_context(|| name.to_owned())
       .context("create window")?;
 
     drop(current);
@@ -661,22 +662,32 @@ impl Setup {
 //
 // The unboxed closures feature seems more stable.  It has one bug to
 // do with references (#42736) but that doesn't seem likely to bite.
-impl<'g> FnOnce<()> for Window<'g> {
-  type Output =  Result<WindowGuard<'g>,AE>;
+// However, the tracking issue is incomplete, and experimentation
+// shows that it has serious trouble handling a FnMut trait which
+// returns something borrowed from the implementor. #80421
+// 
+// This is a shame because we would like to write
+//    window()?.driver_method(...)?
+//
+// The operator precedence table has method calls very high.  We must
+// either use ( ), or a method call, or a suffix operator.  The suffix
+// operators are () ? [] `as`.  () is Fn.  `as` is not overloadable.
+// ? is is Try, whose operative method takes a value, not a reference.
+// [] needs a spurious argument.  That leaves these syntaxes:
+//    window.u()?.driver_method(...)?     verbose
+//    (&window)?.driver_method(...)?        impl Try for &Window
+//    (!&window)?.driver_method(...)?       impl Neg for &Window (or -)
+// of which .use() is the least bad.
+
+impl<'w> Window<'w> {
   #[throws(AE)]
-  extern "rust-call" fn call_once(self, _:()) -> WindowGuard<'g> {
-    self.call_mut(())
-  }
-}
-impl<'g> FnMut<()> for Window<'g> {
-  #[throws(AE)]
-  extern "rust-call" fn call_mut(&mut self, _:()) -> WindowGuard<'g> {
-    let current = self.su.current_window.lock();
-    if current != self.name {
-      self.su.driver.switch_to().window_name(self.name)
-        .context(self.name)
+  pub fn u(&'w mut self) -> WindowGuard<'w> {
+    let mut current = self.su.current_window.lock();
+    if current.as_ref() != Some(&self.name) {
+      self.su.driver.switch_to().window_name(&self.name)
+        .with_context(|| self.name.to_owned())
         .context("switch to window")?;
-      *current = self.name.to_string();
+      *current = Some(self.name.clone());
     }
     WindowGuard { w: self, current }
   }
@@ -684,7 +695,7 @@ impl<'g> FnMut<()> for Window<'g> {
 
 impl<'g> Deref for WindowGuard<'g> {
   type Target = T4d;
-  fn deref(&self) -> &T4d { &self.w.su.t4d }
+  fn deref(&self) -> &T4d { &self.w.su.driver }
 }
 
 #[throws(AE)]
@@ -765,6 +776,7 @@ pub fn setup(exe_module_path: &str) -> Setup {
     ds,
     driver,
     screenshot_count,
+    current_window: Mutex::new(None),
     final_hook
   }
 }
