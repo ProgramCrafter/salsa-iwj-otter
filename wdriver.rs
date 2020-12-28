@@ -558,14 +558,15 @@ _ = "error" # rocket
 
 impl DirSubst {
   #[throws(AE)]
-  pub fn otter<S:AsRef<std::ffi::OsStr>>(&self, args: &[S]) {
+  pub fn otter<S:AsRef<str>>(&self, xargs: &[S]) {
     let ds = self;
     let exe = ds.subst("@target@/debug/otter")?;
+    let mut args : Vec<&str> = vec![];
+    args.extend(&["--config", CONFIG]);
+    args.extend(xargs.iter().map(AsRef::as_ref));
     (||{
       let mut cmd = Command::new(&exe);
-      cmd
-        .args(&["--config", CONFIG])
-        .args(&*args);
+      cmd.args(&args);
       let st = cmd
         .spawn().context("spawn")?
         .wait().context("wait")?;
