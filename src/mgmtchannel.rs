@@ -53,6 +53,29 @@ impl MgmtChannel {
     write!(self.write, "\n")?;
     self.write.flush()?;
   }
+
+  #[throws(AE)]
+  pub fn cmd(&mut self, cmd: &MgmtCommand) -> MgmtResponse {
+    use MgmtResponse::*;
+    self.write(&cmd).context("send command")?;
+    let resp = self.read().context("read response")?;
+    match &resp {
+      Fine | GamesList{..} | LibraryItems(_) => { },
+      AlterGame { error: None, .. } => { },
+      Error { error } => {
+        Err(error.clone()).context(
+          format!("got error response to: {:?}",&cmd)
+        )?;
+      },
+      AlterGame { error: Some(error), .. } => {
+        Err(error.clone()).context(format!(
+          "game alterations failed (maybe partially); response to: {:?}",
+          &cmd
+        ))?;
+      }
+    };
+    resp
+  }
 }
 
 pub trait IoTryClone: Sized {

@@ -440,30 +440,15 @@ struct Conn {
   chan: MgmtChannel,
 }
 
-impl Conn {
-  #[throws(AE)]
-  fn cmd(&mut self, cmd: &MgmtCommand) -> MgmtResponse {
-    use MgmtResponse::*;
-    self.chan.write(&cmd).context("send command")?;
-    let resp = self.chan.read().context("read response")?;
-    match &resp {
-      Fine | GamesList{..} | LibraryItems(_) => { },
-      AlterGame { error: None, .. } => { },
-      Error { error } => {
-        Err(error.clone()).context(
-          format!("got error response to: {:?}",&cmd)
-        )?;
-      },
-      AlterGame { error: Some(error), .. } => {
-        Err(error.clone()).context(format!(
-          "game alterations failed (maybe partially); response to: {:?}",
-          &cmd
-        ))?;
-      }
-    };
-    resp
-  }
+impl Deref for Conn {
+  type Target = MgmtChannel;
+  fn deref(&self) -> &MgmtChannel { &self.chan }
+}
+impl DerefMut for Conn {
+  fn deref_mut(&mut self) -> &mut MgmtChannel { &mut self.chan }
+}
 
+impl Conn {
   #[throws(AE)]
   fn prep_access_account(&mut self, ma: &MainOpts) {
     #[derive(Debug)]
