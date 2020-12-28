@@ -107,7 +107,7 @@ type WindowState = Option<String>;
 pub struct Setup {
   pub ds: DirSubst,
   driver: T4d,
-  current_window: Mutex<WindowState>,
+  current_window: WindowState,
   screenshot_count: ScreenShotCount,
   final_hook: FinalInfoCollection,
 }
@@ -120,9 +120,9 @@ pub struct DirSubst {
   pub src: String,
 }
 
-struct RawSubst(HashMap<String,String>);
+pub struct RawSubst(HashMap<String,String>);
 
-struct ExtendedSubst<'b, B: Subst, X: Subst>(&'b B, X);
+pub struct ExtendedSubst<'b, B: Subst, X: Subst>(&'b B, X);
 
 impl<'i,
      T: AsRef<str> + 'i,
@@ -137,7 +137,7 @@ impl<'i,
   }
 }
 
-trait Subst : Sized {
+pub trait Subst : Sized {
   fn get(&self, kw: &str) -> Option<String>;
   fn also<L: Into<RawSubst>>(&self, xl: L) -> ExtendedSubst<Self, RawSubst> {
     ExtendedSubst(self, xl.into())
@@ -190,6 +190,7 @@ impl<'b, B:Subst, X:Subst> Subst for ExtendedSubst<'b, B, X> {
 impl Subst for DirSubst {
   fn get(&self, kw: &str) -> Option<String> {
     Some(match kw {
+      "url"    => URL.to_owned(),
       "src"    => self.src.clone(),
       "build"  => self.start_dir.clone(),
       "target" => format!("{}/target", &self.start_dir),
@@ -477,7 +478,7 @@ fn prepare_xserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
 fn prepare_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
   let config = ds.subst(&r##"
 base_dir = "@build@"
-public_url = "@url"
+public_url = "@url@"
 
 save_dir = "."
 command_socket = "command.socket"
@@ -592,14 +593,14 @@ fn prepare_thirtyfour() -> (T4d, ScreenShotCount) {
   (driver, count)
 }
 
-pub struct Window<'s> {
-  su: &'s Setup,
+pub struct Window {
   name: String,
 }
 
 pub struct WindowGuard<'g> {
-  w: &'g mut Window<'g>,
-  current: MutexGuard<'g, WindowState>,
+  su: &'g mut Setup,
+  #[allow(dead_code)]
+  w: &'g Window,
 }
 
 #[throws(AE)]
@@ -610,19 +611,22 @@ fn check_window_name_sanity(name: &str) -> &str {
 
 impl Setup {
   #[throws(AE)]
-  pub fn new_window<'s>(&'s self, name: &str) -> Window<'s> {
-    let mut current = self.current_window.lock();
+  pub fn new_window<'s>(&'s mut self, name: &str) -> Window {
     let name = check_window_name_sanity(name)?;
     let window = (||{
 
-      *current = None; // we might change the current window
+      self.current_window = None; // we might change the current window
 
       match self.driver.switch_to().window_name(name) {
         Ok(()) => throw!(anyhow!("window already exists")),
-        Err(WDE::NoSuchWindow(_)) => (),
-        e@ Err(_) => throw!(e
+        Err(WDE::NoSuchWindow(_)) |
+        Err(WDE::NotFound(..)) => (),
+        e@ Err(_) => {
+          eprintln!("wot {:?}", &e);
+          throw!(e
                             .context("check for pre-existing window")
-                            .err().unwrap()),
+                            .err().unwrap())
+        },
       };
 
       self.driver.execute_script(&format!(
@@ -631,12 +635,11 @@ impl Setup {
       ))
         .context("execute script to create window")?;
 
-      Ok::<_,AE>(Window { su: self, name: name.to_owned() })
+      Ok::<_,AE>(Window { name: name.to_owned() })
     })()
       .with_context(|| name.to_owned())
       .context("create window")?;
 
-    drop(current);
     window
   }
 }
@@ -679,29 +682,32 @@ impl Setup {
 //    (!&window)?.driver_method(...)?       impl Neg for &Window (or -)
 // of which .use() is the least bad.
 
-impl<'w> Window<'w> {
+impl Setup {
   #[throws(AE)]
-  pub fn u(&'w mut self) -> WindowGuard<'w> {
-    let mut current = self.su.current_window.lock();
-    if current.as_ref() != Some(&self.name) {
-      self.su.driver.switch_to().window_name(&self.name)
-        .with_context(|| self.name.to_owned())
+  pub fn w<'s>(&'s mut self, w: &'s Window) -> WindowGuard<'s> {
+    if self.current_window.as_ref() != Some(&w.name) {
+      self.driver.switch_to().window_name(&w.name)
+        .with_context(|| w.name.to_owned())
         .context("switch to window")?;
-      *current = Some(self.name.clone());
+      self.current_window = Some(w.name.clone());
     }
-    WindowGuard { w: self, current }
+    WindowGuard { su: self, w }
   }
 }
 
 impl<'g> Deref for WindowGuard<'g> {
   type Target = T4d;
-  fn deref(&self) -> &T4d { &self.w.su.driver }
+  fn deref(&self) -> &T4d { &self.su.driver }
 }
 
-impl<'g> WindowGuard<'g> {
+pub trait Screenshottable {
+  fn screenshot(&mut self, slug: &str) -> Result<(),AE>;
+}
+
+impl<'g> Screenshottable for WindowGuard<'g> {
   #[throws(AE)]
   fn screenshot(&mut self, slug: &str) {
-    screenshot(&self.w.su.driver, &mut self.w.su.screenshot_count, slug)?
+    screenshot(&self.su.driver, &mut self.su.screenshot_count, slug)?
   }
 }
 
@@ -780,7 +786,7 @@ pub fn setup(exe_module_path: &str) -> Setup {
     ds,
     driver,
     screenshot_count,
-    current_window: Mutex::new(None),
+    current_window: None,
     final_hook
   }
 }
