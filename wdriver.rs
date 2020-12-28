@@ -37,6 +37,8 @@ pub use std::process::{Command, Stdio};
 pub use std::thread::sleep;
 pub use std::time;
 
+pub use otter::mgmtchannel::MgmtChannel;
+
 use otter::config::DAEMON_STARTUP_REPORT;
 
 pub type T4d = t4::WebDriver;
@@ -482,13 +484,17 @@ fn prepare_xserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
 }
 
 #[throws(AE)]
-fn prepare_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
-  let config = ds.subst(&r##"
+fn prepare_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst)
+                      -> MgmtChannel {
+  let subst = ds.also(&[
+    ("command_socket", "command.socket"),
+  ]);
+  let config = subst.subst(&r##"
 base_dir = "@build@"
 public_url = "@url@"
 
 save_dir = "."
-command_socket = "command.socket"
+command_socket = "@command_socket@"
 template_dir = "@src@/templates"
 nwtemplate_dir = "@src@/nwtemplates"
 bundled_sources = "@target@/bundled-sources"
@@ -526,6 +532,12 @@ _ = "error" # rocket
     Ok::<_,AE>(())
   })()
     .context(server_exe).context("game server")?;
+
+  let server_conn = MgmtChannel::connect(
+    &subst.subst(&"@command_socket@")?
+  )?;
+
+  server_conn
 }
 
 impl DirSubst {
