@@ -618,9 +618,7 @@ impl ConnForGame {
 
 #[throws(E)]
 fn connect(ma: &MainOpts) -> Conn {
-  let unix = UnixStream::connect(&ma.socket_path)
-    .with_context(||ma.socket_path.clone()).context("connect to server")?; 
-  let chan = MgmtChannel::new(unix)?;
+  let chan = MgmtChannel::connect(&ma.socket_path)?;
   let mut chan = Conn { chan };
   if ma.superuser {
     chan.cmd(&MC::SetSuperuser(true))?;

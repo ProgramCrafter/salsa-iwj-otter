@@ -19,6 +19,15 @@ pub struct MgmtChannel {
 
 impl MgmtChannel {
   #[throws(AE)]
+  pub fn connect(socket_path: &str) -> MgmtChannel {
+    let unix = UnixStream::connect(socket_path)
+      .with_context(||socket_path.to_owned())
+      .context("connect to server")?; 
+    let chan = MgmtChannel::new(unix)?;
+    chan
+  }
+
+  #[throws(AE)]
   pub fn new<U: IoTryClone + Read + Write + 'static>(conn: U) -> MgmtChannel {
     let read = conn.try_clone().context("dup the command stream")?;
     let read = Box::new(read) as Box<dyn Read>;
