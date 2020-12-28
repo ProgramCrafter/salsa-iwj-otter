@@ -698,6 +698,13 @@ impl<'g> Deref for WindowGuard<'g> {
   fn deref(&self) -> &T4d { &self.w.su.driver }
 }
 
+impl<'g> WindowGuard<'g> {
+  #[throws(AE)]
+  fn screenshot(&mut self, slug: &str) {
+    screenshot(&self.w.su.driver, &mut self.w.su.screenshot_count, slug)?
+  }
+}
+
 #[throws(AE)]
 fn screenshot(driver: &T4d, count: &mut ScreenShotCount, slug: &str) {
   let path = format!("{:03}{}.png", count, slug);
@@ -717,18 +724,15 @@ impl Drop for FinalInfoCollection {
   }
 }
 
-impl Setup {
-  #[throws(AE)]
-  fn screenshot(&mut self, slug: &str) {
-    screenshot(&self.driver, &mut self.screenshot_count, slug)?
-  }
-}
-
 impl Drop for Setup {
   fn drop(&mut self) {
+    /*
     self.screenshot("final")
       .context("in Setup::drop")
       .just_warn();
+xxx
+*/
+
   }
 }
 

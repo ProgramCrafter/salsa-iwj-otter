@@ -8,6 +8,10 @@ use otter_webdriver_tests::*;
 fn main(){
   let su = setup(module_path!()).always_context("setup")?;
 
+  let w1 = su.new_window("alice")?;
+  w1.get("/?zonk")?;
+  w1.screenshot("test alice")?;
+
   debug!("ok");
   info!("hi! {:#?}", &su.ds);
 }
