@@ -24,7 +24,7 @@ pub use void::Void;
 pub use t4::WebDriverCommands;
 
 pub use std::env;
-pub use std::fmt;
+pub use std::fmt::{self, Debug};
 pub use std::fs;
 pub use std::collections::hash_map::HashMap;
 pub use std::convert::TryInto;
@@ -43,6 +43,7 @@ pub use std::time;
 pub use otter::commands::{MgmtCommand, MgmtResponse};
 pub use otter::commands::{MgmtGameInstruction, MgmtGameResponse};
 pub use otter::commands::{MgmtGameUpdateMode};
+pub use otter::gamestate::Generation;
 pub use otter::global::InstanceName;
 pub use otter::mgmtchannel::MgmtChannel;
 
@@ -142,28 +143,28 @@ pub struct DirSubst {
 pub struct Instance(InstanceName);
 
 #[derive(Clone,Debug)]
-pub struct RawSubst(HashMap<String,String>);
+pub struct Subst(HashMap<String,String>);
 
 #[derive(Clone,Debug)]
-pub struct ExtendedSubst<B: Subst, X: Subst>(B, X);
+pub struct ExtendedSubst<B: Substitutor, X: Substitutor>(B, X);
 
 impl<'i,
      T: AsRef<str> + 'i,
      U: AsRef<str> + 'i,
      L: IntoIterator<Item=&'i (T, U)>>
-  From<L> for RawSubst
+  From<L> for Subst
 {
-  fn from(l: L) -> RawSubst {
+  fn from(l: L) -> Subst {
     let map = l.into_iter()
       .map(|(k,v)| (k.as_ref().to_owned(), v.as_ref().to_owned())).collect();
-    RawSubst(map)
+    Subst(map)
   }
 }
 
-pub trait Subst {
+pub trait Substitutor {
   fn get(&self, kw: &str) -> Option<String>;
 
-  fn also<L: Into<RawSubst>>(&self, xl: L) -> ExtendedSubst<Self, RawSubst>
+  fn also<L: Into<Subst>>(&self, xl: L) -> ExtendedSubst<Self, Subst>
   where Self: Clone + Sized {
     ExtendedSubst(self.clone(), xl.into())
   }
@@ -172,7 +173,7 @@ pub trait Subst {
   fn subst<S: AsRef<str>>(&self, s: S) -> String 
   where Self: Sized {
     #[throws(AE)]
-    fn inner(self_: &dyn Subst, s: &dyn AsRef<str>) -> String {
+    fn inner(self_: &dyn Substitutor, s: &dyn AsRef<str>) -> String {
       let s = s.as_ref();
       let re = Regex::new(r"@(\w+)@").expect("bad re!");
       let mut errs = vec![];
@@ -206,19 +207,19 @@ pub trait Subst {
   }
 }
 
-impl Subst for RawSubst {
+impl Substitutor for Subst {
   fn get(&self, kw: &str) -> Option<String> {
     self.0.get(kw).map(String::clone)
   }
 }
 
-impl<B:Subst, X:Subst> Subst for ExtendedSubst<B, X> {
+impl<B:Substitutor, X:Substitutor> Substitutor for ExtendedSubst<B, X> {
   fn get(&self, kw: &str) -> Option<String> {
     self.1.get(kw).or_else(|| self.0.get(kw))
   }
 }
 
-impl Subst for DirSubst {
+impl Substitutor for DirSubst {
   fn get(&self, kw: &str) -> Option<String> {
     Some(match kw {
       "url"    => URL.to_owned(),
@@ -721,6 +722,16 @@ pub struct WindowGuard<'g> {
   w: &'g Window,
 }
 
+impl Debug for WindowGuard<'_> {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut fmt::Formatter) {
+    f.debug_struct("WindowGuard")
+      .field("w.name", &self.w.name)
+      .field("w.instance", &self.w.instance.to_string())
+      .finish()?
+  }
+}
+
 #[throws(AE)]
 fn check_window_name_sanity(name: &str) -> &str {
   let e = || anyhow!("bad window name {:?}", &name);
@@ -839,7 +850,29 @@ impl<'g> WindowGuard<'g> {
       then { gen }
       else { throw!(anyhow!("unexpected resp to synch {:?}", resp)) }
     };
-    dbg!(gen);
+    (|| {
+      loop {
+        let tgen = self.su.driver.execute_async_script(
+          &Subst::from(&[
+            ("wanted", &gen.to_string())
+          ]).subst(r#"
+            var done = arguments[0];
+            if (gen >= @wanted) { done(gen): return; }
+            gen_update_hook = function() {
+              gen_update_hook = function() { };
+              done(gen);
+            };
+          "#)?
+        )
+          .context("run async script")?
+          .value().as_u64().ok_or(anyhow!("script return is not u64"))?;
+        let tgen = Generation(tgen);
+        if tgen >= gen { break; }
+        trace!("{:?} gen={} tgen={}", self, gen, tgen);
+      }
+      Ok::<(),AE>(())
+    })()
+      .context("await gen update via async js script")?;
   }
 }
 

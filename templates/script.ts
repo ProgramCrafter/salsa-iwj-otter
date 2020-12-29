@@ -105,7 +105,7 @@ var keyops_local : { [opname: string]: (uo: UoRecord) => void } = Object();
 var last_log_ts: wasm_bindgen.TimestampAbbreviator;
 var last_zoom_factor : number = 1.0;
 var firefox_bug_zoom_factor_compensation : number = 1.0;
-var gen_update_hook : (gen: Generation) => void = function() { }
+var gen_update_hook : () => void = function() { }
 
 var svg_ns : string;
 var space : SVGGraphicsElement;
@@ -1197,7 +1197,7 @@ function startup() {
 	messages[k](m[k]);
       }
       gen = tgen;
-      gen_update_hook(gen);
+      gen_update_hook();
     } catch (exc) {
       var s = exc.toString();
       string_report_error('exception handling update '
