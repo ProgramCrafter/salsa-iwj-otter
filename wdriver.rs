@@ -651,6 +651,7 @@ fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<String>) {
     ("devtools.console.stdout.content", true),
   ].iter().cloned().collect();
   caps.add("prefs", prefs)?;
+  caps.add("stdio", "inherit")?;
   let mut driver = t4::WebDriver::new("http://localhost:4444", &caps)
     .context("create 34 WebDriver")?;
 
