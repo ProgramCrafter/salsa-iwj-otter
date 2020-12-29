@@ -24,6 +24,7 @@ pub use void::Void;
 pub use t4::WebDriverCommands;
 
 pub use std::env;
+pub use std::fmt;
 pub use std::fs;
 pub use std::collections::hash_map::HashMap;
 pub use std::convert::TryInto;
@@ -708,12 +709,18 @@ fn fetch_log(driver: &T4d, name: &str) {
     {
       #[derive(Deserialize)]
       struct LogEnt(String, Vec<serde_json::Value>);
+      impl fmt::Display for LogEnt {
+        #[throws(fmt::Error)]
+        fn fmt(&self, f: &mut fmt::Formatter) {
+          write!(f, "{}:", self.0)?;
+          for a in &self.1 { write!(f, " {}", a)?; }
+        }
+      }
 
       let ent: LogEnt = serde_json::from_value(ent.clone())
         .context("parse log entry")?;
-      eprint!("JS {} {}:", name, &ent.0);
-      for a in ent.1 { eprint!(" {}", a); }
-      eprintln!("");
+
+      debug!("JS {} {}", name, &ent);
     }
     Ok::<_,AE>(())
   })()
