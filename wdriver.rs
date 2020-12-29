@@ -544,6 +544,8 @@ bundled_sources = "@target@/bundled-sources"
 wasm_dir = "@target@/packed-wasm"
 shapelibs = [ "@src@/library/*.toml" ]
 
+debug_js_inject_file = "@src@/templates/log-save.js"
+
 [log]
 global_level = 'debug'
 
@@ -664,26 +666,6 @@ fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<String>) {
   screenshot(&mut driver, &mut count, "startup")?;
   driver.get(URL).context("navigate to front page")?;
   screenshot(&mut driver, &mut count, "front")?;
-
-  driver.execute_script(r#"
-    orig_console = window.console;
-    window.console = (function(){
-        var saved = [ ];
-        var new_console = { saved: saved};
-        for (k of ['log','error','warn','info']) {
-            (function(k){
-                var orig = orig_console[k];
-                new_console[k] = function() {
-                    saved.push([k, arguments]);
-                    orig.apply(orig_console, arguments);
-                }
-            })(k);
-        }
-        return new_console;
-    })();
-
-    console.log('wdriver.rs console log starts');
-  "#)?;
 
   fetch_log(&driver, "front")?;
   
