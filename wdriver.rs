@@ -850,6 +850,7 @@ impl<'g> WindowGuard<'g> {
       then { gen }
       else { throw!(anyhow!("unexpected resp to synch {:?}", resp)) }
     };
+    trace!("{:?} gen={} ...", self, gen);
     (|| {
       loop {
         let tgen = self.su.driver.execute_async_script(
