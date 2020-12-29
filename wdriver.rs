@@ -868,8 +868,8 @@ impl<'g> WindowGuard<'g> {
           .context("run async script")?
           .value().as_u64().ok_or(anyhow!("script return is not u64"))?;
         let tgen = Generation(tgen);
-        if tgen >= gen { break; }
         trace!("{:?} gen={} tgen={}", self, gen, tgen);
+        if tgen >= gen { break; }
       }
       Ok::<(),AE>(())
     })()
