@@ -857,7 +857,7 @@ impl<'g> WindowGuard<'g> {
             ("wanted", &gen.to_string())
           ]).subst(r#"
             var done = arguments[0];
-            if (gen >= @wanted) { done(gen): return; }
+            if (gen >= @wanted@) { done(gen); return; }
             gen_update_hook = function() {
               gen_update_hook = function() { };
               done(gen);
