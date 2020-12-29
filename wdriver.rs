@@ -684,14 +684,41 @@ fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<String>) {
     console.log('wdriver.rs console log starts');
   "#)?;
 
-  let cons = driver.execute_script(r#"return window.console.saved;"#)?;
-  eprintln!("{:?}", &cons.value());
+  fetch_log(&driver, "front")?;
   
   let t = Some(5_000 * MS);
   driver.set_timeouts(t4::TimeoutConfiguration::new(t,t,t))
     .context("set webdriver timeouts")?;
 
   (driver, count, window_names)
+}
+
+/// current window must be `name`
+#[throws(AE)]
+fn fetch_log(driver: &T4d, name: &str) {
+  (||{
+    let got = driver.execute_script(r#"
+      var returning = window.console.saved;
+      window.console.saved = [];
+      return returning;
+    "#).context("get log")?;
+
+    for ent in got.value().as_array()
+      .ok_or(anyhow!("saved isn't an array?"))?
+    {
+      #[derive(Deserialize)]
+      struct LogEnt(String, Vec<serde_json::Value>);
+
+      let ent: LogEnt = serde_json::from_value(ent.clone())
+        .context("parse log entry")?;
+      eprint!("JS {} {}:", name, &ent.0);
+      for a in ent.1 { eprint!(" {}", a); }
+      eprintln!("");
+    }
+    Ok::<_,AE>(())
+  })()
+    .with_context(|| name.to_owned())
+    .context("fetch JS log messages")?;
 }
 
 #[derive(Debug)]
@@ -779,29 +806,7 @@ impl<'g> Deref for WindowGuard<'g> {
 
 impl<'g> Drop for WindowGuard<'g> {
   fn drop(&mut self) {
-    (||{
-      let got = self.su.driver.execute_script(r#"
-        var returning = window.console.saved;
-        window.console.saved = [];
-        return returning;
-      "#).context("get log")?;
-
-      for ent in got.value().as_array()
-        .ok_or(anyhow!("saved isn't an array?"))?
-      {
-        #[derive(Deserialize)]
-        struct LogEnt(String, Vec<serde_json::Value>);
-
-        let ent: LogEnt = serde_json::from_value(ent.clone())
-          .context("parse log entry")?;
-        eprint!("JS {} {}:", &self.w.name, &ent.0);
-        for a in ent.1 { eprint!(" {}", a); }
-        eprintln!("");
-      }
-      Ok::<_,AE>(())
-    })()
-      .with_context(|| self.w.name.clone())
-      .context("update log")
+    fetch_log(&self.su.driver, &self.w.name)
       .just_warn();
   }
 }
