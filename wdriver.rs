@@ -663,6 +663,27 @@ fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<String>) {
   driver.get(URL).context("navigate to front page")?;
   screenshot(&mut driver, &mut count, "front")?;
 
+  driver.execute_script(r#"
+    orig_console = window.console;
+    window.console = (function(){
+        var saved = [ ];
+        var new_console = { saved: saved};
+        for (k of ['log','error','warn','info']) {
+            var orig = orig_console[k];
+            new_console[k] = function() {
+                saved.push([k, arguments]);
+                orig.apply(orig_console, arguments);
+            }
+        }
+        return new_console;
+    })();
+
+    console.log('wdriver.rs console log starts');
+"#)?;
+
+  let cons = driver.execute_script(r#"return window.console.saved;"#)?;
+  eprintln!("{:?}", &cons.value());
+  
   let t = Some(5_000 * MS);
   driver.set_timeouts(t4::TimeoutConfiguration::new(t,t,t))
     .context("set webdriver timeouts")?;
