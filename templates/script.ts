@@ -97,7 +97,7 @@ var our_dnd_type = "text/puvnex-game-server-dummy";
 var api_queue : [string, Object][] = [];
 var api_posting = false;
 var us : PlayerId;
-var gen = 0;
+var gen : Generation = 0;
 var cseq : ClientSeq = 0;
 var ctoken : string;
 var uo_map : { [k: string]: UoRecord | null } = Object.create(null);
