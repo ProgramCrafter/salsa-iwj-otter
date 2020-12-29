@@ -15,6 +15,7 @@ pub use nix::unistd::LinkatFlags;
 pub use num_derive::FromPrimitive;
 pub use parking_lot::{Mutex, MutexGuard};
 pub use regex::{Captures, Regex};
+pub use serde::{Serialize, Deserialize};
 pub use structopt::StructOpt;
 pub use strum::{EnumIter, EnumProperty, IntoEnumIterator, IntoStaticStr};
 pub use thirtyfour_sync as t4;
@@ -669,17 +670,19 @@ fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<String>) {
         var saved = [ ];
         var new_console = { saved: saved};
         for (k of ['log','error','warn','info']) {
-            var orig = orig_console[k];
-            new_console[k] = function() {
-                saved.push([k, arguments]);
-                orig.apply(orig_console, arguments);
-            }
+            (function(k){
+                var orig = orig_console[k];
+                new_console[k] = function() {
+                    saved.push([k, arguments]);
+                    orig.apply(orig_console, arguments);
+                }
+            })(k);
         }
         return new_console;
     })();
 
     console.log('wdriver.rs console log starts');
-"#)?;
+  "#)?;
 
   let cons = driver.execute_script(r#"return window.console.saved;"#)?;
   eprintln!("{:?}", &cons.value());
@@ -772,6 +775,35 @@ impl Setup {
 impl<'g> Deref for WindowGuard<'g> {
   type Target = T4d;
   fn deref(&self) -> &T4d { &self.su.driver }
+}
+
+impl<'g> Drop for WindowGuard<'g> {
+  fn drop(&mut self) {
+    (||{
+      let got = self.su.driver.execute_script(r#"
+        var returning = window.console.saved;
+        window.console.saved = [];
+        return returning;
+      "#).context("get log")?;
+
+      for ent in got.value().as_array()
+        .ok_or(anyhow!("saved isn't an array?"))?
+      {
+        #[derive(Deserialize)]
+        struct LogEnt(String, Vec<serde_json::Value>);
+
+        let ent: LogEnt = serde_json::from_value(ent.clone())
+          .context("parse log entry")?;
+        eprint!("JS {} {}:", &self.w.name, &ent.0);
+        for a in ent.1 { eprint!(" {}", a); }
+        eprintln!("");
+      }
+      Ok::<_,AE>(())
+    })()
+      .with_context(|| self.w.name.clone())
+      .context("update log")
+      .just_warn();
+  }
 }
 
 pub trait Screenshottable {

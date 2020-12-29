@@ -1588,6 +1588,8 @@ dependencies = [
  "otter",
  "parking_lot",
  "regex",
+ "serde",
+ "serde_json",
  "structopt",
  "strum",
  "thirtyfour_sync",
