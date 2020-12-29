@@ -1186,7 +1186,7 @@ function startup() {
     sse_url_prefix + "/_/updates?ctoken="+ctoken+'&gen='+gen
   );
   es.onmessage = function(event) {
-    console.log('GOTEVE', event);
+    console.log('GOTEVE', event.data);
     var k;
     var m;
     try {
@@ -1203,7 +1203,7 @@ function startup() {
     }
   }
   es.addEventListener('commsworking', function(event) {
-    console.log('GOTDATA', event);
+    console.log('GOTDATA', (event as any).data);
     status_node.innerHTML = (event as any).data;
   });
   es.addEventListener('player-gone', function(event) {
