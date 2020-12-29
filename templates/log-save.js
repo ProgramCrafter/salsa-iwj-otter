@@ -1,13 +1,12 @@
 <script>
     orig_console = window.console;
     window.console = (function(){
-        var saved = [ ];
-        var new_console = { saved: saved};
+        var new_console = { saved: [] };
         for (k of ['log','error','warn','info']) {
             (function(k){
                 var orig = orig_console[k];
                 new_console[k] = function() {
-                    saved.push([k, arguments]);
+                  new_console.saved.push([k, arguments]);
                     orig.apply(orig_console, arguments);
                 }
             })(k);
