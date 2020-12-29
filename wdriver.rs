@@ -414,6 +414,7 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> DirSubst {
     getcwd().context("canonicalise our tmp subdir (getcwd)")?;
 
   env::set_var("HOME", &abstmp);
+  env::set_var("TMPDIR", &abstmp);
   for v in "http_proxy https_proxy XAUTHORITY CDPATH \
             SSH_AGENT_PID SSH_AUTH_SOCK WINDOWID WWW_HOME".split(' ')
   {
@@ -467,7 +468,7 @@ fn fork_something_which_prints(mut cmd: Command,
       for l in report {
         let l : Result<String, io::Error> = l;
         let l = l.context("reading further output")?;
-        const MAXLEN : usize = 200;
+        const MAXLEN : usize = 300;
         if l.len() <= MAXLEN {
           println!("{} {}", what, l);
         } else {
