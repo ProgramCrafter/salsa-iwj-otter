@@ -34,6 +34,7 @@ pub struct ServerConfigSpec {
   pub bundled_sources: Option<String>,
   pub shapelibs: Option<Vec<shapelib::Config1>>,
   pub sendmail: Option<String>,
+  pub debug_js_inject_file: Option<String>,
 }
 
 #[derive(Debug,Clone)]
@@ -57,6 +58,7 @@ pub struct ServerConfig {
   pub bundled_sources: String,
   pub shapelibs: Vec<shapelib::Config1>,
   pub sendmail: String,
+  pub debug_js_inject: Arc<String>,
 }
 
 impl TryFrom<ServerConfigSpec> for WholeServerConfig {
@@ -68,6 +70,7 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
       http_port, public_url, sse_wildcard_url, rocket_workers,
       template_dir, nwtemplate_dir, wasm_dir,
       log, bundled_sources, shapelibs, sendmail,
+      debug_js_inject_file,
     } = spec;
 
     let defpath = |specd: Option<String>, leaf: &str| -> String {
@@ -127,11 +130,18 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
     let log = LogSpecification::from_toml(&log)
       .context("log specification")?;
 
+    let debug_js_inject = Arc::new(match &debug_js_inject_file {
+      Some(f) => fs::read_to_string(f)
+        .with_context(|| f.clone()).context("debug_js_inject_file")?,
+      None => "".into(),
+    });
+
     let server = ServerConfig {
       save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
       template_dir, nwtemplate_dir, wasm_dir,
       bundled_sources, shapelibs, sendmail,
+      debug_js_inject,
     };
     WholeServerConfig {
       server: Arc::new(server),

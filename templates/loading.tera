@@ -6,6 +6,7 @@
     <title>{{ game | escape }} - {{ nick | escape }} - Otter
     </title>
 <link rel="license" href="/_/libre">
+{{ debug_js_inject }}
 <script defer>let wasm_input = fetch('/_/wasm.wasm');</script>
 <script src="/_/wasm.js" defer></script>
 <script id="global-info" data-layout="{{ layout }}"></script>

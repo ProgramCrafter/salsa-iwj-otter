@@ -1,6 +1,7 @@
 <html>
   <head>
     <title>Otter</title>
+{{ debug_js_inject }}
   </head>
 <body>
 

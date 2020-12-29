@@ -12,7 +12,9 @@ use rocket_contrib::serve::StaticFiles;
 use otter::imports::*;
 
 #[derive(Serialize,Debug)]
-struct FrontPageRenderContext { }
+struct FrontPageRenderContext {
+  debug_js_inject: Arc<String>,
+}
 
 #[derive(Copy,Clone,Debug)]
 enum ResourceLocation { Main, Wasm(&'static str), }
@@ -63,6 +65,7 @@ struct LoadingRenderContext<'r> {
   nick: String,
   layout: PresentationLayout,
   ptoken: &'r RawTokenVal,
+  debug_js_inject: Arc<String>,
 }
 #[get("/")]
 #[throws(OE)]
@@ -88,11 +91,14 @@ fn loading(layout: Option<PresentationLayout>, ia: PlayerQueryString)
       nick: gpl.nick.clone(),
       game: g.name.to_string(),
       ptoken: &ia.raw_token,
+      debug_js_inject: config().debug_js_inject.clone(),
       layout,
     };
     Template::render("loading", &c)
   } else {
-    let c = FrontPageRenderContext { };
+    let c = FrontPageRenderContext {
+      debug_js_inject: config().debug_js_inject.clone(),
+    };
     Template::render("front", &c)
   }
 }
