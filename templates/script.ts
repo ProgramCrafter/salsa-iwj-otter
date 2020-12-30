@@ -622,7 +622,7 @@ function drag_add_piece(piece: PieceId, p: PieceInfo) {
 }
 
 function some_mousedown(e : MouseEvent) {
-  console.log('mousedown', e);
+  console.log('mousedown', e, e.clientX, e.clientY, e.target);
 
   if (e.button != 0) { return }
   if (e.altKey) { return }

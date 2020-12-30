@@ -29,6 +29,8 @@ fn main(){
         .release()
         .perform()
         .always_context("drag")?;
+
+      w.synch()?;
     }
 
     debug!("finishing");
