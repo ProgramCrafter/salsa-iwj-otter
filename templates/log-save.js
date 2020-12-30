@@ -1,18 +1,18 @@
 <script>
     orig_console = window.console;
     window.console = (function(){
-        var new_console = { saved: [] };
-        for (k of ['log','error','warn','info']) {
-            (function(k){
-                var orig = orig_console[k];
-                new_console[k] = function() {
-                  new_console.saved.push([k, arguments]);
-                    orig.apply(orig_console, arguments);
-                }
-            })(k);
-        }
-        return new_console;
+      var new_console = { saved: [] };
+      for (k of ['log','error','warn','info']) {
+        (function(k){
+          var orig = orig_console[k];
+          new_console[k] = function() {
+            let args = [].slice.call(arguments);
+            new_console.saved.push([k, [args.map(s => s.toString())]]);
+            orig.apply(orig_console, arguments);
+          }
+        })(k);
+      }
+      return new_console;
     })();
-
     console.log('wdriver.rs console log starts');
 </script>
