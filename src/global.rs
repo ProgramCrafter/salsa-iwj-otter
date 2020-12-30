@@ -454,7 +454,7 @@ impl<Id> InstanceAccessDetails<Id>
   where Id: AccessId, OE: From<Id::Error>
 {
   #[throws(OE)]
-  pub fn from_token(token: &RawToken) -> InstanceAccessDetails<Id> {
+  pub fn from_token(token: &RawTokenVal) -> InstanceAccessDetails<Id> {
     let g = Id::global_tokens(PRIVATE_Y).read().unwrap();
     let i = g.get(token).ok_or(Id::ERROR)?;
     i.clone()

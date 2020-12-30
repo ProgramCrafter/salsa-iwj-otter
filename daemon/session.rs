@@ -53,8 +53,16 @@ struct SessionForm {
   ptoken: RawToken,
 }
 #[post("/_/session/<layout>", format="json", data="<form>")]
-fn session(form : Json<SessionForm>, layout: Option<PresentationLayout>)
-           -> Result<Template,OE> {
+#[throws(OER)]
+fn session(form: Json<SessionForm>,
+           layout: Option<Parse<PresentationLayout>>)
+           -> Template {
+  session_inner(form, layout.map(|pl| pl.0))?
+}
+
+fn session_inner(form : Json<SessionForm>,
+                 layout: Option<PresentationLayout>)
+                 -> Result<Template,OE> {
   // make session in this game, log a message to other players
   let iad = lookup_token(form.ptoken.borrow())?;
   let player = iad.ident;

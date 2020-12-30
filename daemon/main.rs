@@ -24,7 +24,10 @@ pub use rocket_contrib::templates::Engines;
 pub use rocket_contrib::templates::Template;
 
 pub use crate::api::{AbbrevPresentationLayout, InstanceAccess};
+pub use crate::api::{OnlineErrorResponse};
 pub use crate::cmdlistener::*;
+
+pub type OER = OnlineErrorResponse;
 
 use rocket::fairing;
 use rocket::response::Content;
@@ -89,12 +92,12 @@ struct LoadingRenderContext<'r> {
   debug_js_inject: Arc<String>,
 }
 #[get("/")]
-#[throws(OE)]
+#[throws(OER)]
 fn loading_p(ia: PlayerQueryString) -> Template {
   loading(None, ia)?
 }
 #[get("/<layout>")]
-#[throws(OE)]
+#[throws(OER)]
 fn loading_l(layout: AbbrevPresentationLayout, ia: PlayerQueryString)
              -> Template {
   loading(Some(layout.0), ia)?
@@ -143,6 +146,20 @@ impl<'a,'r,T> FromRequest<'a,'r> for WholeQueryString<T>
       Ok(v) => rocket::Outcome::Success(WholeQueryString(v)),
       Err(e) => rocket::Outcome::Failure(((&e).into(), e)),
     }
+  }
+}
+
+pub struct Parse<T: FromStr>(pub T);
+
+impl<'r, T> FromParam<'r> for Parse<T>
+  where T: FromStr,
+        <T as FromStr>::Err : Debug,
+//  where  : Into<OE>
+{
+  type Error = <T as FromStr>::Err;
+  #[throws(Self::Error)]
+  fn from_param(param: &'r RawStr) -> Parse<T> {
+    Parse(param.as_str().parse()?)
   }
 }
 

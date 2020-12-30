@@ -10,15 +10,6 @@ type PL = PresentationLayout;
 
 pub struct AbbrevPresentationLayout(pub PresentationLayout);
 
-/*
-impl<'r> FromParam<'r> for PresentationLayout {
-  type Error = strum::ParseError;
-  fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
-    param.as_str().parse()
-  }
-}
-*/
-
 impl<'r> FromParam<'r> for AbbrevPresentationLayout {
   type Error = ();
   #[throws(Self::Error)]
@@ -40,15 +31,14 @@ pub struct InstanceAccess<'i, Id> {
 impl<'r, Id> FromFormValue<'r> for InstanceAccess<'r, Id>
   where Id : AccessId, OE : From<Id::Error>
 {
-  type Error = OE;
-  #[throws(OE)]
+  type Error = OER;
+  #[throws(OER)]
   fn from_form_value(param: &'r RawStr) -> Self {
     let token = RawTokenVal::from_str(param.as_str());
-    let i = InstanceAccessDetails::from_token(&token);
+    let i = InstanceAccessDetails::from_token(token)?;
     InstanceAccess { raw_token : token, i }
   }
 }
-
 
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiPiece<O : ApiPieceOp> {
@@ -79,10 +69,14 @@ trait ApiPieceOp : Debug {
   }
 }
 
-impl From<&OnlineError> for rocket::http::Status {
-  fn from(oe: &OnlineError) -> rocket::http::Status {
+#[derive(Error,Debug)]
+#[error("{0}")]
+pub struct OnlineErrorResponse(#[from] OnlineError);
+
+impl From<&OnlineErrorResponse> for rocket::http::Status {
+  fn from(oe: &OnlineErrorResponse) -> rocket::http::Status {
     use OnlineError::*;
-    match oe {
+    match oe.0 {
       ServerFailure(_) => Status::InternalServerError,
       NoClient | NoPlayer(_) | GameBeingDestroyed
         => Status::NotFound,
@@ -94,7 +88,7 @@ impl From<&OnlineError> for rocket::http::Status {
   }
 }
 
-impl<'r> Responder<'r> for OnlineError {
+impl<'r> Responder<'r> for OnlineErrorResponse {
   #[throws(Status)]
   fn respond_to(self, req: &Request) -> Response<'r> {
     let msg = format!("Online-layer error\n{:?}\n{}\n", self, self);
