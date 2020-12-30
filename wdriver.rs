@@ -828,8 +828,9 @@ fn screenshot(driver: &T4d, count: &mut ScreenShotCount, slug: &str) {
   let path = format!("{:03}{}.png", count, slug);
   *count += 1;
   driver.screenshot(&path::PathBuf::from(&path))
-    .context(path)
+    .with_context(|| path.clone())
     .context("take screenshot")?;
+  debug!("screenshot {}", &path);
 }
 
 impl<'g> WindowGuard<'g> {

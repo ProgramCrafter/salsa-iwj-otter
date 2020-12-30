@@ -14,7 +14,6 @@ fn main(){
 
     su.w(&alice)?.synch()?;
 
-    sleep(750 * MS);
     debug!("finishing");
   }
   info!("ok");
