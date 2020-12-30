@@ -8,8 +8,7 @@
 #![allow(clippy::redundant_closure_call)]
 
 pub mod accounts;
-pub mod api;
-pub mod cmdlistener;
+pub mod authproofs;
 pub mod commands;
 pub mod config;
 pub mod debugreader;
@@ -18,15 +17,16 @@ pub mod gamestate;
 pub mod global;
 pub mod imports;
 pub mod keydata;
+pub mod lens;
 pub mod mgmtchannel;
 pub mod nwtemplates;
 pub mod pieces;
-pub mod session;
 pub mod shapelib;
 pub mod spec;
 pub mod sse;
 pub mod tz;
 pub mod updates;
+pub mod ui;
 pub mod utils;
 
 #[path = "slotmap-slot-idx.rs"]   pub mod slotmap_slot_idx;

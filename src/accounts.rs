@@ -6,6 +6,8 @@ use crate::imports::*;
 
 use parking_lot::{Mutex, const_mutex, MutexGuard};
 
+use authproofs::*;
+
 //---------- simple types ----------
 
 slotmap::new_key_type!{
@@ -433,6 +435,7 @@ pub fn load_accounts() {
 
 pub mod loaded_acl {
   use crate::imports::*;
+  use authproofs::*;
 
   pub trait Perm : FromPrimitive + ToPrimitive +
     Copy + Eq + Hash + Sync + Send + 'static

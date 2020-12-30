@@ -2,45 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-use crate::imports::*;
+use super::*;
 
 type WRC = WhatResponseToClientOp;
 
-#[derive(Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize,EnumString)]
-pub enum PresentationLayout {
-  Portrait,
-  Landscape,
-}
-
 type PL = PresentationLayout;
 
-impl<'r> FromParam<'r> for PresentationLayout {
+pub struct AbbrevPresentationLayout(pub PresentationLayout);
+
+impl<'r> FromParam<'r> for AbbrevPresentationLayout {
   type Error = strum::ParseError;
   fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
-    param.as_str().parse()
+    AbbrevPresentationLayout(param.as_str().parse())
   }
 }
-
-impl PresentationLayout {
-  pub fn template(self) -> &'static str {
-    match self {
-      PL::Portrait => "session",
-      PL::Landscape => "landscape",
-    }
-  }
-  pub fn abbreviate_timestamps(self) -> bool {
-    match self {
-      PL::Portrait => false,
-      PL::Landscape => true,
-    }
-  }
-}
-
-impl Default for PresentationLayout {
-  fn default() -> Self { PL::Portrait }
-}
-
-pub struct AbbrevPresentationLayout(pub PresentationLayout);
 
 impl<'r> FromParam<'r> for AbbrevPresentationLayout {
   type Error = ();
@@ -53,6 +28,26 @@ impl<'r> FromParam<'r> for AbbrevPresentationLayout {
     })
   }
 }
+
+#[derive(Clone,Debug)]
+pub struct InstanceAccess<'i, Id> {
+  pub raw_token: &'i RawTokenVal,
+  pub i: InstanceAccessDetails<Id>,
+}
+
+impl<'r, Id> FromFormValue<'r> for InstanceAccess<'r, Id>
+  where Id : AccessId, OE : From<Id::Error>
+{
+  type Error = OE;
+  #[throws(OE)]
+  fn from_form_value(param: &'r RawStr) -> Self {
+    let g = Id::global_tokens(PRIVATE_Y).read().unwrap();
+    let token = RawTokenVal::from_str(param.as_str());
+    let i = g.get(token).ok_or(Id::ERROR)?;
+    InstanceAccess { raw_token : token, i : i.clone() }
+  }
+}
+
 
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiPiece<O : ApiPieceOp> {
@@ -81,57 +76,6 @@ trait ApiPieceOp : Debug {
       throw!(OnlineError::PieceHeld)
     }
   }
-}
-
-#[derive(Error,Debug)]
-pub enum ApiPieceOpError {
-  ReportViaResponse(#[from] OnlineError),
-  ReportViaUpdate(#[from] PieceOpError),
-  PartiallyProcessed(PieceOpError, Vec<LogEntry>),
-}
-display_as_debug!(ApiPieceOpError);
-
-impl From<PlayerNotFound> for ApiPieceOpError {
-  fn from(x: PlayerNotFound) -> ApiPieceOpError {
-    ApiPieceOpError::ReportViaResponse(x.into())
-  }
-}
-
-pub trait Lens : Debug {
-  fn pieceid2visible(&self, piece: PieceId) -> VisiblePieceId;
-  fn log_pri(&self, piece: PieceId, pc: &PieceState)
-             -> PieceRenderInstructions;
-  fn svg_pri(&self, piece: PieceId, pc: &PieceState, player: PlayerId)
-             -> PieceRenderInstructions;
-  fn massage_prep_piecestate(&self, ns : &mut PreparedPieceState);
-  fn decode_visible_pieceid(&self, vpiece: VisiblePieceId, player: PlayerId)
-                            -> PieceId;
-}
-#[derive(Debug)]
-pub struct TransparentLens {
-  // when lenses become nontrivial, make this nonconstructable
-  // to find all the places where a TransparentLens was bodged
-}
-impl Lens for TransparentLens {
-  fn pieceid2visible(&self, piece: PieceId) -> VisiblePieceId {
-    let kd : slotmap::KeyData = piece.into();
-    VisiblePieceId(kd)
-  }
-  fn log_pri(&self, piece: PieceId, pc: &PieceState)
-             -> PieceRenderInstructions {
-    let id = self.pieceid2visible(piece);
-    PieceRenderInstructions { id, face : pc.face }
-  }
-  fn svg_pri(&self, piece: PieceId, pc: &PieceState, _player: PlayerId)
-             -> PieceRenderInstructions {
-    self.log_pri(piece, pc)
-  }
-  fn decode_visible_pieceid(&self, vpiece: VisiblePieceId, _player: PlayerId)
-                            -> PieceId {
-    let kd : slotmap::KeyData = vpiece.into();
-    PieceId::from(kd)
-  }
-  fn massage_prep_piecestate(&self, _ns : &mut PreparedPieceState) { }
 }
 
 impl From<&OnlineError> for rocket::http::Status {

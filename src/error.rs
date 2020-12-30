@@ -74,6 +74,21 @@ impl From<InternalError> for SpecError {
     SpecError::InternalError(format!("{:?}", ie))
   }
 }
+
+#[derive(Error,Debug)]
+pub enum ApiPieceOpError {
+  ReportViaResponse(#[from] OnlineError),
+  ReportViaUpdate(#[from] PieceOpError),
+  PartiallyProcessed(PieceOpError, Vec<LogEntry>),
+}
+display_as_debug!(ApiPieceOpError);
+
+impl From<PlayerNotFound> for ApiPieceOpError {
+  fn from(x: PlayerNotFound) -> ApiPieceOpError {
+    ApiPieceOpError::ReportViaResponse(x.into())
+  }
+}
+
 #[derive(Error,Debug,Serialize,Clone)]
 pub enum ErrorSignaledViaUpdate {
   InternalError,

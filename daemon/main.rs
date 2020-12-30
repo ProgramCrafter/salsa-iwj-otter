@@ -4,8 +4,30 @@
 
 #![feature(proc_macro_hygiene, decl_macro)]
 
+pub mod api;
+pub mod cmdlistener;
+pub mod session;
+
+pub use rocket::http::Status;
+pub use rocket::http::{ContentType, RawStr};
+pub use rocket::request::Request;
+pub use rocket::request::{FromFormValue, FromParam, FromRequest, LenientForm};
+pub use rocket::response;
+pub use rocket::response::NamedFile;
+pub use rocket::response::{Responder, Response};
+pub use rocket::{get, post, routes};
+pub use rocket::{Rocket, State};
+pub use rocket_contrib::helmet::*;
+pub use rocket_contrib::json::Json;
+pub use rocket_contrib::templates::tera::{self, Value};
+pub use rocket_contrib::templates::Engines;
+pub use rocket_contrib::templates::Template;
+
+pub use crate::api::{AbbrevPresentationLayout};
+pub use crate::api::{ApiPieceOpError, Lens, TransparentLens};
+pub use crate::cmdlistener::*;
+
 use rocket::fairing;
-use rocket::{get, routes};
 use rocket::response::Content;
 use rocket_contrib::serve::StaticFiles;
 
@@ -295,8 +317,8 @@ fn main() {
     r = r.attach(ReportStartup);
   }
 
-  let r = otter::session::mount(r);
-  let r = otter::api::mount(r);
+  let r = crate::session::mount(r);
+  let r = crate::api::mount(r);
 
   thread::spawn(client_periodic_expiry);
   thread::spawn(logs_periodic_expiry);

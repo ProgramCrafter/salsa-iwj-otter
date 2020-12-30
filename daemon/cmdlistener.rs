@@ -4,7 +4,9 @@
 
 // management API implementation
 
-use crate::imports::*;
+use super::*;
+
+use authproofs::*;
 
 // ---------- newtypes, type aliases, basic definitions ----------
 
@@ -13,9 +15,6 @@ use std::os::unix::io::AsRawFd;
 use std::os::unix::net::UnixListener;
 use uds::UnixStreamExt;
 
-pub use crate::from_instance_lock_error;
-pub use std::os::unix::net::UnixStream;
-
 type SE = SpecError;
 type CSE = anyhow::Error;
 
@@ -23,7 +22,6 @@ use MgmtCommand::*;
 use MgmtResponse::*;
 
 type ME = MgmtError;
-from_instance_lock_error!{MgmtError}
 
 type AS = AccountScope;
 type TP = TablePermission;
@@ -33,8 +31,6 @@ const CREATE_PIECES_MAX: u32 = 300;
 
 const DEFAULT_POS_START: Pos = PosC([20,20]);
 const DEFAULT_POS_DELTA: Pos = PosC([5,5]);
-
-pub type AuthorisationSuperuser = Authorisation<authproofs::Global>;
 
 pub struct CommandListener {
   listener: UnixListener,
@@ -156,7 +152,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       let mut games = games_lock();
       let auth = authorise_by_account(cs, &ag, &game)?;
 
-      let gs = crate::gamestate::GameState {
+      let gs = otter::gamestate::GameState {
         table_colour: Html::lit("green"),
         table_size: DEFAULT_TABLE_SIZE,
         pieces: default(),
@@ -908,6 +904,12 @@ impl CommandListener {
 #[error("connection euid lookup failed (at connection initiation): {0}")]
 pub struct ConnectionEuidDiscoverEerror(String);
 
+impl From<ConnectionEuidDiscoverEerror> for AuthorisationError {
+  fn from(e: ConnectionEuidDiscoverEerror) -> AuthorisationError {
+    AuthorisationError(format!("{}", e))
+  }
+}
+
 impl CommandStream<'_> {
   #[throws(AuthorisationError)]
   fn authorised_uid(&self, wanted: Option<Uid>, xinfo: Option<&str>)
@@ -1172,87 +1174,3 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
 
   }
 }
-
-use authproofs::*;
-use authproofs::AuthorisationError;
-
-pub use authproofs::Authorisation;
-pub use authproofs::Unauthorised;
-
-mod authproofs {
-  use crate::imports::*;
-
-  #[derive(Copy,Clone,Debug)]
-  pub struct Global;
-
-  #[derive(Debug,Copy,Clone)]
-  pub struct Unauthorised<T,A> (T, PhantomData<A>);
-  impl<T,A> Unauthorised<T,A> {
-    pub fn of(t: T) -> Self { Unauthorised(t, PhantomData) }
-    pub fn by(self, _auth: Authorisation<A>) -> T { self.0 }
-    pub fn by_ref(&self,     _auth: Authorisation<A>) -> &    T { &    self.0 }
-    pub fn by_mut(&mut self, _auth: Authorisation<A>) -> &mut T { &mut self.0 }
-  }
-  impl<T,A> From<T> for Unauthorised<T,A> {
-    fn from(t: T) -> Self { Self::of(t) }
-  }
-
-  #[derive(Error,Debug)]
-  #[error("internal AuthorisationError {0}")]
-  pub struct AuthorisationError(pub String);
-
-  #[derive(Debug)]
-  pub struct Authorisation<A> (PhantomData<*const A>);
-  impl<A> Clone for Authorisation<A> { fn clone(&self) -> Self { *self } }
-  impl<A> Copy for Authorisation<A> { }
-
-  impl<T> Authorisation<T> {
-    pub const fn authorised(_v: &T) -> Authorisation<T> {
-      Authorisation(PhantomData)
-    }
-    pub fn map<U>(self, _f: fn(&T) -> &U) -> Authorisation<U> {
-      self.therefore_ok()
-    }
-    pub fn therefore_ok<U>(self) -> Authorisation<U> {
-      Authorisation(PhantomData)
-    }
-    pub const fn authorise_any() -> Authorisation<T> {
-      Authorisation(PhantomData)
-    }
-  }
-
-  impl<T:Serialize> From<Authorisation<Global>> for Authorisation<T> {
-    // ^ we need a bound not met by Global or we conflict with From<T> for T
-    fn from(global: Authorisation<Global>) -> Self {
-      global.therefore_ok()
-    }
-  }
-
-  impl From<anyhow::Error> for AuthorisationError {
-    fn from(a: anyhow::Error) -> AuthorisationError {
-      AuthorisationError(format!("{}", a))
-    }
-  }
-  impl From<ConnectionEuidDiscoverEerror> for AuthorisationError {
-    fn from(e: ConnectionEuidDiscoverEerror) -> AuthorisationError {
-      AuthorisationError(format!("{}", e))
-    }
-  }
-
-  pub trait AuthorisationCombine: Sized {
-    type Output;
-    fn combine(self) -> Authorisation<Self::Output> {
-      Authorisation(PhantomData)
-    }
-  }
-  impl<A,B> AuthorisationCombine
-    for (Authorisation<A>, Authorisation<B>) {
-    type Output = (A, B);
-  }
-  impl<A,B,C> AuthorisationCombine
-    for (Authorisation<A>, Authorisation<B>, Authorisation<C>) {
-    type Output = (A, B, C);
-  }
-}
-
-

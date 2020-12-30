@@ -168,12 +168,6 @@ pub struct InstanceAccessDetails<Id> {
   pub acctid: AccountId,
 }
 
-#[derive(Clone,Debug)]
-pub struct InstanceAccess<'i, Id> {
-  pub raw_token: &'i RawTokenVal,
-  pub i: InstanceAccessDetails<Id>,
-}
-
 // ========== internal data structures ==========
 
 lazy_static! {
@@ -225,6 +219,7 @@ display_as_debug!{InstanceLockError}
 impl<X> From<PoisonError<X>> for InstanceLockError {
   fn from(_: PoisonError<X>) -> Self { Self::GameCorrupted }
 }
+from_instance_lock_error!{MgmtError}
 
 pub struct PrivateCaller(());
 // outsiders cannot construct this
@@ -1142,19 +1137,6 @@ pub fn lookup_token<Id : AccessId>(s : &RawTokenVal)
       -> Result<InstanceAccessDetails<Id>, Id::Error> {
   Id::global_tokens(PRIVATE_Y).read().unwrap().get(s).cloned()
     .ok_or(Id::ERROR)
-}
-
-impl<'r, Id> FromFormValue<'r> for InstanceAccess<'r, Id>
-  where Id : AccessId, OE : From<Id::Error>
-{
-  type Error = OE;
-  #[throws(OE)]
-  fn from_form_value(param: &'r RawStr) -> Self {
-    let g = Id::global_tokens(PRIVATE_Y).read().unwrap();
-    let token = RawTokenVal::from_str(param.as_str());
-    let i = g.get(token).ok_or(Id::ERROR)?;
-    InstanceAccess { raw_token : token, i : i.clone() }
-  }
 }
 
 #[throws(OE)]
