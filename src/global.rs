@@ -1096,7 +1096,7 @@ pub fn load_games(accounts: &mut AccountsGuard,
 pub type TokenTable<Id> = HashMap<RawToken, InstanceAccessDetails<Id>>;
 
 pub trait AccessId: Copy + Clone + 'static {
-  type Error: Copy;
+  type Error: Into<OnlineError>;
   const ERROR : Self::Error;
   fn global_tokens(_:PrivateCaller) -> &'static RwLock<TokenTable<Self>>;
   fn tokens_registry(ig: &mut Instance, _:PrivateCaller)

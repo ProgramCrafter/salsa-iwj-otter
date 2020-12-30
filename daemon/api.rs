@@ -10,29 +10,6 @@ type PL = PresentationLayout;
 
 pub struct AbbrevPresentationLayout(pub PresentationLayout);
 
-#[derive(Error,Debug)]
-pub enum OnlineError {
-  #[error("Game in process of being destroyed")]
-  GameBeingDestroyed,
-  #[error("client session not recognised (terminated by server?)")]
-  NoClient,
-  #[error("player not part of game (removed?)")]
-  NoPlayer(#[from] PlayerNotFound),
-  #[error("invalid Z coordinate")]
-  InvalidZCoord,
-  #[error("Server operational problems - consult administrator: {0:?}")]
-  ServerFailure(#[from] InternalError),
-  #[error("JSON deserialisation error: {0:?}")]
-  BadJSON(serde_json::Error),
-  #[error("referenced piece is gone (maybe race)")]
-  PieceGone,
-  #[error("improper piece hold status for op (maybe race)")]
-  PieceHeld,
-  #[error("improper UI operation")]
-  BadOperation,
-}
-from_instance_lock_error!{OnlineError}
-
 /*
 impl<'r> FromParam<'r> for PresentationLayout {
   type Error = strum::ParseError;
