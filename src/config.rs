@@ -19,6 +19,7 @@ pub const DAEMON_STARTUP_REPORT : &str = "otter-daemon started";
 
 #[derive(Deserialize,Debug,Clone)]
 pub struct ServerConfigSpec {
+  pub change_directory: Option<String>,
   pub base_dir: Option<String>,
   pub save_dir: Option<String>,
   pub command_socket: Option<String>,
@@ -66,12 +67,18 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
   #[throws(Self::Error)]
   fn try_from(spec: ServerConfigSpec) -> WholeServerConfig {
     let ServerConfigSpec {
-      base_dir, save_dir, command_socket, debug,
+      change_directory, base_dir, save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
       template_dir, nwtemplate_dir, wasm_dir,
       log, bundled_sources, shapelibs, sendmail,
       debug_js_inject_file,
     } = spec;
+
+    if let Some(cd) = change_directory {
+      env::set_current_dir(&cd)
+        .context(cd)
+        .context("config change_directory")?;
+    }
 
     let defpath = |specd: Option<String>, leaf: &str| -> String {
       specd.unwrap_or_else(|| match &base_dir {

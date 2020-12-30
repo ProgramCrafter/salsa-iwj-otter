@@ -225,6 +225,7 @@ impl Substitutor for DirSubst {
       "url"    => URL.to_owned(),
       "src"    => self.src.clone(),
       "build"  => self.start_dir.clone(),
+      "abstmp" => self.abstmp.clone(),
       "target" => format!("{}/target", &self.start_dir),
       "specs"  => format!("{}/specs" , &self.src      ),
       _ => return None,
@@ -534,6 +535,7 @@ fn prepare_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst)
     ("command_socket", "command.socket"),
   ]);
   let config = subst.subst(r##"
+change_directory = "@abstmp@"
 base_dir = "@build@"
 public_url = "@url@"
 

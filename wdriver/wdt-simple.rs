@@ -4,6 +4,10 @@
 
 use otter_webdriver_tests::*;
 
+// Reuse this setup, after a test:
+//   target/debug/daemon-otter tmp/wdt-simple/server-config.toml
+//   http://localhost:8000/?kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe
+
 #[throws(AE)]
 fn main(){
   {
