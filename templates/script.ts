@@ -86,6 +86,8 @@ type PieceErrorHandler = (piece: PieceId, p: PieceInfo, m: PieceOpError)
   => boolean;
 interface DispatchTable<H> { [key: string]: H };
 
+// xxx turn all var into let
+// xxx any exceptions should have otter in them or something
 var globalinfo_elem : HTMLElement;
 var layout: Layout;
 var general_timeout : number = 10000;
