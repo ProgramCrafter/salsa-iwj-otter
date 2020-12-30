@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-use super::*;
+pub use super::*;
 
 type WRC = WhatResponseToClientOp;
 
@@ -10,12 +10,14 @@ type PL = PresentationLayout;
 
 pub struct AbbrevPresentationLayout(pub PresentationLayout);
 
-impl<'r> FromParam<'r> for AbbrevPresentationLayout {
+/*
+impl<'r> FromParam<'r> for PresentationLayout {
   type Error = strum::ParseError;
   fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
-    AbbrevPresentationLayout(param.as_str().parse())
+    param.as_str().parse()
   }
 }
+*/
 
 impl<'r> FromParam<'r> for AbbrevPresentationLayout {
   type Error = ();
@@ -41,10 +43,9 @@ impl<'r, Id> FromFormValue<'r> for InstanceAccess<'r, Id>
   type Error = OE;
   #[throws(OE)]
   fn from_form_value(param: &'r RawStr) -> Self {
-    let g = Id::global_tokens(PRIVATE_Y).read().unwrap();
     let token = RawTokenVal::from_str(param.as_str());
-    let i = g.get(token).ok_or(Id::ERROR)?;
-    InstanceAccess { raw_token : token, i : i.clone() }
+    let i = InstanceAccessDetails::from_token(&token);
+    InstanceAccess { raw_token : token, i }
   }
 }
 

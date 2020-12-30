@@ -23,8 +23,7 @@ pub use rocket_contrib::templates::tera::{self, Value};
 pub use rocket_contrib::templates::Engines;
 pub use rocket_contrib::templates::Template;
 
-pub use crate::api::{AbbrevPresentationLayout};
-pub use crate::api::{ApiPieceOpError, Lens, TransparentLens};
+pub use crate::api::{AbbrevPresentationLayout, InstanceAccess};
 pub use crate::cmdlistener::*;
 
 use rocket::fairing;

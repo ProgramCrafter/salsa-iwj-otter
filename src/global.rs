@@ -450,6 +450,17 @@ impl Display for InstanceName {
 
 // ---------- Player and token functionality ----------
 
+impl<Id> InstanceAccessDetails<Id>
+  where Id: AccessId, OE: From<Id::Error>
+{
+  #[throws(OE)]
+  pub fn from_token(token: &RawToken) -> InstanceAccessDetails<Id> {
+    let g = Id::global_tokens(PRIVATE_Y).read().unwrap();
+    let i = g.get(token).ok_or(Id::ERROR)?;
+    i.clone()
+  }
+}
+
 impl<'ig> InstanceGuard<'ig> {
   /// caller is responsible for logging; threading it through
   /// proves the caller has a log entry.
