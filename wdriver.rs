@@ -22,6 +22,7 @@ pub use thirtyfour_sync as t4;
 pub use void::Void;
 
 pub use t4::WebDriverCommands;
+pub use t4::By;
 
 pub use std::env;
 pub use std::fmt::{self, Debug};

@@ -16,7 +16,20 @@ fn main(){
       su.setup_static_users(&inst)?.try_into().unwrap();
     debug!("ok {:?} {:?}", alice, bob);
 
-    su.w(&alice)?.synch()?;
+    {
+      let mut w = su.w(&alice)?;
+      w.synch()?;
+      let p1 = w.find_element(By::Id("use1.1"))?;
+      let p2 = w.find_element(By::Id("use2.1"))?;
+      
+      w.action_chain()
+        .move_to_element_center(&p1)
+        .click_and_hold()
+        .move_to_element_with_offset(&p2, 5, 10)
+        .release()
+        .perform()
+        .always_context("drag")?;
+    }
 
     debug!("finishing");
   }
