@@ -22,13 +22,8 @@ fn main(){
       let p1 = w.find_piece("1.1")?;
       let p2 = w.find_element(By::Id("use2.1"))?;
 
-      dbg!(p1.rect()?,
-           p1.tag_name(),
-           p1.class_name(),
-           p1.id(),
-           p1.get_attribute("x"),
-           p1.get_attribute("y"),
-           p1.posg(),
+      dbg!(
+        p1.posg(),
       );
       
       w.action_chain()

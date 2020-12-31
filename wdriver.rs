@@ -743,7 +743,6 @@ impl<'g> WindowGuard<'g> {
     let elem = self.su.driver.find_element(By::Id(&id))?;
     PieceElement {
       pieceid, elem,
-      pos: None,
       w: self,
     }
   }
@@ -756,7 +755,6 @@ pub struct PieceElement<'g> {
   pieceid: &'g str,
   w: &'g WindowGuard<'g>,
   elem: t4::WebElement<'g>,
-  pos: Option<WebPos>,
 }
 
 impl<'g> Deref for PieceElement<'g> {
@@ -768,8 +766,11 @@ impl<'g> PieceElement<'g> {
   #[throws(AE)]
   pub fn posg(&self) -> Pos {
     (||{
-      let x = self.get_attribute("x")?.ok_or(anyhow!("x"))?.parse()?;
-      let y = self.get_attribute("x")?.ok_or(anyhow!("y"))?.parse()?;
+      let a = |a| Ok::<_,AE>(
+        self.get_attribute(a)?.ok_or(anyhow!("{}", a))?.parse()?
+      );
+      let x = a("x")?;
+      let y = a("y")?;
       Ok::<_,AE>(PosC([x,y]))
     })()
       .with_context(|| self.pieceid.to_owned())
