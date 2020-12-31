@@ -44,9 +44,10 @@ pub use std::time;
 pub use otter::commands::{MgmtCommand, MgmtResponse};
 pub use otter::commands::{MgmtGameInstruction, MgmtGameResponse};
 pub use otter::commands::{MgmtGameUpdateMode};
-pub use otter::gamestate::Generation;
+pub use otter::gamestate::{self, Generation};
 pub use otter::global::InstanceName;
 pub use otter::mgmtchannel::MgmtChannel;
+pub use otter::spec::{Coord, Pos, PosC};
 
 pub type T4d = t4::WebDriver;
 pub type WDE = t4::error::WebDriverError;
@@ -737,7 +738,7 @@ impl Debug for WindowGuard<'_> {
 
 impl<'g> WindowGuard<'g> {
   #[throws(AE)]
-  fn find_piece(&'g self, pieceid: &'g str) -> PieceElement<'g> {
+  pub fn find_piece(&'g self, pieceid: &'g str) -> PieceElement<'g> {
     let id = format!("use{}", pieceid);
     let elem = self.su.driver.find_element(By::Id(&id))?;
     PieceElement {
@@ -765,7 +766,18 @@ impl<'g> Deref for PieceElement<'g> {
 
 impl<'g> PieceElement<'g> {
   #[throws(AE)]
-  fn pos(&self) -> WebPos {
+  pub fn posg(&self) -> Pos {
+    (||{
+      let x = self.get_attribute("x")?.ok_or(anyhow!("x"))?.parse()?;
+      let y = self.get_attribute("x")?.ok_or(anyhow!("y"))?.parse()?;
+      Ok::<_,AE>(PosC([x,y]))
+    })()
+      .with_context(|| self.pieceid.to_owned())
+      .context("read position of piece out of x,y attributes")?
+  }
+
+  #[throws(AE)]
+  pub fn pos(&self) -> WebPos {
     (||{
       Ok::<_,AE>( todo!() )
     })()

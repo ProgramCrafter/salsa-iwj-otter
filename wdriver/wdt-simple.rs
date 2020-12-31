@@ -19,18 +19,17 @@ fn main(){
     {
       let mut w = su.w(&alice)?;
       w.synch()?;
-      let p1 = w.find_element(By::Id("use1.1"))?;
+      let p1 = w.find_piece("1.1")?;
       let p2 = w.find_element(By::Id("use2.1"))?;
 
       dbg!(p1.rect()?,
            p1.tag_name(),
            p1.class_name(),
            p1.id(),
-           p1.text(),
+           p1.get_attribute("x"),
+           p1.get_attribute("y"),
+           p1.posg(),
       );
-      dbg!(p2.rect()?);
-      dbg!(w.find_element(By::Id("use3.1"))?.rect()?);
-      dbg!(w.find_element(By::Id("use4.1"))?.rect()?);
       
       w.action_chain()
         .move_to_element_center(&p1)
