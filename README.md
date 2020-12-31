@@ -174,8 +174,8 @@ Build
 ```
 
 
-Test
-----
+Ad-hoc tests
+------------
 
 In one shell:
 
@@ -273,6 +273,16 @@ Navigating the otter source code
   `usvg-processor`.
 
 
+Automatic in-browser tests
+--------------------------
+
+  apt install firefox
+
+  https://github.com/mozilla/geckodriver/releases/tag/v0.28.0
+  download appropriate tarball, put "geckodriver" on PATH
+
+The tests are not yet wired into the Makefile.
+
 Rust, cargo, curl|bash-ware; privsep
 ------------------------------------
 
@@ -288,6 +298,7 @@ executed - and, therefore, trusted:
  * 50 transitive dependencies of bundle-sources
  * the transitive dependencies of resvg
  * god knows how many transitive dependencies of wasm-pack
+ * a geckodriver binary directly from mozilla
  * whatever wasm-pack downloads at runtime (mostly(?) via cargo)
 
 You will have trusted the integrity of the following:
@@ -296,6 +307,7 @@ You will have trusted the integrity of the following:
  * Rustup's and Rust's TLS keyholders (good, I think)
  * The HTTP TLS cabal (sigh)
  * github (pretty good in practice)
+ * whatever mozilla do to make binaries, in particular geckodriver
  * crates.io (extremely poor traceability)
  * the project management of hundreds of random crates.io libraries
 
@@ -348,6 +360,24 @@ Dependencies - apologia
  * bundle-rust-sources
 
    This is mine, but it needs to be properly released.
+
+ * geckodriver (for the automated in-browser tests)
+
+   This is done with a protocol called "WebDriver" which is a
+   cross-browser way to puppet a browser.  There is a thing called
+   "geckodriver" which converts that to a firefox-specific protocol
+   for the same purpose, called "Marionette".  (In practice all this
+   seems to have lots of bugs and misfeatures.)
+
+   AFAICT the usual approach for using geckodriver to have it *bind to
+   a fixed TCP port accessible to all local programs*.  My wrapper
+   tooling arranges to run this in an ephemeral $HOME and a private
+   network namespace.
+
+   AFAICT the only practical way to get geckodriver is to download the
+   binary.  I got mine here:
+     https://github.com/mozilla/geckodriver/releases/tag/v0.28.0 You
+   You just dump the binary on your PATH.
 
 
 Final weirdness
