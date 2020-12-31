@@ -735,6 +735,45 @@ impl Debug for WindowGuard<'_> {
   }
 }
 
+impl<'g> WindowGuard<'g> {
+  #[throws(AE)]
+  fn find_piece(&'g self, pieceid: &'g str) -> PieceElement<'g> {
+    let id = format!("use{}", pieceid);
+    let elem = self.su.driver.find_element(By::Id(&id))?;
+    PieceElement {
+      pieceid, elem,
+      pos: None,
+      w: self,
+    }
+  }
+}
+
+pub type WebCoord = i32;
+pub type WebPos = (WebCoord, WebCoord);
+
+pub struct PieceElement<'g> {
+  pieceid: &'g str,
+  w: &'g WindowGuard<'g>,
+  elem: t4::WebElement<'g>,
+  pos: Option<WebPos>,
+}
+
+impl<'g> Deref for PieceElement<'g> {
+  type Target = t4::WebElement<'g>;
+  fn deref<'i>(&'i self) -> &'i t4::WebElement<'g> { &self.elem }
+}
+
+impl<'g> PieceElement<'g> {
+  #[throws(AE)]
+  fn pos(&self) -> WebPos {
+    (||{
+      Ok::<_,AE>( todo!() )
+    })()
+      .with_context(|| self.pieceid.to_owned())
+      .context("find piece position")?
+  }
+}
+
 #[throws(AE)]
 fn check_window_name_sanity(name: &str) -> &str {
   let e = || anyhow!("bad window name {:?}", &name);
