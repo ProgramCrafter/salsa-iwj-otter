@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+tname="$1";
+mkdir -p tmp
+
+target/debug/"$tname" 2>&1 | ts -s %.s >tmp/"$tname".log
+case "${PIPESTATUS[*]}" in
+"0 0")	exit 0;
+esac
+
+grep -v 'DEBUG [otter_webdriver_tests]' <tmp/"$tname".log \
+| tail -20
+
+exit 1

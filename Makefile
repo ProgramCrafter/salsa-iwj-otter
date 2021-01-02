@@ -113,7 +113,7 @@ WASM := wasm32-unknown-unknown
 
 #---------- toplevel aggregate targets ----------
 
-check: stamp/cargo.check
+check: stamp/cargo.check wdt
 	@echo 'All tests passed.'
 
 doc: cargo-doc
@@ -149,6 +149,10 @@ stamp/cargo.%: $(call rsrcs,. ! -path './wasm/*')
 
 stamp/cargo.check: $(call rsrcs,.)
 	$(CARGO) test --workspace
+	$(stamp)
+
+stamp/cargo-wdt.debug: $(call rsrcs,.)
+	$(CARGO) build $(call cr,$*) -p otter-webdriver-tests
 	$(stamp)
 
 stamp/cargo.doc: $(call rsrcs,.)
@@ -252,6 +256,17 @@ $(addprefix templates/,$(TXTFILES)): templates/%: %.txt
 	cp $< $@.new && mv -f $@.new $@
 
 libraries: $(LIBRARY_FILES)
+
+#---------- webdriver tests (wdt) ----------
+
+WDT_TESTS := $(basename $(notdir $(wildcard wdriver/wdt-*.rs)))
+
+wdt:	$(foreach f, $(WDT_TESTS), stamp/$f.check)
+
+stamp/wdt-%.check:	wdriver/run1 stamp/cargo.debug stamp/cargo-wdt.debug \
+			$(FILEASSETS) templates/script.js $(LIBRARY_FILES)
+	$(NAILING_CARGO_JUST_RUN) $(abspath $<) $(basename $(notdir $@))
+	$(stamp)
 
 #---------- deployment ----------
 
