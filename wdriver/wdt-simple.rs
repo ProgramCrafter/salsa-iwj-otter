@@ -16,11 +16,12 @@ fn main(){
       su.setup_static_users(&inst)?.try_into().unwrap();
     debug!("ok {:?} {:?}", alice, bob);
 
-    {
+    let alice_p1g = {
       let mut w = su.w(&alice)?;
       w.synch()?;
       let p1 = w.find_piece("1.1")?;
       let p2 = w.find_piece("2.1")?;
+      let p1g_old = p1.posg()?;
       let (p1x,p1y) = p1.posw()?;
       let (p2x,p2y) = p2.posw()?;
 
@@ -32,7 +33,20 @@ fn main(){
         .perform()
         .always_context("drag")?;
 
+      let p1g_new = p1.posg()?;
+      dbg!(p1g_old, p1g_new);
+      assert!( p1g_new != p1g_old );
+
       w.synch()?;
+      p1g_new
+    };
+
+    {
+      let mut w = su.w(&bob)?;
+      w.synch()?;
+      let p1 = w.find_piece("1.1")?;
+      assert_eq!( p1.posg()?,
+                  alice_p1g );
     }
 
     debug!("finishing");
