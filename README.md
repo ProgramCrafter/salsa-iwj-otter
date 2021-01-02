@@ -281,7 +281,18 @@ Automatic in-browser tests
   https://github.com/mozilla/geckodriver/releases/tag/v0.28.0
   download appropriate tarball, put "geckodriver" on PATH
 
-The tests are not yet wired into the Makefile.
+"make check" runs them; "make wdt" runs only those tests.  You can run
+an individual test with a rune like this:
+
+  OTTER_WDT_LOG=otter_webdriver_tests=trace CARGO_MANIFEST_DIR=~ian/Rustup/Game/server time target/debug/wdt-simple --geckodriver-args=
+
+(You can omit the CARGO_MANIFEST_DIR for an in-tree non-privsep build.)
+After a test has run, you can find screenshots, etc. in tmp/wdt-simple.
+
+You can restart the same game server as the test used with
+  target/debug/daemon-otter tmp/wdt-simple/server-config.toml
+and then see it at this url:
+  http://localhost:8000/?kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe
 
 Rust, cargo, curl|bash-ware; privsep
 ------------------------------------
@@ -294,7 +305,7 @@ executed - and, therefore, trusted:
  * Rust itself - again, pretty safe
  * Otter itself - well, I wrote this; up to you.
  * My branch of wasm-pack - I haven't audited what I started with.
- * 236 transitive dependencies of otter (from crates.io)
+ * 300 transitive dependencies of otter (from crates.io)
  * 50 transitive dependencies of bundle-sources
  * the transitive dependencies of resvg
  * god knows how many transitive dependencies of wasm-pack
