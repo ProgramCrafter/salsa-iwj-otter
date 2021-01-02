@@ -12,6 +12,7 @@ pub use if_chain::if_chain;
 pub use log::{debug, error, info, trace, warn};
 pub use log::{log, log_enabled};
 pub use nix::unistd::LinkatFlags;
+pub use num_traits::NumCast;
 pub use num_derive::FromPrimitive;
 pub use parking_lot::{Mutex, MutexGuard};
 pub use regex::{Captures, Regex};
@@ -26,10 +27,11 @@ pub use t4::By;
 
 pub use std::env;
 pub use std::fmt::{self, Debug};
-pub use std::fs;
 pub use std::collections::hash_map::HashMap;
 pub use std::convert::TryInto;
+pub use std::fs;
 pub use std::io::{self, BufRead, BufReader, ErrorKind, Write};
+pub use std::iter;
 pub use std::mem;
 pub use std::net::TcpStream;
 pub use std::ops::Deref;
@@ -784,6 +786,8 @@ impl<'g> PieceElement<'g> {
 
   #[throws(AE)]
   pub fn posw(&self) -> WebPos {
+    let posg = self.posg()?;
+
     let mat = self.w.matrix.get_or_try_init(||{
       let ary = self.w.su.driver.execute_script(r#"
         let m = space.getScreenCTM();
@@ -814,7 +818,24 @@ impl<'g> PieceElement<'g> {
       Ok::<_,AE>(mat)
     })?;
     (||{
-      Ok::<_,AE>( todo!() )
+      let vec : ndarray::Array1<f64> =
+        posg.0.iter()
+        .cloned()
+        .map(|v| v as f64)
+        .chain(iter::once(1.))
+        .collect();
+      dbg!(&vec);
+
+      let vec = mat.dot(&vec);
+      let mut coords = vec.iter().map(
+        |v| NumCast::from(v.round()).ok_or_else(
+          || anyhow!("coordinate {} out of range in {:?}", v, &vec))
+      );
+      let mut coord = || coords.next().unwrap();
+      Ok::<WebPos,AE>((
+        coord()?,
+        coord()?,
+      ))
     })()
       .with_context(|| self.pieceid.to_owned())
       .context("find piece position")?
