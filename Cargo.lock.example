@@ -1675,6 +1675,7 @@ dependencies = [
  "fehler",
  "humantime",
  "if_chain",
+ "itertools",
  "libc",
  "log 0.4.11",
  "ndarray",

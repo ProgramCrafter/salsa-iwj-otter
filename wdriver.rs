@@ -782,14 +782,36 @@ impl<'g> PieceElement<'g> {
 
   #[throws(AE)]
   pub fn posw(&self) -> WebPos {
-    let ary = self.w.matrix.get_or_try_init(||{
+    let mat = self.w.matrix.get_or_try_init(||{
       let ary = self.w.su.driver.execute_script(r#"
         let m = space.getScreenCTM();
         return [m.a, m.b, m.c, m.d, m.e, m.f];
       "#)?;
-      dbg!(ary.value());
+      let ary = ary.value();
+      dbg!(ary);
+
+      let mat = (||{
+        let ary = ary.as_array().ok_or_else(|| anyhow!("not array"))?;
+        let mut mat = ndarray::Array2::<f64>::zeros((3,3));
+        for got in itertools::Itertools::zip_longest(
+          [11, 12, 21, 22, 41, 42].iter(),
+          // ^ from https://developer.mozilla.org/en-US/docs/Web/API/DOMMatrix
+          ary.iter(),
+        ) {
+          let (mij, v) = got.both().ok_or_else(|| anyhow!("wrong length"))?;
+          let adj = |v| (if v == 4 { 3 } else { v }) - 1;
+          let i = adj(mij / 10);
+          let j = adj(mij % 10);
+          mat[(i,j)] = v.as_f64().ok_or_else(|| anyhow!("entry not f64"))?;
+        }
+        Ok::<_,AE>(mat)
+      })()
+        .with_context(|| format!("getScreenCGM script gave {:?}", &ary))?;
+
+      dbg!(mat);
       Ok::<_,AE>(())
     })?;
+    let () = mat;
     (||{
       Ok::<_,AE>( todo!() )
     })()
