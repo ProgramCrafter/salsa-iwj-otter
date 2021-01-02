@@ -20,19 +20,14 @@ fn main(){
       let mut w = su.w(&alice)?;
       w.synch()?;
       let p1 = w.find_piece("1.1")?;
-      let p2 = w.find_element(By::Id("use2.1"))?;
+      let p2 = w.find_piece("2.1")?;
+      let (p1x,p1y) = p1.posw()?;
+      let (p2x,p2y) = p2.posw()?;
 
-      dbg!(
-        p1.posg(),
-      );
-      dbg!(
-        p1.posw(),
-      );
-      
       w.action_chain()
-        .move_to_element_center(&p1)
+        .move_to(p1x, p1y)
         .click_and_hold()
-        .move_to_element_with_offset(&p2, 5, 10)
+        .move_to(p2x + 5, p2y + 10)
         .release()
         .perform()
         .always_context("drag")?;
