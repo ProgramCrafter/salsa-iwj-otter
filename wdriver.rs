@@ -308,6 +308,8 @@ mod cleanup_notify {
               );
 
               let _ = close(writing_end);
+              let _ = nix::unistd::dup2(2, 1);
+
               for fd in 2.. {
                 if fd == notify_writing_end { continue }
                 let r = close(fd);
