@@ -25,6 +25,9 @@ fn main(){
       dbg!(
         p1.posg(),
       );
+      dbg!(
+        p1.posw(),
+      );
       
       w.action_chain()
         .move_to_element_center(&p1)

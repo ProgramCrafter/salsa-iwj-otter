@@ -57,6 +57,8 @@ pub type AE = anyhow::Error;
 
 pub const URL : &str = "http://localhost:8000";
 
+pub fn default<T:Default>() -> T { Default::default() }
+
 use t4::Capabilities;
 use otter::config::DAEMON_STARTUP_REPORT;
 
@@ -724,6 +726,7 @@ pub struct Window {
 pub struct WindowGuard<'g> {
   su: &'g mut Setup,
   w: &'g Window,
+  matrix: once_cell::sync::OnceCell<()>,
 }
 
 impl Debug for WindowGuard<'_> {
@@ -778,7 +781,15 @@ impl<'g> PieceElement<'g> {
   }
 
   #[throws(AE)]
-  pub fn pos(&self) -> WebPos {
+  pub fn posw(&self) -> WebPos {
+    let ary = self.w.matrix.get_or_try_init(||{
+      let ary = self.w.su.driver.execute_script(r#"
+        let m = space.getScreenCTM();
+        return [m.a, m.b, m.c, m.d, m.e, m.f];
+      "#)?;
+      dbg!(ary.value());
+      Ok::<_,AE>(())
+    })?;
     (||{
       Ok::<_,AE>( todo!() )
     })()
@@ -850,7 +861,11 @@ impl Setup {
         .context("switch to window")?;
       self.current_window = Some(w.name.clone());
     }
-    WindowGuard { su: self, w }
+    WindowGuard {
+      w,
+      su: self,
+      matrix: default(),
+    }
   }
 }
 

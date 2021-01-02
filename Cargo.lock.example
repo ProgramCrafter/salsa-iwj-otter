@@ -1649,6 +1649,7 @@ dependencies = [
  "nix 0.19.1",
  "num-derive",
  "num-traits",
+ "once_cell",
  "otter",
  "parking_lot",
  "regex",
