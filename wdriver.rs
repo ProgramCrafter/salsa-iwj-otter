@@ -808,7 +808,7 @@ impl<'g> PieceElement<'g> {
           let adj = |v| (if v == 4 { 3 } else { v }) - 1;
           let i = adj(mij / 10);
           let j = adj(mij % 10);
-          mat[(i,j)] = v.as_f64().ok_or_else(|| anyhow!("entry not f64"))?;
+          mat[(j,i)] = v.as_f64().ok_or_else(|| anyhow!("entry not f64"))?;
         }
         Ok::<_,AE>(mat)
       })()
