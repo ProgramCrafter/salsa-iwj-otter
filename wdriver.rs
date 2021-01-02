@@ -723,10 +723,12 @@ pub struct Window {
   instance: InstanceName,
 }
 
+type ScreenCTM = ndarray::Array2::<f64>;
+
 pub struct WindowGuard<'g> {
   su: &'g mut Setup,
   w: &'g Window,
-  matrix: once_cell::sync::OnceCell<()>,
+  matrix: once_cell::sync::OnceCell<ScreenCTM>,
 }
 
 impl Debug for WindowGuard<'_> {
@@ -792,7 +794,7 @@ impl<'g> PieceElement<'g> {
 
       let mat = (||{
         let ary = ary.as_array().ok_or_else(|| anyhow!("not array"))?;
-        let mut mat = ndarray::Array2::<f64>::zeros((3,3));
+        let mut mat : ScreenCTM = ndarray::Array2::zeros((3,3));
         for got in itertools::Itertools::zip_longest(
           [11, 12, 21, 22, 41, 42].iter(),
           // ^ from https://developer.mozilla.org/en-US/docs/Web/API/DOMMatrix
@@ -808,10 +810,9 @@ impl<'g> PieceElement<'g> {
       })()
         .with_context(|| format!("getScreenCGM script gave {:?}", &ary))?;
 
-      dbg!(mat);
-      Ok::<_,AE>(())
+      dbg!(&mat);
+      Ok::<_,AE>(mat)
     })?;
-    let () = mat;
     (||{
       Ok::<_,AE>( todo!() )
     })()
