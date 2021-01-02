@@ -261,7 +261,7 @@ fn main() {
 
   debug!("resolved config: {:#?}", c);
 
-  {
+  if c.check_bundled_sources {
     let check = format!("{}/otter/index.html", &c.bundled_sources);
     fs::metadata(&check)
       .context(check.clone())

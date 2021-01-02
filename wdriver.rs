@@ -556,6 +556,7 @@ wasm_dir = "@target@/packed-wasm"
 shapelibs = [ "@src@/library/*.toml" ]
 
 debug_js_inject_file = "@src@/templates/log-save.js"
+check_bundled_sources = false # For testing only! see LICENCE!
 
 [log]
 global_level = 'debug'

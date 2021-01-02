@@ -36,6 +36,8 @@ pub struct ServerConfigSpec {
   pub shapelibs: Option<Vec<shapelib::Config1>>,
   pub sendmail: Option<String>,
   pub debug_js_inject_file: Option<String>,
+  /// Disable this for local testing only.  See LICENCE.
+  pub check_bundled_sources: Option<bool>,
 }
 
 #[derive(Debug,Clone)]
@@ -60,6 +62,7 @@ pub struct ServerConfig {
   pub shapelibs: Vec<shapelib::Config1>,
   pub sendmail: String,
   pub debug_js_inject: Arc<String>,
+  pub check_bundled_sources: bool,
 }
 
 impl TryFrom<ServerConfigSpec> for WholeServerConfig {
@@ -71,7 +74,7 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
       http_port, public_url, sse_wildcard_url, rocket_workers,
       template_dir, nwtemplate_dir, wasm_dir,
       log, bundled_sources, shapelibs, sendmail,
-      debug_js_inject_file,
+      debug_js_inject_file, check_bundled_sources,
     } = spec;
 
     if let Some(cd) = change_directory {
@@ -143,12 +146,14 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
       None => "".into(),
     });
 
+    let check_bundled_sources = check_bundled_sources.unwrap_or(true); 
+
     let server = ServerConfig {
       save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
       template_dir, nwtemplate_dir, wasm_dir,
       bundled_sources, shapelibs, sendmail,
-      debug_js_inject,
+      debug_js_inject, check_bundled_sources,
     };
     WholeServerConfig {
       server: Arc::new(server),
