@@ -160,6 +160,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         log: default(),
         gen: Generation(0),
         max_z: default(),
+        links: default(),
       };
 
       let acl = default();
