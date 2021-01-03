@@ -272,6 +272,25 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     (U{ pcs: vec![], log: vec![], raw: None }, resp, ig)
   }
 
+  #[throws(MgmtError)]
+  fn update_links<'igr, 'ig : 'igr, 'cs,
+               F: FnOnce(&mut Arc<LinksTable>) -> Result<Html,ME>>
+    (
+      cs: &'cs CommandStream,
+      ag: &'_ mut AccountsGuard,
+      ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
+      f: F
+    ) -> ExecuteGameInsnResults<'igr, 'ig>
+  {
+    let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::SetLinks])?.0;
+    let log_html = f(&mut ig.links)?;
+    let log = vec![LogEntry { html: log_html, }];
+    (U{ log,
+        pcs: vec![],
+        raw: Some(vec![ PreparedUpdateEntry::SetLinks(ig.links.clone()) ])},
+     Fine, ig)
+  }
+
   impl<'cs> CommandStream<'cs> {
     #[throws(MgmtError)]
     fn check_acl_manip_player_access<'igr, 'ig: 'igr>(
@@ -442,22 +461,20 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     })?,
 
     Insn::SetLinks(mut spec_links) =>  {
-      let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::SetLinks])?.0;
-      let mut new_links : LinksTable = default();
-      for (k,v) in spec_links.drain() {
-        let url : Url = (&v).try_into()?;
-        new_links[k] = Some(url.into_string());
-      }
-      let new_links = Arc::new(new_links);
-      ig.links = new_links.clone();
-      let log = vec![LogEntry {
-        html: Html(format!("{} set the links to off-server game resources",
-                           &who.0)),
-      }];
-      (U{ log,
-          pcs: vec![],
-          raw: Some(vec![ PreparedUpdateEntry::SetLinks(new_links) ])},
-       Fine, ig)
+      update_links(cs,ag,ig, |ig_links|{
+        let mut new_links : LinksTable = default();
+        // todo want a FromIterator impl
+        for (k,v) in spec_links.drain() {
+          let url : Url = (&v).try_into()?;
+          new_links[k] = Some(url.into_string());
+        }
+        let new_links = Arc::new(new_links);
+        *ig_links = new_links.clone();
+        Ok(Html(
+          format!("{} set the links to off-server game resources",
+                  &who.0)
+        ))
+      })?
     }
 
     ResetPlayerAccess(player) => {
