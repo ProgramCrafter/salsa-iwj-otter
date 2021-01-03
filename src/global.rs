@@ -455,6 +455,13 @@ impl Display for InstanceName {
   }
 }
 
+impl From<(LinkKind, &str)> for Html {
+  fn from((k, v): (LinkKind, &str)) -> Html {
+    let url = htmlescape::encode_minimal(v);
+    Html(format!("<a href={url}>{kind}</a>", url=url, kind=k))
+  }
+}
+
 impl Deref for LinksTable {
   type Target = EnumMap<LinkKind, Option<String>>;
   fn deref(&self) -> &Self::Target { &self.0 }
@@ -468,9 +475,7 @@ impl From<&LinksTable> for Html {
     Html(links.iter()
          .filter_map(|(k,v)| {
            let v = v.as_ref()?;
-           let url = htmlescape::encode_minimal(v);
-           Some(format!("<a href={url}>{kind}</a>",
-                        url=url, kind=k))
+           Some(Html::from((k, v.as_str())).0)
          })
          .join(" | "))
   }
