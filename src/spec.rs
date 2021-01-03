@@ -14,6 +14,7 @@ use fehler::throws;
 use index_vec::{define_index_type, IndexVec};
 use num_derive::{FromPrimitive, ToPrimitive};
 use serde::{Deserialize, Serialize};
+use strum::{EnumString, Display};
 use thiserror::Error;
 
 use crate::accounts::AccountName;
@@ -114,7 +115,8 @@ pub enum TablePermission {
 }
 
 #[derive(Copy,Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash)]
-#[derive(Enum,Serialize,Deserialize)]
+#[derive(Enum,EnumString,Display)]
+#[derive(Serialize,Deserialize)]
 pub enum LinkKind {
   Voice,
   Info,

@@ -837,10 +837,10 @@ mod set_link {
 
   use super::*;
 
-  #[derive(Default,Debug)]
+  #[derive(Debug,Default)]
   struct Args {
     table_name: String,
-    kind: LinkKind,
+    kind: Option<LinkKind>,
     url: Option<String>,
   }
 
@@ -849,19 +849,46 @@ mod set_link {
     let mut ap = ArgumentParser::new();
     ap.refer(&mut sa.table_name).required()
       .add_argument("TABLE-NAME",Store,"table name");
-    ap.refer(&mut sa.kind).required()
-      .add_argument("LINK-KIND",Store,"link kind");
+    ap.refer(&mut sa.kind)
+      .add_argument("LINK-KIND",StoreOption,"link kind");
     ap.refer(&mut sa.url)
-      .add_argument("URL",Store,"url (or empty for none)");
+      .add_argument("URL",StoreOption,"url (or empty for none)");
     ap
   }
 
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+  #[throws(AE)]
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = access_game(&ma, &args.table_name)?;
 
-    let mut insns = vec![];
-    
+    match args.url {
+      None => {
+        let MgmtGameResponseGameInfo { links, .. } = chan.info()?;
+        for (tk, v) in links {
+          // xxx check syntax
+          match args.kind {
+            None => {
+              println!("{:<10} {}", tk, &v);
+            }
+            Some(wk) => {
+              if wk == tk {
+                println!("{}", &v);
+              }
+            }
+          }
+        }
+      },
+
+      Some(url) => {
+        chan.alter_game(vec![
+          if url == "" {
+            MGI::SetLink { kind: args.kind, url }
+          } else {
+            MGI::RemoveLink { kind: args.kind }
+          }
+        ])?;
+      },
+    }
   }
 
   inventory::submit!{Subcommand(
