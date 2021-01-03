@@ -18,6 +18,7 @@ struct SessionRenderContext {
   load: String,
   log: Vec<SessionFormattedLogEntry>,
   sse_url_prefix: String,
+  links: Vec<(LinkKind, Html)>,
 }
 
 #[derive(Debug,Serialize)]
@@ -186,6 +187,7 @@ fn session_inner(form : Json<SessionForm>,
       nick : gpl.nick.clone(),
       sse_url_prefix,
       ptoken: form.ptoken.clone(),
+      links: ig.links.iter().map(|(k,v)| (k.clone(), v.clone())).collect(),
       load : serde_json::to_string(&DataLoad {
         players: load_players,
         last_log_ts: timestamp_abbrev.unwrap_or_default(),

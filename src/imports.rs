@@ -46,6 +46,7 @@ pub use arrayvec::ArrayVec;
 pub use boolinator::Boolinator as _;
 pub use delegate::delegate;
 pub use either::{Either, Left, Right};
+pub use enum_map::{Enum, EnumMap};
 pub use fehler::{throw, throws};
 pub use flexi_logger::{self, LogSpecification};
 pub use fs2::FileExt;

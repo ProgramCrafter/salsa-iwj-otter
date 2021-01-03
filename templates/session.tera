@@ -32,7 +32,7 @@
 <div class="upper">
 {{ m::nick() }}
 |
-{{ m::wresting() }}
+g{{ m::wresting() }}
 |
 {{ m::status() }}
 |

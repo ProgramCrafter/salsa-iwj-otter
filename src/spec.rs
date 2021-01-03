@@ -4,10 +4,12 @@
 
 // game specs
 
+use std::collections::hash_map::HashMap;
 use std::collections::hash_set::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
 
+use enum_map::Enum;
 use fehler::throws;
 use index_vec::{define_index_type, IndexVec};
 use num_derive::{FromPrimitive, ToPrimitive};
@@ -71,6 +73,7 @@ pub struct TableSpec {
   #[serde(default)] pub players: Vec<TablePlayerSpec>,
   pub player_perms: Option<HashSet<TablePermission>>,
   #[serde(default)] pub acl: Acl<TablePermission>,
+  #[serde(default)] pub links: HashMap<LinkKind, String>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -108,6 +111,13 @@ pub enum TablePermission {
   RedeliverOthersAccess,
   ModifyOtherPlayer,
   Super,
+}
+
+#[derive(Copy,Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash)]
+#[derive(Enum,Serialize,Deserialize)]
+pub enum LinkKind {
+  Voice,
+  Info,
 }
 
 //---------- player accesses, should perhaps be in commands.rs ----------

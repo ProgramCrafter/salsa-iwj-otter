@@ -630,7 +630,7 @@ const PLAYER_DEFAULT_PERMS : &[TablePermission] = &[
 
 #[throws(AE)]
 fn setup_table(_ma: &MainOpts, spec: &TableSpec) -> Vec<MGI> {
-  let TableSpec { players, player_perms, acl } = spec;
+  let TableSpec { players, player_perms, acl, links } = spec;
   let mut player_perms = player_perms.clone()
     .unwrap_or(PLAYER_DEFAULT_PERMS.iter().cloned().collect());
   player_perms.extend(PLAYER_ALWAYS_PERMS.iter());
@@ -827,6 +827,46 @@ mod reset_game {
   inventory::submit!{Subcommand(
     "reset",
     "Reset the state of the game table",
+    call,
+  )}
+}
+
+//---------- set-link ----------
+
+mod set_link {
+
+  use super::*;
+
+  #[derive(Default,Debug)]
+  struct Args {
+    table_name: String,
+    kind: LinkKind,
+    url: Option<String>,
+  }
+
+  fn subargs(sa: &mut Args) -> ArgumentParser {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.table_name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
+    ap.refer(&mut sa.kind).required()
+      .add_argument("LINK-KIND",Store,"link kind");
+    ap.refer(&mut sa.url)
+      .add_argument("URL",Store,"url (or empty for none)");
+    ap
+  }
+
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
+    let mut chan = access_game(&ma, &args.table_name)?;
+
+    let mut insns = vec![];
+    
+  }
+
+  inventory::submit!{Subcommand(
+    "set-link",
+    "Set one of the info links visible from within the game",
     call,
   )}
 }

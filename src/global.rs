@@ -38,7 +38,7 @@ pub struct InstanceName {
 #[derive(Debug,Clone)]
 pub struct InstanceRef (Arc<Mutex<InstanceContainer>>);
 
-type LinksTable = HashMap<LinkKind, Html>;
+pub type LinksTable = EnumMap<LinkKind, Option<Html>>;
 
 pub struct Instance {
   pub name: Arc<InstanceName>,
@@ -50,13 +50,6 @@ pub struct Instance {
   pub tokens_clients: TokenRegistry<ClientId>,
   pub acl: LoadedAcl<TablePermission>,
   pub links: LinksTable,
-}
-
-#[derive(Copy,Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash)]
-#[derive(Serialize,Deserialize)]
-pub enum LinkKind {
-  Voice,
-  Info,
 }
 
 pub struct PlayerRecord {

@@ -26,6 +26,7 @@ chrono-tz = "0.5"
 delegate = "0.5"
 derive_more = "0.99"
 either = "1"
+enum-map = { version = "0.6", features = [ "serde" ] }
 failure = "0.1.8" # for pwd
 fehler = "1"
 flexi_logger = { version = "0.16", features = [ "specfile" ] }
