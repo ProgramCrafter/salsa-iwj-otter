@@ -52,7 +52,6 @@ pub struct GameState {
   pub log: VecDeque<(Generation, Arc<CommittedLogEntry>)>,
   pub max_z: ZCoord,
   pub players: DenseSlotMap<PlayerId, GPlayerState>,
-  #[serde(default)] pub links: HashMap<LinkKind, Html>,
 }
 
 #[derive(Debug,Serialize,Deserialize,Clone)]
@@ -82,13 +81,6 @@ pub struct LogEntry {
 pub struct CommittedLogEntry {
   pub when: Timestamp,
   pub logent: LogEntry,
-}
-
-#[derive(Copy,Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash)]
-#[derive(Serialize,Deserialize)]
-pub enum LinkKind {
-  Voice,
-  Info,
 }
 
 // ---------- piece trait, and rendering ----------

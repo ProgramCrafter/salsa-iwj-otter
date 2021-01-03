@@ -559,7 +559,6 @@ impl<'ig> InstanceGuard<'ig> {
       table_size: self.c.g.gs.table_size,
       gen: self.c.g.gs.gen,
       max_z: self.gs.max_z.clone(),
-      links: self.gs.links.clone(),
       players,
       // These have special handling
       log: default(),
