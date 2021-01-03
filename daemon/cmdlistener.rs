@@ -366,7 +366,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
        ig)
     },
 
-    Insn::ListPieces => readonly(cs,ag,ig, &[TP::ViewPublic], |ig|{
+    Insn::ListPieces => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
       let pieces = ig.gs.pieces.iter().map(|(piece,p)|{
         let &PieceState { pos, face, .. } = p;
         let pinfo = ig.ipieces.get(piece)?;
@@ -414,7 +414,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
        Fine, ig)
     },
 
-    Insn::Info => readonly(cs,ag,ig, &[TP::ViewPublic], |ig|{
+    Insn::Info => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
       let players = ig.gs.players.iter().map(
         |(player, gpl)| {
           let nick = gpl.nick.clone();

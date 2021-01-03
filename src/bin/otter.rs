@@ -620,7 +620,7 @@ fn connect(ma: &MainOpts) -> Conn {
 
 const PLAYER_ALWAYS_PERMS : &[TablePermission] = &[
   TP::TestExistence,
-  TP::ViewPublic,
+  TP::ViewNotSecret,
   TP::Play,
 ];
 
