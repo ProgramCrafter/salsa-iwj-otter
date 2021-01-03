@@ -290,11 +290,11 @@ impl Instance {
     let g = Instance {
       name : name.clone(),
       gs, acl,
-      ipieces : PiecesLoaded(Default::default()),
-      clients : Default::default(),
-      iplayers : Default::default(),
-      tokens_players : Default::default(),
-      tokens_clients : Default::default(),
+      ipieces: PiecesLoaded(Default::default()),
+      clients: default(),
+      iplayers: default(),
+      tokens_players: default(),
+      tokens_clients: default(),
     };
 
     let cont = InstanceContainer {
