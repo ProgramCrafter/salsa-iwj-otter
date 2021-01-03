@@ -62,10 +62,6 @@ b-elephant	edt45	a black elephant piece
 #  black one either unless someone wants to edit it.
 # w-ship	Xslt45X	a white ship piece
 # b-ship	sdt45	a black ship piece
-
-g-ship		sgt45	a green ship piece
-r-ship		srt45	a red ship piece
-y-ship		syt45	a yellow ship piece
 """
 
 [group.chess-flip]
@@ -79,6 +75,10 @@ b-N	adt45	a black knight
 # g-N	qgt45	a green chess knight
 # r-N	qrt45	a red chess knight
 # y-N	qyt45	a yellow chess knight
+
+g-ship		sgt45	a green ship piece
+r-ship		srt45	a red ship piece
+y-ship		syt45	a yellow ship piece
 
 w-zebra		Zlt45	a white zebra piece
 b-zebra		Zdt45	a black zebra piece
