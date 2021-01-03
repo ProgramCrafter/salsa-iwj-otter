@@ -51,7 +51,7 @@ pub struct Instance {
   pub tokens_players: TokenRegistry<PlayerId>,
   pub tokens_clients: TokenRegistry<ClientId>,
   pub acl: LoadedAcl<TablePermission>,
-  pub links: LinksTable,
+  pub links: Arc<LinksTable>,
 }
 
 pub struct PlayerRecord {
@@ -218,7 +218,7 @@ struct InstanceSaveAccesses<RawTokenStr, PiecesLoadedRef> {
   tokens_players: Vec<(RawTokenStr, PlayerId)>,
   aplayers: SecondarySlotMap<PlayerId, IPlayerState>,
   acl: Acl<TablePermission>,
-  #[serde(default)] pub links: LinksTable,
+  #[serde(default)] pub links: Arc<LinksTable>,
 }
 
 display_as_debug!{InstanceLockError}
@@ -458,6 +458,9 @@ impl Display for InstanceName {
 impl Deref for LinksTable {
   type Target = EnumMap<LinkKind, Option<String>>;
   fn deref(&self) -> &Self::Target { &self.0 }
+}
+impl DerefMut for LinksTable {
+  fn deref_mut(&mut self) -> &mut Self::Target { &mut self.0 }
 }
 
 impl From<&LinksTable> for Html {

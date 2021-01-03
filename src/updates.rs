@@ -48,7 +48,7 @@ pub enum PreparedUpdateEntry {
   },
   SetTableSize(Pos),
   SetTableColour(Colour),
-  SetLinks, // we use whatever the most recent is
+  SetLinks(Arc<LinksTable>),
   AddPlayer { player: PlayerId, data: DataLoadPlayer },
   RemovePlayer { player: PlayerId },
   Log (Arc<CommittedLogEntry>),
@@ -147,10 +147,6 @@ impl PlayerUpdatesBuildContext {
   }
 }
 
-pub struct InstanceForJsonLen<'i> {
-  links: &'i LinksTable,
-}
-
 impl PlayerUpdates {
   pub fn new_begin(gs: &GameState) -> PlayerUpdatesBuildContext {
     let u1 = Arc::new(PreparedUpdate {
@@ -187,13 +183,13 @@ impl PlayerUpdates {
 }
 
 impl PreparedUpdate {
-  pub fn json_len(&self, ig: &InstanceForJsonLen) -> usize {
-    self.us.iter().map(|u| 20 + u.json_len(ig)).sum()
+  pub fn json_len(&self) -> usize {
+    self.us.iter().map(|u| 20 + u.json_len()).sum()
   }
 }
 
 impl PreparedUpdateEntry {
-  pub fn json_len(&self, ig: &InstanceForJsonLen) -> usize {
+  pub fn json_len(&self) -> usize {
     use PreparedUpdateEntry::*;
     match self {
       Piece { ref op, .. } => {
@@ -209,8 +205,8 @@ impl PreparedUpdateEntry {
       SetTableColour(colour) => {
         colour.0.as_bytes().len() + 50
       }
-      SetLinks => {
-        ig.links.iter().filter_map(
+      SetLinks(links) => {
+        links.iter().filter_map(
           |(_k,v)| Some(50 + v.as_ref()?.len())
         ).sum::<usize>() + 50
       }
@@ -563,8 +559,8 @@ impl PreparedUpdate {
             continue
           }
         }
-        PUE::SetLinks => {
-          
+        PUE::SetLinks(links) => {
+          TUE::SetLinks((&**links).into())
         }
       };
       ents.push(ue);

@@ -36,18 +36,9 @@
       {{ m::nick() }} |
       {{ m::status() }}<br/>
     </div>
-{%- for l in links -%}
-{%-  if l.first -%}
-    <div>
-{%-  else -%}
-|
-{%-  endif -%}
-<a href="{{ l.1 }}">{{ l.0 }}</a>
-xxx core should be in some other .tera file so we can reuse it on update
-{%-  if l.last -%}
-    </div>
-{%-  endif -%}
-{%- endfor -%}
+{%- if links != "" -%}
+    <div id="links">{{ links }}</div>
+{%- endif -%}
     <div>
       <a href="/p?{{ ptoken }}">switch to portrait view</a> |
       {{ m::zoom() }}
