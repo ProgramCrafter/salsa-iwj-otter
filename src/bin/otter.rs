@@ -651,6 +651,7 @@ fn setup_table(_ma: &MainOpts, spec: &TableSpec) -> Vec<MGI> {
   let mut insns = vec![];
   insns.push(MGI::ClearLog);
   insns.push(MGI::SetACL { acl });
+  insns.push(MGI::SetLinks(links.clone()));
   insns
 }
 
@@ -880,13 +881,14 @@ mod set_link {
       },
 
       Some(url) => {
+        let kind = args.kind.unwrap();
         chan.alter_game(vec![
           if url == "" {
-            MGI::SetLink { kind: args.kind, url }
+            MGI::SetLink { kind, url }
           } else {
-            MGI::RemoveLink { kind: args.kind }
+            MGI::RemoveLink { kind }
           }
-        ])?;
+        ], None)?;
       },
     }
   }

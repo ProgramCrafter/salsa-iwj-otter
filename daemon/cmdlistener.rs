@@ -433,7 +433,11 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         }
       ).collect::<Result<SecondarySlotMap<_,_>,ME>>()?;
       let table_size = ig.gs.table_size;
-      let info = MgmtGameResponseGameInfo { table_size, players };
+      let links = ig.links.iter().filter_map(
+        |(k,v)|
+        Some((k.clone(), v.as_ref()?.clone().0))
+      ).collect();
+      let info = MgmtGameResponseGameInfo { table_size, players, links };
       Ok(Resp::Info(info))
     })?,
 
