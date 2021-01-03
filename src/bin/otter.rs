@@ -550,15 +550,21 @@ impl ConnForGame {
   }
 
   #[throws(AE)]
+  fn info(&mut self) -> MgmtGameResponseGameInfo {
+    let resp = self.alter_game(vec![MGI::Info], None)?;
+    match &resp[..] {
+      [MGR::Info(info)] => info.clone(),
+      x => throw!(anyhow!("unexpected response to game Info: {:?}", &x)),
+    }
+  }
+
+  #[throws(AE)]
   fn we_are_player(&mut self, ma: &MainOpts)
                    -> Option<(PlayerId, MgmtPlayerInfo)>
   {
     let players = {
-      let resp = self.alter_game(vec![MGI::Info], None)?;
-      match resp.as_slice() {
-        [MGR::Info(MgmtGameResponseGameInfo { players, .. })] => players,
-        x => throw!(anyhow!("unexpected response to game Info: {:?}", &x)),
-      }.clone()
+      let MgmtGameResponseGameInfo { players, .. } = self.info()?;
+      players
     };
 
     players.into_iter().filter(
