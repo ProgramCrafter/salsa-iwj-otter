@@ -38,6 +38,8 @@ pub struct InstanceName {
 #[derive(Debug,Clone)]
 pub struct InstanceRef (Arc<Mutex<InstanceContainer>>);
 
+type LinksTable = HashMap<LinkKind, Html>;
+
 pub struct Instance {
   pub name: Arc<InstanceName>,
   pub gs: GameState,
@@ -47,6 +49,14 @@ pub struct Instance {
   pub tokens_players: TokenRegistry<PlayerId>,
   pub tokens_clients: TokenRegistry<ClientId>,
   pub acl: LoadedAcl<TablePermission>,
+  pub links: LinksTable,
+}
+
+#[derive(Copy,Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash)]
+#[derive(Serialize,Deserialize)]
+pub enum LinkKind {
+  Voice,
+  Info,
 }
 
 pub struct PlayerRecord {
@@ -213,6 +223,7 @@ struct InstanceSaveAccesses<RawTokenStr, PiecesLoadedRef> {
   tokens_players: Vec<(RawTokenStr, PlayerId)>,
   aplayers: SecondarySlotMap<PlayerId, IPlayerState>,
   acl: Acl<TablePermission>,
+  #[serde(default)] pub links: LinksTable,
 }
 
 display_as_debug!{InstanceLockError}
@@ -295,6 +306,7 @@ impl Instance {
       iplayers: default(),
       tokens_players: default(),
       tokens_clients: default(),
+      links: default(),
     };
 
     let cont = InstanceContainer {
@@ -921,8 +933,9 @@ impl InstanceGuard<'_> {
         (player, ipl.clone())
       ).collect();
       let acl = s.c.g.acl.clone().into();
+      let links = s.c.g.links.clone();
       let isa = InstanceSaveAccesses {
-        ipieces, tokens_players, aplayers, acl
+        ipieces, tokens_players, aplayers, acl, links,
       };
       rmp_serde::encode::write_named(w, &isa)
     })?;
@@ -946,7 +959,7 @@ impl InstanceGuard<'_> {
                games: &mut GamesGuard,
                name: InstanceName) -> Option<InstanceRef> {
     let InstanceSaveAccesses::<String,ActualPiecesLoaded>
-    { tokens_players, mut ipieces, mut aplayers, acl }
+    { tokens_players, mut ipieces, mut aplayers, acl, links }
     = match Self::load_something(&name, "a-") {
       Ok(data) => data,
       Err(e) => if (||{
@@ -1006,7 +1019,7 @@ impl InstanceGuard<'_> {
     };
 
     let g = Instance {
-      gs, iplayers,
+      gs, iplayers, links,
       acl: acl.into(),
       ipieces: PiecesLoaded(ipieces),
       name: name.clone(),
