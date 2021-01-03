@@ -91,7 +91,9 @@ impl Read for UpdateReader {
              self.player, self.client, ig.gs.gen, self.to_send)?;
     }
 
-    let iplayer = &mut match ig.iplayers.get_mut(self.player) {
+    let g = &mut *ig;
+    let for_json_len = InstanceForJsonLen { links: &g.links };
+    let iplayer = &mut match g.iplayers.get_mut(self.player) {
       Some(x) => x,
       None => {
         let data = format!("event: player-gone\n\
@@ -131,7 +133,7 @@ impl Read for UpdateReader {
           break
         }
       };
-      let next_len = UPDATE_MAX_FRAMING_SIZE + next.json_len();
+      let next_len = UPDATE_MAX_FRAMING_SIZE + next.json_len(&for_json_len);
       if next_len > buf.len() {
         if buf.len() != orig_wanted { break }
 

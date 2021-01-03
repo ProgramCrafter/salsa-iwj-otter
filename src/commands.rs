@@ -86,9 +86,9 @@ pub enum MgmtGameInstruction {
   UpdatePlayer { player: PlayerId, details: MgmtPlayerDetails },
   LeaveGame(PlayerId),
 
-  SetLinks(HashMap<LinkKind,String>),
+  SetLinks(HashMap<LinkKind, UrlSpec>),
   RemoveLink { kind: LinkKind },
-  SetLink { kind: LinkKind, url: String },
+  SetLink { kind: LinkKind, url: UrlSpec },
 
   ClearLog,
   SetACL { acl: Acl<TablePermission> },
@@ -126,7 +126,7 @@ pub struct AccessTokenReport { pub lines: Vec<String> }
 pub struct MgmtGameResponseGameInfo {
   pub table_size: Pos,
   pub players: SecondarySlotMap<PlayerId, MgmtPlayerInfo>,
-  pub links: Vec<(LinkKind, String)>,
+  pub links: Vec<(LinkKind, UrlSpec)>,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]

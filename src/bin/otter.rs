@@ -866,7 +866,7 @@ mod set_link {
       None => {
         let MgmtGameResponseGameInfo { links, .. } = chan.info()?;
         for (tk, v) in links {
-          // xxx check syntax
+          let v : Url = (&v).try_into().context("reparse sererr's UrlSpec")?;
           match args.kind {
             None => {
               println!("{:<10} {}", tk, &v);
@@ -884,9 +884,9 @@ mod set_link {
         let kind = args.kind.unwrap();
         chan.alter_game(vec![
           if url == "" {
-            MGI::SetLink { kind, url }
-          } else {
             MGI::RemoveLink { kind }
+          } else {
+            MGI::SetLink { kind, url: UrlSpec(url) }
           }
         ], None)?;
       },

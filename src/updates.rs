@@ -48,6 +48,7 @@ pub enum PreparedUpdateEntry {
   },
   SetTableSize(Pos),
   SetTableColour(Colour),
+  SetLinks, // we use whatever the most recent is
   AddPlayer { player: PlayerId, data: DataLoadPlayer },
   RemovePlayer { player: PlayerId },
   Log (Arc<CommittedLogEntry>),
@@ -115,6 +116,7 @@ enum TransmitUpdateEntry<'u> {
   SetTableColour(&'u Colour),
   AddPlayer { player: PlayerId, data: &'u DataLoadPlayer },
   RemovePlayer { player: PlayerId },
+  SetLinks(Html),
   #[serde(serialize_with="serialize_logentry")]
   Log(TransmitUpdateLogEntry<'u>),
   Error(&'u ErrorSignaledViaUpdate),
@@ -143,6 +145,10 @@ impl PlayerUpdatesBuildContext {
     let cv = Default::default();
     PlayerUpdates { log, cv }
   }
+}
+
+pub struct InstanceForJsonLen<'i> {
+  links: &'i LinksTable,
 }
 
 impl PlayerUpdates {
@@ -181,13 +187,13 @@ impl PlayerUpdates {
 }
 
 impl PreparedUpdate {
-  pub fn json_len(&self) -> usize {
-    self.us.iter().map(|u| 20 + u.json_len()).sum()
+  pub fn json_len(&self, ig: &InstanceForJsonLen) -> usize {
+    self.us.iter().map(|u| 20 + u.json_len(ig)).sum()
   }
 }
 
 impl PreparedUpdateEntry {
-  pub fn json_len(&self) -> usize {
+  pub fn json_len(&self, ig: &InstanceForJsonLen) -> usize {
     use PreparedUpdateEntry::*;
     match self {
       Piece { ref op, .. } => {
@@ -202,6 +208,11 @@ impl PreparedUpdateEntry {
       }
       SetTableColour(colour) => {
         colour.0.as_bytes().len() + 50
+      }
+      SetLinks => {
+        ig.links.iter().filter_map(
+          |(_k,v)| Some(50 + v.as_ref()?.len())
+        ).sum::<usize>() + 50
       }
       SetTableSize(_) |
       RemovePlayer { player:_ } |
@@ -551,6 +562,9 @@ impl PreparedUpdate {
           } else {
             continue
           }
+        }
+        PUE::SetLinks => {
+          
         }
       };
       ents.push(ue);

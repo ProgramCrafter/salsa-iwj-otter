@@ -74,6 +74,7 @@ pub use serde_with::SerializeDisplay;
 pub use slotmap::dense::DenseSlotMap;
 pub use strum::EnumString;
 pub use thiserror::Error;
+pub use url::Url;
 pub use vecdeque_stableix::Deque as StableIndexVecDeque;
 pub use zcoord::{self, ZCoord};
 

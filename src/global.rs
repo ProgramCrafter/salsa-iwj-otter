@@ -38,7 +38,9 @@ pub struct InstanceName {
 #[derive(Debug,Clone)]
 pub struct InstanceRef (Arc<Mutex<InstanceContainer>>);
 
-pub type LinksTable = EnumMap<LinkKind, Option<Html>>;
+#[derive(Debug,Clone,Serialize,Deserialize,Default)]
+#[serde(transparent)]
+pub struct LinksTable(pub EnumMap<LinkKind, Option<String>>);
 
 pub struct Instance {
   pub name: Arc<InstanceName>,
@@ -450,6 +452,19 @@ impl Display for InstanceName {
       &[ self.account.subaccount.as_str(), self.game.as_str() ],
       |s| f.write_str(s),
     )?
+  }
+}
+
+impl From<&LinksTable> for Html {
+  fn from(links: &LinksTable) -> Html {
+    links.iter()
+      .filter_map(|(k,v)| {
+        let v = v.as_ref()?;
+        let url = htmlescape::encode_minimal(v);
+        Some(Html(format!("<a href={url}>{kind}</a>",
+                          url=url, kind=k)))
+      })
+      .join(" | ")
   }
 }
 

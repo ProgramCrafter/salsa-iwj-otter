@@ -50,7 +50,13 @@ define_index_type! {
 #[derive(Debug,Default)]
 #[repr(transparent)]
 #[serde(transparent)]
-pub struct ColourSpec(String);
+pub struct ColourSpec(pub String);
+
+#[derive(Debug,Default,Clone,Eq,PartialEq,Hash,Ord,PartialOrd)]
+#[derive(Serialize,Deserialize)]
+#[repr(transparent)]
+#[serde(transparent)]
+pub struct UrlSpec(pub String);
 
 #[derive(Error,Clone,Serialize,Deserialize,Debug)]
 pub enum SpecError {
@@ -64,6 +70,8 @@ pub enum SpecError {
   AclInvalidAccountGlob,
   AclEntryOverlappingAllowDeny,
   InconsistentPieceCount,
+  BadUrlSyntax,
+  UrlTooLong,
 }
 display_as_debug!{SpecError}
 
@@ -74,7 +82,7 @@ pub struct TableSpec {
   #[serde(default)] pub players: Vec<TablePlayerSpec>,
   pub player_perms: Option<HashSet<TablePermission>>,
   #[serde(default)] pub acl: Acl<TablePermission>,
-  #[serde(default)] pub links: HashMap<LinkKind, String>,
+  #[serde(default)] pub links: HashMap<LinkKind, UrlSpec>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -108,6 +116,7 @@ pub enum TablePermission {
   ViewNotSecret,
   Play,
   ChangePieces,
+  SetLinks,
   ResetOthersAccess,
   RedeliverOthersAccess,
   ModifyOtherPlayer,
@@ -522,6 +531,29 @@ pub mod implementation {
         throw!(SpecError::UnsupportedColourSpec);
       }
       Html(spec.0.clone())
+    }
+  }
+
+  impl UrlSpec {
+    const MAX_LEN : usize = 200;
+  }
+
+  impl TryFrom<&UrlSpec> for Url {
+    type Error = SpecError;
+    #[throws(SpecError)]
+    fn try_from(spec: &UrlSpec) -> Url {
+      if spec.0.len() > UrlSpec::MAX_LEN {
+        throw!(SE::UrlTooLong);
+      }
+      let base = Url::parse(&config().public_url)
+        .or_else(|_| Url::parse(
+          "https://bad-otter-config-public-url.example.net/"
+        )).unwrap();
+      let url = Url::options()
+        .base_url(Some(&base))
+        .parse(&spec.0)
+        .map_err(|_| SE::BadUrlSyntax)?;
+      url
     }
   }
 }
