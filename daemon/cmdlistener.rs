@@ -477,6 +477,34 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       })?
     }
 
+    Insn::SetLink { kind, url } =>  {
+      update_links(cs,ag,ig, |ig_links|{
+        let mut new_links : LinksTable = (**ig_links).clone();
+        let url : Url = (&url).try_into()?;
+        let show : Html = (kind, url.as_str()).into();
+        new_links[kind] = Some(url.into_string());
+        let new_links = Arc::new(new_links);
+        *ig_links = new_links.clone();
+        Ok(Html(
+          format!("{} set the link {}",
+                  &who.0, &show.0)
+        ))
+      })?
+    }
+
+    Insn::RemoveLink { kind } =>  {
+      update_links(cs,ag,ig, |ig_links|{
+        let mut new_links : LinksTable = (**ig_links).clone();
+        new_links[kind] = None;
+        let new_links = Arc::new(new_links);
+        *ig_links = new_links.clone();
+        Ok(Html(
+          format!("{} removed the link {}",
+                  &who.0, &kind)
+        ))
+      })?
+    }
+
     ResetPlayerAccess(player) => {
       let (ig, auth) = cs.check_acl_manip_player_access
         (ag, ig, player, TP::ResetOthersAccess)?;
