@@ -35,16 +35,25 @@ impl Context {
   }
 
   #[throws(AE)]
+  fn otter_table(&mut self, verb: &[&str], args: &[&str]) {
+    let args : Vec<String> =
+      ["--account", "server:"].iter().cloned().map(Into::into)
+      .chain(verb.iter().cloned().map(Into::into))
+      .chain(iter::once(self.alice.table()))
+      .chain(args.iter().cloned().map(Into::into))
+      .collect();
+    self.su.ds.otter(&args)?;
+  }
+
+  #[throws(AE)]
   fn test_link(&mut self, kind: LinkKind, desc: &str, url: &str) {
-    self.su.ds.otter(&["set-link", &self.alice.table(),
-                       &kind.to_string(), url])?;
+    self.otter_table(&["set-link"], &[&kind.to_string(), url])?;
     self.check_link(desc, Some(url))?;
   }
 
   #[throws(AE)]
   fn test_remove_link(&mut self, kind: LinkKind, desc: &str) {
-    self.su.ds.otter(&["remove-link", &self.alice.table(),
-                       &kind.to_string()])?;
+    self.otter_table(&["remove-link"], &[&kind.to_string()])?;
     self.check_link(desc, None)?;
   }
 }
