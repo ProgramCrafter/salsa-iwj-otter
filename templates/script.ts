@@ -170,6 +170,7 @@ function json_report_error(error_for_json: Object) {
 function string_report_error(error_message: String) {
   let errornode = document.getElementById('error')!;
   errornode.textContent += '\nError (reloading may help?):' + error_message;
+  console.error("ERROR reported via log", error_message);
   // todo want to fix this for at least basic game reconfigs, auto-reload?
 }
 
