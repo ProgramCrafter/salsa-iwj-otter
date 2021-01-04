@@ -472,14 +472,14 @@ impl DerefMut for LinksTable {
 
 impl From<&LinksTable> for Html {
   fn from(links: &LinksTable) -> Html {
-    Html("links: ".to_string() + &(
-      links.iter()
-        .filter_map(|(k,v)| {
-          let v = v.as_ref()?;
-          Some(Html::from((k, v.as_str())).0)
-        })
-        .join(" ")
-    ))
+    let mut s = links.iter()
+      .filter_map(|(k,v)| {
+        let v = v.as_ref()?;
+        Some(Html::from((k, v.as_str())).0)
+      })
+      .join(" ");
+    if s.len() != 0 { s = format!("links: {}", s) }
+    Html(s)
   }
 }
 

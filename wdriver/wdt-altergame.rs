@@ -62,7 +62,7 @@ impl Ctx {
   #[throws(AE)]
   fn test_remove_link(&mut self, kind: LinkKind, desc: &'static str) {
     (||{
-      self.otter_table(&["remove-link"], &[&kind.to_string()])?;
+      self.otter_table(&["set-link"], &[&kind.to_string(), ""])?;
       self.check_link(desc, None)?;
       Ok::<_,AE>(())
     })()
