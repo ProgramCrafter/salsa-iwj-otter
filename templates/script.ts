@@ -119,6 +119,7 @@ var status_node : HTMLElement;
 var uos_node : HTMLElement;
 var zoom_val : HTMLInputElement;
 var zoom_btn : HTMLInputElement;
+var links_elem : HTMLElement;
 var wresting: boolean;
 
 const uo_kind_prec : { [kind: string]: number } = {
@@ -829,6 +830,14 @@ messages.RemovePlayer = <MessageHandler>function
   delete players[j.player];
 }
 
+messages.SetLinks = <MessageHandler>function
+(msg: string) {
+  if (msg.length != 0 && layout == 'Portrait') {
+    msg += " |";
+  }
+  links_elem.innerHTML = msg
+}
+
 // ----- logs -----
 
 messages.Log = <MessageHandler>function
@@ -1152,6 +1161,7 @@ function startup() {
   var body = document.getElementById("main-body")!;
   zoom_btn = document.getElementById("zoom-btn") as any;
   zoom_val = document.getElementById("zoom-val") as any;
+  links_elem = document.getElementById("links") as any;
   ctoken = body.dataset.ctoken!;
   us = body.dataset.us!;
   gen = +body.dataset.gen!;
