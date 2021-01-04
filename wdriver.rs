@@ -728,6 +728,10 @@ pub struct Window {
   instance: InstanceName,
 }
 
+impl Window {
+  pub fn table(&self) -> String { self.instance.to_string() }
+}
+
 type ScreenCTM = ndarray::Array2::<f64>;
 
 pub struct WindowGuard<'g> {

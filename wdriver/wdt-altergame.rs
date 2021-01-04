@@ -36,13 +36,15 @@ impl Context {
 
   #[throws(AE)]
   fn test_link(&mut self, kind: LinkKind, desc: &str, url: &str) {
-    self.su.ds.otter(&["set-link", &kind.to_string(), url])?;
+    self.su.ds.otter(&["set-link", &self.alice.table(),
+                       &kind.to_string(), url])?;
     self.check_link(desc, Some(url))?;
   }
 
   #[throws(AE)]
   fn test_remove_link(&mut self, kind: LinkKind, desc: &str) {
-    self.su.ds.otter(&["remove-link", &kind.to_string()])?;
+    self.su.ds.otter(&["remove-link", &self.alice.table(),
+                       &kind.to_string()])?;
     self.check_link(desc, None)?;
   }
 }
