@@ -39,6 +39,12 @@ impl Context {
     self.su.ds.otter(&["set-link", &kind.to_string(), url])?;
     self.check_link(desc, Some(url))?;
   }
+
+  #[throws(AE)]
+  fn test_remove_link(&mut self, kind: LinkKind, desc: &str) {
+    self.su.ds.otter(&["remove-link", &kind.to_string()])?;
+    self.check_link(desc, None)?;
+  }
 }
 
 #[throws(AE)]
@@ -53,6 +59,7 @@ fn main(){
   c.check_link("Info", None)?;
   c.check_link("Voice", Some("https://jitsi.example.com/initial"))?;
   c.test_link(LinkKind::Info, "Info", "https://www.example.org/newinfo")?;
+  c.test_remove_link(LinkKind::Info, "Info")?;
 
   info!("ok");
 }
