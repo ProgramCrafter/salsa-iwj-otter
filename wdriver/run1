@@ -10,6 +10,6 @@ case "${PIPESTATUS[*]}" in
 esac
 
 grep -v 'DEBUG [otter_webdriver_tests]' <tmp/"$tname".log \
-| tail -20
+| tail -40
 
 exit 1

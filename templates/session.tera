@@ -37,9 +37,9 @@ g{{ m::wresting() }}
 {{ m::status() }}
 |
 <a href="/l?{{ ptoken }}">switch to landscape view</a> |
-{%- if links != "" -%}
-<span id="links">| {{ links }}</span>
-{%- endif -%}
+{% if links != "" -%}
+<span id="links">{{ links }} |</span>
+{% endif -%}
 {{ m::zoom() }}
 {{ m::errors() }}
 

@@ -36,9 +36,7 @@
       {{ m::nick() }} |
       {{ m::status() }}<br/>
     </div>
-{%- if links != "" -%}
     <div id="links">{{ links }}</div>
-{%- endif -%}
     <div>
       <a href="/p?{{ ptoken }}">switch to portrait view</a> |
       {{ m::zoom() }}
