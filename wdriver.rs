@@ -5,7 +5,7 @@
 #![feature(unboxed_closures)]
 #![feature(fn_traits)]
 
-pub use anyhow::{anyhow, Context};
+pub use anyhow::{anyhow, ensure, Context};
 pub use boolinator::Boolinator;
 pub use fehler::{throw, throws};
 pub use if_chain::if_chain;

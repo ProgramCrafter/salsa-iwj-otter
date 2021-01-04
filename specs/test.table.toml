@@ -6,6 +6,9 @@ timezone = "Europe/London"
 
 #players = [ { account_glob = "server:*" } ]
 
+[links]
+Voice = "https://jitsi.example.com/initial"
+
 [[players]]
 account_glob = "server:*"
 
