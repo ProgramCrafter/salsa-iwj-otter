@@ -7,7 +7,11 @@
           var orig = orig_console[k];
           new_console[k] = function() {
             let args = [].slice.call(arguments);
-            new_console.saved.push([k, [args.map(s => s.toString())]]);
+            new_console.saved.push([k, [args.map(s => (
+	      s === undefined ? "<undefined>" :
+		s === null ? "<null>" :
+		s.toString()
+	    ))]]);
             orig.apply(orig_console, arguments);
           }
         })(k);
