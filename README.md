@@ -234,24 +234,41 @@ wastes only a handful of seconds (on my stupidly fast laptop).
 Navigating the otter source code
 --------------------------------
 
-* `src/*.rs`
+* `src/`
 
-  The main Rust source code.  This is mixture of code used only by the
-  server and code used by the `otter` command line utility; these
-  aren't split up.  In Rust terms this is a "library crate".
+  The main Rust source code.  This is mixture of code used only or
+  mainly by the server and code used by the `otter` command line
+  utility; these aren't split up in a wholly principled way.  In Rust
+  terms this is a "library crate".
 
-* `src/bin/*.rs`: The actual executables.
+* `src/bin/*.rs`
 
-* `wasm/*.rs`: We ship WebAssembly bindings for a few things, mostly
-  to avoid having to write the code twice - once in Rust and once in
-  Typescript.
+  Support executables, including in particular the command line
+  utility `otter` which is used to set up and join games.
 
-* `zcoord/*.rs`: Code shared by the host and the WebAssembly.
-  Notably, the Z coordinate handling, but also a
-  string-timestamp-handling function.  This is a separate library
-  crate so that we don't have to compile Rocket for WASM...
+* `daemon/`
 
-* templates/script.ts
+  The Otter server.  This is a simple binary crare.  Much
+  functionality belonging primarily, or only, to the server, is in
+  `src/`, simply because it was easier not to disentangle it.
+  Anything that needs Rocket (the web framework) is in `daemon/`.
+
+* `zcoord/`
+
+  Code shared by the host and the WebAssembly.  Notably, the Z
+  coordinate handling, but also a a few other minor functions needed
+  by both client and server.  To avoid duplicating them are written
+  once in Rust and compiled twice - once for the host and once for
+  WebAssembly for use in the client.  This crate is kept minimal to
+  keeep the WebAssembly binary small.
+
+* `wasm/`
+
+  WebAssembly/Rust bindings for the items in `zcoord/`.  Produces the
+  single wasm file for use by the JavaScript, and corresponding
+  Typescript annotations etc.
+
+* `templates/script.ts`
 
   The main Typescript (typed Javascript) code.  Otter's web
   compatibility target is the earliest browser versions that properly
@@ -260,17 +277,40 @@ Navigating the otter source code
 * `templates/session.tera`, `macros.tera`, etc.
 
   Tera templates generating the main HTML screen.  These templates are
-  filled in from structs in the Rust source code.  In the case of
-  `session.tera` and `macros.tera`, the rendering uses an instance of
+  filled in from structs in the Rust source code.  The main files are
+  `session.tera` (portrait), `landscape.tera`, and `macros.tera`
+  (common), and their rendering uses an instance of
   `SessionRenderContext` from `src/session.rs`.
 
-* `library/`
+* `nwtemplates/`
 
-  The shape libraries.  The program `./media-scraper` (which is not
-  run by the `Makefile`) reads `library/*.toml` for instructions and
-  generates `files.make` fragments.  These fragments arrange to run
-  `./usvg-processor` which launders SVGs through `usvg`.
-  `usvg-processor`.
+  "Non-web templataes".  Tera templates for things other than web
+  pages.  Currently this includes the server's outgoing emails.  These
+  have to be in a separate directory because Rocket likes to load
+  everything applicable it finds in its own `templates/` directory.
+  These are used via `src/nwtemplates.rs`.
+
+* `wdriver.rs`, `wdriver/`
+
+  WebDriver-based end-to-end tests.  Each `wdt-*.rs` is one test
+  utility.  `wdriver.rs` (in the top level to evade Cargo's
+  dur-brained search rules) is the library for these, and contains
+  most of the heavy lifting.
+
+  These are not standard Rust `#[test]` tests because they need to
+  reinvoke themselves via `bwrap` for test isolation reasons, and
+  because their dependencies are extensive and not properly capturable
+  in Cargo.  They are run by `make check`.
+
+* `library/`: The shape libraries.
+
+  The program `./media-scraper` (which is not run by the `Makefile`)
+  reads `library/*.toml` for instructions and generates `files.make`
+  fragments.  These fragments arrange to run `./usvg-processor` which
+  launders SVGs through `usvg`.  `usvg-processor`.
+
+  The shape libraries have a different, more relaxed, copyright
+  licence.
 
 
 Automatic in-browser tests
@@ -293,6 +333,7 @@ You can restart the same game server as the test used with
   target/debug/daemon-otter tmp/wdt-simple/server-config.toml
 and then see it at this url:
   http://localhost:8000/?kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe
+
 
 Rust, cargo, curl|bash-ware; privsep
 ------------------------------------
