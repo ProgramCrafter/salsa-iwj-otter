@@ -322,10 +322,9 @@ impl ApiPieceOp for ApiPieceMove {
   }
 }
 
-/*
 #[derive(Debug,Serialize,Deserialize)]
-struct ApiPieceRotate (bool);
-#[post("/_/api/r", format="json", data="<form>")]
+struct ApiPieceRotate(CompassAngle);
+#[post("/_/api/rotate", format="json", data="<form>")]
 #[throws(OE)]
 fn api_rotate(form : Json<ApiPiece<ApiPieceRotate>>) -> impl response::Responder<'static> {
   api_piece_op(form)
@@ -335,20 +334,13 @@ impl ApiPieceOp for ApiPieceRotate {
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
     let ApiPieceOpArgs { gs,piece, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
-    let (pos, clamped) = self.0.clamped(gs.table_size);
+    pc.angle = PieceAngle::Compass(self.0);
     let logents = vec![];
-    pc.pos = pos;
-    if clamped {
-      throw!(ApiPieceOpError::PartiallyProcessed(
-        PieceOpError::PosOffTable,
-        logents,
-      ));
-    }
-    let update = PieceUpdateOp::Move(self.0);
+    let update = PieceUpdateOp::Modify(());
     (WhatResponseToClientOp::Predictable,
      update, logents)
   }
-}*/
+}
 
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiPiecePin (bool);
