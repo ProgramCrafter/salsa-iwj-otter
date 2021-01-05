@@ -99,6 +99,18 @@ impl<'r> Responder<'r> for OnlineErrorResponse {
   }
 }
 
+fn log_did_to_piece<L: Lens + ?Sized>(
+  gpl: &GPlayerState, lens: &L, p: &dyn Piece, pc: &PieceState, piece: PieceId,
+  did: &str,
+) -> Vec<LogEntry> {
+  vec![ LogEntry { html: Html(format!(
+    "{} {} {}",
+    &htmlescape::encode_minimal(&gpl.nick),
+    did,
+    p.describe_pri(&lens.log_pri(piece, pc)).0
+  ))}]
+}
+
 #[throws(OE)]
 fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
                    -> impl response::Responder<'static> {
@@ -357,12 +369,10 @@ impl ApiPieceOp for ApiPiecePin {
     let gpl = gs.players.byid(player).unwrap();
     pc.pinned = self.0;
     let update = PieceUpdateOp::Modify(());
-    let logents = vec![ LogEntry { html: Html(format!(
-      "{} {} {}",
-      &htmlescape::encode_minimal(&gpl.nick),
+    let logents = log_did_to_piece(
+      &gpl, lens, p, pc, piece,
       if pc.pinned { "pinned" } else { "unpinned" },
-      p.describe_pri(&lens.log_pri(piece, pc)).0
-    ))}];
+    );
     (WhatResponseToClientOp::Predictable,
      update, logents)
   }
