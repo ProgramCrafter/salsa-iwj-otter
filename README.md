@@ -8,11 +8,11 @@ It is accessed from a web browser running JavaScript.  The server runs
 on a convenationl Unix host.  Currently, joining a game requires a
 unix shell account on the server.
 
-The game does not have a built-in text chat system, nor any other
-communication other than via moving the game pieces.  I expect it to
-be used with a concurrent voice chat, or perhaps a concurrent text
-chat program.  Right now the arrangements for the chat must be agreed
-by the players without help from the Otter server.
+I expect it to be used with a concurrent voice chat.
+
+The game server does not currently have a built-in text chat system.
+The game organiser can use the game server to distribute (and update)
+voice chat and info links.
 
 Right now Otter is in an alpha state.
 
