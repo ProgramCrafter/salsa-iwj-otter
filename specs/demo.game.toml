@@ -14,6 +14,7 @@ faces = ["red","grey"]
 pos = [90, 20]
 type = "Square"
 size = [10]
+angle.Compass = 1
 faces = ["blue", "grey"]
 
 [[pieces]]

@@ -420,6 +420,7 @@ pub fn mount(rocket_instance: Rocket) -> Rocket {
     api_ungrab,
     api_raise,
     api_move,
+    api_rotate,
     api_wrest,
     api_pin,
     api_uo,
