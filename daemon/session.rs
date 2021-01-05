@@ -31,6 +31,7 @@ struct SessionFormattedLogEntry {
 struct SessionPieceContext {
   id: VisiblePieceId,
   pos: Pos,
+  transform: VisibleAngleTransform,
   info: String, // SessionPieceLoadJson as JSON
 }
 
@@ -110,6 +111,7 @@ fn session_inner(form : Json<SessionForm>,
       else { continue /* was deleted */ };
       let defs = p.make_defs(&pri)?;
       alldefs.push((pri.id, defs));
+      let transform = make_angle_visible(pr.angle, pr.pos);
 
       let for_info = SessionPieceLoadJson {
         held : &pr.held,
@@ -120,9 +122,10 @@ fn session_inner(form : Json<SessionForm>,
       };
 
       let for_piece = SessionPieceContext {
+        transform,
         id: pri.id,
-        pos : pr.pos,
-        info : serde_json::to_string(&for_info)
+        pos: pr.pos,
+        info: serde_json::to_string(&for_info)
           .map_err(|e| InternalError::JSONEncode(e))?,
       };
       uses.push(for_piece);

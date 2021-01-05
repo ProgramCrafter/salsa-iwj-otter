@@ -25,5 +25,6 @@ item = "chess-w-B"
 [[pieces]]
 pos = [160,40]
 type = "Lib"
+angle.Compass = 1
 lib = "wikimedia"
 item = "chess-b-N"

@@ -1194,6 +1194,7 @@ mod library_add {
         count: Some(to_add as u32),
         face: None,
         pinned: Some(false),
+        angle: default(),
         info: Box::new(spec),
       };
       Poor(vec![ MGI::AddPieces(spec) ],
@@ -1346,7 +1347,7 @@ mod library_add {
       let spec = PiecesSpec {
         pos: Some(pos),
         posd: None, count: Some(1), face: None, pinned: Some(false),
-        info: Box::new(spec),
+        angle: default(), info: Box::new(spec),
       };
       let insn = MGI::AddPieces(spec);
       insns.push(insn);

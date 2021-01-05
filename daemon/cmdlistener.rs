@@ -576,7 +576,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
        Fine, ig)
     },
 
-    AddPieces(PiecesSpec{ pos,posd,count,face,pinned,info }) => {
+    AddPieces(PiecesSpec{ pos,posd,count,face,pinned,angle,info }) => {
       let (ig_g, modperm, _) = cs.check_acl_modify_pieces(ag, ig)?;
       let ig = &mut **ig_g;
       let gs = &mut ig.gs;
@@ -615,6 +615,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           lastclient: Default::default(),
           gen_before_lastclient: Generation(0),
           pinned: pinned.unwrap_or(false),
+          angle,
           gen: gs.gen,
           pos, face,
         };

@@ -61,6 +61,7 @@ Hi {{nick | escape}}
 {%- for piece in uses %}
       <use id="use{{ piece.id }}" href="#piece{{ piece.id }}"
 	   x="{{ piece.pos[0] }}" y="{{ piece.pos[1] }}"
+           transform="{{ piece.transform }}"
 	   data-piece="{{ piece.id }}" data-info="{{ piece.info | escape }}" />
 {%- endfor %}
       <g id="defs_marker"></g>

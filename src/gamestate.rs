@@ -23,6 +23,11 @@ pub struct Generation(pub u64);
 
 visible_slotmap_key!{ VisiblePieceId('.') }
 
+#[derive(Clone,Debug)]
+#[derive(Serialize,Deserialize)]
+#[serde(transparent)]
+pub struct VisibleAngleTransform(String);
+
 #[derive(Clone,Serialize,Deserialize,Hash,Eq,Ord,PartialEq,PartialOrd)]
 #[serde(transparent)]
 pub struct Html(pub String);
@@ -67,6 +72,7 @@ pub struct PieceState {
   pub held: Option<PlayerId>,
   pub zlevel: ZLevel,
   pub pinned: bool,
+  #[serde(default)] pub angle: PieceAngle,
   pub gen: Generation,
   pub lastclient: ClientId,
   pub gen_before_lastclient: Generation,
@@ -320,4 +326,10 @@ pub fn make_pieceid_visible(p: PieceId) -> VisiblePieceId {
   // todo-lens need to do censorship mapping here
   let kd: slotmap::KeyData = p.into();
   VisiblePieceId(kd)
+}
+
+pub fn make_angle_visible(angle: PieceAngle, pos: Pos)
+                          -> VisibleAngleTransform {
+  // todo-lens need to do censorship mapping here
+  VisibleAngleTransform(angle.to_transform(pos))
 }

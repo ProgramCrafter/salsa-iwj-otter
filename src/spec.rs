@@ -72,6 +72,7 @@ pub enum SpecError {
   InconsistentPieceCount,
   BadUrlSyntax,
   UrlTooLong,
+  CompassAngleInvalid,
 }
 display_as_debug!{SpecError}
 
@@ -168,9 +169,22 @@ pub struct PiecesSpec {
   pub count: Option<u32>,
   pub face: Option<FaceId>,
   pub pinned: Option<bool>,
+  #[serde(default)] pub angle: PieceAngle,
   #[serde(flatten)]
   pub info: Box<dyn PieceSpec>,
 }
+
+#[derive(Debug,Copy,Clone,Serialize,Deserialize)]
+pub enum PieceAngle {
+  Compass(CompassAngle),
+}
+
+#[derive(Debug,Copy,Clone,Eq,PartialEq)]
+#[derive(Default,Serialize,Deserialize)]
+#[serde(try_from="u8")]
+#[serde(into="u8")]
+/// 0 = unrotated, +ve is anticlockwise, units of 45deg
+pub struct CompassAngle(u8);
 
 //---------- Piece specs ----------
 // the implementations are in pieces.rs
@@ -281,6 +295,38 @@ pub mod implementation {
   type AS = AccountScope;
   type SE = SpecError;
   type TPS = TablePlayerSpec;
+
+  impl Default for PieceAngle {
+    fn default() -> Self { PieceAngle::Compass(default()) }
+  }
+
+  impl TryFrom<u8> for CompassAngle {
+    type Error = SpecError;
+    #[throws(SpecError)]
+    fn try_from(v: u8) -> Self {
+      if v < 8 { Self(v) }
+      else { throw!(SE::CompassAngleInvalid) }
+    }
+  }
+
+  impl From<CompassAngle> for u8 {
+    fn from(a: CompassAngle) -> u8 {
+      a.0
+    }
+  }
+
+  impl PieceAngle {
+    pub fn to_transform(self, pos: Pos) -> String {
+      match self {
+        PieceAngle::Compass(CompassAngle(angle)) => {
+          if angle == 0 { default() }
+          else { format!("rotate({}, {}, {})",
+                         -45 * (angle as i16),
+                         pos.0[0], pos.0[1]) }
+        }
+      }
+    }
+  }
 
   impl<P: Eq + Hash> Default for Acl<P> {
     fn default() -> Self { Acl { ents: default() } }
