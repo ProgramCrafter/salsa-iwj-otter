@@ -264,11 +264,11 @@ function recompute_keybindings() {
   };
   if (all_targets.length) {
     add_uo(all_targets, {
-      def_key: 'l',
+      def_key: 'b',
       kind: 'Client',
       wrc: 'Predictable',
       opname: "lower",
-      desc: "lower (send to bottom)",
+      desc: "send to bottom (below other pieces)",
     });
   }
   if (all_targets.length) {
