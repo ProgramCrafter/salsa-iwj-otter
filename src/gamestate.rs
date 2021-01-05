@@ -26,7 +26,7 @@ visible_slotmap_key!{ VisiblePieceId('.') }
 #[derive(Clone,Copy,Debug)]
 #[derive(Serialize,Deserialize)]
 #[serde(transparent)]
-pub struct VisiblePieceAngle(PieceAngle);
+pub struct VisiblePieceAngle(pub PieceAngle);
 
 #[derive(Clone,Debug)]
 #[derive(Serialize,Deserialize)]

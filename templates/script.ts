@@ -67,6 +67,7 @@ type PieceInfo = {
   cseq_updatesvg : number | null,
   z : ZCoord,
   zg : Generation,
+  angle: number,
   pinned: boolean,
   uos : UoDescription[],
   uelem : SVGGraphicsElement,
@@ -264,6 +265,20 @@ function recompute_keybindings() {
   };
   if (all_targets.length) {
     add_uo(all_targets, {
+      def_key: 'l',
+      kind: 'Client',
+      wrc: 'Predictable',
+      opname: "left",
+      desc: "rotate left",
+    });
+    add_uo(all_targets, {
+      def_key: 'r',
+      kind: 'Client',
+      wrc: 'Predictable',
+      opname: "right",
+      desc: "rotate right",
+    });
+    add_uo(all_targets, {
       def_key: 'b',
       kind: 'Client',
       wrc: 'Predictable',
@@ -363,6 +378,21 @@ function some_keydown(e: KeyboardEvent) {
       }
     }
   }
+}
+
+keyops_local['left' ] = function (uo: UoRecord) { rotate_targets(uo, +1); }
+keyops_local['right'] = function (uo: UoRecord) { rotate_targets(uo, -1); }
+
+function rotate_targets(uo: UoRecord, dangle: number): boolean {
+  for (let piece of uo.targets!) {
+    let p = pieces[piece]!;
+    p.angle += dangle + 8;
+    p.angle %= 8;
+    let transform = 
+    api_piece(api, 'rotate', piece,p, p.angle);
+  }
+  recompute_keybindings();
+  return true;
 }
 
 type LowerTodoItem = {

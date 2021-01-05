@@ -40,7 +40,7 @@ struct SessionPieceLoadJson<'r> {
   z: ZCoord,
   zg: Generation,
   pinned: bool,
-  angle: VisiblePieceAngle,
+  angle: CompassAngle,
   uos: &'r [UoDescription],
 }
 
@@ -113,12 +113,16 @@ fn session_inner(form : Json<SessionForm>,
       let defs = p.make_defs(&pri)?;
       alldefs.push((pri.id, defs));
 
+      let vangle = match pri.angle {
+        VisiblePieceAngle(PieceAngle::Compass(vangle)) => vangle,
+      };
+
       let for_info = SessionPieceLoadJson {
         held: &pr.held,
         z: pr.zlevel.z.clone(),
         zg: pr.zlevel.zg,
         pinned: pr.pinned,
-        angle: pri.angle,
+        angle: vangle,
         uos: &p.ui_operations()?,
       };
 

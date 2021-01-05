@@ -115,6 +115,11 @@ impl TimestampAbbreviator {
 }
 
 #[wasm_bindgen]
+pub fn angle_transform(angle: u8) -> JsString {
+  zcoord::misc::raw_angle_transform(angle).into()
+}
+
+#[wasm_bindgen]
 pub fn setup(s: &str) -> JsString {
   // returning String produces a wasm-opt error, as here
   //  https://github.com/WebAssembly/binaryen/issues/3006
