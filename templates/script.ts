@@ -388,7 +388,8 @@ function rotate_targets(uo: UoRecord, dangle: number): boolean {
     let p = pieces[piece]!;
     p.angle += dangle + 8;
     p.angle %= 8;
-    let transform = 
+    let transform = wasm_bindgen.angle_transform(p.angle);
+    p.pelem.setAttributeNS(null,'transform',transform);
     api_piece(api, 'rotate', piece,p, p.angle);
   }
   recompute_keybindings();
