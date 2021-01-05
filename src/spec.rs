@@ -315,19 +315,6 @@ pub mod implementation {
     }
   }
 
-  impl PieceAngle {
-    pub fn to_transform(self, pos: Pos) -> String {
-      match self {
-        PieceAngle::Compass(CompassAngle(angle)) => {
-          if angle == 0 { default() }
-          else { format!("rotate({}, {}, {})",
-                         -45 * (angle as i16),
-                         pos.0[0], pos.0[1]) }
-        }
-      }
-    }
-  }
-
   impl<P: Eq + Hash> Default for Acl<P> {
     fn default() -> Self { Acl { ents: default() } }
   }

@@ -27,7 +27,8 @@ impl Lens for TransparentLens {
   fn log_pri(&self, piece: PieceId, pc: &PieceState)
              -> PieceRenderInstructions {
     let id = self.pieceid2visible(piece);
-    PieceRenderInstructions { id, face : pc.face }
+    let angle = make_angle_visible(pc.angle);
+    PieceRenderInstructions { id, angle, face: pc.face }
   }
   fn svg_pri(&self, piece: PieceId, pc: &PieceState, _player: PlayerId)
              -> PieceRenderInstructions {

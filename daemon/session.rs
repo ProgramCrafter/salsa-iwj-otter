@@ -31,7 +31,6 @@ struct SessionFormattedLogEntry {
 struct SessionPieceContext {
   id: VisiblePieceId,
   pos: Pos,
-  transform: VisibleAngleTransform,
   info: String, // SessionPieceLoadJson as JSON
 }
 
@@ -41,6 +40,7 @@ struct SessionPieceLoadJson<'r> {
   z: ZCoord,
   zg: Generation,
   pinned: bool,
+  angle: VisiblePieceAngle,
   uos: &'r [UoDescription],
 }
 
@@ -104,25 +104,25 @@ fn session_inner(form : Json<SessionForm>,
 
     for (gpid, pr) in pieces {
       let pri = PieceRenderInstructions {
-        id : make_pieceid_visible(gpid),
-        face : pr.face,
+        id: make_pieceid_visible(gpid),
+        angle: make_angle_visible(pr.angle),
+        face: pr.face,
       };
       let p = if let Some(p) = ig.ipieces.get(gpid) { p }
       else { continue /* was deleted */ };
       let defs = p.make_defs(&pri)?;
       alldefs.push((pri.id, defs));
-      let transform = make_angle_visible(pr.angle, pr.pos);
 
       let for_info = SessionPieceLoadJson {
-        held : &pr.held,
-        z  : pr.zlevel.z.clone(),
-        zg : pr.zlevel.zg,
-        pinned : pr.pinned,
-        uos : &p.ui_operations()?,
+        held: &pr.held,
+        z: pr.zlevel.z.clone(),
+        zg: pr.zlevel.zg,
+        pinned: pr.pinned,
+        angle: pri.angle,
+        uos: &p.ui_operations()?,
       };
 
       let for_piece = SessionPieceContext {
-        transform,
         id: pri.id,
         pos: pr.pos,
         info: serde_json::to_string(&for_info)

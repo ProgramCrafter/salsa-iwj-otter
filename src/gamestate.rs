@@ -23,6 +23,11 @@ pub struct Generation(pub u64);
 
 visible_slotmap_key!{ VisiblePieceId('.') }
 
+#[derive(Clone,Copy,Debug)]
+#[derive(Serialize,Deserialize)]
+#[serde(transparent)]
+pub struct VisiblePieceAngle(PieceAngle);
+
 #[derive(Clone,Debug)]
 #[derive(Serialize,Deserialize)]
 #[serde(transparent)]
@@ -141,9 +146,10 @@ pub trait Piece: Outline + Send + Debug {
   fn itemname(&self) -> &str;
 }
 
-#[derive(Debug,Copy,Clone)]
+#[derive(Debug,Clone)]
 pub struct PieceRenderInstructions {
   pub id: VisiblePieceId,
+  pub angle: VisiblePieceAngle,
   pub face: FaceId,
 }
 
@@ -226,6 +232,18 @@ impl Debug for Html {
   }
 }
 
+impl VisiblePieceAngle {
+  pub fn to_transform(self) -> VisibleAngleTransform {
+    match self.0 {
+      PieceAngle::Compass(angle) => VisibleAngleTransform(
+        zcoord::misc::raw_angle_transform(
+          angle.into()
+        )
+      ),
+    }
+  }
+}
+
 // ---------- game state - rendering etc. ----------
 
 impl PieceState {
@@ -259,9 +277,10 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
       Some(n) => n,
       None => -1,
     };
+    let transform = pri.angle.to_transform();
     write!(&mut defs.0,
-           r##"<g id="piece{}" data-dragraise="{}">"##,
-           pri.id, dragraise)?;
+           r##"<g id="piece{}" transform="{}" data-dragraise="{}">"##,
+           pri.id, &transform.0, dragraise)?;
     self.svg_piece(&mut defs, &pri)?;
     write!(&mut defs.0, r##"</g>"##)?;
     write!(&mut defs.0,
@@ -328,8 +347,7 @@ pub fn make_pieceid_visible(p: PieceId) -> VisiblePieceId {
   VisiblePieceId(kd)
 }
 
-pub fn make_angle_visible(angle: PieceAngle, pos: Pos)
-                          -> VisibleAngleTransform {
+pub fn make_angle_visible(angle: PieceAngle) -> VisiblePieceAngle {
   // todo-lens need to do censorship mapping here
-  VisibleAngleTransform(angle.to_transform(pos))
+  VisiblePieceAngle(angle)
 }
