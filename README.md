@@ -102,8 +102,8 @@ See `LICENCE` for more information about copyright status.
 BUILDING AND TESTING
 ====================
 
-You will need about 5500 megabytes of disk space, and a good internet
-connection.  Your computer will be compiling a lot of code.
+You will need at 6000 megabytes of disk space, or more, and a good
+internet connection.  Your computer will be compiling a lot of code.
 
 These instructions have been tested on Debian buster.
 
