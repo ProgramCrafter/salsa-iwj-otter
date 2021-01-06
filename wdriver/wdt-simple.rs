@@ -41,9 +41,10 @@ fn main(){
       let mut w = su.w(&bob)?;
       w.synch()?;
       let p1 = w.find_piece("1.1")?;
-      ensure!( p1.posg()? == alice_p1g );
+      ensure_eq!(p1.posg()?, alice_p1g);
     }
 
+    let transform = format!("rotate(-90)");
     {
       let mut w = su.w(&alice)?;
       let p = w.find_piece("4.1")?;
@@ -62,6 +63,13 @@ fn main(){
       ensure_eq!(pd.get_attribute("transform")?, Some(transform));
       w.synch()?;
     }
+
+    {
+      let mut w = su.w(&bob)?;
+      w.synch()?;
+      let pd = w.find_element(By::Id("piece4.1"))?;
+      ensure_eq!(pd.get_attribute("transform")?, Some(transform));
+    }      
 
     debug!("finishing");
   }
