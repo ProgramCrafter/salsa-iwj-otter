@@ -1,15 +1,20 @@
 #!/bin/bash
 set -e
 
-tname="$1";
+tname="$1"; shift;
 mkdir -p tmp
 
-target/debug/"$tname" 2>&1 | ts -s %.s >tmp/"$tname".log
+lname="$tname"
+case "$1" in
+--as-if=*)	lname="${1#--as-if}";;
+esac
+lname="$lname.log"
+
+target/debug/"$tname" "$@" 2>&1 | ts -s %.s >tmp/"$lname"
 case "${PIPESTATUS[*]}" in
 "0 0")	exit 0;
 esac
 
- <tmp/"$tname".log \
- tail -40
+tail -40 <tmp/"$lname"
 
 exit 1

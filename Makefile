@@ -261,11 +261,20 @@ libraries: $(LIBRARY_FILES)
 
 WDT_TESTS := $(basename $(notdir $(wildcard wdriver/wdt-*.rs)))
 
-wdt:	$(foreach f, $(WDT_TESTS), stamp/$f.check)
+WDT_LANDSCAPE_TESTS = wdt-altergame
 
-stamp/wdt-%.check:	wdriver/run1 stamp/cargo.debug stamp/cargo-wdt.debug \
-			$(FILEASSETS) templates/script.js $(LIBRARY_FILES)
+wdt:	$(foreach f, $(WDT_TESTS), stamp/$f.check) \
+	$(foreach f, $(WDT_LANDSCAPE_TESTS), stamp/$f.lcheck) \
+
+WDT_DEPS =	wdriver/run1 stamp/cargo.debug stamp/cargo-wdt.debug \
+		$(FILEASSETS) templates/script.js $(LIBRARY_FILES)
+
+stamp/wdt-%.check:	$(WDT_DEPS)
 	$(NAILING_CARGO_JUST_RUN) $(abspath $<) $(basename $(notdir $@))
+	$(stamp)
+
+stamp/wdt-%.lcheck:	$(WDT_DEPS)
+	$(NAILING_CARGO_JUST_RUN) $(abspath $<) $(basename $(notdir $@)) --as-if=lwdt-$* --layout=Landscape
 	$(stamp)
 
 #---------- deployment ----------

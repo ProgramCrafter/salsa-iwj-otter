@@ -8,20 +8,6 @@ type WRC = WhatResponseToClientOp;
 
 type PL = PresentationLayout;
 
-pub struct AbbrevPresentationLayout(pub PresentationLayout);
-
-impl<'r> FromParam<'r> for AbbrevPresentationLayout {
-  type Error = ();
-  #[throws(Self::Error)]
-  fn from_param(param: &'r RawStr) -> Self {
-    AbbrevPresentationLayout(match param.as_str() {
-      "p" => PL::Portrait,
-      "l" => PL::Landscape,
-      _ => throw!(())
-    })
-  }
-}
-
 #[derive(Clone,Debug)]
 pub struct InstanceAccess<'i, Id> {
   pub raw_token: &'i RawTokenVal,

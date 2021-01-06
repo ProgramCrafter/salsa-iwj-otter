@@ -51,6 +51,7 @@ pub use otter::gamestate::{self, Generation};
 pub use otter::global::InstanceName;
 pub use otter::mgmtchannel::MgmtChannel;
 pub use otter::spec::{Coord, Pos, PosC};
+pub use otter::ui::{AbbrevPresentationLayout, PresentationLayout};
 
 pub type T4d = t4::WebDriver;
 pub type WDE = t4::error::WebDriverError;
@@ -108,15 +109,21 @@ impl<T> JustWarn<T> for Result<T,AE> {
 
 #[derive(Debug,Clone)]
 #[derive(StructOpt)]
-struct Opts {
+pub struct Opts {
   #[structopt(long="--no-bwrap")]
   no_bwrap: bool,
 
   #[structopt(long="--tmp-dir", default_value="tmp")]
   tmp_dir: String,
 
+  #[structopt(long="--as-if")]
+  as_if: Option<String>,
+
   #[structopt(long="--pause", default_value="0ms")]
   pause: humantime::Duration,
+
+  #[structopt(long="--layout", default_value="Portrait")]
+  layout: PresentationLayout,
 
   #[structopt(long="--geckodriver-args", default_value="")]
   geckodriver_args: String,
@@ -132,6 +139,7 @@ type WindowState = Option<String>;
 pub struct Setup {
   pub ds: DirSubst,
   pub mgmt_conn: MgmtChannel,
+  pub opts: Opts,
   driver: T4d,
   current_window: WindowState,
   screenshot_count: ScreenShotCount,
@@ -358,7 +366,7 @@ fn reinvoke_via_bwrap(_opts: &Opts, current_exe: &str) -> Void {
 }
 
 #[throws(AE)]
-fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> DirSubst {
+fn prepare_tmpdir<'x>(opts: &'x Opts, mut current_exe: &'x str) -> DirSubst {
   #[throws(AE)]
   fn getcwd() -> String {
     env::current_dir()
@@ -366,6 +374,10 @@ fn prepare_tmpdir(opts: &Opts, current_exe: &str) -> DirSubst {
       .to_str()
       .ok_or_else(|| anyhow!("path is not UTF-8"))?
       .to_owned()
+  }
+
+  if let Some(as_if) = &opts.as_if {
+    current_exe = as_if;
   }
 
   let start_dir = getcwd()
@@ -1082,6 +1094,7 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
     ds,
     mgmt_conn,
     driver,
+    opts,
     screenshot_count,
     current_window: None,
     windows_squirreled,
@@ -1099,15 +1112,19 @@ impl Setup {
     fn mk(su: &mut Setup, instance: &Instance, u: StaticUser) -> Window {
       let nick: &str = u.into();
       let token = u.get_str("Token").expect("StaticUser missing Token");
-      let subst = su.ds.also([("nick",  nick),
-                              ("token", token)].iter());
+      let pl = AbbrevPresentationLayout(su.opts.layout).to_string();
+      let subst = su.ds.also([
+        ("nick",  nick),
+        ("token", token),
+        ("pl",    &pl),
+      ].iter());
       su.ds.otter(&subst
                   .ss("--super                          \
                        --account server:@nick@       \
                        --fixed-token @token@         \
                        join-game server::dummy")?)?;
       let w = su.new_window(instance, nick)?;
-      let url = subst.subst("@url@/?@token@")?;
+      let url = subst.subst("@url@/@pl@?@token@")?;
       su.w(&w)?.get(url)?;
       su.w(&w)?.screenshot("initial")?;
       w

@@ -23,7 +23,7 @@ pub use rocket_contrib::templates::tera::{self, Value};
 pub use rocket_contrib::templates::Engines;
 pub use rocket_contrib::templates::Template;
 
-pub use crate::api::{AbbrevPresentationLayout, InstanceAccess};
+pub use crate::api::InstanceAccess;
 pub use crate::api::{OnlineErrorResponse};
 pub use crate::cmdlistener::*;
 
@@ -98,9 +98,9 @@ fn loading_p(ia: PlayerQueryString) -> Template {
 }
 #[get("/<layout>")]
 #[throws(OER)]
-fn loading_l(layout: AbbrevPresentationLayout, ia: PlayerQueryString)
+fn loading_l(layout: Parse<AbbrevPresentationLayout>, ia: PlayerQueryString)
              -> Template {
-  loading(Some(layout.0), ia)?
+  loading(Some((layout.0).0), ia)?
 }
 
 #[throws(OE)]
