@@ -100,7 +100,8 @@ impl<'r> Responder<'r> for OnlineErrorResponse {
 }
 
 fn log_did_to_piece<L: Lens + ?Sized>(
-  gpl: &GPlayerState, lens: &L, p: &dyn Piece, pc: &PieceState, piece: PieceId,
+  gpl: &GPlayerState, lens: &L,
+  piece: PieceId, pc: &PieceState, p: &dyn Piece,
   did: &str,
 ) -> Vec<LogEntry> {
   vec![ LogEntry { html: Html(format!(
@@ -370,7 +371,7 @@ impl ApiPieceOp for ApiPiecePin {
     pc.pinned = self.0;
     let update = PieceUpdateOp::Modify(());
     let logents = log_did_to_piece(
-      &gpl, lens, p, pc, piece,
+      gpl, lens, piece, pc, p,
       if pc.pinned { "pinned" } else { "unpinned" },
     );
     (WhatResponseToClientOp::Predictable,
