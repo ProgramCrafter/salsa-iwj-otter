@@ -203,15 +203,10 @@ impl ApiPieceOp for ApiPieceGrab {
     pc.held = Some(player);
     
     let update = PieceUpdateOp::ModifyQuiet(());
-
-    let logent = LogEntry {
-      html : Html(format!("{} grasped {}",
-                     &htmlescape::encode_minimal(&gpl.nick),
-                     p.describe_pri(&lens.log_pri(piece, pc)).0)),
-    };
+    let logents = log_did_to_piece(gpl, lens, piece, pc, p, "grasped");
 
     (WhatResponseToClientOp::Predictable,
-     update, vec![logent])
+     update, logents)
   }
 }
 
@@ -274,15 +269,10 @@ impl ApiPieceOp for ApiPieceUngrab {
     pc.held = None;
     
     let update = PieceUpdateOp::Modify(());
-
-    let logent = LogEntry {
-      html : Html(format!("{} released {}",
-                     &htmlescape::encode_minimal(&gpl.nick),
-                     p.describe_pri(&lens.log_pri(piece, pc)).0)),
-    };
+    let logents = log_did_to_piece(gpl, lens, piece, pc, p, "released");
 
     (WhatResponseToClientOp::Predictable,
-     update, vec![logent])
+     update, logents)
   }
 }
 
@@ -403,11 +393,8 @@ impl ApiPieceOp for ApiPieceUo {
           return (
             wrc,
             PieceUpdateOp::Modify(()),
-            vec![ LogEntry { html: Html(format!(
-              "{} flipped {}",
-              &htmlescape::encode_minimal(&gpl.nick),
-              p.describe_pri(&lens.log_pri(piece, pc)).0
-            )) }])
+            log_did_to_piece(gpl, lens, piece, pc, p, "flipped"),
+          )
         },
 
         _ => break,
