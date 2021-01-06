@@ -4,16 +4,19 @@
 
 use otter_webdriver_tests::*;
 
-#[throws(AE)]
-fn main(){
-  {
-    let (mut su, inst) = setup(module_path!()).always_context("setup")?;
-    let [alice, bob] : [Window; 2] =
-      su.setup_static_users(&inst)?.try_into().unwrap();
-    debug!("ok {:?} {:?}", alice, bob);
+struct Ctx {
+  su: Setup,
+  alice: Window,
+  bob: Window,
+}
+
+impl Ctx {
+  #[throws(AE)]
+  fn drag(&mut self){
+    let su = &mut self.su;
 
     let alice_p1g = {
-      let mut w = su.w(&alice)?;
+      let mut w = su.w(&self.alice)?;
       w.synch()?;
       let p1 = w.find_piece("1.1")?;
       let p2 = w.find_piece("2.1")?;
@@ -26,8 +29,7 @@ fn main(){
         .click_and_hold()
         .move_to(p2x + 5, p2y + 10)
         .release()
-        .perform()
-        .always_context("drag")?;
+        .perform()?;
 
       let p1g_new = p1.posg()?;
       dbg!(p1g_old, p1g_new);
@@ -38,15 +40,20 @@ fn main(){
     };
 
     {
-      let mut w = su.w(&bob)?;
+      let mut w = su.w(&self.bob)?;
       w.synch()?;
       let p1 = w.find_piece("1.1")?;
       ensure_eq!(p1.posg()?, alice_p1g);
     }
+  }
 
+  #[throws(AE)]
+  fn rotate(&mut self){
+    let su = &mut self.su;
     let transform = format!("rotate(-90)");
+
     {
-      let mut w = su.w(&alice)?;
+      let mut w = su.w(&self.alice)?;
       let p = w.find_piece("4.1")?;
       let (px,py) = p.posw()?;
       w.action_chain()
@@ -65,11 +72,26 @@ fn main(){
     }
 
     {
-      let mut w = su.w(&bob)?;
+      let mut w = su.w(&self.bob)?;
       w.synch()?;
       let pd = w.find_element(By::Id("piece4.1"))?;
       ensure_eq!(pd.get_attribute("transform")?, Some(transform));
-    }      
+    }
+  }
+}
+
+#[throws(AE)]
+fn main(){
+  {
+    let (mut su, inst) = setup(module_path!()).always_context("setup")?;
+    let [alice, bob] : [Window; 2] =
+      su.setup_static_users(&inst)?.try_into().unwrap();
+    debug!("ok {:?} {:?}", alice, bob);
+
+    let mut c = Ctx { su, alice, bob };
+
+    c.drag().always_context("drag")?;
+    c.rotate().always_context("rotate")?;
 
     debug!("finishing");
   }
