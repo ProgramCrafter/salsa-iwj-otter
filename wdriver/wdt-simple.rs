@@ -50,7 +50,13 @@ impl Ctx {
   #[throws(AE)]
   fn rotate(&mut self){
     let su = &mut self.su;
-    let transform = format!("rotate(-90)");
+
+    let chk = |w: &WindowGuard<'_>| {
+      let transform = format!("rotate(-90)");
+      let pd = w.find_element(By::Id("piece4.1"))?;
+      ensure_eq!(pd.get_attribute("transform")?, Some(transform));
+      Ok::<_,AE>(())
+    };
 
     {
       let mut w = su.w(&self.alice)?;
@@ -65,17 +71,14 @@ impl Ctx {
         .perform()
         .always_context("rotate")?;
 
-      let transform = format!("rotate(-90)");
-      let pd = w.find_element(By::Id("piece4.1"))?;
-      ensure_eq!(pd.get_attribute("transform")?, Some(transform));
+      chk(&w)?;
       w.synch()?;
     }
 
     {
       let mut w = su.w(&self.bob)?;
       w.synch()?;
-      let pd = w.find_element(By::Id("piece4.1"))?;
-      ensure_eq!(pd.get_attribute("transform")?, Some(transform));
+      chk(&w)?;
     }
   }
 }
