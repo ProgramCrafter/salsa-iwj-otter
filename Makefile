@@ -267,7 +267,8 @@ wdt:	$(foreach f, $(WDT_TESTS), stamp/$f.check) \
 	$(foreach f, $(WDT_LANDSCAPE_TESTS), stamp/$f.lcheck) \
 
 WDT_DEPS =	wdriver/run1 stamp/cargo.debug stamp/cargo-wdt.debug \
-		$(FILEASSETS) templates/script.js $(LIBRARY_FILES)
+		$(FILEASSETS) templates/script.js \
+		$(wildcard libraries/*.toml) $(LIBRARY_FILES)
 
 stamp/wdt-%.check:	$(WDT_DEPS)
 	$(NAILING_CARGO_JUST_RUN) $(abspath $<) $(basename $(notdir $@))
