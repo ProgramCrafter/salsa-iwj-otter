@@ -57,9 +57,9 @@ fn main(){
         .perform()
         .always_context("rotate")?;
 
-      let transform = format!("rotate(-90");
+      let transform = format!("rotate(-90)");
       let pd = w.find_element(By::Id("piece4.1"))?;
-      ensure!(pd.get_attribute("transform")? == Some(transform));
+      ensure_eq!(pd.get_attribute("transform")?, Some(transform));
       w.synch()?;
     }
 

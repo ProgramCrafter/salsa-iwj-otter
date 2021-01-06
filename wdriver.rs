@@ -43,6 +43,7 @@ pub use std::process::{Command, Stdio};
 pub use std::thread::{self, sleep};
 pub use std::time;
 
+pub use otter::ensure_eq;
 pub use otter::commands::{MgmtCommand, MgmtResponse};
 pub use otter::commands::{MgmtGameInstruction, MgmtGameResponse};
 pub use otter::commands::{MgmtGameUpdateMode};

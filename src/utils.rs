@@ -11,6 +11,23 @@ use std::os::unix::io::IntoRawFd;
 use fehler::{throw, throws};
 use libc;
 
+#[macro_export]
+macro_rules! ensure_eq {
+  ($v1:expr, $v2:expr) => {
+    ({
+      let v1 = $v1;
+      let v2 = $v2;
+      if &v1 != &v2 {
+        Err(anyhow!("ensure_eq failed: {} != {}: {:?} != {:?}",
+                    stringify!($v1), stringify!($v2),
+                    &v1, &v2))
+      } else {
+        Ok(())
+      }
+    }?)
+  }
+}
+
 pub trait OrdExt: Ord + Sized + Clone {
   fn update_max(&mut self, new: &Self) {
     if *new > *self { *self = new.clone() }
