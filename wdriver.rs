@@ -1012,7 +1012,7 @@ impl<'g> WindowGuard<'g> {
 
     (|| {
       let errors = self.su.driver.execute_script(r#"
-        let e = document.getElementById('errors');
+        let e = document.getElementById('error');
         if (e) {
           return e.innerHTML;
         } else {
