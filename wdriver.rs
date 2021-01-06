@@ -1009,6 +1009,28 @@ impl<'g> WindowGuard<'g> {
       Ok::<(),AE>(())
     })()
       .context("await gen update via async js script")?;
+
+    (|| {
+      let errors = self.su.driver.execute_script(r#"
+        let e = document.getElementById('errors');
+        if (e) {
+          return e.innerHTML;
+        } else {
+          console.log('wdt-*: no errors element, no trapped errors check');
+          return "";
+        }
+      "#)
+        .context("get errors")?;
+      let errors = errors
+        .value()
+        .as_str()
+        .ok_or_else(|| anyhow!("errors script gave non-string"))?;
+      if ! errors.is_empty() {
+        throw!(anyhow!("JS errors - HTML: {}", errors));
+      }
+      Ok::<(),AE>(())
+    })()
+      .context("check for in-client trapped errors")?;
   }
 }
 
