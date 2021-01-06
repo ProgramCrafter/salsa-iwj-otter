@@ -335,10 +335,11 @@ fn api_rotate(form : Json<ApiPiece<ApiPieceRotate>>) -> impl response::Responder
 impl ApiPieceOp for ApiPieceRotate {
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
-    let ApiPieceOpArgs { gs,piece, .. } = a;
+    let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
+    let gpl = gs.players.byid(player).unwrap();
     pc.angle = PieceAngle::Compass(self.0);
-    let logents = vec![];
+    let logents = log_did_to_piece(gpl, lens, piece, pc, p, "rotated");
     let update = PieceUpdateOp::Modify(());
     (WhatResponseToClientOp::Predictable,
      update, logents)
