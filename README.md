@@ -316,23 +316,32 @@ Navigating the otter source code
 Automatic in-browser tests
 --------------------------
 
-  apt install firefox
+* `apt install firefox`
 
-  https://github.com/mozilla/geckodriver/releases/tag/v0.28.0
+* `https://github.com/mozilla/geckodriver/releases/tag/v0.28.0`
   download appropriate tarball, put "geckodriver" on PATH
 
-"make check" runs them; "make wdt" runs only those tests.  You can run
+`make check` runs all the tests; `make wdt` runs only those tests.  You can run
 an individual test with a rune like this:
 
+```
   OTTER_WDT_LOG=otter_webdriver_tests=trace CARGO_MANIFEST_DIR=~ian/Rustup/Game/server time target/debug/wdt-simple --geckodriver-args=
+```
 
-(You can omit the CARGO_MANIFEST_DIR for an in-tree non-privsep build.)
-After a test has run, you can find screenshots, etc. in tmp/wdt-simple.
+(This rune has some example logging options in it, for you to change
+if you like. You can omit the `CARGO_MANIFEST_DIR` for an in-tree
+non-privsep build.)  After a test has run, you can find screenshots,
+etc. in `tmp/wdt-simple` or whatever.  You can restart the same game
+server setup as the test used, with the state left by the test, with a
+rune like this:
 
-You can restart the same game server as the test used with
+```
   target/debug/daemon-otter tmp/wdt-simple/server-config.toml
-and then see it at this url:
+```
+and then play with it at this url:
+```
   http://localhost:8000/?kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe
+```
 
 
 Rust, cargo, curl|bash-ware; privsep
