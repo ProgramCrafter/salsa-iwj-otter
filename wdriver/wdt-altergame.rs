@@ -40,7 +40,7 @@ impl Ctx {
 
   #[throws(AE)]
   fn otter(&mut self, verb: &[&str], args: &[&str]) {
-    self.su.otter(&self.alice, verb, args)?
+    self.su.w(&self.alice)?.otter(verb, args)?
   }
 
   #[throws(AE)]

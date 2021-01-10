@@ -918,17 +918,6 @@ impl Setup {
     self.windows_squirreled.push(name.to_owned());
     window
   }
-
-  #[throws(AE)]
-  pub fn otter(&mut self, w: &Window, verb: &[&str], args: &[&str]) {
-    let args : Vec<String> =
-      ["--account", "server:"].iter().cloned().map(Into::into)
-      .chain(verb.iter().cloned().map(Into::into))
-      .chain(iter::once(w.table()))
-      .chain(args.iter().cloned().map(Into::into))
-      .collect();
-    self.ds.otter(&args)?;
-  }
 }
 
 impl Setup {
@@ -983,6 +972,18 @@ fn screenshot(driver: &T4d, count: &mut ScreenShotCount, slug: &str) {
 }
 
 impl<'g> WindowGuard<'g> {
+
+  #[throws(AE)]
+  pub fn otter(&mut self, verb: &[&str], args: &[&str]) {
+    let args : Vec<String> =
+      ["--account", "server:"].iter().cloned().map(Into::into)
+      .chain(verb.iter().cloned().map(Into::into))
+      .chain(iter::once(self.w.table()))
+      .chain(args.iter().cloned().map(Into::into))
+      .collect();
+    self.su.ds.otter(&args)?;
+  }
+
   #[throws(AE)]
   fn synch_raw(&mut self) {
     let cmd = MgmtCommand::AlterGame {
