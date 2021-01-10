@@ -40,7 +40,7 @@ fn main() {
 
   let libs = Config1::PathGlob(opts.libs.clone());
   load(&vec![libs.clone()])?;
-  let items : Vec<(String, ItemEnquiryData)> =
+  let mut items : Vec<(String, ItemEnquiryData)> =
     libs_list()
     .into_iter()
     .map(|lib| {
@@ -54,6 +54,7 @@ fn main() {
       items.into_iter().map(|item| (lib.clone(),item)).collect::<Vec<_>>()
     }).flatten()
     .collect();
+  items.sort();
 
   for item in &items {
     println!("{:<10} {}", &item.0, item.1.line_for_list());
