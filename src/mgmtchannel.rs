@@ -74,7 +74,14 @@ impl MgmtChannel {
           format!("got error response to: {:?}",&cmd)
         )?;
       },
-      AlterGame { error: Some(error), .. } => {
+      AlterGame { error: Some(error), ref responses } => {
+        if let MgmtCommand::AlterGame { insns, .. } = &cmd {
+          if responses.len() < insns.len() {
+            Err(error.clone())
+              .context("AlterGame insn failed")
+              .with_context(|| format!(" {:?}", &insns[responses.len()]))?;
+          }
+        }
         Err(error.clone()).context(format!(
           "game alterations failed (maybe partially); response to: {:?}",
           &cmd
