@@ -4,6 +4,8 @@
 
 pub use otter::imports::*;
 
+pub use shapelib::*;
+
 use structopt::StructOpt;
 
 #[derive(Debug,Clone)]
@@ -19,9 +21,29 @@ pub struct Opts {
 #[throws(anyhow::Error)]
 fn main() {
   let opts = Opts::from_args();
-  let libs = shapelib::Config1::PathGlob(opts.libs.clone());
-  shapelib::load(&vec![libs])?;
-/*
+
+  env_logger::Builder::new()
+//    .format_timestamp_micros()
+//    .format_level(true)
+//    .filter_module(exe_module_path, log::LevelFilter::Debug)
+    .filter_level(log::LevelFilter::Info)
+    .parse_env("OTTERLIB_LOG")
+    .init();
+
+  let libs = Config1::PathGlob(opts.libs.clone());
+  load(&vec![libs.clone()])?;
+  let libnames = libs_list();
+  for lib in libnames {
+    let contents = libs_lookup(&lib)?;
+    let items = contents.list_glob(&opts.items)?;
+    dbg!(&items);
+    for item in items {
+      dbg!(&item);
+    }
+  }
+}
+  
+/* 
   let name = a.next().unwrap();
   let dirname = a.next().unwrap();
   let catalogue = format!("{}.toml", &dirname);
@@ -30,4 +52,4 @@ fn main() {
   };
   shapelib::load1(&e).unwrap();
 */
-}
+

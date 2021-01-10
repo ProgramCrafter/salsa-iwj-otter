@@ -207,6 +207,13 @@ impl Piece for Item {
 
 static SHAPELIBS: RwLock<Option<Registry>> = const_rwlock(None);
 
+pub fn libs_list() -> Vec<String> {
+  let libs = SHAPELIBS.read();
+  libs.as_ref().map(
+    |l| l.keys().cloned().collect()
+  ).unwrap_or_default()
+}
+
 #[throws(SpecError)]
 pub fn libs_lookup(libname: &str)
                    -> MappedRwLockReadGuard<'static, Contents> {
