@@ -504,8 +504,8 @@ impl Config1 {
 }
 
 #[throws(LibraryLoadError)]
-pub fn load() {
-  for l in &config().shapelibs {
+pub fn load(libs: &Vec<Config1>) {
+  for l in libs {
     let libs = l.resolve()?;
     let n = libs.len();
     for e in libs {

@@ -269,7 +269,7 @@ fn main() {
   }
 
   nwtemplates::init()?;
-  shapelib::load()?;
+  shapelib::load(&config().shapelibs)?;
 
   c.lock_save_area()?;
   load_accounts()?;
