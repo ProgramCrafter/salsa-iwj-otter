@@ -191,11 +191,102 @@ foreach my $groupname (sort keys %$groups) {
 
     print DEBUG "file $lstem ";
 
-    print $makefile <<END or die $!;
+    my $process_colour = sub ($$) {
+      my ($linput, $lprocessed) = @_;
+      print $makefile <<END or die $!;
 LIBRARY_FILES += $lprocessed
-$lprocessed: $lupstream $licpath $input
+$lprocessed: $linput $licpath $input
 	\$(LIBRARY_PROCESS_SVG)
 END
+    };
+
+    my $process_colours = sub {
+      my $colours = $gcfg->('colours');
+      if (!keys %$colours) {
+	$process_colour->($lupstream, $lprocessed, "");
+	return;
+      }
+      foreach my $colour (sort keys %$colours) {
+	my $cspec = $colours->{$colour};
+	my $abbrev = $cspec->{abbrev} or confess;
+	my $ncoloured = $lupstream;
+	$ncoloured =~ s/\.svg$/.coloured$&/;
+	my $outfile  = $lprocessed;
+	$ncoloured =~ s/_c/$abbrev/ or confess "$outfile ?";
+	$outfile  =~ s/_c/$abbrev/ or confess "$outfile ?";
+	my $coloured = $lupstream;
+
+	my $ci = 0;
+	my $cfp = '$<';
+	my $emitmap = sub {
+	  my ($from, $to) = @_;
+	  confess if $from =~ m/\W/ || $to =~ m/\W/;
+
+	  my $nfp = "\$@.$ci.tmp";
+	  $coloured = $ncoloured;
+	  print $makefile <<END or die $! if $ci == 0;
+LIBRARY_CLEAN += $ncoloured
+$ncoloured: $lupstream Makefile
+END
+	  $ci++;
+	  print $makefile <<END or die $!;
+	\$(RECOLOUR_SVG) -f '$from' -t '$to' $cfp >$nfp
+END
+	  $cfp = $nfp;
+	};
+
+	my %map = %{ $cspec->{map} // { } };
+	while (keys %map) {
+	  my $from = (sort keys %map)[0];
+	  my @maybe_cycle = ();
+	  my $cycle;
+	  for (;;) {
+	    push @maybe_cycle, $from;
+	    my $to = $map{$from};
+	    if (!exists $map{$to}) {
+	      last;
+	    }
+	    $from = $to;
+	    if (grep { $_ eq $to } @maybe_cycle) {
+	      $cycle = $to;
+	      last;
+	    }
+	  }
+	  my $emit_most = sub ($) {
+	    my ($end) = @_;
+	    $end //= $#maybe_cycle;
+	    foreach my $i (@maybe_cycle[0..$end]) {
+	      $emitmap->($i, $map{$i});
+	    }
+	  };
+	  if (defined $cycle) {
+	    my $temp = 'abcbfb'; # chosen at random
+	    my $aside = $maybe_cycle[-1];
+	    $emitmap->($aside, $temp);
+	    $emit_most->($#maybe_cycle-1);
+	    $emitmap->($temp, $map{$aside});
+	    print $makefile <<END or die $!;
+# cycle: @maybe_cycle
+END
+	  } else {
+	    $emit_most->();
+	  }
+	  delete $map{$_} foreach @maybe_cycle;
+	}
+	if ($ci) {
+	  # inkscape extensions have a tendency to write an empty
+	  # file when they don't like their input or arguments
+	  print $makefile <<END or die $!;
+	test -s $cfp
+	mv -f $cfp \$@
+END
+	}
+
+	$process_colour->($coloured, $outfile);
+      }
+    };
+
+    $process_colours->();
 
     if (stat $lupstream) {
       print DEBUG "already.\n";

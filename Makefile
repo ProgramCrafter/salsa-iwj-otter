@@ -38,6 +38,12 @@ WASM_PACK_OPTIONS = --cargo-path=/bin/echo
 
 BUNDLE_SOURCES ?= bundle-rust-sources
 
+ifndef INKSCAPE_EXTENSIONS
+INKSCAPE ?= inkscape
+INKSCAPE_EXTENSIONS := $(shell $(INKSCAPE) -x)
+endif
+RECOLOUR_SVG ?= $(INKSCAPE_EXTENSIONS)/color_replace.py
+
 DEPLOY_ARCH=x86_64-unknown-linux-musl
 DEPLOY_RELEASE=debug
 DEPLOY_TARGET_DIR=$(TARGET_DIR)/$(addsuffix /,$(DEPLOY_ARCH))$(DEPLOY_RELEASE)
@@ -303,5 +309,6 @@ deploy: stamp/cargo.deploy-build bundled-sources assets libraries
 
 clean: clean-nailing
 	rm -f templates/script.js library/*/*.usvg stamp/*
+	rm -rf $(LIBRARY_CLEAN)
 	rm -rf target
 	$(NAILING_CARGO_JUST_RUN) rm -rf target

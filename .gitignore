@@ -8,6 +8,7 @@ templates/CC-BY-SA-4.0
 templates/otter_wasm.ns.d.ts
 save/lock
 /library/*/*.usvg
+/library/*/*.coloured.svg
 *.tmp
 .tsconfig.*.json
 stamp/*

@@ -41,7 +41,14 @@ struct GroupDetails {
   #[serde(default)] centre: [f64; 2],
   #[serde(default)] flip: bool,
   #[serde(default="num_traits::identities::One::one")] scale: f64,
+  colours: Option<HashMap<String, RecolourData>>,
   #[serde(flatten)] outline: Box<dyn OutlineDefn>,
+}
+
+#[derive(Debug,Deserialize)]
+struct RecolourData {
+  abbrev: String,
+  // `map` not used by Rust
 }
 
 #[derive(Debug)]
@@ -105,6 +112,10 @@ pub enum LibraryLoadError {
   DuplicateItem { item: String, group1: String, group2: String },
   #[error("{:?}",&self)]
   FilesListLineMissingWhitespace(usize),
+  #[error("{:?}",&self)]
+  MissingSubstituionToken(&'static str),
+  #[error("{:?}",&self)]
+  RepeatedSubstituionToken(&'static str),
 }
 
 impl LibraryLoadError {
@@ -365,24 +376,51 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
       d,
     });
     for fe in gdefn.files.0 {
+      let mut add1 = |item_name: &str, desc| {
+        let idata = ItemData {
+          group: group.clone(),
+          d: Arc::new(ItemDetails { desc }),
+        };
+        type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
+        match l.items.entry(item_name.to_owned()) {
+          H::Occupied(oe) => throw!(LLE::DuplicateItem {
+            item: item_name.to_owned(),
+            group1: oe.get().group.groupname.clone(),
+            group2: groupname.clone(),
+          }),
+          H::Vacant(ve) => {
+            debug!("loaded shape {} {}", libname, item_name);
+            ve.insert(idata);
+          }
+        };
+        Ok::<_,LLE>(())
+      };
+
       let item_name = format!("{}{}{}", gdefn.item_prefix,
                               fe.item_spec, gdefn.item_suffix);
-      let idata = ItemData {
-        group: group.clone(),
-        d: Arc::new(ItemDetails { desc: fe.desc.clone() }),
-      };
-      type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
-      match l.items.entry(item_name.clone()) {
-        H::Occupied(oe) => throw!(LLE::DuplicateItem {
-          item: item_name.clone(),
-          group1: oe.get().group.groupname.clone(),
-          group2: groupname.clone(),
-        }),
-        H::Vacant(ve) => {
-          debug!("loaded shape {} {}", libname, item_name);
-          ve.insert(idata);
+
+      if let Some(colours) = &group.d.colours {
+        #[throws(LLE)]
+        fn subst(before: &str, needle: &'static str, replacement: &str)
+                 -> String {
+          let mut matches = before.match_indices(needle);
+          let m1 = matches.next()
+            .ok_or(LLE::MissingSubstituionToken(needle))?;
+          if matches.next().is_some() {
+            Err(LLE::RepeatedSubstituionToken(needle))?;
+          }
+          before[0.. m1.0].to_owned()
+            + replacement
+            + &before[m1.0 + m1.1.len() ..]
         }
-      };
+        for (colour, recolourdata) in colours {
+          let t_item_name = subst(&item_name, "_c", &recolourdata.abbrev)?;
+          let t_desc = Html(subst(&fe.desc.0, "_colour", colour)?);
+          add1(&t_item_name, t_desc)?;
+        }
+      } else {
+        add1(&item_name, fe.desc.clone())?;
+      }
     }
   }
   l
