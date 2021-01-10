@@ -1028,6 +1028,17 @@ impl<'g> WindowGuard<'g> {
   }
 
   #[throws(AE)]
+  pub fn synch_ignore_js_errors(&mut self) {
+    self.synch_raw()?;
+
+    self.su.driver.execute_script(r#"
+      let e = document.getElementById('error');
+      e.innerHTML = "";
+    "#)
+      .context("clear in-client trapped errors")?;
+  }
+
+  #[throws(AE)]
   pub fn synch(&mut self) {
     self.synch_raw()?;
 
