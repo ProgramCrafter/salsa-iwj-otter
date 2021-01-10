@@ -242,7 +242,7 @@ impl Substitutor for DirSubst {
       "build"  => self.start_dir.clone(),
       "abstmp" => self.abstmp.clone(),
       "target" => format!("{}/target", &self.start_dir),
-      "specs"  => format!("{}/specs" , &self.src      ),
+      "specs"  => self.specs_dir(),
       _ => return None,
     })
   }
@@ -614,6 +614,10 @@ _ = "error" # rocket
 }
 
 impl DirSubst {
+  pub fn specs_dir(&self) -> String {
+    format!("{}/specs" , &self.src)
+  }
+
   #[throws(AE)]
   pub fn otter<S:AsRef<str>>(&self, xargs: &[S]) {
     let ds = self;
