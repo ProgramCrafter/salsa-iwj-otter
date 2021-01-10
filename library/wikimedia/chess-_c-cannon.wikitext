@@ -1,0 +1,16 @@
+=={{int:filedesc}}==
+{{Information
+|description={{en|1=Chess piece for new diagram template}}
+|date=2013-04-11 15:42:40
+|source={{own}}
+|author=[[User:NikNaks|NikNaks]]
+|permission=
+|other_versions=
+|other_fields=
+}}
+
+=={{int:license-header}}==
+{{self|cc-by-sa-3.0}}
+
+
+[[Category:SVG chess pieces]]

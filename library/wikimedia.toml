@@ -56,6 +56,15 @@ map = {"ffffff" = "ffc505"}
 abbrev = "purple"
 map = {"ffffff" = "9305ff"}
 
+[group.chess-26]
+inherit = "chess"
+size = [26]
+centre = [13,13]
+scale = 0.3461
+files = """
+_c-siege-engine	tlt26	a _colour siege engine piece
+"""
+
 [group.chess-flip]
 inherit = "chess"
 flip = true
@@ -67,6 +76,14 @@ _c-knight-king	Cet45	a _colour knight king piece
 # ^ wikimedia calls these Centaurs
 _c-ship		ship_slt45		a _colour ship piece
 _c-zebra	Zlt45	a _colour zebra piece
+"""
+
+[group.chess-flip-26]
+inherit = "chess-26"
+flip = true
+files = """
+_c-cannon	Clt26	a _colour cannon piece
+_c-flag		Blt26	a _colour flag piece
 """
 
 [group.chess-anomalous-filenames]
