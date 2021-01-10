@@ -862,17 +862,22 @@ impl CommandStream<'_> {
       use MgmtChannelReadError::*;
       let resp = match self.chan.read::<MgmtCommand>() {
         Ok(cmd) => {
-          let cmd_s = log_enabled!(log::Level::Info)
+          let mut cmd_s = log_enabled!(log::Level::Info)
             .as_some_from(|| format!("{:?}", &cmd))
             .unwrap_or_default();
+          const MAX : usize = 200;
+          if cmd_s.len() > MAX-3 {
+            cmd_s.truncate(MAX-3);
+            cmd_s += "..";
+          }
           match execute(&mut self, cmd) {
             Ok(resp) => {
-              info!("command connection {}: executed {:?}",
+              info!("command connection {}: executed {}",
                     &self.desc, cmd_s);
               resp
             }
             Err(error) => {
-              info!("command connection {}: error {:?} from {:?}",
+              info!("command connection {}: error {:?} from {}",
                     &self.desc, &error, cmd_s);
               MgmtResponse::Error { error }
             }
