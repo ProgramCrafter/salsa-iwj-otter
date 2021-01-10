@@ -82,8 +82,15 @@ _c-zebra	Zlt45	a _colour zebra piece
 inherit = "chess-26"
 flip = true
 files = """
-_c-cannon	Clt26	a _colour cannon piece
 _c-flag		Blt26	a _colour flag piece
+"""
+
+[group.chess-flip-26-ship-adj]
+inherit = "chess-flip-26"
+flip = true
+centre = [13, 16]
+files = """
+_c-cannon	Clt26	a _colour cannon piece
 """
 
 [group.chess-anomalous-filenames]
