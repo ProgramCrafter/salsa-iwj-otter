@@ -1,0 +1,14 @@
+=={{int:filedesc}}==
+{{Information
+|description={{en|1=light-coloured ship chess piece}}
+|date=2021-01-09
+|source=Chess_syg45.svg
+|author=[[User:Molybdomancy|Molybdomancy]]
+|permission=
+|other versions=
+}}
+
+=={{int:license-header}}==
+{{self|cc-by-sa-4.0}}
+
+[[Category:SVG chess pieces]]

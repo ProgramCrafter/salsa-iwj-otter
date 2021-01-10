@@ -21,79 +21,58 @@ size = [45]
 centre = [22.5, 22.5]
 item_prefix = "chess-"
 stem_prefix = "Chess_"
+
 files = """
-w-P	plt45	a white pawn
-w-B	blt45	a white bishop
-w-R	rlt45	a white rook
-w-K	klt45	the white king
-w-Q	qlt45	the white queen
+_c-P	plt45	a _colour pawn
+_c-B	blt45	a _colour bishop
+_c-R	rlt45	a _colour rook
+_c-K	klt45	the _colour king
+_c-Q	qlt45	the _colour queen
 
-b-P	pdt45	a black pawn
-b-B	bdt45	a black bishop
-b-R	rdt45	a black rook
-b-K	kdt45	the black king
-b-Q	qdt45	the black queen
-
-g-P	pgt45	a green chess pawn
-g-B	bgt45	a green chess bishop
-g-R	rgt45	a green chess rook
-g-K	kgt45	a green chess king
-g-Q	qgt45	a green chess queen
-
-r-P	prt45	a red chess pawn
-r-B	brt45	a red chess bishop
-r-R	rrt45	a red chess rook
-r-K	krt45	a red chess king
-r-Q	qrt45	a red chess queen
-
-y-P	pyt45	a yellow chess pawn
-y-B	byt45	a yellow chess bishop
-y-R	ryt45	a yellow chess rook
-y-K	kyt45	a yellow chess king
-y-Q	qyt45	a yellow chess queen
-
-w-mann		Mlt45	a white Mann piece
-b-mann		Mdt45	a black Mann piece
-w-elephant	elt45	a white elephant piece
-b-elephant	edt45	a black elephant piece
-
-#  Foolish people stole "s" for an upside-down knight, and as
-#  a result the white one is not available.  So I guess no
-#  black one either unless someone wants to edit it.
-# w-ship	Xslt45X	a white ship piece
-# b-ship	sdt45	a black ship piece
+_c-elephant	elt45	a _colour elephant piece
+_c-mann		Mlt45	a _colour Mann piece
 """
+
+[group.chess.colours.white]
+abbrev = "w"
+
+[group.chess.colours.black]
+abbrev = "b"
+map = { "000000" = "ffffff", "ffffff" = "000000" }
+
+[group.chess.colours."light blue"]
+abbrev = "blue"
+map = {"ffffff" = "05e2ff"}
+
+[group.chess.colours."red"]
+abbrev = "red"
+map = {"ffffff" = "ff4805"}
+
+[group.chess.colours."yellow"]
+abbrev = "yellow"
+map = {"ffffff" = "ffc505"}
+
+[group.chess.colours."purple"]
+abbrev = "purple"
+map = {"ffffff" = "9305ff"}
 
 [group.chess-flip]
 inherit = "chess"
 flip = true
 files = """
-w-N	alt45	a white knight
-b-N	adt45	a black knight
+_c-N	alt45	a _colour knight
 
-# these seem to be more queens
-# g-N	qgt45	a green chess knight
-# r-N	qrt45	a red chess knight
-# y-N	qyt45	a yellow chess knight
-
-g-ship		sgt45	a green ship piece
-r-ship		srt45	a red ship piece
-y-ship		syt45	a yellow ship piece
-
-w-zebra		Zlt45	a white zebra piece
-b-zebra		Zdt45	a black zebra piece
-
-w-knight-king	Cet45	a white knight king piece
-b-knight-king	Cdt45	a white knight king piece
+_c-knight-king	Cet45	a _colour knight king piece
 # ^ wikimedia calls these Centaurs
+_c-ship		ship_slt45		a _colour ship piece
+_c-zebra	Zlt45	a _colour zebra piece
 """
 
 [group.chess-anomalous-filenames]
 inherit = "chess"
 stem_prefix = ""
 files = """
-w-commoner	Commoner_Transparent		a white commoner piece
-b-commoner	CommonerB_Transparent		a black commoner piece
+_c-commoner	Commoner_Transparent		a _colour commoner piece
 """
 
 [group.misc]

@@ -121,7 +121,7 @@ count = 4
 pos = [210, 75]
 type = "LibList"
 lib = "wikimedia"
-prefix = "chess-r-"
+prefix = "chess-red-"
 items = ["K","Q","R","R","B","B","ship","ship"]
 posd = [10, 0]
 
@@ -129,7 +129,7 @@ posd = [10, 0]
 pos = [210, 85]
 type = "LibList"
 lib = "wikimedia"
-prefix = "chess-g-"
+prefix = "chess-blue-"
 items = ["K","Q","R","R","B","B","ship","ship"]
 posd = [10, 0]
 
@@ -137,7 +137,7 @@ posd = [10, 0]
 pos = [210, 95]
 type = "LibList"
 lib = "wikimedia"
-prefix = "chess-y-"
+prefix = "chess-yellow-"
 items = ["K","Q","R","R","B","B","ship","ship"]
 posd = [10, 0]
 

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
+
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -12,10 +13,9 @@
    height="45.200001"
    id="svg3128"
    sodipodi:version="0.32"
-   inkscape:version="0.46"
+   inkscape:version="0.92.1 r15371"
    version="1.0"
-   sodipodi:docbase="/home/cburnett/wikipedia/images/chess"
-   sodipodi:docname="Chess_syg45.svg"
+   sodipodi:docname="Chess_slt45.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape">
   <defs
      id="defs3130">
@@ -59,7 +59,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="5.6568542"
-     inkscape:cx="37.533737"
+     inkscape:cx="7.1281451"
      inkscape:cy="24.769657"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -68,18 +68,19 @@
      inkscape:grid-points="true"
      showgrid="false"
      inkscape:window-width="1214"
-     inkscape:window-height="878"
+     inkscape:window-height="817"
      inkscape:window-x="132"
-     inkscape:window-y="0"
+     inkscape:window-y="26"
      showguides="true"
-     inkscape:guide-bbox="true">
+     inkscape:guide-bbox="true"
+     inkscape:window-maximized="0">
     <inkscape:grid
        id="GridFromPre046Settings"
        type="xygrid"
-       originx="0px"
-       originy="0px"
-       spacingx="0.5px"
-       spacingy="0.5px"
+       originx="0"
+       originy="0"
+       spacingx="0.5"
+       spacingy="0.5"
        color="#0000ff"
        empcolor="#0000ff"
        opacity="0.2"
@@ -134,5 +135,17 @@
        style="fill:#ffdc00;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1.50000000000000000;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        d="M -78.78165,-63.217822 C -78.78165,-63.217822 -76.75174,-69.852989 -80.55592,-75.763298 L -80.62769,-75.763298 C -80.62769,-75.763298 -97.92592,-75.763298 -98.19287,-75.763298 L -98.38804,-75.763298 C -94.58387,-69.852989 -96.52184,-63.273574 -96.38272,-63.217822 L -95.54681,-63.224556 C -95.54681,-63.224556 -78.78165,-63.217822 -78.78165,-63.217822 z"
        sodipodi:nodetypes="cccccccc" />
+    <path
+       style="fill:#ffffff;stroke:#ffffff;stroke-width:0.31318706;stroke-miterlimit:4;stroke-dasharray:none"
+       d="m 17.883305,21.079133 c 0.07954,-3.353889 -0.225368,-5.031626 -1.475297,-8.117605 -0.118219,-0.291875 0.320121,-0.309359 7.7561,-0.309359 h 7.881401 l 0.271668,0.414619 c 0.431577,0.658669 1.094534,2.468255 1.406064,3.837944 0.302925,1.331862 0.381127,4.877033 0.132363,6.000486 l -0.137002,0.618718 -7.947733,0.0461 -7.947734,0.0461 z"
+       id="path19"
+       inkscape:connector-curvature="0"
+       transform="translate(-113.16893,-87.666093)" />
+    <path
+       style="fill:#ffffff;stroke:#ffffff;stroke-width:0.31318706;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M 8.5809586,31.257916 C 8.4859388,30.990542 8.0321071,29.916623 7.5724437,28.871431 L 6.7366921,26.971082 H 4.8994867 c -1.7193544,0 -1.8372056,-0.02268 -1.8372056,-0.353554 0,-0.344612 0.1178512,-0.353553 4.6601482,-0.353553 h 4.6601487 l 0.437067,1.193242 0.437068,1.193243 12.094318,0.04401 12.094318,0.04401 1.760932,-1.406135 c 0.968512,-0.773375 1.791305,-1.375762 1.828428,-1.338639 0.03712,0.03712 -0.236755,0.650078 -0.608617,1.362122 -0.466816,0.893858 -1.147049,1.773457 -2.1974,2.841422 l -1.521284,1.546796 H 22.730566 8.7537218 Z"
+       id="path21"
+       inkscape:connector-curvature="0"
+       transform="translate(-113.16893,-87.666093)" />
   </g>
 </svg>
