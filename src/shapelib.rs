@@ -224,7 +224,8 @@ impl ItemSpec {
   #[throws(SpecError)]
   pub fn load(&self) -> Box<dyn Piece> {
     let lib = libs_lookup(&self.lib)?;
-    let idata = lib.items.get(&self.item).ok_or(SE::LibraryItemNotFound)?;
+    let idata = lib.items.get(&self.item)
+      .ok_or(SE::LibraryItemNotFound(self.item.clone()))?;
     lib.load1(idata, &self.item)?
   }
 }
@@ -237,7 +238,7 @@ impl Contents {
       .map_err(|e| if e.kind() == ErrorKind::NotFound {
         warn!("library item lib={} itme={} data file {:?} not found",
               &self.libname, &name, &svg_path);
-        SE::LibraryItemNotFound
+        SE::LibraryItemNotFound(name.to_owned())
       } else {
         let m = "error accessing/reading library item data file";
         error!("{}: {}: {}", &m, &svg_path, &e);
@@ -280,7 +281,7 @@ impl Contents {
     for (k,v) in &self.items {
       if !pat.matches(&k) { continue }
       let loaded = match self.load1(v, &k) {
-        Err(SpecError::LibraryItemNotFound) => continue,
+        Err(SpecError::LibraryItemNotFound(_)) => continue,
         e@ Err(_) => e?,
         Ok(r) => r,
       };
