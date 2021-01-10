@@ -229,18 +229,22 @@ END
 	my $coloured = $lupstream;
 
 	my $ci = 0;
-	my $cfp = '$<';
+	my $cfp;
 	my $emitmap = sub {
 	  my ($from, $to) = @_;
 	  confess if $from =~ m/\W/ || $to =~ m/\W/;
 
-	  my $nfp = "\$@.$ci.tmp";
 	  $coloured = $ncoloured;
-	  print $makefile <<END or die $! if $ci == 0;
+	  if (!defined $cfp) {
+	    $cfp ="\$@.$ci.tmp";
+	    print $makefile <<END or die $!;
 LIBRARY_CLEAN += $ncoloured
 $ncoloured: $lupstream Makefile $makepath
+	\$(USVG_CMD) -c - <\$< >$cfp
 END
+	  }
 	  $ci++;
+	  my $nfp = "\$@.$ci.tmp";
 	  print $makefile <<END or die $!;
 	\$(RECOLOUR_SVG) -f '$from' -t '$to' $cfp >$nfp
 END
