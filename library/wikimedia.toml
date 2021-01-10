@@ -100,6 +100,14 @@ files = """
 _c-commoner	Commoner_Transparent		a _colour commoner piece
 """
 
+[group.chess-onecolour]
+inherit = "chess"
+colours = { }
+files = """
+# harlequin		put45		a black/white pawn
+# ^ needs a grey LH edge really
+"""
+
 [group.misc]
 outline = "Square"
 size = [448,326]
