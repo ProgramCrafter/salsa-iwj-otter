@@ -179,9 +179,10 @@ foreach my $groupname (sort keys %$groups) {
   foreach (split(/\n/, $gcfg->('files'))) {
     s/^\s+//;
     next if m/^\#/ || m/^$/;
-    m/^(\S+)\s+(\S+)/ or die;
+    m/^(\S+)\s+(\S+)/ or die "bad line in files: \`$_'";
     my $lministem = $1;
     my $rministem = $2;
+
     my $lstem = cfg_affixes $gcfg, 'item', $lministem;
     my $rstem = cfg_affixes $gcfg, 'stem', $rministem;
     my $lbase = "$basename/$lstem";
