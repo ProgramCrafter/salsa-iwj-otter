@@ -62,6 +62,7 @@ flip = true
 files = """
 _c-N	alt45	a _colour knight
 
+_c-giraffe	Glt45	a _colour giraffe piece
 _c-knight-king	Cet45	a _colour knight king piece
 # ^ wikimedia calls these Centaurs
 _c-ship		ship_slt45		a _colour ship piece

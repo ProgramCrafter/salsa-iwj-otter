@@ -1,0 +1,15 @@
+=={{int:filedesc}}==
+{{Information
+|description={{en|1=Light giraffe on transparent square, default size 45x45}}
+|date=2016-04-15
+|source={{own}}
+|author={{U|Francois-Pier}}
+|permission=GFDL & BSD & GPL
+|other versions=
+|other fields={{Igen|T|+|s=}}
+}}
+
+=={{int:license-header}}==
+{{self|GFDL|migration=relicense|BSD|GPL}}
+
+[[Category:SVG chess pieces/Fairy]]
