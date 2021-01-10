@@ -6,7 +6,7 @@ mkdir -p tmp
 
 lname="$tname"
 case "$1" in
---as-if=*)	lname="${1#--as-if}";;
+--as-if=*)	lname="${1#--as-if=}";;
 esac
 lname="$lname.log"
 
