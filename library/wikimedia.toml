@@ -96,7 +96,7 @@ w-commoner	Commoner_Transparent		a white commoner piece
 b-commoner	CommonerB_Transparent		a black commoner piece
 """
 
-[group.misc-management]
+[group.misc]
 outline = "Square"
 size = [448,326]
 centre = [224, 163]
