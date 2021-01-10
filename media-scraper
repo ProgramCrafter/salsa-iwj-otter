@@ -226,7 +226,7 @@ END
 	  $coloured = $ncoloured;
 	  print $makefile <<END or die $! if $ci == 0;
 LIBRARY_CLEAN += $ncoloured
-$ncoloured: $lupstream Makefile
+$ncoloured: $lupstream Makefile $makepath
 END
 	  $ci++;
 	  print $makefile <<END or die $!;
