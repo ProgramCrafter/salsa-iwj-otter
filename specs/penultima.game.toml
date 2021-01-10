@@ -155,7 +155,7 @@ type = "LibList"
 lib = "wikimedia"
 prefix = "chess-w-"
 items = ["commoner","elephant","knight-king","mann","zebra",
-	 "ship","giraffe","cannon","flag"]
+	 "ship","giraffe","cannon"]
 posd = [10, 0]
 
 [[pieces]]
@@ -164,7 +164,7 @@ type = "LibList"
 lib = "wikimedia"
 prefix = "chess-w-"
 items = ["commoner","elephant","knight-king","mann","zebra",
-	 "ship","giraffe","cannon","flag"]
+	 "ship","giraffe","cannon"]
 posd = [10, 0]
 
 [[pieces]]
@@ -173,7 +173,7 @@ type = "LibList"
 lib = "wikimedia"
 prefix = "chess-b-"
 items = ["commoner","elephant","knight-king","mann","zebra",
-	"ship","giraffe","cannon","flag"]
+	"ship","giraffe","cannon"]
 posd = [10, 0]
 
 [[pieces]]
@@ -182,5 +182,5 @@ type = "LibList"
 lib = "wikimedia"
 prefix = "chess-b-"
 items = ["commoner","elephant","knight-king","mann","zebra",
-	 "ship","giraffe","cannon","flag"]
+	 "ship","giraffe","cannon"]
 posd = [10, 0]
