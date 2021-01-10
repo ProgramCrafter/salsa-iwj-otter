@@ -118,75 +118,69 @@ posd = [10, 0]
 count = 4
 
 [[pieces]]
+pos = [210, 55]
+type = "LibList"
+lib = "wikimedia"
+prefix = "chess-blue-"
+items = ["K","Q","R","R","B","B","N","N"]
+posd = [10, 0]
+
+[[pieces]]
+pos = [210, 65]
+type = "LibList"
+lib = "wikimedia"
+prefix = "chess-yellow-"
+items = ["K","Q","R","R","B","B","N","N"]
+posd = [10, 0]
+
+[[pieces]]
 pos = [210, 75]
 type = "LibList"
 lib = "wikimedia"
 prefix = "chess-red-"
-items = ["K","Q","R","R","B","B","ship","ship"]
+items = ["K","Q","R","R","B","B","N","N"]
 posd = [10, 0]
 
 [[pieces]]
 pos = [210, 85]
 type = "LibList"
 lib = "wikimedia"
-prefix = "chess-blue-"
-items = ["K","Q","R","R","B","B","ship","ship"]
+prefix = "chess-purple-"
+items = ["K","Q","R","R","B","B","N","N"]
 posd = [10, 0]
 
 [[pieces]]
-pos = [210, 95]
-type = "LibList"
-lib = "wikimedia"
-prefix = "chess-yellow-"
-items = ["K","Q","R","R","B","B","ship","ship"]
-posd = [10, 0]
-
-[[pieces]]
-pos = [210, 115]
+pos = [205, 115]
 type = "LibList"
 lib = "wikimedia"
 prefix = "chess-w-"
-items = ["commoner","elephant","knight-king","mann","zebra"]
+items = ["commoner","elephant","knight-king","mann","zebra",
+	 "ship","giraffe","cannon","flag"]
 posd = [10, 0]
 
 [[pieces]]
-pos = [210, 125]
+pos = [205, 125]
 type = "LibList"
 lib = "wikimedia"
 prefix = "chess-w-"
-items = ["commoner","elephant","knight-king","mann","zebra"]
+items = ["commoner","elephant","knight-king","mann","zebra",
+	 "ship","giraffe","cannon","flag"]
 posd = [10, 0]
 
 [[pieces]]
-pos = [210, 135]
+pos = [205, 135]
 type = "LibList"
 lib = "wikimedia"
 prefix = "chess-b-"
-items = ["commoner","elephant","knight-king","mann","zebra"]
+items = ["commoner","elephant","knight-king","mann","zebra",
+	"ship","giraffe","cannon","flag"]
 posd = [10, 0]
 
 [[pieces]]
-pos = [210, 145]
+pos = [205, 145]
 type = "LibList"
 lib = "wikimedia"
 prefix = "chess-b-"
-items = ["commoner","elephant","knight-king","mann","zebra"]
+items = ["commoner","elephant","knight-king","mann","zebra",
+	 "ship","giraffe","cannon","flag"]
 posd = [10, 0]
-
-
-[[pieces]]
-pos = [210, 155]
-type = "LibList"
-lib = "edited"
-prefix = "chess-w-"
-items = ["portal-orange", "portal-orange", "portal-blue", "portal-blue"]
-posd = [10, 0]
-
-[[pieces]]
-pos = [210, 165]
-type = "LibList"
-lib = "edited"
-prefix = "chess-b-"
-items = ["portal-orange", "portal-orange", "portal-blue", "portal-blue"]
-posd = [10, 0]
-
