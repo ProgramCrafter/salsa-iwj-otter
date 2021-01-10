@@ -984,7 +984,7 @@ fn screenshot(driver: &T4d, count: &mut ScreenShotCount, slug: &str) {
 
 impl<'g> WindowGuard<'g> {
   #[throws(AE)]
-  pub fn synch(&mut self) {
+  fn synch_raw(&mut self) {
     let cmd = MgmtCommand::AlterGame {
       game: self.w.instance.clone(),
       how: MgmtGameUpdateMode::Online,
@@ -1024,6 +1024,11 @@ impl<'g> WindowGuard<'g> {
       Ok::<(),AE>(())
     })()
       .context("await gen update via async js script")?;
+  }
+
+  #[throws(AE)]
+  pub fn synch(&mut self) {
+    self.synch_raw()?;
 
     (|| {
       let errors = self.su.driver.execute_script(r#"
