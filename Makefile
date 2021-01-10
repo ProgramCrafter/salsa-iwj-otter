@@ -221,13 +221,18 @@ bundled-sources::
 
 #---------- svg processing ----------
 
-include $(wildcard library/*/files.make)
+LIBRARIES ?= $(basename $(wildcard library/*.toml))
+
+include $(addsuffix /files.make, $(LIBRARIES))
 
 USVG_PROCESSOR = usvg-processor
 LIBRARY_PROCESS_SVG = ./$(USVG_PROCESSOR) $@ $(wordlist 1,2,$^) '$(USVG_CMD) $(USVG_OPTIONS)'
 $(LIBRARY_FILES): $(USVG_PROCESSOR) $(USVG_BINARY) Makefile
 
 # actual command for each of $(LIBRARY_FILES) is in one of the files.make
+
+library/%/files.make: media-scraper library/%.toml
+	./$< --offline library/$*.toml
 
 #---------- typescript ----------
 
