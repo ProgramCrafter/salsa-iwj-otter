@@ -40,21 +40,23 @@ fn main() {
 
   let libs = Config1::PathGlob(opts.libs.clone());
   load(&vec![libs.clone()])?;
-  let items : Vec<ItemEnquiryData> =
+  let items : Vec<(String, ItemEnquiryData)> =
     libs_list()
     .into_iter()
     .map(|lib| {
       let contents = libs_lookup(&lib)?;
       let items = contents.list_glob(&opts.items)?;
-      Ok::<_,AE>(items)
+      Ok::<_,AE>((lib, items))
     })
     .collect::<Result<Vec<_>,_>>()?
     .into_iter()
-    .flatten()
+    .map(|(lib, items)| {
+      items.into_iter().map(|item| (lib.clone(),item)).collect::<Vec<_>>()
+    }).flatten()
     .collect();
 
   for item in &items {
-    println!("{}", item.line_for_list());
+    println!("{:<10} {}", &item.0, item.1.line_for_list());
   }
 }
   
