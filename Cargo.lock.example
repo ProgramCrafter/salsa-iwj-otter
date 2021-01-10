@@ -1615,6 +1615,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "slotmap",
+ "structopt",
  "strum",
  "tempfile",
  "tera",
