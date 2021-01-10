@@ -15,6 +15,6 @@ case "${PIPESTATUS[*]}" in
 "0 0")	exit 0;
 esac
 
-tail -40 <tmp/"$lname" | sed -e "s/^/${lname%.log}: /"
+fold -250 <tmp/"$lname" | tail -40 | sed -e "s/^/${lname%.log}: /"
 
 exit 1
