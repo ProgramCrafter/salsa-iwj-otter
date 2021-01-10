@@ -41,7 +41,7 @@ struct GroupDetails {
   #[serde(default)] centre: [f64; 2],
   #[serde(default)] flip: bool,
   #[serde(default="num_traits::identities::One::one")] scale: f64,
-  colours: Option<HashMap<String, RecolourData>>,
+  #[serde(default)] colours: HashMap<String, RecolourData>,
   #[serde(flatten)] outline: Box<dyn OutlineDefn>,
 }
 
@@ -399,7 +399,10 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
       let item_name = format!("{}{}{}", gdefn.item_prefix,
                               fe.item_spec, gdefn.item_suffix);
 
-      if let Some(colours) = &group.d.colours {
+      if group.d.colours.is_empty() {
+        add1(&item_name, fe.desc.clone())?;
+      } else {
+
         #[throws(LLE)]
         fn subst(before: &str, needle: &'static str, replacement: &str)
                  -> String {
@@ -413,13 +416,13 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
             + replacement
             + &before[m1.0 + m1.1.len() ..]
         }
-        for (colour, recolourdata) in colours {
+
+        for (colour, recolourdata) in &group.d.colours {
           let t_item_name = subst(&item_name, "_c", &recolourdata.abbrev)?;
           let t_desc = Html(subst(&fe.desc.0, "_colour", colour)?);
           add1(&t_item_name, t_desc)?;
         }
-      } else {
-        add1(&item_name, fe.desc.clone())?;
+
       }
     }
   }
