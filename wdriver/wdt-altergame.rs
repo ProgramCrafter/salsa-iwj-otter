@@ -83,6 +83,9 @@ fn main(){
     let mut alice = c.su.w(&c.alice)?;
     alice.otter(&["reset"],&[&game_spec])?;
     alice.synch_ignore_js_errors()?;
+    let url = alice.current_url()?;
+    alice.get(url)?;
+    alice.synch()?;
   }
 
   info!("ok");
