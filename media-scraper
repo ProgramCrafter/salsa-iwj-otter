@@ -139,6 +139,18 @@ sub method_wikimedia ($$$) {
   };
 }
 
+our $offline;
+
+while (@ARGV && $ARGV[0] =~ m/^-/) {
+  $_ = shift @ARGV;
+  last if m/^-$/;
+  if (m/^--offline$/) {
+    $offline = 1;
+  } else {
+    die "bad option: \`$_'";
+  }
+}
+
 my $input = $ARGV[0] // die;
 $input =~ m/\.toml$/ or die "$input ?";
 my $basename = $`;
@@ -293,6 +305,12 @@ END
       next;
     }
     die "$lupstream $!" unless $!==ENOENT;
+
+    if ($offline) {
+      print DEBUG "missing.\n";
+      warn "offline but $lupstream missing\n";
+      next;
+    }
 
     $method_impl->($lbase, $lupstream, $rstem);
 
