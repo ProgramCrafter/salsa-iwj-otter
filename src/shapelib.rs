@@ -174,6 +174,12 @@ pub struct ItemEnquiryData {
   pub f0bbox: [Pos; 2],
 }
 
+impl ItemEnquiryData {
+  pub fn line_for_list(&self) -> String {
+    format!("{:20}  {}", self.itemname, self.f0desc.0)
+  }
+}
+
 #[typetag::serde(name="Lib")]
 impl Outline for Item { delegate! { to self.outline {
   fn surround_path(&self, pri: &PieceRenderInstructions) -> Result<Html, IE>;

@@ -16,6 +16,14 @@ pub struct Opts {
 
   #[structopt(long="--items", default_value="*")]
   items: String,
+
+  #[structopt(flatten)]
+  output: OutputKind,
+}
+
+#[derive(StructOpt,Debug,Clone,Copy)]
+pub enum OutputKind {
+  List,
 }
 
 #[throws(anyhow::Error)]
@@ -36,9 +44,8 @@ fn main() {
   for lib in libnames {
     let contents = libs_lookup(&lib)?;
     let items = contents.list_glob(&opts.items)?;
-    dbg!(&items);
     for item in items {
-      dbg!(&item);
+      println!("{}", item.line_for_list());
     }
   }
 }
