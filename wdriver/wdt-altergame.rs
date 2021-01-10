@@ -78,5 +78,12 @@ fn main(){
   c.test_link(LinkKind::Info, "Info", "https://www.example.org/newinfo")?;
   c.test_remove_link(LinkKind::Info, "Info")?;
 
+  {
+    let game_spec = &c.su.ds.subst("@specs@/penultima.game.toml")?;
+    let mut alice = c.su.w(&c.alice)?;
+    alice.otter(&["reset"],&[&game_spec])?;
+    alice.synch_ignore_js_errors()?;
+  }
+
   info!("ok");
 }
