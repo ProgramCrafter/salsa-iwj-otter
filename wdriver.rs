@@ -914,6 +914,17 @@ impl Setup {
     self.windows_squirreled.push(name.to_owned());
     window
   }
+
+  #[throws(AE)]
+  pub fn otter(&mut self, w: &Window, verb: &[&str], args: &[&str]) {
+    let args : Vec<String> =
+      ["--account", "server:"].iter().cloned().map(Into::into)
+      .chain(verb.iter().cloned().map(Into::into))
+      .chain(iter::once(w.table()))
+      .chain(args.iter().cloned().map(Into::into))
+      .collect();
+    self.ds.otter(&args)?;
+  }
 }
 
 impl Setup {

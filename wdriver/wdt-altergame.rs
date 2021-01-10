@@ -39,20 +39,14 @@ impl Ctx {
   }
 
   #[throws(AE)]
-  fn otter_table(&mut self, verb: &[&str], args: &[&str]) {
-    let args : Vec<String> =
-      ["--account", "server:"].iter().cloned().map(Into::into)
-      .chain(verb.iter().cloned().map(Into::into))
-      .chain(iter::once(self.alice.table()))
-      .chain(args.iter().cloned().map(Into::into))
-      .collect();
-    self.su.ds.otter(&args)?;
+  fn otter(&mut self, verb: &[&str], args: &[&str]) {
+    self.su.otter(&self.alice, verb, args)?
   }
 
   #[throws(AE)]
   fn test_link(&mut self, kind: LinkKind, desc: &'static str, url: &str) {
     (||{
-      self.otter_table(&["set-link"], &[&kind.to_string(), url])?;
+      self.otter(&["set-link"], &[&kind.to_string(), url])?;
       self.check_link(desc, Some(url))?;
       Ok::<_,AE>(())
     })()
@@ -62,7 +56,7 @@ impl Ctx {
   #[throws(AE)]
   fn test_remove_link(&mut self, kind: LinkKind, desc: &'static str) {
     (||{
-      self.otter_table(&["set-link"], &[&kind.to_string(), ""])?;
+      self.otter(&["set-link"], &[&kind.to_string(), ""])?;
       self.check_link(desc, None)?;
       Ok::<_,AE>(())
     })()
