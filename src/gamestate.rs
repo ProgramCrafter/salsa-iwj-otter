@@ -133,7 +133,7 @@ pub trait Piece: Outline + Send + Debug {
     throw!(OE::BadOperation)
   }
 
-  // #[throws] doesn't work here for some reason
+  // #[throws] doesn't work here - fehler #todo
   fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) -> IR;
 
   fn describe_html(&self, face: Option<FaceId>) -> Html;
