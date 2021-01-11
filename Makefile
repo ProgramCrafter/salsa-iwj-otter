@@ -9,7 +9,7 @@
 SHELL=/bin/bash
 src=.
 
-default: all check
+default: all check doc
 all: debug
 everything: debug doc release check bundled-sources
 
