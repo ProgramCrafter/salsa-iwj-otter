@@ -36,7 +36,7 @@ fn preview(items: Vec<ItemForOutput>) {
     spec.clone().load()
       .with_context(|| format!("{:?}", &spec))
   })
-    .collect::<Result<Vec<Box<dyn Piece>>,AE>>()?;
+    .collect::<Result<Vec<_>,_>>()?;
   dbg!(&pieces);
 }
 
