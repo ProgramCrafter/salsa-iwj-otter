@@ -56,6 +56,9 @@ fn preview(items: Vec<ItemForOutput>) {
           angle: VisiblePieceAngle(default()),
           face: face.into(),
         };
+        let bbox = pc.bbox_approx();
+        let surround = pc.surround_path(&pri);
+        println!(r#"<--svg viewBox="{:?} {:?}""#, &bbox, &surround);
         let mut html = Html("".into());
         pc.svg_piece(&mut html, &pri)?;
         println!("SVG\n{}\n\n", html.0);
@@ -106,14 +109,3 @@ fn main() {
     }
   }
 }
-  
-/* 
-  let name = a.next().unwrap();
-  let dirname = a.next().unwrap();
-  let catalogue = format!("{}.toml", &dirname);
-  let e = shapelib::Explicit1 {
-    name, dirname, catalogue
-  };
-  shapelib::load1(&e).unwrap();
-*/
-
