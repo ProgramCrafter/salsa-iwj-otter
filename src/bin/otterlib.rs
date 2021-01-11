@@ -24,6 +24,20 @@ pub struct Opts {
 #[derive(StructOpt,Debug,Clone,Copy)]
 pub enum OutputKind {
   List,
+  Preview,
+}
+
+pub type ItemForOutput = (String, ItemEnquiryData);
+
+#[throws(AE)]
+fn preview(items: Vec<ItemForOutput>) {
+  let pieces = items.into_iter().map(|it| {
+    let spec = ItemSpec { lib: it.0, item: it.1.itemname };
+    spec.clone().load()
+      .with_context(|| format!("{:?}", &spec))
+  })
+    .collect::<Result<Vec<Box<dyn Piece>>,AE>>()?;
+  dbg!(&pieces);
 }
 
 #[throws(anyhow::Error)]
@@ -40,7 +54,7 @@ fn main() {
 
   let libs = Config1::PathGlob(opts.libs.clone());
   load(&vec![libs.clone()])?;
-  let mut items : Vec<(String, ItemEnquiryData)> =
+  let mut items : Vec<ItemForOutput> =
     libs_list()
     .into_iter()
     .map(|lib| {
@@ -59,6 +73,9 @@ fn main() {
   match opts.outkind {
     OutputKind::List => for item in &items {
       println!("{:<10} {}", &item.0, item.1.line_for_list());
+    }
+    OutputKind::Preview => {
+      preview(items)?
     }
   }
 }
