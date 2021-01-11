@@ -58,12 +58,34 @@ fn preview(items: Vec<ItemForOutput>) {
           angle: VisiblePieceAngle(default()),
           face: face.into(),
         };
-        let bbox = pc.bbox_approx();
+        const BORDER: f64 = 1.;
+        let bbox = pc
+          .bbox_approx();
+        let mut bbox = bbox
+          .iter()
+          .map(|PosC(xy)| xy.iter().map(|&p| p as f64).collect::<Vec<_>>())
+          .collect::<Vec<_>>();
+        for xy in &mut bbox[0] { *xy -= BORDER }
+        for xy in &mut bbox[1] { *xy += BORDER }
+        let viewport = bbox
+          .iter().cloned()
+          .flatten()
+          .map(|c| c.to_string())
+          .join(" ");
+        let size = izip!(&bbox[0], &bbox[1])
+          .map(|(min,max)| (max-min) * SVG_SCALE)
+          .collect::<Vec<_>>();
         let surround = pc.surround_path(&pri);
-        println!(r#"<--svg viewBox="{:?} {:?}""#, &bbox, &surround);
+        print!(r#"<svg xmlns="http://www.w3.org/2000/svg"
+                       viewBox="{}"> width={} height={}>"#,
+               &viewport, size[0], size[1]);
         let mut html = Html("".into());
         pc.svg_piece(&mut html, &pri)?;
-        println!("SVG\n{}\n\n", html.0);
+        println!("{}</svg>", html.0);
+//        
+//        println!(r#"<svg viewBox="{}"> width={} height={} {:?}"#,
+//                 &viewport, size[0], size[1], &surround);
+//        println!("SVG\n{}\n\n", html.0);
       }
       println!("</td>");
     };
