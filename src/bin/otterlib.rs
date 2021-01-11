@@ -33,10 +33,14 @@ pub type ItemForOutput = (String, ItemEnquiryData);
 fn preview(items: Vec<ItemForOutput>) {
   let pieces = items.into_iter().map(|it| {
     let spec = ItemSpec { lib: it.0, item: it.1.itemname };
-    spec.clone().load()
-      .with_context(|| format!("{:?}", &spec))
-  })
-    .collect::<Result<Vec<_>,_>>()?;
+    (||{
+      let pc = spec.clone().load().context("load")?;
+      let mut uos = vec![];
+      pc.add_ui_operations(&mut uos).context("add uos")?;
+      let uos = uos.into_iter().map(|uo| uo.opname).collect::<Vec<_>>();
+      Ok::<_,AE>((pc, uos))
+    })().with_context(|| format!("{:?}", &spec))
+  }).collect::<Result<Vec<_>,_>>()?;
   dbg!(&pieces);
 }
 
