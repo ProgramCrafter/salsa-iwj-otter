@@ -19,6 +19,7 @@ struct SessionRenderContext {
   log: Vec<SessionFormattedLogEntry>,
   sse_url_prefix: String,
   links: Html,
+  scale: f64,
 }
 
 #[derive(Debug,Serialize)]
@@ -185,17 +186,18 @@ fn session_inner(form : Json<SessionForm>,
     let src = SessionRenderContext {
       table_colour: ig.gs.table_colour.clone(),
       ctoken,
-      gen : ig.gs.gen,
+      gen: ig.gs.gen,
       log,
-      table_size : ig.gs.table_size,
+      table_size: ig.gs.table_size,
       player,
-      defs : alldefs,
+      defs: alldefs,
       uses,
-      nick : gpl.nick.clone(),
+      scale: SVG_SCALE,
+      nick: gpl.nick.clone(),
       sse_url_prefix,
       ptoken: form.ptoken.clone(),
       links: (&*ig.links).into(),
-      load : serde_json::to_string(&DataLoad {
+      load: serde_json::to_string(&DataLoad {
         players: load_players,
         last_log_ts: timestamp_abbrev.unwrap_or_default(),
       }).map_err(|e| InternalError::JSONEncode(e))?,

@@ -4,6 +4,8 @@
 
 use crate::imports::*;
 
+pub const SVG_SCALE : f64 = 6.;
+
 #[derive(Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize,EnumString)]
 pub enum PresentationLayout {
   Portrait,
