@@ -41,7 +41,11 @@ fn preview(items: Vec<ItemForOutput>) {
       Ok::<_,AE>((pc, uos))
     })().with_context(|| format!("{:?}", &spec))
   }).collect::<Result<Vec<_>,_>>()?;
+
+  let max_faces = pieces.iter().map(|(p,_)| p.nfaces()).max().unwrap_or(1);
+  let max_uos = pieces.iter().map(|(_,uos)| uos.len()).max().unwrap_or(0);
   dbg!(&pieces);
+  dbg!(&max_faces, &max_uos);
 }
 
 #[throws(anyhow::Error)]
