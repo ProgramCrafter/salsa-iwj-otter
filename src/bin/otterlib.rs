@@ -18,7 +18,7 @@ pub struct Opts {
   items: String,
 
   #[structopt(flatten)]
-  output: OutputKind,
+  outkind: OutputKind,
 }
 
 #[derive(StructOpt,Debug,Clone,Copy)]
@@ -56,8 +56,10 @@ fn main() {
     .collect();
   items.sort();
 
-  for item in &items {
-    println!("{:<10} {}", &item.0, item.1.line_for_list());
+  match opts.outkind {
+    OutputKind::List => for item in &items {
+      println!("{:<10} {}", &item.0, item.1.line_for_list());
+    }
   }
 }
   
