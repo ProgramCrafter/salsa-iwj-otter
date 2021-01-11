@@ -67,18 +67,21 @@ fn preview(items: Vec<ItemForOutput>) {
           .collect::<Vec<_>>();
         for xy in &mut bbox[0] { *xy -= BORDER }
         for xy in &mut bbox[1] { *xy += BORDER }
-        let viewport = bbox
+        let size = izip!(&bbox[0], &bbox[1])
+          .map(|(min,max)| max-min)
+          .collect::<Vec<_>>();
+        let viewport =
+          [bbox[0].clone(), size.clone()]
           .iter().cloned()
           .flatten()
           .map(|c| c.to_string())
           .join(" ");
-        let size = izip!(&bbox[0], &bbox[1])
-          .map(|(min,max)| (max-min) * SVG_SCALE)
+        let wh = size.iter().map(|&s| s * SVG_SCALE)
           .collect::<Vec<_>>();
         let surround = pc.surround_path(&pri);
         print!(r#"<svg xmlns="http://www.w3.org/2000/svg"
-                       viewBox="{}"> width={} height={}>"#,
-               &viewport, size[0], size[1]);
+                       viewBox="{}" width={} height={}>"#,
+               &viewport, wh[0], wh[1]);
         let mut html = Html("".into());
         pc.svg_piece(&mut html, &pri)?;
         println!("{}</svg>", html.0);
