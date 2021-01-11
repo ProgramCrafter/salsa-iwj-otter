@@ -44,8 +44,27 @@ fn preview(items: Vec<ItemForOutput>) {
 
   let max_faces = pieces.iter().map(|(p,_)| p.nfaces()).max().unwrap_or(1);
   let max_uos = pieces.iter().map(|(_,uos)| uos.len()).max().unwrap_or(0);
-  dbg!(&pieces);
-  dbg!(&max_faces, &max_uos);
+
+  println!("<table>");
+  for (pc, uos) in &pieces {
+    println!("<tr><th>{}</th>", pc.describe_html(None).0);
+    for face in 0..max_faces {
+      println!("<td>");
+      if face < pc.nfaces() {
+        let pri = PieceRenderInstructions {
+          id: default(),
+          angle: VisiblePieceAngle(default()),
+          face: face.into(),
+        };
+        let mut html = Html("".into());
+        pc.svg_piece(&mut html, &pri)?;
+        println!("SVG\n{}\n\n", html.0);
+      }
+      println!("</td>");
+    };
+    println!("</tr>");
+  }
+  println!("</table>");
 }
 
 #[throws(anyhow::Error)]
