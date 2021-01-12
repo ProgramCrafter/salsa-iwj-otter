@@ -140,12 +140,15 @@ fn preview(items: Vec<ItemForOutput>) {
         let mut html = Html("".into());
         pc.svg_piece(&mut html, &pri)?;
         println!("{}</svg>", html.0);
-//        
-//        println!(r#"<svg viewBox="{}"> width={} height={} {:?}"#,
-//                 &viewport, size[0], size[1], &surround);
-//        println!("SVG\n{}\n\n", html.0);
       }
       println!("</td>");
+
+      if max_uos > 0 {
+        println!(r#"<td>{}</td>"#,
+                 uos.iter()
+                 .map(|uo| Html::from_txt(uo).0)
+                 .join(" "));
+      }
     };
     println!("</tr>");
   }
