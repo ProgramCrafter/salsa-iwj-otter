@@ -12,7 +12,7 @@ src=.
 default: all check doc
 all: debug
 everything: debug doc release check bundled-sources
-shapelib: templates/shapelib.html
+shapelib: templates/shapelib.html stamp/cargo.doc-otter-only
 
 #---------- funky macros etc. ----------
 
@@ -167,6 +167,10 @@ stamp/cargo-wdt.debug: $(call rsrcs,.)
 
 stamp/cargo.doc: $(call rsrcs,.)
 	$(CARGO) doc --workspace 2>&1 | egrep -vf .cargo-doc-suppress-errors
+	$(stamp)
+
+stamp/cargo.doc-otter-only: $(call rsrcs,.)
+	$(CARGO) doc -p otter --no-deps
 	$(stamp)
 
 $(addprefix stamp/cargo.wasm-,$(DR)):: \
