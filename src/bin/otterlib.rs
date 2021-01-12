@@ -201,14 +201,23 @@ fn main() {
     .parse_env("OTTERLIB_LOG")
     .init();
 
-  let libs = Config1::PathGlob(opts.libs.clone());
-  load(&vec![libs.clone()])?;
+  const SPLIT: &[char] = &[',', ' '];
+
+  for libs in opts.libs.split(SPLIT) {
+    let tlibs = Config1::PathGlob(libs.to_owned());
+    load(&vec![tlibs.clone()])?;
+  }
   let mut items : Vec<ItemForOutput> =
     libs_list()
     .into_iter()
     .map(|lib| {
       let contents = libs_lookup(&lib)?;
-      let items = contents.list_glob(&opts.items)?;
+      let items = opts.items
+        .split(SPLIT)
+        .map(|items| contents.list_glob(items))
+        .collect::<Result<Vec<_>,_>>()?
+        .into_iter()
+        .flatten();
       Ok::<_,AE>((lib, items))
     })
     .collect::<Result<Vec<_>,_>>()?
