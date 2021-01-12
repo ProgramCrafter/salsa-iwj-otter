@@ -108,6 +108,12 @@ fn preview(items: Vec<ItemForOutput>) {
         assert!(!s.want_several());
         print!(r#" colspan="{}""#, max_facecols);
       }
+      print!(r##" bgcolor="#{}""##,
+             match inseveral {
+               0 | 1 => "eee",
+               2 => "555",
+               _ => panic!(),
+             });
       println!(r#">"#);
       if face < (pc.nfaces() as usize) {
         let pri = getpri(face.into());
