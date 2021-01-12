@@ -4,6 +4,35 @@
 
 // target/debug/otterlib --libs ~ian/Rustup/Game/server/library/\*.toml preview
 
+const HTML_PRELUDE: &str = r##"
+<!-- Copyright 2020u Ian Jackson
+     SPDX-License-Identifier: AGPL-3.0-or-later
+     There is NO WARRANTY. -->
+<html>
+  <head>
+    <title>Otter builtin shape library</title>
+  </head>
+<body>
+<h1>Otter builtin shape library</h1>
+This lists all the shapes provided by the library in this version of Otter.
+</p>
+"##;
+
+const HTML_TRAILER: &str = r##"
+<hr>
+<address>
+Otter and its shape (piece picture) libraries
+are <a href="/_/libre">Free Software</a> and come with NO
+WARRANTY.
+<p>
+The shapes come from a variety of sources and are the work of many
+contributors.  <a href="/_/LICENCE">Further information about
+their authorship and licensing</a> etc. is available.
+<p>
+If you wish to edit these shapes you should probably start with
+the <a href="/_/src/">source code</a>.
+"##;
+
 pub use otter::imports::*;
 
 pub use shapelib::*;
@@ -83,6 +112,7 @@ fn preview(items: Vec<ItemForOutput>) {
   let max_facecols = pieces.iter().map(|s| s.face_cols()).max().unwrap_or(1);
   let max_uos = pieces.iter().map(|s| s.uos.len()).max().unwrap_or(0);
 
+  println!("{}", &HTML_PRELUDE);
   println!(r#"<table rules="all">"#);
   for s in &pieces {
     let Prep { spec, pc, uos, bbox, size } = s;
@@ -153,6 +183,7 @@ fn preview(items: Vec<ItemForOutput>) {
     println!("</tr>");
   }
   println!("</table>");
+  println!("{}", &HTML_TRAILER);
 }
 
 #[throws(anyhow::Error)]
