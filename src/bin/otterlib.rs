@@ -120,9 +120,9 @@ fn preview(items: Vec<ItemForOutput>) {
   for s in &pieces {
     let Prep { spec, pc, uos, bbox, size } = s;
     println!(r#"<tr>"#);
-    println!(r#"<th align="left"><kbd>{}</kbd><th>"#,
+    println!(r#"<th align="left"><kbd>{}</kbd></th>"#,
              Html::from_txt(&spec.lib).0);
-    println!(r#"<th align="left"><kbd>{}</kbd><th>"#,
+    println!(r#"<th align="left"><kbd>{}</kbd></th>"#,
              Html::from_txt(&spec.item).0);
     println!(r#"<th align="left">{}</th>"#, pc.describe_html(None).0);
     let only1 = s.face_cols() == 1;
