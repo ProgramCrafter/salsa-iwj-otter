@@ -148,32 +148,33 @@ Setup
      rustup default nightly-2020-11-09
 ```
 
+4. Install the `usv` SVG launderer, which we need for shape libraries
+
+```
+     cargo install usvg
+```
+
+   This will put it in `~/.cargo/bin`, which you presumably have on
+   your PATH (or the above `rustup` and `cargo` runes wouldn't work).
+
 
 ** If you just want to edit and preview the shape libraries
    (ie the piece shapes) you can stop here **
 
 
-4. Install some build tools:
+4. Install some more build tools:
 
 ```
-     cargo install usvg
      cargo install bundle-sources
-```
-
-   This will put them in `~/.cargo/bin`, which you presumably have on
-   your PATH (or the above `rustup` and `cargo` runes wouldn't work).
-
-5. Install the version of wasm-pack with the option I need (upstream
-   haven't reviewed my merge request):
-
-```
      git clone https://github.com/ijackson/wasm-pack.git -b cargo-opts
      cd wasm-pack
      cargo install
 ```
 
-  NB that wasm-pack will itself download and install more stuff when
-  it is run by the Otter Makefile.
+wasm-pack upstream haven't reviewed my merge request.
+
+NB that wasm-pack will itself download and install more stuff when it
+is run by the Otter Makefile.
 
 
 Build
