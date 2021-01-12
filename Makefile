@@ -269,7 +269,7 @@ $(addprefix templates/,$(TXTFILES)): templates/%: %.txt
 
 libraries: $(LIBRARY_FILES)
 
-templates/shapelib.html: stamp/cargo.debug
+templates/shapelib.html: stamp/cargo.debug $(LIBRARY_FILES)
 	$(NAILING_CARGO) --just-run --- \
 		$(abspath $(TARGET_DIR))/debug/otterlib \
 	--libs '$(addprefix $(PWD)/, $(addsuffix .toml, $(LIBRARIES)))' \
