@@ -40,18 +40,24 @@ fn preview(items: Vec<ItemForOutput>) {
       let mut uos = vec![];
       pc.add_ui_operations(&mut uos).context("add uos")?;
       let uos = uos.into_iter().map(|uo| uo.opname).collect::<Vec<_>>();
-      Ok::<_,AE>((pc, uos))
+      Ok::<_,AE>((spec.clone(), pc, uos))
     })().with_context(|| format!("{:?}", &spec))
   }).collect::<Result<Vec<_>,_>>()?;
 
-  let max_faces = pieces.iter().map(|(p,_)| p.nfaces()).max().unwrap_or(1);
-  let max_uos = pieces.iter().map(|(_,uos)| uos.len()).max().unwrap_or(0);
+  let max_faces = pieces.iter().map(|(_,p,_)| p.nfaces()).max().unwrap_or(1);
+  let max_uos = pieces.iter().map(|(..,uos)| uos.len()).max().unwrap_or(0);
 
-  println!("<table>");
-  for (pc, uos) in &pieces {
-    println!("<tr><th>{}</th>", pc.describe_html(None).0);
-    for face in 0..max_faces {
-      println!("<td>");
+  println!(r#"<table rules="all">"#);
+  for (spec, pc, uos) in &pieces {
+    println!(r#"<tr>"#);
+    println!(r#"<th align="left"><kbd>{}</kbd><th>"#, &spec.lib);
+    println!(r#"<th align="left"><kbd>{}</kbd><th>"#, &spec.item);
+    println!(r#"<th align="left">{}</th>"#, pc.describe_html(None).0);
+    let only1 = pc.nfaces() == 1;
+    for face in 0..(if only1 { 1 } else { max_faces }) {
+      print!(r#"<td align="center""#);
+      if only1 { print!(r#" colspan="{}""#, max_faces); }
+      println!(r#">"#);
       if face < pc.nfaces() {
         let pri = PieceRenderInstructions {
           id: default(),
