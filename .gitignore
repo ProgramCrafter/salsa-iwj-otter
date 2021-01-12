@@ -6,6 +6,7 @@ templates/AGPLv3
 templates/CC-BY-SA-3.0
 templates/CC-BY-SA-4.0
 templates/otter_wasm.ns.d.ts
+templates/shapelib.html
 save/lock
 /library/*/files.make
 /library/*/*.usvg

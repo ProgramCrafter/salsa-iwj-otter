@@ -268,6 +268,12 @@ $(addprefix templates/,$(TXTFILES)): templates/%: %.txt
 
 libraries: $(LIBRARY_FILES)
 
+templates/shapelib.html: stamp/cargo.debug
+	$(NAILING_CARGO) --just-run --- \
+		$(abspath $(TARGET_DIR))/debug/otterlib \
+	--libs '$(addprefix $(PWD)/, $(addsuffix .toml, $(LIBRARIES)))' \
+		preview >$@.tmp && mv -f $@.tmp $@
+
 #---------- webdriver tests (wdt) ----------
 
 WDT_TESTS := $(basename $(notdir $(wildcard wdriver/wdt-*.rs)))
