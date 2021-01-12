@@ -82,8 +82,14 @@ ADDING SHAPES
 Otter uses SVGs.  The sources for the SVGs are all in the otter source
 tree, in the `library/` directory.
 
-Unfortunately the mechanisms here are not yet particularly well
-documented.
+Each shape is listed in one of the `library/*.toml` files, in a
+`files` entry.  Unfortunately the syntax and semantics of this file
+are not yet properly documented.
+
+You can preview the shapes, including any changes you make, without a
+whole game server, by running `make -j8 shapelib`, and looking at
+`templates/shapelib.html`.  (See BUILDING AND TESTING for information
+about how to install the tools you will need.)
 
 Some of these SVGs were scraped from Wikimedia.  The scraper machinery
 can perhaps be adapted to scrape SVGs from elsewhere.
@@ -106,6 +112,7 @@ You will need at 6000 megabytes of disk space, or more, and a good
 internet connection.  Your computer will be compiling a lot of code.
 
 These instructions have been tested on Debian buster.
+
 
 Setup
 -----
@@ -141,6 +148,11 @@ Setup
      rustup default nightly-2020-11-09
 ```
 
+
+** If you just want to edit and preview the shape libraries
+   (ie the piece shapes) you can stop here **
+
+
 4. Install some build tools:
 
 ```
@@ -172,6 +184,13 @@ Build
      cd otter
      make -j8 all bundled-sources
 ```
+
+Or if you just want to edit the piece libraries:
+
+```
+    make -j8 shapelib
+```
+And then open ./templates/shapelib.html in your browser
 
 
 Ad-hoc tests
