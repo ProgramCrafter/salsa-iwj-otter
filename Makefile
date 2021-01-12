@@ -111,7 +111,7 @@ TS_SRC_FILES= \
 LITFILES= LICENCE AGPLv3
 TXTFILES= CC-BY-SA-3.0 CC-BY-SA-4.0
 
-FILEASSETS = $(addprefix templates/, libre script.js \
+FILEASSETS = $(addprefix templates/, libre shapelib.html script.js \
 			$(LITFILES) $(TXTFILES)) \
 		$(wildcard templates/*.tera)
 
