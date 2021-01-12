@@ -84,7 +84,7 @@ fn preview(items: Vec<ItemForOutput>) {
     }
   }
 
-  let pieces : Vec<Prep> = items.into_iter().map(|it| {
+  let mut pieces : Vec<Prep> = items.into_iter().map(|it| {
     let spec = ItemSpec { lib: it.0, item: it.1.itemname };
     (||{
       let pc = spec.clone().load().context("load")?;
@@ -109,6 +109,9 @@ fn preview(items: Vec<ItemForOutput>) {
     })().with_context(|| format!("{:?}", &spec))
   }).collect::<Result<Vec<_>,_>>()?;
 
+  // clones as a bodge for https://github.com/rust-lang/rust/issues/34162
+  pieces.sort_by_key(|p| (p.spec.item.clone(), p.spec.lib.clone()));
+                     
   let max_facecols = pieces.iter().map(|s| s.face_cols()).max().unwrap_or(1);
   let max_uos = pieces.iter().map(|s| s.uos.len()).max().unwrap_or(0);
 
