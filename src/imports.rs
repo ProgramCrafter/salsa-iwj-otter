@@ -24,7 +24,7 @@ pub use std::iter;
 pub use std::iter::repeat_with;
 pub use std::marker::PhantomData;
 pub use std::mem;
-pub use std::num::{TryFromIntError, Wrapping};
+pub use std::num::{NonZeroUsize, TryFromIntError, Wrapping};
 pub use std::ops::{Deref, DerefMut};
 pub use std::os::unix;
 pub use std::os::unix::ffi::OsStrExt;

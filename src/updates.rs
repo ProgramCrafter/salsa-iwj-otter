@@ -225,15 +225,7 @@ impl DataLoadPlayer {
     let n = kd.get_idx_version().0;
     let n = if n != 0 { n.try_into().unwrap() }
     else { ig.gs.players.capacity() };
-    assert!(n != 0);
-    let mut dasharray = String::with_capacity(n*3 + 4);
-    for dash in iter::once("3").chain(
-      iter::repeat("1").take(n-1))
-    {
-      write!(&mut dasharray, "{} 1 ", &dash).unwrap();
-    }
-    let spc = dasharray.pop();
-    assert_eq!(spc,Some(' '));
+    let dasharray = player_dasharray(n.try_into().unwrap());
     DataLoadPlayer {
       dasharray,
     }

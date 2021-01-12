@@ -16,6 +16,19 @@ pub enum PresentationLayout {
 
 type PL = PresentationLayout;
 
+pub fn player_dasharray(player_num: NonZeroUsize) -> String {
+  let n: usize = player_num.into();
+  let mut dasharray = String::with_capacity(n*3 + 4);
+  for dash in iter::once("3").chain(
+    iter::repeat("1").take(n-1))
+  {
+    write!(&mut dasharray, "{} 1 ", &dash).unwrap();
+  }
+  let spc = dasharray.pop();
+  assert_eq!(spc,Some(' '));
+  dasharray
+}
+
 impl PresentationLayout {
   pub fn template(self) -> &'static str {
     match self {
