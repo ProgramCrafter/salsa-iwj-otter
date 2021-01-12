@@ -127,13 +127,19 @@ fn preview(items: Vec<ItemForOutput>) {
           .join(" ");
         let wh = size.iter().map(|&s| s * SVG_SCALE)
           .collect::<Vec<_>>();
-        let surround = pc.surround_path(&pri);
+        let surround = pc.surround_path(&pri)?;
         print!(r#"<svg xmlns="http://www.w3.org/2000/svg"
                        viewBox="{}" width={} height={}>"#,
                &viewport, wh[0], wh[1]);
+        if inseveral == 1 {
+          let dasharray = player_dasharray(1.try_into().unwrap());
+          print!(r#"<path d="{}" stroke-dasharray="{}"
+                          fill="none" stroke="{}" />"#,
+                 &surround.0, &dasharray, HELD_SURROUND_COLOUR);
+        }
         let mut html = Html("".into());
         pc.svg_piece(&mut html, &pri)?;
-          println!("{}</svg>", html.0);
+        println!("{}</svg>", html.0);
 //        
 //        println!(r#"<svg viewBox="{}"> width={} height={} {:?}"#,
 //                 &viewport, size[0], size[1], &surround);
