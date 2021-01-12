@@ -3,6 +3,7 @@
 // There is NO WARRANTY.
 
 pub use crate::imports::*;
+pub use crate::shapelib_toml::*;
 
 use parking_lot::{const_rwlock, RwLock};
 use parking_lot::{MappedRwLockReadGuard, RwLockReadGuard};
@@ -15,6 +16,18 @@ use parking_lot::{MappedRwLockReadGuard, RwLockReadGuard};
 //  Outline        }  no Arc's as we serialise/deserialize during save/load
 
 pub type Registry = HashMap<String, shapelib::Contents>;
+
+#[derive(Debug)]
+pub struct GroupData {
+  pub groupname: String,
+  pub d: GroupDetails,
+}
+
+#[typetag::deserialize(tag="outline")]
+pub trait OutlineDefn : Debug + Sync + Send {
+  fn check(&self, lgi: &GroupData) -> Result<(),LLE>;
+  fn load(&self, lgi: &GroupData) -> Result<Box<dyn Outline>,IE>;
+}
 
 #[derive(Debug)]
 pub struct Contents {
@@ -33,55 +46,6 @@ struct ItemDetails {
 struct ItemData {
   d: Arc<ItemDetails>,
   group: Arc<GroupData>,
-}
-
-#[derive(Debug,Deserialize)]
-struct GroupDetails {
-  size: Vec<f64>, // scaled when put into GroupData
-  #[serde(default)] centre: [f64; 2],
-  #[serde(default)] flip: bool,
-  #[serde(default="num_traits::identities::One::one")] scale: f64,
-  #[serde(default)] colours: HashMap<String, RecolourData>,
-  #[serde(flatten)] outline: Box<dyn OutlineDefn>,
-}
-
-#[derive(Debug,Deserialize)]
-struct RecolourData {
-  abbrev: String,
-  // `map` not used by Rust
-}
-
-#[derive(Debug)]
-struct GroupData {
-  groupname: String,
-  d: GroupDetails,
-}
-
-#[derive(Debug,Deserialize)]
-struct GroupDefn {
-  files: FileList,
-  #[serde(default)] item_prefix: String,
-  #[serde(default)] item_suffix: String,
-  #[serde(flatten)] d: GroupDetails,
-}
-
-#[derive(Deserialize,Debug)]
-#[serde(try_from="String")]
-struct FileList(Vec<FileData>);
-
-#[derive(Deserialize,Debug)]
-struct FileData {
-  item_spec: String,
-  r_file_spec: (), // string, in the actual source file
-  desc: Html,
-}
-
-type IE = InternalError;
-
-#[typetag::deserialize(tag="outline")]
-trait OutlineDefn : Debug + Sync + Send {
-  fn check(&self, lgi: &GroupData) -> Result<(),LLE>;
-  fn load(&self, lgi: &GroupData) -> Result<Box<dyn Outline>,IE>;
 }
 
 #[derive(Error,Debug)]
@@ -126,7 +90,6 @@ impl LibraryLoadError {
 
 const INHERIT_DEPTH_LIMIT: u8 = 20;
 
-type LLE = LibraryLoadError;
 type TV = toml::Value;
 type SE = SpecError;
 
