@@ -54,16 +54,17 @@ fn preview(items: Vec<ItemForOutput>) {
     println!(r#"<th align="left"><kbd>{}</kbd><th>"#, &spec.item);
     println!(r#"<th align="left">{}</th>"#, pc.describe_html(None).0);
     let only1 = pc.nfaces() == 1;
+    let getpri = |face: FaceId| PieceRenderInstructions {
+      id: default(),
+      angle: VisiblePieceAngle(default()),
+      face
+    };
     for face in 0..(if only1 { 1 } else { max_faces }) {
       print!(r#"<td align="center""#);
       if only1 { print!(r#" colspan="{}""#, max_faces); }
       println!(r#">"#);
       if face < pc.nfaces() {
-        let pri = PieceRenderInstructions {
-          id: default(),
-          angle: VisiblePieceAngle(default()),
-          face: face.into(),
-        };
+        let pri = getpri(face.into());
         const BORDER: f64 = 1.;
         let bbox = pc
           .bbox_approx();
