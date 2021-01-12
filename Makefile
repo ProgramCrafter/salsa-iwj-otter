@@ -154,6 +154,9 @@ stamp/cargo.%: $(call rsrcs,. ! -path './wasm/*')
 	$(CARGO) build $(call cr,$*) -p otter -p otter-daemon
 	$(stamp)
 
+$(TARGET_DIR)/debug/%: $(call rsrcs, ! -path './wasm/*')
+	$(CARGO) build -p otter --bin $*
+
 stamp/cargo.check: $(call rsrcs,.)
 	$(CARGO) test --workspace
 	$(stamp)
@@ -269,9 +272,8 @@ $(addprefix templates/,$(TXTFILES)): templates/%: %.txt
 
 libraries: $(LIBRARY_FILES)
 
-templates/shapelib.html: stamp/cargo.debug $(LIBRARY_FILES)
-	$(NAILING_CARGO) --just-run --- \
-		$(abspath $(TARGET_DIR))/debug/otterlib \
+templates/shapelib.html: $(TARGET_DIR)/debug/otterlib $(LIBRARY_FILES)
+	$(NAILING_CARGO) --just-run --- $(abspath $<) \
 	--libs '$(addprefix $(PWD)/, $(addsuffix .toml, $(LIBRARIES)))' \
 		preview >$@.tmp && mv -f $@.tmp $@
 
