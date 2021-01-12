@@ -455,10 +455,13 @@ impl Display for InstanceName {
   }
 }
 
+fn link_a_href<K:Display>(k: &K, v: &str) -> Html {
+  let url = htmlescape::encode_minimal(v);
+  Html(format!("<a href={url}>{kind}</a>", url=url, kind=k))
+}
 impl From<(LinkKind, &str)> for Html {
   fn from((k, v): (LinkKind, &str)) -> Html {
-    let url = htmlescape::encode_minimal(v);
-    Html(format!("<a href={url}>{kind}</a>", url=url, kind=k))
+    link_a_href(&k, v)
   }
 }
 
@@ -477,6 +480,9 @@ impl From<&LinksTable> for Html {
         let v = v.as_ref()?;
         Some(Html::from((k, v.as_str())).0)
       })
+      .chain(iter::once(
+        link_a_href(&"Shapelib", "/_/shapelib.html").0
+      ))
       .join(" ");
     if s.len() != 0 { s = format!("links: {}", s) }
     Html(s)
