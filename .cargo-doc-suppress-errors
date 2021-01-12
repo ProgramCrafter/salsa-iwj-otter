@@ -1,0 +1,6 @@
+The lib target `.*` in package `.*` has the same output filename as the lib target `.*` in package `.*`.
+Colliding filename is:.*
+The targets should have unique names.
+This is a known bug where multiple crates with the same name use
+the same path; see <https://github\.com/rust-lang/cargo/issues/6313>\.
+warning: output filename collision\.

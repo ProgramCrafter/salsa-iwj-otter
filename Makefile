@@ -162,7 +162,7 @@ stamp/cargo-wdt.debug: $(call rsrcs,.)
 	$(stamp)
 
 stamp/cargo.doc: $(call rsrcs,.)
-	$(CARGO) doc --workspace
+	$(CARGO) doc --workspace 2>&1 | egrep -vf .cargo-doc-suppress-errors
 	$(stamp)
 
 $(addprefix stamp/cargo.wasm-,$(DR)):: \
