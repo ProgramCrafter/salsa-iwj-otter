@@ -589,7 +589,7 @@ impl Outline for Square {
     Some((smallest * 0.5) as Coord)
   }
   fn bbox_approx(&self) -> [Pos;2] {
-    let pos : Pos = (self.xy * 0.5).map(
+    let pos : Pos = self.xy.map(
       |v| ((v * 0.5).ceil()) as Coord
     );
     let neg = -pos;
