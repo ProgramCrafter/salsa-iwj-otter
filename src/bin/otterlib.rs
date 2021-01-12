@@ -13,6 +13,10 @@ const HTML_PRELUDE: &str = r##"
     <title>Otter builtin shape library</title>
   </head>
 <body>
+<style>
+  html { background-color: #ddf; }
+  table { background-color: #eef; }
+</style>
 <h1>Otter builtin shape library</h1>
 This lists all the shapes provided by the library in this version of Otter.
 </p>
