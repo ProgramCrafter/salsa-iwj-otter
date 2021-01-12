@@ -59,24 +59,24 @@ fn preview(items: Vec<ItemForOutput>) {
       angle: VisiblePieceAngle(default()),
       face
     };
+    const BORDER: f64 = 1.;
+    let bbox = pc
+      .bbox_approx();
+    let mut bbox = bbox
+      .iter()
+      .map(|PosC(xy)| xy.iter().map(|&p| p as f64).collect::<Vec<_>>())
+      .collect::<Vec<_>>();
+    for xy in &mut bbox[0] { *xy -= BORDER }
+        for xy in &mut bbox[1] { *xy += BORDER }
+    let size = izip!(&bbox[0], &bbox[1])
+      .map(|(min,max)| max-min)
+      .collect::<Vec<_>>();
     for face in 0..(if only1 { 1 } else { max_faces }) {
       print!(r#"<td align="center""#);
       if only1 { print!(r#" colspan="{}""#, max_faces); }
       println!(r#">"#);
       if face < pc.nfaces() {
         let pri = getpri(face.into());
-        const BORDER: f64 = 1.;
-        let bbox = pc
-          .bbox_approx();
-        let mut bbox = bbox
-          .iter()
-          .map(|PosC(xy)| xy.iter().map(|&p| p as f64).collect::<Vec<_>>())
-          .collect::<Vec<_>>();
-        for xy in &mut bbox[0] { *xy -= BORDER }
-        for xy in &mut bbox[1] { *xy += BORDER }
-        let size = izip!(&bbox[0], &bbox[1])
-          .map(|(min,max)| max-min)
-          .collect::<Vec<_>>();
         let viewport =
           [bbox[0].clone(), size.clone()]
           .iter().cloned()
