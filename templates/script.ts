@@ -91,6 +91,7 @@ interface DispatchTable<H> { [key: string]: H };
 // xxx any exceptions should have otter in them or something
 var globalinfo_elem : HTMLElement;
 var layout: Layout;
+var held_surround_colour: string;
 var general_timeout : number = 10000;
 var messages : DispatchTable<MessageHandler> = Object();
 var pieceops : DispatchTable<PieceHandler> = Object();
@@ -774,7 +775,7 @@ function redisplay_ancillaries(piece: PieceId, p: PieceInfo) {
   } 
   if (p.held != null) {
     let da = players[p.held!]!.dasharray;
-    let nelem = ancillary_node(piece, 'black');
+    let nelem = ancillary_node(piece, held_surround_colour);
     nelem.setAttributeNS(null,'stroke-dasharray',da);
     p.pelem.appendChild(nelem);
   }
@@ -1202,6 +1203,7 @@ function startup() {
   log_elem = document.getElementById("log")!;
   logscroll_elem = document.getElementById("logscroll") || log_elem;
   let dataload = JSON.parse(body.dataset.load!);
+  held_surround_colour = dataload.held_surround_colour!;
   players = dataload.players!;
   delete body.dataset.load;
   uos_node = document.getElementById("uos")!;

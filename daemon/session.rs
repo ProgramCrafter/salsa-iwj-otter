@@ -49,6 +49,7 @@ struct SessionPieceLoadJson<'r> {
 struct DataLoad {
   last_log_ts: String,
   players: HashMap<PlayerId, DataLoadPlayer>,
+  held_surround_colour: &'static str,
 }
 
 #[derive(Deserialize)]
@@ -200,6 +201,7 @@ fn session_inner(form : Json<SessionForm>,
       load: serde_json::to_string(&DataLoad {
         players: load_players,
         last_log_ts: timestamp_abbrev.unwrap_or_default(),
+        held_surround_colour: HELD_SURROUND_COLOUR,
       }).map_err(|e| InternalError::JSONEncode(e))?,
     };
     trace!("SessionRenderContext {:?}", &src);
