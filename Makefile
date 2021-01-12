@@ -5,6 +5,7 @@
 
 # make -j8
 # make -j8 release
+# make -j8 shapelib
 
 SHELL=/bin/bash
 src=.
@@ -12,7 +13,10 @@ src=.
 default: all check doc
 all: debug
 everything: debug doc release check bundled-sources
+
 shapelib: templates/shapelib.html stamp/cargo.doc-otter-only
+	@echo 'Now visit in your web browser:'
+	@echo '  file://$(PWD)/$<'
 
 #---------- funky macros etc. ----------
 
