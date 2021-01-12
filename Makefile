@@ -12,6 +12,7 @@ src=.
 default: all check doc
 all: debug
 everything: debug doc release check bundled-sources
+shapelib: templates/shapelib.html
 
 #---------- funky macros etc. ----------
 
