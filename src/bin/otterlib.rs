@@ -33,22 +33,32 @@ pub type ItemForOutput = (String, ItemEnquiryData);
 
 #[throws(AE)]
 fn preview(items: Vec<ItemForOutput>) {
-  let pieces = items.into_iter().map(|it| {
+  const BORDER: f64 = 1.;
+
+  struct Prep {
+    spec: ItemSpec,
+    pc: Box<dyn Piece>,
+    uos: Vec<String>
+  };
+
+  let pieces : Vec<Prep> = items.into_iter().map(|it| {
     let spec = ItemSpec { lib: it.0, item: it.1.itemname };
     (||{
       let pc = spec.clone().load().context("load")?;
       let mut uos = vec![];
       pc.add_ui_operations(&mut uos).context("add uos")?;
       let uos = uos.into_iter().map(|uo| uo.opname).collect::<Vec<_>>();
-      Ok::<_,AE>((spec.clone(), pc, uos))
+      let spec = spec.clone();
+
+      Ok::<_,AE>(Prep { spec, pc, uos })
     })().with_context(|| format!("{:?}", &spec))
   }).collect::<Result<Vec<_>,_>>()?;
 
-  let max_faces = pieces.iter().map(|(_,p,_)| p.nfaces()).max().unwrap_or(1);
-  let max_uos = pieces.iter().map(|(..,uos)| uos.len()).max().unwrap_or(0);
+  let max_faces = pieces.iter().map(|s| s.pc.nfaces()).max().unwrap_or(1);
+  let max_uos = pieces.iter().map(|s| s.uos.len()).max().unwrap_or(0);
 
   println!(r#"<table rules="all">"#);
-  for (spec, pc, uos) in &pieces {
+  for Prep { spec, pc, uos } in &pieces {
     println!(r#"<tr>"#);
     println!(r#"<th align="left"><kbd>{}</kbd><th>"#, &spec.lib);
     println!(r#"<th align="left"><kbd>{}</kbd><th>"#, &spec.item);
@@ -59,7 +69,7 @@ fn preview(items: Vec<ItemForOutput>) {
       angle: VisiblePieceAngle(default()),
       face
     };
-    const BORDER: f64 = 1.;
+
     let bbox = pc
       .bbox_approx();
     let mut bbox = bbox
@@ -71,6 +81,7 @@ fn preview(items: Vec<ItemForOutput>) {
     let size = izip!(&bbox[0], &bbox[1])
       .map(|(min,max)| max-min)
       .collect::<Vec<_>>();
+
     for face in 0..(if only1 { 1 } else { max_faces }) {
       print!(r#"<td align="center""#);
       if only1 { print!(r#" colspan="{}""#, max_faces); }
