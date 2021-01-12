@@ -38,7 +38,9 @@ fn preview(items: Vec<ItemForOutput>) {
   struct Prep {
     spec: ItemSpec,
     pc: Box<dyn Piece>,
-    uos: Vec<String>
+    uos: Vec<String>,
+    bbox: Vec<Vec<f64>>,
+    size: Vec<f64>,
   };
 
   let pieces : Vec<Prep> = items.into_iter().map(|it| {
@@ -50,7 +52,19 @@ fn preview(items: Vec<ItemForOutput>) {
       let uos = uos.into_iter().map(|uo| uo.opname).collect::<Vec<_>>();
       let spec = spec.clone();
 
-      Ok::<_,AE>(Prep { spec, pc, uos })
+      let bbox = pc
+        .bbox_approx();
+      let mut bbox = bbox
+        .iter()
+        .map(|PosC(xy)| xy.iter().map(|&p| p as f64).collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+      for xy in &mut bbox[0] { *xy -= BORDER }
+      for xy in &mut bbox[1] { *xy += BORDER }
+      let size = izip!(&bbox[0], &bbox[1])
+        .map(|(min,max)| max-min)
+        .collect::<Vec<_>>();
+
+      Ok::<_,AE>(Prep { spec, pc, uos, bbox, size })
     })().with_context(|| format!("{:?}", &spec))
   }).collect::<Result<Vec<_>,_>>()?;
 
@@ -58,7 +72,7 @@ fn preview(items: Vec<ItemForOutput>) {
   let max_uos = pieces.iter().map(|s| s.uos.len()).max().unwrap_or(0);
 
   println!(r#"<table rules="all">"#);
-  for Prep { spec, pc, uos } in &pieces {
+  for Prep { spec, pc, uos, bbox, size } in &pieces {
     println!(r#"<tr>"#);
     println!(r#"<th align="left"><kbd>{}</kbd><th>"#, &spec.lib);
     println!(r#"<th align="left"><kbd>{}</kbd><th>"#, &spec.item);
@@ -69,18 +83,6 @@ fn preview(items: Vec<ItemForOutput>) {
       angle: VisiblePieceAngle(default()),
       face
     };
-
-    let bbox = pc
-      .bbox_approx();
-    let mut bbox = bbox
-      .iter()
-      .map(|PosC(xy)| xy.iter().map(|&p| p as f64).collect::<Vec<_>>())
-      .collect::<Vec<_>>();
-    for xy in &mut bbox[0] { *xy -= BORDER }
-        for xy in &mut bbox[1] { *xy += BORDER }
-    let size = izip!(&bbox[0], &bbox[1])
-      .map(|(min,max)| max-min)
-      .collect::<Vec<_>>();
 
     for face in 0..(if only1 { 1 } else { max_faces }) {
       print!(r#"<td align="center""#);
