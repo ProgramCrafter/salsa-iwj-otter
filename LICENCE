@@ -21,6 +21,12 @@ You can download the complete source code of a running instance of
 Otter, by visiting the path /src.  There should be a link at the
 bottom of the page.
 
+For a list of the contributors to Otter and its provided shape
+libraries, see the git history (and the in-source-tree information
+from applicable original image sources).  Information about the
+contributors to the dependencies is to be found in each dependency's
+source code.
+
 
 Shape libraries
 ---------------
