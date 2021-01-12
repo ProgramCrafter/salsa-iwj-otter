@@ -43,6 +43,18 @@ fn preview(items: Vec<ItemForOutput>) {
     size: Vec<f64>,
   };
 
+  const SEVERAL: usize = 3;
+
+  impl Prep {
+    fn want_several(&self) -> bool {
+      self.size[0] < 20.0
+    }
+    fn face_cols(&self) -> usize {
+      usize::from(self.pc.nfaces())
+        * if self.want_several() { SEVERAL } else { 1 }
+    }
+  }
+
   let pieces : Vec<Prep> = items.into_iter().map(|it| {
     let spec = ItemSpec { lib: it.0, item: it.1.itemname };
     (||{
@@ -68,27 +80,36 @@ fn preview(items: Vec<ItemForOutput>) {
     })().with_context(|| format!("{:?}", &spec))
   }).collect::<Result<Vec<_>,_>>()?;
 
-  let max_faces = pieces.iter().map(|s| s.pc.nfaces()).max().unwrap_or(1);
+  let max_facecols = pieces.iter().map(|s| s.face_cols()).max().unwrap_or(1);
   let max_uos = pieces.iter().map(|s| s.uos.len()).max().unwrap_or(0);
 
   println!(r#"<table rules="all">"#);
-  for Prep { spec, pc, uos, bbox, size } in &pieces {
+  for s in &pieces {
+    let Prep { spec, pc, uos, bbox, size } = s;
     println!(r#"<tr>"#);
     println!(r#"<th align="left"><kbd>{}</kbd><th>"#, &spec.lib);
     println!(r#"<th align="left"><kbd>{}</kbd><th>"#, &spec.item);
     println!(r#"<th align="left">{}</th>"#, pc.describe_html(None).0);
-    let only1 = pc.nfaces() == 1;
+    let only1 = s.face_cols() == 1;
     let getpri = |face: FaceId| PieceRenderInstructions {
       id: default(),
       angle: VisiblePieceAngle(default()),
       face
     };
 
-    for face in 0..(if only1 { 1 } else { max_faces }) {
+    for facecol in 0..(if only1 { 1 } else { max_facecols }) {
+      let (face, inseveral) = if s.want_several() {
+        (facecol / SEVERAL, facecol % SEVERAL)
+      } else {
+        (facecol, 0)
+      };
       print!(r#"<td align="center""#);
-      if only1 { print!(r#" colspan="{}""#, max_faces); }
+      if only1 {
+        assert!(!s.want_several());
+        print!(r#" colspan="{}""#, max_facecols);
+      }
       println!(r#">"#);
-      if face < pc.nfaces() {
+      if face < (pc.nfaces() as usize) {
         let pri = getpri(face.into());
         let viewport =
           [bbox[0].clone(), size.clone()]
@@ -104,7 +125,7 @@ fn preview(items: Vec<ItemForOutput>) {
                &viewport, wh[0], wh[1]);
         let mut html = Html("".into());
         pc.svg_piece(&mut html, &pri)?;
-        println!("{}</svg>", html.0);
+          println!("{}</svg>", html.0);
 //        
 //        println!(r#"<svg viewBox="{}"> width={} height={} {:?}"#,
 //                 &viewport, size[0], size[1], &surround);
