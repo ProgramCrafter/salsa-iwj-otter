@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-#![feature(proc_macro_hygiene, decl_macro)]
 #![feature(slice_strip)]
 
 #![allow(clippy::redundant_closure_call)]

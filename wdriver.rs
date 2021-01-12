@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-#![feature(unboxed_closures)]
-#![feature(fn_traits)]
-
 pub use anyhow::{anyhow, ensure, Context};
 pub use boolinator::Boolinator;
 pub use fehler::{throw, throws};
