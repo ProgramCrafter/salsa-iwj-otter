@@ -108,8 +108,9 @@ See `LICENCE` for more information about copyright status.
 BUILDING AND TESTING
 ====================
 
-You will need at 6000 megabytes of disk space, or more, and a good
-internet connection.  Your computer will be compiling a lot of code.
+You will need at least 6000 megabytes of disk space, or more, and a
+good internet connection.  Your computer will be compiling a lot of
+code.
 
 These instructions have been tested on Debian buster.
 
@@ -124,7 +125,7 @@ Setup
                       node-typescript inkscape
 ```
 
-2. Install Rust.  This is most easily done with rustup:
+2. Install Rust.  This is most easily done with [rustup](https://rustup.rs)):
 
 ```
      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -148,21 +149,21 @@ Setup
      rustup default nightly-2020-11-09
 ```
 
-4. Install the `usv` SVG launderer, which we need for shape libraries
+4. Install the `usvg` SVG launderer, which we need for shape libraries
 
 ```
      cargo install usvg
 ```
 
    This will put it in `~/.cargo/bin`, which you presumably have on
-   your PATH (or the above `rustup` and `cargo` runes wouldn't work).
+   your `PATH` (or the above `rustup` and `cargo` runes wouldn't work).
 
 
 ** If you just want to edit and preview the shape libraries
    (ie the piece shapes) you can stop here **
 
 
-4. Install some more build tools:
+5. Install some more build tools:
 
 ```
      cargo install bundle-sources
@@ -171,10 +172,9 @@ Setup
      cargo install
 ```
 
-wasm-pack upstream haven't reviewed my merge request.
-
-NB that wasm-pack will itself download and install more stuff when it
-is run by the Otter Makefile.
+wasm-pack upstream haven't reviewed my merge request, so you need my
+version.  NB that wasm-pack will itself download and install more
+stuff when it is run by the Otter Makefile.
 
 
 Build
@@ -191,7 +191,7 @@ Or if you just want to edit the piece libraries:
 ```
     make -j8 shapelib
 ```
-And then open ./templates/shapelib.html in your browser
+And then open `./templates/shapelib.html` in your browser
 
 
 Ad-hoc tests
