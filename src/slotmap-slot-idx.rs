@@ -1,4 +1,4 @@
-// Copyright 2020 Ian Jackson
+// Copyright 2020-2021 Ian Jackson and contributors to Otter
 // SPDX-License-Identifier: MIT-0 OR AGPL-3.0-or-later
 // There is NO WARRANTY.
 
