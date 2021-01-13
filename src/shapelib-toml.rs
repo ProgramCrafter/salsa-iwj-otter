@@ -10,7 +10,7 @@
 //! Rust `struct` corresponds to a TOML table.  A `HashMap` is also a
 //! TOML Table (ie, a `key = value` mapping).  A `Vec` is a TOML Array
 //! (ie, a list).  (There are a number of wrinkles where the parsing
-//! deviates from these defaults; these are documented explicitly.)
+//! deviates from these conventions; these are documented explicitly.)
 //!
 //! Each `*.toml` file contains the information in
 //! [`LibraryTomlFile`], so start there.
@@ -21,8 +21,8 @@
 
 pub use crate::imports::*;
 
-pub type IE = InternalError;
-pub type LLE = shapelib::LibraryLoadError;
+#[doc(hidden)] pub type IE = InternalError;
+#[doc(hidden)] pub type LLE = shapelib::LibraryLoadError;
 
 #[cfg(doc)]
 /// Each file `library/*.toml` contains this.
@@ -30,7 +30,7 @@ pub type LLE = shapelib::LibraryLoadError;
 /// (Ignore the "Trait implementations" and everything that follows.)
 pub struct LibraryTomlFile {
   /// A TOML table of groups.  Each group has a name, a can specify
-  /// various properties (some inheritable), and also gives a list of
+  /// various (inheritable) properties, and also gives a list of
   /// indvidual SVG files which should be processed this way.
   pub groups: HashMap<String, GroupDefn>,
 
@@ -39,7 +39,7 @@ pub struct LibraryTomlFile {
   /// The scraper is never automatically run during the build.  If you
   /// updated the TOML file in a way that means files should be
   /// re-downloaded, you should re-run `./media-scraper
-  /// library/`_lib_`.toml` ```
+  /// library/`_lib_`.toml`
   pub scraper: Scraper
 }
 
@@ -193,7 +193,8 @@ pub struct Scraper {
   ///
   ///  * `"none"`: Do not scrape anything.  The SVGs in the Otter
   ///  source tree are hand-edited.  The 2nd field in each
-  ///  [`files`](GroupDefn::files) line ([`FileData`]) is ignored.
+  ///  [`files`](GroupDefn::files) line
+  ///  ([`r_file_spec`](FileData::r_file_spec)) is ignored.
   ///
   ///  * `"wikimedia"`: Scrape a site that uses Mediawiki the way that
   ///  Wikimedia does.  In this case
@@ -203,7 +204,7 @@ pub struct Scraper {
 }
 
 #[cfg(doc)]
-/// `scraper = "wikimedia"`
+/// Settings to go alongside `scraper = "wikimedia"`
 ///
 /// TODO: Most fields here yet to be documented!
 pub struct WikimediaScraper {
