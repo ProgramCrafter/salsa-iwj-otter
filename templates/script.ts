@@ -79,7 +79,7 @@ type PieceInfo = {
 
 let wasm : wasm_bindgen.InitOutput;
 
-let pieces : { [piece: string]: PieceInfo } = Object.create(null);
+var pieces : { [piece: string]: PieceInfo } = Object.create(null);
 
 type MessageHandler = (op: Object) => void;
 type PieceHandler = (piece: PieceId, p: PieceInfo, info: Object) => void;
