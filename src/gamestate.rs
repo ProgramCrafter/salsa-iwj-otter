@@ -343,7 +343,7 @@ impl GameState {
 
 pub fn make_pieceid_visible(p: PieceId) -> VisiblePieceId {
   // todo-lens need to do censorship mapping here
-  let kd: slotmap::KeyData = p.into();
+  let kd: slotmap::KeyData = p.data();
   VisiblePieceId(kd)
 }
 

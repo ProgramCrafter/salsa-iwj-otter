@@ -64,7 +64,9 @@ macro_rules! visible_slotmap_key {
       fn try_from(s: String) -> $x { $x(slotkey_parse(&s,$sep)?) }
     }
 
-    impl slotmap::Key for $x { }
+    impl slotmap::Key for $x {
+      fn data(&self) -> slotmap::KeyData { self.0 }
+    }
     impl From<slotmap::KeyData> for $x {
       fn from(d : slotmap::KeyData) -> Self { $x(d) }
     }

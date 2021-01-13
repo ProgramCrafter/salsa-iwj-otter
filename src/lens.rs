@@ -21,7 +21,7 @@ pub struct TransparentLens {
 }
 impl Lens for TransparentLens {
   fn pieceid2visible(&self, piece: PieceId) -> VisiblePieceId {
-    let kd : slotmap::KeyData = piece.into();
+    let kd : slotmap::KeyData = piece.data();
     VisiblePieceId(kd)
   }
   fn log_pri(&self, piece: PieceId, pc: &PieceState)
