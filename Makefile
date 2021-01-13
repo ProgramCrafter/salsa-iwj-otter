@@ -15,8 +15,9 @@ all: debug
 everything: debug doc release check bundled-sources
 
 shapelib: templates/shapelib.html stamp/cargo.doc-otter-only
-	@echo 'Now visit in your web browser:'
+	@echo 'Now you can visit these in your web browser:'
 	@echo '  file://$(PWD)/$<'
+	@echo '  file://$(abspath $(TARGET_DIR)/doc/otter/shapelib_toml/index.html)'
 
 #---------- funky macros etc. ----------
 
