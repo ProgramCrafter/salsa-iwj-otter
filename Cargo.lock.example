@@ -398,17 +398,6 @@ dependencies = [
 
 [[package]]
 name = "delegate"
-version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12e531288b600a8bea48baff926d2f16a3f68fda1cd2d59240279907ba727332"
-dependencies = [
- "proc-macro2 1.0.24",
- "quote 1.0.8",
- "syn 1.0.57",
-]
-
-[[package]]
-name = "delegate"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a57ed03a3563e9d6214c1eec5bd3b151fc21fb2052448b97692c8df30d113c8c"
@@ -1581,7 +1570,7 @@ dependencies = [
  "boolinator",
  "chrono",
  "chrono-tz",
- "delegate 0.5.0",
+ "delegate",
  "derive_more",
  "either",
  "enum-map",
@@ -1638,7 +1627,7 @@ dependencies = [
  "boolinator",
  "chrono",
  "chrono-tz",
- "delegate 0.4.3",
+ "delegate",
  "derive_more",
  "either",
  "failure",
