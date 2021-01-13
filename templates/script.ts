@@ -672,7 +672,9 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   var target = e.target as SVGGraphicsElement; // we check this just now!
   var piece = target.dataset.piece!;
   if (!piece) {
-    ungrab_all();    
+    if (!shifted) {
+      ungrab_all();
+    }
     return;
   }
   let p = pieces[piece]!;
@@ -691,13 +693,12 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       drag_add_piece(tpiece,tp);
     }
   } else if (held == null || wresting) {
-    if (p.pinned && !wresting) {
-      add_log_message('That piece is pinned to the table.');
-      ungrab_all();
-      return;
-    }
     if (!shifted) {
       ungrab_all();
+    }
+    if (p.pinned && !wresting) {
+      add_log_message('That piece is pinned to the table.');
+      return;
     }
     dragging = DRAGGING.MAYBE_GRAB;
     drag_add_piece(piece,p);
