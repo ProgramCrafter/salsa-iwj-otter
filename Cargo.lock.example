@@ -1622,7 +1622,7 @@ dependencies = [
  "rand 0.8.1",
  "regex",
  "rmp",
- "rmp-serde 0.15.1",
+ "rmp-serde",
  "serde",
  "serde_json",
  "serde_with",
@@ -1678,7 +1678,7 @@ dependencies = [
  "rand 0.8.1",
  "regex",
  "rmp",
- "rmp-serde 0.14.4",
+ "rmp-serde",
  "rocket",
  "rocket_contrib",
  "rocket_cors",
@@ -2190,17 +2190,6 @@ checksum = "0f10b46df14cf1ee1ac7baa4d2fbc2c52c0622a4b82fa8740e37bc452ac0184f"
 dependencies = [
  "byteorder",
  "num-traits",
-]
-
-[[package]]
-name = "rmp-serde"
-version = "0.14.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ce7d70c926fe472aed493b902010bccc17fa9f7284145cb8772fd22fdb052d8"
-dependencies = [
- "byteorder",
- "rmp",
- "serde",
 ]
 
 [[package]]
