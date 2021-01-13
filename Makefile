@@ -282,7 +282,7 @@ $(addprefix templates/,$(TXTFILES)): templates/%: %.txt
 libraries: $(LIBRARY_FILES)
 
 templates/shapelib.html: $(TARGET_DIR)/debug/otterlib $(LIBRARY_FILES)
-	$(NAILING_CARGO) --just-run --- $(abspath $<) \
+	$(NAILING_CARGO_JUST_RUN) --- $(abspath $<) \
 	--libs '$(addprefix $(PWD)/, $(addsuffix .toml, $(LIBRARIES)))' \
 		preview >$@.tmp && mv -f $@.tmp $@
 
