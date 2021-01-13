@@ -27,6 +27,11 @@
   div[id=uos] {
     flex: auto;
   }
+  div[class=somepane] {
+    flex: auto;
+    display: flex;
+    flex-direction: column;
+  }
 </style>
 {% endmacro header %}
 
@@ -81,6 +86,7 @@ Hi {{nick | escape}}
 
 {% macro infopane() %}
 <div id="infopane">
+ <div id="uopane" class="somepane">
   <div id="uos" class="uos">
     <div class="uos-mid" id="uos-mid"></div>
   </div>
@@ -88,6 +94,7 @@ Hi {{nick | escape}}
     <div class="uokey"><strong>Mouse</strong> select/deselect/drag</div>
     <div class="uokey"><strong>shift</strong> multiple selection</div>
   </div>
+ </div id="uopane">
 </div id="infopane">
 {% endmacro infopane %}
 
