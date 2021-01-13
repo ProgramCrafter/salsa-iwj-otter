@@ -35,7 +35,7 @@ structopt = "0.3"
 strum = { version = "0.20", features = ['derive'] }
 thirtyfour_sync = "0.22"
 void = "1"
-x11rb = "0.7"
+x11rb = "0.8"
 
 [lib]
 name = "otter_webdriver_tests"
