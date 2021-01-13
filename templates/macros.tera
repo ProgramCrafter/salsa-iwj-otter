@@ -19,9 +19,9 @@
   div[id=infopane] {
     display: flex;
     flex-direction: column;
+    background-color: white;
   }
   div[class=uos] {
-    background-color: white;
     flex: initial;
   }
   div[id=uos] {
