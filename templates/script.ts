@@ -124,6 +124,12 @@ var zoom_btn : HTMLInputElement;
 var links_elem : HTMLElement;
 var wresting: boolean;
 
+type PaneName = string;
+const pane_keys : { [key: string]: PaneName } = {
+  "H" : "help",
+  "U" : "players",
+};
+
 const uo_kind_prec : { [kind: string]: number } = {
   'GlobalExtra' :  50,
   'Client'      :  70,
@@ -357,6 +363,11 @@ function some_keydown(e: KeyboardEvent) {
   // my tsc says this isComposing thing doesn't exist.  wat.
   if ((e as any).isComposing /* || e.keyCode === 229 */) return;
 
+  let pane = pane_keys[e.key];
+  if (pane) {
+    return pane_switch(pane);
+  }
+
   let uo = uo_map[e.key];
   if (uo === undefined || uo === null) return;
 
@@ -379,6 +390,22 @@ function some_keydown(e: KeyboardEvent) {
       }
     }
   }
+}
+
+function pane_switch(newpane: PaneName) {
+  let new_e;
+  for (;;) {
+    new_e = document.getElementById('pane_' + newpane)!;
+    let style = new_e.getAttribute('style');
+    if (style || newpane == 'help') break;
+    newpane = 'help';
+  }
+  for (let old_e = new_e.parentElement!.firstElementChild;
+       old_e;
+       old_e = old_e.nextElementSibling) {
+    old_e.setAttribute('style','display: none;');
+  }
+  new_e.removeAttribute('style');
 }
 
 keyops_local['left' ] = function (uo: UoRecord) { rotate_targets(uo, +1); }

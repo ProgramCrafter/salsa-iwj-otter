@@ -86,15 +86,25 @@ Hi {{nick | escape}}
 
 {% macro infopane() %}
 <div id="infopane">
- <div id="uopane" class="somepane">
+
+ <div id="pane_help" class="somepane">
   <div id="uos" class="uos">
     <div class="uos-mid" id="uos-mid"></div>
   </div>
   <div class="uos">
     <div class="uokey"><strong>Mouse</strong> select/deselect/drag</div>
     <div class="uokey"><strong>shift</strong> multiple selection</div>
+    <div class="uokey">Show
+      <strong>H</strong> this help
+      <strong>U</strong> players
+    </div>
   </div>
- </div id="uopane">
+ </div>
+
+ <div id="pane_players" class="somepane" style="display:none">
+   Player list will appear here.
+ </div>
+
 </div id="infopane">
 {% endmacro infopane %}
 
