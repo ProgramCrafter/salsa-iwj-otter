@@ -322,8 +322,13 @@ impl AccountsGuard {
 
     if let Some(new_access) = set_access {
       if (|| Ok::<_,IE>(
-        rmp_serde::encode::to_vec(&new_access)?
-          != rmp_serde::encode::to_vec(&entry.access)?
+        // In lieu of downcasting.
+        // Ideally we would add Eq and PartialEq as a trait bound
+        // on PlayerAccessSpec and then use std::any::Any::downcast_ref
+        // in a provided method.  Well, ideally this would not be
+        // necessary and we could do some magic.
+           rmp_serde::encode::to_vec(&new_access)?
+        != rmp_serde::encode::to_vec(&entry.access)?
       ))()? {
         process_all_players_for_account(
           games,
