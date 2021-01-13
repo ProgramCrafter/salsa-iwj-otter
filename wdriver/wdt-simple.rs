@@ -48,19 +48,20 @@ impl Ctx {
   }
 
   #[throws(AE)]
-  fn rotate(&mut self){
+  fn rotate(&mut self) -> &'static str {
+    let pc = "4.1";
     let su = &mut self.su;
 
     let chk = |w: &WindowGuard<'_>| {
       let transform = format!("rotate(-90)");
-      let pd = w.find_element(By::Id("piece4.1"))?;
+      let pd = w.find_element(By::Id(&format!("piece{}",pc)))?;
       ensure_eq!(pd.get_attribute("transform")?, Some(transform));
       Ok::<_,AE>(())
     };
 
     {
       let mut w = su.w(&self.alice)?;
-      let p = w.find_piece("4.1")?;
+      let p = w.find_piece(pc)?;
       let (px,py) = p.posw()?;
       w.action_chain()
         .move_to(px,py)
@@ -70,6 +71,43 @@ impl Ctx {
         .key_up('l')
         .perform()
         .always_context("rotate")?;
+
+      chk(&w)?;
+      w.synch()?;
+    }
+
+    {
+      let mut w = su.w(&self.bob)?;
+      w.synch()?;
+      chk(&w)?;
+    }
+
+    pc
+  }
+
+  #[throws(AE)]
+  fn unselect(&mut self, pc: &'static str) {
+    let su = &mut self.su;
+
+    let chk = |w: &WindowGuard<'_>| {
+      let held = w.execute_script(&format!(r##"
+        let pc = pieces['{}'];
+        pc.held;
+                       "##, &pc))?;
+      let held = held.value();
+      dbg!(held);
+      ensure_eq!(held, &serde_json::Value::Null);
+      Ok::<_,AE>(())
+    };
+
+    {
+      let mut w = su.w(&self.alice)?;
+      w.action_chain()
+        .move_to(10,10)
+        .click()
+        .release()
+        .perform()
+        .always_context("unselect by clicking elsewhere")?;
 
       chk(&w)?;
       w.synch()?;
@@ -94,7 +132,8 @@ fn main(){
     let mut c = Ctx { su, alice, bob };
 
     c.drag().always_context("drag")?;
-    c.rotate().always_context("rotate")?;
+    let pc = c.rotate().always_context("rotate")?;
+    c.unselect(pc).always_context("unselect")?;
 
     debug!("finishing");
   }

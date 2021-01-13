@@ -671,7 +671,10 @@ function some_mousedown(e : MouseEvent) {
 function drag_mousedown(e : MouseEvent, shifted: boolean) {
   var target = e.target as SVGGraphicsElement; // we check this just now!
   var piece = target.dataset.piece!;
-  if (!piece) { return; }
+  if (!piece) {
+    ungrab_all();    
+    return;
+  }
   let p = pieces[piece]!;
   let held = p.held;
 
@@ -690,6 +693,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   } else if (held == null || wresting) {
     if (p.pinned && !wresting) {
       add_log_message('That piece is pinned to the table.');
+      ungrab_all();
       return;
     }
     if (!shifted) {
