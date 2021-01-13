@@ -4,8 +4,10 @@
   div[class=uos] {
     display: flex; flex-direction: column; flex-wrap: wrap;
   }
-  div[id=uos] {
+  div[id=infopane] {
     min-height: 340px;
+  }
+  div[id=uos] {
     flex-grow: 1;
   }
   div[class|=uokey] {

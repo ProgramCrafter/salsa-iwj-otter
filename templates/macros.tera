@@ -16,8 +16,16 @@
   .footer {
     background-color: #ddf;
   }
+  div[id=infopane] {
+    display: flex;
+    flex-direction: column;
+  }
   div[class=uos] {
     background-color: white;
+    flex: initial;
+  }
+  div[id=uos] {
+    flex: auto;
   }
 </style>
 {% endmacro header %}

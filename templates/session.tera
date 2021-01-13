@@ -22,7 +22,7 @@
   div[class=uokey-r] {
     align-self: end;
   }
-  div[id=uos] {
+  div[id=infopane] {
     height: 100px;
   }
   .uos-mid {
