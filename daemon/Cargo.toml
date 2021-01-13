@@ -29,7 +29,7 @@ derive_more = "0.99"
 either = "1"
 failure = "0.1.8" # for pwd
 fehler = "1"
-flexi_logger = { version = "0.16", features = [ "specfile" ] }
+flexi_logger = { version = "0.17", features = [ "specfile" ] }
 fs2 = "0.4"
 glob = "0.3"
 htmlescape = "0.3"
