@@ -406,6 +406,12 @@ impl Instance {
       .collect();
     out
   }
+
+  #[throws(InternalError)]
+  fn player_info_pane(&self) -> Arc<Html> {
+    let html = Html::from_txt("Players list from server, but NYI");// xxx
+    Arc::new(html)
+  }
 }
 
 pub fn games_lock() -> RwLockWriteGuard<'static, GamesTable> {
@@ -518,16 +524,20 @@ impl<'ig> InstanceGuard<'ig> {
     let player = self.c.g.gs.players.insert(gnew);
     let u = PlayerUpdates::new_begin(&self.c.g.gs).new();
     let record = PlayerRecord { u, ipl: inew };
-    let update = PreparedUpdateEntry::AddPlayer {
-      player,
-      data: DataLoadPlayer::from_player(self, player),
-    };
+
     self.c.g.iplayers.insert(player, record);
 
-    (||{
+    let update = (||{
+      let new_info_pane = self.player_info_pane()?;
+
+      let update = PreparedUpdateEntry::AddPlayer {
+        player, new_info_pane,
+        data: DataLoadPlayer::from_player(self, player),
+      };
+
       self.save_game_now()?;
       self.save_access_now()?;
-      Ok::<_,InternalError>(())
+      Ok::<_,InternalError>(update)
     })().map_err(|e|{
       self.c.g.iplayers.remove(player);
       self.c.g.gs.players.remove(player);
@@ -642,6 +652,8 @@ impl<'ig> InstanceGuard<'ig> {
     swap_things(self);
     undo.push(Box::new(swap_things));
 
+    let new_info_pane = self.player_info_pane()?;
+
     self.save_game_now().map_err(|e|{
       // oof
       for u in undo.drain(..).rev() {
@@ -685,7 +697,10 @@ impl<'ig> InstanceGuard<'ig> {
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
 
     let updates = old_players.iter().cloned().map(
-      |player| PreparedUpdateEntry::RemovePlayer { player }
+      |player| PreparedUpdateEntry::RemovePlayer {
+        player,
+        new_info_pane: new_info_pane.clone(),
+      }
     );
 
     let old = izip!(

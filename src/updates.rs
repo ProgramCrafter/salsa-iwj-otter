@@ -49,8 +49,15 @@ pub enum PreparedUpdateEntry {
   SetTableSize(Pos),
   SetTableColour(Colour),
   SetLinks(Arc<LinksTable>),
-  AddPlayer { player: PlayerId, data: DataLoadPlayer },
-  RemovePlayer { player: PlayerId },
+  AddPlayer {
+    player: PlayerId,
+    data: DataLoadPlayer,
+    new_info_pane: Arc<Html>,
+  },
+  RemovePlayer {
+    player: PlayerId,
+    new_info_pane: Arc<Html>,
+  },
   Log (Arc<CommittedLogEntry>),
   Error (Option<ClientId> /* none: all */, ErrorSignaledViaUpdate),
 }
@@ -114,8 +121,15 @@ enum TransmitUpdateEntry<'u> {
   },
   SetTableSize(Pos),
   SetTableColour(&'u Colour),
-  AddPlayer { player: PlayerId, data: &'u DataLoadPlayer },
-  RemovePlayer { player: PlayerId },
+  AddPlayer {
+    player: PlayerId,
+    data: &'u DataLoadPlayer,
+    new_info_pane: &'u Arc<Html>,
+  },
+  RemovePlayer {
+    player: PlayerId,
+    new_info_pane: &'u Arc<Html>,
+  },
   SetLinks(Html),
   #[serde(serialize_with="serialize_logentry")]
   Log(TransmitUpdateLogEntry<'u>),
@@ -199,8 +213,16 @@ impl PreparedUpdateEntry {
       Log(logent) => {
         logent.logent.html.0.as_bytes().len() * 28
       }
-      AddPlayer { player:_, data: DataLoadPlayer { dasharray } } => {
+      AddPlayer {
+        player:_,
+        data: DataLoadPlayer { dasharray },
+        new_info_pane,
+      } => {
         dasharray.as_bytes().len() + 100
+          + new_info_pane.0.len()
+      }
+      RemovePlayer { player:_, new_info_pane } => {
+        new_info_pane.0.len() + 100
       }
       SetTableColour(colour) => {
         colour.0.as_bytes().len() + 50
@@ -211,7 +233,6 @@ impl PreparedUpdateEntry {
         ).sum::<usize>() + 50
       }
       SetTableSize(_) |
-      RemovePlayer { player:_ } |
       Error(_,_) => {
         100
       }
@@ -535,11 +556,11 @@ impl PreparedUpdate {
         PUE::SetTableColour(colour) => {
           TUE::SetTableColour(colour)
         }
-        &PUE::AddPlayer { player, ref data } => {
-          TUE::AddPlayer { player, data }
+        &PUE::AddPlayer { player, ref new_info_pane, ref data } => {
+          TUE::AddPlayer { player, new_info_pane, data }
         }
-        &PUE::RemovePlayer { player } => {
-          TUE::RemovePlayer { player }
+        &PUE::RemovePlayer { player, ref new_info_pane } => {
+          TUE::RemovePlayer { player, new_info_pane }
         }
         PUE::Error(c, e) => {
           if *c == None || *c == Some(dest) {
