@@ -71,7 +71,8 @@ Hi {{nick | escape}}
     </svg>
 {% endmacro space %}
 
-{% macro uos() %}
+{% macro infopane() %}
+<div id="infopane">
   <div id="uos" class="uos">
     <div class="uos-mid" id="uos-mid"></div>
   </div>
@@ -79,7 +80,8 @@ Hi {{nick | escape}}
     <div class="uokey"><strong>Mouse</strong> select/deselect/drag</div>
     <div class="uokey"><strong>shift</strong> multiple selection</div>
   </div>
-{% endmacro uos %}
+</div id="infopane">
+{% endmacro infopane %}
 
 {% macro footer() %}
   <div class="footer">

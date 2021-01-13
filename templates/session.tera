@@ -44,7 +44,7 @@ g{{ m::wresting() }}
 {{ m::errors() }}
 
 {{ m::space() }}
-<p>{{ m::uos() }}
+<p>{{ m::infopane() }}
 
 <p>
   <div id="logscroll" style="overflow-y: scroll; height: 200px;">

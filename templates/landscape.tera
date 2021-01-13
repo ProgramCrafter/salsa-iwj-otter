@@ -46,7 +46,7 @@
     </div><div>
           
     </div>
-    {{ m::uos() }}
+    {{ m::infopane() }}
 
 <div>
   <div id="log" style="overflow-y: scroll; height: 600px;">
