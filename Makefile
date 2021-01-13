@@ -22,8 +22,8 @@ shapelib: templates/shapelib.html stamp/cargo.doc-otter-only
 #---------- funky macros etc. ----------
 
 cr = $(addprefix --,$(filter-out debug,$1))
-rsrcs = $(shell \
-    find $1 \( -name Cargo.toml -o -name Cargo.lock -o -name Cargo.lock.example -o -name \*.rs \) ) \! -path '*/build/*'
+rsrcs = $(shell set -x;\
+    find -H $1 \( -name Cargo.toml -o -name Cargo.lock -o -name Cargo.lock.example -o -name \*.rs \) \! -path '*/build/*' )
 stamp=@mkdir -p stamp; touch $@
 
 BUNDLED_SOURCES_LIT = README.md LICENCE
@@ -282,7 +282,7 @@ $(addprefix templates/,$(TXTFILES)): templates/%: %.txt
 libraries: $(LIBRARY_FILES)
 
 templates/shapelib.html: $(TARGET_DIR)/debug/otterlib $(LIBRARY_FILES)
-	$(NAILING_CARGO_JUST_RUN) --- $(abspath $<) \
+	$(NAILING_CARGO_JUST_RUN) $(abspath $<) \
 	--libs '$(addprefix $(PWD)/, $(addsuffix .toml, $(LIBRARIES)))' \
 		preview >$@.tmp && mv -f $@.tmp $@
 
