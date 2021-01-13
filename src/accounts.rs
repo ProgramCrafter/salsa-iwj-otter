@@ -321,12 +321,17 @@ impl AccountsGuard {
     let (entry, acctid) = self.lookup_mut_caller_must_save(key, auth)?;
 
     if let Some(new_access) = set_access {
-      process_all_players_for_account(
-        games,
-        acctid,
-        |ig, player| ig.invalidate_tokens(player)
-      )?;
-      entry.access = new_access;
+      if (|| Ok::<_,IE>(
+        rmp_serde::encode::to_vec(&new_access)?
+          != rmp_serde::encode::to_vec(&entry.access)?
+      ))()? {
+        process_all_players_for_account(
+          games,
+          acctid,
+          |ig, player| ig.invalidate_tokens(player)
+        )?;
+        entry.access = new_access;
+      }
     }
     let output = f(&mut *entry, acctid);
     let ok = self.save_accounts_now();
