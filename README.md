@@ -83,12 +83,15 @@ Otter uses SVGs.  The sources for the SVGs are all in the otter source
 tree, in the `library/` directory.
 
 Each shape is listed in one of the `library/*.toml` files, in a
-`files` entry.  Unfortunately the syntax and semantics of this file
-are not yet properly documented.
+`files` entry.  (Most of) the syntax and semantics of this file are
+documented in the Rustdoc documentation for the module
+`otter::shapelib_toml`.  If you run `make -j8 shapelib` it will print
+out a `file://` url for these docs.
 
 You can preview the shapes, including any changes you make, without a
 whole game server, by running `make -j8 shapelib`, and looking at
-`templates/shapelib.html`.  (See BUILDING AND TESTING for information
+`templates/shapelib.html`.  As above, this make rune will print the
+`file://` url for you.  (See BUILDING AND TESTING for information
 about how to install the tools you will need.)
 
 Some of these SVGs were scraped from Wikimedia.  The scraper machinery
