@@ -418,15 +418,15 @@ impl Instance {
     struct RenderPlayer<'r> {
       player_num: u32,
       nick: &'r str,
-      account: &'r str,
+      account: &'r AccountName,
     };
     let players = self.gs.players.iter().filter_map(|(player, gpl)| {
-      let _ipl = self.iplayers.get(player)?;
+      let ipl = self.iplayers.get(player)?;
       let (idx, _) = player.data().get_idx_version();
       Some(RenderPlayer {
         player_num: idx,
         nick: &gpl.nick,
-        account: "todo",
+        account: &ipl.account,
       })
     }).collect::<Vec<_>>();
     let render = RenderContext { players };
