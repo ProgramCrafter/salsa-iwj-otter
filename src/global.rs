@@ -420,7 +420,7 @@ impl Instance {
       account: &'r str,
     };
     let players = self.gs.players.iter().filter_map(|(player, gpl)| {
-      let ipl = self.iplayers.get(player)?;
+      let _ipl = self.iplayers.get(player)?;
       let (idx, _) = player.data().get_idx_version();
       Some(RenderPlayer {
         player_num: idx,
