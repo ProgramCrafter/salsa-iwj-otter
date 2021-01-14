@@ -32,7 +32,7 @@
   }
 </style>
 {{ m::errors() }}
-<div class="upper" style="display: flex; flex-flow: row none;">
+<div class="upper" style="display: flex; flex-flow: row nowrap;">
   <div>{{ m::space() }}</div>
   <div id="rhs-panel">
     <div>
