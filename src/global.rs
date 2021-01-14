@@ -409,7 +409,9 @@ impl Instance {
 
   #[throws(InternalError)]
   pub fn player_info_pane(&self) -> Html {
-    let html = Html::from_txt("Players list from server, but NYI");// xxx
+    let html = Html(format!(
+      "Players list from server, but NYI {}", &self.gs.gen,
+    ));// xxx
     html
   }
 }

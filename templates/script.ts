@@ -884,14 +884,23 @@ function drag_cancel() {
 
 // ----- general -----
 
+type PlayersUpdate = { new_info_pane: string };
+
 messages.AddPlayer = <MessageHandler>function
-(j: { player: string, data: PlayerInfo }) {
+(j: { player: string, data: PlayerInfo } & PlayersUpdate) {
   players[j.player] = j.data;
+  player_info_pane_set(j);
 }
 
 messages.RemovePlayer = <MessageHandler>function
-(j: { player: string }) {
+(j: { player: string } & PlayersUpdate ) {
   delete players[j.player];
+  player_info_pane_set(j);
+}
+
+function player_info_pane_set(j: PlayersUpdate) {
+  document.getElementById('player_list')!
+    .innerHTML = j.new_info_pane;
 }
 
 messages.SetLinks = <MessageHandler>function
