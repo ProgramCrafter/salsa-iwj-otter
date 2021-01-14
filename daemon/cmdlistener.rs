@@ -362,7 +362,8 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         tz,
         tokens_revealed: default(),
       };
-      let (player, update, logentry) = ig.player_new(gpl, ipl, logentry)?;
+      let (player, update, logentry) =
+        ig.player_new(gpl, ipl, arecord.account.clone(), logentry)?;
 
       let atr = ig.player_access_reset(ag, player, auth.therefore_ok())?;
 

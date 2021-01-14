@@ -57,6 +57,7 @@ pub struct Instance {
 pub struct PlayerRecord {
   pub u: PlayerUpdates,
   pub ipl: IPlayerState,
+  pub account: Arc<AccountName>,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
@@ -534,7 +535,7 @@ impl<'ig> InstanceGuard<'ig> {
   /// proves the caller has a log entry.
   #[throws(MgmtError)]
   pub fn player_new(&mut self, gnew: GPlayerState, inew: IPlayerState,
-                    logentry: LogEntry)
+                    account: Arc<AccountName>, logentry: LogEntry)
                     -> (PlayerId, PreparedUpdateEntry, LogEntry) {
     // saving is fallible, but we can't attempt to save unless
     // we have a thing to serialise with the player in it
@@ -544,7 +545,7 @@ impl<'ig> InstanceGuard<'ig> {
     }
     let player = self.c.g.gs.players.insert(gnew);
     let u = PlayerUpdates::new_begin(&self.c.g.gs).new();
-    let record = PlayerRecord { u, ipl: inew };
+    let record = PlayerRecord { u, account, ipl: inew, };
 
     self.c.g.iplayers.insert(player, record);
 
@@ -1057,9 +1058,10 @@ impl InstanceGuard<'_> {
     let iplayers : SecondarySlotMap<PlayerId, PlayerRecord> = {
       let a = aplayers;
       a.into_iter()
-    }.map(|(player, ipl)| {
+    }.filter_map(|(player, ipl)| {
       let u = pu_bc.new();
-      (player, PlayerRecord { u, ipl })
+      let account = accounts.lookup(ipl.acctid).ok()?.0.account.clone();
+      Some((player, PlayerRecord { u, ipl, account }))
     }).collect();
 
     for mut p in gs.pieces.values_mut() {
