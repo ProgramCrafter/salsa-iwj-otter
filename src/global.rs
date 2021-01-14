@@ -408,9 +408,9 @@ impl Instance {
   }
 
   #[throws(InternalError)]
-  fn player_info_pane(&self) -> Arc<Html> {
+  pub fn player_info_pane(&self) -> Html {
     let html = Html::from_txt("Players list from server, but NYI");// xxx
-    Arc::new(html)
+    html
   }
 }
 
@@ -528,7 +528,7 @@ impl<'ig> InstanceGuard<'ig> {
     self.c.g.iplayers.insert(player, record);
 
     let update = (||{
-      let new_info_pane = self.player_info_pane()?;
+      let new_info_pane = Arc::new(self.player_info_pane()?);
 
       let update = PreparedUpdateEntry::AddPlayer {
         player, new_info_pane,
@@ -652,7 +652,7 @@ impl<'ig> InstanceGuard<'ig> {
     swap_things(self);
     undo.push(Box::new(swap_things));
 
-    let new_info_pane = self.player_info_pane()?;
+    let new_info_pane = Arc::new(self.player_info_pane()?);
 
     self.save_game_now().map_err(|e|{
       // oof

@@ -20,6 +20,7 @@ struct SessionRenderContext {
   sse_url_prefix: String,
   links: Html,
   scale: f64,
+  player_info_pane: Html,
 }
 
 #[derive(Debug,Serialize)]
@@ -86,6 +87,8 @@ fn session_inner(form : Json<SessionForm>,
 
     let mut uses = vec![];
     let mut alldefs = vec![];
+
+    let player_info_pane = ig.player_info_pane()?;
 
     let mut load_players = HashMap::new();
     for (player, _pl) in &ig.gs.players {
@@ -196,6 +199,7 @@ fn session_inner(form : Json<SessionForm>,
       scale: SVG_SCALE,
       nick: gpl.nick.clone(),
       sse_url_prefix,
+      player_info_pane,
       ptoken: form.ptoken.clone(),
       links: (&*ig.links).into(),
       load: serde_json::to_string(&DataLoad {

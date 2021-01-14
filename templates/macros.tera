@@ -102,7 +102,7 @@ Hi {{nick | escape}}
  </div>
 
  <div id="pane_players" class="somepane" style="display:none">
-   Player list will appear here.
+{{ player_info_pane }}
  </div>
 
 </div id="infopane">
