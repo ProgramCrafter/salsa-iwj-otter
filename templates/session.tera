@@ -32,7 +32,7 @@
   .uos-mid {
     flex-grow: 1;
   }
-  div[id=player_list] {
+  div[id=player_list_columns] {
     columns: 3;
   }
 </style>
