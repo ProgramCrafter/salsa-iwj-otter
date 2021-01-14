@@ -416,9 +416,8 @@ impl Instance {
     let render = RenderContext {
       players: &self.gs.players,
     };
-    let txt = nwtemplates::render("player-info-pane.tera", &render)
-      .context("render player info template")?;
-    let html = Html::from_txt(&txt);
+    let html = Html(nwtemplates::render("player-info-pane.tera", &render)
+      .context("render player info template")?);
     html
   }
 }
