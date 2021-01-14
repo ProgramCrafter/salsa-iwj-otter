@@ -46,7 +46,7 @@ map = {"ffffff" = "04cbe5"}
 
 [group.chess.colours."red"]
 abbrev = "red"
-map = {"ffffff" = "ff4805"}
+map = {"ffffff" = "ff4805", "000000" = "bbbbbb" }
 
 [group.chess.colours."yellow"]
 abbrev = "yellow"
@@ -54,7 +54,7 @@ map = {"ffffff" = "ffc505"}
 
 [group.chess.colours."purple"]
 abbrev = "purple"
-map = {"ffffff" = "c105ff"}
+map = {"ffffff" = "c105ff", "000000" = "bbbbbb" }
 
 [group.chess-26]
 inherit = "chess"
