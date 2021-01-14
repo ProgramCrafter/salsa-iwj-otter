@@ -23,6 +23,7 @@
     display: flex;
     flex-direction: column;
     background-color: white;
+    overflow-y: scroll;
   }
   div[class=uos] {
     flex: initial;
@@ -34,6 +35,8 @@
     flex: auto;
     display: flex;
     flex-direction: column;
+  }
+  div[id=player_list] {
   }
 </style>
 {% endmacro header %}
