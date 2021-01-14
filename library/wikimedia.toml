@@ -46,7 +46,7 @@ map = {"ffffff" = "04cbe5"}
 
 [group.chess.colours."red"]
 abbrev = "red"
-map = {"ffffff" = "ff4805", "000000" = "bbbbbb" }
+map = {"ffffff" = "e64104", "000000" = "bbbbbb" }
 
 [group.chess.colours."yellow"]
 abbrev = "yellow"
