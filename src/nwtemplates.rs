@@ -30,11 +30,13 @@ pub fn init() {
   })
 }
 
-#[throws(tera::Error)]
+#[throws(anyhow::Error)]
 pub fn render<D: Serialize>(template_name: &str, data: &D) -> String {
   fn get_tera() -> MappedRwLockReadGuard<'static, tera::Tera> {
     let g = STATE.read();
     RwLockReadGuard::map(g, |g| &g.as_ref().unwrap().tera)
   }
-  get_tera().render(template_name, data)?
+  get_tera().render(template_name, data)
+    .map_err(|e| anyhow!(e.to_string()))
+    ?
 }

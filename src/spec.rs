@@ -510,8 +510,8 @@ pub mod implementation {
           };
           nwtemplates::render("token-other.tera", &data)
         },
-      }.map_err(|e| anyhow!(e.to_string()))
-        .context("render email template")?;
+      }
+      .context("render email template")?;
 
       let messagefile = (||{
         let mut messagefile = tempfile::tempfile().context("tempfile")?;
