@@ -411,11 +411,24 @@ impl Instance {
   pub fn player_info_pane(&self) -> Html {
     #[derive(Serialize,Debug)]
     struct RenderContext<'r> {
-      players: &'r DenseSlotMap<PlayerId, GPlayerState>,
+      players: Vec<RenderPlayer<'r>>,
     }
-    let render = RenderContext {
-      players: &self.gs.players,
+    #[derive(Serialize,Debug)]
+    struct RenderPlayer<'r> {
+      player_num: u32,
+      nick: &'r str,
+      account: &'r str,
     };
+    let players = self.gs.players.iter().filter_map(|(player, gpl)| {
+      let ipl = self.iplayers.get(player)?;
+      let (idx, _) = player.data().get_idx_version();
+      Some(RenderPlayer {
+        player_num: idx,
+        nick: &gpl.nick,
+        account: "todo",
+      })
+    }).collect::<Vec<_>>();
+    let render = RenderContext { players };
     let html = Html(nwtemplates::render("player-info-pane.tera", &render)
       .context("render player info template")?);
     html

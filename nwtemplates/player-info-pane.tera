@@ -1,4 +1,11 @@
+{# -*- HTML -*- -#}
 <!-- Copyright 2020-2021 Ian Jackson and contributors to Otter
      SPDX-License-Identifier: AGPL-3.0-or-later
      There is NO WARRANTY. -->
-{{ players }}
+{% for p in players %}
+<div class="player">
+<span class="player_num">#{{ p.player_num }}</span>
+<span class="nick">{{ p.nick | escape }}</span>
+<span class="account">[{{ p.account | escape }}]</span>
+</div>
+{% endfor %}
