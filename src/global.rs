@@ -409,9 +409,16 @@ impl Instance {
 
   #[throws(InternalError)]
   pub fn player_info_pane(&self) -> Html {
-    let html = Html(format!(
-      "Players list from server, but NYI {}", &self.gs.gen,
-    ));// xxx
+    #[derive(Serialize,Debug)]
+    struct RenderContext<'r> {
+      players: &'r DenseSlotMap<PlayerId, GPlayerState>,
+    }
+    let render = RenderContext {
+      players: &self.gs.players,
+    };
+    let txt = nwtemplates::render("player-info-pane.tera", &render)
+      .context("render player info template")?;
+    let html = Html::from_txt(&txt);
     html
   }
 }
