@@ -87,8 +87,8 @@ type PieceErrorHandler = (piece: PieceId, p: PieceInfo, m: PieceOpError)
   => boolean;
 interface DispatchTable<H> { [key: string]: H };
 
-// xxx turn all var into let
-// xxx any exceptions should have otter in them or something
+// todo turn all var into let
+// todo any exceptions should have otter in them or something
 var globalinfo_elem : HTMLElement;
 var layout: Layout;
 var held_surround_colour: string;
