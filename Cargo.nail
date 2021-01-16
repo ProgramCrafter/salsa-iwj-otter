@@ -4,6 +4,7 @@
 
 subdirs = """
 server
+slotmap
 bundle-sources
 """
 
