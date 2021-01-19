@@ -21,7 +21,6 @@ Player sees:	number of tokens						SVGs of blanks at *calculated* locations
 Others see:	nothing
 
 
-
 Quacks bag - messy
 ------------------
 
@@ -31,6 +30,7 @@ Player sees:	number of tokens						SVGs of blanks at actual locations
 
 Others see:	nothing
 
+Magic "stopping" token is different to player but still invisible to others.  Has a different "back".
 
 
 Pick-up deck
@@ -52,7 +52,8 @@ Player sees:	cards laid out as they like					SVGs of fronts at actual locations
 Others see:	number of cards							SVGs of backs at calculated locations
 		laid out predictably, sorted in groups according to back	When card added, set of visible ids does not change, nor does
 		no knowledge of which is which						their ordering in the calculated view
-		but agree on the layout							But actual<->visible mapping is permuted (for everyone, the same way)
+		but agree on the layout							But actual<->visible mapping is permuted (for everyone other2
+											thais the player, the same way)
 
 
 
@@ -63,3 +64,13 @@ Everyone sees:	card back							SVG of back at actual location, by normal rules
 		only know what it is from historical information		IDs are not messed around with
 
 
+Quacks committed token
+----------------------
+
+People see the same things as for a bag
+
+This is a separate bag with a separate name
+		You can move things from this to another bag.
+		"Took something out" "put something in ..."
+
+It can be un-blinded by "emptying" - a thing bags can do
