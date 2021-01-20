@@ -27,7 +27,7 @@ type ME = crate::commands::MgmtError;
 
 //---------- common types ----------
 
-pub type Coord = isize;
+pub type Coord = i32;
 
 #[derive(Clone,Copy,Debug,Serialize,Deserialize,Hash)]
 #[derive(Eq,PartialEq,Ord,PartialOrd)]
