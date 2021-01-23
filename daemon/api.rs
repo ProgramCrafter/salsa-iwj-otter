@@ -253,7 +253,7 @@ impl ApiPieceOp for ApiPieceUngrab {
 
     if pc.held != Some(player) { throw!(OnlineError::PieceHeld) }
     pc.held = None;
-    
+
     let update = PieceUpdateOp::Modify(());
     let logents = log_did_to_piece(gpl, lens, piece, pc, p, "released");
 

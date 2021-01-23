@@ -94,6 +94,7 @@ impl LocalFileExt for fs::File {
   }
 }
 
+
 // todo #[derive(Clone)]
 pub struct Thunk<U: Sync, F: Sync + FnOnce() -> U> (
   lazy_init::LazyTransform<F, U>
