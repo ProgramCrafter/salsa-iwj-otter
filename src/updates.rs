@@ -6,6 +6,9 @@
 
 use crate::imports::*;
 
+type PUE = PreparedUpdateEntry;
+#[allow(non_camel_case_types)] type PUE_P = PreparedUpdateEntry_Piece;
+
 // ---------- newtypes, type aliases, basic definitions ----------
 
 #[derive(Debug,Copy,Clone,Eq,PartialEq,Deserialize,Serialize)]
@@ -41,11 +44,7 @@ pub struct PreparedUpdate {
 
 #[derive(Debug)]
 pub enum PreparedUpdateEntry {
-  Piece {
-    by_client: IsResponseToClientOp,
-    piece: VisiblePieceId,
-    op: PieceUpdateOp<PreparedPieceState, ZLevel>,
-  },
+  Piece(PreparedUpdateEntry_Piece),
   SetTableSize(Pos),
   SetTableColour(Colour),
   SetLinks(Arc<LinksTable>),
@@ -60,6 +59,14 @@ pub enum PreparedUpdateEntry {
   },
   Log (Arc<CommittedLogEntry>),
   Error (Option<ClientId> /* none: all */, ErrorSignaledViaUpdate),
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Debug)]
+pub struct PreparedUpdateEntry_Piece {
+  by_client: IsResponseToClientOp,
+  piece: VisiblePieceId,
+  op: PieceUpdateOp<PreparedPieceState, ZLevel>,
 }
 
 #[derive(Debug,Clone,Serialize)]
@@ -206,7 +213,7 @@ impl PreparedUpdateEntry {
   pub fn json_len(&self) -> usize {
     use PreparedUpdateEntry::*;
     match self {
-      Piece { ref op, .. } => {
+      Piece(PUE_P { ref op, .. }) => {
         50 +
         op.new_state().map(|x| x.svg.0.as_bytes().len()).unwrap_or(0)
       }
@@ -375,7 +382,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       piece, PieceUpdateOp::Modify(()), lens
     )?;
     let update = match update {
-      PreparedUpdateEntry::Piece {
+      PUE_P {
         piece,
         op: PieceUpdateOp::Modify(state),
         ..
@@ -397,7 +404,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   #[throws(InternalError)]
   fn piece_update_fallible(&mut self, piece: PieceId,
                            update: PieceUpdateOp<(),()>,
-                           lens: &dyn Lens) -> PreparedUpdateEntry {
+                           lens: &dyn Lens) -> PreparedUpdateEntry_Piece {
     type WRC = WhatResponseToClientOp;
 
     let gen = self.gen();
@@ -440,7 +447,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       }
     };
 
-    PreparedUpdateEntry::Piece {
+    PreparedUpdateEntry_Piece {
       piece,
       by_client : self.by_client,
       op : update,
@@ -453,6 +460,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     // this point to back out a game state change.
 
     let update = self.piece_update_fallible(piece, update, lens)
+      .map(|update| PUE::Piece(update))
       .unwrap_or_else(|e| {
         error!("piece update error! piece={:?} lens={:?} error={:?}",
                piece, &lens, &e);
@@ -517,7 +525,7 @@ impl PreparedUpdate {
     for u in &self.us {
       trace!("for_transmit to={:?} {:?}", dest, &u);
       let ue = match u {
-        &PUE::Piece { piece, by_client, ref op } => {
+        &PUE::Piece(PUE_P { piece, by_client, ref op }) => {
           let ns = ||op.new_state();
           enum FTG<'u> {
             Recorded(ClientSequence, Option<&'u PreparedPieceState>),
