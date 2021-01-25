@@ -8,6 +8,7 @@ use crate::imports::*;
 
 type PUE = PreparedUpdateEntry;
 #[allow(non_camel_case_types)] type PUE_P = PreparedUpdateEntry_Piece;
+#[allow(non_camel_case_types)] type TUE_P<'u> = TransmitUpdateEntry_Piece<'u>;
 
 // ---------- newtypes, type aliases, basic definitions ----------
 
@@ -117,10 +118,7 @@ enum TransmitUpdateEntry<'u> {
     zg: Option<Generation>,
     svg: Option<&'u Html>, // IsResponseToClientOp::UpdateSvg
   },
-  Piece {
-    piece: VisiblePieceId,
-    op: PieceUpdateOp<&'u PreparedPieceState, &'u ZLevel>,
-  },
+  Piece(TransmitUpdateEntry_Piece<'u>),
   RecordedUnpredictable {
     piece: VisiblePieceId,
     cseq: ClientSequence,
@@ -144,6 +142,13 @@ enum TransmitUpdateEntry<'u> {
 }
 
 type TransmitUpdateLogEntry<'u> = (&'u Timezone, &'u CommittedLogEntry);
+
+#[allow(non_camel_case_types)]
+#[derive(Debug,Serialize)]
+struct TransmitUpdateEntry_Piece<'u> {
+  piece: VisiblePieceId,
+  op: PieceUpdateOp<&'u PreparedPieceState, &'u ZLevel>,
+}
 
 #[derive(Debug,Serialize)]
 struct FormattedLogEntry<'u> {
@@ -551,7 +556,7 @@ impl PreparedUpdate {
               let zg = op.new_z_generation();
               TUE::Recorded { piece, cseq, zg, svg: ns.map(|ns| &ns.svg) }
             },
-            FTG::Piece => TUE::Piece { piece, op: op.map_ref() },
+            FTG::Piece => TUE::Piece(TUE_P { piece, op: op.map_ref() }),
             FTG::Exactly(x) => x,
           }
         }
@@ -575,7 +580,7 @@ impl PreparedUpdate {
             TUE::Error(e)
           } else if let &ESVU::PieceOpError { piece, ref state, .. } = e {
             let op = PieceUpdateOp::Modify(state);
-            TUE::Piece { piece, op }
+            TUE::Piece(TUE_P { piece, op })
           } else {
             continue
           }
