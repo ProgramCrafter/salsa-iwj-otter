@@ -63,8 +63,6 @@
 //       limb by 1, with borrow, then add two limbs vvvvvvvvvv, and
 //       redo.
 
-#![feature(slice_strip)]
-
 use std::cmp::{max, Ordering};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self, Debug, Display, Formatter};

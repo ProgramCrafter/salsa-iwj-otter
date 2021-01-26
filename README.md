@@ -149,7 +149,7 @@ Setup
    you run this is missing some pieces.  The following is known to
    work (with otter from the time of writing):
 ```
-     rustup default nightly-2020-11-09
+     rustup default nightly-2021-01-26
 ```
 
 4. Install the `usvg` SVG launderer, which we need for shape libraries
