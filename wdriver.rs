@@ -774,43 +774,11 @@ impl<'g> WindowGuard<'g> {
       w: self,
     }
   }
-}
-
-pub type WebCoord = i32;
-pub type WebPos = (WebCoord, WebCoord);
-
-pub struct PieceElement<'g> {
-  pieceid: &'g str,
-  w: &'g WindowGuard<'g>,
-  elem: t4::WebElement<'g>,
-}
-
-impl<'g> Deref for PieceElement<'g> {
-  type Target = t4::WebElement<'g>;
-  fn deref<'i>(&'i self) -> &'i t4::WebElement<'g> { &self.elem }
-}
-
-impl<'g> PieceElement<'g> {
-  #[throws(AE)]
-  pub fn posg(&self) -> Pos {
-    (||{
-      let a = |a| Ok::<_,AE>(
-        self.get_attribute(a)?.ok_or(anyhow!("{}", a))?.parse()?
-      );
-      let x = a("x")?;
-      let y = a("y")?;
-      Ok::<_,AE>(PosC([x,y]))
-    })()
-      .with_context(|| self.pieceid.to_owned())
-      .context("read position of piece out of x,y attributes")?
-  }
 
   #[throws(AE)]
-  pub fn posw(&self) -> WebPos {
-    let posg = self.posg()?;
-
-    let mat = self.w.matrix.get_or_try_init(||{
-      let ary = self.w.su.driver.execute_script(r#"
+  pub fn posg2posw(&'g self, posg: Pos) -> WebPos {
+    let mat = self.matrix.get_or_try_init(||{
+      let ary = self.su.driver.execute_script(r#"
         let m = space.getScreenCTM();
         return [m.a, m.b, m.c, m.d, m.e, m.f];
       "#)?;
@@ -858,8 +826,45 @@ impl<'g> PieceElement<'g> {
         coord()?,
       ))
     })()
+      .context("convert game position to web page coordinates")?
+  }
+}
+
+pub type WebCoord = i32;
+pub type WebPos = (WebCoord, WebCoord);
+
+pub struct PieceElement<'g> {
+  pieceid: &'g str,
+  w: &'g WindowGuard<'g>,
+  elem: t4::WebElement<'g>,
+}
+
+impl<'g> Deref for PieceElement<'g> {
+  type Target = t4::WebElement<'g>;
+  fn deref<'i>(&'i self) -> &'i t4::WebElement<'g> { &self.elem }
+}
+
+impl<'g> PieceElement<'g> {
+  #[throws(AE)]
+  pub fn posg(&self) -> Pos {
+    (||{
+      let a = |a| Ok::<_,AE>(
+        self.get_attribute(a)?.ok_or(anyhow!("{}", a))?.parse()?
+      );
+      let x = a("x")?;
+      let y = a("y")?;
+      Ok::<_,AE>(PosC([x,y]))
+    })()
       .with_context(|| self.pieceid.to_owned())
-      .context("find piece position")?
+      .context("read position of piece out of x,y attributes")?
+  }
+
+  #[throws(AE)]
+  pub fn posw(&self) -> WebPos {
+    let posg = self.posg()?;
+
+    self.w.posg2posw(posg)
+      .with_context(|| self.pieceid.to_owned())?
   }
 }
 
