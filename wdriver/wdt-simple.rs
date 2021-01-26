@@ -87,6 +87,47 @@ impl Ctx {
   }
 
   #[throws(AE)]
+  fn drag_off(&mut self, pc: &'static str) {
+    let su = &mut self.su;
+
+    let chk = |w: &WindowGuard<'_>| {
+      Ok::<_,AE>(())
+    };
+
+    let table_size = self.spec.table_size
+      .ok_or(anyhow!("table size missing from spec"))?;
+
+    {
+      let mut w = su.w(&self.alice)?;
+      let p = w.find_piece(pc)?;
+      let start = p.posg()?;
+      let (sx,sy) = w.posg2posw(start)?;
+      let end = |d| { let mut e = start; e.0[1] = table_size.0[1] + d; e };
+      let try_end = end(10);
+      let exp_end = end(0);
+      let (ex,ey) = w.posg2posw(try_end)?;
+      w.action_chain()
+        .move_to(sx,sy)
+        .click_and_hold()
+        .move_to(ex,ey)
+        .release()
+        .perform()
+        .always_context("drag off")?;
+
+      chk(&w)?;
+      w.synch()?;
+    }
+
+    {
+      let mut w = su.w(&self.bob)?;
+      w.synch()?;
+      chk(&w)?;
+    }
+
+    pc
+  }
+
+  #[throws(AE)]
   fn unselect(&mut self, pc: &'static str) {
     let su = &mut self.su;
 
@@ -135,6 +176,7 @@ fn main(){
 
     c.drag().always_context("drag")?;
     let pc = c.rotate().always_context("rotate")?;
+    c.drag_off(pc).always_context("drag off")?;
     c.unselect(pc).always_context("unselect")?;
 
     debug!("finishing");
