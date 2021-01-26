@@ -90,14 +90,16 @@ impl Ctx {
   fn drag_off(&mut self, pc: &'static str) {
     let su = &mut self.su;
 
-    let chk = |w: &WindowGuard<'_>| {
+    let chk = |w: &WindowGuard<'_>, exp_end| {
+      let got_end = w.find_piece(pc)?.posg()?;
+      assert_eq!(got_end, exp_end);
       Ok::<_,AE>(())
     };
 
     let table_size = self.spec.table_size
       .ok_or(anyhow!("table size missing from spec"))?;
 
-    {
+    let exp_end = {
       let mut w = su.w(&self.alice)?;
       let p = w.find_piece(pc)?;
       let start = p.posg()?;
@@ -114,14 +116,16 @@ impl Ctx {
         .perform()
         .always_context("drag off")?;
 
-      chk(&w)?;
+      chk(&w, exp_end)?;
       w.synch()?;
-    }
+
+      exp_end
+    };
 
     {
       let mut w = su.w(&self.bob)?;
       w.synch()?;
-      chk(&w)?;
+      chk(&w, exp_end)?;
     }
 
     pc
