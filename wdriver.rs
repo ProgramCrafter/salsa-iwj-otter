@@ -638,16 +638,25 @@ impl DirSubst {
       .context(dbg)
       .context("run otter client")?;
   }
+
+  #[throws(AE)]
+  pub fn game_spec_path(&self) -> String {
+    self.subst("@specs@/demo.game.toml")?
+  }
 }
 
 #[throws(AE)]
 pub fn prepare_game(ds: &DirSubst, table: &str) -> InstanceName {
-  let subst = ds.also(&[("table", &table)]);
+  let game_spec = ds.game_spec_path()?;
+  let subst = ds.also(&[
+    ("table",     table),
+    ("game_spec", &game_spec),
+  ]);
   ds.otter(&subst.ss(
     "--account server:                                  \
      reset                                              \
      --reset-table @specs@/test.table.toml              \
-                   @table@ @specs@/demo.game.toml \
+                   @table@ @game_spec@ \
     ")?).context("reset table")?;
 
   let instance : InstanceName = table.parse()
