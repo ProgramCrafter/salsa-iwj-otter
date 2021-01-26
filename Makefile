@@ -122,6 +122,11 @@ FILEASSETS = $(addprefix templates/, libre shapelib.html script.js \
 		$(wildcard templates/*.tera)
 
 WASM := wasm32-unknown-unknown
+# ^ todo: Is this still right after
+#     Use correct ABI for wasm32 by default
+#     https://github.com/rust-lang/rust/pull/79998
+# ?  But maybe it doesn't matter since we're very conservative and
+# only pass JsValue and a few strings across the WASM ABI.
 
 #---------- toplevel aggregate targets ----------
 
