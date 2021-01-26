@@ -458,7 +458,7 @@ impl Config1 {
             dirname: dirname.to_string(),
             catalogue: path,
           }
-        };
+        }
 
         let results = glob::glob_with(pat, glob::MatchOptions {
           require_literal_separator: true,

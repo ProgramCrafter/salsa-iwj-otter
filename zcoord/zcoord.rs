@@ -897,7 +897,7 @@ mod test {
       let last = a.as_ref().map(|m| m.repack().unwrap());
       let i = Mutable::some_range(a.as_ref(), b.as_ref(), count)?;
       It { i, last }
-    };
+    }
     impl It {
       fn nxt(&mut self, exp: Option<&str>) {
         let got = self.i.next();

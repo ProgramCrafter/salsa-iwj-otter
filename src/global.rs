@@ -419,7 +419,7 @@ impl Instance {
       player_num: u32,
       nick: &'r str,
       account: &'r AccountName,
-    };
+    }
     let players = self.gs.players.iter().filter_map(|(player, gpl)| {
       let ipl = self.iplayers.get(player)?;
       let (idx, _) = player.data().get_idx_version();
@@ -1129,7 +1129,7 @@ impl InstanceGuard<'_> {
 #[throws(anyhow::Error)]
 pub fn load_games(accounts: &mut AccountsGuard,
                   games: &mut GamesGuard) {
-  enum AFState { Found(PathBuf), Used };
+  enum AFState { Found(PathBuf), Used }
   use AFState::*;
   use SavefilenameParseResult::*;
   let mut a_leaves = HashMap::new();

@@ -523,7 +523,7 @@ impl PreparedUpdate {
             Recorded(ClientSequence, Option<&'u PreparedPieceState>),
             Exactly(TransmitUpdateEntry<'u>),
             Piece,
-          };
+          }
           let ftg = match by_client {
             None                                     => FTG::Piece,
             Some((_,u_client,_)) if u_client != dest => FTG::Piece,

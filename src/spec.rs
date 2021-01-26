@@ -468,7 +468,7 @@ pub mod implementation {
         game_name: String,
         nick: &'r str,
         token_lines: Vec<String>,
-      };
+      }
       let common = CommonData {
         player_email: &self.addr,
         game_name: g.name.to_string(),
@@ -489,7 +489,7 @@ pub mod implementation {
             unix_user: &'r str,
             #[serde(flatten)]
             common: CommonData<'r>,
-          };
+          }
           let data = Data {
             unix_user: user,
             common,
@@ -503,7 +503,7 @@ pub mod implementation {
             account: String,
             #[serde(flatten)]
             common: CommonData<'r>,
-          };
+          }
           let data = Data {
             account: account.to_string(),
             common,

@@ -261,7 +261,7 @@ fn main() {
     subcommand: String,
     subargs: Vec<String>,
     spec_dir: Option<String>,
-  };
+  }
   let (subcommand, subargs, mo) = parse_args::<RawMainArgs,_>(
     env::args().collect(),
   &|rma|{
@@ -1178,7 +1178,7 @@ mod library_add {
     enum Situation {
       Poor(Vec<MGI>, &'static str),
       Good([Pos; 2]),
-    };
+    }
     use Situation::*;
 
     const WANTED: usize = 2;
@@ -1220,7 +1220,7 @@ mod library_add {
     struct Placement {
       lhs: Coord, top: Coord, rhs: Coord, bot: Coord,
       clhs: Coord, cbot: Coord, // current line
-    };
+    }
 
     let mut placement = match situation {
       Poor(insns, msg) => {

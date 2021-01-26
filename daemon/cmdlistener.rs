@@ -1183,7 +1183,7 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
 
       let y : Authorisation<(Passwd,Uid,InUserList)> = {
 
-        struct AuthorisedIf { authorised_for : Option<Uid> };
+        struct AuthorisedIf { authorised_for : Option<Uid> }
 
         const SERVER_ONLY : (AuthorisedIf, Authorisation<InUserList>) = (
           AuthorisedIf { authorised_for: None },

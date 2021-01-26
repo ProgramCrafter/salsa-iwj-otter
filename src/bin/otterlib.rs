@@ -74,7 +74,7 @@ fn preview(items: Vec<ItemForOutput>) {
     uos: Vec<String>,
     bbox: Vec<Vec<f64>>,
     size: Vec<f64>,
-  };
+  }
 
   const SEVERAL: usize = 3;
 

@@ -48,7 +48,7 @@ pub fn svg_rescale_path(input: &Html, scale: f64) -> Html {
     bits: BM,
     len: BI,
     index: BI,
-  };
+  }
   impl RotatingBitmap {
     const fn new(bits: BM, len: BI) -> Self { Self{ bits, len, index:0 } }
     fn reset(&mut self) { self.index= 0; }
