@@ -8,6 +8,7 @@ struct Ctx {
   su: Setup,
   alice: Window,
   bob: Window,
+  spec: otter::spec::GameSpec,
 }
 
 impl Ctx {
@@ -127,9 +128,10 @@ fn main(){
     let (mut su, inst) = setup(module_path!()).always_context("setup")?;
     let [alice, bob] : [Window; 2] =
       su.setup_static_users(&inst)?.try_into().unwrap();
+    let spec = su.ds.game_spec_data()?;
     debug!("ok {:?} {:?}", alice, bob);
 
-    let mut c = Ctx { su, alice, bob };
+    let mut c = Ctx { su, alice, bob, spec };
 
     c.drag().always_context("drag")?;
     let pc = c.rotate().always_context("rotate")?;

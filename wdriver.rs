@@ -48,6 +48,7 @@ pub use otter::gamestate::{self, Generation};
 pub use otter::global::InstanceName;
 pub use otter::mgmtchannel::MgmtChannel;
 pub use otter::spec::{Coord, Pos, PosC};
+pub use otter::toml_de;
 pub use otter::ui::{AbbrevPresentationLayout, PresentationLayout};
 
 pub type T4d = t4::WebDriver;
@@ -649,7 +650,8 @@ impl DirSubst {
     let path = self.game_spec_path()?;
     (||{
       let data = fs::read(&path).context("read")?;
-      let data = toml::de::from_slice(&data).context("parse")?;
+      let data = std::str::from_utf8(&data).context("convert from UTF-8")?;
+      let data = toml_de::from_str(&data).context("parse")?;
       Ok::<_,AE>(data)
     })()
       .context(path)
