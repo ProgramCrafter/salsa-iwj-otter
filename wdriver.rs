@@ -643,6 +643,18 @@ impl DirSubst {
   pub fn game_spec_path(&self) -> String {
     self.subst("@specs@/demo.game.toml")?
   }
+
+  #[throws(AE)]
+  pub fn game_spec_data(&self) -> otter::spec::GameSpec {
+    let path = self.game_spec_path()?;
+    (||{
+      let data = fs::read(&path).context("read")?;
+      let data = toml::de::from_slice(&data).context("parse")?;
+      Ok::<_,AE>(data)
+    })()
+      .context(path)
+      .context("game spec")?
+  }
 }
 
 #[throws(AE)]

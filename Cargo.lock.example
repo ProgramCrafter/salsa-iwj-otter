@@ -1743,6 +1743,7 @@ dependencies = [
  "structopt",
  "strum",
  "thirtyfour_sync",
+ "toml 0.5.8",
  "void",
  "x11rb",
 ]
