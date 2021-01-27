@@ -171,10 +171,21 @@ impl Ctx {
     }
 
     let mut mk_side = |window, dx| {
-      let w = su.w(window)?;
+      let mut w = su.w(window)?;
       let p = w.find_piece(pc)?;
       let start = p.posg()?;
       let try_end = start + PosC([dx, 0]);
+
+      let (sx,sy) = w.posg2posw(start)?;
+      w.action_chain()
+        .move_to(sx,sy)
+        .click()
+        .click()
+        .perform()
+        .context("select and release")?;
+
+      w.synch()?;
+
       Ok::<_,AE>(Side { window, start, try_end })
     };
 
@@ -192,11 +203,18 @@ impl Ctx {
       let w = su.w(side.window)?;
       let p = w.find_piece(pc)?;
 
+      // xxx why do both report conflict
+      // xxx why has neither actually moved it
       w.action_chain()
         .move_w(&w, side.start)?
-        .click_and_hold()
-        .move_w(&w, side.try_end)?
-        .release()
+        // .click() // xxx both show up as not held even with these
+        // .release() // two lines uncommened
+
+//        .click_and_hold()
+//        .move_w(&w, side.try_end)?
+//        .release()
+.click()
+
         .perform()
         .context("conflicting drag")?;
 
@@ -205,16 +223,49 @@ impl Ctx {
 //        ensure!( pause < Duration::from_secs(1) );
 //        dbg!(pause);
 //        sleep(pause);
-        let now = p.posg()?;
-ensure_eq!(now, side.try_end);
+        let _now = p.posg()?;
+//ensure_eq!(now, side.try_end);
 //        if now == side.try_end { break }
 //        pause *= 2;
 //      }
-
-      
     }
 
     nix::sys::signal::kill(pid, nix::sys::signal::SIGCONT)?;
+
+    #[derive(Debug)]
+    struct Got {
+      now: Pos,
+      log: Vec<String>,
+      held: serde_json::Value,
+    }
+
+    let gots = sides.iter().map(|side|{
+      let mut w = su.w(side.window)?;
+      w.synch()?;
+      let p = w.find_piece(pc)?;
+      let now = p.posg()?;
+      let log = w.find_elements(By::ClassName("logmsg"))?;
+      let log = log.iter()
+        .rev()
+        .map(|e| e.inner_html())
+        .take_while(|h| {
+          h.as_ref().ok()
+            .map(|s| s.contains("black knight"))
+            != Some(true)
+        })
+        .collect::<Result<Vec<String>,_>>()?;
+
+      // xxx clone and hack
+      let held = w.execute_script(&format!(r##"
+        let pc = pieces['{}'];
+        return pc.held;
+                       "##, &pc))?;
+      let held = held.value().to_owned();
+
+      Ok::<_,AE>(Got { now, log, held })
+    }).collect::<Result<Vec<_>,AE>>()?;
+
+    dbg!(gots);
   }
 }
 
