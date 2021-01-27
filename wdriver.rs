@@ -38,7 +38,7 @@ pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
 pub use std::path;
 pub use std::process::{self, Command, Stdio};
 pub use std::thread::{self, sleep};
-pub use std::time;
+pub use std::time::{self, Duration};
 
 pub use otter::ensure_eq;
 pub use otter::commands::{MgmtCommand, MgmtResponse};
@@ -327,6 +327,7 @@ mod cleanup_notify {
               }
               let _ = read_await(notify_writing_end);
               let _ = kill(semidaemon, SIGTERM);
+              let _ = kill(semidaemon, SIGCONT);
               _exit(0);
             });
             let _ = raise(SIGABRT);

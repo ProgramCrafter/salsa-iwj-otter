@@ -165,6 +165,70 @@ impl Ctx {
       chk(&w)?;
     }
   }
+
+  #[throws(AE)]
+  fn conflict(&mut self) {
+    let pc = "1.1";
+    let su = &mut self.su;
+
+    #[derive(Debug)]
+    struct Side<'s> {
+      window: &'s Window,
+      start: Pos,
+      try_end: Pos,
+    }
+
+    let mut mk_side = |window, dx| {
+      let w = su.w(window)?;
+      let p = w.find_piece(pc)?;
+      let start = p.posg()?;
+      let try_end = start + PosC([dx, 0]);
+      Ok::<_,AE>(Side { window, start, try_end })
+    };
+
+    let sides = [
+      mk_side(&self.alice, -20)?,
+      mk_side(&self.bob,    20)?,
+    ];
+
+    dbg!(&sides);
+
+    let pid = nix::unistd::Pid::from_raw(su.server_child.id() as nix::libc::pid_t);
+    nix::sys::signal::kill(pid, nix::sys::signal::SIGSTOP)?;
+
+    for side in &sides {
+      let w = su.w(side.window)?;
+      let p = w.find_piece(pc)?;
+      let (sx,sy) = w.posg2posw(side.start)?;
+      let (ex,ey) = w.posg2posw(side.try_end)?;
+
+      dbg!(sx,sy);
+      dbg!(ex,ey);
+
+      w.action_chain()
+        .move_to(sx,sy)
+        .click_and_hold()
+        .move_to(ex,ey)
+        .release()
+        .perform()
+        .context("conflicting drag")?;
+
+//      let mut pause = Duration::from_millis(1);
+//      loop {
+//        ensure!( pause < Duration::from_secs(1) );
+//        dbg!(pause);
+//        sleep(pause);
+        let now = p.posg()?;
+ensure_eq!(now, side.try_end);
+//        if now == side.try_end { break }
+//        pause *= 2;
+//      }
+
+      
+    }
+
+    nix::sys::signal::kill(pid, nix::sys::signal::SIGCONT)?;
+  }
 }
 
 #[throws(AE)]
@@ -182,6 +246,7 @@ fn main(){
     let pc = c.rotate().always_context("rotate")?;
     c.drag_off(pc).always_context("drag off")?;
     c.unselect(pc).always_context("unselect")?;
+    c.conflict().always_context("conflict handling")?;
 
     debug!("finishing");
   }
