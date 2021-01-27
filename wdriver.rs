@@ -36,7 +36,7 @@ pub use std::os::unix::process::CommandExt;
 pub use std::os::unix::fs::DirBuilderExt;
 pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
 pub use std::path;
-pub use std::process::{Command, Stdio};
+pub use std::process::{self, Command, Stdio};
 pub use std::thread::{self, sleep};
 pub use std::time;
 
@@ -138,6 +138,7 @@ pub struct Setup {
   pub ds: DirSubst,
   pub mgmt_conn: MgmtChannel,
   pub opts: Opts,
+  pub server_child: process::Child,
   driver: T4d,
   current_window: WindowState,
   screenshot_count: ScreenShotCount,
@@ -464,7 +465,7 @@ fn prepare_tmpdir<'x>(opts: &'x Opts, mut current_exe: &'x str) -> DirSubst {
 fn fork_something_which_prints(mut cmd: Command,
                                cln: &cleanup_notify::Handle,
                                what: &str)
-                               -> String
+                               -> (String, process::Child)
 {
   (||{
     cmd.stdout(Stdio::piped());
@@ -502,7 +503,7 @@ fn fork_something_which_prints(mut cmd: Command,
     })().context(what).just_warn()
     );
 
-    Ok::<_,AE>(l)
+    Ok::<_,AE>((l, child))
   })().with_context(|| what.to_owned())?
 }
 
@@ -522,7 +523,7 @@ fn prepare_xserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
     .args(&["-fbdir", &ds.abstmp])
     .arg(format!(":{}", DISPLAY));
 
-  let l = fork_something_which_prints(xcmd, cln, "Xvfb")?;
+  let (l,_) = fork_something_which_prints(xcmd, cln, "Xvfb")?;
 
   if l != DISPLAY.to_string() {
     throw!(anyhow!(
@@ -549,7 +550,7 @@ fn prepare_xserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
 
 #[throws(AE)]
 fn prepare_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst)
-                      -> MgmtChannel {
+                      -> (MgmtChannel, process::Child) {
   let subst = ds.also(&[
     ("command_socket", "command.socket"),
   ]);
@@ -591,13 +592,13 @@ _ = "error" # rocket
     .arg("--report-startup")
     .arg(CONFIG);
 
-  (||{
-    let l = fork_something_which_prints(cmd, cln, &server_exe)?;
+  let child = (||{
+    let (l,child) = fork_something_which_prints(cmd, cln, &server_exe)?;
     if l != DAEMON_STARTUP_REPORT {
       throw!(anyhow!("otter-daemon startup report {:?}, expected {:?}",
                      &l, DAEMON_STARTUP_REPORT));
     }
-    Ok::<_,AE>(())
+    Ok::<_,AE>(child)
   })()
     .context("game server")?;
 
@@ -608,7 +609,7 @@ _ = "error" # rocket
   mgmt_conn.cmd(&MgmtCommand::SetSuperuser(true))?;
   mgmt_conn.cmd(&MgmtCommand::SelectAccount("server:".parse()?))?;  
 
-  mgmt_conn
+  (mgmt_conn, child)
 }
 
 impl DirSubst {
@@ -687,7 +688,7 @@ fn prepare_geckodriver(opts: &Opts, cln: &cleanup_notify::Handle) {
   if opts.geckodriver_args != "" {
     cmd.args(opts.geckodriver_args.split(' '));
   }
-  let l = fork_something_which_prints(cmd, cln, "geckodriver")?;
+  let (l,_) = fork_something_which_prints(cmd, cln, "geckodriver")?;
   let fields : Vec<_> = l.split('\t').skip(2).take(2).collect();
   let expected = ["INFO", EXPECTED];
   if fields != expected {
@@ -1157,7 +1158,7 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
 
   prepare_xserver(&cln, &ds).always_context("setup X server")?;
 
-  let mgmt_conn =
+  let (mgmt_conn, server_child) =
     prepare_gameserver(&cln, &ds).always_context("setup game server")?;
 
   let instance_name =
@@ -1172,6 +1173,7 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
   (Setup {
     ds,
     mgmt_conn,
+    server_child,
     driver,
     opts,
     screenshot_count,
