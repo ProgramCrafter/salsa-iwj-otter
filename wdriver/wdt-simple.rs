@@ -92,7 +92,7 @@ impl Ctx {
 
     let chk = |w: &WindowGuard<'_>, exp_end| {
       let got_end = w.find_piece(pc)?.posg()?;
-      assert_eq!(got_end, exp_end);
+      ensure_eq!(got_end, exp_end);
       Ok::<_,AE>(())
     };
 
