@@ -132,13 +132,8 @@ impl Ctx {
     let su = &mut self.su;
 
     let chk = |w: &WindowGuard<'_>| {
-      let held = w.execute_script(&format!(r##"
-        let pc = pieces['{}'];
-        return pc.held;
-                       "##, &pc))?;
-      let held = held.value();
-      dbg!(held);
-      ensure_eq!(held, &serde_json::Value::Null);
+      let held = w.piece_held(pc)?;
+      ensure_eq!(held, None);
       Ok::<_,AE>(())
     };
 

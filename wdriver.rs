@@ -801,6 +801,21 @@ impl<'g> WindowGuard<'g> {
   }
 
   #[throws(AE)]
+  pub fn piece_held(&'g self, pc: &'g str) -> Option<String> {
+    let held = self.execute_script(&format!(r##"
+        let pc = pieces['{}'];
+        return pc.held;
+                       "##, &pc))?;
+    let held = held.value();
+    dbg!(held);
+    match held {
+      serde_json::Value::Null => None,
+      serde_json::Value::String(s) => Some(s.to_owned()),
+      _ => Err(anyhow!("held check script gave {:?}", held))?,
+    }
+  }
+
+  #[throws(AE)]
   pub fn posg2posw(&'g self, posg: Pos) -> WebPos {
     let mat = self.matrix.get_or_try_init(||{
       let ary = self.su.driver.execute_script(r#"
