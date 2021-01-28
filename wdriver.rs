@@ -893,6 +893,14 @@ impl<'g> PieceElement<'g> {
   }
 }
 
+impl<'g> TryInto<WebPos> for &'g PieceElement<'g> {
+  type Error = AE;
+  #[throws(AE)]
+  fn try_into(self) -> WebPos {
+    self.posw()?
+  }
+}
+
 #[throws(AE)]
 fn check_window_name_sanity(name: &str) -> &str {
   let e = || anyhow!("bad window name {:?}", &name);
@@ -1122,6 +1130,9 @@ impl IntoInWindow<WebPos> for Pos {
 pub trait ActionChainExt: Sized {
   fn w_move<'g, P: IntoInWindow<WebPos>>
     (self, w: &'g WindowGuard, pos: P) -> Result<Self,AE>;
+
+  fn move_pos<'g, P: TryInto<WebPos, Error=AE>>
+    (self, pos: P) -> Result<Self,AE>;
 }
 
 impl<'a> ActionChainExt for t4::action_chain::ActionChain<'a> {
@@ -1130,6 +1141,12 @@ impl<'a> ActionChainExt for t4::action_chain::ActionChain<'a> {
     (self, w: &'g WindowGuard, pos: P) -> Self
   {
     let (px,py) = pos.w_into(w)?;
+    self.move_to(px,py)
+  }
+
+  #[throws(AE)]
+  fn move_pos<'g, P: TryInto<WebPos, Error=AE>> (self, pos: P) -> Self {
+    let (px,py) = pos.try_into()?;
     self.move_to(px,py)
   }
 }
