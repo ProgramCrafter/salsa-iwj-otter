@@ -134,7 +134,7 @@ impl Ctx {
     let chk = |w: &WindowGuard<'_>| {
       let held = w.execute_script(&format!(r##"
         let pc = pieces['{}'];
-        pc.held;
+        return pc.held;
                        "##, &pc))?;
       let held = held.value();
       dbg!(held);
@@ -145,7 +145,7 @@ impl Ctx {
     {
       let mut w = su.w(&self.alice)?;
       w.action_chain()
-        .move_to(10,10)
+        .move_w(&w, PosC([10,10]))?
         .click()
         .release()
         .perform()
