@@ -22,7 +22,6 @@ impl Ctx {
       let p1 = w.find_piece("1.1")?;
       let p2 = w.find_piece("2.1")?;
       let p1g_old = p1.posg()?;
-      let (p1x,p1y) = p1.posw()?;
       let (p2x,p2y) = p2.posw()?;
 
       w.action_chain()
@@ -63,9 +62,8 @@ impl Ctx {
     {
       let mut w = su.w(&self.alice)?;
       let p = w.find_piece(pc)?;
-      let (px,py) = p.posw()?;
       w.action_chain()
-        .move_to(px,py)
+        .move_pos(&p)?
         .click()
         .release()
         .key_down('l')
@@ -103,15 +101,13 @@ impl Ctx {
       let mut w = su.w(&self.alice)?;
       let p = w.find_piece(pc)?;
       let start = p.posg()?;
-      let (sx,sy) = w.posg2posw(start)?;
       let end = |d| { let mut e = start; e.0[1] = table_size.0[1] + d; e };
       let try_end = end(10);
       let exp_end = end(0);
-      let (ex,ey) = w.posg2posw(try_end)?;
       w.action_chain()
-        .move_to(sx,sy)
+        .w_move(&w, start)?
         .click_and_hold()
-        .move_to(ex,ey)
+        .w_move(&w, try_end)?
         .release()
         .perform()
         .always_context("drag off")?;
@@ -199,16 +195,11 @@ impl Ctx {
     for side in &sides {
       let w = su.w(side.window)?;
       let p = w.find_piece(pc)?;
-      let (sx,sy) = w.posg2posw(side.start)?;
-      let (ex,ey) = w.posg2posw(side.try_end)?;
-
-      dbg!(sx,sy);
-      dbg!(ex,ey);
 
       w.action_chain()
-        .move_to(sx,sy)
+        .w_move(&w, side.start)?
         .click_and_hold()
-        .move_to(ex,ey)
+        .w_move(&w, side.try_end)?
         .release()
         .perform()
         .context("conflicting drag")?;
