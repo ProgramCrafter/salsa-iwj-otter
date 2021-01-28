@@ -26,7 +26,7 @@ impl Ctx {
       let (p2x,p2y) = p2.posw()?;
 
       w.action_chain()
-        .move_to(p1x, p1y)
+        .w_move(&w, p1.posw()?)?
         .click_and_hold()
         .move_to(p2x + 5, p2y + 10)
         .release()

@@ -1103,7 +1103,7 @@ impl Drop for FinalInfoCollection {
   }
 }
 
-trait IntoInWindow<T> {
+pub trait IntoInWindow<T> {
   fn w_into<'g>(self, w: &'g WindowGuard) -> Result<T, AE>;
 }
 
@@ -1116,6 +1116,21 @@ impl IntoInWindow<WebPos> for Pos {
   #[throws(AE)]
   fn w_into<'g>(self, w: &'g WindowGuard) -> WebPos {
     w.posg2posw(self)?
+  }
+}
+
+pub trait ActionChainExt: Sized {
+  fn w_move<'g, P: IntoInWindow<WebPos>>
+    (self, w: &'g WindowGuard, pos: P) -> Result<Self,AE>;
+}
+
+impl<'a> ActionChainExt for t4::action_chain::ActionChain<'a> {
+  #[throws(AE)]
+  fn w_move<'g, P: IntoInWindow<WebPos>>
+    (self, w: &'g WindowGuard, pos: P) -> Self
+  {
+    let (px,py) = pos.w_into(w)?;
+    self.move_to(px,py)
   }
 }
 

@@ -5,6 +5,7 @@
 subdirs = """
 server
 bundle-sources
+thirtyfour_sync
 """
 
 [arch]
