@@ -207,13 +207,12 @@ impl Ctx {
       // xxx why has neither actually moved it
       w.action_chain()
         .move_w(&w, side.start)?
-        // .click() // xxx both show up as not held even with these
-        // .release() // two lines uncommened
+        .click()
+        .release()
 
-//        .click_and_hold()
-//        .move_w(&w, side.try_end)?
-//        .release()
-.click()
+        .click_and_hold()
+        .move_w(&w, side.try_end)?
+        .release()
 
         .perform()
         .context("conflicting drag")?;
