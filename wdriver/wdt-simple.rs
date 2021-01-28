@@ -105,9 +105,9 @@ impl Ctx {
       let try_end = end(10);
       let exp_end = end(0);
       w.action_chain()
-        .w_move(&w, start)?
+        .move_w(&w, start)?
         .click_and_hold()
-        .w_move(&w, try_end)?
+        .move_w(&w, try_end)?
         .release()
         .perform()
         .always_context("drag off")?;
@@ -197,9 +197,9 @@ impl Ctx {
       let p = w.find_piece(pc)?;
 
       w.action_chain()
-        .w_move(&w, side.start)?
+        .move_w(&w, side.start)?
         .click_and_hold()
-        .w_move(&w, side.try_end)?
+        .move_w(&w, side.try_end)?
         .release()
         .perform()
         .context("conflicting drag")?;
