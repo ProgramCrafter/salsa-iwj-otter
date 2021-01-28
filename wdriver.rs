@@ -1103,6 +1103,17 @@ impl Drop for FinalInfoCollection {
   }
 }
 
+trait IntoInWindow<T> {
+  fn w_into<'g>(self, w: &'g WindowGuard) -> Result<T, AE>;
+}
+
+impl IntoInWindow<WebPos> for Pos {
+  #[throws(AE)]
+  fn w_into<'g>(self, w: &'g WindowGuard) -> WebPos {
+    w.posg2posw(self)?
+  }
+}
+
 impl Drop for Setup {
   fn drop(&mut self) {
     (||{
