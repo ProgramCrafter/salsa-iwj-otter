@@ -218,11 +218,17 @@ impl Ctx {
     nix::sys::signal::kill(pid, nix::sys::signal::SIGCONT)?;
 
     #[derive(Debug)]
-    struct Got {
+    struct Got<'s> {
+      side: &'s Side<'s>,
+      yes: bool,
       now: Pos,
       log: Vec<String>,
       held: Option<String>,
       client: String,
+    }
+    impl<'s> Deref for Got<'s> {
+      type Target = Side<'s>;
+      fn deref<'t>(&'t self) -> &'t Side<'s> { &self.side }
     }
 
     let gots = sides.iter().map(|side|{
@@ -243,15 +249,24 @@ impl Ctx {
 
       let held = w.piece_held(&pc)?;
       let client = w.client()?;
+      let yes = held.as_ref() == Some(&client);
 
-      Ok::<_,AE>(Got { now, log, held, client })
+      Ok::<_,AE>(Got { side, now, log, held, client, yes })
     }).collect::<Result<Vec<_>,AE>>()?;
 
-    dbg!(gots);
-/*
-    let yesno = izip!(&sides, &gots).map(|side, got|{
-      let yn = 
-    }).collect::<Result<Vec<_>,AE>>.context("compare")?;*/
+    dbg!(&gots);
+
+    let y = gots.iter().filter(|got|  got.yes).next().expect("y");
+    let n = gots.iter().filter(|got| !got.yes).next().expect("n");
+    ensure_eq!(y.now, y.try_end);
+    ensure_eq!(n.now, y.try_end);
+    ensure_eq!(n.now, y.try_end);
+    ensure_eq!(n.held, y.held);
+
+    for got in &gots {
+      let conflict = got.log.iter().any(|m| m.starts_with("Conflict!"));
+      ensure_eq!(conflict, !got.yes);
+    }
   }
 }
 
