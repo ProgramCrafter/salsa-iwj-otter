@@ -15,12 +15,12 @@ use libc;
 macro_rules! ensure_eq {
   ($v1:expr, $v2:expr) => {
     ({
-      let v1 = $v1;
-      let v2 = $v2;
-      if &v1 != &v2 {
+      let v1 = &$v1;
+      let v2 = &$v2;
+      if v1 != v2 {
         Err(anyhow!("ensure_eq failed: {} != {}: {:?} != {:?}",
                     stringify!($v1), stringify!($v2),
-                    &v1, &v2))
+                    v1, v2))
       } else {
         Ok(())
       }
