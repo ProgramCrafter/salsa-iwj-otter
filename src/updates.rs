@@ -424,8 +424,6 @@ impl<'r> PrepareUpdatesBuffer<'r> {
                                 gen_update: GUF) -> PreparedUpdateEntry_Piece
     where GUF: FnOnce(&mut PieceState, Generation, &IsResponseToClientOp)
   {
-    type WRC = WhatResponseToClientOp;
-
     let gen = self.gen();
     let gs = &mut self.g.gs;
 
