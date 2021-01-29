@@ -1200,6 +1200,7 @@ type PieceOpError = {
 update_error_handlers.PieceOpError = <MessageHandler>function
 (m: PieceOpError) {
   let p = pieces[m.piece];
+  console.log('ERROR UPDATE PIECE ', m, p);
   if (p == null) return;
   let conflict_expected = piece_error_handlers[m.error](m.piece, p, m);
   piece_modify(m.piece, p, m.state, conflict_expected);
