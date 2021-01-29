@@ -10,6 +10,7 @@ struct Ctx {
   bob: Window,
   spec: otter::spec::GameSpec,
 }
+ctx_with_setup!{Ctx}
 
 impl Ctx {
   #[throws(AE)]
@@ -228,10 +229,14 @@ fn main(){
 
     let mut c = Ctx { su, alice, bob, spec };
 
-    c.drag().always_context("drag")?;
-    let pc = c.rotate().always_context("rotate")?;
-    c.drag_off(pc).always_context("drag off")?;
-    c.unselect(pc).always_context("unselect")?;
+    test!(c, "drag", c.drag().always_context("drag")?);
+
+    test!(c, "drag-rotate-unselect", {
+      let pc = c.rotate().always_context("rotate")?;
+      c.drag_off(pc).always_context("drag off")?;
+      c.unselect(pc).always_context("unselect")?;
+    });
+
     c.conflict().always_context("conflict handling")?;
 
     debug!("finishing");

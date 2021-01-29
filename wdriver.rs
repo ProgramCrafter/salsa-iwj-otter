@@ -930,7 +930,32 @@ fn check_window_name_sanity(name: &str) -> &str {
   name
 }
 
+#[macro_export]
+macro_rules! test {
+  ($c:expr, $tname:expr, $s:stmt) => {
+    if $c.su.want_test($tname) {
+      debug!("{} starting", $tname);
+      $s
+      info!("{} completed", $tname);
+    } else {
+      trace!("{} skipped", $tname);
+    }
+  }
+}
+
+#[macro_export]
+macro_rules! ctx_with_setup {
+  {$ctx:ident} => {
+    impl Deref for $ctx {
+      type Target = self::Setup;
+      fn deref(&self) -> &self::Setup { &self.su }
+    }
+  }
+}
+
 impl Setup {
+  pub fn want_test(&self, _tname: &str) -> bool { true }
+
   #[throws(AE)]
   pub fn new_window<'s>(&'s mut self, instance: &Instance, name: &str)
                         -> Window {
