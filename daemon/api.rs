@@ -129,6 +129,8 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       if client == pc.lastclient { pc.gen_before_lastclient }
       else { pc.gen };
 
+    debug!("client={:?} pc.lastclient={:?} pc.gen_before={:?} pc.gen={:?} q_gen={:?} u_gen={:?}", &client, &pc.lastclient, &pc.gen_before_lastclient, &pc.gen, &q_gen, &u_gen);
+
     if u_gen > q_gen { throw!(PieceOpError::Conflict) }
     form.op.check_held(pc,player)?;
     let (wrc, update, logents) =
@@ -144,12 +146,14 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
         &mut ig, poe,
         piece, vec![], client, &lens
       )?;
+      debug!("api_piece_op Err(RVU): {:?}", &form);
     },
     Err(PartiallyProcessed(poe, logents)) => {
       PrepareUpdatesBuffer::piece_report_error(
         &mut ig, poe,
         piece, logents, client, &lens
       )?;
+      debug!("api_piece_op Err(PP): {:?}", &form);
     },
     Err(ReportViaResponse(err)) => {
       warn!("api_piece_op ERROR {:?}: {:?}", &form, &err);
