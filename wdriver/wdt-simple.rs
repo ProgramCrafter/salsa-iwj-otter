@@ -203,8 +203,6 @@ impl Ctx {
       let w = su.w(side.window)?;
       let p = w.find_piece(pc)?;
 
-      // xxx why do both report conflict
-      // xxx why has neither actually moved it
       w.action_chain()
         .move_w(&w, side.start)?
         .click()
@@ -216,17 +214,6 @@ impl Ctx {
 
         .perform()
         .context("conflicting drag")?;
-
-//      let mut pause = Duration::from_millis(1);
-//      loop {
-//        ensure!( pause < Duration::from_secs(1) );
-//        dbg!(pause);
-//        sleep(pause);
-        let _now = p.posg()?;
-//ensure_eq!(now, side.try_end);
-//        if now == side.try_end { break }
-//        pause *= 2;
-//      }
     }
 
     nix::sys::signal::kill(pid, nix::sys::signal::SIGCONT)?;
@@ -254,7 +241,6 @@ impl Ctx {
         })
         .collect::<Result<Vec<String>,_>>()?;
 
-      // xxx clone and hack
       let held = w.piece_held(&pc)?;
 
       Ok::<_,AE>(Got { now, log, held })
