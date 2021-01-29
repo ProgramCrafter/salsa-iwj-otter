@@ -201,7 +201,6 @@ impl Ctx {
 
     for side in &sides {
       let w = su.w(side.window)?;
-      let p = w.find_piece(pc)?;
 
       w.action_chain()
         .move_w(&w, side.start)?
