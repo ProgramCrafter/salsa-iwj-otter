@@ -112,8 +112,8 @@ impl Ctx {
         .perform()
         .always_context("drag off")?;
 
-      chk(&w, exp_end)?;
       w.synch()?;
+      chk(&w, exp_end)?;
 
       exp_end
     };
