@@ -62,6 +62,7 @@ pub const URL : &str = "http://localhost:8000";
 pub fn default<T:Default>() -> T { Default::default() }
 
 use t4::Capabilities;
+use once_cell::sync::OnceCell;
 use otter::config::DAEMON_STARTUP_REPORT;
 
 const TABLE : &str = "server::dummy";
@@ -776,7 +777,7 @@ type ScreenCTM = ndarray::Array2::<f64>;
 pub struct WindowGuard<'g> {
   su: &'g mut Setup,
   w: &'g Window,
-  matrix: once_cell::sync::OnceCell<ScreenCTM>,
+  matrix: OnceCell<ScreenCTM>,
 }
 
 impl Debug for WindowGuard<'_> {
