@@ -222,6 +222,7 @@ impl Ctx {
       now: Pos,
       log: Vec<String>,
       held: Option<String>,
+      client: String,
     }
 
     let gots = sides.iter().map(|side|{
@@ -241,11 +242,16 @@ impl Ctx {
         .collect::<Result<Vec<String>,_>>()?;
 
       let held = w.piece_held(&pc)?;
+      let client = w.client()?;
 
-      Ok::<_,AE>(Got { now, log, held })
+      Ok::<_,AE>(Got { now, log, held, client })
     }).collect::<Result<Vec<_>,AE>>()?;
 
     dbg!(gots);
+/*
+    let yesno = izip!(&sides, &gots).map(|side, got|{
+      let yn = 
+    }).collect::<Result<Vec<_>,AE>>.context("compare")?;*/
   }
 }
 
