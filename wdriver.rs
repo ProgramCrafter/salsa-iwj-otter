@@ -802,7 +802,7 @@ impl<'g> WindowGuard<'g> {
   }
 
   #[throws(AE)]
-  pub fn piece_held(&'g self, pc: &'g str) -> Option<String> {
+  pub fn piece_held(&self, pc: &str) -> Option<String> {
     let held = self.execute_script(&format!(r##"
         let pc = pieces['{}'];
         return pc.held;
@@ -817,7 +817,7 @@ impl<'g> WindowGuard<'g> {
   }
 
   #[throws(AE)]
-  pub fn posg2posw(&'g self, posg: Pos) -> WebPos {
+  pub fn posg2posw(&self, posg: Pos) -> WebPos {
     let mat = self.matrix.get_or_try_init(||{
       let ary = self.su.driver.execute_script(r#"
         let m = space.getScreenCTM();
