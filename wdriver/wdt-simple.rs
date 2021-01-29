@@ -235,7 +235,7 @@ impl Ctx {
     struct Got {
       now: Pos,
       log: Vec<String>,
-      held: serde_json::Value,
+      held: Option<String>,
     }
 
     let gots = sides.iter().map(|side|{
@@ -255,11 +255,7 @@ impl Ctx {
         .collect::<Result<Vec<String>,_>>()?;
 
       // xxx clone and hack
-      let held = w.execute_script(&format!(r##"
-        let pc = pieces['{}'];
-        return pc.held;
-                       "##, &pc))?;
-      let held = held.value().to_owned();
+      let held = w.piece_held(&pc)?;
 
       Ok::<_,AE>(Got { now, log, held })
     }).collect::<Result<Vec<_>,AE>>()?;
