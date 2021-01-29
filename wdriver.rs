@@ -778,6 +778,7 @@ pub struct WindowGuard<'g> {
   su: &'g mut Setup,
   w: &'g Window,
   matrix: OnceCell<ScreenCTM>,
+  client: OnceCell<String>,
 }
 
 impl Debug for WindowGuard<'_> {
@@ -799,6 +800,18 @@ impl<'g> WindowGuard<'g> {
       pieceid, elem,
       w: self,
     }
+  }
+
+  #[throws(AE)]
+  pub fn client(&mut self) -> String {
+    let us = self.client.get_or_try_init(||{
+      let us = self.execute_script(r##"return us;"##)?;
+      let us = us.value();
+      let us = us.as_str().ok_or_else(
+        || anyhow!("return us script gave {:?}", &us))?;
+      Ok::<_,AE>(us.to_owned())
+    }).context("obtain client ID")?;
+    us.clone()
   }
 
   #[throws(AE)]
@@ -1009,6 +1022,7 @@ impl Setup {
       w,
       su: self,
       matrix: default(),
+      client: default(),
     }
   }
 }
