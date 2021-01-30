@@ -167,7 +167,7 @@ impl Ctx {
       let pc = "4.1";
       let w = su.w(&self.alice)?;
       w.action_chain()
-        .move_w(&w, w.find_piece(pc)?.posg()?)?
+        .move_pc(&w, pc)?
         .click();
     }
 

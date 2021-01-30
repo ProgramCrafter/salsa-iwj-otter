@@ -1201,6 +1201,8 @@ pub trait ActionChainExt: Sized {
               P: TryInto<WebPos, Error=E>>
     (self, pos: P) -> Result<Self,AE>
     where Result<WebPos,E>: anyhow::Context<WebPos,E>;
+
+  fn move_pc<'g>(self, w: &'g WindowGuard, pc: &str) -> Result<Self, AE>;
 }
 
 impl<'a> ActionChainExt for t4::action_chain::ActionChain<'a> {
@@ -1224,6 +1226,16 @@ impl<'a> ActionChainExt for t4::action_chain::ActionChain<'a> {
       .with_context(|| format!("{:?}", pos))
       .context("find coordinate")?;
     self.move_pos(pos)?
+  }
+
+  #[throws(AE)]
+  fn move_pc<'g>(self, w: &'g WindowGuard, pc: &str) -> Self {
+    (||{
+      let p = w.find_piece(pc).context("find")?;
+      let pos = p.posw().context("get pos")?;
+      let r = self.move_pos(pos).context("move")?;
+      Ok::<_,AE>(r)
+    })().with_context(|| format!("piece {}", pc))?
   }
 }
 
