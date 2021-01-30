@@ -538,38 +538,49 @@ impl PreparedUpdate {
     type PUE = PreparedUpdateEntry;
     type TUE<'u> = TransmitUpdateEntry<'u>;
     let mut ents = vec![];
+
+    fn pue_piece_to_tue_p(pue_p: &PUE_P) -> TUE_P {
+      let PUE_P { piece, ref op, .. } = *pue_p;
+      TUE_P { piece, op: op.map_ref() }
+    }
+
+    fn pue_piece_to_tue(pue_p: &PUE_P, dest: ClientId) -> TUE {
+      let PUE_P { piece, by_client, ref op } = *pue_p;
+      let ns = ||op.new_state();
+      enum FTG<'u> {
+        Recorded(ClientSequence, Option<&'u PreparedPieceState>),
+        Exactly(TransmitUpdateEntry<'u>),
+        Piece,
+      }
+      let ftg = match by_client {
+        None                                     => FTG::Piece,
+        Some((_,u_client,_)) if u_client != dest => FTG::Piece,
+        Some((WRC::Predictable  ,_,cseq)) => FTG::Recorded(cseq, None),
+        Some((WRC::UpdateSvg    ,_,cseq)) => FTG::Recorded(cseq, ns()),
+        Some((WRC::Unpredictable,_,cseq)) => {
+          if let Some(ns) = ns() {
+            FTG::Exactly(TUE::RecordedUnpredictable { piece, cseq, ns })
+          } else {
+            error!("internal error: for_transmit PreparedUpdateEntry::Piece with RecordedUnpredictable but PieceOp no NS");
+            FTG::Piece
+          }
+        }
+      };
+      match ftg {
+        FTG::Recorded(cseq, ns) => {
+          let zg = op.new_z_generation();
+          TUE::Recorded { piece, cseq, zg, svg: ns.map(|ns| &ns.svg) }
+        },
+        FTG::Piece => TUE::Piece(pue_piece_to_tue_p(&pue_p)),
+        FTG::Exactly(x) => x,
+      }
+    }
+
     for u in &self.us {
       trace!("for_transmit to={:?} {:?}", dest, &u);
       let ue = match u {
-        &PUE::Piece(PUE_P { piece, by_client, ref op }) => {
-          let ns = ||op.new_state();
-          enum FTG<'u> {
-            Recorded(ClientSequence, Option<&'u PreparedPieceState>),
-            Exactly(TransmitUpdateEntry<'u>),
-            Piece,
-          }
-          let ftg = match by_client {
-            None                                     => FTG::Piece,
-            Some((_,u_client,_)) if u_client != dest => FTG::Piece,
-            Some((WRC::Predictable  ,_,cseq)) => FTG::Recorded(cseq, None),
-            Some((WRC::UpdateSvg    ,_,cseq)) => FTG::Recorded(cseq, ns()),
-            Some((WRC::Unpredictable,_,cseq)) => {
-              if let Some(ns) = ns() {
-                FTG::Exactly(TUE::RecordedUnpredictable { piece, cseq, ns })
-              } else {
-                error!("internal error: for_transmit PreparedUpdateEntry::Piece with RecordedUnpredictable but PieceOp no NS");
-                FTG::Piece
-              }
-            }
-          };
-          match ftg {
-            FTG::Recorded(cseq, ns) => {
-              let zg = op.new_z_generation();
-              TUE::Recorded { piece, cseq, zg, svg: ns.map(|ns| &ns.svg) }
-            },
-            FTG::Piece => TUE::Piece(TUE_P { piece, op: op.map_ref() }),
-            FTG::Exactly(x) => x,
-          }
+        &PUE::Piece(ref pue_p) => {
+          pue_piece_to_tue(pue_p, dest)
         }
         PUE::Log(logent) => {
           TUE::Log((&tz, &logent))
