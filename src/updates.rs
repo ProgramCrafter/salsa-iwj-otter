@@ -68,6 +68,11 @@ pub enum PreparedUpdateEntry {
 #[derive(Debug,Clone)]
 pub struct PreparedUpdateEntry_Piece {
   by_client: IsResponseToClientOp,
+  ops: SecondarySlotMap<PlayerId, PreparedPieceUpdate>,
+}
+
+#[derive(Debug,Clone)]
+pub struct PreparedPieceUpdate {
   piece: VisiblePieceId,
   op: PieceUpdateOp<PreparedPieceState, ZLevel>,
 }
@@ -242,10 +247,14 @@ impl PreparedUpdate {
 }
 
 impl PreparedUpdateEntry_Piece {
-  pub fn json_len(&self, _player: PlayerId) -> usize {
-    let PUE_P { ref op, .. } = self;
-    50 +
-      op.new_state().map(|x| x.svg.0.as_bytes().len()).unwrap_or(0)
+  pub fn json_len(&self, player: PlayerId) -> usize {
+    let PUE_P { ref ops, .. } = self;
+    if let Some(op) = ops.get(player) {
+      50 +
+        op.op.new_state().map(|x| x.svg.0.as_bytes().len()).unwrap_or(0)
+    } else {
+      50
+    }
   }
 }
 
@@ -444,49 +453,73 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   }
 
   #[throws(InternalError)]
+  fn piece_update_player(max_z: &mut ZCoord,
+                         pc: &mut PieceState,
+                         p: &Box<dyn Piece>,
+                         piece: PieceId,
+                         op: PieceUpdateOp<(),()>,
+                         lens: &dyn Lens) -> PreparedPieceUpdate
+  {
+    max_z.update_max(&pc.zlevel.z);
+
+    let pri_for_all = lens.svg_pri(piece,pc,Default::default());
+
+    let op = op.try_map(
+      |()|{
+        let mut ns = pc.prep_piecestate(p.as_ref(), &pri_for_all)?;
+        lens.massage_prep_piecestate(&mut ns);
+        <Result<_,InternalError>>::Ok(ns)
+      },
+      |()|{
+        Ok(pc.zlevel.clone())
+      }
+    )?;
+
+    PreparedPieceUpdate {
+      piece: pri_for_all.id,
+      op,
+    }
+  }
+
+
+  #[throws(InternalError)]
   fn piece_update_fallible<GUF>(&mut self, piece: PieceId,
                                 ops: PieceUpdateOps,
                                 lens: &dyn Lens,
-                                gen_update: GUF) -> PreparedUpdateEntry_Piece
+                                gen_update: GUF)
+                                -> PreparedUpdateEntry_Piece
     where GUF: FnOnce(&mut PieceState, Generation, &IsResponseToClientOp)
   {
     let gen = self.gen();
     let gs = &mut self.g.gs;
 
-    let PUO::Simple(update) = ops;
+    let mut pc = gs.pieces.byid_mut(piece).ok();
+    let p = self.g.ipieces.get(piece);
 
-    let (update, piece) = match (
-      gs.pieces.byid_mut(piece),
-      self.g.ipieces.get(piece),
-    ) {
-      (Ok(pc), Some(p)) => {
-        gs.max_z.update_max(&pc.zlevel.z);
+    if let Some(ref mut pc) = pc {
+      gen_update(pc, gen, &self.by_client);
+    }
+    let mut out: SecondarySlotMap<PlayerId, PreparedPieceUpdate> = default();
+    for player in gs.players.keys() {
+      let ops = match ops {
+        PUO::Simple(update) => update,
+      };
+      let op = match (&mut pc, p) {
+        (Some(pc), Some(p)) => Self::piece_update_player(
+            &mut gs.max_z, pc, p, piece, ops, lens
+        )?,
+        _ => PreparedPieceUpdate {
+          piece: lens.pieceid2visible(piece),
+          op: PieceUpdateOp::Delete(),
+        }
+      };
 
-        gen_update(pc, gen, &self.by_client);
-        let pri_for_all = lens.svg_pri(piece,pc,Default::default());
-
-        let update = update.try_map(
-          |()|{
-            let mut ns = pc.prep_piecestate(p.as_ref(), &pri_for_all)?;
-            lens.massage_prep_piecestate(&mut ns);
-            <Result<_,InternalError>>::Ok(ns)
-          },
-          |()|{
-            Ok(pc.zlevel.clone())
-          }
-        )?;
-
-        (update, pri_for_all.id)
-      },
-      _ => {
-        (PieceUpdateOp::Delete(), lens.pieceid2visible(piece))
-      }
-    };
+      out.insert(player, op);
+    }
 
     PreparedUpdateEntry_Piece {
-      piece,
       by_client : self.by_client,
-      op : update,
+      ops: out,
     }
   }
 
@@ -576,15 +609,17 @@ impl PreparedUpdate {
     type TUE<'u> = TransmitUpdateEntry<'u>;
     let mut ents = vec![];
 
-    fn pue_piece_to_tue_p(pue_p: &PUE_P, _player: PlayerId)
+    fn pue_piece_to_tue_p(pue_p: &PUE_P, player: PlayerId)
                           -> Option<TUE_P> {
-      let PUE_P { piece, ref op, .. } = *pue_p;
+      let op = pue_p.ops.get(player)?;
+      let PreparedPieceUpdate { piece, ref op } = *op;
       Some(TUE_P { piece, op: op.map_ref() })
     }
 
     fn pue_piece_to_tue(pue_p: &PUE_P, player: PlayerId, dest: ClientId)
                         -> Option<TUE> {
-      let PUE_P { piece, by_client, ref op } = *pue_p;
+      let PUE_P { by_client, ref ops } = *pue_p;
+      let PreparedPieceUpdate { piece, ref op } = *ops.get(player)?;
       let ns = ||op.new_state();
       enum FTG<'u> {
         Recorded(ClientSequence, Option<&'u PreparedPieceState>),
