@@ -118,3 +118,6 @@ display_as_debug!(Impossible);
 pub type AE = anyhow::Error;
 pub type OE = OnlineError;
 pub type POEPP = PieceOpErrorPartiallyProcessed;
+
+// updates.rs
+pub type PUO = PieceUpdateOps;

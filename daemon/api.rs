@@ -45,7 +45,7 @@ struct ApiPieceOpArgs<'a> {
 
 trait ApiPieceOp : Debug {
   #[throws(ApiPieceOpError)]
-  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp;
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate;
 
   #[throws(OnlineError)]
   fn check_held(&self, pc: &PieceState, player: PlayerId) {
@@ -133,13 +133,13 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
 
     if u_gen > q_gen { throw!(PieceOpError::Conflict) }
     form.op.check_held(pc,player)?;
-    let (wrc, update, logents) =
+    let update =
       form.op.op(ApiPieceOpArgs {
         gs, player, piece,
         p: p.as_ref(),
         lens: &lens,
       })?;
-    Ok::<_,ApiPieceOpError>((wrc, update, logents))
+    Ok::<_,ApiPieceOpError>(update)
   })() {
     Err(ReportViaUpdate(poe)) => {
       PrepareUpdatesBuffer::piece_report_error(
@@ -159,13 +159,13 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       warn!("api_piece_op ERROR {:?}: {:?}", &form, &err);
       Err(err)?;
     },
-    Ok((wrc, update, logents)) => {
+    Ok(PieceUpdate { wrc, log, ops }) => {
       let mut buf = PrepareUpdatesBuffer::new(g,
                                               Some((wrc, client, form.cseq)),
-                                              Some(1 + logents.len()));
+                                              Some(1 + log.len()));
       
-      buf.piece_update(piece, update, &lens);
-      buf.log_updates(logents);
+      buf.piece_update(piece, ops, &lens);
+      buf.log_updates(log);
 
       debug!("api_piece_op OK: {:?}", &form);
     }
@@ -221,7 +221,7 @@ api_route!{
   struct ApiPieceGrab {
   }
   #[throws(ApiPieceOpError)]
-  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
     let gpl = gs.players.byid(player)?;
     let pc = gs.pieces.byid_mut(piece)?;
@@ -233,7 +233,7 @@ api_route!{
     let logents = log_did_to_piece(gpl, lens, piece, pc, p, "grasped");
 
     (WhatResponseToClientOp::Predictable,
-     update, logents)
+     update, logents).into()
   }
 }
 
@@ -245,7 +245,7 @@ api_route!{
   fn check_held(&self, _pc: &PieceState, _player: PlayerId) { }
 
   #[throws(ApiPieceOpError)]
-  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
     let gpl = gs.players.byid(player)?;
     let pc = gs.pieces.byid_mut(piece)?;
@@ -266,7 +266,7 @@ api_route!{
     })};
 
     (WhatResponseToClientOp::Predictable,
-     update, vec![logent])
+     update, vec![logent]).into()
   }
 }
 
@@ -275,7 +275,7 @@ api_route!{
   struct ApiPieceUngrab {
   }
   #[throws(ApiPieceOpError)]
-  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
     let gpl = gs.players.byid(player).unwrap();
     let pc = gs.pieces.byid_mut(piece).unwrap();
@@ -287,7 +287,7 @@ api_route!{
     let logents = log_did_to_piece(gpl, lens, piece, pc, p, "released");
 
     (WhatResponseToClientOp::Predictable,
-     update, logents)
+     update, logents).into()
   }
 }
 
@@ -297,13 +297,13 @@ api_route!{
     z : ZCoord,
   }
   #[throws(ApiPieceOpError)]
-  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,piece, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
     pc.zlevel = ZLevel { z : self.z.clone(), zg : gs.gen };
     let update = PieceUpdateOp::SetZLevel(());
     (WhatResponseToClientOp::Predictable,
-     update, vec![])
+     update, vec![]).into()
   }
 }
 
@@ -312,7 +312,7 @@ api_route!{
   struct ApiPieceMove(Pos);
 
   #[throws(ApiPieceOpError)]
-  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,piece, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let (pos, clamped) = self.0.clamped(gs.table_size);
@@ -326,7 +326,7 @@ api_route!{
     }
     let update = PieceUpdateOp::Move(self.0);
     (WhatResponseToClientOp::Predictable,
-     update, logents)
+     update, logents).into()
   }
 }
 
@@ -335,7 +335,7 @@ api_route!{
   struct ApiPieceRotate(CompassAngle);
 
   #[throws(ApiPieceOpError)]
-  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let gpl = gs.players.byid(player).unwrap();
@@ -343,7 +343,7 @@ api_route!{
     let logents = log_did_to_piece(gpl, lens, piece, pc, p, "rotated");
     let update = PieceUpdateOp::Modify(());
     (WhatResponseToClientOp::Predictable,
-     update, logents)
+     update, logents).into()
   }
 }
 
@@ -352,7 +352,7 @@ api_route!{
   struct ApiPiecePin (bool);
 
   #[throws(ApiPieceOpError)]
-  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let gpl = gs.players.byid(player).unwrap();
@@ -363,7 +363,7 @@ api_route!{
       if pc.pinned { "pinned" } else { "unpinned" },
     );
     (WhatResponseToClientOp::Predictable,
-     update, logents)
+     update, logents).into()
   }
 }
 
@@ -376,7 +376,7 @@ api_route!{
     wrc: WhatResponseToClientOp,
   }
   #[throws(ApiPieceOpError)]
-  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
+  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
     '_normal_global_ops__not_loop: loop {
       let pc = gs.pieces.byid_mut(piece)?;
@@ -390,7 +390,7 @@ api_route!{
             wrc,
             PieceUpdateOp::Modify(()),
             log_did_to_piece(gpl, lens, piece, pc, p, "flipped"),
-          )
+          ).into()
         },
 
         _ => break,

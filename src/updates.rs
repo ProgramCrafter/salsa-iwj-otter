@@ -100,9 +100,34 @@ pub enum PieceUpdateOp<NS,ZL> {
   SetZLevel(ZL),
 }
 
-pub type PieceUpdateFromOp = (WhatResponseToClientOp,
-                              PieceUpdateOp<(),()>, Vec<LogEntry>);
-pub type PieceUpdateResult = Result<PieceUpdateFromOp, ApiPieceOpError>;
+pub type PieceUpdateFromOpSimple = (
+  WhatResponseToClientOp,
+  PieceUpdateOp<(),()>,
+  Vec<LogEntry>,
+);
+pub type PieceUpdateResult = Result<PieceUpdate, ApiPieceOpError>;
+
+#[derive(Debug)]
+pub struct PieceUpdate {
+  pub wrc: WhatResponseToClientOp,
+  pub log: Vec<LogEntry>,
+  pub ops: PieceUpdateOps,
+}
+
+#[derive(Debug)]
+pub enum PieceUpdateOps {
+  Simple(PieceUpdateOp<(),()>),
+}
+
+impl From<PieceUpdateOp<(),()>> for PieceUpdateOps {
+  fn from(op: PieceUpdateOp<(),()>) -> Self { PUO::Simple(op) }
+}
+
+impl From<PieceUpdateFromOpSimple> for PieceUpdate {
+  fn from((wrc, op, log): PieceUpdateFromOpSimple) -> Self {
+    PieceUpdate { wrc, log, ops: op.into() }
+  }
+}
 
 // ---------- for traansmission ----------
 
@@ -462,10 +487,12 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     }
   }
 
-  pub fn piece_update(&mut self, piece: PieceId, update: PieceUpdateOp<(),()>,
+  pub fn piece_update(&mut self, piece: PieceId, ops: PieceUpdateOps,
                       lens: &dyn Lens) {
     // Caller needs us to be infallible since it is too late by
     // this point to back out a game state change.
+
+    let PUO::Simple(update) = ops;
 
     let update = self.piece_update_fallible(
       piece, update, lens,

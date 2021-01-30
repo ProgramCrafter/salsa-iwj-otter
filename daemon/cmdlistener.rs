@@ -820,7 +820,7 @@ impl UpdateHandler {
         let mut buf = PrepareUpdatesBuffer::new(g, None, Some(estimate));
         for (upiece, uuop) in updates.pcs {
           let lens = TransparentLens { };
-          buf.piece_update(upiece, uuop, &lens);
+          buf.piece_update(upiece, PUO::Simple(uuop), &lens);
         }
         buf.log_updates(updates.log);
         buf.raw_updates(raw);
@@ -836,7 +836,7 @@ impl UpdateHandler {
         let mut buf = PrepareUpdatesBuffer::new(g, None, None);
         for (upiece, uuop) in bulk.pieces {
           let lens = TransparentLens { };
-          buf.piece_update(upiece, uuop, &lens);
+          buf.piece_update(upiece, PUO::Simple(uuop), &lens);
         }
 
         if bulk.logs {
