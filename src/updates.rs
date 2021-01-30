@@ -58,8 +58,8 @@ pub enum PreparedUpdateEntry {
     player: PlayerId,
     new_info_pane: Arc<Html>,
   },
-  Log (Arc<CommittedLogEntry>),
-  Error (Option<ClientId> /* none: all */, ErrorSignaledViaUpdate),
+  Log(Arc<CommittedLogEntry>),
+  Error(Option<ClientId> /* none: all */, ErrorSignaledViaUpdate),
 }
 
 #[allow(non_camel_case_types)]
