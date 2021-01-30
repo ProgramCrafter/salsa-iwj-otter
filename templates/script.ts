@@ -1010,8 +1010,12 @@ function zoom_activate() {
 
 // ----- test counter, startup -----
 
-messages.Piece = <MessageHandler>function
-(j: { piece: PieceId, op: Object }) {
+type TransmitUpdateEntry_Piece = {
+  piece: PieceId,
+  op: Object,
+};
+
+function handle_piece_update(j: TransmitUpdateEntry_Piece) {
   console.log('PIECE UPDATE ',j)
   var piece = j.piece;
   var m = j.op as { [k: string]: Object };
@@ -1019,6 +1023,8 @@ messages.Piece = <MessageHandler>function
   let p = pieces[piece]!;
   pieceops[k](piece,p, m[k]);
 };
+
+messages.Piece = <MessageHandler>handle_piece_update;
 
 type PieceStateMessage = {
   svg: string,
@@ -1192,18 +1198,18 @@ messages.Error = <MessageHandler>function
 }
 
 type PieceOpError = {
-  piece: PieceId,
   error: string,
-  state: PieceStateMessage,
+  state: TransmitUpdateEntry_Piece,
 };
 
 update_error_handlers.PieceOpError = <MessageHandler>function
 (m: PieceOpError) {
-  let p = pieces[m.piece];
+  let piece = m.state.piece;
+  let p = pieces[piece];
   console.log('ERROR UPDATE PIECE ', m, p);
   if (p == null) return;
-  let conflict_expected = piece_error_handlers[m.error](m.piece, p, m);
-  piece_modify(m.piece, p, m.state, conflict_expected);
+  let conflict_expected = piece_error_handlers[m.error](piece, p, m);
+  handle_piece_update(m.state);
 }
 
 function piece_checkconflict_nrda(piece: PieceId, p: PieceInfo,

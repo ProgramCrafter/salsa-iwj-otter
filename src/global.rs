@@ -10,7 +10,9 @@ use slotmap::dense as sm;
 use std::sync::PoisonError;
 
 type ME = MgmtError;
-type ESU = ErrorSignaledViaUpdate;
+type ESU<POEPU> = ErrorSignaledViaUpdate<POEPU>;
+
+#[allow(non_camel_case_types)] type PUE_P = PreparedUpdateEntry_Piece;
 
 // ---------- newtypes and type aliases ----------
 
@@ -582,7 +584,7 @@ impl<'ig> InstanceGuard<'ig> {
 
   pub fn remove_clients(&mut self,
                         players: &HashSet<PlayerId>,
-                        signal: ErrorSignaledViaUpdate) {
+                        signal: ErrorSignaledViaUpdate<PUE_P>) {
     let mut clients_to_remove = HashSet::new();
     self.clients.retain(|k,v| {
       let remove = players.contains(&v.player);
@@ -597,7 +599,6 @@ impl<'ig> InstanceGuard<'ig> {
           gen,
           when: Instant::now(),
           us: vec![ PreparedUpdateEntry::Error(
-            None,
             signal.clone(),
           )],
         });

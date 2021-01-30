@@ -144,14 +144,14 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
     Err(ReportViaUpdate(poe)) => {
       PrepareUpdatesBuffer::piece_report_error(
         &mut ig, poe,
-        piece, vec![], client, &lens
+        piece, vec![], POEPP::Unprocessed, client, form.cseq, &lens
       )?;
       debug!("api_piece_op Err(RVU): {:?}", &form);
     },
     Err(PartiallyProcessed(poe, logents)) => {
       PrepareUpdatesBuffer::piece_report_error(
         &mut ig, poe,
-        piece, logents, client, &lens
+        piece, logents, POEPP::Partially, client, form.cseq, &lens
       )?;
       debug!("api_piece_op Err(PP): {:?}", &form);
     },

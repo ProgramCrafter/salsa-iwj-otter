@@ -7,6 +7,8 @@
 use crate::imports::*;
 
 type PUE = PreparedUpdateEntry;
+type ESVU<POEPU> = ErrorSignaledViaUpdate<POEPU>;
+
 #[allow(non_camel_case_types)] type PUE_P = PreparedUpdateEntry_Piece;
 #[allow(non_camel_case_types)] type TUE_P<'u> = TransmitUpdateEntry_Piece<'u>;
 
@@ -59,7 +61,7 @@ pub enum PreparedUpdateEntry {
     new_info_pane: Arc<Html>,
   },
   Log(Arc<CommittedLogEntry>),
-  Error(Option<ClientId> /* none: all */, ErrorSignaledViaUpdate),
+  Error(ErrorSignaledViaUpdate<PUE_P>),
 }
 
 #[allow(non_camel_case_types)]
@@ -138,7 +140,7 @@ enum TransmitUpdateEntry<'u> {
   SetLinks(Html),
   #[serde(serialize_with="serialize_logentry")]
   Log(TransmitUpdateLogEntry<'u>),
-  Error(&'u ErrorSignaledViaUpdate),
+  Error(ErrorSignaledViaUpdate<TUE_P<'u>>),
 }
 
 type TransmitUpdateLogEntry<'u> = (&'u Timezone, &'u CommittedLogEntry);
@@ -251,8 +253,13 @@ impl PreparedUpdateEntry {
           |(_k,v)| Some(50 + v.as_ref()?.len())
         ).sum::<usize>() + 50
       }
-      SetTableSize(_) |
-      Error(_,_) => {
+      Error(ESVU::PieceOpError { state, .. }) => {
+        100 + state.json_len()
+      }
+      Error(ESVU::InternalError) |
+      Error(ESVU::PlayerRemoved) |
+      Error(ESVU::TokenRevoked) |
+      SetTableSize(_) => {
         100
       }
     }
@@ -386,41 +393,37 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     })
   }
 
-  fn new_for_error(ig: &'r mut Instance) -> Self {
-    Self::new(ig, None, Some(1))
-  }
   pub fn piece_report_error(ig: &mut Instance,
                             error: PieceOpError, piece: PieceId,
-                            logents: Vec<LogEntry>, client: ClientId,
+                            logents: Vec<LogEntry>,
+                            partially: PieceOpErrorPartiallyProcessed,
+                            client: ClientId, cseq: ClientSequence,
                             lens: &dyn Lens) -> Result<(),OE> {
-    let mut buf = PrepareUpdatesBuffer::new_for_error(ig);
-    let update = buf.piece_update_fallible(
-      piece, PieceUpdateOp::Modify(()), lens
+    let by_client = (WRC::Unpredictable, client, cseq);
+    let mut buf = PrepareUpdatesBuffer::new(ig, Some(by_client), None);
+    let state = buf.piece_update_fallible(
+      piece, PieceUpdateOp::Modify(()), lens, |pc, gen, _by_client| {
+        match partially {
+          POEPP::Unprocessed => { }
+          POEPP::Partially => { pc.gen = gen; pc.lastclient = default(); }
+        }
+      }
     )?;
-    let update = match update {
-      PUE_P {
-        piece,
-        op: PieceUpdateOp::Modify(state),
-        ..
-      } => {
-        PreparedUpdateEntry::Error(
-          Some(client),
-          ErrorSignaledViaUpdate::PieceOpError {
-            piece, error, state,
-          },
-        )
-      },
-      _ => panic!(),
-    };
+    let update = PUE::Error(ESVU::PieceOpError {
+      error, state, partially
+    });
     buf.us.push(update);
     buf.log_updates(logents);
     Ok(())
   }
 
   #[throws(InternalError)]
-  fn piece_update_fallible(&mut self, piece: PieceId,
-                           update: PieceUpdateOp<(),()>,
-                           lens: &dyn Lens) -> PreparedUpdateEntry_Piece {
+  fn piece_update_fallible<GUF>(&mut self, piece: PieceId,
+                                update: PieceUpdateOp<(),()>,
+                                lens: &dyn Lens,
+                                gen_update: GUF) -> PreparedUpdateEntry_Piece
+    where GUF: FnOnce(&mut PieceState, Generation, &IsResponseToClientOp)
+  {
     type WRC = WhatResponseToClientOp;
 
     let gen = self.gen();
@@ -433,16 +436,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       (Ok(pc), Some(p)) => {
         gs.max_z.update_max(&pc.zlevel.z);
 
-        if let Some(new_lastclient) = match self.by_client {
-          Some((WRC::Predictable,tclient,_)) |
-          Some((WRC::UpdateSvg,  tclient,_))
-            => if tclient == pc.lastclient { None } else { Some(tclient) }
-          _ => Some(Default::default()),
-        } {
-          pc.gen_before_lastclient = pc.gen;
-          pc.lastclient = new_lastclient;
-        }
-        pc.gen = gen;
+        gen_update(pc, gen, &self.by_client);
         let pri_for_all = lens.svg_pri(piece,pc,Default::default());
 
         let update = update.try_map(
@@ -475,13 +469,30 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     // Caller needs us to be infallible since it is too late by
     // this point to back out a game state change.
 
-    let update = self.piece_update_fallible(piece, update, lens)
+    let update = self.piece_update_fallible(
+      piece, update, lens,
+      |pc, gen, by_client|
+    {
+      match *by_client {
+        Some((WRC::Predictable,tclient,_)) |
+        Some((WRC::UpdateSvg,  tclient,_)) => {
+          if tclient != pc.lastclient {
+            pc.gen_before_lastclient = pc.gen;
+            pc.lastclient = tclient;
+          }
+        }
+        Some((WRC::Unpredictable, _,_)) |
+          None => {
+            pc.lastclient = default();
+          }
+      }
+      pc.gen = gen;
+    })
       .map(|update| PUE::Piece(update))
       .unwrap_or_else(|e| {
         error!("piece update error! piece={:?} lens={:?} error={:?}",
                piece, &lens, &e);
-        PreparedUpdateEntry::Error(None,
-                                   ErrorSignaledViaUpdate::InternalError)
+        PreparedUpdateEntry::Error(ErrorSignaledViaUpdate::InternalError)
       });
     self.us.push(update);
   }
@@ -534,7 +545,7 @@ type WRC = WhatResponseToClientOp;
 impl PreparedUpdate {
   pub fn for_transmit<'u>(&'u self, tz: &'u Timezone, dest : ClientId)
                       -> TransmitUpdate<'u> {
-    type ESVU = ErrorSignaledViaUpdate;
+    type ESVU<T> = ErrorSignaledViaUpdate<T>;
     type PUE = PreparedUpdateEntry;
     type TUE<'u> = TransmitUpdateEntry<'u>;
     let mut ents = vec![];
@@ -597,14 +608,25 @@ impl PreparedUpdate {
         &PUE::RemovePlayer { player, ref new_info_pane } => {
           TUE::RemovePlayer { player, new_info_pane }
         }
-        PUE::Error(c, e) => {
-          if *c == None || *c == Some(dest) {
-            TUE::Error(e)
-          } else if let &ESVU::PieceOpError { piece, ref state, .. } = e {
-            let op = PieceUpdateOp::Modify(state);
-            TUE::Piece(TUE_P { piece, op })
-          } else {
-            continue
+        PUE::Error(e) => {
+          match *e {
+            ESVU::InternalError => TUE::Error(ESVU::InternalError),
+            ESVU::PlayerRemoved => TUE::Error(ESVU::PlayerRemoved),
+            ESVU::TokenRevoked  => TUE::Error(ESVU::TokenRevoked),
+            ESVU::PieceOpError { error, partially, ref state } => {
+              let c = state.by_client.as_ref().map(|(_,c,_)| *c);
+              if c == None || c == Some(dest) {
+                let state = pue_piece_to_tue_p(state);
+                TUE::Error(
+                  ESVU::PieceOpError { error, partially, state }
+                )
+              } else {
+                match partially {
+                  POEPP::Unprocessed => continue,
+                  POEPP::Partially => pue_piece_to_tue(&state, dest),
+                }
+              }
+            }
           }
         }
         PUE::SetLinks(links) => {

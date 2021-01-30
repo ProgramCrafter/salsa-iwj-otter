@@ -96,17 +96,24 @@ impl From<PlayerNotFound> for ApiPieceOpError {
 }
 
 #[derive(Error,Debug,Serialize,Clone)]
-pub enum ErrorSignaledViaUpdate {
+pub enum ErrorSignaledViaUpdate<POEPU: Debug> {
   InternalError,
-  PlayerRemoved,
-  TokenRevoked,
+  PlayerRemoved, // appears only in streams for applicable player
+  TokenRevoked, // appears only in streams for applicable player
   PieceOpError {
-    piece: VisiblePieceId,
     error: PieceOpError,
-    state: PreparedPieceState,
+    partially: PieceOpErrorPartiallyProcessed,
+    state: POEPU,
   },
 }
-display_as_debug!{ErrorSignaledViaUpdate}
+display_as_debug!{ErrorSignaledViaUpdate<T>, <T:Debug>}
+
+#[derive(Error,Debug,Serialize,Copy,Clone,Eq,PartialEq)]
+pub enum PieceOpErrorPartiallyProcessed {
+  Unprocessed,
+  Partially,
+}
+display_as_debug!{PieceOpErrorPartiallyProcessed}
 
 #[derive(Error,Debug,Serialize,Copy,Clone)]
 pub enum PieceOpError {
