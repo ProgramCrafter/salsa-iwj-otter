@@ -426,8 +426,9 @@ impl<'r> PrepareUpdatesBuffer<'r> {
                             lens: &dyn Lens) -> Result<(),OE> {
     let by_client = (WRC::Unpredictable, client, cseq);
     let mut buf = PrepareUpdatesBuffer::new(ig, Some(by_client), None);
+    let ops = PUO::Simple(PieceUpdateOp::Modify(()));
     let state = buf.piece_update_fallible(
-      piece, PieceUpdateOp::Modify(()), lens, |pc, gen, _by_client| {
+      piece, ops, lens, |pc, gen, _by_client| {
         match partially {
           POEPP::Unprocessed => { }
           POEPP::Partially => { pc.gen = gen; pc.lastclient = default(); }
@@ -444,13 +445,15 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
   #[throws(InternalError)]
   fn piece_update_fallible<GUF>(&mut self, piece: PieceId,
-                                update: PieceUpdateOp<(),()>,
+                                ops: PieceUpdateOps,
                                 lens: &dyn Lens,
                                 gen_update: GUF) -> PreparedUpdateEntry_Piece
     where GUF: FnOnce(&mut PieceState, Generation, &IsResponseToClientOp)
   {
     let gen = self.gen();
     let gs = &mut self.g.gs;
+
+    let PUO::Simple(update) = ops;
 
     let (update, piece) = match (
       gs.pieces.byid_mut(piece),
@@ -492,10 +495,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     // Caller needs us to be infallible since it is too late by
     // this point to back out a game state change.
 
-    let PUO::Simple(update) = ops;
-
     let update = self.piece_update_fallible(
-      piece, update, lens,
+      piece, ops, lens,
       |pc, gen, by_client|
     {
       match *by_client {
