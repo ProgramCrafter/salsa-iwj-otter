@@ -211,13 +211,13 @@ impl PlayerUpdates {
 }
 
 impl PreparedUpdate {
-  pub fn json_len(&self) -> usize {
-    self.us.iter().map(|u| 20 + u.json_len()).sum()
+  pub fn json_len(&self, player: PlayerId) -> usize {
+    self.us.iter().map(|u| 20 + u.json_len(player)).sum()
   }
 }
 
 impl PreparedUpdateEntry_Piece {
-  pub fn json_len(&self) -> usize {
+  pub fn json_len(&self, _player: PlayerId) -> usize {
     let PUE_P { ref op, .. } = self;
     50 +
       op.new_state().map(|x| x.svg.0.as_bytes().len()).unwrap_or(0)
@@ -225,11 +225,11 @@ impl PreparedUpdateEntry_Piece {
 }
 
 impl PreparedUpdateEntry {
-  pub fn json_len(&self) -> usize {
+  pub fn json_len(&self, player: PlayerId) -> usize {
     use PreparedUpdateEntry::*;
     match self {
       Piece(op) => {
-        op.json_len()
+        op.json_len(player)
       }
       Log(logent) => {
         logent.logent.html.0.as_bytes().len() * 28
@@ -254,7 +254,7 @@ impl PreparedUpdateEntry {
         ).sum::<usize>() + 50
       }
       Error(ESVU::PieceOpError { state, .. }) => {
-        100 + state.json_len()
+        100 + state.json_len(player)
       }
       Error(ESVU::InternalError) |
       Error(ESVU::PlayerRemoved) |

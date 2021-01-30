@@ -132,7 +132,7 @@ impl Read for UpdateReader {
           break
         }
       };
-      let next_len = UPDATE_MAX_FRAMING_SIZE + next.json_len();
+      let next_len = UPDATE_MAX_FRAMING_SIZE + next.json_len(self.player);
       if next_len > buf.len() {
         if buf.len() != orig_wanted { break }
 
