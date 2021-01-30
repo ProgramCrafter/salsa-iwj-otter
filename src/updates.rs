@@ -577,13 +577,13 @@ impl PreparedUpdate {
     let mut ents = vec![];
 
     fn pue_piece_to_tue_p(pue_p: &PUE_P, _player: PlayerId)
-                          -> TUE_P {
+                          -> Option<TUE_P> {
       let PUE_P { piece, ref op, .. } = *pue_p;
-      TUE_P { piece, op: op.map_ref() }
+      Some(TUE_P { piece, op: op.map_ref() })
     }
 
     fn pue_piece_to_tue(pue_p: &PUE_P, player: PlayerId, dest: ClientId)
-                        -> TUE {
+                        -> Option<TUE> {
       let PUE_P { piece, by_client, ref op } = *pue_p;
       let ns = ||op.new_state();
       enum FTG<'u> {
@@ -605,21 +605,25 @@ impl PreparedUpdate {
           }
         }
       };
-      match ftg {
+      let tue = match ftg {
         FTG::Recorded(cseq, ns) => {
           let zg = op.new_z_generation();
           TUE::Recorded { piece, cseq, zg, svg: ns.map(|ns| &ns.svg) }
         },
-        FTG::Piece => TUE::Piece(pue_piece_to_tue_p(&pue_p, player)),
+        FTG::Piece => TUE::Piece(pue_piece_to_tue_p(&pue_p, player)?),
         FTG::Exactly(x) => x,
-      }
+      };
+      Some(tue)
     }
 
     for u in &self.us {
       trace!("for_transmit to={:?} {:?}", dest, &u);
       let ue = match u {
         &PUE::Piece(ref pue_p) => {
-          pue_piece_to_tue(pue_p, player, dest)
+          match pue_piece_to_tue(pue_p, player,dest) {
+            Some(tue) => tue,
+            _ => continue,
+          }
         }
         PUE::Log(logent) => {
           TUE::Log((&tz, &logent))
@@ -644,14 +648,22 @@ impl PreparedUpdate {
             ESVU::PieceOpError { error, partially, ref state } => {
               let c = state.by_client.as_ref().map(|(_,c,_)| *c);
               if c == None || c == Some(dest) {
-                let state = pue_piece_to_tue_p(state, player);
+                let state = match pue_piece_to_tue_p(state, player) {
+                  Some(tue) => tue,
+                  None => continue,
+                };
                 TUE::Error(
                   ESVU::PieceOpError { error, partially, state }
                 )
               } else {
                 match partially {
                   POEPP::Unprocessed => continue,
-                  POEPP::Partially => pue_piece_to_tue(&state, player, dest),
+                  POEPP::Partially => {
+                    match pue_piece_to_tue(&state, player, dest) {
+                      Some(tue) => tue,
+                      None => continue,
+                    }
+                  }
                 }
               }
             }
