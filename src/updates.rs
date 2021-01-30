@@ -63,7 +63,7 @@ pub enum PreparedUpdateEntry {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PreparedUpdateEntry_Piece {
   by_client: IsResponseToClientOp,
   piece: VisiblePieceId,
@@ -88,7 +88,7 @@ pub struct DataLoadPlayer {
 
 // ---------- piece updates ----------
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Clone,Serialize)]
 pub enum PieceUpdateOp<NS,ZL> {
   Delete(),
   Insert(NS),
