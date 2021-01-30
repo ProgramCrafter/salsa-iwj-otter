@@ -73,12 +73,14 @@ fn main(){
 
   let mut c = Ctx { su, alice };
 
-  c.check_link("Info", None)?;
-  c.check_link("Voice", Some("https://jitsi.example.com/initial"))?;
-  c.test_link(LinkKind::Info, "Info", "https://www.example.org/newinfo")?;
-  c.test_remove_link(LinkKind::Info, "Info")?;
+  test!(c, "links", {
+    c.check_link("Info", None)?;
+    c.check_link("Voice", Some("https://jitsi.example.com/initial"))?;
+    c.test_link(LinkKind::Info, "Info", "https://www.example.org/newinfo")?;
+    c.test_remove_link(LinkKind::Info, "Info")?;
+  });
 
-  {
+  test!(c, "reset", {
     let game_spec = &c.su.ds.subst("@specs@/penultima.game.toml")?;
     let mut alice = c.su.w(&c.alice)?;
     alice.otter(&["reset"],&[&game_spec])?;
@@ -86,7 +88,7 @@ fn main(){
     let url = alice.current_url()?;
     alice.get(url)?;
     alice.synch()?;
-  }
+  });
 
   info!("ok");
 }
