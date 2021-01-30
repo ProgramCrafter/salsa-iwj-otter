@@ -25,6 +25,7 @@ pub use t4::By;
 pub use std::env;
 pub use std::fmt::{self, Debug};
 pub use std::collections::hash_map::HashMap;
+pub use std::collections::btree_set::BTreeSet;
 pub use std::convert::TryInto;
 pub use std::fs;
 pub use std::io::{self, BufRead, BufReader, ErrorKind, Write};
@@ -126,6 +127,8 @@ pub struct Opts {
 
   #[structopt(long="--geckodriver-args", default_value="")]
   geckodriver_args: String,
+
+  tests: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -140,6 +143,7 @@ pub struct Setup {
   pub mgmt_conn: MgmtChannel,
   pub opts: Opts,
   pub server_child: process::Child,
+  found_tests: BTreeSet<String>,
   driver: T4d,
   current_window: WindowState,
   screenshot_count: ScreenShotCount,
@@ -968,7 +972,13 @@ macro_rules! ctx_with_setup {
 }
 
 impl Setup {
-  pub fn want_test(&self, _tname: &str) -> bool { true }
+  pub fn want_test(&mut self, tname: &str) -> bool {
+    self.found_tests.insert(tname.to_owned());
+    let y =
+      self.opts.tests.is_empty() ||
+      self.opts.tests.iter().any(|s| s==tname);
+    y
+  }
 
   #[throws(AE)]
   pub fn new_window<'s>(&'s mut self, instance: &Instance, name: &str)
@@ -1238,6 +1248,19 @@ impl Drop for Setup {
     })()
       .context("screenshots, in Setup::drop")
       .just_warn();
+
+    let missing_tests = self.opts.tests.iter().cloned()
+      .filter(|s| !self.found_tests.contains(s))
+      .collect::<Vec<_>>();
+
+    if !missing_tests.is_empty() {
+      for f in &self.found_tests {
+        eprintln!("fyi: test that exists: {}", f);
+      }
+      for m in &missing_tests {
+        eprintln!("warning: unknown test requested: {}", m);
+      }
+    }
   }
 }
 
@@ -1291,6 +1314,7 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
     server_child,
     driver,
     opts,
+    found_tests: default(),
     screenshot_count,
     current_window: None,
     windows_squirreled,
