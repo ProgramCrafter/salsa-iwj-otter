@@ -2691,7 +2691,9 @@ dependencies = [
 
 [[package]]
 name = "thirtyfour_sync"
-version = "0.22.1"
+version = "0.22.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "405a495c59f62df75bc2fd9e695d926b3c812fca1bffa30e459af419cc39701c"
 dependencies = [
  "base64 0.13.0",
  "log 0.4.14",
