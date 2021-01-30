@@ -340,7 +340,11 @@ pub struct PrepareUpdatesBuffer<'r> {
 }
 
 /// In PROTOCOL.md terms, None is a Server update
-type IsResponseToClientOp = Option<(WhatResponseToClientOp, ClientId, ClientSequence)>;
+type IsResponseToClientOp = Option<(
+  WhatResponseToClientOp,
+  ClientId,
+  ClientSequence
+)>;
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum WhatResponseToClientOp {
   /// In PROTOCOL.md terms, a Client update
