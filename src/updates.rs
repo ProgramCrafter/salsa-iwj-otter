@@ -90,7 +90,7 @@ pub struct DataLoadPlayer {
 
 // ---------- piece updates ----------
 
-#[derive(Debug,Clone,Serialize)]
+#[derive(Debug,Clone,Copy,Serialize)]
 pub enum PieceUpdateOp<NS,ZL> {
   Delete(),
   Insert(NS),
@@ -114,7 +114,7 @@ pub struct PieceUpdate {
   pub ops: PieceUpdateOps,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Copy,Clone)]
 pub enum PieceUpdateOps {
   Simple(PieceUpdateOp<(),()>),
 }
