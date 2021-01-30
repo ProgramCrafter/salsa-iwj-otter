@@ -119,9 +119,10 @@ pub struct PieceUpdate {
   pub ops: PieceUpdateOps,
 }
 
-#[derive(Debug,Copy,Clone)]
+#[derive(Debug,Clone)]
 pub enum PieceUpdateOps {
   Simple(PieceUpdateOp<(),()>),
+  PerPlayer(DenseSlotMap<PlayerId, PieceUpdateOp<(),()>>),
 }
 
 impl From<PieceUpdateOp<(),()>> for PieceUpdateOps {
@@ -503,6 +504,10 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     for player in gs.players.keys() {
       let ops = match ops {
         PUO::Simple(update) => update,
+        PUO::PerPlayer(ref ops) => match ops.get(player) {
+          Some(op) => *op,
+          None => continue,
+        }
       };
       let op = match (&mut pc, p) {
         (Some(pc), Some(p)) => Self::piece_update_player(
