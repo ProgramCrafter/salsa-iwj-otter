@@ -281,7 +281,7 @@ fn main(){
 
     let mut c = Ctx { su, alice, bob, spec };
 
-    test!(c, "drag", c.drag().always_context("drag")?);
+    test!(c, "drag", c.drag()?);
 
     test!(c, "drag-rotate-unselect", {
       let pc = c.rotate().always_context("rotate")?;
@@ -289,7 +289,7 @@ fn main(){
       c.unselect(pc).always_context("unselect")?;
     });
 
-    c.conflict().always_context("conflict handling")?;
+    test!(c, "conflict", c.conflict()?);
 
     debug!("finishing");
   }

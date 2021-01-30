@@ -952,11 +952,11 @@ fn check_window_name_sanity(name: &str) -> &str {
 macro_rules! test {
   ($c:expr, $tname:expr, $s:stmt) => {
     if $c.su.want_test($tname) {
-      debug!("{} starting", $tname);
+      debug!("-------------------- {} starting --------------------", $tname);
       $s
-      info!("{} completed", $tname);
+      info!("-------------------- {} completed --------------------", $tname);
     } else {
-      trace!("{} skipped", $tname);
+      trace!("- - - {} skipped - - -", $tname);
     }
   }
 }
