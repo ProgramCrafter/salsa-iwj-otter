@@ -4,7 +4,16 @@
 
 use crate::imports::*;
 
+// this ios going to be replaced with new "hidden" machiner
+//
+// For now, we are firstly removing all calls to everything except
+// new_hidden_todo.
+//
+// Then we'll adjust all call sites of new_hidden_todo too and Lens
+// can be abolished.
+
 pub trait Lens : Debug {
+  fn new_hidden_todo(&self, why: &'static str);
   fn pieceid2visible(&self, piece: PieceId) -> VisiblePieceId;
   fn log_pri(&self, piece: PieceId, pc: &PieceState)
              -> PieceRenderInstructions;
@@ -16,10 +25,9 @@ pub trait Lens : Debug {
 }
 #[derive(Debug)]
 pub struct TransparentLens {
-  // when lenses become nontrivial, make this nonconstructable
-  // to find all the places where a TransparentLens was bodged
 }
 impl Lens for TransparentLens {
+  fn new_hidden_todo(&self, _why: &'static str) { }
   fn pieceid2visible(&self, piece: PieceId) -> VisiblePieceId {
     let kd : slotmap::KeyData = piece.data();
     VisiblePieceId(kd)
