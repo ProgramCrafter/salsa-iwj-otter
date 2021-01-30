@@ -14,6 +14,11 @@ use crate::imports::*;
 
 pub trait Lens : Debug {
   fn new_hidden_todo(&self, why: &'static str);
+  /// Will be replaced by some call to an Occlusion
+  fn new_hidden_pri(&self, id: VisiblePieceId,
+                    angle: VisiblePieceAngle, face: FaceId)
+                    -> PieceRenderInstructions;
+
   fn pieceid2visible(&self, piece: PieceId) -> VisiblePieceId;
   fn log_pri(&self, piece: PieceId, pc: &PieceState)
              -> PieceRenderInstructions;
@@ -28,6 +33,12 @@ pub struct TransparentLens {
 }
 impl Lens for TransparentLens {
   fn new_hidden_todo(&self, _why: &'static str) { }
+  fn new_hidden_pri(&self, id: VisiblePieceId,
+                    angle: VisiblePieceAngle, face: FaceId)
+                    -> PieceRenderInstructions {
+    PieceRenderInstructions { id, angle, face }
+  }
+
   fn pieceid2visible(&self, piece: PieceId) -> VisiblePieceId {
     let kd : slotmap::KeyData = piece.data();
     VisiblePieceId(kd)
