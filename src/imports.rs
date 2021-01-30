@@ -90,6 +90,7 @@ pub use crate::debugreader::DebugReader;
 pub use crate::error::*;
 pub use crate::gamestate::*;
 pub use crate::global::*;
+pub use crate::hidden::PerPlayerIdMap;
 pub use crate::keydata::*;
 pub use crate::lens::*;
 pub use crate::mgmtchannel::*;

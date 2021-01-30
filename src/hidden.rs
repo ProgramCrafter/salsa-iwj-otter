@@ -6,6 +6,7 @@ use crate::imports::*;
 
 use slotmap::secondary;
 
+#[derive(Default,Debug,Clone,Serialize,Deserialize)]
 pub struct PerPlayerIdMap {
   f: SecondarySlotMap<PieceId, VisiblePieceId>,
   r: DenseSlotMap<VisiblePieceId, PieceId>,

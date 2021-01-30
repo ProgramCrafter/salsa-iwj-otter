@@ -356,6 +356,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let gpl = GPlayerState {
         nick: nick.to_string(),
         layout: arecord.layout,
+        idmap: default(),
       };
       let ipl = IPlayerState {
         acctid,

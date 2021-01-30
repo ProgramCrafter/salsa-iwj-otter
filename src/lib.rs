@@ -12,6 +12,7 @@ pub mod debugreader;
 pub mod error;
 pub mod gamestate;
 pub mod global;
+pub mod hidden;
 pub mod imports;
 pub mod keydata;
 pub mod lens;
