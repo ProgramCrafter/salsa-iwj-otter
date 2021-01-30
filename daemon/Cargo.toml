@@ -20,7 +20,7 @@ otter-zcoord = { path = "../zcoord" }
 
 anyhow = "1"
 argparse = "0.2"
-arrayvec = "0"
+arrayvec = "0.5"
 boolinator = "2"
 chrono = "0.4"
 chrono-tz = "0.5"
@@ -48,7 +48,7 @@ ordered-float = "2"
 parking_lot = "0.11"
 percent-encoding = "2"
 pwd = "1"
-rand = "0"
+rand = "0.8"
 regex = "1"
 rmp = "0.8"
 rmp-serde = "0.15"
@@ -61,7 +61,7 @@ strum = { version = "0.20", features = ['derive'] }
 thiserror = "1"
 toml = "0.5"
 typetag = "0.1.6"
-uds = "0"
+uds = "0.2"
 vecdeque-stableix = "1"
 
 rocket = { version = "^0.4.6", features=["sse"] }
