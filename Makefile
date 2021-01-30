@@ -161,18 +161,18 @@ CARGOES=$(foreach t, wasm-,$(addprefix $t,check $(DR)))
 
 $(addprefix stamp/cargo.,$(DR)):: \
 stamp/cargo.%: $(call rsrcs,. ! -path './wasm/*')
-	$(CARGO) build $(call cr,$*) -p otter -p otter-daemon
+	$(CARGO) build --workspace $(call cr,$*) -p otter -p otter-daemon
 	$(stamp)
 
 $(TARGET_DIR)/debug/%: $(call rsrcs, ! -path './wasm/*')
-	$(CARGO) build -p otter --bin $*
+	$(CARGO) build --workspace -p otter --bin $*
 
 stamp/cargo.check: $(call rsrcs,.)
 	$(CARGO) test --workspace
 	$(stamp)
 
 stamp/cargo-wdt.debug: $(call rsrcs,.)
-	$(CARGO) build $(call cr,$*) -p otter-webdriver-tests
+	$(CARGO) build --workspace $(call cr,$*) -p otter-webdriver-tests
 	$(stamp)
 
 stamp/cargo.doc: $(call rsrcs,.)
@@ -180,7 +180,7 @@ stamp/cargo.doc: $(call rsrcs,.)
 	$(stamp)
 
 stamp/cargo.doc-otter-only: $(call rsrcs,.)
-	$(CARGO) doc -p otter --no-deps
+	$(CARGO) doc --workspace -p otter --no-deps
 	$(stamp)
 
 $(addprefix stamp/cargo.wasm-,$(DR)):: \
@@ -189,7 +189,7 @@ stamp/cargo.wasm-%: $(call rsrcs, zcoord wasm Cargo.*)
 	$(stamp)
 
 stamp/cargo.deploy-build: $(call rsrcs,.)
-	$(CARGO) -T$(DEPLOY_ARCH) build $(call cr,$(DEPLOY_RELEASE)) -p otter -p otter-daemon
+	$(CARGO) -T$(DEPLOY_ARCH) build --workspace $(call cr,$(DEPLOY_RELEASE)) -p otter -p otter-daemon
 	$(stamp)
 
 #---------- wasm ----------
