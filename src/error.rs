@@ -21,7 +21,7 @@ pub enum OnlineError {
   #[error("JSON deserialisation error: {0:?}")]
   BadJSON(serde_json::Error),
   #[error("referenced piece is gone (maybe race)")]
-  PieceGone,
+  PieceGone, // xxx this needs to go away and be done via updates stream
   #[error("improper piece hold status for op (maybe race)")]
   PieceHeld,
   #[error("improper UI operation")]
