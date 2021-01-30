@@ -52,7 +52,7 @@ impl UpdateReaderWN {
   fn write_next<U>(&mut self, mut buf: &mut U, tz: &Timezone,
                    next: &PreparedUpdate)
                    where U : Write {
-    let tu = next.for_transmit(tz, self.client);
+    let tu = next.for_transmit(tz, self.player, self.client);
 
     write!(buf, "data: ")?;
     serde_json::to_writer(&mut buf, &tu)?;
