@@ -79,6 +79,12 @@ impl From<InternalError> for SpecError {
 pub enum ApiPieceOpError {
   ReportViaResponse(#[from] OnlineError),
   ReportViaUpdate(#[from] PieceOpError),
+
+  /// This error is always generated in the context of a piece
+  /// operation by a particular client.  It corresponds roughly to a
+  /// PieceUpdateFromOp for other clients of (Unpredicable,
+  /// PieceUpdateOp::Modify, ..).
+  /// For this client it is that but also an error report.
   PartiallyProcessed(PieceOpError, Vec<LogEntry>),
 }
 display_as_debug!(ApiPieceOpError);
