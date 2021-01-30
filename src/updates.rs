@@ -65,7 +65,7 @@ pub enum PreparedUpdateEntry {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Clone)]
+#[derive(Debug,Clone)]
 pub struct PreparedUpdateEntry_Piece {
   by_client: IsResponseToClientOp,
   piece: VisiblePieceId,
