@@ -214,13 +214,20 @@ impl PreparedUpdate {
   }
 }
 
+impl PreparedUpdateEntry_Piece {
+  pub fn json_len(&self) -> usize {
+    let PUE_P { ref op, .. } = self;
+    50 +
+      op.new_state().map(|x| x.svg.0.as_bytes().len()).unwrap_or(0)
+  }
+}
+
 impl PreparedUpdateEntry {
   pub fn json_len(&self) -> usize {
     use PreparedUpdateEntry::*;
     match self {
-      Piece(PUE_P { ref op, .. }) => {
-        50 +
-        op.new_state().map(|x| x.svg.0.as_bytes().len()).unwrap_or(0)
+      Piece(op) => {
+        op.json_len()
       }
       Log(logent) => {
         logent.logent.html.0.as_bytes().len() * 28
