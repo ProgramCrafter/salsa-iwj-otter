@@ -165,7 +165,7 @@ impl<'r, T> FromParam<'r> for Parse<T>
 }
 
 #[get("/_/updates?<ctoken>&<gen>")]
-#[throws(OE)]
+#[throws(OER)]
 fn updates<'r>(ctoken : InstanceAccess<ClientId>, gen: u64,
                cors: rocket_cors::Guard<'r>)
                -> impl response::Responder<'r> {

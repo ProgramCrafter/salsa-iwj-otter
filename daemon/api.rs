@@ -177,10 +177,10 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
 struct ApiPieceGrab {
 }
 #[post("/_/api/grab", format="json", data="<form>")]
-#[throws(OE)]
+#[throws(OER)]
 fn api_grab(form : Json<ApiPiece<ApiPieceGrab>>)
             -> impl response::Responder<'static> {
-  api_piece_op(form)
+  api_piece_op(form)?
 }
 impl ApiPieceOp for ApiPieceGrab {
   #[throws(ApiPieceOpError)]
@@ -204,10 +204,10 @@ impl ApiPieceOp for ApiPieceGrab {
 struct ApiPieceWrest {
 }
 #[post("/_/api/wrest", format="json", data="<form>")]
-#[throws(OE)]
+#[throws(OER)]
 fn api_wrest(form : Json<ApiPiece<ApiPieceWrest>>)
             -> impl response::Responder<'static> {
-  api_piece_op(form)
+  api_piece_op(form)?
 }
 impl ApiPieceOp for ApiPieceWrest {
   #[throws(OnlineError)]
@@ -243,10 +243,10 @@ impl ApiPieceOp for ApiPieceWrest {
 struct ApiPieceUngrab {
 }
 #[post("/_/api/ungrab", format="json", data="<form>")]
-#[throws(OE)]
+#[throws(OER)]
 fn api_ungrab(form : Json<ApiPiece<ApiPieceUngrab>>)
               -> impl response::Responder<'static> {
-  api_piece_op(form)
+  api_piece_op(form)?
 }
 impl ApiPieceOp for ApiPieceUngrab {
   #[throws(ApiPieceOpError)]
@@ -271,10 +271,10 @@ struct ApiPieceSetZ {
   z : ZCoord,
 }
 #[post("/_/api/setz", format="json", data="<form>")]
-#[throws(OE)]
+#[throws(OER)]
 fn api_raise(form : Json<ApiPiece<ApiPieceSetZ>>)
             -> impl response::Responder<'static> {
-  api_piece_op(form)
+  api_piece_op(form)?
 }
 impl ApiPieceOp for ApiPieceSetZ {
   #[throws(ApiPieceOpError)]
@@ -291,9 +291,9 @@ impl ApiPieceOp for ApiPieceSetZ {
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiPieceMove (Pos);
 #[post("/_/api/m", format="json", data="<form>")]
-#[throws(OE)]
+#[throws(OER)]
 fn api_move(form : Json<ApiPiece<ApiPieceMove>>) -> impl response::Responder<'static> {
-  api_piece_op(form)
+  api_piece_op(form)?
 }
 impl ApiPieceOp for ApiPieceMove {
   #[throws(ApiPieceOpError)]
@@ -318,9 +318,9 @@ impl ApiPieceOp for ApiPieceMove {
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiPieceRotate(CompassAngle);
 #[post("/_/api/rotate", format="json", data="<form>")]
-#[throws(OE)]
+#[throws(OER)]
 fn api_rotate(form : Json<ApiPiece<ApiPieceRotate>>) -> impl response::Responder<'static> {
-  api_piece_op(form)
+  api_piece_op(form)?
 }
 impl ApiPieceOp for ApiPieceRotate {
   #[throws(ApiPieceOpError)]
@@ -339,9 +339,9 @@ impl ApiPieceOp for ApiPieceRotate {
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiPiecePin (bool);
 #[post("/_/api/pin", format="json", data="<form>")]
-#[throws(OE)]
+#[throws(OER)]
 fn api_pin(form : Json<ApiPiece<ApiPiecePin>>) -> impl response::Responder<'static> {
-  api_piece_op(form)
+  api_piece_op(form)?
 }
 impl ApiPieceOp for ApiPiecePin {
   #[throws(ApiPieceOpError)]
@@ -365,9 +365,9 @@ const DEFKEY_FLIP : UoKey = 'f';
 #[derive(Debug,Serialize,Deserialize)]
 struct ApiPieceUo { opname: String, wrc: WhatResponseToClientOp }
 #[post("/_/api/k", format="json", data="<form>")]
-#[throws(OE)]
+#[throws(OER)]
 fn api_uo(form : Json<ApiPiece<ApiPieceUo>>) -> impl response::Responder<'static> {
-  api_piece_op(form)
+  api_piece_op(form)?
 }
 impl ApiPieceOp for ApiPieceUo {
   #[throws(ApiPieceOpError)]
