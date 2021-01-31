@@ -141,3 +141,42 @@ impl<Y: Sync, E: Sync, F: Sync + FnOnce() -> Result<Y,E>>
 }
 
 // todo: DerefMut
+
+pub fn toml_merge<'u,
+                  S: 'u + AsRef<str>,
+                  KV: IntoIterator<Item=(&'u S, &'u toml::Value)>
+                  >(
+  table: &mut toml::value::Table,
+  updates: KV,
+) {
+  use toml::value::{Table, Value};
+  type TME<'e> = toml::map::Entry<'e>;
+
+  let mut kv = updates.into_iter().map(|(k, v)| (k.as_ref(), v));
+  inner(table, &mut kv);
+
+  fn inner<'u>(
+    table: &mut Table,
+    updates: &'u mut dyn Iterator<Item=(&'u str, &'u Value)>
+  ) {
+    for (k, v) in updates {
+      let e = table.entry(k);
+      match e {
+        TME::Vacant(ve) => {
+          ve.insert(v.clone());
+        }
+        TME::Occupied(mut oe) => match (oe.get_mut(), v) {
+          (Value::Table(old), Value::Table(new)) => {
+            toml_merge(old, new);
+          }
+          (Value::Array(old), Value::Array(new)) => {
+            old.extend(new.iter().cloned());
+          }
+          (old, new) => {
+            *old = new.clone();
+          }
+        }
+      }
+    }
+  }
+}
