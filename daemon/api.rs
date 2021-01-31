@@ -86,6 +86,7 @@ impl<'r> Responder<'r> for OnlineErrorResponse {
 }
 
 fn log_did_to_piece<L: Lens + ?Sized>(
+  _occults: &GameOccults,
   gpl: &mut GPlayerState, lens: &L,
   piece: PieceId, pc: &PieceState, p: &dyn Piece,
   did: &str,
@@ -230,7 +231,8 @@ api_route!{
     pc.held = Some(player);
     
     let update = PieceUpdateOp::ModifyQuiet(());
-    let logents = log_did_to_piece(gpl, lens, piece, pc, p, "grasped");
+    let logents = log_did_to_piece(&gs.occults, gpl, lens, piece, pc, p,
+                                   "grasped");
 
     (WhatResponseToClientOp::Predictable,
      update, logents).into()
@@ -284,7 +286,8 @@ api_route!{
     pc.held = None;
 
     let update = PieceUpdateOp::Modify(());
-    let logents = log_did_to_piece(gpl, lens, piece, pc, p, "released");
+    let logents = log_did_to_piece(&gs.occults, gpl, lens, piece, pc, p,
+                                   "released");
 
     (WhatResponseToClientOp::Predictable,
      update, logents).into()
@@ -340,7 +343,8 @@ api_route!{
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let gpl = gs.players.byid_mut(player).unwrap();
     pc.angle = PieceAngle::Compass(self.0);
-    let logents = log_did_to_piece(gpl, lens, piece, pc, p, "rotated");
+    let logents = log_did_to_piece(&gs.occults, gpl, lens, piece, pc, p,
+                                   "rotated");
     let update = PieceUpdateOp::Modify(());
     (WhatResponseToClientOp::Predictable,
      update, logents).into()
@@ -359,7 +363,7 @@ api_route!{
     pc.pinned = self.0;
     let update = PieceUpdateOp::Modify(());
     let logents = log_did_to_piece(
-      gpl, lens, piece, pc, p,
+      &gs.occults, gpl, lens, piece, pc, p,
       if pc.pinned { "pinned" } else { "unpinned" },
     );
     (WhatResponseToClientOp::Predictable,
@@ -389,7 +393,8 @@ api_route!{
           return (
             wrc,
             PieceUpdateOp::Modify(()),
-            log_did_to_piece(gpl, lens, piece, pc, p, "flipped"),
+            log_did_to_piece(&gs.occults, gpl, lens, piece, pc, p,
+                             "flipped"),
           ).into()
         },
 
