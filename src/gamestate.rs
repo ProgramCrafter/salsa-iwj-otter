@@ -79,6 +79,7 @@ pub struct PieceState {
   pub held: Option<PlayerId>,
   pub zlevel: ZLevel,
   pub pinned: bool,
+  pub occult: PieceOccult,
   #[serde(default)] pub angle: PieceAngle,
   pub gen: Generation,
   pub lastclient: ClientId,

@@ -615,6 +615,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           held: None,
           zlevel: ZLevel { z: z.increment()?, zg: gs.gen },
           lastclient: default(),
+          occult: default(),
           gen_before_lastclient: Generation(0),
           pinned: pinned.unwrap_or(false),
           angle,

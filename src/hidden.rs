@@ -13,6 +13,11 @@ pub struct GameOccults {
   // todo
 }
 
+#[derive(Clone,Debug,Default,Serialize,Deserialize)]
+pub struct PieceOccult {
+  // todo
+}
+
 // ========== PerPlayerIdMap ==========
 
 #[derive(Default,Debug,Clone,Serialize,Deserialize)]
