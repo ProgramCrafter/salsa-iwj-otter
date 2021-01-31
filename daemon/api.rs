@@ -40,7 +40,6 @@ struct ApiPieceOpArgs<'a> {
   player: PlayerId,
   piece: PieceId,
   p: &'a dyn Piece,
-  lens: &'a dyn Lens /* used for LogEntry and PieceId but not Pos */
 }
 
 trait ApiPieceOp : Debug {
@@ -85,10 +84,10 @@ impl<'r> Responder<'r> for OnlineErrorResponse {
   }
 }
 
-fn log_did_to_piece<L: Lens + ?Sized>(
+fn log_did_to_piece(
   occults: &GameOccults,
   player: PlayerId,
-  gpl: &mut GPlayerState, _lens: &L,
+  gpl: &mut GPlayerState,
   piece: PieceId, pc: &PieceState, p: &dyn Piece,
   did: &str,
 ) -> Vec<LogEntry> {
@@ -119,7 +118,6 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   let iplayers = &g.iplayers;
   let _ = iplayers.byid(player)?;
   let gpl = gs.players.byid(player)?;
-  let lens = TransparentLens { };
   let piece = vpiece_decode(gs, player, gpl, form.piece)
     .ok_or(OE::PieceGone)?;
   use ApiPieceOpError::*;
@@ -141,21 +139,20 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
       form.op.op(ApiPieceOpArgs {
         gs, player, piece,
         p: p.as_ref(),
-        lens: &lens,
       })?;
     Ok::<_,ApiPieceOpError>(update)
   })() {
     Err(ReportViaUpdate(poe)) => {
       PrepareUpdatesBuffer::piece_report_error(
         &mut ig, poe,
-        piece, vec![], POEPP::Unprocessed, client, form.cseq, &lens
+        piece, vec![], POEPP::Unprocessed, client, form.cseq,
       )?;
       debug!("api_piece_op Err(RVU): {:?}", &form);
     },
     Err(PartiallyProcessed(poe, logents)) => {
       PrepareUpdatesBuffer::piece_report_error(
         &mut ig, poe,
-        piece, logents, POEPP::Partially, client, form.cseq, &lens
+        piece, logents, POEPP::Partially, client, form.cseq,
       )?;
       debug!("api_piece_op Err(PP): {:?}", &form);
     },
@@ -168,7 +165,7 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
                                               Some((wrc, client, form.cseq)),
                                               Some(1 + log.len()));
       
-      buf.piece_update(piece, ops, &lens);
+      buf.piece_update(piece, ops);
       buf.log_updates(log);
 
       debug!("api_piece_op OK: {:?}", &form);
@@ -226,7 +223,7 @@ api_route!{
   }
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
-    let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
+    let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
     let gpl = gs.players.byid_mut(player)?;
     let pc = gs.pieces.byid_mut(piece)?;
 
@@ -235,7 +232,7 @@ api_route!{
     
     let update = PieceUpdateOp::ModifyQuiet(());
     let logents = log_did_to_piece(
-      &gs.occults, player, gpl, lens, piece, pc, p,
+      &gs.occults, player, gpl, piece, pc, p,
       "grasped"
     );
 
@@ -286,7 +283,7 @@ api_route!{
   }
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
-    let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
+    let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
     let gpl = gs.players.byid_mut(player).unwrap();
     let pc = gs.pieces.byid_mut(piece).unwrap();
 
@@ -295,7 +292,7 @@ api_route!{
 
     let update = PieceUpdateOp::Modify(());
     let logents = log_did_to_piece(
-      &gs.occults, player, gpl, lens, piece, pc, p,
+      &gs.occults, player, gpl, piece, pc, p,
       "released"
     );
 
@@ -349,12 +346,12 @@ api_route!{
 
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
-    let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
+    let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let gpl = gs.players.byid_mut(player).unwrap();
     pc.angle = PieceAngle::Compass(self.0);
     let logents = log_did_to_piece(
-      &gs.occults, player, gpl, lens, piece, pc, p,
+      &gs.occults, player, gpl, piece, pc, p,
       "rotated"
     );
     let update = PieceUpdateOp::Modify(());
@@ -369,13 +366,13 @@ api_route!{
 
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
-    let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
+    let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let gpl = gs.players.byid_mut(player).unwrap();
     pc.pinned = self.0;
     let update = PieceUpdateOp::Modify(());
     let logents = log_did_to_piece(
-      &gs.occults, player, gpl, lens, piece, pc, p,
+      &gs.occults, player, gpl, piece, pc, p,
       if pc.pinned { "pinned" } else { "unpinned" },
     );
     (WhatResponseToClientOp::Predictable,
@@ -393,7 +390,7 @@ api_route!{
   }
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
-    let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
+    let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
     '_normal_global_ops__not_loop: loop {
       let pc = gs.pieces.byid_mut(piece)?;
       let gpl = gs.players.byid_mut(player)?;
@@ -406,7 +403,7 @@ api_route!{
             wrc,
             PieceUpdateOp::Modify(()),
             log_did_to_piece(
-              &gs.occults, player, gpl, lens, piece, pc, p,
+              &gs.occults, player, gpl, piece, pc, p,
               "flipped"
             ),
           ).into()
@@ -423,7 +420,7 @@ api_route!{
       };
     }
 
-    p.ui_operation(gs, player, piece, &self.opname, self.wrc, lens)?
+    p.ui_operation(gs, player, piece, &self.opname, self.wrc)?
   }
 }
 

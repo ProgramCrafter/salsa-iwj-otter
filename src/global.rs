@@ -697,11 +697,10 @@ impl<'ig> InstanceGuard<'ig> {
         }))();
       }
 
-      let lens = TransparentLens { };
       let estimate = updated_pieces.len() + 1;
       let mut buf = PrepareUpdatesBuffer::new(self, None , Some(estimate));
       for &piece in &updated_pieces {
-        buf.piece_update(piece, PieceUpdateOp::Modify(()).into(), &lens);
+        buf.piece_update(piece, PieceUpdateOp::Modify(()).into());
       }
       buf.finish();
 

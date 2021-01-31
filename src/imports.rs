@@ -92,7 +92,6 @@ pub use crate::gamestate::*;
 pub use crate::global::*;
 pub use crate::hidden::*;
 pub use crate::keydata::*;
-pub use crate::lens::*;
 pub use crate::mgmtchannel::*;
 pub use crate::nwtemplates;
 pub use crate::pieces::*;

@@ -432,13 +432,13 @@ impl<'r> PrepareUpdatesBuffer<'r> {
                             error: PieceOpError, piece: PieceId,
                             logents: Vec<LogEntry>,
                             partially: PieceOpErrorPartiallyProcessed,
-                            client: ClientId, cseq: ClientSequence,
-                            lens: &dyn Lens) -> Result<(),OE> {
+                            client: ClientId, cseq: ClientSequence)
+                            -> Result<(),OE> {
     let by_client = (WRC::Unpredictable, client, cseq);
     let mut buf = PrepareUpdatesBuffer::new(ig, Some(by_client), None);
     let ops = PUO::Simple(PieceUpdateOp::Modify(()));
     let state = buf.piece_update_fallible(
-      piece, ops, lens, |pc, gen, _by_client| {
+      piece, ops, |pc, gen, _by_client| {
         match partially {
           POEPP::Unprocessed => { }
           POEPP::Partially => { pc.gen = gen; pc.lastclient = default(); }
@@ -458,8 +458,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
                          pc: &mut PieceState,
                          p: &Box<dyn Piece>,
                          op: PieceUpdateOp<(),()>,
-                         pri: &PieceRenderInstructions,
-                         _lens: &dyn Lens) -> PreparedPieceUpdate
+                         pri: &PieceRenderInstructions)
+                         -> PreparedPieceUpdate
   {
     max_z.update_max(&pc.zlevel.z);
 
@@ -484,7 +484,6 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   #[throws(InternalError)]
   fn piece_update_fallible<GUF>(&mut self, piece: PieceId,
                                 ops: PieceUpdateOps,
-                                lens: &dyn Lens,
                                 gen_update: GUF)
                                 -> PreparedUpdateEntry_Piece
     where GUF: FnOnce(&mut PieceState, Generation, &IsResponseToClientOp)
@@ -511,7 +510,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
         (Some(pc), Some(p)) => {
           let pri = piece_pri(&gs.occults, player, gpl, piece, *pc);
           Self::piece_update_player(
-            &mut gs.max_z, pc, p, ops, &pri, lens
+            &mut gs.max_z, pc, p, ops, &pri
           )?
         }
         _ => PreparedPieceUpdate {
@@ -530,13 +529,12 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     }
   }
 
-  pub fn piece_update(&mut self, piece: PieceId, ops: PieceUpdateOps,
-                      lens: &dyn Lens) {
+  pub fn piece_update(&mut self, piece: PieceId, ops: PieceUpdateOps) {
     // Caller needs us to be infallible since it is too late by
     // this point to back out a game state change.
 
     let update = self.piece_update_fallible(
-      piece, ops, lens,
+      piece, ops,
       |pc, gen, by_client|
     {
       match *by_client {
@@ -556,8 +554,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     })
       .map(|update| PUE::Piece(update))
       .unwrap_or_else(|e| {
-        error!("piece update error! piece={:?} lens={:?} error={:?}",
-               piece, &lens, &e);
+        error!("piece update error! piece={:?} error={:?}",
+               piece, &e);
         PreparedUpdateEntry::Error(ErrorSignaledViaUpdate::InternalError)
       });
     self.us.push(update);

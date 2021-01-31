@@ -15,7 +15,6 @@ pub mod global;
 pub mod hidden;
 pub mod imports;
 pub mod keydata;
-pub mod lens;
 pub mod mgmtchannel;
 pub mod nwtemplates;
 pub mod pieces;
