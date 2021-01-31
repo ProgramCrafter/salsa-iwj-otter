@@ -173,16 +173,31 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   ""
 }
 
-#[derive(Debug,Serialize,Deserialize)]
-struct ApiPieceGrab {
+macro_rules! api_route {
+  { $fn:ident, $path:expr,
+    struct $form:ident $body:tt
+    $( $impl:tt )*
+  } => {
+    #[derive(Debug,Serialize,Deserialize)]
+    struct $form $body
+
+    #[post($path, format="json", data="<form>")]
+    #[throws(OER)]
+    fn $fn(form : Json<ApiPiece<$form>>)
+           -> impl response::Responder<'static> {
+      api_piece_op(form)?
+    }
+
+    impl ApiPieceOp for $form {
+      $( $impl )*
+    }
+  }
 }
-#[post("/_/api/grab", format="json", data="<form>")]
-#[throws(OER)]
-fn api_grab(form : Json<ApiPiece<ApiPieceGrab>>)
-            -> impl response::Responder<'static> {
-  api_piece_op(form)?
-}
-impl ApiPieceOp for ApiPieceGrab {
+
+api_route!{
+  api_grab, "/_/api/grab",
+  struct ApiPieceGrab {
+  }
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
