@@ -64,7 +64,8 @@ pub fn piece_pri(
 ) -> PieceRenderInstructions {
   let vpiece = gpl.idmap.fwd_or_insert(piece);
   let angle = make_angle_visible(pc.angle);
-  PieceRenderInstructions { id: vpiece, angle, face: pc.face }
+  let face = pc.face;
+  PieceRenderInstructions { id: vpiece, angle, face }
 }
 
 pub fn vpiece_decode(
