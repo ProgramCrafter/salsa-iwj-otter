@@ -173,13 +173,12 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   ""
 }
 
-macro_rules! api_route {
-  { $fn:ident, $path:expr,
-    struct $form:ident $body:tt
+macro_rules! api_route_core {
+  { $fn:ident, $path:expr, $form:ident, $formdef:item,
     $( $impl:tt )*
   } => {
     #[derive(Debug,Serialize,Deserialize)]
-    struct $form $body
+    $formdef
 
     #[post($path, format="json", data="<form>")]
     #[throws(OER)]
@@ -189,6 +188,29 @@ macro_rules! api_route {
     }
 
     impl ApiPieceOp for $form {
+      $( $impl )*
+    }
+  }
+}
+
+macro_rules! api_route {
+  { $fn:ident, $path:expr,
+    struct $form:ident { $( $body:tt )* }
+    $( $impl:tt )*
+  } => {
+    api_route_core!{
+      $fn, $path, $form,
+      struct $form { $( $body )* },
+      $( $impl )*
+    }
+  };
+  { $fn:ident, $path:expr,
+    struct $form:ident ( $( $body:tt )* );
+    $( $impl:tt )*
+  } => {
+    api_route_core!{
+      $fn, $path, $form,
+      struct $form ( $( $body )* );,
       $( $impl )*
     }
   }
@@ -215,16 +237,10 @@ api_route!{
   }
 }
 
-#[derive(Debug,Serialize,Deserialize)]
-struct ApiPieceWrest {
-}
-#[post("/_/api/wrest", format="json", data="<form>")]
-#[throws(OER)]
-fn api_wrest(form : Json<ApiPiece<ApiPieceWrest>>)
-            -> impl response::Responder<'static> {
-  api_piece_op(form)?
-}
-impl ApiPieceOp for ApiPieceWrest {
+api_route!{
+  api_wrest, "/_/api/wrest",
+  struct ApiPieceWrest {
+  }
   #[throws(OnlineError)]
   fn check_held(&self, _pc: &PieceState, _player: PlayerId) { }
 
@@ -254,16 +270,10 @@ impl ApiPieceOp for ApiPieceWrest {
   }
 }
 
-#[derive(Debug,Serialize,Deserialize)]
-struct ApiPieceUngrab {
-}
-#[post("/_/api/ungrab", format="json", data="<form>")]
-#[throws(OER)]
-fn api_ungrab(form : Json<ApiPiece<ApiPieceUngrab>>)
-              -> impl response::Responder<'static> {
-  api_piece_op(form)?
-}
-impl ApiPieceOp for ApiPieceUngrab {
+api_route!{
+  api_ungrab, "/_/api/ungrab",
+  struct ApiPieceUngrab {
+  }
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
@@ -281,17 +291,11 @@ impl ApiPieceOp for ApiPieceUngrab {
   }
 }
 
-#[derive(Debug,Serialize,Deserialize)]
-struct ApiPieceSetZ {
-  z : ZCoord,
-}
-#[post("/_/api/setz", format="json", data="<form>")]
-#[throws(OER)]
-fn api_raise(form : Json<ApiPiece<ApiPieceSetZ>>)
-            -> impl response::Responder<'static> {
-  api_piece_op(form)?
-}
-impl ApiPieceOp for ApiPieceSetZ {
+api_route!{
+  api_raise, "/_/api/setz",
+  struct ApiPieceSetZ {
+    z : ZCoord,
+  }
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
     let ApiPieceOpArgs { gs,piece, .. } = a;
@@ -303,14 +307,10 @@ impl ApiPieceOp for ApiPieceSetZ {
   }
 }
 
-#[derive(Debug,Serialize,Deserialize)]
-struct ApiPieceMove (Pos);
-#[post("/_/api/m", format="json", data="<form>")]
-#[throws(OER)]
-fn api_move(form : Json<ApiPiece<ApiPieceMove>>) -> impl response::Responder<'static> {
-  api_piece_op(form)?
-}
-impl ApiPieceOp for ApiPieceMove {
+api_route!{
+  api_move, "/_/api/m",
+  struct ApiPieceMove(Pos);
+
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
     let ApiPieceOpArgs { gs,piece, .. } = a;
@@ -330,14 +330,10 @@ impl ApiPieceOp for ApiPieceMove {
   }
 }
 
-#[derive(Debug,Serialize,Deserialize)]
-struct ApiPieceRotate(CompassAngle);
-#[post("/_/api/rotate", format="json", data="<form>")]
-#[throws(OER)]
-fn api_rotate(form : Json<ApiPiece<ApiPieceRotate>>) -> impl response::Responder<'static> {
-  api_piece_op(form)?
-}
-impl ApiPieceOp for ApiPieceRotate {
+api_route!{
+  api_rotate, "/_/api/rotate",
+  struct ApiPieceRotate(CompassAngle);
+
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
@@ -351,14 +347,10 @@ impl ApiPieceOp for ApiPieceRotate {
   }
 }
 
-#[derive(Debug,Serialize,Deserialize)]
-struct ApiPiecePin (bool);
-#[post("/_/api/pin", format="json", data="<form>")]
-#[throws(OER)]
-fn api_pin(form : Json<ApiPiece<ApiPiecePin>>) -> impl response::Responder<'static> {
-  api_piece_op(form)?
-}
-impl ApiPieceOp for ApiPiecePin {
+api_route!{
+  api_pin, "/_/api/pin",
+  struct ApiPiecePin (bool);
+
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
@@ -377,14 +369,12 @@ impl ApiPieceOp for ApiPiecePin {
 
 const DEFKEY_FLIP : UoKey = 'f';
 
-#[derive(Debug,Serialize,Deserialize)]
-struct ApiPieceUo { opname: String, wrc: WhatResponseToClientOp }
-#[post("/_/api/k", format="json", data="<form>")]
-#[throws(OER)]
-fn api_uo(form : Json<ApiPiece<ApiPieceUo>>) -> impl response::Responder<'static> {
-  api_piece_op(form)?
-}
-impl ApiPieceOp for ApiPieceUo {
+api_route!{
+  api_uo, "/_/api/k",
+  struct ApiPieceUo {
+    opname: String,
+    wrc: WhatResponseToClientOp,
+  }
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdateFromOp {
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
