@@ -127,15 +127,19 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
 
     let log = {
       use toml::Value::Table;
-      match log {
-        None => Table(Default::default()),
-        Some(log @Table(_)) => log,
+
+      let log = match log {
+        Some(Table(log)) => log,
+        None => Default::default(),
         Some(x) => throw!(anyhow!(
           r#"wanted table for "log" config key, not {}"#,
           x.type_str())
         ),
-      }
+      };
+
+      Table(log)
     };
+
     let log = toml::to_string(&log)?;
     let log = LogSpecification::from_toml(&log)
       .context("log specification")?;
