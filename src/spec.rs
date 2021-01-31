@@ -33,6 +33,11 @@ pub type Coord = i32;
 pub struct PosC<T>(pub [T; 2]);
 pub type Pos = PosC<Coord>;
 
+#[derive(Clone,Copy,Debug,Serialize,Deserialize,Hash)]
+#[serde(transparent)]
+pub struct AreaC<T>(pub [PosC<T>; 2]);
+pub type Area = AreaC<Coord>;
+
 #[derive(Clone,Eq,PartialEq,Ord,PartialOrd,Hash,Serialize,Deserialize)]
 #[serde(transparent)]
 pub struct RawToken(pub String);
