@@ -256,14 +256,14 @@ api_route!{
     let was = pc.held;
     pc.held = Some(player);
     let was = was.and_then(|p| gs.players.get(p));    
+    let was = was.map(|was| htmlescape::encode_minimal(&was.nick));
 
     let update = PieceUpdateOp::Modify(());
 
     let pls = &htmlescape::encode_minimal(&gpl.nick);
 
     let logent = LogEntry { html : Html(match was {
-        Some(was) => format!("{} wrested {} from {}", pls, pcs,
-                             &htmlescape::encode_minimal(&was.nick)),
+        Some(was) => format!("{} wrested {} from {}", pls, pcs, was),
         None => format!("{} wrested {}", pls, pcs),
     })};
 
