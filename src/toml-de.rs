@@ -184,3 +184,10 @@ pub fn from_str<T: DeserializeOwned>(s: &str) -> T {
 //  dbg!(&tv);
   from_value(&tv)?
 }
+
+#[throws(Error)]
+pub fn from_slice<T: DeserializeOwned>(s: &[u8]) -> T {
+  let tv: toml::Value = toml::de::from_slice(s).map_err(Error::TomlSyntax)?;
+//  dbg!(&tv);
+  from_value(&tv)?
+}
