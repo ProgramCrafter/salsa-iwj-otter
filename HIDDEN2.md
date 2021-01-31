@@ -43,6 +43,14 @@ Totally invisible
 	The piece disappears from view.  Message explaining why
 	"Alice puts a black token into Alice's bag"
 
+
+Scrambling vs Visible
+---------------------
+
+If any player sees Scrambled, none see Visible.  This is because
+Scrambled works by permuting actual locations.
+
+
 Other
 -----
 
