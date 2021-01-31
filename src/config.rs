@@ -16,6 +16,7 @@ pub const DEFAULT_CONFIG_LEAFNAME : &str = "server.toml";
 pub const DEFAULT_SENDMAIL_PROGRAM : &str = "/usr/sbin/sendmail";
 
 pub const DAEMON_STARTUP_REPORT : &str = "otter-daemon started";
+pub const LOG_ENV_VAR: &str = "OTTER_LOG";
 
 #[derive(Deserialize,Debug,Clone)]
 pub struct ServerConfigSpec {
@@ -128,7 +129,7 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
     let log = {
       use toml::Value::Table;
 
-      let log = match log {
+      let mut log = match log {
         Some(Table(log)) => log,
         None => Default::default(),
         Some(x) => throw!(anyhow!(
@@ -136,7 +137,34 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
           x.type_str())
         ),
       };
+      
+      // flexi_logger doesn't allow env var to override config, sigh
+      // But we can simulate this by having it convert the env results
+      // to toml and merging it with the stuff from the file.
+      (||{
+        dbg!(&log);
+        if let Some(v) = env::var_os(LOG_ENV_VAR) {
+          let v = v.to_str().ok_or(anyhow!("UTF-8 conversion"))?;
+          let v = LogSpecification::parse(v).context("parse")?;
+          dbg!(&v);
+          let mut buf: Vec<u8> = default();
+          v.to_toml(&mut buf).context("convert to toml")?;
+          let v = toml_de::from_slice(&buf).context("reparse")?;
+          dbg!(&v);
+          let v = match v {
+            Some(Table(v)) => v,
+            None => default(),
+            Some(x) => throw!(anyhow!("reparse gave {:?}, no table", x)),
+          };
+          dbg!(&v);
+          log.extend(v);
+        }
+        Ok::<_,AE>(())
+      })()
+        .context(LOG_ENV_VAR)
+        .context("processing env override")?;
 
+      dbg!(&log);
       Table(log)
     };
 
