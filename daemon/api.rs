@@ -86,7 +86,7 @@ impl<'r> Responder<'r> for OnlineErrorResponse {
 }
 
 fn log_did_to_piece<L: Lens + ?Sized>(
-  gpl: &GPlayerState, lens: &L,
+  gpl: &mut GPlayerState, lens: &L,
   piece: PieceId, pc: &PieceState, p: &dyn Piece,
   did: &str,
 ) -> Vec<LogEntry> {
@@ -223,7 +223,7 @@ api_route!{
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
-    let gpl = gs.players.byid(player)?;
+    let gpl = gs.players.byid_mut(player)?;
     let pc = gs.pieces.byid_mut(piece)?;
 
     if pc.held.is_some() { throw!(OnlineError::PieceHeld) }
@@ -277,7 +277,7 @@ api_route!{
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
-    let gpl = gs.players.byid(player).unwrap();
+    let gpl = gs.players.byid_mut(player).unwrap();
     let pc = gs.pieces.byid_mut(piece).unwrap();
 
     if pc.held != Some(player) { throw!(OnlineError::PieceHeld) }
@@ -338,7 +338,7 @@ api_route!{
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
-    let gpl = gs.players.byid(player).unwrap();
+    let gpl = gs.players.byid_mut(player).unwrap();
     pc.angle = PieceAngle::Compass(self.0);
     let logents = log_did_to_piece(gpl, lens, piece, pc, p, "rotated");
     let update = PieceUpdateOp::Modify(());
@@ -355,7 +355,7 @@ api_route!{
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
-    let gpl = gs.players.byid(player).unwrap();
+    let gpl = gs.players.byid_mut(player).unwrap();
     pc.pinned = self.0;
     let update = PieceUpdateOp::Modify(());
     let logents = log_did_to_piece(
@@ -380,7 +380,7 @@ api_route!{
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
     '_normal_global_ops__not_loop: loop {
       let pc = gs.pieces.byid_mut(piece)?;
-      let gpl = gs.players.byid(player)?;
+      let gpl = gs.players.byid_mut(player)?;
       let _: Impossible = match (self.opname.as_str(), self.wrc) {
 
         ("flip", wrc@ WRC::UpdateSvg) => {
