@@ -457,17 +457,15 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   fn piece_update_player(max_z: &mut ZCoord,
                          pc: &mut PieceState,
                          p: &Box<dyn Piece>,
-                         piece: PieceId,
                          op: PieceUpdateOp<(),()>,
+                         pri: &PieceRenderInstructions,
                          lens: &dyn Lens) -> PreparedPieceUpdate
   {
     max_z.update_max(&pc.zlevel.z);
 
-    let pri_for_all = lens.svg_pri(piece,pc,Default::default());
-
     let op = op.try_map(
       |()|{
-        let mut ns = pc.prep_piecestate(p.as_ref(), &pri_for_all)?;
+        let mut ns = pc.prep_piecestate(p.as_ref(), pri)?;
         lens.massage_prep_piecestate(&mut ns);
         <Result<_,InternalError>>::Ok(ns)
       },
@@ -477,7 +475,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     )?;
 
     PreparedPieceUpdate {
-      piece: pri_for_all.id,
+      piece: pri.id,
       op,
     }
   }
@@ -510,9 +508,12 @@ impl<'r> PrepareUpdatesBuffer<'r> {
         }
       };
       let op = match (&mut pc, p) {
-        (Some(pc), Some(p)) => Self::piece_update_player(
-            &mut gs.max_z, pc, p, piece, ops, lens
-        )?,
+        (Some(pc), Some(p)) => {
+          let pri = lens.svg_pri(piece,pc,Default::default());
+          Self::piece_update_player(
+            &mut gs.max_z, pc, p, ops, &pri, lens
+          )?
+        }
         _ => PreparedPieceUpdate {
           piece: lens.pieceid2visible(piece),
           op: PieceUpdateOp::Delete(),
