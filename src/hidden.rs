@@ -76,12 +76,12 @@ pub fn vpiece_decode(
   gpl: &GPlayerState,
   vis: VisiblePieceId
 ) -> Option<PieceId> {
-  let piece = gpl.idmap.rev(vis)?;
+  let piece = gpl.idmap.rev(vis);
   // xxx check for occultation:
   // check that this piece is visible at all to this player,
   // or they might manipulate it despite not seeing it!
   trace!("{} {:?} <= {}", player, piece, vis);
-  Some(piece)
+  piece
 }
 
 pub fn massage_prep_piecestate(
