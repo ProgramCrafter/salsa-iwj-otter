@@ -131,7 +131,7 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
 
       let mut log = match log {
         Some(Table(log)) => log,
-        None => Default::default(),
+        None => default(),
         Some(x) => throw!(anyhow!(
           r#"wanted table for "log" config key, not {}"#,
           x.type_str())

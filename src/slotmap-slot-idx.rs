@@ -47,7 +47,7 @@ impl KeyDataExt for slotmap::KeyData {
 /// representation has changed too much.  Should not be able to fail
 /// otherwise.
 pub fn keydata_extract(key: slotmap::KeyData) -> Result<(u32, u32), Error> {
-  let mut m: MainExtractor = std::default::Default::default();
+  let mut m: MainExtractor = Default::default();
   key.serialize(&mut m)?;
   Ok(( m.idx    .ok_or(error(line!()))?,
        m.version.ok_or(error(line!()))? ))

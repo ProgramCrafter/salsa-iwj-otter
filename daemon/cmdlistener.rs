@@ -567,7 +567,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         .remove(piece).ok_or(ME::PieceNotFound)?;
       let gs = &mut ig.gs;
       let pc = gs.pieces.as_mut(modperm).remove(piece);
-      let desc_html = p.describe_html(Some(Default::default()));
+      let desc_html = p.describe_html(Some(default()));
       if let Some(pc) = pc { p.delete_hook(&pc, gs); }
       (U{ pcs: vec![(piece, PieceUpdateOp::Delete())],
           log: vec![ LogEntry {
@@ -614,7 +614,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         let pc = PieceState {
           held: None,
           zlevel: ZLevel { z: z.increment()?, zg: gs.gen },
-          lastclient: Default::default(),
+          lastclient: default(),
           gen_before_lastclient: Generation(0),
           pinned: pinned.unwrap_or(false),
           angle,
@@ -787,7 +787,7 @@ impl UpdateHandler {
   fn from_how(how: MgmtGameUpdateMode) -> Self {
     use UpdateHandler::*;
     match how {
-      MgmtGameUpdateMode::Bulk => Bulk(Default::default()),
+      MgmtGameUpdateMode::Bulk => Bulk(default()),
       MgmtGameUpdateMode::Online => Online,
     }
   }

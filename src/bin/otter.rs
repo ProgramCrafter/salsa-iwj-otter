@@ -118,7 +118,7 @@ fn parse_args<T:Default,U>(
   completer: &dyn Fn(T) -> Result<U, ArgumentParseError>,
   extra_help: Option<&dyn Fn(&mut dyn Write) -> Result<(), io::Error>>,
 ) -> U {
-  let mut parsed = Default::default();
+  let mut parsed = default();
   let ap = apmaker(&mut parsed);
   let us = args.get(0).expect("argv[0] must be provided!").clone();
 

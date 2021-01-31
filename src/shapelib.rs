@@ -265,7 +265,7 @@ impl Contents {
       let ier = ItemEnquiryData {
         itemname: k.clone(),
         f0bbox,
-        f0desc: loaded.describe_html(Some(Default::default())),
+        f0desc: loaded.describe_html(Some(default())),
       };
       out.push(ier);
     }
@@ -334,7 +334,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
     items: HashMap::new(),
     dirname: dirname.to_string(),
   };
-  let empty_table = toml::value::Value::Table(Default::default());
+  let empty_table = toml::value::Value::Table(default());
   let groups =
     toplevel
     .as_table().ok_or_else(|| LLE::ExpectedTable(format!("toplevel")))?

@@ -299,7 +299,7 @@ impl Instance {
     let g = Instance {
       name : name.clone(),
       gs, acl,
-      ipieces: PiecesLoaded(Default::default()),
+      ipieces: PiecesLoaded(default()),
       clients: default(),
       iplayers: default(),
       tokens_players: default(),
@@ -1067,7 +1067,7 @@ impl InstanceGuard<'_> {
     }).collect();
 
     for mut p in gs.pieces.values_mut() {
-      p.lastclient = Default::default();
+      p.lastclient = default();
       if let Some(held) = p.held {
         if !gs.players.contains_key(held) { p.held = None }
       }
@@ -1408,7 +1408,7 @@ fn client_expire_old_clients() {
       }
     }
 
-    let mut now = Now(Default::default());
+    let mut now = Now(default());
     let (mut c, _) = now.iter(&gref, max_age);
     c.g.clients.retain(|c,_| !now.0.contains(&c));
     let mut gref = InstanceGuard { c, gref: gref.clone() };
