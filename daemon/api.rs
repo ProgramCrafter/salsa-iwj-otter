@@ -308,6 +308,7 @@ api_route!{
   }
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
+    // xxx prevent restzcking anything that is occulting
     let ApiPieceOpArgs { gs,piece, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
     pc.zlevel = ZLevel { z : self.z.clone(), zg : gs.gen };
