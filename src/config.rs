@@ -151,13 +151,11 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
           v.to_toml(&mut buf).context("convert to toml")?;
           let v = toml_de::from_slice(&buf).context("reparse")?;
           dbg!(&v);
-          let v = match v {
-            Some(Table(v)) => v,
+          match v {
+            Some(Table(v)) => toml_merge(&mut log, &v),
             None => default(),
             Some(x) => throw!(anyhow!("reparse gave {:?}, no table", x)),
           };
-          dbg!(&v);
-          log.extend(v);
         }
         Ok::<_,AE>(())
       })()
