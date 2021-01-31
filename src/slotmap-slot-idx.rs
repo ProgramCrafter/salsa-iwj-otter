@@ -7,6 +7,8 @@
 //! Provides a [`get_idx_key`](trait.KeyDataExt.html#tymethod.get_idx_version) method on
 //! `slotmap::KeyData`.  See [KeyDataExt::get_idx_version].
 
+use zcoord::misc::default;
+
 /// Extension trait for `slotmap::KeyData`, providing `get_idx_version`.
 ///
 /// No-one is expected to implement this trait for anything else.
@@ -47,7 +49,7 @@ impl KeyDataExt for slotmap::KeyData {
 /// representation has changed too much.  Should not be able to fail
 /// otherwise.
 pub fn keydata_extract(key: slotmap::KeyData) -> Result<(u32, u32), Error> {
-  let mut m: MainExtractor = Default::default();
+  let mut m: MainExtractor = default();
   key.serialize(&mut m)?;
   Ok(( m.idx    .ok_or(error(line!()))?,
        m.version.ok_or(error(line!()))? ))

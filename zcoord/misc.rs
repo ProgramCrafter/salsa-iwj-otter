@@ -27,6 +27,8 @@ pub fn timestring_abbreviate<'x>(base: &str, this: &'x str)
 
 pub fn raw_angle_transform(compass: u8) -> String {
   assert!(compass < 8);
-  if compass == 0 { Default::default() }
+  if compass == 0 { default() }
   else { format!("rotate({})", -45 * (compass as i16)) }
 }
+
+pub fn default<T:Default>() -> T { Default::default() }

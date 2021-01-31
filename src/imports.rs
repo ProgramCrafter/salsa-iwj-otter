@@ -77,6 +77,7 @@ pub use thiserror::Error;
 pub use url::Url;
 pub use vecdeque_stableix::Deque as StableIndexVecDeque;
 pub use zcoord::{self, ZCoord};
+pub use zcoord::misc::default;
 
 pub use crate::from_instance_lock_error;
 
@@ -108,8 +109,6 @@ pub use crate::ui::*;
 pub type SecondarySlotMap<K,V> = slotmap::secondary::SecondaryMap<K,V>;
 pub type SvgData = Vec<u8>;
 pub type Colour = Html;
-
-pub fn default<T:Default>() -> T { Default::default() }
 
 #[derive(Debug,Copy,Clone)]
 pub enum Impossible { }

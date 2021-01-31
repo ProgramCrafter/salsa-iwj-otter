@@ -10,6 +10,7 @@ use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
 use zcoord::{Mutable,ZCoord};
+use zcoord::misc::default;
 
 #[derive(Error,Clone,Copy,Debug,Eq,PartialEq)]
 #[error("packed Z coordinate wrong JS type (not a string)")]
@@ -54,7 +55,7 @@ pub fn increment(packed: &JsValue) -> JsValue {
 
 #[wasm_bindgen]
 pub fn def_zcoord() -> JsValue {
-  let z: ZCoord = Default::default();
+  let z: ZCoord = default();
   z.to_string().into()
 }
 

@@ -821,7 +821,7 @@ mod test {
       fn tinc(self, e: &str) -> Self { self.tincdec(e, Increment, Greater) }
       fn tdec(self, e: &str) -> Self { self.tincdec(e, Decrement, Less)    }
     }
-    let start: ZCoord = Default::default();
+    let start: ZCoord = default();
     assert_eq!(format!("{}", &start), "g000000000");
     start.clone_mut()
       .tinc("g001000000");
