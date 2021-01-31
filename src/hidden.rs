@@ -57,6 +57,7 @@ pub struct GameOccults {
 
 pub fn piece_pri(
   _occults: &GameOccults, // xxx
+  _player: PlayerId,
   gpl: &mut GPlayerState,
   piece: PieceId,
   pc: &PieceState,
@@ -68,6 +69,7 @@ pub fn piece_pri(
 
 pub fn vpiece_decode(
   _gs: &GameState, // xxx
+  _player: PlayerId,
   gpl: &GPlayerState,
   vis: VisiblePieceId
 ) -> Option<PieceId> {

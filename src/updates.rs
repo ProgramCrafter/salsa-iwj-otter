@@ -509,7 +509,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       };
       let op = match (&mut pc, p) {
         (Some(pc), Some(p)) => {
-          let pri = piece_pri(&gs.occults, gpl, piece, *pc);
+          let pri = piece_pri(&gs.occults, player, gpl, piece, *pc);
           Self::piece_update_player(
             &mut gs.max_z, pc, p, ops, &pri, lens
           )?

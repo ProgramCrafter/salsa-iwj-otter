@@ -87,11 +87,12 @@ impl<'r> Responder<'r> for OnlineErrorResponse {
 
 fn log_did_to_piece<L: Lens + ?Sized>(
   occults: &GameOccults,
+  player: PlayerId,
   gpl: &mut GPlayerState, _lens: &L,
   piece: PieceId, pc: &PieceState, p: &dyn Piece,
   did: &str,
 ) -> Vec<LogEntry> {
-  let pri = piece_pri(occults, gpl, piece, pc);
+  let pri = piece_pri(occults, player, gpl, piece, pc);
   vec![ LogEntry { html: Html(format!(
     "{} {} {}",
     &htmlescape::encode_minimal(&gpl.nick),
@@ -119,7 +120,8 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   let _ = iplayers.byid(player)?;
   let gpl = gs.players.byid(player)?;
   let lens = TransparentLens { };
-  let piece = vpiece_decode(gs, gpl, form.piece).ok_or(OE::PieceGone)?;
+  let piece = vpiece_decode(gs, player, gpl, form.piece)
+    .ok_or(OE::PieceGone)?;
   use ApiPieceOpError::*;
 
   match (||{
@@ -232,8 +234,10 @@ api_route!{
     pc.held = Some(player);
     
     let update = PieceUpdateOp::ModifyQuiet(());
-    let logents = log_did_to_piece(&gs.occults, gpl, lens, piece, pc, p,
-                                   "grasped");
+    let logents = log_did_to_piece(
+      &gs.occults, player, gpl, lens, piece, pc, p,
+      "grasped"
+    );
 
     (WhatResponseToClientOp::Predictable,
      update, logents).into()
@@ -257,7 +261,7 @@ api_route!{
     let was = was.map(|was| htmlescape::encode_minimal(&was.nick));
 
     let gpl = players.byid_mut(player)?;
-    let pri = piece_pri(&gs.occults, gpl, piece, pc);
+    let pri = piece_pri(&gs.occults, player, gpl, piece, pc);
     let pcs = p.describe_pri(&pri).0;
 
     pc.held = Some(player);
@@ -290,8 +294,10 @@ api_route!{
     pc.held = None;
 
     let update = PieceUpdateOp::Modify(());
-    let logents = log_did_to_piece(&gs.occults, gpl, lens, piece, pc, p,
-                                   "released");
+    let logents = log_did_to_piece(
+      &gs.occults, player, gpl, lens, piece, pc, p,
+      "released"
+    );
 
     (WhatResponseToClientOp::Predictable,
      update, logents).into()
@@ -347,8 +353,10 @@ api_route!{
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let gpl = gs.players.byid_mut(player).unwrap();
     pc.angle = PieceAngle::Compass(self.0);
-    let logents = log_did_to_piece(&gs.occults, gpl, lens, piece, pc, p,
-                                   "rotated");
+    let logents = log_did_to_piece(
+      &gs.occults, player, gpl, lens, piece, pc, p,
+      "rotated"
+    );
     let update = PieceUpdateOp::Modify(());
     (WhatResponseToClientOp::Predictable,
      update, logents).into()
@@ -367,7 +375,7 @@ api_route!{
     pc.pinned = self.0;
     let update = PieceUpdateOp::Modify(());
     let logents = log_did_to_piece(
-      &gs.occults, gpl, lens, piece, pc, p,
+      &gs.occults, player, gpl, lens, piece, pc, p,
       if pc.pinned { "pinned" } else { "unpinned" },
     );
     (WhatResponseToClientOp::Predictable,
@@ -397,8 +405,10 @@ api_route!{
           return (
             wrc,
             PieceUpdateOp::Modify(()),
-            log_did_to_piece(&gs.occults, gpl, lens, piece, pc, p,
-                             "flipped"),
+            log_did_to_piece(
+              &gs.occults, player, gpl, lens, piece, pc, p,
+              "flipped"
+            ),
           ).into()
         },
 
