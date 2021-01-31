@@ -249,14 +249,16 @@ api_route!{
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
-    let gpl = gs.players.byid(player)?;
     let pc = gs.pieces.byid_mut(piece)?;
+    let players = &mut gs.players;
+    let was = pc.held;
+    let was = was.and_then(|p| players.get(p));
+    let was = was.map(|was| htmlescape::encode_minimal(&was.nick));
+
+    let gpl = players.byid_mut(player)?;
     let pcs = p.describe_pri(&lens.log_pri(piece, pc)).0;
 
-    let was = pc.held;
     pc.held = Some(player);
-    let was = was.and_then(|p| gs.players.get(p));    
-    let was = was.map(|was| htmlescape::encode_minimal(&was.nick));
 
     let update = PieceUpdateOp::Modify(());
 
