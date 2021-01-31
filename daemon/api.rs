@@ -195,22 +195,22 @@ macro_rules! api_route_core {
 
 macro_rules! api_route {
   { $fn:ident, $path:expr,
-    struct $form:ident { $( $body:tt )* }
+    $( #[ $attrs:meta ] )* struct $form:ident { $( $body:tt )* }
     $( $impl:tt )*
   } => {
     api_route_core!{
       $fn, $path, $form,
-      struct $form { $( $body )* },
+      $( #[ $attrs ] )* struct $form { $( $body )* },
       $( $impl )*
     }
   };
   { $fn:ident, $path:expr,
-    struct $form:ident ( $( $body:tt )* );
+    $( #[ $attrs:meta ] )* struct $form:ident ( $( $body:tt )* );
     $( $impl:tt )*
   } => {
     api_route_core!{
       $fn, $path, $form,
-      struct $form ( $( $body )* );,
+      $( #[ $attrs ] )* struct $form ( $( $body )* );,
       $( $impl )*
     }
   }
