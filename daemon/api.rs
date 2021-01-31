@@ -322,6 +322,17 @@ api_route!{
   api_move, "/_/api/m",
   struct ApiPieceMove(Pos);
 
+  #[throws(OnlineError)]
+  fn check_held(&self, pc: &PieceState, player: PlayerId) {
+    // This will ensure that occultations are (in general) properly
+    // updated, because the player will (have to) release the thing
+    // again
+    if pc.held != Some(player) {
+      throw!(OnlineError::PieceHeld)
+    }
+    // xxx prevent moving anything that is occulting
+  }
+
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,piece, .. } = a;
