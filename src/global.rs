@@ -637,6 +637,7 @@ impl<'ig> InstanceGuard<'ig> {
       // These have special handling
       log: default(),
       pieces: default(),
+      occults: default(),
     };
 
     let held_by_old = |p: &PieceState| if_chain! {
@@ -670,6 +671,7 @@ impl<'ig> InstanceGuard<'ig> {
     let mut swap_things = |ig: &mut InstanceGuard| {
       mem::swap(&mut ig.c.g.gs.log,    &mut gs.log   );
       mem::swap(&mut ig.c.g.gs.pieces, &mut gs.pieces);
+      mem::swap(&mut ig.c.g.gs.occults,&mut gs.occults);
       mem::swap(&mut ig.c.g.gs,        &mut gs,   );
     };
     swap_things(self);

@@ -50,3 +50,7 @@ impl PerPlayerIdMap {
   }
 }
 
+#[derive(Clone,Debug,Default,Serialize,Deserialize)]
+pub struct GameOccults {
+  // todo
+}
