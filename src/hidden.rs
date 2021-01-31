@@ -6,6 +6,15 @@ use crate::imports::*;
 
 use slotmap::secondary;
 
+// ========== data structures ==========
+
+#[derive(Clone,Debug,Default,Serialize,Deserialize)]
+pub struct GameOccults {
+  // todo
+}
+
+// ========== PerPlayerIdMap ==========
+
 #[derive(Default,Debug,Clone,Serialize,Deserialize)]
 pub struct PerPlayerIdMap {
   f: SecondarySlotMap<PieceId, VisiblePieceId>,
@@ -50,10 +59,7 @@ impl PerPlayerIdMap {
   }
 }
 
-#[derive(Clone,Debug,Default,Serialize,Deserialize)]
-pub struct GameOccults {
-  // todo
-}
+// ========== public entrypoints ==========
 
 pub fn piece_pri(
   _occults: &GameOccults, // xxx
