@@ -54,3 +54,33 @@ impl PerPlayerIdMap {
 pub struct GameOccults {
   // todo
 }
+
+pub fn piece_pri(
+  _occults: &GameOccults, // xxx
+  gpl: &mut GPlayerState,
+  piece: PieceId,
+  pc: &PieceState,
+) -> PieceRenderInstructions {
+  let vpiece = gpl.idmap.fwd_or_insert(piece);
+  let angle = make_angle_visible(pc.angle);
+  PieceRenderInstructions { id: vpiece, angle, face: pc.face }
+}
+
+pub fn vpiece_decode(
+  _gs: &GameState, // xxx
+  gpl: &GPlayerState,
+  vis: VisiblePieceId
+) -> Option<PieceId> {
+  let piece = gpl.idmap.rev(vis)?;
+  // xxx check for occultation:
+  // check that this piece is visible at all to this player,
+  // or they might manipulate it despite not seeing it!
+  Some(piece)
+}
+
+pub fn massage_prep_piecestate(
+  _pri: &PieceRenderInstructions, // xxx
+  _ns: &mut PreparedPieceState, // xxx
+) {
+  // xxx hidden position involves adjusting pos and z and ??? here
+}
