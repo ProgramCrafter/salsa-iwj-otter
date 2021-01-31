@@ -122,6 +122,7 @@ pub struct UoDescription {
 
 #[typetag::serde]
 pub trait Piece: Outline + Send + Debug {
+  /// by convention, occult face is nfaces-1
   fn nfaces(&self) -> RawFaceId;
 
   #[throws(InternalError)]
