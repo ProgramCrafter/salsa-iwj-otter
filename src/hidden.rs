@@ -70,6 +70,13 @@ pub fn piece_pri(
   PieceRenderInstructions { id: vpiece, angle, face }
 }
 
+pub fn piece_at_all_occluded(
+  _occults: &GameOccults, // xxx
+  _piece: PieceId, // xxx
+) -> bool {
+  false
+}
+
 pub fn vpiece_decode(
   _gs: &GameState, // xxx
   player: PlayerId,

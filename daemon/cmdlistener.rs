@@ -395,9 +395,8 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         let desc_html = pinfo.describe_html(None);
         let itemname = pinfo.itemname().to_string();
         let bbox = pinfo.bbox_approx();
-        let lens = TransparentLens { };
         #[allow(irrefutable_let_patterns)]
-        let visible = if let TransparentLens { } = lens {
+        let visible = if ! piece_at_all_occluded(&ig.gs.occults, piece) {
           Some(MgmtGamePieceVisibleInfo {
             pos, face, desc_html, bbox
           })
