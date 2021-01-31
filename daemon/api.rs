@@ -86,16 +86,17 @@ impl<'r> Responder<'r> for OnlineErrorResponse {
 }
 
 fn log_did_to_piece<L: Lens + ?Sized>(
-  _occults: &GameOccults,
-  gpl: &mut GPlayerState, lens: &L,
+  occults: &GameOccults,
+  gpl: &mut GPlayerState, _lens: &L,
   piece: PieceId, pc: &PieceState, p: &dyn Piece,
   did: &str,
 ) -> Vec<LogEntry> {
+  let pri = piece_pri(occults, gpl, piece, pc);
   vec![ LogEntry { html: Html(format!(
     "{} {} {}",
     &htmlescape::encode_minimal(&gpl.nick),
     did,
-    p.describe_pri(&lens.log_pri(piece, pc)).0
+    p.describe_pri(&pri).0
   ))}]
 }
 
@@ -116,9 +117,9 @@ fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
   let ipieces = &g.ipieces;
   let iplayers = &g.iplayers;
   let _ = iplayers.byid(player)?;
-  let _ = gs.players.byid(player)?;
+  let gpl = gs.players.byid(player)?;
   let lens = TransparentLens { };
-  let piece = lens.decode_visible_pieceid(form.piece, player);
+  let piece = vpiece_decode(gs, gpl, form.piece).ok_or(OE::PieceGone)?;
   use ApiPieceOpError::*;
 
   match (||{
@@ -248,7 +249,7 @@ api_route!{
 
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
-    let ApiPieceOpArgs { gs,player,piece,p,lens, .. } = a;
+    let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
     let pc = gs.pieces.byid_mut(piece)?;
     let players = &mut gs.players;
     let was = pc.held;
@@ -256,7 +257,8 @@ api_route!{
     let was = was.map(|was| htmlescape::encode_minimal(&was.nick));
 
     let gpl = players.byid_mut(player)?;
-    let pcs = p.describe_pri(&lens.log_pri(piece, pc)).0;
+    let pri = piece_pri(&gs.occults, gpl, piece, pc);
+    let pcs = p.describe_pri(&pri).0;
 
     pc.held = Some(player);
 

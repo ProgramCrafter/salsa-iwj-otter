@@ -459,14 +459,14 @@ impl<'r> PrepareUpdatesBuffer<'r> {
                          p: &Box<dyn Piece>,
                          op: PieceUpdateOp<(),()>,
                          pri: &PieceRenderInstructions,
-                         lens: &dyn Lens) -> PreparedPieceUpdate
+                         _lens: &dyn Lens) -> PreparedPieceUpdate
   {
     max_z.update_max(&pc.zlevel.z);
 
     let op = op.try_map(
       |()|{
         let mut ns = pc.prep_piecestate(p.as_ref(), pri)?;
-        lens.massage_prep_piecestate(&mut ns);
+        massage_prep_piecestate(pri, &mut ns);
         <Result<_,InternalError>>::Ok(ns)
       },
       |()|{
@@ -499,7 +499,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       gen_update(pc, gen, &self.by_client);
     }
     let mut out: SecondarySlotMap<PlayerId, PreparedPieceUpdate> = default();
-    for player in gs.players.keys() {
+    for (player, gpl) in &mut gs.players {
       let ops = match ops {
         PUO::Simple(update) => update,
         PUO::PerPlayer(ref ops) => match ops.get(player) {
@@ -509,13 +509,14 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       };
       let op = match (&mut pc, p) {
         (Some(pc), Some(p)) => {
-          let pri = lens.svg_pri(piece,pc,Default::default());
+          let pri = piece_pri(&gs.occults, gpl, piece, *pc);
           Self::piece_update_player(
             &mut gs.max_z, pc, p, ops, &pri, lens
           )?
         }
         _ => PreparedPieceUpdate {
-          piece: lens.pieceid2visible(piece),
+          // The piece is deleted, so we can't leak anything.
+          piece: gpl.idmap.fwd_or_insert(piece),
           op: PieceUpdateOp::Delete(),
         }
       };

@@ -343,12 +343,6 @@ impl GameState {
 
 // ========== ad-hoc and temporary ==========
 
-pub fn make_pieceid_visible(p: PieceId) -> VisiblePieceId {
-  // todo-lens need to do censorship mapping here
-  let kd: slotmap::KeyData = p.data();
-  VisiblePieceId(kd)
-}
-
 pub fn make_angle_visible(angle: PieceAngle) -> VisiblePieceAngle {
   // todo-lens need to do censorship mapping here
   VisiblePieceAngle(angle)

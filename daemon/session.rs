@@ -108,11 +108,7 @@ fn session_inner(form : Json<SessionForm>,
     pieces.sort_by_key(|(_,pr)| &pr.zlevel);
 
     for (gpid, pr) in pieces {
-      let pri = PieceRenderInstructions {
-        id: make_pieceid_visible(gpid),
-        angle: make_angle_visible(pr.angle),
-        face: pr.face,
-      };
+      let pri = piece_pri(&ig.gs.occults, gpl, gpid, pr);
       let p = if let Some(p) = ig.ipieces.get(gpid) { p }
       else { continue /* was deleted */ };
       let defs = p.make_defs(&pri)?;
