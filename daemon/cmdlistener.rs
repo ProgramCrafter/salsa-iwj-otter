@@ -19,10 +19,9 @@ use uds::UnixStreamExt;
 type SE = SpecError;
 type CSE = anyhow::Error;
 
-use MgmtCommand::*;
-use MgmtResponse::*;
-
 type TP = TablePermission;
+
+use MgmtResponse::Fine;
 
 const USERLIST: &str = "/etc/userlist";
 const CREATE_PIECES_MAX: u32 = 300;
@@ -64,9 +63,9 @@ type PCH = PermissionCheckHow;
 #[throws(ME)]
 fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
   match cmd {
-    Noop => Fine,
+    MC::Noop => Fine,
 
-    SetSuperuser(enable) => {
+    MC::SetSuperuser(enable) => {
       if !enable {
         cs.superuser = None;
       } else {
@@ -76,7 +75,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine
     },
 
-    CreateAccount(AccountDetails {
+    MC::CreateAccount(AccountDetails {
       account, nick, timezone, access, layout
     }) => {
       let mut ag = AccountsGuard::lock();
@@ -95,7 +94,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine
     }
 
-    UpdateAccount(AccountDetails {
+    MC::UpdateAccount(AccountDetails {
       account, nick, timezone, access, layout
     }) => {
       let mut ag = AccountsGuard::lock();
@@ -121,7 +120,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         .map_err(|(e,_)|e) ?
     }
 
-    DeleteAccount(account) => {
+    MC::DeleteAccount(account) => {
       let mut ag = AccountsGuard::lock();
       let mut games = games_lock();
       let auth = authorise_for_account(cs, &ag, &account)?;
@@ -129,7 +128,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine
     }
 
-    SelectAccount(wanted_account) => {
+    MC::SelectAccount(wanted_account) => {
       let auth = authorise_scope_direct(cs, &wanted_account.scope)?;
       cs.account = Some(AccountSpecified {
         cooked: wanted_account.to_string(),
@@ -139,13 +138,13 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine
     }
 
-    CheckAccount => {
+    MC::CheckAccount => {
       let ag = AccountsGuard::lock();
       let _ok = ag.lookup(&cs.current_account()?.notional_account)?;
       Fine
     }
 
-    CreateGame { game, insns } => {
+    MC::CreateGame { game, insns } => {
       let mut ag = AccountsGuard::lock();
       let mut games = games_lock();
       let auth = authorise_by_account(cs, &ag, &game)?;
@@ -184,7 +183,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       resp
     }
 
-    ListGames { all } => {
+    MC::ListGames { all } => {
       let (scope, auth) = if all == Some(true) {
         let auth = authorise_scope_direct(cs, &AS::Server)?;
         (None, auth.therefore_ok())
@@ -195,17 +194,17 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       };
       let mut games = Instance::list_names(scope, auth);
       games.sort_unstable();
-      GamesList(games)
+      MR::GamesList(games)
     }
 
-    MgmtCommand::AlterGame { game, insns, how } => {
+    MC::AlterGame { game, insns, how } => {
       let mut ag = AccountsGuard::lock();
       let gref = Instance::lookup_by_name_unauth(&game)?;
       let mut g = gref.lock()?;
       execute_for_game(cs, &mut ag, &mut g, insns, how)?
     }
 
-    DestroyGame { game } => {
+    MC::DestroyGame { game } => {
       let mut ag = AccountsGuard::lock();
       let mut games = games_lock();
       let auth = authorise_by_account(cs, &mut ag, &game)?;
@@ -215,10 +214,10 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine
     }
 
-    LibraryListByGlob { glob: spec } => {
+    MC::LibraryListByGlob { glob: spec } => {
       let lib = shapelib::libs_lookup(&spec.lib)?;
       let results = lib.list_glob(&spec.item)?;
-      LibraryItems(results)
+      MR::LibraryItems(results)
     }
   }
 }
@@ -241,10 +240,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   -> Result<ExecuteGameInsnResults<'igr, 'ig> ,ME>
 {
   type U = ExecuteGameChangeUpdates;
-  use MgmtGameInstruction::*;
-  use MgmtGameResponse::*;
-  type Insn = MgmtGameInstruction;
-  type Resp = MgmtGameResponse;
+  use MgmtGameResponse::Fine;
 
   fn tz_from_str(s: &str) -> Timezone {
     match Timezone::from_str(s) {
@@ -310,9 +306,9 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   }
 
   let y = match update {
-    Noop { } => readonly(cs,ag,ig, &[], |_| Ok(Fine))?,
+    MGI::Noop { } => readonly(cs,ag,ig, &[], |_| Ok(Fine))?,
 
-    Insn::SetTableSize(size) => {
+    MGI::SetTableSize(size) => {
       let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
       ig.gs.table_size = size;
       (U{ pcs: vec![],
@@ -324,7 +320,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
        Fine, ig)
     }
 
-    Insn::SetTableColour(colour) => {
+    MGI::SetTableColour(colour) => {
       let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
       let colour: Colour = (&colour).try_into()?;
       ig.gs.table_colour = colour.clone();
@@ -337,7 +333,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
        Fine, ig)
     }
 
-    Insn::JoinGame {
+    MGI::JoinGame {
       details: MgmtPlayerDetails { nick },
     } => {
       let account = &cs.current_account()?.notional_account;
@@ -370,11 +366,11 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       (U{ pcs: vec![],
           log: vec![ logentry ],
           raw: Some(vec![ update ] )},
-       Resp::JoinGame { nick, player, token: atr },
+       MGR::JoinGame { nick, player, token: atr },
        ig)
     },
 
-    Insn::Synch => {
+    MGI::Synch => {
       let (mut ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Play])?;
       let mut buf = PrepareUpdatesBuffer::new(&mut ig, None, None);
       let gen = buf.gen();
@@ -382,11 +378,11 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       (U{ pcs: vec![], // we handled the update ourselves,
           log: vec![], // return no update info
           raw: None },
-       Resp::Synch(gen),
+       MGR::Synch(gen),
        ig)
     },
 
-    Insn::ListPieces => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
+    MGI::ListPieces => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
       let pieces = ig.gs.pieces.iter().map(|(piece,p)|{
         let &PieceState { pos, face, .. } = p;
         let pinfo = ig.ipieces.get(piece)?;
@@ -406,10 +402,10 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           visible
         })
       }).flatten().collect();
-      Ok(Resp::Pieces(pieces))
+      Ok(MGR::Pieces(pieces))
     })?,
 
-    UpdatePlayer {
+    MGI::UpdatePlayer {
       player,
       details: MgmtPlayerDetails { nick },
     } => {
@@ -433,7 +429,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
        Fine, ig)
     },
 
-    Insn::Info => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
+    MGI::Info => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
       let players = ig.gs.players.iter().map(
         |(player, gpl)| {
           let nick = gpl.nick.clone();
@@ -457,10 +453,10 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         Some((k.clone(), UrlSpec(v.as_ref()?.clone())))
       ).collect();
       let info = MgmtGameResponseGameInfo { table_size, players, links };
-      Ok(Resp::Info(info))
+      Ok(MGR::Info(info))
     })?,
 
-    Insn::SetLinks(mut spec_links) =>  {
+    MGI::SetLinks(mut spec_links) =>  {
       update_links(cs,ag,ig, |ig_links|{
         let mut new_links: LinksTable = default();
         // todo want a FromIterator impl
@@ -477,7 +473,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       })?
     }
 
-    Insn::SetLink { kind, url } =>  {
+    MGI::SetLink { kind, url } =>  {
       update_links(cs,ag,ig, |ig_links|{
         let mut new_links: LinksTable = (**ig_links).clone();
         let url: Url = (&url).try_into()?;
@@ -492,7 +488,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       })?
     }
 
-    Insn::RemoveLink { kind } =>  {
+    MGI::RemoveLink { kind } =>  {
       update_links(cs,ag,ig, |ig_links|{
         let mut new_links: LinksTable = (**ig_links).clone();
         new_links[kind] = None;
@@ -505,7 +501,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       })?
     }
 
-    ResetPlayerAccess(player) => {
+    MGI::ResetPlayerAccess(player) => {
       let (ig, auth) = cs.check_acl_manip_player_access
         (ag, ig, player, TP::ResetOthersAccess)?;
 
@@ -513,10 +509,10 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       (U{ pcs: vec![],
           log: vec![],
           raw: None },
-       PlayerAccessToken(token), ig)
+       MGR::PlayerAccessToken(token), ig)
     }
 
-    RedeliverPlayerAccess(player) => {
+    MGI::RedeliverPlayerAccess(player) => {
       let (ig, auth) = cs.check_acl_manip_player_access
         (ag, ig, player, TP::RedeliverOthersAccess)?;
 
@@ -524,10 +520,10 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       (U{ pcs: vec![],
           log: vec![],
           raw: None },
-       PlayerAccessToken(token), ig)
+       MGR::PlayerAccessToken(token), ig)
     },
 
-    LeaveGame(player) => {
+    MGI::LeaveGame(player) => {
       let account = &cs.current_account()?.notional_account;
       let (ig, _auth) = cs.check_acl_manip_player_access
         (ag, ig, player, TP::ModifyOtherPlayer)?;
@@ -559,7 +555,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
        Fine, ig)
     },
 
-    DeletePiece(piece) => {
+    MGI::DeletePiece(piece) => {
       let (ig, modperm, _) = cs.check_acl_modify_pieces(ag, ig)?;
       let p = ig.ipieces.as_mut(modperm)
         .remove(piece).ok_or(ME::PieceNotFound)?;
@@ -576,7 +572,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
        Fine, ig)
     },
 
-    AddPieces(PiecesSpec{ pos,posd,count,face,pinned,angle,info }) => {
+    MGI::AddPieces(PiecesSpec{ pos,posd,count,face,pinned,angle,info }) => {
       let (ig_g, modperm, _) = cs.check_acl_modify_pieces(ag, ig)?;
       let ig = &mut **ig_g;
       let gs = &mut ig.gs;
@@ -638,7 +634,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
        Fine, ig_g)
     },
 
-    ClearLog => {
+    MGI::ClearLog => {
       let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Super])?;
       ig.gs.log.clear();
       for ipr in ig.iplayers.values_mut() {
@@ -659,7 +655,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
        Fine, ig)
     },
 
-    SetACL { acl } => {
+    MGI::SetACL { acl } => {
       let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Super])?;
       ig.acl = acl.into();
       let mut log = vec![ LogEntry {

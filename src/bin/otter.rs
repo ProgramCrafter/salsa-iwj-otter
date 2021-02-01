@@ -17,10 +17,6 @@ use otter::imports::*;
 
 type APE = ArgumentParseError;
 type E = anyhow::Error;
-type MC = MgmtCommand;
-type MGI = MgmtGameInstruction;
-type MGR = MgmtGameResponse;
-type MR = MgmtResponse;
 type PL = PresentationLayout;
 type TP = TablePermission;
 

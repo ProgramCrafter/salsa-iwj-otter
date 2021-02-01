@@ -4,6 +4,11 @@
 
 use crate::imports::*;
 
+pub type MC = MgmtCommand;
+pub type MGI = MgmtGameInstruction;
+pub type MGR = MgmtGameResponse;
+pub type MR = MgmtResponse;
+
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtCommand {
   Noop,
