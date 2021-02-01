@@ -312,8 +312,8 @@ pub type RangeIterator = std::iter::Take<
 
 pub trait MutateReturn {
   fn op<T, U,
-        M : FnOnce(&mut T),
-        O : FnOnce(&T) -> U>
+        M: FnOnce(&mut T),
+        O: FnOnce(&T) -> U>
     (x: &mut T,
      m: M,
      o: O) -> U;
@@ -323,8 +323,8 @@ pub trait MutateReturn {
 pub struct MutateFirst;
 impl MutateReturn for MutateFirst {
   fn op<T, U,
-        M : FnOnce(&mut T),
-        O : FnOnce(&T) -> U>
+        M: FnOnce(&mut T),
+        O: FnOnce(&T) -> U>
     (x: &mut T, m: M, o: O) -> U
   {
     m(x);
@@ -336,8 +336,8 @@ impl MutateReturn for MutateFirst {
 pub struct MutateLast;
 impl MutateReturn for MutateLast {
   fn op<T, U,
-        M : FnOnce(&mut T),
-        O : FnOnce(&T) -> U>
+        M: FnOnce(&mut T),
+        O: FnOnce(&T) -> U>
     (x: &mut T, m: M, o: O) -> U
   {
     let u = o(x);
