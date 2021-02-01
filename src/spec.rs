@@ -34,6 +34,7 @@ pub struct PosC<T>(pub [T; 2]);
 pub type Pos = PosC<Coord>;
 
 #[derive(Clone,Copy,Debug,Serialize,Deserialize,Hash)]
+#[derive(Eq,PartialEq)]
 #[serde(transparent)]
 pub struct AreaC<T>(pub [PosC<T>; 2]);
 pub type Area = AreaC<Coord>;
