@@ -340,7 +340,7 @@ pub mod implementation {
   impl loaded_acl::Perm for TablePermission {
     type Auth = InstanceName;
     const TEST_EXISTENCE: Self = TablePermission::TestExistence;
-    const NOT_FOUND: MgmtError = MgmtError::GameNotFound;
+    const NOT_FOUND: MgmtError = ME::GameNotFound;
   }
 
   impl TablePlayerSpec {

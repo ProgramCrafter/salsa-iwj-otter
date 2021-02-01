@@ -251,7 +251,7 @@ impl Contents {
 
   #[throws(MgmtError)]
   pub fn list_glob(&self, pat: &str) -> Vec<ItemEnquiryData> {
-    let pat = glob::Pattern::new(pat).map_err(|pe| MgmtError::BadGlob {
+    let pat = glob::Pattern::new(pat).map_err(|pe| ME::BadGlob {
       pat: pat.to_string(), msg: pe.msg.to_string() })?;
     let mut out = vec![];
     for (k,v) in &self.items {

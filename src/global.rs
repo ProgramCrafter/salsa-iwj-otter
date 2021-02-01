@@ -225,7 +225,6 @@ display_as_debug!{InstanceLockError}
 impl<X> From<PoisonError<X>> for InstanceLockError {
   fn from(_: PoisonError<X>) -> Self { Self::GameCorrupted }
 }
-from_instance_lock_error!{MgmtError}
 
 pub struct PrivateCaller(());
 // outsiders cannot construct this
@@ -319,7 +318,7 @@ impl Instance {
     use hash_map::Entry::*;
     let entry = match entry {
       Vacant(ve) => ve,
-      Occupied(_) => throw!(MgmtError::AlreadyExists),
+      Occupied(_) => throw!(ME::AlreadyExists),
     };
 
     ig.save_access_now()?;
@@ -340,7 +339,7 @@ impl Instance {
     Unauthorised::of(
       games_table
         .get(name)
-        .ok_or(MgmtError::GameNotFound)?
+        .ok_or(ME::GameNotFound)?
         .clone()
         .into()
     )
@@ -540,7 +539,7 @@ impl<'ig> InstanceGuard<'ig> {
     // we have a thing to serialise with the player in it
     self.check_new_nick(&gnew.nick)?;
     if self.c.g.iplayers.values().any(|r| r.ipl.acctid == inew.acctid) {
-      Err(MgmtError::AlreadyExists)?;
+      Err(ME::AlreadyExists)?;
     }
     let player = self.c.g.gs.players.insert(gnew);
     let u = PlayerUpdates::new_begin(&self.c.g.gs).new();
@@ -575,7 +574,7 @@ impl<'ig> InstanceGuard<'ig> {
   #[throws(MgmtError)]
   pub fn check_new_nick(&mut self, new_nick: &str) {
     if self.c.g.gs.players.values().any(|old| old.nick == new_nick) {
-      Err(MgmtError::NickCollision)?;
+      Err(ME::NickCollision)?;
     }
   }
 

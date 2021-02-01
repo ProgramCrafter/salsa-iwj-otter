@@ -198,6 +198,8 @@ impl From<InternalError> for MgmtError {
   }
 }
 
+from_instance_lock_error!{MgmtError}
+
 impl AccessTokenInfo {
   pub fn report(self) -> Vec<String> {
     vec![

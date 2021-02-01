@@ -5,6 +5,7 @@
 // management API implementation
 
 use super::*;
+use otter::commands::*;
 
 use authproofs::*;
 

@@ -518,7 +518,7 @@ pub mod loaded_acl {
       Err(if needed & test_existence != 0 {
         P::NOT_FOUND
       } else {
-        MgmtError::AuthorisationError
+        ME::AuthorisationError
       })?
     }
   }

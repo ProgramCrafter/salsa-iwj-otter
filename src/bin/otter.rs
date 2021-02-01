@@ -12,6 +12,7 @@ use argparse::{self,ArgumentParser,action::{TypedAction,ParseResult}};
 use argparse::action::{Action,IFlagAction,IArgAction};
 use derive_more::Display;
 
+use otter::commands::*;
 use otter::imports::*;
 
 type APE = ArgumentParseError;
@@ -596,10 +597,10 @@ impl ConnForGame {
 */
   #[throws(AE)]
   fn get_pieces(&mut self) -> Vec<MgmtGamePieceInfo> {
-    let insns = vec![ MgmtGameInstruction::ListPieces ];
+    let insns = vec![ MGI::ListPieces ];
     let mut responses = self.alter_game(insns, None)?;
     match responses.as_mut_slice() {
-      [MgmtGameResponse::Pieces(pieces)] => return mem::take(pieces),
+      [MGR::Pieces(pieces)] => return mem::take(pieces),
       wat => Err(anyhow!("ListPieces => {:?}", &wat))?,
     }
   }
