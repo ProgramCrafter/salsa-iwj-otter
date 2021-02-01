@@ -41,7 +41,7 @@ pub struct Html(pub String);
 #[serde(transparent)]
 pub struct Timestamp(pub u64); /* time_t */
 
-pub const DEFAULT_TABLE_SIZE : Pos = PosC([ 400, 200 ]);
+pub const DEFAULT_TABLE_SIZE: Pos = PosC([ 400, 200 ]);
 
 // ---------- general data types ----------
 
@@ -251,7 +251,7 @@ impl VisiblePieceAngle {
 
 impl PieceState {
   #[throws(IE)]
-  pub fn prep_piecestate(&self, p: &dyn Piece, pri : &PieceRenderInstructions)
+  pub fn prep_piecestate(&self, p: &dyn Piece, pri: &PieceRenderInstructions)
                      -> PreparedPieceState {
     PreparedPieceState {
       pos        : self.pos,

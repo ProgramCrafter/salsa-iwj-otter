@@ -12,7 +12,7 @@ type SKD = slotmap::KeyData;
 macro_rules! display_consequential_impls {
   ( $x:path ) => {
     impl From<$x> for String {
-      fn from(p : $x) -> String { format!("{}",p) }
+      fn from(p: $x) -> String { format!("{}",p) }
     }
     impl Debug for $x {
       fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
@@ -68,10 +68,10 @@ macro_rules! visible_slotmap_key {
       fn data(&self) -> slotmap::KeyData { self.0 }
     }
     impl From<slotmap::KeyData> for $x {
-      fn from(d : slotmap::KeyData) -> Self { $x(d) }
+      fn from(d: slotmap::KeyData) -> Self { $x(d) }
     }
     impl From<$x> for slotmap::KeyData {
-      fn from(p : $x) -> Self {
+      fn from(p: $x) -> Self {
         p.0
       }
     }

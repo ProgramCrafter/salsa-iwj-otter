@@ -121,7 +121,7 @@ impl AccountScope {
                   >
     (&'out self, ns: NS, mut f: F)
   {
-    const ENCODE : percent_encoding::AsciiSet =
+    const ENCODE: percent_encoding::AsciiSet =
       percent_encoding::NON_ALPHANUMERIC
       .remove(b'-');
 
@@ -447,7 +447,7 @@ pub mod loaded_acl {
   use crate::imports::*;
   use authproofs::*;
 
-  pub trait Perm : FromPrimitive + ToPrimitive +
+  pub trait Perm: FromPrimitive + ToPrimitive +
     Copy + Eq + Hash + Sync + Send + 'static
   {
     type Auth;

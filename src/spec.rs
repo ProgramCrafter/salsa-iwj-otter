@@ -568,7 +568,7 @@ pub mod implementation {
   }
 
   impl UrlSpec {
-    const MAX_LEN : usize = 200;
+    const MAX_LEN: usize = 200;
   }
 
   impl TryFrom<&UrlSpec> for Url {

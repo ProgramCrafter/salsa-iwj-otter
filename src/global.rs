@@ -297,7 +297,7 @@ impl Instance {
     let name = Arc::new(name);
 
     let g = Instance {
-      name : name.clone(),
+      name: name.clone(),
       gs, acl,
       ipieces: PiecesLoaded(default()),
       clients: default(),
@@ -308,9 +308,9 @@ impl Instance {
     };
 
     let cont = InstanceContainer {
-      live : true,
-      game_dirty : false,
-      access_dirty : false,
+      live: true,
+      game_dirty: false,
+      access_dirty: false,
       g,
     };
 
@@ -402,7 +402,7 @@ impl Instance {
                     _: Authorisation<AccountName>)
                     -> Vec<Arc<InstanceName>> {
     let games = GLOBAL.games_table.read().unwrap();
-    let out : Vec<Arc<InstanceName>> =
+    let out: Vec<Arc<InstanceName>> =
       games.keys()
       .filter(|k| account == None || account == Some(&k.account))
       .cloned()
@@ -621,8 +621,8 @@ impl<'ig> InstanceGuard<'ig> {
     // We make a copy so if the save fails, we can put everything back
 
     let mut players = self.c.g.gs.players.clone();
-    let old_players : Vec<_> = old_players_set.iter().cloned().collect();
-    let old_gpls : Vec<_> = old_players.iter().cloned().map(|oldplayer| {
+    let old_players: Vec<_> = old_players_set.iter().cloned().collect();
+    let old_gpls: Vec<_> = old_players.iter().cloned().map(|oldplayer| {
       players.remove(oldplayer)
     }).collect();
 
@@ -708,7 +708,7 @@ impl<'ig> InstanceGuard<'ig> {
       self.tokens_deregister_for_id(
         |id:PlayerId| old_players_set.contains(&id)
       );
-      let old_ipls : Vec<_> = old_players.iter().cloned().map(
+      let old_ipls: Vec<_> = old_players.iter().cloned().map(
         |oldplayer| self.iplayers.remove(oldplayer)
           .map(|ipr| ipr.ipl)
       ).collect();
@@ -813,8 +813,8 @@ impl<'ig> InstanceGuard<'ig> {
         });
         
       let iad = InstanceAccessDetails {
-        gref : self.gref.clone(),
-        ident : player,
+        gref: self.gref.clone(),
+        ident: player,
         acctid
       };
       self.token_register(token.clone(), iad);
@@ -886,7 +886,7 @@ impl<'ig> InstanceGuard<'ig> {
   }
 
   fn forget_all_tokens<Id:AccessId>(tokens: &mut TokenRegistry<Id>) {
-    let global : &RwLock<TokenTable<Id>> = AccessId::global_tokens(PRIVATE_Y);
+    let global: &RwLock<TokenTable<Id>> = AccessId::global_tokens(PRIVATE_Y);
     let mut global = global.write().unwrap();
     for t in tokens.tr.drain() { global.remove(&t); }
   }
@@ -941,7 +941,7 @@ fn savefilename_parse(leaf: &[u8]) -> SavefilenameParseResult {
   let name = InstanceName::from_str(&rhs)?;
 
   GameFile {
-    access_leaf : [ b"a-", after_ftype_prefix ].concat(),
+    access_leaf: [ b"a-", after_ftype_prefix ].concat(),
     name,
   }
 }
@@ -961,7 +961,7 @@ impl InstanceGuard<'_> {
     f.flush()
       .with_context(||format!("save: flush {:?}",&tmp))?;
     drop(
-      f.into_inner().map_err(|e| { let e : io::Error = e.into(); e })
+      f.into_inner().map_err(|e| { let e: io::Error = e.into(); e })
         .with_context(||format!("save: close {:?}",&tmp))?
     );
     let out = savefilename(&self.name, prefix,"");
@@ -1057,7 +1057,7 @@ impl InstanceGuard<'_> {
   
     let pu_bc = PlayerUpdates::new_begin(&gs);
 
-    let iplayers : SecondarySlotMap<PlayerId, PlayerRecord> = {
+    let iplayers: SecondarySlotMap<PlayerId, PlayerRecord> = {
       let a = aplayers;
       a.into_iter()
     }.filter_map(|(player, ipl)| {
@@ -1115,8 +1115,8 @@ impl InstanceGuard<'_> {
       if let Some(acctid) = acctid;
       let iad = InstanceAccessDetails {
         acctid,
-        gref : gref.clone(),
-        ident : player,
+        gref: gref.clone(),
+        ident: player,
       };
       then { global.insert(RawToken(token), iad); }
     } }
@@ -1179,7 +1179,7 @@ pub type TokenTable<Id> = HashMap<RawToken, InstanceAccessDetails<Id>>;
 
 pub trait AccessId: Copy + Clone + 'static {
   type Error: Into<OnlineError>;
-  const ERROR : Self::Error;
+  const ERROR: Self::Error;
   fn global_tokens(_:PrivateCaller) -> &'static RwLock<TokenTable<Self>>;
   fn tokens_registry(ig: &mut Instance, _:PrivateCaller)
                      -> &mut TokenRegistry<Self>;
@@ -1226,14 +1226,14 @@ impl RawToken {
   }
 }
 
-pub fn lookup_token<Id : AccessId>(s : &RawTokenVal)
+pub fn lookup_token<Id:AccessId>(s: &RawTokenVal)
       -> Result<InstanceAccessDetails<Id>, Id::Error> {
   Id::global_tokens(PRIVATE_Y).read().unwrap().get(s).cloned()
     .ok_or(Id::ERROR)
 }
 
 #[throws(OE)]
-pub fn record_token<Id : AccessId> (
+pub fn record_token<Id:AccessId> (
   ig: &mut InstanceGuard,
   iad: InstanceAccessDetails<Id>
 ) -> RawToken {
@@ -1251,7 +1251,7 @@ pub fn process_all_players_for_account<
 {
   for gref in games.values() {
     let c = gref.lock_even_poisoned();
-    let remove : Vec<_> = c.g.iplayers.iter().filter_map(|(player,pr)| {
+    let remove: Vec<_> = c.g.iplayers.iter().filter_map(|(player,pr)| {
       if pr.ipl.acctid == acctid { Some(player) } else { None }
     }).collect();
     let mut ig = InstanceGuard { gref: gref.clone(), c };

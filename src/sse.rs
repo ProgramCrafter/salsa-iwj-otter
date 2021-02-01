@@ -51,7 +51,7 @@ impl UpdateReaderWN {
   #[throws(io::Error)]
   fn write_next<U>(&mut self, mut buf: &mut U, tz: &Timezone,
                    next: &PreparedUpdate)
-                   where U : Write {
+                   where U: Write {
     let tu = next.for_transmit(tz, self.player, self.client);
 
     write!(buf, "data: ")?;
@@ -226,7 +226,7 @@ impl StableIndexOffset for UpdateId {
 // ---------- entrypoint for dribbling the http response ----------
 
 #[throws(OE)]
-pub fn content(iad : InstanceAccessDetails<ClientId>, gen: Generation)
+pub fn content(iad: InstanceAccessDetails<ClientId>, gen: Generation)
   -> impl Read {
   let client = iad.ident;
 
@@ -248,13 +248,13 @@ pub fn content(iad : InstanceAccessDetails<ClientId>, gen: Generation)
       };
 
     UpdateReader {
-      need_flush : false,
-      keepalives : Wrapping(0),
-      overflow : None,
+      need_flush: false,
+      keepalives: Wrapping(0),
+      overflow: None,
       gref,
-      ending_send : default(),
-      init_confirmation_send : iter::once(()),
-      wn : UpdateReaderWN {
+      ending_send: default(),
+      init_confirmation_send: iter::once(()),
+      wn: UpdateReaderWN {
         player, client, to_send,
       },
     }

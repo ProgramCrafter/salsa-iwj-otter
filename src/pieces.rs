@@ -100,7 +100,7 @@ pub fn svg_circle_path(diam: f64) -> Html {
 }
 
 #[throws(SE)]
-pub fn svg_rectangle_path(PosC([x,y]) : PosC<f64>) -> Html {
+pub fn svg_rectangle_path(PosC([x,y]): PosC<f64>) -> Html {
   Html(format!("M {} {} h {} v {} h {} z",
                -x*0.5, -y*0.5, x, y, -x))
 }
@@ -109,9 +109,9 @@ pub fn svg_rectangle_path(PosC([x,y]) : PosC<f64>) -> Html {
 impl Outline for SimpleShape {
   delegate! {
     to self.outline {
-      fn surround_path(&self, _pri : &PieceRenderInstructions)
+      fn surround_path(&self, _pri: &PieceRenderInstructions)
                        -> Result<Html,IE>;
-      fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
+      fn thresh_dragraise(&self, _pri: &PieceRenderInstructions)
                           -> Result<Option<Coord>,IE>;
       fn bbox_approx(&self) -> [Pos;2];
     }

@@ -10,12 +10,11 @@ pub const EXIT_SITUATION : i32 =  8;
 pub const EXIT_USAGE     : i32 = 12;
 pub const EXIT_DISASTER  : i32 = 16;
 
-pub const DEFAULT_CONFIG_DIR      : &str = "/etc/otter";
-pub const DEFAULT_CONFIG_LEAFNAME : &str = "server.toml";
-
+pub const DEFAULT_CONFIG_DIR       : &str = "/etc/otter";
+pub const DEFAULT_CONFIG_LEAFNAME  : &str = "server.toml";
 pub const DEFAULT_SENDMAIL_PROGRAM : &str = "/usr/sbin/sendmail";
 
-pub const DAEMON_STARTUP_REPORT : &str = "otter-daemon started";
+pub const DAEMON_STARTUP_REPORT: &str = "otter-daemon started";
 pub const LOG_ENV_VAR: &str = "OTTER_LOG";
 
 #[derive(Deserialize,Debug,Clone)]
@@ -97,7 +96,7 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
     let wasm_dir        = defpath(wasm_dir,        "assets"            );
     let nwtemplate_dir  = defpath(nwtemplate_dir,  "nwtemplates"       );
     let bundled_sources = defpath(bundled_sources, "bundled-sources"   );
-    const DEFAULT_LIBRARY_GLOB : &str = "library/*.toml";
+    const DEFAULT_LIBRARY_GLOB: &str = "library/*.toml";
 
     let shapelibs = shapelibs.unwrap_or_else(||{
       let glob = defpath(None, DEFAULT_LIBRARY_GLOB);
@@ -213,7 +212,7 @@ impl ServerConfig {
     let mut buf = String::new();
     File::open(&config_filename).with_context(||config_filename.to_string())?
       .read_to_string(&mut buf)?;
-    let spec : ServerConfigSpec = toml_de::from_str(&buf)?;
+    let spec: ServerConfigSpec = toml_de::from_str(&buf)?;
     let whole = spec.try_into()?;
     set_config(whole);
   }
@@ -234,7 +233,7 @@ impl ServerConfig {
 
   pub fn save_dir(&self) -> &String {
     let st = GLOBAL.save_area_lock.lock().unwrap();
-    let mut _f : &File = st.as_ref().unwrap();
+    let mut _f: &File = st.as_ref().unwrap();
     &self.save_dir
   }
 }

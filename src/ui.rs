@@ -4,7 +4,7 @@
 
 use crate::imports::*;
 
-pub const SVG_SCALE : f64 = 6.;
+pub const SVG_SCALE: f64 = 6.;
 
 pub const HELD_SURROUND_COLOUR: &str = "black";
 

@@ -24,7 +24,7 @@ pub struct GroupData {
 }
 
 #[typetag::deserialize(tag="outline")]
-pub trait OutlineDefn : Debug + Sync + Send {
+pub trait OutlineDefn: Debug + Sync + Send {
   fn check(&self, lgi: &GroupData) -> Result<(),LLE>;
   fn load(&self, lgi: &GroupData) -> Result<Box<dyn Outline>,IE>;
 }
@@ -529,7 +529,7 @@ impl CircleDefn {
     match group.d.size.as_slice() {
       &[c] => c,
       size => throw!(LLE::WrongNumberOfSizeDimensions
-                     { got: size.len(), expected : [1,1] }),
+                     { got: size.len(), expected: [1,1] }),
     }
   }
 }
@@ -540,19 +540,19 @@ pub struct Square { pub xy: PosC<f64> }
 #[typetag::serde(name="Square")]
 impl Outline for Square {
   #[throws(IE)]
-  fn surround_path(&self, _pri : &PieceRenderInstructions) -> Html {
+  fn surround_path(&self, _pri: &PieceRenderInstructions) -> Html {
     let size = self.xy * SELECT_SCALE;
     svg_rectangle_path(size)?
   }
   #[throws(IE)]
-  fn thresh_dragraise(&self, _pri : &PieceRenderInstructions)
+  fn thresh_dragraise(&self, _pri: &PieceRenderInstructions)
                       -> Option<Coord> {
-    let smallest : f64 = self.xy.0.iter().cloned()
+    let smallest: f64 = self.xy.0.iter().cloned()
       .map(OrderedFloat::from).min().unwrap().into();
     Some((smallest * 0.5) as Coord)
   }
   fn bbox_approx(&self) -> [Pos;2] {
-    let pos : Pos = self.xy.map(
+    let pos: Pos = self.xy.map(
       |v| ((v * 0.5).ceil()) as Coord
     );
     let neg = -pos;
@@ -580,7 +580,7 @@ impl SquareDefn {
         &[s] => [s,s],
         s if s.len() == 2 => s.try_into().unwrap(),
         size => throw!(LLE::WrongNumberOfSizeDimensions
-                       { got: size.len(), expected : [1,2]}),
+                       { got: size.len(), expected: [1,2]}),
       }
     )}
   }

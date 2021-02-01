@@ -303,7 +303,7 @@ impl PreparedUpdateEntry {
 
 impl DataLoadPlayer {
   pub fn from_player(ig: &Instance, player: PlayerId) -> Self {
-    let kd : slotmap::KeyData = player.into();
+    let kd: slotmap::KeyData = player.into();
     let n = kd.get_idx_version().0;
     let n = if n != 0 { n.try_into().unwrap() }
     else { ig.gs.players.capacity() };
@@ -524,7 +524,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     }
 
     PreparedUpdateEntry_Piece {
-      by_client : self.by_client,
+      by_client: self.by_client,
       ops: out,
     }
   }
@@ -607,8 +607,9 @@ impl<'r> Drop for PrepareUpdatesBuffer<'r> {
 type WRC = WhatResponseToClientOp;
 
 impl PreparedUpdate {
-  pub fn for_transmit<'u>(&'u self, tz: &'u Timezone, player: PlayerId, dest : ClientId)
-                      -> TransmitUpdate<'u> {
+  pub fn for_transmit<'u>(&'u self, tz: &'u Timezone,
+                          player: PlayerId, dest: ClientId)
+                          -> TransmitUpdate<'u> {
     type ESVU<T> = ErrorSignaledViaUpdate<T>;
     type PUE = PreparedUpdateEntry;
     type TUE<'u> = TransmitUpdateEntry<'u>;
@@ -729,6 +730,6 @@ impl<'u> Into<FormattedLogEntry<'u>> for TransmitUpdateLogEntry<'u> {
 
 fn serialize_logentry<S:Serializer>(&(tz,logent): &TransmitUpdateLogEntry,
                                     s:S) -> Result<S::Ok, S::Error> {
-  let f : FormattedLogEntry = (tz, logent).into();
+  let f: FormattedLogEntry = (tz, logent).into();
   f.serialize(s)
 }

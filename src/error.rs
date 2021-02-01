@@ -182,14 +182,14 @@ macro_rules! some_slotmap {
 some_slotmap!{DenseSlotMap}
 some_slotmap!{SecondarySlotMap}
 
-impl<T> IdForById for T where T : AccessId {
+impl<T> IdForById for T where T: AccessId {
   type Error = T::Error;
-  const ERROR : Self::Error = <Self as AccessId>::ERROR;
+  const ERROR: Self::Error = <Self as AccessId>::ERROR;
 }
 
 impl IdForById for PieceId {
   type Error = OE;
-  const ERROR : OE = OE::PieceGone;
+  const ERROR: OE = OE::PieceGone;
 }
 
 #[macro_export]

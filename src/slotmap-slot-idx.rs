@@ -125,11 +125,11 @@ impl Serializer for &mut MainExtractor {
   fn serialize_unit (self)            -> ROk { u(line!()) }
 
   fn serialize_some<T>(self,                                   _: &T) -> ROk
-  where T : Serialize + ?Sized  { u(line!()) }
+  where T: Serialize + ?Sized  { u(line!()) }
   fn serialize_newtype_struct <T>(self, _:&str,                _: &T) -> ROk
-  where T : Serialize + ?Sized  { u(line!()) }
+  where T: Serialize + ?Sized  { u(line!()) }
   fn serialize_newtype_variant<T>(self, _:&str, _:u32, _:&str, _: &T) -> ROk
-  where T : Serialize + ?Sized  { u(line!()) }
+  where T: Serialize + ?Sized  { u(line!()) }
 
   fn serialize_unit_struct (self,_:&str             ) -> ROk { u(line!()) }
   fn serialize_unit_variant(self,_:&str,_:u32,_:&str) -> ROk { u(line!()) }
@@ -191,11 +191,11 @@ impl Serializer for ValueExtractor {
   fn serialize_unit (self)            -> R<V> { u(line!()) }
 
   fn serialize_some           <T>(self,                        _: &T) -> R<V>
-  where T : Serialize + ?Sized  { u(line!()) }
+  where T: Serialize + ?Sized  { u(line!()) }
   fn serialize_newtype_struct <T>(self, _:&str,                _: &T) -> R<V>
-  where T : Serialize + ?Sized  { u(line!()) }
+  where T: Serialize + ?Sized  { u(line!()) }
   fn serialize_newtype_variant<T>(self, _:&str, _:u32, _:&str, _: &T) -> R<V>
-  where T : Serialize + ?Sized  { u(line!()) }
+  where T: Serialize + ?Sized  { u(line!()) }
 
   fn serialize_unit_struct   (self,_:&str             ) -> R<V>    { u(line!()) }
   fn serialize_unit_variant  (self,_:&str,_:u32,_:&str) -> R<V>    { u(line!()) }
