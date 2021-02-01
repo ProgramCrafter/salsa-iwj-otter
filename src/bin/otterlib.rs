@@ -88,7 +88,7 @@ fn preview(items: Vec<ItemForOutput>) {
     }
   }
 
-  let mut pieces : Vec<Prep> = items.into_iter().map(|it| {
+  let mut pieces: Vec<Prep> = items.into_iter().map(|it| {
     let spec = ItemSpec { lib: it.0, item: it.1.itemname };
     (||{
       let pc = spec.clone().load().context("load")?;
@@ -211,7 +211,7 @@ fn main() {
     let tlibs = Config1::PathGlob(libs.to_owned());
     load(&vec![tlibs.clone()])?;
   }
-  let mut items : Vec<ItemForOutput> =
+  let mut items: Vec<ItemForOutput> =
     libs_list()
     .into_iter()
     .map(|lib| {

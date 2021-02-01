@@ -36,8 +36,8 @@ struct BoundMapStore<'r, T, F: FnMut(&str) -> Result<T,String>> {
 }
 
 impl<'f,T,F> TypedAction<T> for MapStore<T,F>
-where F : 'f + Clone + FnMut(&str) -> Result<T,String>,
-     'f : 'static // ideally TypedAction wuld have a lifetime parameter
+where F: 'f + Clone + FnMut(&str) -> Result<T,String>,
+     'f: 'static // ideally TypedAction wuld have a lifetime parameter
 {
   fn bind<'x>(&self, r: Rc<RefCell<&'x mut T>>) -> Action<'x> {
     Action::Single(Box::new(BoundMapStore {
@@ -618,13 +618,13 @@ fn connect(ma: &MainOpts) -> Conn {
   chan
 }
 
-const PLAYER_ALWAYS_PERMS : &[TablePermission] = &[
+const PLAYER_ALWAYS_PERMS: &[TablePermission] = &[
   TP::TestExistence,
   TP::ViewNotSecret,
   TP::Play,
 ];
 
-const PLAYER_DEFAULT_PERMS : &[TablePermission] = &[
+const PLAYER_DEFAULT_PERMS: &[TablePermission] = &[
   TP::ChangePieces,
 ];
 
@@ -866,7 +866,7 @@ mod set_link {
       None => {
         let MgmtGameResponseGameInfo { links, .. } = chan.info()?;
         for (tk, v) in links {
-          let v : Url = (&v).try_into().context("reparse sererr's UrlSpec")?;
+          let v: Url = (&v).try_into().context("reparse sererr's UrlSpec")?;
           match args.kind {
             None => {
               println!("{:<10} {}", tk, &v);
@@ -1078,7 +1078,7 @@ impl Default for LibGlobArgs { fn default() -> Self { Self {
 } } }
 
 impl LibGlobArgs {
-  fn add_arguments<'ap, 'tlg : 'ap>(
+  fn add_arguments<'ap, 'tlg: 'ap>(
     &'tlg mut self,
     ap: &'_ mut ArgumentParser<'ap>
   ) {
@@ -1157,7 +1157,7 @@ mod library_add {
   }
 
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
-    const MAGIC : &str = "mgmt-library-load-marker";
+    const MAGIC: &str = "mgmt-library-load-marker";
 
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = access_game(&ma, &args.table_name)?;
