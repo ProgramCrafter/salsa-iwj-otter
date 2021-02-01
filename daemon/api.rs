@@ -4,8 +4,6 @@
 
 pub use super::*;
 
-type WRC = WhatResponseToClientOp;
-
 type PL = PresentationLayout;
 
 #[derive(Clone,Debug)]

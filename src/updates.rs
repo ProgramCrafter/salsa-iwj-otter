@@ -6,9 +6,6 @@
 
 use crate::imports::*;
 
-type PUE = PreparedUpdateEntry;
-type ESVU<POEPU> = ErrorSignaledViaUpdate<POEPU>;
-
 #[allow(non_camel_case_types)] type PUE_P = PreparedUpdateEntry_Piece;
 #[allow(non_camel_case_types)] type TUE_P<'u> = TransmitUpdateEntry_Piece<'u>;
 
@@ -394,6 +391,7 @@ type IsResponseToClientOp = Option<(
   ClientId,
   ClientSequence
 )>;
+
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum WhatResponseToClientOp {
   /// In PROTOCOL.md terms, a Client update
@@ -603,8 +601,6 @@ impl<'r> Drop for PrepareUpdatesBuffer<'r> {
 }
 
 // ---------- for traansmission ----------
-
-type WRC = WhatResponseToClientOp;
 
 impl PreparedUpdate {
   pub fn for_transmit<'u>(&'u self, tz: &'u Timezone,

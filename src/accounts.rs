@@ -21,9 +21,6 @@ pub enum AccountScope {
   Unix { user: String },
 }
 
-type AS = AccountScope;
-type ME = MgmtError;
-type IE = InternalError;
 
 #[derive(Debug,Clone)]
 #[derive(Eq,PartialEq,Ord,PartialOrd,Hash)]

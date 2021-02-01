@@ -4,8 +4,6 @@
 
 use crate::imports::*;
 
-type IE = InternalError;
-type IR = Result<(), IE>;
 type SE = SVGProcessingError;
 
 // ---------- newtypes and type aliases ----------
@@ -137,7 +135,8 @@ pub trait Piece: Outline + Send + Debug {
   }
 
   // #[throws] doesn't work here - fehler #todo
-  fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) -> IR;
+  fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions)
+               -> Result<(),IE>;
 
   fn describe_html(&self, face: Option<FaceId>) -> Html;
 

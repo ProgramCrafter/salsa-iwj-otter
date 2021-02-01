@@ -9,9 +9,6 @@ use crate::imports::*;
 use slotmap::dense as sm;
 use std::sync::PoisonError;
 
-type ME = MgmtError;
-type ESU<POEPU> = ErrorSignaledViaUpdate<POEPU>;
-
 #[allow(non_camel_case_types)] type PUE_P = PreparedUpdateEntry_Piece;
 
 // ---------- newtypes and type aliases ----------
@@ -704,7 +701,7 @@ impl<'ig> InstanceGuard<'ig> {
       }
       buf.finish();
 
-      self.remove_clients(old_players_set, ESU::PlayerRemoved);
+      self.remove_clients(old_players_set, ESVU::PlayerRemoved);
       self.tokens_deregister_for_id(
         |id:PlayerId| old_players_set.contains(&id)
       );
@@ -753,7 +750,7 @@ impl<'ig> InstanceGuard<'ig> {
     // ppoint of no return
     (||{
       self.remove_clients(&[player].iter().cloned().collect(),
-                          ESU::TokenRevoked);
+                          ESVU::TokenRevoked);
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
   }
 

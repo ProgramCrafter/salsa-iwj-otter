@@ -8,6 +8,8 @@ use crate::imports::*;
 
 type ColourMap = IndexVec<FaceId, Colour>;
 
+type SE = SVGProcessingError;
+
 #[derive(Debug,Serialize,Deserialize)]
 // todo: this serialisation is rather large
 struct SimpleShape {
@@ -35,9 +37,6 @@ error_from_losedetails!{SVGProcessingError,BadNumber,std::num::ParseFloatError}
 impl From<SVGProcessingError> for MgmtError {
   fn from(se: SVGProcessingError) -> MgmtError { se.into() }
 }
-
-type IE = InternalError;
-type SE = SVGProcessingError;
 
 #[throws(SE)]
 pub fn svg_rescale_path(input: &Html, scale: f64) -> Html {

@@ -114,9 +114,23 @@ pub type Colour = Html;
 pub enum Impossible { }
 display_as_debug!(Impossible);
 
+// ---------- type abbreviations ----------
+
 pub type AE = anyhow::Error;
+
+// accounts.rs
+pub type AS = AccountScope;
+
+// commands.rs
+pub type ME = MgmtError;
+
+// error.rs
+pub type ESVU<POEPU> = ErrorSignaledViaUpdate<POEPU>;
+pub type IE = InternalError;
 pub type OE = OnlineError;
 pub type POEPP = PieceOpErrorPartiallyProcessed;
 
 // updates.rs
+pub type PUE = PreparedUpdateEntry;
 pub type PUO = PieceUpdateOps;
+pub type WRC = WhatResponseToClientOp;

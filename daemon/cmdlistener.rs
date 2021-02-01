@@ -21,9 +21,6 @@ type CSE = anyhow::Error;
 use MgmtCommand::*;
 use MgmtResponse::*;
 
-type ME = MgmtError;
-
-type AS = AccountScope;
 type TP = TablePermission;
 
 const USERLIST: &str = "/etc/userlist";

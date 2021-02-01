@@ -23,8 +23,6 @@ use crate::gamestate::PieceSpec;
 
 pub use implementation::PlayerAccessSpec;
 
-type ME = crate::commands::MgmtError;
-
 //---------- common types ----------
 
 pub type Coord = i32;

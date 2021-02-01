@@ -21,7 +21,6 @@
 
 pub use crate::imports::*;
 
-#[doc(hidden)] pub type IE = InternalError;
 #[doc(hidden)] pub type LLE = shapelib::LibraryLoadError;
 
 #[cfg(doc)]

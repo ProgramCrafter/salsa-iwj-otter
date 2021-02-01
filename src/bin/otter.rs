@@ -15,10 +15,8 @@ use derive_more::Display;
 use otter::imports::*;
 
 type APE = ArgumentParseError;
-type AS = AccountScope;
 type E = anyhow::Error;
 type MC = MgmtCommand;
-type ME = MgmtError;
 type MGI = MgmtGameInstruction;
 type MGR = MgmtGameResponse;
 type MR = MgmtResponse;

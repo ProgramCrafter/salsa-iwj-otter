@@ -4,8 +4,6 @@
 
 use crate::imports::*;
 
-type IE = InternalError;
-
 #[derive(Error,Debug)]
 pub enum OnlineError {
   #[error("Game in process of being destroyed")]
