@@ -13,7 +13,7 @@ use std::sync::PoisonError;
 
 // ---------- newtypes and type aliases ----------
 
-visible_slotmap_key!{ ClientId('C') }
+visible_slotmap_key!{ ClientId(b'C') }
 
 const MAX_CLIENT_INACTIVITY: Duration = Duration::from_secs(200);
 

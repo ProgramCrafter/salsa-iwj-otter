@@ -24,7 +24,9 @@ macro_rules! display_consequential_impls {
 pub use crate::display_consequential_impls; // this is madness!
 
 #[throws(AE)]
-pub fn slotkey_parse(s: &str, sep: char) -> SKD {
+pub fn slotkey_parse(s: &str, sep: u8) -> SKD {
+  if s.as_bytes() == [b'0', sep, b'0', b'0'] { return default() }
+  let sep: char = sep.into();
   let e = || anyhow!("could not deserialise visibile piece id");
   let mut i = s.splitn(2, sep).map(|s| s.parse().map_err(|_| e()));
   let l: u32 = i.next().ok_or_else(e)??;
@@ -34,7 +36,9 @@ pub fn slotkey_parse(s: &str, sep: char) -> SKD {
 }
 
 #[throws(fmt::Error)]
-pub fn slotkey_write(k: SKD, sep: char, f: &mut fmt::Formatter) {
+pub fn slotkey_write(k: SKD, sep: u8, f: &mut fmt::Formatter) {
+  let sep: char = sep.into();
+  if k == default() { write!(f, "0{}00", sep)?; return; }
   let v = k.as_ffi();
   write!(f, "{}{}{}", v & 0xffffffff, sep, v >> 32)?
 }

@@ -8,7 +8,7 @@ type SE = SVGProcessingError;
 
 // ---------- newtypes and type aliases ----------
 
-visible_slotmap_key!{ PlayerId('#') }
+visible_slotmap_key!{ PlayerId(b'#') }
 
 slotmap::new_key_type!{
   pub struct PieceId;
@@ -19,7 +19,7 @@ slotmap::new_key_type!{
 #[serde(transparent)]
 pub struct Generation(pub u64);
 
-visible_slotmap_key!{ VisiblePieceId('.') }
+visible_slotmap_key!{ VisiblePieceId(b'.') }
 
 #[derive(Clone,Copy,Debug)]
 #[derive(Serialize,Deserialize)]
