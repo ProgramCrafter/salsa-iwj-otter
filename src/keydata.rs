@@ -52,6 +52,12 @@ macro_rules! visible_slotmap_key {
     #[serde(try_from="String")]
     pub struct $x(pub slotmap::KeyData);
 
+    impl_for_slotmap_key!($x($sep));
+  }
+}
+#[macro_export]
+macro_rules! impl_for_slotmap_key {
+  ( $x:ident($sep:expr) ) => {
     impl Display for $x {
       #[throws(fmt::Error)]
       fn fmt(&self, f: &mut fmt::Formatter) { slotkey_write(self.0,$sep,f)? }
@@ -84,3 +90,4 @@ macro_rules! visible_slotmap_key {
   }
 }
 pub use crate::visible_slotmap_key; // this is madness!
+pub use crate::impl_for_slotmap_key; // this is madness!
