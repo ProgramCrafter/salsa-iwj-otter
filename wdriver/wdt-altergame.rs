@@ -20,11 +20,11 @@ impl Ctx {
       let container = w.find_element(By::Id("links"))?;
       let relevant = container
         .find_elements(By::Tag("a"))?;
-      let relevant : Vec<_> = relevant
+      let relevant: Vec<_> = relevant
         .iter()
         .map(|e| Ok::<_,AE>((e, e.text()?)))
         .collect::<Result<Vec<_>,AE>>()?;
-      let relevant : Vec<_> = relevant
+      let relevant: Vec<_> = relevant
         .iter()
         .filter(|(_e, txt)| txt == desc)
         .collect();
@@ -67,7 +67,7 @@ impl Ctx {
 #[throws(AE)]
 fn main(){
   let (mut su, inst) = setup(module_path!()).always_context("setup")?;
-  let [alice, _] : [Window; 2] =
+  let [alice, _]: [Window; 2] =
     su.setup_static_users(&inst)?.try_into().unwrap();
   debug!("ok {:?}", alice);
 

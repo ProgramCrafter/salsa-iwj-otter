@@ -55,10 +55,10 @@ pub use otter::ui::{AbbrevPresentationLayout, PresentationLayout};
 pub type T4d = t4::WebDriver;
 pub type WDE = t4::error::WebDriverError;
 
-pub const MS : time::Duration = time::Duration::from_millis(1);
+pub const MS: time::Duration = time::Duration::from_millis(1);
 pub type AE = anyhow::Error;
 
-pub const URL : &str = "http://localhost:8000";
+pub const URL: &str = "http://localhost:8000";
 
 pub fn default<T:Default>() -> T { Default::default() }
 
@@ -66,8 +66,8 @@ use t4::Capabilities;
 use once_cell::sync::OnceCell;
 use otter::config::DAEMON_STARTUP_REPORT;
 
-const TABLE : &str = "server::dummy";
-const CONFIG : &str = "server-config.toml";
+const TABLE: &str = "server::dummy";
+const CONFIG: &str = "server-config.toml";
 
 #[derive(Copy,Clone,Debug,Eq,PartialEq,Ord,PartialOrd)]
 #[derive(FromPrimitive,EnumIter,IntoStaticStr,EnumProperty)]
@@ -366,7 +366,7 @@ fn reinvoke_via_bwrap(_opts: &Opts, current_exe: &str) -> Void {
     .args(env::args_os().skip(1));
 
   std::io::stdout().flush().context("flush stdout")?;
-  let e : AE = bcmd.exec().into();
+  let e: AE = bcmd.exec().into();
   throw!(e.context("exec bwrap"));
 }
 
@@ -407,7 +407,7 @@ fn prepare_tmpdir<'x>(opts: &'x Opts, mut current_exe: &'x str) -> DirSubst {
           .context("create")?;
       }
       Err(e) => {
-        let e : AE = e.into();
+        let e: AE = e.into();
         throw!(e.context("stat existing directory"))
       }
     }
@@ -452,7 +452,7 @@ fn prepare_tmpdir<'x>(opts: &'x Opts, mut current_exe: &'x str) -> DirSubst {
   }
 
   let manifest_var = "CARGO_MANIFEST_DIR";
-  let src : String = (|| Ok::<_,AE>(match env::var(manifest_var) {
+  let src: String = (|| Ok::<_,AE>(match env::var(manifest_var) {
     Ok(dir) => dir.into(),
     Err(env::VarError::NotPresent) => start_dir.clone(),
     e@ Err(_) => throw!(e.context(manifest_var).err().unwrap()),
@@ -496,9 +496,9 @@ fn fork_something_which_prints(mut cmd: Command,
     let what = what.to_owned();
     thread::spawn(move|| (||{
       for l in report {
-        let l : Result<String, io::Error> = l;
+        let l: Result<String, io::Error> = l;
         let l = l.context("reading further output")?;
-        const MAXLEN : usize = 300;
+        const MAXLEN: usize = 300;
         if l.len() <= MAXLEN {
           println!("{} {}", what, l);
         } else {
@@ -515,7 +515,7 @@ fn fork_something_which_prints(mut cmd: Command,
 
 #[throws(AE)]
 fn prepare_xserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
-  const DISPLAY : u16 = 12;
+  const DISPLAY: u16 = 12;
 
   let mut xcmd = Command::new("Xvfb");
   xcmd
@@ -627,7 +627,7 @@ impl DirSubst {
   pub fn otter<S:AsRef<str>>(&self, xargs: &[S]) {
     let ds = self;
     let exe = ds.subst("@target@/debug/otter")?;
-    let mut args : Vec<&str> = vec![];
+    let mut args: Vec<&str> = vec![];
     args.extend(&["--config", CONFIG]);
     args.extend(xargs.iter().map(AsRef::as_ref));
     let dbg = format!("running {} {:?}", &exe, &args);
@@ -680,7 +680,7 @@ pub fn prepare_game(ds: &DirSubst, table: &str) -> InstanceName {
                    @table@ @game_spec@ \
     ")?).context("reset table")?;
 
-  let instance : InstanceName = table.parse()
+  let instance: InstanceName = table.parse()
     .with_context(|| table.to_owned())
     .context("parse table name")?;
 
@@ -689,13 +689,13 @@ pub fn prepare_game(ds: &DirSubst, table: &str) -> InstanceName {
 
 #[throws(AE)]
 fn prepare_geckodriver(opts: &Opts, cln: &cleanup_notify::Handle) {
-  const EXPECTED : &str = "Listening on 127.0.0.1:4444";
+  const EXPECTED: &str = "Listening on 127.0.0.1:4444";
   let mut cmd = Command::new("geckodriver");
   if opts.geckodriver_args != "" {
     cmd.args(opts.geckodriver_args.split(' '));
   }
   let (l,_) = fork_something_which_prints(cmd, cln, "geckodriver")?;
-  let fields : Vec<_> = l.split('\t').skip(2).take(2).collect();
+  let fields: Vec<_> = l.split('\t').skip(2).take(2).collect();
   let expected = ["INFO", EXPECTED];
   if fields != expected {
     throw!(anyhow!("geckodriver did not report as expected \
@@ -708,7 +708,7 @@ fn prepare_geckodriver(opts: &Opts, cln: &cleanup_notify::Handle) {
 fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<String>) {
   let mut count = 0;
   let mut caps = t4::DesiredCapabilities::firefox();
-  let prefs : HashMap<_,_> = [
+  let prefs: HashMap<_,_> = [
     ("devtools.console.stdout.content", true),
   ].iter().cloned().collect();
   caps.add("prefs", prefs)?;
@@ -716,7 +716,7 @@ fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<String>) {
   let mut driver = t4::WebDriver::new("http://localhost:4444", &caps)
     .context("create 34 WebDriver")?;
 
-  const FRONT : &str = "front";
+  const FRONT: &str = "front";
   let window_names = vec![FRONT.into()];
   driver.set_window_name(FRONT).context("set initial window name")?;
   screenshot(&mut driver, &mut count, "startup")?;
@@ -845,7 +845,7 @@ impl<'g> WindowGuard<'g> {
 
       let mat = (||{
         let ary = ary.as_array().ok_or_else(|| anyhow!("not array"))?;
-        let mut mat : ScreenCTM = ndarray::Array2::zeros((3,3));
+        let mut mat: ScreenCTM = ndarray::Array2::zeros((3,3));
         for got in itertools::Itertools::zip_longest(
           [11, 12, 21, 22, 41, 42].iter(),
           // ^ from https://developer.mozilla.org/en-US/docs/Web/API/DOMMatrix
@@ -865,7 +865,7 @@ impl<'g> WindowGuard<'g> {
       Ok::<_,AE>(mat)
     })?;
     (||{
-      let vec : ndarray::Array1<f64> =
+      let vec: ndarray::Array1<f64> =
         posg.0.iter()
         .cloned()
         .map(|v| v as f64)
@@ -1075,7 +1075,7 @@ impl<'g> WindowGuard<'g> {
 
   #[throws(AE)]
   pub fn otter(&mut self, verb: &[&str], args: &[&str]) {
-    let args : Vec<String> =
+    let args: Vec<String> =
       ["--account", "server:"].iter().cloned().map(Into::into)
       .chain(verb.iter().cloned().map(Into::into))
       .chain(iter::once(self.w.table()))
@@ -1288,7 +1288,7 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
     .init();
   debug!("starting");
 
-  let current_exe : String = env::current_exe()
+  let current_exe: String = env::current_exe()
     .context("find current executable")?
     .to_str()
     .ok_or_else(|| anyhow!("current executable path is not UTF-8 !"))?
