@@ -15,24 +15,24 @@ pub struct InstanceAccess<'i, Id> {
 }
 
 impl<'r, Id> FromFormValue<'r> for InstanceAccess<'r, Id>
-  where Id : AccessId, OE : From<Id::Error>
+  where Id: AccessId, OE: From<Id::Error>
 {
   type Error = OER;
   #[throws(OER)]
   fn from_form_value(param: &'r RawStr) -> Self {
     let token = RawTokenVal::from_str(param.as_str());
     let i = InstanceAccessDetails::from_token(token)?;
-    InstanceAccess { raw_token : token, i }
+    InstanceAccess { raw_token: token, i }
   }
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-struct ApiPiece<O : ApiPieceOp> {
-  ctoken : RawToken,
-  piece : VisiblePieceId,
-  gen : Generation,
-  cseq : ClientSequence,
-  op : O,
+struct ApiPiece<O:ApiPieceOp> {
+  ctoken: RawToken,
+  piece: VisiblePieceId,
+  gen: Generation,
+  cseq: ClientSequence,
+  op: O,
 }
 
 struct ApiPieceOpArgs<'a> {
@@ -42,7 +42,7 @@ struct ApiPieceOpArgs<'a> {
   p: &'a dyn Piece,
 }
 
-trait ApiPieceOp : Debug {
+trait ApiPieceOp: Debug {
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate;
 
@@ -101,7 +101,7 @@ fn log_did_to_piece(
 }
 
 #[throws(OE)]
-fn api_piece_op<O: ApiPieceOp>(form : Json<ApiPiece<O>>)
+fn api_piece_op<O: ApiPieceOp>(form: Json<ApiPiece<O>>)
                    -> impl response::Responder<'static> {
 //  thread::sleep(Duration::from_millis(2000));
   let iad = lookup_token(form.ctoken.borrow())?;
@@ -183,7 +183,7 @@ macro_rules! api_route_core {
 
     #[post($path, format="json", data="<form>")]
     #[throws(OER)]
-    fn $fn(form : Json<ApiPiece<$form>>)
+    fn $fn(form: Json<ApiPiece<$form>>)
            -> impl response::Responder<'static> {
       api_piece_op(form)?
     }
@@ -267,7 +267,7 @@ api_route!{
 
     let pls = &htmlescape::encode_minimal(&gpl.nick);
 
-    let logent = LogEntry { html : Html(match was {
+    let logent = LogEntry { html: Html(match was {
         Some(was) => format!("{} wrested {} from {}", pls, pcs, was),
         None => format!("{} wrested {}", pls, pcs),
     })};
@@ -304,14 +304,14 @@ api_route!{
 api_route!{
   api_raise, "/_/api/setz",
   struct ApiPieceSetZ {
-    z : ZCoord,
+    z: ZCoord,
   }
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     // xxx prevent restzcking anything that is occulting
     let ApiPieceOpArgs { gs,piece, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
-    pc.zlevel = ZLevel { z : self.z.clone(), zg : gs.gen };
+    pc.zlevel = ZLevel { z: self.z.clone(), zg: gs.gen };
     let update = PieceUpdateOp::SetZLevel(());
     (WhatResponseToClientOp::Predictable,
      update, vec![]).into()
@@ -392,7 +392,7 @@ api_route!{
   }
 }
 
-const DEFKEY_FLIP : UoKey = 'f';
+const DEFKEY_FLIP: UoKey = 'f';
 
 api_route!{
   api_uo, "/_/api/k",

@@ -256,7 +256,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   }
 
   #[throws(MgmtError)]
-  fn readonly<'igr, 'ig : 'igr, 'cs,
+  fn readonly<'igr, 'ig: 'igr, 'cs,
               F: FnOnce(&InstanceGuard) -> Result<MgmtGameResponse,ME>,
               P: Into<PermSet<TablePermission>>>
   
@@ -274,7 +274,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   }
 
   #[throws(MgmtError)]
-  fn update_links<'igr, 'ig : 'igr, 'cs,
+  fn update_links<'igr, 'ig: 'igr, 'cs,
                F: FnOnce(&mut Arc<LinksTable>) -> Result<Html,ME>>
     (
       cs: &'cs CommandStream,
@@ -464,10 +464,10 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
     Insn::SetLinks(mut spec_links) =>  {
       update_links(cs,ag,ig, |ig_links|{
-        let mut new_links : LinksTable = default();
+        let mut new_links: LinksTable = default();
         // todo want a FromIterator impl
         for (k,v) in spec_links.drain() {
-          let url : Url = (&v).try_into()?;
+          let url: Url = (&v).try_into()?;
           new_links[k] = Some(url.into_string());
         }
         let new_links = Arc::new(new_links);
@@ -481,9 +481,9 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
     Insn::SetLink { kind, url } =>  {
       update_links(cs,ag,ig, |ig_links|{
-        let mut new_links : LinksTable = (**ig_links).clone();
-        let url : Url = (&url).try_into()?;
-        let show : Html = (kind, url.as_str()).into();
+        let mut new_links: LinksTable = (**ig_links).clone();
+        let url: Url = (&url).try_into()?;
+        let show: Html = (kind, url.as_str()).into();
         new_links[kind] = Some(url.into_string());
         let new_links = Arc::new(new_links);
         *ig_links = new_links.clone();
@@ -496,7 +496,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
     Insn::RemoveLink { kind } =>  {
       update_links(cs,ag,ig, |ig_links|{
-        let mut new_links : LinksTable = (**ig_links).clone();
+        let mut new_links: LinksTable = (**ig_links).clone();
         new_links[kind] = None;
         let new_links = Arc::new(new_links);
         *ig_links = new_links.clone();
@@ -586,7 +586,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         .try_into().map_err(
           |_| SE::InternalError(format!("implicit item count out of range"))
         )?;
-      let count : Box<dyn ExactSizeIterator<Item=u32>> = match count {
+      let count: Box<dyn ExactSizeIterator<Item=u32>> = match count {
         Some(explicit) if implicit == 1 => {
           Box::new((0..explicit).map(|_| 0))
         },
@@ -866,7 +866,7 @@ impl CommandStream<'_> {
           let mut cmd_s = log_enabled!(log::Level::Info)
             .as_some_from(|| format!("{:?}", &cmd))
             .unwrap_or_default();
-          const MAX : usize = 200;
+          const MAX: usize = 200;
           if cmd_s.len() > MAX-3 {
             cmd_s.truncate(MAX-3);
             cmd_s += "..";
@@ -886,7 +886,7 @@ impl CommandStream<'_> {
         }
         Err(EOF) => break,
         Err(IO(e)) => Err(e).context("read command stream")?,
-        Err(Parse(s)) => MgmtResponse::Error { error : ME::ParseFailed(s) },
+        Err(Parse(s)) => MgmtResponse::Error { error: ME::ParseFailed(s) },
       };
       self.chan.write(&resp).context("swrite command stream")?;
     }
@@ -1015,7 +1015,7 @@ impl CommandStream<'_> {
   }
 
   #[throws(MgmtError)]
-  pub fn check_acl_modify_player<'igr, 'ig : 'igr,
+  pub fn check_acl_modify_player<'igr, 'ig: 'igr,
                                  P: Into<PermSet<TablePermission>>>(
     &self,
     ag: &AccountsGuard,
@@ -1172,7 +1172,7 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
   match &wanted {
 
     AccountScope::Server => {
-      let y : Authorisation<Uid> = {
+      let y: Authorisation<Uid> = {
         cs.authorised_uid(None,None)?
       };
       y.therefore_ok()
@@ -1181,11 +1181,11 @@ fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
     AccountScope::Unix { user: wanted } => {
       struct InUserList;
 
-      let y : Authorisation<(Passwd,Uid,InUserList)> = {
+      let y: Authorisation<(Passwd,Uid,InUserList)> = {
 
-        struct AuthorisedIf { authorised_for : Option<Uid> }
+        struct AuthorisedIf { authorised_for: Option<Uid> }
 
-        const SERVER_ONLY : (AuthorisedIf, Authorisation<InUserList>) = (
+        const SERVER_ONLY: (AuthorisedIf, Authorisation<InUserList>) = (
           AuthorisedIf { authorised_for: None },
           Authorisation::authorised(&InUserList),
         );

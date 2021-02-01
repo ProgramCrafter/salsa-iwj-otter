@@ -44,7 +44,7 @@ struct FrontPageRenderContext {
 enum ResourceLocation { Main, Wasm(&'static str), }
 type RL = ResourceLocation;
 
-const RESOURCES : &[(&'static str, ResourceLocation, ContentType)] = &[
+const RESOURCES: &[(&'static str, ResourceLocation, ContentType)] = &[
   ("script.js",    RL::Main,                       ContentType::JavaScript),
   ("LICENCE",      RL::Main,                       ContentType::Plain),
   ("libre",        RL::Main,                       ContentType::HTML),
@@ -132,8 +132,8 @@ struct WholeQueryString<T>(pub Option<T>);
 
 impl<'a,'r,T> FromRequest<'a,'r> for WholeQueryString<T>
   where T: 'a + FromFormValue<'a>,
-        T::Error : Debug,
-        for <'x> &'x T::Error : Into<rocket::http::Status>,
+        T::Error: Debug,
+        for <'x> &'x T::Error: Into<rocket::http::Status>,
 {
   type Error = <T as FromFormValue<'a>>::Error;
   fn from_request(r: &'a rocket::Request<'r>)
@@ -154,7 +154,7 @@ pub struct Parse<T: FromStr>(pub T);
 
 impl<'r, T> FromParam<'r> for Parse<T>
   where T: FromStr,
-        <T as FromStr>::Err : Debug,
+        <T as FromStr>::Err: Debug,
 //  where  : Into<OE>
 {
   type Error = <T as FromStr>::Err;
@@ -166,7 +166,7 @@ impl<'r, T> FromParam<'r> for Parse<T>
 
 #[get("/_/updates?<ctoken>&<gen>")]
 #[throws(OER)]
-fn updates<'r>(ctoken : InstanceAccess<ClientId>, gen: u64,
+fn updates<'r>(ctoken: InstanceAccess<ClientId>, gen: u64,
                cors: rocket_cors::Guard<'r>)
                -> impl response::Responder<'r> {
   let gen = Generation(gen);

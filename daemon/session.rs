@@ -65,7 +65,7 @@ fn session(form: Json<SessionForm>,
   session_inner(form, layout.map(|pl| pl.0))?
 }
 
-fn session_inner(form : Json<SessionForm>,
+fn session_inner(form: Json<SessionForm>,
                  layout: Option<PresentationLayout>)
                  -> Result<Template,OE> {
   // make session in this game, log a message to other players
@@ -77,8 +77,8 @@ fn session_inner(form : Json<SessionForm>,
     let client = ig.clients.insert(cl);
 
     let ciad = InstanceAccessDetails {
-      gref : iad.gref.clone(),
-      ident : client,
+      gref: iad.gref.clone(),
+      ident: client,
       acctid: iad.acctid,
     };
     let ctoken = record_token(&mut ig, ciad)?;
@@ -136,7 +136,7 @@ fn session_inner(form : Json<SessionForm>,
       uses.push(for_piece);
     }
 
-    let mut timestamp_abbrev : Option<String> = None;
+    let mut timestamp_abbrev: Option<String> = None;
 
     let log = itertools::chain(
       ig.gs.log.iter()
