@@ -108,12 +108,6 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         update_from(nick,                   &mut record.nick    );
         update_from(timezone,               &mut record.timezone);
         update_from(layout,                 &mut record.layout  );
-/*
-      if let Some(new_timezone) = timezone {
-        let ipr = ig.iplayers.byid_mut(player)?;
-       ipr.ipl.tz = tz_from_str(&new_timezone);
-      }
-*/
         Fine
       })
         ?
@@ -343,10 +337,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let logentry = LogEntry {
         html: Html(format!("{} [{}] joined the game", &nick, &account)),
       };
-      let timezone = &arecord.timezone
-/*.as_ref().map(String::as_str)
-        .unwrap_or("");*/
-;
+      let timezone = &arecord.timezone;
       let tz = tz_from_str(&timezone);
       let gpl = GPlayerState {
         nick: nick.to_string(),
@@ -1067,7 +1058,6 @@ impl CommandStream<'_> {
       let current_account = cs.current_account()?;
       let (_subject_record, subject_acctid) =
         ag.lookup(&current_account.notional_account)?;
-//      let subject_account = &*subject_record.account;
 
       let subject_is = |object_acctid: AccountId|{
         if subject_acctid == object_acctid {

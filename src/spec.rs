@@ -147,10 +147,6 @@ pub struct TokenByEmail {
 #[derive(Debug,Serialize,Deserialize)]
 pub struct UrlOnStdout;
 
-//#[derive(Debug,Serialize,Deserialize)]
-//struct TokenByEmail { email: String };
-// todo ^ implement this
-
 //---------- Game TOML file ----------
 
 #[derive(Debug,Serialize,Deserialize)]
