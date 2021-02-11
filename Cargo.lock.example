@@ -1598,6 +1598,7 @@ dependencies = [
  "anyhow",
  "argparse",
  "arrayvec",
+ "backtrace",
  "boolinator",
  "chrono",
  "chrono-tz",
