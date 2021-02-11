@@ -806,7 +806,7 @@ impl UpdateHandler {
         let estimate = updates.pcs.len() + updates.log.len();
         let mut buf = PrepareUpdatesBuffer::new(g, None, Some(estimate));
         for (upiece, uuop) in updates.pcs {
-          buf.piece_update(upiece, PUO::Simple(uuop));
+          buf.piece_update(upiece, PUOs::Simple(uuop));
         }
         buf.log_updates(updates.log);
         buf.raw_updates(raw);
@@ -821,7 +821,7 @@ impl UpdateHandler {
       Bulk(bulk) => {
         let mut buf = PrepareUpdatesBuffer::new(g, None, None);
         for (upiece, uuop) in bulk.pieces {
-          buf.piece_update(upiece, PUO::Simple(uuop));
+          buf.piece_update(upiece, PUOs::Simple(uuop));
         }
 
         if bulk.logs {

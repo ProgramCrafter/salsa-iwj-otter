@@ -133,5 +133,6 @@ pub type POEPP = PieceOpErrorPartiallyProcessed;
 
 // updates.rs
 pub type PUE = PreparedUpdateEntry;
-pub type PUO = PieceUpdateOps;
+pub type PUO<NS,ZL> = PieceUpdateOp<NS,ZL>;
+pub type PUOs = PieceUpdateOps;
 pub type WRC = WhatResponseToClientOp;

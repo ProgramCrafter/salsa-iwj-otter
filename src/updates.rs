@@ -123,7 +123,7 @@ pub enum PieceUpdateOps {
 }
 
 impl From<PieceUpdateOp<(),()>> for PieceUpdateOps {
-  fn from(op: PieceUpdateOp<(),()>) -> Self { PUO::Simple(op) }
+  fn from(op: PieceUpdateOp<(),()>) -> Self { PUOs::Simple(op) }
 }
 
 impl From<PieceUpdateFromOpSimple> for PieceUpdate {
@@ -434,7 +434,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
                             -> Result<(),OE> {
     let by_client = (WRC::Unpredictable, client, cseq);
     let mut buf = PrepareUpdatesBuffer::new(ig, Some(by_client), None);
-    let ops = PUO::Simple(PieceUpdateOp::Modify(()));
+    let ops = PUOs::Simple(PieceUpdateOp::Modify(()));
     let state = buf.piece_update_fallible(
       piece, ops, |pc, gen, _by_client| {
         match partially {
@@ -498,8 +498,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     let mut out: SecondarySlotMap<PlayerId, PreparedPieceUpdate> = default();
     for (player, gpl) in &mut gs.players {
       let ops = match ops {
-        PUO::Simple(update) => update,
-        PUO::PerPlayer(ref ops) => match ops.get(player) {
+        PUOs::Simple(update) => update,
+        PUOs::PerPlayer(ref ops) => match ops.get(player) {
           Some(op) => *op,
           None => continue,
         }
