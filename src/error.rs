@@ -40,7 +40,7 @@ pub enum InternalError {
   #[error("Server MessagePack decoding error (game load failed) {0}")]
   MessagePackDecodeFail(#[from] rmp_serde::decode::Error),
   #[error("Server internal logic error {0}")]
-  InternalLogicError(String),
+  InternalLogicError(InternalLogicError),
   #[error("SVG processing/generation error {0:?}")]
   SVGProcessingFailed(#[from] SVGProcessingError),
   #[error("String formatting error {0}")]
@@ -52,6 +52,30 @@ pub enum InternalError {
   #[error("Game contains only partial data for player, or account missing")]
   PartialPlayerData,
 }
+
+#[derive(Error)]
+pub struct InternalLogicError {
+  desc: Cow<'static, str>,
+  backtrace: parking_lot::Mutex<backtrace::Backtrace>,
+}
+
+pub fn internal_logic_error<S: Into<Cow<'static, str>>>(desc: S) -> IE {
+  let backtrace = backtrace::Backtrace::new_unresolved();
+  IE::InternalLogicError(InternalLogicError {
+    desc: desc.into(),
+    backtrace: parking_lot::Mutex::new(backtrace),
+  })
+}
+
+impl Debug for InternalLogicError {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    let mut backtrace = self.backtrace.lock();
+    backtrace.resolve();
+    write!(f, "internal logic error! {}\nbacktrace: {:?}",
+           self.desc, &backtrace)
+  }
+}
+display_as_debug!(InternalLogicError);
 
 #[derive(Clone,Error,Debug,Serialize,Deserialize)]
 #[error("{0}")]
