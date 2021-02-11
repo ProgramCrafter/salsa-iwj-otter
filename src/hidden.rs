@@ -29,60 +29,62 @@ pub struct Occultation {
   region: [Pos; 2], // automatically affect pieces here
   occulter: PieceId, // kept in synch with PieceOccult::active
   views: Vec<OccultView>,
-  defview: Option<OccultationKind>,
+  #[serde(default)] defview: OccultationKind,
   pieces: BTreeSet<PieceId>, // kept in synch with PieceOccult::passive
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
 pub struct OccultView {
   players: Vec<PlayerId>,
-  occult: Option<OccultationKind>,
+  #[serde(default)] occult: OccultationKind,
 }
 
 #[derive(Clone,Copy,Debug,Serialize,Deserialize)]
 #[derive(Eq,PartialEq)]
 pub enum OccultationKind {
+  Visible,
   Scrambled,
   Displaced { within: Area },
   Invisible,
 }
 
+impl Default for OccultationKind {
+  fn default() -> Self { OccK::Visible }
+}
+
 impl PartialOrd for OccultationKind {
   fn partial_cmp(&self, rhs: &Self) -> Option<Ordering> {
     fn level(k: &OccK) -> u8 { use OccultationKind::*; match k {
-      Scrambled     => 0,
-      Displaced{..} => 1,
-      Invisible     => 2,
+      Visible       => 0,
+      Scrambled     => 1,
+      Displaced{..} => 2,
+      Invisible     => 3,
     } }
 
     level(self).partial_cmp(&level(rhs))
   }
 }
 
-trait OccOptExt {
-  fn at_all_visible(&self) -> bool;
-}
-
-impl OccOptExt for Option<OccultationKind> {
-  fn at_all_visible(&self) -> bool {
+impl OccultationKind {
+  fn _at_all_visible(&self) -> bool {
     match self {
-      None |
-      Some(OccK::Scrambled) |
-      Some(OccK::Displaced { .. })
+      OccK::Visible |
+      OccK::Scrambled |
+      OccK::Displaced { .. }
         => false,
-      Some(OccK::Invisible)
+      OccK::Invisible
         => true,
     }
   }
 }
 
 impl Occultation {
-  pub fn get_kind(&self, player: PlayerId) -> Option<&OccultationKind> {
+  pub fn get_kind(&self, player: PlayerId) -> &OccultationKind {
     let kind = self.views.iter().find_map(|view| {
-      if view.players.contains(&player) { return Some(view.occult.as_ref()); }
+      if view.players.contains(&player) { return Some(&view.occult); }
       None
     }).unwrap_or(
-      self.defview.as_ref()
+      &self.defview
     );
     kind
   }
@@ -96,8 +98,7 @@ impl GameOccults {
   }
 
   #[throws(IE)]
-  pub fn get_kind(&self, occid: OccId, player: PlayerId)
-              -> Option<&OccultationKind> {
+  pub fn get_kind(&self, occid: OccId, player: PlayerId) -> &OccultationKind {
     let occ = self.by_id(occid)?;
     let kind = occ.get_kind(player);
     kind
