@@ -153,33 +153,74 @@ impl SimpleShape {
   }
 }
 
+type FacesSpec = IndexVec<FaceId,ColourSpec>;
+
+trait SimplePieceSpec {
+  fn outline(&self) -> Result<Box<dyn Outline>, SpecError>;
+  fn path(&self) -> Result<Html, SpecError>;
+  fn faces(&self) -> Result<&FacesSpec, SpecError>;
+  fn desc(&self) -> Result<Html, SpecError>;
+  fn itemname(&self) -> Result<String, SpecError>;
+
+  #[throws(SpecError)]
+  fn load(&self) -> Box<dyn Piece> {
+    SimpleShape::new_from_path(self.desc()?,
+                               self.path()?,
+                               self.faces()?,
+                               self.outline()?,
+                               self.itemname()?)?
+  }
+}
+
+impl SimplePieceSpec for piece_specs::Disc {
+  fn outline(&self) -> Result<Box<dyn Outline>, SpecError> { Ok(Box::new(
+    shapelib::Circle { diam: self.diam as f64 }
+  ))}
+  #[throws(SpecError)] fn path(&self) -> Html {
+    svg_circle_path(self.diam as f64)?
+  }
+  #[throws(SpecError)] fn faces(&self) -> &FacesSpec { &self.faces }
+  #[throws(SpecError)] fn desc(&self) -> Html { Html::lit("disc") }
+  #[throws(SpecError)] fn itemname(&self) -> String {
+    self.itemname.clone()
+      .unwrap_or_else(||"simple-disc".to_string())
+  }
+}
+
 #[typetag::serde]
 impl PieceSpec for piece_specs::Disc {
   #[throws(SpecError)]
-  fn load(&self, _: usize) -> Box<dyn Piece> {
-    let outline = Box::new(shapelib::Circle { diam: self.diam as f64 });
-    let path = svg_circle_path(self.diam as f64)?;
-    let itemname = self.itemname.clone()
-      .unwrap_or_else(||"simple-disc".to_string());
-    SimpleShape::new_from_path(Html::lit("circle"), path,
-                               &self.faces, outline, itemname)?
+  fn load(&self, _: usize) -> Box<dyn Piece> { SimplePieceSpec::load(self)? }
+}
+
+impl piece_specs::Square {
+  #[throws(SpecError)]
+  fn xy(&self) -> Pos {
+    match *self.size.as_slice() {
+      [s,]  => PosC([s,s]),
+      [x,y] => PosC([x,y]),
+      _ => throw!(SpecError::ImproperSizeSpec),
+    }
+  }
+}
+
+impl SimplePieceSpec for piece_specs::Square {
+  fn outline(&self) -> Result<Box<dyn Outline>, SpecError> { Ok(Box::new(
+    shapelib::Square { xy: self.xy()?.map(|v| v as f64) }
+  ))}
+  #[throws(SpecError)] fn path(&self) -> Html {
+    svg_rectangle_path(self.xy()?.promote())?
+  }
+  #[throws(SpecError)] fn faces(&self) -> &FacesSpec { &self.faces }
+  #[throws(SpecError)] fn desc(&self) -> Html { Html::lit("square") }
+  #[throws(SpecError)] fn itemname(&self) -> String {
+    self.itemname.clone()
+      .unwrap_or_else(||"simple-square".to_string())
   }
 }
 
 #[typetag::serde]
 impl PieceSpec for piece_specs::Square {
   #[throws(SpecError)]
-  fn load(&self, _: usize) -> Box<dyn Piece> {
-    let xy = match *self.size.as_slice() {
-      [s,]  => PosC([s,s]),
-      [x,y] => PosC([x,y]),
-      _ => throw!(SpecError::ImproperSizeSpec),
-    };
-    let outline = Box::new(shapelib::Square { xy: xy.map(|v| v as f64) });
-    let path = svg_rectangle_path(xy.promote())?;
-    let itemname = self.itemname.clone()
-      .unwrap_or_else(||"simple-square".to_string());
-    SimpleShape::new_from_path(Html::lit("square"), path,
-                               &self.faces, outline, itemname)?
-  }
-} 
+  fn load(&self, _: usize) -> Box<dyn Piece> { SimplePieceSpec::load(self)? }
+}

@@ -205,7 +205,10 @@ pub mod piece_specs {
     pub size: Vec<Coord>,
     pub faces: IndexVec<FaceId, ColourSpec>,
   }
-
+/*
+  pub struct Hand {
+    pub shape: Box<dyn PieceSpec>,
+  }*/
 }
 
 //---------- Pos ----------
