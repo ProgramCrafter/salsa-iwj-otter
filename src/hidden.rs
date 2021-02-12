@@ -7,6 +7,7 @@ use crate::imports::*;
 use slotmap::secondary;
 
 type OccK = OccultationKind;
+type ONI = OldNewIndex;
 
 visible_slotmap_key!{ OccId(b'H') }
 
@@ -70,7 +71,7 @@ impl PartialOrd for OccultationKind {
 }
 
 impl OccultationKind {
-  fn _at_all_visible(&self) -> bool {
+  fn at_all_visible(&self) -> bool {
     match self {
       OccK::Visible |
       OccK::Scrambled |
@@ -203,4 +204,170 @@ pub fn massage_prep_piecestate(
   _ns: &mut PreparedPieceState, // xxx
 ) {
   // xxx hidden position involves adjusting pos and z and ??? here
+}
+
+// xxx prevent addpiece and removepiece in places that would be occulted
+// xxx this means this only happens on ungrab I think ?
+
+#[throws(InternalError)]
+pub fn recalculate_occultation<LF: FnOnce() -> Vec<LogEntry> + Sync>
+  (
+    gs: &mut GameState,
+    who_by: Html,
+    ipieces: &PiecesLoaded,
+    piece: PieceId,
+    vanilla_wrc: WhatResponseToClientOp,
+    vanilla_uo: PieceUpdateOp<(),()>,
+    vanilla_log: LF,
+  ) -> PieceUpdate
+{
+  // fallible part
+  let (update, occids): (_, OldNew<Option<OccId>>) = {
+    let nopiece = || internal_logic_error("piece vanished");
+    let ipc = ipieces.get(piece).ok_or_else(nopiece)?;
+    let gpc = gs.pieces.get(piece).ok_or_else(nopiece)?;
+    struct Occulted<'o> { occid: OccId, occ: &'o Occultation }
+
+    let occulteds: OldNew<Option<Occulted>> = [
+      gpc.occult.passive.map(|occid| Ok::<_,IE>(
+        Occulted {
+          occid,
+          occ: gs.occults.occults.get(occid).ok_or_else(
+            || internal_logic_error("uccultation vanished"))?,
+        }
+      )).transpose()?,
+      gs.occults.occults.iter().find_map(|(occid, occ)| {
+        if gpc.occult.active.is_some() {
+          // prevent occulting pieces being occulted
+          // (also prevents reflexive occultation)
+          return None
+        } else if occ.in_region(gpc.pos) {
+          Some(Occulted { occid, occ })
+        } else {
+          None
+        }
+      }),
+    ].into();
+
+    let occids = occulteds.map(|h| h.as_ref().map(|occ| occ.occid));
+    if occids.old() == occids.new() {
+      return (vanilla_wrc, vanilla_uo, vanilla_log()).into()
+    }
+
+  /*
+    #[throws(IE)]
+    fn get_kind(gs: &GameState, occid: Option<OccultationId>, player: PlayerId)
+                -> Option<(OccultationId, OccultationKind)> {
+    };*/
+
+    let mut situations: HashMap<
+        OldNew<&OccultationKind>,
+        Vec<PlayerId>,
+      > = default();
+    for (player, _gpl) in &gs.players {
+      situations
+        .entry(
+          occulteds.as_refs().map(|occulted| {
+            if let Some(occulted) = occulted {
+              occulted.occ.get_kind(player)
+            } else {
+              &OccK::Visible
+            }
+          }))
+        .or_default()
+        .push(player);
+    }
+
+    let mut puos = SecondarySlotMap::new();
+    let mut most_obscure = None;
+
+    for (kinds, players) in &situations {
+      // For each player, the message obscuration is the least obscure.
+      // Then the overall obscuration is that from most afflicted player.
+      most_obscure = cmp::max(
+        most_obscure,
+        kinds.iter().map(Deref::deref).min()
+      );
+
+      let puo = match (
+        kinds.old().at_all_visible(),
+        kinds.new().at_all_visible(),
+      ) {
+        (false, false) => None,
+        (false, true ) => Some(PUO::Insert(())),
+        (true,  false) => Some(PUO::Delete()),
+        (true,  true ) => Some(PUO::Modify(())),
+      };
+
+      if let Some(puo) = puo {
+        for player in players {
+          puos.insert(*player, puo);
+        }
+      }
+    }
+
+    let describe_occulter = |oni| {
+      let h = occulteds[oni].as_ref().ok_or_else(
+        || internal_logic_error("most obscure not obscure"))?;
+      let piece = h.occ.occulter;
+      let ipc = ipieces.get(h.occ.occulter).ok_or_else(
+        || internal_logic_error(
+          format!("missing occulter piece {:?} for occid {:?}",
+                  piece, h.occid)
+        ))?;
+      Ok::<_,IE>(ipc.describe_html(None))
+    };
+
+    let most_obscure = most_obscure.unwrap_or(&OccK::Visible); // no players!
+    
+    let log = match most_obscure {
+      OccK::Visible => {
+        vanilla_log()
+      }
+      OccK::Scrambled | OccK::Displaced{..} => {
+        let face = ipc.nfaces() - 1;
+        let show = ipc.describe_html(Some(face.into()));
+        vec![ LogEntry { html: Html(format!(
+          "{} moved {} from {} to {}",
+          who_by.0, &show.0,
+          describe_occulter(ONI::Old)?.0,
+          describe_occulter(ONI::New)?.0,
+        ))}]
+      },
+      OccK::Invisible => vec![ LogEntry { html: Html(format!(
+        "{} moved something from {} to {}",
+        who_by.0,
+        describe_occulter(ONI::Old)?.0,
+        describe_occulter(ONI::New)?.0,
+      ))}],
+    };
+
+    let update = PieceUpdate {
+      wrc: WRC::Unpredictable,
+      ops: PieceUpdateOps::PerPlayer(puos),
+      log,
+    };
+
+    let occids = occulteds.map(|h| h.as_ref().map(|h| h.occid));
+    
+    (update, occids)
+  };
+  
+  // point of no return
+
+  // xxx shuffle some players' ids
+  // xxx and/or shuffle locations
+
+  (||{
+    let mut update_pieces = |oni, upd: &dyn Fn(&mut _)| {
+      if let Some(occid) = occids[oni] {
+        upd(&mut gs.occults.occults.get_mut(occid).unwrap().pieces);
+      }
+    };
+    update_pieces(ONI::Old, &|opcs|{ opcs.remove(&piece); });
+    update_pieces(ONI::New, &|opcs|{ opcs.insert(piece); });
+    gs.pieces.byid_mut(piece).unwrap().occult.passive = *occids.new();
+  })(); // <- no ?, infallible commitment
+
+  update
 }
