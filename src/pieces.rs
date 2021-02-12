@@ -273,3 +273,52 @@ impl PieceSpec for piece_specs::Square {
   #[throws(SpecError)]
   fn load(&self, _: usize) -> Box<dyn Piece> { SimplePieceSpec::load(self)? }
 }
+
+#[derive(Debug,Serialize,Deserialize)]
+struct Hand {
+  shape: SimpleShape,
+}
+
+#[typetag::serde]
+impl Outline for Hand {
+  delegate!{
+    to self.shape {
+      fn surround_path(&self, _pri: &PieceRenderInstructions)
+                       -> Result<Html,IE>;
+      fn thresh_dragraise(&self, _pri: &PieceRenderInstructions)
+                          -> Result<Option<Coord>,IE>;
+      fn bbox_approx(&self) -> [Pos;2];
+    }
+  }
+}
+
+#[typetag::serde]
+impl Piece for Hand {
+  delegate!{
+    to self.shape {
+      fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions)
+                   -> Result<(),IE>;
+      fn describe_html(&self, face: Option<FaceId>) -> Html;
+      fn itemname(&self) -> &str;
+    }
+  }
+  fn nfaces(&self) -> RawFaceId { 1 }
+}
+
+#[typetag::serde]
+impl PieceSpec for piece_specs::Hand {
+  #[throws(SpecError)]
+  fn load(&self, _: usize) -> Box<dyn Piece> {
+    let (mut shape, common) = self.shape.load_raw()?;
+    if common.itemname.is_some() {
+      throw!(SpecError::ItemnameSpecifiedWhereForbidden);
+    }
+    if shape.nfaces() != 1 {
+      throw!(SpecError::MultifacetedMagic);
+    }
+    shape.itemname = "magic-hand".to_string();
+    Box::new(Hand {
+      shape
+    }) as Box<dyn Piece>
+  }
+}

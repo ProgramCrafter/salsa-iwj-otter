@@ -80,6 +80,8 @@ pub enum SpecError {
   ZeroFaces,
   InconsistentFacesEdgecoloursCount,
   SpecifiedWidthOfNoEdges,
+  ItemnameSpecifiedWhereForbidden,
+  MultifacetedMagic,
 }
 display_as_debug!{SpecError}
 
@@ -218,10 +220,11 @@ pub mod piece_specs {
     #[serde(flatten)]
     pub common: SimpleCommon,
   }
-/*
+
+  #[derive(Debug,Serialize,Deserialize)]
   pub struct Hand {
-    pub shape: Box<dyn PieceSpec>,
-  }*/
+    pub shape: Box<dyn crate::pieces::SimplePieceSpec>,
+  }
 }
 
 //---------- Pos ----------
