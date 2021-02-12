@@ -34,7 +34,8 @@ impl PerPlayerIdMap {
     Some(*self.r.get(vis)?)
   }
 
-  fn _fwd_or_insert<R, VF, OF>(&mut self, piece: PieceId, vf: VF, of: OF) -> R
+  fn fwd_or_insert_internal<R, VF, OF>
+    (&mut self, piece: PieceId, vf: VF, of: OF) -> R
   where VF: FnOnce(VisiblePieceId) -> R,
         OF: FnOnce(secondary::OccupiedEntry<PieceId,VisiblePieceId>) -> R,
   {
@@ -54,13 +55,13 @@ impl PerPlayerIdMap {
   }
 
   pub fn insert(&mut self, piece: PieceId) {
-    self._fwd_or_insert(piece, |_vis|(), |vis|{
+    self.fwd_or_insert_internal(piece, |_vis|(), |vis|{
       panic!("duplicate insert of {:?} {:?}", piece, vis)
     })
   }
 
   pub fn fwd_or_insert(&mut self, piece: PieceId) -> VisiblePieceId {
-    self._fwd_or_insert(piece, |vis|vis, |occ| *occ.get())
+    self.fwd_or_insert_internal(piece, |vis|vis, |occ| *occ.get())
   }
 }
 
