@@ -744,6 +744,7 @@ mod innards {
 
 #[cfg(test)]
 mod test {
+  use crate::misc::default;
   use super::*;
   use std::mem;
 
