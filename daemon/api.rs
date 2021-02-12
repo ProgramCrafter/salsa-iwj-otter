@@ -294,11 +294,20 @@ api_route!{
       &gs.occults, player, gpl, piece, pc, p,
       "released"
     );
+    let who_by = Html(htmlescape::encode_minimal(&gpl.nick));
 
-    let _ = ipieces;
+    let vanilla = (WhatResponseToClientOp::Predictable,
+                   update,
+                   logents);
 
-    (WhatResponseToClientOp::Predictable,
-     update, logents).into()
+    let update=
+      recalculate_occultation(gs,
+                              who_by,
+                              ipieces,
+                              piece,
+                              vanilla).map_err(|e| OnlineError::from(e))?;
+
+    update
   }
 }
 
