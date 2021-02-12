@@ -192,6 +192,8 @@ pub struct CompassAngle(u8);
 pub mod piece_specs {
   use super::*;
 
+  pub type FaceColourSpecs = IndexVec<FaceId,ColourSpec>;
+
   #[derive(Debug,Serialize,Deserialize)]
   pub struct Disc {
     pub itemname: Option<String>,

@@ -153,12 +153,10 @@ impl SimpleShape {
   }
 }
 
-type FacesSpec = IndexVec<FaceId,ColourSpec>;
-
 trait SimplePieceSpec {
   fn outline(&self) -> Result<Box<dyn Outline>, SpecError>;
   fn path(&self) -> Result<Html, SpecError>;
-  fn faces(&self) -> Result<&FacesSpec, SpecError>;
+  fn faces(&self) -> Result<&FaceColourSpecs, SpecError>;
   fn desc(&self) -> Result<Html, SpecError>;
   fn itemname(&self) -> Result<String, SpecError>;
 
@@ -179,7 +177,7 @@ impl SimplePieceSpec for piece_specs::Disc {
   #[throws(SpecError)] fn path(&self) -> Html {
     svg_circle_path(self.diam as f64)?
   }
-  #[throws(SpecError)] fn faces(&self) -> &FacesSpec { &self.faces }
+  #[throws(SpecError)] fn faces(&self) -> &FaceColourSpecs { &self.faces }
   #[throws(SpecError)] fn desc(&self) -> Html { Html::lit("disc") }
   #[throws(SpecError)] fn itemname(&self) -> String {
     self.itemname.clone()
@@ -211,7 +209,7 @@ impl SimplePieceSpec for piece_specs::Square {
   #[throws(SpecError)] fn path(&self) -> Html {
     svg_rectangle_path(self.xy()?.promote())?
   }
-  #[throws(SpecError)] fn faces(&self) -> &FacesSpec { &self.faces }
+  #[throws(SpecError)] fn faces(&self) -> &FaceColourSpecs { &self.faces }
   #[throws(SpecError)] fn desc(&self) -> Html { Html::lit("square") }
   #[throws(SpecError)] fn itemname(&self) -> String {
     self.itemname.clone()
