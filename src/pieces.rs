@@ -16,6 +16,7 @@ struct SimpleShape {
   desc: Html,
   path: Html,
   colours: ColourMap,
+  #[serde(default)] edges: ColourMap,
   itemname: String,
   outline: Box<dyn Outline>,
 }
@@ -121,8 +122,16 @@ impl Outline for SimpleShape {
 impl Piece for SimpleShape {
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) {
-    write!(&mut f.0, r##"<path fill="{}" d="{}"/>"##,
-           self.colours[pri.face].0,
+    let ef = |cmap: &ColourMap, attrname: &str| {
+      if let Some(colour) = cmap.get(pri.face) {
+        format!(r##"{}="{}""##, attrname, colour.0)
+      } else {
+        "".to_owned()
+      }
+    };
+    write!(&mut f.0, r##"<path {} {} d="{}"/>"##,
+           ef(&self.colours, "fill"),
+           ef(&self.edges, r##"stroke-width="0.2" stroke"##),
            &self.path.0)?;
   }
   fn describe_html(&self, face: Option<FaceId>) -> Html {
@@ -132,12 +141,14 @@ impl Piece for SimpleShape {
       format!("a {}", self.desc.0)
     })
   }
-  fn nfaces(&self) -> RawFaceId { self.colours.len().try_into().unwrap() }
+  fn nfaces(&self) -> RawFaceId { self.count_faces().try_into().unwrap() }
 
   fn itemname(&self) -> &str { &self.itemname }
 }
 
 impl SimpleShape {
+  fn count_faces(&self) -> usize { max(self.colours.len(), self.edges.len()) }
+
   #[throws(SpecError)]
   fn new(desc: Html, path: Html,
          outline: Box<dyn Outline>,
@@ -147,13 +158,32 @@ impl SimpleShape {
   {
     let itemname = common.itemname.clone()
       .unwrap_or_else(|| def_itemname.to_string());
-    let colours = common.faces
-      .iter()
-      .map(|s| s.try_into())
-      .collect::<Result<_,SpecError>>()?;
-    SimpleShape {
-      desc, path, colours, itemname, outline,
-    }
+
+    let cmap = |spec: &FaceColourSpecs| Ok::<_,SpecError>(
+      spec
+        .iter()
+        .map(|s| s.try_into())
+        .collect::<Result<_,_>>()?
+    );
+
+    let shape = SimpleShape {
+      desc, path, itemname, outline,
+      colours: cmap(&common.faces)?,
+      edges: cmap(&common.edges)?,
+    };
+
+    let count = shape.count_faces();
+    if count == 0 { throw!(SpecError::ZeroFaces) }
+
+    let check = |colours: &ColourMap| {
+      let x = colours.len();
+      if x == 0 || x == count { Ok(()) }
+      else { Err(SpecError::InconsistentFacesEdgecoloursCount) }
+    };
+    check(&shape.colours)?;
+    check(&shape.edges)?;
+
+    shape
   }
 }
 

@@ -9,6 +9,7 @@ pos = [90,40]
 type = "Disc"
 diam = 10
 faces = ["red","grey"]
+edges = ["black","white"]
 
 [[pieces]]
 pos = [90, 20]

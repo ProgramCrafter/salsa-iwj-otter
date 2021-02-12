@@ -77,6 +77,8 @@ pub enum SpecError {
   BadUrlSyntax,
   UrlTooLong,
   CompassAngleInvalid,
+  ZeroFaces,
+  InconsistentFacesEdgecoloursCount,
 }
 display_as_debug!{SpecError}
 
@@ -198,6 +200,7 @@ pub mod piece_specs {
   pub struct SimpleCommon {
     pub itemname: Option<String>,
     pub faces: IndexVec<FaceId, ColourSpec>,
+    #[serde(default)] pub edges: IndexVec<FaceId, ColourSpec>,
   }
 
   #[derive(Debug,Serialize,Deserialize)]
