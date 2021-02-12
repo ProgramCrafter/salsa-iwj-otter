@@ -138,50 +138,45 @@ impl Piece for SimpleShape {
 }
 
 impl SimpleShape {
-  fn new_from_path(desc: Html, path: Html,
-                   faces: &IndexVec<FaceId,ColourSpec>,
-                   outline: Box<dyn Outline>,
-                   itemname: String)
-                   -> Result<Box<dyn Piece>,SpecError> {
+  #[throws(SpecError)]
+  fn new(desc: Html, path: Html,
+         faces: &IndexVec<FaceId,ColourSpec>,
+         outline: Box<dyn Outline>,
+         spec_itemname: &Option<String>,
+         def_itemname: &'_ str)
+         -> SimpleShape
+  {
+    let itemname = spec_itemname.clone()
+      .unwrap_or_else(|| def_itemname.to_string());
     let colours = faces
       .iter()
       .map(|s| s.try_into())
       .collect::<Result<_,SpecError>>()?;
-    Ok(Box::new(SimpleShape {
+    SimpleShape {
       desc, path, colours, itemname, outline,
-    }))
+    }
   }
 }
 
 trait SimplePieceSpec {
-  fn outline(&self) -> Result<Box<dyn Outline>, SpecError>;
-  fn path(&self) -> Result<Html, SpecError>;
-  fn faces(&self) -> Result<&FaceColourSpecs, SpecError>;
-  fn desc(&self) -> Result<Html, SpecError>;
-  fn itemname(&self) -> Result<String, SpecError>;
-
-  #[throws(SpecError)]
-  fn load(&self) -> Box<dyn Piece> {
-    SimpleShape::new_from_path(self.desc()?,
-                               self.path()?,
-                               self.faces()?,
-                               self.outline()?,
-                               self.itemname()?)?
+  fn load_simple(&self) -> Result<SimpleShape, SpecError>;
+  fn load(&self) -> Result<Box<dyn Piece>, SpecError> {
+    Ok(Box::new(self.load_simple()?))
   }
 }
 
 impl SimplePieceSpec for piece_specs::Disc {
-  fn outline(&self) -> Result<Box<dyn Outline>, SpecError> { Ok(Box::new(
-    shapelib::Circle { diam: self.diam as f64 }
-  ))}
-  #[throws(SpecError)] fn path(&self) -> Html {
-    svg_circle_path(self.diam as f64)?
-  }
-  #[throws(SpecError)] fn faces(&self) -> &FaceColourSpecs { &self.faces }
-  #[throws(SpecError)] fn desc(&self) -> Html { Html::lit("disc") }
-  #[throws(SpecError)] fn itemname(&self) -> String {
-    self.itemname.clone()
-      .unwrap_or_else(||"simple-disc".to_string())
+  #[throws(SpecError)]
+  fn load_simple(&self) -> SimpleShape {
+    let outline = shapelib::Circle { diam: self.diam as f64 };
+    SimpleShape::new(
+      Html::lit("disc"),
+      svg_circle_path(self.diam as f64)?,
+      &self.faces,
+      Box::new(outline),
+      &self.itemname,
+      "simple-disc",
+    )?
   }
 }
 
@@ -203,17 +198,17 @@ impl piece_specs::Square {
 }
 
 impl SimplePieceSpec for piece_specs::Square {
-  fn outline(&self) -> Result<Box<dyn Outline>, SpecError> { Ok(Box::new(
-    shapelib::Square { xy: self.xy()?.map(|v| v as f64) }
-  ))}
-  #[throws(SpecError)] fn path(&self) -> Html {
-    svg_rectangle_path(self.xy()?.promote())?
-  }
-  #[throws(SpecError)] fn faces(&self) -> &FaceColourSpecs { &self.faces }
-  #[throws(SpecError)] fn desc(&self) -> Html { Html::lit("square") }
-  #[throws(SpecError)] fn itemname(&self) -> String {
-    self.itemname.clone()
-      .unwrap_or_else(||"simple-square".to_string())
+  #[throws(SpecError)]
+  fn load_simple(&self) -> SimpleShape {
+    let outline = shapelib::Square { xy: self.xy()?.map(|v| v as f64) };
+    SimpleShape::new(
+      Html::lit("square"),
+      svg_rectangle_path(self.xy()?.promote())?,
+      &self.faces,
+      Box::new(outline),
+      &self.itemname,
+      "simple-square",
+    )?
   }
 }
 
