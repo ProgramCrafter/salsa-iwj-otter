@@ -5,9 +5,11 @@
 use std::fmt::{self, Debug};
 use std::fs;
 use std::io;
-use std::ops::Deref;
+use std::ops::{Deref, Index};
 use std::os::unix::io::IntoRawFd;
 
+use arrayvec::ArrayVec;
+use derive_more::*;
 use fehler::{throw, throws};
 use libc;
 
@@ -46,6 +48,46 @@ impl SplitAtDelim<char> for str {
       None => (self, ""),
     }
   }
+}
+
+#[derive(Copy,Clone,Debug,From,Into)]
+#[derive(Hash,Eq,PartialEq)]
+pub struct OldNew<T>([T; 2]);
+
+#[derive(Copy,Clone,Debug)]
+#[derive(Hash,Eq,PartialEq)]
+pub enum OldNewIndex { Old, New }
+
+impl<T> OldNew<T> {
+  pub fn old(&self) -> &T { &self.0[0] }
+  pub fn new(&self) -> &T { &self.0[0] }
+
+  pub fn map<U, F: FnMut(&T) -> U>(&self, f: F) -> OldNew<U> {
+    OldNew(
+      self.iter().map(f)
+        .collect::<ArrayVec<[U; 2]>>()
+        .into_inner()
+        .unwrap_or_else(|_|panic!())
+    )
+  }
+
+  pub fn as_refs(&self) -> OldNew<&T> {
+    OldNew(
+      self.iter()
+        .collect::<ArrayVec<[&T; 2]>>()
+        .into_inner()
+        .unwrap_or_else(|_|panic!())
+    )
+  }
+
+  pub fn iter(&self) -> impl Iterator<Item=&T> {
+    self.0.iter()
+  }
+}
+
+impl<T> Index<OldNewIndex> for OldNew<T> {
+  type Output = T;
+  fn index(&self, i: OldNewIndex) -> &T { &self.0[i as usize] }
 }
 
 /*

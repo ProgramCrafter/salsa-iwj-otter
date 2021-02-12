@@ -46,6 +46,7 @@ pub use anyhow::{anyhow, Context};
 pub use arrayvec::ArrayVec;
 pub use boolinator::Boolinator as _;
 pub use delegate::delegate;
+pub use derive_more::*;
 pub use either::{Either, Left, Right};
 pub use enum_map::{Enum, EnumMap};
 pub use fehler::{throw, throws};
