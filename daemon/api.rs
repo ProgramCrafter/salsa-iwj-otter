@@ -302,11 +302,10 @@ api_route!{
     pc.held = None;
 
     let update = PieceUpdateOp::Modify(());
-    let logents = log_did_to_piece(
+    let (logents, who_by) = log_did_to_piece_whoby(
       &gs.occults, player, gpl, piece, pc, p,
       "released"
     );
-    let who_by = Html(htmlescape::encode_minimal(&gpl.nick));
 
     let vanilla = (WhatResponseToClientOp::Predictable,
                    update,
