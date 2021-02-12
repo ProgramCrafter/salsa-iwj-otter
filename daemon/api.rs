@@ -83,6 +83,24 @@ impl<'r> Responder<'r> for OnlineErrorResponse {
   }
 }
 
+fn log_did_to_piece_whoby(
+  occults: &GameOccults,
+  player: PlayerId,
+  gpl: &mut GPlayerState,
+  piece: PieceId, pc: &PieceState, p: &dyn Piece,
+  did: &str,
+) -> (Vec<LogEntry>, Html) {
+  let who_by = Html(htmlescape::encode_minimal(&gpl.nick));
+  let pri = piece_pri(occults, player, gpl, piece, pc);
+  let log = vec![ LogEntry { html: Html(format!(
+    "{} {} {}",
+    &who_by.0,
+    did,
+    p.describe_pri(&pri).0
+  ))}];
+  (log, who_by)
+}
+
 fn log_did_to_piece(
   occults: &GameOccults,
   player: PlayerId,
@@ -90,13 +108,7 @@ fn log_did_to_piece(
   piece: PieceId, pc: &PieceState, p: &dyn Piece,
   did: &str,
 ) -> Vec<LogEntry> {
-  let pri = piece_pri(occults, player, gpl, piece, pc);
-  vec![ LogEntry { html: Html(format!(
-    "{} {} {}",
-    &htmlescape::encode_minimal(&gpl.nick),
-    did,
-    p.describe_pri(&pri).0
-  ))}]
+  log_did_to_piece_whoby(occults,player,gpl,piece,pc,p,did).0
 }
 
 #[throws(OE)]
