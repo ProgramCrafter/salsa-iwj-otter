@@ -210,16 +210,14 @@ pub fn massage_prep_piecestate(
 // xxx this means this only happens on ungrab I think ?
 
 #[throws(InternalError)]
-pub fn recalculate_occultation<LF: FnOnce() -> Vec<LogEntry> + Sync>
-  (
-    gs: &mut GameState,
-    who_by: Html,
-    ipieces: &PiecesLoaded,
-    piece: PieceId,
-    vanilla_wrc: WhatResponseToClientOp,
-    vanilla_uo: PieceUpdateOp<(),()>,
-    vanilla_log: LF,
-  ) -> PieceUpdate
+pub fn recalculate_occultation(
+  gs: &mut GameState,
+  who_by: Html,
+  ipieces: &PiecesLoaded,
+  piece: PieceId,
+  vanilla: PUFOS,
+)
+  -> PieceUpdate
 {
   // fallible part
   let (update, occids): (_, OldNew<Option<OccId>>) = {
@@ -250,9 +248,7 @@ pub fn recalculate_occultation<LF: FnOnce() -> Vec<LogEntry> + Sync>
     ].into();
 
     let occids = occulteds.map(|h| h.as_ref().map(|occ| occ.occid));
-    if occids.old() == occids.new() {
-      return (vanilla_wrc, vanilla_uo, vanilla_log()).into()
-    }
+    if occids.old() == occids.new() { return vanilla.into(); }
 
   /*
     #[throws(IE)]
@@ -319,10 +315,10 @@ pub fn recalculate_occultation<LF: FnOnce() -> Vec<LogEntry> + Sync>
     };
 
     let most_obscure = most_obscure.unwrap_or(&OccK::Visible); // no players!
-    
+
     let log = match most_obscure {
       OccK::Visible => {
-        vanilla_log()
+        vanilla.2
       }
       OccK::Scrambled | OccK::Displaced{..} => {
         let face = ipc.nfaces() - 1;
