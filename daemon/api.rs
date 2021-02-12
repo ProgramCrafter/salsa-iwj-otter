@@ -38,6 +38,7 @@ struct ApiPieceOpArgs<'a> {
   player: PlayerId,
   piece: PieceId,
   p: &'a dyn Piece,
+  ipieces: &'a PiecesLoaded,
 }
 
 trait ApiPieceOp: Debug {
@@ -135,7 +136,7 @@ fn api_piece_op<O: ApiPieceOp>(form: Json<ApiPiece<O>>)
     form.op.check_held(pc,player)?;
     let update =
       form.op.op(ApiPieceOpArgs {
-        gs, player, piece,
+        gs, player, piece, ipieces,
         p: p.as_ref(),
       })?;
     Ok::<_,ApiPieceOpError>(update)
@@ -281,7 +282,7 @@ api_route!{
   }
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
-    let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
+    let ApiPieceOpArgs { gs,player,piece,p,ipieces, .. } = a;
     let gpl = gs.players.byid_mut(player).unwrap();
     let pc = gs.pieces.byid_mut(piece).unwrap();
 
@@ -293,6 +294,8 @@ api_route!{
       &gs.occults, player, gpl, piece, pc, p,
       "released"
     );
+
+    let _ = ipieces;
 
     (WhatResponseToClientOp::Predictable,
      update, logents).into()
