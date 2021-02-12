@@ -26,7 +26,7 @@ pub struct PieceOccult {
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
 pub struct Occultation {
-  region: [Pos; 2], // automatically affect pieces here
+  region: Area, // automatically affect pieces here
   occulter: PieceId, // kept in synch with PieceOccult::active
   views: Vec<OccultView>,
   #[serde(default)] defview: OccultationKind,
