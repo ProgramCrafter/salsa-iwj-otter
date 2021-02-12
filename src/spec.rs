@@ -296,6 +296,15 @@ pub mod implementation {
   type SE = SpecError;
   type TPS = TablePlayerSpec;
 
+  impl<T> AreaC<T> {
+    pub fn contains(&self, p: PosC<T>) -> bool where T: Ord {
+      (0..2).all(|i| {
+        p.0[i] < self.0[0].0[i] ||
+        p.0[i] > self.0[1].0[i]
+      })
+    }
+  }
+
   impl Default for PieceAngle {
     fn default() -> Self { PieceAngle::Compass(default()) }
   }
