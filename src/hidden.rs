@@ -92,6 +92,10 @@ impl Occultation {
     );
     kind
   }
+
+  pub fn in_region(&self, pos: Pos) -> bool {
+    self.region.contains(pos)
+  }
 }
 
 impl GameOccults {
