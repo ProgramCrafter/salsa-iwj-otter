@@ -119,7 +119,7 @@ pub struct PieceUpdate {
 #[derive(Debug)]
 pub enum PieceUpdateOps {
   Simple(PieceUpdateOp<(),()>),
-  PerPlayer(DenseSlotMap<PlayerId, PieceUpdateOp<(),()>>),
+  PerPlayer(SecondarySlotMap<PlayerId, PieceUpdateOp<(),()>>),
 }
 
 impl From<PieceUpdateOp<(),()>> for PieceUpdateOps {
