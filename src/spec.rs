@@ -195,17 +195,23 @@ pub mod piece_specs {
   pub type FaceColourSpecs = IndexVec<FaceId,ColourSpec>;
 
   #[derive(Debug,Serialize,Deserialize)]
-  pub struct Disc {
+  pub struct SimpleCommon {
     pub itemname: Option<String>,
-    pub diam: Coord,
     pub faces: IndexVec<FaceId, ColourSpec>,
   }
 
   #[derive(Debug,Serialize,Deserialize)]
+  pub struct Disc {
+    pub diam: Coord,
+    #[serde(flatten)]
+    pub common: SimpleCommon,
+  }
+
+  #[derive(Debug,Serialize,Deserialize)]
   pub struct Square {
-    pub itemname: Option<String>,
     pub size: Vec<Coord>,
-    pub faces: IndexVec<FaceId, ColourSpec>,
+    #[serde(flatten)]
+    pub common: SimpleCommon,
   }
 /*
   pub struct Hand {

@@ -140,15 +140,14 @@ impl Piece for SimpleShape {
 impl SimpleShape {
   #[throws(SpecError)]
   fn new(desc: Html, path: Html,
-         faces: &IndexVec<FaceId,ColourSpec>,
          outline: Box<dyn Outline>,
-         spec_itemname: &Option<String>,
-         def_itemname: &'_ str)
+         def_itemname: &'_ str,
+         common: &piece_specs::SimpleCommon)
          -> SimpleShape
   {
-    let itemname = spec_itemname.clone()
+    let itemname = common.itemname.clone()
       .unwrap_or_else(|| def_itemname.to_string());
-    let colours = faces
+    let colours = common.faces
       .iter()
       .map(|s| s.try_into())
       .collect::<Result<_,SpecError>>()?;
@@ -172,10 +171,9 @@ impl SimplePieceSpec for piece_specs::Disc {
     SimpleShape::new(
       Html::lit("disc"),
       svg_circle_path(self.diam as f64)?,
-      &self.faces,
       Box::new(outline),
-      &self.itemname,
       "simple-disc",
+      &self.common,
     )?
   }
 }
@@ -204,10 +202,9 @@ impl SimplePieceSpec for piece_specs::Square {
     SimpleShape::new(
       Html::lit("square"),
       svg_rectangle_path(self.xy()?.promote())?,
-      &self.faces,
       Box::new(outline),
-      &self.itemname,
       "simple-square",
+      &self.common,
     )?
   }
 }
