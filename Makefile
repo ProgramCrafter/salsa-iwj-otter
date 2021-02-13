@@ -335,9 +335,11 @@ deploy: stamp/cargo.deploy-build bundled-sources assets libraries
 
 #---------- clean ----------
 
-clean: clean-nailing
+clean-for-retest:
 	rm -f templates/script.js library/*/*.usvg stamp/*
 	rm -rf $(LIBRARY_CLEAN)
 	find * -name '*~' -print0 | xargs -0r rm --
+
+clean: clean-nailing clean-for-retest
 	rm -rf target
 	$(NAILING_CARGO_JUST_RUN) rm -rf target
