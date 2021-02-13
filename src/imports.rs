@@ -130,6 +130,7 @@ pub type AS = AccountScope;
 pub type ME = MgmtError;
 
 // error.rs
+pub type APOE = ApiPieceOpError;
 pub type ESVU<POEPU> = ErrorSignaledViaUpdate<POEPU>;
 pub type IE = InternalError;
 pub type OE = OnlineError;

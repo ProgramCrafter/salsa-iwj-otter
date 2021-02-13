@@ -283,10 +283,24 @@ impl PieceSpec for piece_specs::Square {
   fn load(&self, _: usize) -> Box<dyn Piece> { SimplePieceSpec::load(self)? }
 }
 
+#[derive(Debug,Clone,Serialize,Deserialize)]
+struct MagicOwner {
+  player: PlayerId,
+  dasharray: Html,
+}
+
 #[derive(Debug,Serialize,Deserialize)]
 struct Hand {
   shape: SimpleShape,
 }
+
+#[derive(Debug,Clone,Default,Serialize,Deserialize)]
+struct HandState {
+  owner: Option<MagicOwner>,
+}
+
+#[typetag::serde(name="Hand")]
+impl PieceXData for HandState { }
 
 #[typetag::serde]
 impl Outline for Hand {
@@ -302,20 +316,6 @@ impl Outline for Hand {
 }
 
 #[typetag::serde]
-impl Piece for Hand {
-  delegate!{
-    to self.shape {
-      fn svg_piece(&self, f: &mut Html, gpc: &PieceState,
-                   pri: &PieceRenderInstructions) -> Result<(),IE>;
-      fn describe_html(&self, face: Option<FaceId>,  _gpc: &PieceState)
-                       -> Result<Html,IE>;
-      fn itemname(&self) -> &str;
-    }
-  }
-  fn nfaces(&self) -> RawFaceId { 1 }
-}
-
-#[typetag::serde]
 impl PieceSpec for piece_specs::Hand {
   #[throws(SpecError)]
   fn load(&self, _: usize) -> Box<dyn Piece> {
@@ -328,7 +328,104 @@ impl PieceSpec for piece_specs::Hand {
     }
     shape.itemname = "magic-hand".to_string();
     Box::new(Hand {
-      shape
+      shape,
     }) as Box<dyn Piece>
+  }
+}
+
+#[typetag::serde]
+impl Piece for Hand {
+  fn nfaces(&self) -> RawFaceId { 1 }
+  #[throws(IE)]
+  fn svg_piece(&self, f: &mut Html, gpc: &PieceState,
+               pri: &PieceRenderInstructions) {
+    self.shape.svg_piece_raw(f, pri, &mut |f: &mut String| {
+      if_chain!{
+        if let Some(xdata) = gpc.xdata.get::<HandState>()?;
+        if let Some(owned) = &xdata.owner;
+        then { write!(f, " dasharray={} ", &owned.dasharray.0)?; }
+      }
+      Ok(())
+    })?;
+  }
+
+  delegate!{
+    to self.shape {
+      fn describe_html(&self, face: Option<FaceId>,  _gpc: &PieceState)
+                       -> Result<Html,IE>;
+      fn itemname(&self) -> &str;
+    }
+  }
+
+  #[throws(InternalError)]
+  fn add_ui_operations(&self, upd: &mut Vec<UoDescription>,
+                       gpc: &PieceState) {
+    upd.push(if_chain! {
+      if let Some(xdata) = gpc.xdata.get::<HandState>()?;
+      if let Some(_owner) = &xdata.owner;
+      then { UoDescription {
+        kind: UoKind:: GlobalExtra,
+        def_key: 'C',
+        opname: "claim".to_owned(),
+        desc: Html::lit("Claim this as your hand"),
+        wrc: WRC::Unpredictable,
+      }}
+      else { UoDescription {
+        kind: UoKind:: GlobalExtra,
+        def_key: 'C',
+        opname: "deactivate".to_owned(),
+        desc: Html::lit("Deactivate hand"),
+        wrc: WRC::Unpredictable,
+      }}
+    })
+  }
+
+  fn ui_operation(&self, gs: &mut GameState, player: PlayerId,
+                  piece: PieceId, opname: &str, wrc: WhatResponseToClientOp)
+                  -> PieceUpdateResult {
+    let gplayers = &mut gs.players;
+    let gpc = gs.pieces.byid_mut(piece)?;
+    let xdata = gpc.xdata.get_mut::<HandState>()
+      .map_err(|e| APOE::ReportViaResponse(e.into()))?;
+    let previous_owner = (||{
+      let owner = xdata.owner.as_ref()?;
+      let owner_gpl = gplayers.get(owner.player)?;
+      Some(Html(htmlescape::encode_minimal(&owner_gpl.nick)))
+    })();
+
+    let dasharray = player_dasharray(gplayers, player);
+    let gpl = gplayers.byid_mut(player)?;
+    let occults = &mut gs.occults;
+
+    let did;
+    match (opname, &previous_owner) {
+      ("claim", None) => {
+        xdata.owner = Some(MagicOwner {
+          player,
+          dasharray,
+        });
+        // xxx recalculate occultations
+        did = format!("claimed a hand repository");
+      }
+      ("deactivate", Some(prev)) => {
+        xdata.owner = None;
+        // xxx recalculate occultations
+        did = format!("deactivated {}'s a hand", &prev.0);
+      }
+      ("claim", Some(_)) |
+      ("deactivate", None) => {
+        throw!(OE::PieceHeld);
+      }
+      _ => {
+        throw!(OE::BadOperation);
+      }
+    }
+
+    let log = log_did_to_piece(occults,player,gpl,piece,gpc,self,&did);
+    Ok(PieceUpdate {
+      wrc, log,
+      ops: PUOs::Simple(PUO::Modify(())), // xxx
+      // xxx want PUU::RecalculateOccultations
+    })
   }
 }
