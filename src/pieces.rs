@@ -122,6 +122,7 @@ impl Outline for SimpleShape {
 impl Piece for SimpleShape {
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) {
+    let f = &mut f.0;
     let ef = |cmap: &ColourMap, attrname: &str, otherwise: &str| {
       if let Some(colour) = cmap.get(pri.face) {
         format!(r##"{}="{}""##, attrname, colour.0)
@@ -130,12 +131,12 @@ impl Piece for SimpleShape {
       }
     };
     if self.colours.len() == 0 {
-      write!(&mut f.0,
+      write!(f,
              r##"<path fill="none" \
                   stroke-width="2" stroke="transparent" d="{}"/>"##,
              &self.path.0)?;
     }
-    write!(&mut f.0, r##"<path {} {} d="{}"/>"##,
+    write!(f, r##"<path {} {} d="{}"/>"##,
            ef(&self.colours, "fill", r##"fill="none""##),
            ef(&self.edges, r##"stroke-width="0.2" stroke"##, ""),
            &self.path.0)?;
