@@ -122,23 +122,24 @@ impl Outline for SimpleShape {
 impl Piece for SimpleShape {
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) {
-    let ef = |cmap: &ColourMap, attrname: &str| {
+    let ef = |cmap: &ColourMap, attrname: &str, otherwise: &str| {
       if let Some(colour) = cmap.get(pri.face) {
         format!(r##"{}="{}""##, attrname, colour.0)
       } else {
-        "".to_owned()
+        otherwise.to_owned()
       }
     };
     write!(&mut f.0, r##"<path {} {} d="{}"/>"##,
-           ef(&self.colours, "fill"),
-           ef(&self.edges, r##"stroke-width="0.2" stroke"##),
+           ef(&self.colours, "fill", r##"fill="none""##),
+           ef(&self.edges, r##"stroke-width="0.2" stroke"##, ""),
            &self.path.0)?;
   }
   fn describe_html(&self, face: Option<FaceId>) -> Html {
-    Html(if let Some(face) = face {
-      format!("a {} {}", self.colours[face].0, self.desc.0)
-    } else {
-      format!("a {}", self.desc.0)
+    Html(if_chain! {
+      if let Some(face) = face;
+      if let Some(colour) = self.colours.get(face);
+      then { format!("a {} {}", colour.0, self.desc.0) }
+      else { format!("a {}", self.desc.0) }
     })
   }
   fn nfaces(&self) -> RawFaceId { self.count_faces().try_into().unwrap() }

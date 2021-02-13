@@ -30,3 +30,11 @@ type = "Lib"
 angle.Compass = 1
 lib = "wikimedia"
 item = "chess-b-N"
+
+[[pieces]]
+pos = [120, 30]
+type = "Square"
+size = [10]
+angle.Compass = 1
+faces = [ ]
+edges = ["yellow", "orange"]
