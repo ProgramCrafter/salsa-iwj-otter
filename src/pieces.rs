@@ -171,11 +171,12 @@ impl SimpleShape {
   #[throws(SpecError)]
   fn new(desc: Html, path: Html,
          outline: Box<dyn Outline>,
-         itemname: &'_ str,
+         def_itemname: &'_ str,
          common: &piece_specs::SimpleCommon)
          -> SimpleShape
   {
-    let itemname = itemname.to_owned();
+    let itemname = common.itemname.clone()
+      .unwrap_or_else(|| def_itemname.to_string());
 
     let cmap = |spec: &FaceColourSpecs| Ok::<_,SpecError>(
       spec
@@ -225,7 +226,7 @@ impl SimplePieceSpec for piece_specs::Disc {
       Html::lit("disc"),
       svg_circle_path(self.diam as f64)?,
       Box::new(outline),
-      self.itemname.as_deref().unwrap_or("simple-disc"),
+      "simple-disc",
       &self.common,
     )?
   }
@@ -256,7 +257,7 @@ impl SimplePieceSpec for piece_specs::Square {
       Html::lit("square"),
       svg_rectangle_path(self.xy()?.promote())?,
       Box::new(outline),
-      self.itemname.as_deref().unwrap_or("simple-square"),
+      "simple-square",
       &self.common,
     )?
   }
