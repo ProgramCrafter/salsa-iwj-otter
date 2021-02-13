@@ -141,15 +141,12 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
       // But we can simulate this by having it convert the env results
       // to toml and merging it with the stuff from the file.
       (||{
-        dbg!(&log);
         if let Some(v) = env::var_os(LOG_ENV_VAR) {
           let v = v.to_str().ok_or(anyhow!("UTF-8 conversion"))?;
           let v = LogSpecification::parse(v).context("parse")?;
-          dbg!(&v);
           let mut buf: Vec<u8> = default();
           v.to_toml(&mut buf).context("convert to toml")?;
           let v = toml_de::from_slice(&buf).context("reparse")?;
-          dbg!(&v);
           match v {
             Some(Table(v)) => toml_merge(&mut log, &v),
             None => default(),
@@ -161,7 +158,6 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
         .context(LOG_ENV_VAR)
         .context("processing env override")?;
 
-      dbg!(&log);
       Table(log)
     };
 
