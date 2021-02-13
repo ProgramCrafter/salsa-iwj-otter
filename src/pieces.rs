@@ -123,11 +123,11 @@ impl Piece for SimpleShape {
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) {
     let f = &mut f.0;
-    let ef = |cmap: &ColourMap, attrname: &str, otherwise: &str| {
+    let ef = |f: &mut String, cmap: &ColourMap, attrname: &str, otherwise| {
       if let Some(colour) = cmap.get(pri.face) {
-        format!(r##"{}="{}""##, attrname, colour.0)
+        write!(f, r##"{}="{}""##, attrname, colour.0)
       } else {
-        otherwise.to_owned()
+        write!(f, "{}", otherwise)
       }
     };
     if self.colours.len() == 0 {
@@ -136,10 +136,10 @@ impl Piece for SimpleShape {
                   stroke-width="2" stroke="transparent" d="{}"/>"##,
              &self.path.0)?;
     }
-    write!(f, r##"<path {} {} d="{}"/>"##,
-           ef(&self.colours, "fill", r##"fill="none""##),
-           ef(&self.edges, r##"stroke-width="0.2" stroke"##, ""),
-           &self.path.0)?;
+    write!(f, r##"<path "##)?;
+    ef(f, &self.colours, "fill", r##"fill="none""##)?;
+    ef(f, &self.edges, r##"stroke-width="0.2" stroke"##, "")?;
+    write!(f, r##" d="{}"/>"##, &self.path.0)?;
   }
   fn describe_html(&self, face: Option<FaceId>) -> Html {
     Html(if_chain! {
