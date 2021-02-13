@@ -14,7 +14,7 @@ type SE = SVGProcessingError;
 
 #[derive(Debug,Serialize,Deserialize)]
 // todo: this serialisation is rather large
-struct SimpleShape {
+pub struct SimpleShape {
   desc: Html,
   path: Html,
   colours: ColourMap,
@@ -213,13 +213,15 @@ impl SimpleShape {
   }
 }
 
-trait SimplePieceSpec {
+#[typetag::serde(tag="type")]
+pub trait SimplePieceSpec: Debug {
   fn load_raw(&self) -> Result<(SimpleShape, &SimpleCommon), SpecError>;
   fn load(&self) -> Result<Box<dyn Piece>, SpecError> {
     Ok(Box::new(self.load_raw()?.0))
   }
 }
 
+#[typetag::serde]
 impl SimplePieceSpec for piece_specs::Disc {
   #[throws(SpecError)]
   fn load_raw(&self) -> (SimpleShape, &SimpleCommon) {
@@ -251,6 +253,7 @@ impl piece_specs::Square {
   }
 }
 
+#[typetag::serde]
 impl SimplePieceSpec for piece_specs::Square {
   #[throws(SpecError)]
   fn load_raw(&self) -> (SimpleShape, &SimpleCommon) {
