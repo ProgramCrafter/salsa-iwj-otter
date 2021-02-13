@@ -174,7 +174,7 @@ impl SimpleShape {
   fn new(desc: Html, path: Html,
          outline: Box<dyn Outline>,
          def_itemname: &'_ str,
-         common: &piece_specs::SimpleCommon)
+         common: &SimpleCommon)
          -> SimpleShape
   {
     let itemname = common.itemname.clone()
