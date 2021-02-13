@@ -275,15 +275,28 @@ impl PieceState {
   }
 
   #[throws(IE)]
-  pub fn xdata<T:PieceXData+Default>(&mut self) -> &mut T {
+  pub fn xdata<T:PieceXData+Default>(&self) -> Option<&T> {
+    self.xdata.get()?
+  }
+
+  #[throws(IE)]
+  pub fn xdata_mut<T:PieceXData+Default>(&mut self) -> &mut T {
     self.xdata.get_mut()?
   }
 }
 
 pub trait PieceXDataExt {
+  fn get<T:PieceXData>(&self) -> Result<Option<&T>, IE>;
   fn get_mut<T:PieceXData+Default>(&mut self) -> Result<&mut T, IE>;
 }
 impl PieceXDataExt for PieceXDataState {
+  #[throws(IE)]
+  fn get<T:PieceXData>(&self) -> Option<&T> {
+    let m = format!("piece xdata unexpectedly {:?}", &self);
+    let xdata = match &self { Some(xdata) => xdata, None => return None };
+    Some(Any::downcast_ref(xdata).ok_or_else(|| internal_logic_error(m))?)
+  }
+
   #[throws(IE)]
   fn get_mut<T:PieceXData+Default>(&mut self) -> &mut T {
     let m = format!("piece xdata unexpectedly {:?}", &self);
