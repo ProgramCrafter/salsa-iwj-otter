@@ -55,7 +55,6 @@ rmp-serde = "0.15"
 serde = { version = "1", features = ["derive","rc"] }
 serde_json = "1"
 serde_with = "1"
-slotmap = { version = "1", features = ['serde'] }
 structopt = "0.3"
 strum = { version = "0.20", features = ['derive'] }
 thiserror = "1"
@@ -66,6 +65,9 @@ vecdeque-stableix = "1"
 
 rocket = { version = "^0.4.6", features=["sse"] }
 rocket_cors = "0.5"
+
+slotmap = { features = ['serde'], git = "https://github.com/ijackson/slotmap", branch="entry-return-stale-key" }
+# ^ MR not yet reviewed
 
 [dependencies.rocket_contrib]
 version = "0.4"

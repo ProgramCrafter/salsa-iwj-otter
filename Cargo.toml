@@ -57,10 +57,6 @@ rmp-serde = "0.15"
 serde = { version = "1", features = ["derive","rc"] }
 serde_json = "1"
 serde_with = "1"
-
-slotmap = { features = ['serde'], git = "https://github.com/ijackson/slotmap", branch="entry-return-stale-key" }
-# ^ MR not yet reviewed
-
 structopt = "0.3"
 strum = { version = "0.20", features = ['derive'] }
 thiserror = "1"
@@ -71,3 +67,6 @@ typetag = "0.1.6"
 uds = "0.2"
 url = "2"
 vecdeque-stableix = "1"
+
+slotmap = { features = ['serde'], git = "https://github.com/ijackson/slotmap", branch="entry-return-stale-key" }
+# ^ MR not yet reviewed

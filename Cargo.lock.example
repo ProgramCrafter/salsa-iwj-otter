@@ -2474,6 +2474,7 @@ checksum = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 [[package]]
 name = "slotmap"
 version = "1.0.2"
+source = "git+https://github.com/ijackson/slotmap?branch=entry-return-stale-key#508ddf21d9d28dfd122e7abe195e0d0d824aea33"
 dependencies = [
  "serde",
  "version_check 0.9.2",
