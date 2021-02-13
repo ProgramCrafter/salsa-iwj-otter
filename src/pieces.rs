@@ -129,28 +129,7 @@ impl Outline for SimpleShape {
 impl Piece for SimpleShape {
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) {
-    let f = &mut f.0;
-    let ef = |f: &mut String, cmap: &ColourMap, attrname: &str, otherwise| {
-      if let Some(colour) = cmap.get(pri.face) {
-        write!(f, r##" {}="{}""##, attrname, colour.0)
-      } else {
-        write!(f, "{}", otherwise)
-      }
-    };
-    if self.colours.len() == 0 {
-      write!(f,
-             r##"<path fill="none" \
-                  stroke-width="{}" stroke="transparent" d="{}"/>"##,
-             INVISIBLE_EDGE_SENSITIVE,
-             &self.path.0)?;
-    }
-    write!(f, r##"<path"##)?;
-    ef(f, &self.colours, "fill", r##" fill="none""##)?;
-    if self.edges.len() != 0 {
-      write!(f, r##" stroke-width="{}""##, &self.edge_width)?;
-    }
-    ef(f, &self.edges, "stroke", "")?;
-    write!(f, r##" d="{}"/>"##, &self.path.0)?;
+    self.svg_piece_raw(f, pri)?;
   }
   fn describe_html(&self, face: Option<FaceId>) -> Html {
     Html(if_chain! {
@@ -208,6 +187,35 @@ impl SimpleShape {
     check(&shape.edges)?;
 
     shape
+  }
+
+  #[throws(IE)]
+  fn svg_piece_raw<
+      >(&self, f: &mut Html, pri: &PieceRenderInstructions,
+  )
+  {
+    let f = &mut f.0;
+    let ef = |f: &mut String, cmap: &ColourMap, attrname: &str, otherwise| {
+      if let Some(colour) = cmap.get(pri.face) {
+        write!(f, r##" {}="{}""##, attrname, colour.0)
+      } else {
+        write!(f, "{}", otherwise)
+      }
+    };
+    if self.colours.len() == 0 {
+      write!(f,
+             r##"<path fill="none" \
+                  stroke-width="{}" stroke="transparent" d="{}"/>"##,
+             INVISIBLE_EDGE_SENSITIVE,
+             &self.path.0)?;
+    }
+    write!(f, r##"<path"##)?;
+    ef(f, &self.colours, "fill", r##" fill="none""##)?;
+    if self.edges.len() != 0 {
+      write!(f, r##" stroke-width="{}""##, &self.edge_width)?;
+    }
+    ef(f, &self.edges, "stroke", "")?;
+    write!(f, r##" d="{}"/>"##, &self.path.0)?;
   }
 }
 
