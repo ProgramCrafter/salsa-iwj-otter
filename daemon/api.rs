@@ -83,34 +83,6 @@ impl<'r> Responder<'r> for OnlineErrorResponse {
   }
 }
 
-fn log_did_to_piece_whoby(
-  occults: &GameOccults,
-  player: PlayerId,
-  gpl: &mut GPlayerState,
-  piece: PieceId, pc: &PieceState, p: &dyn Piece,
-  did: &str,
-) -> (Vec<LogEntry>, Html) {
-  let who_by = Html(htmlescape::encode_minimal(&gpl.nick));
-  let pri = piece_pri(occults, player, gpl, piece, pc);
-  let log = vec![ LogEntry { html: Html(format!(
-    "{} {} {}",
-    &who_by.0,
-    did,
-    p.describe_pri(&pri).0
-  ))}];
-  (log, who_by)
-}
-
-fn log_did_to_piece(
-  occults: &GameOccults,
-  player: PlayerId,
-  gpl: &mut GPlayerState,
-  piece: PieceId, pc: &PieceState, p: &dyn Piece,
-  did: &str,
-) -> Vec<LogEntry> {
-  log_did_to_piece_whoby(occults,player,gpl,piece,pc,p,did).0
-}
-
 #[throws(OE)]
 fn api_piece_op<O: ApiPieceOp>(form: Json<ApiPiece<O>>)
                    -> impl response::Responder<'static> {
