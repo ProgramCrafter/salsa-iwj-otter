@@ -605,6 +605,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           angle,
           gen: gs.gen,
           pos, face,
+          xdata: None,
         };
         if let (_, true) = pc.pos.clamped(gs.table_size) {
           throw!(SpecError::PosOffTable);

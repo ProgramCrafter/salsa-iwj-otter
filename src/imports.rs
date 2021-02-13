@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
+pub use std::any::Any;
 pub use std::borrow::Borrow;
 pub use std::borrow::Cow;
 pub use std::cmp::{self, max, min, Ordering};

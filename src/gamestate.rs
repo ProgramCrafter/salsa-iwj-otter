@@ -82,6 +82,7 @@ pub struct PieceState {
   pub gen: Generation,
   pub lastclient: ClientId,
   pub gen_before_lastclient: Generation,
+  pub xdata: Option<Box<dyn PieceXData>>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -96,6 +97,13 @@ pub struct CommittedLogEntry {
 }
 
 // ---------- piece trait, and rendering ----------
+
+#[typetag::serde(tag="type")]
+pub trait PieceXData: Any + Debug + Send + 'static {
+  fn default() -> Box<dyn PieceXData> where Self: Default {
+    Box::new(<Self as Default>::default())
+  }
+}
 
 #[typetag::serde]
 pub trait Outline: Send + Debug {
@@ -261,6 +269,14 @@ impl PieceState {
       pinned     : self.pinned,
       uos        : p.ui_operations()?,
     }
+  }
+
+  #[throws(IE)]
+  pub fn xdata<T:PieceXData+Default>(&mut self) -> &mut T {
+    let m = format!("piece xdata unexpectedly {:?}", &self.xdata);
+    let xdata = self.xdata
+      .get_or_insert_with(|| <T as PieceXData>::default());
+    Any::downcast_mut(xdata).ok_or_else(|| internal_logic_error(m))?
   }
 }
 
