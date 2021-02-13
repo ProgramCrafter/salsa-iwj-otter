@@ -364,17 +364,17 @@ impl Piece for Hand {
       if let Some(xdata) = gpc.xdata.get::<HandState>()?;
       if let Some(_owner) = &xdata.owner;
       then { UoDescription {
-        kind: UoKind:: GlobalExtra,
-        def_key: 'C',
-        opname: "claim".to_owned(),
-        desc: Html::lit("Claim this as your hand"),
-        wrc: WRC::Unpredictable,
-      }}
-      else { UoDescription {
-        kind: UoKind:: GlobalExtra,
+        kind: UoKind:: Piece,
         def_key: 'C',
         opname: "deactivate".to_owned(),
         desc: Html::lit("Deactivate hand"),
+        wrc: WRC::Unpredictable,
+      }}
+      else { UoDescription {
+        kind: UoKind:: Piece,
+        def_key: 'C',
+        opname: "claim".to_owned(),
+        desc: Html::lit("Claim this as your hand"),
         wrc: WRC::Unpredictable,
       }}
     })
