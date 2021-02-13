@@ -25,6 +25,7 @@ struct SimpleShape {
 pub const SELECT_SCALE: f64 = 1.1;
 
 pub const DEFAULT_EDGE_WIDTH: f64 = 0.2;
+pub const INVISIBLE_EDGE_SENSITIVE: f64 = 2.;
 
 fn default_edge_width() -> f64 { DEFAULT_EDGE_WIDTH }
 
@@ -139,7 +140,8 @@ impl Piece for SimpleShape {
     if self.colours.len() == 0 {
       write!(f,
              r##"<path fill="none" \
-                  stroke-width="2" stroke="transparent" d="{}"/>"##,
+                  stroke-width="{}" stroke="transparent" d="{}"/>"##,
+             INVISIBLE_EDGE_SENSITIVE,
              &self.path.0)?;
     }
     write!(f, r##"<path"##)?;
