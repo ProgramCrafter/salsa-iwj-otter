@@ -17,11 +17,16 @@ struct SimpleShape {
   path: Html,
   colours: ColourMap,
   #[serde(default)] edges: ColourMap,
+  #[serde(default="default_edge_width")] edge_width: f64,
   itemname: String,
   outline: Box<dyn Outline>,
 }
 
 pub const SELECT_SCALE: f64 = 1.1;
+
+pub const DEFAULT_EDGE_WIDTH: f64 = 0.2;
+
+fn default_edge_width() -> f64 { DEFAULT_EDGE_WIDTH }
 
 #[derive(Copy,Clone,Debug,Error,Serialize,Deserialize)]
 pub enum SVGProcessingError {
@@ -117,6 +122,7 @@ impl Outline for SimpleShape {
     }
   }
 }
+//    let edge_attrs = format!(r##"stroke-width="" stroke"##
 
 #[typetag::serde]
 impl Piece for SimpleShape {
@@ -125,7 +131,7 @@ impl Piece for SimpleShape {
     let f = &mut f.0;
     let ef = |f: &mut String, cmap: &ColourMap, attrname: &str, otherwise| {
       if let Some(colour) = cmap.get(pri.face) {
-        write!(f, r##"{}="{}""##, attrname, colour.0)
+        write!(f, r##" {}="{}""##, attrname, colour.0)
       } else {
         write!(f, "{}", otherwise)
       }
@@ -136,9 +142,12 @@ impl Piece for SimpleShape {
                   stroke-width="2" stroke="transparent" d="{}"/>"##,
              &self.path.0)?;
     }
-    write!(f, r##"<path "##)?;
-    ef(f, &self.colours, "fill", r##"fill="none""##)?;
-    ef(f, &self.edges, r##"stroke-width="0.2" stroke"##, "")?;
+    write!(f, r##"<path"##)?;
+    ef(f, &self.colours, "fill", r##" fill="none""##)?;
+    if self.edges.len() != 0 {
+      write!(f, r##" stroke-width="{}""##, &self.edge_width)?;
+    }
+    ef(f, &self.edges, "stroke", "")?;
     write!(f, r##" d="{}"/>"##, &self.path.0)?;
   }
   fn describe_html(&self, face: Option<FaceId>) -> Html {
@@ -174,10 +183,15 @@ impl SimpleShape {
         .collect::<Result<_,_>>()?
     );
 
+    if common.edge_width.is_some() && common.edges.len() == 0 {
+      throw!(SpecError::SpecifiedWidthOfNoEdges);
+    }
+
     let shape = SimpleShape {
       desc, path, itemname, outline,
       colours: cmap(&common.faces)?,
       edges: cmap(&common.edges)?,
+      edge_width: common.edge_width.unwrap_or(DEFAULT_EDGE_WIDTH),
     };
 
     let count = shape.count_faces();

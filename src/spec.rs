@@ -79,6 +79,7 @@ pub enum SpecError {
   CompassAngleInvalid,
   ZeroFaces,
   InconsistentFacesEdgecoloursCount,
+  SpecifiedWidthOfNoEdges,
 }
 display_as_debug!{SpecError}
 
@@ -201,6 +202,7 @@ pub mod piece_specs {
     pub itemname: Option<String>,
     pub faces: IndexVec<FaceId, ColourSpec>,
     #[serde(default)] pub edges: IndexVec<FaceId, ColourSpec>,
+    pub edge_width: Option<f64>,
   }
 
   #[derive(Debug,Serialize,Deserialize)]

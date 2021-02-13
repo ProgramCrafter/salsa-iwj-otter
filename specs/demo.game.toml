@@ -38,3 +38,4 @@ size = [10]
 angle.Compass = 1
 faces = [ ]
 edges = ["yellow", "orange"]
+edge_width = 0.5
