@@ -16,7 +16,7 @@ pub enum PresentationLayout {
 
 type PL = PresentationLayout;
 
-pub fn player_num_dasharray(player_num: NonZeroUsize) -> String {
+pub fn player_num_dasharray(player_num: NonZeroUsize) -> Html {
   let n: usize = player_num.into();
   let mut dasharray = String::with_capacity(n*3 + 4);
   for dash in iter::once("3").chain(
@@ -26,10 +26,10 @@ pub fn player_num_dasharray(player_num: NonZeroUsize) -> String {
   }
   let spc = dasharray.pop();
   assert_eq!(spc,Some(' '));
-  dasharray
+  Html(dasharray)
 }
 
-pub fn player_dasharray(gplayers: &GPlayers, player: PlayerId) -> String {
+pub fn player_dasharray(gplayers: &GPlayers, player: PlayerId) -> Html {
   let kd: slotmap::KeyData = player.into();
   let n: usize = kd.get_idx_version().0.try_into().unwrap();
   let n: NonZeroUsize = n.try_into()

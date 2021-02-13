@@ -172,7 +172,7 @@ fn preview(items: Vec<ItemForOutput>) {
           let dasharray = player_num_dasharray(1.try_into().unwrap());
           print!(r#"<path d="{}" stroke-dasharray="{}"
                           fill="none" stroke="{}" />"#,
-                 &surround.0, &dasharray, HELD_SURROUND_COLOUR);
+                 &surround.0, &dasharray.0, HELD_SURROUND_COLOUR);
         }
         let mut html = Html("".into());
         pc.svg_piece(&mut html, &pri)?;

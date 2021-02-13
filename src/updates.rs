@@ -87,7 +87,7 @@ pub struct PreparedPieceState {
 
 #[derive(Serialize,Debug)]
 pub struct DataLoadPlayer {
-  dasharray: String,
+  dasharray: Html,
 }
 
 // ---------- piece updates ----------
@@ -271,7 +271,7 @@ impl PreparedUpdateEntry {
         data: DataLoadPlayer { dasharray },
         new_info_pane,
       } => {
-        dasharray.as_bytes().len() + 100
+        dasharray.0.as_bytes().len() + 100
           + new_info_pane.0.len()
       }
       RemovePlayer { player:_, new_info_pane } => {
