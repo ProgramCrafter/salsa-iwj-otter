@@ -129,7 +129,7 @@ impl Outline for SimpleShape {
 impl Piece for SimpleShape {
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) {
-    self.svg_piece_raw(f, pri)?;
+    self.svg_piece_raw(f, pri, &mut |_|Ok(()))?;
   }
   fn describe_html(&self, face: Option<FaceId>) -> Html {
     Html(if_chain! {
@@ -190,10 +190,10 @@ impl SimpleShape {
   }
 
   #[throws(IE)]
-  fn svg_piece_raw<
-      >(&self, f: &mut Html, pri: &PieceRenderInstructions,
-  )
-  {
+  fn svg_piece_raw(
+    &self, f: &mut Html, pri: &PieceRenderInstructions,
+    stroke_attrs_hook: &mut dyn FnMut(&mut String) -> Result<(),IE>,
+  ) {
     let f = &mut f.0;
     let ef = |f: &mut String, cmap: &ColourMap, attrname: &str, otherwise| {
       if let Some(colour) = cmap.get(pri.face) {
@@ -214,6 +214,7 @@ impl SimpleShape {
     if self.edges.len() != 0 {
       write!(f, r##" stroke-width="{}""##, &self.edge_width)?;
     }
+    stroke_attrs_hook(f)?;
     ef(f, &self.edges, "stroke", "")?;
     write!(f, r##" d="{}"/>"##, &self.path.0)?;
   }
