@@ -129,6 +129,12 @@ impl Piece for SimpleShape {
         otherwise.to_owned()
       }
     };
+    if self.colours.len() == 0 {
+      write!(&mut f.0,
+             r##"<path fill="none" \
+                  stroke-width="2" stroke="transparent" d="{}"/>"##,
+             &self.path.0)?;
+    }
     write!(&mut f.0, r##"<path {} {} d="{}"/>"##,
            ef(&self.colours, "fill", r##"fill="none""##),
            ef(&self.edges, r##"stroke-width="0.2" stroke"##, ""),
