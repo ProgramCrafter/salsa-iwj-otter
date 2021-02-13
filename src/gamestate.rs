@@ -149,10 +149,11 @@ pub trait Piece: Outline + Send + Debug {
   }
 
   // #[throws] doesn't work here - fehler #todo
-  fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions)
-               -> Result<(),IE>;
+  fn svg_piece(&self, f: &mut Html, gpc: &PieceState,
+               pri: &PieceRenderInstructions) -> Result<(),IE>;
 
-  fn describe_html(&self, face: Option<FaceId>) -> Html;
+  fn describe_html(&self, face: Option<FaceId>, gpc: &PieceState)
+                   -> Result<Html,IE>;
 
   fn delete_hook(&self, _p: &PieceState, _gs: &mut GameState)
                  -> ExecuteGameChangeUpdates { 
@@ -269,7 +270,7 @@ impl PieceState {
     PreparedPieceState {
       pos        : self.pos,
       held       : self.held,
-      svg        : p.make_defs(pri)?,
+      svg        : p.make_defs(self, pri)?,
       z          : self.zlevel.z.clone(),
       zg         : self.zlevel.zg,
       pinned     : self.pinned,
@@ -285,6 +286,23 @@ impl PieceState {
   #[throws(IE)]
   pub fn xdata_mut<T:PieceXData+Default>(&mut self) -> &mut T {
     self.xdata.get_mut()?
+  }
+
+  pub fn dummy() -> Self {
+    let gen_dummy = Generation(1);
+    PieceState {
+      pos: PosC([0,0]),
+      face: default(),
+      held: None,
+      zlevel: ZLevel { z: default(), zg: gen_dummy },
+      pinned: false,
+      occult: default(),
+      angle: default(),
+      gen: gen_dummy,
+      lastclient: ClientId(default()),
+      gen_before_lastclient: gen_dummy,
+      xdata: None,
+    }
   }
 }
 
@@ -330,14 +348,19 @@ impl PieceXDataExt for PieceXDataState {
 }
 
 pub trait PieceExt {
-  fn make_defs(&self, pri: &PieceRenderInstructions) -> Result<Html, IE>;
-  fn describe_pri(&self, pri: &PieceRenderInstructions) -> Html;
+  fn make_defs(&self, gpc: &PieceState, pri: &PieceRenderInstructions)
+               -> Result<Html, IE>;
+  fn describe_html_infallible(&self, face: Option<FaceId>, gpc: &PieceState)
+                              -> Html;
+  fn describe_pri(&self, gpc: &PieceState, pri: &PieceRenderInstructions)
+                  -> Html;
   fn ui_operations(&self, gpc: &PieceState) -> Result<Vec<UoDescription>, IE>;
 }
 
 impl<T> PieceExt for T where T: Piece + ?Sized {
   #[throws(IE)]
-  fn make_defs(&self, pri: &PieceRenderInstructions) -> Html {
+  fn make_defs(&self,  gpc: &PieceState, pri: &PieceRenderInstructions)
+               -> Html {
     let mut defs = Html(String::new());
     let dragraise = match self.thresh_dragraise(pri)? {
       Some(n) if n < 0 => throw!(SvgE::NegativeDragraise),
@@ -348,7 +371,7 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
     write!(&mut defs.0,
            r##"<g id="piece{}" transform="{}" data-dragraise="{}">"##,
            pri.id, &transform.0, dragraise)?;
-    self.svg_piece(&mut defs, &pri)?;
+    self.svg_piece(&mut defs, gpc, &pri)?;
     write!(&mut defs.0, r##"</g>"##)?;
     write!(&mut defs.0,
            r##"<path id="surround{}" d="{}"/>"##,
@@ -356,8 +379,18 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
     defs
   }
 
-  fn describe_pri(&self, pri: &PieceRenderInstructions) -> Html {
-    self.describe_html(Some(pri.face))
+  fn describe_html_infallible(&self, face: Option<FaceId>, gpc: &PieceState)
+                              -> Html {
+    self.describe_html(face, gpc)
+      .unwrap_or_else(|e| {
+        error!("error describing piece: {:?}", e);
+        Html::lit("<internal error describing piece>")
+      })
+  }
+
+  fn describe_pri(&self, gpc: &PieceState, pri: &PieceRenderInstructions)
+                  -> Html {
+    self.describe_html_infallible(Some(pri.face), gpc)
   }
 
   #[throws(InternalError)]

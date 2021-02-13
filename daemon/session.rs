@@ -111,7 +111,7 @@ fn session_inner(form: Json<SessionForm>,
       let pri = piece_pri(&ig.gs.occults, player, gpl, gpid, pr);
       let p = if let Some(p) = ig.ipieces.get(gpid) { p }
       else { continue /* was deleted */ };
-      let defs = p.make_defs(&pri)?;
+      let defs = p.make_defs(pr, &pri)?;
       alldefs.push((pri.id, defs));
 
       let vangle = match pri.angle {

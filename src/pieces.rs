@@ -128,10 +128,12 @@ impl Outline for SimpleShape {
 #[typetag::serde]
 impl Piece for SimpleShape {
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) {
+  fn svg_piece(&self, f: &mut Html, _gpc: &PieceState,
+               pri: &PieceRenderInstructions) {
     self.svg_piece_raw(f, pri, &mut |_|Ok(()))?;
   }
-  fn describe_html(&self, face: Option<FaceId>) -> Html {
+  #[throws(IE)]
+  fn describe_html(&self, face: Option<FaceId>, _gpc: &PieceState) -> Html {
     Html(if_chain! {
       if let Some(face) = face;
       if let Some(colour) = self.colours.get(face);
@@ -303,9 +305,10 @@ impl Outline for Hand {
 impl Piece for Hand {
   delegate!{
     to self.shape {
-      fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions)
-                   -> Result<(),IE>;
-      fn describe_html(&self, face: Option<FaceId>) -> Html;
+      fn svg_piece(&self, f: &mut Html, gpc: &PieceState,
+                   pri: &PieceRenderInstructions) -> Result<(),IE>;
+      fn describe_html(&self, face: Option<FaceId>,  _gpc: &PieceState)
+                       -> Result<Html,IE>;
       fn itemname(&self) -> &str;
     }
   }

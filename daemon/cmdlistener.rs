@@ -376,7 +376,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let pieces = ig.gs.pieces.iter().map(|(piece,p)|{
         let &PieceState { pos, face, .. } = p;
         let pinfo = ig.ipieces.get(piece)?;
-        let desc_html = pinfo.describe_html(None);
+        let desc_html = pinfo.describe_html_infallible(None, p);
         let itemname = pinfo.itemname().to_string();
         let bbox = pinfo.bbox_approx();
         #[allow(irrefutable_let_patterns)]
@@ -551,7 +551,11 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         .remove(piece).ok_or(ME::PieceNotFound)?;
       let gs = &mut ig.gs;
       let pc = gs.pieces.as_mut(modperm).remove(piece);
-      let desc_html = p.describe_html(Some(default()));
+      let desc_html = if let Some(pc) = &pc {
+        p.describe_html_infallible(Some(default()), pc)
+      } else {
+        Html::lit("<piece partially missing from game state!>")
+      };
       if let Some(pc) = pc { p.delete_hook(&pc, gs); }
       (U{ pcs: vec![(piece, PieceUpdateOp::Delete())],
           log: vec![ LogEntry {

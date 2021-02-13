@@ -155,7 +155,8 @@ impl Piece for Item {
   fn nfaces(&self) -> RawFaceId { self.faces.len().try_into().unwrap() }
 
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, pri: &PieceRenderInstructions) {
+  fn svg_piece(&self, f: &mut Html, _gpc: &PieceState,
+               pri: &PieceRenderInstructions) {
     let face = &self.faces[pri.face];
     let svgd = &self.svgs[face.svg];
     write!(&mut f.0,
@@ -163,7 +164,8 @@ impl Piece for Item {
            face.scale[0], face.scale[1], -face.centre[0], -face.centre[1],
            svgd.0)?;
   }
-  fn describe_html(&self, face: Option<FaceId>) -> Html {
+  #[throws(IE)]
+  fn describe_html(&self, face: Option<FaceId>, _gpc: &PieceState) -> Html {
     self.descs[ match face {
       Some(face) => self.faces[face].desc,
       None => self.desc_hidden,
@@ -264,7 +266,7 @@ impl Contents {
       let ier = ItemEnquiryData {
         itemname: k.clone(),
         f0bbox,
-        f0desc: loaded.describe_html(Some(default())),
+        f0desc: loaded.describe_html(Some(default()), &PieceState::dummy())?,
       };
       out.push(ier);
     }

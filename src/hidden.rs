@@ -310,7 +310,8 @@ pub fn recalculate_occultation(
           format!("missing occulter piece {:?} for occid {:?}",
                   opiece, h.occid));
       let oipc = ipieces.get(opiece).ok_or_else(bad)?;
-      Ok::<_,IE>(oipc.describe_html(None))
+      let ogpc = gs.pieces.get(opiece).ok_or_else(bad)?;
+      Ok::<_,IE>(oipc.describe_html(None, ogpc)?)
     };
 
     let most_obscure = most_obscure.unwrap_or(&OccK::Visible); // no players!
@@ -321,7 +322,7 @@ pub fn recalculate_occultation(
       }
       OccK::Scrambled | OccK::Displaced{..} => {
         let face = ipc.nfaces() - 1;
-        let show = ipc.describe_html(Some(face.into()));
+        let show = ipc.describe_html(Some(face.into()), gpc)?;
         vec![ LogEntry { html: Html(format!(
           "{} moved {} from {} to {}",
           who_by.0, &show.0,

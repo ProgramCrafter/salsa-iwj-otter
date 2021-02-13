@@ -93,20 +93,7 @@ fn preview(items: Vec<ItemForOutput>) {
     (||{
       let pc = spec.clone().load().context("load")?;
       let mut uos = vec![];
-      let gen_dummy = Generation(1);
-      let gpc_dummy = PieceState {
-        pos: PosC([0,0]),
-        face: default(),
-        held: None,
-        zlevel: ZLevel { z: default(), zg: gen_dummy },
-        pinned: false,
-        occult: default(),
-        angle: default(),
-        gen: gen_dummy,
-        lastclient: ClientId(default()),
-        gen_before_lastclient: gen_dummy,
-        xdata: None,
-      };
+      let gpc_dummy = PieceState::dummy();
       pc.add_ui_operations(&mut uos, &gpc_dummy).context("add uos")?;
       let uos = uos.into_iter().map(|uo| uo.opname).collect::<Vec<_>>();
       let spec = spec.clone();
@@ -133,6 +120,8 @@ fn preview(items: Vec<ItemForOutput>) {
   let max_facecols = pieces.iter().map(|s| s.face_cols()).max().unwrap_or(1);
   let max_uos = pieces.iter().map(|s| s.uos.len()).max().unwrap_or(0);
 
+  let gpc_dummy = PieceState::dummy();
+
   println!("{}", &HTML_PRELUDE);
   println!(r#"<table rules="all">"#);
   for s in &pieces {
@@ -142,7 +131,8 @@ fn preview(items: Vec<ItemForOutput>) {
              Html::from_txt(&spec.lib).0);
     println!(r#"<th align="left"><kbd>{}</kbd></th>"#,
              Html::from_txt(&spec.item).0);
-    println!(r#"<th align="left">{}</th>"#, pc.describe_html(None).0);
+    println!(r#"<th align="left">{}</th>"#,
+             pc.describe_html(None, &gpc_dummy)?.0);
     let only1 = s.face_cols() == 1;
     let getpri = |face: FaceId| PieceRenderInstructions {
       id: default(),
@@ -189,7 +179,7 @@ fn preview(items: Vec<ItemForOutput>) {
                  &surround.0, &dasharray.0, HELD_SURROUND_COLOUR);
         }
         let mut html = Html("".into());
-        pc.svg_piece(&mut html, &pri)?;
+        pc.svg_piece(&mut html, &gpc_dummy, &pri)?;
         println!("{}</svg>", html.0);
       }
       println!("</td>");
