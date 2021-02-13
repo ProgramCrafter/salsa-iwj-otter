@@ -6,6 +6,8 @@
 
 use crate::imports::*;
 
+use piece_specs::SimpleCommon;
+
 type ColourMap = IndexVec<FaceId, Colour>;
 
 type SE = SVGProcessingError;
@@ -212,23 +214,23 @@ impl SimpleShape {
 }
 
 trait SimplePieceSpec {
-  fn load_simple(&self) -> Result<SimpleShape, SpecError>;
+  fn load_raw(&self) -> Result<(SimpleShape, &SimpleCommon), SpecError>;
   fn load(&self) -> Result<Box<dyn Piece>, SpecError> {
-    Ok(Box::new(self.load_simple()?))
+    Ok(Box::new(self.load_raw()?.0))
   }
 }
 
 impl SimplePieceSpec for piece_specs::Disc {
   #[throws(SpecError)]
-  fn load_simple(&self) -> SimpleShape {
+  fn load_raw(&self) -> (SimpleShape, &SimpleCommon) {
     let outline = shapelib::Circle { diam: self.diam as f64 };
-    SimpleShape::new(
+    (SimpleShape::new(
       Html::lit("disc"),
       svg_circle_path(self.diam as f64)?,
       Box::new(outline),
       "simple-disc",
       &self.common,
-    )?
+    )?, &self.common)
   }
 }
 
@@ -251,15 +253,15 @@ impl piece_specs::Square {
 
 impl SimplePieceSpec for piece_specs::Square {
   #[throws(SpecError)]
-  fn load_simple(&self) -> SimpleShape {
+  fn load_raw(&self) -> (SimpleShape, &SimpleCommon) {
     let outline = shapelib::Square { xy: self.xy()?.map(|v| v as f64) };
-    SimpleShape::new(
+    (SimpleShape::new(
       Html::lit("square"),
       svg_rectangle_path(self.xy()?.promote())?,
       Box::new(outline),
       "simple-square",
       &self.common,
-    )?
+    )?, &self.common)
   }
 }
 
