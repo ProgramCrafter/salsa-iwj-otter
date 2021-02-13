@@ -135,7 +135,8 @@ pub trait Piece: Outline + Send + Debug {
   fn nfaces(&self) -> RawFaceId;
 
   #[throws(InternalError)]
-  fn add_ui_operations(&self, _upd: &mut Vec<UoDescription>) { }
+  fn add_ui_operations(&self, _upd: &mut Vec<UoDescription>,
+                       _gpc: &PieceState) { }
 
   fn ui_operation(&self,
                   _gs: &mut GameState, _player: PlayerId, _piece: PieceId,
@@ -269,7 +270,7 @@ impl PieceState {
       z          : self.zlevel.z.clone(),
       zg         : self.zlevel.zg,
       pinned     : self.pinned,
-      uos        : p.ui_operations()?,
+      uos        : p.ui_operations(self)?,
     }
   }
 
@@ -294,7 +295,7 @@ impl PieceXDataExt for PieceXDataState {
 pub trait PieceExt {
   fn make_defs(&self, pri: &PieceRenderInstructions) -> Result<Html, IE>;
   fn describe_pri(&self, pri: &PieceRenderInstructions) -> Html;
-  fn ui_operations(&self) -> Result<Vec<UoDescription>, IE>;
+  fn ui_operations(&self, gpc: &PieceState) -> Result<Vec<UoDescription>, IE>;
 }
 
 impl<T> PieceExt for T where T: Piece + ?Sized {
@@ -323,7 +324,7 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
   }
 
   #[throws(InternalError)]
-  fn ui_operations(&self) -> Vec<UoDescription> {
+  fn ui_operations(&self, gpc: &PieceState) -> Vec<UoDescription> {
     type WRC = WhatResponseToClientOp;
 
     let mut out = vec![];
@@ -336,7 +337,7 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
         desc: Html::lit("flip"),
       })
     }
-    self.add_ui_operations(&mut out)?;
+    self.add_ui_operations(&mut out, gpc)?;
     out
   }
 }

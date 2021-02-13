@@ -124,7 +124,7 @@ fn session_inner(form: Json<SessionForm>,
         zg: pr.zlevel.zg,
         pinned: pr.pinned,
         angle: vangle,
-        uos: &p.ui_operations()?,
+        uos: &p.ui_operations(pr)?,
       };
 
       let for_piece = SessionPieceContext {

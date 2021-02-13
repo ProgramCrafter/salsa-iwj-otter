@@ -93,7 +93,21 @@ fn preview(items: Vec<ItemForOutput>) {
     (||{
       let pc = spec.clone().load().context("load")?;
       let mut uos = vec![];
-      pc.add_ui_operations(&mut uos).context("add uos")?;
+      let gen_dummy = Generation(1);
+      let gpc_dummy = PieceState {
+        pos: PosC([0,0]),
+        face: default(),
+        held: None,
+        zlevel: ZLevel { z: default(), zg: gen_dummy },
+        pinned: false,
+        occult: default(),
+        angle: default(),
+        gen: gen_dummy,
+        lastclient: ClientId(default()),
+        gen_before_lastclient: gen_dummy,
+        xdata: None,
+      };
+      pc.add_ui_operations(&mut uos, &gpc_dummy).context("add uos")?;
       let uos = uos.into_iter().map(|uo| uo.opname).collect::<Vec<_>>();
       let spec = spec.clone();
 
