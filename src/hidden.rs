@@ -305,13 +305,12 @@ pub fn recalculate_occultation(
     let describe_occulter = |oni| {
       let h = occulteds[oni].as_ref().ok_or_else(
         || internal_logic_error("most obscure not obscure"))?;
-      let piece = h.occ.occulter;
-      let ipc = ipieces.get(h.occ.occulter).ok_or_else(
-        || internal_logic_error(
+      let opiece = h.occ.occulter;
+      let bad = || internal_logic_error(
           format!("missing occulter piece {:?} for occid {:?}",
-                  piece, h.occid)
-        ))?;
-      Ok::<_,IE>(ipc.describe_html(None))
+                  opiece, h.occid));
+      let oipc = ipieces.get(opiece).ok_or_else(bad)?;
+      Ok::<_,IE>(oipc.describe_html(None))
     };
 
     let most_obscure = most_obscure.unwrap_or(&OccK::Visible); // no players!
