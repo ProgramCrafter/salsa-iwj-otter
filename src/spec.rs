@@ -199,7 +199,6 @@ pub mod piece_specs {
 
   #[derive(Debug,Serialize,Deserialize)]
   pub struct SimpleCommon {
-    pub itemname: Option<String>,
     pub faces: IndexVec<FaceId, ColourSpec>,
     #[serde(default)] pub edges: IndexVec<FaceId, ColourSpec>,
     pub edge_width: Option<f64>,
@@ -208,6 +207,7 @@ pub mod piece_specs {
   #[derive(Debug,Serialize,Deserialize)]
   pub struct Disc {
     pub diam: Coord,
+    pub itemname: Option<String>,
     #[serde(flatten)]
     pub common: SimpleCommon,
   }
@@ -215,6 +215,7 @@ pub mod piece_specs {
   #[derive(Debug,Serialize,Deserialize)]
   pub struct Square {
     pub size: Vec<Coord>,
+    pub itemname: Option<String>,
     #[serde(flatten)]
     pub common: SimpleCommon,
   }
