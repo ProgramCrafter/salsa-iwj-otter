@@ -82,8 +82,10 @@ pub struct PieceState {
   pub gen: Generation,
   pub lastclient: ClientId,
   pub gen_before_lastclient: Generation,
-  pub xdata: Option<Box<dyn PieceXData>>,
+  pub xdata: PieceXDataState,
 }
+
+pub type PieceXDataState = Option<Box<dyn PieceXData>>;
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct LogEntry {
@@ -273,9 +275,18 @@ impl PieceState {
 
   #[throws(IE)]
   pub fn xdata<T:PieceXData+Default>(&mut self) -> &mut T {
-    let m = format!("piece xdata unexpectedly {:?}", &self.xdata);
-    let xdata = self.xdata
-      .get_or_insert_with(|| <T as PieceXData>::default());
+    self.xdata.get_mut()?
+  }
+}
+
+pub trait PieceXDataExt {
+  fn get_mut<T:PieceXData+Default>(&mut self) -> Result<&mut T, IE>;
+}
+impl PieceXDataExt for PieceXDataState {
+  #[throws(IE)]
+  fn get_mut<T:PieceXData+Default>(&mut self) -> &mut T {
+    let m = format!("piece xdata unexpectedly {:?}", &self);
+    let xdata = self.get_or_insert_with(|| <T as PieceXData>::default());
     Any::downcast_mut(xdata).ok_or_else(|| internal_logic_error(m))?
   }
 }
