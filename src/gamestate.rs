@@ -4,8 +4,6 @@
 
 use crate::imports::*;
 
-type SE = SVGProcessingError;
-
 // ---------- newtypes and type aliases ----------
 
 visible_slotmap_key!{ PlayerId(b'#') }
@@ -275,7 +273,7 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
   fn make_defs(&self, pri: &PieceRenderInstructions) -> Html {
     let mut defs = Html(String::new());
     let dragraise = match self.thresh_dragraise(pri)? {
-      Some(n) if n < 0 => throw!(SE::NegativeDragraise),
+      Some(n) if n < 0 => throw!(SvgE::NegativeDragraise),
       Some(n) => n,
       None => -1,
     };

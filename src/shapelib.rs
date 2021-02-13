@@ -91,7 +91,6 @@ impl LibraryLoadError {
 const INHERIT_DEPTH_LIMIT: u8 = 20;
 
 type TV = toml::Value;
-type SE = SpecError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ItemSpec {
@@ -192,7 +191,7 @@ pub fn libs_lookup(libname: &str)
       libs.as_ref()?.get(libname)?
     }))()
   })
-    .map_err(|_| SE::LibraryNotFound)
+    .map_err(|_| SpE::LibraryNotFound)
     ?
 }
 
@@ -201,7 +200,7 @@ impl ItemSpec {
   pub fn load(&self) -> Box<dyn Piece> {
     let lib = libs_lookup(&self.lib)?;
     let idata = lib.items.get(&self.item)
-      .ok_or(SE::LibraryItemNotFound(self.item.clone()))?;
+      .ok_or(SpE::LibraryItemNotFound(self.item.clone()))?;
     lib.load1(idata, &self.item)?
   }
 }
@@ -214,15 +213,15 @@ impl Contents {
       .map_err(|e| if e.kind() == ErrorKind::NotFound {
         warn!("library item lib={} itme={} data file {:?} not found",
               &self.libname, &name, &svg_path);
-        SE::LibraryItemNotFound(name.to_owned())
+        SpE::LibraryItemNotFound(name.to_owned())
       } else {
         let m = "error accessing/reading library item data file";
         error!("{}: {}: {}", &m, &svg_path, &e);
-        SE::InternalError(m.to_string())
+        SpE::InternalError(m.to_string())
       })?;
 
     idata.group.d.outline.check(&idata.group)
-      .map_err(|e| SE::InternalError(format!("rechecking outline: {}",&e)))?;
+      .map_err(|e| SpE::InternalError(format!("rechecking outline: {}",&e)))?;
     let outline = idata.group.d.outline.load(&idata.group)?;
 
     let mut svgs = IndexVec::with_capacity(1);
@@ -285,7 +284,7 @@ impl PieceSpec for MultiSpec {
   fn count(&self) -> usize { self.items.len() }
   fn load(&self, i: usize) -> Result<Box<dyn Piece>,SpecError> {
     let item = self.items.get(i).ok_or_else(
-      || SE::InternalError(format!("item {:?} from {:?}", i, &self))
+      || SpE::InternalError(format!("item {:?} from {:?}", i, &self))
     )?;
     let item = format!("{}{}{}", &self.prefix, item, &self.suffix);
     let lib = self.lib.clone();

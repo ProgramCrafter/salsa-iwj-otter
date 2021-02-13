@@ -10,8 +10,6 @@ use piece_specs::SimpleCommon;
 
 type ColourMap = IndexVec<FaceId, Colour>;
 
-type SE = SVGProcessingError;
-
 #[derive(Debug,Serialize,Deserialize)]
 // todo: this serialisation is rather large
 pub struct SimpleShape {
@@ -47,7 +45,7 @@ impl From<SVGProcessingError> for MgmtError {
   fn from(se: SVGProcessingError) -> MgmtError { se.into() }
 }
 
-#[throws(SE)]
+#[throws(SvgE)]
 pub fn svg_rescale_path(input: &Html, scale: f64) -> Html {
   type BM = u64;
   type BI = u32;
@@ -87,7 +85,7 @@ pub fn svg_rescale_path(input: &Html, scale: f64) -> Html {
           continue;
         }
       }
-      _ => throw!(SE::UnknownOperator),
+      _ => throw!(SvgE::UnknownOperator),
     };
     write!(&mut out, "{}", w)?;
   }
@@ -96,7 +94,7 @@ pub fn svg_rescale_path(input: &Html, scale: f64) -> Html {
   Html(out)
 }
 
-#[throws(SE)]
+#[throws(SvgE)]
 pub fn svg_circle_path(diam: f64) -> Html {
   let unit_path = Html::lit(
     "M 0 1  a 1 1 0 1 0 0 -2 \
@@ -107,7 +105,7 @@ pub fn svg_circle_path(diam: f64) -> Html {
   path
 }
 
-#[throws(SE)]
+#[throws(SvgE)]
 pub fn svg_rectangle_path(PosC([x,y]): PosC<f64>) -> Html {
   Html(format!("M {} {} h {} v {} h {} z",
                -x*0.5, -y*0.5, x, y, -x))

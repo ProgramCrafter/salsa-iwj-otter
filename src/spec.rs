@@ -312,7 +312,6 @@ pub mod implementation {
   use crate::imports::*;
 
   type AS = AccountScope;
-  type SE = SpecError;
   type TPS = TablePlayerSpec;
 
   impl<T> AreaC<T> {
@@ -333,7 +332,7 @@ pub mod implementation {
     #[throws(SpecError)]
     fn try_from(v: u8) -> Self {
       if v < 8 { Self(v) }
-      else { throw!(SE::CompassAngleInvalid) }
+      else { throw!(SpE::CompassAngleInvalid) }
     }
   }
 
@@ -358,9 +357,9 @@ pub mod implementation {
     fn try_from(ents: RawAcl<P>) -> Self {
       for ent in &ents {
         glob::Pattern::new(&ent.account_glob)
-          .map_err(|_| SE::AclInvalidAccountGlob)?;
+          .map_err(|_| SpE::AclInvalidAccountGlob)?;
         if ! ent.deny.is_disjoint(&ent.allow) {
-          throw!(SE::AclEntryOverlappingAllowDeny);
+          throw!(SpE::AclEntryOverlappingAllowDeny);
         }
       }
       Acl { ents }
@@ -604,7 +603,7 @@ pub mod implementation {
     #[throws(SpecError)]
     fn try_from(spec: &UrlSpec) -> Url {
       if spec.0.len() > UrlSpec::MAX_LEN {
-        throw!(SE::UrlTooLong);
+        throw!(SpE::UrlTooLong);
       }
       let base = Url::parse(&config().public_url)
         .or_else(|_| Url::parse(
@@ -613,7 +612,7 @@ pub mod implementation {
       let url = Url::options()
         .base_url(Some(&base))
         .parse(&spec.0)
-        .map_err(|_| SE::BadUrlSyntax)?;
+        .map_err(|_| SpE::BadUrlSyntax)?;
       url
     }
   }

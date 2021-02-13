@@ -132,6 +132,8 @@ pub type ESVU<POEPU> = ErrorSignaledViaUpdate<POEPU>;
 pub type IE = InternalError;
 pub type OE = OnlineError;
 pub type POEPP = PieceOpErrorPartiallyProcessed;
+pub type SvgE = SVGProcessingError;
+pub type SpE = SpecError;
 
 // updates.rs
 pub type PUE = PreparedUpdateEntry;

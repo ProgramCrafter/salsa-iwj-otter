@@ -16,7 +16,6 @@ use std::os::unix::io::AsRawFd;
 use std::os::unix::net::UnixListener;
 use uds::UnixStreamExt;
 
-type SE = SpecError;
 type CSE = anyhow::Error;
 
 type TP = TablePermission;
@@ -569,7 +568,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let gs = &mut ig.gs;
       let implicit: u32 = info.count()
         .try_into().map_err(
-          |_| SE::InternalError(format!("implicit item count out of range"))
+          |_| SpE::InternalError(format!("implicit item count out of range"))
         )?;
       let count: Box<dyn ExactSizeIterator<Item=u32>> = match count {
         Some(explicit) if implicit == 1 => {
