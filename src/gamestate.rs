@@ -293,7 +293,7 @@ impl PieceXDataExt for PieceXDataState {
   #[throws(IE)]
   fn get<T:PieceXData>(&self) -> Option<&T> {
     let m = format!("piece xdata unexpectedly {:?}", &self);
-    let xdata = match &self { Some(xdata) => xdata, None => return None };
+    let xdata = if let Some(xdata) = &self { xdata } else { return None };
     Some(Any::downcast_ref(xdata).ok_or_else(|| internal_logic_error(m))?)
   }
 
