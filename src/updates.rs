@@ -300,11 +300,7 @@ impl PreparedUpdateEntry {
 
 impl DataLoadPlayer {
   pub fn from_player(ig: &Instance, player: PlayerId) -> Self {
-    let kd: slotmap::KeyData = player.into();
-    let n = kd.get_idx_version().0;
-    let n = if n != 0 { n.try_into().unwrap() }
-    else { ig.gs.players.capacity() };
-    let dasharray = player_dasharray(n.try_into().unwrap());
+    let dasharray = player_dasharray(&ig.gs.players, player);
     DataLoadPlayer {
       dasharray,
     }

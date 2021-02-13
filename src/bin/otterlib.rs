@@ -169,7 +169,7 @@ fn preview(items: Vec<ItemForOutput>) {
                        viewBox="{}" width={} height={}>"#,
                &viewport, wh[0], wh[1]);
         if inseveral == 1 {
-          let dasharray = player_dasharray(1.try_into().unwrap());
+          let dasharray = player_num_dasharray(1.try_into().unwrap());
           print!(r#"<path d="{}" stroke-dasharray="{}"
                           fill="none" stroke="{}" />"#,
                  &surround.0, &dasharray, HELD_SURROUND_COLOUR);
