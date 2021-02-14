@@ -58,6 +58,8 @@ uds = "0.2"
 url = "2"
 vecdeque-stableix = "1"
 
+# This version wants to stay aligned with Rocket's, or we'll hve
+# two copies of the templating engine in our executables!
 tera = "0.11"
 
 # Repeated here because importing does not work properly
