@@ -1649,7 +1649,6 @@ dependencies = [
 name = "otter-daemon"
 version = "0.0.1"
 dependencies = [
- "arrayvec",
  "boolinator",
  "chrono",
  "chrono-tz",
