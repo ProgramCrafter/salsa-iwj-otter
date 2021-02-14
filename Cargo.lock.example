@@ -1611,7 +1611,7 @@ dependencies = [
  "num-derive",
  "num-traits",
  "ordered-float",
- "otter-zcoord",
+ "otter-base",
  "parking_lot",
  "percent-encoding 2.1.0",
  "pwd",
@@ -1633,6 +1633,19 @@ dependencies = [
  "uds",
  "url 2.2.0",
  "vecdeque-stableix",
+]
+
+[[package]]
+name = "otter-base"
+version = "0.0.1"
+dependencies = [
+ "arrayvec",
+ "derive_more",
+ "fehler",
+ "if_chain",
+ "serde",
+ "serde_with",
+ "thiserror",
 ]
 
 [[package]]
@@ -1667,7 +1680,7 @@ dependencies = [
  "num-traits",
  "ordered-float",
  "otter",
- "otter-zcoord",
+ "otter-base",
  "parking_lot",
  "percent-encoding 2.1.0",
  "pwd",
@@ -1698,7 +1711,7 @@ dependencies = [
  "console_error_panic_hook",
  "fehler",
  "js-sys",
- "otter-zcoord",
+ "otter-base",
  "thiserror",
  "wasm-bindgen",
  "wee_alloc",
@@ -1731,19 +1744,6 @@ dependencies = [
  "thirtyfour_sync",
  "void",
  "x11rb",
-]
-
-[[package]]
-name = "otter-zcoord"
-version = "0.0.1"
-dependencies = [
- "arrayvec",
- "derive_more",
- "fehler",
- "if_chain",
- "serde",
- "serde_with",
- "thiserror",
 ]
 
 [[package]]

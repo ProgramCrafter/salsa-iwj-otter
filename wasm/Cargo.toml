@@ -14,7 +14,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 
-otter-zcoord = { path = "../zcoord" }
+otter-base = { path = "../base" }
 
 console_error_panic_hook = "0.1"
 fehler = "1"

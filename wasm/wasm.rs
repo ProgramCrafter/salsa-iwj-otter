@@ -9,8 +9,10 @@ use js_sys::JsString;
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
+use otter_base::zcoord;
+use otter_base::misc as base_misc;
 use zcoord::{Mutable,ZCoord};
-use zcoord::misc::default;
+use base_misc::default;
 
 #[derive(Error,Clone,Copy,Debug,Eq,PartialEq)]
 #[error("packed Z coordinate wrong JS type (not a string)")]
@@ -108,7 +110,7 @@ pub fn timestamp_abbreviator(j: JsString) -> TimestampAbbreviator {
 impl TimestampAbbreviator {
   pub fn update(&mut self, now: &JsString) -> JsString {
     let now: String = now.into();
-    let (abbrev, _) = zcoord::misc::timestring_abbreviate(&self.last, &now);
+    let (abbrev, _) = base_misc::timestring_abbreviate(&self.last, &now);
     let abbrev = abbrev.into();
     self.last = now;
     abbrev
@@ -117,7 +119,7 @@ impl TimestampAbbreviator {
 
 #[wasm_bindgen]
 pub fn angle_transform(angle: u8) -> JsString {
-  zcoord::misc::raw_angle_transform(angle).into()
+  base_misc::raw_angle_transform(angle).into()
 }
 
 #[wasm_bindgen]

@@ -16,7 +16,7 @@ path = "main.rs"
 
 [dependencies]
 otter = { path = ".." }
-otter-zcoord = { path = "../zcoord" }
+otter-base = { path = "../base" }
 
 anyhow = "1"
 argparse = "0.2"

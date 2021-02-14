@@ -80,8 +80,10 @@ pub use strum::EnumString;
 pub use thiserror::Error;
 pub use url::Url;
 pub use vecdeque_stableix::Deque as StableIndexVecDeque;
-pub use zcoord::{self, ZCoord};
-pub use zcoord::misc::default;
+
+pub use otter_base::zcoord::{self, ZCoord};
+pub use otter_base::misc as base_misc;
+pub use base_misc::default;
 
 pub use crate::from_instance_lock_error;
 

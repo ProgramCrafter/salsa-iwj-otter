@@ -15,7 +15,7 @@ members = ["wasm", "daemon", "wdriver"]
 
 [dependencies]
 
-otter-zcoord = { path = "zcoord" }
+otter-base = { path = "base" }
 
 anyhow = "1"
 argparse = "0.2"

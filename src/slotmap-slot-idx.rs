@@ -7,7 +7,7 @@
 //! Provides a [`get_idx_key`](trait.KeyDataExt.html#tymethod.get_idx_version) method on
 //! `slotmap::KeyData`.  See [KeyDataExt::get_idx_version].
 
-use zcoord::misc::default;
+use otter_base::misc::default;
 
 /// Extension trait for `slotmap::KeyData`, providing `get_idx_version`.
 ///

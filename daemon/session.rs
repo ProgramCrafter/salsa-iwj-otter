@@ -164,7 +164,7 @@ fn session_inner(form: Json<SessionForm>,
     ).map(|logent|{
       let mut when = logent.when.render(tz);
       if layout.abbreviate_timestamps() {
-        let (abbrev, _) = zcoord::misc::timestring_abbreviate(
+        let (abbrev, _) = base_misc::timestring_abbreviate(
           timestamp_abbrev.get_or_insert(default()),
           &when
         );

@@ -253,7 +253,7 @@ impl VisiblePieceAngle {
   pub fn to_transform(self) -> VisibleAngleTransform {
     match self.0 {
       PieceAngle::Compass(angle) => VisibleAngleTransform(
-        zcoord::misc::raw_angle_transform(
+        base_misc::raw_angle_transform(
           angle.into()
         )
       ),
