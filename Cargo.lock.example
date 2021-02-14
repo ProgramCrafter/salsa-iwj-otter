@@ -1649,8 +1649,6 @@ dependencies = [
 name = "otter-daemon"
 version = "0.0.1"
 dependencies = [
- "chrono",
- "chrono-tz",
  "delegate",
  "either",
  "failure",
