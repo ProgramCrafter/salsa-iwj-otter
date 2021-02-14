@@ -28,8 +28,8 @@ downcast-rs = "1"
 either = "1"
 enum-map = { version = "0.6", features = [ "serde" ] }
 env_logger = "0.8"
-
 failure = "0.1.8" # for pwd
+
 flexi_logger = { version = "0.17", features = [ "specfile" ] }
 fs2 = "0.4"
 glob = "0.3"
