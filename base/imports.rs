@@ -4,3 +4,4 @@
 
 pub use arrayvec;
 pub use derive_more;
+pub use if_chain;

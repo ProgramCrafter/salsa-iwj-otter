@@ -1597,7 +1597,6 @@ dependencies = [
  "fs2",
  "glob 0.3.0",
  "htmlescape",
- "if_chain",
  "index_vec",
  "inventory",
  "itertools",
