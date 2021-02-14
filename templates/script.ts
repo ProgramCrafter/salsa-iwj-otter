@@ -378,7 +378,7 @@ function some_keydown(e: KeyboardEvent) {
     f(uo);
     return;
   }
-  if (!(uo.kind == 'Global' || uo.kind == 'GlobalExtra'))
+  if (!(uo.kind == 'Global' || uo.kind == 'GlobalExtra' || uo.kind == 'Piece'))
     throw 'bad kind '+uo.kind;
 
   if (uo.wrc == 'UpdateSvg' || uo.wrc == 'Predictable') {
