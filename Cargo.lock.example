@@ -1650,10 +1650,6 @@ name = "otter-daemon"
 version = "0.0.1"
 dependencies = [
  "fehler",
- "itertools",
- "lazy-init",
- "lazy_static",
- "libc",
  "log 0.4.14",
  "nix",
  "num-derive",
@@ -1703,8 +1699,6 @@ version = "0.0.1"
 dependencies = [
  "fehler",
  "humantime",
- "itertools",
- "libc",
  "log 0.4.14",
  "ndarray",
  "nix",
