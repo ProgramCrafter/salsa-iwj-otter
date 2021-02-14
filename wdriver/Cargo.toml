@@ -16,7 +16,6 @@ otter = { path = ".." }
 boolinator = "2"
 env_logger = "0.8"
 humantime = "2"
-if_chain = "1"
 itertools = "0.10"
 log = "0.4"
 libc = "0.2"
