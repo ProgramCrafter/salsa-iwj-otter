@@ -8,3 +8,4 @@ pub use anyhow;
 pub use boolinator;
 pub use chrono;
 pub use chrono_tz;
+pub use delegate;

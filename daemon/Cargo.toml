@@ -18,7 +18,6 @@ path = "main.rs"
 otter = { path = ".." }
 otter-base = { path = "../base" }
 
-delegate = "0.5"
 either = "1"
 failure = "0.1.8" # for pwd
 flexi_logger = { version = "0.17", features = [ "specfile" ] }
