@@ -1649,7 +1649,6 @@ dependencies = [
 name = "otter-daemon"
 version = "0.0.1"
 dependencies = [
- "boolinator",
  "chrono",
  "chrono-tz",
  "delegate",
@@ -1713,7 +1712,6 @@ dependencies = [
 name = "otter-webdriver-tests"
 version = "0.0.1"
 dependencies = [
- "boolinator",
  "env_logger",
  "fehler",
  "humantime",

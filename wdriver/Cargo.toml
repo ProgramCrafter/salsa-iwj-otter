@@ -13,7 +13,6 @@ edition = "2018"
 [dependencies]
 otter = { path = ".." }
 
-boolinator = "2"
 env_logger = "0.8"
 humantime = "2"
 itertools = "0.10"
