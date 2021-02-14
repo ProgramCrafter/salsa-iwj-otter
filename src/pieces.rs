@@ -355,7 +355,8 @@ impl Piece for Hand {
       if_chain!{
         if let Some(xdata) = gpc.xdata.get::<HandState>()?;
         if let Some(owned) = &xdata.owner;
-        then { write!(f, " dasharray={} ", &owned.dasharray.0)?; }
+        then { write!(f, r##" stroke-dasharray="{}" "##,
+                      &owned.dasharray.0)?; }
       }
       Ok(())
     })?;
