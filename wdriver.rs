@@ -1370,6 +1370,8 @@ impl Setup {
   }
 }
 
+// Ideally individual test files' Ctx would simply contain this,
+// but it would need to be borrowed in pieces which is awkward.
 pub struct UsualSetup {
   pub su: Setup,
   pub inst: Instance,
