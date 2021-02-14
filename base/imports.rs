@@ -3,3 +3,4 @@
 // There is NO WARRANTY.
 
 pub use arrayvec;
+pub use derive_more;

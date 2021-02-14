@@ -4,6 +4,8 @@
 
 #![allow(unused_imports)]
 
+use otter::imports::*;
+
 use std::cell::Cell;
 use std::cell::RefCell;
 use std::rc::Rc;

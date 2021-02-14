@@ -24,7 +24,6 @@ boolinator = "2"
 chrono = "0.4"
 chrono-tz = "0.5"
 delegate = "0.5"
-derive_more = "0.99"
 downcast-rs = "1"
 either = "1"
 enum-map = { version = "0.6", features = [ "serde" ] }
