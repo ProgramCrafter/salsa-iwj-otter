@@ -1369,3 +1369,29 @@ impl Setup {
       .collect::<Result<Vec<Window>,AE>>()?
   }
 }
+
+pub struct UsualSetup {
+  pub su: Setup,
+  pub inst: Instance,
+  pub alice: Window,
+  pub bob: Window,
+  pub spec: otter::spec::GameSpec,
+}
+
+impl UsualSetup {
+  #[throws(AE)]
+  pub fn new() -> UsualSetup {
+    let (mut su, inst) = setup(module_path!()).always_context("setup")?;
+    let [alice, bob] : [Window; 2] =
+      su.setup_static_users(&inst)?.try_into().unwrap();
+    let spec = su.ds.game_spec_data()?;
+    UsualSetup { su, inst, alice, bob, spec }
+  }
+}
+
+#[throws(AE)]
+pub fn as_usual<F: FnOnce(UsualSetup) -> Result<(), AE>>(f: F) {
+  let usual = UsualSetup::new()?;
+  f(usual)?;
+  info!("ok");
+}

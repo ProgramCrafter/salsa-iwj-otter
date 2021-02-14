@@ -279,27 +279,21 @@ impl Ctx {
 }
 
 #[throws(AE)]
-fn main(){
-  {
-    let (mut su, inst) = setup(module_path!()).always_context("setup")?;
-    let [alice, bob] : [Window; 2] =
-      su.setup_static_users(&inst)?.try_into().unwrap();
-    let spec = su.ds.game_spec_data()?;
-    debug!("ok {:?} {:?}", alice, bob);
+fn tests(UsualSetup { su, alice, bob, spec, ..}: UsualSetup) {
+  let mut c = Ctx { su, alice, bob, spec };
 
-    let mut c = Ctx { su, alice, bob, spec };
+  test!(c, "drag", c.drag()?);
 
-    test!(c, "drag", c.drag()?);
+  test!(c, "drag-rotate-unselect", {
+    let pc = c.rotate().always_context("rotate")?;
+    c.drag_off(pc).always_context("drag off")?;
+    c.unselect(pc).always_context("unselect")?;
+  });
 
-    test!(c, "drag-rotate-unselect", {
-      let pc = c.rotate().always_context("rotate")?;
-      c.drag_off(pc).always_context("drag off")?;
-      c.unselect(pc).always_context("unselect")?;
-    });
+  test!(c, "conflict", c.conflict()?);
 
-    test!(c, "conflict", c.conflict()?);
-
-    debug!("finishing");
-  }
-  info!("ok");
+  debug!("finishing");
 }
+
+#[throws(AE)]
+fn main() { as_usual(tests)? }
