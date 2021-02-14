@@ -45,7 +45,6 @@ num-derive = "0.3"
 ordered-float = "2"
 parking_lot = "0.11"
 
-num-traits = "0.2"
 percent-encoding = "2"
 pwd = "1"
 rand = "0.8"
@@ -65,6 +64,7 @@ vecdeque-stableix = "1"
 
 # Repeated here because importing does not work properly
 fehler = "1"
+num-traits = "0.2"
 serde = { version = "1", features = ["derive","rc"] }
 serde_with = "1"
 thiserror = "1"
