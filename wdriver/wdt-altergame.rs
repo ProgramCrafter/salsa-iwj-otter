@@ -65,12 +65,7 @@ impl Ctx {
 }
 
 #[throws(AE)]
-fn main(){
-  let (mut su, inst) = setup(module_path!()).always_context("setup")?;
-  let [alice, _]: [Window; 2] =
-    su.setup_static_users(&inst)?.try_into().unwrap();
-  debug!("ok {:?}", alice);
-
+fn tests(UsualSetup { su, alice, ..}: UsualSetup) {
   let mut c = Ctx { su, alice };
 
   test!(c, "links", {
@@ -90,5 +85,8 @@ fn main(){
     alice.synch()?;
   });
 
-  info!("ok");
+  debug!("finishing");
 }
+
+#[throws(AE)]
+fn main() { as_usual(tests)? }
