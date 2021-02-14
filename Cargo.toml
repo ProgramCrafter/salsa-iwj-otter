@@ -56,7 +56,6 @@ serde_json = "1"
 serde_with = "1"
 structopt = "0.3"
 strum = { version = "0.20", features = ['derive'] }
-thiserror = "1"
 tempfile = "3"
 tera = "0.11"
 toml = "0.5"
@@ -67,6 +66,7 @@ vecdeque-stableix = "1"
 
 # Repeated here because importing does not work properly
 fehler = "1"
+thiserror = "1"
 
 slotmap = { features = ['serde'], git = "https://github.com/ijackson/slotmap", branch="entry-return-stale-key" }
 # ^ MR not yet reviewed
