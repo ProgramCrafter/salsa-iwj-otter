@@ -50,7 +50,6 @@ rand = "0.8"
 regex = "1"
 rmp = "0.8"
 rmp-serde = "0.15"
-serde = { version = "1", features = ["derive","rc"] }
 serde_json = "1"
 serde_with = "1"
 structopt = "0.3"
@@ -65,6 +64,7 @@ rocket_cors = "0.5"
 
 # Repeated here because importing does not work properly
 fehler = "1"
+serde = { version = "1", features = ["derive","rc"] }
 thiserror = "1"
 
 slotmap = { features = ['serde'], git = "https://github.com/ijackson/slotmap", branch="entry-return-stale-key" }
