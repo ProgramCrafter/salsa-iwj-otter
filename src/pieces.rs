@@ -385,14 +385,14 @@ impl Piece for Hand {
         def_key: 'C',
         opname: "deactivate".to_owned(),
         desc: Html::lit("Deactivate hand"),
-        wrc: WRC::UpdateSvg,
+        wrc: WRC::Unpredictable,
       }}
       else { UoDescription {
         kind: UoKind:: Piece,
         def_key: 'C',
         opname: "claim".to_owned(),
         desc: Html::lit("Claim this as your hand"),
-        wrc: WRC::UpdateSvg,
+        wrc: WRC::Unpredictable,
       }}
     })
   }

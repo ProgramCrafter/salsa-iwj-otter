@@ -381,14 +381,12 @@ function some_keydown(e: KeyboardEvent) {
   if (!(uo.kind == 'Global' || uo.kind == 'GlobalExtra' || uo.kind == 'Piece'))
     throw 'bad kind '+uo.kind;
 
-  if (uo.wrc == 'UpdateSvg' || uo.wrc == 'Predictable') {
-    for (var piece of uo.targets!) {
-      let p = pieces[piece]!;
-      api_piece(api, 'k', piece, p, { opname: uo.opname, wrc: uo.wrc });
-      if (uo.wrc == 'UpdateSvg') {
-	p.cseq_updatesvg = p.cseq;
-	redisplay_ancillaries(piece,p);
-      }
+  for (var piece of uo.targets!) {
+    let p = pieces[piece]!;
+    api_piece(api, 'k', piece, p, { opname: uo.opname, wrc: uo.wrc });
+    if (uo.wrc == 'UpdateSvg') {
+      p.cseq_updatesvg = p.cseq;
+      redisplay_ancillaries(piece,p);
     }
   }
 }
@@ -1188,6 +1186,13 @@ messages.Recorded = <MessageHandler>function
       p.zg = zg_new;
     });
   }
+}
+
+messages.RecordedUnpredictable = <MessageHandler>function
+(j: { piece: PieceId, cseq: ClientSeq, ns: PreparedPieceState } ) {
+  let piece = j.piece;
+  let p = pieces[piece]!;
+  piece_modify(piece, p, j.ns, false);
 }
 
 messages.Error = <MessageHandler>function
