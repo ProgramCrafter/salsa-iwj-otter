@@ -1027,10 +1027,10 @@ function handle_piece_update(j: TransmitUpdateEntry_Piece) {
 
 messages.Piece = <MessageHandler>handle_piece_update;
 
-type PieceStateMessage = {
+type PreparedPieceState = {
+  pos: Pos,
   svg: string,
   held: PlayerId,
-  pos: Pos,
   z: ZCoord,
   zg: Generation,
   pinned: boolean,
@@ -1038,13 +1038,13 @@ type PieceStateMessage = {
 }
 
 pieceops.ModifyQuiet = <PieceHandler>function
-(piece: PieceId, p: PieceInfo, info: PieceStateMessage) {
+(piece: PieceId, p: PieceInfo, info: PreparedPieceState) {
   console.log('PIECE UPDATE MODIFY QUIET ',piece,info)
   piece_modify(piece, p, info, false);
 }
 
 pieceops.Modify = <PieceHandler>function
-(piece: PieceId, p: PieceInfo, info: PieceStateMessage) {
+(piece: PieceId, p: PieceInfo, info: PreparedPieceState) {
   console.log('PIECE UPDATE MODIFY LOuD ',piece,info)
   piece_note_moved(piece,p);
   piece_modify(piece, p, info, false);
@@ -1055,7 +1055,7 @@ piece_error_handlers.PosOffTable = <PieceErrorHandler>function()
 piece_error_handlers.Conflict = <PieceErrorHandler>function()
 { return true ; }
 
-function piece_modify(piece: PieceId, p: PieceInfo, info: PieceStateMessage,
+function piece_modify(piece: PieceId, p: PieceInfo, info: PreparedPieceState,
 		      conflict_expected: boolean) {
   p.delem.innerHTML = info.svg;
   p.pelem= piece_element('piece',piece)!;
