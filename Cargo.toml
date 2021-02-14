@@ -58,6 +58,9 @@ uds = "0.2"
 url = "2"
 vecdeque-stableix = "1"
 
+slotmap = { features = ['serde'], git = "https://github.com/ijackson/slotmap", branch="entry-return-stale-key" }
+# ^ MR not yet reviewed
+
 # This version wants to stay aligned with Rocket's, or we'll hve
 # two copies of the templating engine in our executables!
 tera = "0.11"
@@ -70,6 +73,3 @@ serde_with = "1"
 structopt = "0.3"
 strum = { version = "0.20", features = ['derive'] }
 thiserror = "1"
-
-slotmap = { features = ['serde'], git = "https://github.com/ijackson/slotmap", branch="entry-return-stale-key" }
-# ^ MR not yet reviewed

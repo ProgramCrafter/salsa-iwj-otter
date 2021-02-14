@@ -30,9 +30,6 @@ structopt = "0.3"
 strum = { version = "0.20", features = ['derive'] }
 thiserror = "1"
 
-slotmap = { features = ['serde'], git = "https://github.com/ijackson/slotmap", branch="entry-return-stale-key" }
-# ^ MR not yet reviewed
-
 [dependencies.rocket_contrib]
 version = "0.4"
 default-features = false

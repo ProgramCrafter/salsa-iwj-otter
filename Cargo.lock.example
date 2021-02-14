@@ -1658,7 +1658,6 @@ dependencies = [
  "rocket_cors",
  "serde",
  "serde_with",
- "slotmap",
  "structopt",
  "strum",
  "thiserror",

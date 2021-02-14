@@ -30,6 +30,7 @@ pub use pwd;
 pub use regex;
 pub use rmp_serde;
 pub use serde_json;
+pub use slotmap;
 pub use toml;
 pub use uds;
 pub use vecdeque_stableix;
