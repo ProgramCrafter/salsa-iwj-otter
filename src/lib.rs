@@ -4,6 +4,9 @@
 
 #![allow(clippy::redundant_closure_call)]
 
+pub mod imports;
+pub mod prelude;
+
 pub mod accounts;
 pub mod authproofs;
 pub mod commands;
@@ -13,7 +16,6 @@ pub mod error;
 pub mod gamestate;
 pub mod global;
 pub mod hidden;
-pub mod prelude;
 pub mod keydata;
 pub mod mgmtchannel;
 pub mod nwtemplates;
