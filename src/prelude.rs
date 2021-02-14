@@ -4,6 +4,8 @@
 
 use crate::imports::*;
 
+pub use crate::imports::flexi_logger;
+
 pub use std::any::Any;
 pub use std::borrow::Borrow;
 pub use std::borrow::Cow;
@@ -54,7 +56,7 @@ pub use downcast_rs::{impl_downcast, Downcast};
 pub use either::{Either, Left, Right};
 pub use enum_map::{Enum, EnumMap};
 pub use fehler::{throw, throws};
-pub use flexi_logger::{self, LogSpecification};
+pub use flexi_logger::LogSpecification;
 pub use fs2::FileExt;
 pub use if_chain::if_chain;
 pub use index_vec::{define_index_type, index_vec, IndexSlice, IndexVec};

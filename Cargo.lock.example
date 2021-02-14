@@ -1650,10 +1650,6 @@ name = "otter-daemon"
 version = "0.0.1"
 dependencies = [
  "fehler",
- "flexi_logger",
- "fs2",
- "glob 0.3.0",
- "htmlescape",
  "index_vec",
  "inventory",
  "itertools",

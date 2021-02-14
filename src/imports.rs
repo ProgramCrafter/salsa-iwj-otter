@@ -12,3 +12,7 @@ pub use delegate;
 pub use either;
 pub use env_logger;
 pub use failure;
+pub use flexi_logger;
+pub use fs2;
+pub use glob;
+pub use htmlescape;
