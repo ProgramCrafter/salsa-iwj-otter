@@ -42,10 +42,10 @@ libc = "0.2"
 log = "0.4"
 nix = "0.19"
 num-derive = "0.3"
-
-num-traits = "0.2"
 ordered-float = "2"
 parking_lot = "0.11"
+
+num-traits = "0.2"
 percent-encoding = "2"
 pwd = "1"
 rand = "0.8"

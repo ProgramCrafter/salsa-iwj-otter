@@ -1651,10 +1651,8 @@ version = "0.0.1"
 dependencies = [
  "fehler",
  "num-traits",
- "ordered-float",
  "otter",
  "otter-base",
- "parking_lot",
  "percent-encoding 2.1.0",
  "pwd",
  "rand 0.8.3",
@@ -1700,7 +1698,6 @@ dependencies = [
  "num-traits",
  "once_cell",
  "otter",
- "parking_lot",
  "regex",
  "serde",
  "serde_json",
