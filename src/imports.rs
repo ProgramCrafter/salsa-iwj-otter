@@ -21,3 +21,5 @@ pub use lazy_init;
 pub use lazy_static;
 pub use itertools;
 pub use libc;
+pub use log;
+pub use nix;

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-use otter::imports::*;
+pub use otter::imports::*;
 
 pub use anyhow::{anyhow, ensure, Context};
 pub use boolinator::Boolinator;
