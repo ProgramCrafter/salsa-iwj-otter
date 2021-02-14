@@ -101,11 +101,14 @@ pub struct CommittedLogEntry {
 // ---------- piece trait, and rendering ----------
 
 #[typetag::serde(tag="type")]
-pub trait PieceXData: Any + Debug + Send + 'static {
+pub trait PieceXData: Downcast + Debug + Send + 'static {
   fn default() -> Box<dyn PieceXData> where Self: Default {
-    Box::new(<Self as Default>::default())
+    let k = Box::new(<Self as Default>::default());
+    dbg!(&k);
+    k
   }
 }
+impl_downcast!(PieceXData);
 
 #[typetag::serde]
 pub trait Outline: Send + Debug {
@@ -286,22 +289,43 @@ impl PieceState {
 }
 
 pub trait PieceXDataExt {
-  fn get<T:PieceXData>(&self) -> Result<Option<&T>, IE>;
+  fn get<T:PieceXData+Default>(&self) -> Result<Option<&T>, IE>;
   fn get_mut<T:PieceXData+Default>(&mut self) -> Result<&mut T, IE>;
 }
+
+fn xdata_unexpected<T:PieceXData+Default>(got: &dyn PieceXData)
+                                          -> InternalError {
+  internal_logic_error(format!(
+    "\n\
+     piece xdata unexpectedly: {:?}\n\
+     expected something like:  Some({:?})\n",
+    &got, <T as PieceXData>::default(),
+  ))
+}
+
 impl PieceXDataExt for PieceXDataState {
   #[throws(IE)]
-  fn get<T:PieceXData>(&self) -> Option<&T> {
-    let m = format!("piece xdata unexpectedly {:?}", &self);
+  fn get<T:PieceXData>(&self) -> Option<&T> where T: Default {
     let xdata = if let Some(xdata) = &self { xdata } else { return None };
-    Some(Any::downcast_ref(xdata).ok_or_else(|| internal_logic_error(m))?)
+    let xdata: &dyn PieceXData = xdata.as_ref();
+    if let Some(y) = xdata.downcast_ref::<T>() { Some(y) }
+    else { throw!(xdata_unexpected::<T>(xdata)) }
   }
 
-  #[throws(IE)]
-  fn get_mut<T:PieceXData+Default>(&mut self) -> &mut T {
-    let m = format!("piece xdata unexpectedly {:?}", &self);
+  fn get_mut<T:PieceXData+Default>(&mut self) -> Result<&mut T, IE> {
     let xdata = self.get_or_insert_with(|| <T as PieceXData>::default());
-    Any::downcast_mut(xdata).ok_or_else(|| internal_logic_error(m))?
+    let xdata: &mut dyn PieceXData = xdata.as_mut();
+    let keep: *mut dyn PieceXData = xdata;
+    if let Some(y) = xdata.downcast_mut::<T>() { return Ok(y) }
+    
+    // Erroneous borrowck error with early returns
+    // https://github.com/rust-lang/rust/issues/58910
+    // https://github.com/rust-lang/rust/issues/51545
+    // Safety: the `xdata` borrow that was passed to `downcast_mut`
+    // is no longer present in this branch, so now we have only `keep`
+    // and the things `keep` was borrowed from.
+    let xdata: &dyn PieceXData = unsafe { keep.as_ref().unwrap() };
+    Err(xdata_unexpected::<T>(xdata))
   }
 }
 
