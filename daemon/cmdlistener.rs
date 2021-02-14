@@ -4,6 +4,8 @@
 
 // management API implementation
 
+use otter::imports::*;
+
 use super::*;
 use otter::commands::*;
 
