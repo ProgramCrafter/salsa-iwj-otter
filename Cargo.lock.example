@@ -1650,7 +1650,6 @@ name = "otter-daemon"
 version = "0.0.1"
 dependencies = [
  "fehler",
- "inventory",
  "itertools",
  "lazy-init",
  "lazy_static",
