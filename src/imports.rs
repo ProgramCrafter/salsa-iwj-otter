@@ -30,3 +30,4 @@ pub use pwd;
 pub use regex;
 pub use rmp_serde;
 pub use serde_json;
+pub use toml;

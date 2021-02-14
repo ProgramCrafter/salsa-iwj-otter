@@ -51,14 +51,15 @@ regex = "1"
 rmp = "0.8"
 rmp-serde = "0.15"
 serde_json = "1"
-
 tempfile = "3"
-tera = "0.11"
 toml = "0.5"
+
 typetag = "0.1.6"
 uds = "0.2"
 url = "2"
 vecdeque-stableix = "1"
+
+tera = "0.11"
 
 # Repeated here because importing does not work properly
 fehler = "1"
