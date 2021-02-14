@@ -16,3 +16,4 @@ pub use flexi_logger;
 pub use fs2;
 pub use glob;
 pub use htmlescape;
+pub use index_vec;
