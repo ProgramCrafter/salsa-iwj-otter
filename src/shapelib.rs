@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-pub use crate::imports::*;
+pub use crate::prelude::*;
 pub use crate::shapelib_toml::*;
 
 use parking_lot::{const_rwlock, RwLock};

@@ -13,7 +13,7 @@ pub mod error;
 pub mod gamestate;
 pub mod global;
 pub mod hidden;
-pub mod imports;
+pub mod prelude;
 pub mod keydata;
 pub mod mgmtchannel;
 pub mod nwtemplates;

@@ -4,7 +4,7 @@
 
 #![allow(clippy::let_and_return)]
 
-use crate::imports::*;
+use crate::prelude::*;
 
 use slotmap::dense as sm;
 use std::sync::PoisonError;

@@ -19,7 +19,7 @@
 //! the provided `library/wikimedia.toml` and `library/edited.toml`,
 //! which demonstrate the use of the various features.
 
-pub use crate::imports::*;
+pub use crate::prelude::*;
 
 #[doc(hidden)] pub type LLE = shapelib::LibraryLoadError;
 

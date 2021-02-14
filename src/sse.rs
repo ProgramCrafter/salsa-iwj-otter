@@ -5,7 +5,7 @@
 #![allow(clippy::while_let_loop)]
 #![allow(clippy::blocks_in_if_conditions)]
 
-use crate::imports::*;
+use crate::prelude::*;
 
 use vecdeque_stableix::Offset as StableIndexOffset;
 use std::ops::Neg;

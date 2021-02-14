@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-use crate::imports::*;
+use crate::prelude::*;
 
 pub const SVG_SCALE: f64 = 6.;
 

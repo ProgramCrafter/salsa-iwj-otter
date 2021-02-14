@@ -33,7 +33,7 @@ use rocket::fairing;
 use rocket::response::Content;
 use rocket_contrib::serve::StaticFiles;
 
-use otter::imports::*;
+use otter::prelude::*;
 
 #[derive(Serialize,Debug)]
 struct FrontPageRenderContext {

@@ -231,7 +231,7 @@ pub mod piece_specs {
 
 pub mod pos_traits {
   use std::ops::{Add,Sub,Mul,Neg,AddAssign,SubAssign};
-  use crate::imports::*;
+  use crate::prelude::*;
 
   impl<T:Add<T,Output=T>+Copy+Clone+Debug> Add<PosC<T>> for PosC<T> {
     type Output = PosC<T>;
@@ -309,7 +309,7 @@ pub mod pos_traits {
 
 pub mod implementation {
   use super::*;
-  use crate::imports::*;
+  use crate::prelude::*;
 
   type AS = AccountScope;
   type TPS = TablePlayerSpec;

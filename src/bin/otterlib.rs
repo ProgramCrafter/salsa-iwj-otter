@@ -37,7 +37,7 @@ If you wish to edit these shapes you should probably start with
 the <a href="/_/src/">source code</a>.
 "##;
 
-pub use otter::imports::*;
+pub use otter::prelude::*;
 
 pub use shapelib::*;
 

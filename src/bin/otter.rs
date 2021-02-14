@@ -12,8 +12,8 @@ use argparse::{self,ArgumentParser,action::{TypedAction,ParseResult}};
 use argparse::action::{Action,IFlagAction,IArgAction};
 use derive_more::Display;
 
+use otter::prelude::*;
 use otter::commands::*;
-use otter::imports::*;
 
 type APE = ArgumentParseError;
 type E = anyhow::Error;
