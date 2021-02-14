@@ -1166,7 +1166,7 @@ pieceops.SetZLevel = <PieceHandler>function
 }
 
 messages.Recorded = <MessageHandler>function
-(j: { piece: PieceId, cseq: ClientSeq, gen: Generation
+(j: { piece: PieceId, cseq: ClientSeq,
       zg: Generation|null, svg: string | null } ) {
   let piece = j.piece;
   let p = pieces[piece]!;
@@ -1188,7 +1188,6 @@ messages.Recorded = <MessageHandler>function
       p.zg = zg_new;
     });
   }
-  gen = j.gen;
 }
 
 messages.Error = <MessageHandler>function
