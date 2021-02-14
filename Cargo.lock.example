@@ -1650,7 +1650,6 @@ name = "otter-daemon"
 version = "0.0.1"
 dependencies = [
  "fehler",
- "num-derive",
  "num-traits",
  "ordered-float",
  "otter",
@@ -1698,7 +1697,6 @@ dependencies = [
  "fehler",
  "humantime",
  "ndarray",
- "num-derive",
  "num-traits",
  "once_cell",
  "otter",

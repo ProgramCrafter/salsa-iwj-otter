@@ -23,3 +23,4 @@ pub use itertools;
 pub use libc;
 pub use log;
 pub use nix;
+pub use num_derive;
