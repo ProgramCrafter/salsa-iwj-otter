@@ -286,6 +286,7 @@ impl PieceSpec for piece_specs::Square {
 #[derive(Debug,Clone,Serialize,Deserialize)]
 struct MagicOwner {
   player: PlayerId,
+  desc: Html,
   dasharray: Html,
 }
 
@@ -333,6 +334,17 @@ impl PieceSpec for piece_specs::Hand {
   }
 }
 
+impl Hand {
+  fn describe_html_inner(&self, xdata: Option<&HandState>) -> Html {
+    if_chain! {
+      if let Some(xdata) = xdata;
+      if let Some(owner) = &xdata.owner;
+      then { owner.desc.clone() }
+      else { Html(format!("a hand repository")) }
+    }
+  }
+}
+
 #[typetag::serde]
 impl Piece for Hand {
   fn nfaces(&self) -> RawFaceId { 1 }
@@ -349,10 +361,14 @@ impl Piece for Hand {
     })?;
   }
 
+  #[throws(IE)]
+  fn describe_html(&self, _face: Option<FaceId>, gpc: &PieceState) -> Html {
+    let xdata = gpc.xdata.get()?;
+    self.describe_html_inner(xdata)
+  }
+
   delegate!{
     to self.shape {
-      fn describe_html(&self, face: Option<FaceId>,  _gpc: &PieceState)
-                       -> Result<Html,IE>;
       fn itemname(&self) -> &str;
     }
   }
@@ -387,33 +403,32 @@ impl Piece for Hand {
     let gpc = gs.pieces.byid_mut(piece)?;
     let xdata = gpc.xdata.get_mut::<HandState>()
       .map_err(|e| APOE::ReportViaResponse(e.into()))?;
-    let previous_owner = (||{
-      let owner = xdata.owner.as_ref()?;
-      let owner_gpl = gplayers.get(owner.player)?;
-      Some(Html(htmlescape::encode_minimal(&owner_gpl.nick)))
-    })();
+    let old_desc = self.describe_html_inner(Some(xdata));
 
     let dasharray = player_dasharray(gplayers, player);
     let gpl = gplayers.byid_mut(player)?;
-    let occults = &mut gs.occults;
+    let _occults = &mut gs.occults;
 
     let did;
-    match (opname, &previous_owner) {
-      ("claim", None) => {
+    match (opname, xdata.owner.is_some()) {
+      ("claim", false) => {
+        let nick = Html(htmlescape::encode_minimal(&gpl.nick));
+        let new_desc = Html(format!("{}'s hand", &nick.0));
         xdata.owner = Some(MagicOwner {
           player,
           dasharray,
+          desc: new_desc,
         });
         // xxx recalculate occultations
-        did = format!("claimed a hand repository");
+        did = format!("claimed {}", &old_desc.0);
       }
-      ("deactivate", Some(prev)) => {
+      ("deactivate", true) => {
         xdata.owner = None;
         // xxx recalculate occultations
-        did = format!("deactivated {}'s a hand", &prev.0);
+        did = format!("deactivated {}", &old_desc.0);
       }
-      ("claim", Some(_)) |
-      ("deactivate", None) => {
+      ("claim", true) |
+      ("deactivate", false) => {
         throw!(OE::PieceHeld);
       }
       _ => {
@@ -421,7 +436,8 @@ impl Piece for Hand {
       }
     }
 
-    let log = log_did_to_piece(occults,player,gpl,piece,gpc,self,&did);
+    let who_by = Html(htmlescape::encode_minimal(&gpl.nick));
+    let log = vec![ LogEntry { html: Html(format!("{} {}", who_by.0, did)) }];
     Ok(PieceUpdate {
       wrc, log,
       ops: PUOs::Simple(PUO::Modify(())), // xxx
