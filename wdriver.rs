@@ -48,7 +48,7 @@ pub use otter::commands::{MgmtGameUpdateMode};
 pub use otter::gamestate::{self, Generation};
 pub use otter::global::InstanceName;
 pub use otter::mgmtchannel::MgmtChannel;
-pub use otter::spec::{Coord, Pos, PosC};
+pub use otter::spec::{Coord, GameSpec, Pos, PosC};
 pub use otter::toml_de;
 pub use otter::ui::{AbbrevPresentationLayout, PresentationLayout};
 
@@ -653,7 +653,7 @@ impl DirSubst {
   }
 
   #[throws(AE)]
-  pub fn game_spec_data(&self) -> otter::spec::GameSpec {
+  pub fn game_spec_data(&self) -> GameSpec {
     let path = self.game_spec_path()?;
     (||{
       let data = fs::read(&path).context("read")?;
@@ -1377,7 +1377,7 @@ pub struct UsualSetup {
   pub inst: Instance,
   pub alice: Window,
   pub bob: Window,
-  pub spec: otter::spec::GameSpec,
+  pub spec: GameSpec,
 }
 
 impl UsualSetup {

@@ -8,7 +8,7 @@ struct Ctx {
   su: Setup,
   alice: Window,
   bob: Window,
-  spec: otter::spec::GameSpec,
+  spec: GameSpec,
 }
 ctx_with_setup!{Ctx}
 
