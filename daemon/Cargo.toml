@@ -18,8 +18,6 @@ path = "main.rs"
 otter = { path = ".." }
 otter-base = { path = "../base" }
 
-structopt = "0.3"
-strum = { version = "0.20", features = ['derive'] }
 toml = "0.5"
 typetag = "0.1.6"
 uds = "0.2"
@@ -33,6 +31,8 @@ fehler = "1"
 num-traits = "0.2"
 serde = { version = "1", features = ["derive","rc"] }
 serde_with = "1"
+structopt = "0.3"
+strum = { version = "0.20", features = ['derive'] }
 thiserror = "1"
 
 slotmap = { features = ['serde'], git = "https://github.com/ijackson/slotmap", branch="entry-return-stale-key" }

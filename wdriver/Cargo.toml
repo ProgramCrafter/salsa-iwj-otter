@@ -16,8 +16,6 @@ otter = { path = ".." }
 humantime = "2"
 ndarray = "0.14"
 once_cell = "1"
-structopt = "0.3"
-strum = { version = "0.20", features = ['derive'] }
 thirtyfour_sync = "0.22"
 void = "1"
 x11rb = "0.8"
@@ -26,6 +24,8 @@ x11rb = "0.8"
 fehler = "1"
 num-traits = "0.2"
 serde = { version = "1", features = ["derive","rc"] }
+structopt = "0.3"
+strum = { version = "0.20", features = ['derive'] }
 
 [lib]
 name = "otter_webdriver_tests"
