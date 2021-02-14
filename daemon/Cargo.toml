@@ -18,7 +18,6 @@ path = "main.rs"
 otter = { path = ".." }
 otter-base = { path = "../base" }
 
-typetag = "0.1.6"
 uds = "0.2"
 vecdeque-stableix = "1"
 

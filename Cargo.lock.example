@@ -1662,7 +1662,6 @@ dependencies = [
  "structopt",
  "strum",
  "thiserror",
- "typetag",
  "uds",
  "vecdeque-stableix",
 ]
