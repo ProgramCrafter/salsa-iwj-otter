@@ -362,6 +362,7 @@ function some_keydown(e: KeyboardEvent) {
   // says that keyCode is deprecated
   // my tsc says this isComposing thing doesn't exist.  wat.
   if ((e as any).isComposing /* || e.keyCode === 229 */) return;
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
 
   let pane = pane_keys[e.key];
   if (pane) {
