@@ -27,7 +27,6 @@ chrono-tz = "0.5"
 delegate = "0.5"
 either = "1"
 failure = "0.1.8" # for pwd
-fehler = "1"
 flexi_logger = { version = "0.17", features = [ "specfile" ] }
 fs2 = "0.4"
 glob = "0.3"
@@ -64,6 +63,9 @@ vecdeque-stableix = "1"
 
 rocket = { version = "^0.4.6", features=["sse"] }
 rocket_cors = "0.5"
+
+# Repeated here because importing does not work properly
+fehler = "1"
 
 slotmap = { features = ['serde'], git = "https://github.com/ijackson/slotmap", branch="entry-return-stale-key" }
 # ^ MR not yet reviewed

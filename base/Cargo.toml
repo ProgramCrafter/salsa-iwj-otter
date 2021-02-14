@@ -15,8 +15,10 @@ path = "lib.rs"
 
 arrayvec = "0.5"
 derive_more = "0.99"
-fehler = "1"
 if_chain = "1"
 thiserror = "1"
 serde = { version = "1", features = ["derive","rc"] }
 serde_with = "1"
+
+# Repeated in other Cargo.toml's because importing does not work properly
+fehler = "1"

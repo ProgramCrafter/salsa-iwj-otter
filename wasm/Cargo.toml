@@ -17,8 +17,10 @@ crate-type = ["cdylib"]
 otter-base = { path = "../base" }
 
 console_error_panic_hook = "0.1"
-fehler = "1"
 js-sys = "0.3"
 thiserror = "1"
 wasm-bindgen = "0.2"
 wee_alloc = "0.4"
+
+# Repeated here because importing does not work properly
+fehler = "1"

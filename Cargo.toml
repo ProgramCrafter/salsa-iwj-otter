@@ -29,7 +29,6 @@ either = "1"
 enum-map = { version = "0.6", features = [ "serde" ] }
 env_logger = "0.8"
 failure = "0.1.8" # for pwd
-fehler = "1"
 flexi_logger = { version = "0.17", features = [ "specfile" ] }
 fs2 = "0.4"
 glob = "0.3"
@@ -66,6 +65,9 @@ typetag = "0.1.6"
 uds = "0.2"
 url = "2"
 vecdeque-stableix = "1"
+
+# Repeated here because importing does not work properly
+fehler = "1"
 
 slotmap = { features = ['serde'], git = "https://github.com/ijackson/slotmap", branch="entry-return-stale-key" }
 # ^ MR not yet reviewed
