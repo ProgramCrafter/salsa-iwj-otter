@@ -1625,7 +1625,6 @@ dependencies = [
  "strum",
  "tempfile",
  "tera",
- "thiserror",
  "toml 0.5.8",
  "typetag",
  "uds",
@@ -1662,7 +1661,6 @@ dependencies = [
  "serde_with",
  "structopt",
  "strum",
- "thiserror",
 ]
 
 [[package]]
@@ -1673,7 +1671,6 @@ dependencies = [
  "fehler",
  "js-sys",
  "otter-base",
- "thiserror",
  "wasm-bindgen",
  "wee_alloc",
 ]

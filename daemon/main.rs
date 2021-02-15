@@ -4,6 +4,8 @@
 
 #![feature(proc_macro_hygiene, decl_macro)]
 
+use otter::imports::thiserror;
+
 pub mod imports;
 
 pub mod api;

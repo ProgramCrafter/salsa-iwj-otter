@@ -28,7 +28,6 @@ serde = { version = "1", features = ["derive","rc"] }
 serde_with = "1"
 structopt = "0.3"
 strum = { version = "0.20", features = ['derive'] }
-thiserror = "1"
 
 [dependencies.rocket_contrib]
 version = "0.4"

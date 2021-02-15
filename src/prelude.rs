@@ -4,7 +4,7 @@
 
 use crate::imports::*;
 
-pub use crate::imports::flexi_logger;
+pub use crate::imports::{flexi_logger, thiserror};
 
 pub use std::any::Any;
 pub use std::borrow::Borrow;

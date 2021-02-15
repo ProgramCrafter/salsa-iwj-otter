@@ -23,4 +23,3 @@ wee_alloc = "0.4"
 
 # Repeated here because importing does not work properly
 fehler = "1"
-thiserror = "1"
