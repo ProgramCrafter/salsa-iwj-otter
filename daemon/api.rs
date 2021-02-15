@@ -401,7 +401,7 @@ api_route!{
     '_normal_global_ops__not_loop: loop {
       let pc = gs.pieces.byid_mut(piece)?;
       let gpl = gs.players.byid_mut(player)?;
-      let _: Impossible = match (self.opname.as_str(), self.wrc) {
+      let _: Void = match (self.opname.as_str(), self.wrc) {
 
         ("flip", wrc@ WRC::UpdateSvg) => {
           let nfaces = p.nfaces();
@@ -421,7 +421,7 @@ api_route!{
     }
 
     '_abnormal_global_ops__notloop: loop {
-      let _: Impossible = match self {
+      let _: Void = match self {
 
         _ => break,
       };

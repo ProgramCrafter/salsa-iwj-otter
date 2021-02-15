@@ -1397,8 +1397,8 @@ fn client_expire_old_clients() {
     #[derive(Debug)]
     struct Now(HashSet<ClientId>);
     impl ClientIterator for Now {
-      type Ret = Impossible;
-      fn old(&mut self, client: ClientId) -> Option<Impossible> {
+      type Ret = Void;
+      fn old(&mut self, client: ClientId) -> Option<Void> {
         self.0.insert(client);
         None
       }

@@ -84,6 +84,7 @@ pub use strum::EnumString;
 pub use thiserror::Error;
 pub use url::Url;
 pub use vecdeque_stableix::Deque as StableIndexVecDeque;
+pub use void::Void;
 
 pub use otter_base::zcoord::{self, ZCoord};
 pub use otter_base::misc as base_misc;
@@ -120,10 +121,6 @@ pub use crate::ui::*;
 pub type SecondarySlotMap<K,V> = slotmap::secondary::SecondaryMap<K,V>;
 pub type SvgData = Vec<u8>;
 pub type Colour = Html;
-
-#[derive(Debug,Copy,Clone)]
-pub enum Impossible { }
-display_as_debug!(Impossible);
 
 // ---------- type abbreviations ----------
 

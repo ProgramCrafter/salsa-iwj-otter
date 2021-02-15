@@ -376,7 +376,7 @@ pub mod implementation {
     pub fn account_glob(&self) -> String {
       fn scope_glob(scope: AccountScope) -> String {
         let mut out = "".to_string();
-        scope.display_name(&["*"], |s| Ok::<_,Impossible>(out += s)).unwrap();
+        scope.display_name(&["*"], |s| Ok::<_,Void>(out += s)).unwrap();
         out
       }
       match self {
