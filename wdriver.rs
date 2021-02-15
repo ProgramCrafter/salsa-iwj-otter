@@ -724,9 +724,9 @@ fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<String>) {
   const FRONT: &str = "front";
   let window_names = vec![FRONT.into()];
   driver.set_window_name(FRONT).context("set initial window name")?;
-  screenshot(&mut driver, &mut count, "startup")?;
+  screenshot(&mut driver, &mut count, "startup", log::Level::Trace)?;
   driver.get(URL).context("navigate to front page")?;
-  screenshot(&mut driver, &mut count, "front")?;
+  screenshot(&mut driver, &mut count, "front", log::Level::Trace)?;
 
   fetch_log(&driver, "front")?;
   
@@ -1055,19 +1055,24 @@ impl<'g> Drop for WindowGuard<'g> {
 }
 
 pub trait Screenshottable {
-  fn screenshot(&mut self, slug: &str) -> Result<(),AE>;
+  fn screenshot(&mut self, slug: &str, level: log::Level) -> Result<(),AE>;
 }
 
 impl<'g> Screenshottable for WindowGuard<'g> {
   #[throws(AE)]
-  fn screenshot(&mut self, slug: &str) {
+  fn screenshot(&mut self, slug: &str, level: log::Level) {
     screenshot(&self.su.driver, &mut self.su.screenshot_count,
-               &format!("{}-{}", &self.w.name, slug))?
+               &format!("{}-{}", &self.w.name, slug), level)?
   }
 }
 
 #[throws(AE)]
-fn screenshot(driver: &T4d, count: &mut ScreenShotCount, slug: &str) {
+fn screenshot(driver: &T4d, count: &mut ScreenShotCount, slug: &str,
+              level: log::Level) {
+  if !log_enabled!(level) {
+    debug!("skipping screenshot {}", slug);
+    return
+  }
   let path = format!("{:03}{}.png", count, slug);
   *count += 1;
   driver.screenshot(&path::PathBuf::from(&path))
@@ -1256,7 +1261,7 @@ impl Drop for Setup {
           name: name.clone(),
           instance: TABLE.parse().context(TABLE)?,
         };
-        self.w(&w)?.screenshot("final")
+        self.w(&w)?.screenshot("final", log::Level::Info)
           .context(name)
           .context("final screenshot")
           .just_warn();
@@ -1363,7 +1368,7 @@ impl Setup {
       let w = su.new_window(instance, nick)?;
       let url = subst.subst("@url@/@pl@?@token@")?;
       su.w(&w)?.get(url)?;
-      su.w(&w)?.screenshot("initial")?;
+      su.w(&w)?.screenshot("initial", log::Level::Trace)?;
       w
     }
     StaticUser::iter().map(
