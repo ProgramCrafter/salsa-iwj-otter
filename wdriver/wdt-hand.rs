@@ -18,19 +18,26 @@ impl Ctx {
     const HAND: &str = "6.1";
     const ALICE: &str = "1#1";
 
-    let chk = |w: &WindowGuard<'_>, pc: &str, player: &'static str| {
-      let player: PlayerId = player.try_into().context(player)?;
-      let player: slotmap::KeyData = player.into();
-      let (player,_) = player.get_idx_version();
-      let player: usize = player.try_into().unwrap();
-      let player = player.try_into().unwrap();
-      let dasharray = player_num_dasharray(player).0;
-
+    let chk = |
+        w: &WindowGuard<'_>, pc: &str,
+        player: Option<&'static str>
+    | {
+      let dasharray = if let Some(player) = player {
+        let player: PlayerId = player.try_into().context(player)?;
+        let player: slotmap::KeyData = player.into();
+        let (player,_) = player.get_idx_version();
+        let player: usize = player.try_into().unwrap();
+        let player = player.try_into().unwrap();
+        let dasharray = player_num_dasharray(player).0;
+        Some(dasharray)
+      } else {
+        None
+      };
       let euse = w.find_element(By::Id(&format!("piece{}", pc)))?;
       let epath = euse.find_element(By::Tag("path"))?;
       let attr = epath.get_attribute("stroke-dasharray")?;
 
-      ensure_eq!(attr, Some(dasharray));
+      ensure_eq!(attr, dasharray);
       Ok::<_,AE>(())
     };
 
@@ -54,7 +61,7 @@ impl Ctx {
 
       w.synch()?;
 
-      chk(&w, HAND, ALICE)?;
+      chk(&w, HAND, Some(ALICE))?;
     }
 
     {
@@ -63,7 +70,7 @@ impl Ctx {
 
       let _hand = w.find_piece(HAND)?;
 
-      chk(&w, HAND, ALICE)?;
+      chk(&w, HAND, Some(ALICE))?;
     }
   }
 }
