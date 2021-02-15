@@ -11,12 +11,24 @@ struct Ctx {
 }
 ctx_with_setup!{Ctx}
 
+const HAND: &str = "6.1";
+const ALICE: &str = "1#1";
+
+#[throws(AE)]
+pub fn player_dasharray(player: &'static str) -> String {
+  let player: PlayerId = player.try_into().context(player)?;
+  let player: slotmap::KeyData = player.into();
+  let (player,_) = player.get_idx_version();
+  let player: usize = player.try_into().unwrap();
+  let player = player.try_into().unwrap();
+  let dasharray = player_num_dasharray(player).0;
+  dasharray
+}
+
 impl Ctx {
   #[throws(AE)]
   fn claim(&mut self){
     let su = &mut self.su;
-    const HAND: &str = "6.1";
-    const ALICE: &str = "1#1";
 
     let chk = |
         w: &mut WindowGuard<'_>, pc: &str,
@@ -24,17 +36,7 @@ impl Ctx {
     | {
       w.synch()?;
 
-      let dasharray = if let Some(player) = player {
-        let player: PlayerId = player.try_into().context(player)?;
-        let player: slotmap::KeyData = player.into();
-        let (player,_) = player.get_idx_version();
-        let player: usize = player.try_into().unwrap();
-        let player = player.try_into().unwrap();
-        let dasharray = player_num_dasharray(player).0;
-        Some(dasharray)
-      } else {
-        None
-      };
+      let dasharray = player.map(player_dasharray).transpose()?;
       let euse = w.find_element(By::Id(&format!("piece{}", pc)))?;
       let epath = euse.find_element(By::Tag("path"))?;
       let attr = epath.get_attribute("stroke-dasharray")?;
