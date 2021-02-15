@@ -19,9 +19,11 @@ impl Ctx {
     const ALICE: &str = "1#1";
 
     let chk = |
-        w: &WindowGuard<'_>, pc: &str,
+        w: &mut WindowGuard<'_>, pc: &str,
         player: Option<&'static str>
     | {
+      w.synch()?;
+
       let dasharray = if let Some(player) = player {
         let player: PlayerId = player.try_into().context(player)?;
         let player: slotmap::KeyData = player.into();
@@ -59,18 +61,12 @@ impl Ctx {
         .perform()
         .context("claim hand")?;
 
-      w.synch()?;
-
-      chk(&w, HAND, Some(ALICE))?;
+      chk(&mut w, HAND, Some(ALICE))?;
     }
 
     {
       let mut w = su.w(&self.bob)?;
-      w.synch()?;
-
-      let _hand = w.find_piece(HAND)?;
-
-      chk(&w, HAND, Some(ALICE))?;
+      chk(&mut w, HAND, Some(ALICE))?;
     }
 
     {
@@ -81,13 +77,11 @@ impl Ctx {
         .perform()
         .context("unclaim hand")?;
 
-      w.synch()?;
-      chk(&w, HAND, None)?;
+      chk(&mut w, HAND, None)?;
     }
     {
       let mut w = su.w(&self.bob)?;
-      w.synch()?;
-      chk(&w, HAND, None)?;
+      chk(&mut w, HAND, None)?;
     }
   }
 }
