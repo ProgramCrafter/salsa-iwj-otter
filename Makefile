@@ -154,6 +154,12 @@ js: templates/script.js
 extra-debug:
 extra-release: bundled-sources
 
+cargo-syntaxcheck: cargo-syntaxcheck-host cargo-syntaxcheck-wasm
+cargo-syntaxcheck-host:
+	$(CARGO) check --workspace
+cargo-syntaxcheck-wasm:
+	$(CARGO) check --target $(WASM) -p otter-wasm
+
 #---------- cargo ----------
 
 DR=debug release
