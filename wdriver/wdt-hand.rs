@@ -72,6 +72,23 @@ impl Ctx {
 
       chk(&w, HAND, Some(ALICE))?;
     }
+
+    {
+      let mut w = su.w(&self.alice)?;
+      w.action_chain()
+        .key_down('C')
+        .key_up('C')
+        .perform()
+        .context("unclaim hand")?;
+
+      w.synch()?;
+      chk(&w, HAND, None)?;
+    }
+    {
+      let mut w = su.w(&self.bob)?;
+      w.synch()?;
+      chk(&w, HAND, None)?;
+    }
   }
 }
 
