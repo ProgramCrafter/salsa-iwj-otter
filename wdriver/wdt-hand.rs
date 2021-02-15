@@ -79,6 +79,11 @@ impl Ctx {
         .perform()
         .context("unclaim hand")?;
 
+      w.action_chain()
+        .click()
+        .perform()
+        .context("deselect")?;
+
       chk(&mut w, HAND, None)?;
     }
     {
