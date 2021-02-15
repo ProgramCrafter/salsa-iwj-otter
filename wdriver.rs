@@ -47,12 +47,14 @@ pub use otter::ensure_eq;
 pub use otter::commands::{MgmtCommand, MgmtResponse};
 pub use otter::commands::{MgmtGameInstruction, MgmtGameResponse};
 pub use otter::commands::{MgmtGameUpdateMode};
-pub use otter::gamestate::{self, Generation};
+pub use otter::gamestate::{self, Generation, PlayerId};
 pub use otter::global::InstanceName;
 pub use otter::mgmtchannel::MgmtChannel;
+pub use otter::slotmap_slot_idx::KeyDataExt;
 pub use otter::spec::{Coord, GameSpec, Pos, PosC};
 pub use otter::toml_de;
 pub use otter::ui::{AbbrevPresentationLayout, PresentationLayout};
+pub use otter::ui::player_num_dasharray;
 
 pub type T4d = t4::WebDriver;
 pub type WDE = t4::error::WebDriverError;
