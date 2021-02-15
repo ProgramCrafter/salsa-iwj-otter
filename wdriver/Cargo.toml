@@ -15,9 +15,7 @@ otter = { path = ".." }
 
 humantime = "2"
 ndarray = "0.14"
-once_cell = "1"
 thirtyfour_sync = "0.22"
-void = "1"
 x11rb = "0.8"
 
 # Repeated here because importing does not work properly
