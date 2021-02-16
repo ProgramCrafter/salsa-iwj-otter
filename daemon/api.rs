@@ -286,11 +286,20 @@ api_route!{
                    logents);
 
     let update=
-      recalculate_occultation(gs,
-                              who_by,
-                              ipieces,
-                              piece,
-                              vanilla).map_err(|e| OnlineError::from(e))?;
+      recalculate_occultation(
+        gs,
+        who_by,
+        ipieces,
+        piece,
+        vanilla,
+        |who_by, old, new, show| vec![ LogEntry { html: Html(format!(
+          "{} moved {} from {} to {}",
+          &who_by.0,
+          if let Some(show) = show { &show.0 } else { "something" },
+          &old.0, &new.0,
+        ))}],
+        
+      ).map_err(|e| OnlineError::from(e))?;
 
     update
   }

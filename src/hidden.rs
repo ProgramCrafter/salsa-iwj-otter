@@ -210,12 +210,15 @@ pub fn massage_prep_piecestate(
 // xxx this means this only happens on ungrab I think ?
 
 #[throws(InternalError)]
-pub fn recalculate_occultation(
+pub fn recalculate_occultation<
+  L: FnOnce(&Html, Html, Html, Option<&Html>) -> Vec<LogEntry>,
+  >(
   gs: &mut GameState,
   who_by: Html,
   ipieces: &PiecesLoaded,
   piece: PieceId,
   vanilla: PUFOS,
+  log_callback: L,
 )
   -> PieceUpdate
 {
@@ -316,6 +319,14 @@ pub fn recalculate_occultation(
 
     let most_obscure = most_obscure.unwrap_or(&OccK::Visible); // no players!
 
+    let call_log_callback =
+      |show| Ok::<_,IE>(
+        log_callback(&who_by,
+                     describe_occulter(ONI::Old)?,
+                     describe_occulter(ONI::New)?,
+                     show)
+      );
+
     let log = match most_obscure {
       OccK::Visible => {
         vanilla.2
@@ -323,19 +334,11 @@ pub fn recalculate_occultation(
       OccK::Scrambled | OccK::Displaced{..} => {
         let face = ipc.nfaces() - 1;
         let show = ipc.describe_html(Some(face.into()), gpc)?;
-        vec![ LogEntry { html: Html(format!(
-          "{} moved {} from {} to {}",
-          who_by.0, &show.0,
-          describe_occulter(ONI::Old)?.0,
-          describe_occulter(ONI::New)?.0,
-        ))}]
+        call_log_callback(Some(&show))?
       },
-      OccK::Invisible => vec![ LogEntry { html: Html(format!(
-        "{} moved something from {} to {}",
-        who_by.0,
-        describe_occulter(ONI::Old)?.0,
-        describe_occulter(ONI::New)?.0,
-      ))}],
+      OccK::Invisible => {
+        call_log_callback(None)?
+      },
     };
 
     let update = PieceUpdate {
