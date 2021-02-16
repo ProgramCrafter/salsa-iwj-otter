@@ -47,6 +47,12 @@ trait ApiPieceOp: Debug {
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate;
 
+  #[throws(ApiPieceOpError)]
+  fn op_complex(&self, a: ApiPieceOpArgs)
+                -> (PieceUpdate, Vec<(PieceId, PieceUpdateOps)>) {
+    (self.op(a)?, vec![])
+  }
+
   #[throws(OnlineError)]
   fn check_held(&self, pc: &PieceState, player: PlayerId) {
     if pc.held != None && pc.held != Some(player) {
@@ -121,7 +127,7 @@ fn api_piece_op<O: ApiPieceOp>(form: Json<ApiPiece<O>>)
     if u_gen > q_gen { throw!(PieceOpError::Conflict) }
     form.op.check_held(pc,player)?;
     let update =
-      form.op.op(ApiPieceOpArgs {
+      form.op.op_complex(ApiPieceOpArgs {
         gs, player, piece, ipieces,
         p: p.as_ref(),
       })?;
@@ -145,12 +151,13 @@ fn api_piece_op<O: ApiPieceOp>(form: Json<ApiPiece<O>>)
       warn!("api_piece_op ERROR {:?}: {:?}", &form, &err);
       Err(err)?;
     },
-    Ok(PieceUpdate { wrc, log, ops }) => {
+    Ok((PieceUpdate { wrc, log, ops }, updates)) => {
       let mut buf = PrepareUpdatesBuffer::new(g,
                                               Some((wrc, client, form.cseq)),
                                               Some(1 + log.len()));
       
       buf.piece_update(piece, ops);
+      buf.piece_updates(updates);
       buf.log_updates(log);
 
       debug!("api_piece_op OK: {:?}", &form);

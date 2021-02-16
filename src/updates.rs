@@ -589,6 +589,12 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     self.us.push(update);
   }
 
+  pub fn piece_updates(&mut self, updates: Vec<(PieceId, PieceUpdateOps)>) {
+    for (piece, ops) in updates {
+      self.piece_update(piece, ops);
+    }
+  }
+
   pub fn raw_updates(&mut self, mut raw: Vec<PreparedUpdateEntry>) {
     self.us.append(&mut raw)
   }
