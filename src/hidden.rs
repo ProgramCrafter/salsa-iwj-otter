@@ -210,7 +210,7 @@ pub fn massage_prep_piecestate(
 // xxx this means this only happens on ungrab I think ?
 
 #[throws(InternalError)]
-pub fn recalculate_occultation<
+fn recalculate_occultation_general<
   L: FnOnce(&Html, Html, Html, Option<&Html>) -> Vec<LogEntry>,
   >(
   gs: &mut GameState,
@@ -369,4 +369,29 @@ pub fn recalculate_occultation<
   })(); // <- no ?, infallible commitment
 
   update
+}
+
+#[throws(InternalError)]
+pub fn recalculate_occultation_piece(
+  gs: &mut GameState,
+  who_by: Html,
+  ipieces: &PiecesLoaded,
+  piece: PieceId,
+  vanilla: PUFOS,
+)
+  -> PieceUpdate
+{
+  recalculate_occultation_general(
+    gs,
+    who_by,
+    ipieces,
+    piece,
+    vanilla,
+    |who_by, old, new, show| vec![ LogEntry { html: Html(format!(
+      "{} moved {} from {} to {}",
+      &who_by.0,
+      if let Some(show) = show { &show.0 } else { "something" },
+      &old.0, &new.0,
+    ))}]
+  )?
 }
