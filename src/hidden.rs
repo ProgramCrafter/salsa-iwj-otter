@@ -415,6 +415,23 @@ pub fn recalculate_occultation_piece(
   )?
 }
 
+#[throws(IE)]
+fn recalculate_occultation_ofmany(
+  gs: &mut GameState,
+  ipieces: &PiecesLoaded,
+  ppiece: PieceId,
+  updates: &mut Vec<(PieceId, PieceUpdateOps)>,
+){
+  recalculate_occultation_general(
+    gs, ipieces, ppiece,
+    (), |_|(),
+    |_,_,_|(), |puo_pp, ()|{
+      updates.push((ppiece, PUOs::PerPlayer(puo_pp)));
+    },
+  )?;
+}
+
+
 #[must_use]
 pub struct NascentOccultation(Occultation);
 
@@ -496,13 +513,7 @@ pub fn create_occultation<V: OccultationViewDef>(
     ogpc.occult.active = Some(occid);
 
     for &ppiece in &recalc {
-      recalculate_occultation_general(
-        gs, ipieces, ppiece,
-        (), |_|(),
-        |_,_,_|(), |puo_pp, ()|{
-          updates.push((ppiece, PUOs::PerPlayer(puo_pp)));
-        },
-      )?;
+      recalculate_occultation_ofmany(gs, ipieces, ppiece, &mut updates)?;
     }
 
     Ok::<_,IE>(())
