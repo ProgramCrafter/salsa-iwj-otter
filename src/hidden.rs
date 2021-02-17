@@ -530,3 +530,34 @@ pub fn create_occultation<V: OccultationViewDef>(
 
   updates
 }
+
+#[throws(IE)]
+pub fn remove_occultation(
+  gs: &mut GameState,
+  ipieces: &PiecesLoaded,
+  occid: OccId,
+) -> Vec<(PieceId, PieceUpdateOps)> {
+  let occultation = gs.occults.occults.remove(occid).ok_or_else(
+    || internal_logic_error("removing nonexistent occultation"))?;
+
+  let mut updates = vec![];
+  let mut aggerr = AggregatedIE::new();
+  for &ppiece in &occultation.pieces {
+    recalculate_occultation_ofmany(gs, ipieces, ppiece, &mut updates)
+      .unwrap_or_else(|e| {
+        aggerr.record(e);
+        if let Some(pgpc) = gs.pieces.get_mut(ppiece) {
+          pgpc.occult.passive = None;
+        }
+      });
+  }
+
+  if let Some(ogpc) = gs.pieces.get_mut(occultation.occulter) {
+    ogpc.occult.active = None;
+  } else {
+    aggerr.record(internal_logic_error("removing occultation of non-piece"));
+  }
+
+  aggerr.ok()?;
+  updates
+}
