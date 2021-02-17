@@ -224,9 +224,13 @@ fn recalculate_occultation_general<
   who_by: Html,
   ipieces: &PiecesLoaded,
   piece: PieceId,
+  // if no change, we return ret_vanilla(log_visible)
   log_visible: LD,
   ret_vanilla: VF,
+  // otherwise we maybe call log_callback(who_by, old, new, desc)
+  // or maybe we just use log_visible
   log_callback: LF,
+  // and then call ret_callback(<calculated>, <logmsgs>)
   ret_callback: RF,
 )
   -> RD
