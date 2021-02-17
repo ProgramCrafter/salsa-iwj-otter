@@ -217,11 +217,10 @@ fn recalculate_occultation_general<
   RD,                                                 // return data
   LD,                                                 // log data
   VF: FnOnce(LD) -> RD,                               // ret_vanilla
-  LF: FnOnce(&Html, Html, Html, Option<&Html>) -> LD, // log_callback
+  LF: FnOnce(Html, Html, Option<&Html>) -> LD,        // log_callback
   RF: FnOnce(PieceUpdateOps_PerPlayer, LD) -> RD,     // ret_callback
 >(
   gs: &mut GameState,
-  who_by: Html,
   ipieces: &PiecesLoaded,
   piece: PieceId,
   // if no change, we return ret_vanilla(log_visible)
@@ -334,8 +333,7 @@ fn recalculate_occultation_general<
 
     let call_log_callback =
       |show| Ok::<_,IE>(
-        log_callback(&who_by,
-                     describe_occulter(ONI::Old)?,
+        log_callback(describe_occulter(ONI::Old)?,
                      describe_occulter(ONI::New)?,
                      show)
       );
@@ -390,12 +388,11 @@ pub fn recalculate_occultation_piece(
 {
   recalculate_occultation_general(
     gs,
-    who_by,
     ipieces,
     piece,
     vanilla_log,
     |log| (vanilla_wrc, vanilla_op, log).into(),
-    |who_by, old, new, show| vec![ LogEntry { html: Html(format!(
+    |old, new, show| vec![ LogEntry { html: Html(format!(
       "{} moved {} from {} to {}",
       &who_by.0,
       if let Some(show) = show { &show.0 } else { "something" },
