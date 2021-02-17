@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
+#[path="magic.rs"]
+mod magic;
+
 use crate::prelude::*;
 
 use slotmap::secondary;
