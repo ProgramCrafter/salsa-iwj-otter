@@ -535,14 +535,47 @@ pub fn create_occultation<V: OccultationViewDef>(
 pub fn remove_occultation(
   gs: &mut GameState,
   ipieces: &PiecesLoaded,
-  occid: OccId,
+  occulter: PieceId,
 ) -> Vec<(PieceId, PieceUpdateOps)> {
-  let occultation = gs.occults.occults.remove(occid).ok_or_else(
-    || internal_logic_error("removing nonexistent occultation"))?;
-
-  let mut updates = vec![];
   let mut aggerr = AggregatedIE::new();
-  for &ppiece in &occultation.pieces {
+
+  let occid = if_chain! {
+    if let Some(ogpc) = gs.pieces.get(occulter).or_else(||{
+      aggerr.record(internal_logic_error(
+        "removing occultation by no piece"));
+      None
+    });
+
+    if let Some(occid) = ogpc.occult.active.or_else(||{
+      aggerr.record(internal_logic_error(
+        "removing occultation by non-active piece"));
+      None
+    });
+
+    then { occid }
+    else { aggerr.ok()?; panic!(); }
+  };
+
+  let occultation = aggerr.handle(
+    gs.occults.occults.remove(occid).ok_or_else(
+      || internal_logic_error("removing nonexistent occultation"))
+  );
+      
+  let mut updates = vec![];
+
+  let pieces_fallback_buf;
+  let pieces = if let Some(o) = &occultation { &o.pieces } else {
+    pieces_fallback_buf = gs.pieces
+      .iter()
+      .filter_map(|(ppiece, pgpc)| {
+        if pgpc.occult.passive == Some(occid) { Some(ppiece) }
+        else { None }
+      })
+      .collect();
+    &pieces_fallback_buf
+  };
+  
+  for &ppiece in pieces.iter() {
     recalculate_occultation_ofmany(gs, ipieces, ppiece, &mut updates)
       .unwrap_or_else(|e| {
         aggerr.record(e);
@@ -552,12 +585,13 @@ pub fn remove_occultation(
       });
   }
 
-  if let Some(ogpc) = gs.pieces.get_mut(occultation.occulter) {
+  if let Some(ogpc) = gs.pieces.get_mut(occulter) {
     ogpc.occult.active = None;
   } else {
     aggerr.record(internal_logic_error("removing occultation of non-piece"));
   }
 
   aggerr.ok()?;
+
   updates
 }
