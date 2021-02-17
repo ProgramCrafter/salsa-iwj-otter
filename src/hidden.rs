@@ -211,21 +211,22 @@ pub fn massage_prep_piecestate(
 
 #[throws(InternalError)]
 fn recalculate_occultation_general<
-  R, LD,
-  V: FnOnce(LD) -> R,
-  L: FnOnce(&Html, Html, Html, Option<&Html>) -> LD,
-  F: FnOnce(PieceUpdateOps_PerPlayer, LD) -> R,
+  RD,                                                 // return data
+  LD,                                                 // log data
+  VF: FnOnce(LD) -> RD,                               // ret_vanilla
+  LF: FnOnce(&Html, Html, Html, Option<&Html>) -> LD, // log_callback
+  RF: FnOnce(PieceUpdateOps_PerPlayer, LD) -> RD,     // ret_callback
 >(
   gs: &mut GameState,
   who_by: Html,
   ipieces: &PiecesLoaded,
   piece: PieceId,
   log_visible: LD,
-  ret_vanilla: V,
-  log_callback: L,
-  ret_callback: F,
+  ret_vanilla: VF,
+  log_callback: LF,
+  ret_callback: RF,
 )
-  -> R
+  -> RD
 {
   // fallible part
   let (puos, log, occids): (_, _, OldNew<Option<OccId>>) = {
