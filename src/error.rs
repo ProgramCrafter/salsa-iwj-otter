@@ -59,6 +59,10 @@ pub struct InternalLogicError {
   backtrace: parking_lot::Mutex<backtrace::Backtrace>,
 }
 
+pub fn internal_error_bydebug(desc: &dyn Debug) -> IE {
+  internal_logic_error(format!("{:?}", desc))
+}
+
 pub fn internal_logic_error<S: Into<Cow<'static, str>>>(desc: S) -> IE {
   let backtrace = backtrace::Backtrace::new_unresolved();
   IE::InternalLogicError(InternalLogicError {

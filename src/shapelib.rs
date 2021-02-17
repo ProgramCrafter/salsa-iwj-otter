@@ -83,8 +83,8 @@ pub enum LibraryLoadError {
 }
 
 impl LibraryLoadError {
-  fn ought(self) -> InternalError {
-    internal_logic_error(format!("{:?}", self))
+  fn ought(&self) -> InternalError {
+    internal_error_bydebug(self)
   }
 }
 

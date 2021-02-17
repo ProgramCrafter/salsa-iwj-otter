@@ -332,9 +332,7 @@ fn recalculate_occultation_general<
       let h = occulteds[oni].as_ref().ok_or_else(
         || internal_logic_error("most obscure not obscure"))?;
       let opiece = h.occ.occulter;
-      let bad = || internal_logic_error(
-          format!("missing occulter piece {:?} for occid {:?}",
-                  opiece, h.occid));
+      let bad = || internal_error_bydebug(&("missing", opiece, h.occid));
       let oipc = ipieces.get(opiece).ok_or_else(bad)?;
       let ogpc = gs.pieces.get(opiece).ok_or_else(bad)?;
       Ok::<_,IE>(oipc.describe_html(None, ogpc)?)
