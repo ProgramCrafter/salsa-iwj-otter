@@ -223,7 +223,7 @@ fn recalculate_occultation_general<
   -> PieceUpdate
 {
   // fallible part
-  let (update, occids): (_, OldNew<Option<OccId>>) = {
+  let (puos, log, occids): (_, _, OldNew<Option<OccId>>) = {
     let nopiece = || internal_logic_error("piece vanished");
     let ipc = ipieces.get(piece).ok_or_else(nopiece)?;
     let gpc = gs.pieces.get(piece).ok_or_else(nopiece)?;
@@ -341,15 +341,9 @@ fn recalculate_occultation_general<
       },
     };
 
-    let update = PieceUpdate {
-      wrc: WRC::Unpredictable,
-      ops: PieceUpdateOps::PerPlayer(puos),
-      log,
-    };
-
     let occids = occulteds.map(|h| h.as_ref().map(|h| h.occid));
     
-    (update, occids)
+    (puos, log, occids)
   };
   
   // point of no return
@@ -368,7 +362,11 @@ fn recalculate_occultation_general<
     gs.pieces.byid_mut(piece).unwrap().occult.passive = *occids.new();
   })(); // <- no ?, infallible commitment
 
-  update
+  PieceUpdate {
+    wrc: WRC::Unpredictable,
+    ops: PieceUpdateOps::PerPlayer(puos),
+    log,
+  }
 }
 
 #[throws(InternalError)]
