@@ -135,11 +135,12 @@ impl Piece for Hand {
     let _occults = &mut gs.occults;
 
     let did;
+    let new_owner;
     match (opname, xdata.owner.is_some()) {
       ("claim", false) => {
         let nick = Html(htmlescape::encode_minimal(&gpl.nick));
         let new_desc = Html(format!("{}'s hand", &nick.0));
-        xdata.owner = Some(MagicOwner {
+        new_owner = Some(MagicOwner {
           player,
           dasharray,
           desc: new_desc,
@@ -148,7 +149,7 @@ impl Piece for Hand {
         did = format!("claimed {}", &old_desc.0);
       }
       ("deactivate", true) => {
-        xdata.owner = None;
+        new_owner = None;
         // xxx recalculate occultations
         did = format!("deactivated {}", &old_desc.0);
       }
@@ -163,6 +164,9 @@ impl Piece for Hand {
 
     let who_by = Html(htmlescape::encode_minimal(&gpl.nick));
     let log = vec![ LogEntry { html: Html(format!("{} {}", who_by.0, did)) }];
+
+    xdata.owner = new_owner;
+
     Ok(PieceUpdate {
       wrc, log,
       ops: PUOs::Simple(PUO::Modify(())), // xxx
