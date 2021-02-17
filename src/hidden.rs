@@ -32,15 +32,20 @@ pub struct PieceOccult {
 pub struct Occultation {
   region: Area, // automatically affect pieces here
   occulter: PieceId, // kept in synch with PieceOccult::active
+  pieces: BTreeSet<PieceId>, // kept in synch with PieceOccult::passive
+  #[serde(flatten)] views: OccultationViews,
+}
+
+#[derive(Clone,Debug,Serialize,Deserialize)]
+pub struct OccultationViews {
   views: Vec<OccultView>,
   #[serde(default)] defview: OccultationKind,
-  pieces: BTreeSet<PieceId>, // kept in synch with PieceOccult::passive
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
 pub struct OccultView {
-  players: Vec<PlayerId>,
   #[serde(default)] occult: OccultationKind,
+  players: Vec<PlayerId>,
 }
 
 #[derive(Clone,Copy,Debug,Serialize,Deserialize)]
@@ -86,7 +91,7 @@ impl OccultationKind {
   }
 }
 
-impl Occultation {
+impl OccultationViews {
   pub fn get_kind(&self, player: PlayerId) -> &OccultationKind {
     let kind = self.views.iter().find_map(|view| {
       if view.players.contains(&player) { return Some(&view.occult); }
@@ -95,6 +100,12 @@ impl Occultation {
       &self.defview
     );
     kind
+  }
+}
+
+impl Occultation {
+  pub fn get_kind(&self, player: PlayerId) -> &OccultationKind {
+    self.views.get_kind(player)
   }
 
   pub fn in_region(&self, pos: Pos) -> bool {
