@@ -24,6 +24,8 @@ pub enum OnlineError {
   PieceHeld,
   #[error("improper UI operation")]
   BadOperation,
+  #[error("overlapping occultation")]
+  OverlappingOccultation,
 }
 from_instance_lock_error!{OnlineError}
 

@@ -414,3 +414,108 @@ pub fn recalculate_occultation_piece(
     }
   )?
 }
+
+#[must_use]
+pub struct NascentOccultation(Occultation);
+
+#[derive(Debug,Copy,Clone)]
+pub struct UniformOccultationView(
+  pub OccultationKind
+);
+#[derive(Debug,Copy,Clone)]
+pub struct OwnerOccultationView {
+  defview: OccultationKind,
+  owner: PlayerId,
+  owner_view: OccultationKind,
+}
+
+pub trait OccultationViewDef {
+  fn views(self) -> Result<OccultationViews, IE>;
+}
+impl OccultationViewDef for UniformOccultationView {
+  #[throws(IE)]
+  fn views(self) -> OccultationViews { OccultationViews {
+    defview: self.0,
+    views: vec![]
+  } }
+}
+impl OccultationViewDef for OwnerOccultationView {
+  #[throws(IE)]
+  fn views(self) -> OccultationViews { OccultationViews {
+    defview: self.defview,
+    views: vec![OccultView {
+      players: vec![self.owner],
+      occult: self.owner_view,
+    }]
+  } }
+}
+
+#[throws(OnlineError)]
+pub fn create_occultation<V: OccultationViewDef>(
+  gs: &mut GameState,
+  ipieces: &PiecesLoaded,
+  region: Area,
+  occulter: PieceId,
+  views: OccultationViews,
+) -> Vec<(PieceId, PieceUpdateOps)> {
+  {
+    let ogpc = gs.pieces.byid(occulter)?;
+    if ogpc.occult.active.is_some() {
+      throw!(internal_logic_error("re-occulting!"))
+    }
+  }
+
+  for occ in gs.occults.occults.values() {
+    if occ.region.overlaps(&region) { throw!(OE::OverlappingOccultation) }
+  }
+
+  let mut recalc = vec![];
+  for (ppiece, pgpc) in gs.pieces.iter() {
+    if ! region.contains(pgpc.pos) { continue }
+    if pgpc.occult.passive.is_some() { throw!(internal_logic_error(
+      format!("piece {:?} in region, no occulters, but occulted", &pgpc)
+    )) }
+    recalc.push(ppiece);
+  }
+
+  let occultation = Occultation {
+    region,
+    occulter,
+    views,
+    pieces: default(),
+  };    
+
+  // Everything from here on must be undone if we get an error
+  // but we hope not to get one...
+
+  let occid = gs.occults.occults.insert(occultation);
+  let mut updates = vec![];
+  (||{
+    let ogpc = gs.pieces.get_mut(occulter).ok_or_else(
+      ||internal_logic_error("occulter vanished"))?;
+    ogpc.occult.active = Some(occid);
+
+    for &ppiece in &recalc {
+      recalculate_occultation_general(
+        gs, ipieces, ppiece,
+        (), |_|(),
+        |_,_,_|(), |puo_pp, ()|{
+          updates.push((ppiece, PUOs::PerPlayer(puo_pp)));
+        },
+      )?;
+    }
+
+    Ok::<_,IE>(())
+  })().map_err(|e| {
+    for &ppiece in &recalc {
+      let pgpc = gs.pieces.get_mut(ppiece).expect("had ppiece earlier");
+      pgpc.occult.passive = None;
+    }
+    let ogpc = gs.pieces.get_mut(occulter).expect("had occulter earlier");
+    ogpc.occult.active = None;
+    gs.occults.occults.remove(occid).expect("inserted this earlier");
+    e
+  })?;
+
+  updates
+}

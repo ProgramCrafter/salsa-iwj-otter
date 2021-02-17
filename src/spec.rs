@@ -323,6 +323,13 @@ pub mod implementation {
         p.0[i] > self.0[1].0[i]
       })
     }
+
+    pub fn overlaps(&self, other: &AreaC<T>) -> bool where T: Ord {
+      (0..2).all(|i| !(
+        other.0[1].0[i] < self.0[0].0[i] ||
+        other.0[0].0[i] > self.0[1].0[i]
+      ))
+    }
   }
 
   impl Default for PieceAngle {

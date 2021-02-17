@@ -72,7 +72,8 @@ impl From<&OnlineErrorResponse> for rocket::http::Status {
       ServerFailure(_) => Status::InternalServerError,
       NoClient | NoPlayer(_) | GameBeingDestroyed
         => Status::NotFound,
-      OnlineError::PieceHeld | OnlineError::PieceGone
+      OnlineError::PieceHeld | OnlineError::PieceGone |
+      OnlineError::OverlappingOccultation
         => Status::Conflict,
       InvalidZCoord | BadOperation | BadJSON(_)
         => Status::BadRequest,
