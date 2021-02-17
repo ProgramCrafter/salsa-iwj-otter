@@ -164,6 +164,14 @@ pub enum AggregatedIE {
 
 impl AggregatedIE {
   pub fn new() -> Self { Self::Ok }
+
+  pub fn handle<T>(&mut self, r: Result<T, InternalError>) -> Option<T> {
+    match r {
+      Ok(t) => Some(t),
+      Err(e) => { self.record(e); None }
+    }
+  }
+
   pub fn record(&mut self, e: InternalError) {
     error!("error occurred in aggregating-errors contest: {}", &e);
     *self = match self {
