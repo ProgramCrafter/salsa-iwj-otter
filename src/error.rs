@@ -53,6 +53,8 @@ pub enum InternalError {
   Anyhow(#[from] anyhow::Error),
   #[error("Game contains only partial data for player, or account missing")]
   PartialPlayerData,
+  #[error("Multiple errors occurred where only one could be reported")]
+  Aggregated,
 }
 
 #[derive(Error)]
@@ -153,6 +155,30 @@ display_as_debug!{PieceOpError}
 pub type StartupError = anyhow::Error;
 
 pub use OnlineError::{NoClient,NoPlayer};
+
+pub enum AggregatedIE {
+  Ok,
+  One(InternalError),
+  Many,
+}
+
+impl AggregatedIE {
+  pub fn new() -> Self { Self::Ok }
+  pub fn record(&mut self, e: InternalError) {
+    error!("error occurred in aggregating-errors contest: {}", &e);
+    *self = match self {
+      Self::Ok => Self::One(e),
+      _ => Self::Many,
+    }
+  }
+  pub fn ok(self) -> Result<(),IE> {
+    match self {
+      Self::Ok => Ok(()),
+      Self::One(e) => Err(e),
+      Self::Many => Err(IE::Aggregated),
+    }
+  }
+}
 
 #[derive(Error,Debug)]
 pub enum InstanceLockError {
