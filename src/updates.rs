@@ -119,8 +119,12 @@ pub struct PieceUpdate {
 #[derive(Debug)]
 pub enum PieceUpdateOps {
   Simple(PieceUpdateOp<(),()>),
-  PerPlayer(SecondarySlotMap<PlayerId, PieceUpdateOp<(),()>>),
+  PerPlayer(PieceUpdateOps_PerPlayer),
 }
+
+#[allow(non_camel_case_types)]
+pub type PieceUpdateOps_PerPlayer =
+  SecondarySlotMap<PlayerId, PieceUpdateOp<(),()>>;
 
 impl From<PieceUpdateOp<(),()>> for PieceUpdateOps {
   fn from(op: PieceUpdateOp<(),()>) -> Self { PUOs::Simple(op) }

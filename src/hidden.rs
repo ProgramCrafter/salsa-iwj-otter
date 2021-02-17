@@ -211,16 +211,21 @@ pub fn massage_prep_piecestate(
 
 #[throws(InternalError)]
 fn recalculate_occultation_general<
+  R,
+  V: FnOnce(Vec<LogEntry>) -> R,
   L: FnOnce(&Html, Html, Html, Option<&Html>) -> Vec<LogEntry>,
+  F: FnOnce(PieceUpdateOps_PerPlayer, Vec<LogEntry>) -> R,
 >(
   gs: &mut GameState,
   who_by: Html,
   ipieces: &PiecesLoaded,
   piece: PieceId,
-  vanilla: PUFOS,
+  log_visible: Vec<LogEntry>,
+  ret_vanilla: V,
   log_callback: L,
+  ret_callback: F,
 )
-  -> PieceUpdate
+  -> R
 {
   // fallible part
   let (puos, log, occids): (_, _, OldNew<Option<OccId>>) = {
@@ -251,7 +256,7 @@ fn recalculate_occultation_general<
     ].into();
 
     let occids = occulteds.map(|h| h.as_ref().map(|occ| occ.occid));
-    if occids.old() == occids.new() { return vanilla.into(); }
+    if occids.old() == occids.new() { return ret_vanilla(log_visible); }
 
   /*
     #[throws(IE)]
@@ -329,7 +334,7 @@ fn recalculate_occultation_general<
 
     let log = match most_obscure {
       OccK::Visible => {
-        vanilla.2
+        log_visible
       }
       OccK::Scrambled | OccK::Displaced{..} => {
         let face = ipc.nfaces() - 1;
@@ -362,11 +367,7 @@ fn recalculate_occultation_general<
     gs.pieces.byid_mut(piece).unwrap().occult.passive = *occids.new();
   })(); // <- no ?, infallible commitment
 
-  PieceUpdate {
-    wrc: WRC::Unpredictable,
-    ops: PieceUpdateOps::PerPlayer(puos),
-    log,
-  }
+  ret_callback(puos, log)
 }
 
 #[throws(InternalError)]
@@ -375,7 +376,7 @@ pub fn recalculate_occultation_piece(
   who_by: Html,
   ipieces: &PiecesLoaded,
   piece: PieceId,
-  vanilla: PUFOS,
+  (vanilla_wrc, vanilla_op, vanilla_log): PUFOS,
 )
   -> PieceUpdate
 {
@@ -384,12 +385,18 @@ pub fn recalculate_occultation_piece(
     who_by,
     ipieces,
     piece,
-    vanilla,
+    vanilla_log,
+    |log| (vanilla_wrc, vanilla_op, log).into(),
     |who_by, old, new, show| vec![ LogEntry { html: Html(format!(
       "{} moved {} from {} to {}",
       &who_by.0,
       if let Some(show) = show { &show.0 } else { "something" },
       &old.0, &new.0,
-    ))}]
+    ))}],
+    |puos, log| PieceUpdate {
+      wrc: WRC::Unpredictable,
+      ops: PieceUpdateOps::PerPlayer(puos),
+      log
+    }
   )?
 }
