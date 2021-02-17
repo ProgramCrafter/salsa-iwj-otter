@@ -211,16 +211,16 @@ pub fn massage_prep_piecestate(
 
 #[throws(InternalError)]
 fn recalculate_occultation_general<
-  R,
-  V: FnOnce(Vec<LogEntry>) -> R,
-  L: FnOnce(&Html, Html, Html, Option<&Html>) -> Vec<LogEntry>,
-  F: FnOnce(PieceUpdateOps_PerPlayer, Vec<LogEntry>) -> R,
+  R, LD,
+  V: FnOnce(LD) -> R,
+  L: FnOnce(&Html, Html, Html, Option<&Html>) -> LD,
+  F: FnOnce(PieceUpdateOps_PerPlayer, LD) -> R,
 >(
   gs: &mut GameState,
   who_by: Html,
   ipieces: &PiecesLoaded,
   piece: PieceId,
-  log_visible: Vec<LogEntry>,
+  log_visible: LD,
   ret_vanilla: V,
   log_callback: L,
   ret_callback: F,
