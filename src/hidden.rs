@@ -212,7 +212,7 @@ pub fn massage_prep_piecestate(
 #[throws(InternalError)]
 fn recalculate_occultation_general<
   L: FnOnce(&Html, Html, Html, Option<&Html>) -> Vec<LogEntry>,
-  >(
+>(
   gs: &mut GameState,
   who_by: Html,
   ipieces: &PiecesLoaded,
