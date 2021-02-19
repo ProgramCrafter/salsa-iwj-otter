@@ -520,6 +520,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "enum_dispatch"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8946e241a7774d5327d92749c50806f275f57d031d2229ecbfd65469a8ad338e"
+dependencies = [
+ "once_cell",
+ "proc-macro2 1.0.24",
+ "quote 1.0.9",
+ "syn 1.0.60",
+]
+
+[[package]]
 name = "env_logger"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1590,6 +1602,7 @@ dependencies = [
  "downcast-rs",
  "either",
  "enum-map",
+ "enum_dispatch",
  "env_logger",
  "failure",
  "fehler",
