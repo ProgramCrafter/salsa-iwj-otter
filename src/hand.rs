@@ -27,7 +27,6 @@ struct HandState {
 #[typetag::serde(name="Hand")]
 impl PieceXData for HandState { }
 
-#[typetag::serde]
 impl Outline for Hand {
   delegate!{
     to self.shape {

@@ -110,7 +110,7 @@ pub trait PieceXData: Downcast + Debug + Send + 'static {
 }
 impl_downcast!(PieceXData);
 
-#[typetag::serde]
+#[enum_dispatch]
 pub trait Outline: Send + Debug {
   fn surround_path(&self, pri: &PieceRenderInstructions) -> Result<Html, IE>;
   fn thresh_dragraise(&self, pri: &PieceRenderInstructions)

@@ -26,7 +26,7 @@ pub struct GroupData {
 #[typetag::deserialize(tag="outline")]
 pub trait OutlineDefn: Debug + Sync + Send {
   fn check(&self, lgi: &GroupData) -> Result<(),LLE>;
-  fn load(&self, lgi: &GroupData) -> Result<Box<dyn Outline>,IE>;
+  fn load(&self, lgi: &GroupData) -> Result<OutlineRepr,IE>;
 }
 
 #[derive(Debug)]
@@ -126,7 +126,7 @@ struct Item {
   desc_hidden: DescId,
   svgs: IndexVec<SvgId, Html>,
   descs: IndexVec<DescId, Html>,
-  outline: Box<dyn Outline>,
+  outline: OutlineRepr,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
@@ -142,7 +142,6 @@ impl ItemEnquiryData {
   }
 }
 
-#[typetag::serde(name="Lib")]
 impl Outline for Item { delegate! { to self.outline {
   fn surround_path(&self, pri: &PieceRenderInstructions) -> Result<Html, IE>;
   fn thresh_dragraise(&self, pri: &PieceRenderInstructions)
@@ -493,10 +492,9 @@ pub fn load(libs: &Vec<Config1>) {
   }
 }
 
-#[derive(Serialize,Deserialize,Debug)]
+#[derive(Clone,Copy,Debug,Serialize,Deserialize)]
 pub struct Circle { pub diam: f64 }
 
-#[typetag::serde(name="Circle")]
 impl Outline for Circle {
   #[throws(IE)]
   fn surround_path(&self, _pri: &PieceRenderInstructions) -> Html {
@@ -518,10 +516,10 @@ struct CircleDefn { }
 impl OutlineDefn for CircleDefn {
   #[throws(LibraryLoadError)]
   fn check(&self, lgd: &GroupData) { Self::get_size(lgd)?; }
-  fn load(&self, lgd: &GroupData) -> Result<Box<dyn Outline>,IE> {
-    Ok(Box::new(Circle {
+  fn load(&self, lgd: &GroupData) -> Result<OutlineRepr,IE> {
+    Ok(Circle {
       diam: Self::get_size(lgd).map_err(|e| e.ought())?,
-    }))
+    }.into())
   }
 }
 impl CircleDefn {
@@ -535,11 +533,10 @@ impl CircleDefn {
   }
 }
 
-#[derive(Serialize,Deserialize,Debug)]
-pub struct Square { pub xy: PosC<f64> }
+#[derive(Clone,Copy,Debug,Serialize,Deserialize)]
+pub struct Rectangle { pub xy: PosC<f64> }
 
-#[typetag::serde(name="Square")]
-impl Outline for Square {
+impl Outline for Rectangle {
   #[throws(IE)]
   fn surround_path(&self, _pri: &PieceRenderInstructions) -> Html {
     let size = self.xy * SELECT_SCALE;
@@ -567,16 +564,16 @@ struct SquareDefn { }
 impl OutlineDefn for SquareDefn {
   #[throws(LibraryLoadError)]
   fn check(&self, lgd: &GroupData) { Self::get(lgd)?; }
-  fn load(&self, lgd: &GroupData) -> Result<Box<dyn Outline>,IE> {
-    Ok(Box::new(
-      Self::get(lgd).map_err(|e| e.ought())?
-    ))
+  fn load(&self, lgd: &GroupData) -> Result<OutlineRepr,IE> {
+    Ok(
+      Self::get(lgd).map_err(|e| e.ought())?.into()
+    )
   }
 }
 impl SquareDefn {
   #[throws(LibraryLoadError)]
-  fn get(group: &GroupData) -> Square {
-    Square { xy: PosC(
+  fn get(group: &GroupData) -> Rectangle {
+    Rectangle { xy: PosC(
       match group.d.size.as_slice() {
         &[s] => [s,s],
         s if s.len() == 2 => s.try_into().unwrap(),

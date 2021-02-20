@@ -196,6 +196,20 @@ pub struct CompassAngle(u8);
 //---------- Piece specs ----------
 // the implementations are in pieces.rs
 
+mod outline {
+  use super::*;
+  use crate::prelude::*;
+  use crate::shapelib::{Circle, Rectangle};
+  #[enum_dispatch(Outline)]
+  #[derive(Clone,Debug,Serialize,Deserialize)]
+  #[serde(tag="type")]
+  pub enum OutlineRepr {
+    Circle,
+    #[serde(alias="Square")] Rectangle,
+  }
+}
+pub use outline::*;
+
 pub mod piece_specs {
   use super::*;
 

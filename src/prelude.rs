@@ -54,6 +54,7 @@ pub use delegate::delegate;
 pub use derive_more::*;
 pub use downcast_rs::{impl_downcast, Downcast};
 pub use either::{Either, Left, Right};
+pub use enum_dispatch::enum_dispatch;
 pub use enum_map::{Enum, EnumMap};
 pub use fehler::{throw, throws};
 pub use flexi_logger::LogSpecification;

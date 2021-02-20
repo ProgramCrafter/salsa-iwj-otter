@@ -19,7 +19,7 @@ pub struct SimpleShape {
   #[serde(default)] pub edges: ColourMap,
   #[serde(default="default_edge_width")] pub edge_width: f64,
   pub itemname: String,
-  pub outline: Box<dyn Outline>,
+  pub outline: OutlineRepr,
 }
 
 pub const SELECT_SCALE: f64 = 1.1;
@@ -111,7 +111,6 @@ pub fn svg_rectangle_path(PosC([x,y]): PosC<f64>) -> Html {
                -x*0.5, -y*0.5, x, y, -x))
 }
 
-#[typetag::serde]
 impl Outline for SimpleShape {
   delegate! {
     to self.outline {
@@ -151,7 +150,7 @@ impl SimpleShape {
 
   #[throws(SpecError)]
   fn new(desc: Html, path: Html,
-         outline: Box<dyn Outline>,
+         outline: OutlineRepr,
          def_itemname: &'_ str,
          common: &SimpleCommon)
          -> SimpleShape
@@ -238,7 +237,7 @@ impl SimplePieceSpec for piece_specs::Disc {
     (SimpleShape::new(
       Html::lit("disc"),
       svg_circle_path(self.diam as f64)?,
-      Box::new(outline),
+      outline.into(),
       "simple-disc",
       &self.common,
     )?, &self.common)
@@ -266,11 +265,11 @@ impl piece_specs::Square {
 impl SimplePieceSpec for piece_specs::Square {
   #[throws(SpecError)]
   fn load_raw(&self) -> (SimpleShape, &SimpleCommon) {
-    let outline = shapelib::Square { xy: self.xy()?.map(|v| v as f64) };
+    let outline = shapelib::Rectangle { xy: self.xy()?.map(|v| v as f64) };
     (SimpleShape::new(
       Html::lit("square"),
       svg_rectangle_path(self.xy()?.promote())?,
-      Box::new(outline),
+      outline.into(),
       "simple-square",
       &self.common,
     )?, &self.common)
