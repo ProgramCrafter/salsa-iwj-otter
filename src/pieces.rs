@@ -14,7 +14,6 @@ type ColourMap = IndexVec<FaceId, Colour>;
 // todo: this serialisation is rather large
 pub struct SimpleShape {
   pub desc: Html,
-  pub path: Html,
   colours: ColourMap,
   #[serde(default)] pub edges: ColourMap,
   #[serde(default="default_edge_width")] pub edge_width: f64,
@@ -149,8 +148,7 @@ impl SimpleShape {
   fn count_faces(&self) -> usize { max(self.colours.len(), self.edges.len()) }
 
   #[throws(SpecError)]
-  fn new(desc: Html, path: Html,
-         outline: OutlineRepr,
+  fn new(desc: Html, outline: OutlineRepr,
          def_itemname: &'_ str,
          common: &SimpleCommon)
          -> SimpleShape
@@ -170,7 +168,7 @@ impl SimpleShape {
     }
 
     let shape = SimpleShape {
-      desc, path, itemname, outline,
+      desc, itemname, outline,
       colours: cmap(&common.faces)?,
       edges: cmap(&common.edges)?,
       edge_width: common.edge_width.unwrap_or(DEFAULT_EDGE_WIDTH),
@@ -203,12 +201,14 @@ impl SimpleShape {
         write!(f, "{}", otherwise)
       }
     };
+    let path = self.outline_path(pri, 1.0)?;
+
     if self.colours.len() == 0 {
       write!(f,
              r##"<path fill="none" \
                   stroke-width="{}" stroke="transparent" d="{}"/>"##,
              INVISIBLE_EDGE_SENSITIVE,
-             &self.path.0)?;
+             &path.0)?;
     }
     write!(f, r##"<path"##)?;
     ef(f, &self.colours, "fill", r##" fill="none""##)?;
@@ -217,7 +217,7 @@ impl SimpleShape {
     }
     stroke_attrs_hook(f)?;
     ef(f, &self.edges, "stroke", "")?;
-    write!(f, r##" d="{}"/>"##, &self.path.0)?;
+    write!(f, r##" d="{}"/>"##, &path.0)?;
   }
 }
 
@@ -236,7 +236,6 @@ impl SimplePieceSpec for piece_specs::Disc {
     let outline = shapelib::Circle { diam: self.diam as f64 };
     (SimpleShape::new(
       Html::lit("disc"),
-      svg_circle_path(self.diam as f64)?,
       outline.into(),
       "simple-disc",
       &self.common,
@@ -268,7 +267,6 @@ impl SimplePieceSpec for piece_specs::Square {
     let outline = shapelib::Rectangle { xy: self.xy()?.map(|v| v as f64) };
     (SimpleShape::new(
       Html::lit("square"),
-      svg_rectangle_path(self.xy()?.promote())?,
       outline.into(),
       "simple-square",
       &self.common,
