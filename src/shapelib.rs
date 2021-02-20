@@ -143,7 +143,8 @@ impl ItemEnquiryData {
 }
 
 impl Outline for Item { delegate! { to self.outline {
-  fn surround_path(&self, pri: &PieceRenderInstructions) -> Result<Html, IE>;
+  fn outline_path(&self, pri: &PieceRenderInstructions, scale: f64)
+                  -> Result<Html, IE>;
   fn thresh_dragraise(&self, pri: &PieceRenderInstructions)
                       -> Result<Option<Coord>, IE>;
   fn bbox_approx(&self) -> [Pos; 2];
@@ -497,8 +498,8 @@ pub struct Circle { pub diam: f64 }
 
 impl Outline for Circle {
   #[throws(IE)]
-  fn surround_path(&self, _pri: &PieceRenderInstructions) -> Html {
-    svg_circle_path(self.diam * SELECT_SCALE)?
+  fn outline_path(&self, _pri: &PieceRenderInstructions, scale: f64) -> Html {
+    svg_circle_path(self.diam * scale)?
   }
   #[throws(IE)]
   fn thresh_dragraise(&self, _pri: &PieceRenderInstructions) -> Option<Coord> {
@@ -538,9 +539,9 @@ pub struct Rectangle { pub xy: PosC<f64> }
 
 impl Outline for Rectangle {
   #[throws(IE)]
-  fn surround_path(&self, _pri: &PieceRenderInstructions) -> Html {
-    let size = self.xy * SELECT_SCALE;
-    svg_rectangle_path(size)?
+  fn outline_path(&self, _pri: &PieceRenderInstructions, scale: f64) -> Html {
+    let xy = self.xy * scale;
+    svg_rectangle_path(xy)?
   }
   #[throws(IE)]
   fn thresh_dragraise(&self, _pri: &PieceRenderInstructions)

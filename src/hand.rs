@@ -30,7 +30,7 @@ impl PieceXData for HandState { }
 impl Outline for Hand {
   delegate!{
     to self.shape {
-      fn surround_path(&self, _pri: &PieceRenderInstructions)
+      fn outline_path(&self, _pri: &PieceRenderInstructions, scale: f64)
                        -> Result<Html,IE>;
       fn thresh_dragraise(&self, _pri: &PieceRenderInstructions)
                           -> Result<Option<Coord>,IE>;

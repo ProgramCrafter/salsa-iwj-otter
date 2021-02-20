@@ -112,7 +112,11 @@ impl_downcast!(PieceXData);
 
 #[enum_dispatch]
 pub trait Outline: Send + Debug {
-  fn surround_path(&self, pri: &PieceRenderInstructions) -> Result<Html, IE>;
+  fn outline_path(&self, pri: &PieceRenderInstructions, scale: f64)
+          -> Result<Html, IE>;
+  fn surround_path(&self, pri: &PieceRenderInstructions) -> Result<Html, IE> {
+    self.outline_path(pri, SELECT_SCALE)
+  }
   fn thresh_dragraise(&self, pri: &PieceRenderInstructions)
                       -> Result<Option<Coord>, IE>;
   fn bbox_approx(&self) -> [Pos;2];

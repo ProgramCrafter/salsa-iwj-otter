@@ -114,7 +114,7 @@ pub fn svg_rectangle_path(PosC([x,y]): PosC<f64>) -> Html {
 impl Outline for SimpleShape {
   delegate! {
     to self.outline {
-      fn surround_path(&self, _pri: &PieceRenderInstructions)
+      fn outline_path(&self, _pri: &PieceRenderInstructions, scale: f64)
                        -> Result<Html,IE>;
       fn thresh_dragraise(&self, _pri: &PieceRenderInstructions)
                           -> Result<Option<Coord>,IE>;
