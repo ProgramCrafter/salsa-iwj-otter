@@ -680,7 +680,9 @@ fn read_spec<T: DeserializeOwned + SomeSpec>
     let mut f = File::open(&filename).context("open")?;
     let mut buf = String::new();
     f.read_to_string(&mut buf).context("read")?;
-    let spec: T = toml_de::from_str(&buf).context("parse")?;
+    let tv: toml::Value = buf.parse().context("parse TOML")?;
+    dbg!(&tv);
+    let spec: T = toml_de::from_value(&tv).context("parse value")?;
     Ok::<_,AE>(spec)
   })().with_context(|| format!("read {} {:?}", T::WHAT, &filename))?
 }

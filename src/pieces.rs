@@ -12,14 +12,15 @@ type ColourMap = IndexVec<FaceId, Colour>;
 
 #[derive(Debug,Serialize,Deserialize)]
 // todo: this serialisation is rather large
-pub struct SimpleShape {
-  pub desc: Html,
+pub struct GenericSimpleShape<Desc> {
+  pub desc: Desc,
   colours: ColourMap,
   #[serde(default)] pub edges: ColourMap,
   #[serde(default="default_edge_width")] pub edge_width: f64,
   pub itemname: String,
   pub outline: OutlineRepr,
 }
+pub type SimpleShape = GenericSimpleShape<Html>;
 
 pub const SELECT_SCALE: f64 = 1.1;
 
@@ -110,7 +111,9 @@ pub fn svg_rectangle_path(PosC([x,y]): PosC<f64>) -> Html {
                -x*0.5, -y*0.5, x, y, -x))
 }
 
-impl Outline for SimpleShape {
+impl<Desc> Outline for GenericSimpleShape<Desc>
+    where Desc: Debug + Send + Sync + 'static
+{
   delegate! {
     to self.outline {
       fn outline_path(&self, _pri: &PieceRenderInstructions, scale: f64)
@@ -141,17 +144,22 @@ impl Piece for SimpleShape {
   }
   fn nfaces(&self) -> RawFaceId { self.count_faces().try_into().unwrap() }
 
-  fn itemname(&self) -> &str { &self.itemname }
+  fn itemname(&self) -> &str { self.itemname() }
 }
 
-impl SimpleShape {
-  fn count_faces(&self) -> usize { max(self.colours.len(), self.edges.len()) }
+impl<Desc> GenericSimpleShape<Desc>
+    where Desc: Debug + Send + Sync + 'static
+{
+  pub fn count_faces(&self) -> usize {
+    max(self.colours.len(), self.edges.len())
+  }
+  pub fn itemname(&self) -> &str { &self.itemname }
 
   #[throws(SpecError)]
-  fn new(desc: Html, outline: OutlineRepr,
+  pub fn new(desc: Desc, outline: OutlineRepr,
          def_itemname: &'_ str,
          common: &SimpleCommon)
-         -> SimpleShape
+         -> GenericSimpleShape<Desc>
   {
     let itemname = common.itemname.clone()
       .unwrap_or_else(|| def_itemname.to_string());
@@ -167,7 +175,7 @@ impl SimpleShape {
       throw!(SpecError::SpecifiedWidthOfNoEdges);
     }
 
-    let shape = SimpleShape {
+    let shape = GenericSimpleShape {
       desc, itemname, outline,
       colours: cmap(&common.faces)?,
       edges: cmap(&common.edges)?,

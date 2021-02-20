@@ -53,7 +53,7 @@ define_index_type! {
 }
 
 #[derive(Serialize,Deserialize)]
-#[derive(Debug,Default)]
+#[derive(Debug,Default,Clone)]
 #[repr(transparent)]
 #[serde(transparent)]
 pub struct ColourSpec(pub String);
@@ -239,7 +239,10 @@ pub mod piece_specs {
 
   #[derive(Debug,Serialize,Deserialize)]
   pub struct Hand {
-    pub shape: Box<dyn crate::pieces::SimplePieceSpec>,
+    pub colour: String,
+    pub edge: Option<ColourSpec>,
+    pub edge_width: Option<f64>,
+    pub shape: OutlineRepr,
   }
 }
 

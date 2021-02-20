@@ -43,7 +43,7 @@ edge_width = 0.5
 [[pieces]]
 pos = [40, 40]
 type = "Hand"
-shape.type = "Square"
-shape.size = [70,20]
-shape.faces = ["grey"]
-shape.edges = ["white"]
+edge = "white"
+colour = "grey"
+shape.type = "Rectangle"
+shape.xy = [70,20]

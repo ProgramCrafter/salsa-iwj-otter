@@ -16,7 +16,7 @@ struct MagicOwner {
 
 #[derive(Debug,Serialize,Deserialize)]
 struct Hand {
-  shape: SimpleShape,
+  shape: GenericSimpleShape<()>,
 }
 
 #[derive(Debug,Clone,Default,Serialize,Deserialize)]
@@ -43,14 +43,17 @@ impl Outline for Hand {
 impl PieceSpec for piece_specs::Hand {
   #[throws(SpecError)]
   fn load(&self, _: usize) -> Box<dyn Piece> {
-    let (mut shape, common) = self.shape.load_raw()?;
-    if common.itemname.is_some() {
-      throw!(SpecError::ItemnameSpecifiedWhereForbidden);
-    }
-    if shape.nfaces() != 1 {
-      throw!(SpecError::MultifacetedMagic);
-    }
-    shape.itemname = "magic-hand".to_string();
+    let common = SimpleCommon {
+      itemname: None,
+      faces: index_vec![ColourSpec(self.colour.clone())],
+      edges: self.edge.iter().cloned().collect(),
+      edge_width: self.edge_width,
+    };
+    let shape = GenericSimpleShape::new(
+      (),
+      self.shape.clone(),
+      "magic-hand",
+      &common)?;
     Box::new(Hand {
       shape,
     }) as Box<dyn Piece>
