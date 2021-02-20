@@ -16,7 +16,7 @@ struct MagicOwner {
 
 #[derive(Debug,Serialize,Deserialize)]
 struct Hand {
-  shape: GenericSimpleShape<()>,
+  shape: GenericSimpleShape<(), OutlineRepr>,
 }
 
 #[derive(Debug,Clone,Default,Serialize,Deserialize)]

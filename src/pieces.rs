@@ -12,15 +12,15 @@ type ColourMap = IndexVec<FaceId, Colour>;
 
 #[derive(Debug,Serialize,Deserialize)]
 // todo: this serialisation is rather large
-pub struct GenericSimpleShape<Desc> {
+pub struct GenericSimpleShape<Desc, Outl> {
   pub desc: Desc,
   colours: ColourMap,
   #[serde(default)] pub edges: ColourMap,
   #[serde(default="default_edge_width")] pub edge_width: f64,
   pub itemname: String,
-  pub outline: OutlineRepr,
+  pub outline: Outl,
 }
-pub type SimpleShape = GenericSimpleShape<Html>;
+pub type SimpleShape = GenericSimpleShape<Html, OutlineRepr>;
 
 pub const SELECT_SCALE: f64 = 1.1;
 
@@ -111,8 +111,9 @@ pub fn svg_rectangle_path(PosC([x,y]): PosC<f64>) -> Html {
                -x*0.5, -y*0.5, x, y, -x))
 }
 
-impl<Desc> Outline for GenericSimpleShape<Desc>
-    where Desc: Debug + Send + Sync + 'static
+impl<Desc, Outl> Outline for GenericSimpleShape<Desc, Outl>
+    where Desc: Debug + Send + Sync + 'static,
+          Outl: Outline,
 {
   delegate! {
     to self.outline {
@@ -147,8 +148,9 @@ impl Piece for SimpleShape {
   fn itemname(&self) -> &str { self.itemname() }
 }
 
-impl<Desc> GenericSimpleShape<Desc>
-    where Desc: Debug + Send + Sync + 'static
+impl<Desc, Outl> GenericSimpleShape<Desc, Outl>
+    where Desc: Debug + Send + Sync + 'static,
+          Outl: Outline,
 {
   pub fn count_faces(&self) -> usize {
     max(self.colours.len(), self.edges.len())
@@ -156,10 +158,10 @@ impl<Desc> GenericSimpleShape<Desc>
   pub fn itemname(&self) -> &str { &self.itemname }
 
   #[throws(SpecError)]
-  pub fn new(desc: Desc, outline: OutlineRepr,
+  pub fn new(desc: Desc, outline: Outl,
          def_itemname: &'_ str,
          common: &SimpleCommon)
-         -> GenericSimpleShape<Desc>
+         -> GenericSimpleShape<Desc, Outl>
   {
     let itemname = common.itemname.clone()
       .unwrap_or_else(|| def_itemname.to_string());
