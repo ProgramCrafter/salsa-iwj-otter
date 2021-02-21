@@ -618,9 +618,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           pos, face,
           xdata: None,
         };
-        if let (_, true) = pc.pos.clamped(gs.table_size) {
-          throw!(SpecError::PosOffTable);
-        }
+        pc.pos.clamped(gs.table_size).map_err(|_| SpecError::PosOffTable)?;
         if pc.zlevel.z > gs.max_z { gs.max_z = pc.zlevel.z.clone() }
         let piece = gs.pieces.as_mut(modperm).insert(pc);
         ig.ipieces.as_mut(modperm).insert(piece, p);

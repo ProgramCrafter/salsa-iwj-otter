@@ -212,27 +212,29 @@ impl Timestamp {
 }
 
 pub trait ClampTable: Sized {
-  fn clamped(self, range: Self) -> (Self, bool);
+  fn clamped(self, range: Self) -> Result<Self, Self>;
 }
 
 impl ClampTable for Coord {
-  fn clamped(self, range: Coord) -> (Coord, bool) {
-    if self < 0     { return (0,     true) }
-    if self > range { return (range, true) }
-    return (self, false)
+  fn clamped(self, range: Coord) -> Result<Coord, Coord> {
+    if self < 0     { return Err(0,   ) }
+    if self > range { return Err(range) }
+    return Ok(self)
   }
 }
 
 impl ClampTable for Pos {
-  fn clamped(self, range: Pos) -> (Pos, bool) {
+  fn clamped(self, range: Pos) -> Result<Pos, Pos> {
     let mut output = ArrayVec::new();
-    let mut did = false;
-    for (npos, tdid) in self.0.iter().zip(range.0.iter())
-      .map(|(&pos, &rng)| pos.clamped(rng)) {
-      output.push(npos);
-      did |= tdid;
+    let mut ok = true;
+    for (&pos, &rng) in izip!(self.0.iter(), range.0.iter()) {
+      output.push(match pos.clamped(rng) {
+        Ok(pos) => pos,
+        Err(pos) => { ok = false; pos },
+      })
     }
-    (PosC(output.into_inner().unwrap()), did)
+    let output = PosC(output.into_inner().unwrap());
+    if ok { Ok(output) } else { Err(output) }
   }
 }
 

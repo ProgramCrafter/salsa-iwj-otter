@@ -342,15 +342,17 @@ api_route!{
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,piece, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
-    let (pos, clamped) = self.0.clamped(gs.table_size);
     let logents = vec![];
-    pc.pos = pos;
-    if clamped {
-      throw!(ApiPieceOpError::PartiallyProcessed(
-        PieceOpError::PosOffTable,
-        logents,
-      ));
-    }
+    match self.0.clamped(gs.table_size) {
+      Ok(pos) => pc.pos = pos,
+      Err(pos) => {
+        pc.pos = pos;
+        throw!(ApiPieceOpError::PartiallyProcessed(
+          PieceOpError::PosOffTable,
+          logents,
+        ));
+      }
+    };
     let update = PieceUpdateOp::Move(self.0);
     (WhatResponseToClientOp::Predictable,
      update, logents).into()
