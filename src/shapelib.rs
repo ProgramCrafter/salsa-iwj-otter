@@ -541,7 +541,7 @@ pub struct Rectangle { pub xy: PosC<f64> }
 impl Outline for Rectangle {
   #[throws(IE)]
   fn outline_path(&self, _pri: &PieceRenderInstructions, scale: f64) -> Html {
-    let xy = self.xy * scale;
+    let xy = (self.xy * scale)?;
     svg_rectangle_path(xy)?
   }
   #[throws(IE)]
@@ -556,7 +556,7 @@ impl Outline for Rectangle {
     let pos: Pos = self.xy.map(
       |v| ((v * 0.5).ceil()) as Coord
     );
-    let neg = -pos;
+    let neg = (-pos)?;
     [ neg, pos ]
   }
 }

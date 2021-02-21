@@ -185,6 +185,7 @@ pub enum MgmtError {
   BadGlob { pat: String, msg: String },
   BadSpec(#[from] SpecError),
   TokenDeliveryFailed(#[from] TokenDeliveryError),
+  CoordinateOverflow(#[from] CoordinateOverflow),
 }
 impl Display for MgmtError {
   #[throws(fmt::Error)]

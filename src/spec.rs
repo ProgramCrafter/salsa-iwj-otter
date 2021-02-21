@@ -248,63 +248,62 @@ pub mod piece_specs {
 //---------- Pos ----------
 
 pub mod pos_traits {
-  use std::ops::{Add,Sub,Mul,Neg,AddAssign,SubAssign};
+  use std::ops::{Add,Sub,Mul,Neg};
   use crate::prelude::*;
 
-  impl<T:Add<T,Output=T>+Copy+Clone+Debug> Add<PosC<T>> for PosC<T> {
-    type Output = PosC<T>;
+  impl<T:CheckedArith> Add<PosC<T>> for PosC<T> {
+    type Output = Result<Self, CoordinateOverflow>;
+    #[throws(CoordinateOverflow)]
     fn add(self, rhs: PosC<T>) -> PosC<T> {
       PosC(
         itertools::zip_eq(
           self.0.iter().cloned(),
           rhs .0.iter().cloned(),
-        ).map(|(a,b)| a + b)
-          .collect::<ArrayVec<_>>().into_inner().unwrap()
+        ).map(
+          |(a,b)| a.checked_add(b)
+        )
+          .collect::<Result<ArrayVec<_>,_>>()?
+          .into_inner().unwrap()
       )
     }
   }
 
-  impl<T:Sub<T,Output=T>+Copy+Clone+Debug> Sub<PosC<T>> for PosC<T> {
-    type Output = PosC<T>;
+  impl<T:CheckedArith> Sub<PosC<T>> for PosC<T> {
+    type Output = Result<Self, CoordinateOverflow>;
+    #[throws(CoordinateOverflow)]
     fn sub(self, rhs: PosC<T>) -> PosC<T> {
       PosC(
         itertools::zip_eq(
           self.0.iter().cloned(),
           rhs .0.iter().cloned(),
-        ).map(|(a,b)| a - b)
-          .collect::<ArrayVec<_>>().into_inner().unwrap()
+        ).map(|(a,b)| a.checked_sub(b))
+          .collect::<Result<ArrayVec<_>,_>>()?
+          .into_inner().unwrap()
       )
     }
   }
 
-  impl<T:Add<T,Output=T>+Copy+Clone+Debug> AddAssign<PosC<T>> for PosC<T> {
-    fn add_assign(&mut self, rhs: PosC<T>) {
-      *self = *self + rhs;
-    }
-  }
-
-  impl<T:Sub<T,Output=T>+Copy+Clone+Debug> SubAssign<PosC<T>> for PosC<T> {
-    fn sub_assign(&mut self, rhs: PosC<T>) {
-      *self = *self - rhs;
-    }
-  }
-
-  impl<T:Mul<T,Output=T>+Copy+Clone+Debug> Mul<T> for PosC<T> {
-    type Output = PosC<T>;
-    fn mul(self, rhs: T) -> PosC<T> {
+  impl<S:Copy+Debug+Clone+'static,T:CheckedArithMul<S>> Mul<S> for PosC<T> {
+    type Output = Result<Self, CoordinateOverflow>;
+    #[throws(CoordinateOverflow)]
+    fn mul(self, rhs: S) -> PosC<T> {
       PosC(
-        self.0.iter().cloned().map(|a| a * rhs)
-          .collect::<ArrayVec<_>>().into_inner().unwrap()
+        self.0.iter().cloned().map(
+          |a| a.checked_mul(rhs)
+        )
+          .collect::<Result<ArrayVec<_>,_>>()?
+          .into_inner().unwrap()
       )
     }
   }
 
-  impl<T:Neg<Output=T>+Copy+Clone+Debug> Neg for PosC<T> {
-    type Output = Self;
+  impl<T:CheckedArith> Neg for PosC<T> {
+    type Output = Result<Self, CoordinateOverflow>;
+    #[throws(CoordinateOverflow)]
     fn neg(self) -> Self {
       PosC(
-        self.0.iter().cloned().map(|a| -a)
-          .collect::<ArrayVec<_>>().into_inner().unwrap()
+        self.0.iter().cloned().map(|a| a.checked_neg())
+          .collect::<Result<ArrayVec<_>,_>>()?.into_inner().unwrap()
       )
     }
   }

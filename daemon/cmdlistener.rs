@@ -623,7 +623,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         let piece = gs.pieces.as_mut(modperm).insert(pc);
         ig.ipieces.as_mut(modperm).insert(piece, p);
         updates.push((piece, PieceUpdateOp::Insert(())));
-        pos += posd;
+        pos = (pos + posd)?;
       }
 
       (U{ pcs: updates,

@@ -182,7 +182,7 @@ impl Ctx {
       let mut w = su.w(window)?;
       let p = w.find_piece(pc)?;
       let start = p.posg()?;
-      let try_end = start + PosC([dx, 0]);
+      let try_end = (start + PosC([dx, 0]))?;
 
       let (sx,sy) = w.posg2posw(start)?;
       w.action_chain()

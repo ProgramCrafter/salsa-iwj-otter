@@ -1245,7 +1245,7 @@ mod library_add {
       fn place(&mut self, bbox: &[Pos;2],
                pieces: &Vec<MgmtGamePieceInfo>, ma: &MainOpts)
                -> Option<Pos> {
-        let PosC([w,h]) = bbox[1] - bbox[0];
+        let PosC([w,h]) = (bbox[1] - bbox[0])?;
 
         let mut did_newline = false;
         let (ncbot, tlhs) = 'search: loop {
@@ -1261,8 +1261,8 @@ mod library_add {
             if let Some((nclhs, clash_bot)) = pieces.iter()
               .filter_map(|p| (|| if_chain! {
                 if let Some(pv) = p.visible.as_ref();
-                let tl = pv.pos + pv.bbox[0];
-                let br = pv.pos + pv.bbox[1];
+                let tl = (pv.pos + pv.bbox[0])?;
+                let br = (pv.pos + pv.bbox[1])?;
                 if !(tl.0[0] >= self.clhs
                     || tl.0[1] >= ncbot
                     || br.0[0] <= tlhs
@@ -1304,7 +1304,7 @@ mod library_add {
         };
         self.cbot = ncbot;
         let ttopleft = PosC([tlhs, self.top]);
-        let tnominal = ttopleft - bbox[0];
+        let tnominal = (ttopleft - bbox[0])?;
 
         if ma.verbose > 3 { dbg!(&self, &tnominal); }
         Some(tnominal)

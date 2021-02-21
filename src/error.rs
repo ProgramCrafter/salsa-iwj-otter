@@ -53,6 +53,8 @@ pub enum InternalError {
   Anyhow(#[from] anyhow::Error),
   #[error("Game contains only partial data for player, or account missing")]
   PartialPlayerData,
+  #[error("Coordinate overflow")]
+  CoordinateOverflow(#[from] CoordinateOverflow),
   #[error("Multiple errors occurred where only one could be reported")]
   Aggregated,
 }
