@@ -130,7 +130,7 @@ WASM := wasm32-unknown-unknown
 
 #---------- toplevel aggregate targets ----------
 
-check: stamp/cargo.check wdt
+check: stamp/cargo.check at wdt
 	@echo 'All tests passed.'
 
 doc: cargo-doc
@@ -175,6 +175,10 @@ $(TARGET_DIR)/debug/%: $(call rsrcs, ! -path './wasm/*')
 
 stamp/cargo.check: $(call rsrcs,.)
 	$(CARGO) test --workspace
+	$(stamp)
+
+stamp/cargo-at.debug: $(call rsrcs,.)
+	$(CARGO) build --workspace $(call cr,$*) -p otter-api-tests
 	$(stamp)
 
 stamp/cargo-wdt.debug: $(call rsrcs,.)
@@ -299,23 +303,37 @@ templates/shapelib.html: $(TARGET_DIR)/debug/otterlib $(LIBRARY_FILES)
 
 #---------- webdriver tests (wdt) ----------
 
+AT_TESTS := $(basename $(notdir $(wildcard apitest/at-*.rs)))
 WDT_TESTS := $(basename $(notdir $(wildcard wdriver/wdt-*.rs)))
 
 WDT_LANDSCAPE_TESTS = wdt-altergame
 
+at:	$(foreach f, $(AT_TESTS), stamp/$f.check)
+
 wdt:	$(foreach f, $(WDT_TESTS), stamp/$f.check) \
 	$(foreach f, $(WDT_LANDSCAPE_TESTS), stamp/$f.lcheck) \
 
-WDT_DEPS =	wdriver/run1 stamp/cargo.debug stamp/cargo-wdt.debug \
-		$(FILEASSETS) templates/script.js \
+RUNTEST_DEPS =	apitest/run1 stamp/cargo.debug $(FILEASSETS) \
 		$(wildcard libraries/*.toml) $(LIBRARY_FILES)
 
+AT_DEPS =	$(filter-out templates/script.js, $(RUNTEST_DEPS)) \
+		stamp/cargo-at.debug
+
+WDT_DEPS =	$(RUNTEST_DEPS) \
+		stamp/cargo-wdt.debug
+
+AT_WDT_RUN = $(NAILING_CARGO_JUST_RUN) $(abspath $<) $(basename $(notdir $@))
+
+stamp/at-%.check:	$(AT_DEPS)
+	$(AT_WDT_RUN)
+	$(stamp)
+
 stamp/wdt-%.check:	$(WDT_DEPS)
-	$(NAILING_CARGO_JUST_RUN) $(abspath $<) $(basename $(notdir $@))
+	$(AT_WDT_RUN)
 	$(stamp)
 
 stamp/wdt-%.lcheck:	$(WDT_DEPS)
-	$(NAILING_CARGO_JUST_RUN) $(abspath $<) $(basename $(notdir $@)) --as-if=lwdt-$* --layout=Landscape
+	$(AT_WDT_RUN) --as-if=lwdt-$* --layout=Landscape
 	$(stamp)
 
 #---------- deployment ----------

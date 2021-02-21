@@ -11,7 +11,7 @@ version = "0.3.0"
 edition = "2018"
 
 [workspace]
-members = ["wasm", "daemon", "wdriver"]
+members = ["wasm", "daemon", "wdriver", "apitest"]
 
 [dependencies]
 

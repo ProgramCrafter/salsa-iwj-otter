@@ -1696,6 +1696,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "otter-api-tests"
+version = "0.0.1"
+dependencies = [
+ "fehler",
+ "humantime",
+ "ndarray",
+ "num-traits",
+ "otter",
+ "serde",
+ "structopt",
+ "strum",
+]
+
+[[package]]
 name = "otter-base"
 version = "0.0.1"
 dependencies = [
