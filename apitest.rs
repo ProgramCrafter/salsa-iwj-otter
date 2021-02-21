@@ -125,6 +125,13 @@ pub struct Opts {
   #[structopt(long="--pause", default_value="0ms")]
   pub pause: humantime::Duration,
 
+  #[structopt(flatten)]
+  pub tests: WantedTests,
+}
+
+#[derive(Clone,Debug)]
+#[derive(StructOpt)]
+pub struct WantedTests {
   pub tests: Vec<String>,
 }
 

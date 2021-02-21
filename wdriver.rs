@@ -361,8 +361,8 @@ impl Setup {
   pub fn want_test(&mut self, tname: &str) -> bool {
     self.found_tests.insert(tname.to_owned());
     let y =
-      self.opts.tests.is_empty() ||
-      self.opts.tests.iter().any(|s| s==tname);
+      self.opts.tests.tests.is_empty() ||
+      self.opts.tests.tests.iter().any(|s| s==tname);
     y
   }
 
@@ -652,7 +652,7 @@ impl Drop for Setup {
       .context("screenshots, in Setup::drop")
       .just_warn();
 
-    let missing_tests = self.opts.tests.iter().cloned()
+    let missing_tests = self.opts.tests.tests.iter().cloned()
       .filter(|s| !self.found_tests.contains(s))
       .collect::<Vec<_>>();
 
