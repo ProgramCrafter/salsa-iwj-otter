@@ -375,13 +375,12 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     },
 
     MGI::ListPieces => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
-      let pieces = ig.gs.pieces.iter().filter_map(|(piece,p)| {
+      let pieces = ig.gs.pieces.iter().filter_map(|(piece,p)| if_chain!{
         let &PieceState { pos, face, .. } = p;
-        let pinfo = ig.ipieces.get(piece)?;
+        if let Some(pinfo) = ig.ipieces.get(piece);
         let desc_html = pinfo.describe_html_infallible(None, p);
         let itemname = pinfo.itemname().to_string();
         let bbox = pinfo.bbox_approx();
-        #[allow(irrefutable_let_patterns)]
         let visible = if ! piece_at_all_occluded(&ig.gs.occults, piece) {
           Some(MgmtGamePieceVisibleInfo {
             pos, face, desc_html, bbox
@@ -389,10 +388,13 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         } else {
           None
         };
-        Some(MgmtGamePieceInfo {
-          piece, itemname,
-          visible
-        })
+        then {
+          Some(MgmtGamePieceInfo {
+            piece, itemname,
+            visible
+          })
+        }
+        else { None }
       }).collect();
       Ok(MGR::Pieces(pieces))
     })?,
