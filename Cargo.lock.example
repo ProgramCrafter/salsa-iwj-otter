@@ -1701,7 +1701,6 @@ version = "0.0.1"
 dependencies = [
  "fehler",
  "humantime",
- "ndarray",
  "num-traits",
  "otter",
  "serde",
@@ -1756,10 +1755,9 @@ name = "otter-webdriver-tests"
 version = "0.0.1"
 dependencies = [
  "fehler",
- "humantime",
  "ndarray",
  "num-traits",
- "otter",
+ "otter-api-tests",
  "serde",
  "structopt",
  "strum",

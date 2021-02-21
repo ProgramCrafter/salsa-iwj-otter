@@ -11,9 +11,8 @@ version = "0.0.1"
 edition = "2018"
 
 [dependencies]
-otter = { path = ".." }
+otter-api-tests = { path = "../apitest" }
 
-humantime = "2"
 ndarray = "0.14"
 thirtyfour_sync = "0.22"
 x11rb = "0.8"

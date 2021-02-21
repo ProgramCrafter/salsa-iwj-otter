@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-pub use otter::imports::*;
+pub use otter_api_tests::imports::*;
 
 pub use anyhow::{anyhow, ensure, Context};
 pub use boolinator::Boolinator;
@@ -257,7 +257,7 @@ impl Substitutor for DirSubst {
 }
 
 mod cleanup_notify {
-  use otter::imports::*;
+  use otter_api_tests::imports::*;
   use anyhow::Context;
   use fehler::{throw, throws};
   use libc::_exit;

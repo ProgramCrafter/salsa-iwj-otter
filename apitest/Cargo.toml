@@ -14,7 +14,6 @@ edition = "2018"
 otter = { path = ".." }
 
 humantime = "2"
-ndarray = "0.14"
 
 # Repeated here because importing does not work properly
 fehler = "1"
