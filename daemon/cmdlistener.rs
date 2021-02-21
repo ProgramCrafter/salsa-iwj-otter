@@ -375,27 +375,30 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     },
 
     MGI::ListPieces => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
-      let pieces = ig.gs.pieces.iter().filter_map(|(piece,p)| if_chain!{
-        let &PieceState { pos, face, .. } = p;
-        if let Some(pinfo) = ig.ipieces.get(piece);
-        let desc_html = pinfo.describe_html_infallible(None, p);
-        let itemname = pinfo.itemname().to_string();
-        let bbox = pinfo.bbox_approx();
-        let visible = if ! piece_at_all_occluded(&ig.gs.occults, piece) {
-          Some(MgmtGamePieceVisibleInfo {
-            pos, face, desc_html, bbox
-          })
-        } else {
-          None
-        };
-        then {
-          Some(MgmtGamePieceInfo {
-            piece, itemname,
-            visible
-          })
-        }
-        else { None }
-      }).collect();
+      let pieces = ig.gs.pieces.iter().filter_map(
+        |(piece,p)| (|| Ok::<_,MgmtError>(if_chain!{
+          let &PieceState { pos, face, .. } = p;
+          if let Some(pinfo) = ig.ipieces.get(piece);
+          let desc_html = pinfo.describe_html_infallible(None, p);
+          let itemname = pinfo.itemname().to_string();
+          let bbox = pinfo.bbox_approx();
+          let visible = if ! piece_at_all_occluded(&ig.gs.occults, piece) {
+            Some(MgmtGamePieceVisibleInfo {
+              pos, face, desc_html, bbox
+            })
+          } else {
+            None
+          };
+          then {
+            Some(MgmtGamePieceInfo {
+              piece, itemname,
+              visible
+            })
+          } else {
+            None
+          }
+        }))().transpose()
+      ).collect::<Result<Vec<_>,_>>()?;
       Ok(MGR::Pieces(pieces))
     })?,
 
