@@ -43,6 +43,8 @@ pub use std::process::{self, Command, Stdio};
 pub use std::thread::{self, sleep};
 pub use std::time::{self, Duration};
 
+pub use otter_base::misc::default;
+
 pub use otter::ensure_eq;
 pub use otter::commands::{MgmtCommand, MgmtResponse};
 pub use otter::commands::{MgmtGameInstruction, MgmtGameResponse};
@@ -63,8 +65,6 @@ pub const MS: time::Duration = time::Duration::from_millis(1);
 pub type AE = anyhow::Error;
 
 pub const URL: &str = "http://localhost:8000";
-
-pub fn default<T:Default>() -> T { Default::default() }
 
 use t4::Capabilities;
 use once_cell::sync::OnceCell;
