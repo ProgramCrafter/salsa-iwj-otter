@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
+// ==================== namespace preparation ====================
+
 pub mod imports {
   pub use otter;
   pub use otter::imports::*;
@@ -65,12 +67,16 @@ pub use otter::ui::player_num_dasharray;
 pub const MS: time::Duration = time::Duration::from_millis(1);
 pub type AE = anyhow::Error;
 
-pub const URL: &str = "http://localhost:8000";
+// -------------------- private imports ----------
 
 use otter::config::DAEMON_STARTUP_REPORT;
 
+// ==================== public constants ====================
+
 pub const TABLE: &str = "server::dummy";
 pub const CONFIG: &str = "server-config.toml";
+
+pub const URL: &str = "http://localhost:8000";
 
 #[derive(Copy,Clone,Debug,Eq,PartialEq,Ord,PartialOrd)]
 #[derive(FromPrimitive,EnumIter,IntoStaticStr,EnumProperty)]
@@ -80,35 +86,7 @@ pub enum StaticUser {
   #[strum(props(Token="ccg9kzoTh758QrVE1xMY7BQWB36dNJTx"))] Bob,
 }
 
-pub trait AlwaysContext<T,E> {
-  fn always_context(self, msg: &'static str) -> anyhow::Result<T>;
-}
-
-impl<T,E> AlwaysContext<T,E> for Result<T,E>
-where Self: anyhow::Context<T,E>,
-{
-  fn always_context(self, msg: &'static str) -> anyhow::Result<T> {
-    let x = self.context(msg);
-    if x.is_ok() { info!("completed {}.", msg) };
-    x
-  }
-}
-
-pub trait JustWarn<T> {
-  fn just_warn(self) -> Option<T>;
-}
-
-impl<T> JustWarn<T> for Result<T,AE> {
-  fn just_warn(self) -> Option<T> {
-    match self {
-      Ok(x) => Some(x),
-      Err(e) => {
-        warn!("{:#}", e);
-        None
-      },
-    }
-  }
-}
+// ==================== principal public structs ====================
 
 #[derive(Debug,Clone)]
 #[derive(StructOpt)]
@@ -137,51 +115,6 @@ pub struct SetupCore {
 }
 
 #[derive(Clone,Debug)]
-#[derive(StructOpt)]
-pub struct WantedTestsOpt {
-  tests: Vec<String>,
-}
-
-#[derive(Debug)]
-pub struct TrackWantedTests {
-  wanted: WantedTestsOpt,
-  found: BTreeSet<String>,
-}
-
-impl WantedTestsOpt {
-  pub fn track(&self) -> TrackWantedTests {
-    TrackWantedTests { wanted: self.clone(), found: default() }
-  }
-}
-
-impl TrackWantedTests {
-  pub fn wantp(&mut self, tname: &str) -> bool {
-    self.found.insert(tname.to_owned());
-    let y =
-      self.wanted.tests.is_empty() ||
-      self.wanted.tests.iter().any(|s| s==tname);
-    y
-  }
-}
-
-impl Drop for TrackWantedTests {
-  fn drop(&mut self) {
-    let missing_tests = self.wanted.tests.iter().cloned()
-      .filter(|s| !self.found.contains(s))
-      .collect::<Vec<_>>();
-
-    if !missing_tests.is_empty() && !self.found.is_empty() {
-      for f in &self.found {
-        eprintln!("fyi: test that exists: {}", f);
-      }
-      for m in &missing_tests {
-        eprintln!("warning: unknown test requested: {}", m);
-      }
-    }
-  }
-}
-
-#[derive(Clone,Debug)]
 pub struct DirSubst {
   pub tmp: String,
   pub abstmp: String,
@@ -191,24 +124,9 @@ pub struct DirSubst {
 
 pub struct Instance(pub InstanceName);
 
-#[derive(Clone,Debug)]
-pub struct Subst(HashMap<String,String>);
+// ==================== Facilities for tests ====================
 
-#[derive(Clone,Debug)]
-pub struct ExtendedSubst<B: Substitutor, X: Substitutor>(B, X);
-
-impl<'i,
-     T: AsRef<str> + 'i,
-     U: AsRef<str> + 'i,
-     L: IntoIterator<Item=&'i (T, U)>>
-  From<L> for Subst
-{
-  fn from(l: L) -> Subst {
-    let map = l.into_iter()
-      .map(|(k,v)| (k.as_ref().to_owned(), v.as_ref().to_owned())).collect();
-    Subst(map)
-  }
-}
+// -------------------- Substition --------------------
 
 pub trait Substitutor {
   fn get(&self, kw: &str) -> Option<String>;
@@ -256,11 +174,30 @@ pub trait Substitutor {
   }
 }
 
+#[derive(Clone,Debug)]
+pub struct Subst(HashMap<String,String>);
+
 impl Substitutor for Subst {
   fn get(&self, kw: &str) -> Option<String> {
     self.0.get(kw).map(String::clone)
   }
 }
+
+impl<'i,
+     T: AsRef<str> + 'i,
+     U: AsRef<str> + 'i,
+     L: IntoIterator<Item=&'i (T, U)>>
+  From<L> for Subst
+{
+  fn from(l: L) -> Subst {
+    let map = l.into_iter()
+      .map(|(k,v)| (k.as_ref().to_owned(), v.as_ref().to_owned())).collect();
+    Subst(map)
+  }
+}
+
+#[derive(Clone,Debug)]
+pub struct ExtendedSubst<B: Substitutor, X: Substitutor>(B, X);
 
 impl<B:Substitutor, X:Substitutor> Substitutor for ExtendedSubst<B, X> {
   fn get(&self, kw: &str) -> Option<String> {
@@ -281,6 +218,100 @@ impl Substitutor for DirSubst {
     })
   }
 }
+
+// ---------- requested/available test tracking ----------
+
+#[derive(Clone,Debug)]
+#[derive(StructOpt)]
+pub struct WantedTestsOpt {
+  tests: Vec<String>,
+}
+
+#[derive(Debug)]
+pub struct TrackWantedTests {
+  wanted: WantedTestsOpt,
+  found: BTreeSet<String>,
+}
+
+impl WantedTestsOpt {
+  pub fn track(&self) -> TrackWantedTests {
+    TrackWantedTests { wanted: self.clone(), found: default() }
+  }
+}
+
+impl TrackWantedTests {
+  pub fn wantp(&mut self, tname: &str) -> bool {
+    self.found.insert(tname.to_owned());
+    let y =
+      self.wanted.tests.is_empty() ||
+      self.wanted.tests.iter().any(|s| s==tname);
+    y
+  }
+}
+
+impl Drop for TrackWantedTests {
+  fn drop(&mut self) {
+    let missing_tests = self.wanted.tests.iter().cloned()
+      .filter(|s| !self.found.contains(s))
+      .collect::<Vec<_>>();
+
+    if !missing_tests.is_empty() && !self.found.is_empty() {
+      for f in &self.found {
+        eprintln!("fyi: test that exists: {}", f);
+      }
+      for m in &missing_tests {
+        eprintln!("warning: unknown test requested: {}", m);
+      }
+    }
+  }
+}
+
+#[macro_export]
+macro_rules! test {
+  ($c:expr, $tname:expr, $s:stmt) => {
+    if $c.su.want_test($tname) {
+      debug!("-------------------- {} starting --------------------", $tname);
+      $s
+      info!("-------------------- {} completed --------------------", $tname);
+    } else {
+      trace!("- - - {} skipped - - -", $tname);
+    }
+  }
+}
+
+// -------------------- Extra anyhow result handling --------------------
+
+pub trait AlwaysContext<T,E> {
+  fn always_context(self, msg: &'static str) -> anyhow::Result<T>;
+}
+
+impl<T,E> AlwaysContext<T,E> for Result<T,E>
+where Self: anyhow::Context<T,E>,
+{
+  fn always_context(self, msg: &'static str) -> anyhow::Result<T> {
+    let x = self.context(msg);
+    if x.is_ok() { info!("completed {}.", msg) };
+    x
+  }
+}
+
+pub trait JustWarn<T> {
+  fn just_warn(self) -> Option<T>;
+}
+
+impl<T> JustWarn<T> for Result<T,AE> {
+  fn just_warn(self) -> Option<T> {
+    match self {
+      Ok(x) => Some(x),
+      Err(e) => {
+        warn!("{:#}", e);
+        None
+      },
+    }
+  }
+}
+
+// -------------------- cleanup_notify (signaling) --------------------
 
 pub mod cleanup_notify {
   use super::imports::*;
@@ -382,6 +413,56 @@ pub mod cleanup_notify {
     } }
   }
 }
+
+// -------------------- generalised daemon startup --------------------
+
+#[throws(AE)]
+pub fn fork_something_which_prints(mut cmd: Command,
+                               cln: &cleanup_notify::Handle,
+                               what: &str)
+                               -> (String, process::Child)
+{
+  (||{
+    cmd.stdout(Stdio::piped());
+    cln.arm_hook(&mut cmd)?;
+    let mut child = cmd.spawn().context("spawn")?;
+    let mut report = BufReader::new(child.stdout.take().unwrap())
+      .lines().fuse();
+
+    let l = report.next();
+
+    let s = child.try_wait().context("check on spawned child")?;
+    if let Some(e) = s {
+      throw!(anyhow!("failed to start: wait status = {}", &e));
+    }
+
+    let l = match l {
+      Some(Ok(l)) => l,
+      None => throw!(anyhow!("EOF (but it's still running?")),
+      Some(Err(e)) => throw!(AE::from(e).context("failed to read")),
+    };
+
+    let what = what.to_owned();
+    thread::spawn(move|| (||{
+      for l in report {
+        let l: Result<String, io::Error> = l;
+        let l = l.context("reading further output")?;
+        const MAXLEN: usize = 300;
+        if l.len() <= MAXLEN {
+          println!("{} {}", what, l);
+        } else {
+          println!("{} {}...", what, &l[..MAXLEN-3]);
+        }
+      }
+      Ok::<_,AE>(())
+    })().context(what).just_warn()
+    );
+
+    Ok::<_,AE>((l, child))
+  })().with_context(|| what.to_owned())?
+}
+
+// ==================== principal actual setup code ====================
 
 #[throws(AE)]
 pub fn reinvoke_via_bwrap(_opts: &Opts, current_exe: &str) -> Void {
@@ -500,52 +581,6 @@ pub fn prepare_tmpdir<'x>(opts: &'x Opts, mut current_exe: &'x str) -> DirSubst 
 }
 
 #[throws(AE)]
-pub fn fork_something_which_prints(mut cmd: Command,
-                               cln: &cleanup_notify::Handle,
-                               what: &str)
-                               -> (String, process::Child)
-{
-  (||{
-    cmd.stdout(Stdio::piped());
-    cln.arm_hook(&mut cmd)?;
-    let mut child = cmd.spawn().context("spawn")?;
-    let mut report = BufReader::new(child.stdout.take().unwrap())
-      .lines().fuse();
-
-    let l = report.next();
-
-    let s = child.try_wait().context("check on spawned child")?;
-    if let Some(e) = s {
-      throw!(anyhow!("failed to start: wait status = {}", &e));
-    }
-
-    let l = match l {
-      Some(Ok(l)) => l,
-      None => throw!(anyhow!("EOF (but it's still running?")),
-      Some(Err(e)) => throw!(AE::from(e).context("failed to read")),
-    };
-
-    let what = what.to_owned();
-    thread::spawn(move|| (||{
-      for l in report {
-        let l: Result<String, io::Error> = l;
-        let l = l.context("reading further output")?;
-        const MAXLEN: usize = 300;
-        if l.len() <= MAXLEN {
-          println!("{} {}", what, l);
-        } else {
-          println!("{} {}...", what, &l[..MAXLEN-3]);
-        }
-      }
-      Ok::<_,AE>(())
-    })().context(what).just_warn()
-    );
-
-    Ok::<_,AE>((l, child))
-  })().with_context(|| what.to_owned())?
-}
-
-#[throws(AE)]
 pub fn prepare_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst)
                       -> (MgmtChannel, process::Child) {
   let subst = ds.also(&[
@@ -608,6 +643,8 @@ _ = "error" # rocket
 
   (mgmt_conn, child)
 }
+
+// ---------- game spec ----------
 
 impl DirSubst {
   pub fn specs_dir(&self) -> String {
@@ -680,6 +717,8 @@ pub fn prepare_game(ds: &DirSubst, table: &str) -> InstanceName {
   instance
 }
 
+// ---------- core entrypoint, for wdriver too ----------
+
 #[throws(AE)]
 pub fn setup_core<O>(module_paths: &[&str]) ->
   (O, cleanup_notify::Handle, Instance, SetupCore)
@@ -741,27 +780,4 @@ pub fn setup_core<O>(module_paths: &[&str]) ->
      server_child,
      wanted_tests,
    })
-}
-
-#[derive(Debug)]
-pub struct Window {
-  pub name: String,
-  pub instance: InstanceName,
-}
-
-impl Window {
-  pub fn table(&self) -> String { self.instance.to_string() }
-}
-
-#[macro_export]
-macro_rules! test {
-  ($c:expr, $tname:expr, $s:stmt) => {
-    if $c.su.want_test($tname) {
-      debug!("-------------------- {} starting --------------------", $tname);
-      $s
-      info!("-------------------- {} completed --------------------", $tname);
-    } else {
-      trace!("- - - {} skipped - - -", $tname);
-    }
-  }
 }

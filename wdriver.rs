@@ -58,6 +58,16 @@ pub struct Setup {
   windows_squirreled: Vec<String>, // see Drop impl
 }
 
+#[derive(Debug)]
+pub struct Window {
+  pub name: String,
+  pub instance: InstanceName,
+}
+
+impl Window {
+  pub fn table(&self) -> String { self.instance.to_string() }
+}
+
 #[throws(AE)]
 fn prepare_xserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
   const DISPLAY: u16 = 12;
