@@ -718,7 +718,58 @@ pub fn prepare_game(ds: &DirSubst, table: &str) -> InstanceName {
   instance
 }
 
-// ---------- core entrypoint, for wdriver too ----------
+// ==================== post-setup facilities ====================
+
+// -------------------- static users --------------------
+
+pub struct StaticUserSetup {
+  pub nick: &'static str,
+  pub url: String,
+}
+
+impl DirSubst {
+  #[throws(AE)]
+  pub fn setup_static_users
+    <W, F: FnMut(StaticUserSetup) -> Result<W, AE>>
+    (&mut self, layout: PresentationLayout, mut f: F)
+     -> Vec<W>
+  {
+    #[throws(AE)]
+    fn mk(su: &DirSubst, layout: PresentationLayout, u: StaticUser)
+          -> StaticUserSetup
+    {
+      let nick: &str = u.into();
+      let token = u.get_str("Token").expect("StaticUser missing Token");
+      let pl = AbbrevPresentationLayout(layout).to_string();
+      let subst = su.also([
+        ("nick",  nick),
+        ("token", token),
+        ("pl",    &pl),
+      ].iter());
+
+      su.otter(&subst
+                  .ss("--super                          \
+                       --account server:@nick@       \
+                       --fixed-token @token@         \
+                       join-game server::dummy")?)?;
+      let url = subst.subst("@url@/@pl@?@token@")?;
+      StaticUserSetup { nick, url }
+    }
+
+    StaticUser::iter().map(
+      |u| (||{
+        let ssu = mk(self, layout, u).context("create")?;
+        let w = f(ssu).context("set up")?;
+        Ok::<_,AE>(w)
+      })()
+        .with_context(|| format!("{:?}", u))
+        .context("make static user")
+    )
+      .collect::<Result<Vec<W>,AE>>()?
+  }
+}
+
+// ==================== core entrypoint, for wdriver too ====================
 
 #[throws(AE)]
 pub fn setup_core<O>(module_paths: &[&str]) ->

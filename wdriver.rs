@@ -695,33 +695,12 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
 impl Setup {
   #[throws(AE)]
   pub fn setup_static_users(&mut self, instance: &Instance) -> Vec<Window> {
-    #[throws(AE)]
-    fn mk(su: &mut Setup, instance: &Instance, u: StaticUser) -> Window {
-      let nick: &str = u.into();
-      let token = u.get_str("Token").expect("StaticUser missing Token");
-      let pl = AbbrevPresentationLayout(su.opts.layout).to_string();
-      let subst = su.ds.also([
-        ("nick",  nick),
-        ("token", token),
-        ("pl",    &pl),
-      ].iter());
-      su.ds.otter(&subst
-                  .ss("--super                          \
-                       --account server:@nick@       \
-                       --fixed-token @token@         \
-                       join-game server::dummy")?)?;
-      let w = su.new_window(instance, nick)?;
-      let url = subst.subst("@url@/@pl@?@token@")?;
-      su.w(&w)?.get(url)?;
-      su.w(&w)?.screenshot("initial", log::Level::Trace)?;
-      w
-    }
-    StaticUser::iter().map(
-      |u| mk(self, instance, u)
-        .with_context(|| format!("{:?}", u))
-        .context("make static user")
-    )
-      .collect::<Result<Vec<Window>,AE>>()?
+    self.core.ds.clone().setup_static_users(self.opts.layout, |sus|{
+      let w = self.new_window(instance, sus.nick)?;
+      self.w(&w)?.get(sus.url)?;
+      self.w(&w)?.screenshot("initial", log::Level::Trace)?;
+      Ok(w)
+    })?
   }
 }
 
