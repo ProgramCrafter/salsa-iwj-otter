@@ -82,8 +82,7 @@ pub enum SpecError {
   ZeroFaces,
   InconsistentFacesEdgecoloursCount,
   SpecifiedWidthOfNoEdges,
-  ItemnameSpecifiedWhereForbidden,
-  MultifacetedMagic,
+  UnsupportedShape,
 }
 display_as_debug!{SpecError}
 

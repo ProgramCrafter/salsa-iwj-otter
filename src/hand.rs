@@ -16,7 +16,7 @@ struct MagicOwner {
 
 #[derive(Debug,Serialize,Deserialize)]
 struct Hand {
-  shape: GenericSimpleShape<(), OutlineRepr>,
+  shape: GenericSimpleShape<(), shapelib::Rectangle>,
 }
 
 #[derive(Debug,Clone,Default,Serialize,Deserialize)]
@@ -49,9 +49,13 @@ impl PieceSpec for piece_specs::Hand {
       edges: self.edge.iter().cloned().collect(),
       edge_width: self.edge_width,
     };
+    let shape = match self.shape {
+      OutlineRepr::Rectangle(r) => r,
+      _ => throw!(SpecError::UnsupportedShape),
+    };
     let shape = GenericSimpleShape::new(
       (),
-      self.shape.clone(),
+      shape,
       "magic-hand",
       &common)?;
     Box::new(Hand {
