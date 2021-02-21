@@ -99,7 +99,7 @@ fn preview(items: Vec<ItemForOutput>) {
       let spec = spec.clone();
 
       let bbox = pc
-        .bbox_approx();
+        .bbox_approx()?;
       let mut bbox = bbox
         .iter()
         .map(|PosC(xy)| xy.iter().map(|&p| p as f64).collect::<Vec<_>>())

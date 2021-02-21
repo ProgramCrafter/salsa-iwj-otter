@@ -381,7 +381,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           if let Some(pinfo) = ig.ipieces.get(piece);
           let desc_html = pinfo.describe_html_infallible(None, p);
           let itemname = pinfo.itemname().to_string();
-          let bbox = pinfo.bbox_approx();
+          let bbox = pinfo.bbox_approx()?;
           let visible = if ! piece_at_all_occluded(&ig.gs.occults, piece) {
             Some(MgmtGamePieceVisibleInfo {
               pos, face, desc_html, bbox

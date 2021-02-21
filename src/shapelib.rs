@@ -147,7 +147,7 @@ impl Outline for Item { delegate! { to self.outline {
                   -> Result<Html, IE>;
   fn thresh_dragraise(&self, pri: &PieceRenderInstructions)
                       -> Result<Option<Coord>, IE>;
-  fn bbox_approx(&self) -> [Pos; 2];
+  fn bbox_approx(&self) -> Result<[Pos; 2], IE>;
 }}}
 
 #[typetag::serde(name="Lib")]
@@ -262,7 +262,7 @@ impl Contents {
         e@ Err(_) => e?,
         Ok(r) => r,
       };
-      let f0bbox = loaded.bbox_approx();
+      let f0bbox = loaded.bbox_approx()?;
       let ier = ItemEnquiryData {
         itemname: k.clone(),
         f0bbox,
@@ -505,6 +505,7 @@ impl Outline for Circle {
   fn thresh_dragraise(&self, _pri: &PieceRenderInstructions) -> Option<Coord> {
     Some((self.diam * 0.5) as Coord)
   }
+  #[throws(IE)]
   fn bbox_approx(&self) -> [Pos;2] {
     let d = (self.diam * 0.5).ceil() as Coord;
     [PosC([-d,-d]), PosC([d, d])]
@@ -550,6 +551,7 @@ impl Outline for Rectangle {
       .map(OrderedFloat::from).min().unwrap().into();
     Some((smallest * 0.5) as Coord)
   }
+  #[throws(IE)]
   fn bbox_approx(&self) -> [Pos;2] {
     let pos: Pos = self.xy.map(
       |v| ((v * 0.5).ceil()) as Coord
