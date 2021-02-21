@@ -729,8 +729,8 @@ pub struct UsualSetup {
 
 impl UsualSetup {
   #[throws(AE)]
-  pub fn new() -> UsualSetup {
-    let (mut su, inst) = setup(module_path!()).always_context("setup")?;
+  pub fn new(exe_module_path: &str) -> UsualSetup {
+    let (mut su, inst) = setup(exe_module_path).always_context("setup")?;
     let [alice, bob] : [Window; 2] =
       su.setup_static_users(&inst)?.try_into().unwrap();
     let spec = su.ds.game_spec_data()?;
@@ -739,8 +739,10 @@ impl UsualSetup {
 }
 
 #[throws(AE)]
-pub fn as_usual<F: FnOnce(UsualSetup) -> Result<(), AE>>(f: F) {
-  let usual = UsualSetup::new()?;
+pub fn as_usual<F: FnOnce(UsualSetup) -> Result<(), AE>>(
+  f: F, exe_module_path: &str,
+) {
+  let usual = UsualSetup::new(exe_module_path)?;
   f(usual)?;
   info!("ok");
 }

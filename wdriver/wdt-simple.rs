@@ -296,4 +296,4 @@ fn tests(UsualSetup { su, alice, bob, spec, ..}: UsualSetup) {
 }
 
 #[throws(AE)]
-fn main() { as_usual(tests)? }
+fn main() { as_usual(tests, module_path!())? }
