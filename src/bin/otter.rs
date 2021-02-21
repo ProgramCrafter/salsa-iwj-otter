@@ -1241,6 +1241,7 @@ mod library_add {
 
     impl Placement {
       /// If returns None, has already maybe tried to take some space
+      #[throws(AE)]
       fn place(&mut self, bbox: &[Pos;2],
                pieces: &Vec<MgmtGamePieceInfo>, ma: &MainOpts)
                -> Option<Pos> {
@@ -1249,7 +1250,7 @@ mod library_add {
         let mut did_newline = false;
         let (ncbot, tlhs) = 'search: loop {
           let ncbot = max(self.cbot, self.top + h);
-          if ncbot > self.bot { None? }
+          if ncbot > self.bot { return None }
           let mut any_clash_bot = None;
 
           'within_line: loop {
@@ -1258,27 +1259,27 @@ mod library_add {
             if self.clhs > self.rhs { break 'within_line }
 
             if let Some((nclhs, clash_bot)) = pieces.iter()
-              .filter_map(|p| {
-                let pv = p.visible.as_ref()?;
+              .filter_map(|p| (|| if_chain! {
+                if let Some(pv) = p.visible.as_ref();
                 let tl = pv.pos + pv.bbox[0];
                 let br = pv.pos + pv.bbox[1];
-                if tl.0[0] >= self.clhs
-                  || tl.0[1] >= ncbot
-                  || br.0[0] <= tlhs
-                  || br.0[1] <= self.top
-                {
-                  None
-                } else {
+                if !(tl.0[0] >= self.clhs
+                    || tl.0[1] >= ncbot
+                    || br.0[0] <= tlhs
+                    || br.0[1] <= self.top);
+                then {
                   if ma.verbose > 2 {
                     eprintln!(
                       "at {:?} tlhs={} ncbot={} avoiding {} tl={:?} br={:?}",
                       &self, tlhs, ncbot, &p.itemname, &tl, &br
                     )
                   }
-                  Some((br.0[0], br.0[1]))
+                  Ok::<_,AE>(Some((br.0[0], br.0[1])))
+                } else {
+                  Ok::<_,AE>(None)
                 }
-              })
-              .next()
+              })().transpose())
+              .next().transpose()?
             {
               self.clhs = nclhs;
               any_clash_bot = Some(clash_bot);
@@ -1290,7 +1291,12 @@ mod library_add {
           // line is full
           self.top = self.cbot;
           if did_newline {
-            self.top = any_clash_bot?; // if not, will never fit
+            if let Some(top) = any_clash_bot {
+              self.top = top;
+            } else {
+              // if not, will never fit
+              return None;
+            }
           }
           did_newline = true;
           self.clhs = self.lhs;
@@ -1316,7 +1322,7 @@ mod library_add {
       if let Some(already) = &already {
         if already.contains(&it.itemname) { continue }
       }
-      let pos = match placement.place(&items[0].f0bbox, &pieces, &ma) {
+      let pos = match placement.place(&items[0].f0bbox, &pieces, &ma)? {
         Some(pos) => pos,
         None => {
           let m = format!("out of space after {} at {}",
