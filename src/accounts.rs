@@ -215,10 +215,8 @@ impl FromStr for AccountName {
 
 //---------- AccessRecord ----------
 
-impl Deref for AccessRecord {
-  type Target = Arc<dyn PlayerAccessSpec>;
-  fn deref(&self) -> &Self::Target { return &self.0 }
-}
+// No DerefMut, to make sure we save properly etc.
+deref_to_field!{AccessRecord, Arc<dyn PlayerAccessSpec>, 0}
 
 impl AccessRecord {
   pub fn new_unset() -> Self{ Self( Arc::new(PlayerAccessUnset) ) }

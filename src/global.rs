@@ -40,6 +40,7 @@ pub struct InstanceRef (Arc<Mutex<InstanceContainer>>);
 #[derive(Debug,Clone,Serialize,Deserialize,Default)]
 #[serde(transparent)]
 pub struct LinksTable(pub EnumMap<LinkKind, Option<String>>);
+deref_to_field_mut!{LinksTable, EnumMap<LinkKind, Option<String>>, 0}
 
 pub struct Instance {
   pub name: Arc<InstanceName>,
@@ -483,14 +484,6 @@ impl From<(LinkKind, &str)> for Html {
   fn from((k, v): (LinkKind, &str)) -> Html {
     link_a_href(&k, v)
   }
-}
-
-impl Deref for LinksTable {
-  type Target = EnumMap<LinkKind, Option<String>>;
-  fn deref(&self) -> &Self::Target { &self.0 }
-}
-impl DerefMut for LinksTable {
-  fn deref_mut(&mut self) -> &mut Self::Target { &mut self.0 }
 }
 
 impl From<&LinksTable> for Html {
@@ -1265,10 +1258,8 @@ impl PiecesLoaded {
 
 // ---------- gamestate pieces table ----------
 
-impl Deref for Pieces {
-  type Target = ActualPieces;
-  fn deref(&self) -> &ActualPieces { &self.0 }
-}
+// No DerefMut to make sure we send updates, save, etc.
+deref_to_field!{Pieces, ActualPieces, 0}
 
 impl Pieces {
   pub fn get_mut(&mut self, piece: PieceId) -> Option<&mut PieceState> {

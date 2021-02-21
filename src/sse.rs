@@ -37,11 +37,7 @@ struct UpdateReader {
   ending_send: Option<io::Cursor<Box<[u8]>>>,
   init_confirmation_send: iter::Once<()>,
 }
-
-impl Deref for UpdateReader {
-  type Target = UpdateReaderWN;
-  fn deref(&self) -> &UpdateReaderWN { &self.wn }
-}
+deref_to_field!{UpdateReader, UpdateReaderWN, wn} // no DerefMut
 
 #[derive(Error,Debug)]
 #[error("WouldBlock error misreported!")]

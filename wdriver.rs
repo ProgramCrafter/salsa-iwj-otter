@@ -29,11 +29,7 @@ pub struct Opts {
   #[structopt(long="--geckodriver-args", default_value="")]
   geckodriver_args: String,
 }
-
-impl Deref for Opts {
-  type Target = apitest::Opts;
-  fn deref(&self) -> &Self::Target { &self.at }
-}
+deref_to_field!{Opts, apitest::Opts, at}
 impl AsRef<apitest::Opts> for Opts {
   fn as_ref(&self) -> &apitest::Opts { &self.at }
 }
