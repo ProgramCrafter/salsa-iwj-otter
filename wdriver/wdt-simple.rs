@@ -10,7 +10,7 @@ struct Ctx {
   bob: Window,
   spec: GameSpec,
 }
-ctx_with_setup!{Ctx}
+deref_to_field!{Ctx, Setup, su}
 
 impl Ctx {
   #[throws(AE)]

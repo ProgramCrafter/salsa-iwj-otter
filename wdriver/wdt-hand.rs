@@ -9,7 +9,7 @@ struct Ctx {
   alice: Window,
   bob: Window,
 }
-ctx_with_setup!{Ctx}
+deref_to_field!{Ctx, Setup, su}
 
 const HAND: &str = "6.1";
 const ALICE: &str = "1#1";

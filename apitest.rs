@@ -55,6 +55,7 @@ pub use otter::ensure_eq;
 pub use otter::commands::{MgmtCommand, MgmtResponse};
 pub use otter::commands::{MgmtGameInstruction, MgmtGameResponse};
 pub use otter::commands::{MgmtGameUpdateMode};
+pub use otter::deref_to_field;
 pub use otter::gamestate::{self, Generation, PlayerId};
 pub use otter::global::InstanceName;
 pub use otter::mgmtchannel::MgmtChannel;
@@ -126,6 +127,8 @@ pub struct DirSubst {
 pub struct Instance(pub InstanceName);
 
 // ==================== Facilities for tests ====================
+
+impl AsRef<Opts> for Opts { fn as_ref(&self) -> &Opts { self } }
 
 // -------------------- Substition --------------------
 

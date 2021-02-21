@@ -273,3 +273,13 @@ pub fn toml_merge<'u,
     }
   }
 }
+
+#[macro_export]
+macro_rules! deref_to_field {
+  {$outer:ident, $inner:ty, $field:ident} => {
+    impl Deref for $outer {
+      type Target = $inner;
+      fn deref(&self) -> &$inner { &self.$field }
+    }
+  }
+}

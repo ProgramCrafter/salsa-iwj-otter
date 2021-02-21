@@ -365,16 +365,6 @@ fn check_window_name_sanity(name: &str) -> &str {
   name
 }
 
-#[macro_export]
-macro_rules! ctx_with_setup {
-  {$ctx:ident} => {
-    impl Deref for $ctx {
-      type Target = self::Setup;
-      fn deref(&self) -> &self::Setup { &self.su }
-    }
-  }
-}
-
 impl Setup {
   pub fn want_test(&mut self, tname: &str) -> bool {
     self.wanted_tests.wantp(tname)
