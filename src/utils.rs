@@ -5,6 +5,8 @@
 use crate::imports::*;
 use crate::prelude::*;
 
+use std::ops::Neg;
+
 #[macro_export]
 macro_rules! ensure_eq {
   ($v1:expr, $v2:expr) => {
@@ -175,6 +177,56 @@ impl<Y: Sync, E: Sync, F: Sync + FnOnce() -> Result<Y,E>>
 }
 
 // todo: DerefMut
+
+#[derive(Error,Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize)]
+#[error("error parsing Z coordinate")]
+pub struct FooParseError;
+
+#[derive(Error,Clone,Copy,Debug,Serialize,Deserialize)]
+#[error("error parsing Z coordinate")]
+pub struct CoordinateOverflow;
+
+pub trait CheckedArith: Copy + Clone + Debug + 'static {
+  fn checked_add(self, rhs: Self) -> Result<Self, CoordinateOverflow>;
+  fn checked_sub(self, rhs: Self) -> Result<Self, CoordinateOverflow>;
+  fn checked_mul(self, rhs: Self) -> Result<Self, CoordinateOverflow>;
+  fn checked_neg(self)            -> Result<Self, CoordinateOverflow>;
+  fn checked_mulf(self, rhs: f64) -> Result<Self, CoordinateOverflow>;
+}
+
+macro_rules! checked_inherent { {$n:ident($($formal:tt)*) $($actual:tt)*} => {
+  fn $n(self $($formal)*) -> Result<Self, CoordinateOverflow> {
+    self.$n($($actual)*).ok_or(CoordinateOverflow)
+  }
+} }
+
+impl CheckedArith for i32 {
+  checked_inherent!{checked_add(, rhs: Self) rhs}
+  checked_inherent!{checked_sub(, rhs: Self) rhs}
+  checked_inherent!{checked_mul(, rhs: Self) rhs}
+  checked_inherent!{checked_neg(           )    }
+  fn checked_mulf(self, rhs: f64) -> Result<Self, CoordinateOverflow> {
+    let lhs: f64 = self.into();
+    let out: f64 = lhs.checked_mul(rhs)?;
+    let out: Self = num::NumCast::from(out).ok_or(CoordinateOverflow)?;
+    Ok(out)
+  }
+}
+
+macro_rules! checked_float { {$n:ident($($formal:tt)*) $($modify:tt)*} => {
+  fn $n(self $($formal)*) -> Result<Self, CoordinateOverflow> {
+    let out = self $($modify)*;
+    if out.is_finite() { Ok(out) } else { Err(CoordinateOverflow) }
+  }
+} }
+
+impl CheckedArith for f64 {
+  checked_float!{checked_add (, rhs: Self)  + rhs }
+  checked_float!{checked_sub (, rhs: Self)  - rhs }
+  checked_float!{checked_mul (, rhs: Self)  * rhs }
+  checked_float!{checked_mulf(, rhs: Self)  * rhs }
+  checked_float!{checked_neg()              .neg()}
+}
 
 pub fn toml_merge<'u,
                   S: 'u + AsRef<str>,
