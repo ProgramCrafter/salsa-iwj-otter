@@ -27,12 +27,14 @@ pub enum MgmtCommand {
   },
   ListGames {
     all: Option<bool>, // in scope of selected account by default
+    //   todo: should list games that are accessible, not just own
   },
   AlterGame {
     game: InstanceName,
     insns: Vec<MgmtGameInstruction>,
     how: MgmtGameUpdateMode,
   },
+  // todo: MarkGameUncorrupted
   DestroyGame {
     game: InstanceName,
   },
