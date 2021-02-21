@@ -189,9 +189,11 @@ pub struct CoordinateOverflow;
 pub trait CheckedArith: Copy + Clone + Debug + 'static {
   fn checked_add(self, rhs: Self) -> Result<Self, CoordinateOverflow>;
   fn checked_sub(self, rhs: Self) -> Result<Self, CoordinateOverflow>;
-  fn checked_mul(self, rhs: Self) -> Result<Self, CoordinateOverflow>;
   fn checked_neg(self)            -> Result<Self, CoordinateOverflow>;
-  fn checked_mulf(self, rhs: f64) -> Result<Self, CoordinateOverflow>;
+}
+pub trait CheckedArithMul<RHS: Copy + Clone + Debug + 'static>:
+                               Copy + Clone + Debug + 'static {
+  fn checked_mul(self, rhs: RHS) -> Result<Self, CoordinateOverflow>;
 }
 
 macro_rules! checked_inherent { {$n:ident($($formal:tt)*) $($actual:tt)*} => {
@@ -203,9 +205,13 @@ macro_rules! checked_inherent { {$n:ident($($formal:tt)*) $($actual:tt)*} => {
 impl CheckedArith for i32 {
   checked_inherent!{checked_add(, rhs: Self) rhs}
   checked_inherent!{checked_sub(, rhs: Self) rhs}
-  checked_inherent!{checked_mul(, rhs: Self) rhs}
   checked_inherent!{checked_neg(           )    }
-  fn checked_mulf(self, rhs: f64) -> Result<Self, CoordinateOverflow> {
+}
+impl CheckedArithMul<i32> for i32 {
+  checked_inherent!{checked_mul(, rhs: Self) rhs}
+}
+impl CheckedArithMul<f64> for i32 {
+  fn checked_mul(self, rhs: f64) -> Result<Self, CoordinateOverflow> {
     let lhs: f64 = self.into();
     let out: f64 = lhs.checked_mul(rhs)?;
     let out: Self = num::NumCast::from(out).ok_or(CoordinateOverflow)?;
@@ -221,11 +227,12 @@ macro_rules! checked_float { {$n:ident($($formal:tt)*) $($modify:tt)*} => {
 } }
 
 impl CheckedArith for f64 {
-  checked_float!{checked_add (, rhs: Self)  + rhs }
-  checked_float!{checked_sub (, rhs: Self)  - rhs }
-  checked_float!{checked_mul (, rhs: Self)  * rhs }
-  checked_float!{checked_mulf(, rhs: Self)  * rhs }
+  checked_float!{checked_add(, rhs: Self)  + rhs }
+  checked_float!{checked_sub(, rhs: Self)  - rhs }
   checked_float!{checked_neg()              .neg()}
+}
+impl CheckedArithMul<f64> for f64 {
+  checked_float!{checked_mul(, rhs: Self)  * rhs }
 }
 
 pub fn toml_merge<'u,
