@@ -276,10 +276,19 @@ pub fn toml_merge<'u,
 
 #[macro_export]
 macro_rules! deref_to_field {
-  {$outer:ident, $inner:ty, $field:ident} => {
+  {$outer:ty, $inner:ty, $($field:tt)*} => {
     impl Deref for $outer {
       type Target = $inner;
-      fn deref(&self) -> &$inner { &self.$field }
+      fn deref(&self) -> &$inner { &self.$($field)* }
+    }
+  }
+}
+#[macro_export]
+macro_rules! deref_to_field_mut {
+  {$outer:ty, $inner:ty, $($field:tt)*} => {
+    deref_to_field!{$outer, $inner, $($field)*}
+    impl DerefMut for $outer {
+      fn deref_mut(&mut self) -> &mut $inner { &mut self.$($field)* }
     }
   }
 }

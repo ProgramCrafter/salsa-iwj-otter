@@ -440,13 +440,7 @@ pub fn games_lock() -> RwLockWriteGuard<'static, GamesTable> {
 
 // ---------- Simple trait implementations ----------
 
-impl Deref for InstanceGuard<'_> {
-  type Target = Instance;
-  fn deref(&self) -> &Instance { &self.c.g }
-}
-impl DerefMut for InstanceGuard<'_> {
-  fn deref_mut(&mut self) -> &mut Instance { &mut self.c.g }
-}
+deref_to_field_mut!{InstanceGuard<'_>, Instance, c.g}
 
 impl FromStr for AccountScope {
   type Err = InvalidScopedName;

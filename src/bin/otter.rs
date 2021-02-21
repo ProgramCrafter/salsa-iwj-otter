@@ -437,13 +437,7 @@ struct Conn {
   chan: MgmtChannel,
 }
 
-impl Deref for Conn {
-  type Target = MgmtChannel;
-  fn deref(&self) -> &MgmtChannel { &self.chan }
-}
-impl DerefMut for Conn {
-  fn deref_mut(&mut self) -> &mut MgmtChannel { &mut self.chan }
-}
+deref_to_field_mut!{Conn, MgmtChannel, chan}
 
 impl Conn {
   #[throws(AE)]
@@ -512,13 +506,7 @@ struct ConnForGame {
   pub game: InstanceName,
   pub how: MgmtGameUpdateMode,
 }
-impl Deref for ConnForGame {
-  type Target = Conn;
-  fn deref(&self) -> &Conn { &self.conn }
-}
-impl DerefMut for ConnForGame {
-  fn deref_mut(&mut self) -> &mut Conn { &mut self.conn }
-}
+deref_to_field_mut!{ConnForGame, Conn, conn}
 
 impl ConnForGame {
   #[throws(AE)]
