@@ -47,7 +47,7 @@ pub struct Setup {
   pub mgmt_conn: MgmtChannel,
   pub opts: Opts,
   pub server_child: process::Child,
-  found_tests: BTreeSet<String>,
+  wanted_tests: TrackWantedTests,
   driver: T4d,
   current_window: WindowState,
   screenshot_count: ScreenShotCount,
@@ -359,11 +359,7 @@ macro_rules! ctx_with_setup {
 
 impl Setup {
   pub fn want_test(&mut self, tname: &str) -> bool {
-    self.found_tests.insert(tname.to_owned());
-    let y =
-      self.opts.tests.tests.is_empty() ||
-      self.opts.tests.tests.iter().any(|s| s==tname);
-    y
+    self.wanted_tests.wantp(tname)
   }
 
   #[throws(AE)]
@@ -651,19 +647,6 @@ impl Drop for Setup {
     })()
       .context("screenshots, in Setup::drop")
       .just_warn();
-
-    let missing_tests = self.opts.tests.tests.iter().cloned()
-      .filter(|s| !self.found_tests.contains(s))
-      .collect::<Vec<_>>();
-
-    if !missing_tests.is_empty() {
-      for f in &self.found_tests {
-        eprintln!("fyi: test that exists: {}", f);
-      }
-      for m in &missing_tests {
-        eprintln!("warning: unknown test requested: {}", m);
-      }
-    }
   }
 }
 
@@ -711,13 +694,15 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
   let (driver, screenshot_count, windows_squirreled) =
     prepare_thirtyfour().always_context("prepare web session")?;
 
+  let wanted_tests = opts.tests.track();
+
   (Setup {
     ds,
     mgmt_conn,
     server_child,
     driver,
     opts,
-    found_tests: default(),
+    wanted_tests,
     screenshot_count,
     current_window: None,
     windows_squirreled,

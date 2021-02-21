@@ -126,13 +126,52 @@ pub struct Opts {
   pub pause: humantime::Duration,
 
   #[structopt(flatten)]
-  pub tests: WantedTests,
+  pub tests: WantedTestsOpt,
 }
 
 #[derive(Clone,Debug)]
 #[derive(StructOpt)]
-pub struct WantedTests {
-  pub tests: Vec<String>,
+pub struct WantedTestsOpt {
+  tests: Vec<String>,
+}
+
+#[derive(Debug)]
+pub struct TrackWantedTests {
+  wanted: WantedTestsOpt,
+  found: BTreeSet<String>,
+}
+
+impl WantedTestsOpt {
+  pub fn track(&self) -> TrackWantedTests {
+    TrackWantedTests { wanted: self.clone(), found: default() }
+  }
+}
+
+impl TrackWantedTests {
+  pub fn wantp(&mut self, tname: &str) -> bool {
+    self.found.insert(tname.to_owned());
+    let y =
+      self.wanted.tests.is_empty() ||
+      self.wanted.tests.iter().any(|s| s==tname);
+    y
+  }
+}
+
+impl Drop for TrackWantedTests {
+  fn drop(&mut self) {
+    let missing_tests = self.wanted.tests.iter().cloned()
+      .filter(|s| !self.found.contains(s))
+      .collect::<Vec<_>>();
+
+    if !missing_tests.is_empty() {
+      for f in &self.found {
+        eprintln!("fyi: test that exists: {}", f);
+      }
+      for m in &missing_tests {
+        eprintln!("warning: unknown test requested: {}", m);
+      }
+    }
+  }
 }
 
 #[derive(Clone,Debug)]
