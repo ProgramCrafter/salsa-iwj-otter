@@ -375,7 +375,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     },
 
     MGI::ListPieces => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
-      let pieces = ig.gs.pieces.iter().map(|(piece,p)|{
+      let pieces = ig.gs.pieces.iter().filter_map(|(piece,p)| {
         let &PieceState { pos, face, .. } = p;
         let pinfo = ig.ipieces.get(piece)?;
         let desc_html = pinfo.describe_html_infallible(None, p);
@@ -393,7 +393,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           piece, itemname,
           visible
         })
-      }).flatten().collect();
+      }).collect();
       Ok(MGR::Pieces(pieces))
     })?,
 
