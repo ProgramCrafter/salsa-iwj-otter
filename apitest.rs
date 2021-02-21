@@ -40,7 +40,7 @@ pub use std::io::{self, BufRead, BufReader, ErrorKind, Write};
 pub use std::iter;
 pub use std::mem;
 pub use std::net::TcpStream;
-pub use std::ops::Deref;
+pub use std::ops::{Deref, DerefMut};
 pub use std::os::unix::process::CommandExt;
 pub use std::os::unix::fs::DirBuilderExt;
 pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
@@ -107,6 +107,7 @@ pub struct Opts {
   pub tests: WantedTestsOpt,
 }
 
+#[derive(Debug)]
 pub struct SetupCore {
   pub ds: DirSubst,
   pub mgmt_conn: MgmtChannel,

@@ -47,15 +47,20 @@ type WindowState = Option<String>;
 #[derive(Debug)]
 pub struct Setup {
   pub opts: Opts,
-  pub ds: DirSubst,
-  pub mgmt_conn: MgmtChannel,
-  pub server_child: process::Child,
-  wanted_tests: TrackWantedTests,
+  pub core: SetupCore,
   driver: T4d,
   current_window: WindowState,
   screenshot_count: ScreenShotCount,
   final_hook: FinalInfoCollection,
   windows_squirreled: Vec<String>, // see Drop impl
+}
+
+impl Deref for Setup {
+  type Target = SetupCore;
+  fn deref(&self) -> &SetupCore { &self.core }
+}
+impl DerefMut for Setup {
+  fn deref_mut(&mut self) -> &mut SetupCore { &mut self.core }
 }
 
 #[derive(Debug)]
@@ -665,14 +670,10 @@ impl Drop for Setup {
 
 #[throws(AE)]
 pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
-  let (opts, cln, instance, apitest::SetupCore {
-    ds,
-    mgmt_conn,
-    server_child,
-    wanted_tests
-  }) = apitest::setup_core(&[exe_module_path, "otter_webdriver_tests"])?;
+  let (opts, cln, instance, core) =
+    apitest::setup_core(&[exe_module_path, "otter_webdriver_tests"])?;
 
-  prepare_xserver(&cln, &ds).always_context("setup X server")?;
+  prepare_xserver(&cln, &core.ds).always_context("setup X server")?;
 
   let final_hook = FinalInfoCollection;
 
@@ -681,12 +682,9 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
     prepare_thirtyfour().always_context("prepare web session")?;
 
   (Setup {
-    ds,
-    mgmt_conn,
-    server_child,
+    core,
     driver,
     opts,
-    wanted_tests,
     screenshot_count,
     current_window: None,
     windows_squirreled,
