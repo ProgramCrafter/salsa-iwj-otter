@@ -34,6 +34,9 @@ impl Deref for Opts {
   type Target = apitest::Opts;
   fn deref(&self) -> &Self::Target { &self.at }
 }
+impl AsRef<apitest::Opts> for Opts {
+  fn as_ref(&self) -> &apitest::Opts { &self.at }
+}
 
 #[derive(Debug)]
 pub struct FinalInfoCollection;
@@ -43,9 +46,9 @@ type WindowState = Option<String>;
 
 #[derive(Debug)]
 pub struct Setup {
+  pub opts: Opts,
   pub ds: DirSubst,
   pub mgmt_conn: MgmtChannel,
-  pub opts: Opts,
   pub server_child: process::Child,
   wanted_tests: TrackWantedTests,
   driver: T4d,
@@ -652,49 +655,20 @@ impl Drop for Setup {
 
 #[throws(AE)]
 pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
-  env_logger::Builder::new()
-    .format_timestamp_micros()
-    .format_level(true)
-    .filter_module("otter_webdriver_tests", log::LevelFilter::Debug)
-    .filter_module(exe_module_path, log::LevelFilter::Debug)
-    .filter_level(log::LevelFilter::Info)
-    .parse_env("OTTER_WDT_LOG")
-    .init();
-  debug!("starting");
-
-  let current_exe: String = env::current_exe()
-    .context("find current executable")?
-    .to_str()
-    .ok_or_else(|| anyhow!("current executable path is not UTF-8 !"))?
-    .to_owned();
-
-  let opts = Opts::from_args();
-  if !opts.no_bwrap {
-    reinvoke_via_bwrap(&opts, &current_exe)
-      .context("reinvoke via bwrap")?;
-  }
-
-  info!("pid = {}", nix::unistd::getpid());
-  sleep(opts.pause.into());
-
-  let cln = cleanup_notify::Handle::new()?;
-  let ds = prepare_tmpdir(&opts, &current_exe)?;
+  let (opts, cln, instance, apitest::SetupCore {
+    ds,
+    mgmt_conn,
+    server_child,
+    wanted_tests
+  }) = apitest::setup_core(&[exe_module_path, "otter_webdriver_tests"])?;
 
   prepare_xserver(&cln, &ds).always_context("setup X server")?;
-
-  let (mgmt_conn, server_child) =
-    prepare_gameserver(&cln, &ds).always_context("setup game server")?;
-
-  let instance_name =
-    prepare_game(&ds, TABLE).context("setup game")?;
 
   let final_hook = FinalInfoCollection;
 
   prepare_geckodriver(&opts, &cln).always_context("setup webdriver server")?;
   let (driver, screenshot_count, windows_squirreled) =
     prepare_thirtyfour().always_context("prepare web session")?;
-
-  let wanted_tests = opts.tests.track();
 
   (Setup {
     ds,
@@ -707,10 +681,7 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
     current_window: None,
     windows_squirreled,
     final_hook,
-  },
-   Instance(
-     instance_name
-   ))
+  }, instance)
 }
 
 impl Setup {

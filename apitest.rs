@@ -129,6 +129,13 @@ pub struct Opts {
   pub tests: WantedTestsOpt,
 }
 
+pub struct SetupCore {
+  pub ds: DirSubst,
+  pub mgmt_conn: MgmtChannel,
+  pub server_child: process::Child,
+  pub wanted_tests: TrackWantedTests,
+}
+
 #[derive(Clone,Debug)]
 #[derive(StructOpt)]
 pub struct WantedTestsOpt {
@@ -163,7 +170,7 @@ impl Drop for TrackWantedTests {
       .filter(|s| !self.found.contains(s))
       .collect::<Vec<_>>();
 
-    if !missing_tests.is_empty() {
+    if !missing_tests.is_empty() && !self.found.is_empty() {
       for f in &self.found {
         eprintln!("fyi: test that exists: {}", f);
       }
@@ -671,6 +678,69 @@ pub fn prepare_game(ds: &DirSubst, table: &str) -> InstanceName {
     .context("parse table name")?;
 
   instance
+}
+
+#[throws(AE)]
+pub fn setup_core<O>(module_paths: &[&str]) ->
+  (O, cleanup_notify::Handle, Instance, SetupCore)
+  where O: StructOpt + AsRef<Opts>
+{
+  let mut builder = env_logger::Builder::new();
+  builder
+    .format_timestamp_micros()
+    .format_level(true)
+    .filter_module("otter_apitest_tests", log::LevelFilter::Debug);
+
+  for module in module_paths {
+    builder
+      .filter_module(module, log::LevelFilter::Debug);
+  }
+
+  builder
+    .filter_level(log::LevelFilter::Info)
+    .parse_env("OTTER_WDT_LOG")
+    .init();
+  debug!("starting");
+
+  let caller_opts = O::from_args();
+  let opts = caller_opts.as_ref();
+
+  let current_exe: String = env::current_exe()
+    .context("find current executable")?
+    .to_str()
+    .ok_or_else(|| anyhow!("current executable path is not UTF-8 !"))?
+    .to_owned();
+
+  if !opts.no_bwrap {
+    reinvoke_via_bwrap(&opts, &current_exe)
+      .context("reinvoke via bwrap")?;
+  }
+
+  info!("pid = {}", nix::unistd::getpid());
+  sleep(opts.pause.into());
+
+  let cln = cleanup_notify::Handle::new()?;
+  let ds = prepare_tmpdir(&opts, &current_exe)?;
+
+  let (mgmt_conn, server_child) =
+    prepare_gameserver(&cln, &ds).always_context("setup game server")?;
+
+  let instance_name =
+    prepare_game(&ds, TABLE).context("setup game")?;
+
+  let wanted_tests = opts.tests.track();
+
+  (caller_opts,
+   cln,
+   Instance(
+     instance_name
+   ),
+   SetupCore {
+     ds,
+     mgmt_conn,
+     server_child,
+     wanted_tests,
+   })
 }
 
 #[derive(Debug)]
