@@ -218,6 +218,7 @@ impl Substitutor for DirSubst {
       "abstmp" => self.abstmp.clone(),
       "target" => format!("{}/target", &self.start_dir),
       "specs"  => self.specs_dir(),
+      "table"  => TABLE.to_owned(),
       _ => return None,
     })
   }
@@ -754,7 +755,7 @@ impl DirSubst {
                   .ss("--super                          \
                        --account server:@nick@       \
                        --fixed-token @token@         \
-                       join-game server::dummy")?)?;
+                       join-game @table@")?)?;
       let url = subst.subst("@url@/@pl@?@token@")?;
       StaticUserSetup { nick, url }
     }
