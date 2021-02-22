@@ -24,8 +24,14 @@ struct Player {
 impl Player {
   #[throws(AE)]
   fn connect(&self) {
-    let body = reqwest::blocking::get(&self.url)?;
-    dbg!(&body);
+    let body = reqwest::blocking::get(&self.url)?.text()?;
+    let dom = scraper::Html::parse_document(&body);
+    dbg!(&body, &dom);
+    let clid = dom
+      .select(&"#loading_token".try_into().unwrap())
+      .next().unwrap()
+      .value().attr("data-ptoken");
+    dbg!(&clid);
   }
 }
 
