@@ -351,10 +351,6 @@ fn check_window_name_sanity(name: &str) -> &str {
 }
 
 impl Setup {
-  pub fn want_test(&mut self, tname: &str) -> bool {
-    self.wanted_tests.wantp(tname)
-  }
-
   #[throws(AE)]
   pub fn new_window<'s>(&'s mut self, instance: &Instance, name: &str)
                         -> Window {

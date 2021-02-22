@@ -274,7 +274,7 @@ impl Drop for TrackWantedTests {
 #[macro_export]
 macro_rules! test {
   ($c:expr, $tname:expr, $s:stmt) => {
-    if $c.su.want_test($tname) {
+    if $c.su.wanted_tests.wantp($tname) {
       debug!("-------------------- {} starting --------------------", $tname);
       $s
       info!("-------------------- {} completed --------------------", $tname);
