@@ -16,8 +16,19 @@ deref_to_field!{Ctx, SetupCore, su}
 
 impl Ctx {
   #[throws(AE)]
-  fn library_load(&self) {
+  pub fn otter<S:AsRef<str>>(&mut self, args: &[S]) {
+    let args: Vec<String> =
+      ["--account", "server:"].iter().cloned().map(Into::into)
+      .chain(args.iter().map(|s| s.as_ref().to_owned()))
+      .collect();
+    self.ds.otter(&args)?;
+  }
+
+  #[throws(AE)]
+  fn library_load(&mut self) {
     prepare_game(&self.ds, TABLE)?;
+
+    self.otter(&self.ds.ss("library-add @table@ wikimedia chess-blue-?")?)?;
   }
 }
 
