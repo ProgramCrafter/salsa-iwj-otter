@@ -29,8 +29,9 @@ fn tests(mut c: Ctx) {
 #[throws(AE)]
 fn main() {
   {
-    let (opts, _cln, instance, su) = setup_core(&[module_path!()])?;
+    let (opts, _cln, instance, mut su) = setup_core(&[module_path!()])?;
     let spec = su.ds.game_spec_data()?;
+    let users = su.ds.setup_static_users(default(), |_|Ok(()))?;
     tests(Ctx { opts, spec, su })?;
   }
   info!("ok");
