@@ -1703,6 +1703,7 @@ dependencies = [
  "humantime",
  "num-traits",
  "otter",
+ "reqwest",
  "serde",
  "structopt",
  "strum",

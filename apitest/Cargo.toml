@@ -14,6 +14,7 @@ edition = "2018"
 otter = { path = ".." }
 
 humantime = "2"
+reqwest = "0.11"
 
 # Repeated here because importing does not work properly
 fehler = "1"

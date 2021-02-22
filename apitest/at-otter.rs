@@ -11,8 +11,23 @@ struct Ctx {
   opts: Opts,
   su: SetupCore,
   spec: GameSpec,
+  alice: Player,
+  bob: Player,
 }
 deref_to_field!{Ctx, SetupCore, su}
+
+#[derive(Debug)]
+struct Player {
+  url: String,
+}
+
+impl Player {
+  #[throws(AE)]
+  fn connect(&self) {
+    let body = reqwest::blocking::get(&self.url)?;
+    dbg!(&body);
+  }
+}
 
 impl Ctx {
   #[throws(AE)]
@@ -29,6 +44,8 @@ impl Ctx {
     prepare_game(&self.ds, TABLE)?;
 
     self.otter(&self.ds.ss("library-add @table@ wikimedia chess-blue-?")?)?;
+
+    self.alice.connect()?;
   }
 }
 
@@ -42,8 +59,13 @@ fn main() {
   {
     let (opts, _cln, instance, mut su) = setup_core(&[module_path!()])?;
     let spec = su.ds.game_spec_data()?;
-    let users = su.ds.setup_static_users(default(), |_|Ok(()))?;
-    tests(Ctx { opts, spec, su })?;
+    let [alice, bob]: [Player; 2] = su.ds.setup_static_users(
+      default(),
+      |sus| Ok(Player { url: sus.url })
+    )?
+      .try_into().unwrap();
+    
+    tests(Ctx { opts, spec, su, alice, bob })?;
   }
   info!("ok");
 }
