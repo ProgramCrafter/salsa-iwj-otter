@@ -15,10 +15,15 @@ struct Ctx {
 deref_to_field!{Ctx, SetupCore, su}
 
 impl Ctx {
+  #[throws(AE)]
+  fn library_load(&self) {
+    prepare_game(&self.ds, TABLE)?;
+  }
 }
 
 #[throws(AE)]
-fn tests(Ctx { opts, su, spec, ..}: Ctx) {
+fn tests(mut c: Ctx) {
+  test!(c, "library-load", c.library_load()?);
 }
 
 #[throws(AE)]
