@@ -55,7 +55,7 @@ pub use otter::ensure_eq;
 pub use otter::commands::{MgmtCommand, MgmtResponse};
 pub use otter::commands::{MgmtGameInstruction, MgmtGameResponse};
 pub use otter::commands::{MgmtGameUpdateMode};
-pub use otter::deref_to_field;
+pub use otter::{deref_to_field, deref_to_field_mut};
 pub use otter::gamestate::{self, Generation, PlayerId};
 pub use otter::global::InstanceName;
 pub use otter::mgmtchannel::MgmtChannel;

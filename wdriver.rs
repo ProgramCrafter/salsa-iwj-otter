@@ -50,14 +50,7 @@ pub struct Setup {
   final_hook: FinalInfoCollection,
   windows_squirreled: Vec<String>, // see Drop impl
 }
-
-impl Deref for Setup {
-  type Target = SetupCore;
-  fn deref(&self) -> &SetupCore { &self.core }
-}
-impl DerefMut for Setup {
-  fn deref_mut(&mut self) -> &mut SetupCore { &mut self.core }
-}
+deref_to_field_mut!{Setup, SetupCore, core}
 
 #[derive(Debug)]
 pub struct Window {
@@ -309,11 +302,7 @@ pub struct PieceElement<'g> {
   w: &'g WindowGuard<'g>,
   elem: t4::WebElement<'g>,
 }
-
-impl<'g> Deref for PieceElement<'g> {
-  type Target = t4::WebElement<'g>;
-  fn deref<'i>(&'i self) -> &'i t4::WebElement<'g> { &self.elem }
-}
+deref_to_field!{{'g} PieceElement<'g>, t4::WebElement<'g>, elem}
 
 impl<'g> PieceElement<'g> {
   #[throws(AE)]
