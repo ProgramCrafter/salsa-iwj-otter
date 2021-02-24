@@ -30,7 +30,7 @@ impl Ctx {
     ensure_eq!(resp.status(), 200);
     let body = resp.text()?;
     let dom = scraper::Html::parse_document(&body);
-    dbg!(&body, &dom);
+    //dbg!(&body, &dom);
     let ptoken = dom
       .select(&"#loading_token".try_into().unwrap())
       .next().unwrap()
@@ -44,7 +44,7 @@ impl Ctx {
     ensure_eq!(resp.status(), 200);
     let body = resp.text()?;
     let dom = scraper::Html::parse_document(&body);
-    dbg!(&body, &dom);
+    //dbg!(&body, &dom);
 
     let ctoken = dom
       .select(&"#main-body".try_into().unwrap())
@@ -73,7 +73,7 @@ impl Ctx {
       eprintln!("copy_to'ing");
       sse.copy_to(&mut writer).unwrap();
       eprintln!("copy_to'd!"); 
-   });
+    });
     thread::spawn(move ||{
       eprintln!("copying");
       std::io::copy(&mut reader, &mut std::io::stderr()).unwrap();
