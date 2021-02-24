@@ -26,6 +26,7 @@ pub use num_derive::FromPrimitive;
 pub use parking_lot::{Mutex, MutexGuard};
 pub use regex::{Captures, Regex};
 pub use serde::{Serialize, Deserialize};
+pub use serde_json::json;
 pub use structopt::StructOpt;
 pub use strum::{EnumIter, EnumProperty, IntoEnumIterator, IntoStaticStr};
 pub use void::Void;

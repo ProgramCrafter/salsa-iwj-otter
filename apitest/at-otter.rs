@@ -21,21 +21,30 @@ struct Player {
   url: String,
 }
 
-impl Player {
+impl Ctx {
   #[throws(AE)]
-  fn connect(&self) {
-    let resp = reqwest::blocking::get(&self.url)?;
+  fn connect_player(&self, player: &Player) {
+    let client = reqwest::blocking::Client::new();
+
+    let resp = client.get(&player.url).send()?;
     ensure_eq!(resp.status(), 200);
     let body = resp.text()?;
     let dom = scraper::Html::parse_document(&body);
     dbg!(&body, &dom);
-    let clid = dom
+    let ptoken = dom
       .select(&"#loading_token".try_into().unwrap())
       .next().unwrap()
-      .value().attr("data-ptoken");
-    dbg!(&clid);
+      .value().attr("data-ptoken")
+      .unwrap();
+    dbg!(&ptoken);
 
-    
+    let resp = client.post(&self.ds.subst("@url@/_/session/Portrait")?)
+      .json(&json!({ "ptoken": ptoken }))
+      .send()?;
+    ensure_eq!(resp.status(), 200);
+    let body = resp.text()?;
+    let dom = scraper::Html::parse_document(&body);
+    dbg!(&body, &dom);
   }
 }
 
@@ -55,7 +64,7 @@ impl Ctx {
 
     self.otter(&self.ds.ss("library-add @table@ wikimedia chess-blue-?")?)?;
 
-    self.alice.connect()?;
+    self.connect_player(&self.alice)?;
   }
 }
 
