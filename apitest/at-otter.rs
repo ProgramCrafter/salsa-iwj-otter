@@ -45,6 +45,30 @@ impl Ctx {
     let body = resp.text()?;
     let dom = scraper::Html::parse_document(&body);
     dbg!(&body, &dom);
+
+    let ctoken = dom
+      .select(&"#main-body".try_into().unwrap())
+      .next().unwrap()
+      .value().attr("data-ctoken")
+      .unwrap();
+    dbg!(&ctoken);
+
+    let gen: Generation = Generation(dom
+      .select(&"#main-body".try_into().unwrap())
+      .next().unwrap()
+      .value().attr("data-gen")
+      .unwrap()
+      .parse().unwrap());
+    dbg!(gen);
+
+    let sse = client.get(
+      &self.ds
+        .also(&[("ctoken", ctoken),
+                ("gen",    &gen.to_string())])
+        .subst("@url@/_/updates?ctoken=@ctoken@&gen=@gen@")?
+    ).send()?;
+
+    //sse.copy_to(&mut std::io::stderr())?;
   }
 }
 
