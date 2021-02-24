@@ -61,14 +61,26 @@ impl Ctx {
       .parse().unwrap());
     dbg!(gen);
 
-    let sse = client.get(
+    let mut sse = client.get(
       &self.ds
         .also(&[("ctoken", ctoken),
                 ("gen",    &gen.to_string())])
         .subst("@url@/_/updates?ctoken=@ctoken@&gen=@gen@")?
     ).send()?;
 
-    //sse.copy_to(&mut std::io::stderr())?;
+    let (mut writer, mut reader) = std::os::unix::net::UnixStream::pair()?;
+    thread::spawn(move ||{
+      eprintln!("copy_to'ing");
+      sse.copy_to(&mut writer).unwrap();
+      eprintln!("copy_to'd!"); 
+   });
+    thread::spawn(move ||{
+      eprintln!("copying");
+      std::io::copy(&mut reader, &mut std::io::stderr()).unwrap();
+      eprintln!("copied!");
+    });
+
+    sleep(10 * MS);
   }
 }
 
