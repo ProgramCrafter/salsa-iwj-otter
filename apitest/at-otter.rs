@@ -87,13 +87,9 @@ impl Ctx {
     let ptoken = loading.e_attr("#loading_token", "data-ptoken").unwrap();
     dbg!(&ptoken);
 
-    let resp = client.post(&self.ds.subst("@url@/_/session/Portrait")?)
+    let session = client.post(&self.ds.subst("@url@/_/session/Portrait")?)
       .json(&json!({ "ptoken": ptoken }))
-      .send()?;
-    ensure_eq!(resp.status(), 200);
-    let body = resp.text()?;
-    let session = scraper::Html::parse_document(&body);
-    //dbg!(&body, &dom);
+      .send_parse_html()?;
 
     let ctoken = session.e_attr("#main-body", "data-ctoken").unwrap();
     dbg!(&ctoken);
