@@ -42,6 +42,7 @@ pub use std::iter;
 pub use std::mem;
 pub use std::net::TcpStream;
 pub use std::ops::{Deref, DerefMut};
+pub use std::os::unix::net::UnixStream;
 pub use std::os::unix::process::CommandExt;
 pub use std::os::unix::fs::DirBuilderExt;
 pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??

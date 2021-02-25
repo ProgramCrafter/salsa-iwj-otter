@@ -21,11 +21,14 @@ struct Player {
   url: String,
 }
 
+struct Session {
+  pub dom: scraper::html::Html,
+  pub updates: UnixStream,
+}
+
 impl Ctx {
   #[throws(AE)]
-  fn connect_player(&self, player: &Player)
-                    -> (scraper::html::Html, impl std::io::Read)
-  {
+  fn connect_player(&self, player: &Player) -> Session {
     let client = reqwest::blocking::Client::new();
 
     let resp = client.get(&player.url).send()?;
@@ -70,14 +73,14 @@ impl Ctx {
         .subst("@url@/_/updates?ctoken=@ctoken@&gen=@gen@")?
     ).send()?;
 
-    let (mut writer, reader) = std::os::unix::net::UnixStream::pair()?;
+    let (mut writer, reader) = UnixStream::pair()?;
     thread::spawn(move ||{
       eprintln!("copy_to'ing");
       sse.copy_to(&mut writer).unwrap();
       eprintln!("copy_to'd!"); 
     });
 
-    (session, reader)
+    Session { dom: session, updates: reader }
   }
 }
 
