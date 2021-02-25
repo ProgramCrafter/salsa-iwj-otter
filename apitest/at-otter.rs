@@ -53,24 +53,37 @@ mod scraper_ext {
   }
 
   #[throws(AE)]
-  pub fn parse(req: reqwest::blocking::RequestBuilder) -> Html {
-    let resp = req.send()?;
+  pub fn parse_html(resp: reqwest::blocking::Response) -> Html {
     ensure_eq!(resp.status(), 200);
     let body = resp.text()?;
     let dom = scraper::Html::parse_document(&body);
     //dbg!(&&dom);
     dom
   }
+
+  pub trait RequestBuilderExt: Sized {
+    fn send(self) -> Result<reqwest::blocking::Response, AE>;
+
+    #[throws(AE)]
+    fn send_parse_html(self) -> Html {
+      let resp = self.send()?;
+      parse_html(resp)?
+    }
+  }
+
+  impl RequestBuilderExt for reqwest::blocking::RequestBuilder {
+    #[throws(AE)]
+    fn send(self) -> reqwest::blocking::Response { self.send()? }
+  }
 }
 
-use scraper_ext::HtmlExt;
+use scraper_ext::{HtmlExt, RequestBuilderExt};
 
 impl Ctx {
   #[throws(AE)]
   fn connect_player(&self, player: &Player) -> Session {
     let client = reqwest::blocking::Client::new();
-    let req = client.get(&player.url);
-    let loading = scraper_ext::parse(req)?;
+    let loading = client.get(&player.url).send_parse_html()?;
     let ptoken = loading.e_attr("#loading_token", "data-ptoken").unwrap();
     dbg!(&ptoken);
 
