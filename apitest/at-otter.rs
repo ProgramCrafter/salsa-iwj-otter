@@ -51,6 +51,16 @@ mod scraper_ext {
       self.select(selector)
     }
   }
+
+  #[throws(AE)]
+  pub fn parse(req: reqwest::blocking::RequestBuilder) -> Html {
+    let resp = req.send()?;
+    ensure_eq!(resp.status(), 200);
+    let body = resp.text()?;
+    let dom = scraper::Html::parse_document(&body);
+    //dbg!(&&dom);
+    dom
+  }
 }
 
 use scraper_ext::HtmlExt;
@@ -59,12 +69,8 @@ impl Ctx {
   #[throws(AE)]
   fn connect_player(&self, player: &Player) -> Session {
     let client = reqwest::blocking::Client::new();
-
-    let resp = client.get(&player.url).send()?;
-    ensure_eq!(resp.status(), 200);
-    let body = resp.text()?;
-    let loading = scraper::Html::parse_document(&body);
-    //dbg!(&body, &dom);
+    let req = client.get(&player.url);
+    let loading = scraper_ext::parse(req)?;
     let ptoken = loading.e_attr("#loading_token", "data-ptoken").unwrap();
     dbg!(&ptoken);
 
