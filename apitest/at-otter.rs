@@ -76,19 +76,13 @@ impl Ctx {
     let session = scraper::Html::parse_document(&body);
     //dbg!(&body, &dom);
 
-    let ctoken = session
-      .select(&"#main-body".try_into().unwrap())
-      .next().unwrap()
-      .value().attr("data-ctoken")
-      .unwrap();
+    let ctoken = session.e_attr("#main-body", "data-ctoken").unwrap();
     dbg!(&ctoken);
 
-    let gen: Generation = Generation(session
-      .select(&"#main-body".try_into().unwrap())
-      .next().unwrap()
-      .value().attr("data-gen")
-      .unwrap()
-      .parse().unwrap());
+    let gen: Generation = Generation(
+      session.e_attr("#main-body", "data-gen").unwrap()
+        .parse().unwrap()
+    );
     dbg!(gen);
 
     let mut sse = client.get(
