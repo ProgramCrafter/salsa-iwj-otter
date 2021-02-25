@@ -23,15 +23,17 @@ struct Player {
 
 impl Ctx {
   #[throws(AE)]
-  fn connect_player(&self, player: &Player) {
+  fn connect_player(&self, player: &Player)
+                    -> (scraper::html::Html, impl std::io::Read)
+  {
     let client = reqwest::blocking::Client::new();
 
     let resp = client.get(&player.url).send()?;
     ensure_eq!(resp.status(), 200);
     let body = resp.text()?;
-    let dom = scraper::Html::parse_document(&body);
+    let loading = scraper::Html::parse_document(&body);
     //dbg!(&body, &dom);
-    let ptoken = dom
+    let ptoken = loading
       .select(&"#loading_token".try_into().unwrap())
       .next().unwrap()
       .value().attr("data-ptoken")
@@ -43,17 +45,17 @@ impl Ctx {
       .send()?;
     ensure_eq!(resp.status(), 200);
     let body = resp.text()?;
-    let dom = scraper::Html::parse_document(&body);
+    let session = scraper::Html::parse_document(&body);
     //dbg!(&body, &dom);
 
-    let ctoken = dom
+    let ctoken = session
       .select(&"#main-body".try_into().unwrap())
       .next().unwrap()
       .value().attr("data-ctoken")
       .unwrap();
     dbg!(&ctoken);
 
-    let gen: Generation = Generation(dom
+    let gen: Generation = Generation(session
       .select(&"#main-body".try_into().unwrap())
       .next().unwrap()
       .value().attr("data-gen")
@@ -68,19 +70,14 @@ impl Ctx {
         .subst("@url@/_/updates?ctoken=@ctoken@&gen=@gen@")?
     ).send()?;
 
-    let (mut writer, mut reader) = std::os::unix::net::UnixStream::pair()?;
+    let (mut writer, reader) = std::os::unix::net::UnixStream::pair()?;
     thread::spawn(move ||{
       eprintln!("copy_to'ing");
       sse.copy_to(&mut writer).unwrap();
       eprintln!("copy_to'd!"); 
     });
-    thread::spawn(move ||{
-      eprintln!("copying");
-      std::io::copy(&mut reader, &mut std::io::stderr()).unwrap();
-      eprintln!("copied!");
-    });
 
-    sleep(10 * MS);
+    (session, reader)
   }
 }
 
