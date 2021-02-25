@@ -22,9 +22,38 @@ struct Player {
 }
 
 struct Session {
-  pub dom: scraper::html::Html,
+  pub dom: scraper::Html,
   pub updates: UnixStream,
 }
+
+mod scraper_ext {
+  use super::*;
+  use scraper::*;
+  use scraper::html::*;
+
+  pub trait HtmlExt {
+    fn select<'a,'b>(&'a self, selector: &'b Selector) -> Select<'a, 'b>;
+
+    #[throws(as Option)]
+    fn e_attr<S>(&self, sel: S, attr: &str) -> &str
+    where S: TryInto<Selector>,
+          <S as TryInto<Selector>>::Error: Debug,
+    {
+      self
+        .select(&sel.try_into().unwrap())
+        .next()?
+        .value().attr(attr)?
+    }
+  }
+
+  impl HtmlExt for Html {
+    fn select<'a,'b>(&'a self, selector: &'b Selector) -> Select<'a, 'b> {
+      self.select(selector)
+    }
+  }
+}
+
+use scraper_ext::HtmlExt;
 
 impl Ctx {
   #[throws(AE)]
@@ -36,11 +65,7 @@ impl Ctx {
     let body = resp.text()?;
     let loading = scraper::Html::parse_document(&body);
     //dbg!(&body, &dom);
-    let ptoken = loading
-      .select(&"#loading_token".try_into().unwrap())
-      .next().unwrap()
-      .value().attr("data-ptoken")
-      .unwrap();
+    let ptoken = loading.e_attr("#loading_token", "data-ptoken").unwrap();
     dbg!(&ptoken);
 
     let resp = client.post(&self.ds.subst("@url@/_/session/Portrait")?)
