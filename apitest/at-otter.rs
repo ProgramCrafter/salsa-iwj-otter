@@ -147,9 +147,18 @@ impl Ctx {
       .expect_err("library-add succeeded after reset!");
     ensure_eq!(add_err.downcast::<ExitStatusError>()?.0.code(),
                Some(EXIT_NOTFOUND));
+
+    let session = self.connect_player(&self.alice)?;
+
+    for pu in session.dom.element("#pieces_marker").unwrap().next_siblings() {
+      let pu = match pu.value().as_element() { Some(pu) => pu, _ => continue };
+      let info = match pu.attr("data-info") { Some(info) => info, _ => break };
+      let info: serde_json::Value = serde_json::from_str(&info)?;
+      let desc = &info["desc"];
+      dbg!(&desc);
+    }
     // xxx find load markers ids
 
-    let _session = self.connect_player(&self.alice)?;
     // xxx find load markers' locations
     // xxx send api requests to move markers
     // run library-add again
