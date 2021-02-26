@@ -129,7 +129,7 @@ impl Ctx {
 
 #[derive(Debug,Clone)]
 struct PieceInfo<I> {
-  id: (),
+  id: String,
   info: I,
 }
 
@@ -140,11 +140,13 @@ impl Session {
       .element("#pieces_marker")
       .unwrap().next_siblings()
       .map_loop(|puse: ego_tree::NodeRef<scraper::Node>| {
-        dbg!(puse);
-        let puse = puse.value().as_element().ok_or(Loop::Continue)?;
+        let puse = puse.value();
+        let puse = puse.as_element().ok_or(Loop::Continue)?;
         let attr = puse.attr("data-info").ok_or(Loop::Break)?;
+        let id = puse.id.as_ref().unwrap();
+        let id = id.strip_prefix("use").unwrap().to_string();
         let info = serde_json::from_str(attr).unwrap();
-        Loop::ok(PieceInfo { id: (), info })
+        Loop::ok(PieceInfo { id, info })
       })
       .collect()
   }
@@ -177,7 +179,6 @@ impl Ctx {
     let llm = pieces.into_iter()
       .filter(|pi| pi.info["desc"] == "a library load area marker")
       .collect::<ArrayVec<_>>();
-    dbg!(&llm);
     let llm: [_;2] = llm.into_inner().unwrap();
     dbg!(&llm);
     // xxx find load markers ids
