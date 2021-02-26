@@ -127,16 +127,25 @@ impl Ctx {
   }
 }
 
+#[derive(Debug,Clone)]
+struct PieceInfo<I> {
+  id: (),
+  info: I,
+}
+
 impl Session {
   #[throws(AE)]
-  fn pieces(&self) -> Vec<((/*will be piece id*/), serde_json::Value)> {
+  fn pieces(&self) -> Vec<PieceInfo<serde_json::Value>> {
     self.dom
       .element("#pieces_marker")
       .unwrap().next_siblings()
-      .filter_map(|pu| pu.value().as_element())
-      .map(|pu| ((), pu.attr("data-info")))
-      .take_while(|(_,attr)| attr.is_some())
-      .map(|(id,attr)| (id, serde_json::from_str(attr.unwrap()).unwrap()))
+      .map_loop(|puse: ego_tree::NodeRef<scraper::Node>| {
+        dbg!(puse);
+        let puse = puse.value().as_element().ok_or(Loop::Continue)?;
+        let attr = puse.attr("data-info").ok_or(Loop::Break)?;
+        let info = serde_json::from_str(attr).unwrap();
+        Ok::<_,Loop<Infallible>>(PieceInfo { id: (), info })
+      })
       .collect()
   }
 }
@@ -163,10 +172,14 @@ impl Ctx {
                Some(EXIT_NOTFOUND));
 
     let session = self.connect_player(&self.alice)?;
-    let llm: [_;2] = session.pieces()?.into_iter()
-      .filter(|(_,info)| info["desc"] == "a library load area marker")
-      .collect::<ArrayVec<_>>().into_inner().unwrap();
-    dbg!(llm);
+    let pieces = session.pieces()?;
+    dbg!(&pieces);
+    let llm = pieces.into_iter()
+      .filter(|pi| pi.info["desc"] == "a library load area marker")
+      .collect::<ArrayVec<_>>();
+    dbg!(&llm);
+    let llm: [_;2] = llm.into_inner().unwrap();
+    dbg!(&llm);
     // xxx find load markers ids
 
     // xxx find load markers' locations

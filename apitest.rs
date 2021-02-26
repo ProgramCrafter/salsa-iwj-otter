@@ -37,7 +37,7 @@ pub use std::env;
 pub use std::fmt::{self, Debug};
 pub use std::collections::hash_map::HashMap;
 pub use std::collections::btree_set::BTreeSet;
-pub use std::convert::TryInto;
+pub use std::convert::{Infallible, TryInto};
 pub use std::fs;
 pub use std::io::{self, BufRead, BufReader, ErrorKind, Write};
 pub use std::iter;
@@ -69,6 +69,7 @@ pub use otter::spec::{Coord, GameSpec, Pos, PosC};
 pub use otter::toml_de;
 pub use otter::ui::{AbbrevPresentationLayout, PresentationLayout};
 pub use otter::ui::player_num_dasharray;
+pub use otter::utils::*;
 
 pub const MS: time::Duration = time::Duration::from_millis(1);
 pub type AE = anyhow::Error;

@@ -1824,6 +1824,7 @@ dependencies = [
 name = "otter-api-tests"
 version = "0.0.1"
 dependencies = [
+ "ego-tree",
  "fehler",
  "humantime",
  "num-traits",
