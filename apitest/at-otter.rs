@@ -35,13 +35,22 @@ mod scraper_ext {
     fn select<'a,'b>(&'a self, selector: &'b Selector) -> Select<'a, 'b>;
 
     #[throws(as Option)]
-    fn e_attr<S>(&self, sel: S, attr: &str) -> &str
+    fn element<S>(&self, sel: S) -> ElementRef
     where S: TryInto<Selector>,
           <S as TryInto<Selector>>::Error: Debug,
     {
       self
         .select(&sel.try_into().unwrap())
         .next()?
+    }
+
+    #[throws(as Option)]
+    fn e_attr<S>(&self, sel: S, attr: &str) -> &str
+    where S: TryInto<Selector>,
+          <S as TryInto<Selector>>::Error: Debug,
+    {
+      self
+        .element(sel).unwrap()
         .value().attr(attr)?
     }
   }
