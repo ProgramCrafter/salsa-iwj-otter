@@ -303,8 +303,8 @@ impl<E> From<E> for Loop<E> {
   fn from(e: E) -> Loop<E> { Loop::Error(e) }
 }
 
-pub trait IteratorExt<'f,U,E,F>: Iterator
-  where F: 'f + FnMut(Self::Item) -> Result<U,Loop<E>>,
+pub trait IteratorExt<U,E,F>: Iterator
+  where F: FnMut(Self::Item) -> Result<U,Loop<E>>,
 {
   type Return: Iterator<Item=U>;
   fn map_loop(self, f: F) -> Self::Return where E: EmptyType;
@@ -319,11 +319,11 @@ impl EmptyType for Infallible {
   fn diverge<T>(self) -> T { match self { } }
 }
 
-impl<'f,T,U,E,F> IteratorExt<'f,U,E,F> for T where
-  T: 'f + Iterator,
-  F: 'f + FnMut(Self::Item) -> Result<U,Loop<E>>,
+impl<T,U,E,F> IteratorExt<U,E,F> for T where
+  T: Iterator,
+  F: FnMut(Self::Item) -> Result<U,Loop<E>>,
 {
-  type Return = impl Iterator<Item=U> + 'f;
+  type Return = impl Iterator<Item=U>;
   fn map_loop(self, f: F) -> Self::Return where E: EmptyType {
     self
       .map(f)
@@ -332,7 +332,7 @@ impl<'f,T,U,E,F> IteratorExt<'f,U,E,F> for T where
       .map(|i| i.ok().unwrap())
   }
 
-  type TryReturn = impl Iterator<Item=Result<U,E>> + 'f;
+  type TryReturn = impl Iterator<Item=Result<U,E>>;
   fn try_map_loop(self, f: F) -> Self::TryReturn {
     self
       .map(f)
