@@ -132,8 +132,12 @@ impl Ctx {
   fn library_load(&mut self) {
     prepare_game(&self.ds, TABLE)?;
 
-    self.otter(&self.ds.ss("library-add @table@ wikimedia chess-blue-?")?)?;
-    // xxx make library-add give distinct exit status here
+    let add_err = self.otter(&self.ds.ss(
+      "library-add @table@ wikimedia chess-blue-?"
+    )?)
+      .expect_err("library-add succeeded after reset!");
+    ensure_eq!(add_err.downcast::<ExitStatusError>()?.0.code(),
+               Some(EXIT_NOTFOUND));
     // xxx find load markers ids
 
     let _session = self.connect_player(&self.alice)?;

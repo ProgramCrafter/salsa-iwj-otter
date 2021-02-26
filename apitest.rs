@@ -58,6 +58,7 @@ pub use otter::ensure_eq;
 pub use otter::commands::{MgmtCommand, MgmtResponse};
 pub use otter::commands::{MgmtGameInstruction, MgmtGameResponse};
 pub use otter::commands::{MgmtGameUpdateMode};
+pub use otter::config::*;
 pub use otter::{deref_to_field, deref_to_field_mut};
 pub use otter::gamestate::{self, Generation, PlayerId};
 pub use otter::global::InstanceName;
@@ -656,7 +657,7 @@ _ = "error" # rocket
 
 #[derive(Copy,Clone,Error,Debug)]
 #[error("wait status: {0}")]
-struct ExitStatusError(pub std::process::ExitStatus);
+pub struct ExitStatusError(pub std::process::ExitStatus);
 
 impl DirSubst {
   pub fn specs_dir(&self) -> String {

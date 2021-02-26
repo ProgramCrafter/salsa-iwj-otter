@@ -1223,7 +1223,7 @@ mod library_add {
         eprintln!("updated game: {}\n\
                    please adjust markers as desired and run again",
                   msg);
-        return Ok(());
+        exit(EXIT_NOTFOUND);
       }
       Good([a, b]) => {
         // todo: take account of the space used by the markers themselves
