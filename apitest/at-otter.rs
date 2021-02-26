@@ -127,6 +127,20 @@ impl Ctx {
   }
 }
 
+impl Session {
+  #[throws(AE)]
+  fn pieces(&self) -> Vec<((/*will be piece id*/), serde_json::Value)> {
+    self.dom
+      .element("#pieces_marker")
+      .unwrap().next_siblings()
+      .filter_map(|pu| pu.value().as_element())
+      .map(|pu| ((), pu.attr("data-info")))
+      .take_while(|(_,attr)| attr.is_some())
+      .map(|(id,attr)| (id, serde_json::from_str(attr.unwrap()).unwrap()))
+      .collect()
+  }
+}
+
 impl Ctx {
   #[throws(AE)]
   pub fn otter<S:AsRef<str>>(&mut self, args: &[S]) {
@@ -150,10 +164,7 @@ impl Ctx {
 
     let session = self.connect_player(&self.alice)?;
 
-    for pu in session.dom.element("#pieces_marker").unwrap().next_siblings() {
-      let pu = match pu.value().as_element() { Some(pu) => pu, _ => continue };
-      let info = match pu.attr("data-info") { Some(info) => info, _ => break };
-      let info: serde_json::Value = serde_json::from_str(&info)?;
+    for (_, info) in session.pieces()? {
       let desc = &info["desc"];
       dbg!(&desc);
     }
