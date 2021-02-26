@@ -321,6 +321,20 @@ pub mod pos_traits {
   impl PosC<Coord> {
     pub fn promote(&self) -> PosC<f64> { self.map(|v| v as f64) }
   }
+
+  #[derive(Error,Debug,Copy,Clone,Serialize,Deserialize)]
+  pub struct PosCFromIteratorError;
+  display_as_debug!{PosCFromIteratorError}
+
+  impl<T> PosC<T> {
+    #[throws(PosCFromIteratorError)]
+    pub fn from_iter<I: Iterator<Item=T>>(i: I) -> Self { PosC(
+      i
+        .collect::<ArrayVec<_>>()
+        .into_inner()
+        .map_err(|_| PosCFromIteratorError)?
+    )}
+  }
 }
 
 //---------- Implementation ----------
