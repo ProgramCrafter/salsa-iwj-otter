@@ -15,6 +15,7 @@ pub use imports::*;
 
 pub use anyhow::{anyhow, ensure, Context};
 
+pub use arrayvec::ArrayVec;
 pub use boolinator::Boolinator;
 pub use fehler::{throw, throws};
 pub use if_chain::if_chain;

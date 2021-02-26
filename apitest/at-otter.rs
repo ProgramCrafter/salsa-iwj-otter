@@ -163,11 +163,10 @@ impl Ctx {
                Some(EXIT_NOTFOUND));
 
     let session = self.connect_player(&self.alice)?;
-
-    for (_, info) in session.pieces()? {
-      let desc = &info["desc"];
-      dbg!(&desc);
-    }
+    let llm: [_;2] = session.pieces()?.into_iter()
+      .filter(|(_,info)| info["desc"] == "a library load area marker")
+      .collect::<ArrayVec<_>>().into_inner().unwrap();
+    dbg!(llm);
     // xxx find load markers ids
 
     // xxx find load markers' locations
