@@ -133,8 +133,13 @@ impl Ctx {
     prepare_game(&self.ds, TABLE)?;
 
     self.otter(&self.ds.ss("library-add @table@ wikimedia chess-blue-?")?)?;
+    // xxx make library-add give distinct exit status here
+    // xxx find load markers ids
 
-    self.connect_player(&self.alice)?;
+    let _session = self.connect_player(&self.alice)?;
+    // xxx find load markers' locations
+    // xxx send api requests to move markers
+    // run library-add again
   }
 }
 
