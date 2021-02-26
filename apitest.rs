@@ -29,6 +29,7 @@ pub use serde::{Serialize, Deserialize};
 pub use serde_json::json;
 pub use structopt::StructOpt;
 pub use strum::{EnumIter, EnumProperty, IntoEnumIterator, IntoStaticStr};
+pub use thiserror::Error;
 pub use void::Void;
 
 pub use std::env;
@@ -653,6 +654,10 @@ _ = "error" # rocket
 
 // ---------- game spec ----------
 
+#[derive(Copy,Clone,Error,Debug)]
+#[error("wait status: {0}")]
+struct ExitStatusError(pub std::process::ExitStatus);
+
 impl DirSubst {
   pub fn specs_dir(&self) -> String {
     format!("{}/specs" , &self.src)
@@ -674,7 +679,7 @@ impl DirSubst {
         .spawn().context("spawn")?
         .wait().context("wait")?;
       if !st.success() {
-        throw!(anyhow!("wait status {}", &st));
+        throw!(ExitStatusError(st));
       }
       Ok::<_,AE>(())
     })()
