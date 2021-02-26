@@ -302,6 +302,9 @@ pub enum Loop<E> {
 impl<E> From<E> for Loop<E> {
   fn from(e: E) -> Loop<E> { Loop::Error(e) }
 }
+impl Loop<Infallible> {
+  pub fn ok<T>(t: T) -> Result<T,Loop<Infallible>> { Ok(t) }
+}
 
 pub trait IteratorExt<U,E,F>: Iterator
   where F: FnMut(Self::Item) -> Result<U,Loop<E>>,

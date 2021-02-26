@@ -144,7 +144,7 @@ impl Session {
         let puse = puse.value().as_element().ok_or(Loop::Continue)?;
         let attr = puse.attr("data-info").ok_or(Loop::Break)?;
         let info = serde_json::from_str(attr).unwrap();
-        Ok::<_,Loop<Infallible>>(PieceInfo { id: (), info })
+        Loop::ok(PieceInfo { id: (), info })
       })
       .collect()
   }
