@@ -11,9 +11,11 @@ use crate::prelude::*;
 
 // ---------- newtypes, type aliases, basic definitions ----------
 
+pub type RawClientSequence = u64;
+
 #[derive(Debug,Copy,Clone,Eq,PartialEq,Deserialize,Serialize)]
 #[serde(transparent)]
-pub struct ClientSequence(u64);
+pub struct ClientSequence(RawClientSequence);
 
 // ---------- from manamgenet operations ----------
 

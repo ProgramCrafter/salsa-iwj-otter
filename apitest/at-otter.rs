@@ -22,8 +22,12 @@ struct Player {
 }
 
 struct Session {
+  pub ctoken: RawToken,
+  pub gen: Generation,
+  pub cseq: RawClientSequence,
   pub dom: scraper::Html,
   pub updates: UnixStream,
+  pub client: reqwest::blocking::Client,
 }
 
 mod scraper_ext {
@@ -123,7 +127,13 @@ impl Ctx {
       eprintln!("copy_to'd!"); 
     });
 
-    Session { dom: session, updates: reader }
+    Session {
+      client, gen,
+      cseq: 42,
+      ctoken: RawToken(ctoken.to_string()),
+      dom: session,
+      updates: reader,
+    }
   }
 }
 
@@ -156,6 +166,25 @@ impl Session {
       })
       .collect()
   }
+
+  #[throws(AE)]
+  fn api_piece_op(&mut self, su: &SetupCore, piece: &str,
+                  opname: &str, op: serde_json::Value) {
+    self.cseq += 1;
+    let cseq = self.cseq;
+    
+    let resp = self.client.post(&su.ds.also(&[("opname",opname)])
+                                .subst("@url@/_/api/@opname@")?)
+      .json(&json!({
+        "ctoken": self.ctoken,
+        "piece": piece,
+        "gen": self.gen,
+        "cseq": cseq,
+        "op": op,
+      }))
+      .send()?;
+    ensure_eq!(resp.status(), 200);
+  }
 }
 
 impl Ctx {
@@ -179,7 +208,7 @@ impl Ctx {
     ensure_eq!(add_err.downcast::<ExitStatusError>()?.0.code(),
                Some(EXIT_NOTFOUND));
 
-    let session = self.connect_player(&self.alice)?;
+    let mut session = self.connect_player(&self.alice)?;
     let pieces = session.pieces()?;
     dbg!(&pieces);
     let llm = pieces.into_iter()
@@ -187,9 +216,12 @@ impl Ctx {
       .collect::<ArrayVec<_>>();
     let llm: [_;2] = llm.into_inner().unwrap();
     dbg!(&llm);
-    // xxx find load markers ids
 
-    // xxx find load markers' locations
+    for (llm, pos) in izip!(&llm, [PosC([5,5]), PosC([50,25])].iter()) {
+      session.api_piece_op(&self.su, &llm.id, "grab", json!({}))?;
+      session.api_piece_op(&self.su, &llm.id, "m", json![pos.0])?;
+    }
+
     // xxx send api requests to move markers
     // run library-add again
   }
