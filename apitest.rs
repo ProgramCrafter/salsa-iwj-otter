@@ -40,7 +40,7 @@ pub use std::collections::hash_map::HashMap;
 pub use std::collections::btree_set::BTreeSet;
 pub use std::convert::{Infallible, TryInto};
 pub use std::fs;
-pub use std::io::{self, BufRead, BufReader, ErrorKind, Write};
+pub use std::io::{self, BufRead, BufReader, ErrorKind, Read, Write};
 pub use std::iter;
 pub use std::mem;
 pub use std::net::TcpStream;
@@ -51,6 +51,7 @@ pub use std::os::unix::fs::DirBuilderExt;
 pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
 pub use std::path;
 pub use std::process::{self, Command, Stdio};
+pub use std::sync::mpsc;
 pub use std::thread::{self, sleep};
 pub use std::time::{self, Duration};
 
