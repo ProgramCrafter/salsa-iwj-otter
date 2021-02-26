@@ -13,7 +13,7 @@ pub use std::cmp::{self, max, min, Ordering};
 pub use std::collections::VecDeque;
 pub use std::collections::{btree_set, BTreeSet};
 pub use std::collections::{hash_map, HashMap, HashSet};
-pub use std::convert::{TryFrom, TryInto};
+pub use std::convert::{Infallible, TryFrom, TryInto};
 pub use std::env;
 pub use std::error::Error;
 pub use std::fmt::Formatter;
