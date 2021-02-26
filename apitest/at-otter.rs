@@ -130,6 +130,7 @@ impl Ctx {
 #[derive(Debug,Clone)]
 struct PieceInfo<I> {
   id: String,
+  pos: Pos,
   info: I,
 }
 
@@ -143,10 +144,15 @@ impl Session {
         let puse = puse.value();
         let puse = puse.as_element().ok_or(Loop::Continue)?;
         let attr = puse.attr("data-info").ok_or(Loop::Break)?;
+        let pos = Pos::from_iter(["x","y"].iter().map(|attr|{
+          puse
+            .attr(attr).unwrap()
+            .parse().unwrap()
+        })).unwrap();
         let id = puse.id.as_ref().unwrap();
         let id = id.strip_prefix("use").unwrap().to_string();
         let info = serde_json::from_str(attr).unwrap();
-        Loop::ok(PieceInfo { id, info })
+        Loop::ok(PieceInfo { id, pos, info })
       })
       .collect()
   }
