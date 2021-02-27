@@ -41,7 +41,7 @@ impl Ctx {
       let epath = euse.find_element(By::Tag("path"))?;
       let attr = epath.get_attribute("stroke-dasharray")?;
 
-      ensure_eq!(attr, dasharray);
+      assert_eq!(attr, dasharray);
       Ok::<_,AE>(())
     };
 

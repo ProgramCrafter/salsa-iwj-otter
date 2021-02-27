@@ -44,7 +44,7 @@ impl Ctx {
       let mut w = su.w(&self.bob)?;
       w.synch()?;
       let p1 = w.find_piece("1.1")?;
-      ensure_eq!(p1.posg()?, alice_p1g);
+      assert_eq!(p1.posg()?, alice_p1g);
     }
   }
 
@@ -56,7 +56,7 @@ impl Ctx {
     let chk = |w: &WindowGuard<'_>| {
       let transform = format!("rotate(-90)");
       let pd = w.find_element(By::Id(&format!("piece{}",pc)))?;
-      ensure_eq!(pd.get_attribute("transform")?, Some(transform));
+      assert_eq!(pd.get_attribute("transform")?, Some(transform));
       Ok::<_,AE>(())
     };
 
@@ -91,7 +91,7 @@ impl Ctx {
 
     let chk = |w: &WindowGuard<'_>, exp_end| {
       let got_end = w.find_piece(pc)?.posg()?;
-      ensure_eq!(got_end, exp_end);
+      assert_eq!(got_end, exp_end);
       Ok::<_,AE>(())
     };
 
@@ -134,7 +134,7 @@ impl Ctx {
 
     let chk = |w: &WindowGuard<'_>| {
       let held = w.piece_held(pc)?;
-      ensure_eq!(held, None);
+      assert_eq!(held, None);
       Ok::<_,AE>(())
     };
 
@@ -266,14 +266,14 @@ impl Ctx {
 
     let y = gots.iter().filter(|got|  got.yes).next().expect("y");
     let n = gots.iter().filter(|got| !got.yes).next().expect("n");
-    ensure_eq!(y.now, y.try_end);
-    ensure_eq!(n.now, y.try_end);
-    ensure_eq!(n.now, y.try_end);
-    ensure_eq!(n.held, y.held);
+    assert_eq!(y.now, y.try_end);
+    assert_eq!(n.now, y.try_end);
+    assert_eq!(n.now, y.try_end);
+    assert_eq!(n.held, y.held);
 
     for got in &gots {
       let conflict = got.log.iter().any(|m| m.starts_with("Conflict!"));
-      ensure_eq!(conflict, !got.yes);
+      assert_eq!(conflict, !got.yes);
     }
   }
 }
