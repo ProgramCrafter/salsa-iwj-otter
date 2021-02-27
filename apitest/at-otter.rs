@@ -245,14 +245,12 @@ impl Session {
   }
 
   #[throws(AE)]
-  fn resynch_pieces(&mut self) {
-    self.await_update(|session, _gen, k, v| {
-      let got_cseq: RawClientSequence = match k {
-        "Recorded" => v["cseq"].as_i64().unwrap().try_into().unwrap(),
-        _ => return None,
-      };
-      if got_cseq == session.cseq { Some(()) } else { None }
-    }, |_,_| None)?;
+  fn synch(&mut self, su: &mut SetupCore) {
+    let exp = mgmt_game_synch(&mut su.mgmt_conn, TABLE.parse().unwrap())?;
+    self.await_update(
+      |session, gen, _k, _v| (gen == exp).as_option(),
+      |session, gen        | (gen == exp).as_option(),
+    )?;
   }
 }
 
@@ -293,11 +291,12 @@ impl Ctx {
       session.api_piece_op(&self.su, &llm.id, "ungrab", json!({}))?;
     }
 
-    session.resynch_pieces()?;
+    session.synch(&mut self.su)?;
 
     self.otter(&command)
       .expect("library-add failed after place!");
 
+    session.synch(&mut self.su)?;
     // xxx send api requests to move markers
     // run library-add again
   }
