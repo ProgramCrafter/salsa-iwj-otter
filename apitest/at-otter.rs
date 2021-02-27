@@ -270,9 +270,10 @@ impl Ctx {
   fn library_load(&mut self) {
     prepare_game(&self.ds, TABLE)?;
 
-    let add_err = self.otter(&self.ds.ss(
+    let command = self.ds.ss(
       "library-add @table@ wikimedia chess-blue-?"
-    )?)
+    )?;
+    let add_err = self.otter(&command)
       .expect_err("library-add succeeded after reset!");
     ensure_eq!(add_err.downcast::<ExitStatusError>()?.0.code(),
                Some(EXIT_NOTFOUND));
@@ -289,9 +290,13 @@ impl Ctx {
     for (llm, pos) in izip!(&llm, [PosC([5,5]), PosC([50,25])].iter()) {
       session.api_piece_op(&self.su, &llm.id, "grab", json!({}))?;
       session.api_piece_op(&self.su, &llm.id, "m", json![pos.0])?;
+      session.api_piece_op(&self.su, &llm.id, "ungrab", json!({}))?;
     }
 
     session.resynch_pieces()?;
+
+    self.otter(&command)
+      .expect("library-add failed after place!");
 
     // xxx send api requests to move markers
     // run library-add again
