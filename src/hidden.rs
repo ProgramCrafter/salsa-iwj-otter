@@ -248,6 +248,8 @@ fn recalculate_occultation_general<
     let nopiece = || internal_logic_error("piece vanished");
     let ipc = ipieces.get(piece).ok_or_else(nopiece)?;
     let gpc = gpieces.get(piece).ok_or_else(nopiece)?;
+
+    #[derive(Debug)]
     struct Occulted<'o> { occid: OccId, occ: &'o Occultation }
 
     let occulteds: OldNew<Option<Occulted>> = [
@@ -259,7 +261,7 @@ fn recalculate_occultation_general<
         }
       )).transpose()?,
       goccults.occults.iter().find_map(|(occid, occ)| {
-        if gpc.occult.active.is_some() {
+        dbg!(if gpc.occult.active.is_some() { // xxx remove dbg!
           // prevent occulting pieces being occulted
           // (also prevents reflexive occultation)
           return None
@@ -267,7 +269,7 @@ fn recalculate_occultation_general<
           Some(Occulted { occid, occ })
         } else {
           None
-        }
+        })
       }),
     ].into();
 
