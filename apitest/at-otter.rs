@@ -335,6 +335,11 @@ impl Ctx {
       .into_inner().unwrap();
     dbg!(&hand);
 
+    session.api_piece_op(&self.su, &hand.id, "k", json!({
+      "opname": "claim",
+      "wrc": "Unpredictable",
+    }))?;
+
     session.synch(&mut self.su)?;
   }
 }
