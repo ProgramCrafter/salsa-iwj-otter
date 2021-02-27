@@ -245,12 +245,19 @@ impl Session {
   }
 
   #[throws(AE)]
-  fn synch(&mut self, su: &mut SetupCore) {
+  fn synchx<
+    F: FnMut(&mut Session, Generation, &str, &serde_json::Value),
+  > (&mut self, su: &mut SetupCore, mut f: F) {
     let exp = mgmt_game_synch(&mut su.mgmt_conn, TABLE.parse().unwrap())?;
     self.await_update(
-      |session, gen        | (gen == exp).as_option(),
-      |_session, _gen, _k, _v| None,
+      |session, gen      | (gen == exp).as_option(),
+      |session, gen, k, v| { f(session,gen,k,v); None },
     )?;
+  }
+
+  #[throws(AE)]
+  fn synch(&mut self, su: &mut SetupCore) {
+    self.synchx(su, |_session, _gen, _k, _v|() )?;
   }
 }
 
