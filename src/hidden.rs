@@ -440,9 +440,9 @@ pub struct UniformOccultationView(
 );
 #[derive(Debug,Copy,Clone)]
 pub struct OwnerOccultationView {
-  defview: OccultationKind,
-  owner: PlayerId,
-  owner_view: OccultationKind,
+  pub defview: OccultationKind,
+  pub owner: PlayerId,
+  pub owner_view: OccultationKind,
 }
 
 pub trait OccultationViewDef {
