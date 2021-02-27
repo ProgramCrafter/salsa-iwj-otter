@@ -26,7 +26,7 @@ pub struct GroupData {
 #[typetag::deserialize(tag="outline")]
 pub trait OutlineDefn: Debug + Sync + Send {
   fn check(&self, lgi: &GroupData) -> Result<(),LLE>;
-  fn load(&self, lgi: &GroupData) -> Result<OutlineRepr,IE>;
+  fn load(&self, lgi: &GroupData) -> Result<Outline,IE>;
 }
 
 #[derive(Debug)]
@@ -126,7 +126,7 @@ struct Item {
   desc_hidden: DescId,
   svgs: IndexVec<SvgId, Html>,
   descs: IndexVec<DescId, Html>,
-  outline: OutlineRepr,
+  outline: Outline,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
@@ -518,7 +518,7 @@ struct CircleDefn { }
 impl OutlineDefn for CircleDefn {
   #[throws(LibraryLoadError)]
   fn check(&self, lgd: &GroupData) { Self::get_size(lgd)?; }
-  fn load(&self, lgd: &GroupData) -> Result<OutlineRepr,IE> {
+  fn load(&self, lgd: &GroupData) -> Result<Outline,IE> {
     Ok(Circle {
       diam: Self::get_size(lgd).map_err(|e| e.ought())?,
     }.into())
@@ -567,7 +567,7 @@ struct SquareDefn { }
 impl OutlineDefn for SquareDefn {
   #[throws(LibraryLoadError)]
   fn check(&self, lgd: &GroupData) { Self::get(lgd)?; }
-  fn load(&self, lgd: &GroupData) -> Result<OutlineRepr,IE> {
+  fn load(&self, lgd: &GroupData) -> Result<Outline,IE> {
     Ok(
       Self::get(lgd).map_err(|e| e.ought())?.into()
     )

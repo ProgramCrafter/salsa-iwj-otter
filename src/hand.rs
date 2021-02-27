@@ -50,7 +50,7 @@ impl PieceSpec for piece_specs::Hand {
       edge_width: self.edge_width,
     };
     let shape = match self.shape {
-      OutlineRepr::Rectangle(r) => r,
+      Outline::Rectangle(r) => r,
       _ => throw!(SpecError::UnsupportedShape),
     };
     let shape = GenericSimpleShape::new(

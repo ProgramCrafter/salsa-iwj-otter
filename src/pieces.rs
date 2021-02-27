@@ -20,7 +20,7 @@ pub struct GenericSimpleShape<Desc, Outl> {
   pub itemname: String,
   pub outline: Outl,
 }
-pub type SimpleShape = GenericSimpleShape<Html, OutlineRepr>;
+pub type SimpleShape = GenericSimpleShape<Html, Outline>;
 
 pub const SELECT_SCALE: f64 = 1.1;
 

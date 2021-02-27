@@ -202,7 +202,7 @@ mod outline {
   #[enum_dispatch(OutlineTrait)]
   #[derive(Clone,Debug,Serialize,Deserialize)]
   #[serde(tag="type")]
-  pub enum OutlineRepr {
+  pub enum Outline {
     Circle,
     #[serde(alias="Square")] Rectangle,
   }
@@ -241,7 +241,7 @@ pub mod piece_specs {
     pub colour: String,
     pub edge: Option<ColourSpec>,
     pub edge_width: Option<f64>,
-    pub shape: OutlineRepr,
+    pub shape: Outline,
   }
 }
 
