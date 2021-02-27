@@ -147,9 +147,7 @@ pub trait Piece: Outline + Send + Debug {
   fn add_ui_operations(&self, _upd: &mut Vec<UoDescription>,
                        _gpc: &PieceState) { }
 
-  fn ui_operation(&self,
-                  _gs: &mut GameState, _ipieces: &PiecesLoaded,
-                  _player: PlayerId, _piece: PieceId,
+  fn ui_operation(&self, _a: ApiPieceOpArgs<'_>,
                   _opname: &str, _wrc: WhatResponseToClientOp)
                   -> PieceUpdateResult {
     throw!(OE::BadOperation)
@@ -168,6 +166,15 @@ pub trait Piece: Outline + Send + Debug {
   }
 
   fn itemname(&self) -> &str;
+}
+
+#[derive(Debug)]
+pub struct ApiPieceOpArgs<'a> {
+  pub gs: &'a mut GameState,
+  pub ipieces: &'a PiecesLoaded,
+  pub player: PlayerId,
+  pub piece: PieceId,
+  pub p: &'a dyn Piece,
 }
 
 #[derive(Debug,Clone)]

@@ -127,10 +127,10 @@ impl Piece for Hand {
     })
   }
 
-  fn ui_operation(&self, gs: &mut GameState, _ipieces: &PiecesLoaded,
-                  player: PlayerId, piece: PieceId,
+  fn ui_operation(&self, a: ApiPieceOpArgs<'_>,
                   opname: &str, wrc: WhatResponseToClientOp)
                   -> PieceUpdateResult {
+    let ApiPieceOpArgs { gs, player, piece, ..} = a;
     let gplayers = &mut gs.players;
     let gpc = gs.pieces.byid_mut(piece)?;
     let xdata = gpc.xdata.get_mut::<HandState>()
