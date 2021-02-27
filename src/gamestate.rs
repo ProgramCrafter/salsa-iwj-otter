@@ -53,7 +53,7 @@ pub struct ZLevel {
 pub struct GameState {
   pub table_colour: Colour,
   pub table_size: Pos,
-  pub pieces: Pieces,
+  pub pieces: GPieces,
   pub gen: Generation,
   pub log: VecDeque<(Generation, Arc<CommittedLogEntry>)>,
   pub max_z: ZCoord,
@@ -171,7 +171,7 @@ pub trait Piece: Outline + Send + Debug {
 #[derive(Debug)]
 pub struct ApiPieceOpArgs<'a> {
   pub gs: &'a mut GameState,
-  pub ipieces: &'a PiecesLoaded,
+  pub ipieces: &'a IPieces,
   pub player: PlayerId,
   pub piece: PieceId,
   pub p: &'a dyn Piece,

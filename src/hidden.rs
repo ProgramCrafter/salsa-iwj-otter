@@ -228,7 +228,7 @@ fn recalculate_occultation_general<
   RF: FnOnce(PieceUpdateOps_PerPlayer, LD) -> RD,     // ret_callback
 >(
   gs: &mut GameState,
-  ipieces: &PiecesLoaded,
+  ipieces: &IPieces,
   piece: PieceId,
   // if no change, we return ret_vanilla(log_visible)
   log_visible: LD,
@@ -385,7 +385,7 @@ fn recalculate_occultation_general<
 pub fn recalculate_occultation_piece(
   gs: &mut GameState,
   who_by: Html,
-  ipieces: &PiecesLoaded,
+  ipieces: &IPieces,
   piece: PieceId,
   (vanilla_wrc, vanilla_op, vanilla_log): PUFOS,
 )
@@ -414,7 +414,7 @@ pub fn recalculate_occultation_piece(
 #[throws(IE)]
 fn recalculate_occultation_ofmany(
   gs: &mut GameState,
-  ipieces: &PiecesLoaded,
+  ipieces: &IPieces,
   ppiece: PieceId,
   updates: &mut Vec<(PieceId, PieceUpdateOps)>,
 ){
@@ -466,7 +466,7 @@ impl OccultationViewDef for OwnerOccultationView {
 #[throws(OnlineError)]
 pub fn create_occultation(
   gs: &mut GameState,
-  ipieces: &PiecesLoaded,
+  ipieces: &IPieces,
   region: Area,
   occulter: PieceId,
   views: OccultationViews,
@@ -530,7 +530,7 @@ pub fn create_occultation(
 #[throws(IE)]
 pub fn remove_occultation(
   gs: &mut GameState,
-  ipieces: &PiecesLoaded,
+  ipieces: &IPieces,
   occulter: PieceId,
 ) -> Vec<(PieceId, PieceUpdateOps)> {
   let mut aggerr = AggregatedIE::new();

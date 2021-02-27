@@ -45,7 +45,7 @@ deref_to_field_mut!{LinksTable, EnumMap<LinkKind, Option<String>>, 0}
 pub struct Instance {
   pub name: Arc<InstanceName>,
   pub gs: GameState,
-  pub ipieces: PiecesLoaded,
+  pub ipieces: IPieces,
   pub clients: DenseSlotMap<ClientId, Client>,
   pub iplayers: SecondarySlotMap<PlayerId, PlayerRecord>,
   pub tokens_players: TokenRegistry<PlayerId>,
@@ -69,15 +69,15 @@ pub struct IPlayerState {
 
 #[derive(Debug,Serialize,Deserialize)]
 #[serde(transparent)]
-pub struct PiecesLoaded(ActualPiecesLoaded);
-pub type ActualPiecesLoaded = SecondarySlotMap<PieceId, Box<dyn Piece>>;
+pub struct IPieces(ActualIPieces);
+pub type ActualIPieces = SecondarySlotMap<PieceId, Box<dyn Piece>>;
 #[derive(Copy,Clone,Debug)]
 pub struct ModifyingPieces(());
 
 #[derive(Debug,Serialize,Deserialize,Default)]
 #[serde(transparent)]
-pub struct Pieces(pub(in crate::global) ActualPieces);
-type ActualPieces = DenseSlotMap<PieceId, PieceState>;
+pub struct GPieces(pub(in crate::global) ActualGPieces);
+type ActualGPieces = DenseSlotMap<PieceId, PieceState>;
 
 #[derive(Debug)]
 pub struct Client {
@@ -296,7 +296,7 @@ impl Instance {
     let g = Instance {
       name: name.clone(),
       gs, acl,
-      ipieces: PiecesLoaded(default()),
+      ipieces: IPieces(default()),
       clients: default(),
       iplayers: default(),
       tokens_players: default(),
@@ -1009,7 +1009,7 @@ impl InstanceGuard<'_> {
   fn load_game(accounts: &AccountsGuard,
                games: &mut GamesGuard,
                name: InstanceName) -> Option<InstanceRef> {
-    let InstanceSaveAccesses::<String,ActualPiecesLoaded>
+    let InstanceSaveAccesses::<String,ActualIPieces>
     { tokens_players, mut ipieces, mut aplayers, acl, links }
     = match Self::load_something(&name, "a-") {
       Ok(data) => data,
@@ -1073,7 +1073,7 @@ impl InstanceGuard<'_> {
     let g = Instance {
       gs, iplayers, links,
       acl: acl.into(),
-      ipieces: PiecesLoaded(ipieces),
+      ipieces: IPieces(ipieces),
       name: name.clone(),
       clients: default(),
       tokens_clients: default(),
@@ -1246,12 +1246,12 @@ pub fn process_all_players_for_account<
 
 // ========== instance pieces data access ==========
 
-impl PiecesLoaded {
+impl IPieces {
   pub fn get(&self, piece: PieceId) -> Option<&Box<dyn Piece>> {
     self.0.get(piece)
   }
 
-  pub fn as_mut(&mut self, _: ModifyingPieces) -> &mut ActualPiecesLoaded {
+  pub fn as_mut(&mut self, _: ModifyingPieces) -> &mut ActualIPieces {
     &mut self.0
   }
 }
@@ -1259,21 +1259,21 @@ impl PiecesLoaded {
 // ---------- gamestate pieces table ----------
 
 // No DerefMut to make sure we send updates, save, etc.
-deref_to_field!{Pieces, ActualPieces, 0}
+deref_to_field!{GPieces, ActualGPieces, 0}
 
-impl Pieces {
+impl GPieces {
   pub fn get_mut(&mut self, piece: PieceId) -> Option<&mut PieceState> {
     self.0.get_mut(piece)
   }
   pub fn values_mut(&mut self) -> sm::ValuesMut<PieceId, PieceState> {
     self.0.values_mut()
   }
-  pub fn as_mut(&mut self, _: ModifyingPieces) -> &mut ActualPieces {
+  pub fn as_mut(&mut self, _: ModifyingPieces) -> &mut ActualGPieces {
     &mut self.0
   }
 }
 
-impl ById for Pieces {
+impl ById for GPieces {
   type Id = PieceId;
   type Entry = PieceState;
   type Error = OnlineError;
@@ -1292,7 +1292,7 @@ impl ById for Pieces {
   type IntoIter = sm::Iter<'p, PieceId, PieceState>;
   fn into_iter(self) -> Self::IntoIter { (&self.0).into_iter() }
 }*/
-impl<'p> IntoIterator for &'p mut Pieces {
+impl<'p> IntoIterator for &'p mut GPieces {
   type Item = (PieceId, &'p mut PieceState);
   type IntoIter = sm::IterMut<'p, PieceId, PieceState>;
   fn into_iter(self) -> Self::IntoIter { (&mut self.0).into_iter() }
