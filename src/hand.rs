@@ -24,6 +24,12 @@ struct HandState {
   owner: Option<MagicOwner>,
 }
 
+impl HandState {
+  fn player(&self) -> Option<PlayerId> {
+    self.owner.as_ref().map(|o| o.player)
+  }
+}
+
 #[typetag::serde(name="Hand")]
 impl PieceXData for HandState { }
 
@@ -134,10 +140,12 @@ impl PieceTrait for Hand {
     let gplayers = &mut gs.players;
     let gpieces = &mut gs.pieces;
     let _goccults = &mut gs.occults;
+
     let gpc = gpieces.byid_mut(piece)?;
     let xdata = gpc.xdata.get_mut::<HandState>()
       .map_err(|e| APOE::ReportViaResponse(e.into()))?;
     let old_desc = self.describe_html_inner(Some(xdata));
+    let old_player = xdata.player();
 
     let dasharray = player_dasharray(gplayers, player);
     let gpl = gplayers.byid_mut(player)?;
@@ -171,6 +179,12 @@ impl PieceTrait for Hand {
     }
 
     let log = vec![ LogEntry { html: Html(format!("{} {}", nick.0, did)) }];
+
+    // We need to reaquire mut references because create_occultation etc.
+    // need mut access to gpieces.
+    let gpc = gpieces.byid_mut(piece).expect("piece disappeared");
+    let xdata = gpc.xdata.get_mut::<HandState>().expect("xdata disappeared!");
+    assert_eq!(xdata.player(), old_player);
 
     xdata.owner = new_owner;
 
