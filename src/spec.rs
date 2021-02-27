@@ -309,6 +309,16 @@ pub mod pos_traits {
     }
   }
 
+  impl<T:Copy+Clone+Debug> PosC<T> {
+    pub fn try_map<E:Debug, U:Copy+Clone+Debug, F: FnMut(T) -> Result<U,E>>
+      (self, f: F) -> Result<PosC<U>,E>
+    {
+      PosC::try_from_iter_2(
+        self.0.iter().cloned().map(f)
+      )
+    }
+  }
+
   impl PosC<Coord> {
     pub fn promote(&self) -> PosC<f64> { self.map(|v| v as f64) }
   }
