@@ -503,7 +503,8 @@ pub fn create_occultation(
     occulter,
     views,
     pieces: default(),
-  };    
+  };
+  debug!("creating occultation {:?}", &occultation);
 
   // Everything from here on must be undone if we get an error
   // but we hope not to get one...
@@ -566,6 +567,7 @@ pub fn remove_occultation(
     goccults.occults.remove(occid).ok_or_else(
       || internal_logic_error("removing nonexistent occultation"))
   );
+  debug!("removing occultation {:?}", &occultation);
       
   let mut updates = vec![];
 
