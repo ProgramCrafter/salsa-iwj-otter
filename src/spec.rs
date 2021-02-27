@@ -295,10 +295,9 @@ pub mod pos_traits {
     type Output = Result<Self, CoordinateOverflow>;
     #[throws(CoordinateOverflow)]
     fn neg(self) -> Self {
-      PosC(
+      PosC::try_from_iter_2(
         self.0.iter().cloned().map(|a| a.checked_neg())
-          .collect::<Result<ArrayVec<_>,_>>()?.into_inner().unwrap()
-      )
+      )?
     }
   }
 
