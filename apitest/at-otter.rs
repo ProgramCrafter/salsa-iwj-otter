@@ -333,7 +333,7 @@ impl Ctx {
       .filter(|p| p.info["desc"] == otter::hand::UNCLAIMED_DESC)
       .collect::<ArrayVec<[_;1]>>()
       .into_inner().unwrap();
-    dbg!(hand);
+    dbg!(&hand);
 
     session.synch(&mut self.su)?;
   }
