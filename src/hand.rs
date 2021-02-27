@@ -136,11 +136,11 @@ impl PieceTrait for Hand {
   fn ui_operation(&self, a: ApiPieceOpArgs<'_>,
                   opname: &str, wrc: WhatResponseToClientOp)
                   -> PieceUpdateResult {
-    let ApiPieceOpArgs { gs, player, piece, ..} = a;
+    let ApiPieceOpArgs { gs,player,piece,ipieces,.. } = a;
     let gplayers = &mut gs.players;
     let gpieces = &mut gs.pieces;
-    let _goccults = &mut gs.occults;
 
+    let goccults = &mut gs.occults;
     let gpc = gpieces.byid_mut(piece)?;
     let xdata = gpc.xdata.get_mut::<HandState>()
       .map_err(|e| APOE::ReportViaResponse(e.into()))?;
@@ -151,23 +151,44 @@ impl PieceTrait for Hand {
     let gpl = gplayers.byid_mut(player)?;
     let nick = Html(htmlescape::encode_minimal(&gpl.nick));
 
-    let did;
-    let new_owner;
-    match (opname, xdata.owner.is_some()) {
+    let (new_owner, did) = match (opname, xdata.owner.is_some()) {
       ("claim", false) => {
         let new_desc = Html(format!("{}'s hand", &nick.0));
-        new_owner = Some(MagicOwner {
+        let new_owner = Some(MagicOwner {
           player,
           dasharray,
           desc: new_desc,
         });
+        let pos = gpc.pos;
+        let (region, views) = (||{
+          let region = AreaC(
+            [-1,1].iter().map(|&signum| Ok::<_,IE>({
+              let xy = self.shape.outline.xy.try_map(
+                |c| c.floor().to_i32().ok_or(CoordinateOverflow)
+              )?;
+              (pos + (xy * signum)?)?
+            }))
+              .collect::<Result<ArrayVec<_>,_>>()?
+              .into_inner().unwrap()
+          );
+          let views = OwnerOccultationView {
+            owner: player,
+            owner_view: OccK::Visible,
+            defview: OccK::Displaced { within: region },
+          }.views()?;
+          Ok::<_,IE>((region, views))
+        })().map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?;
+        
+        // actually do things:
+        create_occultation(gplayers, gpieces, goccults, ipieces,
+                           region, piece, views)?;
         // xxx recalculate occultations
-        did = format!("claimed {}", &old_desc.0);
+
+        (new_owner, format!("claimed {}", &old_desc.0))
       }
       ("deactivate", true) => {
-        new_owner = None;
         // xxx recalculate occultations
-        did = format!("deactivated {}", &old_desc.0);
+        (None, format!("deactivated {}", &old_desc.0))
       }
       ("claim", true) |
       ("deactivate", false) => {
@@ -176,7 +197,7 @@ impl PieceTrait for Hand {
       _ => {
         throw!(OE::BadOperation);
       }
-    }
+    };
 
     let log = vec![ LogEntry { html: Html(format!("{} {}", nick.0, did)) }];
 
