@@ -111,7 +111,7 @@ pub trait PieceXData: Downcast + Debug + Send + 'static {
 impl_downcast!(PieceXData);
 
 #[enum_dispatch]
-pub trait Outline: Send + Debug {
+pub trait OutlineTrait: Send + Debug {
   fn outline_path(&self, pri: &PieceRenderInstructions, scale: f64)
           -> Result<Html, IE>;
   fn surround_path(&self, pri: &PieceRenderInstructions) -> Result<Html, IE> {
@@ -137,7 +137,7 @@ pub struct UoDescription {
 }
 
 #[typetag::serde]
-pub trait Piece: Outline + Send + Debug {
+pub trait PieceTrait: OutlineTrait + Send + Debug {
   /// by convention, occult face is nfaces-1
   // xxx this is no good, we need a central definition of the occult
   // face to avoid weird behaviour with buggy gamespecs
@@ -174,7 +174,7 @@ pub struct ApiPieceOpArgs<'a> {
   pub ipieces: &'a IPieces,
   pub player: PlayerId,
   pub piece: PieceId,
-  pub p: &'a dyn Piece,
+  pub p: &'a dyn PieceTrait,
 }
 
 #[derive(Debug,Clone)]
@@ -187,7 +187,7 @@ pub struct PieceRenderInstructions {
 #[typetag::serde(tag="type")]
 pub trait PieceSpec: Debug {
   fn count(&self) -> usize { 1 }
-  fn load(&self, i: usize) -> Result<Box<dyn Piece>, SpecError>;
+  fn load(&self, i: usize) -> Result<Box<dyn PieceTrait>, SpecError>;
 }
 
 // ========== implementations ==========
@@ -281,7 +281,7 @@ impl VisiblePieceAngle {
 
 impl GPiece {
   #[throws(IE)]
-  pub fn prep_piecestate(&self, p: &dyn Piece, pri: &PieceRenderInstructions)
+  pub fn prep_piecestate(&self, p: &dyn PieceTrait, pri: &PieceRenderInstructions)
                      -> PreparedPieceState {
     PreparedPieceState {
       pos        : self.pos,
@@ -373,7 +373,7 @@ pub trait PieceExt {
   fn ui_operations(&self, gpc: &GPiece) -> Result<Vec<UoDescription>, IE>;
 }
 
-impl<T> PieceExt for T where T: Piece + ?Sized {
+impl<T> PieceExt for T where T: PieceTrait + ?Sized {
   #[throws(IE)]
   fn make_defs(&self,  gpc: &GPiece, pri: &PieceRenderInstructions)
                -> Html {

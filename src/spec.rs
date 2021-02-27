@@ -199,7 +199,7 @@ mod outline {
   use super::*;
   use crate::prelude::*;
   use crate::shapelib::{Circle, Rectangle};
-  #[enum_dispatch(Outline)]
+  #[enum_dispatch(OutlineTrait)]
   #[derive(Clone,Debug,Serialize,Deserialize)]
   #[serde(tag="type")]
   pub enum OutlineRepr {

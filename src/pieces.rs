@@ -111,9 +111,9 @@ pub fn svg_rectangle_path(PosC([x,y]): PosC<f64>) -> Html {
                -x*0.5, -y*0.5, x, y, -x))
 }
 
-impl<Desc, Outl> Outline for GenericSimpleShape<Desc, Outl>
+impl<Desc, Outl> OutlineTrait for GenericSimpleShape<Desc, Outl>
     where Desc: Debug + Send + Sync + 'static,
-          Outl: Outline,
+          Outl: OutlineTrait,
 {
   delegate! {
     to self.outline {
@@ -128,7 +128,7 @@ impl<Desc, Outl> Outline for GenericSimpleShape<Desc, Outl>
 //    let edge_attrs = format!(r##"stroke-width="" stroke"##
 
 #[typetag::serde]
-impl Piece for SimpleShape {
+impl PieceTrait for SimpleShape {
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, _gpc: &GPiece,
                pri: &PieceRenderInstructions) {
@@ -150,7 +150,7 @@ impl Piece for SimpleShape {
 
 impl<Desc, Outl> GenericSimpleShape<Desc, Outl>
     where Desc: Debug + Send + Sync + 'static,
-          Outl: Outline,
+          Outl: OutlineTrait,
 {
   pub fn count_faces(&self) -> usize {
     max(self.colours.len(), self.edges.len())
@@ -234,7 +234,7 @@ impl<Desc, Outl> GenericSimpleShape<Desc, Outl>
 #[typetag::serde(tag="type")]
 pub trait SimplePieceSpec: Debug {
   fn load_raw(&self) -> Result<(SimpleShape, &SimpleCommon), SpecError>;
-  fn load(&self) -> Result<Box<dyn Piece>, SpecError> {
+  fn load(&self) -> Result<Box<dyn PieceTrait>, SpecError> {
     Ok(Box::new(self.load_raw()?.0))
   }
 }
@@ -256,7 +256,7 @@ impl SimplePieceSpec for piece_specs::Disc {
 #[typetag::serde]
 impl PieceSpec for piece_specs::Disc {
   #[throws(SpecError)]
-  fn load(&self, _: usize) -> Box<dyn Piece> { SimplePieceSpec::load(self)? }
+  fn load(&self, _: usize) -> Box<dyn PieceTrait> { SimplePieceSpec::load(self)? }
 }
 
 impl piece_specs::Square {
@@ -287,5 +287,5 @@ impl SimplePieceSpec for piece_specs::Square {
 #[typetag::serde]
 impl PieceSpec for piece_specs::Square {
   #[throws(SpecError)]
-  fn load(&self, _: usize) -> Box<dyn Piece> { SimplePieceSpec::load(self)? }
+  fn load(&self, _: usize) -> Box<dyn PieceTrait> { SimplePieceSpec::load(self)? }
 }

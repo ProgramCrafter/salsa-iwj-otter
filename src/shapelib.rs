@@ -142,7 +142,7 @@ impl ItemEnquiryData {
   }
 }
 
-impl Outline for Item { delegate! { to self.outline {
+impl OutlineTrait for Item { delegate! { to self.outline {
   fn outline_path(&self, pri: &PieceRenderInstructions, scale: f64)
                   -> Result<Html, IE>;
   fn thresh_dragraise(&self, pri: &PieceRenderInstructions)
@@ -151,7 +151,7 @@ impl Outline for Item { delegate! { to self.outline {
 }}}
 
 #[typetag::serde(name="Lib")]
-impl Piece for Item {
+impl PieceTrait for Item {
   fn nfaces(&self) -> RawFaceId { self.faces.len().try_into().unwrap() }
 
   #[throws(IE)]
@@ -199,7 +199,7 @@ pub fn libs_lookup(libname: &str)
 
 impl ItemSpec {
   #[throws(SpecError)]
-  pub fn load(&self) -> Box<dyn Piece> {
+  pub fn load(&self) -> Box<dyn PieceTrait> {
     let lib = libs_lookup(&self.lib)?;
     let idata = lib.items.get(&self.item)
       .ok_or(SpE::LibraryItemNotFound(self.item.clone()))?;
@@ -209,7 +209,7 @@ impl ItemSpec {
 
 impl Contents {
   fn load1(&self, idata: &ItemData, name: &str)
-           -> Result<Box<dyn Piece>,SpecError> {
+           -> Result<Box<dyn PieceTrait>,SpecError> {
     let svg_path = format!("{}/{}.usvg", self.dirname, &name);
     let svg_data = fs::read_to_string(&svg_path)
       .map_err(|e| if e.kind() == ErrorKind::NotFound {
@@ -276,7 +276,7 @@ impl Contents {
 
 #[typetag::serde(name="Lib")]
 impl PieceSpec for ItemSpec {
-  fn load(&self, _: usize) -> Result<Box<dyn Piece>, SpecError> {
+  fn load(&self, _: usize) -> Result<Box<dyn PieceTrait>, SpecError> {
     self.load()
   }
 }
@@ -284,7 +284,7 @@ impl PieceSpec for ItemSpec {
 #[typetag::serde(name="LibList")]
 impl PieceSpec for MultiSpec {
   fn count(&self) -> usize { self.items.len() }
-  fn load(&self, i: usize) -> Result<Box<dyn Piece>,SpecError> {
+  fn load(&self, i: usize) -> Result<Box<dyn PieceTrait>,SpecError> {
     let item = self.items.get(i).ok_or_else(
       || SpE::InternalError(format!("item {:?} from {:?}", i, &self))
     )?;
@@ -496,7 +496,7 @@ pub fn load(libs: &Vec<Config1>) {
 #[derive(Clone,Copy,Debug,Serialize,Deserialize)]
 pub struct Circle { pub diam: f64 }
 
-impl Outline for Circle {
+impl OutlineTrait for Circle {
   #[throws(IE)]
   fn outline_path(&self, _pri: &PieceRenderInstructions, scale: f64) -> Html {
     svg_circle_path(self.diam * scale)?
@@ -538,7 +538,7 @@ impl CircleDefn {
 #[derive(Clone,Copy,Debug,Serialize,Deserialize)]
 pub struct Rectangle { pub xy: PosC<f64> }
 
-impl Outline for Rectangle {
+impl OutlineTrait for Rectangle {
   #[throws(IE)]
   fn outline_path(&self, _pri: &PieceRenderInstructions, scale: f64) -> Html {
     let xy = (self.xy * scale)?;

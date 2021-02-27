@@ -70,7 +70,7 @@ pub struct IPlayer {
 #[derive(Debug,Serialize,Deserialize)]
 #[serde(transparent)]
 pub struct IPieces(ActualIPieces);
-pub type ActualIPieces = SecondarySlotMap<PieceId, Box<dyn Piece>>;
+pub type ActualIPieces = SecondarySlotMap<PieceId, Box<dyn PieceTrait>>;
 #[derive(Copy,Clone,Debug)]
 pub struct ModifyingPieces(());
 
@@ -1247,7 +1247,7 @@ pub fn process_all_players_for_account<
 // ========== instance pieces data access ==========
 
 impl IPieces {
-  pub fn get(&self, piece: PieceId) -> Option<&Box<dyn Piece>> {
+  pub fn get(&self, piece: PieceId) -> Option<&Box<dyn PieceTrait>> {
     self.0.get(piece)
   }
 

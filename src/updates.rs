@@ -200,7 +200,7 @@ pub fn log_did_to_piece_whoby(
   occults: &GameOccults,
   player: PlayerId,
   gpl: &mut GPlayer,
-  piece: PieceId, pc: &GPiece, p: &dyn Piece,
+  piece: PieceId, pc: &GPiece, p: &dyn PieceTrait,
   did: &str,
 ) -> (Vec<LogEntry>, Html) {
   let who_by = Html(htmlescape::encode_minimal(&gpl.nick));
@@ -218,7 +218,7 @@ pub fn log_did_to_piece(
   occults: &GameOccults,
   player: PlayerId,
   gpl: &mut GPlayer,
-  piece: PieceId, pc: &GPiece, p: &dyn Piece,
+  piece: PieceId, pc: &GPiece, p: &dyn PieceTrait,
   did: &str,
 ) -> Vec<LogEntry> {
   log_did_to_piece_whoby(occults,player,gpl,piece,pc,p,did).0
@@ -486,7 +486,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   #[throws(InternalError)]
   fn piece_update_player(max_z: &mut ZCoord,
                          pc: &mut GPiece,
-                         p: &Box<dyn Piece>,
+                         p: &Box<dyn PieceTrait>,
                          op: PieceUpdateOp<(),()>,
                          pri: &PieceRenderInstructions)
                          -> PreparedPieceUpdate

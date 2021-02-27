@@ -70,7 +70,7 @@ fn preview(items: Vec<ItemForOutput>) {
 
   struct Prep {
     spec: ItemSpec,
-    pc: Box<dyn Piece>,
+    pc: Box<dyn PieceTrait>,
     uos: Vec<String>,
     bbox: Vec<Vec<f64>>,
     size: Vec<f64>,

@@ -27,7 +27,7 @@ struct HandState {
 #[typetag::serde(name="Hand")]
 impl PieceXData for HandState { }
 
-impl Outline for Hand {
+impl OutlineTrait for Hand {
   delegate!{
     to self.shape {
       fn outline_path(&self, _pri: &PieceRenderInstructions, scale: f64)
@@ -42,7 +42,7 @@ impl Outline for Hand {
 #[typetag::serde]
 impl PieceSpec for piece_specs::Hand {
   #[throws(SpecError)]
-  fn load(&self, _: usize) -> Box<dyn Piece> {
+  fn load(&self, _: usize) -> Box<dyn PieceTrait> {
     let common = SimpleCommon {
       itemname: None,
       faces: index_vec![ColourSpec(self.colour.clone())],
@@ -60,7 +60,7 @@ impl PieceSpec for piece_specs::Hand {
       &common)?;
     Box::new(Hand {
       shape,
-    }) as Box<dyn Piece>
+    }) as Box<dyn PieceTrait>
   }
 }
 
@@ -76,7 +76,7 @@ impl Hand {
 }
 
 #[typetag::serde]
-impl Piece for Hand {
+impl PieceTrait for Hand {
   fn nfaces(&self) -> RawFaceId { 1 }
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
