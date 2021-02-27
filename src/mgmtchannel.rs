@@ -104,6 +104,14 @@ impl MgmtChannel {
     items.sort();
     items
   }
+
+  pub fn for_game(self, game: InstanceName, how: MgmtGameUpdateMode)
+                  -> MgmtChannelForGame {
+    MgmtChannelForGame {
+      chan: self,
+      game, how
+    }
+  }
 }
 
 pub trait IoTryClone: Sized {
@@ -115,14 +123,14 @@ impl IoTryClone for UnixStream {
 }
 
 
-pub struct ConnForGame {
-  pub conn: MgmtChannel,
+pub struct MgmtChannelForGame {
+  pub chan: MgmtChannel,
   pub game: InstanceName,
   pub how: MgmtGameUpdateMode,
 }
-deref_to_field_mut!{ConnForGame, MgmtChannel, conn}
+deref_to_field_mut!{MgmtChannelForGame, MgmtChannel, chan}
 
-impl ConnForGame {
+impl MgmtChannelForGame {
   #[throws(AE)]
   pub fn alter_game(&mut self, insns: Vec<MgmtGameInstruction>,
                 f: Option<&mut dyn FnMut(&MgmtGameResponse) -> Result<(),AE>>)

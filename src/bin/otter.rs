@@ -579,12 +579,11 @@ fn access_account(ma: &MainOpts) -> Conn {
 }
 
 #[throws(AE)]
-fn access_game(ma: &MainOpts, table_name: &String) -> ConnForGame {
-  ConnForGame {
-    conn: access_account(ma)?.chan,
-    game: ma.instance_name(table_name),
-    how: MgmtGameUpdateMode::Online,
-  }
+fn access_game(ma: &MainOpts, table_name: &String) -> MgmtChannelForGame {
+  access_account(ma)?.chan.for_game(
+    ma.instance_name(table_name),
+    MgmtGameUpdateMode::Online,
+  )
 }
 
 //---------- list-games ----------
@@ -660,11 +659,10 @@ mod reset_game {
 
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let mut chan = ConnForGame {
-      conn: access_account(&ma)?.chan,
-      game: ma.instance_name(&args.table_name),
-      how: MgmtGameUpdateMode::Bulk,
-    };
+    let mut chan = access_account(&ma)?.chan.for_game(
+      ma.instance_name(&args.table_name),
+      MgmtGameUpdateMode::Bulk,
+    );
     let GameSpec {
       table_size,
       pieces,
