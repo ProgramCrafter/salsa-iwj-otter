@@ -27,7 +27,7 @@ impl<'r, Id> FromFormValue<'r> for InstanceAccess<'r, Id>
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-struct ApiPiece<O:ApiPieceOp> {
+struct ApiPiece<O:op::Complex> {
   ctoken: RawToken,
   piece: VisiblePieceId,
   gen: Generation,
@@ -35,20 +35,32 @@ struct ApiPiece<O:ApiPieceOp> {
   op: O,
 }
 
-trait ApiPieceOp: Debug {
-  #[throws(ApiPieceOpError)]
-  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate;
+mod op {
+  use super::*;
 
-  #[throws(ApiPieceOpError)]
-  fn op_complex(&self, a: ApiPieceOpArgs)
-                -> (PieceUpdate, Vec<(PieceId, PieceUpdateOps)>) {
-    (self.op(a)?, vec![])
+  pub trait Core: Debug { 
+    #[throws(OnlineError)]
+    fn check_held(&self, pc: &GPiece, player: PlayerId) {
+      if pc.held != None && pc.held != Some(player) {
+        throw!(OnlineError::PieceHeld)
+      }
+    }
   }
 
-  #[throws(OnlineError)]
-  fn check_held(&self, pc: &GPiece, player: PlayerId) {
-    if pc.held != None && pc.held != Some(player) {
-      throw!(OnlineError::PieceHeld)
+  pub trait Simple: Core + Debug { 
+    #[throws(ApiPieceOpError)]
+    fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate;
+  }
+ 
+  pub trait Complex: Core + Debug { 
+    #[throws(ApiPieceOpError)]
+    fn op_complex(&self, a: ApiPieceOpArgs) -> UpdateFromOpComplex;
+  }
+
+  impl<T> Complex for T where T: Simple {
+    #[throws(ApiPieceOpError)]
+    fn op_complex(&self, a: ApiPieceOpArgs) -> UpdateFromOpComplex {
+      (self.op(a)?, vec![])
     }
   }
 }
@@ -85,7 +97,7 @@ impl<'r> Responder<'r> for OnlineErrorResponse {
 }
 
 #[throws(OE)]
-fn api_piece_op<O: ApiPieceOp>(form: Json<ApiPiece<O>>)
+fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
                    -> impl response::Responder<'static> {
 //  thread::sleep(Duration::from_millis(2000));
   let iad = lookup_token(form.ctoken.borrow())?;
@@ -161,7 +173,8 @@ fn api_piece_op<O: ApiPieceOp>(form: Json<ApiPiece<O>>)
 
 macro_rules! api_route_core {
   { $fn:ident, $path:expr, $form:ident, $formdef:item,
-    $( $impl:tt )*
+    $( impl $trait:path as { $($impl:tt)* } )*
+    $( as: $($simple_impl:tt)* )?
   } => {
     #[derive(Debug,Serialize,Deserialize)]
     $formdef
@@ -173,9 +186,13 @@ macro_rules! api_route_core {
       api_piece_op(form)?
     }
 
-    impl ApiPieceOp for $form {
-      $( $impl )*
-    }
+    $(
+      impl $trait for $form { $($impl)* }
+    )*
+    $(
+      impl op::Core for $form { }
+      impl op::Simple for $form { $($simple_impl)* }
+    )?
   }
 }
 
@@ -206,6 +223,8 @@ api_route!{
   api_grab, "/_/api/grab",
   struct ApiPieceGrab {
   }
+
+  as:
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
@@ -230,35 +249,40 @@ api_route!{
   api_wrest, "/_/api/wrest",
   struct ApiPieceWrest {
   }
-  #[throws(OnlineError)]
-  fn check_held(&self, _pc: &GPiece, _player: PlayerId) { }
 
-  #[throws(ApiPieceOpError)]
-  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
-    let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
-    let pc = gs.pieces.byid_mut(piece)?;
-    let players = &mut gs.players;
-    let was = pc.held;
-    let was = was.and_then(|p| players.get(p));
-    let was = was.map(|was| htmlescape::encode_minimal(&was.nick));
+  impl op::Core as {
+    #[throws(OnlineError)]
+    fn check_held(&self, _pc: &GPiece, _player: PlayerId) { }
+  }
 
-    let gpl = players.byid_mut(player)?;
-    let pri = piece_pri(&gs.occults, player, gpl, piece, pc);
-    let pcs = p.describe_pri(pc, &pri).0;
+  impl op::Simple as {
+    #[throws(ApiPieceOpError)]
+    fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
+      let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
+      let pc = gs.pieces.byid_mut(piece)?;
+      let players = &mut gs.players;
+      let was = pc.held;
+      let was = was.and_then(|p| players.get(p));
+      let was = was.map(|was| htmlescape::encode_minimal(&was.nick));
 
-    pc.held = Some(player);
+      let gpl = players.byid_mut(player)?;
+      let pri = piece_pri(&gs.occults, player, gpl, piece, pc);
+      let pcs = p.describe_pri(pc, &pri).0;
 
-    let update = PieceUpdateOp::Modify(());
+      pc.held = Some(player);
 
-    let pls = &htmlescape::encode_minimal(&gpl.nick);
+      let update = PieceUpdateOp::Modify(());
 
-    let logent = LogEntry { html: Html(match was {
+      let pls = &htmlescape::encode_minimal(&gpl.nick);
+
+      let logent = LogEntry { html: Html(match was {
         Some(was) => format!("{} wrested {} from {}", pls, pcs, was),
         None => format!("{} wrested {}", pls, pcs),
-    })};
+      })};
 
-    (WhatResponseToClientOp::Predictable,
-     update, vec![logent]).into()
+      (WhatResponseToClientOp::Predictable,
+       update, vec![logent]).into()
+    }
   }
 }
 
@@ -266,6 +290,8 @@ api_route!{
   api_ungrab, "/_/api/ungrab",
   struct ApiPieceUngrab {
   }
+
+  as:
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p,ipieces, .. } = a;
@@ -284,7 +310,7 @@ api_route!{
     let vanilla = (WhatResponseToClientOp::Predictable,
                    update,
                    logents);
-
+      
     let update=
       recalculate_occultation_piece(
         gs,
@@ -303,6 +329,8 @@ api_route!{
   struct ApiPieceSetZ {
     z: ZCoord,
   }
+
+  as:
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     // xxx prevent restzcking anything that is occulting
@@ -319,35 +347,39 @@ api_route!{
   api_move, "/_/api/m",
   struct ApiPieceMove(Pos);
 
-  #[throws(OnlineError)]
-  fn check_held(&self, pc: &GPiece, player: PlayerId) {
-    // This will ensure that occultations are (in general) properly
-    // updated, because the player will (have to) release the thing
-    // again
-    if pc.held != Some(player) {
-      throw!(OnlineError::PieceHeld)
+  impl op::Core as {
+    #[throws(OnlineError)]
+    fn check_held(&self, pc: &GPiece, player: PlayerId) {
+      // This will ensure that occultations are (in general) properly
+      // updated, because the player will (have to) release the thing
+      // again
+      if pc.held != Some(player) {
+        throw!(OnlineError::PieceHeld)
+      }
+      // xxx prevent moving anything that is occulting
     }
-    // xxx prevent moving anything that is occulting
   }
 
-  #[throws(ApiPieceOpError)]
-  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
-    let ApiPieceOpArgs { gs,piece, .. } = a;
-    let pc = gs.pieces.byid_mut(piece).unwrap();
-    let logents = vec![];
-    match self.0.clamped(gs.table_size) {
-      Ok(pos) => pc.pos = pos,
-      Err(pos) => {
-        pc.pos = pos;
-        throw!(ApiPieceOpError::PartiallyProcessed(
-          PieceOpError::PosOffTable,
-          logents,
-        ));
-      }
-    };
-    let update = PieceUpdateOp::Move(self.0);
-    (WhatResponseToClientOp::Predictable,
-     update, logents).into()
+  impl op::Simple as {
+    #[throws(ApiPieceOpError)]
+    fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
+      let ApiPieceOpArgs { gs,piece, .. } = a;
+      let pc = gs.pieces.byid_mut(piece).unwrap();
+      let logents = vec![];
+      match self.0.clamped(gs.table_size) {
+        Ok(pos) => pc.pos = pos,
+        Err(pos) => {
+          pc.pos = pos;
+          throw!(ApiPieceOpError::PartiallyProcessed(
+            PieceOpError::PosOffTable,
+            logents,
+          ));
+        }
+      };
+      let update = PieceUpdateOp::Move(self.0);
+      (WhatResponseToClientOp::Predictable,
+       update, logents).into()
+    }
   }
 }
 
@@ -355,6 +387,7 @@ api_route!{
   api_rotate, "/_/api/rotate",
   struct ApiPieceRotate(CompassAngle);
 
+  as:
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
@@ -375,6 +408,7 @@ api_route!{
   api_pin, "/_/api/pin",
   struct ApiPiecePin (bool);
 
+  as:
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
@@ -399,40 +433,44 @@ api_route!{
     opname: String,
     wrc: WhatResponseToClientOp,
   }
-  #[throws(ApiPieceOpError)]
-  fn op(&self, mut a: ApiPieceOpArgs) -> PieceUpdate {
-    let ApiPieceOpArgs { player,piece,p, .. } = a;
-    let gs = &mut a.gs;
-    '_normal_global_ops__not_loop: loop {
-      let pc = gs.pieces.byid_mut(piece)?;
-      let gpl = gs.players.byid_mut(player)?;
-      let _: Void = match (self.opname.as_str(), self.wrc) {
 
-        ("flip", wrc@ WRC::UpdateSvg) => {
-          let nfaces = p.nfaces();
-          pc.face = ((RawFaceId::from(pc.face) + 1) % nfaces).into();
-          return (
-            wrc,
-            PieceUpdateOp::Modify(()),
-            log_did_to_piece(
-              &gs.occults, player, gpl, piece, pc, p,
-              "flipped"
-            ),
-          ).into()
-        },
+  impl op::Core as { }
+  impl op::Complex as {
+    #[throws(ApiPieceOpError)]
+    fn op_complex(&self, mut a: ApiPieceOpArgs) -> UpdateFromOpComplex {
+      let ApiPieceOpArgs { player,piece,p, .. } = a;
+      let gs = &mut a.gs;
+      '_normal_global_ops__not_loop: loop {
+        let pc = gs.pieces.byid_mut(piece)?;
+        let gpl = gs.players.byid_mut(player)?;
+        let _: Void = match (self.opname.as_str(), self.wrc) {
 
-        _ => break,
-      };
+          ("flip", wrc@ WRC::UpdateSvg) => {
+            let nfaces = p.nfaces();
+            pc.face = ((RawFaceId::from(pc.face) + 1) % nfaces).into();
+            return ((
+              wrc,
+              PieceUpdateOp::Modify(()),
+              log_did_to_piece(
+                &gs.occults, player, gpl, piece, pc, p,
+                "flipped"
+              ),
+            ).into(), vec![])
+          },
+
+          _ => break,
+        };
+      }
+
+      '_abnormal_global_ops__notloop: loop {
+        let _: Void = match self {
+
+          _ => break,
+        };
+      }
+
+      p.ui_operation(a, &self.opname, self.wrc)?
     }
-
-    '_abnormal_global_ops__notloop: loop {
-      let _: Void = match self {
-
-        _ => break,
-      };
-    }
-
-    p.ui_operation(a, &self.opname, self.wrc)?
   }
 }
 

@@ -149,7 +149,7 @@ pub trait PieceTrait: OutlineTrait + Send + Debug {
 
   fn ui_operation(&self, _a: ApiPieceOpArgs<'_>,
                   _opname: &str, _wrc: WhatResponseToClientOp)
-                  -> PieceUpdateResult {
+                  -> Result<UpdateFromOpComplex, ApiPieceOpError> {
     throw!(OE::BadOperation)
   }
 

@@ -133,9 +133,10 @@ impl PieceTrait for Hand {
     })
   }
 
+  #[throws(ApiPieceOpError)]
   fn ui_operation(&self, a: ApiPieceOpArgs<'_>,
                   opname: &str, wrc: WhatResponseToClientOp)
-                  -> PieceUpdateResult {
+                  -> UpdateFromOpComplex {
     let ApiPieceOpArgs { gs,player,piece,ipieces,.. } = a;
     let gplayers = &mut gs.players;
     let gpieces = &mut gs.pieces;
@@ -209,10 +210,10 @@ impl PieceTrait for Hand {
 
     xdata.owner = new_owner;
 
-    Ok(PieceUpdate {
+    (PieceUpdate {
       wrc, log,
       ops: PUOs::Simple(PUO::Modify(())), // xxx
       // xxx want PUU::RecalculateOccultations
-    })
+    }, vec![])
   }
 }
