@@ -223,6 +223,14 @@ impl Session {
   }
 
   #[throws(AE)]
+  fn api_with_piece_op(&mut self, su: &SetupCore, piece: &str,
+                       opname: &str, op: serde_json::Value) {
+    self.api_piece_op(su, piece, "grab", json!({}))?;
+    self.api_piece_op(su, piece, "m", op)?;
+    self.api_piece_op(su, piece, "ungrab", json!({}))?;
+  }
+
+  #[throws(AE)]
   fn await_update<
     R,
     F: FnMut(&mut Session, Generation, &str, &serde_json::Value) -> Option<R>,
@@ -293,9 +301,7 @@ impl Ctx {
     dbg!(&llm);
 
     for (llm, pos) in izip!(&llm, [PosC([5,5]), PosC([50,25])].iter()) {
-      session.api_piece_op(&self.su, &llm.id, "grab", json!({}))?;
-      session.api_piece_op(&self.su, &llm.id, "m", json![pos.0])?;
-      session.api_piece_op(&self.su, &llm.id, "ungrab", json!({}))?;
+      session.api_with_piece_op(&self.su, &llm.id, "m", json![pos.0])?;
     }
 
     session.synch(&mut self.su)?;
