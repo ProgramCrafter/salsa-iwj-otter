@@ -152,7 +152,9 @@ impl PieceTrait for Hand {
     let gpl = gplayers.byid_mut(player)?;
     let nick = Html(htmlescape::encode_minimal(&gpl.nick));
 
-    let (new_owner, did) = match (opname, xdata.owner.is_some()) {
+    let (new_owner, xupdates, did) =
+      match (opname, xdata.owner.is_some())
+    {
       ("claim", false) => {
         let new_desc = Html(format!("{}'s hand", &nick.0));
         let new_owner = Some(MagicOwner {
@@ -181,15 +183,16 @@ impl PieceTrait for Hand {
         })().map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?;
         
         // actually do things:
-        create_occultation(gplayers, gpieces, goccults, ipieces,
-                           region, piece, views)?;
+        let xupdates =
+          create_occultation(gplayers, gpieces, goccults, ipieces,
+                             region, piece, views)?;
         // xxx recalculate occultations
 
-        (new_owner, format!("claimed {}", &old_desc.0))
+        (new_owner, xupdates, format!("claimed {}", &old_desc.0))
       }
       ("deactivate", true) => {
         // xxx recalculate occultations
-        (None, format!("deactivated {}", &old_desc.0))
+        (None, vec![], format!("deactivated {}", &old_desc.0))
       }
       ("claim", true) |
       ("deactivate", false) => {
@@ -214,6 +217,6 @@ impl PieceTrait for Hand {
       wrc, log,
       ops: PUOs::Simple(PUO::Modify(())), // xxx
       // xxx want PUU::RecalculateOccultations
-    }, vec![])
+    }, xupdates)
   }
 }
