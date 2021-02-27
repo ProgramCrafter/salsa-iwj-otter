@@ -47,7 +47,7 @@ mod op {
     }
   }
 
-  pub trait Simple: Core + Debug { 
+  pub trait Simple: Debug { 
     #[throws(ApiPieceOpError)]
     fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate;
   }
@@ -57,7 +57,7 @@ mod op {
     fn op_complex(&self, a: ApiPieceOpArgs) -> UpdateFromOpComplex;
   }
 
-  impl<T> Complex for T where T: Simple {
+  impl<T> Complex for T where T: Core + Simple {
     #[throws(ApiPieceOpError)]
     fn op_complex(&self, a: ApiPieceOpArgs) -> UpdateFromOpComplex {
       (self.op(a)?, vec![])
