@@ -115,9 +115,10 @@ fn updates_parser<R:Read>(input: R, out: &mut mpsc::Sender<Update>) {
     } else if let Some(event) = entry.get("event") {
       panic!("unexpected event: {}", event);
     } else {
-      let payload = &entry["data"];
-      let payload = serde_json::from_str(payload).unwrap();
-      if out.send(payload).is_err() { break }
+      let update = &entry["data"];
+      let update = serde_json::from_str(update).unwrap();
+      dbg!(&update);
+      if out.send(update).is_err() { break }
     }
   }
 }
