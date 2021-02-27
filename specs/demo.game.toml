@@ -47,3 +47,15 @@ edge = "white"
 colour = "grey"
 shape.type = "Rectangle"
 shape.xy = [70,20]
+
+[[pieces]]
+pos = [150,30]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-w-P"
+
+[[pieces]]
+pos = [160,30]
+type = "Lib"
+lib = "wikimedia"
+item = "chess-b-P"
