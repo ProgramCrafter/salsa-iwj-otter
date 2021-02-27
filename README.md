@@ -348,7 +348,7 @@ Automatic in-browser tests
 an individual test with a rune like this:
 
 ```
-  OTTER_WDT_LOG=otter_webdriver_tests=trace CARGO_MANIFEST_DIR=~ian/Rustup/Game/server time target/debug/wdt-simple --geckodriver-args=
+  OTTER_TEST_LOG=otter_webdriver_tests=trace CARGO_MANIFEST_DIR=~ian/Rustup/Game/server time target/debug/wdt-simple --geckodriver-args=
 ```
 
 (This rune has some example logging options in it, for you to change

@@ -771,7 +771,7 @@ pub fn setup_core<O>(module_paths: &[&str]) ->
 
   builder
     .filter_level(log::LevelFilter::Info)
-    .parse_env("OTTER_WDT_LOG")
+    .parse_env("OTTER_TEST_LOG")
     .init();
   debug!("starting");
 
