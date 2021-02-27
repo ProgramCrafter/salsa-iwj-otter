@@ -221,6 +221,24 @@ impl Session {
       .send()?;
     ensure_eq!(resp.status(), 200);
   }
+
+  #[throws(AE)]
+  fn resynch_pieces(&mut self) {
+    'overall: loop {
+      let update = self.updates.recv()?;
+      let update = update.as_array().unwrap();
+      let new_gen = &update[0];
+      for ue in update[1].as_array().unwrap() {
+        let (k,v) = ue.as_object().unwrap().iter().next().unwrap();
+        let got_cseq: RawClientSequence = match k.as_str() {
+          "Recorded" => v["cseq"].as_i64().unwrap().try_into().unwrap(),
+          "Log" => continue,
+          _ => throw!(anyhow!("unknown update: {}", ue)),
+        };
+        if got_cseq == self.cseq { break 'overall }
+      }
+    }
+  }
 }
 
 impl Ctx {
@@ -257,6 +275,8 @@ impl Ctx {
       session.api_piece_op(&self.su, &llm.id, "grab", json!({}))?;
       session.api_piece_op(&self.su, &llm.id, "m", json![pos.0])?;
     }
+
+    session.resynch_pieces()?;
 
     // xxx send api requests to move markers
     // run library-add again
