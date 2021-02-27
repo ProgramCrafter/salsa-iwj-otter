@@ -270,14 +270,12 @@ pub mod pos_traits {
     type Output = Result<Self, CoordinateOverflow>;
     #[throws(CoordinateOverflow)]
     fn sub(self, rhs: PosC<T>) -> PosC<T> {
-      PosC(
+      PosC::try_from_iter_2(
         itertools::zip_eq(
           self.0.iter().cloned(),
           rhs .0.iter().cloned(),
         ).map(|(a,b)| a.checked_sub(b))
-          .collect::<Result<ArrayVec<_>,_>>()?
-          .into_inner().unwrap()
-      )
+      )?
     }
   }
 
@@ -285,13 +283,11 @@ pub mod pos_traits {
     type Output = Result<Self, CoordinateOverflow>;
     #[throws(CoordinateOverflow)]
     fn mul(self, rhs: S) -> PosC<T> {
-      PosC(
+      PosC::try_from_iter_2(
         self.0.iter().cloned().map(
           |a| a.checked_mul(rhs)
         )
-          .collect::<Result<ArrayVec<_>,_>>()?
-          .into_inner().unwrap()
-      )
+      )?
     }
   }
 
@@ -308,10 +304,9 @@ pub mod pos_traits {
 
   impl<T:Copy+Clone+Debug> PosC<T> {
     pub fn map<U:Copy+Clone+Debug, F: FnMut(T) -> U>(self, f: F) -> PosC<U> {
-      PosC(
+      PosC::from_iter(
         self.0.iter().cloned().map(f)
-          .collect::<ArrayVec<_>>().into_inner().unwrap()
-      )
+      ).unwrap()
     }
   }
 
