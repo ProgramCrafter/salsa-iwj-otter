@@ -486,110 +486,6 @@ impl Conn {
       resp.with_context(||format!("response to {}", &desc))?;
     }
   }
-
-  #[throws(AE)]
-  fn list_items(&mut self, pat: &shapelib::ItemSpec)
-                -> Vec<shapelib::ItemEnquiryData> {
-    let cmd = MgmtCommand::LibraryListByGlob { glob: pat.clone() };
-    let mut items = match self.cmd(&cmd)? {
-      MgmtResponse::LibraryItems(items) => items,
-      wat => Err(anyhow!("unexpected LibraryListByGlob response: {:?}",
-                         &wat))?,
-    };
-    items.sort();
-    items
-  }
-}
-
-struct ConnForGame {
-  pub conn: Conn,
-  pub game: InstanceName,
-  pub how: MgmtGameUpdateMode,
-}
-deref_to_field_mut!{ConnForGame, Conn, conn}
-
-impl ConnForGame {
-  #[throws(AE)]
-  fn alter_game(&mut self, insns: Vec<MgmtGameInstruction>,
-                f: Option<&mut dyn FnMut(&MgmtGameResponse) -> Result<(),AE>>)
-                -> Vec<MgmtGameResponse> {
-    let insns_len = insns.len();
-    let cmd = MgmtCommand::AlterGame {
-      game: self.game.clone(), how: self.how,
-      insns
-    };
-    let responses = match self.cmd(&cmd)? {
-      MgmtResponse::AlterGame { error: None, responses }
-      if responses.len() == insns_len => {
-        responses
-      },
-      wat => Err(anyhow!("unexpected AlterGame response: {:?} => {:?}",
-                         &cmd, &wat))?,
-    };
-    if let Some(f) = f {
-      for response in &responses {
-        f(response)?;
-      }
-    }
-    responses
-  }
-
-  #[throws(AE)]
-  fn info(&mut self) -> MgmtGameResponseGameInfo {
-    let resp = self.alter_game(vec![MGI::Info], None)?;
-    match &resp[..] {
-      [MGR::Info(info)] => info.clone(),
-      x => throw!(anyhow!("unexpected response to game Info: {:?}", &x)),
-    }
-  }
-
-  #[throws(AE)]
-  fn we_are_player(&mut self, ma: &MainOpts)
-                   -> Option<(PlayerId, MgmtPlayerInfo)>
-  {
-    let players = {
-      let MgmtGameResponseGameInfo { players, .. } = self.info()?;
-      players
-    };
-
-    players.into_iter().filter(
-      |(_,mpi)| &mpi.account == &ma.account
-    ).next()
-  }
-/*
-  fn get_info(&mut self) -> Result<
-      (MgmtGameResponseGameInfo, HashMap<String,PlayerId>
-      ),AE>
-  {
-    let mut players = self.alter_game(
-      vec![ MgmtGameInstruction::Info ],
-      None,
-    )?;
-    let info = match players.pop() {
-      Some(MgmtGameResponse::Info(info)) => info,
-      wat => Err(anyhow!("GetGstate got {:?}", &wat))?,
-    };
-    let mut nick2id = HashMap::new();
-    for (player, pstate) in info.players.iter() {
-      use hash_map::Entry::*;
-      match nick2id.entry(pstate.nick.clone()) {
-        Occupied(oe) => Err(anyhow!("game has duplicate nick {:?}, {} {}",
-                                    &pstate.nick, *oe.get(), player))?,
-        Vacant(ve) => ve.insert(player),
-      };
-    }
-    Ok((info, nick2id))
-  }
-*/
-  #[throws(AE)]
-  fn get_pieces(&mut self) -> Vec<MgmtGamePieceInfo> {
-    let insns = vec![ MGI::ListPieces ];
-    let mut responses = self.alter_game(insns, None)?;
-    match responses.as_mut_slice() {
-      [MGR::Pieces(pieces)] => return mem::take(pieces),
-      wat => Err(anyhow!("ListPieces => {:?}", &wat))?,
-    }
-  }
 }
 
 #[throws(E)]
@@ -685,7 +581,7 @@ fn access_account(ma: &MainOpts) -> Conn {
 #[throws(AE)]
 fn access_game(ma: &MainOpts, table_name: &String) -> ConnForGame {
   ConnForGame {
-    conn: access_account(ma)?,
+    conn: access_account(ma)?.chan,
     game: ma.instance_name(table_name),
     how: MgmtGameUpdateMode::Online,
   }
@@ -765,7 +661,7 @@ mod reset_game {
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ConnForGame {
-      conn: access_account(&ma)?,
+      conn: access_account(&ma)?.chan,
       game: ma.instance_name(&args.table_name),
       how: MgmtGameUpdateMode::Bulk,
     };
@@ -918,7 +814,7 @@ mod join_game {
     let mut chan = access_game(&ma, &args.table_name)?;
 
     let mut insns = vec![];
-    match chan.we_are_player(&ma)? {
+    match chan.has_player(&ma.account)? {
       None => {
         let nick = ma.nick.clone()
           .unwrap_or_else(|| ma.account.default_nick());
@@ -1004,7 +900,7 @@ mod leave_game {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = access_game(&ma, &args.table_name)?;
 
-    let player = match chan.we_are_player(&ma)? {
+    let player = match chan.has_player(&ma.account)? {
       None => {
         println!("this account is not a player in that game");
         exit(EXIT_NOTFOUND);

@@ -91,6 +91,19 @@ impl MgmtChannel {
     };
     resp
   }
+
+  #[throws(AE)]
+  pub fn list_items(&mut self, pat: &shapelib::ItemSpec)
+                -> Vec<shapelib::ItemEnquiryData> {
+    let cmd = MgmtCommand::LibraryListByGlob { glob: pat.clone() };
+    let mut items = match self.cmd(&cmd)? {
+      MgmtResponse::LibraryItems(items) => items,
+      wat => Err(anyhow!("unexpected LibraryListByGlob response: {:?}",
+                         &wat))?,
+    };
+    items.sort();
+    items
+  }
 }
 
 pub trait IoTryClone: Sized {
@@ -99,4 +112,97 @@ pub trait IoTryClone: Sized {
 
 impl IoTryClone for UnixStream {
   fn try_clone(&self) -> io::Result<UnixStream> { self.try_clone() }
+}
+
+
+pub struct ConnForGame {
+  pub conn: MgmtChannel,
+  pub game: InstanceName,
+  pub how: MgmtGameUpdateMode,
+}
+deref_to_field_mut!{ConnForGame, MgmtChannel, conn}
+
+impl ConnForGame {
+  #[throws(AE)]
+  pub fn alter_game(&mut self, insns: Vec<MgmtGameInstruction>,
+                f: Option<&mut dyn FnMut(&MgmtGameResponse) -> Result<(),AE>>)
+                -> Vec<MgmtGameResponse> {
+    let insns_len = insns.len();
+    let cmd = MgmtCommand::AlterGame {
+      game: self.game.clone(), how: self.how,
+      insns
+    };
+    let responses = match self.cmd(&cmd)? {
+      MgmtResponse::AlterGame { error: None, responses }
+      if responses.len() == insns_len => {
+        responses
+      },
+      wat => Err(anyhow!("unexpected AlterGame response: {:?} => {:?}",
+                         &cmd, &wat))?,
+    };
+    if let Some(f) = f {
+      for response in &responses {
+        f(response)?;
+      }
+    }
+    responses
+  }
+
+  #[throws(AE)]
+  pub fn info(&mut self) -> MgmtGameResponseGameInfo {
+    let resp = self.alter_game(vec![MGI::Info], None)?;
+    match &resp[..] {
+      [MGR::Info(info)] => info.clone(),
+      x => throw!(anyhow!("unexpected response to game Info: {:?}", &x)),
+    }
+  }
+
+  #[throws(AE)]
+  pub fn has_player(&mut self, account: &AccountName)
+                    -> Option<(PlayerId, MgmtPlayerInfo)>
+  {
+    let players = {
+      let MgmtGameResponseGameInfo { players, .. } = self.info()?;
+      players
+    };
+
+    players.into_iter().filter(
+      |(_,mpi)| &mpi.account == account
+    ).next()
+  }
+
+  #[throws(AE)]
+  pub fn get_pieces(&mut self) -> Vec<MgmtGamePieceInfo> {
+    let insns = vec![ MGI::ListPieces ];
+    let mut responses = self.alter_game(insns, None)?;
+    match responses.as_mut_slice() {
+      [MGR::Pieces(pieces)] => return mem::take(pieces),
+      wat => Err(anyhow!("ListPieces => {:?}", &wat))?,
+    }
+  }
+/*
+  fn get_info(&mut self) -> Result<
+      (MgmtGameResponseGameInfo, HashMap<String,PlayerId>
+      ),AE>
+  {
+    let mut players = self.alter_game(
+      vec![ MgmtGameInstruction::Info ],
+      None,
+    )?;
+    let info = match players.pop() {
+      Some(MgmtGameResponse::Info(info)) => info,
+      wat => Err(anyhow!("GetGstate got {:?}", &wat))?,
+    };
+    let mut nick2id = HashMap::new();
+    for (player, pstate) in info.players.iter() {
+      use hash_map::Entry::*;
+      match nick2id.entry(pstate.nick.clone()) {
+        Occupied(oe) => Err(anyhow!("game has duplicate nick {:?}, {} {}",
+                                    &pstate.nick, *oe.get(), player))?,
+        Vacant(ve) => ve.insert(player),
+      };
+    }
+    Ok((info, nick2id))
+  }
+*/
 }
