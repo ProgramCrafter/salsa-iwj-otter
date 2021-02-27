@@ -6,7 +6,6 @@ use crate::prelude::*;
 
 use slotmap::secondary;
 
-type OccK = OccultationKind;
 type ONI = OldNewIndex;
 
 visible_slotmap_key!{ OccId(b'H') }

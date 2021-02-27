@@ -144,6 +144,9 @@ pub type POEPP = PieceOpErrorPartiallyProcessed;
 pub type SvgE = SVGProcessingError;
 pub type SpE = SpecError;
 
+// hidden.rs
+pub type OccK = OccultationKind;
+
 // updates.rs
 pub type PUE = PreparedUpdateEntry;
 pub type PUFOS = PieceUpdateFromOpSimple;
