@@ -255,16 +255,14 @@ pub mod pos_traits {
     type Output = Result<Self, CoordinateOverflow>;
     #[throws(CoordinateOverflow)]
     fn add(self, rhs: PosC<T>) -> PosC<T> {
-      PosC(
+      PosC::try_from_iter_2(
         itertools::zip_eq(
           self.0.iter().cloned(),
           rhs .0.iter().cloned(),
         ).map(
           |(a,b)| a.checked_add(b)
         )
-          .collect::<Result<ArrayVec<_>,_>>()?
-          .into_inner().unwrap()
-      )
+      )?
     }
   }
 
@@ -332,6 +330,19 @@ pub mod pos_traits {
         .collect::<ArrayVec<_>>()
         .into_inner()
         .map_err(|_| PosCFromIteratorError)?
+    )}
+  }
+
+  impl<T:Debug> PosC<T> {
+    /// Panics if the iterator doesn't yield exactly 2 elements
+    #[throws(E)]
+    pub fn try_from_iter_2<
+      E: Debug,
+      I: Iterator<Item=Result<T,E>>
+    >(i: I) -> Self { PosC(
+      i
+        .collect::<Result<ArrayVec<_>,E>>()?
+        .into_inner().unwrap()
     )}
   }
 }
