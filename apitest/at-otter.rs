@@ -223,21 +223,36 @@ impl Session {
   }
 
   #[throws(AE)]
-  fn resynch_pieces(&mut self) {
+  fn await_update<
+    R,
+    G: FnMut(&mut Session, Generation) -> Option<R>,
+    F: FnMut(&mut Session, Generation, &str, &serde_json::Value) -> Option<R>,
+   > (&mut self, mut f: F, mut g: G) -> R {
     'overall: loop {
       let update = self.updates.recv()?;
       let update = update.as_array().unwrap();
-      let new_gen = &update[0];
+      let new_gen = Generation(
+        update[0]
+          .as_i64().unwrap()
+          .try_into().unwrap()
+      );
+      if let Some(y) = g(self, new_gen) { break 'overall y }
       for ue in update[1].as_array().unwrap() {
         let (k,v) = ue.as_object().unwrap().iter().next().unwrap();
-        let got_cseq: RawClientSequence = match k.as_str() {
-          "Recorded" => v["cseq"].as_i64().unwrap().try_into().unwrap(),
-          "Log" => continue,
-          _ => throw!(anyhow!("unknown update: {}", ue)),
-        };
-        if got_cseq == self.cseq { break 'overall }
+        if let Some(y) = f(self, new_gen, k, v) { break 'overall y }
       }
     }
+  }
+
+  #[throws(AE)]
+  fn resynch_pieces(&mut self) {
+    self.await_update(|session, _gen, k, v| {
+      let got_cseq: RawClientSequence = match k {
+        "Recorded" => v["cseq"].as_i64().unwrap().try_into().unwrap(),
+        _ => return None,
+      };
+      if got_cseq == session.cseq { Some(()) } else { None }
+    }, |_,_| None)?;
   }
 }
 
