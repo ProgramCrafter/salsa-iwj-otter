@@ -132,14 +132,15 @@ impl PieceTrait for Hand {
                   -> PieceUpdateResult {
     let ApiPieceOpArgs { gs, player, piece, ..} = a;
     let gplayers = &mut gs.players;
-    let gpc = gs.pieces.byid_mut(piece)?;
+    let gpieces = &mut gs.pieces;
+    let _goccults = &mut gs.occults;
+    let gpc = gpieces.byid_mut(piece)?;
     let xdata = gpc.xdata.get_mut::<HandState>()
       .map_err(|e| APOE::ReportViaResponse(e.into()))?;
     let old_desc = self.describe_html_inner(Some(xdata));
 
     let dasharray = player_dasharray(gplayers, player);
     let gpl = gplayers.byid_mut(player)?;
-    let _occults = &mut gs.occults;
 
     let did;
     let new_owner;
