@@ -141,12 +141,12 @@ impl PieceTrait for Hand {
 
     let dasharray = player_dasharray(gplayers, player);
     let gpl = gplayers.byid_mut(player)?;
+    let nick = Html(htmlescape::encode_minimal(&gpl.nick));
 
     let did;
     let new_owner;
     match (opname, xdata.owner.is_some()) {
       ("claim", false) => {
-        let nick = Html(htmlescape::encode_minimal(&gpl.nick));
         let new_desc = Html(format!("{}'s hand", &nick.0));
         new_owner = Some(MagicOwner {
           player,
@@ -170,8 +170,7 @@ impl PieceTrait for Hand {
       }
     }
 
-    let who_by = Html(htmlescape::encode_minimal(&gpl.nick));
-    let log = vec![ LogEntry { html: Html(format!("{} {}", who_by.0, did)) }];
+    let log = vec![ LogEntry { html: Html(format!("{} {}", nick.0, did)) }];
 
     xdata.owner = new_owner;
 
