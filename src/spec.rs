@@ -470,7 +470,7 @@ pub mod implementation {
                ag: &AccountsGuard,
                g: &Instance,
                gpl: &GPlayer,
-               ipl: &IPlayerState,
+               ipl: &IPlayer,
                token: AccessTokenInfo)
                -> Result<AccessTokenReport, TDE>;
     fn describe_html(&self) -> Html {
@@ -486,7 +486,7 @@ pub mod implementation {
                _ag: &AccountsGuard,
                _g: &Instance,
                _gpl: &GPlayer,
-               _ipl: &IPlayerState,
+               _ipl: &IPlayer,
                _token: AccessTokenInfo) -> AccessTokenReport {
       AccessTokenReport { lines: vec![
         "Player access not set, game not accessible to this player"
@@ -509,7 +509,7 @@ pub mod implementation {
                _ag: &AccountsGuard,
                _g: &Instance,
                _gpl: &GPlayer,
-               _ipl: &IPlayerState,
+               _ipl: &IPlayer,
                _token: AccessTokenInfo) -> AccessTokenReport {
       AccessTokenReport { lines: vec![ "Fixed access token".to_string() ] }
     }
@@ -522,7 +522,7 @@ pub mod implementation {
                    _ag: &AccountsGuard,
                    _g: &Instance,
                    _gpl: &GPlayer,
-                   _ipl: &IPlayerState,
+                   _ipl: &IPlayer,
                    token: AccessTokenInfo)
                    -> AccessTokenReport {
       AccessTokenReport { lines: token.report() }
@@ -536,7 +536,7 @@ pub mod implementation {
                    ag: &AccountsGuard,
                    g: &Instance,
                    gpl: &GPlayer,
-                   ipl: &IPlayerState,
+                   ipl: &IPlayer,
                    token: AccessTokenInfo)
                    -> AccessTokenReport {
       let sendmail = &config().sendmail;

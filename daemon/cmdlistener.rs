@@ -345,7 +345,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         layout: arecord.layout,
         idmap: default(),
       };
-      let ipl = IPlayerState {
+      let ipl = IPlayer {
         acctid,
         tz,
         tokens_revealed: default(),

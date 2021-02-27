@@ -56,12 +56,12 @@ pub struct Instance {
 
 pub struct PlayerRecord {
   pub u: PlayerUpdates,
-  pub ipl: IPlayerState,
+  pub ipl: IPlayer,
   pub account: Arc<AccountName>,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
-pub struct IPlayerState {
+pub struct IPlayer {
   pub acctid: AccountId,
   pub tokens_revealed: HashMap<TokenRevelationKey, TokenRevelationValue>,
   pub tz: Timezone,
@@ -217,7 +217,7 @@ pub struct InstanceContainer {
 struct InstanceSaveAccesses<RawTokenStr, PiecesLoadedRef> {
   ipieces: PiecesLoadedRef,
   tokens_players: Vec<(RawTokenStr, PlayerId)>,
-  aplayers: SecondarySlotMap<PlayerId, IPlayerState>,
+  aplayers: SecondarySlotMap<PlayerId, IPlayer>,
   acl: Acl<TablePermission>,
   #[serde(default)] pub links: Arc<LinksTable>,
 }
@@ -519,7 +519,7 @@ impl<'ig> InstanceGuard<'ig> {
   /// caller is responsible for logging; threading it through
   /// proves the caller has a log entry.
   #[throws(MgmtError)]
-  pub fn player_new(&mut self, gnew: GPlayer, inew: IPlayerState,
+  pub fn player_new(&mut self, gnew: GPlayer, inew: IPlayer,
                     account: Arc<AccountName>, logentry: LogEntry)
                     -> (PlayerId, PreparedUpdateEntry, LogEntry) {
     // saving is fallible, but we can't attempt to save unless
@@ -595,7 +595,7 @@ impl<'ig> InstanceGuard<'ig> {
   pub fn players_remove(&mut self, old_players_set: &HashSet<PlayerId>)
                         ->
     Result<Vec<
-        (Option<GPlayer>, Option<IPlayerState>, PreparedUpdateEntry)
+        (Option<GPlayer>, Option<IPlayer>, PreparedUpdateEntry)
         >, InternalError>
   {
     // We have to filter this player out of everything
