@@ -441,7 +441,7 @@ fn screenshot(driver: &T4d, count: &mut ScreenShotCount, slug: &str,
   }
   let path = format!("{:03}{}.png", count, slug);
   *count += 1;
-  driver.screenshot(&path::PathBuf::from(&path))
+  driver.screenshot(&PathBuf::from(&path))
     .with_context(|| path.clone())
     .context("take screenshot")?;
   debug!("screenshot {}", &path);
@@ -532,7 +532,7 @@ impl Drop for FinalInfoCollection {
   fn drop(&mut self) {
     nix::unistd::linkat(None, "Xvfb_screen0",
                         None, "Xvfb_keep.xwd",
-                        LinkatFlags::NoSymlinkFollow)
+                        unistd::LinkatFlags::NoSymlinkFollow)
       .context("preserve Xvfb screen")
       .just_warn();
   }

@@ -32,23 +32,24 @@ pub use std::marker::PhantomData;
 pub use std::mem;
 pub use std::num::{NonZeroUsize, TryFromIntError, Wrapping};
 pub use std::ops::{Deref, DerefMut, Index};
+pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
 pub use std::os::unix;
 pub use std::os::unix::ffi::OsStrExt;
 pub use std::os::unix::io::IntoRawFd;
 pub use std::os::unix::net::UnixStream;
 pub use std::os::unix::process::CommandExt;
 pub use std::path::PathBuf;
-pub use std::process::{exit, Command};
+pub use std::process::{exit, Child, Command, Stdio};
 pub use std::str;
 pub use std::str::FromStr;
 pub use std::string::ParseError;
 pub use std::sync::{Arc, Condvar, Mutex, MutexGuard};
 pub use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+pub use std::sync::mpsc;
 pub use std::thread::{self, sleep};
-pub use std::time::Duration;
-pub use std::time::Instant;
+pub use std::time::{self, Duration, Instant};
 
-pub use anyhow::{anyhow, Context};
+pub use anyhow::{anyhow, ensure, Context};
 pub use arrayvec::ArrayVec;
 pub use boolinator::Boolinator as _;
 pub use delegate::delegate;
@@ -66,7 +67,8 @@ pub use itertools::{izip, EitherOrBoth, Itertools};
 pub use lazy_static::lazy_static;
 pub use log::{debug, error, info, trace, warn};
 pub use log::{log, log_enabled};
-pub use nix::unistd::Uid;
+pub use nix::unistd::{self, Uid};
+pub use num_derive::FromPrimitive;
 pub use num_traits::{Bounded, FromPrimitive, ToPrimitive};
 pub use ordered_float::OrderedFloat;
 pub use percent_encoding::percent_decode_str;
@@ -82,7 +84,8 @@ pub use serde::{Deserializer, Serializer};
 pub use serde_with::DeserializeFromStr;
 pub use serde_with::SerializeDisplay;
 pub use slotmap::{dense::DenseSlotMap, Key as _};
-pub use strum::EnumString;
+pub use strum::{EnumString, EnumIter, EnumProperty};
+pub use strum::{IntoEnumIterator, IntoStaticStr};
 pub use thiserror::Error;
 pub use url::Url;
 pub use vecdeque_stableix::Deque as StableIndexVecDeque;
@@ -93,6 +96,7 @@ pub use otter_base::misc as base_misc;
 pub use base_misc::default;
 
 pub use crate::{deref_to_field, deref_to_field_mut};
+pub use crate::ensure_eq;
 pub use crate::from_instance_lock_error;
 
 pub use crate::accounts::loaded_acl::{self, EffectiveACL, LoadedAcl, PermSet};
@@ -100,6 +104,9 @@ pub use crate::accounts::*;
 pub use crate::authproofs::{self, Authorisation, Unauthorised};
 pub use crate::authproofs::AuthorisationSuperuser;
 pub use crate::commands::{AccessTokenInfo, AccessTokenReport, MgmtError};
+pub use crate::commands::{MgmtCommand, MgmtResponse};
+pub use crate::commands::{MgmtGameInstruction, MgmtGameResponse};
+pub use crate::commands::{MgmtGameUpdateMode};
 pub use crate::config::*;
 pub use crate::debugreader::DebugReader;
 pub use crate::error::*;
@@ -124,6 +131,8 @@ pub use crate::ui::*;
 pub type SecondarySlotMap<K,V> = slotmap::secondary::SecondaryMap<K,V>;
 pub type SvgData = Vec<u8>;
 pub type Colour = Html;
+
+pub const MS: time::Duration = time::Duration::from_millis(1);
 
 // ---------- type abbreviations ----------
 

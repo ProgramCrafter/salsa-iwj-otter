@@ -12,70 +12,11 @@ pub mod imports {
 }
 
 pub use imports::*;
+pub use otter::prelude::*;
 
-pub use anyhow::{anyhow, ensure, Context};
-
-pub use arrayvec::ArrayVec;
-pub use boolinator::Boolinator;
-pub use fehler::{throw, throws};
-pub use if_chain::if_chain;
-pub use itertools::izip;
-pub use log::{debug, error, info, trace, warn};
-pub use log::{log, log_enabled};
-pub use nix::unistd::LinkatFlags;
 pub use num_traits::NumCast;
-pub use num_derive::FromPrimitive;
-pub use parking_lot::{Mutex, MutexGuard};
-pub use regex::{Captures, Regex};
-pub use serde::{Serialize, Deserialize};
 pub use serde_json::json;
 pub use structopt::StructOpt;
-pub use strum::{EnumIter, EnumProperty, IntoEnumIterator, IntoStaticStr};
-pub use thiserror::Error;
-pub use void::Void;
-
-pub use std::env;
-pub use std::fmt::{self, Debug};
-pub use std::collections::hash_map::HashMap;
-pub use std::collections::btree_set::BTreeSet;
-pub use std::convert::{Infallible, TryInto};
-pub use std::fs;
-pub use std::io::{self, BufRead, BufReader, ErrorKind, Read, Write};
-pub use std::iter;
-pub use std::mem;
-pub use std::net::TcpStream;
-pub use std::ops::{Deref, DerefMut};
-pub use std::os::unix::net::UnixStream;
-pub use std::os::unix::process::CommandExt;
-pub use std::os::unix::fs::DirBuilderExt;
-pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
-pub use std::path;
-pub use std::process::{self, Command, Stdio};
-pub use std::sync::mpsc;
-pub use std::thread::{self, sleep};
-pub use std::time::{self, Duration};
-
-pub use otter_base::misc::default;
-
-pub use otter::ensure_eq;
-pub use otter::commands::{MgmtCommand, MgmtResponse};
-pub use otter::commands::{MgmtGameInstruction, MgmtGameResponse};
-pub use otter::commands::{MgmtGameUpdateMode};
-pub use otter::config::*;
-pub use otter::{deref_to_field, deref_to_field_mut};
-pub use otter::gamestate::{self, Generation, PieceId, PlayerId};
-pub use otter::global::InstanceName;
-pub use otter::mgmtchannel::MgmtChannel;
-pub use otter::slotmap_slot_idx::KeyDataExt;
-pub use otter::spec::{Coord, GameSpec, Pos, PosC, RawToken};
-pub use otter::toml_de;
-pub use otter::ui::{AbbrevPresentationLayout, PresentationLayout};
-pub use otter::ui::player_num_dasharray;
-pub use otter::updates::RawClientSequence;
-pub use otter::utils::*;
-
-pub const MS: time::Duration = time::Duration::from_millis(1);
-pub type AE = anyhow::Error;
 
 // -------------------- private imports ----------
 
@@ -121,7 +62,7 @@ pub struct Opts {
 pub struct SetupCore {
   pub ds: DirSubst,
   pub mgmt_conn: MgmtChannel,
-  pub server_child: process::Child,
+  pub server_child: Child,
   pub wanted_tests: TrackWantedTests,
 }
 
@@ -434,7 +375,7 @@ pub mod cleanup_notify {
 pub fn fork_something_which_prints(mut cmd: Command,
                                cln: &cleanup_notify::Handle,
                                what: &str)
-                               -> (String, process::Child)
+                               -> (String, Child)
 {
   (||{
     cmd.stdout(Stdio::piped());
@@ -596,7 +537,7 @@ pub fn prepare_tmpdir<'x>(opts: &'x Opts, mut current_exe: &'x str) -> DirSubst 
 
 #[throws(AE)]
 pub fn prepare_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst)
-                      -> (MgmtChannel, process::Child) {
+                      -> (MgmtChannel, Child) {
   let subst = ds.also(&[
     ("command_socket", "command.socket"),
   ]);

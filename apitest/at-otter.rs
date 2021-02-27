@@ -33,7 +33,7 @@ struct Session {
 mod scraper_ext {
   use super::*;
   use scraper::*;
-  use scraper::html::*;
+  use scraper::html::{*, Html};
 
   pub trait HtmlExt {
     fn select<'a,'b>(&'a self, selector: &'b Selector) -> Select<'a, 'b>;
