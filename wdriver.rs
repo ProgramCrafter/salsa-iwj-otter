@@ -462,22 +462,8 @@ impl<'g> WindowGuard<'g> {
 
   #[throws(AE)]
   fn synch_raw(&mut self) {
-    let cmd = MgmtCommand::AlterGame {
-      game: self.w.instance.clone(),
-      how: MgmtGameUpdateMode::Online,
-      insns: vec![ MgmtGameInstruction::Synch ],
-    };
-    let gen = if_chain!{
-      let resp = self.su.mgmt_conn.cmd(&cmd)?;
-      if let MgmtResponse::AlterGame {
-        error: None,
-        ref responses
-      } = resp;
-      if let [MgmtGameResponse::Synch(gen)] = responses[..];
-      then { gen }
-      else { throw!(anyhow!("unexpected resp to synch {:?}", resp)) }
-    };
-    trace!("{:?} gen={} ...", self, gen);
+    let gen = mgmt_game_synch(&mut self.su.mgmt_conn,
+                              self.w.instance.clone())?;
     (|| {
       loop {
         let tgen = self.su.driver.execute_async_script(
