@@ -67,7 +67,7 @@ mod scraper_ext {
 
   #[throws(AE)]
   pub fn parse_html(resp: reqwest::blocking::Response) -> Html {
-    ensure_eq!(resp.status(), 200);
+    assert_eq!(resp.status(), 200);
     let body = resp.text()?;
     let dom = scraper::Html::parse_document(&body);
     //dbg!(&&dom);
@@ -219,7 +219,7 @@ impl Session {
         "op": op,
       }))
       .send()?;
-    ensure_eq!(resp.status(), 200);
+    assert_eq!(resp.status(), 200);
   }
 
   #[throws(AE)]
@@ -288,7 +288,7 @@ impl Ctx {
     )?;
     let add_err = self.otter(&command)
       .expect_err("library-add succeeded after reset!");
-    ensure_eq!(add_err.downcast::<ExitStatusError>()?.0.code(),
+    assert_eq!(add_err.downcast::<ExitStatusError>()?.0.code(),
                Some(EXIT_NOTFOUND));
 
     let mut session = self.connect_player(&self.alice)?;
@@ -320,7 +320,7 @@ impl Ctx {
       }
     )?;
     dbg!(&added);
-    ensure_eq!(added.len(), 6);
+    assert_eq!(added.len(), 6);
   }
 
   #[throws(AE)]
