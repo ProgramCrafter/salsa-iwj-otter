@@ -225,9 +225,9 @@ impl Session {
   #[throws(AE)]
   fn await_update<
     R,
-    G: FnMut(&mut Session, Generation) -> Option<R>,
     F: FnMut(&mut Session, Generation, &str, &serde_json::Value) -> Option<R>,
-   > (&mut self, mut f: F, mut g: G) -> R {
+    G: FnMut(&mut Session, Generation) -> Option<R>,
+   > (&mut self, mut g: G, mut f: F) -> R {
     'overall: loop {
       let update = self.updates.recv()?;
       let update = update.as_array().unwrap();
@@ -248,8 +248,8 @@ impl Session {
   fn synch(&mut self, su: &mut SetupCore) {
     let exp = mgmt_game_synch(&mut su.mgmt_conn, TABLE.parse().unwrap())?;
     self.await_update(
-      |session, gen, _k, _v| (gen == exp).as_option(),
       |session, gen        | (gen == exp).as_option(),
+      |_session, _gen, _k, _v| None,
     )?;
   }
 }
