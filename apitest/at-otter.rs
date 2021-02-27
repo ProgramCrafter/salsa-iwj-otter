@@ -324,7 +324,7 @@ impl Ctx {
 
     let pieces = session.pieces()?;
     let [hand] = pieces.into_iter()
-      .filter(|p| p.info["desc"] == "a hand repository")
+      .filter(|p| p.info["desc"] == otter::hand::UNCLAIMED_DESC)
       .collect::<ArrayVec<[_;1]>>()
       .into_inner().unwrap();
     dbg!(hand);

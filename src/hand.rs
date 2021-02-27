@@ -7,6 +7,8 @@
 use crate::prelude::*;
 //use super::*;
 
+pub const UNCLAIMED_DESC: &str = "a hand repository";
+
 #[derive(Debug,Clone,Serialize,Deserialize)]
 struct MagicOwner {
   player: PlayerId,
@@ -76,7 +78,7 @@ impl Hand {
       if let Some(xdata) = xdata;
       if let Some(owner) = &xdata.owner;
       then { owner.desc.clone() }
-      else { Html(format!("a hand repository")) }
+      else { Html(UNCLAIMED_DESC.into()) }
     }
   }
 }
