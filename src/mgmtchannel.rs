@@ -180,7 +180,7 @@ impl MgmtChannelForGame {
   }
 
   #[throws(AE)]
-  pub fn get_pieces(&mut self) -> Vec<MgmtGamePieceInfo> {
+  pub fn list_pieces(&mut self) -> Vec<MgmtGamePieceInfo> {
     let insns = vec![ MGI::ListPieces ];
     let mut responses = self.alter_game(insns, None)?;
     match responses.as_mut_slice() {

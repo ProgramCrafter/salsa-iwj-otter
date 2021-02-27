@@ -687,7 +687,7 @@ mod reset_game {
       insns.extend(setup_table(&ma, &table_spec)?);
     }
 
-    for p in chan.get_pieces()? {
+    for p in chan.list_pieces()? {
       insns.push(MgmtGameInstruction::DeletePiece(p.piece));
     }
 
@@ -1046,7 +1046,7 @@ mod library_add {
 
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = access_game(&ma, &args.table_name)?;
-    let pieces = chan.get_pieces()?;
+    let pieces = chan.list_pieces()?;
     let markers = pieces.iter().filter(|p| p.itemname == MAGIC)
       .collect::<Vec<_>>();
 
