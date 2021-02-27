@@ -464,7 +464,7 @@ impl OccultationViewDef for OwnerOccultationView {
 }
 
 #[throws(OnlineError)]
-pub fn create_occultation<V: OccultationViewDef>(
+pub fn create_occultation(
   gs: &mut GameState,
   ipieces: &PiecesLoaded,
   region: Area,
