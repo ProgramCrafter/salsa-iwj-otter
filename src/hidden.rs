@@ -176,9 +176,9 @@ impl PerPlayerIdMap {
 pub fn piece_pri(
   _occults: &GameOccults, // xxx
   player: PlayerId,
-  gpl: &mut GPlayerState,
+  gpl: &mut GPlayer,
   piece: PieceId,
-  pc: &PieceState,
+  pc: &GPiece,
 ) -> PieceRenderInstructions {
   let vpiece = gpl.idmap.fwd_or_insert(piece);
   let angle = VisiblePieceAngle(pc.angle);
@@ -198,7 +198,7 @@ pub fn piece_at_all_occluded(
 pub fn vpiece_decode(
   _gs: &GameState, // xxx
   player: PlayerId,
-  gpl: &GPlayerState,
+  gpl: &GPlayer,
   vis: VisiblePieceId
 ) -> Option<PieceId> {
   let piece = gpl.idmap.rev(vis);

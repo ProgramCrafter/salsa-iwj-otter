@@ -340,7 +340,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       };
       let timezone = &arecord.timezone;
       let tz = tz_from_str(&timezone);
-      let gpl = GPlayerState {
+      let gpl = GPlayer {
         nick: nick.to_string(),
         layout: arecord.layout,
         idmap: default(),
@@ -377,7 +377,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     MGI::ListPieces => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
       let pieces = ig.gs.pieces.iter().filter_map(
         |(piece,p)| (|| Ok::<_,MgmtError>(if_chain!{
-          let &PieceState { pos, face, .. } = p;
+          let &GPiece { pos, face, .. } = p;
           if let Some(pinfo) = ig.ipieces.get(piece);
           let desc_html = pinfo.describe_html_infallible(None, p);
           let itemname = pinfo.itemname().to_string();
@@ -606,7 +606,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         if p.nfaces() <= face.into() {
           throw!(SpecError::FaceNotFound);
         }
-        let pc = PieceState {
+        let pc = GPiece {
           held: None,
           zlevel: ZLevel { z: z.increment()?, zg: gs.gen },
           lastclient: default(),

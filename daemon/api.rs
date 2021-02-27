@@ -46,7 +46,7 @@ trait ApiPieceOp: Debug {
   }
 
   #[throws(OnlineError)]
-  fn check_held(&self, pc: &PieceState, player: PlayerId) {
+  fn check_held(&self, pc: &GPiece, player: PlayerId) {
     if pc.held != None && pc.held != Some(player) {
       throw!(OnlineError::PieceHeld)
     }
@@ -231,7 +231,7 @@ api_route!{
   struct ApiPieceWrest {
   }
   #[throws(OnlineError)]
-  fn check_held(&self, _pc: &PieceState, _player: PlayerId) { }
+  fn check_held(&self, _pc: &GPiece, _player: PlayerId) { }
 
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
@@ -320,7 +320,7 @@ api_route!{
   struct ApiPieceMove(Pos);
 
   #[throws(OnlineError)]
-  fn check_held(&self, pc: &PieceState, player: PlayerId) {
+  fn check_held(&self, pc: &GPiece, player: PlayerId) {
     // This will ensure that occultations are (in general) properly
     // updated, because the player will (have to) release the thing
     // again

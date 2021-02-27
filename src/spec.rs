@@ -469,7 +469,7 @@ pub mod implementation {
     fn deliver(&self,
                ag: &AccountsGuard,
                g: &Instance,
-               gpl: &GPlayerState,
+               gpl: &GPlayer,
                ipl: &IPlayerState,
                token: AccessTokenInfo)
                -> Result<AccessTokenReport, TDE>;
@@ -485,7 +485,7 @@ pub mod implementation {
     fn deliver(&self,
                _ag: &AccountsGuard,
                _g: &Instance,
-               _gpl: &GPlayerState,
+               _gpl: &GPlayer,
                _ipl: &IPlayerState,
                _token: AccessTokenInfo) -> AccessTokenReport {
       AccessTokenReport { lines: vec![
@@ -508,7 +508,7 @@ pub mod implementation {
     fn deliver(&self,
                _ag: &AccountsGuard,
                _g: &Instance,
-               _gpl: &GPlayerState,
+               _gpl: &GPlayer,
                _ipl: &IPlayerState,
                _token: AccessTokenInfo) -> AccessTokenReport {
       AccessTokenReport { lines: vec![ "Fixed access token".to_string() ] }
@@ -521,7 +521,7 @@ pub mod implementation {
     fn deliver<'t>(&self,
                    _ag: &AccountsGuard,
                    _g: &Instance,
-                   _gpl: &GPlayerState,
+                   _gpl: &GPlayer,
                    _ipl: &IPlayerState,
                    token: AccessTokenInfo)
                    -> AccessTokenReport {
@@ -535,7 +535,7 @@ pub mod implementation {
     fn deliver<'t>(&self,
                    ag: &AccountsGuard,
                    g: &Instance,
-                   gpl: &GPlayerState,
+                   gpl: &GPlayer,
                    ipl: &IPlayerState,
                    token: AccessTokenInfo)
                    -> AccessTokenReport {

@@ -199,8 +199,8 @@ struct FormattedLogEntry<'u> {
 pub fn log_did_to_piece_whoby(
   occults: &GameOccults,
   player: PlayerId,
-  gpl: &mut GPlayerState,
-  piece: PieceId, pc: &PieceState, p: &dyn Piece,
+  gpl: &mut GPlayer,
+  piece: PieceId, pc: &GPiece, p: &dyn Piece,
   did: &str,
 ) -> (Vec<LogEntry>, Html) {
   let who_by = Html(htmlescape::encode_minimal(&gpl.nick));
@@ -217,8 +217,8 @@ pub fn log_did_to_piece_whoby(
 pub fn log_did_to_piece(
   occults: &GameOccults,
   player: PlayerId,
-  gpl: &mut GPlayerState,
-  piece: PieceId, pc: &PieceState, p: &dyn Piece,
+  gpl: &mut GPlayer,
+  piece: PieceId, pc: &GPiece, p: &dyn Piece,
   did: &str,
 ) -> Vec<LogEntry> {
   log_did_to_piece_whoby(occults,player,gpl,piece,pc,p,did).0
@@ -485,7 +485,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
   #[throws(InternalError)]
   fn piece_update_player(max_z: &mut ZCoord,
-                         pc: &mut PieceState,
+                         pc: &mut GPiece,
                          p: &Box<dyn Piece>,
                          op: PieceUpdateOp<(),()>,
                          pri: &PieceRenderInstructions)
@@ -516,7 +516,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
                                 ops: PieceUpdateOps,
                                 gen_update: GUF)
                                 -> PreparedUpdateEntry_Piece
-    where GUF: FnOnce(&mut PieceState, Generation, &IsResponseToClientOp)
+    where GUF: FnOnce(&mut GPiece, Generation, &IsResponseToClientOp)
   {
     let gen = self.gen();
     let gs = &mut self.g.gs;

@@ -79,7 +79,7 @@ impl Hand {
 impl Piece for Hand {
   fn nfaces(&self) -> RawFaceId { 1 }
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, gpc: &PieceState,
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
                pri: &PieceRenderInstructions) {
     self.shape.svg_piece_raw(f, pri, &mut |f: &mut String| {
       if_chain!{
@@ -93,7 +93,7 @@ impl Piece for Hand {
   }
 
   #[throws(IE)]
-  fn describe_html(&self, _face: Option<FaceId>, gpc: &PieceState) -> Html {
+  fn describe_html(&self, _face: Option<FaceId>, gpc: &GPiece) -> Html {
     let xdata = gpc.xdata.get()?;
     self.describe_html_inner(xdata)
   }
@@ -106,7 +106,7 @@ impl Piece for Hand {
 
   #[throws(InternalError)]
   fn add_ui_operations(&self, upd: &mut Vec<UoDescription>,
-                       gpc: &PieceState) {
+                       gpc: &GPiece) {
     upd.push(if_chain! {
       if let Some(xdata) = gpc.xdata.get::<HandState>()?;
       if let Some(_owner) = &xdata.owner;

@@ -61,17 +61,17 @@ pub struct GameState {
   pub occults: GameOccults,
 }
 
-pub type GPlayers = DenseSlotMap<PlayerId, GPlayerState>;
+pub type GPlayers = DenseSlotMap<PlayerId, GPlayer>;
 
 #[derive(Debug,Serialize,Deserialize,Clone)]
-pub struct GPlayerState {
+pub struct GPlayer {
   pub nick: String,
   pub layout: PresentationLayout,
   pub idmap: PerPlayerIdMap,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-pub struct PieceState {
+pub struct GPiece {
   pub pos: Pos,
   pub face: FaceId,
   pub held: Option<PlayerId>,
@@ -145,7 +145,7 @@ pub trait Piece: Outline + Send + Debug {
 
   #[throws(InternalError)]
   fn add_ui_operations(&self, _upd: &mut Vec<UoDescription>,
-                       _gpc: &PieceState) { }
+                       _gpc: &GPiece) { }
 
   fn ui_operation(&self, _a: ApiPieceOpArgs<'_>,
                   _opname: &str, _wrc: WhatResponseToClientOp)
@@ -154,13 +154,13 @@ pub trait Piece: Outline + Send + Debug {
   }
 
   // #[throws] doesn't work here - fehler #todo
-  fn svg_piece(&self, f: &mut Html, gpc: &PieceState,
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
                pri: &PieceRenderInstructions) -> Result<(),IE>;
 
-  fn describe_html(&self, face: Option<FaceId>, gpc: &PieceState)
+  fn describe_html(&self, face: Option<FaceId>, gpc: &GPiece)
                    -> Result<Html,IE>;
 
-  fn delete_hook(&self, _p: &PieceState, _gs: &mut GameState)
+  fn delete_hook(&self, _p: &GPiece, _gs: &mut GameState)
                  -> ExecuteGameChangeUpdates { 
     ExecuteGameChangeUpdates{ pcs: vec![], log: vec![], raw: None }
   }
@@ -279,7 +279,7 @@ impl VisiblePieceAngle {
 
 // ---------- game state - rendering etc. ----------
 
-impl PieceState {
+impl GPiece {
   #[throws(IE)]
   pub fn prep_piecestate(&self, p: &dyn Piece, pri: &PieceRenderInstructions)
                      -> PreparedPieceState {
@@ -306,7 +306,7 @@ impl PieceState {
 
   pub fn dummy() -> Self {
     let gen_dummy = Generation(1);
-    PieceState {
+    GPiece {
       pos: PosC([0,0]),
       face: default(),
       held: None,
@@ -364,18 +364,18 @@ impl PieceXDataExt for PieceXDataState {
 }
 
 pub trait PieceExt {
-  fn make_defs(&self, gpc: &PieceState, pri: &PieceRenderInstructions)
+  fn make_defs(&self, gpc: &GPiece, pri: &PieceRenderInstructions)
                -> Result<Html, IE>;
-  fn describe_html_infallible(&self, face: Option<FaceId>, gpc: &PieceState)
+  fn describe_html_infallible(&self, face: Option<FaceId>, gpc: &GPiece)
                               -> Html;
-  fn describe_pri(&self, gpc: &PieceState, pri: &PieceRenderInstructions)
+  fn describe_pri(&self, gpc: &GPiece, pri: &PieceRenderInstructions)
                   -> Html;
-  fn ui_operations(&self, gpc: &PieceState) -> Result<Vec<UoDescription>, IE>;
+  fn ui_operations(&self, gpc: &GPiece) -> Result<Vec<UoDescription>, IE>;
 }
 
 impl<T> PieceExt for T where T: Piece + ?Sized {
   #[throws(IE)]
-  fn make_defs(&self,  gpc: &PieceState, pri: &PieceRenderInstructions)
+  fn make_defs(&self,  gpc: &GPiece, pri: &PieceRenderInstructions)
                -> Html {
     let mut defs = Html(String::new());
     let dragraise = match self.thresh_dragraise(pri)? {
@@ -395,7 +395,7 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
     defs
   }
 
-  fn describe_html_infallible(&self, face: Option<FaceId>, gpc: &PieceState)
+  fn describe_html_infallible(&self, face: Option<FaceId>, gpc: &GPiece)
                               -> Html {
     self.describe_html(face, gpc)
       .unwrap_or_else(|e| {
@@ -404,13 +404,13 @@ impl<T> PieceExt for T where T: Piece + ?Sized {
       })
   }
 
-  fn describe_pri(&self, gpc: &PieceState, pri: &PieceRenderInstructions)
+  fn describe_pri(&self, gpc: &GPiece, pri: &PieceRenderInstructions)
                   -> Html {
     self.describe_html_infallible(Some(pri.face), gpc)
   }
 
   #[throws(InternalError)]
-  fn ui_operations(&self, gpc: &PieceState) -> Vec<UoDescription> {
+  fn ui_operations(&self, gpc: &GPiece) -> Vec<UoDescription> {
     type WRC = WhatResponseToClientOp;
 
     let mut out = vec![];

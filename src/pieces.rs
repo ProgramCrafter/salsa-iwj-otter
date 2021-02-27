@@ -130,12 +130,12 @@ impl<Desc, Outl> Outline for GenericSimpleShape<Desc, Outl>
 #[typetag::serde]
 impl Piece for SimpleShape {
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, _gpc: &PieceState,
+  fn svg_piece(&self, f: &mut Html, _gpc: &GPiece,
                pri: &PieceRenderInstructions) {
     self.svg_piece_raw(f, pri, &mut |_|Ok(()))?;
   }
   #[throws(IE)]
-  fn describe_html(&self, face: Option<FaceId>, _gpc: &PieceState) -> Html {
+  fn describe_html(&self, face: Option<FaceId>, _gpc: &GPiece) -> Html {
     Html(if_chain! {
       if let Some(face) = face;
       if let Some(colour) = self.colours.get(face);

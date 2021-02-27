@@ -77,7 +77,7 @@ pub struct ModifyingPieces(());
 #[derive(Debug,Serialize,Deserialize,Default)]
 #[serde(transparent)]
 pub struct GPieces(pub(in crate::global) ActualGPieces);
-type ActualGPieces = DenseSlotMap<PieceId, PieceState>;
+type ActualGPieces = DenseSlotMap<PieceId, GPiece>;
 
 #[derive(Debug)]
 pub struct Client {
@@ -519,7 +519,7 @@ impl<'ig> InstanceGuard<'ig> {
   /// caller is responsible for logging; threading it through
   /// proves the caller has a log entry.
   #[throws(MgmtError)]
-  pub fn player_new(&mut self, gnew: GPlayerState, inew: IPlayerState,
+  pub fn player_new(&mut self, gnew: GPlayer, inew: IPlayerState,
                     account: Arc<AccountName>, logentry: LogEntry)
                     -> (PlayerId, PreparedUpdateEntry, LogEntry) {
     // saving is fallible, but we can't attempt to save unless
@@ -595,7 +595,7 @@ impl<'ig> InstanceGuard<'ig> {
   pub fn players_remove(&mut self, old_players_set: &HashSet<PlayerId>)
                         ->
     Result<Vec<
-        (Option<GPlayerState>, Option<IPlayerState>, PreparedUpdateEntry)
+        (Option<GPlayer>, Option<IPlayerState>, PreparedUpdateEntry)
         >, InternalError>
   {
     // We have to filter this player out of everything
@@ -623,7 +623,7 @@ impl<'ig> InstanceGuard<'ig> {
       occults: default(),
     };
 
-    let held_by_old = |p: &PieceState| if_chain! {
+    let held_by_old = |p: &GPiece| if_chain! {
       if let Some(held) = p.held;
       if old_players_set.contains(&held);
       then { true }
@@ -1262,10 +1262,10 @@ impl IPieces {
 deref_to_field!{GPieces, ActualGPieces, 0}
 
 impl GPieces {
-  pub fn get_mut(&mut self, piece: PieceId) -> Option<&mut PieceState> {
+  pub fn get_mut(&mut self, piece: PieceId) -> Option<&mut GPiece> {
     self.0.get_mut(piece)
   }
-  pub fn values_mut(&mut self) -> sm::ValuesMut<PieceId, PieceState> {
+  pub fn values_mut(&mut self) -> sm::ValuesMut<PieceId, GPiece> {
     self.0.values_mut()
   }
   pub fn as_mut(&mut self, _: ModifyingPieces) -> &mut ActualGPieces {
@@ -1275,14 +1275,14 @@ impl GPieces {
 
 impl ById for GPieces {
   type Id = PieceId;
-  type Entry = PieceState;
+  type Entry = GPiece;
   type Error = OnlineError;
   #[throws(OE)]
-  fn byid(&self, piece: PieceId) -> &PieceState {
+  fn byid(&self, piece: PieceId) -> &GPiece {
     self.get(piece).ok_or(OE::PieceGone)?
   }
   #[throws(OE)]
-  fn byid_mut(&mut self, piece: PieceId) -> &mut PieceState {
+  fn byid_mut(&mut self, piece: PieceId) -> &mut GPiece {
     self.get_mut(piece).ok_or(OE::PieceGone)?
   }
 }
@@ -1293,8 +1293,8 @@ impl ById for GPieces {
   fn into_iter(self) -> Self::IntoIter { (&self.0).into_iter() }
 }*/
 impl<'p> IntoIterator for &'p mut GPieces {
-  type Item = (PieceId, &'p mut PieceState);
-  type IntoIter = sm::IterMut<'p, PieceId, PieceState>;
+  type Item = (PieceId, &'p mut GPiece);
+  type IntoIter = sm::IterMut<'p, PieceId, GPiece>;
   fn into_iter(self) -> Self::IntoIter { (&mut self.0).into_iter() }
 }
 
