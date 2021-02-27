@@ -316,11 +316,27 @@ impl Ctx {
     dbg!(&added);
     ensure_eq!(added.len(), 6);
   }
+
+  #[throws(AE)]
+  fn hidden_hand(&mut self) {
+    prepare_game(&self.ds, TABLE)?;
+    let mut session = self.connect_player(&self.alice)?;
+
+    let pieces = session.pieces()?;
+    let [hand] = pieces.into_iter()
+      .filter(|p| p.info["desc"] == "a hand repository")
+      .collect::<ArrayVec<[_;1]>>()
+      .into_inner().unwrap();
+    dbg!(hand);
+
+    session.synch(&mut self.su)?;
+  }
 }
 
 #[throws(AE)]
 fn tests(mut c: Ctx) {
   test!(c, "library-load", c.library_load()?);
+  test!(c, "hidden-hand", c.hidden_hand()?);
 }
 
 #[throws(AE)]
