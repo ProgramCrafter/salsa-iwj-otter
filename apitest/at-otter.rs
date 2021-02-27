@@ -303,9 +303,18 @@ impl Ctx {
     self.otter(&command)
       .expect("library-add failed after place!");
 
-    session.synch(&mut self.su)?;
-    // xxx send api requests to move markers
-    // run library-add again
+    let mut added = vec![];
+    session.synchx(&mut self.su,
+      |session, gen, k, v| if_chain! {
+        if k == "Piece";
+        let piece = v["piece"].as_str().unwrap().to_string();
+        let op = v["op"].as_object().unwrap();
+        if let Some(_) = op.get("Insert");
+        then { added.push(piece); }
+      }
+    )?;
+    dbg!(&added);
+    ensure_eq!(added.len(), 6);
   }
 }
 
