@@ -224,9 +224,9 @@ impl Session {
 
   #[throws(AE)]
   fn api_with_piece_op(&mut self, su: &SetupCore, piece: &str,
-                       opname: &str, op: serde_json::Value) {
+                       pathfrag: &str, op: serde_json::Value) {
     self.api_piece_op(su, piece, "grab", json!({}))?;
-    self.api_piece_op(su, piece, "m", op)?;
+    self.api_piece_op(su, piece, pathfrag, op)?;
     self.api_piece_op(su, piece, "ungrab", json!({}))?;
   }
 
