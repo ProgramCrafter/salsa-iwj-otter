@@ -148,7 +148,8 @@ pub trait Piece: Outline + Send + Debug {
                        _gpc: &PieceState) { }
 
   fn ui_operation(&self,
-                  _gs: &mut GameState, _player: PlayerId, _piece: PieceId,
+                  _gs: &mut GameState, _ipieces: &PiecesLoaded,
+                  _player: PlayerId, _piece: PieceId,
                   _opname: &str, _wrc: WhatResponseToClientOp)
                   -> PieceUpdateResult {
     throw!(OE::BadOperation)

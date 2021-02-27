@@ -127,8 +127,9 @@ impl Piece for Hand {
     })
   }
 
-  fn ui_operation(&self, gs: &mut GameState, player: PlayerId,
-                  piece: PieceId, opname: &str, wrc: WhatResponseToClientOp)
+  fn ui_operation(&self, gs: &mut GameState, _ipieces: &PiecesLoaded,
+                  player: PlayerId, piece: PieceId,
+                  opname: &str, wrc: WhatResponseToClientOp)
                   -> PieceUpdateResult {
     let gplayers = &mut gs.players;
     let gpc = gs.pieces.byid_mut(piece)?;

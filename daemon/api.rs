@@ -37,10 +37,10 @@ struct ApiPiece<O:ApiPieceOp> {
 
 struct ApiPieceOpArgs<'a> {
   gs: &'a mut GameState,
+  ipieces: &'a PiecesLoaded,
   player: PlayerId,
   piece: PieceId,
   p: &'a dyn Piece,
-  ipieces: &'a PiecesLoaded,
 }
 
 trait ApiPieceOp: Debug {
@@ -409,7 +409,7 @@ api_route!{
   }
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
-    let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
+    let ApiPieceOpArgs { gs,player,piece,p,ipieces, .. } = a;
     '_normal_global_ops__not_loop: loop {
       let pc = gs.pieces.byid_mut(piece)?;
       let gpl = gs.players.byid_mut(player)?;
@@ -439,7 +439,7 @@ api_route!{
       };
     }
 
-    p.ui_operation(gs, player, piece, &self.opname, self.wrc)?
+    p.ui_operation(gs, ipieces, player, piece, &self.opname, self.wrc)?
   }
 }
 
