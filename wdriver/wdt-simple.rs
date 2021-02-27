@@ -34,7 +34,7 @@ impl Ctx {
 
       let p1g_new = p1.posg()?;
       dbg!(p1g_old, p1g_new);
-      ensure!( p1g_new != p1g_old );
+      assert!( p1g_new != p1g_old );
 
       w.synch()?;
       p1g_new

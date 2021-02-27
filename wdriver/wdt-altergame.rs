@@ -28,10 +28,10 @@ impl Ctx {
         .iter()
         .filter(|(_e, txt)| txt == desc)
         .collect();
-      ensure!(relevant.len() == url.iter().len());
+      assert_eq!(relevant.len(), url.iter().len());
       if let Some(url) = url {
-        ensure!(relevant[0].0.get_attribute("href")?
-                .as_ref().map(|s| s.as_str()) == Some(url));
+        assert_eq!(relevant[0].0.get_attribute("href")?
+                   .as_ref().map(|s| s.as_str()), Some(url));
       }
       Ok::<_,AE>(())
     })()
