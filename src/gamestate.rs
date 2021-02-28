@@ -254,12 +254,14 @@ impl Debug for Html {
 
 impl VisiblePieceAngle {
   pub fn to_transform(self) -> VisibleAngleTransform {
+    VisibleAngleTransform(base_misc::raw_angle_transform(
+      self.to_compass().into()
+    ))
+  }
+
+  pub fn to_compass(self) -> CompassAngle {
     match self {
-      PieceAngle::Compass(angle) => VisibleAngleTransform(
-        base_misc::raw_angle_transform(
-          angle.into()
-        )
-      ),
+      PieceAngle::Compass(compass) => compass,
     }
   }
 }
