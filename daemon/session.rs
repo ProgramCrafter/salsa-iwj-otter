@@ -115,7 +115,7 @@ fn session_inner(form: Json<SessionForm>,
       let p = if let Some(p) = ig.ipieces.get(gpid) { p }
       else { continue /* was deleted */ };
       let defs = pri.make_defs(pr, p)?;
-      alldefs.push((pri.id, defs));
+      alldefs.push((pri.vpid, defs));
       let desc = pri.describe(&pr, p);
 
       let vangle = pri.angle(pr).to_compass();
@@ -131,7 +131,7 @@ fn session_inner(form: Json<SessionForm>,
       };
 
       let for_piece = SessionPieceContext {
-        id: pri.id,
+        id: pri.vpid,
         pos: pr.pos,
         info: serde_json::to_string(&for_info)
           .map_err(|e| InternalError::JSONEncode(e))?,

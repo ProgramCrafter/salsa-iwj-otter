@@ -355,7 +355,7 @@ impl PieceXDataExt for PieceXDataState {
 
 #[derive(Debug,Clone)]
 pub struct PieceRenderInstructions {
-  pub id: VisiblePieceId,
+  pub vpid: VisiblePieceId,
   pub occluded: PriOccluded,
 }
 
@@ -363,6 +363,10 @@ pub struct PieceRenderInstructions {
 pub enum PriOccluded { Visible /*, Occluded*/ }
 
 impl PieceRenderInstructions {
+  pub fn new_visible(vpid: VisiblePieceId) -> PieceRenderInstructions {
+    PieceRenderInstructions { vpid, occluded: PriOccluded::Visible }
+  }
+
   #[throws(IE)]
   pub fn make_defs<'p,P>(&self, gpc: &GPiece, p: &P) -> Html
     where P:Borrow<dyn PieceTrait + 'p>
@@ -382,12 +386,12 @@ impl PieceRenderInstructions {
     let transform = gpc.angle.to_transform();
     write!(&mut defs.0,
            r##"<g id="piece{}" transform="{}" data-dragraise="{}">"##,
-           pri.id, &transform.0, dragraise)?;
-    p.svg_piece(&mut defs, gpc, pri.id)?;
+           pri.vpid, &transform.0, dragraise)?;
+    p.svg_piece(&mut defs, gpc, pri.vpid)?;
     write!(&mut defs.0, r##"</g>"##)?;
     write!(&mut defs.0,
            r##"<path id="surround{}" d="{}"/>"##,
-           pri.id, p.surround_path()?.0)?;
+           pri.vpid, p.surround_path()?.0)?;
     defs
   }
   inner(self, gpc, p.borrow())?

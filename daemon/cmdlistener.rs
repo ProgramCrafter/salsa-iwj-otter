@@ -381,10 +381,10 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           if let Some(pinfo) = ig.ipieces.get(piece);
           let visible = if ! piece_at_all_occluded(&ig.gs.occults, piece) {
             // todo: something more sophisticated would be nice
-            let pri = PieceRenderInstructions {
-              id: VisiblePieceId(piece.data()),
-              occluded: PriOccluded::Visible,
-            };
+            let pri = PieceRenderInstructions::new_visible(
+              // visible id is internal one here
+              VisiblePieceId(piece.data())
+            );
             let bbox = pinfo.bbox_approx()?;
             let desc_html = pri.describe(p, pinfo);
             Some(MgmtGamePieceVisibleInfo {
@@ -564,10 +564,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let gs = &mut ig.gs;
       let pc = gs.pieces.as_mut(modperm).remove(piece);
       let desc_html = if let Some(pc) = &pc {
-        let pri = PieceRenderInstructions {
-          id: default(),
-          occluded: PriOccluded::Visible,
-        };
+        let pri = PieceRenderInstructions::new_visible(default());
         pri.describe(pc, &p)
       } else {
         Html::lit("<piece partially missing from game state!>")

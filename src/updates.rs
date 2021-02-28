@@ -508,7 +508,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     )?;
 
     PreparedPieceUpdate {
-      piece: pri.id,
+      piece: pri.vpid,
       op,
     }
   }
