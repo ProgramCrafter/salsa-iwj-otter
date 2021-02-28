@@ -93,8 +93,7 @@ fn preview(items: Vec<ItemForOutput>) {
     (||{
       let pc = spec.clone().load().context("load")?;
       let mut uos = vec![];
-      let gpc_dummy = GPiece::dummy();
-      pc.add_ui_operations(&mut uos, &gpc_dummy).context("add uos")?;
+      pc.add_ui_operations(&mut uos, &GPiece::dummy()).context("add uos")?;
       let uos = uos.into_iter().map(|uo| uo.opname).collect::<Vec<_>>();
       let spec = spec.clone();
 
@@ -120,8 +119,6 @@ fn preview(items: Vec<ItemForOutput>) {
   let max_facecols = pieces.iter().map(|s| s.face_cols()).max().unwrap_or(1);
   let max_uos = pieces.iter().map(|s| s.uos.len()).max().unwrap_or(0);
 
-  let gpc_dummy = GPiece::dummy();
-
   println!("{}", &HTML_PRELUDE);
   println!(r#"<table rules="all">"#);
   for s in &pieces {
@@ -132,7 +129,7 @@ fn preview(items: Vec<ItemForOutput>) {
     println!(r#"<th align="left"><kbd>{}</kbd></th>"#,
              Html::from_txt(&spec.item).0);
     println!(r#"<th align="left">{}</th>"#,
-             pc.describe_html(&gpc_dummy)?.0);
+             pc.describe_html(&GPiece::dummy())?.0);
     let only1 = s.face_cols() == 1;
 
     for facecol in 0..(if only1 { 1 } else { max_facecols }) {
