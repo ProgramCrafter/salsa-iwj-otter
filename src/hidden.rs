@@ -278,7 +278,11 @@ fn recalculate_occultation_general<
       )).transpose()?,
 
       goccults.occults.iter().find_map(|(occid, occ)| {
-        dbg!(if gpc.occult.active.is_some() { // xxx remove dbg!
+        dbg!(if gpc.pinned {
+          // Prevent pinned pieces being occulted.  What scrambling
+          // them etc. would mean is not entirely clear.
+          return None
+        } else if gpc.occult.active.is_some() { // xxx remove dbg!
           // prevent occulting pieces being occulted
           // (also prevents reflexive occultation)
           return None
