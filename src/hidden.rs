@@ -230,6 +230,8 @@ pub fn massage_prep_piecestate(
 
 // xxx prevent addpiece and removepiece in places that would be occulted
 // xxx this means this only happens on ungrab I think ?
+// xxx prevent occultation of pinned things / pinning of occulted things
+// xxx prevent occultation scrambling of grasped things
 
 #[throws(InternalError)]
 fn recalculate_occultation_general<
@@ -243,6 +245,7 @@ fn recalculate_occultation_general<
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
   ipieces: &IPieces,
+  to_recompute: &mut ToRecompute,
   piece: PieceId,
   // if no change, we return ret_vanilla(log_visible)
   log_visible: LD,
@@ -386,6 +389,7 @@ fn recalculate_occultation_general<
   (||{
     let mut update_pieces = |oni, upd: &dyn Fn(&mut _)| {
       if let Some(occid) = occids[oni] {
+        to_recompute.mark_dirty(occid);
         upd(&mut goccults.occults.get_mut(occid).unwrap().pieces);
       }
     };
@@ -407,8 +411,10 @@ pub fn recalculate_occultation_piece(
 )
   -> PieceUpdate
 {
-  recalculate_occultation_general(
-    &gs.players, &mut gs.pieces, &mut gs.occults, ipieces,
+  let mut to_recompute = ToRecompute::new();
+
+  let r = recalculate_occultation_general(
+    &gs.players, &mut gs.pieces, &mut gs.occults, ipieces, &mut to_recompute,
     piece, vanilla_log,
     |log| (vanilla_wrc, vanilla_op, log).into(),
     |old, new, show| vec![ LogEntry { html: Html(format!(
@@ -422,7 +428,11 @@ pub fn recalculate_occultation_piece(
       ops: PieceUpdateOps::PerPlayer(puos),
       log
     }
-  )?
+  );
+
+  to_recompute.implement(&gs.players, &mut gs.pieces, &mut gs.occults,
+                         ipieces);
+  r?
 }
 
 #[throws(IE)]
@@ -431,11 +441,12 @@ fn recalculate_occultation_ofmany(
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
   ipieces: &IPieces,
+  to_recompute: &mut ToRecompute,
   ppiece: PieceId,
   updates: &mut Vec<(PieceId, PieceUpdateOps)>,
 ){
   recalculate_occultation_general(
-    gplayers, gpieces, goccults, ipieces,
+    gplayers, gpieces, goccults, ipieces, to_recompute,
     ppiece,
     (), |_|(),
     |_,_,_|(), |puo_pp, ()|{
@@ -444,6 +455,36 @@ fn recalculate_occultation_ofmany(
   )?;
 }
 
+
+mod recompute {
+  use super::*;
+
+  #[derive(Debug)]
+  pub struct ToRecompute {
+    outdated: HashSet<OccId>,
+    implemented: bool,
+  }
+  impl Drop for ToRecompute { fn drop(&mut self) {
+    assert!(self.implemented);
+  } }
+
+  impl ToRecompute {
+    pub fn new() -> Self { ToRecompute {
+      outdated: default(),
+      implemented: false,
+    } }
+    pub fn mark_dirty(&mut self, occid: OccId) { self.outdated.insert(occid); }
+    pub fn implement(mut self,
+                     _gplayers: &GPlayers,
+                     _gpieces: &mut GPieces,
+                     _goccults: &mut GameOccults,
+                     _ipieces: &IPieces) {
+      dbg!(&self.outdated); // xxx
+      self.implemented = true;
+    }
+  }
+}
+use recompute::*;
 
 #[must_use]
 pub struct NascentOccultation(Occultation);
@@ -523,13 +564,16 @@ pub fn create_occultation(
 
   let occid = goccults.occults.insert(occultation);
   let mut updates = vec![];
-  (||{
+  let mut to_recompute = ToRecompute::new();
+
+  let r = (||{
     let ogpc = gpieces.get_mut(occulter).ok_or_else(
       ||internal_logic_error("occulter vanished"))?;
     ogpc.occult.active = Some(occid);
 
     for &ppiece in &recalc {
       recalculate_occultation_ofmany(gplayers, gpieces, goccults, ipieces,
+                                     &mut to_recompute,
                                      ppiece, &mut updates)?;
     }
 
@@ -543,7 +587,10 @@ pub fn create_occultation(
     ogpc.occult.active = None;
     goccults.occults.remove(occid).expect("inserted this earlier");
     e
-  })?;
+  });
+
+  to_recompute.implement(gplayers, gpieces, goccults, ipieces);
+  r?;
 
   updates
 }
@@ -582,6 +629,7 @@ pub fn remove_occultation(
   debug!("removing occultation {:?}", &occultation);
       
   let mut updates = vec![];
+  let mut to_recompute = ToRecompute::new();
 
   let pieces_fallback_buf;
   let pieces = if let Some(o) = &occultation { &o.pieces } else {
@@ -597,6 +645,7 @@ pub fn remove_occultation(
   
   for (&ppiece,_) in pieces.iter() {
     recalculate_occultation_ofmany(gplayers, gpieces, goccults, ipieces,
+                                   &mut to_recompute,
                                    ppiece, &mut updates)
       .unwrap_or_else(|e| {
         aggerr.record(e);
@@ -611,6 +660,8 @@ pub fn remove_occultation(
   } else {
     aggerr.record(internal_logic_error("removing occultation of non-piece"));
   }
+
+  to_recompute.implement(gplayers, gpieces, goccults, ipieces);
 
   aggerr.ok()?;
 
