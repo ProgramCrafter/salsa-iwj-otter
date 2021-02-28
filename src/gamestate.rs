@@ -19,10 +19,7 @@ pub struct Generation(pub u64);
 
 visible_slotmap_key!{ VisiblePieceId(b'.') }
 
-#[derive(Clone,Copy,Debug)]
-#[derive(Serialize,Deserialize)]
-#[serde(transparent)]
-pub struct VisiblePieceAngle(pub PieceAngle);
+type VisiblePieceAngle = PieceAngle;
 
 #[derive(Clone,Debug)]
 #[derive(Serialize,Deserialize)]
@@ -257,7 +254,7 @@ impl Debug for Html {
 
 impl VisiblePieceAngle {
   pub fn to_transform(self) -> VisibleAngleTransform {
-    match self.0 {
+    match self {
       PieceAngle::Compass(angle) => VisibleAngleTransform(
         base_misc::raw_angle_transform(
           angle.into()
@@ -356,7 +353,6 @@ impl PieceXDataExt for PieceXDataState {
 #[derive(Debug,Clone)]
 pub struct PieceRenderInstructions {
   pub id: VisiblePieceId,
-  pub angle: VisiblePieceAngle,
   pub occluded: PriOccluded,
 }
 
@@ -380,7 +376,7 @@ impl PieceRenderInstructions {
       Some(n) => n,
       None => -1,
     };
-    let transform = pri.angle.to_transform();
+    let transform = gpc.angle.to_transform();
     write!(&mut defs.0,
            r##"<g id="piece{}" transform="{}" data-dragraise="{}">"##,
            pri.id, &transform.0, dragraise)?;
@@ -414,6 +410,12 @@ impl PieceRenderInstructions {
   #[throws(IE)]
   pub fn describe_fallible(&self, gpc: &GPiece, p: &dyn PieceTrait) -> Html {
     p.describe_html(gpc)?
+  }
+
+  pub fn angle(&self, gpc: &GPiece) -> VisiblePieceAngle {
+    let PriOccluded::Visible = self.occluded;
+
+    gpc.angle
   }
 
   #[throws(InternalError)]

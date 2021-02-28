@@ -118,8 +118,8 @@ fn session_inner(form: Json<SessionForm>,
       alldefs.push((pri.id, defs));
       let desc = pri.describe(&pr, p);
 
-      let vangle = match pri.angle {
-        VisiblePieceAngle(PieceAngle::Compass(vangle)) => vangle,
+      let vangle = match pri.angle(pr) {
+        PieceAngle::Compass(vangle) => vangle,
       };
 
       let for_info = SessionPieceLoadJson {

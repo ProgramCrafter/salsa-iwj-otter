@@ -383,7 +383,6 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
             // todo: something more sophisticated would be nice
             let pri = PieceRenderInstructions {
               id: VisiblePieceId(piece.data()),
-              angle: VisiblePieceAngle(p.angle), // xxx
               occluded: PriOccluded::Visible,
             };
             let bbox = pinfo.bbox_approx()?;
@@ -567,7 +566,6 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let desc_html = if let Some(pc) = &pc {
         let pri = PieceRenderInstructions {
           id: default(),
-          angle: VisiblePieceAngle(pc.angle), // xxx
           occluded: PriOccluded::Visible,
         };
         pri.describe(pc, &p)
