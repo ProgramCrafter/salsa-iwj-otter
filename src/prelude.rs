@@ -11,7 +11,7 @@ pub use std::borrow::Borrow;
 pub use std::borrow::Cow;
 pub use std::cmp::{self, max, min, Ordering};
 pub use std::collections::VecDeque;
-pub use std::collections::{btree_set, BTreeSet};
+pub use std::collections::{btree_map, btree_set, BTreeMap, BTreeSet};
 pub use std::collections::{hash_map, HashMap, HashSet};
 pub use std::convert::{Infallible, TryFrom, TryInto};
 pub use std::env;
