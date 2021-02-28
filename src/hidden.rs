@@ -200,11 +200,12 @@ fn inner(
   inner(occults, player, gpl, piece, gpc, p.borrow())
 }
 
-pub fn piece_at_all_occulted(
-  _occults: &GameOccults, // xxx
-  _piece: PieceId, // xxx
-) -> bool {
-  false
+pub fn piece_at_all_occulted(gpc: &GPiece) -> bool {
+  gpc.occult.passive.is_some()
+}
+pub fn piece_involved_in_occultation(gpc: &GPiece) -> bool {
+  gpc.occult.passive.is_some() ||
+  gpc.occult.active.is_some()
 }
 
 pub fn vpiece_decode(
