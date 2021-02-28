@@ -530,11 +530,11 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     let gen = self.gen();
     let gs = &mut self.g.gs;
 
-    let mut pc = gs.pieces.byid_mut(piece).ok();
+    let mut gpc = gs.pieces.byid_mut(piece).ok();
     let p = self.g.ipieces.get(piece);
 
-    if let Some(ref mut pc) = pc {
-      gen_update(pc, gen, &self.by_client);
+    if let Some(ref mut gpc) = gpc {
+      gen_update(gpc, gen, &self.by_client);
     }
     let mut out: SecondarySlotMap<PlayerId, PreparedPieceUpdate> = default();
     for (player, gpl) in &mut gs.players {
@@ -545,11 +545,11 @@ impl<'r> PrepareUpdatesBuffer<'r> {
           None => continue,
         }
       };
-      let op = match (&mut pc, p) {
-        (Some(pc), Some(p)) => {
-          let pri = piece_pri(&gs.occults, player, gpl, piece, *pc);
+      let op = match (&mut gpc, p) {
+        (Some(gpc), Some(p)) => {
+          let pri = piece_pri(&gs.occults, player, gpl, piece, *gpc);
           Self::piece_update_player(
-            &mut gs.max_z, pc, p, ops, &pri
+            &mut gs.max_z, gpc, p, ops, &pri
           )?
         }
         _ => Some(PreparedPieceUpdate {
