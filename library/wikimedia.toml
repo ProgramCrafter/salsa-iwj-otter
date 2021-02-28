@@ -21,6 +21,8 @@ size = [45]
 centre = [22.5, 22.5]
 item_prefix = "chess-"
 stem_prefix = "Chess_"
+occulted.method = "ByColour"
+occulted.colour = "grey"
 
 files = """
 _c-P	plt45	a _colour pawn
