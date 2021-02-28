@@ -61,7 +61,7 @@ pub struct PlayerRecord {
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
-pub struct IPlayer {
+pub struct IPlayer { // usual variable: ipl
   pub acctid: AccountId,
   pub tokens_revealed: HashMap<TokenRevelationKey, TokenRevelationValue>,
   pub tz: Timezone,

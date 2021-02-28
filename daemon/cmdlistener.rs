@@ -376,24 +376,24 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
     MGI::ListPieces => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
       let pieces = ig.gs.pieces.iter().filter_map(
-        |(piece,p)| (|| Ok::<_,MgmtError>(if_chain!{
-          let &GPiece { pos, face, .. } = p;
-          if let Some(pinfo) = ig.ipieces.get(piece);
+        |(piece,gpc)| (|| Ok::<_,MgmtError>(if_chain!{
+          let &GPiece { pos, face, .. } = gpc;
+          if let Some(pto) = ig.ipieces.get(piece);
           let visible = if ! piece_at_all_occluded(&ig.gs.occults, piece) {
             // todo: something more sophisticated would be nice
             let pri = PieceRenderInstructions::new_visible(
               // visible id is internal one here
               VisiblePieceId(piece.data())
             );
-            let bbox = pinfo.bbox_approx()?;
-            let desc_html = pri.describe(p, pinfo);
+            let bbox = pto.bbox_approx()?;
+            let desc_html = pri.describe(gpc, pto);
             Some(MgmtGamePieceVisibleInfo {
               pos, face, desc_html, bbox
             })
           } else {
             None
           };
-          let itemname = pinfo.itemname().to_string();
+          let itemname = pto.itemname().to_string();
           then {
             Some(MgmtGamePieceInfo {
               piece, itemname,
@@ -559,17 +559,17 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
     MGI::DeletePiece(piece) => {
       let (ig, modperm, _) = cs.check_acl_modify_pieces(ag, ig)?;
-      let p = ig.ipieces.as_mut(modperm)
+      let pto = ig.ipieces.as_mut(modperm)
         .remove(piece).ok_or(ME::PieceNotFound)?;
       let gs = &mut ig.gs;
-      let pc = gs.pieces.as_mut(modperm).remove(piece);
-      let desc_html = if let Some(pc) = &pc {
+      let gpc = gs.pieces.as_mut(modperm).remove(piece);
+      let desc_html = if let Some(gpc) = &gpc {
         let pri = PieceRenderInstructions::new_visible(default());
-        pri.describe(pc, &p)
+        pri.describe(gpc, &pto)
       } else {
         Html::lit("<piece partially missing from game state!>")
       };
-      if let Some(pc) = pc { p.delete_hook(&pc, gs); }
+      if let Some(gpc) = gpc { pto.delete_hook(&gpc, gs); }
       (U{ pcs: vec![(piece, PieceUpdateOp::Delete())],
           log: vec![ LogEntry {
             html: Html(format!("A piece {} was removed from the game",

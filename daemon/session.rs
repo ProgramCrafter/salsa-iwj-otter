@@ -110,29 +110,29 @@ fn session_inner(form: Json<SessionForm>,
 
     pieces.sort_by_key(|(_,pr)| &pr.zlevel);
 
-    for (gpid, pr) in pieces {
-      let pri = piece_pri(&ig.gs.occults, player, gpl, gpid, pr);
-      let p = if let Some(p) = ig.ipieces.get(gpid) { p }
+    for (piece, gpc) in pieces {
+      let pri = piece_pri(&ig.gs.occults, player, gpl, piece, gpc);
+      let pto = if let Some(pto) = ig.ipieces.get(piece) { pto }
       else { continue /* was deleted */ };
-      let defs = pri.make_defs(pr, p)?;
+      let defs = pri.make_defs(gpc, pto)?;
       alldefs.push((pri.vpid, defs));
-      let desc = pri.describe(&pr, p);
+      let desc = pri.describe(&gpc, pto);
 
-      let vangle = pri.angle(pr).to_compass();
+      let vangle = pri.angle(gpc).to_compass();
 
       let for_info = SessionPieceLoadJson {
-        held: &pr.held,
-        z: pr.zlevel.z.clone(),
-        zg: pr.zlevel.zg,
-        pinned: pr.pinned,
+        held: &gpc.held,
+        z: gpc.zlevel.z.clone(),
+        zg: gpc.zlevel.zg,
+        pinned: gpc.pinned,
         angle: vangle,
         desc,
-        uos: &pri.ui_operations(pr, p.as_ref())?,
+        uos: &pri.ui_operations(gpc, pto.as_ref())?,
       };
 
       let for_piece = SessionPieceContext {
         id: pri.vpid,
-        pos: pr.pos,
+        pos: gpc.pos,
         info: serde_json::to_string(&for_info)
           .map_err(|e| InternalError::JSONEncode(e))?,
       };

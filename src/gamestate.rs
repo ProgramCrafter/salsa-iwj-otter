@@ -47,7 +47,7 @@ pub struct ZLevel {
 // ---------- game state ----------
 
 #[derive(Debug,Serialize,Deserialize)]
-pub struct GameState {
+pub struct GameState { // usual variable: gs
   pub table_colour: Colour,
   pub table_size: Pos,
   pub pieces: GPieces,
@@ -61,14 +61,14 @@ pub struct GameState {
 pub type GPlayers = DenseSlotMap<PlayerId, GPlayer>;
 
 #[derive(Debug,Serialize,Deserialize,Clone)]
-pub struct GPlayer {
+pub struct GPlayer { // usual variable: gpl
   pub nick: String,
   pub layout: PresentationLayout,
   pub idmap: PerPlayerIdMap,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-pub struct GPiece {
+pub struct GPiece{  // usual variable: gpc
   pub pos: Pos,
   pub face: FaceId,
   pub held: Option<PlayerId>,
@@ -131,7 +131,7 @@ pub struct UoDescription {
   pub wrc: WhatResponseToClientOp,
 }
 
-#[typetag::serde]
+#[typetag::serde] // usual variable: pto ("piece trait object")
 pub trait PieceTrait: OutlineTrait + Send + Debug {
   /// by convention, occult face is nfaces-1
   // xxx this is no good, we need a central definition of the occult
