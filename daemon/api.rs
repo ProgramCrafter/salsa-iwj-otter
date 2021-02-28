@@ -120,17 +120,17 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
 
   match (||{
     let p = ipieces.get(piece).ok_or(OnlineError::PieceGone)?;
-    let pc = gs.pieces.byid_mut(piece)?;
+    let gpc = gs.pieces.byid_mut(piece)?;
 
     let q_gen = form.gen;
     let u_gen =
-      if client == pc.lastclient { pc.gen_before_lastclient }
-      else { pc.gen };
+      if client == gpc.lastclient { gpc.gen_before_lastclient }
+      else { gpc.gen };
 
-    debug!("client={:?} pc.lastclient={:?} pc.gen_before={:?} pc.gen={:?} q_gen={:?} u_gen={:?}", &client, &pc.lastclient, &pc.gen_before_lastclient, &pc.gen, &q_gen, &u_gen);
+    debug!("client={:?} pc.lastclient={:?} pc.gen_before={:?} pc.gen={:?} q_gen={:?} u_gen={:?}", &client, &gpc.lastclient, &gpc.gen_before_lastclient, &gpc.gen, &q_gen, &u_gen);
 
     if u_gen > q_gen { throw!(PieceOpError::Conflict) }
-    form.op.check_held(pc,player)?;
+    form.op.check_held(gpc,player)?;
     let update =
       form.op.op_complex(ApiPieceOpArgs {
         gs, player, piece, ipieces,
@@ -229,15 +229,15 @@ api_route!{
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
     let gpl = gs.players.byid_mut(player)?;
-    let pc = gs.pieces.byid_mut(piece)?;
+    let gpc = gs.pieces.byid_mut(piece)?;
 
     let logents = log_did_to_piece(
-      &gs.occults, player, gpl, piece, pc, p,
+      &gs.occults, player, gpl, piece, gpc, p,
       "grasped"
     )?;
 
-    if pc.held.is_some() { throw!(OnlineError::PieceHeld) }
-    pc.held = Some(player);
+    if gpc.held.is_some() { throw!(OnlineError::PieceHeld) }
+    gpc.held = Some(player);
     
     let update = PieceUpdateOp::ModifyQuiet(());
 
@@ -260,19 +260,19 @@ api_route!{
     #[throws(ApiPieceOpError)]
     fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
       let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
-      let pc = gs.pieces.byid_mut(piece)?;
+      let gpc = gs.pieces.byid_mut(piece)?;
       let players = &mut gs.players;
-      let was = pc.held;
+      let was = gpc.held;
       let was = was.and_then(|p| players.get(p));
       let was = was.map(|was| htmlescape::encode_minimal(&was.nick));
 
       let gpl = players.byid_mut(player)?;
-      let pri = piece_pri(&gs.occults, player, gpl, piece, pc)
+      let pri = piece_pri(&gs.occults, player, gpl, piece, gpc)
         .ok_or(OE::PieceGone)?;
 
-      let pcs = pri.describe(pc, &p).0;
+      let pcs = pri.describe(gpc, &p).0;
 
-      pc.held = Some(player);
+      gpc.held = Some(player);
 
       let update = PieceUpdateOp::Modify(());
 
@@ -299,16 +299,16 @@ api_route!{
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p,ipieces, .. } = a;
     let gpl = gs.players.byid_mut(player).unwrap();
-    let pc = gs.pieces.byid_mut(piece).unwrap();
+    let gpc = gs.pieces.byid_mut(piece).unwrap();
 
     let (logents, who_by) = log_did_to_piece_whoby(
-      &gs.occults, player, gpl, piece, pc, p,
+      &gs.occults, player, gpl, piece, gpc, p,
       "released"
     )?;
     let who_by = who_by.ok_or(OE::PieceGone)?;
 
-    if pc.held != Some(player) { throw!(OnlineError::PieceHeld) }
-    pc.held = None;
+    if gpc.held != Some(player) { throw!(OnlineError::PieceHeld) }
+    gpc.held = None;
 
     let update = PieceUpdateOp::Modify(());
     let vanilla = (WhatResponseToClientOp::Predictable,
@@ -339,8 +339,8 @@ api_route!{
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     // xxx prevent restzcking anything that is occulting
     let ApiPieceOpArgs { gs,piece, .. } = a;
-    let pc = gs.pieces.byid_mut(piece).unwrap();
-    pc.zlevel = ZLevel { z: self.z.clone(), zg: gs.gen };
+    let gpc = gs.pieces.byid_mut(piece).unwrap();
+    gpc.zlevel = ZLevel { z: self.z.clone(), zg: gs.gen };
     let update = PieceUpdateOp::SetZLevel(());
     (WhatResponseToClientOp::Predictable,
      update, vec![]).into()
@@ -368,12 +368,12 @@ api_route!{
     #[throws(ApiPieceOpError)]
     fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
       let ApiPieceOpArgs { gs,piece, .. } = a;
-      let pc = gs.pieces.byid_mut(piece).unwrap();
+      let gpc = gs.pieces.byid_mut(piece).unwrap();
       let logents = vec![];
       match self.0.clamped(gs.table_size) {
-        Ok(pos) => pc.pos = pos,
+        Ok(pos) => gpc.pos = pos,
         Err(pos) => {
-          pc.pos = pos;
+          gpc.pos = pos;
           throw!(ApiPieceOpError::PartiallyProcessed(
             PieceOpError::PosOffTable,
             logents,
@@ -395,13 +395,13 @@ api_route!{
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
-    let pc = gs.pieces.byid_mut(piece).unwrap();
+    let gpc = gs.pieces.byid_mut(piece).unwrap();
     let gpl = gs.players.byid_mut(player).unwrap();
     let logents = log_did_to_piece(
-      &gs.occults, player, gpl, piece, pc, p,
+      &gs.occults, player, gpl, piece, gpc, p,
       "rotated"
     )?;
-    pc.angle = PieceAngle::Compass(self.0);
+    gpc.angle = PieceAngle::Compass(self.0);
     let update = PieceUpdateOp::Modify(());
     (WhatResponseToClientOp::Predictable,
      update, logents).into()
@@ -416,13 +416,13 @@ api_route!{
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
-    let pc = gs.pieces.byid_mut(piece).unwrap();
+    let gpc = gs.pieces.byid_mut(piece).unwrap();
     let gpl = gs.players.byid_mut(player).unwrap();
     let logents = log_did_to_piece(
-      &gs.occults, player, gpl, piece, pc, p,
-      if pc.pinned { "pinned" } else { "unpinned" },
+      &gs.occults, player, gpl, piece, gpc, p,
+      if gpc.pinned { "pinned" } else { "unpinned" },
     )?;
-    pc.pinned = self.0;
+    gpc.pinned = self.0;
     let update = PieceUpdateOp::Modify(());
     (WhatResponseToClientOp::Predictable,
      update, logents).into()
@@ -445,17 +445,17 @@ api_route!{
       let ApiPieceOpArgs { player,piece,p, .. } = a;
       let gs = &mut a.gs;
       '_normal_global_ops__not_loop: loop {
-        let pc = gs.pieces.byid_mut(piece)?;
+        let gpc = gs.pieces.byid_mut(piece)?;
         let gpl = gs.players.byid_mut(player)?;
         let _: Void = match (self.opname.as_str(), self.wrc) {
 
           ("flip", wrc@ WRC::UpdateSvg) => {
             let nfaces = p.nfaces();
             let logents = log_did_to_piece(
-              &gs.occults, player, gpl, piece, pc, p,
+              &gs.occults, player, gpl, piece, gpc, p,
               "flipped"
             )?;
-            pc.face = ((RawFaceId::from(pc.face) + 1) % nfaces).into();
+            gpc.face = ((RawFaceId::from(gpc.face) + 1) % nfaces).into();
             return ((
               wrc,
               PieceUpdateOp::Modify(()),
