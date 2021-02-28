@@ -134,12 +134,30 @@ pub struct GroupDetails {
   #[serde(default)]
   pub colours: HashMap<String, RecolourData>,
 
+  /// If specified, pieces in this group can be occulted.
+  pub occulted: Option<OccultationMethod>,
+
   /// One of `"Circle"` or `"Square"`, to define the outline shape.
   /// The size is taken from `size`.
   ///
   /// This value is a string, not some weird Rust type, despite
   /// what you see here.
   #[serde(flatten)] pub outline: Box<dyn shapelib::OutlineDefn>,
+}
+
+/// How pieces may be occulted.  Currently only one supported way.
+#[derive(Deserialize,Clone,Debug)]
+#[serde(tag="method")]
+pub enum OccultationMethod {
+  /// When occulted, display as a piece of a particular colour.
+  /// `colour` refers to one of the entries in
+  /// `GroupDetails::colours`.
+  ///
+  /// The description will be different too: `_colour` will be elided,
+  /// along with up to one of any spaces either side of it.
+  ByColour {
+    colour: String,
+  },
 }
 
 /// An entry in the `colours` table, specifying one recolouring.
