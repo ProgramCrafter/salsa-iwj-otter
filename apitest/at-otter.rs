@@ -329,11 +329,25 @@ impl Ctx {
     let mut session = self.connect_player(&self.alice)?;
 
     let pieces = session.pieces()?;
-    let [hand] = pieces.into_iter()
+
+    let [hand] = pieces.iter()
       .filter(|p| p.info["desc"] == otter::hand::UNCLAIMED_DESC)
       .collect::<ArrayVec<[_;1]>>()
       .into_inner().unwrap();
     dbg!(&hand);
+
+    let pawns: [_;2] = pieces.iter()
+      .filter(|p| p.info["desc"].as_str().unwrap().ends_with(" pawn"))
+      .take(2)
+      .collect::<ArrayVec<_>>()
+      .into_inner().unwrap();
+    dbg!(&pawns);
+
+    for (pawn, &xoffset) in izip!(&pawns, [-20,-10].iter()) {
+      session.api_with_piece_op(&self.su, &pawn.id, "m", json![
+        (hand.pos + PosC([xoffset, 0]))?.0
+      ])?;
+    }
 
     session.api_with_piece_op(&self.su, &hand.id, "k", json!({
       "opname": "claim",
