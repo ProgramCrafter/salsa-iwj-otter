@@ -267,7 +267,7 @@ api_route!{
       let was = was.map(|was| htmlescape::encode_minimal(&was.nick));
 
       let gpl = players.byid_mut(player)?;
-      let pri = piece_pri(&gs.occults, player, gpl, piece, gpc)
+      let pri = piece_pri(&gs.occults, player, gpl, piece, gpc, &p)
         .ok_or(OE::PieceGone)?;
 
       let pcs = pri.describe(gpc, &p).0;

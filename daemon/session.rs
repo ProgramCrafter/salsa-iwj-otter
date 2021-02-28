@@ -114,7 +114,7 @@ fn session_inner(form: Json<SessionForm>,
       let p = if let Some(pto) = ig.ipieces.get(piece) { pto }
       else { continue /* was deleted */ };
 
-      let pri = piece_pri(&ig.gs.occults, player, gpl, piece, gpc);
+      let pri = piece_pri(&ig.gs.occults, player, gpl, piece, gpc, p);
       let pri = if let Some(pri) = pri { pri } else { continue /*invisible*/};
 
       let defs = pri.make_defs(gpc, p)?;

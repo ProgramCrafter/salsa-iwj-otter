@@ -208,7 +208,7 @@ pub fn log_did_to_piece_whoby(
   did: &str,
 ) -> (Vec<LogEntry>, Option<Html>) {
   let who_by = Html(htmlescape::encode_minimal(&gpl.nick));
-  let pri = piece_pri(occults, player, gpl, piece, gpc)
+  let pri = piece_pri(occults, player, gpl, piece, gpc, &p)
     .ok_or(OE::PieceGone)?;
 
   let log = vec![ LogEntry { html: Html(format!(
@@ -547,7 +547,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       };
       let op = match (&mut gpc, p) {
         (Some(gpc), Some(p)) => {
-          let pri = piece_pri(&gs.occults, player, gpl, piece, *gpc);
+          let pri = piece_pri(&gs.occults, player, gpl, piece, *gpc, p);
           Self::piece_update_player(
             &mut gs.max_z, gpc, p, ops, &pri
           )?

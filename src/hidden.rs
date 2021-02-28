@@ -174,19 +174,26 @@ impl PerPlayerIdMap {
 // ========== public entrypoints ==========
 
 /// None => do not render at all
-pub fn piece_pri(
+pub fn piece_pri<'p, P:Borrow<dyn PieceTrait + 'p>>(
+  occults: &GameOccults,
+  player: PlayerId, gpl: &mut GPlayer,
+  piece: PieceId, gpc: &GPiece, p: &P,
+) -> Option<PieceRenderInstructions>
+{
+fn inner(
   _occults: &GameOccults, // xxx
-  player: PlayerId,
-  gpl: &mut GPlayer,
-  piece: PieceId,
-  gpc: &GPiece,
-) -> Option<PieceRenderInstructions> {
+  player: PlayerId, gpl: &mut GPlayer,
+  piece: PieceId, gpc: &GPiece, _p: &dyn PieceTrait,
+) -> Option<PieceRenderInstructions>
+{
   let vpid = gpl.idmap.fwd_or_insert(piece);
   let angle = gpc.angle;
   let occluded = PriOccluded::Visible; // xxx
   trace!("{} {:?} => {} angle={:?}",
          player, piece, vpid, angle);
   Some(PieceRenderInstructions { vpid, occluded })
+}
+  inner(occults, player, gpl, piece, gpc, p.borrow())
 }
 
 pub fn piece_at_all_occluded(
