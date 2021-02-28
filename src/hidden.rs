@@ -268,6 +268,7 @@ fn recalculate_occultation_general<
     struct Occulted<'o> { occid: OccId, occ: &'o Occultation }
 
     let occulteds: OldNew<Option<Occulted>> = [
+
       gpc.occult.passive.map(|occid| Ok::<_,IE>(
         Occulted {
           occid,
@@ -275,6 +276,7 @@ fn recalculate_occultation_general<
             || internal_logic_error("uccultation vanished"))?,
         }
       )).transpose()?,
+
       goccults.occults.iter().find_map(|(occid, occ)| {
         dbg!(if gpc.occult.active.is_some() { // xxx remove dbg!
           // prevent occulting pieces being occulted
@@ -286,6 +288,7 @@ fn recalculate_occultation_general<
           None
         })
       }),
+
     ].into();
 
     let occids = occulteds.map(|h| h.as_ref().map(|occ| occ.occid));
