@@ -552,11 +552,13 @@ impl<'r> PrepareUpdatesBuffer<'r> {
             &mut gs.max_z, gpc, p, ops, &pri
           )?
         }
-        _ => Some(PreparedPieceUpdate {
-          // The piece is deleted, so we can't leak anything.
-          piece: gpl.idmap.fwd_or_insert(piece),
-          op: PieceUpdateOp::Delete(),
-        })
+        _ => gpl.idmap.fwd(piece).map(
+          |vpid| PreparedPieceUpdate {
+            // The piece is deleted, so we can't leak anything.
+            piece: vpid,
+            op: PieceUpdateOp::Delete(),
+          }
+        )
       };
 
       if let Some(op) = op {
