@@ -379,7 +379,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         |(piece,gpc)| (|| Ok::<_,MgmtError>(if_chain!{
           let &GPiece { pos, face, .. } = gpc;
           if let Some(p) = ig.ipieces.get(piece);
-          let visible = if ! piece_at_all_occluded(&ig.gs.occults, piece) {
+          let visible = if ! piece_at_all_occulted(&ig.gs.occults, piece) {
             // todo: something more sophisticated would be nice
             let pri = PieceRenderInstructions::new_visible(
               // visible id is internal one here

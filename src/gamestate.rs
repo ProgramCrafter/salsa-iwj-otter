@@ -356,15 +356,15 @@ impl PieceXDataExt for PieceXDataState {
 #[derive(Debug,Clone)]
 pub struct PieceRenderInstructions {
   pub vpid: VisiblePieceId,
-  pub occluded: PriOccluded,
+  pub occulted: PriOcculted,
 }
 
 #[derive(Debug,Clone,Copy)]
-pub enum PriOccluded { Visible /*, Occluded*/ }
+pub enum PriOcculted { Visible /*, Occluded*/ }
 
 impl PieceRenderInstructions {
   pub fn new_visible(vpid: VisiblePieceId) -> PieceRenderInstructions {
-    PieceRenderInstructions { vpid, occluded: PriOccluded::Visible }
+    PieceRenderInstructions { vpid, occulted: PriOcculted::Visible }
   }
 
   #[throws(IE)]
@@ -375,7 +375,7 @@ impl PieceRenderInstructions {
     fn inner(pri: &PieceRenderInstructions, gpc: &GPiece, p: &dyn PieceTrait)
              -> Html
   {
-    let PriOccluded::Visible = pri.occluded;
+    let PriOcculted::Visible = pri.occulted;
 
     let mut defs = Html(String::new());
     let dragraise = match p.thresh_dragraise()? {
@@ -403,7 +403,7 @@ impl PieceRenderInstructions {
     fn inner(pri: &PieceRenderInstructions, gpc: &GPiece, p: &dyn PieceTrait)
              -> Html
   {
-    let PriOccluded::Visible = pri.occluded;
+    let PriOcculted::Visible = pri.occulted;
 
     pri.describe_fallible(gpc, p)
       .unwrap_or_else(|e| {
@@ -420,7 +420,7 @@ impl PieceRenderInstructions {
   }
 
   pub fn angle(&self, gpc: &GPiece) -> VisiblePieceAngle {
-    let PriOccluded::Visible = self.occluded;
+    let PriOcculted::Visible = self.occulted;
 
     gpc.angle
   }
@@ -429,7 +429,7 @@ impl PieceRenderInstructions {
   pub fn ui_operations(&self, gpc: &GPiece, p: &dyn PieceTrait)
                    -> Vec<UoDescription>
   {
-    let PriOccluded::Visible = self.occluded;
+    let PriOcculted::Visible = self.occulted;
     type WRC = WhatResponseToClientOp;
 
     let mut out = vec![];

@@ -192,15 +192,15 @@ fn inner(
 {
   let vpid = gpl.idmap.fwd_or_insert(piece);
   let angle = gpc.angle;
-  let occluded = PriOccluded::Visible; // xxx
+  let occulted = PriOcculted::Visible; // xxx
   trace!("{} {:?} => {} angle={:?}",
          player, piece, vpid, angle);
-  Some(PieceRenderInstructions { vpid, occluded })
+  Some(PieceRenderInstructions { vpid, occulted })
 }
   inner(occults, player, gpl, piece, gpc, p.borrow())
 }
 
-pub fn piece_at_all_occluded(
+pub fn piece_at_all_occulted(
   _occults: &GameOccults, // xxx
   _piece: PieceId, // xxx
 ) -> bool {
