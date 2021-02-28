@@ -207,6 +207,10 @@ pub fn piece_involved_in_occultation(gpc: &GPiece) -> bool {
   gpc.occult.passive.is_some() ||
   gpc.occult.active.is_some()
 }
+#[throws(OE)]
+pub fn forbid_piece_involved_in_occultation(gpc: &GPiece) {
+  if piece_involved_in_occultation(&gpc) { throw!(OE::Occultation) }
+}
 
 pub fn vpiece_decode(
   _gs: &GameState, // xxx
@@ -231,7 +235,6 @@ pub fn massage_prep_piecestate(
 
 // xxx prevent addpiece and removepiece in places that would be occulted
 // xxx this means this only happens on ungrab I think ?
-// xxx prevent occultation of pinned things / pinning of occulted things
 // xxx prevent occultation scrambling of grasped things
 
 #[throws(InternalError)]

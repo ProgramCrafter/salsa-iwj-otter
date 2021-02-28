@@ -26,6 +26,8 @@ pub enum OnlineError {
   BadOperation,
   #[error("overlapping occultation")]
   OverlappingOccultation,
+  #[error("piece is occulting, or occulted")]
+  Occultation,
 }
 from_instance_lock_error!{OnlineError}
 

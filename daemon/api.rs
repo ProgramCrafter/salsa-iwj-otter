@@ -77,7 +77,7 @@ impl From<&OnlineErrorResponse> for rocket::http::Status {
       NoClient | NoPlayer(_) | GameBeingDestroyed
         => Status::NotFound,
       OE::PieceHeld | OE::PieceGone |
-      OE::OverlappingOccultation
+      OE::OverlappingOccultation | OE::Occultation
         => Status::Conflict,
       InvalidZCoord | BadOperation | BadJSON(_)
         => Status::BadRequest,
@@ -422,6 +422,7 @@ api_route!{
       &gs.occults, player, gpl, piece, gpc, p,
       if gpc.pinned { "pinned" } else { "unpinned" },
     )?;
+    forbid_piece_involved_in_occultation(&gpc)?;
     gpc.pinned = self.0;
     let update = PieceUpdateOp::Modify(());
     (WhatResponseToClientOp::Predictable,
