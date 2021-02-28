@@ -77,6 +77,10 @@ impl<T> OldNew<T> {
   pub fn iter(&self) -> impl Iterator<Item=&T> {
     self.0.iter()
   }
+
+  pub fn into_iter(self) -> impl Iterator<Item=T> {
+    std::array::IntoIter::new(self.0)
+  }
 }
 
 impl<T> Index<OldNewIndex> for OldNew<T> {
