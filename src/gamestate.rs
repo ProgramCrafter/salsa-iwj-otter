@@ -155,12 +155,19 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
 
   fn describe_html(&self, gpc: &GPiece) -> Result<Html,IE>;
 
+  fn occultable(&self) -> Option<&dyn OccultedPieceTrait> { None }
+
   fn delete_hook(&self, _p: &GPiece, _gs: &mut GameState)
                  -> ExecuteGameChangeUpdates { 
     ExecuteGameChangeUpdates{ pcs: vec![], log: vec![], raw: None }
   }
 
   fn itemname(&self) -> &str;
+}
+
+pub trait OccultedPieceTrait: OutlineTrait + 'static {
+  fn svg(&self, f: &mut Html, id: VisiblePieceId) -> Result<(),IE>;
+  fn describe_html(&self) -> Result<Html,IE>;
 }
 
 #[derive(Debug)]
