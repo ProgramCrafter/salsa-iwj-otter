@@ -38,10 +38,8 @@ impl PieceXData for HandState { }
 impl OutlineTrait for Hand {
   delegate!{
     to self.shape {
-      fn outline_path(&self, _pri: &PieceRenderInstructions, scale: f64)
-                       -> Result<Html,IE>;
-      fn thresh_dragraise(&self, _pri: &PieceRenderInstructions)
-                          -> Result<Option<Coord>,IE>;
+      fn outline_path(&self, scale: f64) -> Result<Html,IE>;
+      fn thresh_dragraise(&self) -> Result<Option<Coord>,IE>;
       fn bbox_approx(&self) -> Result<[Pos;2], IE>;
     }
   }

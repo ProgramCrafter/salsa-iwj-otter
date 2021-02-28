@@ -143,10 +143,8 @@ impl ItemEnquiryData {
 }
 
 impl OutlineTrait for Item { delegate! { to self.outline {
-  fn outline_path(&self, pri: &PieceRenderInstructions, scale: f64)
-                  -> Result<Html, IE>;
-  fn thresh_dragraise(&self, pri: &PieceRenderInstructions)
-                      -> Result<Option<Coord>, IE>;
+  fn outline_path(&self, scale: f64) -> Result<Html, IE>;
+  fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
   fn bbox_approx(&self) -> Result<[Pos; 2], IE>;
 }}}
 
@@ -498,11 +496,11 @@ pub struct Circle { pub diam: f64 }
 
 impl OutlineTrait for Circle {
   #[throws(IE)]
-  fn outline_path(&self, _pri: &PieceRenderInstructions, scale: f64) -> Html {
+  fn outline_path(&self, scale: f64) -> Html {
     svg_circle_path(self.diam * scale)?
   }
   #[throws(IE)]
-  fn thresh_dragraise(&self, _pri: &PieceRenderInstructions) -> Option<Coord> {
+  fn thresh_dragraise(&self) -> Option<Coord> {
     Some((self.diam * 0.5) as Coord)
   }
   #[throws(IE)]
@@ -540,13 +538,12 @@ pub struct Rectangle { pub xy: PosC<f64> }
 
 impl OutlineTrait for Rectangle {
   #[throws(IE)]
-  fn outline_path(&self, _pri: &PieceRenderInstructions, scale: f64) -> Html {
+  fn outline_path(&self, scale: f64) -> Html {
     let xy = (self.xy * scale)?;
     svg_rectangle_path(xy)?
   }
   #[throws(IE)]
-  fn thresh_dragraise(&self, _pri: &PieceRenderInstructions)
-                      -> Option<Coord> {
+  fn thresh_dragraise(&self) -> Option<Coord> {
     let smallest: f64 = self.xy.0.iter().cloned()
       .map(OrderedFloat::from).min().unwrap().into();
     Some((smallest * 0.5) as Coord)

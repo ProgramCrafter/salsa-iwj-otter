@@ -169,7 +169,7 @@ fn preview(items: Vec<ItemForOutput>) {
           .join(" ");
         let wh = size.iter().map(|&s| s * SVG_SCALE)
           .collect::<Vec<_>>();
-        let surround = pc.surround_path(&pri)?;
+        let surround = pc.surround_path()?;
         print!(r#"<svg xmlns="http://www.w3.org/2000/svg"
                        viewBox="{}" width={} height={}>"#,
                &viewport, wh[0], wh[1]);

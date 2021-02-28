@@ -112,13 +112,11 @@ impl_downcast!(PieceXData);
 
 #[enum_dispatch]
 pub trait OutlineTrait: Send + Debug {
-  fn outline_path(&self, pri: &PieceRenderInstructions, scale: f64)
-          -> Result<Html, IE>;
-  fn surround_path(&self, pri: &PieceRenderInstructions) -> Result<Html, IE> {
-    self.outline_path(pri, SELECT_SCALE)
+  fn outline_path(&self, scale: f64) -> Result<Html, IE>;
+  fn surround_path(&self) -> Result<Html, IE> {
+    self.outline_path(SELECT_SCALE)
   }
-  fn thresh_dragraise(&self, pri: &PieceRenderInstructions)
-                      -> Result<Option<Coord>, IE>;
+  fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
   fn bbox_approx(&self) -> Result<[Pos;2], IE>;
 }
 
@@ -379,7 +377,7 @@ impl PieceRenderInstructions {
     let PriOccluded::Visible = pri.occluded;
 
     let mut defs = Html(String::new());
-    let dragraise = match p.thresh_dragraise(pri)? {
+    let dragraise = match p.thresh_dragraise()? {
       Some(n) if n < 0 => throw!(SvgE::NegativeDragraise),
       Some(n) => n,
       None => -1,
@@ -392,7 +390,7 @@ impl PieceRenderInstructions {
     write!(&mut defs.0, r##"</g>"##)?;
     write!(&mut defs.0,
            r##"<path id="surround{}" d="{}"/>"##,
-           pri.id, p.surround_path(pri)?.0)?;
+           pri.id, p.surround_path()?.0)?;
     defs
   }
   inner(self, gpc, p.borrow())?

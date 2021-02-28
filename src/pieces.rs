@@ -117,10 +117,8 @@ impl<Desc, Outl> OutlineTrait for GenericSimpleShape<Desc, Outl>
 {
   delegate! {
     to self.outline {
-      fn outline_path(&self, _pri: &PieceRenderInstructions, scale: f64)
-                       -> Result<Html,IE>;
-      fn thresh_dragraise(&self, _pri: &PieceRenderInstructions)
-                          -> Result<Option<Coord>,IE>;
+      fn outline_path(&self, scale: f64) -> Result<Html,IE>;
+      fn thresh_dragraise(&self) -> Result<Option<Coord>,IE>;
       fn bbox_approx(&self) -> Result<[Pos;2], IE>;
     }
   }
@@ -211,7 +209,7 @@ impl<Desc, Outl> GenericSimpleShape<Desc, Outl>
         write!(f, "{}", otherwise)
       }
     };
-    let path = self.outline_path(pri, 1.0)?;
+    let path = self.outline_path(1.0)?;
 
     if self.colours.len() == 0 {
       write!(f,
