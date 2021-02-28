@@ -231,14 +231,15 @@ api_route!{
     let gpl = gs.players.byid_mut(player)?;
     let pc = gs.pieces.byid_mut(piece)?;
 
+    let logents = log_did_to_piece(
+      &gs.occults, player, gpl, piece, pc, p,
+      "grasped"
+    )?;
+
     if pc.held.is_some() { throw!(OnlineError::PieceHeld) }
     pc.held = Some(player);
     
     let update = PieceUpdateOp::ModifyQuiet(());
-    let logents = log_did_to_piece(
-      &gs.occults, player, gpl, piece, pc, p,
-      "grasped"
-    );
 
     (WhatResponseToClientOp::Predictable,
      update, logents).into()
@@ -303,7 +304,7 @@ api_route!{
     let (logents, who_by) = log_did_to_piece_whoby(
       &gs.occults, player, gpl, piece, pc, p,
       "released"
-    );
+    )?;
     let who_by = who_by.ok_or(OE::PieceGone)?;
 
     if pc.held != Some(player) { throw!(OnlineError::PieceHeld) }
@@ -396,11 +397,11 @@ api_route!{
     let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let gpl = gs.players.byid_mut(player).unwrap();
-    pc.angle = PieceAngle::Compass(self.0);
     let logents = log_did_to_piece(
       &gs.occults, player, gpl, piece, pc, p,
       "rotated"
-    );
+    )?;
+    pc.angle = PieceAngle::Compass(self.0);
     let update = PieceUpdateOp::Modify(());
     (WhatResponseToClientOp::Predictable,
      update, logents).into()
@@ -417,12 +418,12 @@ api_route!{
     let ApiPieceOpArgs { gs,player,piece,p, .. } = a;
     let pc = gs.pieces.byid_mut(piece).unwrap();
     let gpl = gs.players.byid_mut(player).unwrap();
-    pc.pinned = self.0;
-    let update = PieceUpdateOp::Modify(());
     let logents = log_did_to_piece(
       &gs.occults, player, gpl, piece, pc, p,
       if pc.pinned { "pinned" } else { "unpinned" },
-    );
+    )?;
+    pc.pinned = self.0;
+    let update = PieceUpdateOp::Modify(());
     (WhatResponseToClientOp::Predictable,
      update, logents).into()
   }
@@ -450,14 +451,15 @@ api_route!{
 
           ("flip", wrc@ WRC::UpdateSvg) => {
             let nfaces = p.nfaces();
+            let logents = log_did_to_piece(
+              &gs.occults, player, gpl, piece, pc, p,
+              "flipped"
+            )?;
             pc.face = ((RawFaceId::from(pc.face) + 1) % nfaces).into();
             return ((
               wrc,
               PieceUpdateOp::Modify(()),
-              log_did_to_piece(
-                &gs.occults, player, gpl, piece, pc, p,
-                "flipped"
-              ),
+              logents,
             ).into(), vec![])
           },
 

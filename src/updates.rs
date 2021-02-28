@@ -199,6 +199,7 @@ struct FormattedLogEntry<'u> {
 
 // ---------- helpful utilities ----------
 
+#[throws(OE)]
 pub fn log_did_to_piece_whoby(
   occults: &GameOccults,
   player: PlayerId,
@@ -207,19 +208,19 @@ pub fn log_did_to_piece_whoby(
   did: &str,
 ) -> (Vec<LogEntry>, Option<Html>) {
   let who_by = Html(htmlescape::encode_minimal(&gpl.nick));
-  if let Some(pri) = piece_pri(occults, player, gpl, piece, pc) {
-    let log = vec![ LogEntry { html: Html(format!(
-      "{} {} {}",
-      &who_by.0,
-      did,
-      pri.describe(pc, &p).0,
-    ))}];
-    (log, Some(who_by))
-  } else {
-    (vec![], None)
-  }
+  let pri = piece_pri(occults, player, gpl, piece, pc)
+    .ok_or(OE::PieceGone)?;
+
+  let log = vec![ LogEntry { html: Html(format!(
+    "{} {} {}",
+    &who_by.0,
+    did,
+    pri.describe(pc, &p).0,
+  ))}];
+  (log, Some(who_by))
 }
 
+#[throws(OE)]
 pub fn log_did_to_piece(
   occults: &GameOccults,
   player: PlayerId,
@@ -227,7 +228,7 @@ pub fn log_did_to_piece(
   piece: PieceId, pc: &GPiece, p: &dyn PieceTrait,
   did: &str,
 ) -> Vec<LogEntry> {
-  log_did_to_piece_whoby(occults,player,gpl,piece,pc,p,did).0
+  log_did_to_piece_whoby(occults,player,gpl,piece,pc,p,did)?.0
 }
 
 // ---------- prepared updates, queued in memory ----------
