@@ -1032,6 +1032,7 @@ type PreparedPieceState = {
   z: ZCoord,
   zg: Generation,
   pinned: boolean,
+  angle: number,
   uos: UoDescription[],
 }
 
@@ -1061,6 +1062,7 @@ function piece_modify(piece: PieceId, p: PieceInfo, info: PreparedPieceState,
   p.uelem.setAttributeNS(null, "y", info.pos[1]+"");
   p.held = info.held;
   p.pinned = info.pinned;
+  p.angle = info.angle;
   p.uos = info.uos;
   piece_set_zlevel(piece,p, (oldtop_piece)=>{
     p.z  = info.z;

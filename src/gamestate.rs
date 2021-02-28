@@ -278,6 +278,7 @@ impl GPiece {
       svg        : pri.make_defs(self, &p)?,
       z          : self.zlevel.z.clone(),
       zg         : self.zlevel.zg,
+      angle      : pri.angle(self).to_compass(),
       pinned     : self.pinned,
       uos        : pri.ui_operations(self, p)?,
     }

@@ -83,6 +83,7 @@ pub struct PreparedPieceState {
   pub held: Option<PlayerId>,
   pub z: ZCoord,
   pub zg: Generation,
+  pub angle: CompassAngle,
   pub pinned: bool,
   pub uos: Vec<UoDescription>,
 }
