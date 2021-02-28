@@ -183,9 +183,10 @@ pub fn piece_pri(
   let vpiece = gpl.idmap.fwd_or_insert(piece);
   let angle = VisiblePieceAngle(pc.angle);
   let face = pc.face;
+  let occluded = PriOccluded::Visible; // xxx
   trace!("{} {:?} => {} face={:?} angle={:?}",
          player, piece, vpiece, face, angle);
-  PieceRenderInstructions { id: vpiece, angle, face }
+  PieceRenderInstructions { id: vpiece, angle, face, occluded }
 }
 
 pub fn piece_at_all_occluded(

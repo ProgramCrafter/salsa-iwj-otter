@@ -211,7 +211,7 @@ pub fn log_did_to_piece_whoby(
     "{} {} {}",
     &who_by.0,
     did,
-    p.describe_pri(pc, &pri).0,
+    pri.describe(pc, &p).0,
   ))}];
   (log, who_by)
 }

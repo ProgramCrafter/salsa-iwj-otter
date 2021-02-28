@@ -137,7 +137,8 @@ fn preview(items: Vec<ItemForOutput>) {
     let getpri = |face: FaceId| PieceRenderInstructions {
       id: default(),
       angle: VisiblePieceAngle(default()),
-      face
+      face,
+      occluded: PriOccluded::Visible,
     };
 
     for facecol in 0..(if only1 { 1 } else { max_facecols }) {

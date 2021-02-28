@@ -114,9 +114,9 @@ fn session_inner(form: Json<SessionForm>,
       let pri = piece_pri(&ig.gs.occults, player, gpl, gpid, pr);
       let p = if let Some(p) = ig.ipieces.get(gpid) { p }
       else { continue /* was deleted */ };
-      let defs = p.make_defs(pr, &pri)?;
+      let defs = pri.make_defs(pr, p)?;
       alldefs.push((pri.id, defs));
-      let desc = p.describe_pri(&pr, &pri);
+      let desc = pri.describe(&pr, p);
 
       let vangle = match pri.angle {
         VisiblePieceAngle(PieceAngle::Compass(vangle)) => vangle,
@@ -129,7 +129,7 @@ fn session_inner(form: Json<SessionForm>,
         pinned: pr.pinned,
         angle: vangle,
         desc,
-        uos: &p.ui_operations(pr)?,
+        uos: &pri.ui_operations(pr, p.as_ref())?,
       };
 
       let for_piece = SessionPieceContext {

@@ -177,13 +177,6 @@ pub struct ApiPieceOpArgs<'a> {
   pub p: &'a dyn PieceTrait,
 }
 
-#[derive(Debug,Clone)]
-pub struct PieceRenderInstructions {
-  pub id: VisiblePieceId,
-  pub angle: VisiblePieceAngle,
-  pub face: FaceId,
-}
-
 #[typetag::serde(tag="type")]
 pub trait PieceSpec: Debug {
   fn count(&self) -> usize { 1 }
@@ -286,11 +279,11 @@ impl GPiece {
     PreparedPieceState {
       pos        : self.pos,
       held       : self.held,
-      svg        : p.make_defs(self, pri)?,
+      svg        : pri.make_defs(self, &p)?,
       z          : self.zlevel.z.clone(),
       zg         : self.zlevel.zg,
       pinned     : self.pinned,
-      uos        : p.ui_operations(self)?,
+      uos        : pri.ui_operations(self, p)?,
     }
   }
 
@@ -363,22 +356,30 @@ impl PieceXDataExt for PieceXDataState {
   }
 }
 
-pub trait PieceExt {
-  fn make_defs(&self, gpc: &GPiece, pri: &PieceRenderInstructions)
-               -> Result<Html, IE>;
-  fn describe_html_infallible(&self, face: Option<FaceId>, gpc: &GPiece)
-                              -> Html;
-  fn describe_pri(&self, gpc: &GPiece, pri: &PieceRenderInstructions)
-                  -> Html;
-  fn ui_operations(&self, gpc: &GPiece) -> Result<Vec<UoDescription>, IE>;
+#[derive(Debug,Clone)]
+pub struct PieceRenderInstructions {
+  pub id: VisiblePieceId,
+  pub angle: VisiblePieceAngle,
+  pub face: FaceId,
+  pub occluded: PriOccluded,
 }
 
-impl<T> PieceExt for T where T: PieceTrait + ?Sized {
+#[derive(Debug,Clone,Copy)]
+pub enum PriOccluded { Visible /*, Occluded*/ }
+
+impl PieceRenderInstructions {
   #[throws(IE)]
-  fn make_defs(&self,  gpc: &GPiece, pri: &PieceRenderInstructions)
-               -> Html {
+  pub fn make_defs<'p,P>(&self, gpc: &GPiece, p: &P) -> Html
+    where P:Borrow<dyn PieceTrait + 'p>
+  {
+    #[throws(IE)]
+    fn inner(pri: &PieceRenderInstructions, gpc: &GPiece, p: &dyn PieceTrait)
+             -> Html
+  {
+    let PriOccluded::Visible = pri.occluded;
+
     let mut defs = Html(String::new());
-    let dragraise = match self.thresh_dragraise(pri)? {
+    let dragraise = match p.thresh_dragraise(pri)? {
       Some(n) if n < 0 => throw!(SvgE::NegativeDragraise),
       Some(n) => n,
       None => -1,
@@ -387,34 +388,47 @@ impl<T> PieceExt for T where T: PieceTrait + ?Sized {
     write!(&mut defs.0,
            r##"<g id="piece{}" transform="{}" data-dragraise="{}">"##,
            pri.id, &transform.0, dragraise)?;
-    self.svg_piece(&mut defs, gpc, &pri)?;
+    p.svg_piece(&mut defs, gpc, pri)?;
     write!(&mut defs.0, r##"</g>"##)?;
     write!(&mut defs.0,
            r##"<path id="surround{}" d="{}"/>"##,
-           pri.id, self.surround_path(&pri)?.0)?;
+           pri.id, p.surround_path(pri)?.0)?;
     defs
   }
+  inner(self, gpc, p.borrow())?
+  }
 
-  fn describe_html_infallible(&self, face: Option<FaceId>, gpc: &GPiece)
-                              -> Html {
-    self.describe_html(face, gpc)
+  pub fn describe<'p,P>(&self, gpc: &GPiece, p: &P) -> Html
+    where P:Borrow<dyn PieceTrait + 'p>
+  {
+    fn inner(pri: &PieceRenderInstructions, gpc: &GPiece, p: &dyn PieceTrait)
+             -> Html
+  {
+    let PriOccluded::Visible = pri.occluded;
+
+    pri.describe_fallible(gpc, p)
       .unwrap_or_else(|e| {
         error!("error describing piece: {:?}", e);
         Html::lit("<internal error describing piece>")
       })
   }
+  inner(self, gpc, p.borrow())
+  }
 
-  fn describe_pri(&self, gpc: &GPiece, pri: &PieceRenderInstructions)
-                  -> Html {
-    self.describe_html_infallible(Some(pri.face), gpc)
+  #[throws(IE)]
+  pub fn describe_fallible(&self, gpc: &GPiece, p: &dyn PieceTrait) -> Html {
+    p.describe_html(Some(gpc.face), gpc)?
   }
 
   #[throws(InternalError)]
-  fn ui_operations(&self, gpc: &GPiece) -> Vec<UoDescription> {
+  pub fn ui_operations(&self, gpc: &GPiece, p: &dyn PieceTrait)
+                   -> Vec<UoDescription>
+  {
+    let PriOccluded::Visible = self.occluded;
     type WRC = WhatResponseToClientOp;
 
     let mut out = vec![];
-    if self.nfaces() > 1 {
+    if p.nfaces() > 1 {
       out.push(UoDescription {
         wrc: WRC::UpdateSvg,
         kind: UoKind::Global,
@@ -423,7 +437,7 @@ impl<T> PieceExt for T where T: PieceTrait + ?Sized {
         desc: Html::lit("flip"),
       })
     }
-    self.add_ui_operations(&mut out, gpc)?;
+    p.add_ui_operations(&mut out, gpc)?;
     out
   }
 }

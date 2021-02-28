@@ -267,7 +267,7 @@ api_route!{
 
       let gpl = players.byid_mut(player)?;
       let pri = piece_pri(&gs.occults, player, gpl, piece, pc);
-      let pcs = p.describe_pri(pc, &pri).0;
+      let pcs = pri.describe(pc, &p).0;
 
       pc.held = Some(player);
 

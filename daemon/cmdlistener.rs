@@ -379,16 +379,23 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         |(piece,p)| (|| Ok::<_,MgmtError>(if_chain!{
           let &GPiece { pos, face, .. } = p;
           if let Some(pinfo) = ig.ipieces.get(piece);
-          let desc_html = pinfo.describe_html_infallible(None, p);
-          let itemname = pinfo.itemname().to_string();
-          let bbox = pinfo.bbox_approx()?;
           let visible = if ! piece_at_all_occluded(&ig.gs.occults, piece) {
+            // todo: something more sophisticated would be nice
+            let pri = PieceRenderInstructions {
+              id: VisiblePieceId(piece.data()),
+              angle: VisiblePieceAngle(p.angle), // xxx
+              face: default(),
+              occluded: PriOccluded::Visible,
+            };
+            let bbox = pinfo.bbox_approx()?;
+            let desc_html = pri.describe(p, pinfo);
             Some(MgmtGamePieceVisibleInfo {
               pos, face, desc_html, bbox
             })
           } else {
             None
           };
+          let itemname = pinfo.itemname().to_string();
           then {
             Some(MgmtGamePieceInfo {
               piece, itemname,
@@ -559,7 +566,13 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let gs = &mut ig.gs;
       let pc = gs.pieces.as_mut(modperm).remove(piece);
       let desc_html = if let Some(pc) = &pc {
-        p.describe_html_infallible(Some(default()), pc)
+        let pri = PieceRenderInstructions {
+          id: default(),
+          face: default(),
+          angle: VisiblePieceAngle(pc.angle), // xxx
+          occluded: PriOccluded::Visible,
+        };
+        pri.describe(pc, &p)
       } else {
         Html::lit("<piece partially missing from game state!>")
       };
