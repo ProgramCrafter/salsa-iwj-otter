@@ -153,9 +153,8 @@ impl PieceTrait for Item {
   fn nfaces(&self) -> RawFaceId { self.faces.len().try_into().unwrap() }
 
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, _gpc: &GPiece,
-               pri: &PieceRenderInstructions) {
-    let face = &self.faces[pri.face];
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _vpid: VisiblePieceId) {
+    let face = &self.faces[gpc.face];
     let svgd = &self.svgs[face.svg];
     write!(&mut f.0,
            r##"<g transform="scale({} {}) translate({} {})">{}</g>"##,
@@ -163,11 +162,8 @@ impl PieceTrait for Item {
            svgd.0)?;
   }
   #[throws(IE)]
-  fn describe_html(&self, face: Option<FaceId>, _gpc: &GPiece) -> Html {
-    self.descs[ match face {
-      Some(face) => self.faces[face].desc,
-      None => self.desc_hidden,
-    }].clone()
+  fn describe_html(&self, gpc: &GPiece) -> Html {
+    self.descs[ self.faces[gpc.face].desc ].clone()
   }
 
   fn itemname(&self) -> &str { &self.itemname }
@@ -264,7 +260,7 @@ impl Contents {
       let ier = ItemEnquiryData {
         itemname: k.clone(),
         f0bbox,
-        f0desc: loaded.describe_html(Some(default()), &GPiece::dummy())?,
+        f0desc: loaded.describe_html(&GPiece::dummy())?,
       };
       out.push(ier);
     }

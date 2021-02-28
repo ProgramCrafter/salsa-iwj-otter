@@ -336,7 +336,7 @@ fn recalculate_occultation_general<
       let bad = || internal_error_bydebug(&("missing", opiece, h.occid));
       let oipc = ipieces.get(opiece).ok_or_else(bad)?;
       let ogpc = gpieces.get(opiece).ok_or_else(bad)?;
-      Ok::<_,IE>(oipc.describe_html(None, ogpc)?)
+      Ok::<_,IE>(oipc.describe_html(ogpc)?)
     };
 
     let most_obscure = most_obscure.unwrap_or(&OccK::Visible); // no players!
@@ -353,8 +353,8 @@ fn recalculate_occultation_general<
         log_visible
       }
       OccK::Scrambled | OccK::Displaced{..} => {
-        let face = ipc.nfaces() - 1; // xxx use other thing entirely
-        let show = ipc.describe_html(Some(face.into()), gpc)?;
+        let _face = ipc.nfaces() - 1; // xxx use other thing entirely
+        let show = ipc.describe_html(gpc)?;
         call_log_callback(Some(&show))?
       },
       OccK::Invisible => {

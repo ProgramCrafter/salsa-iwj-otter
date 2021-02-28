@@ -132,14 +132,8 @@ fn preview(items: Vec<ItemForOutput>) {
     println!(r#"<th align="left"><kbd>{}</kbd></th>"#,
              Html::from_txt(&spec.item).0);
     println!(r#"<th align="left">{}</th>"#,
-             pc.describe_html(None, &gpc_dummy)?.0);
+             pc.describe_html(&gpc_dummy)?.0);
     let only1 = s.face_cols() == 1;
-    let getpri = |face: FaceId| PieceRenderInstructions {
-      id: default(),
-      angle: VisiblePieceAngle(default()),
-      face,
-      occluded: PriOccluded::Visible,
-    };
 
     for facecol in 0..(if only1 { 1 } else { max_facecols }) {
       let (face, inseveral) = if s.want_several() {
@@ -160,7 +154,6 @@ fn preview(items: Vec<ItemForOutput>) {
              });
       println!(r#">"#);
       if face < (pc.nfaces() as usize) {
-        let pri = getpri(face.into());
         let viewport =
           [bbox[0].clone(), size.clone()]
           .iter().cloned()
@@ -180,7 +173,8 @@ fn preview(items: Vec<ItemForOutput>) {
                  &surround.0, &dasharray.0, HELD_SURROUND_COLOUR);
         }
         let mut html = Html("".into());
-        pc.svg_piece(&mut html, &gpc_dummy, &pri)?;
+        let gpc = GPiece { face: face.into(), ..GPiece::dummy() };
+        pc.svg_piece(&mut html, &gpc, default())?;
         println!("{}</svg>", html.0);
       }
       println!("</td>");

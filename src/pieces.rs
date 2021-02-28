@@ -128,14 +128,13 @@ impl<Desc, Outl> OutlineTrait for GenericSimpleShape<Desc, Outl>
 #[typetag::serde]
 impl PieceTrait for SimpleShape {
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, _gpc: &GPiece,
-               pri: &PieceRenderInstructions) {
-    self.svg_piece_raw(f, pri, &mut |_|Ok(()))?;
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _vpid: VisiblePieceId) {
+    self.svg_piece_raw(f, gpc.face, &mut |_|Ok(()))?;
   }
   #[throws(IE)]
-  fn describe_html(&self, face: Option<FaceId>, _gpc: &GPiece) -> Html {
+  fn describe_html(&self, gpc: &GPiece) -> Html {
     Html(if_chain! {
-      if let Some(face) = face;
+      if let face = gpc.face;
       if let Some(colour) = self.colours.get(face);
       then { format!("a {} {}", colour.0, self.desc.0) }
       else { format!("a {}", self.desc.0) }
@@ -198,12 +197,12 @@ impl<Desc, Outl> GenericSimpleShape<Desc, Outl>
 
   #[throws(IE)]
   pub fn svg_piece_raw(
-    &self, f: &mut Html, pri: &PieceRenderInstructions,
+    &self, f: &mut Html, face: FaceId,
     stroke_attrs_hook: &mut dyn FnMut(&mut String) -> Result<(),IE>,
   ) {
     let f = &mut f.0;
     let ef = |f: &mut String, cmap: &ColourMap, attrname: &str, otherwise| {
-      if let Some(colour) = cmap.get(pri.face) {
+      if let Some(colour) = cmap.get(face) {
         write!(f, r##" {}="{}""##, attrname, colour.0)
       } else {
         write!(f, "{}", otherwise)

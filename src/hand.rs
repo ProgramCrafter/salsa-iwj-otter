@@ -85,9 +85,8 @@ impl Hand {
 impl PieceTrait for Hand {
   fn nfaces(&self) -> RawFaceId { 1 }
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
-               pri: &PieceRenderInstructions) {
-    self.shape.svg_piece_raw(f, pri, &mut |f: &mut String| {
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _vpid: VisiblePieceId) {
+    self.shape.svg_piece_raw(f, gpc.face, &mut |f: &mut String| {
       if_chain!{
         if let Some(xdata) = gpc.xdata.get::<HandState>()?;
         if let Some(owned) = &xdata.owner;
@@ -99,7 +98,7 @@ impl PieceTrait for Hand {
   }
 
   #[throws(IE)]
-  fn describe_html(&self, _face: Option<FaceId>, gpc: &GPiece) -> Html {
+  fn describe_html(&self, gpc: &GPiece) -> Html {
     let xdata = gpc.xdata.get()?;
     self.describe_html_inner(xdata)
   }

@@ -153,10 +153,9 @@ pub trait PieceTrait: OutlineTrait + Send + Debug {
 
   // #[throws] doesn't work here - fehler #todo
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
-               pri: &PieceRenderInstructions) -> Result<(),IE>;
+               id: VisiblePieceId) -> Result<(),IE>;
 
-  fn describe_html(&self, face: Option<FaceId>, gpc: &GPiece)
-                   -> Result<Html,IE>;
+  fn describe_html(&self, gpc: &GPiece) -> Result<Html,IE>;
 
   fn delete_hook(&self, _p: &GPiece, _gs: &mut GameState)
                  -> ExecuteGameChangeUpdates { 
@@ -386,7 +385,7 @@ impl PieceRenderInstructions {
     write!(&mut defs.0,
            r##"<g id="piece{}" transform="{}" data-dragraise="{}">"##,
            pri.id, &transform.0, dragraise)?;
-    p.svg_piece(&mut defs, gpc, pri)?;
+    p.svg_piece(&mut defs, gpc, pri.id)?;
     write!(&mut defs.0, r##"</g>"##)?;
     write!(&mut defs.0,
            r##"<path id="surround{}" d="{}"/>"##,
@@ -415,7 +414,7 @@ impl PieceRenderInstructions {
 
   #[throws(IE)]
   pub fn describe_fallible(&self, gpc: &GPiece, p: &dyn PieceTrait) -> Html {
-    p.describe_html(Some(gpc.face), gpc)?
+    p.describe_html(gpc)?
   }
 
   #[throws(InternalError)]
