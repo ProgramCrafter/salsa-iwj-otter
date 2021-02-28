@@ -204,7 +204,7 @@ pub fn log_did_to_piece_whoby(
   occults: &GameOccults,
   player: PlayerId,
   gpl: &mut GPlayer,
-  piece: PieceId, gpc: &GPiece, pto: &dyn PieceTrait,
+  piece: PieceId, gpc: &GPiece, p: &dyn PieceTrait,
   did: &str,
 ) -> (Vec<LogEntry>, Option<Html>) {
   let who_by = Html(htmlescape::encode_minimal(&gpl.nick));
@@ -215,7 +215,7 @@ pub fn log_did_to_piece_whoby(
     "{} {} {}",
     &who_by.0,
     did,
-    pri.describe(gpc, &pto).0,
+    pri.describe(gpc, &p).0,
   ))}];
   (log, Some(who_by))
 }
@@ -225,10 +225,10 @@ pub fn log_did_to_piece(
   occults: &GameOccults,
   player: PlayerId,
   gpl: &mut GPlayer,
-  piece: PieceId, gpc: &GPiece, pto: &dyn PieceTrait,
+  piece: PieceId, gpc: &GPiece, p: &dyn PieceTrait,
   did: &str,
 ) -> Vec<LogEntry> {
-  log_did_to_piece_whoby(occults,player,gpl,piece,gpc,pto,did)?.0
+  log_did_to_piece_whoby(occults,player,gpl,piece,gpc,p,did)?.0
 }
 
 // ---------- prepared updates, queued in memory ----------

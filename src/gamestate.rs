@@ -131,7 +131,7 @@ pub struct UoDescription {
   pub wrc: WhatResponseToClientOp,
 }
 
-#[typetag::serde] // usual variable: pto ("piece trait object")
+#[typetag::serde] // usual variable: p
 pub trait PieceTrait: OutlineTrait + Send + Debug {
   /// by convention, occult face is nfaces-1
   // xxx this is no good, we need a central definition of the occult

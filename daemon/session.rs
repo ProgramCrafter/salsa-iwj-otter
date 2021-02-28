@@ -111,15 +111,15 @@ fn session_inner(form: Json<SessionForm>,
     pieces.sort_by_key(|(_,pr)| &pr.zlevel);
 
     for (piece, gpc) in pieces {
-      let pto = if let Some(pto) = ig.ipieces.get(piece) { pto }
+      let p = if let Some(pto) = ig.ipieces.get(piece) { pto }
       else { continue /* was deleted */ };
 
       let pri = piece_pri(&ig.gs.occults, player, gpl, piece, gpc);
       let pri = if let Some(pri) = pri { pri } else { continue /*invisible*/};
 
-      let defs = pri.make_defs(gpc, pto)?;
+      let defs = pri.make_defs(gpc, p)?;
       alldefs.push((pri.vpid, defs));
-      let desc = pri.describe(&gpc, pto);
+      let desc = pri.describe(&gpc, p);
 
       let vangle = pri.angle(gpc).to_compass();
 
@@ -130,7 +130,7 @@ fn session_inner(form: Json<SessionForm>,
         pinned: gpc.pinned,
         angle: vangle,
         desc,
-        uos: &pri.ui_operations(gpc, pto.as_ref())?,
+        uos: &pri.ui_operations(gpc, p.as_ref())?,
       };
 
       let for_piece = SessionPieceContext {
