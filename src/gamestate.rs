@@ -357,7 +357,6 @@ impl PieceXDataExt for PieceXDataState {
 pub struct PieceRenderInstructions {
   pub id: VisiblePieceId,
   pub angle: VisiblePieceAngle,
-  pub face: FaceId,
   pub occluded: PriOccluded,
 }
 
