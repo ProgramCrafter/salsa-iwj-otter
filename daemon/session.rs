@@ -111,9 +111,12 @@ fn session_inner(form: Json<SessionForm>,
     pieces.sort_by_key(|(_,pr)| &pr.zlevel);
 
     for (piece, gpc) in pieces {
-      let pri = piece_pri(&ig.gs.occults, player, gpl, piece, gpc);
       let pto = if let Some(pto) = ig.ipieces.get(piece) { pto }
       else { continue /* was deleted */ };
+
+      let pri = piece_pri(&ig.gs.occults, player, gpl, piece, gpc);
+      let pri = if let Some(pri) = pri { pri } else { continue /*invisible*/};
+
       let defs = pri.make_defs(gpc, pto)?;
       alldefs.push((pri.vpid, defs));
       let desc = pri.describe(&gpc, pto);

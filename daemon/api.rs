@@ -266,7 +266,9 @@ api_route!{
       let was = was.map(|was| htmlescape::encode_minimal(&was.nick));
 
       let gpl = players.byid_mut(player)?;
-      let pri = piece_pri(&gs.occults, player, gpl, piece, pc);
+      let pri = piece_pri(&gs.occults, player, gpl, piece, pc)
+        .ok_or(OE::PieceGone)?;
+
       let pcs = pri.describe(pc, &p).0;
 
       pc.held = Some(player);
@@ -298,15 +300,16 @@ api_route!{
     let gpl = gs.players.byid_mut(player).unwrap();
     let pc = gs.pieces.byid_mut(piece).unwrap();
 
-    if pc.held != Some(player) { throw!(OnlineError::PieceHeld) }
-    pc.held = None;
-
-    let update = PieceUpdateOp::Modify(());
     let (logents, who_by) = log_did_to_piece_whoby(
       &gs.occults, player, gpl, piece, pc, p,
       "released"
     );
+    let who_by = who_by.ok_or(OE::PieceGone)?;
 
+    if pc.held != Some(player) { throw!(OnlineError::PieceHeld) }
+    pc.held = None;
+
+    let update = PieceUpdateOp::Modify(());
     let vanilla = (WhatResponseToClientOp::Predictable,
                    update,
                    logents);

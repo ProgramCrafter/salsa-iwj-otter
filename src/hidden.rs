@@ -173,19 +173,20 @@ impl PerPlayerIdMap {
 
 // ========== public entrypoints ==========
 
+/// None => do not render at all
 pub fn piece_pri(
   _occults: &GameOccults, // xxx
   player: PlayerId,
   gpl: &mut GPlayer,
   piece: PieceId,
   pc: &GPiece,
-) -> PieceRenderInstructions {
+) -> Option<PieceRenderInstructions> {
   let vpid = gpl.idmap.fwd_or_insert(piece);
   let angle = pc.angle;
   let occluded = PriOccluded::Visible; // xxx
   trace!("{} {:?} => {} angle={:?}",
          player, piece, vpid, angle);
-  PieceRenderInstructions { vpid, occluded }
+  Some(PieceRenderInstructions { vpid, occluded })
 }
 
 pub fn piece_at_all_occluded(

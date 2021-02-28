@@ -205,16 +205,19 @@ pub fn log_did_to_piece_whoby(
   gpl: &mut GPlayer,
   piece: PieceId, pc: &GPiece, p: &dyn PieceTrait,
   did: &str,
-) -> (Vec<LogEntry>, Html) {
+) -> (Vec<LogEntry>, Option<Html>) {
   let who_by = Html(htmlescape::encode_minimal(&gpl.nick));
-  let pri = piece_pri(occults, player, gpl, piece, pc);
-  let log = vec![ LogEntry { html: Html(format!(
-    "{} {} {}",
-    &who_by.0,
-    did,
-    pri.describe(pc, &p).0,
-  ))}];
-  (log, who_by)
+  if let Some(pri) = piece_pri(occults, player, gpl, piece, pc) {
+    let log = vec![ LogEntry { html: Html(format!(
+      "{} {} {}",
+      &who_by.0,
+      did,
+      pri.describe(pc, &p).0,
+    ))}];
+    (log, Some(who_by))
+  } else {
+    (vec![], None)
+  }
 }
 
 pub fn log_did_to_piece(
@@ -491,9 +494,11 @@ impl<'r> PrepareUpdatesBuffer<'r> {
                          pc: &mut GPiece,
                          p: &Box<dyn PieceTrait>,
                          op: PieceUpdateOp<(),()>,
-                         pri: &PieceRenderInstructions)
-                         -> PreparedPieceUpdate
+                         pri: &Option<PieceRenderInstructions>)
+                         -> Option<PreparedPieceUpdate>
   {
+    let pri = match pri { Some(pri) => pri, None => return None };
+
     max_z.update_max(&pc.zlevel.z);
 
     let op = op.try_map(
@@ -507,10 +512,10 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       }
     )?;
 
-    PreparedPieceUpdate {
+    Some(PreparedPieceUpdate {
       piece: pri.vpid,
       op,
-    }
+    })
   }
 
 
@@ -546,14 +551,16 @@ impl<'r> PrepareUpdatesBuffer<'r> {
             &mut gs.max_z, pc, p, ops, &pri
           )?
         }
-        _ => PreparedPieceUpdate {
+        _ => Some(PreparedPieceUpdate {
           // The piece is deleted, so we can't leak anything.
           piece: gpl.idmap.fwd_or_insert(piece),
           op: PieceUpdateOp::Delete(),
-        }
+        })
       };
 
-      out.insert(player, op);
+      if let Some(op) = op {
+        out.insert(player, op);
+      }
     }
 
     PreparedUpdateEntry_Piece {
