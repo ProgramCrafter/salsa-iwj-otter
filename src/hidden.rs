@@ -21,14 +21,14 @@ pub struct GameOccults {
 // kept in synch with Occultation::pieces
 pub struct PieceOccult {
   active: Option<OccId>, // kept in synch with Occultation::occulter
-  passive: Option<OccId>, // kept in synch with Occultation::pieces
+  passive: Option<(OccId, Notch)>, // kept in synch with Occultation::pieces
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
 pub struct Occultation {
   region: Area, // automatically affect pieces here
   occulter: PieceId, // kept in synch with PieceOccult::active
-  pieces: BTreeSet<PieceId>, // kept in synch with PieceOccult::passive
+  notches: Notches, // kept in synch with PieceOccult::passive
   #[serde(flatten)] views: OccultationViews,
 }
 
@@ -173,6 +173,78 @@ mod vpid {
       self.fwd_or_insert_internal(piece, |vis|vis, |occ| *occ.get())
     }
   }
+
+  pub type NotchNumber = usize;
+
+  define_index_type!{
+    pub struct Notch = NotchNumber;
+  }
+
+  type NotchPtr = Option<Notch>;
+
+  #[derive(Clone,Copy,Debug,Serialize,Deserialize)]
+  enum NotchRecord {
+    Free(NotchPtr),
+    Piece(PieceId),
+  }
+  type NR = NotchRecord;
+
+  #[derive(Clone,Debug,Serialize,Deserialize,Default)]
+  pub struct Notches {
+    freelist: NotchPtr,
+    table: IndexVec<Notch, NotchRecord>,
+  }
+
+  impl Notches {
+    pub fn iter<'i>(&'i self) -> impl Iterator<Item=PieceId> + 'i {
+      self.table.iter()
+        .filter_map(|nr| match nr {
+          NR::Free(_) => None,
+          &NR::Piece(p) => Some(p),
+        })
+    }
+
+    /// correctness: piece must not already be in this `Notches`
+    pub fn insert(&mut self, piece: PieceId) -> Notch {
+      let new = NR::Piece(piece);
+      match self.freelist.take() {
+        None => {
+          self.table.push(new)
+        },
+        Some(u) => {
+          self.freelist = match self.table[u] {
+            NR::Free(n) => n,
+            NR::Piece(_) => panic!(),
+          };
+          self.table[u] = new;
+          u
+        },
+      }
+    }
+
+    #[throws(IE)]
+    pub fn remove(&mut self, piece: PieceId, notch: Notch) {
+      match self.table.get(notch) {
+        Some(&NR::Piece(p)) if p == piece => { },
+        _ => throw!(internal_error_bydebug(&(piece, notch, self))),
+      }
+      {
+        let mut insert_here = &mut self.freelist;
+        loop {
+          let next = *insert_here;
+          let next = if let Some(y) = next { y } else { break };
+          if notch < next { break }
+          if notch == next { panic!() };
+          let next = &mut self.table[next];
+          insert_here =
+            if let NR::Free(f) = next { f } else { panic!() };
+        }
+        // Now either *insert_here==NULL or notch < insert_here->next
+        let old_next = mem::replace(insert_here, Some(notch));
+        self.table[notch] = NR::Free(old_next);
+      }
+    }
+  }
 }
 
 pub use vpid::*;
@@ -264,44 +336,67 @@ fn recalculate_occultation_general<
 )
   -> RD
 {
+  #[derive(Debug,Copy,Clone)]
+  struct OldNewOcculteds<O> {
+    old: Option<(O, Notch)>,
+    new: Option<O>,
+  }
+  impl<O> OldNewOcculteds<O> {
+    fn main(&self) -> OldNew<Option<O>> where O:Copy {
+      [ self.old.map(|(o,_n)| o), self.new ].into()
+    }
+    fn map<P, F:FnMut(O) -> P>(self, mut f: F) -> OldNewOcculteds<P> {
+      OldNewOcculteds {
+        old: self.old.map(|(o,n)| (f(o), n)),
+        new: self.new.map(f),
+      }
+    }
+    fn as_refs(&self) -> OldNewOcculteds<&O> {
+      OldNewOcculteds {
+        old: self.old.as_ref().map(|(o,n)| (o, *n)),
+        new: self.new.as_ref()
+      }
+    }
+  }
+
   // fallible part
-  let (puos, log, occids): (_, _, OldNew<Option<OccId>>) = {
+  let (puos, log, occulteds): (_, _, OldNewOcculteds<OccId>) = {
     let nopiece = || internal_logic_error("piece vanished");
     let ipc = ipieces.get(piece).ok_or_else(nopiece)?;
     let gpc = gpieces.get(piece).ok_or_else(nopiece)?;
 
-    #[derive(Debug)]
+    #[derive(Debug,Copy,Clone)]
     struct Occulted<'o> { occid: OccId, occ: &'o Occultation }
 
-    let occulteds: OldNew<Option<Occulted>> = [
+    let occulteds = OldNewOcculteds {
+      old:
+        gpc.occult.passive.map(|(occid, notch)| Ok::<_,IE>((
+          Occulted {
+            occid,
+            occ: goccults.occults.get(occid).ok_or_else(
+              || internal_logic_error("uccultation vanished"))?,
+          },
+          notch,
+        ))).transpose()?,
 
-      gpc.occult.passive.map(|occid| Ok::<_,IE>(
-        Occulted {
-          occid,
-          occ: goccults.occults.get(occid).ok_or_else(
-            || internal_logic_error("uccultation vanished"))?,
-        }
-      )).transpose()?,
-
-      goccults.occults.iter().find_map(|(occid, occ)| {
-        dbg!(if gpc.pinned {
-          // Prevent pinned pieces being occulted.  What scrambling
-          // them etc. would mean is not entirely clear.
-          return None
-        } else if gpc.occult.active.is_some() { // xxx remove dbg!
-          // prevent occulting pieces being occulted
-          // (also prevents reflexive occultation)
-          return None
-        } else if occ.in_region(gpc.pos) {
-          Some(Occulted { occid, occ })
-        } else {
-          None
-        })
-      }),
-
-    ].into();
-
-    let occids = occulteds.map(|h| h.as_ref().map(|occ| occ.occid));
+      new:
+        goccults.occults.iter().find_map(|(occid, occ)| {
+          dbg!(if gpc.pinned {
+            // Prevent pinned pieces being occulted.  What scrambling
+            // them etc. would mean is not entirely clear.
+            return None
+          } else if gpc.occult.active.is_some() { // xxx remove dbg!
+            // prevent occulting pieces being occulted
+            // (also prevents reflexive occultation)
+            return None
+          } else if occ.in_region(gpc.pos) {
+            Some(Occulted { occid, occ })
+          } else {
+            None
+          })
+        }),
+    };
+    let occids = occulteds.main().map(|h| h.as_ref().map(|occ| occ.occid));
     if occids.old() == occids.new() { return ret_vanilla(log_visible); }
 
   /*
@@ -317,7 +412,7 @@ fn recalculate_occultation_general<
     for (player, _gpl) in gplayers {
       situations
         .entry(
-          occulteds.as_refs().map(|occulted| {
+          occulteds.main().map(|occulted| {
             if let Some(occulted) = occulted {
               occulted.occ.get_kind(player)
             } else {
@@ -357,7 +452,8 @@ fn recalculate_occultation_general<
     }
 
     let describe_occulter = |oni| {
-      let h = occulteds[oni].as_ref().ok_or_else(
+      let h = occulteds.as_refs().main()[oni];
+      let h = h.as_ref().ok_or_else(
         || internal_logic_error("most obscure not obscure"))?;
       let opiece = h.occ.occulter;
       let bad = || internal_error_bydebug(&("missing", opiece, h.occid));
@@ -389,9 +485,7 @@ fn recalculate_occultation_general<
       },
     };
 
-    let occids = occulteds.map(|h| h.as_ref().map(|h| h.occid));
-    
-    (puos, log, occids)
+    (puos, log, occulteds.map(|h| h.occid))
   };
   
   // point of no return
@@ -400,15 +494,27 @@ fn recalculate_occultation_general<
   // xxx and/or shuffle locations
 
   (||{
-    let mut update_pieces = |oni, upd: &dyn Fn(&mut _)| {
-      if let Some(occid) = occids[oni] {
-        to_recompute.mark_dirty(occid);
-        upd(&mut goccults.occults.get_mut(occid).unwrap().pieces);
-      }
+    let notches:
+       &mut dyn for<'g> FnMut(&'g mut GameOccults, OccId) -> &mut Notches
+      = &mut |goccults, occid|
+      // rust-lang/rust/issues/58525
+    {
+      to_recompute.mark_dirty(occid);
+      &mut goccults.occults.get_mut(occid).unwrap().notches
     };
-    update_pieces(ONI::Old, &|opcs|{ opcs.remove(&piece); });
-    update_pieces(ONI::New, &|opcs|{ opcs.insert(piece); });
-    gpieces.byid_mut(piece).unwrap().occult.passive = *occids.new();
+    if let Some((occid, old_notch)) = occulteds.old {
+      notches(goccults, occid)
+        .remove(piece, old_notch)
+        .unwrap()
+    };
+    let passive = if let Some(occid) = occulteds.new {
+      let notch = notches(goccults, occid)
+        .insert(piece);
+      Some((occid, notch))
+    } else {
+      None
+    };
+    gpieces.byid_mut(piece).unwrap().occult.passive = passive;
   })(); // <- no ?, infallible commitment
 
   ret_callback(puos, log)
@@ -568,7 +674,7 @@ pub fn create_occultation(
     region,
     occulter,
     views,
-    pieces: default(),
+    notches: default(),
   };
   debug!("creating occultation {:?}", &occultation);
 
@@ -644,16 +750,16 @@ pub fn remove_occultation(
   let mut updates = vec![];
   let mut to_recompute = ToRecompute::new();
 
-  let pieces_fallback_buf;
-  let pieces = if let Some(o) = &occultation { &o.pieces } else {
-    pieces_fallback_buf = gpieces
+  let pieces: Vec<PieceId> = if let Some(o) = &occultation {
+    o.notches.iter().collect()
+  } else {
+    gpieces
       .iter()
       .filter_map(|(ppiece, pgpc)| {
-        if pgpc.occult.passive == Some(occid) { Some(ppiece) }
+        if pgpc.occult.passive.map(|p| p.0) == Some(occid) { Some(ppiece) }
         else { None }
       })
-      .collect();
-    &pieces_fallback_buf
+      .collect()
   };
   
   for &ppiece in pieces.iter() {
