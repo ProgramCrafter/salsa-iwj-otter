@@ -24,15 +24,11 @@ pub struct PieceOccult {
   passive: Option<OccId>, // kept in synch with Occultation::pieces
 }
 
-pub type DisplacementIndex = usize;
-
 #[derive(Clone,Debug,Serialize,Deserialize)]
 pub struct Occultation {
   region: Area, // automatically affect pieces here
   occulter: PieceId, // kept in synch with PieceOccult::active
-  // kept synch with PO::passive.  indices are either 0 or dense, 0..len()
-  // except after recalculate_occultation_general and before xxx tbd
-  pieces: BTreeMap<PieceId, DisplacementIndex>,
+  pieces: BTreeSet<PieceId>, // kept in synch with PieceOccult::passive
   #[serde(flatten)] views: OccultationViews,
 }
 
@@ -411,7 +407,7 @@ fn recalculate_occultation_general<
       }
     };
     update_pieces(ONI::Old, &|opcs|{ opcs.remove(&piece); });
-    update_pieces(ONI::New, &|opcs|{ opcs.insert(piece,0); });
+    update_pieces(ONI::New, &|opcs|{ opcs.insert(piece); });
     gpieces.byid_mut(piece).unwrap().occult.passive = *occids.new();
   })(); // <- no ?, infallible commitment
 
@@ -653,14 +649,14 @@ pub fn remove_occultation(
     pieces_fallback_buf = gpieces
       .iter()
       .filter_map(|(ppiece, pgpc)| {
-        if pgpc.occult.passive == Some(occid) { Some((ppiece,0)) }
+        if pgpc.occult.passive == Some(occid) { Some(ppiece) }
         else { None }
       })
       .collect();
     &pieces_fallback_buf
   };
   
-  for (&ppiece,_) in pieces.iter() {
+  for &ppiece in pieces.iter() {
     recalculate_occultation_ofmany(gplayers, gpieces, goccults, ipieces,
                                    &mut to_recompute,
                                    ppiece, &mut updates)
