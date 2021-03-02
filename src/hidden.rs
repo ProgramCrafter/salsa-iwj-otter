@@ -369,9 +369,26 @@ mod vpid {
 
     st.recurse();
   }                                        
+
+  #[allow(unused_variables)]
+  pub fn permute(occid: OccId,
+                 occ: &mut Occultation,
+                 gplayers: &GPlayers,
+                 gpieces: &mut GPieces,
+                 ipieces: &IPieces) {
+    // We must permute for if we have any views that are scrambled
+    // or displaced obviously.  For invisible too, so that when they
+    // reappear the ids have been permuted.  And that's all the
+    // non-Visible views which an occultation ought to have at least
+    // one of...
+    //
+    // We choose a single permutation of the pieces in the
+    // Occultation::notches.
+
+  }
 }
 
-pub use vpid::*;
+pub use vpid::{PerPlayerIdMap, NotchNumber, Notch, Notches};
 
 // ========== public entrypoints ==========
 
@@ -721,33 +738,15 @@ mod recompute {
                      ipieces: &IPieces) -> Implemented {
       for occid in self.outdated.drain() {
         if let Some(occ) = goccults.occults.get_mut(occid) {
-          permute(occid, occ, gplayers, gpieces, ipieces);
+          vpid::permute(occid, occ, gplayers, gpieces, ipieces);
         }
       }
 
       Implemented { }
     }
   }
-
-  #[allow(unused_variables)]
-  fn permute(occid: OccId,
-             occ: &mut Occultation,
-             gplayers: &GPlayers,
-             gpieces: &mut GPieces,
-             ipieces: &IPieces) {
-    // We must permute for if we have any views that are scrambled
-    // or displaced obviously.  For invisible too, so that when they
-    // reappear the ids have been permuted.  And that's all the
-    // non-Visible views which an occultation ought to have at least
-    // one of...
-    //
-    // We choose a single permutation of the pieces in the
-    // Occultation::notches.
-
-      
-
-  }
 }
+
 use recompute::*;
 
 #[must_use]
