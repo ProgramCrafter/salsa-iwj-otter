@@ -731,12 +731,12 @@ mod recompute {
       r
     }
     pub fn mark_dirty(&mut self, occid: OccId) { self.outdated.insert(occid); }
-    pub fn implement(mut self,
+    pub fn implement(self,
                      gplayers: &GPlayers,
                      gpieces: &mut GPieces,
                      goccults: &mut GameOccults,
                      ipieces: &IPieces) -> Implemented {
-      for occid in self.outdated.drain() {
+      for occid in self.outdated {
         if let Some(occ) = goccults.occults.get_mut(occid) {
           vpid::permute(occid, occ, gplayers, gpieces, ipieces);
         }
