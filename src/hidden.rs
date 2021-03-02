@@ -720,6 +720,31 @@ mod recompute {
                      _goccults: &mut GameOccults,
                      _ipieces: &IPieces) -> Implemented {
       dbg!(&self.outdated); // xxx
+
+      // for each occultation
+
+      // check to see if we have any views that are scrambled or
+      // displaced or invisible (we must do invisible too, so that
+      // when they reappear the ids have been permuted)
+      //
+      // err won't we always?
+      //
+      // choose a single permutation of the pieces in
+      // the Occultation::pieces map, and put the corresponding
+      // numbers in there
+      //
+      // somehow make the per player id maps permute the same way
+      //   so we have all the pieces and their current visible piece ids
+      //   get all the visible piece ids, sort them, then permute them
+      //   then assign them like that
+      //
+      // when we are done, displaced sees
+      //   but how do we send an update?
+      //   when one is taken out of the hand, leaves a gap?
+      //   does another one come in ?
+      // xxx
+
+
       Implemented { }
     }
   }
