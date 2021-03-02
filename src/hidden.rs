@@ -252,7 +252,123 @@ mod vpid {
         self.table[notch] = NR::Free(old_next);
       }
     }
+
+    #[cfg(test)]
+    fn check(&self) {
+      let mut count_free = 0;
+      let mut walk = self.freelist;
+      while let Some(here) = walk {
+        count_free += 1;
+        let next_walk = self.table[here].unwrap_free();
+        if let Some(more) = next_walk {
+          assert!(more > here);
+        }
+        walk = next_walk;
+      }
+      assert_eq!(
+        count_free,
+        self.table.iter()
+          .filter(|nr| matches!(nr, NR::Free(_)))
+          .count()
+      );
+      let pieces = self.table.iter()
+        .filter_map(|nr| if let NR::Piece(p) = nr { Some(p) } else { None })
+        .collect::<HashSet<_>>();
+      assert_eq!(
+        count_free + pieces.len(),
+        self.table.len(),
+      );
+    }
   }
+    
+  #[test]
+  fn exhaustive() {
+    enum Can {
+      Insert(PieceId),
+      Remove(PieceId),
+    }
+    impl Debug for Can {
+      fn fmt(&self, f: &mut fmt::Formatter) -> Result<(),fmt::Error> {
+        let (c, p) = match self {
+          Can::Insert(p) => ('+', p),
+          Can::Remove(p) => ('-', p),
+        };
+        let (idx, _vsn) = p.data().get_idx_version();
+        write!(f, "{}{}", c, idx)
+      }
+    }
+
+    #[derive(Debug)]
+    struct State {
+      todo: Vec<Can>,
+      can: Vec<Can>,
+    }
+
+    const NPIECES: usize = 4;
+    const DEPTH: usize = 7;
+
+    impl State {
+      fn implement(&self) {
+        eprintln!("implement {:?}", self);
+        let mut notches: Notches = default();
+        let mut pieces = SecondarySlotMap::new();
+        for op in &self.todo { match op {
+          &Can::Insert(p) => {
+            let notch = notches.insert(p);
+            notches.check();
+            pieces.insert(p, notch);
+          },
+          &Can::Remove(p) => {
+            let notch = pieces[p];
+            notches.remove(p, notch).unwrap();
+            notches.check();
+          },
+        }}
+      }
+
+      fn recurse(&mut self) {
+        if self.todo.len() == DEPTH { self.implement(); return; }
+        eprintln!("  recurse {:?}", &self);
+
+        for i in 0..self.can.len() {
+          let op = self.can.swap_remove(i);
+
+          let l = self.can.len();
+          match &op {
+            &Can::Insert(p) => { self.can.push(Can::Remove(p)) },
+            &Can::Remove(_) => { },
+          }
+
+          self.todo.push(op);
+          self.recurse();
+          let op = self.todo.pop().unwrap();
+
+          self.can.truncate(l);
+
+          let last = if i < self.can.len() {
+            mem::replace(&mut self.can[i], op)
+          } else {
+            op
+          };
+          self.can.push(last);
+        }
+      }
+    }
+
+
+    let mut st = State {
+      todo: vec![],
+      can: {
+        let mut slotmap: DenseSlotMap<PieceId,()> = default();
+        (0..NPIECES)
+          .map(|_| slotmap.insert(()))
+          .map(|p| Can::Insert(p))
+          .collect()
+      },
+    };
+
+    st.recurse();
+  }                                        
 }
 
 pub use vpid::*;
