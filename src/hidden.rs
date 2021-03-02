@@ -714,39 +714,38 @@ mod recompute {
       r
     }
     pub fn mark_dirty(&mut self, occid: OccId) { self.outdated.insert(occid); }
-    pub fn implement(self,
-                     _gplayers: &GPlayers,
-                     _gpieces: &mut GPieces,
-                     _goccults: &mut GameOccults,
-                     _ipieces: &IPieces) -> Implemented {
-      dbg!(&self.outdated); // xxx
-
-      // for each occultation
-
-      // check to see if we have any views that are scrambled or
-      // displaced or invisible (we must do invisible too, so that
-      // when they reappear the ids have been permuted)
-      //
-      // err won't we always?
-      //
-      // choose a single permutation of the pieces in
-      // the Occultation::pieces map, and put the corresponding
-      // numbers in there
-      //
-      // somehow make the per player id maps permute the same way
-      //   so we have all the pieces and their current visible piece ids
-      //   get all the visible piece ids, sort them, then permute them
-      //   then assign them like that
-      //
-      // when we are done, displaced sees
-      //   but how do we send an update?
-      //   when one is taken out of the hand, leaves a gap?
-      //   does another one come in ?
-      // xxx
-
+    pub fn implement(mut self,
+                     gplayers: &GPlayers,
+                     gpieces: &mut GPieces,
+                     goccults: &mut GameOccults,
+                     ipieces: &IPieces) -> Implemented {
+      for occid in self.outdated.drain() {
+        if let Some(occ) = goccults.occults.get_mut(occid) {
+          permute(occid, occ, gplayers, gpieces, ipieces);
+        }
+      }
 
       Implemented { }
     }
+  }
+
+  #[allow(unused_variables)]
+  fn permute(occid: OccId,
+             occ: &mut Occultation,
+             gplayers: &GPlayers,
+             gpieces: &mut GPieces,
+             ipieces: &IPieces) {
+    // We must permute for if we have any views that are scrambled
+    // or displaced obviously.  For invisible too, so that when they
+    // reappear the ids have been permuted.  And that's all the
+    // non-Visible views which an occultation ought to have at least
+    // one of...
+    //
+    // We choose a single permutation of the pieces in the
+    // Occultation::notches.
+
+      
+
   }
 }
 use recompute::*;
