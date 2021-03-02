@@ -189,6 +189,18 @@ mod vpid {
   }
   type NR = NotchRecord;
 
+  impl NotchRecord {
+    fn unwrap_free(&self) -> NotchPtr { match self {
+      &NR::Free(ptr) => ptr,
+      _ => panic!(),
+    }}
+
+    fn unwrap_free_mut(&mut self) -> &mut NotchPtr { match self {
+      NR::Free(ptr) => ptr,
+      _ => panic!(),
+    }}
+  }
+
   #[derive(Clone,Debug,Serialize,Deserialize,Default)]
   pub struct Notches {
     freelist: NotchPtr,
@@ -211,13 +223,10 @@ mod vpid {
         None => {
           self.table.push(new)
         },
-        Some(u) => {
-          self.freelist = match self.table[u] {
-            NR::Free(n) => n,
-            NR::Piece(_) => panic!(),
-          };
-          self.table[u] = new;
-          u
+        Some(old_free_head) => {
+          self.freelist = self.table[old_free_head].unwrap_free();
+          self.table[old_free_head] = new;
+          old_free_head
         },
       }
     }
@@ -236,8 +245,7 @@ mod vpid {
           if notch < next { break }
           if notch == next { panic!() };
           let next = &mut self.table[next];
-          insert_here =
-            if let NR::Free(f) = next { f } else { panic!() };
+          insert_here = next.unwrap_free_mut();
         }
         // Now either *insert_here==NULL or notch < insert_here->next
         let old_next = mem::replace(insert_here, Some(notch));
