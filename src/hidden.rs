@@ -373,7 +373,7 @@ mod vpid {
   #[allow(unused_variables)]
   pub fn permute(occid: OccId,
                  occ: &mut Occultation,
-                 gplayers: &GPlayers,
+                 gplayers: &mut GPlayers,
                  gpieces: &mut GPieces,
                  ipieces: &IPieces) {
     // We must permute for if we have any views that are scrambled
@@ -688,7 +688,7 @@ pub fn recalculate_occultation_piece(
         log
       }
     ),
-    to_recompute.implement(&gs.players, &mut gs.pieces, &mut gs.occults,
+    to_recompute.implement(&mut gs.players, &mut gs.pieces, &mut gs.occults,
                            ipieces),
   ))?
 }
@@ -732,7 +732,7 @@ mod recompute {
     }
     pub fn mark_dirty(&mut self, occid: OccId) { self.outdated.insert(occid); }
     pub fn implement(self,
-                     gplayers: &GPlayers,
+                     gplayers: &mut GPlayers,
                      gpieces: &mut GPieces,
                      goccults: &mut GameOccults,
                      ipieces: &IPieces) -> Implemented {
@@ -786,7 +786,7 @@ impl OccultationViewDef for OwnerOccultationView {
 
 #[throws(OnlineError)]
 pub fn create_occultation(
-  gplayers: &GPlayers,
+  gplayers: &mut GPlayers,
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
   ipieces: &IPieces,
@@ -859,7 +859,7 @@ pub fn create_occultation(
 
 #[throws(IE)]
 pub fn remove_occultation(
-  gplayers: &GPlayers,
+  gplayers: &mut GPlayers,
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
   ipieces: &IPieces,
