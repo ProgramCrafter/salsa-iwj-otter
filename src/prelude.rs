@@ -95,6 +95,7 @@ pub use otter_base::zcoord::{self, ZCoord};
 pub use otter_base::misc as base_misc;
 pub use base_misc::default;
 
+pub use crate::dbgc;
 pub use crate::{deref_to_field, deref_to_field_mut};
 pub use crate::ensure_eq;
 pub use crate::from_instance_lock_error;
