@@ -374,6 +374,6 @@ macro_rules! dbgc {
         }
     };
     ($($val:expr),+ $(,)?) => {
-        ($(std::dbg!($val)),+,)
+        ($($crate::dbgc!($val)),+,)
     };
 }
