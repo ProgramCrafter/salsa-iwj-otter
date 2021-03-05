@@ -54,7 +54,7 @@ pub enum OldNewIndex { Old, New }
 
 impl<T> OldNew<T> {
   pub fn old(&self) -> &T { &self.0[0] }
-  pub fn new(&self) -> &T { &self.0[0] }
+  pub fn new(&self) -> &T { &self.0[1] }
 
   pub fn map<U, F: FnMut(&T) -> U>(&self, f: F) -> OldNew<U> {
     OldNew(
