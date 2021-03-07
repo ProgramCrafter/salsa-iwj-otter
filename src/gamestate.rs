@@ -360,7 +360,7 @@ pub struct PieceRenderInstructions {
 }
 
 #[derive(Debug,Clone,Copy)]
-pub enum PriOcculted { Visible /*, Occluded*/ }
+pub enum PriOcculted { Visible /*, Occulted*/ }
 
 impl PieceRenderInstructions {
   pub fn new_visible(vpid: VisiblePieceId) -> PieceRenderInstructions {
