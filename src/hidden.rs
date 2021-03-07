@@ -131,8 +131,8 @@ mod vpid {
 
   #[derive(Clone,Debug,Default,Serialize,Deserialize)]
   pub struct PerPlayerIdMap {
-    f: SecondarySlotMap<PieceId, VisiblePieceId>,
-    r: DenseSlotMap<VisiblePieceId, PieceId>,
+    pub(in super) f: SecondarySlotMap<PieceId, VisiblePieceId>,
+    pub(in super) r: DenseSlotMap<VisiblePieceId, PieceId>,
   }
 
   impl PerPlayerIdMap {
@@ -190,6 +190,11 @@ mod vpid {
   type NR = NotchRecord;
 
   impl NotchRecord {
+    fn piece(&self) -> Option<PieceId> { match self {
+      &NR::Piece(p) => Some(p),
+      &NR::Free(_) => None,
+    }}
+
     fn unwrap_free(&self) -> NotchPtr { match self {
       &NR::Free(ptr) => ptr,
       _ => panic!(),
@@ -385,6 +390,53 @@ mod vpid {
     // We choose a single permutation of the pieces in the
     // Occultation::notches.
 
+    let permu = {
+      let mut permu: Vec<_> =
+        occ.notches.table.iter()
+        .filter_map(NR::piece)
+        .collect();
+
+      let mut rng = thread_rng();
+      permu.shuffle(&mut rng);
+      permu
+    };
+
+    let new_notches = {
+      let mut permus = permu.iter();
+      let new_notches = occ.notches.table.iter().map(|nr| match nr {
+        &f@ NR::Free(_) => f,
+        NR::Piece(p) => NR::Piece(*permus.next().unwrap()),
+      })
+        .collect::<IndexVec<_,_>>();
+      permus.next().map(|x| panic!("{:?}", x));
+      new_notches
+    };
+
+    for gpl in gplayers.values_mut() {
+
+      // xxx don't do this for Visible, check occk
+
+      let mut fwd_updates = vec![];
+      for (old, new) in izip!(&occ.notches.table, &new_notches) {
+        if_chain! {
+          if let Some((old, new)) = zip_eq(old.piece(), new.piece()).next();
+          if let Some(vpid) = gpl.idmap.fwd(old);
+          then {
+            fwd_updates.push((new, vpid));
+            if let Some(e) = gpl.idmap.r.get_mut(vpid) {
+              *e = new;
+            }
+          }
+        }
+      }
+
+      for (new, vpid) in fwd_updates {
+        gpl.idmap.f.insert(new, vpid);
+      }
+
+    }
+    occ.notches.table = new_notches;
+    dbgc!(&occ);
   }
 }
 
