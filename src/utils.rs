@@ -354,6 +354,16 @@ impl<T,U,E,F> IteratorExt<U,E,F> for T where
 }
 
 #[macro_export]
+macro_rules! matches_doesnot {
+  ($v:expr; $y:pat, ! $n:pat) => { match $v { $y => true, $n => false } }
+}
+
+#[test]
+fn matches_doesnot_test() {
+  assert!( matches_doesnot!( Some(42); Some(_), ! None) );
+}
+
+#[macro_export]
 macro_rules! dbgc {
     // NOTE: We cannot use `concat!` to make a static string as a format argument
     // of `eprintln!` because `file!` could contain a `{` or
