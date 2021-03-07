@@ -153,10 +153,13 @@ impl PieceTrait for Hand {
     let gpl = gplayers.byid_mut(player)?;
     let nick = Html(htmlescape::encode_minimal(&gpl.nick));
 
+    dbgc!("ui op k entry", &opname, &xdata);
+
     let (new_owner, xupdates, did) =
       match (opname, xdata.owner.is_some())
     {
       ("claim", false) => {
+        dbgc!("claiming");
         let new_desc = Html(format!("{}'s hand", &nick.0));
         let new_owner = Some(MagicOwner {
           player,
@@ -182,15 +185,18 @@ impl PieceTrait for Hand {
             owner_view: OccK::Visible,
             defview: OccK::Displaced { within: region },
           }.views()?;
+          dbgc!("claiming got region", &region, &views);
           Ok::<_,IE>((region, views))
         })().map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?;
         
         // actually do things:
+        dbgc!("creating occ");
         let xupdates =
           create_occultation(gplayers, gpieces, goccults, ipieces,
                              region, piece, views)?;
         // xxx recalculate occultations
 
+        dbgc!("creating occ done", &new_owner, &xupdates);
         (new_owner, xupdates, format!("claimed {}", &old_desc.0))
       }
       ("deactivate", true) => {
