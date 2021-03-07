@@ -583,6 +583,10 @@ fn recalculate_occultation_general<
             // prevent occulting pieces being occulted
             // (also prevents reflexive occultation)
             return None
+          } else if ipc.occultable().is_none() {
+            // if we cannot make it look identical to the others, we
+            // cannot occult it beause we can't hide its identity
+            return None
           } else if occ.in_region(gpc.pos) {
             Some(Occulted { occid, occ })
           } else {
