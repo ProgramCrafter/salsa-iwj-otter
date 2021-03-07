@@ -163,14 +163,16 @@ impl PieceTrait for Hand {
           dasharray,
           desc: new_desc,
         });
-        let pos = gpc.pos;
+        let centre = gpc.pos;
         let (region, views) = (||{
+          dbgc!("claiming region");
+          let offset = (self.shape.outline.xy * 0.5)?;
+          let offset = offset.try_map(
+            |c| c.floor().to_i32().ok_or(CoordinateOverflow)
+          )?;
           let region = AreaC(
             [-1,1].iter().map(|&signum| Ok::<_,IE>({
-              let xy = self.shape.outline.xy.try_map(
-                |c| c.floor().to_i32().ok_or(CoordinateOverflow)
-              )?;
-              (pos + (xy * signum)?)?
+              (centre + (offset * signum)?)?
             }))
               .collect::<Result<ArrayVec<_>,_>>()?
               .into_inner().unwrap()
