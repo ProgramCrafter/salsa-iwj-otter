@@ -194,7 +194,6 @@ impl PieceTrait for Hand {
         let xupdates =
           create_occultation(gplayers, gpieces, goccults, ipieces,
                              region, piece, views)?;
-        // xxx recalculate occultations
 
         dbgc!("creating occ done", &new_owner, &xupdates);
         (new_owner, xupdates, format!("claimed {}", &old_desc.0))
