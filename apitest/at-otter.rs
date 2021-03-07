@@ -117,7 +117,7 @@ fn updates_parser<R:Read>(input: R, out: &mut mpsc::Sender<Update>) {
     } else {
       let update = &entry["data"];
       let update = serde_json::from_str(update).unwrap();
-      dbg!(&update);
+      dbgc!(&update);
       if out.send(update).is_err() { break }
     }
   }
