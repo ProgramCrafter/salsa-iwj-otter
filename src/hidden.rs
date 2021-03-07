@@ -80,9 +80,9 @@ impl OccultationKind {
       OccK::Visible |
       OccK::Scrambled |
       OccK::Displaced { .. }
-        => false,
-      OccK::Invisible
         => true,
+      OccK::Invisible
+        => false,
     }
   }
 }
