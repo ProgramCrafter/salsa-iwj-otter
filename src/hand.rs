@@ -213,12 +213,15 @@ impl PieceTrait for Hand {
 
     let log = vec![ LogEntry { html: Html(format!("{} {}", nick.0, did)) }];
 
+    dbgc!("ui op k did main");
+    
     // We need to reaquire mut references because create_occultation etc.
     // need mut access to gpieces.
     let gpc = gpieces.byid_mut(piece).expect("piece disappeared");
     let xdata = gpc.xdata.get_mut::<HandState>().expect("xdata disappeared!");
     assert_eq!(xdata.player(), old_player);
 
+    dbgc!("thinging done", &xdata, &new_owner);
     xdata.owner = new_owner;
 
     (PieceUpdate {

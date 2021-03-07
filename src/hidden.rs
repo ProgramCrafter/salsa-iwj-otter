@@ -405,6 +405,7 @@ fn inner(
   piece: PieceId, gpc: &GPiece, _p: &dyn PieceTrait,
 ) -> Option<PieceRenderInstructions>
 {
+  dbgc!(&gpc);
   let vpid = gpl.idmap.fwd_or_insert(piece);
   let angle = gpc.angle;
   let occulted = PriOcculted::Visible; // xxx
@@ -454,8 +455,8 @@ pub fn massage_prep_piecestate(
 
 #[throws(InternalError)]
 fn recalculate_occultation_general<
-  RD,                                                 // return data
-  LD,                                                 // log data
+  RD: Debug,                                          // return data
+  LD: Debug,                                          // log data
   VF: FnOnce(LD) -> RD,                               // ret_vanilla
   LF: FnOnce(Html, Html, Option<&Html>) -> LD,        // log_callback
   RF: FnOnce(PieceUpdateOps_PerPlayer, LD) -> RD,     // ret_callback
@@ -522,7 +523,7 @@ fn recalculate_occultation_general<
 
       new:
         goccults.occults.iter().find_map(|(occid, occ)| {
-          dbg!(if gpc.pinned {
+          if gpc.pinned {
             // Prevent pinned pieces being occulted.  What scrambling
             // them etc. would mean is not entirely clear.
             return None
@@ -534,9 +535,11 @@ fn recalculate_occultation_general<
             Some(Occulted { occid, occ })
           } else {
             None
-          })
+          }
         }),
     };
+    dbgc!((piece, occulteds));
+
     let occids = occulteds.main().map(|h| h.as_ref().map(|occ| occ.occid));
     if occids.old() == occids.new() { return ret_vanilla(log_visible); }
 
@@ -564,6 +567,8 @@ fn recalculate_occultation_general<
         .push(player);
     }
 
+    dbgc!(&situations);
+
     let mut puos = SecondarySlotMap::new();
     let mut most_obscure = None;
 
@@ -584,6 +589,7 @@ fn recalculate_occultation_general<
         (true,  false) => Some(PUO::Delete()),
         (true,  true ) => Some(PUO::Modify(())),
       };
+      dbgc!(&kinds, &players, &most_obscure, &puo);
 
       if let Some(puo) = puo {
         for player in players {
@@ -591,6 +597,7 @@ fn recalculate_occultation_general<
         }
       }
     }
+    dbgc!(most_obscure);
 
     let describe_occulter = |oni| {
       let h = occulteds.as_refs().main()[oni];
@@ -629,6 +636,8 @@ fn recalculate_occultation_general<
     (puos, log, occulteds.map(|h| h.occid))
   };
   
+
+  dbgc!(&puos, &log, &occulteds);
   // point of no return
 
   // xxx shuffle some players' ids
@@ -821,6 +830,7 @@ pub fn create_occultation(
     notches: default(),
   };
   debug!("creating occultation {:?}", &occultation);
+  dbgc!(&recalc);
 
   // Everything from here on must be undone if we get an error
   // but we hope not to get one...
@@ -854,6 +864,7 @@ pub fn create_occultation(
     to_recompute.implement(gplayers, gpieces, goccults, ipieces),
   ))?;
 
+  dbgc!(&updates);
   updates
 }
 
