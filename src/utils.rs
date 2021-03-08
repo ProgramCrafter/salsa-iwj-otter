@@ -31,11 +31,8 @@ impl<T: Ord + Sized + Clone> T {
   }
 }
 
-pub trait SplitAtDelim<Delim> {
-  fn split_at_delim(&self, delim: Delim) -> (&Self, &Self);
-}
-
-impl SplitAtDelim<char> for str {
+#[ext(pub, name=SplitAtDelim)]
+impl str {
   fn split_at_delim(&self, delim: char) -> (&Self, &Self) {
     match self.find(delim) {
       Some(index) => self.split_at(index),
