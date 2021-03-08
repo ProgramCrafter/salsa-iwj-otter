@@ -110,11 +110,8 @@ impl<T> OptionExt for Option<T> {
 
 // https://github.com/rust-lang/rust/issues/32255 :-(
 
-pub trait LocalFileExt {
-  fn close(self) -> Result<(), io::Error>;
-}
-
-impl LocalFileExt for fs::File {
+#[ext(pub, name=LocalFileExt, supertraits=Sized)]
+impl fs::File {
   #[throws(io::Error)]
   fn close(self) {
     let r = unsafe {
