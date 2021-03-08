@@ -101,6 +101,7 @@ pub use crate::dbgc;
 pub use crate::{deref_to_field, deref_to_field_mut};
 pub use crate::ensure_eq;
 pub use crate::from_instance_lock_error;
+pub use crate::trace_dbg;
 
 pub use crate::accounts::loaded_acl::{self, EffectiveACL, LoadedAcl, PermSet};
 pub use crate::accounts::*;

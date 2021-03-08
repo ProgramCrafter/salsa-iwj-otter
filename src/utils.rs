@@ -388,3 +388,16 @@ macro_rules! dbgc {
         ($($crate::dbgc!($val)),+,)
     };
 }
+
+#[macro_export]
+macro_rules! trace_dbg {
+  ($msg:expr $(,$val:expr)*) => {
+    use log::*;
+    use Level::*;
+    if log_enabled!(Trace) {
+      let mut buf = format!("{}", &$msg);
+      $( write!(&mut buf, " {}={:?}", stringify!($val), &$val).unwrap(); )*
+      trace!("{}", buf);
+    }
+  }
+}
