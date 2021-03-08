@@ -111,7 +111,8 @@ pub fn svg_rectangle_path(PosC([x,y]): PosC<f64>) -> Html {
                -x*0.5, -y*0.5, x, y, -x))
 }
 
-impl<Desc, Outl> OutlineTrait for GenericSimpleShape<Desc, Outl>
+#[dyn_upcast]
+impl<Desc, Outl:'static> OutlineTrait for GenericSimpleShape<Desc, Outl>
     where Desc: Debug + Send + Sync + 'static,
           Outl: OutlineTrait,
 {
@@ -145,7 +146,7 @@ impl PieceTrait for SimpleShape {
   fn itemname(&self) -> &str { self.itemname() }
 }
 
-impl<Desc, Outl> GenericSimpleShape<Desc, Outl>
+impl<Desc, Outl:'static> GenericSimpleShape<Desc, Outl>
     where Desc: Debug + Send + Sync + 'static,
           Outl: OutlineTrait,
 {

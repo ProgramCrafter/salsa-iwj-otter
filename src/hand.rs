@@ -35,6 +35,7 @@ impl HandState {
 #[typetag::serde(name="Hand")]
 impl PieceXData for HandState { }
 
+#[dyn_upcast]
 impl OutlineTrait for Hand {
   delegate!{
     to self.shape {

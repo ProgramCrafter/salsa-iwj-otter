@@ -52,6 +52,7 @@ pub use std::time::{self, Duration, Instant};
 pub use anyhow::{anyhow, ensure, Context};
 pub use arrayvec::ArrayVec;
 pub use boolinator::Boolinator as _;
+pub use cast_trait_object::{dyn_upcast, DynCastExt};
 pub use delegate::delegate;
 pub use derive_more::*;
 pub use downcast_rs::{impl_downcast, Downcast};

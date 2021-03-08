@@ -108,6 +108,7 @@ pub trait PieceXData: Downcast + Debug + Send + 'static {
 impl_downcast!(PieceXData);
 
 #[enum_dispatch]
+#[dyn_upcast]
 pub trait OutlineTrait: Send + Debug {
   fn outline_path(&self, scale: f64) -> Result<Html, IE>;
   fn surround_path(&self) -> Result<Html, IE> {

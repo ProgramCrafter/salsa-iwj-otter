@@ -199,6 +199,7 @@ mod outline {
   use super::*;
   use crate::prelude::*;
   use crate::shapelib::{Circle, Rectangle};
+  #[dyn_upcast(OutlineTrait)]
   #[enum_dispatch(OutlineTrait)]
   #[derive(Clone,Debug,Serialize,Deserialize)]
   #[serde(tag="type")]

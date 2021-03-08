@@ -142,6 +142,7 @@ impl ItemEnquiryData {
   }
 }
 
+#[dyn_upcast]
 impl OutlineTrait for Item { delegate! { to self.outline {
   fn outline_path(&self, scale: f64) -> Result<Html, IE>;
   fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
@@ -490,6 +491,7 @@ pub fn load(libs: &Vec<Config1>) {
 #[derive(Clone,Copy,Debug,Serialize,Deserialize)]
 pub struct Circle { pub diam: f64 }
 
+#[dyn_upcast]
 impl OutlineTrait for Circle {
   #[throws(IE)]
   fn outline_path(&self, scale: f64) -> Html {
@@ -532,6 +534,7 @@ impl CircleDefn {
 #[derive(Clone,Copy,Debug,Serialize,Deserialize)]
 pub struct Rectangle { pub xy: PosC<f64> }
 
+#[dyn_upcast]
 impl OutlineTrait for Rectangle {
   #[throws(IE)]
   fn outline_path(&self, scale: f64) -> Html {
