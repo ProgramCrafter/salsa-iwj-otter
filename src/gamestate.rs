@@ -132,7 +132,7 @@ pub struct UoDescription {
 }
 
 #[typetag::serde] // usual variable: p
-pub trait PieceTrait: OutlineTrait + Send + Debug {
+pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
   /// by convention, occult face is nfaces-1
   // xxx this is no good, we need a central definition of the occult
   // face to avoid weird behaviour with buggy gamespecs
@@ -365,7 +365,7 @@ impl PieceRenderInstructions {
 
   #[throws(IE)]
   pub fn make_defs<'p,P>(&self, gpc: &GPiece, p: &P) -> Html
-    where P:Borrow<dyn PieceTrait + 'p>
+    where P:Borrow<dyn PieceTrait>
   {
     #[throws(IE)]
     fn inner(pri: &PieceRenderInstructions, gpc: &GPiece, p: &dyn PieceTrait)
@@ -394,7 +394,7 @@ impl PieceRenderInstructions {
   }
 
   pub fn describe<'p,P>(&self, gpc: &GPiece, p: &P) -> Html
-    where P:Borrow<dyn PieceTrait + 'p>
+    where P:Borrow<dyn PieceTrait>
   {
     fn inner(pri: &PieceRenderInstructions, gpc: &GPiece, p: &dyn PieceTrait)
              -> Html

@@ -445,7 +445,7 @@ pub use vpid::{PerPlayerIdMap, NotchNumber, Notch, Notches};
 // ========== public entrypoints ==========
 
 /// None => do not render at all
-pub fn piece_pri<'p, P:Borrow<dyn PieceTrait + 'p>>(
+pub fn piece_pri<P:Borrow<dyn PieceTrait>>(
   occults: &GameOccults,
   player: PlayerId, gpl: &mut GPlayer,
   piece: PieceId, gpc: &GPiece, p: &P,
