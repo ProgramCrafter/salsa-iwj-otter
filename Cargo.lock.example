@@ -1617,6 +1617,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "nix"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fa9b4819da1bc61c0ea48b63b7bc8604064dd43013e7cc325df098d49cd7c18a"
+dependencies = [
+ "bitflags",
+ "cc",
+ "cfg-if 1.0.0",
+ "libc",
+]
+
+[[package]]
 name = "nodrop"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1841,7 +1853,7 @@ dependencies = [
  "lazy_static",
  "libc",
  "log 0.4.14",
- "nix",
+ "nix 0.20.0",
  "num",
  "num-derive",
  "num-traits",
@@ -3643,7 +3655,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4122702a684f01cf35cf8e00d0ba513f7c4c7d46f9881d9a699f3de787e61e4"
 dependencies = [
  "gethostname",
- "nix",
+ "nix 0.19.1",
  "winapi 0.3.9",
  "winapi-wsapoll",
 ]
