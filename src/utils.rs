@@ -24,12 +24,12 @@ macro_rules! ensure_eq {
   }
 }
 
-pub trait OrdExt: Ord + Sized + Clone {
+#[ext(pub, name=OrdExt)]
+impl<T: Ord + Sized + Clone> T {
   fn update_max(&mut self, new: &Self) {
     if *new > *self { *self = new.clone() }
   }
 }
-impl<T> OrdExt for T where T: Ord + Sized + Clone { }
 
 pub trait SplitAtDelim<Delim> {
   fn split_at_delim(&self, delim: Delim) -> (&Self, &Self);

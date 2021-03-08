@@ -312,11 +312,6 @@ impl GPiece {
   }
 }
 
-pub trait PieceXDataExt {
-  fn get<T:PieceXData+Default>(&self) -> Result<Option<&T>, IE>;
-  fn get_mut<T:PieceXData+Default>(&mut self) -> Result<&mut T, IE>;
-}
-
 fn xdata_unexpected<T:PieceXData+Default>(got: &dyn PieceXData)
                                           -> InternalError {
   internal_logic_error(format!(
@@ -327,7 +322,8 @@ fn xdata_unexpected<T:PieceXData+Default>(got: &dyn PieceXData)
   ))
 }
 
-impl PieceXDataExt for PieceXDataState {
+#[ext(pub)]
+impl PieceXDataState {
   #[throws(IE)]
   fn get<T:PieceXData>(&self) -> Option<&T> where T: Default {
     let xdata = if let Some(xdata) = &self { xdata } else { return None };
