@@ -457,7 +457,7 @@ fn inner(
   piece: PieceId, gpc: &GPiece, _p: &dyn PieceTrait,
 ) -> Option<PieceRenderInstructions>
 {
-  dbgc!(&gpc);
+  trace_dbg!("piece_pri", &gpc);
   let vpid = gpl.idmap.fwd_or_insert(piece);
   let angle = gpc.angle;
   let occulted = PriOcculted::Visible; // xxx
