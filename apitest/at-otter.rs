@@ -71,19 +71,16 @@ mod scraper_ext {
     dom
   }
 
-  pub trait RequestBuilderExt: Sized {
-    fn send(self) -> Result<reqwest::blocking::Response, AE>;
+  #[ext(pub, name=RequestBuilderExt)]
+  impl reqwest::blocking::RequestBuilder {
+    #[throws(AE)]
+    fn send(self) -> reqwest::blocking::Response { self.send()? }
 
     #[throws(AE)]
     fn send_parse_html(self) -> Html {
       let resp = self.send()?;
       parse_html(resp)?
     }
-  }
-
-  impl RequestBuilderExt for reqwest::blocking::RequestBuilder {
-    #[throws(AE)]
-    fn send(self) -> reqwest::blocking::Response { self.send()? }
   }
 }
 
