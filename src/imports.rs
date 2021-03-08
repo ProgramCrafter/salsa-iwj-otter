@@ -12,6 +12,7 @@ pub use chrono_tz;
 pub use delegate;
 pub use either;
 pub use env_logger;
+pub use extend;
 pub use failure;
 pub use flexi_logger;
 pub use fs2;

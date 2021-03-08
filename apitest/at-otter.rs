@@ -35,8 +35,11 @@ mod scraper_ext {
   use scraper::*;
   use scraper::html::{*, Html};
 
-  pub trait HtmlExt {
-    fn select<'a,'b>(&'a self, selector: &'b Selector) -> Select<'a, 'b>;
+  #[ext(pub)]
+  impl Html {
+    fn select<'a,'b>(&'a self, selector: &'b Selector) -> Select<'a, 'b> {
+      self.select(selector)
+    }
 
     #[throws(as Option)]
     fn element<S>(&self, sel: S) -> ElementRef
@@ -56,12 +59,6 @@ mod scraper_ext {
       self
         .element(sel).unwrap()
         .value().attr(attr)?
-    }
-  }
-
-  impl HtmlExt for Html {
-    fn select<'a,'b>(&'a self, selector: &'b Selector) -> Select<'a, 'b> {
-      self.select(selector)
     }
   }
 
