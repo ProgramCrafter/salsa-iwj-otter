@@ -554,20 +554,18 @@ impl IntoInWindow<WebPos> for Pos {
   }
 }
 
-pub trait ActionChainExt: Sized {
+#[ext(pub, name=ActionChainExt, supertraits=Sized)]
+impl<'a> t4::action_chain::ActionChain<'a> {
+  #[throws(AE)]
   fn move_w<'g, P: Debug + Copy + IntoInWindow<WebPos>>
-    (self, w: &'g WindowGuard, pos: P) -> Result<Self,AE>;
+    (self, w: &'g WindowGuard, pos: P) -> Self
+  {
+    let pos: WebPos = pos.w_into(w)
+      .with_context(|| format!("{:?}", pos))
+      .context("find coordinate")?;
+    self.move_pos(pos)?
+  }
 
-  fn move_pos<'g,
-              E,
-              P: TryInto<WebPos, Error=E>>
-    (self, pos: P) -> Result<Self,AE>
-    where Result<WebPos,E>: anyhow::Context<WebPos,E>;
-
-  fn move_pc<'g>(self, w: &'g WindowGuard, pc: &str) -> Result<Self, AE>;
-}
-
-impl<'a> ActionChainExt for t4::action_chain::ActionChain<'a> {
   #[throws(AE)]
   fn move_pos<'g,
               E,
@@ -578,16 +576,6 @@ impl<'a> ActionChainExt for t4::action_chain::ActionChain<'a> {
     let (px,py) = pos.try_into().context("convert")?;
     trace!("move_pos: ({}, {})", px, py);
     self.move_to(px,py)
-  }
-
-  #[throws(AE)]
-  fn move_w<'g, P: Debug + Copy + IntoInWindow<WebPos>>
-    (self, w: &'g WindowGuard, pos: P) -> Self
-  {
-    let pos: WebPos = pos.w_into(w)
-      .with_context(|| format!("{:?}", pos))
-      .context("find coordinate")?;
-    self.move_pos(pos)?
   }
 
   #[throws(AE)]
