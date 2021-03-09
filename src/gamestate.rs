@@ -376,9 +376,7 @@ impl PieceRenderInstructions {
                  -> Option<&'p dyn OccultedPieceTrait>
   {
     match self.occulted {
-      PriOcculted::Visible => {
-        None
-      },
+      PriOcculted::Visible                              => None,
       PriOcculted::Occulted | PriOcculted::Displaced(_) => {
         Some(
           p.occultable()
