@@ -88,6 +88,20 @@ impl OccultationKind {
   }
 }
 
+impl<T> OccultationKindGeneral<T> {
+  fn map_displaced<U,F>(&self, f: F) -> OccultationKindGeneral<U>
+    where F: FnOnce(&T) -> U,
+  {
+    use OccKG::*;
+    match self {
+      Visible   => Visible,
+      Scrambled => Scrambled,
+      Invisible => Invisible,
+      Displaced(t) => Displaced(f(t)),
+    }
+  }
+}      
+
 impl OccultationViews {
   pub fn get_kind(&self, player: PlayerId) -> &OccultationKind {
     let kind = self.views.iter().find_map(|view| {
@@ -453,17 +467,38 @@ pub fn piece_pri<P:Borrow<dyn PieceTrait>>(
 ) -> Option<PieceRenderInstructions>
 {
 fn inner(
-  _occults: &GameOccults, // xxx
+  occults: &GameOccults,
   player: PlayerId, gpl: &mut GPlayer,
   piece: PieceId, gpc: &GPiece, _p: &dyn PieceTrait,
 ) -> Option<PieceRenderInstructions>
 {
-  trace_dbg!("piece_pri", &gpc);
+  let occk = if_chain! {
+    if let Some((occid, notch)) = gpc.occult.passive;
+    if let Some(occultation) = occults.occults.get(occid);
+    then {
+      occultation.views.get_kind(player)
+        .map_displaced(|area| {
+          let x: Coord = NotchNumber::from(notch).try_into().unwrap(); // xxx
+          let pos = area.0[0] + PosC([x*2, 0]); // xxx
+          pos.unwrap()
+        })
+    }
+    else {
+      OccKG::Visible
+    }
+  };
+
+  let occulted = match occk {
+    OccKG::Invisible => {
+      trace_dbg!("piece_pri", gpc, occk);
+      return None;
+    }
+    OccKG::Visible        => PriOcculted::Visible,
+    OccKG::Scrambled      => PriOcculted::Occulted,
+    OccKG::Displaced(pos) => PriOcculted::Displaced(pos),
+  };
   let vpid = gpl.idmap.fwd_or_insert(piece);
-  let angle = gpc.angle;
-  let occulted = PriOcculted::Visible; // xxx
-  trace!("{} {:?} => {} angle={:?}",
-         player, piece, vpid, angle);
+  trace_dbg!("piece_pri", gpc, occk, vpid, occulted);
   Some(PieceRenderInstructions { vpid, occulted })
 }
   inner(occults, player, gpl, piece, gpc, p.borrow())
