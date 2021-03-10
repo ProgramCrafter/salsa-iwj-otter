@@ -123,7 +123,6 @@ struct ItemFace {
 struct Item {
   itemname: String,
   faces: IndexVec<FaceId, ItemFace>,
-  desc_hidden: DescId,
   svgs: IndexVec<SvgId, Html>,
   descs: IndexVec<DescId, Html>,
   outline: Outline,
@@ -226,7 +225,6 @@ impl Contents {
 
     let mut descs = index_vec![ ];
     let desc = descs.push(idata.d.desc.clone());
-    let desc_hidden = desc; // todo
     descs.shrink_to_fit();
 
     let centre = idata.group.d.centre;
@@ -240,7 +238,7 @@ impl Contents {
     }
     faces.shrink_to_fit();
 
-    let it = Item { faces, descs, svgs, outline, desc_hidden,
+    let it = Item { faces, descs, svgs, outline,
                     itemname: name.to_string() };
     let p = Box::new(it);
     PieceSpecLoaded { p, occultable: None }
