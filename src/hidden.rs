@@ -46,12 +46,13 @@ pub struct OccultView {
 
 #[derive(Clone,Copy,Debug,Serialize,Deserialize)]
 #[derive(Eq,PartialEq,Hash)]
-pub enum OccultationKind {
+pub enum OccultationKindGeneral<D> {
   Visible,
   Scrambled,
-  Displaced { within: Area },
+  Displaced(D),
   Invisible,
 }
+pub type OccultationKind = OccultationKindGeneral<Area>;
 
 impl Default for OccultationKind {
   fn default() -> Self { OccK::Visible }
@@ -59,7 +60,7 @@ impl Default for OccultationKind {
 
 impl Ord for OccultationKind {
   fn cmp(&self, rhs: &Self) -> Ordering {
-    fn level(k: &OccK) -> u8 { use OccultationKind::*; match k {
+    fn level(k: &OccK) -> u8 { use OccKG::*; match k {
       Visible       => 0,
       Scrambled     => 1,
       Displaced{..} => 2,

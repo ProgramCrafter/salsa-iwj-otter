@@ -160,6 +160,7 @@ pub type SpE = SpecError;
 
 // hidden.rs
 pub type OccK = OccultationKind;
+pub use OccultationKindGeneral as OccKG;
 
 // updates.rs
 pub type PUE = PreparedUpdateEntry;
