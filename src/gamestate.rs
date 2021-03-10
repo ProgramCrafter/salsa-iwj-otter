@@ -364,12 +364,38 @@ pub struct PieceRenderInstructions {
 }
 
 #[derive(Debug,Clone,Copy)]
-pub enum PriOcculted { Visible /*, Occulted*/ }
+pub enum PriOcculted { Visible, Occulted, Displaced(Pos) }
 
 impl PieceRenderInstructions {
   pub fn new_visible(vpid: VisiblePieceId) -> PieceRenderInstructions {
     PieceRenderInstructions { vpid, occulted: PriOcculted::Visible }
   }
+
+  #[throws(IE)]
+  fn instead<'p>(&self, p: &'p dyn PieceTrait)
+                 -> Option<&'p dyn OccultedPieceTrait>
+  {
+    match self.occulted {
+      PriOcculted::Visible => {
+        None
+      },
+      PriOcculted::Occulted | PriOcculted::Displaced(_) => {
+        Some(
+          p.occultable()
+            .ok_or_else(|| internal_logic_error(format!(
+              "occulted non-occultable {:?}", p)))?
+        )
+      },
+    }
+  }
+
+  pub fn angle(&self, gpc: &GPiece) -> VisiblePieceAngle {
+    match self.occulted {
+      PriOcculted::Visible                              => gpc.angle,
+      PriOcculted::Occulted | PriOcculted::Displaced(_) => default(),
+    }
+  }
+
 
   #[throws(IE)]
   pub fn make_defs<'p,P>(&self, gpc: &GPiece, p: &P) -> Html
@@ -379,23 +405,41 @@ impl PieceRenderInstructions {
     fn inner(pri: &PieceRenderInstructions, gpc: &GPiece, p: &dyn PieceTrait)
              -> Html
   {
-    let PriOcculted::Visible = pri.occulted;
+    let instead = pri.instead(p)?;
 
-    let mut defs = Html(String::new());
-    let dragraise = match p.thresh_dragraise()? {
+    let o: &dyn OutlineTrait = match instead {
+      None => p.dyn_upcast(),
+      Some(i) => i.dyn_upcast(),
+    };
+
+    let angle = pri.angle(gpc);
+
+    let dragraise = match o.thresh_dragraise()? {
       Some(n) if n < 0 => throw!(SvgE::NegativeDragraise),
       Some(n) => n,
       None => -1,
     };
-    let transform = gpc.angle.to_transform();
+
+    let transform = angle.to_transform();
+
+    let mut defs = Html(String::new());
     write!(&mut defs.0,
            r##"<g id="piece{}" transform="{}" data-dragraise="{}">"##,
            pri.vpid, &transform.0, dragraise)?;
-    p.svg_piece(&mut defs, gpc, pri.vpid)?;
+
+    match instead {
+      None => {
+        p.svg_piece(&mut defs, gpc, pri.vpid)?;
+      },
+      Some(i) => {
+        i.svg(&mut defs, pri.vpid)?;
+      },
+    };
+
     write!(&mut defs.0, r##"</g>"##)?;
     write!(&mut defs.0,
            r##"<path id="surround{}" d="{}"/>"##,
-           pri.vpid, p.surround_path()?.0)?;
+           pri.vpid, o.surround_path()?.0)?;
     defs
   }
   inner(self, gpc, p.borrow())?
@@ -407,8 +451,6 @@ impl PieceRenderInstructions {
     fn inner(pri: &PieceRenderInstructions, gpc: &GPiece, p: &dyn PieceTrait)
              -> Html
   {
-    let PriOcculted::Visible = pri.occulted;
-
     pri.describe_fallible(gpc, p)
       .unwrap_or_else(|e| {
         error!("error describing piece: {:?}", e);
@@ -420,20 +462,21 @@ impl PieceRenderInstructions {
 
   #[throws(IE)]
   pub fn describe_fallible(&self, gpc: &GPiece, p: &dyn PieceTrait) -> Html {
-    p.describe_html(gpc)?
-  }
-
-  pub fn angle(&self, gpc: &GPiece) -> VisiblePieceAngle {
-    let PriOcculted::Visible = self.occulted;
-
-    gpc.angle
+    match self.instead(p)? {
+      None => p.describe_html(gpc)?,
+      Some(i) => i.describe_html()?,
+    }
   }
 
   #[throws(InternalError)]
   pub fn ui_operations(&self, gpc: &GPiece, p: &dyn PieceTrait)
                    -> Vec<UoDescription>
   {
-    let PriOcculted::Visible = self.occulted;
+    match self.occulted {
+      PriOcculted::Visible                              => (),
+      PriOcculted::Occulted | PriOcculted::Displaced(_) => return vec![],
+    };
+
     type WRC = WhatResponseToClientOp;
 
     let mut out = vec![];
