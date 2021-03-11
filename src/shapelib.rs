@@ -63,6 +63,8 @@ pub enum LibraryLoadError {
   FileError(String, io::Error),
   #[error("OS error globbing for files: {0}")]
   GlobFileError(#[from] glob::GlobError),
+  #[error("{:?}",&self)]
+  InternalError(#[from] InternalError),
   #[error("bad glob pattern: {pat:?} (near char {pos}): {msg}")]
   BadGlobPattern { pat: String, msg: &'static str, pos: usize },
   #[error("glob pattern {pat:?} matched non-utf-8 filename {actual:?}")]
