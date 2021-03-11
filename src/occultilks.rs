@@ -14,7 +14,7 @@ pub struct OccultIlkOwningId(Id);
 #[derive(Debug,Clone,Eq,PartialEq,Ord,PartialOrd,Hash)]
 #[derive(Serialize,Deserialize)]
 #[serde(transparent)]
-pub struct OccultIlkName(pub String);
+pub struct OccultIlkName(pub Arc<String>);
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct OccultIlkData {

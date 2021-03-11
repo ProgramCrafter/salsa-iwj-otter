@@ -52,7 +52,7 @@ struct ItemData {
 
 #[derive(Debug,Clone)]
 struct OccData {
-  item_name: String,
+  item_name: Arc<String>,
   outline: Outline,
   desc: Html,
 }
@@ -405,7 +405,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
             throw!(LLE::OccultationColourMissing(colour.clone()));
           }
           Some(Arc::new(OccData {
-            item_name: subst(&item_name, "_c", &colour)?,
+            item_name: Arc::new(subst(&item_name, "_c", &colour)?),
             desc: Html(subst(&fe.desc.0, "_colour", "")?),
             outline: outline.clone(),
           }))
