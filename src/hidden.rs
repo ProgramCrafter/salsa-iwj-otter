@@ -441,8 +441,13 @@ mod vpid {
       new_notches
     };
 
-    for gpl in gplayers.values_mut() {
-      // xxx don't do this for Visible, check occk
+    for (player, gpl) in gplayers.iter_mut() {
+      match occ.views.get_kind(player) {
+        OccK::Visible => continue,
+        OccK::Scrambled |
+        OccK::Displaced{..} |
+        OccK::Invisible => (),
+      };
 
       let mut fwd_updates = vec![];
       for (old, new) in izip!(&occ.notches.table, &new_notches) {
