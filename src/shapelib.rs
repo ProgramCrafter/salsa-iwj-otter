@@ -212,25 +212,32 @@ impl ItemSpec {
 
 impl Contents {
   #[throws(SpecError)]
-  fn load1(&self, idata: &ItemData, name: &str) -> PieceSpecLoaded {
-    let svg_path = format!("{}/{}.usvg", self.dirname, &name);
+  fn load_svg(&self, item_name: &str, for_name: &str) -> Html {
+    let svg_path = format!("{}/{}.usvg", self.dirname, item_name);
     let svg_data = fs::read_to_string(&svg_path)
       .map_err(|e| if e.kind() == ErrorKind::NotFound {
-        warn!("library item lib={} itme={} data file {:?} not found",
-              &self.libname, &name, &svg_path);
-        SpE::LibraryItemNotFound(name.to_owned())
+        warn!("library item lib={} itme={} for={} data file {:?} not found",
+              &self.libname, item_name, for_name, &svg_path);
+        SpE::LibraryItemNotFound(for_name.to_owned())
       } else {
         let m = "error accessing/reading library item data file";
-        error!("{}: {}: {}", &m, &svg_path, &e);
+        error!("{}: {} {}: {}", &m, &svg_path, for_name, &e);
         SpE::InternalError(m.to_string())
       })?;
+
+    Html(svg_data)
+  }
+
+  #[throws(SpecError)]
+  fn load1(&self, idata: &ItemData, name: &str) -> PieceSpecLoaded {
+    let svg_data = self.load_svg(name, name)?;
 
     idata.group.d.outline.check(&idata.group)
       .map_err(|e| SpE::InternalError(format!("rechecking outline: {}",&e)))?;
     let outline = idata.group.d.outline.load(&idata.group)?;
 
     let mut svgs = IndexVec::with_capacity(1);
-    let svg = svgs.push(Html(svg_data));
+    let svg = svgs.push(svg_data);
 
     let mut descs = index_vec![ ];
     let desc = descs.push(idata.d.desc.clone());
