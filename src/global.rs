@@ -46,7 +46,7 @@ pub struct Instance {
   pub name: Arc<InstanceName>,
   pub gs: GameState,
   pub ipieces: IPieces,
-  pub ioccults: OccultIlks,
+  pub ioccults: IOccults,
   pub clients: DenseSlotMap<ClientId, Client>,
   pub iplayers: SecondarySlotMap<PlayerId, PlayerRecord>,
   pub tokens_players: TokenRegistry<PlayerId>,
@@ -80,6 +80,11 @@ pub struct IPieces(ActualIPieces);
 pub type ActualIPieces = SecondarySlotMap<PieceId, IPiece>;
 #[derive(Copy,Clone,Debug)]
 pub struct ModifyingPieces(());
+
+#[derive(Debug,Serialize,Deserialize,Default)]
+pub struct IOccults {
+  pub ilks: OccultIlks,
+}
 
 #[derive(Debug,Serialize,Deserialize,Default)]
 #[serde(transparent)]
@@ -1019,7 +1024,7 @@ impl InstanceGuard<'_> {
   fn load_game(accounts: &AccountsGuard,
                games: &mut GamesGuard,
                name: InstanceName) -> Option<InstanceRef> {
-    let InstanceSaveAccesses::<String,ActualIPieces,OccultIlks>
+    let InstanceSaveAccesses::<String,ActualIPieces,IOccults>
     { tokens_players, mut ipieces, ioccults, mut aplayers, acl, links }
     = match Self::load_something(&name, "a-") {
       Ok(data) => data,

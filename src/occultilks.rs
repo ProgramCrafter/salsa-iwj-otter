@@ -16,10 +16,15 @@ pub struct OccultIlkOwningId(Id);
 #[serde(transparent)]
 pub struct OccultIlkName(pub String);
 
+#[derive(Debug,Serialize,Deserialize)]
+pub struct OccultIlkData {
+  pub p_occ: Box<dyn OccultedPieceTrait>,
+}
+
 type Id = OccultIlkId;
 type OId = OccultIlkOwningId;
 type K = OccultIlkName;
-type V = Box<dyn OccultedPieceTrait>;
+type V = OccultIlkData;
 type Refcount = u32;
 
 #[derive(Debug,Serialize,Deserialize,Default)]
