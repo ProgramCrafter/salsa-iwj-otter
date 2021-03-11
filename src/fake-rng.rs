@@ -46,6 +46,7 @@ impl RngWrap {
     let mut fake = self.0.as_ref()?.lock();
     let e = fake.ents.get(fake.i)?.clone();
     fake.i += 1;
+    fake.i %= fake.ents.len();
     e
   }
 
