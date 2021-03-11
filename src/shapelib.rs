@@ -129,6 +129,12 @@ define_index_type! { pub struct SvgId = u8; }
 struct ItemFace {
   svg: SvgId,
   desc: DescId,
+  #[serde(flatten)]
+  xform: FaceTransform,
+}
+
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+struct FaceTransform {
   centre: [f64; 2],
   scale: [f64; 2],
 }
@@ -191,9 +197,10 @@ impl PieceTrait for Item {
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _vpid: VisiblePieceId) {
     let face = &self.faces[gpc.face];
     let svgd = &self.svgs[face.svg];
+    let xform = &face.xform;
     write!(&mut f.0,
            r##"<g transform="scale({} {}) translate({} {})">{}</g>"##,
-           face.scale[0], face.scale[1], -face.centre[0], -face.centre[1],
+           xform.scale[0], xform.scale[1], -xform.centre[0], -xform.centre[1],
            svgd.0)?;
   }
   #[throws(IE)]
@@ -299,10 +306,11 @@ impl Contents {
     let centre = idata.group.d.centre;
     let scale = idata.group.d.scale;
 
-    let mut face = ItemFace { svg, desc, centre, scale: [scale,scale] };
+    let xform = FaceTransform { centre, scale: [scale,scale] };
+    let mut face = ItemFace { svg, desc, xform };
     let mut faces = index_vec![ face ];
     if idata.group.d.flip {
-      face.scale[0] *= -1.;
+      face.xform.scale[0] *= -1.;
       faces.push(face);
     }
     faces.shrink_to_fit();
