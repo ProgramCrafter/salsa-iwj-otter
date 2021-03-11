@@ -623,7 +623,7 @@ fn recalculate_occultation_general<
             // prevent occulting pieces being occulted
             // (also prevents reflexive occultation)
             return None
-          } else if ipc.p.occultable().is_none() {
+          } else if ipc.occilk.is_none() {
             // if we cannot make it look identical to the others, we
             // cannot occult it beause we can't hide its identity
             return None

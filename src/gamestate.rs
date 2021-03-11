@@ -155,8 +155,6 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
 
   fn describe_html(&self, gpc: &GPiece) -> Result<Html,IE>;
 
-  fn occultable(&self) -> Option<&dyn OccultedPieceTrait> { None }
-
   fn delete_hook(&self, _p: &GPiece, _gs: &mut GameState)
                  -> ExecuteGameChangeUpdates { 
     ExecuteGameChangeUpdates{ pcs: vec![], log: vec![], raw: None }
@@ -381,17 +379,22 @@ impl PieceRenderInstructions {
   }
 
   #[throws(IE)]
-  fn instead<'p>(&self, _ioccults: &'p IOccults, p: &'p IPiece)
+  fn instead<'p>(&self, ioccults: &'p IOccults, p: &'p IPiece)
                  -> Option<&'p dyn OccultedPieceTrait>
   {
     match self.occulted {
       PriOcculted::Visible                              => None,
       PriOcculted::Occulted | PriOcculted::Displaced(_) => {
-        Some(
-          p.p.occultable()
+        Some({
+          let occilk = p.occilk.as_ref()
             .ok_or_else(|| internal_logic_error(format!(
               "occulted non-occultable {:?}", p)))?
-        )
+            .borrow();
+          let occ_data = ioccults.ilks.get(occilk)
+            .ok_or_else(|| internal_logic_error(format!(
+              "occulted ilk vanished {:?} {:?}", p, occilk)))?;
+          occ_data.p_occ.as_ref()
+        })
       },
     }
   }
