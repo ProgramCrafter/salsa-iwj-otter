@@ -50,6 +50,7 @@ Hi {{nick | escape}}
 {% endmacro wresting %}
 
 {% macro status() %}
+{%- if fake_rng %}<strong>FAKING RANDOMNESS!</strong>{% endif %}
 <span id="status">nothing</span>
 {% endmacro status %}
 

@@ -23,6 +23,7 @@ struct SessionRenderContext {
   links: Html,
   scale: f64,
   player_info_pane: Html,
+  fake_rng: bool,
 }
 
 #[derive(Debug,Serialize)]
@@ -206,6 +207,7 @@ fn session_inner(form: Json<SessionForm>,
       player_info_pane,
       ptoken: form.ptoken.clone(),
       links: (&*ig.links).into(),
+      fake_rng: config().fake_rng.is_fake(),
       load: serde_json::to_string(&DataLoad {
         players: load_players,
         last_log_ts: timestamp_abbrev.unwrap_or_default(),
