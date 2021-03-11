@@ -373,6 +373,9 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
           + rhs
       }
 
+      let item_name = format!("{}{}{}", gdefn.item_prefix,
+                              fe.item_spec, gdefn.item_suffix);
+
       let mut add1 = |item_name: &str, desc| {
         let idata = ItemData {
           group: group.clone(),
@@ -392,9 +395,6 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
         };
         Ok::<_,LLE>(())
       };
-
-      let item_name = format!("{}{}{}", gdefn.item_prefix,
-                              fe.item_spec, gdefn.item_suffix);
 
       if group.d.colours.is_empty() {
         add1(&item_name, fe.desc.clone())?;
