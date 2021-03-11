@@ -415,7 +415,7 @@ mod vpid {
         pieces.push(piece);
       }
 
-      let mut new_notches = index_vec![];
+      let mut new_notches = occ.notches.table.clone();
       for (_occilk, (notches, pieces)) in ilks {
         // We must permute for if we have any views that are scrambled
         // or displaced obviously.  For invisible too, so that when they
