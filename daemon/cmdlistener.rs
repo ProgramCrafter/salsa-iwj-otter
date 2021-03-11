@@ -612,7 +612,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         if p.nfaces() <= face.into() {
           throw!(SpecError::FaceNotFound);
         }
-        let pc = GPiece {
+        let gpc = GPiece {
           held: None,
           zlevel: ZLevel { z: z.increment()?, zg: gs.gen },
           lastclient: default(),
@@ -624,9 +624,9 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           pos, face,
           xdata: None,
         };
-        pc.pos.clamped(gs.table_size).map_err(|_| SpecError::PosOffTable)?;
-        if pc.zlevel.z > gs.max_z { gs.max_z = pc.zlevel.z.clone() }
-        let piece = gs.pieces.as_mut(modperm).insert(pc);
+        gpc.pos.clamped(gs.table_size).map_err(|_| SpecError::PosOffTable)?;
+        if gpc.zlevel.z > gs.max_z { gs.max_z = gpc.zlevel.z.clone() }
+        let piece = gs.pieces.as_mut(modperm).insert(gpc);
         ig.ipieces.as_mut(modperm).insert(piece, IPiece { p });
         updates.push((piece, PieceUpdateOp::Insert(())));
         pos = (pos + posd)?;
