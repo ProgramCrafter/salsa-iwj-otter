@@ -396,41 +396,52 @@ mod vpid {
                  gplayers: &mut GPlayers,
                  gpieces: &mut GPieces,
                  ipieces: &IPieces) {
-    // xxx take account of occult ilks
-
-    // We must permute for if we have any views that are scrambled
-    // or displaced obviously.  For invisible too, so that when they
-    // reappear the ids have been permuted.  And that's all the
-    // non-Visible views which an occultation ought to have at least
-    // one of...
-    //
-    // We choose a single permutation of the pieces in the
-    // Occultation::notches.
-
-    let permu = {
-      let mut permu: Vec<_> =
-        occ.notches.table.iter()
-        .filter_map(NR::piece)
-        .collect();
-
-      let mut rng = thread_rng();
-      permu.shuffle(&mut rng);
-      permu
-    };
-
     let new_notches = {
-      let mut permus = permu.iter();
-      let new_notches = occ.notches.table.iter().map(|nr| match nr {
-        &f@ NR::Free(_) => f,
-        NR::Piece(p) => NR::Piece(*permus.next().unwrap()),
-      })
-        .collect::<IndexVec<_,_>>();
-      permus.next().map(|x| panic!("{:?}", x));
+
+      let mut ilks: HashMap<OccultIlkId, (
+        Vec<Notch>,
+        Vec<PieceId>,
+      )> = HashMap::new();
+
+      for (notch, nr) in occ.notches.table.iter_enumerated() {
+        let piece = if let Some(p) = nr.piece() { p } else { continue };
+        let occilk = (|| Some(ipieces.get(piece)?.occilk.as_ref()?))();
+        let occilk = if let Some(o) = occilk { *o.borrow() } else {
+          error!("{}", internal_error_bydebug(&(occid, &occ, &nr, piece)));
+          continue;
+        };
+        let (notches, pieces) = ilks.entry(occilk).or_default();
+        notches.push(notch);
+        pieces.push(piece);
+      }
+
+      let mut new_notches = index_vec![];
+      for (_occilk, (notches, pieces)) in ilks {
+        // We must permute for if we have any views that are scrambled
+        // or displaced obviously.  For invisible too, so that when they
+        // reappear the ids have been permuted.  And that's all the
+        // non-Visible views which an occultation ought to have at least
+        // one of...
+        //
+        // We choose a single permutation of each of the subsets (for a
+        // partiular ilk) of the pieces in the Occultation::notches.
+
+        let permu = {
+          let mut permu = pieces;
+          let mut rng = thread_rng();
+          permu.shuffle(&mut rng);
+          permu
+        };
+
+        for (notch, new_piece) in itertools::zip_eq(notches, permu) {
+          new_notches[notch] = NR::Piece(new_piece);
+        }
+      }
+
       new_notches
     };
 
     for gpl in gplayers.values_mut() {
-
       // xxx don't do this for Visible, check occk
 
       let mut fwd_updates = vec![];
