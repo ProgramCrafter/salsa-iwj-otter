@@ -967,12 +967,15 @@ mod test {
 
   #[test]
   fn plus_offset() {
-    let z: ZCoord = "3o00000000".parse().unwrap();
-    assert_eq!(z.plus_offset(0).unwrap(),
-               "3o00000000_0000004000".parse().unwrap());
-    assert_eq!(z.plus_offset(1).unwrap(),
-               "3o00000000_000000c000".parse().unwrap());
-    assert_eq!(z.plus_offset(0xffffffff).unwrap(),
-               "3o00000000_vvvvvvs000".parse().unwrap());
+    fn chk(off: u32, s: &str) {
+      let z: ZCoord = "3o00000000".parse().unwrap();
+      let p = z.plus_offset(off).unwrap();
+      assert_eq!(s, format!("{}", &p));
+      assert_eq!(p, s.parse().unwrap());
+    }
+
+    chk(         0, "3o00000000_0000004000");
+    chk(         1, "3o00000000_000000c000");
+    chk(0xffffffff, "3o00000000_vvvvvvs000");
   }
 }
