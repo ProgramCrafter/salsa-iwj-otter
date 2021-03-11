@@ -64,8 +64,12 @@ impl OccultIlks {
 
   pub fn dispose(&mut self, id: OId) {
     let id: Id = id.0;
-    let data = self.table.remove(id).unwrap();
-    self.lookup.remove(&data.k);
+    let data = &mut self.table[id];
+    let newrefcount = data.refcount.checked_sub(1).unwrap();
+    if newrefcount == 0 {
+      let data = self.table.remove(id).unwrap();
+      self.lookup.remove(&data.k);
+    }
   }
 }
 
