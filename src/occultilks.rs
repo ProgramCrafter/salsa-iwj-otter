@@ -22,7 +22,7 @@ type K = OccultIlkName;
 type V = Box<dyn OccultedPieceTrait>;
 type Refcount = u32;
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug,Serialize,Deserialize,Default)]
 pub struct OccultIlks {
   lookup: HashMap<K, Id>,
   table: DenseSlotMap<Id, Data>,

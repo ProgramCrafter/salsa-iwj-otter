@@ -46,6 +46,7 @@ pub struct Instance {
   pub name: Arc<InstanceName>,
   pub gs: GameState,
   pub ipieces: IPieces,
+  pub ioccults: OccultIlks,
   pub clients: DenseSlotMap<ClientId, Client>,
   pub iplayers: SecondarySlotMap<PlayerId, PlayerRecord>,
   pub tokens_players: TokenRegistry<PlayerId>,
@@ -214,8 +215,9 @@ pub struct InstanceContainer {
 }
 
 #[derive(Debug,Default,Serialize,Deserialize)]
-struct InstanceSaveAccesses<RawTokenStr, PiecesLoadedRef> {
+struct InstanceSaveAccesses<RawTokenStr, PiecesLoadedRef, OccultIlksRef> {
   ipieces: PiecesLoadedRef,
+  #[serde(default)] ioccults: OccultIlksRef,
   tokens_players: Vec<(RawTokenStr, PlayerId)>,
   aplayers: SecondarySlotMap<PlayerId, IPlayer>,
   acl: Acl<TablePermission>,
@@ -297,6 +299,7 @@ impl Instance {
       name: name.clone(),
       gs, acl,
       ipieces: IPieces(default()),
+      ioccults: default(),
       clients: default(),
       iplayers: default(),
       tokens_players: default(),
@@ -969,6 +972,7 @@ impl InstanceGuard<'_> {
   fn save_access_now(&mut self) {
     self.save_something("a-", |s, w| {
       let ipieces = &s.c.g.ipieces;
+      let ioccults = &s.c.g.ioccults;
       let tokens_players: Vec<(&str, PlayerId)> = {
         let global_players = GLOBAL.players.read().unwrap();
         s.c.g.tokens_players.tr
@@ -986,7 +990,7 @@ impl InstanceGuard<'_> {
       let acl = s.c.g.acl.clone().into();
       let links = s.c.g.links.clone();
       let isa = InstanceSaveAccesses {
-        ipieces, tokens_players, aplayers, acl, links,
+        ipieces, ioccults, tokens_players, aplayers, acl, links,
       };
       rmp_serde::encode::write_named(w, &isa)
     })?;
@@ -1009,8 +1013,8 @@ impl InstanceGuard<'_> {
   fn load_game(accounts: &AccountsGuard,
                games: &mut GamesGuard,
                name: InstanceName) -> Option<InstanceRef> {
-    let InstanceSaveAccesses::<String,ActualIPieces>
-    { tokens_players, mut ipieces, mut aplayers, acl, links }
+    let InstanceSaveAccesses::<String,ActualIPieces,OccultIlks>
+    { tokens_players, mut ipieces, ioccults, mut aplayers, acl, links }
     = match Self::load_something(&name, "a-") {
       Ok(data) => data,
       Err(e) => if (||{
@@ -1074,6 +1078,7 @@ impl InstanceGuard<'_> {
       gs, iplayers, links,
       acl: acl.into(),
       ipieces: IPieces(ipieces),
+      ioccults,
       name: name.clone(),
       clients: default(),
       tokens_clients: default(),
