@@ -510,7 +510,7 @@ fn inner(
 
   let occulted = match occk {
     OccKG::Invisible => {
-      trace_dbg!("piece_pri", gpc, occk);
+      trace_dbg!("piece_pri", player, piece, occk, gpc);
       return None;
     }
     OccKG::Visible        => PriOcculted::Visible,
@@ -518,7 +518,7 @@ fn inner(
     OccKG::Displaced(pos) => PriOcculted::Displaced(pos),
   };
   let vpid = gpl.idmap.fwd_or_insert(piece);
-  trace_dbg!("piece_pri", gpc, occk, vpid, occulted);
+  trace_dbg!("piece_pri", player, piece, occk, vpid, occulted, gpc);
   Some(PieceRenderInstructions { vpid, occulted })
 }
   inner(ioccults, occults, player, gpl, piece, gpc, ipc)
