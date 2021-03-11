@@ -670,7 +670,6 @@ mod innards {
   
     pub(super)
     fn alloc(taillen: Taillen) -> ZCoord {
-
       unsafe {
         ZCoord::alloc_unsafe(taillen, |nt: *mut Tail1| {
           ptr::write_bytes(nt, 0, taillen as usize);
