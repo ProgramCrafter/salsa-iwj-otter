@@ -387,8 +387,8 @@ pub struct PieceRenderInstructions {
   pub occulted: PriOcculted,
 }
 
-#[derive(Debug,Clone,Copy)]
-pub enum PriOcculted { Visible, Occulted, Displaced(Pos) }
+#[derive(Debug,Clone)]
+pub enum PriOcculted { Visible, Occulted, Displaced(Pos, ZLevel) }
 
 impl PieceRenderInstructions {
   pub fn new_visible(vpid: VisiblePieceId) -> PieceRenderInstructions {
@@ -400,8 +400,8 @@ impl PieceRenderInstructions {
                  -> Option<&'p dyn OccultedPieceTrait>
   {
     match self.occulted {
-      PriOcculted::Visible                              => None,
-      PriOcculted::Occulted | PriOcculted::Displaced(_) => {
+      PriOcculted::Visible                               => None,
+      PriOcculted::Occulted | PriOcculted::Displaced(..) => {
         Some({
           let occilk = p.occilk.as_ref()
             .ok_or_else(|| internal_logic_error(format!(
@@ -418,8 +418,8 @@ impl PieceRenderInstructions {
 
   pub fn angle(&self, gpc: &GPiece) -> VisiblePieceAngle {
     match self.occulted {
-      PriOcculted::Visible                              => gpc.angle,
-      PriOcculted::Occulted | PriOcculted::Displaced(_) => default(),
+      PriOcculted::Visible                               => gpc.angle,
+      PriOcculted::Occulted | PriOcculted::Displaced(..) => default(),
     }
   }
 
@@ -502,8 +502,8 @@ impl PieceRenderInstructions {
                    -> Vec<UoDescription>
   {
     match self.occulted {
-      PriOcculted::Visible                              => (),
-      PriOcculted::Occulted | PriOcculted::Displaced(_) => return vec![],
+      PriOcculted::Visible                               => (),
+      PriOcculted::Occulted | PriOcculted::Displaced(..) => return vec![],
     };
 
     type WRC = WhatResponseToClientOp;

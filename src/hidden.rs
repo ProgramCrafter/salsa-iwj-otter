@@ -21,7 +21,7 @@ pub struct GameOccults {
 // kept in synch with Occultation::pieces
 pub struct PieceOccult {
   active: Option<OccId>, // kept in synch with Occultation::occulter
-  passive: Option<(OccId, Notch)>, // kept in synch with Occultation::pieces
+  passive: Option<(OccId, Notch, Generation)>, // kept in synch with Occultation::pieces
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
@@ -52,7 +52,7 @@ pub enum OccultationKindGeneral<D> {
   Displaced(D),
   Invisible,
 }
-pub type OccultationKind = OccultationKindGeneral<Area>;
+pub type OccultationKind = OccultationKindGeneral<(Area, ZCoord)>;
 
 impl Default for OccultationKind {
   fn default() -> Self { OccK::Visible }
@@ -193,6 +193,10 @@ mod vpid {
 
   define_index_type!{
     pub struct Notch = NotchNumber;
+  }
+
+  impl From<Notch> for u32 {
+    fn from(n: Notch) -> u32 { n.index().try_into().unwrap() }
   }
 
   type NotchPtr = Option<Notch>;
@@ -499,14 +503,20 @@ fn inner(
 ) -> Option<PieceRenderInstructions>
 {
   let occk = if_chain! {
-    if let Some((occid, notch)) = gpc.occult.passive;
+    if let Some((occid, notch, zg)) = gpc.occult.passive;
     if let Some(occultation) = occults.occults.get(occid);
     then {
       occultation.views.get_kind(player)
-        .map_displaced(|area| {
+        .map_displaced(|(area, z)| {
           let x: Coord = notch.index().try_into().unwrap(); // xxx
-          let pos = area.0[0] + PosC([x*2, 0]); // xxx
-          pos.unwrap()
+          let pos = (area.0[0] + PosC([x*2, 0])).unwrap(); // xxx
+          let z = z.plus_offset(notch.into())
+            .unwrap_or_else(|e| { // eek!
+              error!("z coordinate overflow ({:?}), bodging! {:?} {:?}",
+                     e, piece, &z);
+              z.clone()
+            });
+          (pos, ZLevel { z, zg })
         })
     }
     else {
@@ -514,17 +524,18 @@ fn inner(
     }
   };
 
+  let occk_dbg = occk.map_displaced(|(pos,z)|(*pos,z.zg));
   let occulted = match occk {
     OccKG::Invisible => {
       trace_dbg!("piece_pri", player, piece, occk, gpc);
       return None;
     }
-    OccKG::Visible        => PriOcculted::Visible,
-    OccKG::Scrambled      => PriOcculted::Occulted,
-    OccKG::Displaced(pos) => PriOcculted::Displaced(pos),
+    OccKG::Visible            => PriOcculted::Visible,
+    OccKG::Scrambled          => PriOcculted::Occulted,
+    OccKG::Displaced((pos,z)) => PriOcculted::Displaced(pos, z),
   };
   let vpid = gpl.idmap.fwd_or_insert(piece);
-  trace_dbg!("piece_pri", player, piece, occk, vpid, occulted, gpc);
+  trace_dbg!("piece_pri", player, piece, occk_dbg, vpid, occulted, gpc);
   Some(PieceRenderInstructions { vpid, occulted })
 }
   inner(ioccults, occults, player, gpl, piece, gpc, ipc)
@@ -627,7 +638,7 @@ fn recalculate_occultation_general<
 
     let occulteds = OldNewOcculteds {
       old:
-        gpc.occult.passive.map(|(occid, notch)| Ok::<_,IE>((
+        gpc.occult.passive.map(|(occid, notch, _zg)| Ok::<_,IE>((
           Occulted {
             occid,
             occ: goccults.occults.get(occid).ok_or_else(
@@ -777,9 +788,10 @@ fn recalculate_occultation_general<
         .unwrap()
     };
     let passive = if let Some(occid) = occulteds.new {
+      let zg = gen.next();
       let notch = notches(goccults, occid)
-        .insert(gen.next(), piece);
-      Some((occid, notch))
+        .insert(zg, piece);
+      Some((occid, notch, zg))
     } else {
       None
     };
@@ -883,11 +895,11 @@ use recompute::*;
 #[must_use]
 pub struct NascentOccultation(Occultation);
 
-#[derive(Debug,Copy,Clone)]
+#[derive(Debug,Clone)]
 pub struct UniformOccultationView(
-  pub OccultationKind
+  pub OccultationKind,
 );
-#[derive(Debug,Copy,Clone)]
+#[derive(Debug,Clone)]
 pub struct OwnerOccultationView {
   pub defview: OccultationKind,
   pub owner: PlayerId,
