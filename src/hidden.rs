@@ -860,16 +860,16 @@ mod recompute {
                      gpieces: &mut GPieces,
                      goccults: &mut GameOccults,
                      ipieces: &IPieces) -> Implemented {
-      struct GenIncr<'g> { gen: &'g mut Generation, none_yet: Option<()>, }
+      struct GenIncr<'g> { gen: &'g mut Generation, none_yet: iter::Once<()>, }
       impl GenIncr<'_> {
         fn next(&mut self) -> Generation {
-          if self.none_yet.take().is_some() { self.gen.increment() }
+          if self.none_yet.next().is_some() { self.gen.increment() }
           let r = *self.gen;
           self.gen.increment();
           r
         }
       }
-      let mut gen = GenIncr { gen, none_yet: Some(()) };
+      let mut gen = GenIncr { gen, none_yet: iter::once(()) };
 
       for occid in self.outdated {
         if let Some(occ) = goccults.occults.get_mut(occid) {
