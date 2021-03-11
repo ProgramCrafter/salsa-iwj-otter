@@ -189,6 +189,16 @@ impl OutlineTrait for Item { delegate! { to self.outline {
   fn bbox_approx(&self) -> Result<[Pos; 2], IE>;
 }}}
 
+impl FaceTransform {
+  #[throws(IE)]
+  fn write_svgd(&self, f: &mut Html, svgd: &Html) {
+    write!(&mut f.0,
+           r##"<g transform="scale({} {}) translate({} {})">{}</g>"##,
+           self.scale[0], self.scale[1], -self.centre[0], -self.centre[1],
+           svgd.0)?;
+  }
+}
+
 #[typetag::serde(name="Lib")]
 impl PieceTrait for Item {
   fn nfaces(&self) -> RawFaceId { self.faces.len().try_into().unwrap() }
@@ -197,11 +207,8 @@ impl PieceTrait for Item {
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _vpid: VisiblePieceId) {
     let face = &self.faces[gpc.face];
     let svgd = &self.svgs[face.svg];
-    let xform = &face.xform;
-    write!(&mut f.0,
-           r##"<g transform="scale({} {}) translate({} {})">{}</g>"##,
-           xform.scale[0], xform.scale[1], -xform.centre[0], -xform.centre[1],
-           svgd.0)?;
+    face.xform.write_svgd(f, svgd)?;
+    
   }
   #[throws(IE)]
   fn describe_html(&self, gpc: &GPiece) -> Html {
