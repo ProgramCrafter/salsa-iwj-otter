@@ -1263,11 +1263,7 @@ pub fn process_all_players_for_account<
 // ========== instance pieces data access ==========
 
 impl IPieces {
-  pub fn get(&self, piece: PieceId) -> Option<&Box<dyn PieceTrait>> {
-    Some(&self.0.get(piece)?.p)
-  }
-
-  pub fn get_ipc(&self, piece: PieceId) -> Option<&IPiece> {
+  pub fn get(&self, piece: PieceId) -> Option<&IPiece> {
     self.0.get(piece)
   }
 

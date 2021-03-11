@@ -175,9 +175,10 @@ pub trait OccultedPieceTrait: OutlineTrait + 'static {
 pub struct ApiPieceOpArgs<'a> {
   pub gs: &'a mut GameState,
   pub ipieces: &'a IPieces,
+  pub ioccults: &'a IOccults,
   pub player: PlayerId,
   pub piece: PieceId,
-  pub p: &'a dyn PieceTrait,
+  pub ipc: &'a IPiece,
 }
 
 #[derive(Debug)]
@@ -285,17 +286,18 @@ impl VisiblePieceAngle {
 
 impl GPiece {
   #[throws(IE)]
-  pub fn prep_piecestate(&self, p: &dyn PieceTrait, pri: &PieceRenderInstructions)
+  pub fn prep_piecestate(&self, ioccults: &IOccults,
+                         ipc: &IPiece, pri: &PieceRenderInstructions)
                      -> PreparedPieceState {
     PreparedPieceState {
       pos        : self.pos,
       held       : self.held,
-      svg        : pri.make_defs(self, &p)?,
+      svg        : pri.make_defs(ioccults, self, ipc)?,
       z          : self.zlevel.z.clone(),
       zg         : self.zlevel.zg,
       angle      : pri.angle(self).to_compass(),
       pinned     : self.pinned,
-      uos        : pri.ui_operations(self, p)?,
+      uos        : pri.ui_operations(self, ipc.p.borrow())?,
     }
   }
 
@@ -379,14 +381,14 @@ impl PieceRenderInstructions {
   }
 
   #[throws(IE)]
-  fn instead<'p>(&self, p: &'p dyn PieceTrait)
+  fn instead<'p>(&self, _ioccults: &'p IOccults, p: &'p IPiece)
                  -> Option<&'p dyn OccultedPieceTrait>
   {
     match self.occulted {
       PriOcculted::Visible                              => None,
       PriOcculted::Occulted | PriOcculted::Displaced(_) => {
         Some(
-          p.occultable()
+          p.p.occultable()
             .ok_or_else(|| internal_logic_error(format!(
               "occulted non-occultable {:?}", p)))?
         )
@@ -403,17 +405,18 @@ impl PieceRenderInstructions {
 
 
   #[throws(IE)]
-  pub fn make_defs<'p,P>(&self, gpc: &GPiece, p: &P) -> Html
-    where P:Borrow<dyn PieceTrait>
+  pub fn make_defs<'p>(&self, ioccults: &IOccults,
+                         gpc: &GPiece, ipc: &IPiece) -> Html
   {
     #[throws(IE)]
-    fn inner(pri: &PieceRenderInstructions, gpc: &GPiece, p: &dyn PieceTrait)
+    fn inner(pri: &PieceRenderInstructions, ioccults: &IOccults,
+             gpc: &GPiece, ipc: &IPiece)
              -> Html
   {
-    let instead = pri.instead(p)?;
+    let instead = pri.instead(ioccults, ipc)?;
 
     let o: &dyn OutlineTrait = match instead {
-      None => p.dyn_upcast(),
+      None => Borrow::<dyn PieceTrait>::borrow(&ipc.p).dyn_upcast(),
       Some(i) => i.dyn_upcast(),
     };
 
@@ -434,7 +437,7 @@ impl PieceRenderInstructions {
 
     match instead {
       None => {
-        p.svg_piece(&mut defs, gpc, pri.vpid)?;
+        ipc.p.svg_piece(&mut defs, gpc, pri.vpid)?;
       },
       Some(i) => {
         i.svg(&mut defs, pri.vpid)?;
@@ -447,28 +450,29 @@ impl PieceRenderInstructions {
            pri.vpid, o.surround_path()?.0)?;
     defs
   }
-  inner(self, gpc, p.borrow())?
+  inner(self, ioccults, gpc, ipc)?
   }
 
-  pub fn describe<'p,P>(&self, gpc: &GPiece, p: &P) -> Html
-    where P:Borrow<dyn PieceTrait>
+  pub fn describe(&self, ioccults: &IOccults,
+                  gpc: &GPiece, ipc: &IPiece) -> Html
   {
-    fn inner(pri: &PieceRenderInstructions, gpc: &GPiece, p: &dyn PieceTrait)
-             -> Html
+    fn inner(pri: &PieceRenderInstructions, ioccults: &IOccults,
+             gpc: &GPiece, ipc: &IPiece) -> Html
   {
-    pri.describe_fallible(gpc, p)
+    pri.describe_fallible(ioccults, gpc, ipc)
       .unwrap_or_else(|e| {
         error!("error describing piece: {:?}", e);
         Html::lit("<internal error describing piece>")
       })
   }
-  inner(self, gpc, p.borrow())
+  inner(self, ioccults, gpc, ipc)
   }
 
   #[throws(IE)]
-  pub fn describe_fallible(&self, gpc: &GPiece, p: &dyn PieceTrait) -> Html {
-    match self.instead(p)? {
-      None => p.describe_html(gpc)?,
+  pub fn describe_fallible(&self, ioccults: &IOccults,
+                           gpc: &GPiece, ipc: &IPiece) -> Html {
+    match self.instead(ioccults, ipc)? {
+      None => ipc.p.describe_html(gpc)?,
       Some(i) => i.describe_html()?,
     }
   }

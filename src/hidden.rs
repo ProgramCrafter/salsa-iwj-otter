@@ -462,16 +462,18 @@ pub use vpid::{PerPlayerIdMap, NotchNumber, Notch, Notches};
 // ========== public entrypoints ==========
 
 /// None => do not render at all
-pub fn piece_pri<P:Borrow<dyn PieceTrait>>(
+pub fn piece_pri(
+  ioccults: &IOccults,
   occults: &GameOccults,
   player: PlayerId, gpl: &mut GPlayer,
-  piece: PieceId, gpc: &GPiece, p: &P,
+  piece: PieceId, gpc: &GPiece, ipc: &IPiece,
 ) -> Option<PieceRenderInstructions>
 {
 fn inner(
+  _ioccults: &IOccults,
   occults: &GameOccults,
   player: PlayerId, gpl: &mut GPlayer,
-  piece: PieceId, gpc: &GPiece, _p: &dyn PieceTrait,
+  piece: PieceId, gpc: &GPiece, _ipc: &IPiece,
 ) -> Option<PieceRenderInstructions>
 {
   let occk = if_chain! {
@@ -503,7 +505,7 @@ fn inner(
   trace_dbg!("piece_pri", gpc, occk, vpid, occulted);
   Some(PieceRenderInstructions { vpid, occulted })
 }
-  inner(occults, player, gpl, piece, gpc, p.borrow())
+  inner(ioccults, occults, player, gpl, piece, gpc, ipc)
 }
 
 pub fn piece_at_all_occulted(gpc: &GPiece) -> bool {
@@ -621,7 +623,7 @@ fn recalculate_occultation_general<
             // prevent occulting pieces being occulted
             // (also prevents reflexive occultation)
             return None
-          } else if ipc.occultable().is_none() {
+          } else if ipc.p.occultable().is_none() {
             // if we cannot make it look identical to the others, we
             // cannot occult it beause we can't hide its identity
             return None
@@ -701,7 +703,7 @@ fn recalculate_occultation_general<
       let bad = || internal_error_bydebug(&("missing", opiece, h.occid));
       let oipc = ipieces.get(opiece).ok_or_else(bad)?;
       let ogpc = gpieces.get(opiece).ok_or_else(bad)?;
-      Ok::<_,IE>(oipc.describe_html(ogpc)?)
+      Ok::<_,IE>(oipc.p.describe_html(ogpc)?)
     };
 
     let most_obscure = most_obscure.unwrap_or(&OccK::Visible); // no players!
@@ -718,8 +720,8 @@ fn recalculate_occultation_general<
         log_visible
       }
       OccK::Scrambled | OccK::Displaced{..} => {
-        let _face = ipc.nfaces() - 1; // xxx use other thing entirely
-        let show = ipc.describe_html(gpc)?;
+        let _face = ipc.p.nfaces() - 1; // xxx use other thing entirely
+        let show = ipc.p.describe_html(gpc)?;
         call_log_callback(Some(&show))?
       },
       OccK::Invisible => {

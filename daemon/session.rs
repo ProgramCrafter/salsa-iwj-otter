@@ -87,6 +87,7 @@ fn session_inner(form: Json<SessionForm>,
     let ctoken = record_token(&mut ig, ciad)?;
     ig.save_game_later(); // in case we changed anything eg gpl.layout
     let ig = &mut *ig;
+    let ioccults = &ig.ioccults;
 
     let mut uses = vec![];
     let mut alldefs = vec![];
@@ -111,15 +112,16 @@ fn session_inner(form: Json<SessionForm>,
     pieces.sort_by_key(|(_,pr)| &pr.zlevel);
 
     for (piece, gpc) in pieces {
-      let p = if let Some(pto) = ig.ipieces.get(piece) { pto }
+      let ipc = if let Some(pto) = ig.ipieces.get(piece) { pto }
       else { continue /* was deleted */ };
 
-      let pri = piece_pri(&ig.gs.occults, player, gpl, piece, gpc, p);
+      let pri = piece_pri(ioccults, &ig.gs.occults, player, gpl,
+                          piece, gpc, ipc);
       let pri = if let Some(pri) = pri { pri } else { continue /*invisible*/};
 
-      let defs = pri.make_defs(gpc, p)?;
+      let defs = pri.make_defs(ioccults, gpc, ipc)?;
       alldefs.push((pri.vpid, defs));
-      let desc = pri.describe(&gpc, p);
+      let desc = pri.describe(ioccults, &gpc, ipc);
 
       let vangle = pri.angle(gpc).to_compass();
 
@@ -130,7 +132,7 @@ fn session_inner(form: Json<SessionForm>,
         pinned: gpc.pinned,
         angle: vangle,
         desc,
-        uos: &pri.ui_operations(gpc, p.as_ref())?,
+        uos: &pri.ui_operations(gpc, ipc.p.as_ref())?,
       };
 
       let for_piece = SessionPieceContext {

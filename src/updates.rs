@@ -201,34 +201,36 @@ struct FormattedLogEntry<'u> {
 
 #[throws(OE)]
 pub fn log_did_to_piece_whoby(
+  ioccults: &IOccults,
   occults: &GameOccults,
   player: PlayerId,
   gpl: &mut GPlayer,
-  piece: PieceId, gpc: &GPiece, p: &dyn PieceTrait,
+  piece: PieceId, gpc: &GPiece, ipc: &IPiece,
   did: &str,
 ) -> (Vec<LogEntry>, Option<Html>) {
   let who_by = Html(htmlescape::encode_minimal(&gpl.nick));
-  let pri = piece_pri(occults, player, gpl, piece, gpc, &p)
+  let pri = piece_pri(ioccults, occults, player, gpl, piece, gpc, ipc)
     .ok_or(OE::PieceGone)?;
 
   let log = vec![ LogEntry { html: Html(format!(
     "{} {} {}",
     &who_by.0,
     did,
-    pri.describe(gpc, &p).0,
+    pri.describe(ioccults, gpc, ipc).0,
   ))}];
   (log, Some(who_by))
 }
 
 #[throws(OE)]
 pub fn log_did_to_piece(
+  ioccults: &IOccults,
   occults: &GameOccults,
   player: PlayerId,
   gpl: &mut GPlayer,
-  piece: PieceId, gpc: &GPiece, p: &dyn PieceTrait,
+  piece: PieceId, gpc: &GPiece, ipc: &IPiece,
   did: &str,
 ) -> Vec<LogEntry> {
-  log_did_to_piece_whoby(occults,player,gpl,piece,gpc,p,did)?.0
+  log_did_to_piece_whoby(ioccults,occults,player,gpl,piece,gpc,ipc,did)?.0
 }
 
 // ---------- prepared updates, queued in memory ----------
@@ -491,9 +493,10 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   }
 
   #[throws(InternalError)]
-  fn piece_update_player(max_z: &mut ZCoord,
+  fn piece_update_player(ioccults: &IOccults,
+                         max_z: &mut ZCoord,
                          pc: &mut GPiece,
-                         p: &Box<dyn PieceTrait>,
+                         ipc: &IPiece,
                          op: PieceUpdateOp<(),()>,
                          pri: &Option<PieceRenderInstructions>)
                          -> Option<PreparedPieceUpdate>
@@ -504,7 +507,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
     let op = op.try_map(
       |()|{
-        let mut ns = pc.prep_piecestate(p.as_ref(), pri)?;
+        let mut ns = pc.prep_piecestate(ioccults, ipc, pri)?;
         massage_prep_piecestate(pri, &mut ns);
         <Result<_,InternalError>>::Ok(ns)
       },
@@ -529,9 +532,10 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   {
     let gen = self.gen();
     let gs = &mut self.g.gs;
+    let ioccults = &self.g.ioccults;
 
     let mut gpc = gs.pieces.byid_mut(piece).ok();
-    let p = self.g.ipieces.get(piece);
+    let ipc = self.g.ipieces.get(piece);
 
     if let Some(ref mut gpc) = gpc {
       gen_update(gpc, gen, &self.by_client);
@@ -545,11 +549,12 @@ impl<'r> PrepareUpdatesBuffer<'r> {
           None => continue,
         }
       };
-      let op = match (&mut gpc, p) {
-        (Some(gpc), Some(p)) => {
-          let pri = piece_pri(&gs.occults, player, gpl, piece, *gpc, p);
+      let op = match (&mut gpc, ipc) {
+        (Some(gpc), Some(ipc)) => {
+          let pri = piece_pri(ioccults, &gs.occults, player,
+                              gpl, piece, *gpc, ipc);
           Self::piece_update_player(
-            &mut gs.max_z, gpc, p, ops, &pri
+            ioccults, &mut gs.max_z, gpc, ipc, ops, &pri
           )?
         }
         _ => gpl.idmap.fwd(piece).map(

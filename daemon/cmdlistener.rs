@@ -375,25 +375,26 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     },
 
     MGI::ListPieces => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
+      let ioccults = &ig.ioccults;
       let pieces = ig.gs.pieces.iter().filter_map(
         |(piece,gpc)| (|| Ok::<_,MgmtError>(if_chain!{
           let &GPiece { pos, face, .. } = gpc;
-          if let Some(p) = ig.ipieces.get(piece);
+          if let Some(ipc) = ig.ipieces.get(piece);
           let visible = if ! piece_at_all_occulted(gpc) {
             // todo: something more sophisticated would be nice
             let pri = PieceRenderInstructions::new_visible(
               // visible id is internal one here
               VisiblePieceId(piece.data())
             );
-            let bbox = p.bbox_approx()?;
-            let desc_html = pri.describe(gpc, p);
+            let bbox = ipc.p.bbox_approx()?;
+            let desc_html = pri.describe(ioccults, gpc, ipc);
             Some(MgmtGamePieceVisibleInfo {
               pos, face, desc_html, bbox
             })
           } else {
             None
           };
-          let itemname = p.itemname().to_string();
+          let itemname = ipc.p.itemname().to_string();
           then {
             Some(MgmtGamePieceInfo {
               piece, itemname,
@@ -558,26 +559,28 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     },
 
     MGI::DeletePiece(piece) => {
-      let (ig, modperm, _) = cs.check_acl_modify_pieces(ag, ig)?;
-      let IPiece { p, occilk } = ig.ipieces.as_mut(modperm)
+      let (ig_g, modperm, _) = cs.check_acl_modify_pieces(ag, ig)?;
+      let ig = &mut **ig_g;
+      let ipc = ig.ipieces.as_mut(modperm)
         .remove(piece).ok_or(ME::PieceNotFound)?;
+      let ioccults = &ig.ioccults;
       let gs = &mut ig.gs;
       let gpc = gs.pieces.as_mut(modperm).remove(piece);
       let desc_html = if let Some(gpc) = &gpc {
         let pri = PieceRenderInstructions::new_visible(default());
-        pri.describe(gpc, &p)
+        pri.describe(ioccults, gpc, &ipc)
       } else {
         Html::lit("<piece partially missing from game state!>")
       };
-      if let Some(gpc) = gpc { p.delete_hook(&gpc, gs); }
-      if let Some(occilk) = occilk { ig.ioccults.ilks.dispose(occilk); }
+      if let Some(gpc) = gpc { ipc.p.delete_hook(&gpc, gs); }
+      if let Some(occilk) = ipc.occilk { ig.ioccults.ilks.dispose(occilk); }
       (U{ pcs: vec![(piece, PieceUpdateOp::Delete())],
           log: vec![ LogEntry {
             html: Html(format!("A piece {} was removed from the game",
                           desc_html.0)),
           }],
           raw: None },
-       Fine, ig)
+       Fine, ig_g)
     },
 
     MGI::AddPieces(PiecesSpec{ pos,posd,count,face,pinned,angle,info }) => {
