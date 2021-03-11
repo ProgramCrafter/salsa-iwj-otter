@@ -10,8 +10,6 @@
 //  *  JSON is not lossy
 //  *  JSON is human-comprehensible
 //  *  JavaScript can compare efficiently
-//     JavaScript can do arithmetic efficiently
-//  *  Limb size is 48 for fast JS arithmetic
 //     Limb size is small for not being too full of padding
 //  *  Limb size is big so step algorithm rarely encounters limb boundaries
 //
