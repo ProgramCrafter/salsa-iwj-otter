@@ -141,6 +141,7 @@ impl PieceTrait for Hand {
                   opname: &str, wrc: WhatResponseToClientOp)
                   -> UpdateFromOpComplex {
     let ApiPieceOpArgs { gs,player,piece,ipieces,.. } = a;
+    let gen = &mut gs.gen;
     let gplayers = &mut gs.players;
     let gpieces = &mut gs.pieces;
 
@@ -194,7 +195,7 @@ impl PieceTrait for Hand {
         // actually do things:
         dbgc!("creating occ");
         let xupdates =
-          create_occultation(gplayers, gpieces, goccults, ipieces,
+          create_occultation(gen, gplayers, gpieces, goccults, ipieces,
                              region, piece, views)?;
 
         dbgc!("creating occ done", &new_owner, &xupdates);

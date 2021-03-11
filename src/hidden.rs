@@ -809,7 +809,8 @@ pub fn recalculate_occultation_piece(
         log
       }
     ),
-    to_recompute.implement(&mut gs.players, &mut gs.pieces, &mut gs.occults,
+    to_recompute.implement(&mut gs.gen, &mut gs.players,
+                           &mut gs.pieces, &mut gs.occults,
                            ipieces),
   ))?
 }
@@ -853,6 +854,7 @@ mod recompute {
     }
     pub fn mark_dirty(&mut self, occid: OccId) { self.outdated.insert(occid); }
     pub fn implement(self,
+                     _gen: &mut Generation,
                      gplayers: &mut GPlayers,
                      gpieces: &mut GPieces,
                      goccults: &mut GameOccults,
@@ -907,6 +909,7 @@ impl OccultationViewDef for OwnerOccultationView {
 
 #[throws(OnlineError)]
 pub fn create_occultation(
+  gen: &mut Generation,
   gplayers: &mut GPlayers,
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
@@ -973,7 +976,7 @@ pub fn create_occultation(
       goccults.occults.remove(occid).expect("inserted this earlier");
       e
     }),
-    to_recompute.implement(gplayers, gpieces, goccults, ipieces),
+    to_recompute.implement(gen, gplayers, gpieces, goccults, ipieces),
   ))?;
 
   dbgc!(&updates);
@@ -982,6 +985,7 @@ pub fn create_occultation(
 
 #[throws(IE)]
 pub fn remove_occultation(
+  gen: &mut Generation,
   gplayers: &mut GPlayers,
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
@@ -1046,7 +1050,7 @@ pub fn remove_occultation(
       aggerr.record(internal_logic_error("removing occultation of non-piece"));
     }
   },
-    to_recompute.implement(gplayers, gpieces, goccults, ipieces),
+    to_recompute.implement(gen, gplayers, gpieces, goccults, ipieces),
   ));
 
   aggerr.ok()?;
