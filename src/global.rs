@@ -69,9 +69,15 @@ pub struct IPlayer { // usual variable: ipl
 }
 
 #[derive(Debug,Serialize,Deserialize)]
+pub struct IPiece {
+  #[serde(flatten)]
+  pub p: Box<dyn PieceTrait>,
+}
+
+#[derive(Debug,Serialize,Deserialize)]
 #[serde(transparent)]
 pub struct IPieces(ActualIPieces);
-pub type ActualIPieces = SecondarySlotMap<PieceId, Box<dyn PieceTrait>>;
+pub type ActualIPieces = SecondarySlotMap<PieceId, IPiece>;
 #[derive(Copy,Clone,Debug)]
 pub struct ModifyingPieces(());
 
@@ -1253,6 +1259,10 @@ pub fn process_all_players_for_account<
 
 impl IPieces {
   pub fn get(&self, piece: PieceId) -> Option<&Box<dyn PieceTrait>> {
+    Some(&self.0.get(piece)?.p)
+  }
+
+  pub fn get_ipc(&self, piece: PieceId) -> Option<&IPiece> {
     self.0.get(piece)
   }
 

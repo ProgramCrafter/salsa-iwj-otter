@@ -559,7 +559,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
     MGI::DeletePiece(piece) => {
       let (ig, modperm, _) = cs.check_acl_modify_pieces(ag, ig)?;
-      let p = ig.ipieces.as_mut(modperm)
+      let IPiece { p } = ig.ipieces.as_mut(modperm)
         .remove(piece).ok_or(ME::PieceNotFound)?;
       let gs = &mut ig.gs;
       let gpc = gs.pieces.as_mut(modperm).remove(piece);
@@ -627,7 +627,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         pc.pos.clamped(gs.table_size).map_err(|_| SpecError::PosOffTable)?;
         if pc.zlevel.z > gs.max_z { gs.max_z = pc.zlevel.z.clone() }
         let piece = gs.pieces.as_mut(modperm).insert(pc);
-        ig.ipieces.as_mut(modperm).insert(piece, p);
+        ig.ipieces.as_mut(modperm).insert(piece, IPiece { p });
         updates.push((piece, PieceUpdateOp::Insert(())));
         pos = (pos + posd)?;
       }
