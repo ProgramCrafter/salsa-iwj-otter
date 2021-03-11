@@ -60,6 +60,12 @@
 //       limb to 0000000000, start again: decrement rightmost nonzero
 //       limb by 1, with borrow, then add two limbs vvvvvvvvvv, and
 //       redo.
+//
+//    Given a base value, and an u32 "offset multiplier", produce a value
+//
+//       The resulting values are all greater than the base, and
+//       in the same order as the provided offset multipliers.
+//       The function is deterministic
 
 use std::cmp::{max, Ordering};
 use std::convert::{TryFrom, TryInto};
@@ -75,6 +81,8 @@ use serde::{Deserialize, Serialize};
 use serde_with::DeserializeFromStr;
 use serde_with::SerializeDisplay;
 use thiserror::Error;
+
+use crate::misc::default;
 
 //---------- core definitions ----------
 
@@ -623,7 +631,7 @@ mod innards {
 
   pub(super)
   struct Header {
-    pub taillen: u16,
+    pub taillen: u16, // in characters
   }
 
   #[repr(C)]
@@ -711,6 +719,31 @@ mod innards {
         layout(taillen)
       }
     }
+
+    #[throws(Overflow)]
+    pub fn plus_offset(&self, offset: u32) -> Self { unsafe {
+      let (old_header, old_tail) = ptrs(self.0.as_ptr());
+      let old_taillen = old_header.as_ref().unwrap().taillen;
+      let new_taillen = old_taillen
+        .checked_add(TEXT_PER_LIMB as Taillen).ok_or(Overflow)?;
+      let old_taillen: usize = old_taillen.into();
+      let new_limb = lv(
+        (offset as RawLimbVal) << (BITS_PER_LIMB - 32) |
+         1                     << (BITS_PER_LIMB - 33)
+      );
+      let mut buf: [u8; TEXT_PER_LIMB] = default();
+      buf[0] = b'_';
+      new_limb.to_str_buf((&mut buf[1..TEXT_PER_LIMB]).try_into().unwrap());
+      ZCoord::alloc_unsafe(new_taillen, |new_tail| {
+        ptr::copy_nonoverlapping(old_tail,
+                                 new_tail,
+                                 old_taillen);
+
+        ptr::copy_nonoverlapping(buf.as_ptr(),
+                                 new_tail.add(old_taillen),
+                                 TEXT_PER_LIMB);
+      })
+    } }
   }
 
   impl Drop for ZCoord {
@@ -930,5 +963,16 @@ mod test {
     it.nxt(None);
     let mut it = mkr(None,Some("fvvq000000"),0).unwrap();
     it.nxt(None);
+  }
+
+  #[test]
+  fn plus_offset() {
+    let z: ZCoord = "3o00000000".parse().unwrap();
+    assert_eq!(z.plus_offset(0).unwrap(),
+               "3o00000000_0000004000".parse().unwrap());
+    assert_eq!(z.plus_offset(1).unwrap(),
+               "3o00000000_000000c000".parse().unwrap());
+    assert_eq!(z.plus_offset(0xffffffff).unwrap(),
+               "3o00000000_vvvvvvs000".parse().unwrap());
   }
 }
