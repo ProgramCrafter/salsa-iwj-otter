@@ -395,7 +395,8 @@ mod vpid {
                  occ: &mut Occultation,
                  gplayers: &mut GPlayers,
                  gpieces: &mut GPieces,
-                 ipieces: &IPieces) {
+                 ipieces: &IPieces,
+                 z_gen: Generation /* unique to this call */) {
     let new_notches = {
 
       let mut ilks: HashMap<OccultIlkId, (
@@ -854,14 +855,25 @@ mod recompute {
     }
     pub fn mark_dirty(&mut self, occid: OccId) { self.outdated.insert(occid); }
     pub fn implement(self,
-                     _gen: &mut Generation,
+                     gen: &mut Generation,
                      gplayers: &mut GPlayers,
                      gpieces: &mut GPieces,
                      goccults: &mut GameOccults,
                      ipieces: &IPieces) -> Implemented {
+      struct GenIncr<'g> { gen: &'g mut Generation, none_yet: Option<()>, }
+      impl GenIncr<'_> {
+        fn next(&mut self) -> Generation {
+          if self.none_yet.take().is_some() { self.gen.increment() }
+          let r = *self.gen;
+          self.gen.increment();
+          r
+        }
+      }
+      let mut gen = GenIncr { gen, none_yet: Some(()) };
+
       for occid in self.outdated {
         if let Some(occ) = goccults.occults.get_mut(occid) {
-          vpid::permute(occid, occ, gplayers, gpieces, ipieces);
+          vpid::permute(occid, occ, gplayers, gpieces, ipieces, gen.next());
         }
       }
 
