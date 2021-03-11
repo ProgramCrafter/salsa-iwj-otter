@@ -215,7 +215,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       MR::LibraryItems(results)
     }
 
-    MC::SetFakeRng { ents } => {
+    MC::LoadFakeRng(ents) => {
       let superuser = cs.superuser
         .ok_or(ME::SuperuserAuthorisationRequired)?;
       config().fake_rng.set(ents, superuser)?;

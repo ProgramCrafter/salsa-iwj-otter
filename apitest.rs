@@ -18,6 +18,8 @@ pub use num_traits::NumCast;
 pub use serde_json::json;
 pub use structopt::StructOpt;
 
+pub type MC = MgmtCommand;
+
 // -------------------- private imports ----------
 
 use otter::config::DAEMON_STARTUP_REPORT;

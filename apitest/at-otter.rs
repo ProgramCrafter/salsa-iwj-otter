@@ -321,6 +321,7 @@ impl Ctx {
   fn hidden_hand(&mut self) {
     prepare_game(&self.ds, TABLE)?;
     let mut session = self.connect_player(&self.alice)?;
+    self.su.mgmt_conn.cmd(&MC::LoadFakeRng(vec![ "1".to_owned() ]))?;
 
     let pieces = session.pieces()?;
 
@@ -349,6 +350,8 @@ impl Ctx {
     }))?;
 
     session.synch(&mut self.su)?;
+
+    self.su.mgmt_conn.cmd(&MC::LoadFakeRng(vec![]))?;
   }
 }
 

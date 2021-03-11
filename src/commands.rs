@@ -43,7 +43,7 @@ pub enum MgmtCommand {
     glob: shapelib::ItemSpec,
   },
 
-  SetFakeRng { ents: Vec<String> },
+  LoadFakeRng(Vec<String>),
 }
 
 //---------- Accounts file ----------
