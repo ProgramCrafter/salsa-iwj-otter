@@ -13,34 +13,39 @@ pub struct FakeRngSpec(Vec<String>);
 impl FakeRngSpec {
   pub fn start(self) -> RngWrap { RngWrap(
     if self.0.is_empty() { None }
-    else { Some(Arc::new(FakeRng {
-      i: Mutex::new(0),
+    else { Some(Arc::new(Mutex::new(FakeRng {
+      i: 0,
       ents: self.0,
-    })) }
+    }))) }
   )}
 }
 
 #[derive(Debug,Clone)]
 pub struct RngWrap (
-  Option<Arc<FakeRng>>
+  Option<Arc<Mutex<FakeRng>>>
 );
 
 #[derive(Debug)]
 struct FakeRng {
-  i: Mutex<usize>,
+  i: usize,
   ents: Vec<String>,
 }
 
 impl RngWrap {
   pub fn is_fake(&self) -> bool { self.0.is_some() }
 
+  #[throws(MgmtError)]
+  pub fn set(&self, v: Vec<String>, _: AuthorisationSuperuser) {
+    let mut fake = self.0.as_ref().ok_or(ME::RngIsReal)?.lock();
+    fake.i = 0;
+    fake.ents = v;
+  }
+
   #[throws(as Option)]
-  fn next(&self) -> &str {
-    let fake = self.0.as_ref()?;
-    let mut i = fake.i.lock();
-    let e = fake.ents[*i].as_str();
-    *i += 1;
-    *i %= fake.ents.len();
+  fn next(&self) -> String {
+    let mut fake = self.0.as_ref()?.lock();
+    let e = fake.ents.get(fake.i)?.clone();
+    fake.i += 1;
     e
   }
 
