@@ -189,7 +189,7 @@ mod vpid {
     }
   }
 
-  pub type NotchNumber = usize;
+  pub type NotchNumber = u32;
 
   define_index_type!{
     pub struct Notch = NotchNumber;
@@ -503,7 +503,7 @@ fn inner(
     then {
       occultation.views.get_kind(player)
         .map_displaced(|area| {
-          let x: Coord = NotchNumber::from(notch).try_into().unwrap(); // xxx
+          let x: Coord = notch.index().try_into().unwrap(); // xxx
           let pos = area.0[0] + PosC([x*2, 0]); // xxx
           pos.unwrap()
         })
