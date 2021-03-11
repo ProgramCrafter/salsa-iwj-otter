@@ -55,6 +55,7 @@ struct OccData {
   item_name: Arc<String>,
   outline: Outline,
   desc: Html,
+  xform: FaceTransform,
   svg: parking_lot::Mutex<Option<Arc<Html>>>,
 }
 
@@ -152,6 +153,7 @@ struct Item {
 struct ItemOccultable {
   svg: Arc<Html>,
   desc: Html,
+  xform: FaceTransform,
   outline: Outline,
 }
 
@@ -164,7 +166,9 @@ impl OutlineTrait for ItemOccultable { delegate! { to self.outline {
 #[typetag::serde(name="Lib")]
 impl OccultedPieceTrait for ItemOccultable {
   #[throws(IE)]
-  fn svg(&self, f: &mut Html, _:VisiblePieceId) { f.0.write_str(&self.svg.0)? }
+  fn svg(&self, f: &mut Html, _: VisiblePieceId) {
+    self.xform.write_svgd(f, &self.svg)?;
+  }
   #[throws(IE)]
   fn describe_html(&self) -> Html { self.desc.clone() }
 }
@@ -298,6 +302,7 @@ impl Contents {
         };
         let it = Box::new(ItemOccultable {
           svg,
+          xform: occ.xform.clone(),
           desc: occ.desc.clone(),
           outline: occ.outline.clone(),
         }) as Box<dyn OccultedPieceTrait>;
@@ -475,6 +480,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
             item_name: Arc::new(subst(&item_name, "_c", &colour)?),
             desc: Html(subst(&fe.desc.0, "_colour", "")?),
             outline: outline.clone(),
+            xform: FaceTransform::from_group(&group.d),
             svg: default(),
           }))
         },
