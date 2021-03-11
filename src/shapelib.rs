@@ -194,7 +194,7 @@ pub fn libs_lookup(libname: &str)
 
 impl ItemSpec {
   #[throws(SpecError)]
-  pub fn load(&self) -> Box<dyn PieceTrait> {
+  pub fn load(&self) -> PieceSpecLoaded {
     let lib = libs_lookup(&self.lib)?;
     let idata = lib.items.get(&self.item)
       .ok_or(SpE::LibraryItemNotFound(self.item.clone()))?;
@@ -203,8 +203,8 @@ impl ItemSpec {
 }
 
 impl Contents {
-  fn load1(&self, idata: &ItemData, name: &str)
-           -> Result<Box<dyn PieceTrait>,SpecError> {
+  #[throws(SpecError)]
+  fn load1(&self, idata: &ItemData, name: &str) -> PieceSpecLoaded {
     let svg_path = format!("{}/{}.usvg", self.dirname, &name);
     let svg_data = fs::read_to_string(&svg_path)
       .map_err(|e| if e.kind() == ErrorKind::NotFound {
@@ -242,7 +242,8 @@ impl Contents {
 
     let it = Item { faces, descs, svgs, outline, desc_hidden,
                     itemname: name.to_string() };
-    Ok(Box::new(it))
+    let p = Box::new(it);
+    PieceSpecLoaded { p, occultable: None }
   }
 
   #[throws(MgmtError)]
@@ -257,11 +258,11 @@ impl Contents {
         e@ Err(_) => e?,
         Ok(r) => r,
       };
-      let f0bbox = loaded.bbox_approx()?;
+      let f0bbox = loaded.p.bbox_approx()?;
       let ier = ItemEnquiryData {
         itemname: k.clone(),
         f0bbox,
-        f0desc: loaded.describe_html(&GPiece::dummy())?,
+        f0desc: loaded.p.describe_html(&GPiece::dummy())?,
       };
       out.push(ier);
     }
@@ -271,7 +272,7 @@ impl Contents {
 
 #[typetag::serde(name="Lib")]
 impl PieceSpec for ItemSpec {
-  fn load(&self, _: usize) -> Result<Box<dyn PieceTrait>, SpecError> {
+  fn load(&self, _: usize) -> Result<PieceSpecLoaded, SpecError> {
     self.load()
   }
 }
@@ -279,7 +280,7 @@ impl PieceSpec for ItemSpec {
 #[typetag::serde(name="LibList")]
 impl PieceSpec for MultiSpec {
   fn count(&self) -> usize { self.items.len() }
-  fn load(&self, i: usize) -> Result<Box<dyn PieceTrait>,SpecError> {
+  fn load(&self, i: usize) -> Result<PieceSpecLoaded, SpecError> {
     let item = self.items.get(i).ok_or_else(
       || SpE::InternalError(format!("item {:?} from {:?}", i, &self))
     )?;

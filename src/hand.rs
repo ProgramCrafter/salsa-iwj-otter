@@ -49,7 +49,7 @@ impl OutlineTrait for Hand {
 #[typetag::serde]
 impl PieceSpec for piece_specs::Hand {
   #[throws(SpecError)]
-  fn load(&self, _: usize) -> Box<dyn PieceTrait> {
+  fn load(&self, _: usize) -> PieceSpecLoaded {
     let common = SimpleCommon {
       itemname: None,
       faces: index_vec![ColourSpec(self.colour.clone())],
@@ -65,9 +65,10 @@ impl PieceSpec for piece_specs::Hand {
       shape,
       "magic-hand",
       &common)?;
-    Box::new(Hand {
+    let p = Box::new(Hand {
       shape,
-    }) as Box<dyn PieceTrait>
+    }) as Box<dyn PieceTrait>;
+    PieceSpecLoaded { p, occultable: None }
   }
 }
 

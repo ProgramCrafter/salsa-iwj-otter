@@ -607,7 +607,8 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let mut pos = pos.unwrap_or(DEFAULT_POS_START);
       let mut z = gs.max_z.clone_mut();
       for piece_i in count {
-        let p = info.load(piece_i as usize)?;
+        let PieceSpecLoaded { p, occultable } = info.load(piece_i as usize)?;
+        let _ = occultable; // xxx
         let face = face.unwrap_or_default();
         if p.nfaces() <= face.into() {
           throw!(SpecError::FaceNotFound);

@@ -91,7 +91,8 @@ fn preview(items: Vec<ItemForOutput>) {
   let mut pieces: Vec<Prep> = items.into_iter().map(|it| {
     let spec = ItemSpec { lib: it.0, item: it.1.itemname };
     (||{
-      let p = spec.clone().load().context("load")?;
+      let loaded = spec.clone().load().context("load")?;
+      let p = loaded.p; // xxx show occulted version too
       let mut uos = vec![];
       p.add_ui_operations(&mut uos, &GPiece::dummy()).context("add uos")?;
       let uos = uos.into_iter().map(|uo| uo.opname).collect::<Vec<_>>();

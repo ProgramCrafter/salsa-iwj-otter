@@ -232,8 +232,9 @@ impl<Desc, Outl:'static> GenericSimpleShape<Desc, Outl>
 #[typetag::serde(tag="type")]
 pub trait SimplePieceSpec: Debug {
   fn load_raw(&self) -> Result<(SimpleShape, &SimpleCommon), SpecError>;
-  fn load(&self) -> Result<Box<dyn PieceTrait>, SpecError> {
-    Ok(Box::new(self.load_raw()?.0))
+  #[throws(SpecError)]
+  fn load(&self) -> PieceSpecLoaded {
+    PieceSpecLoaded { p: Box::new(self.load_raw()?.0), occultable: None }
   }
 }
 
@@ -254,7 +255,7 @@ impl SimplePieceSpec for piece_specs::Disc {
 #[typetag::serde]
 impl PieceSpec for piece_specs::Disc {
   #[throws(SpecError)]
-  fn load(&self, _: usize) -> Box<dyn PieceTrait> { SimplePieceSpec::load(self)? }
+  fn load(&self, _: usize) -> PieceSpecLoaded { SimplePieceSpec::load(self)? }
 }
 
 impl piece_specs::Square {
@@ -285,5 +286,5 @@ impl SimplePieceSpec for piece_specs::Square {
 #[typetag::serde]
 impl PieceSpec for piece_specs::Square {
   #[throws(SpecError)]
-  fn load(&self, _: usize) -> Box<dyn PieceTrait> { SimplePieceSpec::load(self)? }
+  fn load(&self, _: usize) -> PieceSpecLoaded { SimplePieceSpec::load(self)? }
 }

@@ -180,10 +180,16 @@ pub struct ApiPieceOpArgs<'a> {
   pub p: &'a dyn PieceTrait,
 }
 
+#[derive(Debug)]
+pub struct PieceSpecLoaded {
+  pub p: Box<dyn PieceTrait>,
+  pub occultable: Option<(OccultIlkName, Box<dyn OccultedPieceTrait>)>,
+}
+
 #[typetag::serde(tag="type")]
 pub trait PieceSpec: Debug {
   fn count(&self) -> usize { 1 }
-  fn load(&self, i: usize) -> Result<Box<dyn PieceTrait>, SpecError>;
+  fn load(&self, i: usize) -> Result<PieceSpecLoaded, SpecError>;
 }
 
 // ========== implementations ==========
