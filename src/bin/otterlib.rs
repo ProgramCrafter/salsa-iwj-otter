@@ -70,7 +70,7 @@ fn preview(items: Vec<ItemForOutput>) {
 
   struct Prep {
     spec: ItemSpec,
-    pc: Box<dyn PieceTrait>,
+    p: Box<dyn PieceTrait>,
     uos: Vec<String>,
     bbox: Vec<Vec<f64>>,
     size: Vec<f64>,
@@ -83,7 +83,7 @@ fn preview(items: Vec<ItemForOutput>) {
       self.size[0] < 20.0
     }
     fn face_cols(&self) -> usize {
-      usize::from(self.pc.nfaces())
+      usize::from(self.p.nfaces())
         * if self.want_several() { SEVERAL } else { 1 }
     }
   }
@@ -91,13 +91,13 @@ fn preview(items: Vec<ItemForOutput>) {
   let mut pieces: Vec<Prep> = items.into_iter().map(|it| {
     let spec = ItemSpec { lib: it.0, item: it.1.itemname };
     (||{
-      let pc = spec.clone().load().context("load")?;
+      let p = spec.clone().load().context("load")?;
       let mut uos = vec![];
-      pc.add_ui_operations(&mut uos, &GPiece::dummy()).context("add uos")?;
+      p.add_ui_operations(&mut uos, &GPiece::dummy()).context("add uos")?;
       let uos = uos.into_iter().map(|uo| uo.opname).collect::<Vec<_>>();
       let spec = spec.clone();
 
-      let bbox = pc
+      let bbox = p
         .bbox_approx()?;
       let mut bbox = bbox
         .iter()
@@ -109,7 +109,7 @@ fn preview(items: Vec<ItemForOutput>) {
         .map(|(min,max)| max-min)
         .collect::<Vec<_>>();
 
-      Ok::<_,AE>(Prep { spec, pc, uos, bbox, size })
+      Ok::<_,AE>(Prep { spec, p, uos, bbox, size })
     })().with_context(|| format!("{:?}", &spec))
   }).collect::<Result<Vec<_>,_>>()?;
 
@@ -122,14 +122,14 @@ fn preview(items: Vec<ItemForOutput>) {
   println!("{}", &HTML_PRELUDE);
   println!(r#"<table rules="all">"#);
   for s in &pieces {
-    let Prep { spec, pc, uos, bbox, size } = s;
+    let Prep { spec, p, uos, bbox, size } = s;
     println!(r#"<tr>"#);
     println!(r#"<th align="left"><kbd>{}</kbd></th>"#,
              Html::from_txt(&spec.lib).0);
     println!(r#"<th align="left"><kbd>{}</kbd></th>"#,
              Html::from_txt(&spec.item).0);
     println!(r#"<th align="left">{}</th>"#,
-             pc.describe_html(&GPiece::dummy())?.0);
+             p.describe_html(&GPiece::dummy())?.0);
     let only1 = s.face_cols() == 1;
 
     for facecol in 0..(if only1 { 1 } else { max_facecols }) {
@@ -150,7 +150,7 @@ fn preview(items: Vec<ItemForOutput>) {
                _ => panic!(),
              });
       println!(r#">"#);
-      if face < (pc.nfaces() as usize) {
+      if face < (p.nfaces() as usize) {
         let viewport =
           [bbox[0].clone(), size.clone()]
           .iter().cloned()
@@ -159,7 +159,7 @@ fn preview(items: Vec<ItemForOutput>) {
           .join(" ");
         let wh = size.iter().map(|&s| s * SVG_SCALE)
           .collect::<Vec<_>>();
-        let surround = pc.surround_path()?;
+        let surround = p.surround_path()?;
         print!(r#"<svg xmlns="http://www.w3.org/2000/svg"
                        viewBox="{}" width={} height={}>"#,
                &viewport, wh[0], wh[1]);
@@ -171,7 +171,7 @@ fn preview(items: Vec<ItemForOutput>) {
         }
         let mut html = Html("".into());
         let gpc = GPiece { face: face.into(), ..GPiece::dummy() };
-        pc.svg_piece(&mut html, &gpc, default())?;
+        p.svg_piece(&mut html, &gpc, default())?;
         println!("{}</svg>", html.0);
       }
       println!("</td>");
