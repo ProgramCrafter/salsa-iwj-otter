@@ -56,7 +56,7 @@ struct OccData {
   outline: Outline,
   desc: Html,
   xform: FaceTransform,
-  svg: parking_lot::Mutex<Option<Arc<Html>>>,
+  svgd: parking_lot::Mutex<Option<Arc<Html>>>,
 }
 
 #[derive(Error,Debug)]
@@ -151,8 +151,8 @@ struct Item {
 
 #[derive(Debug,Serialize,Deserialize)]
 struct ItemOccultable {
-  svg: Arc<Html>,
   desc: Html,
+  svgd: Arc<Html>,
   xform: FaceTransform,
   outline: Outline,
 }
@@ -167,7 +167,7 @@ impl OutlineTrait for ItemOccultable { delegate! { to self.outline {
 impl OccultedPieceTrait for ItemOccultable {
   #[throws(IE)]
   fn svg(&self, f: &mut Html, _: VisiblePieceId) {
-    self.xform.write_svgd(f, &self.svg)?;
+    self.xform.write_svgd(f, &self.svgd)?;
   }
   #[throws(IE)]
   fn describe_html(&self) -> Html { self.desc.clone() }
@@ -286,22 +286,22 @@ impl Contents {
       None => None,
       Some(occ) => {
         let name = occ.item_name.clone();
-        let svg = {
-          let mut svg = occ.svg.lock();
-          let svg = &mut *svg;
-          let svg = match svg {
-            Some(svg) => svg.clone(),
+        let svgd = {
+          let mut svgd = occ.svgd.lock();
+          let svgd = &mut *svgd;
+          let svgd = match svgd {
+            Some(svgd) => svgd.clone(),
             None => {
               let occ_data = self.load_svg(&occ.item_name, &name)?;
               let occ_data = Arc::new(occ_data);
-              *svg = Some(occ_data.clone());
+              *svgd = Some(occ_data.clone());
               occ_data
             },
           };
-          svg
+          svgd
         };
         let it = Box::new(ItemOccultable {
-          svg,
+          svgd,
           xform: occ.xform.clone(),
           desc: occ.desc.clone(),
           outline: occ.outline.clone(),
@@ -481,7 +481,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
             desc: Html(subst(&fe.desc.0, "_colour", "")?),
             outline: outline.clone(),
             xform: FaceTransform::from_group(&group.d),
-            svg: default(),
+            svgd: default(),
           }))
         },
       };
