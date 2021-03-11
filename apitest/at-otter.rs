@@ -338,7 +338,7 @@ impl Ctx {
       .into_inner().unwrap();
     dbg!(&pawns);
 
-    for (pawn, &xoffset) in izip!(&pawns, [-20,-10].iter()) {
+    for (pawn, &xoffset) in izip!(&pawns, [10,20].iter()) {
       session.api_with_piece_op(&self.su, &pawn.id, "m", json![
         (hand.pos + PosC([xoffset, 0]))?.0
       ])?;
