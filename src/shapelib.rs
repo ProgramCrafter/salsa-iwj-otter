@@ -46,6 +46,13 @@ struct ItemDetails {
 struct ItemData {
   d: Arc<ItemDetails>,
   group: Arc<GroupData>,
+  occ: Option<Arc<OccData>>,
+}
+
+#[derive(Debug,Clone)]
+struct OccData {
+  item_name: String,
+  desc: Html,
 }
 
 #[derive(Error,Debug)]
@@ -62,6 +69,8 @@ pub enum LibraryLoadError {
   GlobNonUTF8 { pat: String, actual: PathBuf },
   #[error("glob pattern {pat:?} matched filename with no extension {path:?}")]
   GlobNoExtension { pat: String, path: String },
+  #[error("{:?}",&self)]
+  OccultationColourMissing(String),
   #[error("{:?}",&self)]
   ExpectedTable(String),
   #[error("{:?}",&self)]
@@ -376,9 +385,23 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
       let item_name = format!("{}{}{}", gdefn.item_prefix,
                               fe.item_spec, gdefn.item_suffix);
 
+      let occ = match &group.d.occulted {
+        None => None,
+        Some(OccultationMethod::ByColour { colour }) => {
+          if ! group.d.colours.contains_key(colour.as_str()) {
+            throw!(LLE::OccultationColourMissing(colour.clone()));
+          }
+          Some(Arc::new(OccData {
+            item_name: subst(&item_name, "_c", &colour)?,
+            desc: Html(subst(&fe.desc.0, "_colour", "")?),
+          }))
+        },
+      };
+
       let mut add1 = |item_name: &str, desc| {
         let idata = ItemData {
           group: group.clone(),
+          occ: occ.clone(),
           d: Arc::new(ItemDetails { desc }),
         };
         type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
