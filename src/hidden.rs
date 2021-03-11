@@ -860,7 +860,7 @@ mod recompute {
                      gpieces: &mut GPieces,
                      goccults: &mut GameOccults,
                      ipieces: &IPieces) -> Implemented {
-      let mut gen = gen.unique_gen();
+      let mut gen = gen.unique_gen(); // xxx not used
 
       for occid in self.outdated {
         if let Some(occ) = goccults.occults.get_mut(occid) {
