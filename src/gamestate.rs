@@ -197,10 +197,27 @@ pub trait PieceSpec: Debug {
 
 impl Generation {
   pub fn increment(&mut self) { self.0 += 1 }
+  pub fn unique_gen(&mut self) -> UniqueGenGen<'_> {
+    UniqueGenGen { gen: self, none_yet: iter::once(()) }
+  }
 }
 impl Display for Generation {
   fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
     Display::fmt(&self.0, f)
+  }
+}
+
+pub struct UniqueGenGen<'g> {
+  gen: &'g mut Generation,
+  none_yet: iter::Once<()>,
+}
+
+impl UniqueGenGen<'_> {
+  pub fn next(&mut self) -> Generation {
+    if self.none_yet.next().is_some() { self.gen.increment() }
+    let r = *self.gen;
+    self.gen.increment();
+    r
   }
 }
 
