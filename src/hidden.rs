@@ -396,6 +396,8 @@ mod vpid {
                  gplayers: &mut GPlayers,
                  gpieces: &mut GPieces,
                  ipieces: &IPieces) {
+    // xxx take account of occult ilks
+
     // We must permute for if we have any views that are scrambled
     // or displaced obviously.  For invisible too, so that when they
     // reappear the ids have been permuted.  And that's all the
