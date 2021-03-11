@@ -46,6 +46,7 @@ struct ItemDetails {
 struct ItemData {
   d: Arc<ItemDetails>,
   group: Arc<GroupData>,
+  outline: Outline,
   occ: Option<Arc<OccData>>,
 }
 
@@ -236,7 +237,7 @@ impl Contents {
 
     idata.group.d.outline.check(&idata.group)
       .map_err(|e| SpE::InternalError(format!("rechecking outline: {}",&e)))?;
-    let outline = idata.group.d.outline.load(&idata.group)?;
+    let outline = idata.outline.clone();
 
     let mut svgs = IndexVec::with_capacity(1);
     let svg = svgs.push(svg_data);
@@ -391,6 +392,8 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
           + rhs
       }
 
+      let outline = group.d.outline.load(&group)?;
+
       let item_name = format!("{}{}{}", gdefn.item_prefix,
                               fe.item_spec, gdefn.item_suffix);
 
@@ -411,6 +414,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
         let idata = ItemData {
           group: group.clone(),
           occ: occ.clone(),
+          outline: outline.clone(),
           d: Arc::new(ItemDetails { desc }),
         };
         type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
