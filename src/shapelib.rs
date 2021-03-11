@@ -357,9 +357,20 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
         if matches.next().is_some() {
           Err(LLE::RepeatedSubstituionToken(needle))?;
         }
-        before[0.. m1.0].to_owned()
+        let mut lhs = &before[0.. m1.0];
+        let mut rhs = &before[m1.0 + m1.1.len() ..];
+        if replacement.is_empty() {
+          let lhs_trimmed = lhs.trim_end();
+          if lhs_trimmed.len() != lhs.len() {
+            lhs = lhs_trimmed;
+          } else {
+            rhs = rhs.trim_start();
+          } 
+        }
+        lhs
+          .to_owned()
           + replacement
-          + &before[m1.0 + m1.1.len() ..]
+          + rhs
       }
 
       let mut add1 = |item_name: &str, desc| {
