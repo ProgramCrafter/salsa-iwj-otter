@@ -21,7 +21,7 @@ pub mod hidden;
 pub mod keydata;
 pub mod mgmtchannel;
 pub mod nwtemplates;
-pub mod occultmap;
+pub mod occultilks;
 pub mod pieces;
 pub mod shapelib;
 pub mod spec;
