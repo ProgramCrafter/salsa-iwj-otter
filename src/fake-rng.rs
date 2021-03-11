@@ -8,14 +8,14 @@ use parking_lot::Mutex;
 
 #[derive(Deserialize,Debug,Clone,Default)]
 #[serde(transparent)]
-pub struct FakeRngSpec(Vec<String>);
+pub struct FakeRngSpec(Option<Vec<String>>);
 
 impl FakeRngSpec {
-  pub fn start(self) -> RngWrap { RngWrap(
-    if self.0.is_empty() { None }
-    else { Some(Arc::new(Mutex::new(FakeRng {
+  pub fn start(self) -> RngWrap { RngWrap( match self.0 {
+    None => None,
+    Some(ents) => Some(Arc::new(Mutex::new(FakeRng {
       i: 0,
-      ents: self.0,
+      ents,
     }))) }
   )}
 }
