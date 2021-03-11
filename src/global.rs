@@ -70,8 +70,8 @@ pub struct IPlayer { // usual variable: ipl
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct IPiece {
-  #[serde(flatten)]
   pub p: Box<dyn PieceTrait>,
+  pub occilk: Option<OccultIlkOwningId>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]

@@ -559,7 +559,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
     MGI::DeletePiece(piece) => {
       let (ig, modperm, _) = cs.check_acl_modify_pieces(ag, ig)?;
-      let IPiece { p } = ig.ipieces.as_mut(modperm)
+      let IPiece { p, occilk } = ig.ipieces.as_mut(modperm)
         .remove(piece).ok_or(ME::PieceNotFound)?;
       let gs = &mut ig.gs;
       let gpc = gs.pieces.as_mut(modperm).remove(piece);
@@ -570,6 +570,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         Html::lit("<piece partially missing from game state!>")
       };
       if let Some(gpc) = gpc { p.delete_hook(&gpc, gs); }
+      if let Some(occilk) = occilk { ig.ioccults.ilks.dispose(occilk); }
       (U{ pcs: vec![(piece, PieceUpdateOp::Delete())],
           log: vec![ LogEntry {
             html: Html(format!("A piece {} was removed from the game",
@@ -608,7 +609,10 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let mut z = gs.max_z.clone_mut();
       for piece_i in count {
         let PieceSpecLoaded { p, occultable } = info.load(piece_i as usize)?;
-        let _ = occultable; // xxx
+        let ilks = &mut ig.ioccults.ilks;
+        let occilk = occultable.map(|(ilkname, p_occ)| {
+          ilks.insert(ilkname, OccultIlkData { p_occ })
+        });
         let face = face.unwrap_or_default();
         if p.nfaces() <= face.into() {
           throw!(SpecError::FaceNotFound);
@@ -628,7 +632,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         gpc.pos.clamped(gs.table_size).map_err(|_| SpecError::PosOffTable)?;
         if gpc.zlevel.z > gs.max_z { gs.max_z = gpc.zlevel.z.clone() }
         let piece = gs.pieces.as_mut(modperm).insert(gpc);
-        ig.ipieces.as_mut(modperm).insert(piece, IPiece { p });
+        ig.ipieces.as_mut(modperm).insert(piece, IPiece { p, occilk });
         updates.push((piece, PieceUpdateOp::Insert(())));
         pos = (pos + posd)?;
       }
