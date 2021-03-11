@@ -165,6 +165,7 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
   fn itemname(&self) -> &str;
 }
 
+#[typetag::serde]
 pub trait OccultedPieceTrait: OutlineTrait + 'static {
   fn svg(&self, f: &mut Html, id: VisiblePieceId) -> Result<(),IE>;
   fn describe_html(&self) -> Result<Html,IE>;
