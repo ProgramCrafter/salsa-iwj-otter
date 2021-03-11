@@ -115,6 +115,7 @@ pub use crate::commands::{MgmtGameUpdateMode};
 pub use crate::config::*;
 pub use crate::debugreader::DebugReader;
 pub use crate::error::*;
+pub use crate::fake_rng::*;
 pub use crate::gamestate::*;
 pub use crate::global::*;
 pub use crate::hidden::*;

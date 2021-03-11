@@ -36,6 +36,7 @@ pub struct ServerConfigSpec {
   pub shapelibs: Option<Vec<shapelib::Config1>>,
   pub sendmail: Option<String>,
   pub debug_js_inject_file: Option<String>,
+  #[serde(default)] pub fake_rng: FakeRngSpec,
   /// Disable this for local testing only.  See LICENCE.
   pub check_bundled_sources: Option<bool>,
 }
@@ -63,6 +64,7 @@ pub struct ServerConfig {
   pub sendmail: String,
   pub debug_js_inject: Arc<String>,
   pub check_bundled_sources: bool,
+  pub fake_rng: RngWrap,
 }
 
 impl TryFrom<ServerConfigSpec> for WholeServerConfig {
@@ -74,8 +76,10 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
       http_port, public_url, sse_wildcard_url, rocket_workers,
       template_dir, nwtemplate_dir, wasm_dir,
       log, bundled_sources, shapelibs, sendmail,
-      debug_js_inject_file, check_bundled_sources,
+      debug_js_inject_file, check_bundled_sources, fake_rng,
     } = spec;
+
+    let fake_rng = fake_rng.start();
 
     if let Some(cd) = change_directory {
       env::set_current_dir(&cd)
@@ -178,7 +182,7 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
       http_port, public_url, sse_wildcard_url, rocket_workers,
       template_dir, nwtemplate_dir, wasm_dir,
       bundled_sources, shapelibs, sendmail,
-      debug_js_inject, check_bundled_sources,
+      debug_js_inject, check_bundled_sources, fake_rng,
     };
     WholeServerConfig {
       server: Arc::new(server),
