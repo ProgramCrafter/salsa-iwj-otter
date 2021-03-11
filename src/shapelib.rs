@@ -190,6 +190,12 @@ impl OutlineTrait for Item { delegate! { to self.outline {
 }}}
 
 impl FaceTransform {
+  fn from_group(d: &GroupDetails) -> Self {
+    let centre = d.centre;
+    let scale = d.scale;
+    FaceTransform { centre, scale: [scale,scale] }
+  }
+
   #[throws(IE)]
   fn write_svgd(&self, f: &mut Html, svgd: &Html) {
     write!(&mut f.0,
@@ -310,10 +316,7 @@ impl Contents {
     let desc = descs.push(idata.d.desc.clone());
     descs.shrink_to_fit();
 
-    let centre = idata.group.d.centre;
-    let scale = idata.group.d.scale;
-
-    let xform = FaceTransform { centre, scale: [scale,scale] };
+    let xform = FaceTransform::from_group(&idata.group.d);
     let mut face = ItemFace { svg, desc, xform };
     let mut faces = index_vec![ face ];
     if idata.group.d.flip {
