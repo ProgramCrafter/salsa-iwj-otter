@@ -225,6 +225,7 @@ mod vpid {
   pub struct Notches {
     freelist: NotchPtr,
     table: IndexVec<Notch, NotchRecord>,
+    zg: IndexVec<Notch, Generation>, // last time notch was (re)filled
   }
 
   impl Notches {
@@ -237,15 +238,19 @@ mod vpid {
     }
 
     /// correctness: piece must not already be in this `Notches`
-    pub fn insert(&mut self, piece: PieceId) -> Notch {
+    pub fn insert(&mut self, zg: Generation, piece: PieceId) -> Notch {
       let new = NR::Piece(piece);
       match self.freelist.take() {
         None => {
-          self.table.push(new)
+          let a = self.table.push(new);
+          let b = self.zg.push(zg);
+          assert_eq!(a,b);
+          a
         },
         Some(old_free_head) => {
           self.freelist = self.table[old_free_head].unwrap_free();
           self.table[old_free_head] = new;
+          self.zg[old_free_head] = zg;
           old_free_head
         },
       }
@@ -334,7 +339,7 @@ mod vpid {
         let mut pieces = SecondarySlotMap::new();
         for op in &self.todo { match op {
           &Can::Insert(p) => {
-            let notch = notches.insert(p);
+            let notch = notches.insert(Generation(0), p);
             notches.check();
             pieces.insert(p, notch);
           },
@@ -395,8 +400,7 @@ mod vpid {
                  occ: &mut Occultation,
                  gplayers: &mut GPlayers,
                  gpieces: &mut GPieces,
-                 ipieces: &IPieces,
-                 z_gen: Generation /* unique to this call */) {
+                 ipieces: &IPieces) {
     let new_notches = {
 
       let mut ilks: HashMap<OccultIlkId, (
@@ -570,6 +574,7 @@ fn recalculate_occultation_general<
   LF: FnOnce(Html, Html, Option<&Html>) -> LD,        // log_callback
   RF: FnOnce(PieceUpdateOps_PerPlayer, LD) -> RD,     // ret_callback
 >(
+  gen: &mut UniqueGenGen,
   gplayers: &GPlayers,
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
@@ -772,7 +777,7 @@ fn recalculate_occultation_general<
     };
     let passive = if let Some(occid) = occulteds.new {
       let notch = notches(goccults, occid)
-        .insert(piece);
+        .insert(gen.next(), piece);
       Some((occid, notch))
     } else {
       None
@@ -795,6 +800,7 @@ pub fn recalculate_occultation_piece(
 {
   ToRecompute::with(|mut to_recompute| (
     recalculate_occultation_general(
+      &mut gs.gen.unique_gen(),
       &gs.players, &mut gs.pieces, &mut gs.occults, ipieces, &mut to_recompute,
       piece, vanilla_log,
       |log| (vanilla_wrc, vanilla_op, log).into(),
@@ -810,7 +816,7 @@ pub fn recalculate_occultation_piece(
         log
       }
     ),
-    to_recompute.implement(&mut gs.gen, &mut gs.players,
+    to_recompute.implement(&mut gs.players,
                            &mut gs.pieces, &mut gs.occults,
                            ipieces),
   ))?
@@ -818,6 +824,7 @@ pub fn recalculate_occultation_piece(
 
 #[throws(IE)]
 fn recalculate_occultation_ofmany(
+  gen: &mut UniqueGenGen,
   gplayers: &GPlayers,
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
@@ -827,7 +834,7 @@ fn recalculate_occultation_ofmany(
   updates: &mut Vec<(PieceId, PieceUpdateOps)>,
 ){
   recalculate_occultation_general(
-    gplayers, gpieces, goccults, ipieces, to_recompute,
+    gen, gplayers, gpieces, goccults, ipieces, to_recompute,
     ppiece,
     (), |_|(),
     |_,_,_|(), |puo_pp, ()|{
@@ -855,16 +862,13 @@ mod recompute {
     }
     pub fn mark_dirty(&mut self, occid: OccId) { self.outdated.insert(occid); }
     pub fn implement(self,
-                     gen: &mut Generation,
                      gplayers: &mut GPlayers,
                      gpieces: &mut GPieces,
                      goccults: &mut GameOccults,
                      ipieces: &IPieces) -> Implemented {
-      let mut gen = gen.unique_gen(); // xxx not used
-
       for occid in self.outdated {
         if let Some(occ) = goccults.occults.get_mut(occid) {
-          vpid::permute(occid, occ, gplayers, gpieces, ipieces, gen.next());
+          vpid::permute(occid, occ, gplayers, gpieces, ipieces);
         }
       }
 
@@ -912,7 +916,7 @@ impl OccultationViewDef for OwnerOccultationView {
 
 #[throws(OnlineError)]
 pub fn create_occultation(
-  gen: &mut Generation,
+  gen: &mut UniqueGenGen,
   gplayers: &mut GPlayers,
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
@@ -963,7 +967,8 @@ pub fn create_occultation(
       ogpc.occult.active = Some(occid);
 
       for &ppiece in &recalc {
-        recalculate_occultation_ofmany(gplayers, gpieces, goccults, ipieces,
+        recalculate_occultation_ofmany(gen,
+                                       gplayers, gpieces, goccults, ipieces,
                                        &mut to_recompute,
                                        ppiece, &mut updates)?;
       }
@@ -979,7 +984,7 @@ pub fn create_occultation(
       goccults.occults.remove(occid).expect("inserted this earlier");
       e
     }),
-    to_recompute.implement(gen, gplayers, gpieces, goccults, ipieces),
+    to_recompute.implement(gplayers, gpieces, goccults, ipieces),
   ))?;
 
   dbgc!(&updates);
@@ -988,7 +993,7 @@ pub fn create_occultation(
 
 #[throws(IE)]
 pub fn remove_occultation(
-  gen: &mut Generation,
+  gen: &mut UniqueGenGen,
   gplayers: &mut GPlayers,
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
@@ -1036,7 +1041,8 @@ pub fn remove_occultation(
     };
   
     for &ppiece in pieces.iter() {
-      recalculate_occultation_ofmany(gplayers, gpieces, goccults, ipieces,
+      recalculate_occultation_ofmany(gen,
+                                     gplayers, gpieces, goccults, ipieces,
                                      &mut to_recompute,
                                      ppiece, &mut updates)
         .unwrap_or_else(|e| {
@@ -1053,7 +1059,7 @@ pub fn remove_occultation(
       aggerr.record(internal_logic_error("removing occultation of non-piece"));
     }
   },
-    to_recompute.implement(gen, gplayers, gpieces, goccults, ipieces),
+    to_recompute.implement(gplayers, gpieces, goccults, ipieces),
   ));
 
   aggerr.ok()?;

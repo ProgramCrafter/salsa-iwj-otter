@@ -195,7 +195,8 @@ impl PieceTrait for Hand {
         // actually do things:
         dbgc!("creating occ");
         let xupdates =
-          create_occultation(gen, gplayers, gpieces, goccults, ipieces,
+          create_occultation(&mut gen.unique_gen(),
+                             gplayers, gpieces, goccults, ipieces,
                              region, piece, views)?;
 
         dbgc!("creating occ done", &new_owner, &xupdates);
