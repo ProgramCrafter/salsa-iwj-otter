@@ -348,6 +348,20 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
       d,
     });
     for fe in gdefn.files.0 {
+      #[throws(LLE)]
+      fn subst(before: &str, needle: &'static str, replacement: &str)
+               -> String {
+        let mut matches = before.match_indices(needle);
+        let m1 = matches.next()
+          .ok_or(LLE::MissingSubstituionToken(needle))?;
+        if matches.next().is_some() {
+          Err(LLE::RepeatedSubstituionToken(needle))?;
+        }
+        before[0.. m1.0].to_owned()
+          + replacement
+          + &before[m1.0 + m1.1.len() ..]
+      }
+
       let mut add1 = |item_name: &str, desc| {
         let idata = ItemData {
           group: group.clone(),
@@ -374,21 +388,6 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
       if group.d.colours.is_empty() {
         add1(&item_name, fe.desc.clone())?;
       } else {
-
-        #[throws(LLE)]
-        fn subst(before: &str, needle: &'static str, replacement: &str)
-                 -> String {
-          let mut matches = before.match_indices(needle);
-          let m1 = matches.next()
-            .ok_or(LLE::MissingSubstituionToken(needle))?;
-          if matches.next().is_some() {
-            Err(LLE::RepeatedSubstituionToken(needle))?;
-          }
-          before[0.. m1.0].to_owned()
-            + replacement
-            + &before[m1.0 + m1.1.len() ..]
-        }
-
         for (colour, recolourdata) in &group.d.colours {
           let t_item_name = subst(&item_name, "_c", &recolourdata.abbrev)?;
           let t_desc = Html(subst(&fe.desc.0, "_colour", colour)?);
