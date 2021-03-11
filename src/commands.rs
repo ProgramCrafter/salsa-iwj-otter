@@ -42,6 +42,8 @@ pub enum MgmtCommand {
   LibraryListByGlob {
     glob: shapelib::ItemSpec,
   },
+
+  SetFakeRng { ents: Vec<String> },
 }
 
 //---------- Accounts file ----------

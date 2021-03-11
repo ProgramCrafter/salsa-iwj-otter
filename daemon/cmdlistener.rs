@@ -214,6 +214,13 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       let results = lib.list_glob(&spec.item)?;
       MR::LibraryItems(results)
     }
+
+    MC::SetFakeRng { ents } => {
+      let superuser = cs.superuser
+        .ok_or(ME::SuperuserAuthorisationRequired)?;
+      config().fake_rng.set(ents, superuser)?;
+      Fine
+    }
   }
 }
 
