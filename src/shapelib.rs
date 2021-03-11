@@ -53,6 +53,7 @@ struct ItemData {
 #[derive(Debug,Clone)]
 struct OccData {
   item_name: String,
+  outline: Outline,
   desc: Html,
 }
 
@@ -406,6 +407,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
           Some(Arc::new(OccData {
             item_name: subst(&item_name, "_c", &colour)?,
             desc: Html(subst(&fe.desc.0, "_colour", "")?),
+            outline: outline.clone(),
           }))
         },
       };
