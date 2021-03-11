@@ -50,11 +50,12 @@ struct ItemData {
   occ: Option<Arc<OccData>>,
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug)]
 struct OccData {
   item_name: Arc<String>,
   outline: Outline,
   desc: Html,
+  svg: parking_lot::Mutex<Option<Arc<Html>>>,
 }
 
 #[derive(Error,Debug)]
@@ -139,6 +140,27 @@ struct Item {
   svgs: IndexVec<SvgId, Html>,
   descs: IndexVec<DescId, Html>,
   outline: Outline,
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+struct ItemOccultable {
+  svg: Arc<Html>,
+  desc: Html,
+  outline: Outline,
+}
+
+#[dyn_upcast]
+impl OutlineTrait for ItemOccultable { delegate! { to self.outline {
+  fn outline_path(&self, scale: f64) -> Result<Html, IE>;
+  fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
+  fn bbox_approx(&self) -> Result<[Pos; 2], IE>;
+}}}
+#[typetag::serde(name="Lib")]
+impl OccultedPieceTrait for ItemOccultable {
+  #[throws(IE)]
+  fn svg(&self, f: &mut Html, _:VisiblePieceId) { f.0.write_str(&self.svg.0)? }
+  #[throws(IE)]
+  fn describe_html(&self) -> Html { self.desc.clone() }
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
@@ -236,6 +258,33 @@ impl Contents {
   fn load1(&self, idata: &ItemData, name: &str) -> PieceSpecLoaded {
     let svg_data = self.load_svg(name, name)?;
 
+    let occultable = match &idata.occ {
+      None => None,
+      Some(occ) => {
+        let name = occ.item_name.clone();
+        let svg = {
+          let mut svg = occ.svg.lock();
+          let svg = &mut *svg;
+          let svg = match svg {
+            Some(svg) => svg.clone(),
+            None => {
+              let occ_data = self.load_svg(&occ.item_name, &name)?;
+              let occ_data = Arc::new(occ_data);
+              *svg = Some(occ_data.clone());
+              occ_data
+            },
+          };
+          svg
+        };
+        let it = Box::new(ItemOccultable {
+          svg,
+          desc: occ.desc.clone(),
+          outline: occ.outline.clone(),
+        }) as Box<dyn OccultedPieceTrait>;
+        Some((OccultIlkName(name), it))
+      },
+    };
+
     idata.group.d.outline.check(&idata.group)
       .map_err(|e| SpE::InternalError(format!("rechecking outline: {}",&e)))?;
     let outline = idata.outline.clone();
@@ -261,7 +310,7 @@ impl Contents {
     let it = Item { faces, descs, svgs, outline,
                     itemname: name.to_string() };
     let p = Box::new(it);
-    PieceSpecLoaded { p, occultable: None }
+    PieceSpecLoaded { p, occultable }
   }
 
   #[throws(MgmtError)]
@@ -408,6 +457,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
             item_name: Arc::new(subst(&item_name, "_c", &colour)?),
             desc: Html(subst(&fe.desc.0, "_colour", "")?),
             outline: outline.clone(),
+            svg: default(),
           }))
         },
       };
