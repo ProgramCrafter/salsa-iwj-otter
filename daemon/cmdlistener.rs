@@ -26,6 +26,7 @@ use MgmtResponse::Fine;
 
 const USERLIST: &str = "/etc/userlist";
 const CREATE_PIECES_MAX: u32 = 300;
+const OVERALL_PIECES_MAX: usize = 100_000; // don't make not fit in i32
 
 const DEFAULT_POS_START: Pos = PosC([20,20]);
 const DEFAULT_POS_DELTA: Pos = PosC([5,5]);
@@ -611,7 +612,10 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       };
 
       let count_len = count.len();
-      if count.len() > CREATE_PIECES_MAX as usize { throw!(ME::LimitExceeded) }
+      if count_len > CREATE_PIECES_MAX as usize { throw!(ME::LimitExceeded) }
+      if gs.pieces.len() + count_len > OVERALL_PIECES_MAX {
+        throw!(ME::LimitExceeded)
+      }
       let posd = posd.unwrap_or(DEFAULT_POS_DELTA);
 
       let mut updates = Vec::with_capacity(count_len);
