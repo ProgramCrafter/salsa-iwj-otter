@@ -369,6 +369,7 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
   pub fn try_map<NS2, ZC2, E:Error,
                  F: FnOnce(NS) -> Result<NS2,E>,
                  G: FnOnce(ZC) -> Result<ZC2,E>
+                 // xxx should be a function for mapping pos
                  > (self, f:F, g:G) -> Result<PieceUpdateOp<NS2,ZC2>,E>
   {
     use PieceUpdateOp::*;
