@@ -567,13 +567,6 @@ pub fn vpiece_decode(
   piece
 }
 
-pub fn massage_prep_piecestate(
-  _pri: &PieceRenderInstructions, // xxx
-  _ns: &mut PreparedPieceState, // xxx
-) {
-  // xxx hidden position involves adjusting pos and z and ??? here
-}
-
 // xxx prevent addpiece and removepiece in places that would be occulted
 // xxx this means this only happens on ungrab I think ?
 // xxx prevent occultation scrambling of grasped things

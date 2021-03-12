@@ -303,13 +303,18 @@ impl GPiece {
   #[throws(IE)]
   pub fn prep_piecestate(&self, ioccults: &IOccults,
                          ipc: &IPiece, pri: &PieceRenderInstructions)
-                     -> PreparedPieceState {
+                         -> PreparedPieceState {
+    use PriOcculted as PO;
+    let (pos, zlevel) = match &pri.occulted {
+      PO::Visible | PO::Occulted => (self.pos, self.zlevel.clone()),
+      PO::Displaced(pos, zlevel) => (*pos, zlevel.clone()),
+    };
     PreparedPieceState {
-      pos        : self.pos,
+      pos        : pos,
       held       : self.held,
       svg        : pri.make_defs(ioccults, self, ipc)?,
-      z          : self.zlevel.z.clone(),
-      zg         : self.zlevel.zg,
+      z          : zlevel.z,
+      zg         : zlevel.zg,
       angle      : pri.angle(self).to_compass(),
       pinned     : self.pinned,
       uos        : pri.ui_operations(self, ipc.p.borrow())?,

@@ -507,8 +507,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
     let op = op.try_map(
       |()|{
-        let mut ns = pc.prep_piecestate(ioccults, ipc, pri)?;
-        massage_prep_piecestate(pri, &mut ns);
+        let ns = pc.prep_piecestate(ioccults, ipc, pri)?;
         <Result<_,InternalError>>::Ok(ns)
       },
       |()|{
