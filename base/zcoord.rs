@@ -70,6 +70,7 @@
 use std::cmp::{max, Ordering};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self, Debug, Display, Formatter};
+use std::hash::{Hash, Hasher};
 use std::iter;
 use std::num::{TryFromIntError, Wrapping};
 use std::str;
@@ -766,6 +767,12 @@ mod innards {
     }
   }
 
+  impl Hash for ZCoord {
+    fn hash<H:Hasher>(&self, state: &mut H) {
+      self.tail().hash(state)
+    }
+  }
+
 }
 
 //---------- tests ----------
@@ -774,6 +781,7 @@ mod innards {
 mod test {
   use crate::misc::default;
   use super::*;
+  use std::collections::hash_map::DefaultHasher;
   use std::mem;
 
   fn bf(s: &str) -> ZCoord {
@@ -845,6 +853,13 @@ mod test {
         let got = self.addsub(&aso).unwrap();
         assert_eq!(got.to_string(), exp);
         assert_eq!(got.cmp(&before), exp_ord);
+
+        fn h(z: &ZCoord) -> u64 {
+          let mut h = DefaultHasher::new();
+          z.hash(&mut h);
+          h.finish()
+        }
+        assert_ne!(h(&got), h(&before));
         self
       }
       fn tinc(self, e: &str) -> Self { self.tincdec(e, Increment, Greater) }
