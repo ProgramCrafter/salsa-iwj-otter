@@ -304,11 +304,8 @@ impl GPiece {
   pub fn prep_piecestate(&self, ioccults: &IOccults,
                          ipc: &IPiece, pri: &PieceRenderInstructions)
                          -> PreparedPieceState {
-    use PriOcculted as PO;
-    let (pos, zlevel) = match &pri.occulted {
-      PO::Visible | PO::Occulted => (self.pos, self.zlevel.clone()),
-      PO::Displaced(pos, zlevel) => (*pos, zlevel.clone()),
-    };
+    let (pos, zlevel) = pri.pos_zlevel(self);
+    dbgc!(pos, pri, self, ioccults, ipc);
     PreparedPieceState {
       pos        : pos,
       held       : self.held,
@@ -428,6 +425,13 @@ impl PieceRenderInstructions {
     }
   }
 
+  pub fn pos_zlevel(&self, gpc: &GPiece) -> (Pos, ZLevel) {
+    use PriOcculted as PO;
+    match &self.occulted {
+      PO::Visible | PO::Occulted => (gpc.pos, gpc.zlevel.clone()),
+      PO::Displaced(pos, zlevel) => (*pos, zlevel.clone()),
+    }
+  }
 
   #[throws(IE)]
   pub fn make_defs<'p>(&self, ioccults: &IOccults,
