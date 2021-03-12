@@ -351,6 +351,8 @@ impl Ctx {
 
     session.synch(&mut self.su)?;
 
+    // to repro a bug, have Bob move the RHS pawn out again
+
     self.su.mgmt_conn.cmd(&MC::LoadFakeRng(vec![]))?;
   }
 }
