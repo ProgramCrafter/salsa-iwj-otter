@@ -125,11 +125,12 @@ fn session_inner(form: Json<SessionForm>,
       let desc = pri.describe(ioccults, &gpc, ipc);
 
       let vangle = pri.angle(gpc).to_compass();
+      let (pos, zlevel) = pri.pos_zlevel(gpc);
 
       let for_info = SessionPieceLoadJson {
         held: &gpc.held,
-        z: gpc.zlevel.z.clone(),
-        zg: gpc.zlevel.zg,
+        z: zlevel.z,
+        zg: zlevel.zg,
         pinned: gpc.pinned,
         angle: vangle,
         desc,
@@ -138,7 +139,7 @@ fn session_inner(form: Json<SessionForm>,
 
       let for_piece = SessionPieceContext {
         id: pri.vpid,
-        pos: gpc.pos,
+        pos: pos,
         info: serde_json::to_string(&for_info)
           .map_err(|e| InternalError::JSONEncode(e))?,
       };
