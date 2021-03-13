@@ -148,7 +148,19 @@ impl Ctx {
     let (mut wpipe, rpipe) = UnixStream::pair()?;
     thread::spawn(move ||{
       eprintln!("copy_to'ing");
-      sse.copy_to(&mut wpipe).unwrap();
+      match sse.copy_to(&mut wpipe) {
+        Err(re) => match (||{
+          // reqwest::Error won't give us the underlying io::Error :-/
+          wpipe.write_all(b"\n")?;
+          wpipe.flush()?;
+          Ok::<_,io::Error>(())
+        })() {
+          Err(pe) if pe.kind() == ErrorKind::BrokenPipe => { Ok(()) }
+          Err(pe) => Err(AE::from(pe)),
+          Ok(_) => Err(AE::from(re)),
+        }
+        Ok(_n) => Ok(()),
+      }.unwrap();
       eprintln!("copy_to'd!"); 
     });
 
