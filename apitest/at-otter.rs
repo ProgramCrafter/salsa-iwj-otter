@@ -383,11 +383,11 @@ impl Ctx {
   #[throws(AE)]
   fn hidden_hand(&mut self) {
     prepare_game(&self.su().ds, TABLE)?;
-    let mut session = self.connect_player(&self.alice)?;
+    let mut alice = self.connect_player(&self.alice)?;
     self.su_mut()
       .mgmt_conn.cmd(&MC::LoadFakeRng(vec![ "1".to_owned() ]))?;
 
-    let pieces = session.pieces()?;
+    let pieces = alice.pieces()?;
 
     let [hand] = pieces.iter()
       .filter(|p| p.info["desc"] == otter::hand::UNCLAIMED_DESC)
@@ -402,18 +402,18 @@ impl Ctx {
       .into_inner().unwrap();
     dbg!(&pawns);
 
-    session.api_with_piece_op_synch(&hand.id, "k", json!({
+    alice.api_with_piece_op_synch(&hand.id, "k", json!({
       "opname": "claim",
       "wrc": "Unpredictable",
     }))?;
 
     for (pawn, &xoffset) in izip!(&pawns, [10,20].iter()) {
-      session.api_with_piece_op(&pawn.id, "m", json![
+      alice.api_with_piece_op(&pawn.id, "m", json![
         (hand.pos + PosC([xoffset, 0]))?.0
       ])?;
     }
 
-    session.synchx(None, |session, gen, k, v| {
+    alice.synchx(None, |session, gen, k, v| {
       dbgc!((k, v));
     })?;
 
