@@ -560,13 +560,6 @@ pub use vpid::{PerPlayerIdMap, NotchNumber, Notch, Notches, consistency_check};
 
 /// None => do not render at all
 pub fn piece_pri(
-  ioccults: &IOccults,
-  occults: &GameOccults,
-  player: PlayerId, gpl: &mut GPlayer,
-  piece: PieceId, gpc: &GPiece, ipc: &IPiece,
-) -> Option<PieceRenderInstructions>
-{
-fn inner(
   _ioccults: &IOccults,
   occults: &GameOccults,
   player: PlayerId, gpl: &mut GPlayer,
@@ -609,8 +602,6 @@ fn inner(
   let vpid = gpl.idmap.fwd_or_insert(piece);
   trace_dbg!("piece_pri", player, piece, occk_dbg, vpid, occulted, gpc);
   Some(PieceRenderInstructions { vpid, occulted })
-}
-  inner(ioccults, occults, player, gpl, piece, gpc, ipc)
 }
 
 pub fn piece_at_all_occulted(gpc: &GPiece) -> bool {
