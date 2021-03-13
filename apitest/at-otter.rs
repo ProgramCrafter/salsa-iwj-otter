@@ -210,7 +210,7 @@ mod pi {
 pub use pi::*;
 
 #[derive(Debug,Clone)]
-struct PieceInfo<I> {
+pub struct PieceInfo<I> {
   id: String,
   pos: Pos,
   info: I,
@@ -317,8 +317,10 @@ impl Session {
 
   #[throws(AE)]
   fn synchx<
+    PI: Idx,
     F: FnMut(&mut Session, Generation, &str, &JsV),
   > (&mut self,
+     mut pieces: Option<&mut IndexVec<PI, PieceInfo<JsV>>>,
      ef: Option<&mut dyn FnMut(&mut Session, Generation, &JsV)
                                -> Result<(), AE>>,
      mut f: F)
@@ -332,15 +334,61 @@ impl Session {
     });
     self.await_update(
       |session, gen      | (gen == exp).as_option(),
-      |session, gen, k, v| { f(session,gen,k,v); None },
+      |session, gen, k, v| {
+        if let Some(pieces) = pieces.as_mut() {
+          update_update_pieces(&session.nick, pieces, k, v);
+        }
+        f(session,gen,k,v);
+        None
+      },
       efwrap,
     )?;
   }
 
   #[throws(AE)]
   fn synch(&mut self) {
-    self.synchx(None, |_session, _gen, _k, _v|())?;
+    self.synchx::<PIA,_>(None, None, |_session, _gen, _k, _v|())?;
   }
+}
+
+pub fn update_update_pieces<PI:Idx>(
+  nick: &str,
+  pieces: &mut IndexVec<PI, PieceInfo<JsV>>,
+  k: &str, v: &JsV
+) {
+  if k != "Piece" { return }
+  let v = v.as_object().unwrap();
+  let piece = v["piece"].as_str().unwrap();
+  let p = pieces.iter_mut().find(|p| p.id == piece);
+  let p = if let Some(p) = p { p } else { return };
+  let (op, d) = v["op"].as_object().unwrap().iter().next().unwrap();
+
+  fn coord(j: &JsV) -> Pos {
+    PosC(
+      j.as_array().unwrap().iter()
+        .map(|n| n.as_i64().unwrap().try_into().unwrap())
+        .collect::<ArrayVec<_>>().into_inner().unwrap()
+    )
+  }
+
+  match op.as_str() {
+    "Move" => {
+      p.pos = coord(d);
+    },
+    "Modify" | "ModifyQuiet" => {
+      let d = d.as_object().unwrap();
+      p.pos = coord(&d["pos"]);
+      for (k,v) in d {
+        p.info
+          .as_object_mut().unwrap()
+          .insert(k.to_string(), v.clone());
+      }
+    },
+    _ => {
+      panic!("unknown op {:?} {:?}", &op, &d);
+    },
+  };
+  dbgc!(nick, k,v,p);
 }
 
 impl Ctx {
@@ -383,7 +431,7 @@ impl Ctx {
       .expect("library-add failed after place!");
 
     let mut added = vec![];
-    session.synchx(None,
+    session.synchx::<PIA,_>(None, None,
       |session, gen, k, v| if_chain! {
         if k == "Piece";
         let piece = v["piece"].as_str().unwrap().to_string();
@@ -445,40 +493,7 @@ impl Ctx {
     }
 
     alice.synch()?;
-    bob.synchx(None, |session, gen, k, v| {
-      if k != "Piece" { return }
-      let v = v.as_object().unwrap();
-      let piece = v["piece"].as_str().unwrap();
-      let p = b_pieces.iter_mut().find(|p| p.id == piece);
-      let p = if let Some(p) = p { p } else { return };
-      let (op, d) = v["op"].as_object().unwrap().iter().next().unwrap();
-      fn coord(j: &JsV) -> Pos {
-        PosC(
-          j.as_array().unwrap().iter()
-            .map(|n| n.as_i64().unwrap().try_into().unwrap())
-            .collect::<ArrayVec<_>>().into_inner().unwrap()
-        )
-      }
-      match op.as_str() {
-        "Move" => {
-          p.pos = coord(d);
-        },
-        "Modify" | "ModifyQuiet" => {
-          let d = d.as_object().unwrap();
-          p.pos = coord(&d["pos"]);
-          for (k,v) in d {
-            p.info
-              .as_object_mut().unwrap()
-              .insert(k.to_string(), v.clone());
-          }
-        },
-        _ => {
-          panic!("unknown op {:?} {:?}", &op, &d);
-        },
-      };
-      let nick = session.nick;
-      dbgc!(nick, k,v,p);
-    })?;
+    bob.synchx(Some(&mut b_pieces), None, |session, gen, k, v| ())?;
 
     for &p in &b_pawns {
       let b_pos = &b_pieces[p].pos;
