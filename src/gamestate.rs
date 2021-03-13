@@ -437,11 +437,7 @@ impl PieceRenderInstructions {
   pub fn make_defs<'p>(&self, ioccults: &IOccults,
                          gpc: &GPiece, ipc: &IPiece) -> Html
   {
-    #[throws(IE)]
-    fn inner(pri: &PieceRenderInstructions, ioccults: &IOccults,
-             gpc: &GPiece, ipc: &IPiece)
-             -> Html
-  {
+    let pri = self;
     let instead = pri.instead(ioccults, ipc)?;
 
     let o: &dyn OutlineTrait = match instead {
@@ -479,22 +475,15 @@ impl PieceRenderInstructions {
            pri.vpid, o.surround_path()?.0)?;
     defs
   }
-  inner(self, ioccults, gpc, ipc)?
-  }
 
   pub fn describe(&self, ioccults: &IOccults,
                   gpc: &GPiece, ipc: &IPiece) -> Html
   {
-    fn inner(pri: &PieceRenderInstructions, ioccults: &IOccults,
-             gpc: &GPiece, ipc: &IPiece) -> Html
-  {
-    pri.describe_fallible(ioccults, gpc, ipc)
+    self.describe_fallible(ioccults, gpc, ipc)
       .unwrap_or_else(|e| {
         error!("error describing piece: {:?}", e);
         Html::lit("<internal error describing piece>")
       })
-  }
-  inner(self, ioccults, gpc, ipc)
   }
 
   #[throws(IE)]
