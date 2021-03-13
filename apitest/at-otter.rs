@@ -16,6 +16,12 @@ struct Ctx {
 }
 deref_to_field!{Ctx, SetupCore, su}
 
+impl Ctx {
+  fn wanted_tests(&mut self) -> &mut TrackWantedTests {
+    &mut self.su.wanted_tests
+  }
+}
+
 #[derive(Debug)]
 struct Player {
   url: String,

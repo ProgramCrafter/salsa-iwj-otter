@@ -11,6 +11,12 @@ struct Ctx {
 }
 deref_to_field!{Ctx, Setup, su}
 
+impl Ctx {
+  fn wanted_tests(&mut self) -> &mut TrackWantedTests {
+    &mut self.su.wanted_tests
+  }
+}
+
 const HAND: &str = "6.1";
 const ALICE: &str = "1#1";
 
