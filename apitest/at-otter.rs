@@ -198,6 +198,12 @@ impl Ctx {
   }
 }
 
+mod pi {
+  use otter::prelude::define_index_type;
+  define_index_type!{ pub struct PI = usize; }
+}
+pub use pi::PI;
+
 #[derive(Debug,Clone)]
 struct PieceInfo<I> {
   id: String,
@@ -207,7 +213,7 @@ struct PieceInfo<I> {
 
 impl Session {
   #[throws(AE)]
-  fn pieces(&self) -> Vec<PieceInfo<JsV>> {
+  fn pieces(&self) -> IndexVec<PI, PieceInfo<JsV>> {
     self.dom
       .element("#pieces_marker")
       .unwrap().next_siblings()
@@ -387,7 +393,7 @@ impl Ctx {
     let mut bob = self.connect_player(&self.bob)?;
     self.su_mut().mgmt_conn.fakerng_load(&[&"1"])?;
 
-    let mut a_pieces = alice.pieces()?;
+    let a_pieces = alice.pieces()?;
 
     let [hand] = a_pieces.iter().enumerate()
       .filter(|(i,p)| p.info["desc"] == otter::hand::UNCLAIMED_DESC)
@@ -401,8 +407,8 @@ impl Ctx {
       "wrc": "Unpredictable",
     }))?;
 
-    fn find_pawns(pieces: &[PieceInfo<JsV>]) -> [usize; 2] {
-      let pawns = pieces.iter().enumerate()
+    fn find_pawns(pieces: &IndexSlice<PI,[PieceInfo<JsV>]>) -> [PI; 2] {
+      let pawns = pieces.iter_enumerated()
         .filter(|(i,p)| p.info["desc"].as_str().unwrap().ends_with(" pawn"))
         .map(|(i,_)| i)
         .take(2)
@@ -411,7 +417,7 @@ impl Ctx {
       dbg!(pawns)
     }
 
-    let a_pawns = find_pawns(&mut a_pieces);
+    let a_pawns = find_pawns(a_pieces.as_slice());
 
     bob.synch()?;
 
