@@ -28,7 +28,6 @@ pub struct PieceOccult {
 struct Passive {
   occid: OccId,
   notch: Notch,
-  zg: Generation,
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
@@ -237,6 +236,12 @@ mod vpid {
     freelist: NotchPtr,
     table: IndexVec<Notch, NotchRecord>,
     zg: IndexVec<Notch, Generation>, // last time notch was (re)filled
+  }
+
+  impl Occultation {
+    pub fn notch_zg(&self, notch: Notch) -> Option<Generation> {
+      self.notches.zg.get(notch).copied()
+    }
   }
 
   impl Notches {
@@ -513,8 +518,9 @@ fn inner(
 ) -> Option<PieceRenderInstructions>
 {
   let occk = if_chain! {
-    if let Some(Passive { occid, notch, zg }) = gpc.occult.passive;
+    if let Some(Passive { occid, notch }) = gpc.occult.passive;
     if let Some(occultation) = occults.occults.get(occid);
+    if let Some(zg) = occultation.notch_zg(notch);
     then {
       occultation.views.get_kind(player)
         .map_displaced(|(area, z)| {
@@ -641,7 +647,7 @@ fn recalculate_occultation_general<
 
     let occulteds = OldNewOcculteds {
       old:
-        gpc.occult.passive.map(|Passive { occid, notch, zg:_zg }| Ok::<_,IE>((
+        gpc.occult.passive.map(|Passive { occid, notch }| Ok::<_,IE>((
           Occulted {
             occid,
             occ: goccults.occults.get(occid).ok_or_else(
@@ -794,7 +800,7 @@ fn recalculate_occultation_general<
       let zg = gen.next();
       let notch = notches(goccults, occid)
         .insert(zg, piece);
-      Some(Passive { occid, notch, zg })
+      Some(Passive { occid, notch })
     } else {
       None
     };
