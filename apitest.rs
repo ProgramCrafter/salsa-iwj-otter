@@ -744,26 +744,28 @@ impl DirSubst {
 
 // -------------------- utilities --------------------
 
-#[throws(AE)]
-pub fn mgmt_game_synch(chan: &mut MgmtChannel, game: InstanceName)
-                       -> Generation {
-  let cmd = MgmtCommand::AlterGame {
-    how: MgmtGameUpdateMode::Online,
-    insns: vec![ MgmtGameInstruction::Synch ],
-    game
-  };
-  let gen = if_chain!{
-    let resp = chan.cmd(&cmd)?;
-    if let MgmtResponse::AlterGame {
-      error: None,
-      ref responses
-    } = resp;
-    if let [MgmtGameResponse::Synch(gen)] = responses[..];
-    then { gen }
-    else { throw!(anyhow!("unexpected resp to synch {:?}", resp)) }
-  };
-  trace!("gen={} ...", gen);
-  gen
+#[ext(pub)]
+impl MgmtChannel {
+  #[throws(AE)]
+  fn game_synch(&mut self, game: InstanceName) -> Generation {
+    let cmd = MgmtCommand::AlterGame {
+      how: MgmtGameUpdateMode::Online,
+      insns: vec![ MgmtGameInstruction::Synch ],
+      game
+    };
+    let gen = if_chain!{
+      let resp = self.cmd(&cmd)?;
+      if let MgmtResponse::AlterGame {
+        error: None,
+        ref responses
+      } = resp;
+      if let [MgmtGameResponse::Synch(gen)] = responses[..];
+      then { gen }
+      else { throw!(anyhow!("unexpected resp to synch {:?}", resp)) }
+    };
+    trace!("gen={} ...", gen);
+    gen
+  }
 }
 
 // ==================== core entrypoint, for wdriver too ====================

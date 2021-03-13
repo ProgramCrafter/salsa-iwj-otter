@@ -308,7 +308,7 @@ impl Session {
   {
     let exp = {
       let mut su = self.su_rc.borrow_mut();
-      mgmt_game_synch(&mut su.mgmt_conn, TABLE.parse().unwrap())?
+      su.mgmt_conn.game_synch(TABLE.parse().unwrap())?
     };
     let efwrap = ef.map(|ef| {
       move |s: &mut _, g, v: &_| { ef(s,g,v)?; Ok::<_,AE>(None) }
