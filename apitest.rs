@@ -766,6 +766,16 @@ impl MgmtChannel {
     trace!("gen={} ...", gen);
     gen
   }
+
+  fn fakerng_load(&mut self, values: &[&dyn ToString]) -> Result<(),AE> {
+    let values = values.iter().map(|v| v.to_string()).collect();
+    self.cmd(&MC::LoadFakeRng(values))?;
+    Ok(())
+  }
+  fn fakerng_unfake(&mut self) -> Result<(),AE> {
+    self.cmd(&MC::LoadFakeRng(vec![]))?;
+    Ok(())
+  }
 }
 
 // ==================== core entrypoint, for wdriver too ====================

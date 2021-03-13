@@ -384,8 +384,7 @@ impl Ctx {
   fn hidden_hand(&mut self) {
     prepare_game(&self.su().ds, TABLE)?;
     let mut alice = self.connect_player(&self.alice)?;
-    self.su_mut()
-      .mgmt_conn.cmd(&MC::LoadFakeRng(vec![ "1".to_owned() ]))?;
+    self.su_mut().mgmt_conn.fakerng_load(&[&"1"])?;
 
     let pieces = alice.pieces()?;
 
@@ -419,7 +418,7 @@ impl Ctx {
 
     // to repro a bug, have Bob move the RHS pawn out again
 
-    self.su_mut().mgmt_conn.cmd(&MC::LoadFakeRng(vec![]))?;
+    self.su_mut().mgmt_conn.fakerng_unfake()?;
   }
 }
 
