@@ -444,6 +444,10 @@ mod vpid {
 
         for (notch, new_piece) in itertools::zip_eq(notches, permu) {
           new_notches[notch] = NR::Piece(new_piece);
+          gpieces.get_mut(new_piece).unwrap()
+            .occult.passive.as_mut().unwrap()
+            .1
+            = notch;
         }
       }
 
