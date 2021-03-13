@@ -104,7 +104,7 @@ mod scraper_ext {
 
 use scraper_ext::{HtmlExt, RequestBuilderExt};
 
-type Update = serde_json::Value;
+type Update = JsV;
 
 #[throws(AE)]
 fn updates_parser<R:Read>(input: R, out: &mut mpsc::Sender<Update>) {
@@ -207,7 +207,7 @@ struct PieceInfo<I> {
 
 impl Session {
   #[throws(AE)]
-  fn pieces(&self) -> Vec<PieceInfo<serde_json::Value>> {
+  fn pieces(&self) -> Vec<PieceInfo<JsV>> {
     self.dom
       .element("#pieces_marker")
       .unwrap().next_siblings()
@@ -230,7 +230,7 @@ impl Session {
 
   #[throws(AE)]
   fn api_piece_op(&mut self, piece: &str, opname: &str,
-                  op: serde_json::Value) {
+                  op: JsV) {
     self.cseq += 1;
     let cseq = self.cseq;
 
@@ -250,7 +250,7 @@ impl Session {
 
   #[throws(AE)]
   fn api_with_piece_op(&mut self, piece: &str,
-                       pathfrag: &str, op: serde_json::Value) {
+                       pathfrag: &str, op: JsV) {
     self.api_piece_op(piece, "grab", json!({}))?;
     self.api_piece_op(piece, pathfrag, op)?;
     self.api_piece_op(piece, "ungrab", json!({}))?;
@@ -258,7 +258,7 @@ impl Session {
 
   #[throws(AE)]
   fn api_with_piece_op_synch(&mut self, piece: &str,
-                             pathfrag: &str, op: serde_json::Value) {
+                             pathfrag: &str, op: JsV) {
     self.api_piece_op(piece, "grab", json!({}))?;
     self.api_piece_op(piece, pathfrag, op)?;
     self.synch()?;
@@ -268,9 +268,9 @@ impl Session {
   #[throws(AE)]
   fn await_update<
     R,
-    F: FnMut(&mut Session, Generation, &str, &serde_json::Value) -> Option<R>,
+    F: FnMut(&mut Session, Generation, &str, &JsV) -> Option<R>,
     G: FnMut(&mut Session, Generation) -> Option<R>,
-    E: FnMut(&mut Session, Generation, &serde_json::Value)
+    E: FnMut(&mut Session, Generation, &JsV)
              -> Result<Option<R>, AE>
    > (&mut self, mut g: G, mut f: F, mut ef: Option<E>) -> R {
     'overall: loop {
@@ -300,9 +300,9 @@ impl Session {
 
   #[throws(AE)]
   fn synchx<
-    F: FnMut(&mut Session, Generation, &str, &serde_json::Value),
+    F: FnMut(&mut Session, Generation, &str, &JsV),
   > (&mut self,
-     ef: Option<&mut dyn FnMut(&mut Session, Generation, &serde_json::Value)
+     ef: Option<&mut dyn FnMut(&mut Session, Generation, &JsV)
                                -> Result<(), AE>>,
      mut f: F)
   {

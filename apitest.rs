@@ -18,6 +18,7 @@ pub use num_traits::NumCast;
 pub use serde_json::json;
 pub use structopt::StructOpt;
 
+pub type JsV = serde_json::Value;
 pub type MC = MgmtCommand;
 
 // -------------------- private imports ----------

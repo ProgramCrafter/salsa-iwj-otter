@@ -162,7 +162,7 @@ fn fetch_log(driver: &T4d, name: &str) {
       .ok_or(anyhow!("saved isn't an array?"))?
     {
       #[derive(Deserialize)]
-      struct LogEnt(String, Vec<serde_json::Value>);
+      struct LogEnt(String, Vec<JsV>);
       impl fmt::Display for LogEnt {
         #[throws(fmt::Error)]
         fn fmt(&self, f: &mut fmt::Formatter) {
@@ -233,8 +233,8 @@ impl<'g> WindowGuard<'g> {
     let held = held.value();
     dbg!(held);
     match held {
-      serde_json::Value::Null => None,
-      serde_json::Value::String(s) => Some(s.to_owned()),
+      JsV::Null => None,
+      JsV::String(s) => Some(s.to_owned()),
       _ => Err(anyhow!("held check script gave {:?}", held))?,
     }
   }
