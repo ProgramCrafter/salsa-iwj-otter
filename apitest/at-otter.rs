@@ -505,9 +505,8 @@ impl Ctx {
     bob.synch()?;
 
     for (&pawn, &xoffset) in izip!(&a_pawns, [10,20].iter()) {
-      alice.api_with_piece_op(&a_pieces[pawn].id, "m", json![
-        (a_pieces[hand].pos + PosC([xoffset, 0]))?.0
-      ])?;
+      let pos = (a_pieces[hand].pos + PosC([xoffset, 0]))?;
+      alice.api_piece_move_synch(&mut a_pieces, pawn, pos)?;
     }
 
     alice.synchu(&mut a_pieces)?;
