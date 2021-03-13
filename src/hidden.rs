@@ -438,8 +438,7 @@ mod vpid {
 
         let permu = {
           let mut permu = pieces;
-          let mut rng = thread_rng();
-          permu.shuffle(&mut rng);
+          config().game_rng.shuffle(&mut permu);
           permu
         };
 
