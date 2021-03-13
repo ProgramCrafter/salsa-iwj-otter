@@ -950,7 +950,7 @@ mod recompute {
   }
 }
 
-use recompute::*;
+pub use recompute::ToRecompute;
 
 #[must_use]
 pub struct NascentOccultation(Occultation);

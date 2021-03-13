@@ -104,6 +104,10 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
   let client = iad.ident;
   let mut ig = iad.gref.lock()?;
   ig.save_game_later();
+
+  ToRecompute::with(move |to_recompute| {
+    let r = (||{
+
   let g = &mut *ig;
   let cl = &mut g.clients.byid_mut(client)?;
   // ^ can only fail if we raced
@@ -160,14 +164,25 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
       let mut buf = PrepareUpdatesBuffer::new(g,
                                               Some((wrc, client, form.cseq)),
                                               Some(1 + log.len()));
-      
+
       buf.piece_update(piece, ops);
       buf.piece_updates(updates);
       buf.log_updates(log);
 
       debug!("api_piece_op OK: {:?}", &form);
     }
-  }
+  };
+
+      Ok::<(),OE>(())
+    })();
+
+    let g = &mut *ig;
+    let gs = &mut g.gs;
+    (r, to_recompute.implement(&mut gs.players,
+                               &mut gs.pieces,
+                               &mut gs.occults,
+                               &g.ipieces))
+  })?;
   ""
 }
 
