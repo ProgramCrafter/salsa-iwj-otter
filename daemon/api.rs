@@ -105,7 +105,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
   let mut ig = iad.gref.lock()?;
   ig.save_game_later();
 
-  ToRecompute::with(move |to_recompute| {
+  ToPermute::with(move |to_recompute| {
     let r = (||{
 
   let g = &mut *ig;

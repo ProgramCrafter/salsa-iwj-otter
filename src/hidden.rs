@@ -647,7 +647,7 @@ fn recalculate_occultation_general<
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
   ipieces: &IPieces,
-  to_recompute: &mut ToRecompute,
+  to_recompute: &mut ToPermute,
   piece: PieceId,
   // if no change, we return ret_vanilla(log_visible)
   log_visible: LD,
@@ -867,7 +867,7 @@ pub fn recalculate_occultation_piece(
 )
   -> PieceUpdate
 {
-  ToRecompute::with(|mut to_recompute| (
+  ToPermute::with(|mut to_recompute| (
     recalculate_occultation_general(
       &mut gs.gen.unique_gen(),
       &gs.players, &mut gs.pieces, &mut gs.occults, ipieces, &mut to_recompute,
@@ -898,7 +898,7 @@ fn recalculate_occultation_ofmany(
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
   ipieces: &IPieces,
-  to_recompute: &mut ToRecompute,
+  to_recompute: &mut ToPermute,
   ppiece: PieceId,
   updates: &mut Vec<(PieceId, PieceUpdateOps)>,
 ){
@@ -917,15 +917,15 @@ mod recompute {
   use super::*;
 
   #[derive(Debug)]
-  pub struct ToRecompute {
+  pub struct ToPermute {
     outdated: HashSet<OccId>,
   }
   #[derive(Debug)]
   pub struct Implemented { }
 
-  impl ToRecompute {
+  impl ToPermute {
     pub fn with<R, F: FnOnce(Self) -> (R, Implemented)>(f: F) -> R {
-      let to_recompute = ToRecompute { outdated: default() };
+      let to_recompute = ToPermute { outdated: default() };
       let (r, Implemented { }) = f(to_recompute);
       r
     }
@@ -950,7 +950,7 @@ mod recompute {
   }
 }
 
-pub use recompute::ToRecompute;
+pub use recompute::ToPermute;
 
 #[must_use]
 pub struct NascentOccultation(Occultation);
@@ -1033,7 +1033,7 @@ pub fn create_occultation(
   let occid = goccults.occults.insert(occultation);
   let mut updates = vec![];
 
-  ToRecompute::with(|mut to_recompute| (
+  ToPermute::with(|mut to_recompute| (
     (||{
       let ogpc = gpieces.get_mut(occulter).ok_or_else(
         ||internal_logic_error("occulter vanished"))?;
@@ -1100,7 +1100,7 @@ pub fn remove_occultation(
       
   let mut updates = vec![];
 
-  ToRecompute::with(|mut to_recompute| ({
+  ToPermute::with(|mut to_recompute| ({
     let pieces: Vec<PieceId> = if let Some(o) = &occultation {
       o.notches.iter().collect()
     } else {
