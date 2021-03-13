@@ -21,7 +21,14 @@ pub struct GameOccults {
 // kept in synch with Occultation::pieces
 pub struct PieceOccult {
   active: Option<OccId>, // kept in synch with Occultation::occulter
-  passive: Option<(OccId, Notch, Generation)>, // kept in synch with Occultation::pieces
+  passive: Option<Passive>, // kept in synch with Occultation::pieces
+}
+
+#[derive(Clone,Copy,Debug,Serialize,Deserialize,Eq,PartialEq)]
+struct Passive {
+  occid: OccId,
+  notch: Notch,
+  zg: Generation,
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
@@ -446,7 +453,7 @@ mod vpid {
           new_notches[notch] = NR::Piece(new_piece);
           gpieces.get_mut(new_piece).unwrap()
             .occult.passive.as_mut().unwrap()
-            .1
+            .notch
             = notch;
         }
       }
@@ -506,7 +513,7 @@ fn inner(
 ) -> Option<PieceRenderInstructions>
 {
   let occk = if_chain! {
-    if let Some((occid, notch, zg)) = gpc.occult.passive;
+    if let Some(Passive { occid, notch, zg }) = gpc.occult.passive;
     if let Some(occultation) = occults.occults.get(occid);
     then {
       occultation.views.get_kind(player)
@@ -634,7 +641,7 @@ fn recalculate_occultation_general<
 
     let occulteds = OldNewOcculteds {
       old:
-        gpc.occult.passive.map(|(occid, notch, _zg)| Ok::<_,IE>((
+        gpc.occult.passive.map(|Passive { occid, notch, zg:_zg }| Ok::<_,IE>((
           Occulted {
             occid,
             occ: goccults.occults.get(occid).ok_or_else(
@@ -787,7 +794,7 @@ fn recalculate_occultation_general<
       let zg = gen.next();
       let notch = notches(goccults, occid)
         .insert(zg, piece);
-      Some((occid, notch, zg))
+      Some(Passive { occid, notch, zg })
     } else {
       None
     };
@@ -1043,8 +1050,9 @@ pub fn remove_occultation(
       gpieces
         .iter()
         .filter_map(|(ppiece, pgpc)| {
-          if pgpc.occult.passive.map(|p| p.0) == Some(occid) { Some(ppiece) }
-          else { None }
+          if pgpc.occult.passive.map(|p| p.occid) == Some(occid) {
+            Some(ppiece)
+          } else { None }
         })
         .collect()
     };
