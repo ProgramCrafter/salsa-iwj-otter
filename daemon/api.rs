@@ -342,6 +342,9 @@ api_route!{
         piece,
         vanilla,
       ).map_err(|e| OnlineError::from(e))?;
+    // xxx if piece is occulted, definitely repermute its occultation
+    // so that we don't leak which piece is which over repeated
+    // adjustment clicks
 
     update
   }
