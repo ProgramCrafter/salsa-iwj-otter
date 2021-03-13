@@ -397,6 +397,7 @@ impl Ctx {
     self.su_mut().mgmt_conn.fakerng_load(&[&"1"])?;
 
     let a_pieces = alice.pieces::<PIA>()?;
+    let mut b_pieces = alice.pieces::<PIB>()?;
 
     let [hand] = a_pieces.iter().enumerate()
       .filter(|(i,p)| p.info["desc"] == otter::hand::UNCLAIMED_DESC)
@@ -423,6 +424,7 @@ impl Ctx {
     }
 
     let a_pawns = find_pawns(a_pieces.as_slice());
+    let b_pawns = find_pawns(b_pieces.as_slice());
 
     bob.synch()?;
 
@@ -435,6 +437,37 @@ impl Ctx {
     alice.synch()?;
     bob.synchx(None, |session, gen, k, v| {
       dbgc!(k,v);
+      if k != "Piece" { return }
+      let v = v.as_object().unwrap();
+      let piece = v["piece"].as_str().unwrap();
+      let p = b_pieces.iter_mut().find(|p| p.id == piece);
+      let p = if let Some(p) = p { p } else { return };
+      let (op, d) = v["op"].as_object().unwrap().iter().next().unwrap();
+      fn coord(j: &JsV) -> Pos {
+        PosC(
+          j.as_array().unwrap().iter()
+            .map(|n| n.as_i64().unwrap().try_into().unwrap())
+            .collect::<ArrayVec<_>>().into_inner().unwrap()
+        )
+      }
+      match op.as_str() {
+        "Move" => {
+          p.pos = coord(d);
+        },
+        "Modify" | "ModifyQuiet" => {
+          let d = d.as_object().unwrap();
+          p.pos = coord(&d["pos"]);
+          for (k,v) in d {
+            p.info
+              .as_object_mut().unwrap()
+              .insert(k.to_string(), v.clone());
+          }
+        },
+        _ => {
+          panic!("unknown op {:?} {:?}", &op, &d);
+        },
+      };
+      dbgc!(k,v,p);
     })?;
 
     // to repro a bug, have Bob move the RHS pawn out again
