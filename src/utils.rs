@@ -364,10 +364,11 @@ fn matches_doesnot_test() {
   );
 }
 
-pub fn dbgc_helper(values: &[(&'static str, &dyn Debug)]) {
+pub fn dbgc_helper(file: &'static str, line: u32,
+                   values: &[(&'static str, &dyn Debug)]) {
   let buf = (||{
     let mut buf = String::new();
-    write!(buf, "[{}:{}]", std::file!(), std::line!())?;
+    write!(buf, "[{}:{}]", file, line)?;
     for (s, v) in values.iter() {
       write!(buf, " {}={:?}", s, v)?;
     }
@@ -386,20 +387,22 @@ macro_rules! dbgc {
     // `$val` expression could be a block (`{ .. }`), in which case the `eprintln!`
     // will be malformed.
     () => {
-      dbgc_helper(&[])
+      dbgc_helper(std::file!(), std::line!(), &[])
     };
     ($val:expr $(,)?) => {
         // Use of `match` here is intentional because it affects the lifetimes
         // of temporaries - https://stackoverflow.com/a/48732525/1063961
         match $val {
             tmp => {
-                dbgc_helper(&[(std::stringify!($val), &tmp)]);
+                dbgc_helper(std::file!(), std::line!(),
+                            &[(std::stringify!($val), &tmp)]);
                 tmp
             }
         }
     };
     ($($val:expr),+ $(,)?) => {
-      dbgc_helper(&[$((std::stringify!($val), &$val)),+])
+      dbgc_helper(std::file!(), std::line!(),
+                  &[$((std::stringify!($val), &$val)),+])
     };
 }
 
