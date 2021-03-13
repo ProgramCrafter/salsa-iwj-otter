@@ -274,11 +274,15 @@ impl Session {
   }
 
   #[throws(AE)]
-  fn api_with_piece_op_synch(&mut self, piece: &str,
-                             pathfrag: &str, op: JsV) {
+  fn api_with_piece_op_synch<PI:Idx>(
+    &mut self, pieces: &mut Pieces<PI>, i: PI,
+    pathfrag: &str, op: JsV
+  ) {
+    let piece = &pieces[i].id;
     self.api_piece_op(piece, "grab", json!({}))?;
     self.api_piece_op(piece, pathfrag, op)?;
-    self.synch()?;
+    self.synchu(pieces)?;
+    let piece = &pieces[i].id;
     self.api_piece_op(piece, "ungrab", json!({}))?;
   }
 
@@ -459,17 +463,17 @@ impl Ctx {
     let mut bob = self.connect_player(&self.bob)?;
     self.su_mut().mgmt_conn.fakerng_load(&[&"1"])?;
 
-    let a_pieces = alice.pieces::<PIA>()?;
+    let mut a_pieces = alice.pieces::<PIA>()?;
     let mut b_pieces = alice.pieces::<PIB>()?;
 
-    let [hand] = a_pieces.iter().enumerate()
+    let [hand] = a_pieces.iter_enumerated()
       .filter(|(i,p)| p.info["desc"] == otter::hand::UNCLAIMED_DESC)
       .map(|(i,_)| i)
       .collect::<ArrayVec<[_;1]>>()
       .into_inner().unwrap();
     dbgc!(&hand);
 
-    alice.api_with_piece_op_synch(&a_pieces[hand].id, "k", json!({
+    alice.api_with_piece_op_synch(&mut a_pieces, hand, "k", json!({
       "opname": "claim",
       "wrc": "Unpredictable",
     }))?;
@@ -498,7 +502,7 @@ impl Ctx {
       ])?;
     }
 
-    alice.synch()?;
+    alice.synchu(&mut a_pieces)?;
     bob.synchu(&mut b_pieces)?;
 
     for &p in &b_pawns {
@@ -508,12 +512,12 @@ impl Ctx {
     }
 
     for (xi, &p) in a_pawns.iter().enumerate().take(1) {
-      alice.api_with_piece_op_synch(&a_pieces[p].id, "m", json![
+      alice.api_with_piece_op_synch(&mut a_pieces, p, "m", json![
         [ (xi+1) * 15, 20 ]
       ])?;
     }
 
-    alice.synch()?;
+    alice.synchu(&mut a_pieces)?;
     bob.synchu(&mut b_pieces)?;
 
     // to repro a bug, have Alice move the black pawn out again
