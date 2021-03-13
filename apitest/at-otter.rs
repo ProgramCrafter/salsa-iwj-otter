@@ -346,6 +346,11 @@ impl Session {
   }
 
   #[throws(AE)]
+  fn synchu<PI:Idx>(&mut self, pieces: &mut IndexVec<PI, PieceInfo<JsV>>) {
+    self.synchx(Some(pieces), None, |_session, _gen, _k, _v| ())?;
+  }
+
+  #[throws(AE)]
   fn synch(&mut self) {
     self.synchx::<PIA,_>(None, None, |_session, _gen, _k, _v|())?;
   }
@@ -493,7 +498,7 @@ impl Ctx {
     }
 
     alice.synch()?;
-    bob.synchx(Some(&mut b_pieces), None, |session, gen, k, v| ())?;
+    bob.synchu(&mut b_pieces)?;
 
     for &p in &b_pawns {
       let b_pos = &b_pieces[p].pos;
