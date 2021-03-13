@@ -421,17 +421,20 @@ impl Ctx {
     fn find_pawns<PI:Idx>(pieces: &IndexSlice<PI,[PieceInfo<JsV>]>)
                           -> [PI; 2]
     {
-      let pawns = pieces.iter_enumerated()
+      let mut pawns = pieces.iter_enumerated()
         .filter(|(i,p)| p.info["desc"].as_str().unwrap().ends_with(" pawn"))
         .map(|(i,_)| i)
         .take(2)
         .collect::<ArrayVec<[_;2]>>()
         .into_inner().unwrap();
+
+      pawns.sort_by_key(|&p| -pieces[p].pos.0[0]);
       dbgc!(pawns)
     }
 
     let a_pawns = find_pawns(a_pieces.as_slice());
     let b_pawns = find_pawns(b_pieces.as_slice());
+    // at this point the indices correspond
 
     bob.synch()?;
 
@@ -476,6 +479,12 @@ impl Ctx {
       let nick = session.nick;
       dbgc!(nick, k,v,p);
     })?;
+
+    for &p in &b_pawns {
+      let b_pos = &b_pieces[p].pos;
+      let got = a_pawns.iter().find(|&&p| &a_pieces[p].pos == b_pos);
+      assert_eq!(got, None);
+    }
 
     // to repro a bug, have Bob move the RHS pawn out again
 
