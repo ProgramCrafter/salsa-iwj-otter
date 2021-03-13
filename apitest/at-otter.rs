@@ -387,31 +387,37 @@ impl Ctx {
     let mut bob = self.connect_player(&self.bob)?;
     self.su_mut().mgmt_conn.fakerng_load(&[&"1"])?;
 
-    let pieces = alice.pieces()?;
+    let mut a_pieces = alice.pieces()?;
 
-    let [hand] = pieces.iter()
-      .filter(|p| p.info["desc"] == otter::hand::UNCLAIMED_DESC)
+    let [hand] = a_pieces.iter().enumerate()
+      .filter(|(i,p)| p.info["desc"] == otter::hand::UNCLAIMED_DESC)
+      .map(|(i,_)| i)
       .collect::<ArrayVec<[_;1]>>()
       .into_inner().unwrap();
     dbg!(&hand);
 
-    let pawns: [_;2] = pieces.iter()
-      .filter(|p| p.info["desc"].as_str().unwrap().ends_with(" pawn"))
-      .take(2)
-      .collect::<ArrayVec<_>>()
-      .into_inner().unwrap();
-    dbg!(&pawns);
-
-    alice.api_with_piece_op_synch(&hand.id, "k", json!({
+    alice.api_with_piece_op_synch(&a_pieces[hand].id, "k", json!({
       "opname": "claim",
       "wrc": "Unpredictable",
     }))?;
 
+    fn find_pawns(pieces: &[PieceInfo<JsV>]) -> [usize; 2] {
+      let pawns = pieces.iter().enumerate()
+        .filter(|(i,p)| p.info["desc"].as_str().unwrap().ends_with(" pawn"))
+        .map(|(i,_)| i)
+        .take(2)
+        .collect::<ArrayVec<[_;2]>>()
+        .into_inner().unwrap();
+      dbg!(pawns)
+    }
+
+    let a_pawns = find_pawns(&mut a_pieces);
+
     bob.synch()?;
 
-    for (pawn, &xoffset) in izip!(&pawns, [10,20].iter()) {
-      alice.api_with_piece_op(&pawn.id, "m", json![
-        (hand.pos + PosC([xoffset, 0]))?.0
+    for (&pawn, &xoffset) in izip!(&a_pawns, [10,20].iter()) {
+      alice.api_with_piece_op(&a_pieces[pawn].id, "m", json![
+        (a_pieces[hand].pos + PosC([xoffset, 0]))?.0
       ])?;
     }
 
