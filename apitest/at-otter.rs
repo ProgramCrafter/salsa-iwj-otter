@@ -417,7 +417,7 @@ impl Ctx {
 
     alice.synch()?;
     bob.synchx(None, |session, gen, k, v| {
-      dbgc!((k, v));
+      dbgc!(k,v);
     })?;
 
     // to repro a bug, have Bob move the RHS pawn out again
