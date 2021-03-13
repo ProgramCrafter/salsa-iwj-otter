@@ -507,6 +507,15 @@ impl Ctx {
       assert_eq!(got, None);
     }
 
+    for (xi, &p) in a_pawns.iter().enumerate().take(1) {
+      alice.api_with_piece_op_synch(&a_pieces[p].id, "m", json![
+        [ (xi+1) * 15, 20 ]
+      ])?;
+    }
+
+    alice.synch()?;
+    bob.synchu(&mut b_pieces)?;
+
     // to repro a bug, have Bob move the RHS pawn out again
 
     self.su_mut().mgmt_conn.fakerng_unfake()?;
