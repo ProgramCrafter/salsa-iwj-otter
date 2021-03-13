@@ -862,15 +862,15 @@ pub fn recalculate_occultation_piece(
   gs: &mut GameState,
   who_by: Html,
   ipieces: &IPieces,
+  to_permute: &mut ToPermute,
   piece: PieceId,
   (vanilla_wrc, vanilla_op, vanilla_log): PUFOS,
 )
   -> PieceUpdate
 {
-  ToPermute::with(|mut to_permute| (
     recalculate_occultation_general(
       &mut gs.gen.unique_gen(),
-      &gs.players, &mut gs.pieces, &mut gs.occults, ipieces, &mut to_permute,
+      &gs.players, &mut gs.pieces, &mut gs.occults, ipieces, to_permute,
       piece, vanilla_log,
       |log| (vanilla_wrc, vanilla_op, log).into(),
       |old, new, show| vec![ LogEntry { html: Html(format!(
@@ -884,11 +884,7 @@ pub fn recalculate_occultation_piece(
         ops: PieceUpdateOps::PerPlayer(puos),
         log
       }
-    ),
-    to_permute.implement(&mut gs.players,
-                           &mut gs.pieces, &mut gs.occults,
-                           ipieces),
-  ))?
+    )?
 }
 
 #[throws(IE)]
@@ -994,6 +990,7 @@ pub fn create_occultation(
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
   ipieces: &IPieces,
+  to_permute: &mut ToPermute,
   region: Area,
   occulter: PieceId,
   views: OccultationViews,
@@ -1033,7 +1030,7 @@ pub fn create_occultation(
   let occid = goccults.occults.insert(occultation);
   let mut updates = vec![];
 
-  ToPermute::with(|mut to_permute| (
+  (|| (
     (||{
       let ogpc = gpieces.get_mut(occulter).ok_or_else(
         ||internal_logic_error("occulter vanished"))?;
@@ -1042,7 +1039,7 @@ pub fn create_occultation(
       for &ppiece in &recalc {
         recalculate_occultation_ofmany(gen,
                                        gplayers, gpieces, goccults, ipieces,
-                                       &mut to_permute,
+                                       to_permute,
                                        ppiece, &mut updates)?;
       }
 
@@ -1056,9 +1053,8 @@ pub fn create_occultation(
       ogpc.occult.active = None;
       goccults.occults.remove(occid).expect("inserted this earlier");
       e
-    }),
-    to_permute.implement(gplayers, gpieces, goccults, ipieces),
-  ))?;
+    })
+  ))()?;
 
   dbgc!(&updates);
   updates
@@ -1071,6 +1067,7 @@ pub fn remove_occultation(
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
   ipieces: &IPieces,
+  to_permute: &mut ToPermute,
   occulter: PieceId,
 ) -> Vec<(PieceId, PieceUpdateOps)> {
   let mut aggerr = AggregatedIE::new();
@@ -1100,7 +1097,6 @@ pub fn remove_occultation(
       
   let mut updates = vec![];
 
-  ToPermute::with(|mut to_permute| ({
     let pieces: Vec<PieceId> = if let Some(o) = &occultation {
       o.notches.iter().collect()
     } else {
@@ -1117,7 +1113,7 @@ pub fn remove_occultation(
     for &ppiece in pieces.iter() {
       recalculate_occultation_ofmany(gen,
                                      gplayers, gpieces, goccults, ipieces,
-                                     &mut to_permute,
+                                     to_permute,
                                      ppiece, &mut updates)
         .unwrap_or_else(|e| {
           aggerr.record(e);
@@ -1132,9 +1128,6 @@ pub fn remove_occultation(
     } else {
       aggerr.record(internal_logic_error("removing occultation of non-piece"));
     }
-  },
-    to_permute.implement(gplayers, gpieces, goccults, ipieces),
-  ));
 
   aggerr.ok()?;
 

@@ -140,7 +140,7 @@ impl PieceTrait for Hand {
   fn ui_operation(&self, a: ApiPieceOpArgs<'_>,
                   opname: &str, wrc: WhatResponseToClientOp)
                   -> UpdateFromOpComplex {
-    let ApiPieceOpArgs { gs,player,piece,ipieces,.. } = a;
+    let ApiPieceOpArgs { gs,player,piece,ipieces,to_permute,.. } = a;
     let gen = &mut gs.gen;
     let gplayers = &mut gs.players;
     let gpieces = &mut gs.pieces;
@@ -197,6 +197,7 @@ impl PieceTrait for Hand {
         let xupdates =
           create_occultation(&mut gen.unique_gen(),
                              gplayers, gpieces, goccults, ipieces,
+                             to_permute,
                              region, piece, views)?;
 
         dbgc!("creating occ done", &new_owner, &xupdates);

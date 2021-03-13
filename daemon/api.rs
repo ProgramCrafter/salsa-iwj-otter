@@ -105,7 +105,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
   let mut ig = iad.gref.lock()?;
   ig.save_game_later();
 
-  ToPermute::with(move |to_permute| {
+  ToPermute::with(move |mut to_permute| {
     let r = (||{
 
   let g = &mut *ig;
@@ -139,6 +139,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
     let update =
       form.op.op_complex(ApiPieceOpArgs {
         ioccults, gs, player, piece, ipieces, ipc,
+        to_permute: &mut to_permute,
       })?;
     Ok::<_,ApiPieceOpError>(update)
   })() {
@@ -312,7 +313,9 @@ api_route!{
   as:
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
-    let ApiPieceOpArgs { gs,ioccults,player,piece,ipc,ipieces, .. } = a;
+    let ApiPieceOpArgs {
+      gs,ioccults,player,piece,ipc,ipieces,to_permute, ..
+    } = a;
     let gpl = gs.players.byid_mut(player).unwrap();
     let gpc = gs.pieces.byid_mut(piece).unwrap();
 
@@ -335,6 +338,7 @@ api_route!{
         gs,
         who_by,
         ipieces,
+        to_permute,
         piece,
         vanilla,
       ).map_err(|e| OnlineError::from(e))?;
