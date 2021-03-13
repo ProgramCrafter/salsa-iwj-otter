@@ -384,6 +384,7 @@ impl Ctx {
   fn hidden_hand(&mut self) {
     prepare_game(&self.su().ds, TABLE)?;
     let mut alice = self.connect_player(&self.alice)?;
+    let mut bob = self.connect_player(&self.bob)?;
     self.su_mut().mgmt_conn.fakerng_load(&[&"1"])?;
 
     let pieces = alice.pieces()?;
@@ -406,13 +407,16 @@ impl Ctx {
       "wrc": "Unpredictable",
     }))?;
 
+    bob.synch()?;
+
     for (pawn, &xoffset) in izip!(&pawns, [10,20].iter()) {
       alice.api_with_piece_op(&pawn.id, "m", json![
         (hand.pos + PosC([xoffset, 0]))?.0
       ])?;
     }
 
-    alice.synchx(None, |session, gen, k, v| {
+    alice.synch()?;
+    bob.synchx(None, |session, gen, k, v| {
       dbgc!((k, v));
     })?;
 
