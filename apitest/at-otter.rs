@@ -520,6 +520,9 @@ impl Ctx {
 
     alice.synchu(&mut a_pieces)?;
     bob.synchu(&mut b_pieces)?;
+    assert_eq!(b_pieces[b_pawns[1]].pos,
+               a_pieces[a_pawns[0]].pos);
+
 
     // to repro a bug, have Alice move the black pawn out again
     // observe yellow highlight in bob's view and black pawn is in wrong
