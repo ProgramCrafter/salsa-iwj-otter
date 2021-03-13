@@ -529,6 +529,28 @@ mod vpid {
         assert_eq!(occ.notches.table[notch], NR::Piece(piece));
       }
     }
+
+    for (occid, occ) in goccults.occults.iter() {
+      let ogpc = gpieces.get(occ.occulter).unwrap();
+      assert_eq!(ogpc.occult.active, Some(occid));
+      assert_eq!(occ.notches.table.len(), occ.notches.zg.len());
+      let nfree1 = occ.notches.table.iter()
+        .filter(|nr| nr.piece().is_none()).count();
+      let mut walk = occ.notches.freelist;
+      let mut nfree2 = 0;
+      while let Some(here) = walk {
+        nfree2 += 1;
+        let next = match occ.notches.table[here] {
+          NR::Free(next) => next,
+          NR::Piece(_) => panic!(),
+        };
+        if let Some(next) = next {
+          assert!(next > here);
+        }
+        walk = next;
+      }
+      assert_eq!(nfree1,  nfree2);
+    }
   }
 }
 
