@@ -208,6 +208,7 @@ mod vpid {
   type NotchPtr = Option<Notch>;
 
   #[derive(Clone,Copy,Debug,Serialize,Deserialize)]
+  #[derive(Eq,PartialEq)]
   enum NotchRecord {
     Free(NotchPtr),
     Piece(PieceId),
@@ -496,9 +497,42 @@ mod vpid {
     occ.notches.table = new_notches;
     dbgc!(&occ);
   }
+
+  #[cfg(debug_assertions)]
+  pub fn consistency_check(
+    gplayers: &GPlayers,
+    gpieces: &GPieces,
+    goccults: &GameOccults,
+  ) {
+    for (_player, gpl) in gplayers.iter() {
+      for (piece, &vpid) in gpl.idmap.f.iter() {
+        if let Some(&rpiece) = gpl.idmap.r.get(vpid) {
+          assert_eq!(piece, rpiece);
+        }
+      }
+      for (vpid, &piece) in gpl.idmap.r.iter() {
+        if let Some(&fvpid) = gpl.idmap.f.get(piece) {
+          assert_eq!(vpid, fvpid);
+        }
+      }
+    }
+    
+    for (piece, gpc) in gpieces.iter() {
+      if let Some(occid) = gpc.occult.active {
+        let occ = goccults.occults.get(occid).unwrap();
+        assert_eq!(occ.occulter, piece);
+        assert_eq!(&gpc.occult.passive, &None);
+      }
+      
+      if let Some(Passive { occid, notch }) = gpc.occult.passive {
+        let occ = goccults.occults.get(occid).unwrap();
+        assert_eq!(occ.notches.table[notch], NR::Piece(piece));
+      }
+    }
+  }
 }
 
-pub use vpid::{PerPlayerIdMap, NotchNumber, Notch, Notches};
+pub use vpid::{PerPlayerIdMap, NotchNumber, Notch, Notches, consistency_check};
 
 // ========== public entrypoints ==========
 
@@ -892,6 +926,10 @@ mod recompute {
         if let Some(occ) = goccults.occults.get_mut(occid) {
           vpid::permute(occid, occ, gplayers, gpieces, ipieces);
         }
+      }
+
+      if cfg!(debug_assertions) {
+        consistency_check(gplayers, gpieces, goccults);
       }
 
       Implemented { }
