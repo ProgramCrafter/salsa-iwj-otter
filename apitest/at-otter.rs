@@ -519,8 +519,6 @@ impl Ctx {
     // to repro a bug, have Alice move the black pawn out again
     // observe yellow highlight in bob's view and black pawn is in wrong
     // place
-
-    self.su_mut().mgmt_conn.fakerng_unfake()?;
   }
 }
 
