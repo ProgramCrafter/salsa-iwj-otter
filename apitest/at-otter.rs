@@ -250,7 +250,9 @@ impl Session {
     R,
     F: FnMut(&mut Session, Generation, &str, &serde_json::Value) -> Option<R>,
     G: FnMut(&mut Session, Generation) -> Option<R>,
-   > (&mut self, mut g: G, mut f: F) -> R {
+    E: FnMut(&mut Session, Generation, &serde_json::Value)
+             -> Result<Option<R>, AE>
+   > (&mut self, mut g: G, mut f: F, mut ef: Option<E>) -> R {
     'overall: loop {
       let update = self.updates.recv()?;
       let update = update.as_array().unwrap();
@@ -263,7 +265,15 @@ impl Session {
       if let Some(y) = g(self, new_gen) { break 'overall y }
       for ue in update[1].as_array().unwrap() {
         let (k,v) = ue.as_object().unwrap().iter().next().unwrap();
-        if let Some(y) = f(self, new_gen, k, v) { break 'overall y }
+        if let Some(y) = {
+          if k != "Error" {
+            f(self, new_gen, k, v)
+          } else if let Some(ef) = &mut ef {
+            ef(self, new_gen, v)?
+          } else {
+            panic!("synch error: {:?}", &v);
+          }
+        } { break 'overall y }
       }
     }
   }
@@ -271,17 +281,25 @@ impl Session {
   #[throws(AE)]
   fn synchx<
     F: FnMut(&mut Session, Generation, &str, &serde_json::Value),
-  > (&mut self, su: &mut SetupCore, mut f: F) {
+  > (&mut self, su: &mut SetupCore,
+     ef: Option<&mut dyn FnMut(&mut Session, Generation, &serde_json::Value)
+                               -> Result<(), AE>>,
+     mut f: F)
+  {                 
     let exp = mgmt_game_synch(&mut su.mgmt_conn, TABLE.parse().unwrap())?;
+    let efwrap = ef.map(|ef| {
+      move |s: &mut _, g, v: &_| { ef(s,g,v)?; Ok::<_,AE>(None) }
+    });
     self.await_update(
       |session, gen      | (gen == exp).as_option(),
       |session, gen, k, v| { f(session,gen,k,v); None },
+      efwrap,
     )?;
   }
 
   #[throws(AE)]
   fn synch(&mut self, su: &mut SetupCore) {
-    self.synchx(su, |_session, _gen, _k, _v|() )?;
+    self.synchx(su, None, |_session, _gen, _k, _v|())?;
   }
 }
 
@@ -326,7 +344,7 @@ impl Ctx {
       .expect("library-add failed after place!");
 
     let mut added = vec![];
-    session.synchx(&mut self.su,
+    session.synchx(&mut self.su, None,
       |session, gen, k, v| if_chain! {
         if k == "Piece";
         let piece = v["piece"].as_str().unwrap().to_string();
@@ -371,7 +389,7 @@ impl Ctx {
       ])?;
     }
 
-    session.synchx(&mut self.su, |session, gen, k, v| {
+    session.synchx(&mut self.su, None, |session, gen, k, v| {
       dbgc!((k, v));
     })?;
 
