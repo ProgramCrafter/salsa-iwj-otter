@@ -15,12 +15,7 @@ struct Ctx {
   bob: Player,
 }
 deref_to_field!{Ctx, SetupCore, su}
-
-impl Ctx {
-  fn wanted_tests(&mut self) -> &mut TrackWantedTests {
-    &mut self.su.wanted_tests
-  }
-}
+usual_wanted_tests!{Ctx, su}
 
 #[derive(Debug)]
 struct Player {

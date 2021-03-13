@@ -10,12 +10,7 @@ struct Ctx {
   bob: Window,
 }
 deref_to_field!{Ctx, Setup, su}
-
-impl Ctx {
-  fn wanted_tests(&mut self) -> &mut TrackWantedTests {
-    &mut self.su.wanted_tests
-  }
-}
+usual_wanted_tests!{Ctx, su}
 
 const HAND: &str = "6.1";
 const ALICE: &str = "1#1";

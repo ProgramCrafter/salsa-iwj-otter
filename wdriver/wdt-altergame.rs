@@ -10,12 +10,9 @@ struct Ctx {
   su: Setup,
   alice: Window,
 }
+usual_wanted_tests!{Ctx, su}
 
 impl Ctx {
-  fn wanted_tests(&mut self) -> &mut TrackWantedTests {
-    &mut self.su.wanted_tests
-  }
-
   #[throws(AE)]
   fn check_link(&mut self, desc: &'static str, url: Option<&str>) {
     (||{

@@ -224,6 +224,17 @@ impl Drop for TrackWantedTests {
 }
 
 #[macro_export]
+macro_rules! usual_wanted_tests {
+  ($ctx:ty, $su:ident) => {
+    impl $ctx {
+      fn wanted_tests(&mut self) -> &mut TrackWantedTests {
+        &mut self.su.wanted_tests
+      }
+    }
+  }
+}
+
+#[macro_export]
 macro_rules! test {
   ($c:expr, $tname:expr, $s:stmt) => {
     if $c.wanted_tests().wantp($tname) {

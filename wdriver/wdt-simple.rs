@@ -11,12 +11,9 @@ struct Ctx {
   spec: GameSpec,
 }
 deref_to_field!{Ctx, Setup, su}
+usual_wanted_tests!{Ctx, su}
 
 impl Ctx {
-  fn wanted_tests(&mut self) -> &mut TrackWantedTests {
-    &mut self.su.wanted_tests
-  }
-
   #[throws(AE)]
   fn drag(&mut self){
     let su = &mut self.su;
