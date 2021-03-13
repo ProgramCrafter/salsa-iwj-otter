@@ -512,9 +512,10 @@ impl Ctx {
     }
 
     for (xi, &p) in a_pawns.iter().enumerate().take(1) {
-      alice.api_with_piece_op_synch(&mut a_pieces, p, "m", json![
-        [ (xi+1) * 15, 20 ]
-      ])?;
+      let xix: Coord = xi.try_into().unwrap();
+      let pos = PosC([ (xix + 1) * 15, 20 ]);
+      a_pieces[p].pos = pos;
+      alice.api_with_piece_op_synch(&mut a_pieces, p, "m", json![pos.0])?;
     }
 
     alice.synchu(&mut a_pieces)?;
