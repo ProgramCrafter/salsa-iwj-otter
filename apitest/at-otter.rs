@@ -209,6 +209,9 @@ mod pi {
 }
 pub use pi::*;
 
+type Pieces<PI> = IndexVec<PI, PieceInfo<JsV>>;
+type PiecesSlice<PI> = IndexSlice<PI,[PieceInfo<JsV>]>;
+
 #[derive(Debug,Clone)]
 pub struct PieceInfo<I> {
   id: String,
@@ -218,7 +221,7 @@ pub struct PieceInfo<I> {
 
 impl Session {
   #[throws(AE)]
-  fn pieces<PI:Idx>(&self) -> IndexVec<PI, PieceInfo<JsV>> {
+  fn pieces<PI:Idx>(&self) -> Pieces<PI> {
     let pieces = self.dom
       .element("#pieces_marker")
       .unwrap().next_siblings()
@@ -320,7 +323,7 @@ impl Session {
     PI: Idx,
     F: FnMut(&mut Session, Generation, &str, &JsV),
   > (&mut self,
-     mut pieces: Option<&mut IndexVec<PI, PieceInfo<JsV>>>,
+     mut pieces: Option<&mut Pieces<PI>>,
      ef: Option<&mut dyn FnMut(&mut Session, Generation, &JsV)
                                -> Result<(), AE>>,
      mut f: F)
@@ -346,7 +349,7 @@ impl Session {
   }
 
   #[throws(AE)]
-  fn synchu<PI:Idx>(&mut self, pieces: &mut IndexVec<PI, PieceInfo<JsV>>) {
+  fn synchu<PI:Idx>(&mut self, pieces: &mut Pieces<PI>) {
     self.synchx(Some(pieces), None, |_session, _gen, _k, _v| ())?;
   }
 
@@ -358,7 +361,7 @@ impl Session {
 
 pub fn update_update_pieces<PI:Idx>(
   nick: &str,
-  pieces: &mut IndexVec<PI, PieceInfo<JsV>>,
+  pieces: &mut Pieces<PI>,
   k: &str, v: &JsV
 ) {
   if k != "Piece" { return }
@@ -471,9 +474,7 @@ impl Ctx {
       "wrc": "Unpredictable",
     }))?;
 
-    fn find_pawns<PI:Idx>(pieces: &IndexSlice<PI,[PieceInfo<JsV>]>)
-                          -> [PI; 2]
-    {
+    fn find_pawns<PI:Idx>(pieces: &PiecesSlice<PI>) -> [PI; 2] {
       let mut pawns = pieces.iter_enumerated()
         .filter(|(i,p)| p.info["desc"].as_str().unwrap().ends_with(" pawn"))
         .map(|(i,_)| i)
