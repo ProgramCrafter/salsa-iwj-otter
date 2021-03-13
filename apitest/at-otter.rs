@@ -250,6 +250,7 @@ impl Session {
           .as_i64().unwrap()
           .try_into().unwrap()
       );
+      self.gen = new_gen;
       if let Some(y) = g(self, new_gen) { break 'overall y }
       for ue in update[1].as_array().unwrap() {
         let (k,v) = ue.as_object().unwrap().iter().next().unwrap();
