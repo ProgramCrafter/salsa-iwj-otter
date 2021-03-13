@@ -37,10 +37,12 @@ deref_to_field_mut!{TrackWantedTestsGuard<'_>,
 
 #[derive(Debug)]
 struct Player {
+  pub nick: &'static str,
   url: String,
 }
 
 struct Session {
+  pub nick: &'static str,
   pub su_rc: Setup,
   pub ctoken: RawToken,
   pub gen: Generation,
@@ -131,7 +133,6 @@ fn updates_parser<R:Read>(input: R, out: &mut mpsc::Sender<Update>) {
     } else {
       let update = &entry["data"];
       let update = serde_json::from_str(update).unwrap();
-      dbgc!(&update);
       if out.send(update).is_err() { break }
     }
   }
@@ -190,6 +191,7 @@ impl Ctx {
     });
 
     Session {
+      nick: player.nick,
       client, gen,
       cseq: 42,
       ctoken: RawToken(ctoken.to_string()),
@@ -235,7 +237,9 @@ impl Session {
         Loop::ok(PieceInfo { id, pos, info })
       })
       .collect();
-    dbgc!(pieces)
+    let nick = self.nick;
+    dbgc!(nick, &pieces);
+    pieces
   }
 
   #[throws(AE)]
@@ -283,6 +287,7 @@ impl Session {
     E: FnMut(&mut Session, Generation, &JsV)
              -> Result<Option<R>, AE>
    > (&mut self, mut g: G, mut f: F, mut ef: Option<E>) -> R {
+    let nick = self.nick;
     'overall: loop {
       let update = self.updates.recv()?;
       let update = update.as_array().unwrap();
@@ -292,9 +297,11 @@ impl Session {
           .try_into().unwrap()
       );
       self.gen = new_gen;
+      dbgc!(nick, new_gen);
       if let Some(y) = g(self, new_gen) { break 'overall y }
       for ue in update[1].as_array().unwrap() {
         let (k,v) = ue.as_object().unwrap().iter().next().unwrap();
+        dbgc!(nick, k, &v);
         if let Some(y) = {
           if k != "Error" {
             f(self, new_gen, k, v)
@@ -436,7 +443,6 @@ impl Ctx {
 
     alice.synch()?;
     bob.synchx(None, |session, gen, k, v| {
-      dbgc!(k,v);
       if k != "Piece" { return }
       let v = v.as_object().unwrap();
       let piece = v["piece"].as_str().unwrap();
@@ -467,7 +473,8 @@ impl Ctx {
           panic!("unknown op {:?} {:?}", &op, &d);
         },
       };
-      dbgc!(k,v,p);
+      let nick = session.nick;
+      dbgc!(nick, k,v,p);
     })?;
 
     // to repro a bug, have Bob move the RHS pawn out again
@@ -489,7 +496,7 @@ fn main() {
     let spec = su.ds.game_spec_data()?;
     let [alice, bob]: [Player; 2] = su.ds.setup_static_users(
       default(),
-      |sus| Ok(Player { url: sus.url })
+      |sus| Ok(Player { nick: sus.nick, url: sus.url })
     )?
       .try_into().unwrap();
     
