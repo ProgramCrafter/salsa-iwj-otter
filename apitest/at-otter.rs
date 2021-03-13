@@ -287,6 +287,14 @@ impl Session {
   }
 
   #[throws(AE)]
+  fn api_piece_move_synch<PI:Idx>(
+    &mut self, pieces: &mut Pieces<PI>, i: PI, pos: Pos
+  ) {
+    pieces[i].pos = pos;
+    self.api_with_piece_op_synch(pieces, i, "m", json![pos.0])?;
+  }
+
+  #[throws(AE)]
   fn await_update<
     R,
     F: FnMut(&mut Session, Generation, &str, &JsV) -> Option<R>,
@@ -514,8 +522,7 @@ impl Ctx {
     for (xi, &p) in a_pawns.iter().enumerate().take(1) {
       let xix: Coord = xi.try_into().unwrap();
       let pos = PosC([ (xix + 1) * 15, 20 ]);
-      a_pieces[p].pos = pos;
-      alice.api_with_piece_op_synch(&mut a_pieces, p, "m", json![pos.0])?;
+      alice.api_piece_move_synch(&mut a_pieces, p, pos)?;
     }
 
     alice.synchu(&mut a_pieces)?;
