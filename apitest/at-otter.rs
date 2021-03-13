@@ -10,6 +10,8 @@ use otter_api_tests::*;
 pub use std::cell::{RefCell, RefMut};
 pub use std::rc::Rc;
 
+pub use index_vec::Idx;
+
 type Setup = Rc<RefCell<SetupCore>>;
 
 struct Ctx {
@@ -200,9 +202,10 @@ impl Ctx {
 
 mod pi {
   use otter::prelude::define_index_type;
-  define_index_type!{ pub struct PI = usize; }
+  define_index_type!{ pub struct PIA = usize; }
+  define_index_type!{ pub struct PIB = usize; }
 }
-pub use pi::PI;
+pub use pi::*;
 
 #[derive(Debug,Clone)]
 struct PieceInfo<I> {
@@ -213,7 +216,7 @@ struct PieceInfo<I> {
 
 impl Session {
   #[throws(AE)]
-  fn pieces(&self) -> IndexVec<PI, PieceInfo<JsV>> {
+  fn pieces<PI:Idx>(&self) -> IndexVec<PI, PieceInfo<JsV>> {
     self.dom
       .element("#pieces_marker")
       .unwrap().next_siblings()
@@ -355,7 +358,7 @@ impl Ctx {
                Some(EXIT_NOTFOUND));
 
     let mut session = self.connect_player(&self.alice)?;
-    let pieces = session.pieces()?;
+    let pieces = session.pieces::<PIA>()?;
     dbg!(&pieces);
     let llm = pieces.into_iter()
       .filter(|pi| pi.info["desc"] == "a library load area marker")
@@ -393,7 +396,7 @@ impl Ctx {
     let mut bob = self.connect_player(&self.bob)?;
     self.su_mut().mgmt_conn.fakerng_load(&[&"1"])?;
 
-    let a_pieces = alice.pieces()?;
+    let a_pieces = alice.pieces::<PIA>()?;
 
     let [hand] = a_pieces.iter().enumerate()
       .filter(|(i,p)| p.info["desc"] == otter::hand::UNCLAIMED_DESC)
@@ -407,7 +410,9 @@ impl Ctx {
       "wrc": "Unpredictable",
     }))?;
 
-    fn find_pawns(pieces: &IndexSlice<PI,[PieceInfo<JsV>]>) -> [PI; 2] {
+    fn find_pawns<PI:Idx>(pieces: &IndexSlice<PI,[PieceInfo<JsV>]>)
+                          -> [PI; 2]
+    {
       let pawns = pieces.iter_enumerated()
         .filter(|(i,p)| p.info["desc"].as_str().unwrap().ends_with(" pawn"))
         .map(|(i,_)| i)
