@@ -237,6 +237,15 @@ impl Session {
   }
 
   #[throws(AE)]
+  fn api_with_piece_op_synch(&mut self, su: &mut SetupCore, piece: &str,
+                             pathfrag: &str, op: serde_json::Value) {
+    self.api_piece_op(su, piece, "grab", json!({}))?;
+    self.api_piece_op(su, piece, pathfrag, op)?;
+    self.synch(su)?;
+    self.api_piece_op(su, piece, "ungrab", json!({}))?;
+  }
+
+  #[throws(AE)]
   fn await_update<
     R,
     F: FnMut(&mut Session, Generation, &str, &serde_json::Value) -> Option<R>,
@@ -351,18 +360,20 @@ impl Ctx {
       .into_inner().unwrap();
     dbg!(&pawns);
 
+    session.api_with_piece_op_synch(&mut self.su, &hand.id, "k", json!({
+      "opname": "claim",
+      "wrc": "Unpredictable",
+    }))?;
+
     for (pawn, &xoffset) in izip!(&pawns, [10,20].iter()) {
       session.api_with_piece_op(&self.su, &pawn.id, "m", json![
         (hand.pos + PosC([xoffset, 0]))?.0
       ])?;
     }
 
-    session.api_with_piece_op(&self.su, &hand.id, "k", json!({
-      "opname": "claim",
-      "wrc": "Unpredictable",
-    }))?;
-
-    session.synch(&mut self.su)?;
+    session.synchx(&mut self.su, |session, gen, k, v| {
+      dbgc!((k, v));
+    })?;
 
     // to repro a bug, have Bob move the RHS pawn out again
 
