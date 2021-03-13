@@ -662,7 +662,7 @@ impl DirSubst {
       let data = fs::read(&path).context("read")?;
       let data = std::str::from_utf8(&data).context("convert from UTF-8")?;
       let data: toml::Value = data.parse().context("parse TOM")?;
-      dbg!(&data);
+      dbgc!(&data);
       let data = toml_de::from_value(&data).context("interperet TOML")?;
       Ok::<_,AE>(data)
     })()

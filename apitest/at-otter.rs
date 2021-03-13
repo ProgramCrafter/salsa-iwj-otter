@@ -87,7 +87,7 @@ mod scraper_ext {
     assert_eq!(resp.status(), 200);
     let body = resp.text()?;
     let dom = scraper::Html::parse_document(&body);
-    //dbg!(&&dom);
+    //dbgc!(&&dom);
     dom
   }
 
@@ -143,20 +143,20 @@ impl Ctx {
     let client = reqwest::blocking::Client::new();
     let loading = client.get(&player.url).send_parse_html()?;
     let ptoken = loading.e_attr("#loading_token", "data-ptoken").unwrap();
-    dbg!(&ptoken);
+    dbgc!(&ptoken);
 
     let session = client.post(&self.su().ds.subst("@url@/_/session/Portrait")?)
       .json(&json!({ "ptoken": ptoken }))
       .send_parse_html()?;
 
     let ctoken = session.e_attr("#main-body", "data-ctoken").unwrap();
-    dbg!(&ctoken);
+    dbgc!(&ctoken);
 
     let gen: Generation = Generation(
       session.e_attr("#main-body", "data-gen").unwrap()
         .parse().unwrap()
     );
-    dbg!(gen);
+    dbgc!(gen);
 
     let mut sse = client.get(
       &self.su().ds
@@ -217,7 +217,7 @@ struct PieceInfo<I> {
 impl Session {
   #[throws(AE)]
   fn pieces<PI:Idx>(&self) -> IndexVec<PI, PieceInfo<JsV>> {
-    self.dom
+    let pieces = self.dom
       .element("#pieces_marker")
       .unwrap().next_siblings()
       .map_loop(|puse: ego_tree::NodeRef<scraper::Node>| {
@@ -234,7 +234,8 @@ impl Session {
         let info = serde_json::from_str(attr).unwrap();
         Loop::ok(PieceInfo { id, pos, info })
       })
-      .collect()
+      .collect();
+    dbgc!(pieces)
   }
 
   #[throws(AE)]
@@ -359,12 +360,11 @@ impl Ctx {
 
     let mut session = self.connect_player(&self.alice)?;
     let pieces = session.pieces::<PIA>()?;
-    dbg!(&pieces);
     let llm = pieces.into_iter()
       .filter(|pi| pi.info["desc"] == "a library load area marker")
       .collect::<ArrayVec<_>>();
     let llm: [_;2] = llm.into_inner().unwrap();
-    dbg!(&llm);
+    dbgc!(&llm);
 
     for (llm, pos) in izip!(&llm, [PosC([5,5]), PosC([50,25])].iter()) {
       session.api_with_piece_op(&llm.id, "m", json![pos.0])?;
@@ -385,7 +385,7 @@ impl Ctx {
         then { added.push(piece); }
       }
     )?;
-    dbg!(&added);
+    dbgc!(&added);
     assert_eq!(added.len(), 6);
   }
 
@@ -403,7 +403,7 @@ impl Ctx {
       .map(|(i,_)| i)
       .collect::<ArrayVec<[_;1]>>()
       .into_inner().unwrap();
-    dbg!(&hand);
+    dbgc!(&hand);
 
     alice.api_with_piece_op_synch(&a_pieces[hand].id, "k", json!({
       "opname": "claim",
@@ -419,7 +419,7 @@ impl Ctx {
         .take(2)
         .collect::<ArrayVec<[_;2]>>()
         .into_inner().unwrap();
-      dbg!(pawns)
+      dbgc!(pawns)
     }
 
     let a_pawns = find_pawns(a_pieces.as_slice());

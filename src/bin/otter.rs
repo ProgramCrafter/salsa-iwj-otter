@@ -565,7 +565,7 @@ fn read_spec<T: DeserializeOwned + SomeSpec>
     let mut buf = String::new();
     f.read_to_string(&mut buf).context("read")?;
     let tv: toml::Value = buf.parse().context("parse TOML")?;
-    dbg!(&tv);
+    dbgc!(&tv);
     let spec: T = toml_de::from_value(&tv).context("parse value")?;
     Ok::<_,AE>(spec)
   })().with_context(|| format!("read {} {:?}", T::WHAT, &filename))?
@@ -1057,7 +1057,7 @@ mod library_add {
       None
     };
 
-    if ma.verbose > 2 { dbg!(&markers, &args, &already); }
+    if ma.verbose > 2 { dbgc!(&markers, &args, &already); }
 
     #[derive(Debug)]
     enum Situation {
@@ -1099,7 +1099,7 @@ mod library_add {
       }
       Good(good.into_inner().unwrap())
     };
-    if ma.verbose > 2 { dbg!(&situation); }
+    if ma.verbose > 2 { dbgc!(&situation); }
 
     #[derive(Debug)]
     struct Placement {
@@ -1131,7 +1131,7 @@ mod library_add {
         }
       }
     };
-    if ma.verbose > 3 { dbg!(&placement); }
+    if ma.verbose > 3 { dbgc!(&placement); }
 
     impl Placement {
       /// If returns None, has already maybe tried to take some space
@@ -1200,7 +1200,7 @@ mod library_add {
         let ttopleft = PosC([tlhs, self.top]);
         let tnominal = (ttopleft - bbox[0])?;
 
-        if ma.verbose > 3 { dbg!(&self, &tnominal); }
+        if ma.verbose > 3 { dbgc!(&self, &tnominal); }
         Some(tnominal)
       }
     }
