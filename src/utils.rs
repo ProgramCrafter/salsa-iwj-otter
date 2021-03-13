@@ -364,6 +364,21 @@ fn matches_doesnot_test() {
   );
 }
 
+pub fn dbgc_helper(values: &[(&'static str, &dyn Debug)]) {
+  let buf = (||{
+    let mut buf = String::new();
+    write!(buf, "[{}:{}]", std::file!(), std::line!())?;
+    for (s, v) in values.iter() {
+      write!(buf, " {}={:?}", s, v)?;
+    }
+    write!(buf, "\n")?;
+    Ok::<_,fmt::Error>(buf)
+  })();
+  let buf = buf.unwrap_or_else(
+    |e| format!("error formatting for dbgc! {}\n", e));
+  eprint!("{}", buf);
+}
+
 #[macro_export]
 macro_rules! dbgc {
     // NOTE: We cannot use `concat!` to make a static string as a format argument
@@ -371,21 +386,20 @@ macro_rules! dbgc {
     // `$val` expression could be a block (`{ .. }`), in which case the `eprintln!`
     // will be malformed.
     () => {
-        std::eprintln!("[{}:{}]", std::file!(), std::line!());
+      dbgc_helper(&[])
     };
     ($val:expr $(,)?) => {
         // Use of `match` here is intentional because it affects the lifetimes
         // of temporaries - https://stackoverflow.com/a/48732525/1063961
         match $val {
             tmp => {
-                std::eprintln!("[{}:{}] {} = {:?}",
-                    std::file!(), std::line!(), std::stringify!($val), &tmp);
+                dbgc_helper(&[(std::stringify!($val), &tmp)]);
                 tmp
             }
         }
     };
     ($($val:expr),+ $(,)?) => {
-        ($($crate::dbgc!($val)),+,)
+      dbgc_helper(&[$((std::stringify!($val), &$val)),+])
     };
 }
 
