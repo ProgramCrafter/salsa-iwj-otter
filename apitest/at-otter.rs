@@ -7,15 +7,31 @@
 
 use otter_api_tests::*;
 
+pub use std::cell::{RefCell, RefMut};
+pub use std::rc::Rc;
+
+type Setup = Rc<RefCell<SetupCore>>;
+
 struct Ctx {
   opts: Opts,
-  su: SetupCore,
+  su_rc: Setup,
   spec: GameSpec,
   alice: Player,
   bob: Player,
 }
-deref_to_field!{Ctx, SetupCore, su}
-usual_wanted_tests!{Ctx, su}
+
+impl Ctx {
+  fn su(&self) -> std::cell::Ref<SetupCore> { RefCell::borrow(&self.su_rc) }
+  fn su_mut(&self) -> RefMut<SetupCore> { self.su_rc.borrow_mut() }
+
+  fn wanted_tests(&self) -> TrackWantedTestsGuard {
+    TrackWantedTestsGuard(self.su_mut())
+  }
+}
+struct TrackWantedTestsGuard<'m>(RefMut<'m, SetupCore>);
+deref_to_field_mut!{TrackWantedTestsGuard<'_>,
+                    TrackWantedTests,
+                    0.wanted_tests}
 
 #[derive(Debug)]
 struct Player {
@@ -23,6 +39,7 @@ struct Player {
 }
 
 struct Session {
+  pub su_rc: Setup,
   pub ctoken: RawToken,
   pub gen: Generation,
   pub cseq: RawClientSequence,
@@ -120,13 +137,13 @@ fn updates_parser<R:Read>(input: R, out: &mut mpsc::Sender<Update>) {
 
 impl Ctx {
   #[throws(AE)]
-  fn connect_player(&self, player: &Player) -> Session {
+  fn connect_player<'su>(&self, player: &Player) -> Session {
     let client = reqwest::blocking::Client::new();
     let loading = client.get(&player.url).send_parse_html()?;
     let ptoken = loading.e_attr("#loading_token", "data-ptoken").unwrap();
     dbg!(&ptoken);
 
-    let session = client.post(&self.ds.subst("@url@/_/session/Portrait")?)
+    let session = client.post(&self.su().ds.subst("@url@/_/session/Portrait")?)
       .json(&json!({ "ptoken": ptoken }))
       .send_parse_html()?;
 
@@ -140,7 +157,7 @@ impl Ctx {
     dbg!(gen);
 
     let mut sse = client.get(
-      &self.ds
+      &self.su().ds
         .also(&[("ctoken", ctoken),
                 ("gen",    &gen.to_string())])
         .subst("@url@/_/updates?ctoken=@ctoken@&gen=@gen@")?
@@ -176,6 +193,7 @@ impl Ctx {
       ctoken: RawToken(ctoken.to_string()),
       dom: session,
       updates: crecv,
+      su_rc: self.su_rc.clone(),
     }
   }
 }
@@ -211,11 +229,12 @@ impl Session {
   }
 
   #[throws(AE)]
-  fn api_piece_op(&mut self, su: &SetupCore, piece: &str,
-                  opname: &str, op: serde_json::Value) {
+  fn api_piece_op(&mut self, piece: &str, opname: &str,
+                  op: serde_json::Value) {
     self.cseq += 1;
     let cseq = self.cseq;
-    
+
+    let su = self.su_rc.borrow_mut();
     let resp = self.client.post(&su.ds.also(&[("opname",opname)])
                                 .subst("@url@/_/api/@opname@")?)
       .json(&json!({
@@ -230,20 +249,20 @@ impl Session {
   }
 
   #[throws(AE)]
-  fn api_with_piece_op(&mut self, su: &SetupCore, piece: &str,
+  fn api_with_piece_op(&mut self, piece: &str,
                        pathfrag: &str, op: serde_json::Value) {
-    self.api_piece_op(su, piece, "grab", json!({}))?;
-    self.api_piece_op(su, piece, pathfrag, op)?;
-    self.api_piece_op(su, piece, "ungrab", json!({}))?;
+    self.api_piece_op(piece, "grab", json!({}))?;
+    self.api_piece_op(piece, pathfrag, op)?;
+    self.api_piece_op(piece, "ungrab", json!({}))?;
   }
 
   #[throws(AE)]
-  fn api_with_piece_op_synch(&mut self, su: &mut SetupCore, piece: &str,
+  fn api_with_piece_op_synch(&mut self, piece: &str,
                              pathfrag: &str, op: serde_json::Value) {
-    self.api_piece_op(su, piece, "grab", json!({}))?;
-    self.api_piece_op(su, piece, pathfrag, op)?;
-    self.synch(su)?;
-    self.api_piece_op(su, piece, "ungrab", json!({}))?;
+    self.api_piece_op(piece, "grab", json!({}))?;
+    self.api_piece_op(piece, pathfrag, op)?;
+    self.synch()?;
+    self.api_piece_op(piece, "ungrab", json!({}))?;
   }
 
   #[throws(AE)]
@@ -282,12 +301,15 @@ impl Session {
   #[throws(AE)]
   fn synchx<
     F: FnMut(&mut Session, Generation, &str, &serde_json::Value),
-  > (&mut self, su: &mut SetupCore,
+  > (&mut self,
      ef: Option<&mut dyn FnMut(&mut Session, Generation, &serde_json::Value)
                                -> Result<(), AE>>,
      mut f: F)
-  {                 
-    let exp = mgmt_game_synch(&mut su.mgmt_conn, TABLE.parse().unwrap())?;
+  {
+    let exp = {
+      let mut su = self.su_rc.borrow_mut();
+      mgmt_game_synch(&mut su.mgmt_conn, TABLE.parse().unwrap())?
+    };
     let efwrap = ef.map(|ef| {
       move |s: &mut _, g, v: &_| { ef(s,g,v)?; Ok::<_,AE>(None) }
     });
@@ -299,8 +321,8 @@ impl Session {
   }
 
   #[throws(AE)]
-  fn synch(&mut self, su: &mut SetupCore) {
-    self.synchx(su, None, |_session, _gen, _k, _v|())?;
+  fn synch(&mut self) {
+    self.synchx(None, |_session, _gen, _k, _v|())?;
   }
 }
 
@@ -311,14 +333,14 @@ impl Ctx {
       ["--account", "server:"].iter().cloned().map(Into::into)
       .chain(args.iter().map(|s| s.as_ref().to_owned()))
       .collect();
-    self.ds.otter(&args)?;
+    self.su().ds.otter(&args)?;
   }
 
   #[throws(AE)]
   fn library_load(&mut self) {
-    prepare_game(&self.ds, TABLE)?;
+    prepare_game(&self.su().ds, TABLE)?;
 
-    let command = self.ds.ss(
+    let command = self.su().ds.ss(
       "library-add @table@ wikimedia chess-blue-?"
     )?;
     let add_err = self.otter(&command)
@@ -336,16 +358,16 @@ impl Ctx {
     dbg!(&llm);
 
     for (llm, pos) in izip!(&llm, [PosC([5,5]), PosC([50,25])].iter()) {
-      session.api_with_piece_op(&self.su, &llm.id, "m", json![pos.0])?;
+      session.api_with_piece_op(&llm.id, "m", json![pos.0])?;
     }
 
-    session.synch(&mut self.su)?;
+    session.synch()?;
 
     self.otter(&command)
       .expect("library-add failed after place!");
 
     let mut added = vec![];
-    session.synchx(&mut self.su, None,
+    session.synchx(None,
       |session, gen, k, v| if_chain! {
         if k == "Piece";
         let piece = v["piece"].as_str().unwrap().to_string();
@@ -360,9 +382,10 @@ impl Ctx {
 
   #[throws(AE)]
   fn hidden_hand(&mut self) {
-    prepare_game(&self.ds, TABLE)?;
+    prepare_game(&self.su().ds, TABLE)?;
     let mut session = self.connect_player(&self.alice)?;
-    self.su.mgmt_conn.cmd(&MC::LoadFakeRng(vec![ "1".to_owned() ]))?;
+    self.su_mut()
+      .mgmt_conn.cmd(&MC::LoadFakeRng(vec![ "1".to_owned() ]))?;
 
     let pieces = session.pieces()?;
 
@@ -379,24 +402,24 @@ impl Ctx {
       .into_inner().unwrap();
     dbg!(&pawns);
 
-    session.api_with_piece_op_synch(&mut self.su, &hand.id, "k", json!({
+    session.api_with_piece_op_synch(&hand.id, "k", json!({
       "opname": "claim",
       "wrc": "Unpredictable",
     }))?;
 
     for (pawn, &xoffset) in izip!(&pawns, [10,20].iter()) {
-      session.api_with_piece_op(&self.su, &pawn.id, "m", json![
+      session.api_with_piece_op(&pawn.id, "m", json![
         (hand.pos + PosC([xoffset, 0]))?.0
       ])?;
     }
 
-    session.synchx(&mut self.su, None, |session, gen, k, v| {
+    session.synchx(None, |session, gen, k, v| {
       dbgc!((k, v));
     })?;
 
     // to repro a bug, have Bob move the RHS pawn out again
 
-    self.su.mgmt_conn.cmd(&MC::LoadFakeRng(vec![]))?;
+    self.su_mut().mgmt_conn.cmd(&MC::LoadFakeRng(vec![]))?;
   }
 }
 
@@ -417,7 +440,8 @@ fn main() {
     )?
       .try_into().unwrap();
     
-    tests(Ctx { opts, spec, su, alice, bob })?;
+    let su_rc = Rc::new(RefCell::new(su));
+    tests(Ctx { opts, spec, su_rc, alice, bob })?;
   }
   info!("ok");
 }
