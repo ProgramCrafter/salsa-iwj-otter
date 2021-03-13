@@ -581,7 +581,7 @@ fn inner(
       occultation.views.get_kind(player)
         .map_displaced(|(area, z)| {
           let x: Coord = notch.index().try_into().unwrap(); // xxx
-          let pos = (area.0[0] + PosC([x*2, 0])).unwrap(); // xxx
+          let pos = (area.0[0] + PosC([x*5, 0])).unwrap(); // xxx
           let z = z.plus_offset(notch.into())
             .unwrap_or_else(|e| { // eek!
               error!("z coordinate overflow ({:?}), bodging! {:?} {:?}",
