@@ -219,7 +219,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     MC::LoadFakeRng(ents) => {
       let superuser = cs.superuser
         .ok_or(ME::SuperuserAuthorisationRequired)?;
-      config().fake_rng.set(ents, superuser)?;
+      config().game_rng.set_fake(ents, superuser)?;
       Fine
     }
   }

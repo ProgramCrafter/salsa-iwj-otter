@@ -64,7 +64,7 @@ pub struct ServerConfig {
   pub sendmail: String,
   pub debug_js_inject: Arc<String>,
   pub check_bundled_sources: bool,
-  pub fake_rng: RngWrap,
+  pub game_rng: RngWrap,
 }
 
 impl TryFrom<ServerConfigSpec> for WholeServerConfig {
@@ -79,7 +79,7 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
       debug_js_inject_file, check_bundled_sources, fake_rng,
     } = spec;
 
-    let fake_rng = fake_rng.start();
+    let game_rng = fake_rng.make_game_rng();
 
     if let Some(cd) = change_directory {
       env::set_current_dir(&cd)
@@ -182,7 +182,7 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
       http_port, public_url, sse_wildcard_url, rocket_workers,
       template_dir, nwtemplate_dir, wasm_dir,
       bundled_sources, shapelibs, sendmail,
-      debug_js_inject, check_bundled_sources, fake_rng,
+      debug_js_inject, check_bundled_sources, game_rng,
     };
     WholeServerConfig {
       server: Arc::new(server),

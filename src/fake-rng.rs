@@ -11,7 +11,7 @@ use parking_lot::Mutex;
 pub struct FakeRngSpec(Option<Vec<String>>);
 
 impl FakeRngSpec {
-  pub fn start(self) -> RngWrap { RngWrap( match self.0 {
+  pub fn make_game_rng(self) -> RngWrap { RngWrap( match self.0 {
     None => None,
     Some(ents) => Some(Arc::new(Mutex::new(FakeRng {
       i: 0,
@@ -35,14 +35,14 @@ impl RngWrap {
   pub fn is_fake(&self) -> bool { self.0.is_some() }
 
   #[throws(MgmtError)]
-  pub fn set(&self, v: Vec<String>, _: AuthorisationSuperuser) {
+  pub fn set_fake(&self, v: Vec<String>, _: AuthorisationSuperuser) {
     let mut fake = self.0.as_ref().ok_or(ME::RngIsReal)?.lock();
     fake.i = 0;
     fake.ents = v;
   }
 
   #[throws(as Option)]
-  fn next(&self) -> String {
+  fn next_fake(&self) -> String {
     let mut fake = self.0.as_ref()?.lock();
     let e = fake.ents.get(fake.i)?.clone();
     fake.i += 1;
@@ -50,7 +50,7 @@ impl RngWrap {
     e
   }
 
-  pub fn shuffle<T:Copy>(&self, slice: &mut [T]) { match self.next() {
+  pub fn shuffle<T:Copy>(&self, slice: &mut [T]) { match self.next_fake() {
     None => {
       let mut rng = thread_rng();
       slice.shuffle(&mut rng);
