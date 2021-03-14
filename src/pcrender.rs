@@ -36,6 +36,23 @@ impl VisiblePieceAngle {
 
 impl PieceRenderInstructions {
   #[throws(IE)]
+  pub fn map_piece_update_op(&self, ioccults: &IOccults,
+                             gpc: &GPiece, ipc: &IPiece,
+                             op: PieceUpdateOp<(),()>
+  ) -> PieceUpdateOp<PreparedPieceState, ZLevel>
+  {
+    op.try_map(
+      |()|{
+        let ns = self.prep_piecestate(ioccults, gpc, ipc)?;
+        <Result<_,InternalError>>::Ok(ns)
+      },
+      |()|{
+        Ok(gpc.zlevel.clone())
+      }
+    )?
+  }
+  
+  #[throws(IE)]
   pub fn prep_piecestate(&self, ioccults: &IOccults,
                          gpc: &GPiece, ipc: &IPiece)
                          -> PreparedPieceState {

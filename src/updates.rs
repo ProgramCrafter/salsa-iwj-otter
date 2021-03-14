@@ -506,15 +506,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
     max_z.update_max(&gpc.zlevel.z);
 
-    let op = op.try_map(
-      |()|{
-        let ns = pri.prep_piecestate(ioccults, gpc, ipc)?;
-        <Result<_,InternalError>>::Ok(ns)
-      },
-      |()|{
-        Ok(gpc.zlevel.clone())
-      }
-    )?;
+    let op = pri.map_piece_update_op(ioccults, gpc, ipc, op)?;
 
     Some(PreparedPieceUpdate {
       piece: pri.vpid,
