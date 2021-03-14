@@ -13,6 +13,7 @@ deref_to_field!{Ctx, Setup, su}
 usual_wanted_tests!{Ctx, su}
 
 const HAND: &str = "6.1";
+const PAWN: &str = "7.1";
 const ALICE: &str = "1#1";
 
 #[throws(AE)]
@@ -46,11 +47,12 @@ impl Ctx {
       Ok::<_,AE>(())
     };
 
-    {
+    let hand_posg = {
       let mut w = su.w(&self.alice)?;
       w.synch()?;
 
       let hand = w.find_piece(HAND)?;
+      let hand_posg = hand.posg()?;
       w.action_chain()
         .move_pos(&hand)?
         .click()
@@ -70,11 +72,25 @@ impl Ctx {
         .context("deselect")?;
 
       chk(&mut w, HAND, Some(ALICE))?;
-    }
+
+      hand_posg
+    };
 
     {
       let mut w = su.w(&self.bob)?;
       chk(&mut w, HAND, Some(ALICE))?;
+    }
+
+    {
+      let mut w = su.w(&self.alice)?;
+      let pawn = w.find_piece(PAWN)?;
+      w.action_chain()
+        .move_pos(&pawn)?
+        .click_and_hold()
+        .move_w(&w, (hand_posg + PosC([20,0]))?)?
+        .release()
+        .perform()?;
+      w.synch()?;
     }
 
     for side in &[&self.alice, &self.bob] {
