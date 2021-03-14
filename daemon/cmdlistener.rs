@@ -587,7 +587,9 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       } else {
         Html::lit("<piece partially missing from game state!>")
       };
-      if let Some(gpc) = gpc { ipc.p.delete_hook(&gpc, gs); }
+      if let Some(gpc) = gpc {
+        ipc.p.delete_hook(&gpc, gs);
+      }
       if let Some(occilk) = ipc.occilk { ig.ioccults.ilks.dispose(occilk); }
       (U{ pcs: vec![(piece, PieceUpdateOp::Delete())],
           log: vec![ LogEntry {
