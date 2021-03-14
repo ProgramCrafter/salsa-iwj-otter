@@ -63,6 +63,10 @@ pub enum OccultationKindGeneral<D> {
 }
 pub type OccultationKind = OccultationKindGeneral<(Area, ZCoord)>;
 
+impl PieceOccult {
+  pub fn is_active(&self) -> bool { self.active.is_some() }
+}
+
 impl Default for OccultationKind {
   fn default() -> Self { OccK::Visible }
 }
