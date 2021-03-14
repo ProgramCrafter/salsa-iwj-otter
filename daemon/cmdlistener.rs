@@ -239,7 +239,9 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   ag: &'_ mut AccountsGuard,
   ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
   update: MgmtGameInstruction,
-  who: &Html)
+  who: &Html,
+  _to_permute: &mut ToPermute,
+)
   -> Result<ExecuteGameInsnResults<'igr, 'ig> ,ME>
 {
   type U = ExecuteGameChangeUpdates;
@@ -754,6 +756,9 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   mut insns: Vec<MgmtGameInstruction>,
   how: MgmtGameUpdateMode) -> MgmtResponse
 {
+  ToPermute::with(|mut to_permute| {
+    let r = (||{
+
   let mut uh = UpdateHandler::from_how(how);
   let mut responses = Vec::with_capacity(insns.len());
   let mut auth = None;
@@ -773,7 +778,8 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   };
   let res = (||{
     for insn in insns.drain(0..) {
-      let (updates, resp, ig) = execute_game_insn(cs, ag, igu, insn, &who)?;
+      let (updates, resp, ig) = execute_game_insn(cs, ag, igu, insn, &who,
+                                                  &mut to_permute)?;
       uh.accumulate(ig, updates)?;
       responses.push(resp);
       auth = Some(Authorisation::authorised(&*ig.name));
@@ -784,10 +790,22 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   if let Some(auth) = auth {
     igu.by_mut(auth).save_game_now()?;
   }
-  MgmtResponse::AlterGame {
+  Ok::<_,ME>(MgmtResponse::AlterGame {
     responses,
     error: res.unwrap_or_else(Some),
-  }
+  })
+
+    })();
+    (r, {
+      let ig = igu.by_mut(Authorisation::authorise_any());
+      let g = &mut **ig;
+      let gs = &mut g.gs;
+      to_permute.implement(&mut gs.players,
+                           &mut gs.pieces,
+                           &mut gs.occults,
+                           &g.ipieces)
+    })
+  })?
 }
 
 #[derive(Debug,Default)]
