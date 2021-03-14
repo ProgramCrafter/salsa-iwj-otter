@@ -246,8 +246,9 @@ impl Session {
   }
 
   #[throws(AE)]
-  fn api_piece_op(&mut self, piece: &str, opname: &str,
-                  op: JsV) {
+  fn api_piece_op_single<O:PieceOp>(&mut self, piece: &str, o: O) {
+    let (opname, payload) = o.api();
+
     self.cseq += 1;
     let cseq = self.cseq;
 
@@ -259,39 +260,31 @@ impl Session {
         "piece": piece,
         "gen": self.gen,
         "cseq": cseq,
-        "op": op,
+        "op": payload,
       }))
       .send()?;
     assert_eq!(resp.status(), 200);
   }
 
   #[throws(AE)]
-  fn api_with_piece_op(&mut self, piece: &str,
-                       pathfrag: &str, op: JsV) {
-    self.api_piece_op(piece, "grab", json!({}))?;
-    self.api_piece_op(piece, pathfrag, op)?;
-    self.api_piece_op(piece, "ungrab", json!({}))?;
-  }
-
-  #[throws(AE)]
-  fn api_with_piece_op_synch<PI:Idx>(
-    &mut self, pieces: &mut Pieces<PI>, i: PI,
-    pathfrag: &str, op: JsV
+  fn api_piece<P:PieceSpecForOp, O:PieceOp>(
+    &mut self, g: GrabHow, mut p: P, o: O
   ) {
-    let piece = &pieces[i].id;
-    self.api_piece_op(piece, "grab", json!({}))?;
-    self.api_piece_op(piece, pathfrag, op)?;
-    self.synchu(pieces)?;
-    let piece = &pieces[i].id;
-    self.api_piece_op(piece, "ungrab", json!({}))?;
-  }
-
-  #[throws(AE)]
-  fn api_with_piece_move_synch<PI:Idx>(
-    &mut self, pieces: &mut Pieces<PI>, i: PI, pos: Pos
-  ) {
-    pieces[i].pos = pos;
-    self.api_with_piece_op_synch(pieces, i, "m", json![pos.0])?;
+    if let GH::With | GH::Grab = g {
+      self.api_piece_op_single(p.id(), ("grab", json!({})))?;
+    }
+    if let Some(u) = p.for_update() {
+      o.update(u);
+    }
+    {
+      self.api_piece_op_single(p.id(), o)?;
+    }
+    if let Some(s) = p.for_synch() {
+      self.synchu(s)?;
+    }
+    if let GH::With | GH::Ungrab = g {
+      self.api_piece_op_single(p.id(), ("ungrab", json!({})))?;
+    }
   }
 
   #[throws(AE)]
@@ -411,6 +404,63 @@ pub fn update_update_pieces<PI:Idx>(
   dbgc!(nick, k,v,p);
 }
 
+pub type PieceOpData = (&'static str, JsV);
+pub trait PieceOp: Debug {
+  fn api(&self) -> PieceOpData;
+  fn update(&self, pi: &mut PieceInfo<JsV>) { info!("no update {:?}", self) }
+}
+impl PieceOp for PieceOpData {
+  fn api(&self) -> PieceOpData { (self.0, self.1.clone()) }
+}
+impl PieceOp for Pos {
+  fn api(&self) -> PieceOpData { ("m", json![self.0]) }
+  fn update(&self, pi: &mut PieceInfo<JsV>) { pi.pos = *self }
+}
+
+pub trait PieceSpecForOp: Debug {
+  fn id(&self) -> &str;
+  type PI: Idx;
+  fn for_update(&mut self) -> Option<&mut PieceInfo<JsV>> { None }
+  fn for_synch(&mut self) -> Option<&mut Pieces<Self::PI>> { None }
+}
+
+impl PieceSpecForOp for str {
+  type PI = PIA;
+  fn id(&self) -> &str { self }
+}
+impl PieceSpecForOp for &String {
+  type PI = PIA;
+  fn id(&self) -> &str { self }
+}
+
+type PuUp<'pcs, PI> = (&'pcs mut Pieces<PI>, PI);
+impl<PI:Idx> PieceSpecForOp for PuUp<'_, PI> {
+  type PI = PI;
+  fn id(&self) -> &str { &self.0[self.1].id }
+  fn for_update(&mut self) -> Option<&mut PieceInfo<JsV>> {
+    Some(&mut self.0[self.1])
+  }
+}
+
+#[derive(Debug)]
+/// Synchronise after op but before any ungrab.
+pub struct PuSynch<'pcs, PI:Idx>(&'pcs mut Pieces<PI>, PI);
+impl<PI:Idx> PieceSpecForOp for PuSynch<'_,PI> {
+  type PI = PI;
+  fn id(&self) -> &str { &self.0[self.1].id }
+  fn for_update(&mut self) -> Option<&mut PieceInfo<JsV>> {
+    Some(&mut self.0[self.1])
+  }
+  fn for_synch(&mut self) -> Option<&mut Pieces<PI>> {
+    Some(self.0)
+  }
+}
+
+#[derive(Debug,Copy,Clone)]
+pub enum GrabHow { Raw, Grab, Ungrab, With }
+pub use GrabHow as GH;
+
+
 impl Ctx {
   #[throws(AE)]
   pub fn otter<S:AsRef<str>>(&mut self, args: &[S]) {
@@ -441,8 +491,9 @@ impl Ctx {
     let llm: [_;2] = llm.into_inner().unwrap();
     dbgc!(&llm);
 
-    for (llm, pos) in izip!(&llm, [PosC([5,5]), PosC([50,25])].iter()) {
-      session.api_with_piece_op(&llm.id, "m", json![pos.0])?;
+    for (llm, &pos) in izip!(&llm, [PosC([5,5]), PosC([50,25])].iter())
+    {
+      session.api_piece(GH::With, &llm.id, pos)?;
     }
 
     session.synch()?;
@@ -481,10 +532,10 @@ impl Ctx {
       .into_inner().unwrap();
     dbgc!(&hand);
 
-    alice.api_with_piece_op_synch(&mut a_pieces, hand, "k", json!({
+    alice.api_piece(GH::With, PuSynch(&mut a_pieces, hand), ("k", json!({
       "opname": "claim",
       "wrc": "Unpredictable",
-    }))?;
+    })))?;
 
     fn find_pawns<PI:Idx>(pieces: &PiecesSlice<PI>) -> [PI; 2] {
       let mut pawns = pieces.iter_enumerated()
@@ -506,7 +557,7 @@ impl Ctx {
 
     for (&pawn, &xoffset) in izip!(&a_pawns, [10,20].iter()) {
       let pos = (a_pieces[hand].pos + PosC([xoffset, 0]))?;
-      alice.api_with_piece_move_synch(&mut a_pieces, pawn, pos)?;
+      alice.api_piece(GH::With, PuSynch(&mut a_pieces, pawn), pos)?;
     }
 
     alice.synchu(&mut a_pieces)?;
@@ -524,7 +575,7 @@ impl Ctx {
     for (xi, &p) in a_pawns.iter().enumerate().take(1) {
       let xix: Coord = xi.try_into().unwrap();
       let pos = PosC([ (xix + 1) * 15, 20 ]);
-      alice.api_with_piece_move_synch(&mut a_pieces, p, pos)?;
+      alice.api_piece(GH::With, PuSynch(&mut a_pieces, p), pos)?;
     }
 
     alice.synchu(&mut a_pieces)?;
@@ -534,9 +585,7 @@ impl Ctx {
 
     let out_again = (a_pieces[hand].pos + PosC([5, 0]))?;
     for (xi, &p) in a_pawns.iter().enumerate().take(1) {
-      alice.api_with_piece_op_synch(&mut a_pieces, p, "m", json![
-        out_again.0
-      ])?;
+      alice.api_piece(GH::With, PuSynch(&mut a_pieces, p), out_again)?;
     }
 
     alice.synchu(&mut a_pieces)?;
