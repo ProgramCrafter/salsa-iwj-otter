@@ -1170,9 +1170,7 @@ messages.Recorded = <MessageHandler>function
       zg: Generation|null, svg: string | null } ) {
   let piece = j.piece;
   let p = pieces[piece]!;
-  if (p.cseq != null && j.cseq >= p.cseq) {
-    p.cseq = null;
-  }
+  piece_recorded_cseq(p, j);
   if (p.cseq_updatesvg != null && j.cseq >= p.cseq_updatesvg) {
     p.cseq_updatesvg = null;
     redisplay_ancillaries(piece,p);
@@ -1187,6 +1185,12 @@ messages.Recorded = <MessageHandler>function
     piece_set_zlevel(piece,p, (oldtop_piece: PieceId)=>{
       p.zg = zg_new;
     });
+  }
+}
+
+function piece_recorded_cseq(p: PieceInfo, j: { cseq: ClientSeq }) {
+  if (p.cseq != null && j.cseq >= p.cseq) {
+    p.cseq = null;
   }
 }
 
