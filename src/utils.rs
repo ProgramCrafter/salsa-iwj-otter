@@ -358,11 +358,11 @@ macro_rules! matches_doesnot {
   ($v:expr,
    $(
      $yn:tt $($p:pat)|*
-   ),*
+   ),* $(,)?
   ) => {
     match $v {
       $(
-        $($p)|* => matches_doesnot_yn2bool!($yn),
+        $($p)|* => $crate::matches_doesnot_yn2bool!($yn),
       )*
     }
   }
@@ -375,6 +375,14 @@ fn matches_doesnot_test() {
       Some(42),
       = Some(_),
       ! None
+    )
+  );
+  assert!(
+    matches_doesnot!(
+      Some(42),
+      ! None,
+      ! Some(3),
+      = Some(_),
     )
   );
   assert!(
