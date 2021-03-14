@@ -287,7 +287,7 @@ impl Session {
   }
 
   #[throws(AE)]
-  fn api_piece_move_synch<PI:Idx>(
+  fn api_with_piece_move_synch<PI:Idx>(
     &mut self, pieces: &mut Pieces<PI>, i: PI, pos: Pos
   ) {
     pieces[i].pos = pos;
@@ -506,7 +506,7 @@ impl Ctx {
 
     for (&pawn, &xoffset) in izip!(&a_pawns, [10,20].iter()) {
       let pos = (a_pieces[hand].pos + PosC([xoffset, 0]))?;
-      alice.api_piece_move_synch(&mut a_pieces, pawn, pos)?;
+      alice.api_with_piece_move_synch(&mut a_pieces, pawn, pos)?;
     }
 
     alice.synchu(&mut a_pieces)?;
@@ -524,7 +524,7 @@ impl Ctx {
     for (xi, &p) in a_pawns.iter().enumerate().take(1) {
       let xix: Coord = xi.try_into().unwrap();
       let pos = PosC([ (xix + 1) * 15, 20 ]);
-      alice.api_piece_move_synch(&mut a_pieces, p, pos)?;
+      alice.api_with_piece_move_synch(&mut a_pieces, p, pos)?;
     }
 
     alice.synchu(&mut a_pieces)?;
