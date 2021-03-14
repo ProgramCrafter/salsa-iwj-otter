@@ -1198,6 +1198,7 @@ messages.RecordedUnpredictable = <MessageHandler>function
 (j: { piece: PieceId, cseq: ClientSeq, ns: PreparedPieceState } ) {
   let piece = j.piece;
   let p = pieces[piece]!;
+  piece_recorded_cseq(p, j);
   piece_modify(piece, p, j.ns, false);
 }
 
