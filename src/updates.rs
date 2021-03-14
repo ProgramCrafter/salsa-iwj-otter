@@ -496,7 +496,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   #[throws(InternalError)]
   fn piece_update_player(ioccults: &IOccults,
                          max_z: &mut ZCoord,
-                         pc: &mut GPiece,
+                         gpc: &mut GPiece,
                          ipc: &IPiece,
                          op: PieceUpdateOp<(),()>,
                          pri: &Option<PieceRenderInstructions>)
@@ -504,15 +504,15 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   {
     let pri = match pri { Some(pri) => pri, None => return None };
 
-    max_z.update_max(&pc.zlevel.z);
+    max_z.update_max(&gpc.zlevel.z);
 
     let op = op.try_map(
       |()|{
-        let ns = pc.prep_piecestate(ioccults, ipc, pri)?;
+        let ns = pri.prep_piecestate(ioccults, gpc, ipc)?;
         <Result<_,InternalError>>::Ok(ns)
       },
       |()|{
-        Ok(pc.zlevel.clone())
+        Ok(gpc.zlevel.clone())
       }
     )?;
 

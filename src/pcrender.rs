@@ -34,27 +34,26 @@ impl VisiblePieceAngle {
   }
 }
 
-impl GPiece {
+impl PieceRenderInstructions {
   #[throws(IE)]
   pub fn prep_piecestate(&self, ioccults: &IOccults,
-                         ipc: &IPiece, pri: &PieceRenderInstructions)
+                         gpc: &GPiece, ipc: &IPiece)
                          -> PreparedPieceState {
-    let (pos, zlevel) = pri.pos_zlevel(self);
-    dbgc!(pos, pri, self, ioccults, ipc);
+    let pri = self;
+    let (pos, zlevel) = pri.pos_zlevel(gpc);
+    dbgc!(pos, pri, gpc, ioccults, ipc);
     PreparedPieceState {
       pos        : pos,
-      held       : self.held,
-      svg        : pri.make_defs(ioccults, self, ipc)?,
+      held       : gpc.held,
+      svg        : pri.make_defs(ioccults, gpc, ipc)?,
       z          : zlevel.z,
       zg         : zlevel.zg,
-      angle      : pri.angle(self).to_compass(),
-      pinned     : self.pinned,
-      uos        : pri.ui_operations(self, ipc.p.borrow())?,
+      angle      : pri.angle(gpc).to_compass(),
+      pinned     : gpc.pinned,
+      uos        : pri.ui_operations(gpc, ipc.p.borrow())?,
     }
   }
-}
 
-impl PieceRenderInstructions {
   pub fn new_visible(vpid: VisiblePieceId) -> PieceRenderInstructions {
     PieceRenderInstructions { vpid, occulted: PriOcculted::Visible }
   }
