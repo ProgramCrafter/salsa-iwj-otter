@@ -230,6 +230,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 type ExecuteGameInsnResults<'igr, 'ig> = (
   ExecuteGameChangeUpdates,
   MgmtGameResponse,
+  Option<Void>,
   &'igr mut InstanceGuard<'ig>,
 );
 
@@ -269,7 +270,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   {
     let (ig, _) = cs.check_acl(ag, ig, PCH::Instance, p)?;
     let resp = f(ig)?;
-    (U{ pcs: vec![], log: vec![], raw: None }, resp, ig)
+    (U{ pcs: vec![], log: vec![], raw: None }, resp, None, ig)
   }
 
   #[throws(MgmtError)]
@@ -288,7 +289,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     (U{ log,
         pcs: vec![],
         raw: Some(vec![ PreparedUpdateEntry::SetLinks(ig.links.clone()) ])},
-     Fine, ig)
+     Fine, None, ig)
   }
 
   impl<'cs> CommandStream<'cs> {
@@ -322,7 +323,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
                                &who.0, size.0[0], size.0[1])),
           }],
           raw: Some(vec![ PreparedUpdateEntry::SetTableSize(size) ]) },
-       Fine, ig)
+       Fine, None, ig)
     }
 
     MGI::SetTableColour(colour) => {
@@ -335,7 +336,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
                                &who.0, &colour.0)),
           }],
           raw: Some(vec![ PreparedUpdateEntry::SetTableColour(colour) ]) },
-       Fine, ig)
+       Fine, None, ig)
     }
 
     MGI::JoinGame {
@@ -369,7 +370,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           log: vec![ logentry ],
           raw: Some(vec![ update ] )},
        MGR::JoinGame { nick, player, token: atr },
-       ig)
+       None, ig)
     },
 
     MGI::Synch => {
@@ -381,7 +382,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           log: vec![], // return no update info
           raw: None },
        MGR::Synch(gen),
-       ig)
+       None, ig)
     },
 
     MGI::ListPieces => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
@@ -439,7 +440,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       (U{ log,
           pcs: vec![],
           raw: None},
-       Fine, ig)
+       Fine, None, ig)
     },
 
     MGI::Info => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
@@ -522,7 +523,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       (U{ pcs: vec![],
           log: vec![],
           raw: None },
-       MGR::PlayerAccessToken(token), ig)
+       MGR::PlayerAccessToken(token), None, ig)
     }
 
     MGI::RedeliverPlayerAccess(player) => {
@@ -533,7 +534,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       (U{ pcs: vec![],
           log: vec![],
           raw: None },
-       MGR::PlayerAccessToken(token), ig)
+       MGR::PlayerAccessToken(token), None, ig)
     },
 
     MGI::LeaveGame(player) => {
@@ -565,7 +566,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       (U{ pcs: vec![],
           log: vec![ LogEntry { html }],
           raw: Some(vec![ update ]) },
-       Fine, ig)
+       Fine, None, ig)
     },
 
     MGI::DeletePiece(piece) => {
@@ -590,7 +591,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
                           desc_html.0)),
           }],
           raw: None },
-       Fine, ig_g)
+       Fine, None, ig_g)
     },
 
     MGI::AddPieces(PiecesSpec{ pos,posd,count,face,pinned,angle,info }) => {
@@ -658,7 +659,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
             html: Html(format!("{} added {} pieces", &who.0, count_len)),
           }],
           raw: None },
-       Fine, ig_g)
+       Fine, None, ig_g)
     },
 
     MGI::ClearLog => {
@@ -679,7 +680,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
             html: Html(format!("{} cleared the log", &who.0)),
           } ],
           raw: None },
-       Fine, ig)
+       Fine, None, ig)
     },
 
     MGI::SetACL { acl } => {
@@ -740,7 +741,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       (U{ pcs: vec![ ],
           log,
           raw: Some(updates) },
-       Fine, ig)
+       Fine, None, ig)
     },
   };
   Ok(y)
@@ -778,10 +779,11 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   };
   let res = (||{
     for insn in insns.drain(0..) {
-      let (updates, resp, ig) = execute_game_insn(cs, ag, igu, insn, &who,
-                                                  &mut to_permute)?;
+      let (updates, resp, for_prepub, ig) =
+        execute_game_insn(cs, ag, igu, insn, &who, &mut to_permute)?;
       uh.accumulate(ig, updates)?;
       responses.push(resp);
+      match for_prepub { None => (), Some(x) => match x { }};
       auth = Some(Authorisation::authorised(&*ig.name));
     }
     if let Some(auth) = auth { uh.complete(igu.by_mut(auth), &who)?; }
