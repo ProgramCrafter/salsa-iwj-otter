@@ -227,10 +227,14 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
 // ---------- game command implementations ----------
 
+type ExecuteGameInsnResultsPrepub = Box<
+    dyn for<'r> FnOnce(&'r mut PrepareUpdatesBuffer)
+    >;
+
 type ExecuteGameInsnResults<'igr, 'ig> = (
   ExecuteGameChangeUpdates,
   MgmtGameResponse,
-  Option<Void>,
+  Option<ExecuteGameInsnResultsPrepub>, // These happena after everything else
   &'igr mut InstanceGuard<'ig>,
 );
 
@@ -780,12 +784,19 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   let res = (||{
     for insn in insns.drain(0..) {
       let (updates, resp, for_prepub, ig) =
-        execute_game_insn(cs, ag, igu, insn, &who, &mut to_permute)?;
+        execute_game_insn(cs, ag, igu, insn, &who,
+                          &mut to_permute)?;
       uh.accumulate(ig, updates)?;
       responses.push(resp);
-      match for_prepub { None => (), Some(x) => match x { }};
       let auth_y = Authorisation::authorised(&*ig.name);
       auth = Some(auth_y);
+      if let Some(for_prepub) = for_prepub {
+        uh.complete(ig, &who)?;
+        let mut prepub = PrepareUpdatesBuffer::new(ig, None, None);
+        for_prepub(&mut prepub);
+        prepub.finish();
+        uh = UpdateHandler::from_how(how);
+      }
     }
     if let Some(auth) = auth { uh.complete(igu.by_mut(auth), &who)?; }
     Ok(None)
