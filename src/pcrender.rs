@@ -39,9 +39,9 @@ impl PieceRenderInstructions {
   pub fn map_piece_update_op(&self, ioccults: &IOccults,
                              gpc: &GPiece, ipc: &IPiece,
                              op: PieceUpdateOp<(),()>
-  ) -> PieceUpdateOp<PreparedPieceState, ZLevel>
+  ) -> Option<PieceUpdateOp<PreparedPieceState, ZLevel>>
   {
-    op.try_map(
+    let op = op.try_map(
       |()|{
         let ns = self.prep_piecestate(ioccults, gpc, ipc)?;
         <Result<_,InternalError>>::Ok(ns)
@@ -49,7 +49,8 @@ impl PieceRenderInstructions {
       |()|{
         Ok(gpc.zlevel.clone())
       }
-    )?
+    )?;
+    Some(op)
   }
   
   #[throws(IE)]
