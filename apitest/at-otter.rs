@@ -448,15 +448,15 @@ impl<PI:Idx> PieceSpecForOp for PuUp<'_, PI> {
 
 #[derive(Debug)]
 /// Synchronise after op but before any ungrab.
-pub struct PuSynch<'pcs, PI:Idx>(&'pcs mut Pieces<PI>, PI);
+pub struct PuSynch<'pcs, PI:Idx>(PuUp<'pcs, PI>);
 impl<PI:Idx> PieceSpecForOp for PuSynch<'_,PI> {
   type PI = PI;
-  fn id(&self) -> &str { &self.0[self.1].id }
+  fn id(&self) -> &str { self.0.id() }
   fn for_update(&mut self) -> Option<&mut PieceInfo<JsV>> {
-    Some(&mut self.0[self.1])
+    self.0.for_update()
   }
   fn for_synch(&mut self) -> Option<&mut Pieces<PI>> {
-    Some(self.0)
+    Some(self.0.0)
   }
 }
 
@@ -536,7 +536,7 @@ impl Ctx {
       .into_inner().unwrap();
     dbgc!(&hand);
 
-    alice.api_piece(GH::With, PuSynch(&mut a_pieces, hand), ("k", json!({
+    alice.api_piece(GH::With, PuSynch((&mut a_pieces, hand)), ("k", json!({
       "opname": "claim",
       "wrc": "Unpredictable",
     })))?;
