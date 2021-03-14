@@ -204,8 +204,13 @@ impl PieceTrait for Hand {
         (new_owner, xupdates, format!("claimed {}", &old_desc.0))
       }
       ("deactivate", true) => {
-        // xxx recalculate occultations
-        (None, vec![], format!("deactivated {}", &old_desc.0))
+        let xupdates =
+          remove_occultation(&mut gen.unique_gen(),
+                             gplayers, gpieces, goccults, ipieces,
+                             to_permute, piece)
+          .map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?;
+
+        (None, xupdates, format!("deactivated {}", &old_desc.0))
       }
       ("claim", true) |
       ("deactivate", false) => {
