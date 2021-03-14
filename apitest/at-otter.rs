@@ -323,7 +323,7 @@ impl Session {
           } else if let Some(ef) = &mut ef {
             ef(self, new_gen, v)?
           } else {
-            panic!("synch error: {:?}", &v);
+            panic!("synch error: {:?}", &(k, v));
           }
         } { break 'overall y }
       }
