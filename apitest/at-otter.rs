@@ -247,7 +247,7 @@ impl Session {
 
   #[throws(AE)]
   fn api_piece_op_single<O:PieceOp>(&mut self, piece: &str, o: O) {
-    let (opname, payload) = o.api();
+    let (opname, payload) = if let Some(o) = o.api() { o } else { return };
 
     self.cseq += 1;
     let cseq = self.cseq;
@@ -406,15 +406,19 @@ pub fn update_update_pieces<PI:Idx>(
 
 pub type PieceOpData = (&'static str, JsV);
 pub trait PieceOp: Debug {
-  fn api(&self) -> PieceOpData;
+  fn api(&self) -> Option<PieceOpData>;
   fn update(&self, pi: &mut PieceInfo<JsV>) { info!("no update {:?}", self) }
 }
 impl PieceOp for PieceOpData {
-  fn api(&self) -> PieceOpData { (self.0, self.1.clone()) }
+  fn api(&self) -> Option<PieceOpData> { Some((self.0, self.1.clone())) }
 }
 impl PieceOp for Pos {
-  fn api(&self) -> PieceOpData { ("m", json![self.0]) }
+  fn api(&self) -> Option<PieceOpData> { Some(("m", json![self.0])) }
   fn update(&self, pi: &mut PieceInfo<JsV>) { pi.pos = *self }
+}
+impl PieceOp for () {
+  fn api(&self) -> Option<PieceOpData> { None }
+  fn update(&self, pi: &mut PieceInfo<JsV>) {  }
 }
 
 pub trait PieceSpecForOp: Debug {
