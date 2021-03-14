@@ -292,6 +292,26 @@ impl<'g> WindowGuard<'g> {
     })()
       .context("convert game position to web page coordinates")?
   }
+
+  #[throws(AE)]
+  pub fn retrieve_log(
+    &self,
+    wanted_pred: &mut dyn FnMut(&str) -> bool)
+    -> Vec<String>
+  {
+    let log = self.find_elements(By::ClassName("logmsg"))?;
+    let log = log.iter()
+      .rev()
+      .map(|e| e.inner_html())
+      .take_while(|h| {
+        h.as_ref().ok()
+          .map(|s: &String| wanted_pred(s))
+          != Some(true)
+      })
+      .collect::<Result<Vec<String>,_>>()?;
+    log
+  }
+
 }
 
 pub type WebCoord = i32;

@@ -245,17 +245,8 @@ impl Ctx {
       w.synch()?;
       let p = w.find_piece(pc)?;
       let now = p.posg()?;
-      let log = w.find_elements(By::ClassName("logmsg"))?;
-      let log = log.iter()
-        .rev()
-        .map(|e| e.inner_html())
-        .take_while(|h| {
-          h.as_ref().ok()
-            .map(|s| s.contains("black knight"))
-            != Some(true)
-        })
-        .collect::<Result<Vec<String>,_>>()?;
 
+      let log = w.retrieve_log(&mut |s| s.contains("black knight"))?;
       let held = w.piece_held(&pc)?;
       let client = w.client()?;
       let yes = held.as_ref() == Some(&client);
