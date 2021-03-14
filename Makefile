@@ -322,18 +322,21 @@ AT_DEPS =	$(filter-out templates/script.js, $(RUNTEST_DEPS)) \
 WDT_DEPS =	$(RUNTEST_DEPS) \
 		stamp/cargo-wdt.debug
 
-AT_WDT_RUN = $(NAILING_CARGO_JUST_RUN) $(abspath $<) $(basename $(notdir $@))
+AT_WDT_RUN = $(NAILING_CARGO_JUST_RUN) $(abspath $<)
+
+AT_RUN = $(AT_WDT_RUN) $(basename $(notdir $@))
+WDT_RUN = $(AT_WDT_RUN) wdriver --test=$(basename $(notdir $@))
 
 stamp/at-%.check:	$(AT_DEPS)
-	$(AT_WDT_RUN)
+	$(AT_RUN)
 	$(stamp)
 
 stamp/wdt-%.check:	$(WDT_DEPS)
-	$(AT_WDT_RUN)
+	$(WDT_RUN)
 	$(stamp)
 
 stamp/wdt-%.lcheck:	$(WDT_DEPS)
-	$(AT_WDT_RUN) --as-if=lwdt-$* --layout=Landscape
+	$(WDT_RUN) --as-if=lwdt-$* --layout=Landscape
 	$(stamp)
 
 #---------- deployment ----------

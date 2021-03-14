@@ -24,6 +24,6 @@ serde = { version = "1", features = ["derive","rc"] }
 structopt = "0.3"
 strum = { version = "0.20", features = ['derive'] }
 
-[lib]
-name = "otter_webdriver_tests"
-path = "../wdriver.rs"
+[[bin]]
+name = "wdriver"
+path = "wdriver.rs"

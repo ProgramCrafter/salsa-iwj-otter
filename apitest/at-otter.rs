@@ -555,7 +555,10 @@ fn tests(mut c: Ctx) {
 #[throws(AE)]
 fn main() {
   {
-    let (opts, _cln, instance, mut su) = setup_core(&[module_path!()])?;
+    let (opts, _cln, instance, mut su) = setup_core(
+      &[module_path!()],
+      &mut |_|false
+    )?;
     let spec = su.ds.game_spec_data()?;
     let [alice, bob]: [Player; 2] = su.ds.setup_static_users(
       default(),

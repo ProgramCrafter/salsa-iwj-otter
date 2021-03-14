@@ -59,6 +59,9 @@ pub struct Opts {
 
   #[structopt(flatten)]
   pub tests: WantedTestsOpt,
+
+  #[structopt(long="--test")]
+  test_name: Option<String>,
 }
 
 #[derive(Debug)]
@@ -433,8 +436,11 @@ pub fn fork_something_which_prints(mut cmd: Command,
 
 // ==================== principal actual setup code ====================
 
+pub type EarlyArgPredicate<'f> = &'f mut dyn FnMut(&OsStr) -> bool;
+
 #[throws(AE)]
-pub fn reinvoke_via_bwrap(_opts: &Opts, current_exe: &str) -> Void {
+pub fn reinvoke_via_bwrap(_opts: &Opts, current_exe: &str,
+                          early: EarlyArgPredicate<'_>) -> Void {
   debug!("running bwrap");
   
   let mut bcmd = Command::new("bwrap");
@@ -443,9 +449,19 @@ pub fn reinvoke_via_bwrap(_opts: &Opts, current_exe: &str) -> Void {
            --dev-bind / / \
            --tmpfs /tmp \
            --die-with-parent".split(" "))
-    .arg(current_exe)
-    .arg("--no-bwrap")
-    .args(env::args_os().skip(1));
+    .arg(current_exe);
+
+  let (early, late) = {
+    let mut still_early = true;
+    env::args_os().skip(1)
+      .partition::<Vec<_>,_>(|s| {
+        still_early &= early(&s);
+        still_early
+      })
+  };
+  bcmd.args(early);
+  bcmd.arg("--no-bwrap");
+  bcmd.args(late);
 
   std::io::stdout().flush().context("flush stdout")?;
   let e: AE = bcmd.exec().into();
@@ -465,6 +481,8 @@ pub fn prepare_tmpdir<'x>(opts: &'x Opts, mut current_exe: &'x str) -> DirSubst 
 
   if let Some(as_if) = &opts.as_if {
     current_exe = as_if;
+  } else if let Some(test_name) = &opts.test_name {
+    current_exe = test_name;
   }
 
   let start_dir = getcwd()
@@ -782,7 +800,7 @@ impl MgmtChannel {
 // ==================== core entrypoint, for wdriver too ====================
 
 #[throws(AE)]
-pub fn setup_core<O>(module_paths: &[&str]) ->
+pub fn setup_core<O>(module_paths: &[&str], early_args: EarlyArgPredicate) ->
   (O, cleanup_notify::Handle, Instance, SetupCore)
   where O: StructOpt + AsRef<Opts>
 {
@@ -813,7 +831,7 @@ pub fn setup_core<O>(module_paths: &[&str]) ->
     .to_owned();
 
   if !opts.no_bwrap {
-    reinvoke_via_bwrap(&opts, &current_exe)
+    reinvoke_via_bwrap(&opts, &current_exe, early_args)
       .context("reinvoke via bwrap")?;
   }
 

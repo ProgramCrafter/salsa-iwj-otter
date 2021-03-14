@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-use otter_webdriver_tests::*;
+use crate::*;
 
 struct Ctx {
   su: Setup,
@@ -104,4 +104,4 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
 }
 
 #[throws(AE)]
-fn main() { as_usual(tests, module_path!())? }
+pub fn main() { as_usual(tests, module_path!())? }

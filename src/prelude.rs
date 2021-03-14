@@ -16,6 +16,7 @@ pub use std::collections::{hash_map, HashMap, HashSet};
 pub use std::convert::{Infallible, TryFrom, TryInto};
 pub use std::env;
 pub use std::error::Error;
+pub use std::ffi::OsStr;
 pub use std::fmt::Formatter;
 pub use std::fmt::Write as _;
 pub use std::fmt::{self, Debug, Display};

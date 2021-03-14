@@ -615,7 +615,10 @@ impl Drop for Setup {
 #[throws(AE)]
 pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
   let (opts, cln, instance, core) =
-    apitest::setup_core(&[exe_module_path, "otter_webdriver_tests"])?;
+    apitest::setup_core(
+      &[exe_module_path, "otter_webdriver_tests"],
+      &mut |s: &OsStr| s.to_str().unwrap().starts_with("--test=")
+    )?;
 
   prepare_xserver(&cln, &core.ds).always_context("setup X server")?;
 
@@ -677,3 +680,54 @@ pub fn as_usual<F: FnOnce(UsualSetup) -> Result<(), AE>>(
   f(usual)?;
   info!("ok");
 }
+
+// ==================== portmanteau binary ====================
+
+pub struct PortmanteauMember {
+  path: &'static str,
+  f: fn() -> Result<(), AE>,
+}
+inventory::collect!(PortmanteauMember);
+
+macro_rules! portmanteau_has {
+  ($path:literal, $mod:ident) => {
+    #[path = $path] mod $mod;
+    inventory::submit!(PortmanteauMember { path: $path, f: $mod::main });
+  }
+}
+
+#[throws(AE)]
+fn main(){
+  let arg = 'arg: loop {
+    for (ai, s) in env::args().enumerate() {
+      let plausible = |s: &str| s.starts_with("wdt-");
+
+      break 'arg if ai == 0 {
+        let s = s.rsplitn(2,'/').next().unwrap();
+        if ! plausible(s) { continue }
+        s
+      } else {
+        let s = s.strip_prefix("--test=")
+          .expect("found non-long-option looking for --test=wdt-*");
+        if ! plausible(s) {
+          panic!("found non --no-bwrap --wdt-* option looking for --wdt-*");
+        }
+        s
+      }.to_owned();
+    }
+    panic!("ran out of options looking for --test=wdt-*");
+  };
+
+  let f = inventory::iter::<PortmanteauMember>.into_iter()
+    .find_map(|pm| {
+      let n = pm.path.strip_suffix(".rs").unwrap();
+      if n == arg { Some(pm.f) } else { None }
+    })
+    .expect("unrecognosed wdt-* portanteau member");
+
+  f()?;
+}
+
+portmanteau_has!("wdt-altergame.rs", wdt_altergame);
+portmanteau_has!("wdt-hand.rs",      wdt_hand);
+portmanteau_has!("wdt-simple.rs",    wdt_simple);
