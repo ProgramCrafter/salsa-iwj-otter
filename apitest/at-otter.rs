@@ -600,9 +600,6 @@ impl Ctx {
       bob.synchu(&mut b_pieces)?;
     }
 
-    // ^ also do the above after alice has grasped and moved
-    //   but not yet released.  currently this is buggy  xxx
-
     for (xi, &p) in a_pawns.iter().enumerate().take(1) {
       let xix: Coord = xi.try_into().unwrap();
       let pos = PosC([ (xix + 1) * 15, 20 ]);
