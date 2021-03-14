@@ -41,6 +41,19 @@ impl PieceRenderInstructions {
                              op: PieceUpdateOp<(),()>
   ) -> Option<PieceUpdateOp<PreparedPieceState, ZLevel>>
   {
+    use PieceUpdateOp::*;
+    use PriOcculted::*;
+    if matches_doesnot!(
+      op,
+      = Move(_) | SetZLevel(_),
+      ! Delete() | Insert(_) | Modify(_) | ModifyQuiet(_),
+    ) {
+      match self.occulted {
+        Visible | Occulted => (),
+        Displaced(..) => return None,
+      }
+    }
+
     let op = op.try_map(
       |()|{
         let ns = self.prep_piecestate(ioccults, gpc, ipc)?;
