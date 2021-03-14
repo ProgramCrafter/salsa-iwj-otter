@@ -331,8 +331,8 @@ impl Session {
      mut pieces: Option<&mut Pieces<PI>>,
      ef: Option<&mut dyn FnMut(&mut Session, Generation, &JsV)
                                -> Result<(), AE>>,
-     mut f: F)
-  {
+     mut f: F
+  ) {
     let exp = {
       let mut su = self.su_rc.borrow_mut();
       su.mgmt_conn.game_synch(TABLE.parse().unwrap())?
