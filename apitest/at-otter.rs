@@ -519,7 +519,7 @@ impl Ctx {
     }
 
     // ^ also do the above after alice has grasped and moved
-    //   but not yet released.  currently this is buggy
+    //   but not yet released.  currently this is buggy  xxx
 
     for (xi, &p) in a_pawns.iter().enumerate().take(1) {
       let xix: Coord = xi.try_into().unwrap();
@@ -542,9 +542,7 @@ impl Ctx {
     alice.synchu(&mut a_pieces)?;
     bob.synchu(&mut b_pieces)?;
 
-    // to repro a bug, have Alice move the black pawn out again
-    // observe yellow highlight in bob's view and black pawn is in wrong
-    // place
+    // xxx check that the right thing happened
   }
 }
 
