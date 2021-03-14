@@ -375,6 +375,23 @@ pub mod implementation {
         self .0[1].0[i] < other.0[0].0[i]
       ))
     }
+
+    pub fn empty() -> Self where T: Copy + num_traits::Zero + num_traits::One {
+      let zero = <T as num_traits::Zero>::zero();
+      let one = <T as num_traits::One>::one();
+      AreaC([
+        PosC([ one,  one  ]),
+        PosC([ zero, zero ]),
+      ])
+    }
+  }
+
+  #[test]
+  fn empty_area() {
+    let empty = Area::empty();
+    for x in -3..3 { for y in -3..3 {
+      assert!(! empty.contains(PosC([x,y])));
+    } }
   }
 
   impl Default for PieceAngle {
