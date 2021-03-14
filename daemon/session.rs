@@ -129,7 +129,7 @@ fn session_inner(form: Json<SessionForm>,
 
       let for_info = SessionPieceLoadJson {
         held: &gpc.held,
-        z: zlevel.z,
+        z: zlevel.z.clone(),
         zg: zlevel.zg,
         pinned: gpc.pinned,
         angle: vangle,

@@ -63,7 +63,7 @@ impl PieceRenderInstructions {
       pos        : pos,
       held       : gpc.held,
       svg        : pri.make_defs(ioccults, gpc, ipc)?,
-      z          : zlevel.z,
+      z          : zlevel.z.clone(),
       zg         : zlevel.zg,
       angle      : pri.angle(gpc).to_compass(),
       pinned     : gpc.pinned,
@@ -103,11 +103,11 @@ impl PieceRenderInstructions {
     }
   }
 
-  pub fn pos_zlevel(&self, gpc: &GPiece) -> (Pos, ZLevel) {
+  pub fn pos_zlevel<'r>(&'r self, gpc: &'r GPiece) -> (Pos, &'r ZLevel) {
     use PriOcculted as PO;
     match &self.occulted {
-      PO::Visible | PO::Occulted => (gpc.pos, gpc.zlevel.clone()),
-      PO::Displaced(pos, zlevel) => (*pos, zlevel.clone()),
+      PO::Visible | PO::Occulted => (gpc.pos, &gpc.zlevel),
+      PO::Displaced(pos, zlevel) => (*pos, &zlevel),
     }
   }
 
