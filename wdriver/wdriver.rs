@@ -296,7 +296,7 @@ impl<'g> WindowGuard<'g> {
   #[throws(AE)]
   pub fn retrieve_log(
     &self,
-    wanted_pred: &mut dyn FnMut(&str) -> bool)
+    ignore_before: &mut dyn FnMut(&str) -> bool)
     -> Vec<String>
   {
     let log = self.find_elements(By::ClassName("logmsg"))?;
@@ -305,7 +305,7 @@ impl<'g> WindowGuard<'g> {
       .map(|e| e.inner_html())
       .take_while(|h| {
         h.as_ref().ok()
-          .map(|s: &String| wanted_pred(s))
+          .map(|s: &String| ignore_before(s))
           != Some(true)
       })
       .collect::<Result<Vec<String>,_>>()?;
