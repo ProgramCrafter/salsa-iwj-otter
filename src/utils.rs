@@ -349,8 +349,8 @@ impl<T,U,E,F> IteratorExt<U,E,F> for T where
 
 #[macro_export]
 macro_rules! matches_doesnot {
-  ($v:expr, = $y:pat, ! $n:pat $(,)?) =>
-  { match $v { $y => true, $n => false } }
+  ($v:expr, = $($y:pat)|*, ! $($n:pat)|* $(,)?) =>
+  { match $v { $($y)|* => true, $($n)|* => false } }
 }
 
 #[test]
@@ -360,6 +360,13 @@ fn matches_doesnot_test() {
       Some(42),
       = Some(_),
       ! None
+    )
+  );
+  assert!(
+    matches_doesnot!(
+      Some(1),
+      = Some(1) | Some(2),
+      ! Some(_) | None
     )
   );
 }
