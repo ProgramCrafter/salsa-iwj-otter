@@ -1,25 +1,22 @@
 
-[package]
-name = "otter-wasm"
-authors = ["Ian Jackson <ijackson@chiark.greenend.org.uk>"]
-license = "AGPL-3.0-or-later"
+[dependencies]
+console_error_panic_hook="0.1"
+fehler="1"
+js-sys="0.3"
+wasm-bindgen="= 0.2.70"
+wee_alloc="0.4"
 
-version = "0.0.1"
-edition = "2018"
+[dependencies.otter-base]
+path="../base"
 
 [lib]
-name = "otter_wasm"
-path = "wasm.rs"
-crate-type = ["cdylib"]
+name="otter_wasm"
+path="wasm.rs"
+crate-type=["cdylib"]
 
-[dependencies]
-
-otter-base = { path = "../base" }
-
-console_error_panic_hook = "0.1"
-js-sys = "0.3"
-wasm-bindgen = "= 0.2.70"
-wee_alloc = "0.4"
-
-# Repeated here because importing does not work properly
-fehler = "1"
+[package]
+edition="2018"
+license="AGPL-3.0-or-later"
+name="otter-wasm"
+version="0.0.1"
+authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>"]

@@ -1,80 +1,88 @@
-# Copyright 2020-2021 Ian Jackson and contributors to Otter
-# SPDX-License-Identifier: AGPL-3.0-or-later
-# There is NO WARRANTY.
-
-[package]
-name = "otter"
-authors = ["Ian Jackson <ijackson@chiark.greenend.org.uk>"]
-license = "AGPL-3.0-or-later"
-
-version = "0.3.0"
-edition = "2018"
-
-[workspace]
-members = ["wasm", "daemon", "wdriver", "apitest"]
 
 [dependencies]
+anyhow="1"
+argparse="0.2"
+backtrace="0.3"
+boolinator="2"
+cast_trait_object="0.1"
+chrono="0.4"
+chrono-tz="0.5"
+delegate="0.5"
+downcast-rs="1"
+either="1"
+enum_dispatch="0.3.5"
+env_logger="0.8"
+extend="1"
+failure="0.1.8"
+fehler="1"
+fs2="0.4"
+glob="0.3"
+htmlescape="0.3"
+inventory="0.1"
+itertools="0.10"
+lazy-init="0.5"
+lazy_static="1"
+libc="0.2"
+log="0.4"
+nix="0.20"
+num="0.4"
+num-derive="0.3"
+num-traits="0.2"
+once_cell="1"
+ordered-float="2"
+parking_lot="0.11"
+percent-encoding="2"
+pwd="1"
+rand="0.8"
+regex="1"
+rmp="0.8"
+rmp-serde="0.15"
+serde_json="1"
+serde_with="1"
+structopt="0.3"
+tempfile="3"
+tera="0.11"
+toml="0.5"
+typetag="0.1.6"
+uds="0.2"
+url="2"
+vecdeque-stableix="1"
+void="1"
 
-otter-base = { path = "base" }
+[dependencies.enum-map]
+version="0.6"
+features=["serde"]
 
-anyhow = "1"
-enum_dispatch = "0.3.5"
-argparse = "0.2"
-backtrace = "0.3"
-boolinator = "2"
-cast_trait_object = "0.1"
-chrono = "0.4"
-chrono-tz = "0.5"
-delegate = "0.5"
-downcast-rs = "1"
-either = "1"
-extend = "1"
-enum-map = { version = "0.6", features = [ "serde" ] }
-env_logger = "0.8"
-failure = "0.1.8" # for pwd
-flexi_logger = { version = "0.17", features = [ "specfile" ] }
-fs2 = "0.4"
-glob = "0.3"
-htmlescape = "0.3"
-index_vec = { version = "0.1.1", features = ['serde'] }
-inventory = "0.1"
-itertools = "0.10"
-lazy-init = "0.5"
-lazy_static = "1"
-libc = "0.2"
-log = "0.4"
-nix = "0.20"
-num = "0.4"
-num-derive = "0.3"
-once_cell = "1"
-ordered-float = "2"
-parking_lot = "0.11"
-percent-encoding = "2"
-pwd = "1"
-rand = "0.8"
-regex = "1"
-rmp = "0.8"
-rmp-serde = "0.15"
-serde_json = "1"
-tempfile = "3"
-toml = "0.5"
-typetag = "0.1.6"
-uds = "0.2"
-url = "2"
-vecdeque-stableix = "1"
-void = "1"
+[dependencies.flexi_logger]
+version="0.17"
+features=["specfile"]
 
-slotmap = { features = ['serde'], git = "https://github.com/ijackson/slotmap", branch="entry-return-stale-key" }
-# ^ MR not yet reviewed
+[dependencies.index_vec]
+version="0.1.1"
+features=["serde"]
 
-# This version wants to stay aligned with Rocket's, or we'll hve
-# two copies of the templating engine in our executables!
-tera = "0.11"
+[dependencies.otter-base]
+path="base"
 
-# Repeated here because importing does not work properly
-fehler = "1"
-num-traits = "0.2"
-serde = { version = "1", features = ["derive","rc"] }
-serde_with = "1"
-structopt = "0.3"
-strum = { version = "0.20", features = ['derive'] }
+[dependencies.serde]
+version="1"
+features=["derive", "rc"]
+
+[dependencies.slotmap]
+branch="entry-return-stale-key"
+git="https://github.com/ijackson/slotmap"
+features=["serde"]
+
+[dependencies.strum]
+version="0.20"
+features=["derive"]
+
+[package]
+edition="2018"
+license="AGPL-3.0-or-later"
+name="otter"
+version="0.3.0"
+authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>"]
+
+[workspace]
+members=["wasm", "daemon", "wdriver", "apitest"]
