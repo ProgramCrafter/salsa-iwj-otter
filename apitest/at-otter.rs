@@ -539,7 +539,7 @@ impl Ctx {
       ])?;
     }
 
-    alice.synch()?;
+    alice.synchu(&mut a_pieces)?;
     bob.synchu(&mut b_pieces)?;
 
     // to repro a bug, have Alice move the black pawn out again
