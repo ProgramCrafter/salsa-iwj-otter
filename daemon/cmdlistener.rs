@@ -784,7 +784,8 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
       uh.accumulate(ig, updates)?;
       responses.push(resp);
       match for_prepub { None => (), Some(x) => match x { }};
-      auth = Some(Authorisation::authorised(&*ig.name));
+      let auth_y = Authorisation::authorised(&*ig.name);
+      auth = Some(auth_y);
     }
     if let Some(auth) = auth { uh.complete(igu.by_mut(auth), &who)?; }
     Ok(None)
