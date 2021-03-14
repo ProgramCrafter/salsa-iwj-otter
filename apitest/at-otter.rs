@@ -537,6 +537,8 @@ impl Ctx {
     let mut a_pieces = alice.pieces::<PIA>()?;
     let mut b_pieces = alice.pieces::<PIB>()?;
 
+    // ----- alice: claim alices' hand -----
+
     let [hand] = a_pieces.iter_enumerated()
       .filter(|(i,p)| p.info["desc"] == otter::hand::UNCLAIMED_DESC)
       .map(|(i,_)| i)
@@ -548,6 +550,8 @@ impl Ctx {
       "opname": "claim",
       "wrc": "Unpredictable",
     })))?;
+
+    // ----- find the pawns -----
 
     fn find_pawns<PI:Idx>(pieces: &PiecesSlice<PI>) -> [PI; 2] {
       let mut pawns = pieces.iter_enumerated()
@@ -567,6 +571,8 @@ impl Ctx {
 
     bob.synch()?;
 
+    // ----- alice: move pawns into alice's hand -----
+
     for (&pawn, &xoffset) in izip!(&a_pawns, [10,20].iter()) {
       let pos = (a_pieces[hand].pos + PosC([xoffset, 0]))?;
       alice.api_piece(GH::With, (&mut a_pieces, pawn), pos)?;
@@ -580,6 +586,8 @@ impl Ctx {
       let got = a_pawns.iter().find(|&&p| &a_pieces[p].pos == b_pos);
       assert_eq!(got, None);
     }
+
+    // ----- alice: move one pawn within alice's hand -----
 
     {
       let p = a_pawns[0];
@@ -600,26 +608,16 @@ impl Ctx {
       bob.synchu(&mut b_pieces)?;
     }
 
-    for (xi, &p) in a_pawns.iter().enumerate().take(1) {
-      let xix: Coord = xi.try_into().unwrap();
-      let pos = PosC([ (xix + 1) * 15, 20 ]);
-      alice.api_piece(GH::With, (&mut a_pieces, p), pos)?;
-    }
+    // ----- alice: move one pawn out of alice's hand -----
+
+    alice.api_piece(GH::With,
+                    (&mut a_pieces, a_pawns[0]),
+                    PosC([ 15, 20 ]))?;
 
     alice.synchu(&mut a_pieces)?;
     bob.synchu(&mut b_pieces)?;
     assert_eq!(b_pieces[b_pawns[1]].pos,
                a_pieces[a_pawns[0]].pos);
-
-    let out_again = (a_pieces[hand].pos + PosC([5, 0]))?;
-    for (xi, &p) in a_pawns.iter().enumerate().take(1) {
-      alice.api_piece(GH::With, (&mut a_pieces, p), out_again)?;
-    }
-
-    alice.synchu(&mut a_pieces)?;
-    bob.synchu(&mut b_pieces)?;
-
-    // xxx check that the right thing happened
   }
 }
 
