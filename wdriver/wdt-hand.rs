@@ -72,6 +72,13 @@ impl Ctx {
       chk(&mut w, HAND, Some(ALICE))?;
     }
 
+    for side in &[&self.alice, &self.bob] {
+      let mut w = su.w(side)?;
+      w.synch()?;
+      let log = w.retrieve_log(&mut |_|false)?;
+      assert_eq!(log.find_conflict(), None);
+    }
+
     {
       let mut w = su.w(&self.alice)?;
       w.action_chain()
