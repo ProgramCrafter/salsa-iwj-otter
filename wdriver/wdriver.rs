@@ -314,6 +314,13 @@ impl<'g> WindowGuard<'g> {
 
 }
 
+#[ext(pub)]
+impl Vec<String> {
+  fn find_conflict(&self) -> Option<&String> {
+    self.iter().find(|m| m.starts_with("Conflict!"))
+  }
+}
+
 pub type WebCoord = i32;
 pub type WebPos = (WebCoord, WebCoord);
 

@@ -264,7 +264,7 @@ impl Ctx {
     assert_eq!(n.held, y.held);
 
     for got in &gots {
-      let conflict = got.log.iter().any(|m| m.starts_with("Conflict!"));
+      let conflict = got.log.find_conflict().is_some();
       assert_eq!(conflict, !got.yes);
     }
   }
