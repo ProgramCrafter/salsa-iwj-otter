@@ -532,6 +532,15 @@ impl Ctx {
     assert_eq!(b_pieces[b_pawns[1]].pos,
                a_pieces[a_pawns[0]].pos);
 
+    let out_again = (a_pieces[hand].pos + PosC([5, 0]))?;
+    for (xi, &p) in a_pawns.iter().enumerate().take(1) {
+      alice.api_with_piece_op_synch(&mut a_pieces, p, "m", json![
+        out_again.0
+      ])?;
+    }
+
+    alice.synch()?;
+    bob.synchu(&mut b_pieces)?;
 
     // to repro a bug, have Alice move the black pawn out again
     // observe yellow highlight in bob's view and black pawn is in wrong
