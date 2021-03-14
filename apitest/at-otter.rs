@@ -438,27 +438,35 @@ impl PieceSpecForOp for &String {
 }
 
 type PuUp<'pcs, PI> = (&'pcs mut Pieces<PI>, PI);
-impl<PI:Idx> PieceSpecForOp for PuUp<'_, PI> {
-  type PI = PI;
-  fn id(&self) -> &str { &self.0[self.1].id }
-  fn for_update(&mut self) -> Option<&mut PieceInfo<JsV>> {
-    Some(&mut self.0[self.1])
-  }
-}
-
 #[derive(Debug)]
 /// Synchronise after op but before any ungrab.
 pub struct PuSynch<T>(T);
-impl<PI:Idx> PieceSpecForOp for PuSynch<PuUp<'_,PI>> {
-  type PI = PI;
-  fn id(&self) -> &str { self.0.id() }
-  fn for_update(&mut self) -> Option<&mut PieceInfo<JsV>> {
-    self.0.for_update()
-  }
-  fn for_synch(&mut self) -> Option<&mut Pieces<PI>> {
-    Some(self.0.0)
+
+macro_rules! impl_PieceSpecForOp {
+  ($($amp:tt $mut:tt)?) => {
+
+    impl<PI:Idx> PieceSpecForOp for $($amp $mut)? PuUp<'_, PI> {
+      type PI = PI;
+      fn id(&self) -> &str { &self.0[self.1].id }
+      fn for_update(&mut self) -> Option<&mut PieceInfo<JsV>> {
+        Some(&mut self.0[self.1])
+      }
+    }
+
+    impl<PI:Idx> PieceSpecForOp for PuSynch<$($amp $mut)? PuUp<'_,PI>> {
+      type PI = PI;
+      fn id(&self) -> &str { self.0.id() }
+      fn for_update(&mut self) -> Option<&mut PieceInfo<JsV>> {
+        self.0.for_update()
+      }
+      fn for_synch(&mut self) -> Option<&mut Pieces<PI>> {
+        Some(self.0.0)
+      }
+    }
   }
 }
+impl_PieceSpecForOp!{}
+impl_PieceSpecForOp!{&mut}
 
 #[derive(Debug,Copy,Clone)]
 pub enum GrabHow { Raw, Grab, Ungrab, With }
