@@ -581,6 +581,25 @@ impl Ctx {
       assert_eq!(got, None);
     }
 
+    {
+      let p = a_pawns[0];
+      let alice_move_to = (a_pieces[p].pos + PosC([5, 5]))?;
+      let mut a_p = (&mut a_pieces, p);
+
+      alice.api_piece(GH::Grab, PuSynch(&mut a_p), ())?;
+      bob.synchu(&mut b_pieces)?;
+
+      alice.api_piece(GH::Raw, &mut a_p, alice_move_to)?;
+      bob.synchx(Some(&mut b_pieces), None, |sess, gen, k, v| {
+        dbg!(gen, k, v);
+        panic!("bob saw something when alice moved displaced occulted");
+      })?;
+
+      alice.api_piece(GH::Ungrab, a_p, ())?;
+      alice.synchu(&mut a_pieces)?;
+      bob.synchu(&mut b_pieces)?;
+    }
+
     // ^ also do the above after alice has grasped and moved
     //   but not yet released.  currently this is buggy  xxx
 
