@@ -245,7 +245,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
   update: MgmtGameInstruction,
   who: &Html,
-  _to_permute: &mut ToPermute,
+  to_permute: &mut ToPermute,
 )
   -> Result<ExecuteGameInsnResults<'igr, 'ig> ,ME>
 {
@@ -587,7 +587,21 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       } else {
         Html::lit("<piece partially missing from game state!>")
       };
+      let mut xupdates = vec![];
       if let Some(gpc) = gpc {
+        if gpc.occult.is_active() {
+          xupdates.append(
+            &mut
+              remove_occultation(
+                &mut gs.gen.unique_gen(),
+                &mut gs.players,
+                &mut gs.pieces,
+                &mut gs.occults,
+                &mut ig.ipieces,
+                to_permute,
+                piece)?
+          );
+        }
         ipc.p.delete_hook(&gpc, gs);
       }
       if let Some(occilk) = ipc.occilk { ig.ioccults.ilks.dispose(occilk); }
@@ -597,7 +611,13 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
                           desc_html.0)),
           }],
           raw: None },
-       Fine, None, ig_g)
+       Fine,
+       Some(
+         Box::new(move |prepub: &mut PrepareUpdatesBuffer|
+                  prepub.piece_updates(xupdates))
+           as ExecuteGameInsnResultsPrepub
+       ),
+       ig_g)
     },
 
     MGI::AddPieces(PiecesSpec{ pos,posd,count,face,pinned,angle,info }) => {
