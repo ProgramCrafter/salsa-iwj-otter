@@ -557,7 +557,7 @@ impl Ctx {
 
     for (&pawn, &xoffset) in izip!(&a_pawns, [10,20].iter()) {
       let pos = (a_pieces[hand].pos + PosC([xoffset, 0]))?;
-      alice.api_piece(GH::With, PuSynch(&mut a_pieces, pawn), pos)?;
+      alice.api_piece(GH::With, (&mut a_pieces, pawn), pos)?;
     }
 
     alice.synchu(&mut a_pieces)?;
@@ -575,7 +575,7 @@ impl Ctx {
     for (xi, &p) in a_pawns.iter().enumerate().take(1) {
       let xix: Coord = xi.try_into().unwrap();
       let pos = PosC([ (xix + 1) * 15, 20 ]);
-      alice.api_piece(GH::With, PuSynch(&mut a_pieces, p), pos)?;
+      alice.api_piece(GH::With, (&mut a_pieces, p), pos)?;
     }
 
     alice.synchu(&mut a_pieces)?;
@@ -585,7 +585,7 @@ impl Ctx {
 
     let out_again = (a_pieces[hand].pos + PosC([5, 0]))?;
     for (xi, &p) in a_pawns.iter().enumerate().take(1) {
-      alice.api_piece(GH::With, PuSynch(&mut a_pieces, p), out_again)?;
+      alice.api_piece(GH::With, (&mut a_pieces, p), out_again)?;
     }
 
     alice.synchu(&mut a_pieces)?;
