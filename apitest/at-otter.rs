@@ -448,8 +448,8 @@ impl<PI:Idx> PieceSpecForOp for PuUp<'_, PI> {
 
 #[derive(Debug)]
 /// Synchronise after op but before any ungrab.
-pub struct PuSynch<'pcs, PI:Idx>(PuUp<'pcs, PI>);
-impl<PI:Idx> PieceSpecForOp for PuSynch<'_,PI> {
+pub struct PuSynch<T>(T);
+impl<PI:Idx> PieceSpecForOp for PuSynch<PuUp<'_,PI>> {
   type PI = PI;
   fn id(&self) -> &str { self.0.id() }
   fn for_update(&mut self) -> Option<&mut PieceInfo<JsV>> {
