@@ -27,4 +27,8 @@ strum = { version = "0.20", features = ['derive'] }
 
 [lib]
 name = "otter_api_tests"
-path = "../apitest.rs"
+path = "apitest.rs"
+
+[[bin]]
+name = "at-otter"
+path = "at-otter.rs"
