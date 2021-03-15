@@ -139,7 +139,8 @@ impl PieceTrait for Hand {
 
   #[throws(ApiPieceOpError)]
   fn ui_operation(&self, a: ApiPieceOpArgs<'_>,
-                  opname: &str, wrc: WhatResponseToClientOp)
+                  opname: &str, wrc: WhatResponseToClientOp,
+                  _: ShowUnocculted)
                   -> UpdateFromOpComplex {
     let ApiPieceOpArgs { gs,player,piece,ipieces,to_permute,.. } = a;
     let gen = &mut gs.gen;

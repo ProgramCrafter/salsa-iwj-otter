@@ -137,7 +137,8 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
                        _gpc: &GPiece, _y: ShowUnocculted) { }
 
   fn ui_operation(&self, _a: ApiPieceOpArgs<'_>,
-                  _opname: &str, _wrc: WhatResponseToClientOp)
+                  _opname: &str, _wrc: WhatResponseToClientOp,
+                  _y: ShowUnocculted)
                   -> Result<UpdateFromOpComplex, ApiPieceOpError> {
     throw!(OE::BadOperation)
   }

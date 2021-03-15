@@ -469,6 +469,19 @@ api_route!{
     fn op_complex(&self, mut a: ApiPieceOpArgs) -> UpdateFromOpComplex {
       let ApiPieceOpArgs { ioccults,player,piece,ipc, .. } = a;
       let gs = &mut a.gs;
+      let pri = piece_pri(ioccults, &gs.occults,
+                          player, gs.players.byid_mut(player)?,
+                          piece, gs.pieces.byid(piece)?,
+                          ipc)
+        .ok_or(OE::PieceGone)?;
+      let y = {
+        use PriOcculted::*;
+        match pri.occulted {
+          Visible(y) => y,
+          Occulted | Displaced(..) => throw!(OE::BadOperation),
+        }
+      };
+
       '_normal_global_ops__not_loop: loop {
         let gpc = gs.pieces.byid_mut(piece)?;
         let gpl = gs.players.byid_mut(player)?;
@@ -499,7 +512,7 @@ api_route!{
         };
       }
 
-      ipc.p.ui_operation(a, &self.opname, self.wrc)?
+      ipc.p.ui_operation(a, &self.opname, self.wrc, y)?
     }
   }
 }
