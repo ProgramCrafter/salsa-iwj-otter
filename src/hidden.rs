@@ -514,12 +514,12 @@ mod recompute {
     outdated: HashSet<OccId>,
   }
   #[derive(Debug)]
-  pub struct Implemented { }
+  pub struct Implemented(());
 
   impl ToPermute {
     pub fn with<R, F: FnOnce(Self) -> (R, Implemented)>(f: F) -> R {
       let to_permute = ToPermute { outdated: default() };
-      let (r, Implemented { }) = f(to_permute);
+      let (r, Implemented(())) = f(to_permute);
       r
     }
     pub fn mark_dirty(&mut self, occid: OccId) { self.outdated.insert(occid); }
@@ -538,7 +538,7 @@ mod recompute {
         consistency_check(gplayers, gpieces, goccults);
       }
 
-      Implemented { }
+      Implemented(())
     }
   }
 }
