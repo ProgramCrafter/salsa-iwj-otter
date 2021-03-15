@@ -658,6 +658,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let mut updates = Vec::with_capacity(count_len);
       let mut pos = pos.unwrap_or(DEFAULT_POS_START);
       let mut z = gs.max_z.clone_mut();
+      let not_occ = ShowUnocculted::new_visible();
       for piece_i in count {
         let PieceSpecLoaded { p, occultable } = info.load(piece_i as usize)?;
         let ilks = &mut ig.ioccults.ilks;
@@ -665,7 +666,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           ilks.insert(ilkname, OccultIlkData { p_occ })
         });
         let face = face.unwrap_or_default();
-        if p.nfaces() <= face.into() {
+        if p.nfaces(not_occ) <= face.into() {
           throw!(SpecError::FaceNotFound);
         }
         let gpc = GPiece {

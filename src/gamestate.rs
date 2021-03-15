@@ -130,7 +130,7 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
   /// by convention, occult face is nfaces-1
   // xxx this is no good, we need a central definition of the occult
   // face to avoid weird behaviour with buggy gamespecs
-  fn nfaces(&self) -> RawFaceId;
+  fn nfaces(&self, y: ShowUnocculted) -> RawFaceId;
 
   #[throws(InternalError)]
   fn add_ui_operations(&self, _upd: &mut Vec<UoDescription>,

@@ -83,8 +83,8 @@ fn preview(items: Vec<ItemForOutput>) {
     fn want_several(&self) -> bool {
       self.size[0] < 20.0
     }
-    fn face_cols(&self) -> usize {
-      usize::from(self.p.nfaces())
+    fn face_cols(&self, unocc_ok: ShowUnocculted) -> usize {
+      usize::from(self.p.nfaces(unocc_ok))
         * if self.want_several() { SEVERAL } else { 1 }
     }
   }
@@ -119,7 +119,9 @@ fn preview(items: Vec<ItemForOutput>) {
   // clones as a bodge for https://github.com/rust-lang/rust/issues/34162
   pieces.sort_by_key(|p| (p.spec.item.clone(), p.spec.lib.clone()));
                      
-  let max_facecols = pieces.iter().map(|s| s.face_cols()).max().unwrap_or(1);
+  let max_facecols = pieces.iter().map(
+    |s| s.face_cols(unocc_ok)
+  ).max().unwrap_or(1);
   let max_uos = pieces.iter().map(|s| s.uos.len()).max().unwrap_or(0);
 
   println!("{}", &HTML_PRELUDE);
@@ -133,7 +135,7 @@ fn preview(items: Vec<ItemForOutput>) {
              Html::from_txt(&spec.item).0);
     println!(r#"<th align="left">{}</th>"#,
              p.describe_html(&GPiece::dummy())?.0);
-    let only1 = s.face_cols() == 1;
+    let only1 = s.face_cols(unocc_ok) == 1;
 
     for facecol in 0..(if only1 { 1 } else { max_facecols }) {
       let (face, inseveral) = if s.want_several() {
@@ -153,7 +155,7 @@ fn preview(items: Vec<ItemForOutput>) {
                _ => panic!(),
              });
       println!(r#">"#);
-      if face < (p.nfaces() as usize) {
+      if face < (p.nfaces(unocc_ok) as usize) {
         let viewport =
           [bbox[0].clone(), size.clone()]
           .iter().cloned()

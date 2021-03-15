@@ -85,7 +85,7 @@ impl Hand {
 
 #[typetag::serde]
 impl PieceTrait for Hand {
-  fn nfaces(&self) -> RawFaceId { 1 }
+  fn nfaces(&self, _: ShowUnocculted) -> RawFaceId { 1 }
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
                _vpid: VisiblePieceId, _: ShowUnocculted) {

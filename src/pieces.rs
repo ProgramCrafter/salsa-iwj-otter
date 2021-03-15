@@ -142,7 +142,9 @@ impl PieceTrait for SimpleShape {
       else { format!("a {}", self.desc.0) }
     })
   }
-  fn nfaces(&self) -> RawFaceId { self.count_faces().try_into().unwrap() }
+  fn nfaces(&self, _: ShowUnocculted) -> RawFaceId {
+    self.count_faces().try_into().unwrap()
+  }
 
   fn itemname(&self, y: ShowUnocculted) -> &str { self.itemname(y) }
 }

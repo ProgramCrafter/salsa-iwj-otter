@@ -199,7 +199,7 @@ impl PieceRenderInstructions {
     type WRC = WhatResponseToClientOp;
 
     let mut out = vec![];
-    if p.nfaces() > 1 {
+    if p.nfaces(y) > 1 {
       out.push(UoDescription {
         wrc: WRC::UpdateSvg,
         kind: UoKind::Global,

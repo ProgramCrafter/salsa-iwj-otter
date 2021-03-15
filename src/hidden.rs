@@ -427,7 +427,6 @@ fn recalculate_occultation_general<
         log_visible
       }
       OccK::Scrambled | OccK::Displaced{..} => {
-        let _face = ipc.p.nfaces() - 1; // xxx use other thing entirely
         let show = ipc.p.describe_html(gpc)?;
         call_log_callback(Some(&show))?
       },

@@ -211,7 +211,9 @@ impl FaceTransform {
 
 #[typetag::serde(name="Lib")]
 impl PieceTrait for Item {
-  fn nfaces(&self) -> RawFaceId { self.faces.len().try_into().unwrap() }
+  fn nfaces(&self, _: ShowUnocculted) -> RawFaceId {
+    self.faces.len().try_into().unwrap()
+  }
 
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
