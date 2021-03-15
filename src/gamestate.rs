@@ -154,7 +154,7 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
     ExecuteGameChangeUpdates{ pcs: vec![], log: vec![], raw: None }
   }
 
-  fn itemname(&self) -> &str;
+  fn itemname(&self, _y: ShowUnocculted) -> &str;
 }
 
 #[typetag::serde]

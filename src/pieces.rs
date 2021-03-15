@@ -144,7 +144,7 @@ impl PieceTrait for SimpleShape {
   }
   fn nfaces(&self) -> RawFaceId { self.count_faces().try_into().unwrap() }
 
-  fn itemname(&self) -> &str { self.itemname() }
+  fn itemname(&self, y: ShowUnocculted) -> &str { self.itemname(y) }
 }
 
 impl<Desc, Outl:'static> GenericSimpleShape<Desc, Outl>
@@ -154,7 +154,7 @@ impl<Desc, Outl:'static> GenericSimpleShape<Desc, Outl>
   pub fn count_faces(&self) -> usize {
     max(self.colours.len(), self.edges.len())
   }
-  pub fn itemname(&self) -> &str { &self.itemname }
+  pub fn itemname(&self, _: ShowUnocculted) -> &str { &self.itemname }
 
   #[throws(SpecError)]
   pub fn new(desc: Desc, outline: Outl,

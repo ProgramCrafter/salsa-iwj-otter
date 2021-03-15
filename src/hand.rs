@@ -110,7 +110,7 @@ impl PieceTrait for Hand {
 
   delegate!{
     to self.shape {
-      fn itemname(&self) -> &str;
+      fn itemname(&self, y: ShowUnocculted) -> &str;
     }
   }
 

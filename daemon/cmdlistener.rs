@@ -397,23 +397,31 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           if let Some(ipc) = ig.ipieces.get(piece);
           let visible = if ! piece_at_all_occulted(gpc) {
             // todo: something more sophisticated would be nice
-            let pri = PieceRenderInstructions::new_visible(
-              // visible id is internal one here
-              VisiblePieceId(piece.data())
+            let (pri, unocc_ok) = (
+              PieceRenderInstructions::new_visible(
+                // visible id is internal one here
+                VisiblePieceId(piece.data())
+              ),
+              ShowUnocculted::new_visible(),
             );
             let bbox = ipc.p.bbox_approx()?;
             let desc_html = pri.describe(ioccults, gpc, ipc);
-            Some(MgmtGamePieceVisibleInfo {
+            Some((MgmtGamePieceVisibleInfo {
               pos, face, desc_html, bbox
-            })
+            }, unocc_ok))
           } else {
             None
           };
-          let itemname = ipc.p.itemname().to_string();
+          let itemname = if let Some((_,unocc_ok)) = visible {
+            ipc.p.itemname(unocc_ok).to_string()
+          } else {
+            "occulted-item".to_string()
+          };
           then {
             Some(MgmtGamePieceInfo {
-              piece, itemname,
-              visible
+              piece,
+              itemname,
+              visible: visible.map(|v| v.0)
             })
           } else {
             None

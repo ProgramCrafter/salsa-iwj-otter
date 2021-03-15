@@ -226,7 +226,7 @@ impl PieceTrait for Item {
     self.descs[ self.faces[gpc.face].desc ].clone()
   }
 
-  fn itemname(&self) -> &str { &self.itemname }
+  fn itemname(&self, _: ShowUnocculted) -> &str { &self.itemname }
 }
 
 static SHAPELIBS: RwLock<Option<Registry>> = const_rwlock(None);
