@@ -116,7 +116,7 @@ impl PieceTrait for Hand {
 
   #[throws(InternalError)]
   fn add_ui_operations(&self, upd: &mut Vec<UoDescription>,
-                       gpc: &GPiece) {
+                       gpc: &GPiece, _: ShowUnocculted) {
     upd.push(if_chain! {
       if let Some(xdata) = gpc.xdata.get::<HandState>()?;
       if let Some(_owner) = &xdata.owner;

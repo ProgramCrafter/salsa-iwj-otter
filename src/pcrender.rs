@@ -189,10 +189,10 @@ impl PieceRenderInstructions {
 
   #[throws(InternalError)]
   pub fn ui_operations(&self, gpc: &GPiece, p: &dyn PieceTrait)
-                   -> Vec<UoDescription>
+                       -> Vec<UoDescription>
   {
-    match self.occulted {
-      PriOcculted::Visible(_)                            => (),
+    let y = match self.occulted {
+      PriOcculted::Visible(y)                            => y,
       PriOcculted::Occulted | PriOcculted::Displaced(..) => return vec![],
     };
 
@@ -208,7 +208,7 @@ impl PieceRenderInstructions {
         desc: Html::lit("flip"),
       })
     }
-    p.add_ui_operations(&mut out, gpc)?;
+    p.add_ui_operations(&mut out, gpc, y)?;
     out
   }
 }

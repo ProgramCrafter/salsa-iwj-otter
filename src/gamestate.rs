@@ -134,7 +134,7 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
 
   #[throws(InternalError)]
   fn add_ui_operations(&self, _upd: &mut Vec<UoDescription>,
-                       _gpc: &GPiece) { }
+                       _gpc: &GPiece, _y: ShowUnocculted) { }
 
   fn ui_operation(&self, _a: ApiPieceOpArgs<'_>,
                   _opname: &str, _wrc: WhatResponseToClientOp)

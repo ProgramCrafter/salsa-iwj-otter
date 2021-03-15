@@ -95,7 +95,8 @@ fn preview(items: Vec<ItemForOutput>) {
       let loaded = spec.clone().load().context("load")?;
       let p = loaded.p; // xxx show occulted version too
       let mut uos = vec![];
-      p.add_ui_operations(&mut uos, &GPiece::dummy()).context("add uos")?;
+      p.add_ui_operations(&mut uos, &GPiece::dummy(), unocc_ok)
+        .context("add uos")?;
       let uos = uos.into_iter().map(|uo| uo.opname).collect::<Vec<_>>();
       let spec = spec.clone();
 
