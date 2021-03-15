@@ -64,6 +64,11 @@ impl Ctx {
         .perform()
         .context("claim hand")?;
 
+      w.action_chain()
+        .click()
+        .perform()
+        .context("deselect")?;
+
       chk(&mut w, HAND, Some(ALICE))?;
     }
 
@@ -81,6 +86,15 @@ impl Ctx {
 
     {
       let mut w = su.w(&self.alice)?;
+
+      let hand = w.find_piece(HAND)?;
+      w.action_chain()
+        .move_pos(&hand)?
+        .click()
+        .perform()
+        .context("select hand")?;
+      w.synch()?;
+
       w.action_chain()
         .key_down('C')
         .key_up('C')
