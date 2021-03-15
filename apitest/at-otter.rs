@@ -595,7 +595,16 @@ impl Ctx {
       let mut a_p = (&mut a_pieces, p);
 
       alice.api_piece(GH::Grab, PuSynch(&mut a_p), ())?;
-      bob.synchu(&mut b_pieces)?;
+      bob.synchx(Some(&mut b_pieces), None, |sess, gen, k, v| {
+        dbg!(gen, k, v);
+        if k == "Log" {
+          let m = v["logent"]["html"].as_str().unwrap();
+          for bad in &["black","white"] {
+            dbgc!(m);
+            assert!(! m.contains(bad));
+          }
+        }
+      })?;
 
       alice.api_piece(GH::Raw, &mut a_p, alice_move_to)?;
       bob.synchx(Some(&mut b_pieces), None, |sess, gen, k, v| {
