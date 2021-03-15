@@ -379,14 +379,12 @@ api_route!{
 
   impl op::Core as {
     #[throws(OnlineError)]
-    fn check_held(&self, pc: &GPiece, player: PlayerId) {
+    fn check_held(&self, gpc: &GPiece, player: PlayerId) {
       // This will ensure that occultations are (in general) properly
       // updated, because the player will (have to) release the thing
       // again
-      if pc.held != Some(player) {
-        throw!(OnlineError::PieceHeld)
-      }
-      // xxx prevent moving anything that is occulting
+      if gpc.held != Some(player) { throw!(OnlineError::PieceHeld) }
+      if gpc.occult.is_active() { throw!(OE::Occultation) }
     }
   }
 
