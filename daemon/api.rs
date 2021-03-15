@@ -334,7 +334,7 @@ api_route!{
                    logents);
       
     if let Some(occid) = gpc.occult.passive_occid() {
-      // xxx if piece is occulted, definitely repermute its occultation
+      // if piece is occulted, definitely repermute its occultation
       // so that we don't leak which piece is which over repeated
       // adjustment clicks
       to_permute.mark_dirty(occid);
