@@ -129,7 +129,8 @@ impl<Desc, Outl:'static> OutlineTrait for GenericSimpleShape<Desc, Outl>
 #[typetag::serde]
 impl PieceTrait for SimpleShape {
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _vpid: VisiblePieceId) {
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
+               _vpid: VisiblePieceId, _: ShowUnocculted) {
     self.svg_piece_raw(f, gpc.face, &mut |_|Ok(()))?;
   }
   #[throws(IE)]

@@ -18,7 +18,11 @@ pub struct PieceRenderInstructions {
 }
 
 #[derive(Debug,Clone)]
-pub enum PriOcculted { Visible, Occulted, Displaced(Pos, ZLevel) }
+pub enum PriOcculted {
+  Visible(ShowUnocculted),
+  Occulted,
+  Displaced(Pos, ZLevel),
+}
 
 impl VisiblePieceAngle {
   pub fn to_transform(self) -> VisibleAngleTransform {
@@ -49,7 +53,7 @@ impl PieceRenderInstructions {
       ! Delete() | Insert(_) | Modify(_) | ModifyQuiet(_),
     ) {
       match self.occulted {
-        Visible | Occulted => (),
+        Visible(_) | Occulted => (),
         Displaced(..) => return None,
       }
     }
@@ -85,18 +89,14 @@ impl PieceRenderInstructions {
     }
   }
 
-  pub fn new_visible(vpid: VisiblePieceId) -> PieceRenderInstructions {
-    PieceRenderInstructions { vpid, occulted: PriOcculted::Visible }
-  }
-
   #[throws(IE)]
   fn instead<'p>(&self, ioccults: &'p IOccults, p: &'p IPiece)
-                 -> Option<&'p dyn OccultedPieceTrait>
+                 -> Either<ShowUnocculted, &'p dyn OccultedPieceTrait>
   {
     match self.occulted {
-      PriOcculted::Visible                               => None,
+      PriOcculted::Visible(v) => Left(v),
       PriOcculted::Occulted | PriOcculted::Displaced(..) => {
-        Some({
+        Right({
           let occilk = p.occilk.as_ref()
             .ok_or_else(|| internal_logic_error(format!(
               "occulted non-occultable {:?}", p)))?
@@ -112,7 +112,7 @@ impl PieceRenderInstructions {
 
   pub fn angle(&self, gpc: &GPiece) -> VisiblePieceAngle {
     match self.occulted {
-      PriOcculted::Visible                               => gpc.angle,
+      PriOcculted::Visible(_)                            => gpc.angle,
       PriOcculted::Occulted | PriOcculted::Displaced(..) => default(),
     }
   }
@@ -120,7 +120,7 @@ impl PieceRenderInstructions {
   pub fn pos_zlevel<'r>(&'r self, gpc: &'r GPiece) -> (Pos, &'r ZLevel) {
     use PriOcculted as PO;
     match &self.occulted {
-      PO::Visible | PO::Occulted => (gpc.pos, &gpc.zlevel),
+      PO::Visible(_) | PO::Occulted => (gpc.pos, &gpc.zlevel),
       PO::Displaced(pos, zlevel) => (*pos, &zlevel),
     }
   }
@@ -133,8 +133,8 @@ impl PieceRenderInstructions {
     let instead = pri.instead(ioccults, ipc)?;
 
     let o: &dyn OutlineTrait = match instead {
-      None => Borrow::<dyn PieceTrait>::borrow(&ipc.p).dyn_upcast(),
-      Some(i) => i.dyn_upcast(),
+      Left(_) => Borrow::<dyn PieceTrait>::borrow(&ipc.p).dyn_upcast(),
+      Right(i) => i.dyn_upcast(),
     };
 
     let angle = pri.angle(gpc);
@@ -153,10 +153,10 @@ impl PieceRenderInstructions {
            pri.vpid, &transform.0, dragraise)?;
 
     match instead {
-      None => {
-        ipc.p.svg_piece(&mut defs, gpc, pri.vpid)?;
+      Left(y) => {
+        ipc.p.svg_piece(&mut defs, gpc, pri.vpid, y)?;
       },
-      Some(i) => {
+      Right(i) => {
         i.svg(&mut defs, pri.vpid)?;
       },
     };
@@ -182,8 +182,8 @@ impl PieceRenderInstructions {
   pub fn describe_fallible(&self, ioccults: &IOccults,
                            gpc: &GPiece, ipc: &IPiece) -> Html {
     match self.instead(ioccults, ipc)? {
-      None => ipc.p.describe_html(gpc)?,
-      Some(i) => i.describe_html()?,
+      Left(_y) => ipc.p.describe_html(gpc)?,
+      Right(i) => i.describe_html()?,
     }
   }
 
@@ -192,7 +192,7 @@ impl PieceRenderInstructions {
                    -> Vec<UoDescription>
   {
     match self.occulted {
-      PriOcculted::Visible                               => (),
+      PriOcculted::Visible(_)                            => (),
       PriOcculted::Occulted | PriOcculted::Displaced(..) => return vec![],
     };
 

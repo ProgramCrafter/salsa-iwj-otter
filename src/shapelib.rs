@@ -214,7 +214,8 @@ impl PieceTrait for Item {
   fn nfaces(&self) -> RawFaceId { self.faces.len().try_into().unwrap() }
 
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _vpid: VisiblePieceId) {
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
+               _vpid: VisiblePieceId, _: ShowUnocculted) {
     let face = &self.faces[gpc.face];
     let svgd = &self.svgs[face.svg];
     face.xform.write_svgd(f, svgd)?;

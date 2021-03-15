@@ -87,7 +87,8 @@ impl Hand {
 impl PieceTrait for Hand {
   fn nfaces(&self) -> RawFaceId { 1 }
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _vpid: VisiblePieceId) {
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
+               _vpid: VisiblePieceId, _: ShowUnocculted) {
     self.shape.svg_piece_raw(f, gpc.face, &mut |f: &mut String| {
       if_chain!{
         if let Some(xdata) = gpc.xdata.get::<HandState>()?;

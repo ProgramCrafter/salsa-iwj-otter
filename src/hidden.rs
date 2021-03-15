@@ -15,6 +15,9 @@ visible_slotmap_key!{ OccId(b'H') }
 
 // ========== data structures ==========
 
+#[derive(Copy,Clone,Debug)]
+pub struct ShowUnocculted(());
+
 #[derive(Clone,Debug,Default,Serialize,Deserialize)]
 pub struct GameOccults {
   occults: DenseSlotMap<OccId, Occultation>,
@@ -192,13 +195,30 @@ pub fn piece_pri(
       trace_dbg!("piece_pri", player, piece, occk, gpc);
       return None;
     }
-    OccKG::Visible            => PriOcculted::Visible,
+    OccKG::Visible            => PriOcculted::Visible(ShowUnocculted(())),
     OccKG::Scrambled          => PriOcculted::Occulted,
     OccKG::Displaced((pos,z)) => PriOcculted::Displaced(pos, z),
   };
   let vpid = gpl.idmap.fwd_or_insert(piece);
   trace_dbg!("piece_pri", player, piece, occk_dbg, vpid, occulted, gpc);
   Some(PieceRenderInstructions { vpid, occulted })
+}
+
+impl ShowUnocculted {
+  /// override
+  pub fn new_visible() -> ShowUnocculted {
+    ShowUnocculted(())
+  }
+}
+
+impl PieceRenderInstructions {
+  /// override
+  pub fn new_visible(vpid: VisiblePieceId) -> PieceRenderInstructions {
+    PieceRenderInstructions {
+      vpid,
+      occulted: PriOcculted::Visible(ShowUnocculted(())),
+    }
+  }
 }
 
 pub fn piece_at_all_occulted(gpc: &GPiece) -> bool {
