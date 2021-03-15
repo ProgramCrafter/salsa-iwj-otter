@@ -333,6 +333,13 @@ api_route!{
                    update,
                    logents);
       
+    if let Some(occid) = gpc.occult.passive_occid() {
+      // xxx if piece is occulted, definitely repermute its occultation
+      // so that we don't leak which piece is which over repeated
+      // adjustment clicks
+      to_permute.mark_dirty(occid);
+    };
+
     let update=
       recalculate_occultation_piece(
         gs,
@@ -342,9 +349,6 @@ api_route!{
         piece,
         vanilla,
       ).map_err(|e| OnlineError::from(e))?;
-    // xxx if piece is occulted, definitely repermute its occultation
-    // so that we don't leak which piece is which over repeated
-    // adjustment clicks
 
     update
   }

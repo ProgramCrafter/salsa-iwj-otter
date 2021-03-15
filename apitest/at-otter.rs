@@ -532,7 +532,7 @@ impl Ctx {
     prepare_game(&self.su().ds, TABLE)?;
     let mut alice = self.connect_player(&self.alice)?;
     let mut bob = self.connect_player(&self.bob)?;
-    self.su_mut().mgmt_conn.fakerng_load(&[&"1"])?;
+    self.su_mut().mgmt_conn.fakerng_load(&[&"1",&"0"])?;
 
     let mut a_pieces = alice.pieces::<PIA>()?;
     let mut b_pieces = alice.pieces::<PIB>()?;

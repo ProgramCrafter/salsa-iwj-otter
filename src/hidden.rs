@@ -65,6 +65,7 @@ pub type OccultationKind = OccultationKindGeneral<(Area, ZCoord)>;
 
 impl PieceOccult {
   pub fn is_active(&self) -> bool { self.active.is_some() }
+  pub fn passive_occid(&self) -> Option<OccId> { Some(self.passive?.occid) }
 }
 
 impl Default for OccultationKind {
