@@ -77,6 +77,7 @@ fn preview(items: Vec<ItemForOutput>) {
   }
 
   const SEVERAL: usize = 3;
+  let unocc_ok = ShowUnocculted::new_visible();
 
   impl Prep {
     fn want_several(&self) -> bool {
@@ -172,8 +173,7 @@ fn preview(items: Vec<ItemForOutput>) {
         }
         let mut html = Html("".into());
         let gpc = GPiece { face: face.into(), ..GPiece::dummy() };
-        p.svg_piece(&mut html, &gpc, default(),
-                    ShowUnocculted::new_visible())?;
+        p.svg_piece(&mut html, &gpc, default(), unocc_ok)?;
         println!("{}</svg>", html.0);
       }
       println!("</td>");
