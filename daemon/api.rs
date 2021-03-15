@@ -389,8 +389,6 @@ api_route!{
   }
 
   impl op::Simple as {
-    // xxx move shows up as actual position even for occultees
-    // xxx add this to test cases
     #[throws(ApiPieceOpError)]
     fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
       let ApiPieceOpArgs { gs,piece, .. } = a;
