@@ -381,7 +381,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let (mut ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Play])?;
       let mut buf = PrepareUpdatesBuffer::new(&mut ig, None, None);
       let gen = buf.gen();
-      drop(buf); // does update
+      drop(buf); // does updatenocc
       (U{ pcs: vec![], // we handled the update ourselves,
           log: vec![], // return no update info
           raw: None },
@@ -395,25 +395,23 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         |(piece,gpc)| (|| Ok::<_,MgmtError>(if_chain!{
           let &GPiece { pos, face, .. } = gpc;
           if let Some(ipc) = ig.ipieces.get(piece);
-          let visible = if ! piece_at_all_occulted(gpc) {
+          let unocc = gpc.fully_visible_to_everyone();
+          let visible = if let Some(_) = unocc {
             // todo: something more sophisticated would be nice
-            let (pri, unocc_ok) = (
-              PieceRenderInstructions::new_visible(
-                // visible id is internal one here
-                VisiblePieceId(piece.data())
-              ),
-              ShowUnocculted::new_visible(),
+            let pri = PieceRenderInstructions::new_visible(
+              // visible id is internal one here
+              VisiblePieceId(piece.data())
             );
             let bbox = ipc.p.bbox_approx()?;
             let desc_html = pri.describe(ioccults, gpc, ipc);
-            Some((MgmtGamePieceVisibleInfo {
+            Some(MgmtGamePieceVisibleInfo {
               pos, face, desc_html, bbox
-            }, unocc_ok))
+            })
           } else {
             None
           };
-          let itemname = if let Some((_,unocc_ok)) = visible {
-            ipc.p.itemname(unocc_ok).to_string()
+          let itemname = if let Some(unocc) = unocc {
+            ipc.p.itemname(unocc).to_string()
           } else {
             "occulted-item".to_string()
           };
@@ -421,7 +419,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
             Some(MgmtGamePieceInfo {
               piece,
               itemname,
-              visible: visible.map(|v| v.0)
+              visible,
             })
           } else {
             None

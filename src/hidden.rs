@@ -221,9 +221,15 @@ impl PieceRenderInstructions {
   }
 }
 
-pub fn piece_at_all_occulted(gpc: &GPiece) -> bool {
-  gpc.occult.passive.is_some()
+impl GPiece {
+  pub fn fully_visible_to_everyone(&self) -> Option<ShowUnocculted> {
+    match self.occult.passive {
+      Some(_) => None,
+      None => Some(ShowUnocculted(())),
+    }
+  }
 }
+
 pub fn piece_involved_in_occultation(gpc: &GPiece) -> bool {
   gpc.occult.passive.is_some() ||
   gpc.occult.active.is_some()
