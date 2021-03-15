@@ -719,6 +719,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       drag_add_piece(tpiece,tp);
     }
   } else if (held == null || wresting) {
+    // xxx prevent clicking on anything that is occulting, unless wresting
     if (!shifted) {
       ungrab_all();
     }

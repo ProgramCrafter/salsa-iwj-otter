@@ -363,9 +363,9 @@ api_route!{
   as:
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
-    // xxx prevent restzcking anything that is occulting
     let ApiPieceOpArgs { gs,piece, .. } = a;
     let gpc = gs.pieces.byid_mut(piece).unwrap();
+    if gpc.occult.is_active() { throw!(OE::Occultation) }
     gpc.zlevel = ZLevel { z: self.z.clone(), zg: gs.gen };
     let update = PieceUpdateOp::SetZLevel(());
     (WhatResponseToClientOp::Predictable,
