@@ -446,7 +446,7 @@ api_route!{
       ioccults, &gs.occults, player, gpl, piece, gpc, ipc,
       if gpc.pinned { "pinned" } else { "unpinned" },
     )?;
-    forbid_piece_involved_in_occultation(&gpc)?;
+    gpc.forbid_involved_in_occultation()?;
     gpc.pinned = self.0;
     let update = PieceUpdateOp::Modify(());
     (WhatResponseToClientOp::Predictable,

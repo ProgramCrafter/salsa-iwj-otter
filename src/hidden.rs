@@ -228,15 +228,16 @@ impl GPiece {
       None => Some(ShowUnocculted(())),
     }
   }
-}
 
-pub fn piece_involved_in_occultation(gpc: &GPiece) -> bool {
-  gpc.occult.passive.is_some() ||
-  gpc.occult.active.is_some()
-}
-#[throws(OE)]
-pub fn forbid_piece_involved_in_occultation(gpc: &GPiece) {
-  if piece_involved_in_occultation(&gpc) { throw!(OE::Occultation) }
+  pub fn involved_in_occultation(&self) -> bool {
+    self.occult.passive.is_some() ||
+    self.occult.active.is_some()
+  }
+
+  #[throws(OE)]
+  pub fn forbid_involved_in_occultation(&self) {
+    if self.involved_in_occultation() { throw!(OE::Occultation) }
+  }
 }
 
 pub fn vpiece_decode(
