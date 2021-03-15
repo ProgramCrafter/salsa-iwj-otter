@@ -685,27 +685,21 @@ pub fn remove_occultation(
     else { aggerr.ok()?; panic!(); }
   };
 
-  let occultation = aggerr.handle(
-    goccults.occults.remove(occid).ok_or_else(
-      || internal_logic_error("removing nonexistent occultation"))
-  );
-  debug!("removing occultation {:?}", &occultation);
-      
   let mut updates = vec![];
+  let mut unbreak_pieces: Vec<PieceId> = vec![];
 
-    let pieces: Vec<PieceId> = if let Some(o) = &occultation {
-      o.notches.iter().collect()
-    } else {
-      gpieces
-        .iter()
-        .filter_map(|(ppiece, pgpc)| {
-          if pgpc.occult.passive.map(|p| p.occid) == Some(occid) {
-            Some(ppiece)
-          } else { None }
-        })
-        .collect()
-    };
-  
+  match (||{
+    let occ = goccults.occults.get_mut(occid).ok_or_else(
+      || internal_logic_error("removing nonexistent occultation"))?;
+    debug!("removing occultation {:?}", &occ);
+
+    // We have to recalculate with the occultation still active, so
+    // that the affected pieces can know what the old situation was.
+    // So we set the region to empty, and do a recalculation of the
+    // relevant pieces.  Only then can we get rid of the occultation.
+    occ.region = Area::empty();
+
+    let pieces: Vec<_> = occ.notches.iter().collect();
     for &ppiece in pieces.iter() {
       recalculate_occultation_ofmany(gen,
                                      gplayers, gpieces, goccults, ipieces,
@@ -719,11 +713,41 @@ pub fn remove_occultation(
         });
     }
 
-    if let Some(ogpc) = gpieces.get_mut(occulter) {
-      ogpc.occult.active = None;
-    } else {
-      aggerr.record(internal_logic_error("removing occultation of non-piece"));
+    // now there should be nothing
+    let occ = goccults.occults.remove(occid).ok_or_else(
+      || internal_logic_error("occultation vanished in recalc!"))?;
+    
+    unbreak_pieces.extend(occ.notches.iter());
+
+    Ok::<_,IE>(())
+  })() {
+    e@ Err(_) => {
+      aggerr.handle(e);
+      unbreak_pieces.extend(gpieces.keys());
     }
+    Ok(()) => {},
+  }
+
+  if ! unbreak_pieces.is_empty() {
+    aggerr.record(internal_logic_error(format!(
+      "occultation remove left pieces: {:?}", &unbreak_pieces)));
+
+    for ppiece in unbreak_pieces { if_chain! {
+      if let Some(pgpc) = gpieces.get_mut(ppiece);
+      if let Some(passive) = pgpc.occult.passive;
+      if passive.occid == occid;
+      then {
+        pgpc.occult.passive = None;
+        updates.push((ppiece, PieceUpdateOp::Modify(()).into()));
+      }
+    }}
+  }
+
+  if let Some(ogpc) = gpieces.get_mut(occulter) {
+    ogpc.occult.active = None;
+  } else {
+    aggerr.record(internal_logic_error("removing occultation of non-piece"));
+  }
 
   aggerr.ok()?;
 
