@@ -202,10 +202,7 @@ struct FormattedLogEntry<'u> {
 #[throws(OE)]
 pub fn log_did_to_piece_whoby(
   ioccults: &IOccults,
-  _occults: &GameOccults,
-  _player: PlayerId,
   by_gpl: &mut GPlayer,
-  _piece: PieceId,
   gpc: &GPiece, ipc: &IPiece,
   did: &str,
 ) -> (Vec<LogEntry>, Option<Html>) {
@@ -233,13 +230,11 @@ pub fn log_did_to_piece_whoby(
 #[throws(OE)]
 pub fn log_did_to_piece(
   ioccults: &IOccults,
-  occults: &GameOccults,
-  player: PlayerId,
-  by_gpl: &mut GPlayer,
-  piece: PieceId, gpc: &GPiece, ipc: &IPiece,
+  gpl_by: &mut GPlayer,
+  gpc: &GPiece, ipc: &IPiece,
   did: &str,
 ) -> Vec<LogEntry> {
-  log_did_to_piece_whoby(ioccults,occults,player,by_gpl,piece,gpc,ipc,did)?.0
+  log_did_to_piece_whoby(ioccults,gpl_by,gpc,ipc,did)?.0
 }
 
 // ---------- prepared updates, queued in memory ----------

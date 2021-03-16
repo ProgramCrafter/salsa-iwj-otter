@@ -248,7 +248,7 @@ api_route!{
     let gpc = gs.pieces.byid_mut(piece)?;
 
     let logents = log_did_to_piece(
-      ioccults, &gs.occults, player, gpl, piece, gpc, ipc,
+      ioccults,gpl,gpc,ipc,
       "grasped"
     )?;
 
@@ -320,7 +320,7 @@ api_route!{
     let gpc = gs.pieces.byid_mut(piece).unwrap();
 
     let (logents, who_by) = log_did_to_piece_whoby(
-      ioccults, &gs.occults, player, gpl, piece, gpc, ipc,
+      ioccults,gpl,gpc,ipc,
       "released"
     )?;
     let who_by = who_by.ok_or(OE::PieceGone)?;
@@ -423,7 +423,7 @@ api_route!{
     let gpc = gs.pieces.byid_mut(piece).unwrap();
     let gpl = gs.players.byid_mut(player).unwrap();
     let logents = log_did_to_piece(
-      ioccults, &gs.occults, player, gpl, piece, gpc, ipc,
+      ioccults,gpl,gpc,ipc,
       "rotated"
     )?;
     gpc.angle = PieceAngle::Compass(self.0);
@@ -444,7 +444,7 @@ api_route!{
     let gpc = gs.pieces.byid_mut(piece).unwrap();
     let gpl = gs.players.byid_mut(player).unwrap();
     let logents = log_did_to_piece(
-      ioccults, &gs.occults, player, gpl, piece, gpc, ipc,
+      ioccults,gpl,gpc,ipc,
       if gpc.pinned { "pinned" } else { "unpinned" },
     )?;
     gpc.forbid_involved_in_occultation()?;
@@ -491,7 +491,7 @@ api_route!{
           ("flip", wrc@ WRC::UpdateSvg) => {
             let nfaces = ipc.show(y).nfaces();
             let logents = log_did_to_piece(
-              ioccults, &gs.occults, player, gpl, piece, gpc, ipc,
+              ioccults,gpl,gpc,ipc,
               "flipped"
             )?;
             gpc.face = ((RawFaceId::from(gpc.face) + 1) % nfaces).into();
