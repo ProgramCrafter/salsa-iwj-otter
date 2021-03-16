@@ -200,12 +200,10 @@ struct FormattedLogEntry<'u> {
 // ---------- helpful utilities ----------
 
 #[throws(OE)]
-pub fn log_did_to_piece_whoby(
-  ioccults: &IOccults,
-  by_gpl: &mut GPlayer,
-  gpc: &GPiece, ipc: &IPiece,
-  did: &str,
-) -> (Vec<LogEntry>, Option<Html>) {
+pub fn log_did_to_piece_whoby(ioccults: &IOccults, by_gpl: &mut GPlayer,
+                              gpc: &GPiece, ipc: &IPiece, did: &str)
+                              -> (Vec<LogEntry>, Option<Html>)
+{
   let who_by = Html(htmlescape::encode_minimal(&by_gpl.nick));
   let y = gpc.fully_visible_to_everyone();
   let desc = (||{
@@ -228,12 +226,9 @@ pub fn log_did_to_piece_whoby(
 }
 
 #[throws(OE)]
-pub fn log_did_to_piece(
-  ioccults: &IOccults,
-  gpl_by: &mut GPlayer,
-  gpc: &GPiece, ipc: &IPiece,
-  did: &str,
-) -> Vec<LogEntry> {
+pub fn log_did_to_piece(ioccults: &IOccults, gpl_by: &mut GPlayer,
+                        gpc: &GPiece, ipc: &IPiece, did: &str)
+                        -> Vec<LogEntry> {
   log_did_to_piece_whoby(ioccults,gpl_by,gpc,ipc,did)?.0
 }
 
