@@ -184,3 +184,11 @@ prefix = "chess-b-"
 items = ["commoner","elephant","knight-king","mann","zebra",
 	 "ship","giraffe","cannon"]
 posd = [10, 0]
+
+[[pieces]]
+pos = [20, 60]
+type = "Hand"
+edge = "white"
+colour = "grey"
+shape.type = "Rectangle"
+shape.xy = [20,10]
