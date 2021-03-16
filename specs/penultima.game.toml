@@ -142,20 +142,11 @@ items = ["K","Q","R","R","B","B","N","N"]
 posd = [10, 0]
 
 [[pieces]]
-pos = [210, 85]
+pos = [210, 45]
 type = "LibList"
 lib = "wikimedia"
 prefix = "chess-purple-"
 items = ["K","Q","R","R","B","B","N","N"]
-posd = [10, 0]
-
-[[pieces]]
-pos = [205, 115]
-type = "LibList"
-lib = "wikimedia"
-prefix = "chess-w-"
-items = ["commoner","elephant","knight-king","mann","zebra",
-	 "ship","giraffe","cannon"]
 posd = [10, 0]
 
 [[pieces]]
@@ -171,13 +162,22 @@ posd = [10, 0]
 pos = [205, 135]
 type = "LibList"
 lib = "wikimedia"
+prefix = "chess-w-"
+items = ["commoner","elephant","knight-king","mann","zebra",
+	 "ship","giraffe","cannon"]
+posd = [10, 0]
+
+[[pieces]]
+pos = [205, 145]
+type = "LibList"
+lib = "wikimedia"
 prefix = "chess-b-"
 items = ["commoner","elephant","knight-king","mann","zebra",
 	"ship","giraffe","cannon"]
 posd = [10, 0]
 
 [[pieces]]
-pos = [205, 145]
+pos = [205, 155]
 type = "LibList"
 lib = "wikimedia"
 prefix = "chess-b-"
@@ -192,3 +192,7 @@ edge = "white"
 colour = "grey"
 shape.type = "Rectangle"
 shape.xy = [20,10]
+
+[[pieces]]
+pos = [240, 100]
+type = "ChessClock"

@@ -10,6 +10,7 @@ pub mod prelude;
 
 pub mod accounts;
 pub mod authproofs;
+pub mod clock;
 pub mod commands;
 pub mod config;
 pub mod debugreader;
