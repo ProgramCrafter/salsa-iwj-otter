@@ -396,13 +396,13 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           let &GPiece { pos, face, .. } = gpc;
           if let Some(ipc) = ig.ipieces.get(piece);
           let unocc = gpc.fully_visible_to_everyone();
-          let visible = if let Some(_) = unocc {
+          let visible = if let Some(y) = unocc {
             // todo: something more sophisticated would be nice
             let pri = PieceRenderInstructions::new_visible(
               // visible id is internal one here
               VisiblePieceId(piece.data())
             );
-            let bbox = ipc.p.bbox_approx()?;
+            let bbox = ipc.show(y).bbox_approx()?;
             let desc_html = pri.describe(ioccults, gpc, ipc);
             Some(MgmtGamePieceVisibleInfo {
               pos, face, desc_html, bbox
@@ -411,7 +411,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
             None
           };
           let itemname = if let Some(unocc) = unocc {
-            ipc.p.itemname(unocc).to_string()
+            ipc.show(unocc).itemname().to_string()
           } else {
             "occulted-item".to_string()
           };
@@ -609,7 +609,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
                 piece)?
           );
         }
-        ipc.p.delete_hook(&gpc, gs);
+        ipc.p.into_inner().delete_hook(&gpc, gs);
       }
       if let Some(occilk) = ipc.occilk { ig.ioccults.ilks.dispose(occilk); }
       (U{ pcs: vec![(piece, PieceUpdateOp::Delete())],
@@ -657,7 +657,6 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let mut updates = Vec::with_capacity(count_len);
       let mut pos = pos.unwrap_or(DEFAULT_POS_START);
       let mut z = gs.max_z.clone_mut();
-      let not_occ = ShowUnocculted::new_visible();
       for piece_i in count {
         let PieceSpecLoaded { p, occultable } = info.load(piece_i as usize)?;
         let ilks = &mut ig.ioccults.ilks;
@@ -665,7 +664,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           ilks.insert(ilkname, OccultIlkData { p_occ })
         });
         let face = face.unwrap_or_default();
-        if p.nfaces(not_occ) <= face.into() {
+        if p.nfaces() <= face.into() {
           throw!(SpecError::FaceNotFound);
         }
         let gpc = GPiece {

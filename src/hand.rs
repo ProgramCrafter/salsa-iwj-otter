@@ -85,10 +85,9 @@ impl Hand {
 
 #[typetag::serde]
 impl PieceTrait for Hand {
-  fn nfaces(&self, _: ShowUnocculted) -> RawFaceId { 1 }
+  fn nfaces(&self) -> RawFaceId { 1 }
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
-               _vpid: VisiblePieceId, _: ShowUnocculted) {
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _vpid: VisiblePieceId) {
     self.shape.svg_piece_raw(f, gpc.face, &mut |f: &mut String| {
       if_chain!{
         if let Some(xdata) = gpc.xdata.get::<HandState>()?;
@@ -101,7 +100,7 @@ impl PieceTrait for Hand {
   }
 
   #[throws(IE)]
-  fn describe_html(&self, gpc: &GPiece, _: ShowUnocculted) -> Html {
+  fn describe_html(&self, gpc: &GPiece) -> Html {
     let xdata = gpc.xdata.get()?;
     self.describe_html_inner(xdata)
   }
@@ -110,13 +109,12 @@ impl PieceTrait for Hand {
 
   delegate!{
     to self.shape {
-      fn itemname(&self, y: ShowUnocculted) -> &str;
+      fn itemname(&self) -> &str;
     }
   }
 
   #[throws(InternalError)]
-  fn add_ui_operations(&self, upd: &mut Vec<UoDescription>,
-                       gpc: &GPiece, _: ShowUnocculted) {
+  fn add_ui_operations(&self, upd: &mut Vec<UoDescription>, gpc: &GPiece) {
     upd.push(if_chain! {
       if let Some(xdata) = gpc.xdata.get::<HandState>()?;
       if let Some(_owner) = &xdata.owner;
@@ -139,8 +137,7 @@ impl PieceTrait for Hand {
 
   #[throws(ApiPieceOpError)]
   fn ui_operation(&self, a: ApiPieceOpArgs<'_>,
-                  opname: &str, wrc: WhatResponseToClientOp,
-                  _: ShowUnocculted)
+                  opname: &str, wrc: WhatResponseToClientOp)
                   -> UpdateFromOpComplex {
     let ApiPieceOpArgs { gs,player,piece,ipieces,ioccults,to_permute,.. } = a;
     let gen = &mut gs.gen;

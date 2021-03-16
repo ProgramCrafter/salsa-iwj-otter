@@ -78,7 +78,7 @@ impl<P,Z> PriOccultedGeneral<P,Z> {
   pub fn describe_fallible(&self, ioccults: &IOccults,
                            gpc: &GPiece, ipc: &IPiece) -> Html {
     match self.instead(ioccults, ipc)? {
-      Left(y) => ipc.show(y).describe_html(gpc, y)?,
+      Left(y) => ipc.show(y).describe_html(gpc)?,
       Right(i) => i.describe_html()?,
     }
   }
@@ -179,7 +179,7 @@ impl PieceRenderInstructions {
 
     match instead {
       Left(y) => {
-        ipc.p.svg_piece(&mut defs, gpc, pri.vpid, y)?;
+        ipc.show(y).svg_piece(&mut defs, gpc, pri.vpid)?;
       },
       Right(i) => {
         i.svg(&mut defs, pri.vpid)?;
@@ -205,7 +205,7 @@ impl PieceRenderInstructions {
     type WRC = WhatResponseToClientOp;
 
     let mut out = vec![];
-    if ipc.p.nfaces(y) > 1 {
+    if ipc.show(y).nfaces() > 1 {
       out.push(UoDescription {
         wrc: WRC::UpdateSvg,
         kind: UoKind::Global,
@@ -214,7 +214,7 @@ impl PieceRenderInstructions {
         desc: Html::lit("flip"),
       })
     }
-    ipc.p.add_ui_operations(&mut out, gpc, y)?;
+    ipc.show(y).add_ui_operations(&mut out, gpc)?;
     out
   }
 }

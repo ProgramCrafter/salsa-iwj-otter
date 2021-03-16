@@ -489,7 +489,7 @@ api_route!{
         let _: Void = match (self.opname.as_str(), self.wrc) {
 
           ("flip", wrc@ WRC::UpdateSvg) => {
-            let nfaces = ipc.p.nfaces(y);
+            let nfaces = ipc.show(y).nfaces();
             let logents = log_did_to_piece(
               ioccults, &gs.occults, player, gpl, piece, gpc, ipc,
               "flipped"
@@ -513,7 +513,7 @@ api_route!{
         };
       }
 
-      ipc.p.ui_operation(a, &self.opname, self.wrc, y)?
+      ipc.show(y).ui_operation(a, &self.opname, self.wrc)?
     }
   }
 }

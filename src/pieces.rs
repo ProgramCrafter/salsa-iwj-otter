@@ -129,12 +129,11 @@ impl<Desc, Outl:'static> OutlineTrait for GenericSimpleShape<Desc, Outl>
 #[typetag::serde]
 impl PieceTrait for SimpleShape {
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
-               _vpid: VisiblePieceId, _: ShowUnocculted) {
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _vpid: VisiblePieceId) {
     self.svg_piece_raw(f, gpc.face, &mut |_|Ok(()))?;
   }
   #[throws(IE)]
-  fn describe_html(&self, gpc: &GPiece, _: ShowUnocculted) -> Html {
+  fn describe_html(&self, gpc: &GPiece) -> Html {
     Html(if_chain! {
       if let face = gpc.face;
       if let Some(colour) = self.colours.get(face);
@@ -142,11 +141,11 @@ impl PieceTrait for SimpleShape {
       else { format!("a {}", self.desc.0) }
     })
   }
-  fn nfaces(&self, _: ShowUnocculted) -> RawFaceId {
+  fn nfaces(&self) -> RawFaceId {
     self.count_faces().try_into().unwrap()
   }
 
-  fn itemname(&self, y: ShowUnocculted) -> &str { self.itemname(y) }
+  fn itemname(&self) -> &str { self.itemname() }
 }
 
 impl<Desc, Outl:'static> GenericSimpleShape<Desc, Outl>
@@ -156,7 +155,7 @@ impl<Desc, Outl:'static> GenericSimpleShape<Desc, Outl>
   pub fn count_faces(&self) -> usize {
     max(self.colours.len(), self.edges.len())
   }
-  pub fn itemname(&self, _: ShowUnocculted) -> &str { &self.itemname }
+  pub fn itemname(&self) -> &str { &self.itemname }
 
   #[throws(SpecError)]
   pub fn new(desc: Desc, outline: Outl,

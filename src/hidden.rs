@@ -21,7 +21,6 @@ pub struct ShowUnocculted(());
 #[derive(Debug,Serialize,Deserialize)]
 #[serde(transparent)]
 pub struct IPieceTraitObj(Box<dyn PieceTrait>);
-deref_to_field!{IPieceTraitObj, Box<dyn PieceTrait>, 0} // xxx
 
 #[derive(Clone,Debug,Default,Serialize,Deserialize)]
 pub struct GameOccults {
@@ -243,6 +242,8 @@ impl IPieceTraitObj {
   pub fn show(&self, _: ShowUnocculted) -> &Box<dyn PieceTrait> {
     &self.0
   }
+
+  pub fn into_inner(self) -> Box<dyn PieceTrait> { self.0 }
 }
 
 impl GPiece {
@@ -444,7 +445,7 @@ fn recalculate_occultation_general<
       let ogpc = gpieces.get(opiece).ok_or_else(bad)?;
       let ounocc = ogpc.fully_visible_to_everyone()
         .ok_or_else(||internal_error_bydebug(&(occulteds, &ogpc)))?;
-      Ok::<_,IE>(oipc.show(ounocc).describe_html(ogpc, ounocc)?)
+      Ok::<_,IE>(oipc.show(ounocc).describe_html(ogpc)?)
     };
 
     let most_obscure = most_obscure.unwrap_or(&OccK::Visible); // no players!

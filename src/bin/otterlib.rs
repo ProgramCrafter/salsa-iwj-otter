@@ -64,8 +64,6 @@ pub enum OutputKind {
 
 pub type ItemForOutput = (String, ItemEnquiryData);
 
-const UNOCC: ShowUnocculted = ShowUnocculted::new_visible();
-
 #[throws(AE)]
 fn preview(items: Vec<ItemForOutput>) {
   const BORDER: f64 = 1.;
@@ -85,7 +83,7 @@ fn preview(items: Vec<ItemForOutput>) {
       self.size[0] < 20.0
     }
     fn face_cols(&self) -> usize {
-      usize::from(self.p.nfaces(UNOCC))
+      usize::from(self.p.nfaces())
         * if self.want_several() { SEVERAL } else { 1 }
     }
   }
@@ -96,7 +94,7 @@ fn preview(items: Vec<ItemForOutput>) {
       let loaded = spec.clone().load().context("load")?;
       let p = loaded.p; // xxx show occulted version too
       let mut uos = vec![];
-      p.add_ui_operations(&mut uos, &GPiece::dummy(), UNOCC)
+      p.add_ui_operations(&mut uos, &GPiece::dummy())
         .context("add uos")?;
       let uos = uos.into_iter().map(|uo| uo.opname).collect::<Vec<_>>();
       let spec = spec.clone();
@@ -133,7 +131,7 @@ fn preview(items: Vec<ItemForOutput>) {
     println!(r#"<th align="left"><kbd>{}</kbd></th>"#,
              Html::from_txt(&spec.item).0);
     println!(r#"<th align="left">{}</th>"#,
-             p.describe_html(&GPiece::dummy(), UNOCC)?.0);
+             p.describe_html(&GPiece::dummy())?.0);
     let only1 = s.face_cols() == 1;
 
     for facecol in 0..(if only1 { 1 } else { max_facecols }) {
@@ -154,7 +152,7 @@ fn preview(items: Vec<ItemForOutput>) {
                _ => panic!(),
              });
       println!(r#">"#);
-      if face < (p.nfaces(UNOCC) as usize) {
+      if face < (p.nfaces() as usize) {
         let viewport =
           [bbox[0].clone(), size.clone()]
           .iter().cloned()
@@ -175,7 +173,7 @@ fn preview(items: Vec<ItemForOutput>) {
         }
         let mut html = Html("".into());
         let gpc = GPiece { face: face.into(), ..GPiece::dummy() };
-        p.svg_piece(&mut html, &gpc, default(), UNOCC)?;
+        p.svg_piece(&mut html, &gpc, default())?;
         println!("{}</svg>", html.0);
       }
       println!("</td>");

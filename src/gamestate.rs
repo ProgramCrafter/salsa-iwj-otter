@@ -130,31 +130,30 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
   /// by convention, occult face is nfaces-1
   // xxx this is no good, we need a central definition of the occult
   // face to avoid weird behaviour with buggy gamespecs
-  fn nfaces(&self, y: ShowUnocculted) -> RawFaceId;
+  fn nfaces(&self) -> RawFaceId;
 
   #[throws(InternalError)]
   fn add_ui_operations(&self, _upd: &mut Vec<UoDescription>,
-                       _gpc: &GPiece, _y: ShowUnocculted) { }
+                       _gpc: &GPiece) { }
 
   fn ui_operation(&self, _a: ApiPieceOpArgs<'_>,
-                  _opname: &str, _wrc: WhatResponseToClientOp,
-                  _y: ShowUnocculted)
+                  _opname: &str, _wrc: WhatResponseToClientOp)
                   -> Result<UpdateFromOpComplex, ApiPieceOpError> {
     throw!(OE::BadOperation)
   }
 
   // #[throws] doesn't work here - fehler #todo
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
-               id: VisiblePieceId, y: ShowUnocculted) -> Result<(),IE>;
+               id: VisiblePieceId) -> Result<(),IE>;
 
-  fn describe_html(&self, gpc: &GPiece, y: ShowUnocculted) -> Result<Html,IE>;
+  fn describe_html(&self, gpc: &GPiece) -> Result<Html,IE>;
 
   fn delete_hook(&self, _p: &GPiece, _gs: &mut GameState)
                  -> ExecuteGameChangeUpdates { 
     ExecuteGameChangeUpdates{ pcs: vec![], log: vec![], raw: None }
   }
 
-  fn itemname(&self, _y: ShowUnocculted) -> &str;
+  fn itemname(&self) -> &str;
 }
 
 #[typetag::serde]

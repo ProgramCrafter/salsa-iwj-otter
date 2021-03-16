@@ -211,24 +211,23 @@ impl FaceTransform {
 
 #[typetag::serde(name="Lib")]
 impl PieceTrait for Item {
-  fn nfaces(&self, _: ShowUnocculted) -> RawFaceId {
+  fn nfaces(&self) -> RawFaceId {
     self.faces.len().try_into().unwrap()
   }
 
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
-               _vpid: VisiblePieceId, _: ShowUnocculted) {
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _vpid: VisiblePieceId) {
     let face = &self.faces[gpc.face];
     let svgd = &self.svgs[face.svg];
     face.xform.write_svgd(f, svgd)?;
     
   }
   #[throws(IE)]
-  fn describe_html(&self, gpc: &GPiece, _: ShowUnocculted) -> Html {
+  fn describe_html(&self, gpc: &GPiece) -> Html {
     self.descs[ self.faces[gpc.face].desc ].clone()
   }
 
-  fn itemname(&self, _: ShowUnocculted) -> &str { &self.itemname }
+  fn itemname(&self) -> &str { &self.itemname }
 }
 
 static SHAPELIBS: RwLock<Option<Registry>> = const_rwlock(None);
@@ -344,7 +343,6 @@ impl Contents {
     let pat = glob::Pattern::new(pat).map_err(|pe| ME::BadGlob {
       pat: pat.to_string(), msg: pe.msg.to_string() })?;
     let mut out = vec![];
-    let unocc_ok = ShowUnocculted::new_visible();
     for (k,v) in &self.items {
       if !pat.matches(&k) { continue }
       let loaded = match self.load1(v, &k) {
@@ -356,7 +354,7 @@ impl Contents {
       let ier = ItemEnquiryData {
         itemname: k.clone(),
         f0bbox,
-        f0desc: loaded.p.describe_html(&GPiece::dummy(), unocc_ok)?,
+        f0desc: loaded.p.describe_html(&GPiece::dummy())?,
       };
       out.push(ier);
     }
