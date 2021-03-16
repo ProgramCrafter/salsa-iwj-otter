@@ -32,7 +32,7 @@ pub use std::iter::repeat_with;
 pub use std::marker::PhantomData;
 pub use std::mem;
 pub use std::num::{NonZeroUsize, TryFromIntError, Wrapping};
-pub use std::ops::{Deref, DerefMut, Index};
+pub use std::ops::{Deref, DerefMut, Index, IndexMut};
 pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
 pub use std::os::unix;
 pub use std::os::unix::ffi::OsStrExt;

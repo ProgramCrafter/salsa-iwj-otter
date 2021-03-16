@@ -83,6 +83,7 @@ pub enum SpecError {
   InconsistentFacesEdgecoloursCount,
   SpecifiedWidthOfNoEdges,
   UnsupportedShape,
+  NegativeTimeout,
 }
 display_as_debug!{SpecError}
 
