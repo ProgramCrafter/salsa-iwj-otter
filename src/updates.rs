@@ -202,21 +202,30 @@ struct FormattedLogEntry<'u> {
 #[throws(OE)]
 pub fn log_did_to_piece_whoby(
   ioccults: &IOccults,
-  occults: &GameOccults,
-  player: PlayerId,
-  gpl: &mut GPlayer,
-  piece: PieceId, gpc: &GPiece, ipc: &IPiece,
+  _occults: &GameOccults,
+  _player: PlayerId,
+  by_gpl: &mut GPlayer,
+  _piece: PieceId,
+  gpc: &GPiece, ipc: &IPiece,
   did: &str,
 ) -> (Vec<LogEntry>, Option<Html>) {
-  let who_by = Html(htmlescape::encode_minimal(&gpl.nick));
-  let pri = piece_pri(ioccults, occults, player, gpl, piece, gpc, ipc)
-    .ok_or(OE::PieceGone)?;
+  let who_by = Html(htmlescape::encode_minimal(&by_gpl.nick));
+  let y = gpc.fully_visible_to_everyone();
+  let desc = (||{
+    Ok::<_,IE>(match ipc.show_or_instead(ioccults, y)? {
+      Left(y) => ipc.show(y).describe_html(gpc)?,
+      Right(instead) => instead.describe_html()?,
+    })
+  })().unwrap_or_else(|e|{
+    error!("failed to format during logging: {:?}", e);
+    Html::lit("<internal error>")
+  });
 
   let log = vec![ LogEntry { html: Html(format!(
     "{} {} {}",
     &who_by.0,
     did,
-    pri.describe(ioccults, gpc, ipc).0,
+    desc.0,
   ))}];
   (log, Some(who_by))
 }
@@ -226,11 +235,11 @@ pub fn log_did_to_piece(
   ioccults: &IOccults,
   occults: &GameOccults,
   player: PlayerId,
-  gpl: &mut GPlayer,
+  by_gpl: &mut GPlayer,
   piece: PieceId, gpc: &GPiece, ipc: &IPiece,
   did: &str,
 ) -> Vec<LogEntry> {
-  log_did_to_piece_whoby(ioccults,occults,player,gpl,piece,gpc,ipc,did)?.0
+  log_did_to_piece_whoby(ioccults,occults,player,by_gpl,piece,gpc,ipc,did)?.0
 }
 
 // ---------- prepared updates, queued in memory ----------
