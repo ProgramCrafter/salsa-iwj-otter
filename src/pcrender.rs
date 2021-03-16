@@ -63,6 +63,25 @@ impl<P,Z> PriOccultedGeneral<P,Z> {
       },
     }
   }
+
+  pub fn describe(&self, ioccults: &IOccults,
+                  gpc: &GPiece, ipc: &IPiece) -> Html
+  {
+    self.describe_fallible(ioccults, gpc, ipc)
+      .unwrap_or_else(|e| {
+        error!("error describing piece: {:?}", e);
+        Html::lit("<internal error describing piece>")
+      })
+  }
+
+  #[throws(IE)]
+  pub fn describe_fallible(&self, ioccults: &IOccults,
+                           gpc: &GPiece, ipc: &IPiece) -> Html {
+    match self.instead(ioccults, ipc)? {
+      Left(_y) => ipc.p.describe_html(gpc)?,
+      Right(i) => i.describe_html()?,
+    }
+  }
 }
 
 impl PieceRenderInstructions {
@@ -172,25 +191,6 @@ impl PieceRenderInstructions {
            r##"<path id="surround{}" d="{}"/>"##,
            pri.vpid, o.surround_path()?.0)?;
     defs
-  }
-
-  pub fn describe(&self, ioccults: &IOccults,
-                  gpc: &GPiece, ipc: &IPiece) -> Html
-  {
-    self.describe_fallible(ioccults, gpc, ipc)
-      .unwrap_or_else(|e| {
-        error!("error describing piece: {:?}", e);
-        Html::lit("<internal error describing piece>")
-      })
-  }
-
-  #[throws(IE)]
-  pub fn describe_fallible(&self, ioccults: &IOccults,
-                           gpc: &GPiece, ipc: &IPiece) -> Html {
-    match self.instead(ioccults, ipc)? {
-      Left(_y) => ipc.p.describe_html(gpc)?,
-      Right(i) => i.describe_html()?,
-    }
   }
 
   #[throws(InternalError)]
