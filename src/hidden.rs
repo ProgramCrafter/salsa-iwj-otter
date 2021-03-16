@@ -105,15 +105,16 @@ impl OccultationKind {
   }
 }
 
-impl OccultationKindGeneral<(Pos, ZLevel)> {
-  pub fn pri_occulted(self) -> Option<PriOcculted> {
+impl<P,Z> OccultationKindGeneral<(P, Z)> {
+  pub fn pri_occulted(self) -> Option<PriOccultedGeneral<P,Z>> {
     Some(match self {
       OccKG::Invisible          => return None,
-      OccKG::Visible            => PriOcculted::Visible(ShowUnocculted(())),
-      OccKG::Scrambled          => PriOcculted::Occulted,
-      OccKG::Displaced((pos,z)) => PriOcculted::Displaced(pos, z),
+      OccKG::Visible            => PriOG::Visible(ShowUnocculted(())),
+      OccKG::Scrambled          => PriOG::Occulted,
+      OccKG::Displaced((pos,z)) => PriOG::Displaced(pos, z),
     })
   }
+
 }
 
 impl<T> OccultationKindGeneral<T> {
