@@ -150,6 +150,9 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
                       _was_held: Option<PlayerId>)
                       -> UnpreparedUpdates { None }
 
+  /// Not called if the whole game is destroyed.
+  /// You can use Drop of course but it's not usually much use since
+  /// you don't have a reference to the game or anything.
   fn delete_hook(&self, _p: &GPiece, _gs: &mut GameState)
                  -> ExecuteGameChangeUpdates { 
     ExecuteGameChangeUpdates{ pcs: vec![], log: vec![], raw: None }

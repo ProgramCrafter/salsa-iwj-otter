@@ -1104,6 +1104,9 @@ impl InstanceGuard<'_> {
     };
     let gref = InstanceRef(Arc::new(Mutex::new(cont)));
     let mut g = gref.lock().unwrap();
+
+    // xxx add hook to let chess clock restart after reload
+
     for (token, _) in &tokens_players {
       g.tokens_players.tr.insert(RawToken(token.clone()));
     }
