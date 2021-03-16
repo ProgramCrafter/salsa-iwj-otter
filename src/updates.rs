@@ -17,7 +17,8 @@ pub type RawClientSequence = u64;
 #[serde(transparent)]
 pub struct ClientSequence(RawClientSequence);
 
-pub type UnpreparedUpdates = Box<
+pub type UnpreparedUpdates = Option<SomeUnpreparedUpdates>;
+pub type SomeUnpreparedUpdates = Box<
     dyn for<'r> FnOnce(&'r mut PrepareUpdatesBuffer)
     >;
 
