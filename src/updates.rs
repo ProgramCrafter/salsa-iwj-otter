@@ -226,10 +226,10 @@ pub fn log_did_to_piece_whoby(ioccults: &IOccults, by_gpl: &mut GPlayer,
 }
 
 #[throws(OE)]
-pub fn log_did_to_piece(ioccults: &IOccults, gpl_by: &mut GPlayer,
+pub fn log_did_to_piece(ioccults: &IOccults, by_gpl: &mut GPlayer,
                         gpc: &GPiece, ipc: &IPiece, did: &str)
                         -> Vec<LogEntry> {
-  log_did_to_piece_whoby(ioccults,gpl_by,gpc,ipc,did)?.0
+  log_did_to_piece_whoby(ioccults,by_gpl,gpc,ipc,did)?.0
 }
 
 // ---------- prepared updates, queued in memory ----------
