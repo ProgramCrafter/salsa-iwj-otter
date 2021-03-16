@@ -1,0 +1,922 @@
+<!-- Copyright 2020-2021 Ian Jackson and contributors to Otter
+     SPDX-License-Identifier: AGPL-3.0-or-later
+     There is NO WARRANTY. -->
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>server::dummy - alice - Otter
+    </title>
+<link rel="license" href="http://localhost:8000/_/libre"><script>
+    orig_console = window.console;
+    window.console = (function(){
+      var new_console = { saved: [] };
+      for (k of ['log','error','warn','info']) {
+        (function(k){
+          var orig = orig_console[k];
+          new_console[k] = function() {
+            let args = [].slice.call(arguments);
+            new_console.saved.push([k, [args.map(s => (
+	      s === undefined ? "<undefined>" :
+		s === null ? "<null>" :
+		s.toString()
+	    ))]]);
+            orig.apply(orig_console, arguments);
+          }
+        })(k);
+      }
+      return new_console;
+    })();
+    console.log('wdriver.rs console log starts');
+</script>
+
+<script defer="defer">let wasm_input = fetch('/_/wasm.wasm');</script>
+<script src="server%20dummy%20-%20alice%20-%20Otter_files/wasm.js" defer="defer"></script>
+<script id="global-info" data-layout="Portrait"></script>
+<script src="server%20dummy%20-%20alice%20-%20Otter_files/script.js" defer="defer"></script>
+</head>
+<!-- Copyright 2020u Ian Jackson
+     SPDX-License-Identifier: AGPL-3.0-or-later
+     There is NO WARRANTY. --><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"></head><body id="main-body" data-ctoken="TdWGr534zPXTH8v9wp0FF15bHs7R9bxyhFY2soYoN2Fg7U1R8RU09JQgasqN4jTC" data-us="1#1" data-gen="538" data-sse-url-prefix="" style="transform-origin: top left;">
+<style>
+  html {
+    background-color: #eef;
+  }
+  .footer {
+    background-color: #ddf;
+  }
+  div[id=infopane] {
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    overflow-y: scroll;
+  }
+  div[class=uos] {
+    flex: initial;
+  }
+  div[id=uos] {
+    flex: auto;
+  }
+  div[class=somepane] {
+    flex: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  div[id=player_list_columns] {
+  }
+</style>
+
+<style>
+  body {
+    min-height: 100vw;
+  }
+  div[class=uos] { display: flex; flex-wrap: wrap; }
+  div[class|=uokey] {
+    outline: 1px solid #000;
+    margin: 1px;
+    padding-left: 5px;
+    padding-right: 6.5px;
+    align-self: start;
+  }
+  table[id=log] {
+    width: 100%;
+  }
+  td[class=logts] {
+    padding-left: 5px;
+    text-align: right;
+  }
+  div[class=uokey-r] {
+    align-self: end;
+  }
+  div[id=infopane] {
+    height: 100px;
+  }
+  .uos-mid {
+    flex-grow: 1;
+  }
+  div[id=player_list_columns] {
+    columns: 3;
+  }
+</style>
+<div class="upper">
+
+Hi alice
+
+|
+g
+<span id="wresting-warning"></span>
+
+|
+<strong>FAKING RANDOMNESS!</strong>
+<span id="status">server online 1#1 1C1 G538 U1 K1</span>
+
+|
+<a href="http://localhost:8000/l?kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe">switch to landscape view</a> |
+<span id="links">links: <a href="https://jitsi.example.com/initial">Voice</a> <a href="http://localhost:8000/_/shapelib.html">Shapelib</a> |</span>
+
+<span style="white-space: nowrap;"><button id="zoom-btn" disabled="disabled" onclick="zoom_activate()">Zoom</button><input id="zoom-val" type="number" max="1000" min="10" step="5" size="4" value="100" oninput="zoom_enable()">%</span>
+
+
+<pre id="error"></pre>
+
+
+
+    <svg id="space" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="1800" height="1200">
+      <rect fill="#bbd" x="0" y="0" width="300" height="200"></rect>
+      <g id="pieces_marker"></g>
+      <use id="use170.5" href="#piece170.5" x="150" y="100" data-piece="170.5"></use>
+      <use id="use166.7" href="#piece166.7" x="115" y="135" data-piece="166.7"></use>
+      <use id="use111.7" href="#piece111.7" x="125" y="135" data-piece="111.7"></use>
+      <use id="use155.7" href="#piece155.7" x="135" y="135" data-piece="155.7"></use>
+      <use id="use72.7" href="#piece72.7" x="145" y="135" data-piece="72.7"></use>
+      <use id="use82.7" href="#piece82.7" x="155" y="135" data-piece="82.7"></use>
+      <use id="use54.7" href="#piece54.7" x="165" y="135" data-piece="54.7"></use>
+      <use id="use126.7" href="#piece126.7" x="175" y="135" data-piece="126.7"></use>
+      <use id="use81.7" href="#piece81.7" x="185" y="135" data-piece="81.7"></use>
+      <use id="use125.7" href="#piece125.7" x="115" y="65" data-piece="125.7"></use>
+      <use id="use94.7" href="#piece94.7" x="125" y="65" data-piece="94.7"></use>
+      <use id="use141.7" href="#piece141.7" x="135" y="65" data-piece="141.7"></use>
+      <use id="use47.7" href="#piece47.7" x="145" y="65" data-piece="47.7"></use>
+      <use id="use134.7" href="#piece134.7" x="155" y="65" data-piece="134.7"></use>
+      <use id="use163.7" href="#piece163.7" x="165" y="65" data-piece="163.7"></use>
+      <use id="use66.7" href="#piece66.7" x="175" y="65" data-piece="66.7"></use>
+      <use id="use161.7" href="#piece161.7" x="185" y="65" data-piece="161.7"></use>
+      <use id="use36.7" href="#piece36.7" x="115" y="125" data-piece="36.7"></use>
+      <use id="use20.7" href="#piece20.7" x="125" y="125" data-piece="20.7"></use>
+      <use id="use27.7" href="#piece27.7" x="135" y="125" data-piece="27.7"></use>
+      <use id="use29.7" href="#piece29.7" x="145" y="125" data-piece="29.7"></use>
+      <use id="use130.7" href="#piece130.7" x="155" y="125" data-piece="130.7"></use>
+      <use id="use146.7" href="#piece146.7" x="165" y="125" data-piece="146.7"></use>
+      <use id="use19.7" href="#piece19.7" x="175" y="125" data-piece="19.7"></use>
+      <use id="use149.7" href="#piece149.7" x="185" y="125" data-piece="149.7"></use>
+      <use id="use34.7" href="#piece34.7" x="115" y="75" data-piece="34.7"></use>
+      <use id="use70.7" href="#piece70.7" x="125" y="75" data-piece="70.7"></use>
+      <use id="use159.7" href="#piece159.7" x="135" y="75" data-piece="159.7"></use>
+      <use id="use89.7" href="#piece89.7" x="145" y="75" data-piece="89.7"></use>
+      <use id="use132.7" href="#piece132.7" x="155" y="75" data-piece="132.7"></use>
+      <use id="use160.7" href="#piece160.7" x="165" y="75" data-piece="160.7"></use>
+      <use id="use124.7" href="#piece124.7" x="175" y="75" data-piece="124.7"></use>
+      <use id="use30.7" href="#piece30.7" x="185" y="75" data-piece="30.7"></use>
+      <use id="use123.7" href="#piece123.7" x="20" y="75" data-piece="123.7"></use>
+      <use id="use140.7" href="#piece140.7" x="30" y="75" data-piece="140.7"></use>
+      <use id="use49.7" href="#piece49.7" x="40" y="75" data-piece="49.7"></use>
+      <use id="use63.7" href="#piece63.7" x="50" y="75" data-piece="63.7"></use>
+      <use id="use46.7" href="#piece46.7" x="60" y="75" data-piece="46.7"></use>
+      <use id="use18.7" href="#piece18.7" x="70" y="75" data-piece="18.7"></use>
+      <use id="use88.7" href="#piece88.7" x="80" y="75" data-piece="88.7"></use>
+      <use id="use165.7" href="#piece165.7" x="90" y="75" data-piece="165.7"></use>
+      <use id="use39.7" href="#piece39.7" x="20" y="85" data-piece="39.7"></use>
+      <use id="use9.7" href="#piece9.7" x="30" y="85" data-piece="9.7"></use>
+      <use id="use145.7" href="#piece145.7" x="40" y="85" data-piece="145.7"></use>
+      <use id="use139.7" href="#piece139.7" x="50" y="85" data-piece="139.7"></use>
+      <use id="use43.7" href="#piece43.7" x="60" y="85" data-piece="43.7"></use>
+      <use id="use122.7" href="#piece122.7" x="70" y="85" data-piece="122.7"></use>
+      <use id="use32.7" href="#piece32.7" x="80" y="85" data-piece="32.7"></use>
+      <use id="use26.7" href="#piece26.7" x="90" y="85" data-piece="26.7"></use>
+      <use id="use93.7" href="#piece93.7" x="20" y="95" data-piece="93.7"></use>
+      <use id="use154.7" href="#piece154.7" x="30" y="95" data-piece="154.7"></use>
+      <use id="use38.7" href="#piece38.7" x="40" y="95" data-piece="38.7"></use>
+      <use id="use25.7" href="#piece25.7" x="50" y="95" data-piece="25.7"></use>
+      <use id="use129.7" href="#piece129.7" x="60" y="95" data-piece="129.7"></use>
+      <use id="use48.7" href="#piece48.7" x="70" y="95" data-piece="48.7"></use>
+      <use id="use158.7" href="#piece158.7" x="80" y="95" data-piece="158.7"></use>
+      <use id="use164.7" href="#piece164.7" x="90" y="95" data-piece="164.7"></use>
+      <use id="use51.7" href="#piece51.7" x="20" y="100" data-piece="51.7"></use>
+      <use id="use69.7" href="#piece69.7" x="30" y="100" data-piece="69.7"></use>
+      <use id="use113.7" href="#piece113.7" x="40" y="100" data-piece="113.7"></use>
+      <use id="use14.7" href="#piece14.7" x="50" y="100" data-piece="14.7"></use>
+      <use id="use10.7" href="#piece10.7" x="60" y="100" data-piece="10.7"></use>
+      <use id="use110.7" href="#piece110.7" x="70" y="100" data-piece="110.7"></use>
+      <use id="use28.7" href="#piece28.7" x="80" y="100" data-piece="28.7"></use>
+      <use id="use102.7" href="#piece102.7" x="90" y="100" data-piece="102.7"></use>
+      <use id="use153.7" href="#piece153.7" x="17" y="110" data-piece="153.7"></use>
+      <use id="use33.7" href="#piece33.7" x="22" y="110" data-piece="33.7"></use>
+      <use id="use119.7" href="#piece119.7" x="27" y="110" data-piece="119.7"></use>
+      <use id="use169.7" href="#piece169.7" x="32" y="110" data-piece="169.7"></use>
+      <use id="use57.7" href="#piece57.7" x="37" y="110" data-piece="57.7"></use>
+      <use id="use91.7" href="#piece91.7" x="42" y="110" data-piece="91.7"></use>
+      <use id="use118.7" href="#piece118.7" x="47" y="110" data-piece="118.7"></use>
+      <use id="use78.7" href="#piece78.7" x="52" y="110" data-piece="78.7"></use>
+      <use id="use120.7" href="#piece120.7" x="57" y="110" data-piece="120.7"></use>
+      <use id="use148.7" href="#piece148.7" x="62" y="110" data-piece="148.7"></use>
+      <use id="use90.7" href="#piece90.7" x="67" y="110" data-piece="90.7"></use>
+      <use id="use138.7" href="#piece138.7" x="72" y="110" data-piece="138.7"></use>
+      <use id="use35.7" href="#piece35.7" x="77" y="110" data-piece="35.7"></use>
+      <use id="use40.7" href="#piece40.7" x="82" y="110" data-piece="40.7"></use>
+      <use id="use99.7" href="#piece99.7" x="87" y="110" data-piece="99.7"></use>
+      <use id="use168.7" href="#piece168.7" x="92" y="110" data-piece="168.7"></use>
+      <use id="use11.7" href="#piece11.7" x="20" y="125" data-piece="11.7"></use>
+      <use id="use31.7" href="#piece31.7" x="30" y="125" data-piece="31.7"></use>
+      <use id="use45.7" href="#piece45.7" x="40" y="125" data-piece="45.7"></use>
+      <use id="use77.7" href="#piece77.7" x="50" y="125" data-piece="77.7"></use>
+      <use id="use84.7" href="#piece84.7" x="60" y="125" data-piece="84.7"></use>
+      <use id="use65.7" href="#piece65.7" x="70" y="125" data-piece="65.7"></use>
+      <use id="use68.7" href="#piece68.7" x="80" y="125" data-piece="68.7"></use>
+      <use id="use42.7" href="#piece42.7" x="90" y="125" data-piece="42.7"></use>
+      <use id="use167.7" href="#piece167.7" x="20" y="135" data-piece="167.7"></use>
+      <use id="use127.7" href="#piece127.7" x="30" y="135" data-piece="127.7"></use>
+      <use id="use62.7" href="#piece62.7" x="40" y="135" data-piece="62.7"></use>
+      <use id="use101.7" href="#piece101.7" x="50" y="135" data-piece="101.7"></use>
+      <use id="use17.7" href="#piece17.7" x="60" y="135" data-piece="17.7"></use>
+      <use id="use44.7" href="#piece44.7" x="70" y="135" data-piece="44.7"></use>
+      <use id="use100.7" href="#piece100.7" x="80" y="135" data-piece="100.7"></use>
+      <use id="use144.7" href="#piece144.7" x="90" y="135" data-piece="144.7"></use>
+      <use id="use117.7" href="#piece117.7" x="20" y="145" data-piece="117.7"></use>
+      <use id="use71.7" href="#piece71.7" x="30" y="145" data-piece="71.7"></use>
+      <use id="use60.7" href="#piece60.7" x="40" y="145" data-piece="60.7"></use>
+      <use id="use15.7" href="#piece15.7" x="50" y="145" data-piece="15.7"></use>
+      <use id="use157.7" href="#piece157.7" x="60" y="145" data-piece="157.7"></use>
+      <use id="use41.7" href="#piece41.7" x="70" y="145" data-piece="41.7"></use>
+      <use id="use83.7" href="#piece83.7" x="80" y="145" data-piece="83.7"></use>
+      <use id="use115.7" href="#piece115.7" x="90" y="145" data-piece="115.7"></use>
+      <use id="use86.7" href="#piece86.7" x="210" y="55" data-piece="86.7"></use>
+      <use id="use59.7" href="#piece59.7" x="220" y="55" data-piece="59.7"></use>
+      <use id="use73.7" href="#piece73.7" x="230" y="55" data-piece="73.7"></use>
+      <use id="use136.7" href="#piece136.7" x="240" y="55" data-piece="136.7"></use>
+      <use id="use121.7" href="#piece121.7" x="250" y="55" data-piece="121.7"></use>
+      <use id="use80.7" href="#piece80.7" x="260" y="55" data-piece="80.7"></use>
+      <use id="use23.7" href="#piece23.7" x="270" y="55" data-piece="23.7"></use>
+      <use id="use151.7" href="#piece151.7" x="280" y="55" data-piece="151.7"></use>
+      <use id="use162.7" href="#piece162.7" x="210" y="65" data-piece="162.7"></use>
+      <use id="use108.7" href="#piece108.7" x="220" y="65" data-piece="108.7"></use>
+      <use id="use135.7" href="#piece135.7" x="230" y="65" data-piece="135.7"></use>
+      <use id="use142.7" href="#piece142.7" x="240" y="65" data-piece="142.7"></use>
+      <use id="use107.7" href="#piece107.7" x="250" y="65" data-piece="107.7"></use>
+      <use id="use55.7" href="#piece55.7" x="260" y="65" data-piece="55.7"></use>
+      <use id="use53.7" href="#piece53.7" x="270" y="65" data-piece="53.7"></use>
+      <use id="use143.7" href="#piece143.7" x="280" y="65" data-piece="143.7"></use>
+      <use id="use67.7" href="#piece67.7" x="210" y="75" data-piece="67.7"></use>
+      <use id="use52.7" href="#piece52.7" x="220" y="75" data-piece="52.7"></use>
+      <use id="use76.7" href="#piece76.7" x="230" y="75" data-piece="76.7"></use>
+      <use id="use112.7" href="#piece112.7" x="240" y="75" data-piece="112.7"></use>
+      <use id="use22.7" href="#piece22.7" x="250" y="75" data-piece="22.7"></use>
+      <use id="use85.7" href="#piece85.7" x="260" y="75" data-piece="85.7"></use>
+      <use id="use13.7" href="#piece13.7" x="270" y="75" data-piece="13.7"></use>
+      <use id="use56.7" href="#piece56.7" x="280" y="75" data-piece="56.7"></use>
+      <use id="use92.7" href="#piece92.7" x="210" y="45" data-piece="92.7"></use>
+      <use id="use106.7" href="#piece106.7" x="220" y="45" data-piece="106.7"></use>
+      <use id="use21.7" href="#piece21.7" x="230" y="45" data-piece="21.7"></use>
+      <use id="use114.7" href="#piece114.7" x="240" y="45" data-piece="114.7"></use>
+      <use id="use97.7" href="#piece97.7" x="250" y="45" data-piece="97.7"></use>
+      <use id="use147.7" href="#piece147.7" x="260" y="45" data-piece="147.7"></use>
+      <use id="use137.7" href="#piece137.7" x="270" y="45" data-piece="137.7"></use>
+      <use id="use133.7" href="#piece133.7" x="280" y="45" data-piece="133.7"></use>
+      <use id="use96.7" href="#piece96.7" x="205" y="125" data-piece="96.7"></use>
+      <use id="use87.7" href="#piece87.7" x="215" y="125" data-piece="87.7"></use>
+      <use id="use156.7" href="#piece156.7" x="225" y="125" data-piece="156.7"></use>
+      <use id="use75.7" href="#piece75.7" x="235" y="125" data-piece="75.7"></use>
+      <use id="use95.7" href="#piece95.7" x="245" y="125" data-piece="95.7"></use>
+      <use id="use150.7" href="#piece150.7" x="255" y="125" data-piece="150.7"></use>
+      <use id="use24.7" href="#piece24.7" x="265" y="125" data-piece="24.7"></use>
+      <use id="use104.7" href="#piece104.7" x="275" y="125" data-piece="104.7"></use>
+      <use id="use116.7" href="#piece116.7" x="205" y="135" data-piece="116.7"></use>
+      <use id="use105.7" href="#piece105.7" x="215" y="135" data-piece="105.7"></use>
+      <use id="use98.7" href="#piece98.7" x="225" y="135" data-piece="98.7"></use>
+      <use id="use103.7" href="#piece103.7" x="235" y="135" data-piece="103.7"></use>
+      <use id="use37.7" href="#piece37.7" x="245" y="135" data-piece="37.7"></use>
+      <use id="use64.7" href="#piece64.7" x="255" y="135" data-piece="64.7"></use>
+      <use id="use74.7" href="#piece74.7" x="265" y="135" data-piece="74.7"></use>
+      <use id="use109.7" href="#piece109.7" x="275" y="135" data-piece="109.7"></use>
+      <use id="use128.7" href="#piece128.7" x="205" y="145" data-piece="128.7"></use>
+      <use id="use131.7" href="#piece131.7" x="215" y="145" data-piece="131.7"></use>
+      <use id="use50.7" href="#piece50.7" x="225" y="145" data-piece="50.7"></use>
+      <use id="use58.7" href="#piece58.7" x="235" y="145" data-piece="58.7"></use>
+      <use id="use12.7" href="#piece12.7" x="245" y="145" data-piece="12.7"></use>
+      <use id="use16.7" href="#piece16.7" x="255" y="145" data-piece="16.7"></use>
+      <use id="use79.7" href="#piece79.7" x="265" y="145" data-piece="79.7"></use>
+      <use id="use152.7" href="#piece152.7" x="275" y="145" data-piece="152.7"></use>
+      <use id="use61.7" href="#piece61.7" x="205" y="155" data-piece="61.7"></use>
+      <use id="use8.9" href="#piece8.9" x="215" y="155" data-piece="8.9"></use>
+      <use id="use7.9" href="#piece7.9" x="225" y="155" data-piece="7.9"></use>
+      <use id="use6.9" href="#piece6.9" x="235" y="155" data-piece="6.9"></use>
+      <use id="use5.9" href="#piece5.9" x="245" y="155" data-piece="5.9"></use>
+      <use id="use4.9" href="#piece4.9" x="255" y="155" data-piece="4.9"></use>
+      <use id="use3.9" href="#piece3.9" x="265" y="155" data-piece="3.9"></use>
+      <use id="use2.9" href="#piece2.9" x="275" y="155" data-piece="2.9"></use>
+      <use id="use1.9" href="#piece1.9" x="240" y="100" data-piece="1.9"></use>
+      <g id="defs_marker"></g>
+      <defs id="defs170.5"><g id="piece170.5" transform="" data-dragraise="45"><g transform="scale(0.38 0.38) translate(-121 -123)"><!-- otter.git#67b62ea1ec2e0c2855d08397cd599bf2a951da0b+ library/edited/chess-board.usvg CC-BY-SA-4.0, see library/edited/LICENCE -->
+<svg width="242" height="246" viewBox="0 0 242 246" xmlns="http://www.w3.org/2000/svg" xmlns:usvg="https://github.com/RazrFalcon/resvg" usvg:version="0.11.0">
+    <defs></defs>
+    <path id="rect2850" fill="#d18b47" stroke="#b0b0b0" stroke-width="0.99999994" d="M 16.5 18.5 L 225.5 18.5 L 225.5 227.5 L 16.5 227.5 Z"></path>
+    <path fill="none" stroke="#cccccc" d="M 21 13.5 C 27 15.5 20 17.5 22 20.5"></path>
+</svg>
+</g></g><path id="surround2.9" d="M 0 4.94923 a 4.94923 4.94923 0 1 0 0 -9.89846 a 4.94923 4.94923 0 1 0 0 9.89846 z"></path></defs>
+      <defs id="defs1.9"><g id="piece1.9" transform="" data-dragraise="10">
+
+<g transform="translate(-25,-10)">
+        <rect fill="white" stroke="black" width="50" height="20"></rect>
+</g>
+
+    <use href="#surround1.9" stroke="black" fill="none" stroke-dasharray="3 1"></use></g><path id="surround1.9" d="M -27.500000000000004 -11 h 55.00000000000001 v 22 h -55.00000000000001 z"></path></defs>
+    </svg>
+
+<p>
+</p><div id="infopane">
+
+ <div id="pane_help" class="somepane">
+  <div id="uos" class="uos">
+    <div class="uokey-l"><b>b</b> send to bottom (below other pieces)</div><div class="uokey-l"><b>l</b> rotate left</div><div class="uokey-l"><b>r</b> rotate right</div><div class="uos-mid" id="uos-mid"></div>
+  <div class="uokey-r"><b>P</b> Pin to table</div><div class="uokey-r"><b>W</b> Enter wresting mode</div></div>
+  <div class="uos">
+    <div class="uokey"><strong>Mouse</strong> select/deselect/drag</div>
+    <div class="uokey"><strong>shift</strong> multiple selection</div>
+    <div class="uokey">Show
+      <strong>H</strong> this help
+      <strong>U</strong> players
+    </div>
+  </div>
+ </div>
+
+ <div id="pane_players" class="somepane" style="display:none">
+  <div id="player_list_columns">
+<div><strong>Players</strong> (<strong>H</strong>/<strong>U</strong>: return to help)</div>
+  <div id="player_list">
+
+<!-- Copyright 2020-2021 Ian Jackson and contributors to Otter
+     SPDX-License-Identifier: AGPL-3.0-or-later
+     There is NO WARRANTY. -->
+
+<div class="player">
+<span class="player_num">#1</span>
+<span class="nick">alice</span>
+<span class="account">[server:alice]</span>
+</div>
+
+<div class="player">
+<span class="player_num">#2</span>
+<span class="nick">bob</span>
+<span class="account">[server:bob]</span>
+</div>
+
+
+  </div>
+  </div>
+ </div>
+
+</div>
+
+
+<p>
+  </p><div id="logscroll" style="overflow-y: scroll; height: 200px;">
+    <table id="log">
+      
+      <tbody><tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:40 +0000</td></tr>
+      <tr><td class="logmsg">alice [server:alice] joined the game</td><td class="logts">2021-03-16 18:05:42 +0000</td></tr>
+      <tr><td class="logmsg">bob [server:bob] joined the game</td><td class="logts">2021-03-16 18:05:42 +0000</td></tr>
+      <tr><td class="logmsg">[server:] set the link <a href="https://www.example.org/newinfo">Info</a></td><td class="logts">2021-03-16 18:05:42 +0000</td></tr>
+      <tr><td class="logmsg">[server:] removed the link Info</td><td class="logts">2021-03-16 18:05:42 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:42 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:42 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:42 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:42 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:42 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:42 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:42 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:42 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:42 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:05:55 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:06:56 +0000</td></tr>
+      <tr><td class="logmsg">alice grasped the chess clock</td><td class="logts">2021-03-16 18:15:23 +0000</td></tr>
+      <tr><td class="logmsg">alice released the chess clock</td><td class="logts">2021-03-16 18:15:25 +0000</td></tr>
+      <tr><td class="logmsg">alice grasped the chess clock</td><td class="logts">2021-03-16 18:15:26 +0000</td></tr>
+      <tr><td class="logmsg">alice released the chess clock</td><td class="logts">2021-03-16 18:15:26 +0000</td></tr>
+      <tr><td class="logmsg">alice grasped the chess clock</td><td class="logts">2021-03-16 18:15:26 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">[server:] (re)configured the game</td><td class="logts">2021-03-16 18:16:01 +0000</td></tr>
+      <tr><td class="logmsg">alice grasped the chess clock</td><td class="logts">2021-03-16 18:16:07 +0000</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+  <div class="footer">
+    <!--
+         this affects the document's overall scrollbars
+         which is not what we want.  so get rid of it for now
+    <div class="footer"; style="
+         height: 100vw;
+         width: 200vw;
+         left: -50vw;
+         overflow-y: clip;
+         position: absolute;
+         z-index: -1;
+     "><!-- this fills in the rest of the page, including the margins
+         --x
+    </div>
+    -->
+    <hr>
+    <address style="max-height: 100vh;">
+      This server is running Otter, the Online TableTop Environment
+      Renderer.  Otter and its shape (piece picture) libraries
+      are <a href="http://localhost:8000/_/libre">Free Software</a> and come with NO
+      WARRANTY.
+  </address></div>
+
+</body></html>
