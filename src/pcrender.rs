@@ -40,6 +40,30 @@ impl VisiblePieceAngle {
   }
 }
 
+impl<P,Z> PriOccultedGeneral<P,Z> {
+  #[throws(IE)]
+  fn instead<'p>(&self, ioccults: &'p IOccults, p: &'p IPiece)
+                 -> Either<ShowUnocculted, &'p dyn OccultedPieceTrait>
+  {
+    use PriOG::*;
+    match self {
+      Visible(v) => Left(*v),
+      Occulted | Displaced(..) => {
+        Right({
+          let occilk = p.occilk.as_ref()
+            .ok_or_else(|| internal_logic_error(format!(
+              "occulted non-occultable {:?}", p)))?
+            .borrow();
+          let occ_data = ioccults.ilks.get(occilk)
+            .ok_or_else(|| internal_logic_error(format!(
+              "occulted ilk vanished {:?} {:?}", p, occilk)))?;
+          occ_data.p_occ.as_ref()
+        })
+      },
+    }
+  }
+}
+
 impl PieceRenderInstructions {
   #[throws(IE)]
   pub fn map_piece_update_op(&self, ioccults: &IOccults,
@@ -91,27 +115,6 @@ impl PieceRenderInstructions {
     }
   }
 
-  #[throws(IE)]
-  fn instead<'p>(&self, ioccults: &'p IOccults, p: &'p IPiece)
-                 -> Either<ShowUnocculted, &'p dyn OccultedPieceTrait>
-  {
-    match self.occulted {
-      PriOcculted::Visible(v) => Left(v),
-      PriOcculted::Occulted | PriOcculted::Displaced(..) => {
-        Right({
-          let occilk = p.occilk.as_ref()
-            .ok_or_else(|| internal_logic_error(format!(
-              "occulted non-occultable {:?}", p)))?
-            .borrow();
-          let occ_data = ioccults.ilks.get(occilk)
-            .ok_or_else(|| internal_logic_error(format!(
-              "occulted ilk vanished {:?} {:?}", p, occilk)))?;
-          occ_data.p_occ.as_ref()
-        })
-      },
-    }
-  }
-
   pub fn angle(&self, gpc: &GPiece) -> VisiblePieceAngle {
     match self.occulted {
       PriOcculted::Visible(_)                            => gpc.angle,
@@ -132,7 +135,7 @@ impl PieceRenderInstructions {
                          gpc: &GPiece, ipc: &IPiece) -> Html
   {
     let pri = self;
-    let instead = pri.instead(ioccults, ipc)?;
+    let instead = pri.occulted.instead(ioccults, ipc)?;
 
     let o: &dyn OutlineTrait = match instead {
       Left(_) => Borrow::<dyn PieceTrait>::borrow(&ipc.p).dyn_upcast(),
@@ -183,7 +186,7 @@ impl PieceRenderInstructions {
   #[throws(IE)]
   pub fn describe_fallible(&self, ioccults: &IOccults,
                            gpc: &GPiece, ipc: &IPiece) -> Html {
-    match self.instead(ioccults, ipc)? {
+    match self.occulted.instead(ioccults, ipc)? {
       Left(_y) => ipc.p.describe_html(gpc)?,
       Right(i) => i.describe_html()?,
     }
