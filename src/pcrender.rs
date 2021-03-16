@@ -16,6 +16,7 @@ pub struct PieceRenderInstructions {
   pub vpid: VisiblePieceId,
   pub occulted: PriOcculted,
 }
+deref_to_field!{PieceRenderInstructions, PriOcculted, occulted}
 
 #[derive(Debug,Clone)]
 pub enum PriOccultedGeneral<P,Z> {
@@ -135,7 +136,7 @@ impl PieceRenderInstructions {
                          gpc: &GPiece, ipc: &IPiece) -> Html
   {
     let pri = self;
-    let instead = pri.occulted.instead(ioccults, ipc)?;
+    let instead = pri.instead(ioccults, ipc)?;
 
     let o: &dyn OutlineTrait = match instead {
       Left(_) => Borrow::<dyn PieceTrait>::borrow(&ipc.p).dyn_upcast(),
@@ -186,7 +187,7 @@ impl PieceRenderInstructions {
   #[throws(IE)]
   pub fn describe_fallible(&self, ioccults: &IOccults,
                            gpc: &GPiece, ipc: &IPiece) -> Html {
-    match self.occulted.instead(ioccults, ipc)? {
+    match self.instead(ioccults, ipc)? {
       Left(_y) => ipc.p.describe_html(gpc)?,
       Right(i) => i.describe_html()?,
     }
