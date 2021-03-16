@@ -217,7 +217,7 @@ pub fn piece_pri(
 
 impl ShowUnocculted {
   /// override
-  pub fn new_visible() -> ShowUnocculted {
+  pub const fn new_visible() -> ShowUnocculted {
     ShowUnocculted(())
   }
 }

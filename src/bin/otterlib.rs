@@ -64,6 +64,8 @@ pub enum OutputKind {
 
 pub type ItemForOutput = (String, ItemEnquiryData);
 
+const UNOCC: ShowUnocculted = ShowUnocculted::new_visible();
+
 #[throws(AE)]
 fn preview(items: Vec<ItemForOutput>) {
   const BORDER: f64 = 1.;
@@ -77,14 +79,13 @@ fn preview(items: Vec<ItemForOutput>) {
   }
 
   const SEVERAL: usize = 3;
-  let unocc_ok = ShowUnocculted::new_visible();
 
   impl Prep {
     fn want_several(&self) -> bool {
       self.size[0] < 20.0
     }
-    fn face_cols(&self, unocc_ok: ShowUnocculted) -> usize {
-      usize::from(self.p.nfaces(unocc_ok))
+    fn face_cols(&self) -> usize {
+      usize::from(self.p.nfaces(UNOCC))
         * if self.want_several() { SEVERAL } else { 1 }
     }
   }
@@ -95,7 +96,7 @@ fn preview(items: Vec<ItemForOutput>) {
       let loaded = spec.clone().load().context("load")?;
       let p = loaded.p; // xxx show occulted version too
       let mut uos = vec![];
-      p.add_ui_operations(&mut uos, &GPiece::dummy(), unocc_ok)
+      p.add_ui_operations(&mut uos, &GPiece::dummy(), UNOCC)
         .context("add uos")?;
       let uos = uos.into_iter().map(|uo| uo.opname).collect::<Vec<_>>();
       let spec = spec.clone();
@@ -119,9 +120,7 @@ fn preview(items: Vec<ItemForOutput>) {
   // clones as a bodge for https://github.com/rust-lang/rust/issues/34162
   pieces.sort_by_key(|p| (p.spec.item.clone(), p.spec.lib.clone()));
                      
-  let max_facecols = pieces.iter().map(
-    |s| s.face_cols(unocc_ok)
-  ).max().unwrap_or(1);
+  let max_facecols = pieces.iter().map(|s| s.face_cols()).max().unwrap_or(1);
   let max_uos = pieces.iter().map(|s| s.uos.len()).max().unwrap_or(0);
 
   println!("{}", &HTML_PRELUDE);
@@ -134,8 +133,8 @@ fn preview(items: Vec<ItemForOutput>) {
     println!(r#"<th align="left"><kbd>{}</kbd></th>"#,
              Html::from_txt(&spec.item).0);
     println!(r#"<th align="left">{}</th>"#,
-             p.describe_html(&GPiece::dummy(), unocc_ok)?.0);
-    let only1 = s.face_cols(unocc_ok) == 1;
+             p.describe_html(&GPiece::dummy(), UNOCC)?.0);
+    let only1 = s.face_cols() == 1;
 
     for facecol in 0..(if only1 { 1 } else { max_facecols }) {
       let (face, inseveral) = if s.want_several() {
@@ -155,7 +154,7 @@ fn preview(items: Vec<ItemForOutput>) {
                _ => panic!(),
              });
       println!(r#">"#);
-      if face < (p.nfaces(unocc_ok) as usize) {
+      if face < (p.nfaces(UNOCC) as usize) {
         let viewport =
           [bbox[0].clone(), size.clone()]
           .iter().cloned()
@@ -176,7 +175,7 @@ fn preview(items: Vec<ItemForOutput>) {
         }
         let mut html = Html("".into());
         let gpc = GPiece { face: face.into(), ..GPiece::dummy() };
-        p.svg_piece(&mut html, &gpc, default(), unocc_ok)?;
+        p.svg_piece(&mut html, &gpc, default(), UNOCC)?;
         println!("{}</svg>", html.0);
       }
       println!("</td>");
