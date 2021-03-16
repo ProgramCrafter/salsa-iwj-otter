@@ -475,7 +475,7 @@ api_route!{
                           ipc)
         .ok_or(OE::PieceGone)?;
       let y = {
-        use PriOcculted::*;
+        use PriOG::*;
         match pri.occulted {
           Visible(y) => y,
           Occulted | Displaced(..) => throw!(OE::BadOperation),

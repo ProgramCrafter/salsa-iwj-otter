@@ -18,11 +18,13 @@ pub struct PieceRenderInstructions {
 }
 
 #[derive(Debug,Clone)]
-pub enum PriOcculted {
+pub enum PriOccultedGeneral<P,Z> {
   Visible(ShowUnocculted),
   Occulted,
-  Displaced(Pos, ZLevel),
+  Displaced(P, Z),
 }
+
+pub type PriOcculted = PriOccultedGeneral<Pos, ZLevel>;
 
 impl VisiblePieceAngle {
   pub fn to_transform(self) -> VisibleAngleTransform {
@@ -46,7 +48,7 @@ impl PieceRenderInstructions {
   ) -> Option<PieceUpdateOp<PreparedPieceState, ZLevel>>
   {
     use PieceUpdateOp::*;
-    use PriOcculted::*;
+    use PriOG::*;
     if matches_doesnot!(
       op,
       = Move(_) | SetZLevel(_),

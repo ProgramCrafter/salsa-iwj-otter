@@ -167,6 +167,9 @@ pub type SpE = SpecError;
 pub type OccK = OccultationKind;
 pub use OccultationKindGeneral as OccKG;
 
+// pcrender.rs
+pub use PriOccultedGeneral as PriOG;
+
 // updates.rs
 pub type PUE = PreparedUpdateEntry;
 pub type PUFOS = PieceUpdateFromOpSimple;
