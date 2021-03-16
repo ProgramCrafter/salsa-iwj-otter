@@ -131,7 +131,7 @@ impl PieceRenderInstructions {
       zg         : zlevel.zg,
       angle      : pri.angle(gpc).to_compass(),
       pinned     : gpc.pinned,
-      uos        : pri.ui_operations(gpc, ipc.p.borrow())?,
+      uos        : pri.ui_operations(gpc, ipc)?,
     }
   }
 
@@ -194,7 +194,7 @@ impl PieceRenderInstructions {
   }
 
   #[throws(InternalError)]
-  pub fn ui_operations(&self, gpc: &GPiece, p: &dyn PieceTrait)
+  pub fn ui_operations(&self, gpc: &GPiece, ipc: &IPiece)
                        -> Vec<UoDescription>
   {
     let y = match self.occulted {
@@ -205,7 +205,7 @@ impl PieceRenderInstructions {
     type WRC = WhatResponseToClientOp;
 
     let mut out = vec![];
-    if p.nfaces(y) > 1 {
+    if ipc.p.nfaces(y) > 1 {
       out.push(UoDescription {
         wrc: WRC::UpdateSvg,
         kind: UoKind::Global,
@@ -214,7 +214,7 @@ impl PieceRenderInstructions {
         desc: Html::lit("flip"),
       })
     }
-    p.add_ui_operations(&mut out, gpc, y)?;
+    ipc.p.add_ui_operations(&mut out, gpc, y)?;
     out
   }
 }
