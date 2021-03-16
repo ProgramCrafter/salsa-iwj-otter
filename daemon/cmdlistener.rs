@@ -604,6 +604,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
                 &mut gs.pieces,
                 &mut gs.occults,
                 &mut ig.ipieces,
+                &mut ig.ioccults,
                 to_permute,
                 piece)?
           );

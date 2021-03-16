@@ -345,6 +345,7 @@ api_route!{
         gs,
         who_by,
         ipieces,
+        ioccults,
         to_permute,
         piece,
         vanilla,

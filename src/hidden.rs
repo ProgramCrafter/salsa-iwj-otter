@@ -282,6 +282,7 @@ fn recalculate_occultation_general<
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
   ipieces: &IPieces,
+  _ioccults: &IOccults,
   to_permute: &mut ToPermute,
   piece: PieceId,
   // if no change, we return ret_vanilla(log_visible)
@@ -496,6 +497,7 @@ pub fn recalculate_occultation_piece(
   gs: &mut GameState,
   who_by: Html,
   ipieces: &IPieces,
+  ioccults: &IOccults,
   to_permute: &mut ToPermute,
   piece: PieceId,
   (vanilla_wrc, vanilla_op, vanilla_log): PUFOS,
@@ -504,7 +506,8 @@ pub fn recalculate_occultation_piece(
 {
     recalculate_occultation_general(
       &mut gs.gen.unique_gen(),
-      &gs.players, &mut gs.pieces, &mut gs.occults, ipieces, to_permute,
+      &gs.players, &mut gs.pieces, &mut gs.occults, ipieces, ioccults,
+      to_permute,
       piece, vanilla_log,
       |log| (vanilla_wrc, vanilla_op, log).into(),
       |old, new, show| vec![ LogEntry { html: Html(format!(
@@ -528,12 +531,13 @@ fn recalculate_occultation_ofmany(
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
   ipieces: &IPieces,
+  ioccults: &IOccults,
   to_permute: &mut ToPermute,
   ppiece: PieceId,
   updates: &mut Vec<(PieceId, PieceUpdateOps)>,
 ){
   recalculate_occultation_general(
-    gen, gplayers, gpieces, goccults, ipieces, to_permute,
+    gen, gplayers, gpieces, goccults, ipieces, ioccults, to_permute,
     ppiece,
     (), |_|(),
     |_,_,_|(), |puo_pp, ()|{
@@ -624,6 +628,7 @@ pub fn create_occultation(
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
   ipieces: &IPieces,
+  ioccults: &IOccults,
   to_permute: &mut ToPermute,
   region: Area,
   occulter: PieceId,
@@ -672,7 +677,8 @@ pub fn create_occultation(
 
       for &ppiece in &recalc {
         recalculate_occultation_ofmany(gen,
-                                       gplayers, gpieces, goccults, ipieces,
+                                       gplayers, gpieces, goccults,
+                                       ipieces, ioccults,
                                        to_permute,
                                        ppiece, &mut updates)?;
       }
@@ -701,6 +707,7 @@ pub fn remove_occultation(
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
   ipieces: &IPieces,
+  ioccults: &IOccults,
   to_permute: &mut ToPermute,
   occulter: PieceId,
 ) -> Vec<(PieceId, PieceUpdateOps)> {
@@ -740,7 +747,8 @@ pub fn remove_occultation(
     let pieces: Vec<_> = occ.notches.iter().collect();
     for &ppiece in pieces.iter() {
       recalculate_occultation_ofmany(gen,
-                                     gplayers, gpieces, goccults, ipieces,
+                                     gplayers, gpieces, goccults,
+                                     ipieces, ioccults,
                                      to_permute,
                                      ppiece, &mut updates)
         .unwrap_or_else(|e| {
