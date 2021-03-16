@@ -43,24 +43,17 @@ impl VisiblePieceAngle {
 
 impl<P,Z> PriOccultedGeneral<P,Z> {
   #[throws(IE)]
-  fn instead<'p>(&self, ioccults: &'p IOccults, p: &'p IPiece)
+  pub fn instead<'p>(&self, ioccults: &'p IOccults, p: &'p IPiece)
                  -> Either<ShowUnocculted, &'p dyn OccultedPieceTrait>
   {
+    p.show_or_instead(ioccults, self.fully_visible())?
+  }
+
+  pub fn fully_visible(&self) -> Option<ShowUnocculted> {
     use PriOG::*;
     match self {
-      Visible(v) => Left(*v),
-      Occulted | Displaced(..) => {
-        Right({
-          let occilk = p.occilk.as_ref()
-            .ok_or_else(|| internal_logic_error(format!(
-              "occulted non-occultable {:?}", p)))?
-            .borrow();
-          let occ_data = ioccults.ilks.get(occilk)
-            .ok_or_else(|| internal_logic_error(format!(
-              "occulted ilk vanished {:?} {:?}", p, occilk)))?;
-          occ_data.p_occ.as_ref()
-        })
-      },
+      Visible(v) => Some(*v),
+      Occulted | Displaced(..) => None,
     }
   }
 

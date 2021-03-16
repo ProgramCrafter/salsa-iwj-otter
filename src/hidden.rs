@@ -246,6 +246,27 @@ impl IPieceTraitObj {
   pub fn into_inner(self) -> Box<dyn PieceTrait> { self.0 }
 }
 
+impl IPiece {
+  #[throws(IE)]
+  pub fn show_or_instead<'p>(&self, ioccults: &'p IOccults,
+                         y: Option<ShowUnocculted>)
+          -> Either<ShowUnocculted, &'p dyn OccultedPieceTrait> {
+    match y {
+      Some(y) => Left(y),
+      None => Right({
+        let occilk = self.occilk.as_ref()
+          .ok_or_else(|| internal_logic_error(format!(
+            "occulted non-occultable {:?}", self)))?
+          .borrow();
+        let occ_data = ioccults.ilks.get(occilk)
+          .ok_or_else(|| internal_logic_error(format!(
+            "occulted ilk vanished {:?} {:?}", self, occilk)))?;
+        occ_data.p_occ.as_ref()
+      }),
+    }
+  }
+}
+
 impl GPiece {
   pub fn fully_visible_to_everyone(&self) -> Option<ShowUnocculted> {
     match self.occult.passive {
