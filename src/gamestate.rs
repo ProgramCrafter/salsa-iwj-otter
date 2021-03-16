@@ -142,6 +142,14 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
 
   fn describe_html(&self, gpc: &GPiece) -> Result<Html,IE>;
 
+  #[throws(IE)]
+  /// Piece is responsible for dealing with the possibility that they
+  /// may be occulted!
+  fn held_change_hook(&self,
+                      _gpieces: &mut GPieces,
+                      _was_held: Option<PlayerId>)
+                      -> UnpreparedUpdates { None }
+
   fn delete_hook(&self, _p: &GPiece, _gs: &mut GameState)
                  -> ExecuteGameChangeUpdates { 
     ExecuteGameChangeUpdates{ pcs: vec![], log: vec![], raw: None }

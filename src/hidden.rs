@@ -245,6 +245,10 @@ impl IPieceTraitObj {
   }
 
   pub fn into_inner(self) -> Box<dyn PieceTrait> { self.0 }
+
+  pub fn direct_trait_access(&self) -> &Box<dyn PieceTrait> {
+    &self.0
+  }
 }
 
 impl IPiece {

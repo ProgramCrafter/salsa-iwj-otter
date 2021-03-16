@@ -121,6 +121,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
   let gpl = gs.players.byid(player)?;
   let piece = vpiece_decode(gs, player, gpl, form.piece)
     .ok_or(OE::PieceGone)?;
+  let was_held = gs.pieces.get(piece).as_ref().map(|gpc| gpc.held);
   use ApiPieceOpError::*;
 
   match (||{
@@ -174,11 +175,30 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
     }
   };
 
+  if let Some(unprepared) = if_chain! {
+    let g = &mut *ig;
+    if let Some(was_held) = was_held;
+    if let Some(gpc) = g.gs.pieces.get_mut(piece);
+    if gpc.held != was_held;
+    if let Some(ipc) = &g.ipieces.get(piece);
+    if let Ok(unprepared) = ipc.direct_trait_access().held_change_hook(
+      &mut g.gs.pieces,
+      was_held,
+    ).map_err(|e| error!("internal error on change hook: {:?}", e));
+    then { unprepared }
+    else { None }
+  } {
+    let mut prepub = PrepareUpdatesBuffer::new(&mut ig, None, None);
+    unprepared(&mut prepub);
+    prepub.finish();
+  }
+
       Ok::<(),OE>(())
     })();
 
     let g = &mut *ig;
     let gs = &mut g.gs;
+
     (r, to_permute.implement(&mut gs.players,
                              &mut gs.pieces,
                              &mut gs.occults,
