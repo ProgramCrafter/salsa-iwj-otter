@@ -282,7 +282,7 @@ fn recalculate_occultation_general<
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
   ipieces: &IPieces,
-  _ioccults: &IOccults,
+  ioccults: &IOccults,
   to_permute: &mut ToPermute,
   piece: PieceId,
   // if no change, we return ret_vanilla(log_visible)
@@ -429,7 +429,9 @@ fn recalculate_occultation_general<
       let bad = || internal_error_bydebug(&("missing", opiece, h.occid));
       let oipc = ipieces.get(opiece).ok_or_else(bad)?;
       let ogpc = gpieces.get(opiece).ok_or_else(bad)?;
-      Ok::<_,IE>(oipc.p.describe_html(ogpc)?)
+      let ounocc = ogpc.fully_visible_to_everyone()
+        .ok_or_else(||internal_error_bydebug(&(occulteds, &ogpc)))?;
+      Ok::<_,IE>(oipc.p.describe_html(ogpc, ounocc)?)
     };
 
     let most_obscure = most_obscure.unwrap_or(&OccK::Visible); // no players!
@@ -441,15 +443,16 @@ fn recalculate_occultation_general<
                      show)
       );
 
-    let log = match most_obscure {
-      OccK::Visible => {
+    let log = match most_obscure.map_displaced(|_|((),())).pri_occulted() {
+      Some(PriOG::Visible(_y)) => {
         log_visible
       }
-      OccK::Scrambled | OccK::Displaced{..} => {
-        let show = ipc.p.describe_html(gpc)?;
+      Some(prioc@ PriOG::Occulted) |
+      Some(prioc@ PriOG::Displaced(..)) => {
+        let show = prioc.describe(ioccults, gpc, ipc);
         call_log_callback(Some(&show))?
       },
-      OccK::Invisible => {
+      None => {
         call_log_callback(None)?
       },
     };

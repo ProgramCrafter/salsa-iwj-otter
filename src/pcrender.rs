@@ -78,7 +78,7 @@ impl<P,Z> PriOccultedGeneral<P,Z> {
   pub fn describe_fallible(&self, ioccults: &IOccults,
                            gpc: &GPiece, ipc: &IPiece) -> Html {
     match self.instead(ioccults, ipc)? {
-      Left(_y) => ipc.p.describe_html(gpc)?,
+      Left(y) => ipc.p.describe_html(gpc, y)?,
       Right(i) => i.describe_html()?,
     }
   }

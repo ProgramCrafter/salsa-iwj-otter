@@ -147,7 +147,7 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
                id: VisiblePieceId, y: ShowUnocculted) -> Result<(),IE>;
 
-  fn describe_html(&self, gpc: &GPiece) -> Result<Html,IE>;
+  fn describe_html(&self, gpc: &GPiece, y: ShowUnocculted) -> Result<Html,IE>;
 
   fn delete_hook(&self, _p: &GPiece, _gs: &mut GameState)
                  -> ExecuteGameChangeUpdates { 

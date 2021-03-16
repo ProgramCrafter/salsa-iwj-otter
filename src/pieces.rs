@@ -134,7 +134,7 @@ impl PieceTrait for SimpleShape {
     self.svg_piece_raw(f, gpc.face, &mut |_|Ok(()))?;
   }
   #[throws(IE)]
-  fn describe_html(&self, gpc: &GPiece) -> Html {
+  fn describe_html(&self, gpc: &GPiece, _: ShowUnocculted) -> Html {
     Html(if_chain! {
       if let face = gpc.face;
       if let Some(colour) = self.colours.get(face);
