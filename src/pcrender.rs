@@ -122,8 +122,7 @@ impl PieceRenderInstructions {
                          -> PreparedPieceState {
     let pri = self;
     let (pos, zlevel) = pri.pos_zlevel(gpc);
-    dbgc!(pos, pri, gpc, ioccults, ipc);
-    PreparedPieceState {
+    let r = PreparedPieceState {
       pos        : pos,
       held       : gpc.held,
       svg        : pri.make_defs(ioccults, gpc, ipc)?,
@@ -132,7 +131,9 @@ impl PieceRenderInstructions {
       angle      : pri.angle(gpc).to_compass(),
       pinned     : gpc.pinned,
       uos        : pri.ui_operations(gpc, ipc)?,
-    }
+    };
+    dbgc!(pri, ipc, gpc, r);
+    r
   }
 
   pub fn angle(&self, gpc: &GPiece) -> VisiblePieceAngle {
