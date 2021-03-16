@@ -17,6 +17,10 @@ pub type RawClientSequence = u64;
 #[serde(transparent)]
 pub struct ClientSequence(RawClientSequence);
 
+pub type UnpreparedUpdates = Box<
+    dyn for<'r> FnOnce(&'r mut PrepareUpdatesBuffer)
+    >;
+
 // ---------- from manamgenet operations ----------
 
 #[derive(Debug)] // not Default

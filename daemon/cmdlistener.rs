@@ -227,14 +227,12 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
 
 // ---------- game command implementations ----------
 
-type ExecuteGameInsnResultsPrepub = Box<
-    dyn for<'r> FnOnce(&'r mut PrepareUpdatesBuffer)
-    >;
+
 
 type ExecuteGameInsnResults<'igr, 'ig> = (
   ExecuteGameChangeUpdates,
   MgmtGameResponse,
-  Option<ExecuteGameInsnResultsPrepub>, // These happena after everything else
+  Option<UnpreparedUpdates>, // These happena after everything else
   &'igr mut InstanceGuard<'ig>,
 );
 
@@ -622,7 +620,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
        Some(
          Box::new(move |prepub: &mut PrepareUpdatesBuffer|
                   prepub.piece_updates(xupdates))
-           as ExecuteGameInsnResultsPrepub
+           as UnpreparedUpdates
        ),
        ig_g)
     },
