@@ -105,6 +105,17 @@ impl OccultationKind {
   }
 }
 
+impl OccultationKindGeneral<(Pos, ZLevel)> {
+  pub fn pri_occulted(self) -> Option<PriOcculted> {
+    Some(match self {
+      OccKG::Invisible          => return None,
+      OccKG::Visible            => PriOcculted::Visible(ShowUnocculted(())),
+      OccKG::Scrambled          => PriOcculted::Occulted,
+      OccKG::Displaced((pos,z)) => PriOcculted::Displaced(pos, z),
+    })
+  }
+}
+
 impl<T> OccultationKindGeneral<T> {
   fn map_displaced<U,F>(&self, f: F) -> OccultationKindGeneral<U>
     where F: FnOnce(&T) -> U,
@@ -189,16 +200,15 @@ pub fn piece_pri(
     }
   };
 
-  let occk_dbg = occk.map_displaced(|(pos,z)|(*pos,z.zg));
-  let occulted = match occk {
-    OccKG::Invisible => {
-      trace_dbg!("piece_pri", player, piece, occk, gpc);
+  let occk_dbg = occk.clone();
+  let occulted = match occk.pri_occulted() {
+    Some(o) => o,
+    None => {
+      trace_dbg!("piece_pri", player, piece, occk_dbg, gpc);
       return None;
     }
-    OccKG::Visible            => PriOcculted::Visible(ShowUnocculted(())),
-    OccKG::Scrambled          => PriOcculted::Occulted,
-    OccKG::Displaced((pos,z)) => PriOcculted::Displaced(pos, z),
   };
+
   let vpid = gpl.idmap.fwd_or_insert(piece);
   trace_dbg!("piece_pri", player, piece, occk_dbg, vpid, occulted, gpc);
   Some(PieceRenderInstructions { vpid, occulted })
