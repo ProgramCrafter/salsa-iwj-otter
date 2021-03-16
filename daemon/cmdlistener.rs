@@ -683,6 +683,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         gpc.pos.clamped(gs.table_size).map_err(|_| SpecError::PosOffTable)?;
         if gpc.zlevel.z > gs.max_z { gs.max_z = gpc.zlevel.z.clone() }
         let piece = gs.pieces.as_mut(modperm).insert(gpc);
+        let p = IPieceTraitObj::new(p);
         ig.ipieces.as_mut(modperm).insert(piece, IPiece { p, occilk });
         updates.push((piece, PieceUpdateOp::Insert(())));
         pos = (pos + posd)?;

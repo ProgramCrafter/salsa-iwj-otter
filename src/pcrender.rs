@@ -78,7 +78,7 @@ impl<P,Z> PriOccultedGeneral<P,Z> {
   pub fn describe_fallible(&self, ioccults: &IOccults,
                            gpc: &GPiece, ipc: &IPiece) -> Html {
     match self.instead(ioccults, ipc)? {
-      Left(y) => ipc.p.describe_html(gpc, y)?,
+      Left(y) => ipc.show(y).describe_html(gpc, y)?,
       Right(i) => i.describe_html()?,
     }
   }
@@ -158,7 +158,7 @@ impl PieceRenderInstructions {
     let instead = pri.instead(ioccults, ipc)?;
 
     let o: &dyn OutlineTrait = match instead {
-      Left(_) => Borrow::<dyn PieceTrait>::borrow(&ipc.p).dyn_upcast(),
+      Left(y) => Borrow::<dyn PieceTrait>::borrow(ipc.show(y)).dyn_upcast(),
       Right(i) => i.dyn_upcast(),
     };
 

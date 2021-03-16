@@ -18,6 +18,11 @@ visible_slotmap_key!{ OccId(b'H') }
 #[derive(Copy,Clone,Debug)]
 pub struct ShowUnocculted(());
 
+#[derive(Debug,Serialize,Deserialize)]
+#[serde(transparent)]
+pub struct IPieceTraitObj(Box<dyn PieceTrait>);
+deref_to_field!{IPieceTraitObj, Box<dyn PieceTrait>, 0} // xxx
+
 #[derive(Clone,Debug,Default,Serialize,Deserialize)]
 pub struct GameOccults {
   occults: DenseSlotMap<OccId, Occultation>,
@@ -232,6 +237,14 @@ impl PieceRenderInstructions {
   }
 }
 
+impl IPieceTraitObj {
+  pub fn new(p: Box<dyn PieceTrait>) -> Self { Self(p) }
+
+  pub fn show(&self, _: ShowUnocculted) -> &Box<dyn PieceTrait> {
+    &self.0
+  }
+}
+
 impl GPiece {
   pub fn fully_visible_to_everyone(&self) -> Option<ShowUnocculted> {
     match self.occult.passive {
@@ -431,7 +444,7 @@ fn recalculate_occultation_general<
       let ogpc = gpieces.get(opiece).ok_or_else(bad)?;
       let ounocc = ogpc.fully_visible_to_everyone()
         .ok_or_else(||internal_error_bydebug(&(occulteds, &ogpc)))?;
-      Ok::<_,IE>(oipc.p.describe_html(ogpc, ounocc)?)
+      Ok::<_,IE>(oipc.show(ounocc).describe_html(ogpc, ounocc)?)
     };
 
     let most_obscure = most_obscure.unwrap_or(&OccK::Visible); // no players!
