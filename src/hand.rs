@@ -146,7 +146,7 @@ impl PieceTrait for Hand {
 
     let goccults = &mut gs.occults;
     let gpc = gpieces.byid_mut(piece)?;
-    let xdata = gpc.xdata.get_mut::<HandState>()
+    let xdata = gpc.xdata.get_mut::<HandState,_>(default)
       .map_err(|e| APOE::ReportViaResponse(e.into()))?;
     let old_desc = self.describe_html_inner(Some(xdata));
     let old_player = xdata.player();
@@ -227,7 +227,8 @@ impl PieceTrait for Hand {
     // We need to reaquire mut references because create_occultation etc.
     // need mut access to gpieces.
     let gpc = gpieces.byid_mut(piece).expect("piece disappeared");
-    let xdata = gpc.xdata.get_mut::<HandState>().expect("xdata disappeared!");
+    let xdata = gpc.xdata.get_mut::<HandState,_>(default)
+      .expect("xdata disappeared!");
     assert_eq!(xdata.player(), old_player);
 
     dbgc!("thinging done", &xdata, &new_owner);

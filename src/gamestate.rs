@@ -284,8 +284,11 @@ impl GPiece {
   }
 
   #[throws(IE)]
-  pub fn xdata_mut<T:PieceXData+Default>(&mut self) -> &mut T {
-    self.xdata.get_mut()?
+  pub fn xdata_mut<
+      T: PieceXData + Default,
+      D: FnOnce() -> T,
+  >(&mut self, def: D) -> &mut T {
+    self.xdata.get_mut(def)?
   }
 
   pub fn dummy() -> Self {
@@ -326,8 +329,11 @@ impl PieceXDataState {
     else { throw!(xdata_unexpected::<T>(xdata)) }
   }
 
-  fn get_mut<T:PieceXData+Default>(&mut self) -> Result<&mut T, IE> {
-    let xdata = self.get_or_insert_with(|| <T as PieceXData>::default());
+  fn get_mut<
+      T: PieceXData+Default,
+      D: FnOnce() -> T,
+  >(&mut self, def: D) -> Result<&mut T, IE> {
+    let xdata = self.get_or_insert_with(|| Box::new(def()));
     let xdata: &mut dyn PieceXData = xdata.as_mut();
     let keep: *mut dyn PieceXData = xdata;
     if let Some(y) = xdata.downcast_mut::<T>() { return Ok(y) }
