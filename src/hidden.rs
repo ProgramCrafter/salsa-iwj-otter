@@ -189,8 +189,8 @@ pub fn piece_pri(
     then {
       occultation.views.get_kind(player)
         .map_displaced(|(area, z)| {
-          let x: Coord = notch.index().try_into().unwrap(); // xxx
-          let pos = (area.0[0] + PosC([x*5, 0])).unwrap(); // xxx
+          let x: Coord = (notch.index() % 3).try_into().unwrap(); // xxx
+          let pos = (area.0[0] + PosC([x*4, 0])).unwrap(); // xxx
           let pos = (pos + PosC([5,5])).unwrap(); // xxx
           let z = z.plus_offset(notch.into())
             .unwrap_or_else(|e| { // eek!
