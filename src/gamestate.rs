@@ -372,6 +372,19 @@ impl PieceXDataState {
   }
 }
 
+impl GameState {
+  pub fn dummy() -> Self { GameState {
+    table_colour: Html::lit("green"),
+    table_size: PosC([300,200]),
+    pieces: default(),
+    gen: Generation(0),
+    log: default(),
+    max_z: default(),
+    players: default(),
+    occults: default(),
+  } }
+}
+
 // ---------- log expiry ==========
 
 impl GameState {
