@@ -104,24 +104,6 @@ struct Running {
   user: User,
 }
 
-mod timespec_serde {
-  use super::*;
-
-  #[derive(Serialize, Deserialize)]
-  struct Timespec(i64, u32);
-
-  #[throws(S::Error)]
-  pub fn serialize<S:Serializer>(v: &TimeSpec, s: S) -> S::Ok {
-    let v = Timespec(v.tv_sec().into(), v.tv_nsec().try_into().unwrap());
-    Serialize::serialize(&v, s)?
-  }
-  #[throws(D::Error)]
-  pub fn deserialize<'de, D:Deserializer<'de>>(d: D) -> TimeSpec {
-    let Timespec(sec, nsec) = Deserialize::deserialize(d)?;
-    libc::timespec { tv_sec: sec.into(), tv_nsec: nsec.into() }.into()
-  }
-}
-
 impl ChessClock {
   fn time(&self) -> TimeSpec {
     TVL::seconds(self.time.into())
