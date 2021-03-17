@@ -33,7 +33,9 @@ impl HandState {
 }
 
 #[typetag::serde(name="Hand")]
-impl PieceXData for HandState { }
+impl PieceXData for HandState {
+  fn dummy() -> Self { default() }
+}
 
 #[dyn_upcast]
 impl OutlineTrait for Hand {

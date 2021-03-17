@@ -92,11 +92,7 @@ pub struct CommittedLogEntry {
 
 #[typetag::serde(tag="type")]
 pub trait PieceXData: Downcast + Debug + Send + 'static {
-  fn default() -> Box<dyn PieceXData> where Self: Default {
-    let k = Box::new(<Self as Default>::default());
-    dbg!(&k);
-    k
-  }
+  fn dummy() -> Self where Self: Sized;
 }
 impl_downcast!(PieceXData);
 
@@ -279,7 +275,7 @@ impl Debug for Html {
 
 impl GPiece {
   #[throws(IE)]
-  pub fn xdata<T:PieceXData+Default>(&self) -> Option<&T> {
+  pub fn xdata<T:PieceXData>(&self) -> Option<&T> {
     self.xdata.get()?
   }
 
@@ -309,20 +305,19 @@ impl GPiece {
   }
 }
 
-fn xdata_unexpected<T:PieceXData+Default>(got: &dyn PieceXData)
-                                          -> InternalError {
+fn xdata_unexpected<T:PieceXData>(got: &dyn PieceXData) -> InternalError {
   internal_logic_error(format!(
     "\n\
      piece xdata unexpectedly: {:?}\n\
      expected something like:  Some({:?})\n",
-    &got, <T as PieceXData>::default(),
+    &got, T::dummy(),
   ))
 }
 
 #[ext(pub)]
 impl PieceXDataState {
   #[throws(IE)]
-  fn get<T:PieceXData>(&self) -> Option<&T> where T: Default {
+  fn get<T:PieceXData>(&self) -> Option<&T> {
     let xdata = if let Some(xdata) = &self { xdata } else { return None };
     let xdata: &dyn PieceXData = xdata.as_ref();
     if let Some(y) = xdata.downcast_ref::<T>() { Some(y) }
@@ -330,7 +325,7 @@ impl PieceXDataState {
   }
 
   fn get_mut<
-      T: PieceXData+Default,
+      T: PieceXData,
       D: FnOnce() -> T,
   >(&mut self, def: D) -> Result<&mut T, IE> {
     let xdata = self.get_or_insert_with(|| Box::new(def()));
