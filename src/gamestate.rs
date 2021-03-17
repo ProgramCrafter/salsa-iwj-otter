@@ -187,7 +187,8 @@ pub struct PieceSpecLoaded {
 #[typetag::serde(tag="type")]
 pub trait PieceSpec: Debug {
   fn count(&self) -> usize { 1 }
-  fn load(&self, i: usize) -> Result<PieceSpecLoaded, SpecError>;
+  fn load(&self, i: usize, gpc: &mut GPiece)
+          -> Result<PieceSpecLoaded, SpecError>;
 }
 
 // ========== implementations ==========

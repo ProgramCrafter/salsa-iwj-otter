@@ -20,7 +20,7 @@ struct Clock { // state
 #[typetag::serde]
 impl PieceSpec for ChessClock {
   #[throws(SpecError)]
-  fn load(&self, _: usize) -> PieceSpecLoaded {
+  fn load(&self, _: usize, _gpc: &mut GPiece) -> PieceSpecLoaded {
     let clock = Clock {
 
     };

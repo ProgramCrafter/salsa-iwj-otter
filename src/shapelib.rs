@@ -364,7 +364,8 @@ impl Contents {
 
 #[typetag::serde(name="Lib")]
 impl PieceSpec for ItemSpec {
-  fn load(&self, _: usize) -> Result<PieceSpecLoaded, SpecError> {
+  fn load(&self, _: usize, _: &mut GPiece)
+          -> Result<PieceSpecLoaded, SpecError> {
     self.load()
   }
 }
@@ -372,7 +373,9 @@ impl PieceSpec for ItemSpec {
 #[typetag::serde(name="LibList")]
 impl PieceSpec for MultiSpec {
   fn count(&self) -> usize { self.items.len() }
-  fn load(&self, i: usize) -> Result<PieceSpecLoaded, SpecError> {
+  fn load(&self, i: usize, _: &mut GPiece)
+          -> Result<PieceSpecLoaded, SpecError>
+  {
     let item = self.items.get(i).ok_or_else(
       || SpE::InternalError(format!("item {:?} from {:?}", i, &self))
     )?;

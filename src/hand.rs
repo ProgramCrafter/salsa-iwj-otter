@@ -51,7 +51,7 @@ impl OutlineTrait for Hand {
 #[typetag::serde]
 impl PieceSpec for piece_specs::Hand {
   #[throws(SpecError)]
-  fn load(&self, _: usize) -> PieceSpecLoaded {
+  fn load(&self, _: usize, _: &mut GPiece) -> PieceSpecLoaded {
     let common = SimpleCommon {
       itemname: None,
       faces: index_vec![ColourSpec(self.colour.clone())],

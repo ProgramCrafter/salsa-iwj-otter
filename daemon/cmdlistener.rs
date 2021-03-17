@@ -656,16 +656,9 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let mut pos = pos.unwrap_or(DEFAULT_POS_START);
       let mut z = gs.max_z.clone_mut();
       for piece_i in count {
-        let PieceSpecLoaded { p, occultable } = info.load(piece_i as usize)?;
         let ilks = &mut ig.ioccults.ilks;
-        let occilk = occultable.map(|(ilkname, p_occ)| {
-          ilks.insert(ilkname, OccultIlkData { p_occ })
-        });
         let face = face.unwrap_or_default();
-        if p.nfaces() <= face.into() {
-          throw!(SpecError::FaceNotFound);
-        }
-        let gpc = GPiece {
+        let mut gpc = GPiece {
           held: None,
           zlevel: ZLevel { z: z.increment()?, zg: gs.gen },
           lastclient: default(),
@@ -677,6 +670,14 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           pos, face,
           xdata: None,
         };
+        let PieceSpecLoaded { p, occultable } =
+          info.load(piece_i as usize, &mut gpc)?;
+        if p.nfaces() <= face.into() {
+          throw!(SpecError::FaceNotFound);
+        }
+        let occilk = occultable.map(|(ilkname, p_occ)| {
+          ilks.insert(ilkname, OccultIlkData { p_occ })
+        });
         gpc.pos.clamped(gs.table_size).map_err(|_| SpecError::PosOffTable)?;
         if gpc.zlevel.z > gs.max_z { gs.max_z = gpc.zlevel.z.clone() }
         let piece = gs.pieces.as_mut(modperm).insert(gpc);
