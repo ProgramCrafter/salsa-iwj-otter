@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-#![allow(dead_code)]
-#![allow(unused_variables)]
-
 use otter_api_tests::*;
 
 pub use std::cell::{RefCell, RefMut};
@@ -14,6 +11,7 @@ pub use index_vec::Idx;
 
 type Setup = Rc<RefCell<SetupCore>>;
 
+#[allow(dead_code)]
 struct Ctx {
   opts: Opts,
   su_rc: Setup,
@@ -120,12 +118,12 @@ fn updates_parser<R:Read>(input: R, out: &mut mpsc::Sender<Update>) {
       let lhs = l.next().unwrap();
       let rhs = l.next().unwrap();
       let rhs = rhs.trim_start();
-      let ins = accum.insert(lhs.to_string(), rhs.to_string())
+      let () = accum.insert(lhs.to_string(), rhs.to_string())
         .is_none().expect("duplicate field");
       continue;
     }
     let entry = mem::take(&mut accum);
-    let accum = (); // stops accidental use of accum
+    #[allow(unused_variables)] let accum = (); // stops accidental use of accum
     if entry.get("event").map(String::as_str) == Some("commsworking") {
       eprintln!("commsworking: {}", entry["data"]);
     } else if let Some(event) = entry.get("event") {
@@ -341,8 +339,8 @@ impl Session {
       move |s: &mut _, g, v: &_| { ef(s,g,v)?; Ok::<_,AE>(None) }
     });
     self.await_update(
-      |session, gen      | (gen == exp).as_option(),
-      |session, gen, k, v| {
+      |_session, gen      | (gen == exp).as_option(),
+      | session, gen, k, v| {
         if let Some(pieces) = pieces.as_mut() {
           update_update_pieces(&session.nick, pieces, k, v);
         }
@@ -407,7 +405,7 @@ pub fn update_update_pieces<PI:Idx>(
 pub type PieceOpData = (&'static str, JsV);
 pub trait PieceOp: Debug {
   fn api(&self) -> Option<PieceOpData>;
-  fn update(&self, pi: &mut PieceInfo<JsV>) { info!("no update {:?}", self) }
+  fn update(&self, _pi: &mut PieceInfo<JsV>) { info!("no update {:?}", self) }
 }
 impl PieceOp for PieceOpData {
   fn api(&self) -> Option<PieceOpData> { Some((self.0, self.1.clone())) }
@@ -418,7 +416,7 @@ impl PieceOp for Pos {
 }
 impl PieceOp for () {
   fn api(&self) -> Option<PieceOpData> { None }
-  fn update(&self, pi: &mut PieceInfo<JsV>) {  }
+  fn update(&self, _pi: &mut PieceInfo<JsV>) {  }
 }
 
 pub trait PieceSpecForOp: Debug {
@@ -515,7 +513,7 @@ impl Ctx {
 
     let mut added = vec![];
     session.synchx::<PIA,_>(None, None,
-      |session, gen, k, v| if_chain! {
+      |_session, _gen, k, v| if_chain! {
         if k == "Piece";
         let piece = v["piece"].as_str().unwrap().to_string();
         let op = v["op"].as_object().unwrap();
@@ -540,7 +538,7 @@ impl Ctx {
     // ----- alice: claim alices' hand -----
 
     let [hand] = a_pieces.iter_enumerated()
-      .filter(|(i,p)| p.info["desc"] == otter::hand::UNCLAIMED_DESC)
+      .filter(|(_i,p)| p.info["desc"] == otter::hand::UNCLAIMED_DESC)
       .map(|(i,_)| i)
       .collect::<ArrayVec<[_;1]>>()
       .into_inner().unwrap();
@@ -555,7 +553,7 @@ impl Ctx {
 
     fn find_pawns<PI:Idx>(pieces: &PiecesSlice<PI>) -> [PI; 2] {
       let mut pawns = pieces.iter_enumerated()
-        .filter(|(i,p)| p.info["desc"].as_str().unwrap().ends_with(" pawn"))
+        .filter(|(_i,p)| p.info["desc"].as_str().unwrap().ends_with(" pawn"))
         .map(|(i,_)| i)
         .take(2)
         .collect::<ArrayVec<[_;2]>>()
@@ -595,7 +593,7 @@ impl Ctx {
       let mut a_p = (&mut a_pieces, p);
 
       alice.api_piece(GH::Grab, PuSynch(&mut a_p), ())?;
-      bob.synchx(Some(&mut b_pieces), None, |sess, gen, k, v| {
+      bob.synchx(Some(&mut b_pieces), None, |_sess, gen, k, v| {
         dbg!(gen, k, v);
         if k == "Log" {
           let m = v["logent"]["html"].as_str().unwrap();
@@ -607,7 +605,7 @@ impl Ctx {
       })?;
 
       alice.api_piece(GH::Raw, &mut a_p, alice_move_to)?;
-      bob.synchx(Some(&mut b_pieces), None, |sess, gen, k, v| {
+      bob.synchx(Some(&mut b_pieces), None, |_sess, gen, k, v| {
         dbg!(gen, k, v);
         panic!("bob saw something when alice moved displaced occulted");
       })?;
@@ -639,7 +637,7 @@ fn tests(mut c: Ctx) {
 #[throws(AE)]
 fn main() {
   {
-    let (opts, _cln, instance, mut su) = setup_core(
+    let (opts, _cln, _instance, mut su) = setup_core(
       &[module_path!()],
       &mut |_|false
     )?;
