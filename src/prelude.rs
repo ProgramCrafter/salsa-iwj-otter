@@ -71,6 +71,8 @@ pub use lazy_static::lazy_static;
 pub use log::{debug, error, info, trace, warn};
 pub use log::{log, log_enabled};
 pub use nix::unistd::{self, Uid};
+pub use nix::sys::time::TimeSpec;
+pub use nix::time::clock_gettime;
 pub use num_derive::FromPrimitive;
 pub use num_traits::{Bounded, FromPrimitive, ToPrimitive};
 pub use ordered_float::OrderedFloat;
@@ -94,6 +96,9 @@ pub use thiserror::Error;
 pub use url::Url;
 pub use vecdeque_stableix::Deque as StableIndexVecDeque;
 pub use void::Void;
+
+use nix::time::ClockId;
+pub const CLOCK_REALTIME: ClockId = ClockId::CLOCK_REALTIME;
 
 pub use otter_base::zcoord::{self, ZCoord};
 pub use otter_base::misc as base_misc;
