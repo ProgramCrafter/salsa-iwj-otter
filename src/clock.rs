@@ -128,7 +128,6 @@ enum URenderState {
   Stopped,
   Reset,
   Flag,
-  PMissing,
 }
 use URenderState as URS;
 
@@ -140,11 +139,13 @@ impl Clock {
       USERS.iter(),
       state.users.iter()
     ).map(|(&user, ustate)| {
-      let nick = gplayers.get(ustate.player).map(|gpl| gpl.nick.as_str());
-      let (st, remaining, nick) =
+      let nick = gplayers.get(ustate.player)
+        .map(|gpl| gpl.nick.as_str())
+        .unwrap_or("");
+      let (st, remaining) =
         if ustate.remaining < TVL::zero() {
-          (URS::Flag, TVL::zero(), nick.unwrap_or(""))
-        } else if let Some(nick) = nick {
+          (URS::Flag, TVL::zero())
+        } else {
           (
             if let Some(running) = &state.running {
               if running.user != user {
@@ -160,10 +161,8 @@ impl Clock {
               URS::Stopped
             }
 
-            , ustate.remaining, nick
+            , ustate.remaining
           )
-        } else {
-          (URS::PMissing, ustate.remaining, "")
         };
 
       URender { st, remaining, nick }
