@@ -499,7 +499,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
   #[throws(InternalError)]
   fn piece_update_player(ioccults: &IOccults,
-                         gpc: &mut GPiece,
+                         gs: &GameState,
+                         gpc: &GPiece,
                          ipc: &IPiece,
                          op: PieceUpdateOp<(),()>,
                          pri: &Option<PieceRenderInstructions>)
@@ -508,7 +509,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     let pri = match pri { Some(pri) => pri, None => return None };
 
 
-    let op = pri.map_piece_update_op(ioccults, gpc, ipc, op)?;
+    let op = pri.map_piece_update_op(ioccults, gs, gpc, ipc, op)?;
     op.map(|op| PreparedPieceUpdate {
       piece: pri.vpid,
       op,
@@ -533,8 +534,17 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     if let Some(ref mut gpc) = gpc {
       gen_update(gpc, gen, &self.by_client);
     }
+    let gpc = gs.pieces.byid(piece).ok();
+
     let mut out: SecondarySlotMap<PlayerId, PreparedPieceUpdate> = default();
-    for (player, gpl) in &mut gs.players {
+    for player in self.g.iplayers.keys() {
+      // Iterate via iplayers because we want to borrow each gpl
+      // mutably and also gs immutably, at different times.  The naive
+      // approach fails because the iterator must borrow the whole
+      // thing, and mutably to produce mut references, so ties everything
+      // in a knot.
+      let gpl = match gs.players.get_mut(player) { Some(v)=>v, _=>continue };
+
       let ops = match ops {
         PUOs::Simple(update) => update,
         PUOs::PerPlayer(ref ops) => match ops.get(player) {
@@ -542,13 +552,14 @@ impl<'r> PrepareUpdatesBuffer<'r> {
           None => continue,
         }
       };
-      let op = match (&mut gpc, ipc) {
+      let op = match (gpc, ipc) {
         (Some(gpc), Some(ipc)) => {
           let pri = piece_pri(ioccults, &gs.occults, player,
-                              gpl, piece, *gpc, ipc);
+                              gpl, piece, gpc, ipc);
           gs.max_z.update_max(&gpc.zlevel.z);
+          drop(gpl);
           Self::piece_update_player(
-            ioccults, gpc, ipc, ops, &pri
+            ioccults, gs, gpc, ipc, ops, &pri
           )?
         }
         _ => gpl.idmap.fwd(piece).map(

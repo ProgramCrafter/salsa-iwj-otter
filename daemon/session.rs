@@ -109,6 +109,7 @@ fn session_inner(form: Json<SessionForm>,
     }
     let layout = gpl.layout;
     let mut pieces: Vec<_> = ig.gs.pieces.iter().collect();
+    let nick = gpl.nick.clone();
 
     pieces.sort_by_key(|(_,pr)| &pr.zlevel);
 
@@ -116,11 +117,14 @@ fn session_inner(form: Json<SessionForm>,
       let ipc = if let Some(pto) = ig.ipieces.get(piece) { pto }
       else { continue /* was deleted */ };
 
-      let pri = piece_pri(ioccults, &ig.gs.occults, player, gpl,
+      let pri = piece_pri(ioccults, &ig.gs.occults, player,
+                          // we need to re-obtain gpl, because
+                          // make_defs needs to borrow the whole of &gs
+                          ig.gs.players.byid_mut(player)?,
                           piece, gpc, ipc);
       let pri = if let Some(pri) = pri { pri } else { continue /*invisible*/};
 
-      let defs = pri.make_defs(ioccults, gpc, ipc)?;
+      let defs = pri.make_defs(ioccults, &ig.gs, gpc, ipc)?;
       alldefs.push((pri.vpid, defs));
       let desc = pri.describe(ioccults, &gpc, ipc);
 
@@ -203,7 +207,7 @@ fn session_inner(form: Json<SessionForm>,
       defs: alldefs,
       uses,
       scale: SVG_SCALE,
-      nick: gpl.nick.clone(),
+      nick,
       sse_url_prefix,
       player_info_pane,
       ptoken: form.ptoken.clone(),

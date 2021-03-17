@@ -137,7 +137,7 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
   }
 
   // #[throws] doesn't work here - fehler #todo
-  fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece, gs: &GameState,
                id: VisiblePieceId) -> Result<(),IE>;
 
   fn describe_html(&self, gpc: &GPiece) -> Result<Html,IE>;

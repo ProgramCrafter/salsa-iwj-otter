@@ -79,7 +79,7 @@ impl<P,Z> PriOccultedGeneral<P,Z> {
 
 impl PieceRenderInstructions {
   #[throws(IE)]
-  pub fn map_piece_update_op(&self, ioccults: &IOccults,
+  pub fn map_piece_update_op(&self, ioccults: &IOccults, gs: &GameState,
                              gpc: &GPiece, ipc: &IPiece,
                              op: PieceUpdateOp<(),()>
   ) -> Option<PieceUpdateOp<PreparedPieceState, ZLevel>>
@@ -99,7 +99,7 @@ impl PieceRenderInstructions {
 
     let op = op.try_map(
       |()|{
-        let ns = self.prep_piecestate(ioccults, gpc, ipc)?;
+        let ns = self.prep_piecestate(ioccults, gs, gpc, ipc)?;
         <Result<_,InternalError>>::Ok(ns)
       },
       |()|{
@@ -110,7 +110,7 @@ impl PieceRenderInstructions {
   }
   
   #[throws(IE)]
-  pub fn prep_piecestate(&self, ioccults: &IOccults,
+  pub fn prep_piecestate(&self, ioccults: &IOccults, gs: &GameState,
                          gpc: &GPiece, ipc: &IPiece)
                          -> PreparedPieceState {
     let pri = self;
@@ -118,7 +118,7 @@ impl PieceRenderInstructions {
     let r = PreparedPieceState {
       pos        : pos,
       held       : gpc.held,
-      svg        : pri.make_defs(ioccults, gpc, ipc)?,
+      svg        : pri.make_defs(ioccults, gs, gpc, ipc)?,
       z          : zlevel.z.clone(),
       zg         : zlevel.zg,
       angle      : pri.angle(gpc).to_compass(),
@@ -145,7 +145,7 @@ impl PieceRenderInstructions {
   }
 
   #[throws(IE)]
-  pub fn make_defs<'p>(&self, ioccults: &IOccults,
+  pub fn make_defs<'p>(&self, ioccults: &IOccults, gs: &GameState,
                          gpc: &GPiece, ipc: &IPiece) -> Html
   {
     let pri = self;
@@ -173,7 +173,7 @@ impl PieceRenderInstructions {
 
     match instead {
       Left(y) => {
-        ipc.show(y).svg_piece(&mut defs, gpc, pri.vpid)?;
+        ipc.show(y).svg_piece(&mut defs, gpc, gs, pri.vpid)?;
       },
       Right(i) => {
         i.svg(&mut defs, pri.vpid)?;

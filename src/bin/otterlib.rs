@@ -173,7 +173,7 @@ fn preview(items: Vec<ItemForOutput>) {
         }
         let mut html = Html("".into());
         let gpc = GPiece { face: face.into(), ..GPiece::dummy() };
-        p.svg_piece(&mut html, &gpc, default())?;
+        p.svg_piece(&mut html, &gpc, &GameState::dummy(), default())?;
         println!("{}</svg>", html.0);
       }
       println!("</td>");

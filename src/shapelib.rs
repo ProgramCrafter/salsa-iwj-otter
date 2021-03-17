@@ -216,7 +216,7 @@ impl PieceTrait for Item {
   }
 
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _vpid: VisiblePieceId) {
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _gs: &GameState, _vpid: VisiblePieceId) {
     let face = &self.faces[gpc.face];
     let svgd = &self.svgs[face.svg];
     face.xform.write_svgd(f, svgd)?;

@@ -47,7 +47,7 @@ impl PieceTrait for Clock {
   fn nfaces(&self) -> RawFaceId { 1 }
 
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, _gpc: &GPiece, id: VisiblePieceId) {
+  fn svg_piece(&self, f: &mut Html, _gpc: &GPiece, _gs: &GameState, id: VisiblePieceId) {
     dbgc!("rendering", id);
     write!( &mut f.0, r##"
         <rect fill="black" width="10" height="10"/>
