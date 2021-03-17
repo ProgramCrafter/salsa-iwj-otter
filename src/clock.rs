@@ -7,6 +7,8 @@
 use crate::prelude::*;
 use shapelib::Rectangle;
 
+use nix::sys::time::TimeValLike as TVL;
+
 // ==================== users ====================
 
 struct UserInfo {
@@ -74,7 +76,7 @@ struct Clock { // state
   spec: ChessClock,
 }
 
-#[derive(Debug,Serialize,Deserialize,Default)]
+#[derive(Debug,Serialize,Deserialize)]
 struct State {
   users: [UState; 2],
   #[serde(skip)] running: Option<Running>,
@@ -82,20 +84,24 @@ struct State {
 
 #[typetag::serde(name="Hand")]
 impl PieceXData for State {
-  fn dummy() -> Self { default() }
+  fn dummy() -> Self {
+    State {
+      users: [UState { player: default(), remaining: TVL::zero() }; N],
+      running: None,
+    }
+  }
 }
 
 
-#[derive(Debug,Default,Serialize,Deserialize)]
+#[derive(Debug,Copy,Clone,Serialize,Deserialize)]
 struct UState {
   player: PlayerId,
-  remaining: Time, // -ve means flag
+  #[serde(with="timespec_serde")] remaining: TimeSpec, // -ve means flag
 }
 
 #[derive(Debug,Serialize,Deserialize)]
 struct Running {
   user: User,
-  #[serde(with="timespec_serde")] next_wakeup: TimeSpec,
 }
 
 mod timespec_serde {
@@ -116,12 +122,18 @@ mod timespec_serde {
   }
 }
 
+impl ChessClock {
+  fn time(&self) -> TimeSpec {
+    TVL::seconds(self.time.into())
+  }
+}
+
 // ==================== rendering, abstract ====================
 
 #[derive(Debug)]
 struct URender<'r> {
   st: URenderState,
-  remaining: Time, // always >=0
+  remaining: TimeSpec, // always >=0
   nick: &'r str,
 }
 
@@ -148,8 +160,8 @@ impl Clock {
     ).map(|(&user, ustate)| {
       let nick = gplayers.get(ustate.player).map(|gpl| gpl.nick.as_str());
       let (st, remaining, nick) =
-        if ustate.remaining < 0 {
-          (URS::Flag, 0, nick.unwrap_or(""))
+        if ustate.remaining < TVL::zero() {
+          (URS::Flag, TVL::zero(), nick.unwrap_or(""))
         } else if let Some(nick) = nick {
           (
             if let Some(running) = &state.running {
@@ -160,7 +172,7 @@ impl Clock {
               } else {
                 URS::Running
               }
-            } else if ustate.remaining == self.spec.time {
+            } else if ustate.remaining == self.spec.time() {
               URS::Reset
             } else {
               URS::Stopped
