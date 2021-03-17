@@ -136,8 +136,8 @@ enum URenderState {
 use URenderState as URS;
 
 impl Clock {
-  fn urender<'r>(&self, state: &State, gplayers: &'r GPlayers, gpc: &GPiece)
-                 -> [URender<'r>; N]
+  fn urender<'r>(&self, state: &State, held: Option<PlayerId>,
+                 gplayers: &'r GPlayers) -> [URender<'r>; N]
   {
     let mut r: [URender;N] = izip!(
       USERS.iter(),
@@ -153,7 +153,7 @@ impl Clock {
             if let Some(running) = &state.running {
               if running.user != user {
                 URS::Inactive
-              } else if gpc.held.is_some() {
+              } else if held.is_some() {
                 URS::ActiveHeld
               } else {
                 URS::Running
@@ -185,8 +185,8 @@ impl Clock {
 
 // ==================== rendering ====================
 
-const W: Coord = 50;
-const H: Coord = 20;
+const W: Coord = 40;
+const H: Coord = 14;
 const OUTLINE: Rectangle = Rectangle { xy: PosC([W as f64, H as f64]) };
 
 
@@ -227,19 +227,84 @@ impl PieceTrait for Clock {
   fn nfaces(&self) -> RawFaceId { 1 }
 
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, _gpc: &GPiece, _gs: &GameState, id: VisiblePieceId) {
-    dbgc!("rendering", id);
-    write!( &mut f.0, r##"
-        <rect fill="white" stroke="black" width="{}" height="{}"/>
-    "##, W, H
-    )?;
-/*
-    let urs = 
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece, gs: &GameState,
+               vpid: VisiblePieceId) {
+    let f = &mut f.0;
+    let state = gpc.xdata()?
+      .ok_or_else(|| internal_logic_error("missing/wrong xdata"))?;
+    let urenders = self.urender(&state, gpc.held, &gs.players);
 
-    dbg
-    for (i,u) in USERS.iter().enumerate() {
-      
-    }*/
+    // player missing, nick is red and pink
+
+    const Y: &[f32] = &[ 0., 7. ];
+
+    struct Show {
+      text:       &'static str,
+      background: &'static str,
+      sigil:      &'static str,
+    }
+
+    impl URenderState {
+      fn show(self) -> Show {
+        use URS::*;
+        let (text, background, sigil) = match self {
+          Running    => ("black",  "yellow",     "&#x25b6;" /* >  */ ),
+          ActiveHeld => ("black",  "yellow",     "&#x2016;" /* || */ ),
+          Inactive   => ("black",  "white",      ":"                 ),
+          Stopped    => ("black",  "lightblue",  "&#x25a1;" /* [] */ ),
+          Reset      => ("black",  "lightgreen", "&#x25cb;" /* O  */ ),
+          Flag       => ("white",  "red",        "&#x2691;" /* F  */ ),
+        };
+        Show { text, background, sigil }
+      }
+    }
+    
+    write!(f, r##"
+<g transform="translate(-20,-7)">"##,
+    )?;
+    for (y, u) in izip!(Y.iter(), urenders.iter()) {
+      write!(f, r##"
+  <rect y="{}" fill="{}" width="40" height="7"/>"##,
+             y,
+             u.st.show().background,
+      )?;
+    }
+    write!(f, r##"
+  <rect fill="none" stroke="black" width="40" height="14"></rect>
+  <clipPath id="def.{}.cl"><rect width="40" height="14"></rect></clipPath>"##,
+           vpid
+    )?;
+    for (y, u) in izip!(Y.iter(), urenders.iter()) {
+      let y = y + 6.;
+      let show = u.st.show();
+      let mins = u.remaining.tv_sec() / 60;
+      let secs = u.remaining.tv_sec() % 60;
+
+      write!(f, r##"
+  <text x="1"  y="{}" font-family="monospace" font-size="6"
+   fill="{}" >{:>3}{}{:02}</text>"##,
+             y,
+             show.text,
+             mins,
+             show.sigil,
+             secs
+      )?;
+      if let Some(nick) = u.nick {
+        write!(f, r##"
+  <text x="23" y="{} clip-path="url(#def.{}.cl)" font-size="4">{}</text>"##,
+               y,
+               vpid,
+               htmlescape::encode_minimal(nick),
+        )?;
+      } else {
+        write!(f, r##"
+  <text x="23" y="13" fill="pink" stroke="red" 
+   stroke-width="0.1" font-size="8">&nbsp;&nbsp;-</text>"##
+        )?;
+      }
+    }
+    write!(f, r##"
+</g>"##)?;
   }
 
   #[throws(IE)]
