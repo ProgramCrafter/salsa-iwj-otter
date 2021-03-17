@@ -164,9 +164,9 @@ impl Clock {
               URS::Reset
             } else {
               URS::Stopped
-            },
-            ustate.remaining,
-            nick
+            }
+
+            , ustate.remaining, nick
           )
         } else {
           (URS::PMissing, ustate.remaining, "")
