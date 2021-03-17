@@ -116,7 +116,7 @@ impl ChessClock {
 struct URender<'r> {
   st: URenderState,
   remaining: TimeSpec, // always >=0
-  nick: &'r str,
+  nick: Option<&'r str>,
 }
 
 #[derive(Debug,Copy,Clone)]
@@ -140,8 +140,7 @@ impl Clock {
       state.users.iter()
     ).map(|(&user, ustate)| {
       let nick = gplayers.get(ustate.player)
-        .map(|gpl| gpl.nick.as_str())
-        .unwrap_or("");
+        .map(|gpl| gpl.nick.as_str());
       let (st, remaining) =
         if ustate.remaining < TVL::zero() {
           (URS::Flag, TVL::zero())
