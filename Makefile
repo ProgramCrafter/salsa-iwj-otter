@@ -199,7 +199,7 @@ stamp/cargo.wasm-%: $(call rsrcs, base wasm Cargo.*)
 	$(stamp)
 
 stamp/cargo.deploy-build: $(call rsrcs,.)
-	$(CARGO) -T$(DEPLOY_ARCH) build --workspace $(call cr,$(DEPLOY_RELEASE)) -p otter -p otter-daemon
+	$(CARGO) -T$(DEPLOY_ARCH) build $(call cr,$(DEPLOY_RELEASE)) -p otter -p otter-daemon
 	$(stamp)
 
 #---------- wasm ----------
