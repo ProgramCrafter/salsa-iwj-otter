@@ -66,13 +66,13 @@ impl From<User> for u8 {
 // ==================== state ====================
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
-pub struct ChessClock { // spec
+pub struct ChessClock { // Spec
   time: Time,
   #[serde(default)] per_move: usize,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-struct Clock { // state
+struct Clock { // PieceTrait
   spec: ChessClock,
 }
 
