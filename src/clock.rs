@@ -282,7 +282,7 @@ impl PieceTrait for Clock {
 
       write!(f, r##"
   <text x="1"  y="{}" font-family="Latin Modern Mono, monospace" font-size="6"
-   font-weight="700"f ill="{}" >{:3>}{}{:02}</text>"##,
+   font-weight="700"f ill="{}" >{:>3}{}{:02}</text>"##,
              y,
              show.text,
              mins,
@@ -298,8 +298,9 @@ impl PieceTrait for Clock {
         )?;
       } else {
         write!(f, r##"
-  <text x="23" y="13" fill="pink" stroke="red" 
-   stroke-width="0.1" font-size="8">&nbsp;&nbsp;-</text>"##
+  <text x="23" y="{}" fill="pink" stroke="red" 
+   stroke-width="0.1" font-size="8">&nbsp;&nbsp;-</text>"##,
+               y
         )?;
       }
     }
