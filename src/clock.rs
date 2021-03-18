@@ -79,14 +79,14 @@ struct Clock { // PieceTrait
 #[derive(Debug,Serialize,Deserialize)]
 struct State {
   users: [UState; 2],
-  #[serde(skip)] running: Option<Running>,
+  #[serde(skip)] current: Option<Current>,
 }
 
 impl State {
   fn new() -> Self {
     State {
       users: [UState { player: default(), remaining: TVL::zero() }; N],
-      running: None,
+      current: None,
     }
   }
 }
@@ -104,7 +104,7 @@ struct UState {
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-struct Running {
+struct Current {
   user: User,
 }
 
@@ -150,8 +150,8 @@ impl Clock {
           (URS::Flag, TVL::zero())
         } else {
           (
-            if let Some(running) = &state.running {
-              if running.user != user {
+            if let Some(current) = &state.current {
+              if current.user != user {
                 URS::Inactive
               } else if held.is_some() {
                 URS::ActiveHeld
