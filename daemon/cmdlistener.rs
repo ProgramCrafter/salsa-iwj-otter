@@ -591,7 +591,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         let pri = PieceRenderInstructions::new_visible(default());
         pri.describe(ioccults, gpc, &ipc)
       } else {
-        Html::lit("<piece partially missing from game state!>")
+        Html::lit("&lt;piece partially missing from game state!&gt;")
       };
       let mut xupdates = vec![];
       if let Some(gpc) = gpc {

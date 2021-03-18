@@ -63,7 +63,7 @@ impl<P,Z> PriOccultedGeneral<P,Z> {
     self.describe_fallible(ioccults, gpc, ipc)
       .unwrap_or_else(|e| {
         error!("error describing piece: {:?}", e);
-        Html::lit("<internal error describing piece>")
+        Html::lit("&lt;internal error describing piece&gt;")
       })
   }
 

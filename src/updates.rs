@@ -213,7 +213,7 @@ pub fn log_did_to_piece_whoby(ioccults: &IOccults, by_gpl: &mut GPlayer,
     })
   })().unwrap_or_else(|e|{
     error!("failed to format during logging: {:?}", e);
-    Html::lit("<internal error>")
+    Html::lit("&lt;internal error&gt;")
   });
 
   let log = vec![ LogEntry { html: Html(format!(
