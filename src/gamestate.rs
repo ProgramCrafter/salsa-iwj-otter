@@ -280,6 +280,11 @@ impl GPiece {
   }
 
   #[throws(IE)]
+  pub fn xdata_exp<T:PieceXData>(&self) -> &T {
+    self.xdata.get_exp()?
+  }
+
+  #[throws(IE)]
   pub fn xdata_mut<
       T: PieceXData,
       D: FnOnce() -> T,
@@ -322,6 +327,17 @@ impl PieceXDataState {
     let xdata: &dyn PieceXData = xdata.as_ref();
     if let Some(y) = xdata.downcast_ref::<T>() { Some(y) }
     else { throw!(xdata_unexpected::<T>(xdata)) }
+  }
+
+  #[throws(IE)]
+  fn get_exp<T:PieceXData>(&self) -> &T {
+    self.get()?
+      .ok_or_else(|| internal_logic_error(format!(
+        "\n\
+         piece xdata unexpected missing\n\
+         expected something like: {:?}\n",
+        T::dummy(),
+      )))?
   }
 
   fn get_mut<
