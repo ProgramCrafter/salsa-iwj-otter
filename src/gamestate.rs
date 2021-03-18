@@ -309,7 +309,7 @@ fn xdata_unexpected<T:PieceXData>(got: &dyn PieceXData) -> InternalError {
   internal_logic_error(format!(
     "\n\
      piece xdata unexpectedly: {:?}\n\
-     expected something like:  Some({:?})\n",
+     expected something like:  {:?}\n",
     &got, T::dummy(),
   ))
 }
