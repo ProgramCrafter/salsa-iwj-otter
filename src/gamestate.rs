@@ -281,7 +281,7 @@ impl GPiece {
 
   #[throws(IE)]
   pub fn xdata_mut<
-      T: PieceXData + Default,
+      T: PieceXData,
       D: FnOnce() -> T,
   >(&mut self, def: D) -> &mut T {
     self.xdata.get_mut(def)?
