@@ -324,5 +324,71 @@ impl PieceTrait for Clock {
     Html::lit("the chess clock")
   }
 
+  #[throws(InternalError)]
+  fn add_ui_operations(&self, upd: &mut Vec<UoDescription>,
+                       gs: &GameState, gpc: &GPiece) {
+    let state: &State = gpc.xdata_exp()?;
+
+    let for_users = || izip!(&USERS, &USERINFOS, &state.users).map(
+      |(&user, userinfo, ust)| (user, userinfo, ust,
+                                userinfo.idchar.to_ascii_uppercase())
+    );
+
+    for (user, userinfo, _ust, upchar) in for_users() {
+      if state.current.as_ref().map(|c| c.user) != Some(user) {
+        upd.push(UoDescription {
+          kind: UoKind::Piece,
+          def_key: userinfo.idchar,
+          opname: format!("start-{}", userinfo.idchar),
+          desc: Html(if state.current.is_none() {
+            format!("Start, with player {}", &upchar)
+          } else {
+            format!("Make player {} current", &upchar)
+          }),
+          wrc: WRC::UpdateSvg,
+        });
+      }
+    }
+
+    if state.current.is_some() {
+      upd.push(UoDescription {
+        kind: UoKind::Piece,
+        def_key: 'S',
+        opname: "stop".to_string(),
+        desc: Html::lit("Stop"),
+        wrc: WRC::UpdateSvg,
+      });
+    }
+    if state.current.is_none() {
+      upd.push(UoDescription {
+        kind: UoKind::Piece,
+        def_key: 'R',
+        opname: "reset".to_string(),
+        desc: Html::lit("Reset"),
+        wrc: WRC::UpdateSvg,
+      });
+    }
+
+    for (_user, userinfo, ust, upchar) in for_users() {
+      if let Some(_gpl) = gs.players.get(ust.player) {
+        upd.push(UoDescription {
+          kind: UoKind::Piece,
+          def_key: upchar,
+          opname: format!("unclaim-{}", userinfo.idchar),
+          desc: Html(format!("Clear player {}", &upchar)),
+          wrc: WRC::UpdateSvg,
+        });
+      } else {
+        upd.push(UoDescription {
+          kind: UoKind::Piece,
+          def_key: upchar,
+          opname: format!("claim-{}", userinfo.idchar),
+          desc: Html(format!("Become player {}", &upchar)),
+          wrc: WRC::UpdateSvg,
+        });
+      }
+    }
+  }
+
   fn itemname(&self) -> &str { "chess-clock" }
 }
