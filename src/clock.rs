@@ -91,7 +91,7 @@ impl State {
   }
 }
 
-#[typetag::serde(name="Hand")]
+#[typetag::serde(name="ChessClock")]
 impl PieceXData for State {
   fn dummy() -> Self { State::new() }
 }
