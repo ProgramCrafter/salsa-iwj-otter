@@ -281,8 +281,8 @@ impl PieceTrait for Clock {
       let secs = u.remaining.tv_sec() % 60;
 
       write!(f, r##"
-  <text x="1"  y="{}" font-family="monospace" font-size="6"
-   fill="{}" >{:>3}{}{:02}</text>"##,
+  <text x="1"  y="{}" font-family="Latin Modern Mono, monospace" font-size="6"
+   font-weight="700"f ill="{}" >{:3>}{}{:02}</text>"##,
              y,
              show.text,
              mins,
