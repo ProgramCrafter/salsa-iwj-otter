@@ -82,14 +82,18 @@ struct State {
   #[serde(skip)] running: Option<Running>,
 }
 
-#[typetag::serde(name="Hand")]
-impl PieceXData for State {
-  fn dummy() -> Self {
+impl State {
+  fn new() -> Self {
     State {
       users: [UState { player: default(), remaining: TVL::zero() }; N],
       running: None,
     }
   }
+}
+
+#[typetag::serde(name="Hand")]
+impl PieceXData for State {
+  fn dummy() -> Self { State::new() }
 }
 
 
@@ -191,12 +195,15 @@ const OUTLINE: Rectangle = Rectangle { xy: PosC([W as f64, H as f64]) };
 #[typetag::serde]
 impl PieceSpec for ChessClock {
   #[throws(SpecError)]
-  fn load(&self, _: usize, _gpc: &mut GPiece) -> PieceSpecLoaded {
+  fn load(&self, _: usize, gpc: &mut GPiece) -> PieceSpecLoaded {
     if self.time <= 0 { throw!(SpecError::NegativeTimeout) }
 
     let clock = Clock {
       spec: self.clone(),
     };
+
+    gpc.xdata_mut(|| State::new())?;
+
     PieceSpecLoaded {
       p: Box::new(clock),
       occultable: None,
