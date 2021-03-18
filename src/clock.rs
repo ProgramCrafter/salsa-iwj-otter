@@ -279,15 +279,16 @@ impl PieceTrait for Clock {
       let show = u.st.show();
       let mins = u.remaining.tv_sec() / 60;
       let secs = u.remaining.tv_sec() % 60;
+      let mins = mins.to_string();
+      let mins_pad = iter::repeat("&nbsp;").take(3 - mins.len())
+        .collect::<String>();
 
       write!(f, r##"
   <text x="1"  y="{}" font-family="Latin Modern Mono, monospace" font-size="6"
-   font-weight="700"f ill="{}" >{:>3}{}{:02}</text>"##,
+   font-weight="700" fill="{}" >{}{}{}{:02}</text>"##,
              y,
              show.text,
-             mins,
-             show.sigil,
-             secs
+             mins_pad, mins, show.sigil, secs
       )?;
       if let Some(nick) = u.nick {
         write!(f, r##"
