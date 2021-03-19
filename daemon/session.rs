@@ -138,7 +138,7 @@ fn session_inner(form: Json<SessionForm>,
         pinned: gpc.pinned,
         angle: vangle,
         desc,
-        uos: &pri.ui_operations(gpc, ipc)?,
+        uos: &pri.ui_operations(&ig.gs, gpc, ipc)?,
       };
 
       let for_piece = SessionPieceContext {

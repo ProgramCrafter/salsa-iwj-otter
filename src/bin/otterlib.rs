@@ -94,7 +94,7 @@ fn preview(items: Vec<ItemForOutput>) {
       let loaded = spec.clone().load().context("load")?;
       let p = loaded.p; // xxx show occulted version too
       let mut uos = vec![];
-      p.add_ui_operations(&mut uos, &GPiece::dummy())
+      p.add_ui_operations(&mut uos, &GameState::dummy(), &GPiece::dummy())
         .context("add uos")?;
       let uos = uos.into_iter().map(|uo| uo.opname).collect::<Vec<_>>();
       let spec = spec.clone();

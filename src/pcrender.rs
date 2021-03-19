@@ -123,7 +123,7 @@ impl PieceRenderInstructions {
       zg         : zlevel.zg,
       angle      : pri.angle(gpc).to_compass(),
       pinned     : gpc.pinned,
-      uos        : pri.ui_operations(gpc, ipc)?,
+      uos        : pri.ui_operations(gs, gpc, ipc)?,
     };
     dbgc!(pri, ipc, gpc, r);
     r
@@ -136,7 +136,7 @@ impl PieceRenderInstructions {
     let pri = self;
     let r = PreparedPieceImage {
       svg        : pri.make_defs(ioccults, gs, gpc, ipc)?,
-      uos        : pri.ui_operations(gpc, ipc)?,
+      uos        : pri.ui_operations(gs, gpc, ipc)?,
     };
     dbgc!(pri, ipc, gpc, r);
     r
@@ -201,7 +201,7 @@ impl PieceRenderInstructions {
   }
 
   #[throws(InternalError)]
-  pub fn ui_operations(&self, gpc: &GPiece, ipc: &IPiece)
+  pub fn ui_operations(&self, gs: &GameState, gpc: &GPiece, ipc: &IPiece)
                        -> Vec<UoDescription>
   {
     let y = match self.occulted {
@@ -221,7 +221,7 @@ impl PieceRenderInstructions {
         desc: Html::lit("flip"),
       })
     }
-    ipc.show(y).add_ui_operations(&mut out, gpc)?;
+    ipc.show(y).add_ui_operations(&mut out, gs, gpc)?;
     out
   }
 }
