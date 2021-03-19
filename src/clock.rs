@@ -414,7 +414,7 @@ impl PieceTrait for Clock {
       },
       "reset" => {
         if state.current.is_some() {
-          throw!(OE::BadOperation);
+          throw!(OE::BadPieceStateForOperation);
         }
         for ust in &mut state.users {
           ust.remaining = self.spec.initial_time();
@@ -423,19 +423,19 @@ impl PieceTrait for Clock {
       "claim-x" | "claim-y" => {
         let user = get_user();
         if let Some(_gpl) = gs.players.get(state.users[user].player) {
-          throw!(OE::BadOperation);
+          throw!(OE::BadPieceStateForOperation);
         }
         state.users[user].player = player;
       },
       "unclaim-x" | "unclaim-y" => {
         let user = get_user();
         if state.users[user].player != player {
-          throw!(OE::BadOperation);
+          throw!(OE::BadPieceStateForOperation);
         }
         state.users[user].player = default();
       },
       _ => {
-        throw!(OE::BadOperation);
+        throw!(OE::BadPieceStateForOperation);
       }
     }
 

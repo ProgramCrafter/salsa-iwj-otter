@@ -77,7 +77,8 @@ impl From<&OnlineErrorResponse> for rocket::http::Status {
       NoClient | NoPlayer(_) | GameBeingDestroyed
         => Status::NotFound,
       OE::PieceHeld | OE::PieceGone |
-      OE::OverlappingOccultation | OE::Occultation
+      OE::OverlappingOccultation | OE::Occultation |
+      OE::BadPieceStateForOperation
         => Status::Conflict,
       InvalidZCoord | BadOperation | BadJSON(_)
         => Status::BadRequest,

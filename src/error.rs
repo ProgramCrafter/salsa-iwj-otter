@@ -28,6 +28,8 @@ pub enum OnlineError {
   OverlappingOccultation,
   #[error("piece is occulting, or occulted")]
   Occultation,
+  #[error("UI operation not valid in the curret piece state")]
+  BadPieceStateForOperation,
 }
 from_instance_lock_error!{OnlineError}
 
