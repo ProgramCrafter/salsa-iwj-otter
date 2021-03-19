@@ -73,6 +73,11 @@ impl From<User> for u8 {
   fn from(user: User) -> u8 { user.0 as u8 }
 }
 
+impl std::ops::Not for User {
+  type Output = User;
+  fn not(self) -> User { User(! self.0) }
+}
+
 // ==================== state ====================
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
@@ -423,6 +428,10 @@ impl PieceTrait for Clock {
       "claim-x" | "claim-y" => {
         let user = get_user();
         if let Some(_gpl) = gs.players.get(state.users[user].player) {
+          throw!(OE::BadPieceStateForOperation);
+        }
+        if state.users[! user].player == player {
+          // todo: some more useful per-player message
           throw!(OE::BadPieceStateForOperation);
         }
         state.users[user].player = player;
