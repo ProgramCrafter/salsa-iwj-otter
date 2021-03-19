@@ -308,7 +308,7 @@ impl PieceTrait for Clock {
       )?;
       if let Some(nick) = u.nick {
         write!(f, r##"
-  <text x="23" y="{} clip-path="url(#def.{}.cl)" font-size="4">{}</text>"##,
+  <text x="23" y="{}" clip-path="url(#def.{}.cl)" font-size="4">{}</text>"##,
                y,
                vpid,
                htmlescape::encode_minimal(nick),
