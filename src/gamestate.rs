@@ -305,6 +305,13 @@ impl GPiece {
     self.xdata.get_mut(def)?
   }
 
+  #[throws(IE)]
+  pub fn xdata_mut_exp<
+      T: PieceXData,
+  >(&mut self) -> &mut T {
+    self.xdata.get_mut_exp()?
+  }
+
   pub fn dummy() -> Self {
     let gen_dummy = Generation(1);
     GPiece {
@@ -360,6 +367,13 @@ impl PieceXDataState {
       D: FnOnce() -> T,
   >(&mut self, def: D) -> Result<&mut T, IE> {
     let xdata = self.get_or_insert_with(|| Box::new(def()));
+    xdata_get_mut_inner(xdata)
+  }
+
+  fn get_mut_exp<
+      T: PieceXData,
+  >(&mut self) -> Result<&mut T, IE> {
+    let xdata = self.as_mut().ok_or_else(|| xdata_missing::<T>())?;
     xdata_get_mut_inner(xdata)
   }
 }
