@@ -59,6 +59,16 @@ impl TryFrom<u8> for User {
   }) }
 }
 
+impl TryFrom<char> for User {
+  type Error = BadClockUserError;
+  #[throws(BadClockUserError)]
+  fn try_from(c: char) -> User { User(match c {
+    'x' | 'X' => false,
+    'y' | 'Y' => true,
+    _ => throw!(BadClockUserError),
+  }) }
+}
+
 impl From<User> for u8 {
   fn from(user: User) -> u8 { user.0 as u8 }
 }
