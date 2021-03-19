@@ -425,18 +425,19 @@ impl PieceTrait for Clock {
           ust.remaining = self.spec.initial_time();
         }
       },
-      "claim-x" | "claim-y" => {
+      "claim-x" | "claim-y" => { // xxx these need to be Unpredictable
         let user = get_user();
         if let Some(_gpl) = gs.players.get(state.users[user].player) {
           throw!(OE::BadPieceStateForOperation);
         }
         if state.users[! user].player == player {
           // todo: some more useful per-player message
+          // xxx: actually, clear us from the other player instead ?
           throw!(OE::BadPieceStateForOperation);
         }
         state.users[user].player = player;
       },
-      "unclaim-x" | "unclaim-y" => {
+      "unclaim-x" | "unclaim-y" => { // xxx these need to be Unpredictable
         let user = get_user();
         if state.users[user].player != player {
           throw!(OE::BadPieceStateForOperation);
