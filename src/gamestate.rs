@@ -331,6 +331,14 @@ fn xdata_unexpected<T:PieceXData>(got: &dyn PieceXData) -> InternalError {
     &got, T::dummy(),
   ))
 }
+fn xdata_missing<T:PieceXData>() -> InternalError {
+  internal_logic_error(format!(
+    "\n\
+     piece xdata unexpected missing\n\
+     expected something like: {:?}\n",
+    T::dummy(),
+  ))
+}
 
 #[ext(pub)]
 impl PieceXDataState {
@@ -344,13 +352,7 @@ impl PieceXDataState {
 
   #[throws(IE)]
   fn get_exp<T:PieceXData>(&self) -> &T {
-    self.get()?
-      .ok_or_else(|| internal_logic_error(format!(
-        "\n\
-         piece xdata unexpected missing\n\
-         expected something like: {:?}\n",
-        T::dummy(),
-      )))?
+    self.get()?.ok_or_else(|| xdata_missing::<T>())?
   }
 
   fn get_mut<
