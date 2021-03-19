@@ -46,16 +46,16 @@ impl fmt::Debug for User {
 }
 
 #[derive(Debug,Clone,Copy,Error,Serialize,Deserialize)]
-struct UserOutOfRangeError;
-display_as_debug!{UserOutOfRangeError}
+struct BadClockUserError;
+display_as_debug!{BadClockUserError}
 
 impl TryFrom<u8> for User {
-  type Error = UserOutOfRangeError;
-  #[throws(UserOutOfRangeError)]
+  type Error = BadClockUserError;
+  #[throws(BadClockUserError)]
   fn try_from(u: u8) -> User { User(match u {
     0 => false,
     1 => true,
-    _ => throw!(UserOutOfRangeError),
+    _ => throw!(BadClockUserError),
   }) }
 }
 
