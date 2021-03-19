@@ -391,5 +391,66 @@ impl PieceTrait for Clock {
     }
   }
 
+  #[throws(ApiPieceOpError)]
+  fn ui_operation(&self, args: ApiPieceOpArgs<'_>,
+                  opname: &str, _wrc: WhatResponseToClientOp)
+                  -> UpdateFromOpComplex {
+    let ApiPieceOpArgs { gs,piece,player,ioccults,ipc, .. } = args;
+    let gpc = gs.pieces.byid_mut(piece)?;
+    let gpl = gs.players.byid(player)?;
+    let state: &mut State = gpc.xdata_mut_exp()
+      .map_err(|e| APOE::ReportViaResponse(e.into()))?;
+    let get_user = || opname.chars().next_back().unwrap().try_into().unwrap();
+
+    let log = Html::lit("xxxx");
+    // xxx
+    match opname {
+      "start-x" | "start-y" => {
+        let user = get_user();
+        state.current = Some(Current { user });
+      },
+      "stop" => {
+        state.current = None;
+      },
+      "reset" => {
+        if state.current.is_some() {
+          throw!(OE::BadOperation);
+        }
+        for ust in &mut state.users {
+          ust.remaining = self.spec.initial_time();
+        }
+      },
+      "claim-x" | "claim-y" => {
+        let user = get_user();
+        if let Some(_gpl) = gs.players.get(state.users[user].player) {
+          throw!(OE::BadOperation);
+        }
+        state.users[user].player = player;
+      },
+      "unclaim-x" | "unclaim-y" => {
+        let user = get_user();
+        if state.users[user].player != player {
+          throw!(OE::BadOperation);
+        }
+        state.users[user].player = default();
+      },
+      _ => {
+        throw!(OE::BadOperation);
+      }
+    }
+
+    let log = log_did_to_piece(ioccults, gpl, gpc, ipc, &log.0)
+      .unwrap_or_else(|e| {
+        error!("failed to log: {:?}", &e);
+        vec![LogEntry { html: Html::lit("&lt;failed to log&gt;") }]
+      });
+    let r: PieceUpdateFromOpSimple = 
+    (WhatResponseToClientOp::UpdateSvg,
+     PieceUpdateOp::Modify(()),
+     log);
+    
+    (r.into(), vec![], None)
+  }
+
   fn itemname(&self) -> &str { "chess-clock" }
 }
