@@ -308,15 +308,15 @@ impl PieceTrait for Clock {
       )?;
       if let Some(nick) = u.nick {
         write!(f, r##"
-  <text x="23" y="{}" clip-path="url(#def.{}.cl)" font-size="4">{}</text>"##,
+  <text x="21" y="{}" clip-path="url(#def.{}.cl)" font-size="4">{}</text>"##,
                y,
                vpid,
                htmlescape::encode_minimal(nick),
         )?;
       } else {
         write!(f, r##"
-  <text x="23" y="{}" fill="pink" stroke="red" 
-   stroke-width="0.1" font-size="8">&nbsp;&nbsp;-</text>"##,
+  <text x="27" y="{}" fill="pink" stroke="red" 
+   stroke-width="0.1" font-size="8">-</text>"##,
                y
         )?;
       }
