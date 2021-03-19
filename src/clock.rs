@@ -430,12 +430,11 @@ impl PieceTrait for Clock {
         if let Some(_gpl) = gs.players.get(state.users[user].player) {
           throw!(OE::BadPieceStateForOperation);
         }
-        if state.users[! user].player == player {
-          // todo: some more useful per-player message
-          // xxx: actually, clear us from the other player instead ?
-          throw!(OE::BadPieceStateForOperation);
-        }
         state.users[user].player = player;
+        if state.users[! user].player == player {
+          // OK, you want to swap
+          state.users[! user].player = default();
+        }
       },
       "unclaim-x" | "unclaim-y" => { // xxx these need to be Unpredictable
         let user = get_user();
