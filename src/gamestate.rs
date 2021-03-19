@@ -358,19 +358,25 @@ impl PieceXDataState {
       D: FnOnce() -> T,
   >(&mut self, def: D) -> Result<&mut T, IE> {
     let xdata = self.get_or_insert_with(|| Box::new(def()));
-    let xdata: &mut dyn PieceXData = xdata.as_mut();
-    let keep: *mut dyn PieceXData = xdata;
-    if let Some(y) = xdata.downcast_mut::<T>() { return Ok(y) }
-    
-    // Erroneous borrowck error with early returns
-    // https://github.com/rust-lang/rust/issues/58910
-    // https://github.com/rust-lang/rust/issues/51545
-    // Safety: the `xdata` borrow that was passed to `downcast_mut`
-    // is no longer present in this branch, so now we have only `keep`
-    // and the things `keep` was borrowed from.
-    let xdata: &dyn PieceXData = unsafe { keep.as_ref().unwrap() };
-    Err(xdata_unexpected::<T>(xdata))
+    xdata_get_mut_inner(xdata)
   }
+}
+
+fn xdata_get_mut_inner<
+  T: PieceXData,
+>(xdata: &mut Box<dyn PieceXData>) -> Result<&mut T, IE> {
+  let xdata: &mut dyn PieceXData = xdata.as_mut();
+  let keep: *mut dyn PieceXData = xdata;
+  if let Some(y) = xdata.downcast_mut::<T>() { return Ok(y) }
+    
+  // Erroneous borrowck error with early returns
+  // https://github.com/rust-lang/rust/issues/58910
+  // https://github.com/rust-lang/rust/issues/51545
+  // Safety: the `xdata` borrow that was passed to `downcast_mut`
+  // is no longer present in this branch, so now we have only `keep`
+  // and the things `keep` was borrowed from.
+  let xdata: &dyn PieceXData = unsafe { keep.as_ref().unwrap() };
+  Err(xdata_unexpected::<T>(xdata))
 }
 
 impl GameState {
