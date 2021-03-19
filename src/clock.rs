@@ -119,7 +119,7 @@ struct Current {
 }
 
 impl ChessClock {
-  fn time(&self) -> TimeSpec {
+  fn initial_time(&self) -> TimeSpec {
     TVL::seconds(self.time.into())
   }
 }
@@ -168,7 +168,7 @@ impl Clock {
               } else {
                 URS::Running
               }
-            } else if ustate.remaining == self.spec.time() {
+            } else if ustate.remaining == self.spec.initial_time() {
               URS::Reset
             } else {
               URS::Stopped
