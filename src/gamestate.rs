@@ -298,17 +298,12 @@ impl GPiece {
   }
 
   #[throws(IE)]
-  pub fn xdata_mut<
-      T: PieceXData,
-      D: FnOnce() -> T,
-  >(&mut self, def: D) -> &mut T {
+  pub fn xdata_mut<T:PieceXData,D:FnOnce()->T>(&mut self, def: D) -> &mut T {
     self.xdata.get_mut(def)?
   }
 
   #[throws(IE)]
-  pub fn xdata_mut_exp<
-      T: PieceXData,
-  >(&mut self) -> &mut T {
+  pub fn xdata_mut_exp<T:PieceXData>(&mut self) -> &mut T {
     self.xdata.get_mut_exp()?
   }
 
@@ -362,19 +357,16 @@ impl PieceXDataState {
     self.get()?.ok_or_else(|| xdata_missing::<T>())?
   }
 
-  fn get_mut<
-      T: PieceXData,
-      D: FnOnce() -> T,
-  >(&mut self, def: D) -> Result<&mut T, IE> {
+  #[throws(IE)]
+  fn get_mut<T:PieceXData,D:FnOnce()->T>(&mut self, def: D) -> &mut T {
     let xdata = self.get_or_insert_with(|| Box::new(def()));
-    xdata_get_mut_inner(xdata)
+    xdata_get_mut_inner(xdata)?
   }
 
-  fn get_mut_exp<
-      T: PieceXData,
-  >(&mut self) -> Result<&mut T, IE> {
+  #[throws(IE)]
+  fn get_mut_exp<T:PieceXData>(&mut self) -> &mut T {
     let xdata = self.as_mut().ok_or_else(|| xdata_missing::<T>())?;
-    xdata_get_mut_inner(xdata)
+    xdata_get_mut_inner(xdata)?
   }
 }
 
