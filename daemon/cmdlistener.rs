@@ -607,6 +607,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
                 piece)?
           );
         }
+        gpc.occult.passive_delete_hook(&mut gs.occults, piece);
         ipc.p.into_inner().delete_hook(&gpc, gs);
       }
       if let Some(occilk) = ipc.occilk { ig.ioccults.ilks.dispose(occilk); }

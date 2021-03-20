@@ -73,6 +73,17 @@ pub type OccultationKind = OccultationKindGeneral<(Area, ZCoord)>;
 impl PieceOccult {
   pub fn is_active(&self) -> bool { self.active.is_some() }
   pub fn passive_occid(&self) -> Option<OccId> { Some(self.passive?.occid) }
+  pub fn passive_delete_hook(&self, goccults: &mut GameOccults,
+                             piece: PieceId) {
+    if_chain! {
+      if let Some(Passive { occid, notch }) = self.passive;
+      if let Some(occ) = goccults.occults.get_mut(occid);
+      then {
+        occ.notches.remove(piece, notch)
+          .unwrap_or_else(|e| error!("removing occulted piece {:?}", e));
+      }
+    }
+  }
 }
 
 impl Default for OccultationKind {
@@ -304,9 +315,6 @@ pub fn vpiece_decode(
   trace!("{} {:?} <= {}", player, piece, vis);
   piece
 }
-
-// xxx prevent addpiece and removepiece in places that would be occulted
-// xxx this means this only happens on ungrab I think ?
 
 #[throws(InternalError)]
 fn recalculate_occultation_general<
