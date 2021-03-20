@@ -48,6 +48,7 @@ struct SessionPieceLoadJson<'r> {
   angle: CompassAngle,
   desc: Html,
   uos: &'r [UoDescription],
+  moveable: PieceMoveable,
 }
 
 #[derive(Serialize,Debug)]
@@ -138,6 +139,7 @@ fn session_inner(form: Json<SessionForm>,
         pinned: gpc.pinned,
         angle: vangle,
         desc,
+        moveable: gpc.moveable(),
         uos: &pri.ui_operations(&ig.gs, gpc, ipc)?,
       };
 
