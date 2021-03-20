@@ -678,7 +678,8 @@ pub fn create_occultation(
   views: OccultationViews,
 ) -> Vec<(PieceId, PieceUpdateOps)> {
   {
-    let ogpc = gpieces.byid(occulter)?;
+    let ogpc = gpieces.get(occulter).ok_or_else(
+      ||internal_logic_error("create occultation with non-piece"))?;
     if ogpc.occult.active.is_some() {
       throw!(internal_logic_error("re-occulting!"))
     }

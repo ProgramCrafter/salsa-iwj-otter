@@ -1309,14 +1309,14 @@ impl GPieces {
 impl ById for GPieces {
   type Id = PieceId;
   type Entry = GPiece;
-  type Error = OnlineError;
-  #[throws(OE)]
+  type Error = PieceOpError;
+  #[throws(POE)]
   fn byid(&self, piece: PieceId) -> &GPiece {
-    self.get(piece).ok_or(OE::PieceGone)?
+    self.get(piece).ok_or(POE::PieceGone)?
   }
-  #[throws(OE)]
+  #[throws(POE)]
   fn byid_mut(&mut self, piece: PieceId) -> &mut GPiece {
-    self.get_mut(piece).ok_or(OE::PieceGone)?
+    self.get_mut(piece).ok_or(POE::PieceGone)?
   }
 }
 

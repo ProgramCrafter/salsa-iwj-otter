@@ -19,8 +19,6 @@ pub enum OnlineError {
   #[error("JSON deserialisation error: {0:?}")]
   BadJSON(serde_json::Error),
   #[error("referenced piece is gone (maybe race)")]
-  PieceGone, // xxx this needs to go away and be done via updates stream
-  #[error("improper piece hold status for op (maybe race)")]
   PieceHeld,
   #[error("improper UI operation")]
   BadOperation,
@@ -155,6 +153,7 @@ display_as_debug!{PieceOpErrorPartiallyProcessed}
 pub enum PieceOpError {
   Conflict,
   PosOffTable,
+  PieceGone,
 }
 display_as_debug!{PieceOpError}
 
@@ -256,8 +255,8 @@ impl<T> IdForById for T where T: AccessId {
 }
 
 impl IdForById for PieceId {
-  type Error = OE;
-  const ERROR: OE = OE::PieceGone;
+  type Error = POE;
+  const ERROR: POE = POE::PieceGone;
 }
 
 #[macro_export]

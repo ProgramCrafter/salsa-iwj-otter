@@ -76,7 +76,7 @@ impl From<&OnlineErrorResponse> for rocket::http::Status {
       ServerFailure(_) => Status::InternalServerError,
       NoClient | NoPlayer(_) | GameBeingDestroyed
         => Status::NotFound,
-      OE::PieceHeld | OE::PieceGone |
+      OE::PieceHeld |
       OE::OverlappingOccultation | OE::Occultation |
       OE::BadPieceStateForOperation
         => Status::Conflict,
@@ -120,13 +120,13 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
   let iplayers = &g.iplayers;
   let _ = iplayers.byid(player)?;
   let gpl = gs.players.byid(player)?;
-  let piece = vpiece_decode(gs, player, gpl, form.piece)
-    .ok_or(OE::PieceGone)?;
+  let piece = vpiece_decode(gs, player, gpl, form.piece);
+  let piece = if let Some(piece) = piece { piece } else { return Ok(()) };
   let was_held = gs.pieces.get(piece).as_ref().map(|gpc| gpc.held);
   use ApiPieceOpError::*;
 
   match (||{
-    let ipc = ipieces.get(piece).ok_or(OnlineError::PieceGone)?;
+    let ipc = ipieces.get(piece).ok_or(POE::PieceGone)?;
     let gpc = gs.pieces.byid_mut(piece)?;
 
     let q_gen = form.gen;
@@ -309,7 +309,7 @@ api_route!{
 
       let gpl = players.byid_mut(player)?;
       let pri = piece_pri(ioccults, &gs.occults, player, gpl, piece, gpc, ipc)
-        .ok_or(OE::PieceGone)?;
+        .ok_or(POE::PieceGone)?;
 
       let pcs = pri.describe(ioccults, gpc, ipc).0;
 
@@ -348,7 +348,7 @@ api_route!{
       ioccults,gpl,gpc,ipc,
       "released"
     )?;
-    let who_by = who_by.ok_or(OE::PieceGone)?;
+    let who_by = who_by.ok_or(POE::PieceGone)?;
 
     if gpc.held != Some(player) { throw!(OnlineError::PieceHeld) }
     gpc.held = None;
@@ -499,7 +499,7 @@ api_route!{
                           player, gs.players.byid_mut(player)?,
                           piece, gs.pieces.byid(piece)?,
                           ipc)
-        .ok_or(OE::PieceGone)?;
+        .ok_or(POE::PieceGone)?;
       let y = {
         use PriOG::*;
         match pri.occulted {
