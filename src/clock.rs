@@ -56,6 +56,15 @@ struct Running {
 impl Spec {
   fn initial_time(&self) -> TimeSpec { TVL::seconds(self.time.into()) }
   fn per_move(&self) -> TimeSpec { TVL::seconds(self.per_move.into()) }
+  fn initial(&self) -> [TimeSpec; N] {
+    // White is player Y, and they will ge to go first, so the clock
+    // will go from stopped to Y, and then later when it's X's turn
+    // X will get an extra per_move.  Y therefore needs per_move too.
+    [
+      self.initial_time(),
+      self.initial_time() + self.per_move(),
+    ]
+  }
 }
 
 impl State {
@@ -66,14 +75,9 @@ impl State {
   }
 
   fn reset(&mut self, spec: &Spec) {
-    for ust in &mut self.users {
-      ust.remaining = spec.initial_time();
+    for (ust, t) in izip!(&mut self.users, spec.initial().iter().copied()) {
+      ust.remaining = t;
     }
-    // White is player Y, and they will ge to go first, so the clock
-    // will go from stopped to Y, and then later when it's X's turn
-    // X will get an extra per_move.  Y therefore needs per_move too.
-    let y_remaining = &mut self.users[USERS[0]].remaining;
-    *y_remaining = *y_remaining + spec.per_move();
   }
 
   fn implies_running(&self, held: Option<PlayerId>) -> Option<User> {
