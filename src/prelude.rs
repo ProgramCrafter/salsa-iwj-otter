@@ -164,6 +164,7 @@ pub type APOE = ApiPieceOpError;
 pub type ESVU<POEPU> = ErrorSignaledViaUpdate<POEPU>;
 pub type IE = InternalError;
 pub type OE = OnlineError;
+pub type POE = PieceOpError;
 pub type POEPP = PieceOpErrorPartiallyProcessed;
 pub type SvgE = SVGProcessingError;
 pub type SpE = SpecError;
