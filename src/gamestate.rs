@@ -146,6 +146,7 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
   /// Piece is responsible for dealing with the possibility that they
   /// may be occulted!
   fn held_change_hook(&self,
+                      _ig: &InstanceRef,
                       _gpieces: &mut GPieces,
                       _was_held: Option<PlayerId>)
                       -> UnpreparedUpdates { None }

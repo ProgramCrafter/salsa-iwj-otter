@@ -185,6 +185,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
     if gpc.held != was_held;
     if let Some(ipc) = &g.ipieces.get(piece);
     if let Ok(unprepared) = ipc.direct_trait_access().held_change_hook(
+      &iad.gref,
       &mut g.gs.pieces,
       was_held,
     ).map_err(|e| error!("internal error on change hook: {:?}", e));
