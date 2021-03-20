@@ -169,6 +169,7 @@ pub trait OccultedPieceTrait: OutlineTrait + 'static {
 
 #[derive(Debug)]
 pub struct ApiPieceOpArgs<'a> {
+  pub ig: &'a InstanceRef,
   pub gs: &'a mut GameState,
   pub ipieces: &'a IPieces,
   pub ioccults: &'a IOccults,
