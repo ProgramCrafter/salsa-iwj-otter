@@ -108,8 +108,6 @@ impl PieceTrait for Hand {
     self.describe_html_inner(xdata)
   }
 
-  // xxx implement delete_hook
-
   delegate!{
     to self.shape {
       fn itemname(&self) -> &str;
