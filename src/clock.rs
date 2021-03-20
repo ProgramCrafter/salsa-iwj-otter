@@ -296,6 +296,8 @@ impl ThreadState {
   #[throws(IE)]
   fn run(mut self) {
     loop {
+      // xxx this seems to spin
+
       match self.next_wakeup {
         Some(wakeup) => {
           let timeout = wakeup - now()?;
@@ -670,6 +672,8 @@ impl PieceTrait for Clock {
     let now_held = gpc.held;
     let state: &mut State = gpc.xdata_mut_exp()?;
     let was_running = state.implies_running(was_held);
+
+    // xxx auto-change active player
 
     state.do_start_or_stop(piece, was_running, now_held, ig)?;
     unprepared_update(piece)
