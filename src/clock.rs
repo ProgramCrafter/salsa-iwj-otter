@@ -362,6 +362,13 @@ const OUTLINE: Rectangle = Rectangle { xy: PosC([W as f64, H as f64]) };
 
 // ==================== piece management, loading, etc. ====================
 
+fn unprepared_update(piece: PieceId) -> UnpreparedUpdates {
+  Some(Box::new(move |buf: &mut PrepareUpdatesBuffer| {
+    buf.piece_update_image(piece)
+      .unwrap_or_else(|e| error!("failed to prep clock: {:?}", e));
+  }))
+}
+
 #[typetag::serde]
 impl PieceSpec for ChessClock {
   #[throws(SpecError)]
@@ -644,10 +651,7 @@ impl PieceTrait for Clock {
             ops: PieceUpdateOps::PerPlayer(default()),
           },
           vec![],
-          Some(Box::new(move |buf: &mut PrepareUpdatesBuffer| {
-            buf.piece_update_image(piece)
-              .unwrap_or_else(|e| error!("failed to prep clock: {:?}", e));
-          }))
+          unprepared_update(piece),
         );
         r
       }
