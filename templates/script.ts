@@ -46,6 +46,7 @@ type UoKind = 'Client' | "Global"| "Piece" | "ClientExtra" | "GlobalExtra";
 type WhatResponseToClientOp = "Predictable" | "Unpredictable" | "UpdateSvg";
 type Timestamp = number; // unix time_t, will break in 285My
 type Layout = 'Portrait' | 'Landscape';
+type PieceMoveable = "No" | "IfWresting" | "Yes";
 
 type UoDescription = {
   kind: UoKind;
@@ -69,6 +70,7 @@ type PieceInfo = {
   zg : Generation,
   angle: number,
   pinned: boolean,
+  moveable: PieceMoveable,
   uos : UoDescription[],
   uelem : SVGGraphicsElement,
   delem : SVGGraphicsElement,
@@ -820,6 +822,19 @@ function drag_mousemove(e: MouseEvent) {
   var ddr2 = ddx*ddx + ddy*ddy;
   if (!(dragging & DRAGGING.YES)) {
     if (ddr2 > DRAGTHRESH) {
+      for (let dp of drag_pieces) {
+	let tpiece = dp.piece;
+	let tp = pieces[tpiece]!;
+	if (tp.moveable == "Yes") {
+	  continue;
+	} else if (tp.moveable == "IfWresting") {
+	  if (wresting) continue;
+	  add_log_message('That piece can only be moved when Wresting.');
+	} else {
+	  add_log_message('That piece cannot be moved at the moment.');
+	}
+	return ddr2;
+      }
       dragging |= DRAGGING.YES;
     }
   }
@@ -1035,6 +1050,7 @@ type PreparedPieceState = {
   pinned: boolean,
   angle: number,
   uos: UoDescription[],
+  moveable: PieceMoveable,
 }
 
 pieceops.ModifyQuiet = <PieceHandler>function
@@ -1069,6 +1085,7 @@ function piece_modify(piece: PieceId, p: PieceInfo, info: PreparedPieceState,
   p.uelem.setAttributeNS(null, "y", info.pos[1]+"");
   p.held = info.held;
   p.pinned = info.pinned;
+  p.moveable = info.moveable;
   p.angle = info.angle;
   piece_set_zlevel(piece,p, (oldtop_piece)=>{
     p.z  = info.z;
