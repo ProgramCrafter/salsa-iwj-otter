@@ -744,7 +744,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
       |_gpl| None,
     )?;
-    PreparedUpdateEntry_Image { ims }
+    self.us.push(PUE::Image(PreparedUpdateEntry_Image { ims }))
   }
 
   pub fn piece_updates(&mut self, updates: Vec<(PieceId, PieceUpdateOps)>) {
