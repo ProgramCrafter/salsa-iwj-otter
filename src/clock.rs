@@ -715,5 +715,18 @@ impl PieceTrait for Clock {
     unprepared_update(piece)
   }
 
+  #[throws(IE)]
+  fn loaded_hook(&self, piece: PieceId, gs: &mut GameState,
+                 ig: &InstanceRef) {
+    // The effect of this is to reload to the amount remaining at the
+    // last game save.  That's probably tolerable, and even arguably
+    // better than having the clock "have kept running" during the
+    // lost state.
+    let gpc = gs.pieces.byid_mut(piece).context("load hook")?;
+    let held = gpc.held;
+    let state = gpc.xdata_mut(|| State::new(&self.spec))?;
+    state.do_start_or_stop(piece, None, None, held, &self.spec, ig)?;
+  }
+
   fn itemname(&self) -> &str { "chess-clock" }
 }
