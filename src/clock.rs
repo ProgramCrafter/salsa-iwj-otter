@@ -109,6 +109,12 @@ impl State {
       current: None,
     }
   }
+
+  fn reset(&mut self, spec: &ChessClock) {
+    for ust in &mut self.users {
+      ust.remaining = spec.initial_time();
+    }
+  }
 }
 
 #[typetag::serde(name="ChessClock")]
@@ -438,9 +444,7 @@ impl PieceTrait for Clock {
         if state.current.is_some() {
           throw!(OE::BadPieceStateForOperation);
         }
-        for ust in &mut state.users {
-          ust.remaining = self.spec.initial_time();
-        }
+        state.reset(&self.spec);
         (Unpredictable, format!("reset"))
       },
       "claim-x" | "claim-y" => { // xxx these need to be Unpredictable
