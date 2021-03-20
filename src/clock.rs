@@ -308,11 +308,14 @@ impl PieceTrait for Clock {
   font-family="Latin Modern Mono, monospace" font-size="6" font-weight="700"
              "##;
       write!(f, r##"
-  <text x="1"  y="{}" {} fill="{}" >{}{}{}{:02}</text>"##,
-             y,
-             font,
-             show.text,
-             mins_pad, mins, show.sigil, secs
+  <text x="1"  y="{}" {} fill="{}" >{}{}{}</text>"##,
+             y, font, show.text,
+             mins_pad, mins, show.sigil
+      )?;
+      write!(f, r##"
+  <text x="14"  y="{}" {} fill="{}" >{:02}</text>"##,
+             y, font, show.text,
+             secs
       )?;
       if let Some(nick) = u.nick {
         write!(f, r##"
