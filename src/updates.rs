@@ -8,6 +8,8 @@ use crate::prelude::*;
 
 #[allow(non_camel_case_types)] type PUE_P = PreparedUpdateEntry_Piece;
 #[allow(non_camel_case_types)] type TUE_P<'u> = TransmitUpdateEntry_Piece<'u>;
+#[allow(non_camel_case_types)] type PUE_I = PreparedUpdateEntry_Image;
+#[allow(non_camel_case_types)] type TUE_I<'u> = TransmitUpdateEntry_Image<'u>;
 
 // ---------- newtypes, type aliases, basic definitions ----------
 
@@ -52,6 +54,7 @@ pub struct PreparedUpdate {
 #[derive(Debug)]
 pub enum PreparedUpdateEntry {
   Piece(PreparedUpdateEntry_Piece),
+  Image(PreparedUpdateEntry_Image),
   SetTableSize(Pos),
   SetTableColour(Colour),
   SetLinks(Arc<LinksTable>),
@@ -75,10 +78,22 @@ pub struct PreparedUpdateEntry_Piece {
   ops: SecondarySlotMap<PlayerId, PreparedPieceUpdate>,
 }
 
+pub type PreparedPieceUpdate = PreparedPieceUpdateGeneral<
+    PieceUpdateOp<PreparedPieceState, ZLevel>
+    >;
+
+#[allow(non_camel_case_types)]
 #[derive(Debug,Clone)]
-pub struct PreparedPieceUpdate {
+pub struct PreparedUpdateEntry_Image {
+  ims: SecondarySlotMap<PlayerId, PreparedPieceUpdateGeneral<
+      PreparedPieceImage
+      >>,
+}
+
+#[derive(Debug,Clone)]
+pub struct PreparedPieceUpdateGeneral<U> {
   piece: VisiblePieceId,
-  op: PieceUpdateOp<PreparedPieceState, ZLevel>,
+  op: U,
 }
 
 #[derive(Debug,Clone,Serialize)]
@@ -93,9 +108,34 @@ pub struct PreparedPieceState {
   pub uos: Vec<UoDescription>,
 }
 
+#[derive(Debug,Clone,Serialize)]
+pub struct PreparedPieceImage {
+  pub svg: Html,
+  pub uos: Vec<UoDescription>,
+}
+
 #[derive(Serialize,Debug)]
 pub struct DataLoadPlayer {
   dasharray: Html,
+}
+
+pub trait JsonLen {
+  fn json_len(&self) -> usize;
+}
+
+#[ext]
+impl<T:JsonLen> SecondarySlotMap<PlayerId, T> {
+  fn json_len(&self, player: PlayerId) -> usize {
+    if let Some(t) = self.get(player) {
+      50 + t.json_len()
+    } else {
+      50
+    }
+  }
+}
+
+impl JsonLen for Html {
+  fn json_len(&self) -> usize { self.0.as_bytes().len() }
 }
 
 // ---------- piece updates ----------
@@ -163,6 +203,7 @@ enum TransmitUpdateEntry<'u> {
     svg: Option<&'u Html>, // IsResponseToClientOp::UpdateSvg
   },
   Piece(TransmitUpdateEntry_Piece<'u>),
+  Image(TransmitUpdateEntry_Image<'u>),
   RecordedUnpredictable {
     piece: VisiblePieceId,
     cseq: ClientSequence,
@@ -192,6 +233,13 @@ type TransmitUpdateLogEntry<'u> = (&'u Timezone, &'u CommittedLogEntry);
 struct TransmitUpdateEntry_Piece<'u> {
   piece: VisiblePieceId,
   op: PieceUpdateOp<&'u PreparedPieceState, &'u ZLevel>,
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Debug,Serialize)]
+struct TransmitUpdateEntry_Image<'u> {
+  piece: VisiblePieceId,
+  im: &'u PreparedPieceImage,
 }
 
 #[derive(Debug,Serialize)]
@@ -295,14 +343,38 @@ impl PreparedUpdate {
 
 impl PreparedUpdateEntry_Piece {
   pub fn json_len(&self, player: PlayerId) -> usize {
-    let PUE_P { ref ops, .. } = self;
-    if let Some(op) = ops.get(player) {
-      50 +
-        op.op.new_state().map(|x| x.svg.0.as_bytes().len()).unwrap_or(0)
-    } else {
-      50
-    }
+    50 + self.ops.json_len(player)
   }
+}
+
+impl<U:JsonLen> JsonLen for PreparedPieceUpdateGeneral<U> {
+  fn json_len(&self) -> usize { self.op.json_len() }
+}
+
+impl<NS:JsonLen, ZL> JsonLen for PieceUpdateOp<NS, ZL> {
+  fn json_len(&self) -> usize {
+    self.new_state().map(|x| x.json_len()).unwrap_or(0)
+  }
+}
+
+impl PreparedUpdateEntry_Image {
+  fn json_len(&self, player: PlayerId) -> usize {
+    self.ims.json_len(player)
+  }
+}
+
+impl JsonLen for PreparedPieceState {
+  fn json_len(&self) -> usize { self.svg.json_len() + self.uos.json_len() }
+}
+
+impl JsonLen for PreparedPieceImage {
+  fn json_len(&self) -> usize { self.svg.json_len() + self.uos.json_len() }
+}
+impl<T:JsonLen> JsonLen for Vec<T> {
+  fn json_len(&self) -> usize { self.iter().map(|x| x.json_len() + 10).sum() }
+}
+impl JsonLen for UoDescription {
+  fn json_len(&self) -> usize { self.desc.json_len() + 50 }
 }
 
 impl PreparedUpdateEntry {
@@ -311,6 +383,9 @@ impl PreparedUpdateEntry {
     match self {
       Piece(op) => {
         op.json_len(player)
+      }
+      Image(ims) => {
+        ims.json_len(player)
       }
       Log(logent) => {
         logent.logent.html.0.as_bytes().len() * 28
@@ -679,6 +754,12 @@ impl PreparedUpdate {
       Some(TUE_P { piece, op: op.map_ref() })
     }
 
+    fn pue_image_to_tue_i(pue_i: &PUE_I, player: PlayerId) -> Option<TUE_I> {
+      let im = pue_i.ims.get(player)?;
+      let PreparedPieceUpdateGeneral { piece, ref op } = *im;
+      Some(TUE_I { piece, im: op })
+    }
+
     fn pue_piece_to_tue(pue_p: &PUE_P, player: PlayerId, dest: ClientId)
                         -> Option<TUE> {
       let PUE_P { by_client, ref ops } = *pue_p;
@@ -720,6 +801,12 @@ impl PreparedUpdate {
         &PUE::Piece(ref pue_p) => {
           match pue_piece_to_tue(pue_p, player,dest) {
             Some(tue) => tue,
+            _ => continue,
+          }
+        }
+        &PUE::Image(ref pue_i) => {
+          match pue_image_to_tue_i(pue_i, player) {
+            Some(tue) => TUE::Image(tue),
             _ => continue,
           }
         }

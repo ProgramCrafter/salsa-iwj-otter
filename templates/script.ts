@@ -1055,16 +1055,21 @@ piece_error_handlers.PosOffTable = <PieceErrorHandler>function()
 piece_error_handlers.Conflict = <PieceErrorHandler>function()
 { return true ; }
 
-function piece_modify(piece: PieceId, p: PieceInfo, info: PreparedPieceState,
-		      conflict_expected: boolean) {
+function piece_modify_image(piece: PieceId, p: PieceInfo,
+			    info: PreparedPieceImage) {
   p.delem.innerHTML = info.svg;
   p.pelem= piece_element('piece',piece)!;
+  p.uos = info.uos;
+}
+
+function piece_modify(piece: PieceId, p: PieceInfo, info: PreparedPieceState,
+		      conflict_expected: boolean) {
+  piece_modify_image(piece, p, info);
   p.uelem.setAttributeNS(null, "x", info.pos[0]+"");
   p.uelem.setAttributeNS(null, "y", info.pos[1]+"");
   p.held = info.held;
   p.pinned = info.pinned;
   p.angle = info.angle;
-  p.uos = info.uos;
   piece_set_zlevel(piece,p, (oldtop_piece)=>{
     p.z  = info.z;
     p.zg = info.zg;
@@ -1073,6 +1078,26 @@ function piece_modify(piece: PieceId, p: PieceInfo, info: PreparedPieceState,
   redisplay_ancillaries(piece,p);
   recompute_keybindings();
   console.log('MODIFY DONE');
+}
+
+type PreparedPieceImage = {
+  svg: string,
+  uos: UoDescription[],
+}
+
+type TransmitUpdateEntry_Image = {
+  piece: PieceId,
+  im: PreparedPieceImage,
+};
+
+messages.Image = <MessageHandler>function(j: TransmitUpdateEntry_Image) {
+  console.log('IMAGE UPDATE ',j)
+  var piece = j.piece;
+  let p = pieces[piece]!;
+  piece_modify_image(piece, p, j.im);
+  redisplay_ancillaries(piece,p);
+  recompute_keybindings();
+  console.log('IMAGE DONE');
 }
 
 /*
