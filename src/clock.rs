@@ -629,7 +629,7 @@ impl PieceTrait for Clock {
         state.reset(&self.spec);
         (Unpredictable, format!("reset"))
       },
-      "claim-x" | "claim-y" => { // xxx these need to be Unpredictable
+      "claim-x" | "claim-y" => {
         let user = get_user();
         if let Some(_gpl) = gs.players.get(state.users[user].player) {
           throw!(OE::BadPieceStateForOperation);
@@ -641,7 +641,7 @@ impl PieceTrait for Clock {
         }
         (Unpredictable, format!("became player {} at the", user))
       },
-      "unclaim-x" | "unclaim-y" => { // xxx these need to be Unpredictable
+      "unclaim-x" | "unclaim-y" => {
         let user = get_user();
         if state.users[user].player != player {
           throw!(OE::BadPieceStateForOperation);
