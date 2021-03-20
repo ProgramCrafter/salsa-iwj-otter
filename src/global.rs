@@ -37,6 +37,9 @@ pub struct InstanceName {
 #[derive(Debug,Clone)]
 pub struct InstanceRef (Arc<Mutex<InstanceContainer>>);
 
+#[derive(Debug,Clone)]
+pub struct InstanceWeakRef (std::sync::Weak<Mutex<InstanceContainer>>);
+
 #[derive(Debug,Clone,Serialize,Deserialize,Default)]
 #[serde(transparent)]
 pub struct LinksTable(pub EnumMap<LinkKind, Option<String>>);
@@ -286,6 +289,16 @@ impl InstanceRef {
       Ok(g) => g,
       Err(poison) => poison.into_inner(),
     }
+  }
+
+  pub fn downgrade_to_weak(&self) -> InstanceWeakRef {
+    InstanceWeakRef(Arc::downgrade(&self.0))
+  }
+}
+
+impl InstanceWeakRef {
+  pub fn upgrade(&self) -> Option<InstanceRef> {
+    Some(InstanceRef(self.0.upgrade()?))
   }
 }
 
