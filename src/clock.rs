@@ -658,5 +658,22 @@ impl PieceTrait for Clock {
     }
   }
 
+  #[throws(IE)]
+  fn held_change_hook(&self,
+                      ig: &InstanceRef,
+                      gpieces: &mut GPieces,
+                      piece: PieceId,
+                      was_held: Option<PlayerId>)
+                      -> UnpreparedUpdates {
+    let gpc = gpieces.get_mut(piece);
+    let gpc = if let Some(gpc) = gpc { gpc } else { return None };
+    let now_held = gpc.held;
+    let state: &mut State = gpc.xdata_mut_exp()?;
+    let was_running = state.implies_running(was_held);
+
+    state.do_start_or_stop(piece, was_running, now_held, ig)?;
+    unprepared_update(piece)
+  }
+
   fn itemname(&self) -> &str { "chess-clock" }
 }
