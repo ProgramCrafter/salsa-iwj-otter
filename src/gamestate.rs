@@ -148,6 +148,7 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
   fn held_change_hook(&self,
                       _ig: &InstanceRef,
                       _gpieces: &mut GPieces,
+                      _piece: PieceId,
                       _was_held: Option<PlayerId>)
                       -> UnpreparedUpdates { None }
 
