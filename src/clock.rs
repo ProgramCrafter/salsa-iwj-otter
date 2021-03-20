@@ -205,7 +205,8 @@ const OUTLINE: Rectangle = Rectangle { xy: PosC([W as f64, H as f64]) };
 #[typetag::serde]
 impl PieceSpec for ChessClock {
   #[throws(SpecError)]
-  fn load(&self, _: usize, gpc: &mut GPiece) -> PieceSpecLoaded {
+  fn load(&self, _: usize, gpc: &mut GPiece, _ir: &InstanceRef)
+          -> PieceSpecLoaded {
     if self.time <= 0 { throw!(SpecError::NegativeTimeout) }
 
     let clock = Clock {

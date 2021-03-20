@@ -627,6 +627,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
     MGI::AddPieces(PiecesSpec{ pos,posd,count,face,pinned,angle,info }) => {
       let (ig_g, modperm, _) = cs.check_acl_modify_pieces(ag, ig)?;
+      let gref = ig_g.gref.clone();
       let ig = &mut **ig_g;
       let gs = &mut ig.gs;
       let implicit: u32 = info.count()
@@ -671,7 +672,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           xdata: None,
         };
         let PieceSpecLoaded { p, occultable } =
-          info.load(piece_i as usize, &mut gpc)?;
+          info.load(piece_i as usize, &mut gpc, &gref)?;
         if p.nfaces() <= face.into() {
           throw!(SpecError::FaceNotFound);
         }

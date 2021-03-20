@@ -257,7 +257,8 @@ impl SimplePieceSpec for piece_specs::Disc {
 #[typetag::serde]
 impl PieceSpec for piece_specs::Disc {
   #[throws(SpecError)]
-  fn load(&self, _: usize, _: &mut GPiece) -> PieceSpecLoaded {
+  fn load(&self, _: usize, _: &mut GPiece, _ir: &InstanceRef)
+          -> PieceSpecLoaded {
     SimplePieceSpec::load(self)?
   }
 }
@@ -290,7 +291,8 @@ impl SimplePieceSpec for piece_specs::Square {
 #[typetag::serde]
 impl PieceSpec for piece_specs::Square {
   #[throws(SpecError)]
-  fn load(&self, _: usize, _: &mut GPiece) -> PieceSpecLoaded {
+  fn load(&self, _: usize, _: &mut GPiece, _ir: &InstanceRef)
+          -> PieceSpecLoaded {
     SimplePieceSpec::load(self)?
   }
 }
