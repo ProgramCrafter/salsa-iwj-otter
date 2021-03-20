@@ -673,7 +673,14 @@ impl PieceTrait for Clock {
     let state: &mut State = gpc.xdata_mut_exp()?;
     let was_running = state.implies_running(was_held);
 
-    // xxx auto-change active player
+    if_chain! {
+      if was_held == None;
+      if let Some(Current { user }) = state.current;
+      if now_held == Some(state.users[user].player);
+      then {
+        state.current = Some(Current { user: ! user });
+      }
+    }
 
     state.do_start_or_stop(piece, was_running, now_held, ig)?;
     unprepared_update(piece)
