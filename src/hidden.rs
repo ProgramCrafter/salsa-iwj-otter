@@ -392,7 +392,7 @@ fn recalculate_occultation_general<
             // Prevent pinned pieces being occulted.  What scrambling
             // them etc. would mean is not entirely clear.
             return None
-          } else if gpc.occult.active.is_some() { // xxx remove dbg!
+          } else if gpc.occult.active.is_some() {
             // prevent occulting pieces being occulted
             // (also prevents reflexive occultation)
             return None
@@ -407,7 +407,7 @@ fn recalculate_occultation_general<
           }
         }),
     };
-    dbgc!((piece, occulteds));
+    trace_dbg!("recalculating", piece, occulteds);
 
     let occids = occulteds.main().map(|h| h.as_ref().map(|occ| occ.occid));
     if occids.old() == occids.new() { return ret_vanilla(log_visible); }
