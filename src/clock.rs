@@ -31,7 +31,7 @@ struct Clock { // PieceTrait
 #[derive(Debug,Serialize,Deserialize)]
 struct State {
   users: [UState; 2],
-  #[serde(skip)] current: Option<Current>,
+  current: Option<Current>,
   #[serde(skip)] notify: Option<mpsc::Sender<()>>,
   #[serde(skip)] running: Option<Running>,
 }
