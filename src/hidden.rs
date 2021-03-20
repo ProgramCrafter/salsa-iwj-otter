@@ -31,7 +31,7 @@ pub struct GameOccults {
 // kept in synch with Occultation::pieces
 pub struct PieceOccult {
   active: Option<OccId>, // kept in synch with Occultation::occulter
-  passive: Option<Passive>, // kept in synch with Occultation::pieces
+  passive: Option<Passive>, // kept in synch with Occultation::notches
 }
 
 #[derive(Clone,Copy,Debug,Serialize,Deserialize,Eq,PartialEq)]
