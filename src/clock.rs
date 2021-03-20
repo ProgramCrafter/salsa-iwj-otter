@@ -9,15 +9,103 @@ use shapelib::Rectangle;
 
 use nix::sys::time::TimeValLike as TVL;
 
+// ========== definitions ==========
+
+const N: usize = 2;
+
+type Time = i32;
+
+// ==================== state ====================
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct ChessClock { // Spec
+  time: Time,
+  #[serde(default)] per_move: Time,
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+struct Clock { // PieceTrait
+  spec: ChessClock,
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+struct State {
+  users: [UState; 2],
+  #[serde(skip)] current: Option<Current>,
+  #[serde(skip)] notify: Option<mpsc::Sender<()>>,
+  #[serde(skip)] running: Option<Running>,
+}
+
+
+#[derive(Debug,Copy,Clone,Serialize,Deserialize)]
+struct UState {
+  player: PlayerId,
+  #[serde(with="timespec_serde")] remaining: TimeSpec, // -ve means flag
+}
+
+#[derive(Debug,Copy,Clone,Eq,PartialEq,Serialize,Deserialize)]
+struct Current {
+  user: User,
+}
+
+#[derive(Debug,Clone,Copy)]
+struct Running {
+  expires: TimeSpec,
+}
+
+impl ChessClock {
+  fn initial_time(&self) -> TimeSpec {
+    TVL::seconds(self.time.into())
+  }
+}
+
+impl State {
+  fn new(spec: &ChessClock) -> Self {
+    let mut state = State::dummy();
+    state.reset(spec);
+    state
+  }
+
+  fn reset(&mut self, spec: &ChessClock) {
+    for ust in &mut self.users {
+      ust.remaining = spec.initial_time();
+    }
+    // White is player Y, and they will ge to go first, so the clock
+    // will go from stopped to Y, and then later when it's X's turn
+    // X will get an extra per_move.  Y therefore needs per_move too.
+    let y_remaining = &mut self.users[USERS[0]].remaining;
+    *y_remaining = *y_remaining + TVL::seconds(spec.per_move.into());
+  }
+
+  fn implies_running(&self, held: Option<PlayerId>) -> Option<User> {
+    if_chain! {
+      if let Some(Current { user }) = self.current;
+      if held.is_none();
+      if self.users[user].remaining >= TVL::zero();
+      then { Some(user) }
+      else { None }
+    }
+  }
+}
+
+#[typetag::serde(name="ChessClock")]
+impl PieceXData for State {
+  fn dummy() -> Self {
+    State {
+      users: [UState { player: default(), remaining: TVL::zero() }; N],
+      current: None,
+      notify: None,
+      running: None,
+    }
+  }
+}
+
+
 // ==================== users ====================
 
 struct UserInfo {
   idchar: char,
 }
-
-const N: usize = 2;
-
-type Time = i32;
 
 #[derive(Copy,Clone,Serialize,Deserialize)]
 #[derive(Eq,Ord,PartialEq,PartialOrd,Hash)]
@@ -81,91 +169,6 @@ impl From<User> for u8 {
 impl std::ops::Not for User {
   type Output = User;
   fn not(self) -> User { User(! self.0) }
-}
-
-// ==================== state ====================
-
-#[derive(Debug,Clone,Serialize,Deserialize)]
-pub struct ChessClock { // Spec
-  time: Time,
-  #[serde(default)] per_move: Time,
-}
-
-#[derive(Debug,Serialize,Deserialize)]
-struct Clock { // PieceTrait
-  spec: ChessClock,
-}
-
-#[derive(Debug,Serialize,Deserialize)]
-struct State {
-  users: [UState; 2],
-  #[serde(skip)] current: Option<Current>,
-  #[serde(skip)] notify: Option<mpsc::Sender<()>>,
-  #[serde(skip)] running: Option<Running>,
-}
-
-impl State {
-  fn new(spec: &ChessClock) -> Self {
-    let mut state = State::dummy();
-    state.reset(spec);
-    state
-  }
-
-  fn reset(&mut self, spec: &ChessClock) {
-    for ust in &mut self.users {
-      ust.remaining = spec.initial_time();
-    }
-    // White is player Y, and they will ge to go first, so the clock
-    // will go from stopped to Y, and then later when it's X's turn
-    // X will get an extra per_move.  Y therefore needs per_move too.
-    let y_remaining = &mut self.users[USERS[0]].remaining;
-    *y_remaining = *y_remaining + TVL::seconds(spec.per_move.into());
-  }
-
-  fn implies_running(&self, held: Option<PlayerId>) -> Option<User> {
-    if_chain! {
-      if let Some(Current { user }) = self.current;
-      if held.is_none();
-      if self.users[user].remaining >= TVL::zero();
-      then { Some(user) }
-      else { None }
-    }
-  }
-}
-
-#[typetag::serde(name="ChessClock")]
-impl PieceXData for State {
-  fn dummy() -> Self {
-    State {
-      users: [UState { player: default(), remaining: TVL::zero() }; N],
-      current: None,
-      notify: None,
-      running: None,
-    }
-  }
-}
-
-
-#[derive(Debug,Copy,Clone,Serialize,Deserialize)]
-struct UState {
-  player: PlayerId,
-  #[serde(with="timespec_serde")] remaining: TimeSpec, // -ve means flag
-}
-
-#[derive(Debug,Copy,Clone,Eq,PartialEq,Serialize,Deserialize)]
-struct Current {
-  user: User,
-}
-
-#[derive(Debug,Clone,Copy)]
-struct Running {
-  expires: TimeSpec,
-}
-
-impl ChessClock {
-  fn initial_time(&self) -> TimeSpec {
-    TVL::seconds(self.time.into())
-  }
 }
 
 // ==================== rendering, abstract ====================
