@@ -147,7 +147,7 @@ struct UState {
   #[serde(with="timespec_serde")] remaining: TimeSpec, // -ve means flag
 }
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug,Copy,Clone,Serialize,Deserialize)]
 struct Current {
   user: User,
 }
@@ -237,6 +237,7 @@ impl Clock {
 impl State {
   #[throws(IE)]
   fn do_start_or_stop(&mut self, piece: PieceId,
+                      _was_current: Option<Current>,
                       was_implied_running: Option<User>,
                       held: Option<PlayerId>,
                       spec: &ChessClock,
@@ -595,6 +596,7 @@ impl PieceTrait for Clock {
     }
     use Howish::*;
 
+    let was_current = state.current;
     let was_implied_running = state.implies_running(held);
 
     let (howish,did) = match opname {
@@ -639,7 +641,8 @@ impl PieceTrait for Clock {
       }
     };
 
-    state.do_start_or_stop(piece, was_implied_running, held, &self.spec, ig)
+    state.do_start_or_stop(piece, was_current, was_implied_running,
+                           held, &self.spec, ig)
       .map_err(|e| APOE::ReportViaResponse(e.into()))?;
 
     let log = log_did_to_piece(ioccults, gpl, gpc, ipc, &did)
@@ -682,6 +685,7 @@ impl PieceTrait for Clock {
     let gpc = if let Some(gpc) = gpc { gpc } else { return None };
     let now_held = gpc.held;
     let state: &mut State = gpc.xdata_mut_exp()?;
+    let was_current = state.current;
     let was_running = state.implies_running(was_held);
 
     if_chain! {
@@ -693,7 +697,8 @@ impl PieceTrait for Clock {
       }
     }
 
-    state.do_start_or_stop(piece, was_running, now_held, &self.spec, ig)?;
+    state.do_start_or_stop(piece, was_current, was_running,
+                           now_held, &self.spec, ig)?;
     unprepared_update(piece)
   }
 
