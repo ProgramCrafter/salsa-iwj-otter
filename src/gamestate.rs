@@ -152,6 +152,9 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
                       _was_held: Option<PlayerId>)
                       -> UnpreparedUpdates { None }
 
+  #[throws(IE)]
+  fn loaded_hook(&self, _piece: PieceId, _gs: &mut GameState) { }
+
   /// Not called if the whole game is destroyed.
   /// You can use Drop of course but it's not usually much use since
   /// you don't have a reference to the game or anything.

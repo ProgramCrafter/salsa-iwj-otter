@@ -1118,7 +1118,10 @@ impl InstanceGuard<'_> {
     let gref = InstanceRef(Arc::new(Mutex::new(cont)));
     let mut g = gref.lock().unwrap();
 
-    // xxx add hook to let chess clock restart after reload
+    let ig = &mut *g;
+    for (piece, ipc) in ig.ipieces.0.iter() {
+      ipc.direct_trait_access().loaded_hook(piece, &mut ig.gs)?;
+    }
 
     for (token, _) in &tokens_players {
       g.tokens_players.tr.insert(RawToken(token.clone()));
