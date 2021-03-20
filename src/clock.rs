@@ -201,8 +201,9 @@ impl Clock {
   {
     let mut r: [URender;N] = izip!(
       USERS.iter(),
-      state.users.iter()
-    ).map(|(&user, ustate)| {
+      state.users.iter(),
+      self.spec.initial().iter().copied(),
+    ).map(|(&user, ustate, initial)| {
       let nick = gplayers.get(ustate.player)
         .map(|gpl| gpl.nick.as_str());
       let (st, remaining) =
@@ -218,7 +219,7 @@ impl Clock {
               } else {
                 URS::Running
               }
-            } else if ustate.remaining == self.spec.initial_time() {
+            } else if ustate.remaining == initial {
               URS::Reset
             } else {
               URS::Stopped
