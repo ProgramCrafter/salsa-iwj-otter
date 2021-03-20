@@ -76,7 +76,7 @@ impl From<&OnlineErrorResponse> for rocket::http::Status {
       ServerFailure(_) => Status::InternalServerError,
       NoClient | NoPlayer(_) | GameBeingDestroyed
         => Status::NotFound,
-      OE::PieceHeld |
+      OE::PieceHeld | OE::PieceImmoveable |
       OE::OverlappingOccultation | OE::Occultation |
       OE::BadPieceStateForOperation
         => Status::Conflict,
@@ -411,6 +411,11 @@ api_route!{
       // again
       if gpc.held != Some(player) { throw!(OnlineError::PieceHeld) }
       if gpc.occult.is_active() { throw!(OE::Occultation) }
+      if matches_doesnot!(
+        gpc.moveable(),
+        = PieceMoveable::No,
+        ! PieceMoveable::Yes | PieceMoveable::IfWresting,
+      ) { throw!(OE::PieceImmoveable) }
     }
   }
 

@@ -21,6 +21,8 @@ pub enum OnlineError {
   #[error("referenced piece is gone (maybe race)")]
   PieceHeld,
   #[error("improper UI operation")]
+  PieceImmoveable,
+  #[error("improper UI operation")]
   BadOperation,
   #[error("overlapping occultation")]
   OverlappingOccultation,
