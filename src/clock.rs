@@ -54,9 +54,8 @@ struct Running {
 }
 
 impl ChessClock {
-  fn initial_time(&self) -> TimeSpec {
-    TVL::seconds(self.time.into())
-  }
+  fn initial_time(&self) -> TimeSpec { TVL::seconds(self.time.into()) }
+  fn per_move(&self) -> TimeSpec { TVL::seconds(self.per_move.into()) }
 }
 
 impl State {
@@ -74,7 +73,7 @@ impl State {
     // will go from stopped to Y, and then later when it's X's turn
     // X will get an extra per_move.  Y therefore needs per_move too.
     let y_remaining = &mut self.users[USERS[0]].remaining;
-    *y_remaining = *y_remaining + TVL::seconds(spec.per_move.into());
+    *y_remaining = *y_remaining + spec.per_move();
   }
 
   fn implies_running(&self, held: Option<PlayerId>) -> Option<User> {
@@ -258,7 +257,7 @@ impl State {
       if now_current != was_current;
       then {
         let remaining = &mut state.users[now_current.user].remaining;
-        *remaining = *remaining + TVL::seconds(spec.per_move.into());
+        *remaining = *remaining + spec.per_move();
       }
     }
 
