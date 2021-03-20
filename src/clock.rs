@@ -39,9 +39,14 @@ const USERINFOS: [UserInfo; N] = [
 
 const USERS: [User; N] = [ User(false), User(true) ];
 
-impl fmt::Debug for User {
+impl fmt::Display for User {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     f.write_char(USERINFOS[*self].idchar)
+  }
+}
+impl fmt::Debug for User {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "User({})", self)
   }
 }
 
