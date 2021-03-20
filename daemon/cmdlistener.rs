@@ -670,6 +670,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           gen: gs.gen,
           pos, face,
           xdata: None,
+          moveable: default(),
         };
         let PieceSpecLoaded { p, occultable } =
           info.load(piece_i as usize, &mut gpc, &gref)?;

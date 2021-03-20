@@ -73,6 +73,7 @@ pub struct GPiece{  // usual variable: gpc
   pub lastclient: ClientId,
   pub gen_before_lastclient: Generation,
   pub xdata: PieceXDataState,
+  #[serde(default)] pub moveable: PieceMoveable,
 }
 
 pub type PieceXDataState = Option<Box<dyn PieceXData>>;
@@ -327,6 +328,7 @@ impl GPiece {
       lastclient: ClientId(default()),
       gen_before_lastclient: gen_dummy,
       xdata: None,
+      moveable: default(),
     }
   }
 }

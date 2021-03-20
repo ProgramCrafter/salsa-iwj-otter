@@ -105,8 +105,18 @@ pub struct PreparedPieceState {
   pub zg: Generation,
   pub angle: CompassAngle,
   pub pinned: bool,
+  pub moveable: PieceMoveable,
   pub uos: Vec<UoDescription>,
 }
+
+#[derive(Debug,Copy,Clone,Serialize,Deserialize,Eq)]
+#[derive(Ord,PartialEq,PartialOrd)]
+pub enum PieceMoveable {
+  No,
+  IfWresting,
+  Yes,
+}
+impl Default for PieceMoveable { fn default() -> Self { PieceMoveable::Yes } }
 
 #[derive(Debug,Clone,Serialize)]
 pub struct PreparedPieceImage {

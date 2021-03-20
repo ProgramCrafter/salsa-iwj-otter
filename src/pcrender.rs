@@ -115,6 +115,8 @@ impl PieceRenderInstructions {
                          -> PreparedPieceState {
     let pri = self;
     let (pos, zlevel) = pri.pos_zlevel(gpc);
+    let moveable = if gpc.occult.is_active() { PieceMoveable::No }
+                   else { gpc.moveable };
     let r = PreparedPieceState {
       pos        : pos,
       held       : gpc.held,
@@ -124,6 +126,7 @@ impl PieceRenderInstructions {
       angle      : pri.angle(gpc).to_compass(),
       pinned     : gpc.pinned,
       uos        : pri.ui_operations(gs, gpc, ipc)?,
+      moveable,
     };
     dbgc!(pri, ipc, gpc, r);
     r
