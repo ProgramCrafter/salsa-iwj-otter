@@ -98,7 +98,8 @@ pub use vecdeque_stableix::Deque as StableIndexVecDeque;
 pub use void::Void;
 
 use nix::time::ClockId;
-pub const CLOCK_REALTIME: ClockId = ClockId::CLOCK_REALTIME;
+pub const CLOCK_REALTIME : ClockId = ClockId::CLOCK_REALTIME ;
+pub const CLOCK_MONOTONIC: ClockId = ClockId::CLOCK_MONOTONIC;
 
 pub use otter_base::zcoord::{self, ZCoord};
 pub use otter_base::misc as base_misc;
