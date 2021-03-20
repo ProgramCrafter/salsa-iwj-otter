@@ -654,6 +654,16 @@ impl PieceTrait for Clock {
       }
     };
 
+    let gplayers = &gs.players;
+    let moveable =
+      if state.users.iter().any(
+        |ust| gplayers.get(ust.player).is_some()
+      ) {
+        PieceMoveable::IfWresting
+      } else {
+        PieceMoveable::Yes
+      };
+
     state.do_start_or_stop(piece, was_current, was_implied_running,
                            held, &self.spec, ig)
       .map_err(|e| APOE::ReportViaResponse(e.into()))?;
@@ -663,6 +673,8 @@ impl PieceTrait for Clock {
         error!("failed to log: {:?}", &e);
         vec![LogEntry { html: Html::lit("&lt;failed to log&gt;") }]
       });
+
+    gpc.moveable = moveable;
     
     match howish {
       Unpredictable => {
