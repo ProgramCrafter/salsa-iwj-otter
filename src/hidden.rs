@@ -761,11 +761,8 @@ pub fn remove_occultation(
   let mut aggerr = AggregatedIE::new();
 
   let occid = if_chain! {
-    if let Some(ogpc) = gpieces.get(occulter).or_else(||{
-      aggerr.record(internal_logic_error(
-        "removing occultation by no piece"));
-      None
-    });
+    if let Some(ogpc) = gpieces.get(occulter);
+    // This can be None if the occulter is being deleted
 
     if let Some(occid) = ogpc.occult.active.or_else(||{
       aggerr.record(internal_logic_error(
