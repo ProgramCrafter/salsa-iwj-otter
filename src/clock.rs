@@ -356,7 +356,7 @@ impl PieceTrait for Clock {
           } else {
             format!("Make player {} current", &upchar)
           }),
-          wrc: WRC::Unpredictable,
+          wrc: WRC::Predictable,
         });
       }
     }
@@ -367,7 +367,7 @@ impl PieceTrait for Clock {
         def_key: 'S',
         opname: "stop".to_string(),
         desc: Html::lit("Stop"),
-        wrc: WRC::Unpredictable,
+        wrc: WRC::Predictable,
       });
     }
     if state.current.is_none() {
@@ -412,15 +412,21 @@ impl PieceTrait for Clock {
       .map_err(|e| APOE::ReportViaResponse(e.into()))?;
     let get_user = || opname.chars().next_back().unwrap().try_into().unwrap();
 
-    let log = Html::lit("xxxx");
-    // xxx
-    match opname {
+    enum Howish {
+      UniversalImage,
+      Unpredictable,
+    }
+    use Howish::*;
+
+    let (howish,did) = match opname {
       "start-x" | "start-y" => {
         let user = get_user();
         state.current = Some(Current { user });
+        (UniversalImage, format!("activated player {} at the", user))
       },
       "stop" => {
         state.current = None;
+        (UniversalImage, format!("stopped"))
       },
       "reset" => {
         if state.current.is_some() {
@@ -429,6 +435,7 @@ impl PieceTrait for Clock {
         for ust in &mut state.users {
           ust.remaining = self.spec.initial_time();
         }
+        (Unpredictable, format!("reset"))
       },
       "claim-x" | "claim-y" => { // xxx these need to be Unpredictable
         let user = get_user();
@@ -440,6 +447,7 @@ impl PieceTrait for Clock {
           // OK, you want to swap
           state.users[! user].player = default();
         }
+        (Unpredictable, format!("became player {} at the", user))
       },
       "unclaim-x" | "unclaim-y" => { // xxx these need to be Unpredictable
         let user = get_user();
@@ -447,23 +455,43 @@ impl PieceTrait for Clock {
           throw!(OE::BadPieceStateForOperation);
         }
         state.users[user].player = default();
+        (Unpredictable, format!("released player {} at the", user))
       },
       _ => {
         throw!(OE::BadPieceStateForOperation);
       }
-    }
+    };
 
-    let log = log_did_to_piece(ioccults, gpl, gpc, ipc, &log.0)
+    let log = log_did_to_piece(ioccults, gpl, gpc, ipc, &did)
       .unwrap_or_else(|e| {
         error!("failed to log: {:?}", &e);
         vec![LogEntry { html: Html::lit("&lt;failed to log&gt;") }]
       });
-    let r: PieceUpdateFromOpSimple = 
-    (WhatResponseToClientOp::Unpredictable,
-     PieceUpdateOp::Modify(()),
-     log);
     
-    (r.into(), vec![], None)
+    match howish {
+      Unpredictable => {
+        let r: PieceUpdateFromOpSimple = (
+          WhatResponseToClientOp::Unpredictable,
+          PieceUpdateOp::Modify(()),
+          log);
+        (r.into(), vec![], None)
+      }
+      UniversalImage => {
+        let r: UpdateFromOpComplex = (
+          PieceUpdate {
+            wrc: WhatResponseToClientOp::Predictable,
+            log,
+            ops: PieceUpdateOps::PerPlayer(default()),
+          },
+          vec![],
+          Some(Box::new(move |buf: &mut PrepareUpdatesBuffer| {
+            buf.piece_update_image(piece)
+              .unwrap_or_else(|e| error!("failed to prep clock: {:?}", e));
+          }))
+        );
+        r
+      }
+    }
   }
 
   fn itemname(&self) -> &str { "chess-clock" }
