@@ -654,15 +654,16 @@ impl PieceTrait for Clock {
       }
     };
 
-    let gplayers = &gs.players;
-    let moveable =
+    let moveable = {
+      let gplayers = &gs.players;
       if state.users.iter().any(
         |ust| gplayers.get(ust.player).is_some()
       ) {
         PieceMoveable::IfWresting
       } else {
         PieceMoveable::Yes
-      };
+      }
+    };
 
     state.do_start_or_stop(piece, was_current, was_implied_running,
                            held, &self.spec, ig)
