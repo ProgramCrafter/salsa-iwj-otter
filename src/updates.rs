@@ -597,11 +597,20 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
 
   #[throws(InternalError)]
-  fn piece_update_fallible<GUF>(&mut self, piece: PieceId,
-                                ops: PieceUpdateOps,
-                                gen_update: GUF)
-                                -> PreparedUpdateEntry_Piece
-    where GUF: FnOnce(&mut GPiece, Generation, &IsResponseToClientOp)
+  fn piece_update_fallible_players<U,GUF,WMZ,MUF,MPF>
+    (&mut self, piece: PieceId, gen_update: GUF,
+     mut with_max_z: WMZ,
+     mut mk_update: MUF,
+     mut missing: MPF,
+    )
+     -> SecondarySlotMap<PlayerId, U>
+  where
+    GUF: FnOnce(&mut GPiece, Generation, &IsResponseToClientOp),
+    WMZ: FnMut(&mut ZCoord, &GPiece),
+    MUF: FnMut(&IOccults, &GameState, &GPiece, &IPiece,
+               PlayerId, &Option<PieceRenderInstructions>)
+               -> Result<Option<U>,IE>,
+    MPF: FnMut(&mut GPlayer) -> Option<U>,
   {
     let gen = self.gen();
     let gs = &mut self.g.gs;
@@ -615,7 +624,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     }
     let gpc = gs.pieces.byid(piece).ok();
 
-    let mut out: SecondarySlotMap<PlayerId, PreparedPieceUpdate> = default();
+    let mut out: SecondarySlotMap<PlayerId, U> = default();
     for player in self.g.iplayers.keys() {
       // Iterate via iplayers because we want to borrow each gpl
       // mutably and also gs immutably, at different times.  The naive
@@ -623,41 +632,66 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       // thing, and mutably to produce mut references, so ties everything
       // in a knot.
       let gpl = match gs.players.get_mut(player) { Some(v)=>v, _=>continue };
-
-      let ops = match ops {
-        PUOs::Simple(update) => update,
-        PUOs::PerPlayer(ref ops) => match ops.get(player) {
-          Some(op) => *op,
-          None => continue,
-        }
-      };
-      let op = match (gpc, ipc) {
+      let upd = match (gpc, ipc) {
         (Some(gpc), Some(ipc)) => {
           let pri = piece_pri(ioccults, &gs.occults, player,
                               gpl, piece, gpc, ipc);
-          gs.max_z.update_max(&gpc.zlevel.z);
           drop(gpl);
-          Self::piece_update_player(
-            ioccults, gs, gpc, ipc, ops, &pri
-          )?
-        }
-        _ => gpl.idmap.fwd(piece).map(
+          with_max_z(&mut gs.max_z, gpc);
+          mk_update(ioccults,gs,gpc,ipc,player,&pri)?
+        },
+        _ => {
+          missing(gpl)
+        },
+      };
+
+      if let Some(upd) = upd {
+        out.insert(player, upd);
+      }
+    }
+    out
+  }
+
+  #[throws(InternalError)]
+  fn piece_update_fallible<GUF>(&mut self, piece: PieceId,
+                                ops: PieceUpdateOps,
+                                gen_update: GUF)
+                                -> PreparedUpdateEntry_Piece
+    where GUF: FnOnce(&mut GPiece, Generation, &IsResponseToClientOp)
+  {
+    let ops = self.piece_update_fallible_players
+      ::<PreparedPieceUpdate,_,_,_,_>
+    (
+      piece, gen_update,
+
+      |max_z, gpc| max_z.update_max(&gpc.zlevel.z),
+
+      |ioccults,gs,gpc,ipc,player,pri| {
+        let ops = match ops {
+          PUOs::Simple(update) => update,
+          PUOs::PerPlayer(ref ops) => match ops.get(player) {
+            Some(op) => *op,
+            None => return Ok(None),
+          }
+        };
+        let u = Self::piece_update_player(ioccults,gs,gpc,ipc,ops,&pri)?;
+        Ok::<_,IE>(u)
+      },
+
+      |gpl| {
+        gpl.idmap.fwd(piece).map(
           |vpid| PreparedPieceUpdate {
             // The piece is deleted, so we can't leak anything.
             piece: vpid,
             op: PieceUpdateOp::Delete(),
           }
         )
-      };
-
-      if let Some(op) = op {
-        out.insert(player, op);
       }
-    }
+    )?;
 
     PreparedUpdateEntry_Piece {
       by_client: self.by_client,
-      ops: out,
+      ops
     }
   }
 
