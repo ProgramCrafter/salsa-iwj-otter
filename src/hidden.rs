@@ -307,7 +307,6 @@ pub fn vpiece_decode(
 
 // xxx prevent addpiece and removepiece in places that would be occulted
 // xxx this means this only happens on ungrab I think ?
-// xxx prevent occultation scrambling of grasped things
 
 #[throws(InternalError)]
 fn recalculate_occultation_general<

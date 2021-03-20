@@ -282,6 +282,8 @@ pub fn permute(occid: OccId,
 
     for (notch, nr) in occ.notches.table.iter_enumerated() {
       let piece = if let Some(p) = nr.piece() { p } else { continue };
+      let gpc = if let Some(gpc) = gpieces.get(piece) { gpc }else{ continue };
+      if gpc.held.is_some() { continue }
       let occilk = (|| Some(ipieces.get(piece)?.occilk.as_ref()?))();
       let occilk = if let Some(o) = occilk { *o.borrow() } else {
         error!("{}", internal_error_bydebug(&(occid, &occ, &nr, piece)));
