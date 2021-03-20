@@ -129,6 +129,19 @@ impl PieceRenderInstructions {
     r
   }
 
+  #[throws(IE)]
+  pub fn prep_pieceimage(&self, ioccults: &IOccults, gs: &GameState,
+                         gpc: &GPiece, ipc: &IPiece)
+                         -> PreparedPieceImage {
+    let pri = self;
+    let r = PreparedPieceImage {
+      svg        : pri.make_defs(ioccults, gs, gpc, ipc)?,
+      uos        : pri.ui_operations(gpc, ipc)?,
+    };
+    dbgc!(pri, ipc, gpc, r);
+    r
+  }
+
   pub fn angle(&self, gpc: &GPiece) -> VisiblePieceAngle {
     match self.occulted {
       PriOcculted::Visible(_)                            => gpc.angle,

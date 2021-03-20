@@ -727,6 +727,26 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     self.us.push(update);
   }
 
+  #[throws(InternalError)]
+  pub fn piece_update_image(&mut self, piece: PieceId) {
+    // Use this only for updates which do not change the set of valid UOs
+    // or other operations or move the piece etc.
+    let ims = self.piece_update_fallible_players(
+      piece, |_,_,_|(), |_,_|(),
+
+      |ioccults,gs,gpc,ipc,_player,pri| {
+        let im = pri.as_ref().map(|pri| {
+          let im = pri.prep_pieceimage(ioccults,gs,gpc,ipc)?;
+          Ok::<_,IE>(PreparedPieceUpdateGeneral { piece: pri.vpid, op: im })
+        }).transpose()?;
+        Ok::<_,IE>(im)
+      },
+
+      |_gpl| None,
+    )?;
+    PreparedUpdateEntry_Image { ims }
+  }
+
   pub fn piece_updates(&mut self, updates: Vec<(PieceId, PieceUpdateOps)>) {
     for (piece, ops) in updates {
       self.piece_update(piece, ops);
