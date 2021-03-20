@@ -285,6 +285,7 @@ fn now() -> TimeSpec {
   clock_gettime(CLOCK_MONOTONIC).context("clock_gettime")?
 }
 
+#[derive(Debug)]
 struct ThreadState {
   ig: InstanceWeakRef,
   piece: PieceId,
