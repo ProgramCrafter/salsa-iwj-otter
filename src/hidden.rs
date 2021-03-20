@@ -501,10 +501,6 @@ fn recalculate_occultation_general<
   
 
   dbgc!(&puos, &log, &occulteds);
-  // point of no return
-
-  // xxx shuffle some players' ids
-  // xxx and/or shuffle locations
 
   (||{
     let notches:
