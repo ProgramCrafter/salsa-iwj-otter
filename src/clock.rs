@@ -147,7 +147,7 @@ struct UState {
   #[serde(with="timespec_serde")] remaining: TimeSpec, // -ve means flag
 }
 
-#[derive(Debug,Copy,Clone,Serialize,Deserialize)]
+#[derive(Debug,Copy,Clone,Eq,PartialEq,Serialize,Deserialize)]
 struct Current {
   user: User,
 }
@@ -237,7 +237,7 @@ impl Clock {
 impl State {
   #[throws(IE)]
   fn do_start_or_stop(&mut self, piece: PieceId,
-                      _was_current: Option<Current>,
+                      was_current: Option<Current>,
                       was_implied_running: Option<User>,
                       held: Option<PlayerId>,
                       spec: &ChessClock,
@@ -256,11 +256,11 @@ impl State {
     }
 
     if_chain! {
-      if let Some(was_running_user) = was_implied_running;
-      if let Some(now_running_user) = state.implies_running(held);
-      if now_running_user != was_running_user;
+      if let Some(was_current) = was_current;
+      if let Some(now_current) = state.current;
+      if now_current != was_current;
       then {
-        let remaining = &mut state.users[now_running_user].remaining;
+        let remaining = &mut state.users[now_current.user].remaining;
         *remaining = *remaining + TVL::seconds(spec.per_move.into());
       }
     }
