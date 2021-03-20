@@ -150,7 +150,11 @@ pub enum PieceUpdateOp<NS,ZL> {
   SetZLevel(ZL),
 }
 
-pub type UpdateFromOpComplex = (PieceUpdate, Vec<(PieceId, PieceUpdateOps)>);
+pub type UpdateFromOpComplex = (
+  PieceUpdate,
+  Vec<(PieceId, PieceUpdateOps)>,
+  UnpreparedUpdates,
+);
 
 pub type PieceUpdateFromOpSimple = (
   WhatResponseToClientOp,

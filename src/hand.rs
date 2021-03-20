@@ -240,6 +240,6 @@ impl PieceTrait for Hand {
       wrc, log,
       ops: PUOs::Simple(PUO::Modify(())), // xxx
       // xxx want PUU::RecalculateOccultations
-    }, xupdates)
+    }, xupdates, None)
   }
 }
