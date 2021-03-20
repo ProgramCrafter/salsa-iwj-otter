@@ -314,6 +314,11 @@ impl GPiece {
     self.xdata.get_mut_exp()?
   }
 
+  pub fn moveable(&self) -> PieceMoveable {
+    if self.occult.is_active() { PieceMoveable::No }
+    else { self.moveable }
+  }
+
   pub fn dummy() -> Self {
     let gen_dummy = Generation(1);
     GPiece {
