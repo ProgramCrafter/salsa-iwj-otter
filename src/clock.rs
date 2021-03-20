@@ -304,10 +304,13 @@ impl PieceTrait for Clock {
       let mins_pad = iter::repeat("&nbsp;").take(3 - mins.len())
         .collect::<String>();
 
+      let font = r##"
+  font-family="Latin Modern Mono, monospace" font-size="6" font-weight="700"
+             "##;
       write!(f, r##"
-  <text x="1"  y="{}" font-family="Latin Modern Mono, monospace" font-size="6"
-   font-weight="700" fill="{}" >{}{}{}{:02}</text>"##,
+  <text x="1"  y="{}" {} fill="{}" >{}{}{}{:02}</text>"##,
              y,
+             font,
              show.text,
              mins_pad, mins, show.sigil, secs
       )?;
