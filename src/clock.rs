@@ -88,7 +88,7 @@ impl std::ops::Not for User {
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct ChessClock { // Spec
   time: Time,
-  #[serde(default)] per_move: usize,
+  #[serde(default)] per_move: Time,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -239,6 +239,7 @@ impl State {
   fn do_start_or_stop(&mut self, piece: PieceId,
                       was_implied_running: Option<User>,
                       held: Option<PlayerId>,
+                      spec: &ChessClock,
                       ig: &InstanceRef) {
     let state = self;
     if state.implies_running(held) == was_implied_running { return }
@@ -250,6 +251,16 @@ impl State {
       if let Some(Running { expires }) = state.running;
       then { 
         state.users[was_running_user].remaining = expires - now;
+      }
+    }
+
+    if_chain! {
+      if let Some(was_running_user) = was_implied_running;
+      if let Some(now_running_user) = state.implies_running(held);
+      if now_running_user != was_running_user;
+      then {
+        let remaining = &mut state.users[now_running_user].remaining;
+        *remaining = *remaining + TVL::seconds(spec.per_move.into());
       }
     }
 
@@ -628,7 +639,7 @@ impl PieceTrait for Clock {
       }
     };
 
-    state.do_start_or_stop(piece, was_implied_running, held, ig)
+    state.do_start_or_stop(piece, was_implied_running, held, &self.spec, ig)
       .map_err(|e| APOE::ReportViaResponse(e.into()))?;
 
     let log = log_did_to_piece(ioccults, gpl, gpc, ipc, &did)
@@ -682,7 +693,7 @@ impl PieceTrait for Clock {
       }
     }
 
-    state.do_start_or_stop(piece, was_running, now_held, ig)?;
+    state.do_start_or_stop(piece, was_running, now_held, &self.spec, ig)?;
     unprepared_update(piece)
   }
 
