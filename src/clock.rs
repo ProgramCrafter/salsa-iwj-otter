@@ -351,7 +351,7 @@ impl PieceTrait for Clock {
           } else {
             format!("Make player {} current", &upchar)
           }),
-          wrc: WRC::UpdateSvg,
+          wrc: WRC::Unpredictable,
         });
       }
     }
@@ -362,7 +362,7 @@ impl PieceTrait for Clock {
         def_key: 'S',
         opname: "stop".to_string(),
         desc: Html::lit("Stop"),
-        wrc: WRC::UpdateSvg,
+        wrc: WRC::Unpredictable,
       });
     }
     if state.current.is_none() {
@@ -371,7 +371,7 @@ impl PieceTrait for Clock {
         def_key: 'R',
         opname: "reset".to_string(),
         desc: Html::lit("Reset"),
-        wrc: WRC::UpdateSvg,
+        wrc: WRC::Unpredictable,
       });
     }
 
@@ -382,7 +382,7 @@ impl PieceTrait for Clock {
           def_key: upchar,
           opname: format!("unclaim-{}", userinfo.idchar),
           desc: Html(format!("Clear player {}", &upchar)),
-          wrc: WRC::UpdateSvg,
+          wrc: WRC::Unpredictable,
         });
       } else {
         upd.push(UoDescription {
@@ -390,7 +390,7 @@ impl PieceTrait for Clock {
           def_key: upchar,
           opname: format!("claim-{}", userinfo.idchar),
           desc: Html(format!("Become player {}", &upchar)),
-          wrc: WRC::UpdateSvg,
+          wrc: WRC::Unpredictable,
         });
       }
     }
@@ -454,7 +454,7 @@ impl PieceTrait for Clock {
         vec![LogEntry { html: Html::lit("&lt;failed to log&gt;") }]
       });
     let r: PieceUpdateFromOpSimple = 
-    (WhatResponseToClientOp::UpdateSvg,
+    (WhatResponseToClientOp::Unpredictable,
      PieceUpdateOp::Modify(()),
      log);
     
