@@ -103,11 +103,10 @@ struct State {
 }
 
 impl State {
-  fn new() -> Self {
-    State {
-      users: [UState { player: default(), remaining: TVL::zero() }; N],
-      current: None,
-    }
+  fn new(spec: &ChessClock) -> Self {
+    let mut state = State::dummy();
+    state.reset(spec);
+    state
   }
 
   fn reset(&mut self, spec: &ChessClock) {
@@ -119,7 +118,12 @@ impl State {
 
 #[typetag::serde(name="ChessClock")]
 impl PieceXData for State {
-  fn dummy() -> Self { State::new() }
+  fn dummy() -> Self {
+    State {
+      users: [UState { player: default(), remaining: TVL::zero() }; N],
+      current: None,
+    }
+  }
 }
 
 
@@ -229,7 +233,7 @@ impl PieceSpec for ChessClock {
       spec: self.clone(),
     };
 
-    gpc.xdata_mut(|| State::new())?;
+    gpc.xdata_mut(|| State::new(&self) )?;
 
     PieceSpecLoaded {
       p: Box::new(clock),
