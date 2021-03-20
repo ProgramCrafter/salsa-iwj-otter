@@ -100,6 +100,8 @@ struct Clock { // PieceTrait
 struct State {
   users: [UState; 2],
   #[serde(skip)] current: Option<Current>,
+  #[serde(skip)] notify: Option<mpsc::Sender<()>>,
+  #[serde(skip)] running: Option<Running>,
 }
 
 impl State {
@@ -114,6 +116,16 @@ impl State {
       ust.remaining = spec.initial_time();
     }
   }
+
+  fn implies_running(&self, held: Option<PlayerId>) -> Option<User> {
+    if_chain! {
+      if let Some(Current { user }) = self.current;
+      if held.is_none();
+      if self.users[user].remaining >= TVL::zero();
+      then { Some(user) }
+      else { None }
+    }
+  }
 }
 
 #[typetag::serde(name="ChessClock")]
@@ -122,6 +134,8 @@ impl PieceXData for State {
     State {
       users: [UState { player: default(), remaining: TVL::zero() }; N],
       current: None,
+      notify: None,
+      running: None,
     }
   }
 }
@@ -136,6 +150,11 @@ struct UState {
 #[derive(Debug,Serialize,Deserialize)]
 struct Current {
   user: User,
+}
+
+#[derive(Debug,Clone,Copy)]
+struct Running {
+  expires: TimeSpec,
 }
 
 impl ChessClock {
@@ -210,6 +229,127 @@ impl Clock {
     }
 
     r
+  }
+}
+
+// ==================== running ====================
+
+impl State {
+  #[throws(IE)]
+  fn do_start_or_stop(&mut self, piece: PieceId,
+                      was_implied_running: Option<User>,
+                      held: Option<PlayerId>,
+                      ig: &InstanceRef) {
+    let state = self;
+    if state.implies_running(held) == was_implied_running { return }
+
+    let now = now()?;
+
+    if_chain! {
+      if let Some(was_running_user) = was_implied_running;
+      if let Some(Running { expires }) = state.running;
+      then { 
+        state.users[was_running_user].remaining = expires - now;
+      }
+    }
+
+    if_chain! {
+      if let Some(now_running_user) = state.implies_running(held);
+      then {
+        let expires = now + state.users[now_running_user].remaining;
+        state.running = Some(Running { expires });
+      }
+    }
+
+    state.notify.get_or_insert_with(||{
+      let (tx,rx) = mpsc::channel();
+      let ts = ThreadState {
+        ig: ig.downgrade_to_weak(),
+        piece,
+        notify: rx,
+        next_wakeup: Some(now),
+      };
+      thread::spawn(move || {
+        ts.run()
+          .unwrap_or_else(|e| error!("clock thread failed: {:?}", e));
+      });
+      tx
+    })
+      .send(())
+      .unwrap_or_else(|e| error!("clock send notify failed: {:?}", e));
+  }
+}
+
+#[throws(IE)]
+fn now() -> TimeSpec {
+  clock_gettime(CLOCK_MONOTONIC).context("clock_gettime")?
+}
+
+struct ThreadState {
+  ig: InstanceWeakRef,
+  piece: PieceId,
+  notify: mpsc::Receiver<()>,
+  next_wakeup: Option<TimeSpec>,
+}
+
+impl ThreadState {
+  #[throws(IE)]
+  fn run(mut self) {
+    loop {
+      match self.next_wakeup {
+        Some(wakeup) => {
+          let timeout = wakeup - now()?;
+          if timeout > TVL::zero() {
+            let timeout =
+              Duration::from_nanos(timeout.tv_nsec() as u64) +
+              Duration::from_secs(timeout.tv_sec() as u64);
+
+            use mpsc::RecvTimeoutError::*;
+            match self.notify.recv_timeout(timeout) {
+              Err(Disconnected) => break,
+              Err(Timeout) => { },
+              Ok(()) => { },
+            }
+          }
+        }
+        None => {
+          match self.notify.recv() {
+            Err(mpsc::RecvError) => break,
+            Ok(()) => { },
+          }
+        }
+      };
+
+      let ig = match self.ig.upgrade() {
+        Some(ig) => ig,
+        None => break,
+      };
+      let mut ig = ig.lock().context("relocking game in clock")?;
+
+      let gpc = ig.gs.pieces.get_mut(self.piece);
+      let gpc = if let Some(gpc) = gpc { gpc } else { break };
+      let held = gpc.held;
+      let state: &mut State = gpc.xdata_mut(|| State::dummy())?;
+
+      self.next_wakeup =
+        if let Some(user) = state.implies_running(held) {
+          let now = now()?;
+          let remaining = state.running.ok_or_else(
+            || internal_error_bydebug(&state)
+          )?.expires - now;
+          state.users[user].remaining = remaining;
+          Some(libc::timespec {
+            tv_sec: 0,
+            tv_nsec: remaining.tv_nsec(),
+          }.into())
+        } else {
+          None
+        };
+
+      let mut updates = PrepareUpdatesBuffer::new(&mut ig, None, None);
+      updates.piece_update_image(self.piece)?;
+      updates.finish();
+    }
   }
 }
 
@@ -421,8 +561,9 @@ impl PieceTrait for Clock {
   fn ui_operation(&self, args: ApiPieceOpArgs<'_>,
                   opname: &str, _wrc: WhatResponseToClientOp)
                   -> UpdateFromOpComplex {
-    let ApiPieceOpArgs { gs,piece,player,ioccults,ipc, .. } = args;
+    let ApiPieceOpArgs { gs,piece,player,ioccults,ipc,ig,.. } = args;
     let gpc = gs.pieces.byid_mut(piece)?;
+    let held = gpc.held;
     let gpl = gs.players.byid(player)?;
     let state: &mut State = gpc.xdata_mut_exp()
       .map_err(|e| APOE::ReportViaResponse(e.into()))?;
@@ -433,6 +574,8 @@ impl PieceTrait for Clock {
       Unpredictable,
     }
     use Howish::*;
+
+    let was_implied_running = state.implies_running(held);
 
     let (howish,did) = match opname {
       "start-x" | "start-y" => {
@@ -475,6 +618,9 @@ impl PieceTrait for Clock {
         throw!(OE::BadPieceStateForOperation);
       }
     };
+
+    state.do_start_or_stop(piece, was_implied_running, held, ig)
+      .map_err(|e| APOE::ReportViaResponse(e.into()))?;
 
     let log = log_did_to_piece(ioccults, gpl, gpc, ipc, &did)
       .unwrap_or_else(|e| {
