@@ -582,18 +582,13 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let ig = &mut **ig_g;
       let ipc = ig.ipieces.as_mut(modperm)
         .remove(piece).ok_or(ME::PieceNotFound)?;
-      let ioccults = &ig.ioccults;
       let gs = &mut ig.gs;
-      let gpc = gs.pieces.as_mut(modperm).remove(piece);
-      let desc_html = if let Some(gpc) = &gpc {
-        let pri = PieceRenderInstructions::new_visible(default());
-        pri.describe(ioccults, gpc, &ipc)
-      } else {
-        Html::lit("&lt;piece partially missing from game state!&gt;")
-      };
+      let gpc = gs.pieces.as_mut(modperm).get_mut(piece);
       let mut xupdates = vec![];
       if let Some(gpc) = gpc {
+        gpc.occult.passive_delete_hook(&mut gs.occults, piece);
         if gpc.occult.is_active() {
+          drop(gpc);
           xupdates.append(
             &mut
               remove_occultation(
@@ -607,7 +602,16 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
                 piece)?
           );
         }
-        gpc.occult.passive_delete_hook(&mut gs.occults, piece);
+      }
+      let ioccults = &ig.ioccults;
+      let gpc = gs.pieces.as_mut(modperm).remove(piece);
+      let desc_html = if let Some(gpc) = &gpc {
+        let pri = PieceRenderInstructions::new_visible(default());
+        pri.describe(ioccults, gpc, &ipc)
+      } else {
+        Html::lit("&lt;piece partially missing from game state!&gt;")
+      };
+      if let Some(gpc) = gpc {
         ipc.p.into_inner().delete_hook(&gpc, gs);
       }
       if let Some(occilk) = ipc.occilk { ig.ioccults.ilks.dispose(occilk); }
