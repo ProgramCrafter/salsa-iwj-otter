@@ -18,14 +18,14 @@ type Time = i32;
 // ==================== state ====================
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
-pub struct ChessClock { // Spec
+pub struct Spec {
   time: Time,
   #[serde(default)] per_move: Time,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
 struct Clock { // PieceTrait
-  spec: ChessClock,
+  spec: Spec,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -53,19 +53,19 @@ struct Running {
   expires: TimeSpec,
 }
 
-impl ChessClock {
+impl Spec {
   fn initial_time(&self) -> TimeSpec { TVL::seconds(self.time.into()) }
   fn per_move(&self) -> TimeSpec { TVL::seconds(self.per_move.into()) }
 }
 
 impl State {
-  fn new(spec: &ChessClock) -> Self {
+  fn new(spec: &Spec) -> Self {
     let mut state = State::dummy();
     state.reset(spec);
     state
   }
 
-  fn reset(&mut self, spec: &ChessClock) {
+  fn reset(&mut self, spec: &Spec) {
     for ust in &mut self.users {
       ust.remaining = spec.initial_time();
     }
@@ -247,7 +247,7 @@ impl State {
                       was_current: Option<Current>,
                       was_implied_running: Option<User>,
                       held: Option<PlayerId>,
-                      spec: &ChessClock,
+                      spec: &Spec,
                       ig: &InstanceRef) {
     let state = self;
 
@@ -391,8 +391,8 @@ fn unprepared_update(piece: PieceId) -> UnpreparedUpdates {
   }))
 }
 
-#[typetag::serde]
-impl PieceSpec for ChessClock {
+#[typetag::serde(name="ChessClock")]
+impl PieceSpec for Spec {
   #[throws(SpecError)]
   fn load(&self, _: usize, gpc: &mut GPiece, _ir: &InstanceRef)
           -> PieceSpecLoaded {
