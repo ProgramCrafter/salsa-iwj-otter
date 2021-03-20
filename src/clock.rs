@@ -243,6 +243,17 @@ impl State {
                       spec: &ChessClock,
                       ig: &InstanceRef) {
     let state = self;
+
+    if_chain! {
+      if let Some(was_current) = was_current;
+      if let Some(now_current) = state.current;
+      if now_current != was_current;
+      then {
+        let remaining = &mut state.users[now_current.user].remaining;
+        *remaining = *remaining + TVL::seconds(spec.per_move.into());
+      }
+    }
+
     if state.implies_running(held) == was_implied_running { return }
 
     let now = now()?;
@@ -252,16 +263,6 @@ impl State {
       if let Some(Running { expires }) = state.running;
       then { 
         state.users[was_running_user].remaining = expires - now;
-      }
-    }
-
-    if_chain! {
-      if let Some(was_current) = was_current;
-      if let Some(now_current) = state.current;
-      if now_current != was_current;
-      then {
-        let remaining = &mut state.users[now_current.user].remaining;
-        *remaining = *remaining + TVL::seconds(spec.per_move.into());
       }
     }
 
