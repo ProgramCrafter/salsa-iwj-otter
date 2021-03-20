@@ -197,3 +197,4 @@ shape.xy = [20,10]
 pos = [240, 100]
 type = "ChessClock"
 time = 900
+per_move = 30
