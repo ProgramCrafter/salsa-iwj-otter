@@ -297,8 +297,6 @@ impl ThreadState {
   #[throws(IE)]
   fn run(mut self) {
     loop {
-      // xxx this seems to spin
-
       match self.next_wakeup {
         Some(wakeup) => {
           let timeout = wakeup - now()?;
@@ -341,10 +339,11 @@ impl ThreadState {
             || internal_error_bydebug(&state)
           )?.expires - now;
           state.users[user].remaining = remaining;
-          Some(libc::timespec {
+          let pause: TimeSpec = libc::timespec {
             tv_sec: 0,
             tv_nsec: remaining.tv_nsec(),
-          }.into())
+          }.into();
+          Some(pause + now)
         } else {
           None
         };
