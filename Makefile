@@ -43,8 +43,10 @@ TARGET_DIR ?= target
 USVG ?= usvg
 USVG_OPTIONS = "--sans-serif-family=DejaVu Sans"
 
-WASM_PACK ?= wasm-pack
-WASM_PACK_OPTIONS = --cargo-path=/bin/echo
+WASM_BINDGEN = $(TARGET_DIR)/debug/wasm-bindgen
+WASM_BINDGEN_OPTIONS =						\
+	--remove-name-section --remove-producers-section	\
+	--typescript --no-modules				\
 
 BUNDLE_SOURCES ?= bundle-rust-sources
 
@@ -71,7 +73,7 @@ TARGET_DIR = $(BUILD_SUBDIR)/$(notdir $(PWD))/target
 NAILING_CARGO_JUST_RUN ?= $(NAILING_CARGO) --just-run -q ---
 BUNDLE_SOURCES_CMD ?= $(NAILING_CARGO) --- $(BUNDLE_SOURCES)
 USVG_CMD ?= $(NAILING_CARGO_JUST_RUN) $(USVG)
-WASM_PACK_CMD ?= $(NAILING_CARGO) --linkfarm=git --- $(WASM_PACK)
+WASM_BINDGEN_CLI_CARGO_OPTS ?= --subcommand-props=!manifest-path
 
 clean-nailing:
 	$(NAILING_CARGO_JUST_RUN) \
@@ -85,7 +87,6 @@ endif # Cargo.nail
 BUILD_SUBDIR ?= ../Build
 BUNDLE_SOURCES_CMD ?= $(BUNDLE_SOURCES)
 USVG_CMD ?= $(USVG)
-WASM_PACK_CMD ?= $(WASM_PACK)
 
 WASM_PACKED=$(TARGET_DIR)/packed-wasm
 
@@ -103,7 +104,6 @@ endef
 
 $(eval $(call lp,BUNDLE_SOURCES,bundle-sources,debug,bundle-rust-sources))
 $(eval $(call lp,USVG,resvg,release,usvg))
-$(eval $(call lp,WASM_PACK,wasm-pack,debug,wasm-pack))
 
 #---------- variables defining bits of source etc. ----------
 
@@ -149,9 +149,9 @@ cargo-%: stamp/cargo.%
 
 cargo-wasm: cargo-wasm-release
 
-wasm-pack: stamp/wasm-pack
+wasm: stamp/wasm-bindgen
 
-assets: js stamp/wasm-pack $(FILEASSETS)
+assets: js stamp/wasm-bindgen $(FILEASSETS)
 
 js: templates/script.js
 
@@ -176,6 +176,10 @@ stamp/cargo.%: $(call rsrcs,. ! -path './wasm/*')
 
 $(TARGET_DIR)/debug/%: $(call rsrcs, ! -path './wasm/*')
 	$(CARGO) build --workspace -p otter --bin $*
+
+$(WASM_BINDGEN): $(call rsrcs, ! -name \*.rs)
+	$(CARGO) $(WASM_BINDGEN_CLI_CARGO_OPTS) build --target-dir=target \
+		--manifest-path=$(abspath wasm/Cargo.toml) -p wasm-bindgen-cli
 
 stamp/cargo.check: $(call rsrcs,.)
 	$(CARGO) test --workspace
@@ -208,18 +212,12 @@ stamp/cargo.deploy-build: $(call rsrcs,.)
 
 #---------- wasm ----------
 
-$(addprefix $(WASM_PACKED)/,$(WASM_ASSETS) $(WASM_OUTPUTS)): stamp/wasm-pack
-stamp/wasm-pack: stamp/cargo.wasm-release
-	$(WASM_PACK_CMD) $(WASM_PACK_OPTIONS) build \
-		--out-dir=../target/packed-wasm wasm -t no-modules --release
+$(addprefix $(WASM_PACKED)/,$(WASM_ASSETS) $(WASM_OUTPUTS)): stamp/wasm-bindgen
+stamp/wasm-bindgen: $(WASM_BINDGEN) stamp/cargo.wasm-release
+	$(NAILING_CARGO_JUST_RUN) $(abspath $<) \
+		$(WASM_BINDGEN_OPTIONS)	--out-dir target/packed-wasm \
+		target/$(WASM)/release/otter_wasm.wasm
 	$(stamp)
-
-# There is some kind of bug in wasm-pack's version of wasm-opt, which
-# can be avoided by running --dev instead (but also then using the
-# debug rust built).  IME this happened when trying to return a u64,
-# so maybe bigints are affected?  (Which I don't want to use anyway.)
-# See
-#    https://github.com/WebAssembly/binaryen/issues/3006
 
 #---------- bundle-sources ----------
 
@@ -283,7 +281,7 @@ templates/script.js: $(TS_SRC_FILES)
 #	@echo 'nodejs check $< ok'
 
 templates/otter_wasm.ns.d.ts: $(WASM_PACKED)/otter_wasm.d.ts \
-				stamp/wasm-pack $(MAKEFILE_DEP)
+				stamp/wasm-bindgen $(MAKEFILE_DEP)
 	set -e; exec >$@.tmp; 				\
 	echo 'declare namespace wasm_bindgen {'; 	\
 	sed 's/^export default function init/export function init/' <$<; \
