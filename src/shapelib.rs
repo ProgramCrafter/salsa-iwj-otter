@@ -95,6 +95,8 @@ pub enum LibraryLoadError {
   MissingSubstituionToken(&'static str),
   #[error("{:?}",&self)]
   RepeatedSubstituionToken(&'static str),
+  #[error("{:?}",&self)]
+  MultipleMultipleFaceDefinitions,
 }
 
 impl LibraryLoadError {
@@ -147,6 +149,8 @@ pub struct Item {
   svgs: IndexVec<SvgId, Html>,
   descs: IndexVec<DescId, Html>,
   outline: Outline,
+  #[serde(default)]
+  back: Option<Box<dyn OccultedPieceTrait>>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -240,22 +244,35 @@ impl FaceTransform {
 
 impl Item {
   #[throws(IE)]
-  fn svg_face(&self, f: &mut Html, face: FaceId, _vpid: VisiblePieceId) {
-    let face = &self.faces[face];
-    let svgd = &self.svgs[face.svg];
-    face.xform.write_svgd(f, svgd)?;
+  fn svg_face(&self, f: &mut Html, face: FaceId, vpid: VisiblePieceId) {
+    if let Some(face) = self.faces.get(face) {
+      let svgd = &self.svgs[face.svg];
+      face.xform.write_svgd(f, svgd)?;
+    } else if let Some(back) = &self.back {
+      back.svg(f, vpid)?;
+    } else {
+      throw!(internal_error_bydebug(&(self, face)))
+    }
   }
 
   #[throws(IE)]
   fn describe_face(&self, face: FaceId) -> Html {
-    self.descs[ self.faces[face].desc ].clone()
+    if let Some(face) = self.faces.get(face) {
+      self.descs[ face.desc ].clone()
+    } else if let Some(back) = &self.back {
+      back.describe_html()?
+    } else {
+      throw!(internal_error_bydebug(&(self, face)))
+    }
   }
 }
 
 #[typetag::serde(name="Lib")]
 impl PieceTrait for Item {
   fn nfaces(&self) -> RawFaceId {
-    self.faces.len().try_into().unwrap()
+    (self.faces.len()
+     + self.back.iter().count())
+      .try_into().unwrap()
   }
 
   #[throws(IE)]
@@ -388,13 +405,17 @@ impl Contents {
       .map_err(|e| SpE::InternalError(format!("reckoning transform: {}",&e)))?;
     let mut face = ItemFace { svg, desc, xform };
     let mut faces = index_vec![ face ];
+    let mut back = None;
     if idata.group.d.flip {
       face.xform.scale[0] *= -1.;
       faces.push(face);
+    } else if let Some(back_spec) = &idata.group.d.back {
+      let p = back_spec.load_occult()?;
+      back = Some(p);
     }
     faces.shrink_to_fit();
 
-    let it = Item { faces, descs, svgs, outline,
+    let it = Item { faces, descs, svgs, outline, back,
                     itemname: name.to_string() };
     (Box::new(it), occultable)
   }
@@ -512,6 +533,12 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
       groupname: groupname.clone(),
       d,
     });
+    if [
+      group.d.flip,
+      group.d.back.is_some(),
+    ].iter().filter(|x|**x).count() > 1 {
+      throw!(LLE::MultipleMultipleFaceDefinitions)
+    }
     for fe in gdefn.files.0 {
       #[throws(LLE)]
       fn subst(before: &str, needle: &'static str, replacement: &str)
