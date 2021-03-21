@@ -104,8 +104,8 @@ If you copied or adapted an SVG from somewhere, provide details.
 Contributions should be via git branch, eg a merge request on Salsa:
 [https://salsa.debian.org/iwj/otter](https://salsa.debian.org/iwj/otter)
 
-NB that shapes must come with a licence compatible with CC-BY-SA 4.0.
-See `LICENCE` for more information about copyright status.
+NB that shapes must come with a licence compatible with CC-BY-SA 4.0
+or GNU AGPLv3+.  See `LICENCE` for more information about copyright status.
 
 
 BUILDING AND TESTING

@@ -34,12 +34,13 @@ Shape libraries
 The shape librariues in library/ are *not* part of Otter itself.  The
 files there have a variety of different licences, and are often
 multiply-licenced.  But all of these files are available under
-at least CC-BY-SA 3.0 or CC-BY-SA 4.0, so:
+at least CC-BY-SA 3.0, CC-BY-SA 4.0 or AGPLv3+, so:
 
 The shape libraries are licensed under either the Creative Commons
 Attribution-Share Alike 3.0 Unported License, or the Creative Commons
-Attribution-ShareAlike 4.0 International Licence.
-There is NO WARRANTY.
+Attribution-ShareAlike 4.0 International Licence, or the GNU Affero
+General Public License (version 3 or at your option any later
+version).  There is NO WARRANTY
 
 Many of these files were downloaded from public sources using the
 ./media-scraper script; if they are to be edited, it would be best to
@@ -64,8 +65,9 @@ source tree, where the full authorship and licence information, and
 source url etc., can be found.
 
 You can find a copy of the actual licences in the files
-CC-BY-SA-3.0.txt and CC-BY-SA-4.0.txt.  If not, see
-<https://creativecommons.org/>.
+  CC-BY-SA-3.0.txt  CC-BY-SA-4.0.txt  AGPL
+If not, see <https://creativecommons.org/> or
+<http://www.gnu.org/licenses/>.
 
 
 Formalities
