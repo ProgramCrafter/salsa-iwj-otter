@@ -164,6 +164,7 @@ my $libinfo = $parser->parse_file($input);
 my $groups = $libinfo->{group};
 my $scraper = sub { $libinfo->{scraper}{$_[0]} };
 my $method = $scraper->('method');
+$method =~ s/-/_/g;
 my $method_fn = ${*::}{"method_$method"};
 
 my $methodlic_fn = ${*::}{"methodlic_$method"};
