@@ -170,14 +170,7 @@ Setup
 
 ```
      cargo install bundle-sources
-     git clone https://github.com/ijackson/wasm-pack.git -b cargo-opts
-     cd wasm-pack
-     cargo install
 ```
-
-wasm-pack upstream haven't reviewed my merge request, so you need my
-version.  NB that wasm-pack will itself download and install more
-stuff when it is run by the Otter Makefile.
 
 
 Build
@@ -377,13 +370,10 @@ executed - and, therefore, trusted:
  * Rustup (the Rust downloader/installer) - this is pretty safe
  * Rust itself - again, pretty safe
  * Otter itself - well, I wrote this; up to you.
- * My branch of wasm-pack - I haven't audited what I started with.
  * 300 transitive dependencies of otter (from crates.io)
  * 50 transitive dependencies of bundle-sources
  * the transitive dependencies of resvg
- * god knows how many transitive dependencies of wasm-pack
  * a geckodriver binary directly from mozilla
- * whatever wasm-pack downloads at runtime (mostly(?) via cargo)
 
 You will have trusted the integrity of the following:
 
@@ -425,21 +415,8 @@ Dependencies - apologia
    much functionality.  But also because I favoured my own programming
    convenience and in some cases was experimenting with different
    approaches.  In practice, it seems to me that once I'm using Rocket
-   and WASM utilities and resvg and so on, there is not that much to
-   be gained by trying to prune the dependencies of the otter package
-   itself.
-
- * wasm-pack
-
-   This is a wrapper program for various utilities for manipulating
-   WebAssembly files, and their Typescript and Javascript glue, etc.
-   It likes to run cargo and do god knows what.  I'm not sure it's
-   buying me much over whatever things it runs, so ideally it would be
-   best to replace this with calls to the underlying utilities and
-   libraries.  But there are some wrinkles, for example, some version
-   coupling requirements that wasm-pack takes care of.  And to be
-   honest, I'm not sure precisely what it does and understanding that
-   would be a necessary first step to reproducing it in the Makefile.
+   and WASM and resvg and so on, there is not that much to be gained
+   by trying to prune the dependencies of the otter package itself.
 
  * bundle-rust-sources
 
