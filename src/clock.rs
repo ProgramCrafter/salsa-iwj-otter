@@ -80,11 +80,15 @@ impl State {
     }
   }
 
+  fn any_expired(&self) -> bool {
+    dbg!(self.users.iter().any(|ust| ust.remaining < TVL::zero()))
+  }
+
   fn implies_running(&self, held: Option<PlayerId>) -> Option<User> {
     if_chain! {
       if let Some(Current { user }) = self.current;
       if held.is_none();
-      if self.users[user].remaining >= TVL::zero();
+      if ! self.any_expired();
       then { Some(user) }
       else { None }
     }
@@ -189,6 +193,7 @@ enum URenderState {
   Running,
   ActiveHeld,
   Inactive,
+  OtherFlag,
   Stopped,
   Reset,
   Flag,
@@ -214,6 +219,8 @@ impl Clock {
             if let Some(current) = &state.current {
               if current.user != user {
                 URS::Inactive
+              } else if state.any_expired() {
+                URS::OtherFlag
               } else if held.is_some() {
                 URS::ActiveHeld
               } else {
@@ -260,6 +267,7 @@ impl State {
       if let Some(was_current) = was_current;
       if let Some(now_current) = state.current;
       if now_current != was_current;
+      if ! state.any_expired();
       then {
         let remaining = &mut state.users[now_current.user].remaining;
         *remaining = *remaining + spec.per_move();
@@ -455,6 +463,7 @@ impl PieceTrait for Clock {
         let (text, background, sigil) = match self {
           Running    => ("black",  "yellow",     "&#x25b6;" /* >  */ ),
           ActiveHeld => ("black",  "yellow",     "&#x2016;" /* || */ ),
+          OtherFlag  => ("black",  "yellow",     ":"                 ),
           Inactive   => ("black",  "white",      ":"                 ),
           Stopped    => ("black",  "lightblue",  "&#x25a1;" /* [] */ ),
           Reset      => ("black",  "lightgreen", "&#x25cb;" /* O  */ ),
