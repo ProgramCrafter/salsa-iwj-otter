@@ -1,0 +1,21 @@
+# Copyright 2020-2021 Ian Jackson and contributors to Otter
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# There is NO WARRANTY.
+
+table_size = [300, 200]
+table_colour = "#bbd"
+
+[[pieces]]
+pos = [150,100]
+type = "Lib"
+lib = "wikimedia"
+item = "card-stripe-back-red"
+
+[[pieces]]
+pos = [115,  135]
+type = "LibList"
+lib = "cards-oxymoron"
+prefix = "card-oxymoron-"
+suffix = "-h"
+items = ["2","3","4","5","6","7","8","9","T","J","Q","K","A"]
+posd = [10, 0]
