@@ -303,15 +303,22 @@ impl GPiece {
 }
 
 pub fn vpiece_decode(
-  _gs: &GameState, // xxx
+  gs: &GameState,
   player: PlayerId,
   gpl: &GPlayer,
   vis: VisiblePieceId
 ) -> Option<PieceId> {
-  let piece = gpl.idmap.rev(vis);
-  // xxx check for occultation:
-  // check that this piece is visible at all to this player,
-  // or they might manipulate it despite not seeing it!
+  let piece: Option<PieceId> = gpl.idmap.rev(vis);
+  let piece: Option<PieceId> = if_chain! {
+    if let Some(p) = piece;
+    if let Some(gpc) = gs.pieces.get(p);
+    if let Some(Passive { occid, notch:_ }) = gpc.occult.passive;
+    if let Some(occ) = gs.occults.occults.get(occid);
+    let kind = occ.views.get_kind(player);
+    if ! kind.at_all_visible();
+    then { None }
+    else { piece }
+  };
   trace!("{} {:?} <= {}", player, piece, vis);
   piece
 }
