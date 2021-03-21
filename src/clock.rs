@@ -517,7 +517,7 @@ impl PieceTrait for Clock {
         write!(f, r##"
   <text x="21" y="{}" {} clip-path="url(#def.{}.cl)" font-size="4">{}</text>
               "##,
-               y, pointer,
+               y - 1., pointer,
                vpid,
                htmlescape::encode_minimal(nick),
         )?;
