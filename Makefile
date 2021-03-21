@@ -177,9 +177,10 @@ stamp/cargo.%: $(call rsrcs,. ! -path './wasm/*')
 $(TARGET_DIR)/debug/%: $(call rsrcs, ! -path './wasm/*')
 	$(CARGO) build --workspace -p otter --bin $*
 
-$(WASM_BINDGEN): $(call rsrcs, ! -name \*.rs)
+stamp/cargo.wasm-bindgen: $(call rsrcs, ! -name \*.rs)
 	$(CARGO) $(WASM_BINDGEN_CLI_CARGO_OPTS) build --target-dir=target \
 		--manifest-path=$(abspath wasm/Cargo.toml) -p wasm-bindgen-cli
+	$(stamp)
 
 stamp/cargo.check: $(call rsrcs,.)
 	$(CARGO) test --workspace
@@ -213,8 +214,8 @@ stamp/cargo.deploy-build: $(call rsrcs,.)
 #---------- wasm ----------
 
 $(addprefix $(WASM_PACKED)/,$(WASM_ASSETS) $(WASM_OUTPUTS)): stamp/wasm-bindgen
-stamp/wasm-bindgen: $(WASM_BINDGEN) stamp/cargo.wasm-release
-	$(NAILING_CARGO_JUST_RUN) $(abspath $<) \
+stamp/wasm-bindgen: stamp/cargo.wasm-bindgen stamp/cargo.wasm-release
+	$(NAILING_CARGO_JUST_RUN) $(abspath $(WASM_BINDGEN)) \
 		$(WASM_BINDGEN_OPTIONS)	--out-dir target/packed-wasm \
 		target/$(WASM)/release/otter_wasm.wasm
 	$(stamp)
