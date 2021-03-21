@@ -194,6 +194,7 @@ impl OutlineTrait for Item { delegate! { to self.outline {
 }}}
 
 impl FaceTransform {
+  #[throws(LLE)]
   fn from_group(d: &GroupDetails) -> Self {
     let centre = d.centre;
     let scale = d.scale;
@@ -323,7 +324,8 @@ impl Contents {
     let desc = descs.push(idata.d.desc.clone());
     descs.shrink_to_fit();
 
-    let xform = FaceTransform::from_group(&idata.group.d);
+    let xform = FaceTransform::from_group(&idata.group.d)
+      .map_err(|e| SpE::InternalError(format!("reckoning transform: {}",&e)))?;
     let mut face = ItemFace { svg, desc, xform };
     let mut faces = index_vec![ face ];
     if idata.group.d.flip {
@@ -485,7 +487,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
             item_name: Arc::new(subst(&item_name, "_c", &colour)?),
             desc: Html(subst(&fe.desc.0, "_colour", "")?),
             outline: outline.clone(),
-            xform: FaceTransform::from_group(&group.d),
+            xform: FaceTransform::from_group(&group.d)?,
             svgd: default(),
           }))
         },
