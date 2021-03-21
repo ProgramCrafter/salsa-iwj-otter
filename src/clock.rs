@@ -488,7 +488,7 @@ impl PieceTrait for Clock {
   <clipPath id="def.{}.cl"><rect width="40" height="14"></rect></clipPath>"##,
            vpid
     )?;
-    for (y, u) in izip!(Y.iter(), urenders.iter()) {
+    for (user, y, u) in izip!(USERS.iter(), Y.iter(), urenders.iter()) {
       let y = y + 6.;
       let show = u.st.show();
       let mins = u.remaining.tv_sec() / 60;
@@ -524,8 +524,8 @@ impl PieceTrait for Clock {
       } else {
         write!(f, r##"
   <text x="27" y="{}" fill="pink" stroke="red" {}
-   stroke-width="0.1" font-size="8">-</text>"##,
-               y, pointer
+   stroke-width="0.1" font-size="4">({})</text>"##,
+               y - 1., pointer, user,
         )?;
       }
     }
