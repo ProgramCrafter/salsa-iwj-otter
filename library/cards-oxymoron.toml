@@ -1,0 +1,50 @@
+# Copyright 2020-2021 Ian Jackson and contributors to Otter
+# SPDX-License-Identifier: AGPL-3.0-or-later OR CC-BY-SA-3.0
+# There is NO WARRANTY.
+
+[scraper]
+method = "local-build"
+spdx = "GPL-2.0-or-later"
+filename_prefix = "cards/src/"
+filename_suffix = ".gif"
+
+[group.clubs]
+item_prefix = "card-oxymoron-"
+outline = "Square"
+size = [73, 97]
+centre = [36.5, 48.5]
+scale = 0.15
+
+item_suffix = "-c"
+desc_template = "the _desc of clubs"
+
+files = """
+2	-	two
+3	-	three
+4	-	four
+5	-	five
+6	-	six
+7	-	seven
+8	-	eight
+9	-	nine
+T	-	ten
+J	-	jack
+Q	-	queen
+K	-	king
+A	-	ace
+"""
+
+[group.diamonds]
+inherit = "clubs"
+item_suffix = "-d"
+desc_template = "the _desc of diamonds"
+
+[group.hearts]
+inherit = "clubs"
+item_suffix = "-h"
+desc_template = "the _desc of hearts"
+
+[group.spades]
+inherit = "clubs"
+item_suffix = "-s"
+desc_template = "the _desc of spades"
