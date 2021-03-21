@@ -5,9 +5,9 @@
 [scraper]
 method = "wikimedia"
 site-title = "Wikimedia"
-spdx = "CC-BY-SA-4.0"
+spdx = "CC-BY-SA-4.0 / AGPL-3.0-OR-LATER"
 
-licences = [ "Cc-by-sa-3.0", "Cc-by-sa-3.0-migrated", "cc-by-sa-4.0", "GFDL|migration=relicense", "cc-zero" ]
+licences = [ "Cc-by-sa-3.0", "Cc-by-sa-3.0-migrated", "cc-by-sa-4.0", "GFDL|migration=relicense", "cc-zero", "LGPL" ]
 filename_suffix = ".svg"
 url_prefix = "https://commons.wikimedia.org/wiki/File:"
 url_suffix = "?action=raw"
