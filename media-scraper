@@ -81,12 +81,16 @@ sub methodisoffline_none { 0 }
 
 sub methodlic_wikimedia ($) {
   my ($scraper) = @_;
-  return <<END;
+  my $spdx = ${ \ $scraper->('spdx') };
+  return <<END.($spdx =~ m{/} ? <<END : '').<<END;
 These files were all obtained from
     ${ \ $scraper->('site-title') }
 
 They are all available under at least, and distributed here under,
-    ${ \ $scraper->('spdx') }
+    $spdx
+END
+(deepending on the file - consult the source file for details)
+END
 as well as possibly other licences.  There is NO WARRANTY.
 
 See <file>.download-log for the original URL and download timestamp.
