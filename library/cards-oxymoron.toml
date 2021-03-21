@@ -13,7 +13,7 @@ item_prefix = "card-oxymoron-"
 outline = "Square"
 size = [73, 97]
 centre = [36.5, 48.5]
-scale = 0.15
+scale = 0.25
 
 item_suffix = "-c"
 desc_template = "the _desc of clubs"
