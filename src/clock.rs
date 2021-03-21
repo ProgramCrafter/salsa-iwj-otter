@@ -488,31 +488,35 @@ impl PieceTrait for Clock {
       let mins_pad = iter::repeat("&nbsp;").take(3 - mins.len())
         .collect::<String>();
 
+      let pointer = r##"
+  pointer-events="none"
+             "##;
       let font = r##"
   font-family="Latin Modern Mono, monospace" font-size="6" font-weight="700"
              "##;
       write!(f, r##"
-  <text x="1"  y="{}" {} fill="{}" >{}{}{}</text>"##,
-             y, font, show.text,
+  <text x="1" y="{}" {} {} fill="{}" >{}{}{}</text>"##,
+             y, font, pointer, show.text,
              mins_pad, mins, show.sigil
       )?;
       write!(f, r##"
-  <text x="14"  y="{}" {} fill="{}" >{:02}</text>"##,
-             y, font, show.text,
+  <text x="14" y="{}" {} {} fill="{}" >{:02}</text>"##,
+             y, font, pointer, show.text,
              secs
       )?;
       if let Some(nick) = u.nick {
         write!(f, r##"
-  <text x="21" y="{}" clip-path="url(#def.{}.cl)" font-size="4">{}</text>"##,
-               y,
+  <text x="21" y="{}" {} clip-path="url(#def.{}.cl)" font-size="4">{}</text>
+              "##,
+               y, pointer,
                vpid,
                htmlescape::encode_minimal(nick),
         )?;
       } else {
         write!(f, r##"
-  <text x="27" y="{}" fill="pink" stroke="red" 
+  <text x="27" y="{}" fill="pink" stroke="red" {}
    stroke-width="0.1" font-size="8">-</text>"##,
-               y
+               y, pointer
         )?;
       }
     }
