@@ -61,8 +61,8 @@ impl Spec {
     // will go from stopped to Y, and then later when it's X's turn
     // X will get an extra per_move.  Y therefore needs per_move too.
     [
-      self.initial_time(),
       self.initial_time() + self.per_move(),
+      self.initial_time(),
     ]
   }
 }
@@ -449,7 +449,7 @@ impl PieceTrait for Clock {
 
     // player missing, nick is red and pink
 
-    const Y: &[f32] = &[ 0., 7. ];
+    const Y: &[f32] = &[ 7., 0. ];
 
     struct Show {
       text:       &'static str,
