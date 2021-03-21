@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+cd library/cards-oxymoron/cards/src
+
+perl -pe <make-cards >make-cards.massaged '
+	s{^#! */usr/bin/perl}{$& -w};
+	print "sub xsystem { \$?=0; \$!=0; system \@_ and die \"$! $?\"; }\n"
+		if !m/\S/ && !$done++;
+	s{\bsystem\(}{x$&}g;
+'
+chmod +x ./make-cards.massaged
+./make-cards.massaged
