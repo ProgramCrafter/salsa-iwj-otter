@@ -1,0 +1,16 @@
+Playing card in SVG based on the french representation. This is a red alternate.
+
+Original version (blue): [[:file:Card_back_03.svg|Card_back_03.svg]]; alternate versions: (red) [[:file:Card_back_03a.svg|Card_back_03a.svg]]; reversed stripe (right to left) (blue) [[:file:Card_back_03b.svg|Card_back_03b.svg]]; (red) [[:file:Card_back_03c.svg|Card_back_03c.svg]]; 
+
+This card has been made with GNOME games in mind and has been succesfully tested with Nautilus, Eye of Gnome (both of them use librsvg) and Inkscape.
+
+Author: David Bellot - Berkeley, CA, USA 08/12/2005 - [http://david.bellot.free.fr/svg-cards/ David's web]
+
+Updated 2010-06-18 by [[user:Rfc1394|Paul Robinson]]
+
+{{LGPL}}
+
+
+[[Category:SVG playing cards]]
+[[Category:Media missing infobox template]]
+[[Category:SVG card games]]
