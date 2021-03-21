@@ -20,11 +20,13 @@ shapelib: templates/shapelib.html stamp/cargo.doc-otter-only
 	@echo '  file://$(abspath $(TARGET_DIR)/doc/otter/shapelib_toml/index.html)'
 
 MAKEFILE_DEP ?= Makefile
+MAKEFILE_FIND_X ?=
+# ^ set this to "x" to debug the $rsrcs rune
 
 #---------- funky macros etc. ----------
 
 cr = $(addprefix --,$(filter-out debug,$1))
-rsrcs = $(shell set -x;\
+rsrcs = $(shell $(foreach x,$(MAKEFILE_FIND_X),set -$x;)\
     find -H $1 \( -name Cargo.toml -o -name Cargo.lock -o -name Cargo.lock.example -o -name \*.rs \) \! -path '*/build/*' )
 stamp=@mkdir -p stamp; touch $@
 
