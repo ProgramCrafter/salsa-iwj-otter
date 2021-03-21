@@ -670,6 +670,7 @@ impl OccultationViewDef for OwnerOccultationView {
 #[throws(OnlineError)]
 pub fn create_occultation(
   gen: &mut UniqueGenGen,
+  max_z: &mut ZCoord,
   gplayers: &mut GPlayers,
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
@@ -685,6 +686,25 @@ pub fn create_occultation(
       ||internal_logic_error("create occultation with non-piece"))?;
     if ogpc.occult.active.is_some() {
       throw!(internal_logic_error("re-occulting!"))
+    }
+
+    if let Some(displ_z) = {
+      views.views
+        .iter().map(|ov| &ov.occult)
+        .chain(iter::once(&views.defview))
+        .filter_map(|ok| { use OccKG::*; match ok {
+          Visible | Scrambled | Invisible => None,
+          Displaced((_area, ref z)) => Some(z)
+        }})
+        .max()
+    } {
+      // We expect that ogpc.zlevel.z.increment() is shorter than
+      // the displ_z, but in case it isn't, we must look at both.
+      (||{
+        max_z.update_max(&ogpc.zlevel.z.clone_mut().increment()?);
+        max_z.update_max(&displ_z.plus_offset(! 0)?);
+        Ok::<_,IE>(())
+      })()?;
     }
   }
 

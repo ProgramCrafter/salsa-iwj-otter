@@ -59,6 +59,8 @@ pub enum InternalError {
   PartialPlayerData,
   #[error("Coordinate overflow")]
   CoordinateOverflow(#[from] CoordinateOverflow),
+  #[error("Z Coordinate overflow (game is too crufty?)")]
+  ZCoordinateOverflow(#[from] zcoord::Overflow),
   #[error("Multiple errors occurred where only one could be reported")]
   Aggregated,
 }

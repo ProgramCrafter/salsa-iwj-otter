@@ -115,7 +115,7 @@ impl Notches {
       None => {
         let a = self.table.push(new);
         let b = self.zg.push(zg);
-        // xxx maybe update z_max in gs
+        // gs.max_z was updated when we created the occultation
         assert_eq!(a,b);
         a
       },
