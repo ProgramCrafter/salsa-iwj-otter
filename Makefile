@@ -19,6 +19,8 @@ shapelib: templates/shapelib.html stamp/cargo.doc-otter-only
 	@echo '  file://$(PWD)/$<'
 	@echo '  file://$(abspath $(TARGET_DIR)/doc/otter/shapelib_toml/index.html)'
 
+MAKEFILE_DEP ?= Makefile
+
 #---------- funky macros etc. ----------
 
 cr = $(addprefix --,$(filter-out debug,$1))
@@ -237,7 +239,7 @@ bundled-sources:: $(addprefix $(TARGET_BUNDLED)/, $(BUNDLED_SOURCES_FILES))
 $(addprefix $(TARGET_BUNDLED)/, $(BUNDLED_SOURCES_LIT)): $(TARGET_BUNDLED)/%: %
 	$(NAILING_CARGO_JUST_RUN) cp $(abspath $(src))/$< $(abspath $@)
 
-$(TARGET_BUNDLED)/index.html: bundled-sources-make-index Makefile
+$(TARGET_BUNDLED)/index.html: bundled-sources-make-index $(MAKEFILE_DEP)
 	$(NAILING_CARGO_JUST_RUN) sh -ec ' 			\
 		cd $(abspath $(src)); mkdir -p $(dir $@);	\
 		./$< >$@.tmp $(BUNDLED_SOURCES_LINKS);		\
@@ -255,7 +257,7 @@ include $(addsuffix /files.make, $(LIBRARIES))
 
 USVG_PROCESSOR = usvg-processor
 LIBRARY_PROCESS_SVG = ./$(USVG_PROCESSOR) $@ $(wordlist 1,2,$^) '$(USVG_CMD) $(USVG_OPTIONS)'
-$(LIBRARY_FILES): $(USVG_PROCESSOR) $(USVG_BINARY) Makefile
+$(LIBRARY_FILES): $(USVG_PROCESSOR) $(USVG_BINARY) $(MAKEFILE_DEP)
 
 # actual command for each of $(LIBRARY_FILES) is in one of the files.make
 
@@ -279,7 +281,7 @@ templates/script.js: $(TS_SRC_FILES)
 #	@echo 'nodejs check $< ok'
 
 templates/otter_wasm.ns.d.ts: $(WASM_PACKED)/otter_wasm.d.ts \
-				stamp/wasm-pack Makefile
+				stamp/wasm-pack $(MAKEFILE_DEP)
 	set -e; exec >$@.tmp; 				\
 	echo 'declare namespace wasm_bindgen {'; 	\
 	sed 's/^export default function init/export function init/' <$<; \
