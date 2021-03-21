@@ -80,7 +80,7 @@ fn preview(items: Vec<ItemForOutput>) {
 
   impl Prep {
     fn want_several(&self) -> bool {
-      self.size[0] < 20.0
+      self.size[0] < 50.0
     }
     fn face_cols(&self) -> usize {
       usize::from(self.p.nfaces())
