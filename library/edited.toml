@@ -7,7 +7,6 @@ method = "none"
 
 [group.chess-board]
 size = [242, 246]
-centre = [121, 123]
 scale = 0.38
 outline = "Square"
 files = """
@@ -17,7 +16,6 @@ chess-board	-	the chessboard
 [group.chess-misc]
 size = [32]
 scale = 0.38
-centre = [16,16]
 item_prefix = "chess-"
 outline = "Circle"
 files = """

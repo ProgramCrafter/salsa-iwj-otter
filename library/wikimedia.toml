@@ -18,7 +18,6 @@ data_url_hashprefix = true
 outline = "Circle"
 scale = 0.20
 size = [45]
-centre = [22.5, 22.5]
 item_prefix = "chess-"
 stem_prefix = "Chess_"
 occulted.method = "ByColour"
@@ -65,7 +64,6 @@ map = { "ffffff" = "888888" }
 [group.chess-26]
 inherit = "chess"
 size = [26]
-centre = [13,13]
 scale = 0.3461
 files = """
 _c-siege-engine	tlt26	a _colour siege engine piece
@@ -94,7 +92,6 @@ _c-flag		Blt26	a _colour flag piece
 [group.chess-flip-26-ship-adj]
 inherit = "chess-flip-26"
 flip = true
-centre = [13, 16]
 files = """
 _c-cannon	Clt26	a _colour cannon piece
 """
@@ -126,7 +123,6 @@ mgmt-library-load-marker   Box_with_polygons	a library load area marker
 [group.card-backs]
 outline = "Square"
 size = [73, 97]
-centre = [104, 151.5]
 
 # sizes to match cards-oxymoron:
 orig_size = [208, 303]
