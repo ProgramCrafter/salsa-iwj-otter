@@ -1,2 +1,3 @@
+*.svg
 cards/src/*.gif
 cards/src/make-cards.massaged

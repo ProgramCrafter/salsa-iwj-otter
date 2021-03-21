@@ -142,6 +142,28 @@ sub method_wikimedia ($$$) {
 
 sub methodisoffline_wikimedia { 0 }
 
+sub method_local_build {
+  my ($scraper, $methname) = @_;
+  return sub {
+    my ($lbase, $ldest, $rstem) = @_;
+    my $lgif = $lbase;
+    $lgif =~ m{/card-oxymoron-(\w+)-(\w+)$} or die "$lbase ?";
+    my $basename = $`;
+    $lgif = "$basename/cards/src/\l$1\E$2.gif";
+
+    if (stat $lgif) {
+    } elsif ($! != ENOENT) {
+      die "$lgif $!";
+    } else {
+      print STDERR "\nbuilding $basename...\n";
+      $!=$?=0; system "$basename/build" and die "$! $?";
+    }
+    $!=$?=0; system qw(convert), $lgif, $ldest and die "$! $?";
+  }
+}
+sub methodlic_local_build { undef }
+sub methodisoffline_local_build ($$) { 1 }
+
 our $offline;
 
 while (@ARGV && $ARGV[0] =~ m/^-/) {
