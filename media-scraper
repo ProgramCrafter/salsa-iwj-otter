@@ -149,7 +149,7 @@ sub method_cards_oxymoron {
     my $lgif = $lbase;
     $lgif =~ m{/card-oxymoron-(\w+)-(\w+)$} or die "$lbase ?";
     my $basename = $`;
-    $lgif = "$basename/cards/src/\l$1\E$2.gif";
+    $lgif = "$basename/cards/src/\l$1$2.gif";
 
     if (stat $lgif) {
     } elsif ($! != ENOENT) {
