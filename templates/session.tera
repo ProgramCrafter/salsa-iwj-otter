@@ -39,7 +39,7 @@
 <div class="upper">
 {{ m::nick() }}
 |
-g{{ m::wresting() }}
+{{ m::wresting() }}
 |
 {{ m::status() }}
 |
