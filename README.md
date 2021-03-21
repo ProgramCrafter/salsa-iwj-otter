@@ -125,7 +125,7 @@ Setup
 ```
      sudo apt install build-essential cpio git curl     \
                       pkg-config libssl-dev             \
-                      node-typescript inkscape
+                      node-typescript inkscape bubblewrap
 ```
 
 2. Install Rust.  This is most easily done with [rustup](https://rustup.rs)):
