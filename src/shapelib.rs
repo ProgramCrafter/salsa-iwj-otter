@@ -197,21 +197,6 @@ impl FaceTransform {
   #[throws(LLE)]
   fn from_group(d: &GroupDetails) -> Self {
     // by this point d.size has already been scaled by scale
-    let centre = d.centre.map(Ok).unwrap_or_else(|| Ok::<_,LLE>({
-      match d.size.as_slice() {
-        [a] => [a,a],
-        [a,b] => [a,b],
-        x => throw!(LLE::WrongNumberOfSizeDimensions {
-          got: x.len(),
-          expected: [1,2],
-        }),
-      }.iter().cloned().map(|size| {
-        size * 0.5 / d.scale
-      })
-        .collect::<ArrayVec<[_;2]>>()
-        .into_inner()
-        .unwrap()
-    }))?;
     let scale = if ! d.orig_size.is_empty() && ! d.size.is_empty() {
       izip!(&d.orig_size, &d.size)
         .map(|(&orig_size, &target_size)| {
@@ -226,6 +211,21 @@ impl FaceTransform {
       let s = d.scale;
       [s,s]
     };
+    let centre = d.centre.map(Ok).unwrap_or_else(|| Ok::<_,LLE>({
+      match d.size.as_slice() {
+        [a] => [a,a],
+        [a,b] => [a,b],
+        x => throw!(LLE::WrongNumberOfSizeDimensions {
+          got: x.len(),
+          expected: [1,2],
+        }),
+      }.iter().cloned().zip(&scale).map(|(size,scale)| {
+        size * 0.5 / scale
+      })
+        .collect::<ArrayVec<[_;2]>>()
+        .into_inner()
+        .unwrap()
+    }))?;
     FaceTransform { centre, scale }
   }
 
