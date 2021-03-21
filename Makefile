@@ -116,7 +116,7 @@ TS_SRCS= script
 TS_SRC_FILES= \
 	$(addprefix templates/,$(addsuffix .ts,$(TS_SRCS))) \
 	webassembly-types/webassembly.d.ts \
-	templates/otter_wasm.ns.d.ts
+	$(WASM_PACKED)/otter_wasm.d.ts
 
 LITFILES= LICENCE AGPLv3
 TXTFILES= CC-BY-SA-3.0 CC-BY-SA-4.0
@@ -270,15 +270,7 @@ library/%/files.make: media-scraper library/%.toml
 templates/%.js: tsc-wrap tsconfig.json
 	./tsc-wrap $@ tsconfig.json $(filter %.ts,$^)
 
-templates/script.js: $(TS_SRC_FILES)
-
-templates/otter_wasm.ns.d.ts: $(WASM_PACKED)/otter_wasm.d.ts \
-				stamp/wasm-bindgen $(MAKEFILE_DEP)
-	set -e; exec >$@.tmp; 				\
-	echo 'declare namespace wasm_bindgen {'; 	\
-	sed 's/^export default function init/export function init/' <$<; \
-	echo '}'
-	mv -v $@.tmp $@
+templates/script.js: $(TS_SRC_FILES) stamp/wasm-bindgen
 
 #---------- other templates ----------
 

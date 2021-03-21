@@ -79,7 +79,7 @@ type PieceInfo = {
   last_seen_moved : DOMHighResTimeStamp | null, // non-0 means halo'd
 }
 
-let wasm : wasm_bindgen.InitOutput;
+let wasm : InitOutput;
 
 var pieces : { [piece: string]: PieceInfo } = Object.create(null);
 
