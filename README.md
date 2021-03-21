@@ -370,7 +370,7 @@ executed - and, therefore, trusted:
  * Rustup (the Rust downloader/installer) - this is pretty safe
  * Rust itself - again, pretty safe
  * Otter itself - well, I wrote this; up to you.
- * 300 transitive dependencies of otter (from crates.io)
+ * 450 transitive dependencies of otter (from crates.io)
  * 50 transitive dependencies of bundle-sources
  * the transitive dependencies of resvg
  * a geckodriver binary directly from mozilla
