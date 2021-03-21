@@ -77,6 +77,7 @@ sub cfg_affixes ($$$) {
 
 sub method_none { return sub { } }
 sub methodlic_none { undef }
+sub methodisoffline_none { 0 }
 
 sub methodlic_wikimedia ($) {
   my ($scraper) = @_;
@@ -139,6 +140,8 @@ sub method_wikimedia ($$$) {
   };
 }
 
+sub methodisoffline_wikimedia { 0 }
+
 our $offline;
 
 while (@ARGV && $ARGV[0] =~ m/^-/) {
@@ -165,6 +168,8 @@ my $method_fn = ${*::}{"method_$method"};
 
 my $methodlic_fn = ${*::}{"methodlic_$method"};
 my $licpath = "$basename/LICENCE";
+
+my $methodisoffline_fn = ${*::}{"methodisoffline_$method"};
 
 my $method_lictext = $methodlic_fn->($scraper);
 if (defined $method_lictext) {
@@ -304,16 +309,18 @@ END
 
     $process_colours->();
 
-    if (stat $lupstream) {
-      print DEBUG "already.\n";
-      next;
-    }
-    die "$lupstream $!" unless $!==ENOENT;
+    if (! $methodisoffline_fn->($basename, $lupstream)) {
+      if (stat $lupstream) {
+	print DEBUG "already.\n";
+	next;
+      }
+      die "$lupstream $!" unless $!==ENOENT;
 
-    if ($offline) {
-      print DEBUG "missing.\n";
-      warn "offline but $lupstream missing\n";
-      next;
+      if ($offline) {
+	print DEBUG "missing.\n";
+	warn "offline but $lupstream missing\n";
+	next;
+      }
     }
 
     $method_impl->($lbase, $lupstream, $rstem);
