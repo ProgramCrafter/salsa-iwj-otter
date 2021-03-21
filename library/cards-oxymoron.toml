@@ -3,7 +3,7 @@
 # There is NO WARRANTY.
 
 [scraper]
-method = "local-build"
+method = "cards-oxymoron"
 spdx = "GPL-2.0-or-later"
 filename_prefix = "cards/src/"
 filename_suffix = ".gif"

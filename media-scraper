@@ -142,7 +142,7 @@ sub method_wikimedia ($$$) {
 
 sub methodisoffline_wikimedia { 0 }
 
-sub method_local_build {
+sub method_cards_oxymoron {
   my ($scraper, $methname) = @_;
   return sub {
     my ($lbase, $ldest, $rstem) = @_;
@@ -161,8 +161,8 @@ sub method_local_build {
     $!=$?=0; system qw(convert), $lgif, $ldest and die "$! $?";
   }
 }
-sub methodlic_local_build { undef }
-sub methodisoffline_local_build ($$) { 1 }
+sub methodlic_cards_oxymoron { undef }
+sub methodisoffline_cards_oxymoron ($$) { 1 }
 
 our $offline;
 

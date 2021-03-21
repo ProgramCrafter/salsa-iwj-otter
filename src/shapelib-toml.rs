@@ -222,6 +222,8 @@ pub struct Scraper {
   ///  Wikimedia does.  In this case
   ///  [`scraper`](LibraryTomlFile::scraper) is a table containing the
   ///  fields of [`WikimediaScraper`], not just `method`.
+  ///
+  ///  * `"cards-oxymoron`": Special for that subdirectory.
   pub method: String,
 }
 
