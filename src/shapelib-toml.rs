@@ -105,6 +105,12 @@ pub struct GroupDetails {
   pub size: Vec<f64>,
   
   #[serde(default)]
+  /// If specified, the input is first scaled from `orig_size` to
+  /// `size`.  If both `size` and `orig_size` are 2 elements, may
+  /// scale by different amounts in x and y.
+  pub orig_size: Vec<f64>,
+
+  #[serde(default)]
   /// Default if not supplied is `[0,0]`.
   pub centre: [f64; 2],
 

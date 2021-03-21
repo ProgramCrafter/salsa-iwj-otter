@@ -197,8 +197,22 @@ impl FaceTransform {
   #[throws(LLE)]
   fn from_group(d: &GroupDetails) -> Self {
     let centre = d.centre;
-    let scale = d.scale;
-    FaceTransform { centre, scale: [scale,scale] }
+    let scale = if ! d.orig_size.is_empty() && ! d.size.is_empty() {
+      // by this point d.size has already been scaled by scale
+      izip!(&d.orig_size, &d.size)
+        .map(|(&orig_size, &target_size)| {
+          target_size / orig_size
+        })
+        .cycle()
+        .take(2)
+        .collect::<ArrayVec<[_;2]>>()
+        .into_inner()
+        .unwrap()
+    } else {
+      let s = d.scale;
+      [s,s]
+    };
+    FaceTransform { centre, scale }
   }
 
   #[throws(IE)]
