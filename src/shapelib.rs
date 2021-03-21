@@ -491,7 +491,12 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
         },
       };
 
-      let mut add1 = |item_name: &str, desc| {
+      let mut add1 = |item_name: &str, desc: Html| {
+        let desc = if let Some(desc_template) = &group.d.desc_template {
+          Html(subst(desc_template, "_desc", &desc.0)?)
+        } else {
+          desc
+        };
         let idata = ItemData {
           group: group.clone(),
           occ: occ.clone(),

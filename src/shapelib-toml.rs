@@ -134,6 +134,11 @@ pub struct GroupDetails {
   #[serde(default)]
   pub colours: HashMap<String, RecolourData>,
 
+  /// If specified, provides a template for the description.  The
+  /// description previously calculated replaces `_desc` in this
+  /// string.
+  pub desc_template: Option<String>,
+
   /// If specified, pieces in this group can be occulted.
   pub occulted: Option<OccultationMethod>,
 
