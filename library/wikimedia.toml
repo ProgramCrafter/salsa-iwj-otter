@@ -125,9 +125,13 @@ mgmt-library-load-marker   Box_with_polygons	a library load area marker
 
 [group.card-backs]
 outline = "Square"
-size = [208, 303]
+size = [73, 97]
 centre = [104, 151.5]
-scale = 0.1
+
+# sizes to match cards-oxymoron:
+orig_size = [208, 303]
+scale = 0.25
+
 files = """
 card-stripe-back-red	Card_back_03a	a card with a red-striped back
 card-stripe-back-blue	Card_back_03b	a card with a blue-striped back
