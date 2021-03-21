@@ -110,7 +110,9 @@ pub struct GroupDetails {
   /// scale by different amounts in x and y.
   pub orig_size: Vec<f64>,
 
-  pub centre: [f64; 2],
+  #[serde(default)]
+  /// Default if not supplied is the centre according to the size.
+  pub centre: Option<[f64; 2]>,
 
   #[serde(default)]
   /// Default is `false`
