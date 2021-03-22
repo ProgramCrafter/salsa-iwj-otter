@@ -291,7 +291,7 @@ impl From<ItemSpecLoaded> for PieceSpecLoaded {
 
 impl ItemSpec {
   #[throws(SpecError)]
-  pub fn load(&self) -> ItemSpecLoaded {
+  pub fn find_load(&self) -> ItemSpecLoaded {
     let lib = libs_lookup(&self.lib)?;
     let idata = lib.items.get(&self.item)
       .ok_or(SpE::LibraryItemNotFound(self.item.clone()))?;
@@ -404,7 +404,7 @@ impl PieceSpec for ItemSpec {
   #[throws(SpecError)]
   fn load(&self, _: usize, _: &mut GPiece, _ir: &InstanceRef)
           -> PieceSpecLoaded {
-    self.load()?.into()
+    self.find_load()?.into()
   }
 }
 
@@ -421,7 +421,7 @@ impl PieceSpec for MultiSpec {
     )?;
     let item = format!("{}{}{}", &self.prefix, item, &self.suffix);
     let lib = self.lib.clone();
-    ItemSpec { lib, item }.load()?.into()
+    ItemSpec { lib, item }.find_load()?.into()
   }
 }
 
