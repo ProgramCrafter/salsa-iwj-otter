@@ -18,6 +18,9 @@ scale = 0.25
 item_suffix = "-c"
 desc_template = "the _desc of clubs"
 
+occulted.method = "ByBack"
+occulted.ilk = "card-back"
+
 files = """
 2	-	two
 3	-	three
