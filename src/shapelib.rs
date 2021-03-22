@@ -359,6 +359,32 @@ impl Contents {
   fn load1(&self, idata: &ItemData, name: &str) -> ItemSpecLoaded {
     let svg_data = self.load_svg(name, name)?;
 
+    idata.group.d.outline.check(&idata.group)
+      .map_err(|e| SpE::InternalError(format!("rechecking outline: {}",&e)))?;
+    let outline = idata.outline.clone();
+
+    let mut svgs = IndexVec::with_capacity(1);
+    let svg = svgs.push(svg_data);
+
+    let mut descs = index_vec![ ];
+    let desc = descs.push(idata.d.desc.clone());
+    descs.shrink_to_fit();
+
+    let xform = FaceTransform::from_group(&idata.group.d)
+      .map_err(|e| SpE::InternalError(format!("reckoning transform: {}",&e)))?;
+    let mut face = ItemFace { svg, desc, xform };
+    let mut faces = index_vec![ face ];
+    let mut back = None;
+    if idata.group.d.flip {
+      face.xform.scale[0] *= -1.;
+      faces.push(face);
+    } else if let Some(back_spec) = &idata.group.d.back {
+      let p = back_spec.load_occult()?;
+      let p = p.into();
+      back = Some(p);
+    }
+    faces.shrink_to_fit();
+
     let occultable = match &idata.occ {
       None => None,
       Some(occ) => {
@@ -386,32 +412,6 @@ impl Contents {
         Some((OccultIlkName(name), it))
       },
     };
-
-    idata.group.d.outline.check(&idata.group)
-      .map_err(|e| SpE::InternalError(format!("rechecking outline: {}",&e)))?;
-    let outline = idata.outline.clone();
-
-    let mut svgs = IndexVec::with_capacity(1);
-    let svg = svgs.push(svg_data);
-
-    let mut descs = index_vec![ ];
-    let desc = descs.push(idata.d.desc.clone());
-    descs.shrink_to_fit();
-
-    let xform = FaceTransform::from_group(&idata.group.d)
-      .map_err(|e| SpE::InternalError(format!("reckoning transform: {}",&e)))?;
-    let mut face = ItemFace { svg, desc, xform };
-    let mut faces = index_vec![ face ];
-    let mut back = None;
-    if idata.group.d.flip {
-      face.xform.scale[0] *= -1.;
-      faces.push(face);
-    } else if let Some(back_spec) = &idata.group.d.back {
-      let p = back_spec.load_occult()?;
-      let p = p.into();
-      back = Some(p);
-    }
-    faces.shrink_to_fit();
 
     let it = Item { faces, descs, svgs, outline, back,
                     itemname: name.to_string() };
