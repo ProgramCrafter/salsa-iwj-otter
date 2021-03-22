@@ -11,7 +11,7 @@ pub const DISABLED_DESC: &str = "a pickup deck (disabled)";
 
 #[derive(Debug,Serialize,Deserialize)]
 struct Deck {
-  shape: GenericSimpleShape<(), Outline>,
+  shape: GenericSimpleShape<(), shapelib::Rectangle>,
 }
 
 #[dyn_upcast]
@@ -36,9 +36,13 @@ impl PieceSpec for piece_specs::Deck {
       edges: self.edges.clone(),
       edge_width: self.edge_width,
     };
+    let shape = match self.shape {
+      Outline::Rectangle(r) => r,
+      _ => throw!(SpecError::UnsupportedShape),
+    };
     let shape = GenericSimpleShape::new(
       (),
-      self.shape.clone(),
+      shape.clone(),
       "magic-pickupdeck",
       &common)?;
     if shape.count_faces() != 2 {
