@@ -5,11 +5,11 @@
 table_size = [300, 200]
 table_colour = "#bbd"
 
-[[pieces]]
-pos = [150,100]
-type = "Lib"
-lib = "wikimedia"
-item = "card-stripe-back-red"
+#[[pieces]]
+#pos = [150,100]
+#type = "Lib"
+#lib = "wikimedia"
+#item = "card-stripe-back-red"
 
 [[pieces]]
 pos = [115,  135]
