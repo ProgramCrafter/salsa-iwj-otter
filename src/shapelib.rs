@@ -271,6 +271,18 @@ impl PieceTrait for Item {
   fn itemname(&self) -> &str { &self.itemname }
 }
 
+#[typetag::serde(name="LibItem")]
+impl OccultedPieceTrait for Item {
+  #[throws(IE)]
+  fn svg(&self, f: &mut Html, _id: VisiblePieceId) {
+    self.svg_face(f, default())?;
+  }
+  #[throws(IE)]
+  fn describe_html(&self) -> Html {
+    self.describe_face(default())?
+  }
+}
+
 static SHAPELIBS: RwLock<Option<Registry>> = const_rwlock(None);
 
 pub fn libs_list() -> Vec<String> {
@@ -417,6 +429,10 @@ impl PieceSpec for ItemSpec {
   fn load(&self, _: usize, _: &mut GPiece, _ir: &InstanceRef)
           -> PieceSpecLoaded {
     self.find_load()?.into()
+  }
+  #[throws(SpecError)]
+  fn load_occult(&self) -> Box<dyn OccultedPieceTrait> {
+    self.find_load()?.0 as Box<dyn OccultedPieceTrait>
   }
 }
 

@@ -199,6 +199,9 @@ pub trait PieceSpec: Debug + Sync + Send + 'static {
   fn count(&self) -> usize { 1 }
   fn load(&self, i: usize, gpc: &mut GPiece, ir: &InstanceRef)
           -> Result<PieceSpecLoaded, SpecError>;
+  fn load_occult(&self) -> Result<Box<dyn OccultedPieceTrait>, SpecError> {
+    throw!(SpE::ComplexPieceWhereSimpleRequired)
+  }
 }
 
 // ========== implementations ==========
