@@ -91,7 +91,7 @@ impl PieceTrait for Deck {
   fn add_ui_operations(&self, upd: &mut Vec<UoDescription>,
                        _gs: &GameState, gpc: &GPiece) {
     upd.push(
-      if self.enabled(gpc) {
+      if ! self.enabled(gpc) {
         UoDescription {
           kind: UoKind::Piece,
           def_key: 'A',
