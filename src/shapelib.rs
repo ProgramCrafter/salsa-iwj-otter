@@ -107,7 +107,7 @@ const INHERIT_DEPTH_LIMIT: u8 = 20;
 
 type TV = toml::Value;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct ItemSpec {
   pub lib: String,
   pub item: String,
@@ -126,7 +126,7 @@ pub struct MultiSpec {
 define_index_type! { pub struct DescId = u8; }
 define_index_type! { pub struct SvgId = u8; }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy,Clone,Debug,Serialize,Deserialize)]
 struct ItemFace {
   svg: SvgId,
   desc: DescId,
@@ -134,7 +134,7 @@ struct ItemFace {
   xform: FaceTransform,
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy,Clone,Debug,Serialize,Deserialize)]
 struct FaceTransform {
   centre: [f64; 2],
   scale: [f64; 2],
