@@ -504,9 +504,7 @@ fn recalculate_occultation_general<
       );
 
     let log = match most_obscure.map_displaced(|_|((),())).pri_occulted() {
-      Some(PriOG::Visible(_y)) => {
-        log_visible
-      }
+      Some(prioc@ PriOG::Visible(_)) |
       Some(prioc@ PriOG::Occulted) |
       Some(prioc@ PriOG::Displaced(..)) => {
         let show = prioc.describe(ioccults, gpc, ipc);
