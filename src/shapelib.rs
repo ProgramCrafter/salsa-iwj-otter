@@ -47,12 +47,13 @@ struct ItemData {
   d: Arc<ItemDetails>,
   group: Arc<GroupData>,
   outline: Outline,
-  occ: Option<Arc<OccData>>,
+  occ: OccData,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 enum OccData {
-  Internal(OccData_Internal),
+  None,
+  Internal(Arc<OccData_Internal>),
 }
 
 #[allow(non_camel_case_types)]
@@ -391,9 +392,9 @@ impl Contents {
     }
     faces.shrink_to_fit();
 
-    let occultable = match idata.occ.as_ref().map(Deref::deref) {
-      None => None,
-      Some(OccData::Internal(occ)) => {
+    let occultable = match &idata.occ {
+      OccData::None => None,
+      OccData::Internal(occ) => {
         let name = occ.item_name.clone();
         let svgd = {
           let mut svgd = occ.svgd.lock();
@@ -575,18 +576,18 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
                               fe.item_spec, gdefn.item_suffix);
 
       let occ = match &group.d.occulted {
-        None => None,
+        None => OccData::None,
         Some(OccultationMethod::ByColour { colour }) => {
           if ! group.d.colours.contains_key(colour.as_str()) {
             throw!(LLE::OccultationColourMissing(colour.clone()));
           }
-          Some(Arc::new(OccData::Internal(OccData_Internal {
+          OccData::Internal(Arc::new(OccData_Internal {
             item_name: Arc::new(subst(&item_name, "_c", &colour)?),
             desc: Html(subst(&fe.desc.0, "_colour", "")?),
             outline: outline.clone(),
             xform: FaceTransform::from_group(&group.d)?,
             svgd: default(),
-          })))
+          }))
         },
       };
 
