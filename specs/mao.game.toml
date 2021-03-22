@@ -19,3 +19,19 @@ prefix = "card-oxymoron-"
 suffix = "-h"
 items = ["2","3","4","5","6","7","8","9","T","J","Q","K","A"]
 posd = [10, 0]
+
+[[pieces]]
+pos = [200, 40]
+type = "Hand"
+edge = "white"
+colour = "grey"
+shape.type = "Rectangle"
+shape.xy = [70,30]
+
+[[pieces]]
+pos = [200, 80]
+type = "Hand"
+edge = "white"
+colour = "blue"
+shape.type = "Rectangle"
+shape.xy = [70,30]
