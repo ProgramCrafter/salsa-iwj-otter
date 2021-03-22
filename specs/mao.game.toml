@@ -80,7 +80,7 @@ posd = [0, 0]
 
 
 [[pieces]]
-pos = [50, 25]
+pos = [50, 30]
 colour = "brown"
 
 type = "Hand"
