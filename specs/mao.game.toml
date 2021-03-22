@@ -87,7 +87,7 @@ type = "Hand"
 edge = "white"
 edge_width = 0.75
 shape.type = "Rectangle"
-shape.xy = [97,40]
+shape.xy = [97,25]
 
 [[pieces]]
 pos = [150, 23]
@@ -97,7 +97,7 @@ type = "Hand"
 edge = "white"
 edge_width = 0.75
 shape.type = "Rectangle"
-shape.xy = [97,40]
+shape.xy = [97,25]
 
 [[pieces]]
 pos = [250, 30]
@@ -107,7 +107,7 @@ type = "Hand"
 edge = "white"
 edge_width = 0.75
 shape.type = "Rectangle"
-shape.xy = [97,40]
+shape.xy = [97,25]
 
 [[pieces]]
 pos = [250, 75]
@@ -117,7 +117,7 @@ type = "Hand"
 edge = "darkgrey"
 edge_width = 1.0
 shape.type = "Rectangle"
-shape.xy = [97,40]
+shape.xy = [97,25]
 
 [[pieces]]
 pos = [250, 120]
@@ -127,7 +127,7 @@ type = "Hand"
 edge = "white"
 edge_width = 0.75
 shape.type = "Rectangle"
-shape.xy = [97,40]
+shape.xy = [97,25]
 
 [[pieces]]
 pos = [250, 165]
@@ -137,7 +137,7 @@ type = "Hand"
 edge = "white"
 edge_width = 0.75
 shape.type = "Rectangle"
-shape.xy = [97,40]
+shape.xy = [97,25]
 
 [[pieces]]
 pos = [150, 177]
@@ -147,7 +147,7 @@ type = "Hand"
 edge = "white"
 edge_width = 0.75
 shape.type = "Rectangle"
-shape.xy = [97,40]
+shape.xy = [97,25]
 
 [[pieces]]
 pos = [50, 165]
@@ -157,7 +157,7 @@ type = "Hand"
 edge = "white"
 edge_width = 0.75
 shape.type = "Rectangle"
-shape.xy = [97,40]
+shape.xy = [97,25]
 
 [[pieces]]
 pos = [50, 75]
@@ -167,7 +167,7 @@ type = "Hand"
 edge = "white"
 edge_width = 0.75
 shape.type = "Rectangle"
-shape.xy = [97,40]
+shape.xy = [97,25]
 
 [[pieces]]
 pos = [50, 120]
@@ -177,4 +177,4 @@ type = "Hand"
 edge = "darkgrey"
 edge_width = 1.0
 shape.type = "Rectangle"
-shape.xy = [97,40]
+shape.xy = [97,25]
