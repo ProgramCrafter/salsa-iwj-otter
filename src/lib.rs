@@ -13,6 +13,7 @@ pub mod authproofs;
 pub mod clock;
 pub mod commands;
 pub mod config;
+pub mod deck;
 pub mod debugreader;
 pub mod error;
 pub mod gamestate;

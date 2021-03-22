@@ -81,6 +81,7 @@ pub enum SpecError {
   CompassAngleInvalid,
   ZeroFaces,
   InconsistentFacesEdgecoloursCount,
+  WrongNumberOfFaces,
   SpecifiedWidthOfNoEdges,
   UnsupportedShape,
   NegativeTimeout,
@@ -243,6 +244,14 @@ pub mod piece_specs {
   pub struct Hand {
     pub colour: ColourSpec,
     pub edge: Option<ColourSpec>,
+    pub edge_width: Option<f64>,
+    pub shape: Outline,
+  }
+
+  #[derive(Debug,Serialize,Deserialize)]
+  pub struct Deck {
+    pub faces: IndexVec<FaceId, ColourSpec>,
+    #[serde(default)] pub edges: IndexVec<FaceId, ColourSpec>,
     pub edge_width: Option<f64>,
     pub shape: Outline,
   }
