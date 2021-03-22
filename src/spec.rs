@@ -84,6 +84,7 @@ pub enum SpecError {
   SpecifiedWidthOfNoEdges,
   UnsupportedShape,
   NegativeTimeout,
+  ComplexPieceWhereSimpleRequired,
 }
 display_as_debug!{SpecError}
 

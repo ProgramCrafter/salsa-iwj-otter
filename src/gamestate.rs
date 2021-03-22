@@ -189,8 +189,10 @@ pub struct ApiPieceOpArgs<'a> {
 #[derive(Debug)]
 pub struct PieceSpecLoaded {
   pub p: Box<dyn PieceTrait>,
-  pub occultable: Option<(OccultIlkName, Box<dyn OccultedPieceTrait>)>,
+  pub occultable:  PieceSpecLoadedOccultable,
 }
+pub type PieceSpecLoadedOccultable =
+  Option<(OccultIlkName, Box<dyn OccultedPieceTrait>)>;
 
 #[typetag::serde(tag="type")]
 pub trait PieceSpec: Debug + Sync + Send + 'static {

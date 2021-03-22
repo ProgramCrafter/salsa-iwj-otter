@@ -141,7 +141,7 @@ struct FaceTransform {
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-struct Item {
+pub struct Item {
   itemname: String,
   faces: IndexVec<FaceId, ItemFace>,
   svgs: IndexVec<SvgId, Html>,
@@ -281,9 +281,17 @@ pub fn libs_lookup(libname: &str)
     ?
 }
 
+pub type ItemSpecLoaded = (Box<Item>, PieceSpecLoadedOccultable);
+
+impl From<ItemSpecLoaded> for PieceSpecLoaded {
+  fn from((p, occultable):  ItemSpecLoaded) -> PieceSpecLoaded {
+    PieceSpecLoaded { p, occultable }
+  }
+}
+
 impl ItemSpec {
   #[throws(SpecError)]
-  pub fn load(&self) -> PieceSpecLoaded {
+  pub fn load(&self) -> ItemSpecLoaded {
     let lib = libs_lookup(&self.lib)?;
     let idata = lib.items.get(&self.item)
       .ok_or(SpE::LibraryItemNotFound(self.item.clone()))?;
@@ -310,7 +318,7 @@ impl Contents {
   }
 
   #[throws(SpecError)]
-  fn load1(&self, idata: &ItemData, name: &str) -> PieceSpecLoaded {
+  fn load1(&self, idata: &ItemData, name: &str) -> ItemSpecLoaded {
     let svg_data = self.load_svg(name, name)?;
 
     let occultable = match &idata.occ {
@@ -364,8 +372,7 @@ impl Contents {
 
     let it = Item { faces, descs, svgs, outline,
                     itemname: name.to_string() };
-    let p = Box::new(it);
-    PieceSpecLoaded { p, occultable }
+    (Box::new(it), occultable)
   }
 
   #[throws(MgmtError)]
@@ -375,16 +382,16 @@ impl Contents {
     let mut out = vec![];
     for (k,v) in &self.items {
       if !pat.matches(&k) { continue }
-      let loaded = match self.load1(v, &k) {
+      let (loaded, _) = match self.load1(v, &k) {
         Err(SpecError::LibraryItemNotFound(_)) => continue,
         e@ Err(_) => e?,
         Ok(r) => r,
       };
-      let f0bbox = loaded.p.bbox_approx()?;
+      let f0bbox = loaded.bbox_approx()?;
       let ier = ItemEnquiryData {
         itemname: k.clone(),
         f0bbox,
-        f0desc: loaded.p.describe_html(&GPiece::dummy())?,
+        f0desc: loaded.describe_html(&GPiece::dummy())?,
       };
       out.push(ier);
     }
@@ -394,24 +401,27 @@ impl Contents {
 
 #[typetag::serde(name="Lib")]
 impl PieceSpec for ItemSpec {
+  #[throws(SpecError)]
   fn load(&self, _: usize, _: &mut GPiece, _ir: &InstanceRef)
-          -> Result<PieceSpecLoaded, SpecError> {
-    self.load()
+          -> PieceSpecLoaded {
+    self.load()?.into()
   }
 }
 
 #[typetag::serde(name="LibList")]
 impl PieceSpec for MultiSpec {
   fn count(&self) -> usize { self.items.len() }
+
+  #[throws(SpecError)]
   fn load(&self, i: usize, _: &mut GPiece, _ir: &InstanceRef)
-          -> Result<PieceSpecLoaded, SpecError>
+          -> PieceSpecLoaded
   {
     let item = self.items.get(i).ok_or_else(
       || SpE::InternalError(format!("item {:?} from {:?}", i, &self))
     )?;
     let item = format!("{}{}{}", &self.prefix, item, &self.suffix);
     let lib = self.lib.clone();
-    ItemSpec { lib, item }.load()
+    ItemSpec { lib, item }.load()?.into()
   }
 }
 
