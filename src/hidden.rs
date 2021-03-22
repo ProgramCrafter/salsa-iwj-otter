@@ -473,6 +473,9 @@ fn recalculate_occultation_general<
         }
       }
     }
+    // this calculation does not seem to work?
+    // to repro: bob moves a card out of bob's hand
+    // alice sees "a card with a red-striped back"
     dbgc!(most_obscure);
 
     let describe_occulter = |oni| {
