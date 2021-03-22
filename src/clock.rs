@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-#![allow(dead_code)]
-
 use crate::prelude::*;
 use shapelib::Rectangle;
 

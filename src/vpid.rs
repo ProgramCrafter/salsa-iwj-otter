@@ -267,7 +267,6 @@ fn exhaustive() {
   st.recurse();
 }                                        
 
-#[allow(unused_variables)]
 pub fn permute(occid: OccId,
                occ: &mut Occultation,
                gplayers: &mut GPlayers,

@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-// This is otter::hidden::magic
-
 use crate::prelude::*;
-//use super::*;
 
 pub const UNCLAIMED_DESC: &str = "a hand repository";
 
