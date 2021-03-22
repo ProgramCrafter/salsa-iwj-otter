@@ -80,7 +80,7 @@ posd = [0, 0]
 
 
 [[pieces]]
-pos = [50, 30]
+pos = [50, 20]
 colour = "brown"
 
 type = "Hand"
@@ -90,7 +90,7 @@ shape.type = "Rectangle"
 shape.xy = [97,25]
 
 [[pieces]]
-pos = [150, 23]
+pos = [150, 14]
 colour = "red"
 
 type = "Hand"
@@ -100,7 +100,7 @@ shape.type = "Rectangle"
 shape.xy = [97,25]
 
 [[pieces]]
-pos = [250, 30]
+pos = [250, 20]
 colour = "orange"
 
 type = "Hand"
@@ -110,7 +110,7 @@ shape.type = "Rectangle"
 shape.xy = [97,25]
 
 [[pieces]]
-pos = [250, 75]
+pos = [250, 65]
 colour = "yellow"
 
 type = "Hand"
@@ -120,7 +120,7 @@ shape.type = "Rectangle"
 shape.xy = [97,25]
 
 [[pieces]]
-pos = [250, 120]
+pos = [250, 135]
 colour = "green"
 
 type = "Hand"
@@ -130,7 +130,7 @@ shape.type = "Rectangle"
 shape.xy = [97,25]
 
 [[pieces]]
-pos = [250, 165]
+pos = [250, 180]
 colour = "blue"
 
 type = "Hand"
@@ -140,7 +140,7 @@ shape.type = "Rectangle"
 shape.xy = [97,25]
 
 [[pieces]]
-pos = [150, 177]
+pos = [150, 186]
 colour = "purple"
 
 type = "Hand"
@@ -150,7 +150,7 @@ shape.type = "Rectangle"
 shape.xy = [97,25]
 
 [[pieces]]
-pos = [50, 165]
+pos = [50, 180]
 colour = "grey"
 
 type = "Hand"
@@ -160,7 +160,7 @@ shape.type = "Rectangle"
 shape.xy = [97,25]
 
 [[pieces]]
-pos = [50, 75]
+pos = [50, 65]
 colour = "black"
 
 type = "Hand"
@@ -170,7 +170,7 @@ shape.type = "Rectangle"
 shape.xy = [97,25]
 
 [[pieces]]
-pos = [50, 120]
+pos = [50, 135]
 colour = "white"
 
 type = "Hand"
