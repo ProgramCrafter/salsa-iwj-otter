@@ -238,6 +238,20 @@ impl FaceTransform {
   }
 }
 
+impl Item {
+  #[throws(IE)]
+  fn svg_face(&self, f: &mut Html, face: FaceId) {
+    let face = &self.faces[face];
+    let svgd = &self.svgs[face.svg];
+    face.xform.write_svgd(f, svgd)?;
+  }
+
+  #[throws(IE)]
+  fn describe_face(&self, face: FaceId) -> Html {
+    self.descs[ self.faces[face].desc ].clone()
+  }
+}
+
 #[typetag::serde(name="Lib")]
 impl PieceTrait for Item {
   fn nfaces(&self) -> RawFaceId {
@@ -245,15 +259,13 @@ impl PieceTrait for Item {
   }
 
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _gs: &GameState, _vpid: VisiblePieceId) {
-    let face = &self.faces[gpc.face];
-    let svgd = &self.svgs[face.svg];
-    face.xform.write_svgd(f, svgd)?;
-    
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
+               _gs: &GameState, _vpid: VisiblePieceId) {
+    self.svg_face(f, gpc.face)?;
   }
   #[throws(IE)]
   fn describe_html(&self, gpc: &GPiece) -> Html {
-    self.descs[ self.faces[gpc.face].desc ].clone()
+    self.describe_face(gpc.face)?
   }
 
   fn itemname(&self) -> &str { &self.itemname }
@@ -391,7 +403,7 @@ impl Contents {
       let ier = ItemEnquiryData {
         itemname: k.clone(),
         f0bbox,
-        f0desc: loaded.describe_html(&GPiece::dummy())?,
+        f0desc: loaded.describe_face(default())?,
       };
       out.push(ier);
     }
