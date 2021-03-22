@@ -99,7 +99,7 @@ impl_downcast!(PieceXData);
 
 #[enum_dispatch]
 #[dyn_upcast]
-pub trait OutlineTrait: Debug + Send + 'static {
+pub trait OutlineTrait: Debug + Sync + Send + 'static {
   fn outline_path(&self, scale: f64) -> Result<Html, IE>;
   fn surround_path(&self) -> Result<Html, IE> {
     self.outline_path(SELECT_SCALE)
