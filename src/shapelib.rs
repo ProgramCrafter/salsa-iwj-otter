@@ -24,7 +24,7 @@ pub struct GroupData {
 }
 
 #[typetag::deserialize(tag="outline")]
-pub trait OutlineDefn: Debug + Sync + Send {
+pub trait OutlineDefn: Debug + Sync + Send + 'static {
   fn check(&self, lgi: &GroupData) -> Result<(),LLE>;
   fn load(&self, lgi: &GroupData) -> Result<Outline,IE>;
 }

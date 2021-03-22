@@ -99,7 +99,7 @@ impl_downcast!(PieceXData);
 
 #[enum_dispatch]
 #[dyn_upcast]
-pub trait OutlineTrait: Send + Debug {
+pub trait OutlineTrait: Debug + Send + 'static {
   fn outline_path(&self, scale: f64) -> Result<Html, IE>;
   fn surround_path(&self) -> Result<Html, IE> {
     self.outline_path(SELECT_SCALE)
@@ -169,7 +169,7 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
 }
 
 #[typetag::serde]
-pub trait OccultedPieceTrait: OutlineTrait + 'static {
+pub trait OccultedPieceTrait: OutlineTrait {
   fn svg(&self, f: &mut Html, id: VisiblePieceId) -> Result<(),IE>;
   fn describe_html(&self) -> Result<Html,IE>;
 }
@@ -193,7 +193,7 @@ pub struct PieceSpecLoaded {
 }
 
 #[typetag::serde(tag="type")]
-pub trait PieceSpec: Debug {
+pub trait PieceSpec: Debug + Send + 'static {
   fn count(&self) -> usize { 1 }
   fn load(&self, i: usize, gpc: &mut GPiece, ir: &InstanceRef)
           -> Result<PieceSpecLoaded, SpecError>;
