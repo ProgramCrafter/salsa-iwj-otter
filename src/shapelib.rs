@@ -54,6 +54,7 @@ struct ItemData {
 enum OccData {
   None,
   Internal(Arc<OccData_Internal>),
+  Back(OccultIlkName),
 }
 
 #[allow(non_camel_case_types)]
@@ -84,6 +85,8 @@ pub enum LibraryLoadError {
   GlobNoExtension { pat: String, path: String },
   #[error("{:?}",&self)]
   OccultationColourMissing(String),
+  #[error("{:?}",&self)]
+  BackMissingForOccultation,
   #[error("{:?}",&self)]
   ExpectedTable(String),
   #[error("{:?}",&self)]
@@ -381,7 +384,7 @@ impl Contents {
       .map_err(|e| SpE::InternalError(format!("reckoning transform: {}",&e)))?;
     let mut face = ItemFace { svg, desc, xform };
     let mut faces = index_vec![ face ];
-    let mut back = None;
+    let mut back = None::<Arc<dyn OccultedPieceTrait>>;
     if idata.group.d.flip {
       face.xform.scale[0] *= -1.;
       faces.push(face);
@@ -394,6 +397,12 @@ impl Contents {
 
     let occultable = match &idata.occ {
       OccData::None => None,
+      OccData::Back(ilk) => {
+        let back = if let Some(back) = &back { back }
+        else { throw!(internal_error_bydebug(&self)) };
+        let back = back.clone();
+        Some((ilk.clone(), back))
+      },
       OccData::Internal(occ) => {
         let name = occ.item_name.clone();
         let svgd = {
@@ -588,6 +597,12 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
             xform: FaceTransform::from_group(&group.d)?,
             svgd: default(),
           }))
+        },
+        Some(OccultationMethod::ByBack { ilk }) => {
+          if group.d.back.is_none() {
+            throw!(LLE::BackMissingForOccultation)
+          }
+          OccData::Back(ilk.clone())
         },
       };
 

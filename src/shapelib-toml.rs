@@ -174,6 +174,9 @@ pub enum OccultationMethod {
   ByColour {
     colour: String,
   },
+  ByBack {
+    ilk: OccultIlkName,
+  },
 }
 
 /// An entry in the `colours` table, specifying one recolouring.
