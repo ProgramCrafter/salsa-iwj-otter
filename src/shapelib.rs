@@ -780,6 +780,24 @@ impl CircleDefn {
 #[derive(Clone,Copy,Debug,Serialize,Deserialize)]
 pub struct Rectangle { pub xy: PosC<f64> }
 
+impl Rectangle {
+  #[throws(CoordinateOverflow)]
+  pub fn region(&self, centre: Pos) -> AreaC<Coord> {
+    let offset = (self.xy * 0.5)?;
+    let offset = offset.try_map(
+      |c| c.floor().to_i32().ok_or(CoordinateOverflow)
+    )?;
+    let region = AreaC(
+      [-1,1].iter().map(|&signum| Ok::<_,CoordinateOverflow>({
+        (centre + (offset * signum)?)?
+      }))
+        .collect::<Result<ArrayVec<_>,_>>()?
+        .into_inner().unwrap()
+    );
+    region
+  }
+}
+
 #[dyn_upcast]
 impl OutlineTrait for Rectangle {
   #[throws(IE)]

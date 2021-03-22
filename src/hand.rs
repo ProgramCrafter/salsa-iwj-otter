@@ -170,20 +170,9 @@ impl PieceTrait for Hand {
           dasharray,
           desc: new_desc,
         });
-        let centre = gpc.pos;
         let (region, views) = (||{
           dbgc!("claiming region");
-          let offset = (self.shape.outline.xy * 0.5)?;
-          let offset = offset.try_map(
-            |c| c.floor().to_i32().ok_or(CoordinateOverflow)
-          )?;
-          let region = AreaC(
-            [-1,1].iter().map(|&signum| Ok::<_,IE>({
-              (centre + (offset * signum)?)?
-            }))
-              .collect::<Result<ArrayVec<_>,_>>()?
-              .into_inner().unwrap()
-          );
+          let region = self.shape.outline.region(gpc.pos)?;
           let views = OwnerOccultationView {
             owner: player,
             owner_view: OccK::Visible,
