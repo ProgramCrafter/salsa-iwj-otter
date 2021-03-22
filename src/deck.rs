@@ -6,8 +6,8 @@
 
 use crate::prelude::*;
 
-pub const ACTIVE_DESC: &str = "a pickup deck (active)";
-pub const INACTIVE_DESC: &str = "a pickup deck (inactive)";
+pub const ENABLED_DESC: &str = "a pickup deck (enabled)";
+pub const DISABLED_DESC: &str = "a pickup deck (disabled)";
 
 #[derive(Debug,Serialize,Deserialize)]
 struct Deck {
@@ -52,12 +52,12 @@ impl PieceSpec for piece_specs::Deck {
 }
 
 impl Deck {
-  fn active(&self, gpc: &GPiece) -> bool {
+  fn enabled(&self, gpc: &GPiece) -> bool {
     gpc.occult.is_active()
   }
 
   fn current_face(&self, gpc: &GPiece) -> FaceId {
-    (self.active(gpc) as RawFaceId).into()
+    (self.enabled(gpc) as RawFaceId).into()
   }
 }
 
@@ -74,7 +74,7 @@ impl PieceTrait for Deck {
   #[throws(IE)]
   fn describe_html(&self, gpc: &GPiece) -> Html {
     Html::lit(
-      if self.active(gpc) { ACTIVE_DESC } else { INACTIVE_DESC }
+      if self.enabled(gpc) { ENABLED_DESC } else { DISABLED_DESC }
     )
   }
 
@@ -88,12 +88,12 @@ impl PieceTrait for Deck {
   fn add_ui_operations(&self, upd: &mut Vec<UoDescription>,
                        _gs: &GameState, gpc: &GPiece) {
     upd.push(
-      if self.active(gpc) {
+      if self.enabled(gpc) {
         UoDescription {
           kind: UoKind::Piece,
           def_key: 'A',
           opname: "activate".to_owned(),
-          desc: Html::lit("Enable pickup deck (to shuffle, etc.)"),
+          desc: Html::lit("Enable pickup deck"),
           wrc: WRC::Unpredictable,
         }
       } else {
@@ -101,7 +101,7 @@ impl PieceTrait for Deck {
           kind: UoKind::Piece,
           def_key: 'S',
           opname: "deactivate".to_owned(),
-          desc: Html::lit("Deactivate pickup deck"),
+          desc: Html::lit("Disable pickup deck"),
           wrc: WRC::Unpredictable,
         }
       }
