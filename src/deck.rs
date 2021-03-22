@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-// This is otter::hidden::magic
-
 use crate::prelude::*;
 
+pub const CORE_DESC: &str = "a pickup deck";
 pub const ENABLED_DESC: &str = "a pickup deck (enabled)";
 pub const DISABLED_DESC: &str = "a pickup deck (disabled)";
 
@@ -110,5 +109,72 @@ impl PieceTrait for Deck {
         }
       }
     )
+  }
+
+  #[throws(ApiPieceOpError)]
+  fn ui_operation(&self, a: ApiPieceOpArgs<'_>,
+                  opname: &str, wrc: WhatResponseToClientOp)
+                  -> UpdateFromOpComplex {
+    let ApiPieceOpArgs { gs,player,piece,ipieces,ioccults,to_permute,.. } = a;
+    let gen = &mut gs.gen;
+    let gplayers = &mut gs.players;
+    let gpieces = &mut gs.pieces;
+
+    let goccults = &mut gs.occults;
+    let gpc = gpieces.byid_mut(piece)?;
+
+    let gpl = gplayers.byid_mut(player)?;
+    let nick = Html(htmlescape::encode_minimal(&gpl.nick));
+
+    dbgc!("ui op k entry", &opname);
+
+    let (xupdates, did) =
+      match (opname, self.enabled(gpc))
+    {
+      ("activate", false) => {
+        dbgc!("claiming");
+        let (region, views) = (||{
+          let region = self.shape.outline.region(gpc.pos)?;
+          let views = UniformOccultationView(OccKG::Scrambled).views()?;
+          Ok::<_,IE>((region, views))
+        })().map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?;
+        
+        // actually do things:
+        dbgc!("creating occ");
+        let xupdates =
+          create_occultation(&mut gen.unique_gen(), &mut gs.max_z,
+                             gplayers, gpieces, goccults, ipieces, ioccults,
+                             to_permute,
+                             region, piece, views)?;
+
+        dbgc!("creating occ done", &xupdates);
+        (xupdates, format!("enabled {}", CORE_DESC))
+      }
+      ("deactivate", true) => {
+        let xupdates =
+          remove_occultation(&mut gen.unique_gen(),
+                             gplayers, gpieces, goccults, ipieces, ioccults,
+                             to_permute, piece)
+          .map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?;
+
+        (xupdates, format!("disabled {}", CORE_DESC))
+      }
+      ("claim", true) |
+      ("deactivate", false) => {
+        throw!(OE::PieceHeld);
+      }
+      _ => {
+        throw!(OE::BadOperation);
+      }
+    };
+
+    let log = vec![ LogEntry { html: Html(format!("{} {}", nick.0, did)) }];
+
+    dbgc!("ui op k did main");
+    
+    (PieceUpdate {
+      wrc, log,
+      ops: PUOs::Simple(PUO::Modify(())),
+    }, xupdates, None)
   }
 }
