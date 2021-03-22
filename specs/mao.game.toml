@@ -5,11 +5,13 @@
 table_size = [300, 200]
 table_colour = "#bbd"
 
-#[[pieces]]
-#pos = [150,100]
-#type = "Lib"
-#lib = "wikimedia"
-#item = "card-stripe-back-red"
+[[pieces]]
+pos = [150,100]
+type = "PickupDeck"
+faces = ["black", "grey"]
+edges = ["white", "white"]
+shape.type = "Rectangle"
+shape.xy = [20,20]
 
 [[pieces]]
 pos = [115,  135]
