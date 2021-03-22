@@ -150,7 +150,7 @@ pub struct Item {
   descs: IndexVec<DescId, Html>,
   outline: Outline,
   #[serde(default)]
-  back: Option<Box<dyn OccultedPieceTrait>>,
+  back: Option<Arc<dyn OccultedPieceTrait>>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -408,6 +408,7 @@ impl Contents {
       faces.push(face);
     } else if let Some(back_spec) = &idata.group.d.back {
       let p = back_spec.load_occult()?;
+      let p = p.into();
       back = Some(p);
     }
     faces.shrink_to_fit();
