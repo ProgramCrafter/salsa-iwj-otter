@@ -240,7 +240,7 @@ impl FaceTransform {
 
 impl Item {
   #[throws(IE)]
-  fn svg_face(&self, f: &mut Html, face: FaceId) {
+  fn svg_face(&self, f: &mut Html, face: FaceId, _vpid: VisiblePieceId) {
     let face = &self.faces[face];
     let svgd = &self.svgs[face.svg];
     face.xform.write_svgd(f, svgd)?;
@@ -260,8 +260,8 @@ impl PieceTrait for Item {
 
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
-               _gs: &GameState, _vpid: VisiblePieceId) {
-    self.svg_face(f, gpc.face)?;
+               _gs: &GameState, vpid: VisiblePieceId) {
+    self.svg_face(f, gpc.face, vpid)?;
   }
   #[throws(IE)]
   fn describe_html(&self, gpc: &GPiece) -> Html {
@@ -274,8 +274,8 @@ impl PieceTrait for Item {
 #[typetag::serde(name="LibItem")]
 impl OccultedPieceTrait for Item {
   #[throws(IE)]
-  fn svg(&self, f: &mut Html, _id: VisiblePieceId) {
-    self.svg_face(f, default())?;
+  fn svg(&self, f: &mut Html, id: VisiblePieceId) {
+    self.svg_face(f, default(), id)?;
   }
   #[throws(IE)]
   fn describe_html(&self) -> Html {
