@@ -193,7 +193,7 @@ pub struct PieceSpecLoaded {
 }
 
 #[typetag::serde(tag="type")]
-pub trait PieceSpec: Debug + Send + 'static {
+pub trait PieceSpec: Debug + Sync + Send + 'static {
   fn count(&self) -> usize { 1 }
   fn load(&self, i: usize, gpc: &mut GPiece, ir: &InstanceRef)
           -> Result<PieceSpecLoaded, SpecError>;
