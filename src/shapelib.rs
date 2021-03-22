@@ -410,12 +410,12 @@ impl Contents {
           };
           svgd
         };
-        let it = Box::new(ItemOccultable {
+        let it = Arc::new(ItemOccultable {
           svgd,
           xform: occ.xform.clone(),
           desc: occ.desc.clone(),
           outline: occ.outline.clone(),
-        }) as Box<dyn OccultedPieceTrait>;
+        }) as Arc<dyn OccultedPieceTrait>;
         Some((OccultIlkName(name), it))
       },
     };

@@ -192,7 +192,7 @@ pub struct PieceSpecLoaded {
   pub occultable:  PieceSpecLoadedOccultable,
 }
 pub type PieceSpecLoadedOccultable =
-  Option<(OccultIlkName, Box<dyn OccultedPieceTrait>)>;
+  Option<(OccultIlkName, Arc<dyn OccultedPieceTrait>)>;
 
 #[typetag::serde(tag="type")]
 pub trait PieceSpec: Debug + Sync + Send + 'static {

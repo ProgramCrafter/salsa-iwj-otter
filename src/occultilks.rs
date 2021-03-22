@@ -18,7 +18,7 @@ pub struct OccultIlkName(pub Arc<String>);
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct OccultIlkData {
-  pub p_occ: Box<dyn OccultedPieceTrait>,
+  pub p_occ: Arc<dyn OccultedPieceTrait>,
 }
 
 type Id = OccultIlkId;
