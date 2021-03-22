@@ -55,7 +55,7 @@ impl PieceSpec for piece_specs::Hand {
           -> PieceSpecLoaded {
     let common = SimpleCommon {
       itemname: None,
-      faces: index_vec![ColourSpec(self.colour.clone())],
+      faces: index_vec![self.colour.clone()],
       edges: self.edge.iter().cloned().collect(),
       edge_width: self.edge_width,
     };

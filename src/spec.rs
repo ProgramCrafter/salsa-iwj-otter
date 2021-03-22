@@ -241,7 +241,7 @@ pub mod piece_specs {
 
   #[derive(Debug,Serialize,Deserialize)]
   pub struct Hand {
-    pub colour: String,
+    pub colour: ColourSpec,
     pub edge: Option<ColourSpec>,
     pub edge_width: Option<f64>,
     pub shape: Outline,
