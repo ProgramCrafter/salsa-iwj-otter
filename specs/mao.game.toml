@@ -6,12 +6,28 @@ table_size = [300, 200]
 table_colour = "#bbd"
 
 [[pieces]]
-pos = [150,100]
+pos = [136,115]
 type = "PickupDeck"
-faces = ["black", "grey"]
-edges = ["white", "white"]
+faces = ["lightblue", "grey"]
+edges = ["black", "white"]
 shape.type = "Rectangle"
-shape.xy = [20,20]
+shape.xy = [25,30]
+
+[[pieces]]
+pos = [162,115]
+type = "PickupDeck"
+faces = ["lightblue", "grey"]
+edges = ["black", "white"]
+shape.type = "Rectangle"
+shape.xy = [25,30]
+
+[[pieces]]
+pos = [150,84]
+type = "PickupDeck"
+faces = ["lightblue", "grey"]
+edges = ["black", "white"]
+shape.type = "Rectangle"
+shape.xy = [25,30]
 
 [[pieces]]
 pos = [115,  135]
@@ -22,18 +38,103 @@ suffix = "-h"
 items = ["2","3","4","5","6","7","8","9","T","J","Q","K","A"]
 posd = [10, 0]
 
-[[pieces]]
-pos = [200, 40]
-type = "Hand"
-edge = "white"
-colour = "grey"
-shape.type = "Rectangle"
-shape.xy = [70,30]
 
 [[pieces]]
-pos = [200, 80]
+pos = [50, 25]
+colour = "brown"
+
 type = "Hand"
 edge = "white"
-colour = "blue"
+edge_width = 0.75
 shape.type = "Rectangle"
-shape.xy = [70,30]
+shape.xy = [97,40]
+
+[[pieces]]
+pos = [150, 23]
+colour = "red"
+
+type = "Hand"
+edge = "white"
+edge_width = 0.75
+shape.type = "Rectangle"
+shape.xy = [97,40]
+
+[[pieces]]
+pos = [250, 30]
+colour = "orange"
+
+type = "Hand"
+edge = "white"
+edge_width = 0.75
+shape.type = "Rectangle"
+shape.xy = [97,40]
+
+[[pieces]]
+pos = [250, 75]
+colour = "yellow"
+
+type = "Hand"
+edge = "darkgrey"
+edge_width = 1.0
+shape.type = "Rectangle"
+shape.xy = [97,40]
+
+[[pieces]]
+pos = [250, 120]
+colour = "green"
+
+type = "Hand"
+edge = "white"
+edge_width = 0.75
+shape.type = "Rectangle"
+shape.xy = [97,40]
+
+[[pieces]]
+pos = [250, 165]
+colour = "blue"
+
+type = "Hand"
+edge = "white"
+edge_width = 0.75
+shape.type = "Rectangle"
+shape.xy = [97,40]
+
+[[pieces]]
+pos = [150, 177]
+colour = "purple"
+
+type = "Hand"
+edge = "white"
+edge_width = 0.75
+shape.type = "Rectangle"
+shape.xy = [97,40]
+
+[[pieces]]
+pos = [50, 165]
+colour = "grey"
+
+type = "Hand"
+edge = "white"
+edge_width = 0.75
+shape.type = "Rectangle"
+shape.xy = [97,40]
+
+[[pieces]]
+pos = [50, 75]
+colour = "black"
+
+type = "Hand"
+edge = "white"
+edge_width = 0.75
+shape.type = "Rectangle"
+shape.xy = [97,40]
+
+[[pieces]]
+pos = [50, 120]
+colour = "white"
+
+type = "Hand"
+edge = "darkgrey"
+edge_width = 1.0
+shape.type = "Rectangle"
+shape.xy = [97,40]
