@@ -332,13 +332,11 @@ fn recalculate_occultation_general<
   RF: FnOnce(PieceUpdateOps_PerPlayer, LD) -> RD,     // ret_callback
 >(
   gen: &mut UniqueGenGen,
-  gplayers: &GPlayers,
-  gpieces: &mut GPieces,
-  goccults: &mut GameOccults,
-  ipieces: &IPieces,
-  ioccults: &IOccults,
-  to_permute: &mut ToPermute,
-  piece: PieceId,
+  //
+  gplayers: &GPlayers, gpieces: &mut GPieces, goccults: &mut
+  GameOccults, ipieces: &IPieces, ioccults: &IOccults,
+  //
+  to_permute: &mut ToPermute, piece: PieceId,
   // if no change, we return ret_vanilla()
   log_invisible: LD,
   ret_vanilla: VF,
@@ -562,8 +560,7 @@ pub fn recalculate_occultation_piece(
     recalculate_occultation_general(
       &mut gs.gen.unique_gen(),
       &gs.players, &mut gs.pieces, &mut gs.occults, ipieces, ioccults,
-      to_permute,
-      piece,
+      to_permute, piece,
       vec![ ],
       || (vanilla_wrc, vanilla_op, vanilla_log).into(),
       |old, new, Html(show)| vec![ LogEntry { html: Html(format!(
@@ -598,10 +595,13 @@ fn recalculate_occultation_ofmany(
   updates: &mut Vec<(PieceId, PieceUpdateOps)>,
 ){
   recalculate_occultation_general(
-    gen, gplayers, gpieces, goccults, ipieces, ioccults, to_permute,
-    ppiece,
-    (), ||(),
-    |_,_,_|(), |puo_pp, ()|{
+    gen,
+    gplayers, gpieces, goccults, ipieces, ioccults,
+    to_permute, ppiece,
+    (),
+    ||(),
+    |_,_,_|(),
+    |puo_pp, ()|{
       updates.push((ppiece, PUOs::PerPlayer(puo_pp)));
     },
   )?;
