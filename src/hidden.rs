@@ -328,7 +328,7 @@ fn recalculate_occultation_general<
   RD: Debug,                                          // return data
   LD: Debug,                                          // log data
   VF: FnOnce(LD) -> RD,                               // ret_vanilla
-  LF: FnOnce(Html, Html, Option<&Html>) -> LD,        // log_callback
+  LF: FnOnce(Option<Html>, Option<Html>, &Html) -> LD, // log_callback
   RF: FnOnce(PieceUpdateOps_PerPlayer, LD) -> RD,     // ret_callback
 >(
   gen: &mut UniqueGenGen,
@@ -341,6 +341,7 @@ fn recalculate_occultation_general<
   piece: PieceId,
   // if no change, we return ret_vanilla(log_visible)
   log_visible: LD,
+  log_invisible: LD,
   ret_vanilla: VF,
   // otherwise we maybe call log_callback(who_by, old, new, desc)
   // or maybe we just use log_visible
@@ -478,18 +479,20 @@ fn recalculate_occultation_general<
     // alice sees "a card with a red-striped back"
     dbgc!(most_obscure);
 
-    let describe_occulter = |oni| {
-      let h = occulteds.as_refs().main()[oni];
-      let h = h.as_ref().ok_or_else(
-        || internal_logic_error("most obscure not obscure"))?;
+    let describe_occulter = |oni| Ok::<_,IE>(if_chain! {
+      if let Some(ref h) = occulteds.as_refs().main()[oni];
       let opiece = h.occ.occulter;
       let bad = || internal_error_bydebug(&("missing", opiece, h.occid));
       let oipc = ipieces.get(opiece).ok_or_else(bad)?;
       let ogpc = gpieces.get(opiece).ok_or_else(bad)?;
       let ounocc = ogpc.fully_visible_to_everyone()
         .ok_or_else(||internal_error_bydebug(&(occulteds, &ogpc)))?;
-      Ok::<_,IE>(oipc.show(ounocc).describe_html(ogpc)?)
-    };
+      then {
+        Some(oipc.show(ounocc).describe_html(ogpc)?)
+      } else {
+        None
+      }
+    });
 
     let most_obscure = most_obscure.unwrap_or(&OccK::Visible); // no players!
 
@@ -507,10 +510,10 @@ fn recalculate_occultation_general<
       Some(prioc@ PriOG::Occulted) |
       Some(prioc@ PriOG::Displaced(..)) => {
         let show = prioc.describe(ioccults, gpc, ipc);
-        call_log_callback(Some(&show))?
+        call_log_callback(&show)?
       },
       None => {
-        call_log_callback(None)?
+        log_invisible
       },
     };
 
@@ -564,13 +567,20 @@ pub fn recalculate_occultation_piece(
       &mut gs.gen.unique_gen(),
       &gs.players, &mut gs.pieces, &mut gs.occults, ipieces, ioccults,
       to_permute,
-      piece, vanilla_log,
+      piece,
+      vanilla_log,
+      vec![ ],
       |log| (vanilla_wrc, vanilla_op, log).into(),
-      |old, new, show| vec![ LogEntry { html: Html(format!(
-        "{} moved {} from {} to {}",
+      |old, new, Html(show)| vec![ LogEntry { html: Html(format!(
+        "{} {}",
         &who_by.0,
-        if let Some(show) = show { &show.0 } else { "something" },
-        &old.0, &new.0,
+        match (old, new) {
+          (None, None) => format!("modified {} somehow", show),
+          (Some(old), None) => format!("produced {} from {}", show, &old.0),
+          (None, Some(new)) => format!("placed {} into {}", show, &new.0),
+          (Some(old), Some(new)) => format!("moved {} from {} to {}",
+                                            show, &old.0, &new.0),
+        },
       ))}],
       |puos, log| PieceUpdate {
         wrc: WRC::Unpredictable,
@@ -595,7 +605,7 @@ fn recalculate_occultation_ofmany(
   recalculate_occultation_general(
     gen, gplayers, gpieces, goccults, ipieces, ioccults, to_permute,
     ppiece,
-    (), |_|(),
+    (),(), |_|(),
     |_,_,_|(), |puo_pp, ()|{
       updates.push((ppiece, PUOs::PerPlayer(puo_pp)));
     },
