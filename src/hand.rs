@@ -87,7 +87,8 @@ impl Hand {
 impl PieceTrait for Hand {
   fn nfaces(&self) -> RawFaceId { 1 }
   #[throws(IE)]
-  fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _gs: &GameState, _vpid: VisiblePieceId) {
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
+               gs: &GameState, _vpid: VisiblePieceId) {
     let owned = if_chain!{
       if let Some(xdata) = gpc.xdata.get::<HandState>()?;
       if let Some(owned) = &xdata.owner;
@@ -100,6 +101,26 @@ impl PieceTrait for Hand {
       }
       Ok(())
     })?;
+    if_chain! {
+      if let Some(owned) = owned;
+      if let Some(gpl) = gs.players.get(owned.player);
+      if let Some(colour) = self.shape.edges.get(0);
+      let signum = if false { -1. } else { 1. };
+      let fontsz = 4.;
+      let PosC([x,y]) = {
+        let mut pos = (self.shape.outline.xy * -0.5)?;
+        pos.0[1] -= 0.5 * fontsz;
+        pos.0[1] *= signum;
+        pos.0[1] += 0.5 * fontsz;
+        pos
+      };
+      then {
+        write!(f.0,
+ r##"<text x="{}" y="{}" font-size="{}" fill="{}">{}</text>"##,
+               x, y, fontsz, &colour.0,
+               htmlescape::encode_minimal(&gpl.nick))?;
+      }
+    }
   }
 
   #[throws(IE)]
