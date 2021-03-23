@@ -121,8 +121,8 @@ impl PieceTrait for Hand {
         let y = &mut pos.0[1];
         *y += 0.5 * fontsz;
         match spec.place {
-          TopLeft => { *y *= -1. },
-          BottomLeft => { },
+          BottomLeft => { *y *= -1. },
+          TopLeft => { }
         };
         *y += 0.5 * fontsz;
         pos
