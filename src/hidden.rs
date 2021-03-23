@@ -338,9 +338,9 @@ fn recalculate_occultation_general<
   //
   to_permute: &mut ToPermute, piece: PieceId,
   // if no change, we return ret_vanilla()
-  log_invisible: LD,
   ret_vanilla: VF,
-  // otherwise we maybe call log_callback(who_by, old, new, desc)
+  // otherwise we use log_invisible or log_callback(who_by,old,new,desc)
+  log_invisible: LD,
   log_callback: LF,
   // and then call ret_callback(<calculated>, <logmsgs>)
   ret_callback: RF,
@@ -561,8 +561,8 @@ pub fn recalculate_occultation_piece(
       &mut gs.gen.unique_gen(),
       &gs.players, &mut gs.pieces, &mut gs.occults, ipieces, ioccults,
       to_permute, piece,
-      vec![ ],
       || (vanilla_wrc, vanilla_op, vanilla_log).into(),
+      vec![],
       |old, new, Html(show)| vec![ LogEntry { html: Html(format!(
         "{} {}",
         &who_by.0,
@@ -598,9 +598,8 @@ fn recalculate_occultation_ofmany(
     gen,
     gplayers, gpieces, goccults, ipieces, ioccults,
     to_permute, ppiece,
-    (),
     ||(),
-    |_,_,_|(),
+    (), |_,_,_|(),
     |puo_pp, ()|{
       updates.push((ppiece, PUOs::PerPlayer(puo_pp)));
     },
