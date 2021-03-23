@@ -88,12 +88,15 @@ impl PieceTrait for Hand {
   fn nfaces(&self) -> RawFaceId { 1 }
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _gs: &GameState, _vpid: VisiblePieceId) {
+    let owned = if_chain!{
+      if let Some(xdata) = gpc.xdata.get::<HandState>()?;
+      if let Some(owned) = &xdata.owner;
+      then { Some(owned) }
+      else { None }
+    };
     self.shape.svg_piece_raw(f, gpc.face, &mut |f: &mut String| {
-      if_chain!{
-        if let Some(xdata) = gpc.xdata.get::<HandState>()?;
-        if let Some(owned) = &xdata.owner;
-        then { write!(f, r##" stroke-dasharray="{}" "##,
-                      &owned.dasharray.0)?; }
+      if let Some(owned) = owned {
+        write!(f, r##" stroke-dasharray="{}" "##, &owned.dasharray.0)?;
       }
       Ok(())
     })?;
