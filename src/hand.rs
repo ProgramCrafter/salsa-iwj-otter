@@ -3,6 +3,7 @@
 // There is NO WARRANTY.
 
 use crate::prelude::*;
+use piece_specs::{HandLabel, HandLabelPlace};
 
 pub const UNCLAIMED_DESC: &str = "a hand repository";
 
@@ -16,6 +17,7 @@ struct MagicOwner {
 #[derive(Debug,Serialize,Deserialize)]
 struct Hand {
   shape: GenericSimpleShape<(), shapelib::Rectangle>,
+  label: Option<HandLabel>,
 }
 
 #[derive(Debug,Clone,Default,Serialize,Deserialize)]
@@ -67,6 +69,7 @@ impl PieceSpec for piece_specs::Hand {
       &common)?;
     let p = Box::new(Hand {
       shape,
+      label: self.label.clone(),
     }) as Box<dyn PieceTrait>;
     PieceSpecLoaded { p, occultable: None }
   }
@@ -104,20 +107,30 @@ impl PieceTrait for Hand {
     if_chain! {
       if let Some(owned) = owned;
       if let Some(gpl) = gs.players.get(owned.player);
-      if let Some(colour) = self.shape.edges.get(0);
-      let signum = if false { -1. } else { 1. };
+      if let Some(spec) = &self.label;
+      let colour = {
+        if let Some(c) = &spec.colour { &c.0 }
+        else if let Some(c) = self.shape.edges.get(0) { &c.0 }
+        else { "black" }
+      };
       let fontsz = 4.;
       let PosC([x,y]) = {
-        let mut pos = (self.shape.outline.xy * -0.5)?;
-        pos.0[1] -= 0.5 * fontsz;
-        pos.0[1] *= signum;
-        pos.0[1] += 0.5 * fontsz;
+        use HandLabelPlace::*;
+        let eff_size = (self.shape.outline.xy - PosC([2.,2.]))?;
+        let mut pos = (eff_size * -0.5)?;
+        let y = &mut pos.0[1];
+        *y += 0.5 * fontsz;
+        match spec.place {
+          TopLeft => { *y *= -1. },
+          BottomLeft => { },
+        };
+        *y += 0.5 * fontsz;
         pos
       };
       then {
         write!(f.0,
  r##"<text x="{}" y="{}" font-size="{}" fill="{}">{}</text>"##,
-               x, y, fontsz, &colour.0,
+               x, y, fontsz, colour,
                htmlescape::encode_minimal(&gpl.nick))?;
       }
     }

@@ -112,6 +112,8 @@ shape.xy = [97,25]
 [[pieces]]
 pos = [250, 65]
 colour = "yellow"
+label.place = "TopLeft"
+label.colour = "black"
 
 type = "Hand"
 edge = "darkgrey"
@@ -172,6 +174,8 @@ shape.xy = [97,25]
 [[pieces]]
 pos = [50, 135]
 colour = "white"
+label.place = "BottomLeft"
+label.colour = "black"
 
 type = "Hand"
 edge = "darkgrey"

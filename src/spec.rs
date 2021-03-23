@@ -246,6 +246,19 @@ pub mod piece_specs {
     pub edge: Option<ColourSpec>,
     pub edge_width: Option<f64>,
     pub shape: Outline,
+    pub label: Option<HandLabel>,
+  }
+
+  #[derive(Debug,Clone,Serialize,Deserialize)]
+  pub struct HandLabel {
+    #[serde(default)] pub place: HandLabelPlace,
+    pub colour: Option<ColourSpec>,
+  }
+
+  #[derive(Debug,Copy,Clone,Serialize,Deserialize,Eq,PartialEq)]
+  pub enum HandLabelPlace {
+    BottomLeft,
+    TopLeft,
   }
 
   #[derive(Debug,Serialize,Deserialize)]
@@ -422,6 +435,10 @@ pub mod implementation {
     fn from(a: CompassAngle) -> u8 {
       a.0
     }
+  }
+
+  impl Default for piece_specs::HandLabelPlace {
+    fn default() -> Self { Self::BottomLeft }
   }
 
   impl<P: Eq + Hash> Default for Acl<P> {
