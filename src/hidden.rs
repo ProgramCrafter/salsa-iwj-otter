@@ -327,7 +327,7 @@ pub fn vpiece_decode(
 fn recalculate_occultation_general<
   RD: Debug,                                          // return data
   LD: Debug,                                          // log data
-  VF: FnOnce(LD) -> RD,                               // ret_vanilla
+  VF: FnOnce() -> RD,                                 // ret_vanilla
   LF: FnOnce(Option<Html>, Option<Html>, &Html) -> LD, // log_callback
   RF: FnOnce(PieceUpdateOps_PerPlayer, LD) -> RD,     // ret_callback
 >(
@@ -339,12 +339,10 @@ fn recalculate_occultation_general<
   ioccults: &IOccults,
   to_permute: &mut ToPermute,
   piece: PieceId,
-  // if no change, we return ret_vanilla(log_visible)
-  log_visible: LD,
+  // if no change, we return ret_vanilla()
   log_invisible: LD,
   ret_vanilla: VF,
   // otherwise we maybe call log_callback(who_by, old, new, desc)
-  // or maybe we just use log_visible
   log_callback: LF,
   // and then call ret_callback(<calculated>, <logmsgs>)
   ret_callback: RF,
@@ -418,7 +416,7 @@ fn recalculate_occultation_general<
     trace_dbg!("recalculating", piece, occulteds);
 
     let occids = occulteds.main().map(|h| h.as_ref().map(|occ| occ.occid));
-    if occids.old() == occids.new() { return ret_vanilla(log_visible); }
+    if occids.old() == occids.new() { return ret_vanilla(); }
 
   /*
     #[throws(IE)]
@@ -566,9 +564,8 @@ pub fn recalculate_occultation_piece(
       &gs.players, &mut gs.pieces, &mut gs.occults, ipieces, ioccults,
       to_permute,
       piece,
-      vanilla_log,
       vec![ ],
-      |log| (vanilla_wrc, vanilla_op, log).into(),
+      || (vanilla_wrc, vanilla_op, vanilla_log).into(),
       |old, new, Html(show)| vec![ LogEntry { html: Html(format!(
         "{} {}",
         &who_by.0,
@@ -603,7 +600,7 @@ fn recalculate_occultation_ofmany(
   recalculate_occultation_general(
     gen, gplayers, gpieces, goccults, ipieces, ioccults, to_permute,
     ppiece,
-    (),(), |_|(),
+    (), ||(),
     |_,_,_|(), |puo_pp, ()|{
       updates.push((ppiece, PUOs::PerPlayer(puo_pp)));
     },
