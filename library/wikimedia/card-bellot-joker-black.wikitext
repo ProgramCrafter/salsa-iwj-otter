@@ -1,0 +1,19 @@
+=={{int:filedesc}}==
+{{Information
+|description    = {{en|1=Playing card in SVG format based on the French suit, following the Paris pattern (''portrait officiel'').}}
+|date           = 2005-12-08
+|source         = http://svg-cards.sourceforge.net/
+|author         = David Bellot
+|permission     = 
+|other versions = {{F|Svg-cards-2.0.svg}}
+|other fields={{Igen|Adobe-hand|+}}
+{{Information field|name=Compatibility|value=This card has been made with GNOME games in mind and has been succesfully tested with Nautilus, Eye of Gnome (both of them use librsvg) and Inkscape.|Style=wiki}}
+}}
+
+== {{int:license-header}} ==
+{{LGPL}}
+
+[[Category:Cap and bells]]
+[[Category:Jokers (playing card)]]
+[[Category:Marottes]]
+[[Category:SVG playing cards 4]]

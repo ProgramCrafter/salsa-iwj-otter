@@ -132,3 +132,18 @@ files = """
 card-stripe-back-red	Card_back_03a	a card with a red-striped back
 card-stripe-back-blue	Card_back_03b	a card with a blue-striped back
 """
+
+[group.cards-bellot]
+outline = "Square"
+size = [73, 97]
+
+# sizes to match cards-oxymoron:
+orig_size = [167, 243]
+scale = 0.25
+
+files = """
+card-bellot-joker-black		Joker_black_02	a joker
+# card-bellot-joker-red		Joker_red_02	a joker
+# ^ on wikimedia this file is unaccountably 60kb instead of 30kb
+#   and furthermore a different size.  wat?
+"""
