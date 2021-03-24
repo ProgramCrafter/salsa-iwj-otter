@@ -379,9 +379,7 @@ impl ThreadState {
           None
         };
 
-      let mut updates = PrepareUpdatesBuffer::new(&mut ig, None, None);
-      updates.piece_update_image(self.piece)?;
-      updates.finish();
+      PrepareUpdatesBuffer::spontaneous_image(&mut ig, self.piece, None)?;
     }
   }
 }

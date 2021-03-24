@@ -554,6 +554,16 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     }
   }
 
+  #[throws(IE)]
+  pub fn spontaneous_image(g: &'r mut Instance,
+                           piece: PieceId,
+                           estimate: Option<usize>)
+  {
+    let mut updates = PrepareUpdatesBuffer::new(g, None, estimate);
+    updates.piece_update_image(piece)?;
+    updates.finish();
+  }
+
   pub fn gen(&mut self) -> Generation {
     let gs = &mut self.g.gs;
     *self.gen.get_or_insert_with(||{
