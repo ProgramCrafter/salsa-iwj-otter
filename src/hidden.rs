@@ -204,13 +204,13 @@ pub fn piece_pri(
 {
   let occk = if_chain! {
     if let Some(Passive { occid, notch }) = gpc.occult.passive;
-    if let Some(occultation) = occults.occults.get(occid);
-    if let Some(zg) = occultation.notch_zg(notch);
+    if let Some(occ) = occults.occults.get(occid);
+    if let Some(zg) = occ.notch_zg(notch);
     then {
-      occultation.views.get_kind(player)
+      occ.views.get_kind(player)
         .map_displaced(|(displace, z)| {
           let notch: NotchNumber = notch.into();
-          let pos = displace.place(occultation.ppiece_use_size, notch);
+          let pos = displace.place(occ.ppiece_use_size, notch);
           let z = z.plus_offset(notch)
             .unwrap_or_else(|e| { // eek!
               error!("z coordinate overflow ({:?}), bodging! {:?} {:?}",
