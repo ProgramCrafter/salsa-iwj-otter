@@ -95,8 +95,8 @@ posd = [0, 0]
 [[pieces]]
 pos = [50, 20]
 colour = "brown"
-label.place = "BottomLeft"
-label.colour = "white"
+label.place = "BottomLeftOutside"
+label.colour = "black"
 
 type = "Hand"
 edge = "white"
@@ -107,8 +107,8 @@ shape.xy = [97,25]
 [[pieces]]
 pos = [150, 14]
 colour = "red"
-label.place = "BottomLeft"
-label.colour = "white"
+label.place = "BottomLeftOutside"
+label.colour = "black"
 
 type = "Hand"
 edge = "white"
@@ -119,7 +119,7 @@ shape.xy = [97,25]
 [[pieces]]
 pos = [250, 20]
 colour = "orange"
-label.place = "BottomLeft"
+label.place = "BottomLeftOutside"
 label.colour = "black"
 
 type = "Hand"
@@ -131,7 +131,7 @@ shape.xy = [97,25]
 [[pieces]]
 pos = [250, 65]
 colour = "yellow"
-label.place = "BottomLeft"
+label.place = "BottomLeftOutside"
 label.colour = "black"
 
 type = "Hand"
@@ -143,8 +143,8 @@ shape.xy = [97,25]
 [[pieces]]
 pos = [250, 135]
 colour = "green"
-label.place = "TopLeft"
-label.colour = "white"
+label.place = "TopLeftOutside"
+label.colour = "black"
 
 type = "Hand"
 edge = "white"
@@ -155,8 +155,8 @@ shape.xy = [97,25]
 [[pieces]]
 pos = [250, 180]
 colour = "blue"
-label.place = "TopLeft"
-label.colour = "white"
+label.place = "TopLeftOutside"
+label.colour = "black"
 
 type = "Hand"
 edge = "white"
@@ -167,8 +167,8 @@ shape.xy = [97,25]
 [[pieces]]
 pos = [150, 186]
 colour = "purple"
-label.place = "TopLeft"
-label.colour = "white"
+label.place = "TopLeftOutside"
+label.colour = "black"
 
 type = "Hand"
 edge = "white"
@@ -179,7 +179,7 @@ shape.xy = [97,25]
 [[pieces]]
 pos = [50, 180]
 colour = "grey"
-label.place = "TopLeft"
+label.place = "TopLeftOutside"
 label.colour = "black"
 
 type = "Hand"
@@ -191,8 +191,8 @@ shape.xy = [97,25]
 [[pieces]]
 pos = [50, 65]
 colour = "black"
-label.place = "BottomLeft"
-label.colour = "white"
+label.place = "BottomLeftOutside"
+label.colour = "black"
 
 type = "Hand"
 edge = "white"
@@ -203,7 +203,7 @@ shape.xy = [97,25]
 [[pieces]]
 pos = [50, 135]
 colour = "white"
-label.place = "TopLeft"
+label.place = "TopLeftOutside"
 label.colour = "black"
 
 type = "Hand"
