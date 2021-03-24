@@ -10,9 +10,10 @@ use std::collections::hash_map::HashMap;
 use std::collections::hash_set::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::convert::TryFrom;
 
 use enum_map::Enum;
-use fehler::throws;
+use fehler::{throw,throws};
 use index_vec::{define_index_type, IndexVec};
 use num_derive::{FromPrimitive, ToPrimitive};
 use serde::{Deserialize, Serialize};
@@ -22,24 +23,14 @@ use thiserror::Error;
 use crate::accounts::AccountName;
 use crate::error::display_as_debug;
 use crate::gamestate::PieceSpec;
+use crate::geometry::{Coord,Pos};
+use crate::prelude::default;
 
 pub use implementation::PlayerAccessSpec;
 
+type SpE = SpecError;
+
 //---------- common types ----------
-
-pub type Coord = i32;
-
-#[derive(Clone,Copy,Debug,Serialize,Deserialize,Hash)]
-#[derive(Eq,PartialEq,Ord,PartialOrd)]
-#[serde(transparent)]
-pub struct PosC<T>(pub [T; 2]);
-pub type Pos = PosC<Coord>;
-
-#[derive(Clone,Copy,Debug,Serialize,Deserialize,Hash)]
-#[derive(Eq,PartialEq)]
-#[serde(transparent)]
-pub struct AreaC<T>(pub [PosC<T>; 2]);
-pub type Area = AreaC<Coord>;
 
 #[derive(Clone,Eq,PartialEq,Ord,PartialOrd,Hash,Serialize,Deserialize)]
 #[serde(transparent)]
@@ -271,194 +262,35 @@ pub mod piece_specs {
   }
 }
 
-//---------- Pos ----------
+// ---------- Implementation - angles ----------
 
-pub mod pos_traits {
-  use std::ops::{Add,Sub,Mul,Neg};
-  use crate::prelude::*;
+impl Default for PieceAngle {
+  fn default() -> Self { PieceAngle::Compass(default()) }
+}
 
-  pub trait Mean { fn mean(&self, other: &Self) -> Self; }
-
-  impl Mean for i32 { fn mean(&self, other: &Self) -> Self {
-    ((*self as i64 + *other as i64) / 2) as i32
-  } }
-
-  impl<T:CheckedArith> Add<PosC<T>> for PosC<T> {
-    type Output = Result<Self, CoordinateOverflow>;
-    #[throws(CoordinateOverflow)]
-    fn add(self, rhs: PosC<T>) -> PosC<T> {
-      PosC::try_from_iter_2(
-        itertools::zip_eq(
-          self.0.iter().cloned(),
-          rhs .0.iter().cloned(),
-        ).map(
-          |(a,b)| a.checked_add(b)
-        )
-      )?
-    }
+impl TryFrom<u8> for CompassAngle {
+  type Error = SpecError;
+  #[throws(SpecError)]
+  fn try_from(v: u8) -> Self {
+    if v < 8 { Self(v) }
+    else { throw!(SpE::CompassAngleInvalid) }
   }
+}
 
-  impl<T:CheckedArith> Sub<PosC<T>> for PosC<T> {
-    type Output = Result<Self, CoordinateOverflow>;
-    #[throws(CoordinateOverflow)]
-    fn sub(self, rhs: PosC<T>) -> PosC<T> {
-      PosC::try_from_iter_2(
-        itertools::zip_eq(
-          self.0.iter().cloned(),
-          rhs .0.iter().cloned(),
-        ).map(|(a,b)| a.checked_sub(b))
-      )?
-    }
-  }
-
-  impl<S:Copy+Debug+Clone+'static,T:CheckedArithMul<S>> Mul<S> for PosC<T> {
-    type Output = Result<Self, CoordinateOverflow>;
-    #[throws(CoordinateOverflow)]
-    fn mul(self, rhs: S) -> PosC<T> {
-      PosC::try_from_iter_2(
-        self.0.iter().cloned().map(
-          |a| a.checked_mul(rhs)
-        )
-      )?
-    }
-  }
-
-  impl<T:CheckedArith> Neg for PosC<T> {
-    type Output = Result<Self, CoordinateOverflow>;
-    #[throws(CoordinateOverflow)]
-    fn neg(self) -> Self {
-      PosC::try_from_iter_2(
-        self.0.iter().cloned().map(|a| a.checked_neg())
-      )?
-    }
-  }
-
-  impl<T:Copy+Clone+Debug> PosC<T> {
-    pub fn map<U:Copy+Clone+Debug, F: FnMut(T) -> U>(self, f: F) -> PosC<U> {
-      PosC::from_iter(
-        self.0.iter().cloned().map(f)
-      ).unwrap()
-    }
-  }
-
-  impl<T:Copy+Clone+Debug> PosC<T> {
-    pub fn try_map<E:Debug, U:Copy+Clone+Debug, F: FnMut(T) -> Result<U,E>>
-      (self, f: F) -> Result<PosC<U>,E>
-    {
-      PosC::try_from_iter_2(
-        self.0.iter().cloned().map(f)
-      )
-    }
-  }
-
-  impl<T> Mean for PosC<T> where T: Mean + Debug {
-    fn mean(&self, other: &Self) -> Self where T: Mean {
-      PosC::try_from_iter_2(
-        izip!(&self.0, &other.0)
-          .map(|(a,b)| Ok::<_,Void>(a.mean(b)))
-      ).unwrap_or_else(|v| match v { })
-    }
-  }
-
-  impl PosC<Coord> {
-    pub fn promote(&self) -> PosC<f64> { self.map(|v| v as f64) }
-  }
-
-  #[derive(Error,Debug,Copy,Clone,Serialize,Deserialize)]
-  pub struct PosCFromIteratorError;
-  display_as_debug!{PosCFromIteratorError}
-
-  impl<T> PosC<T> {
-    #[throws(PosCFromIteratorError)]
-    pub fn from_iter<I: Iterator<Item=T>>(i: I) -> Self { PosC(
-      i
-        .collect::<ArrayVec<_>>()
-        .into_inner()
-        .map_err(|_| PosCFromIteratorError)?
-    )}
-  }
-
-  impl<T:Debug> PosC<T> {
-    /// Panics if the iterator doesn't yield exactly 2 elements
-    #[throws(E)]
-    pub fn try_from_iter_2<
-      E: Debug,
-      I: Iterator<Item=Result<T,E>>
-    >(i: I) -> Self { PosC(
-      i
-        .collect::<Result<ArrayVec<_>,E>>()?
-        .into_inner().unwrap()
-    )}
+impl From<CompassAngle> for u8 {
+  fn from(a: CompassAngle) -> u8 {
+    a.0
   }
 }
 
 //---------- Implementation ----------
 
 pub mod implementation {
-  use super::*;
+  use super::{*, SpE};
   use crate::prelude::*;
 
   type AS = AccountScope;
   type TPS = TablePlayerSpec;
-
-  impl<T> AreaC<T> {
-    pub fn contains(&self, p: PosC<T>) -> bool where T: Ord {
-      (0..2).all(|i| {
-        p.0[i] >= self.0[0].0[i] &&
-        p.0[i] <= self.0[1].0[i]
-      })
-    }
-
-    pub fn overlaps(&self, other: &AreaC<T>) -> bool where T: Ord {
-      ! (0..2).any(|i| (
-        other.0[1].0[i] < self .0[0].0[i] ||
-        self .0[1].0[i] < other.0[0].0[i]
-      ))
-    }
-
-    pub fn empty() -> Self where T: Copy + num_traits::Zero + num_traits::One {
-      let zero = <T as num_traits::Zero>::zero();
-      let one = <T as num_traits::One>::one();
-      AreaC([
-        PosC([ one,  one  ]),
-        PosC([ zero, zero ]),
-      ])
-    }
-  }
-
-  impl<T> AreaC<T> where T: Mean + Debug {
-    pub fn middle(&self) -> PosC<T> {
-      Mean::mean(&self.0[0],
-                 &self.0[1])
-    }
-  }
-
-  #[test]
-  fn empty_area() {
-    let empty = Area::empty();
-    for x in -3..3 { for y in -3..3 {
-      assert!(! empty.contains(PosC([x,y])));
-    } }
-  }
-
-  impl Default for PieceAngle {
-    fn default() -> Self { PieceAngle::Compass(default()) }
-  }
-
-  impl TryFrom<u8> for CompassAngle {
-    type Error = SpecError;
-    #[throws(SpecError)]
-    fn try_from(v: u8) -> Self {
-      if v < 8 { Self(v) }
-      else { throw!(SpE::CompassAngleInvalid) }
-    }
-  }
-
-  impl From<CompassAngle> for u8 {
-    fn from(a: CompassAngle) -> u8 {
-      a.0
-    }
-  }
 
   impl Default for piece_specs::PieceLabelPlace {
     fn default() -> Self { Self::BottomLeft }
@@ -703,9 +535,9 @@ pub mod implementation {
       lazy_static! {
         static ref RE: Regex = Regex::new(concat!(
           r"^(?:", r"[[:alpha:]]{1,50}",
-             r"|", r"#[[:xdigit:]]{3}{1,2}",
-             r"|", r"(?:rgba?|hsla?)\([-.%\t 0-9]{1,50}\)",
-            r")$"
+          r"|", r"#[[:xdigit:]]{3}{1,2}",
+          r"|", r"(?:rgba?|hsla?)\([-.%\t 0-9]{1,50}\)",
+          r")$"
         )).unwrap();
       }
       let s = &spec.0;
