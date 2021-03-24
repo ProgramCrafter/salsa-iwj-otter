@@ -91,6 +91,7 @@ pub struct Notches {
   freelist: NotchPtr,
   table: IndexVec<Notch, NotchRecord>,
   zg: IndexVec<Notch, Generation>, // last time notch was (re)filled
+  used: NotchNumber,
 }
 
 impl Occultation {
@@ -111,7 +112,7 @@ impl Notches {
   /// correctness: piece must not already be in this `Notches`
   pub fn insert(&mut self, zg: Generation, piece: PieceId) -> Notch {
     let new = NR::Piece(piece);
-    match self.freelist.take() {
+    let notch = match self.freelist.take() {
       None => {
         let a = self.table.push(new);
         let b = self.zg.push(zg);
@@ -125,7 +126,9 @@ impl Notches {
         self.zg[old_free_head] = zg;
         old_free_head
       },
-    }
+    };
+    self.used += 1;
+    notch
   }
 
   #[throws(IE)]
@@ -147,6 +150,7 @@ impl Notches {
       // Now either *insert_here==NULL or notch < insert_here->next
       let old_next = mem::replace(insert_here, Some(notch));
       self.table[notch] = NR::Free(old_next);
+      self.used -= 1;
     }
   }
 
@@ -171,6 +175,10 @@ impl Notches {
     let pieces = self.table.iter()
       .filter_map(|nr| if let NR::Piece(p) = nr { Some(p) } else { None })
       .collect::<HashSet<_>>();
+    assert_eq!(
+      self.used as usize,
+      pieces.len(),
+    );
     assert_eq!(
       count_free + pieces.len(),
       self.table.len(),
