@@ -257,9 +257,9 @@ impl OccDisplacement {
         let mut f_num = notch % f_count;
         let     g_num = notch / f_count;
         if g_num % 2 != 0 { f_num = f_count - 1 - f_num }
-        let base = (area.0[0] + ppiece_use_size.mean(&PosC([0,0]))).ok()?;
-        let f_coord = base.0[fi] + f_stride * f_num;
-        let g_coord = base.0[gi] +
+        let f_coord = area.0[1].0[fi] - ppiece_use_size.0[fi] / 2 -
+            f_stride * f_num;
+        let g_coord = area.0[0].0[gi] + ppiece_use_size.0[gi] / 2 +
           if g_num < g_count {
             g_stride * g_num
           } else if g_num < spare.0[gi] {
