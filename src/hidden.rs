@@ -45,6 +45,7 @@ pub struct Occultation {
   region: Area, // automatically affect pieces here
   occulter: PieceId, // kept in synch with PieceOccult::active
   notches: Notches, // kept in synch with PieceOccult::passive
+  ppiece_use_size: Pos, // taken from first piece
   #[serde(flatten)] views: OccultationViews,
 }
 
@@ -209,7 +210,7 @@ pub fn piece_pri(
       occultation.views.get_kind(player)
         .map_displaced(|(displace, z)| {
           let notch: NotchNumber = notch.into();
-          let pos = displace.place(notch);
+          let pos = displace.place(occultation.ppiece_use_size, notch);
           let z = z.plus_offset(notch)
             .unwrap_or_else(|e| { // eek!
               error!("z coordinate overflow ({:?}), bodging! {:?} {:?}",
@@ -239,7 +240,7 @@ pub fn piece_pri(
 }
 
 impl OccDisplacement {
-  fn place(&self, notch: NotchNumber) -> Pos {
+  fn place(&self, _ppiece_use_size: Pos, notch: NotchNumber) -> Pos {
     use OccDisplacement as OD;
     match self {
       OD::Rect{area} => {
@@ -557,6 +558,15 @@ fn recalculate_occultation_general<
     let passive = if let Some(occid) = occulteds.new {
       let zg = gen.next();
       let occ = occultation(goccults, occid);
+      if_chain!{
+        if occ.notches.is_empty();
+        if let Some(ilk) = ipc.occilk.as_ref();            // expected, really
+        let ilk = ilk.borrow();
+        if let Some(ilk) = ioccults.ilks.get(ilk);         // expected, really
+        if let Ok::<_,IE>(bbox) = ilk.p_occ.bbox_approx(); // expected, really
+        if let Ok(size) = bbox[1] - bbox[0];               // expected, really
+        then { occ.ppiece_use_size = size; }
+      };
       let notch = occ.notches
         .insert(zg, piece);
       Some(Passive { occid, notch })
@@ -763,6 +773,7 @@ pub fn create_occultation(
     region,
     occulter,
     views,
+    ppiece_use_size: PosC([0,0]),
     notches: default(),
   };
   debug!("creating occultation {:?}", &occultation);
