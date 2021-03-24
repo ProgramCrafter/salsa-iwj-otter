@@ -4,9 +4,10 @@
 
 use crate::prelude::*;
 
-pub const CORE_DESC: &str = "a pickup deck";
+pub const CORE_DESC: &str = "a play/pickup deck";
+pub const DISABLED_DESC: &str = "a play/pickup deck (disabled)";
+pub const COUNTING_DESC: &str = "a play pile (counting)";
 pub const ENABLED_DESC: &str = "a pickup deck (enabled)";
-pub const DISABLED_DESC: &str = "a pickup deck (disabled)";
 
 #[derive(Debug,Serialize,Deserialize)]
 struct Deck {
@@ -17,6 +18,7 @@ struct Deck {
 #[derive(Debug,Clone,Copy,Ord,PartialOrd,Eq,PartialEq)]
 enum State {
   Disabled,
+  Counting,
   Enabled,
 }
 use State::*;
@@ -65,15 +67,20 @@ impl PieceSpec for piece_specs::Deck {
 
 impl Deck {
   #[throws(IE)]
-  fn state(&self, gpc: &GPiece, _goccults: &GameOccults) -> State {
-    if gpc.occult.is_active() { Enabled } else { Disabled }
+  fn state(&self, gpc: &GPiece, goccults: &GameOccults) -> State {
+    match gpc.occult.active_views(&goccults)? {
+      None                                                   => Disabled,
+      Some(OccultationViews { defview: OccK::Visible,..   }) => Counting,
+      Some(OccultationViews { defview: OccK::Scrambled,.. }) => Enabled,
+      x => throw!(internal_error_bydebug(&x)),
+    }
   }
 
   #[throws(IE)]
   fn current_face(&self, gpc: &GPiece, goccults: &GameOccults) -> FaceId {
     RawFaceId::from(match self.state(gpc, goccults)? {
-      Disabled => 0,
-      Enabled => 1,
+      Disabled | Counting => 0,
+      Enabled             => 1,
     }).into()
   }
 }
@@ -103,6 +110,7 @@ impl PieceTrait for Deck {
     Html::lit(
       match self.state(gpc, goccults)? {
         Disabled => DISABLED_DESC,
+        Counting => ENABLED_DESC,
         Enabled => ENABLED_DESC,
       }
     )
@@ -124,6 +132,15 @@ impl PieceTrait for Deck {
         def_key: 'A',
         opname: "activate".to_owned(),
         desc: Html::lit("Enable pickup deck"),
+        wrc: WRC::Unpredictable,
+      });
+    }
+    if state != Counting {
+      upd.push(UoDescription {
+        kind: UoKind::Piece,
+        def_key: 'C',
+        opname: "counting".to_owned(),
+        desc: Html::lit("Make into counting play pile"),
         wrc: WRC::Unpredictable,
       });
     }
@@ -161,13 +178,15 @@ impl PieceTrait for Deck {
     let old_state = self.state(gpc, &goccults).map_err(err_via_response)?;
   
     let (new_state, did) = match opname {
-      "activate" =>   (Enabled,  format!("enabled {}",  CORE_DESC)),
-      "deactivate" => (Disabled, format!("disabled {}", CORE_DESC)),
+      "activate"   => (Enabled,  format!("enabled {}",         CORE_DESC)),
+      "counting"   => (Counting, format!("set {} to counting", CORE_DESC)),
+      "deactivate" => (Disabled, format!("disabled {}",        CORE_DESC)),
       _ => throw!(OE::BadOperation),
     };
   
     let new_view = match new_state {
       Disabled => None,
+      Counting => Some(OccKG::Visible),
       Enabled  => Some(OccKG::Scrambled),
     };
     let region_views = new_view.map(|new_view| {
