@@ -63,7 +63,7 @@ impl PieceSpec for piece_specs::Deck {
 
 impl Deck {
   fn state(&self, gpc: &GPiece, _goccults: &GameOccults) -> State {
-    if gpc.occult.is_active() { Disabled } else { Disabled }
+    if gpc.occult.is_active() { Enabled } else { Disabled }
   }
 
   fn current_face(&self, gpc: &GPiece) -> FaceId {
@@ -136,46 +136,52 @@ impl PieceTrait for Deck {
     let nick = Html(htmlescape::encode_minimal(&gpl.nick));
 
     dbgc!("ui op k entry", &opname);
-
-    let (xupdates, did) =
-      match (opname, self.state(gpc, &goccults))
-    {
-      ("activate", Disabled) => {
-        dbgc!("claiming");
-        let (region, views) = (||{
-          let region = self.shape.outline.region(gpc.pos)?;
-          let views = UniformOccultationView(OccKG::Scrambled).views()?;
-          Ok::<_,IE>((region, views))
-        })().map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?;
-        
-        // actually do things:
-        dbgc!("creating occ");
-        let xupdates =
-          create_occultation(&mut gen.unique_gen(), &mut gs.max_z,
-                             gplayers, gpieces, goccults, ipieces, ioccults,
-                             to_permute,
-                             region, piece, views)?;
-
-        dbgc!("creating occ done", &xupdates);
-        (xupdates, format!("enabled {}", CORE_DESC))
-      }
-      ("deactivate", Enabled) => {
-        let xupdates =
-          remove_occultation(&mut gen.unique_gen(),
-                             gplayers, gpieces, goccults, ipieces, ioccults,
-                             to_permute, piece)
-          .map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?;
-
-        (xupdates, format!("disabled {}", CORE_DESC))
-      }
-      ("claim", Enabled) |
-      ("deactivate", Disabled) => {
-        throw!(OE::PieceHeld);
-      }
-      _ => {
-        throw!(OE::BadOperation);
-      }
+    
+    let old_state = self.state(gpc, &goccults);
+  
+    let (new_state, did) = match opname {
+      "activate" =>   (Enabled,  format!("enabled {}",  CORE_DESC)),
+      "deactivate" => (Disabled, format!("disabled {}", CORE_DESC)),
+      _ => throw!(OE::BadOperation),
     };
+  
+    let new_view = match new_state {
+      Disabled => None,
+      Enabled  => Some(OccKG::Scrambled),
+    };
+    let region_views = new_view.map(|new_view| {
+      let region = self.shape.outline.region(gpc.pos)?;
+      let views = UniformOccultationView(new_view).views()?;
+      Ok::<_,IE>((region, views))
+    })
+      .transpose()
+      .map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?;
+
+    let mut xupdates = vec![];
+
+    if new_state == old_state {
+        throw!(OE::PieceHeld);
+    }      
+
+    if old_state != Disabled {
+      xupdates.extend(
+        remove_occultation(&mut gen.unique_gen(),
+                           gplayers, gpieces, goccults, ipieces, ioccults,
+                           to_permute, piece)
+          .map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?
+      );
+    }
+
+    if let Some((region, views)) = region_views {
+      dbgc!("creating occ");
+      xupdates.extend(
+        create_occultation(&mut gen.unique_gen(), &mut gs.max_z,
+                           gplayers, gpieces, goccults, ipieces, ioccults,
+                           to_permute,
+                           region, piece, views)?
+      );
+      dbgc!("creating occ done", &xupdates);
+    }
 
     let log = vec![ LogEntry { html: Html(format!("{} {}", nick.0, did)) }];
 
