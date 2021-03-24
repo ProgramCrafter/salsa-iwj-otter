@@ -3,7 +3,7 @@
 // There is NO WARRANTY.
 
 use crate::prelude::*;
-use piece_specs::{HandLabel, HandLabelPlace};
+use piece_specs::{PieceLabel, PieceLabelPlace};
 
 pub const UNCLAIMED_DESC: &str = "a hand repository";
 
@@ -17,7 +17,7 @@ struct MagicOwner {
 #[derive(Debug,Serialize,Deserialize)]
 struct Hand {
   shape: GenericSimpleShape<(), shapelib::Rectangle>,
-  label: Option<HandLabel>,
+  label: Option<PieceLabel>,
 }
 
 #[derive(Debug,Clone,Default,Serialize,Deserialize)]
@@ -115,7 +115,7 @@ impl PieceTrait for Hand {
       };
       let fontsz = 4.;
       let PosC([x,y]) = {
-        use HandLabelPlace::*;
+        use PieceLabelPlace::*;
         let eff_size = (self.shape.outline.xy - PosC([2.,2.]))?;
         let mut pos = (eff_size * -0.5)?;
         let y = &mut pos.0[1];

@@ -246,17 +246,17 @@ pub mod piece_specs {
     pub edge: Option<ColourSpec>,
     pub edge_width: Option<f64>,
     pub shape: Outline,
-    pub label: Option<HandLabel>,
+    pub label: Option<PieceLabel>,
   }
 
   #[derive(Debug,Clone,Serialize,Deserialize)]
-  pub struct HandLabel {
-    #[serde(default)] pub place: HandLabelPlace,
+  pub struct PieceLabel {
+    #[serde(default)] pub place: PieceLabelPlace,
     pub colour: Option<ColourSpec>,
   }
 
   #[derive(Debug,Copy,Clone,Serialize,Deserialize,Eq,PartialEq)]
-  pub enum HandLabelPlace {
+  pub enum PieceLabelPlace {
     BottomLeft,
     TopLeft,
   }
@@ -459,7 +459,7 @@ pub mod implementation {
     }
   }
 
-  impl Default for piece_specs::HandLabelPlace {
+  impl Default for piece_specs::PieceLabelPlace {
     fn default() -> Self { Self::BottomLeft }
   }
 
