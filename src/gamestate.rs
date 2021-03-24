@@ -167,6 +167,10 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
   }
 
   fn itemname(&self) -> &str;
+
+  fn occultation_notify_hook(&self, _piece: PieceId) -> UnpreparedUpdates {
+    None
+  }
 }
 
 #[typetag::serde]

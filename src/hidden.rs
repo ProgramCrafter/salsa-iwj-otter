@@ -725,15 +725,37 @@ mod recompute {
                      gpieces: &mut GPieces,
                      goccults: &mut GameOccults,
                      ipieces: &IPieces) -> Implemented {
+      let mut unprepared = vec![];
+
       for occid in self.outdated {
         if let Some(occ) = goccults.occults.get_mut(occid) {
           vpid::permute(occid, occ, gplayers, gpieces, ipieces);
+          if let Some(ipc) = ipieces.get(occ.occulter) {
+            if let Some(uu) = {
+              ipc
+                .direct_trait_access()
+                .occultation_notify_hook(occ.occulter)
+            } {
+              unprepared.push(uu)
+            }
+          }
         }
       }
 
       consistency_check(gplayers, gpieces, goccults);
 
-      Implemented(None)
+      let unprepared = if unprepared.is_empty() {
+        None
+      } else {
+        Some(Box::new(
+          move |updates: &mut PrepareUpdatesBuffer| {
+            for p in unprepared.into_iter() { p(updates) }
+          }
+        ) as SomeUnpreparedUpdates
+        )
+      };
+
+      Implemented(unprepared)
     }
   }
 }
