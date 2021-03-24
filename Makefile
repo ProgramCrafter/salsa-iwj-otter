@@ -12,6 +12,7 @@ src=.
 
 default: all check
 all: debug
+full-check: all check cargo-syntaxcheck-release
 everything: debug doc release check bundled-sources
 
 shapelib: templates/shapelib.html stamp/cargo.doc-otter-only
@@ -162,7 +163,9 @@ cargo-syntaxcheck: cargo-syntaxcheck-host cargo-syntaxcheck-wasm
 cargo-syntaxcheck-host:
 	$(CARGO) check --workspace
 cargo-syntaxcheck-wasm:
-	$(CARGO) check --target $(WASM) -p otter-wasm
+	$(CARGO) check --target $(WASM) -p otter-wasm --release
+cargo-syntaxcheck-release:
+	$(CARGO) check --workspace --release
 
 #---------- cargo ----------
 
