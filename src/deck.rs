@@ -13,6 +13,13 @@ struct Deck {
   shape: GenericSimpleShape<(), shapelib::Rectangle>,
 }
 
+#[derive(Debug,Clone,Copy,Ord,PartialOrd,Eq,PartialEq)]
+enum State {
+  Disabled,
+  Enabled,
+}
+use State::*;
+
 #[dyn_upcast]
 impl OutlineTrait for Deck {
   delegate!{
@@ -55,8 +62,8 @@ impl PieceSpec for piece_specs::Deck {
 }
 
 impl Deck {
-  fn enabled(&self, gpc: &GPiece, _goccults: &GameOccults) -> bool {
-    gpc.occult.is_active()
+  fn state(&self, gpc: &GPiece, _goccults: &GameOccults) -> State {
+    if gpc.occult.is_active() { Disabled } else { Disabled }
   }
 
   fn current_face(&self, gpc: &GPiece) -> FaceId {
@@ -77,7 +84,10 @@ impl PieceTrait for Deck {
   #[throws(IE)]
   fn describe_html(&self, gpc: &GPiece, goccults: &GameOccults) -> Html {
     Html::lit(
-      if self.enabled(gpc, goccults) { ENABLED_DESC } else { DISABLED_DESC }
+      match self.state(gpc, goccults) {
+        Disabled => DISABLED_DESC,
+        Enabled => ENABLED_DESC,
+      }
     )
   }
 
@@ -90,25 +100,24 @@ impl PieceTrait for Deck {
   #[throws(InternalError)]
   fn add_ui_operations(&self, upd: &mut Vec<UoDescription>,
                        gs: &GameState, gpc: &GPiece) {
-    upd.push(
-      if ! self.enabled(gpc, &gs.occults) {
-        UoDescription {
-          kind: UoKind::Piece,
-          def_key: 'A',
-          opname: "activate".to_owned(),
-          desc: Html::lit("Enable pickup deck"),
-          wrc: WRC::Unpredictable,
-        }
-      } else {
-        UoDescription {
-          kind: UoKind::Piece,
-          def_key: 'S',
-          opname: "deactivate".to_owned(),
-          desc: Html::lit("Disable pickup deck"),
-          wrc: WRC::Unpredictable,
-        }
-      }
-    )
+    if self.state(gpc, &gs.occults) != Enabled {
+      upd.push(UoDescription {
+        kind: UoKind::Piece,
+        def_key: 'A',
+        opname: "activate".to_owned(),
+        desc: Html::lit("Enable pickup deck"),
+        wrc: WRC::Unpredictable,
+      });
+    }
+    if self.state(gpc, &gs.occults) != Disabled {
+      upd.push(UoDescription {
+        kind: UoKind::Piece,
+        def_key: 'S',
+        opname: "deactivate".to_owned(),
+        desc: Html::lit("Disable pickup deck"),
+        wrc: WRC::Unpredictable,
+      });
+    }
   }
 
   #[throws(ApiPieceOpError)]
@@ -129,9 +138,9 @@ impl PieceTrait for Deck {
     dbgc!("ui op k entry", &opname);
 
     let (xupdates, did) =
-      match (opname, self.enabled(gpc, &goccults))
+      match (opname, self.state(gpc, &goccults))
     {
-      ("activate", false) => {
+      ("activate", Disabled) => {
         dbgc!("claiming");
         let (region, views) = (||{
           let region = self.shape.outline.region(gpc.pos)?;
@@ -150,7 +159,7 @@ impl PieceTrait for Deck {
         dbgc!("creating occ done", &xupdates);
         (xupdates, format!("enabled {}", CORE_DESC))
       }
-      ("deactivate", true) => {
+      ("deactivate", Enabled) => {
         let xupdates =
           remove_occultation(&mut gen.unique_gen(),
                              gplayers, gpieces, goccults, ipieces, ioccults,
@@ -159,8 +168,8 @@ impl PieceTrait for Deck {
 
         (xupdates, format!("disabled {}", CORE_DESC))
       }
-      ("claim", true) |
-      ("deactivate", false) => {
+      ("claim", Enabled) |
+      ("deactivate", Disabled) => {
         throw!(OE::PieceHeld);
       }
       _ => {
