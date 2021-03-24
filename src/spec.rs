@@ -278,6 +278,10 @@ pub mod pos_traits {
 
   pub trait Mean { fn mean(&self, other: &Self) -> Self; }
 
+  impl Mean for i32 { fn mean(&self, other: &Self) -> Self {
+    ((*self as i64 + *other as i64) / 2) as i32
+  } }
+
   impl<T:CheckedArith> Add<PosC<T>> for PosC<T> {
     type Output = Result<Self, CoordinateOverflow>;
     #[throws(CoordinateOverflow)]
