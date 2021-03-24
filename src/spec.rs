@@ -257,8 +257,8 @@ pub mod piece_specs {
 
   #[derive(Debug,Copy,Clone,Serialize,Deserialize,Eq,PartialEq)]
   pub enum PieceLabelPlace {
-    BottomLeft,
-    TopLeft,
+    BottomLeft,        TopLeft,
+    BottomLeftOutside, TopLeftOutside,
   }
 
   #[derive(Debug,Serialize,Deserialize)]

@@ -163,13 +163,17 @@ impl piece_specs::PieceLabel {
     let fontsz = 4.;
     let PosC([x,y]) = {
       use piece_specs::PieceLabelPlace::*;
-      let eff_size = (outline.xy - PosC([2.,2.]))?;
+      let inout = match self.place {
+        BottomLeft        | TopLeft        =>  1.,
+        BottomLeftOutside | TopLeftOutside => -1.,
+      };
+      let eff_size = (outline.xy - PosC([2., inout * 2.]))?;
       let mut pos = (eff_size * -0.5)?;
       let y = &mut pos.0[1];
-      *y += 0.5 * fontsz;
+      *y += 0.5 * fontsz * inout;
       match self.place {
-        BottomLeft => { *y *= -1. },
-        TopLeft => { }
+        BottomLeft | BottomLeftOutside => { *y *= -1. },
+           TopLeft |    TopLeftOutside => {           },
       };
       *y += 0.5 * fontsz;
       pos
