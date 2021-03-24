@@ -354,8 +354,8 @@ fn recalculate_occultation_general<
 >(
   gen: &mut UniqueGenGen,
   //
-  gplayers: &GPlayers, gpieces: &mut GPieces, goccults: &mut
-  GameOccults, ipieces: &IPieces, ioccults: &IOccults,
+  gplayers: &GPlayers, gpieces: &mut GPieces,
+  goccults: &mut GameOccults, ipieces: &IPieces, ioccults: &IOccults,
   //
   to_permute: &mut ToPermute, piece: PieceId,
   // if no change, we return ret_vanilla()
