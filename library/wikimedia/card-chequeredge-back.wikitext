@@ -1,0 +1,12 @@
+Playing card in SVG based on the french representation. 
+
+This card has been made with GNOME games in mind and has been succesfully tested with Nautilus, Eye of Gnome (both of them use librsvg) and Inkscape.
+
+Author: David Bellot - Berkeley, CA, USA 08/12/2005 - [http://david.bellot.free.fr/svg-cards/ David's web]
+
+{{LGPL}}
+
+
+[[Category:SVG playing cards]]
+[[Category:Media missing infobox template]]
+[[Category:SVG card games]]

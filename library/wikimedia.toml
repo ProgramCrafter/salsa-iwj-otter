@@ -131,6 +131,7 @@ scale = 0.25
 files = """
 card-stripe-back-red	Card_back_03a	a card with a red-striped back
 card-stripe-back-blue	Card_back_03b	a card with a blue-striped back
+card-chequeredge-back	Card_back_04	a card (with a chequered edged back)
 card-rainbow		Card_back_13	a rainbow card
 """
 
