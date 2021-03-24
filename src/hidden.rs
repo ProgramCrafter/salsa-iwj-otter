@@ -240,13 +240,39 @@ pub fn piece_pri(
 }
 
 impl OccDisplacement {
-  fn place(&self, _ppiece_use_size: Pos, notch: NotchNumber) -> Pos {
+  fn place(&self, ppiece_use_size: Pos, notch: NotchNumber) -> Pos {
     use OccDisplacement as OD;
     match self {
       OD::Rect{area} => (|| Some({
-        let x: Coord = (notch % 3).try_into().unwrap(); // xxx
-        let pos = (area.0[0] + PosC([x*4, 0])).unwrap(); // xxx
-        let pos = (pos + PosC([5,5])).unwrap(); // xxx
+        let notch: Coord = notch.try_into().ok()?;
+        let mut spare = ((area.0[1] - area.0[0]).ok()?
+                         - ppiece_use_size).ok()?;
+        for s in &mut spare.0 { *s = max(*s,1) }
+        let fi = 0;
+        let gi = 1;
+        let f_stride = max(ppiece_use_size.0[fi] / 4, 1);
+        let g_stride = max(ppiece_use_size.0[gi] / 3, 1);
+        let f_count = max(spare.0[fi] / f_stride, 1);
+        let g_count = max(spare.0[gi] / g_stride, 1);
+        let mut f_num = notch % f_count;
+        let     g_num = notch / f_count;
+        if g_num % 2 != 0 { f_num = f_count - 1 - f_num }
+        let base = (area.0[0] + ppiece_use_size.mean(&PosC([0,0]))).ok()?;
+        let f_coord = base.0[fi] + f_stride * f_num;
+        let g_coord = base.0[gi] +
+          if g_num < g_count {
+            g_stride * g_num
+          } else if g_num < spare.0[gi] {
+            g_num
+          } else {
+            spare.0[gi] - 1
+          };
+        trace_dbg!("placement", spare,
+                   f_stride, f_count, f_num, f_coord,
+                   g_stride, g_count, g_num, g_coord);
+        let mut pos = PosC([0,0]);
+        pos.0[fi] = f_coord;
+        pos.0[gi] = g_coord;
         pos
       }))().unwrap_or_else(||{
         area.middle()
