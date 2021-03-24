@@ -40,7 +40,7 @@ A	-	ace
 [group.clubs.back]
 type = "Lib"
 lib = "wikimedia"
-item = "card-stripe-back-red"
+item = "card-chequeredge-back"
 
 [group.diamonds]
 inherit = "clubs"
