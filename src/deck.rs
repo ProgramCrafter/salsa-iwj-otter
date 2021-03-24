@@ -231,4 +231,13 @@ impl PieceTrait for Deck {
       ops: PUOs::Simple(PUO::Modify(())),
     }, xupdates, None)
   }
+
+  fn occultation_notify_hook(&self, piece: PieceId) -> UnpreparedUpdates {
+    Some(Box::new(
+      move |updates: &mut PrepareUpdatesBuffer| {
+        updates.piece_update_image(piece)
+          .unwrap_or_else(|e| error!("unable to send update! {:?}", e))
+      }
+    ))
+  }
 }
