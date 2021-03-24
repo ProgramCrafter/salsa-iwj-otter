@@ -64,12 +64,14 @@ impl PieceSpec for piece_specs::Deck {
 }
 
 impl Deck {
+  #[throws(IE)]
   fn state(&self, gpc: &GPiece, _goccults: &GameOccults) -> State {
     if gpc.occult.is_active() { Enabled } else { Disabled }
   }
 
+  #[throws(IE)]
   fn current_face(&self, gpc: &GPiece, goccults: &GameOccults) -> FaceId {
-    RawFaceId::from(match self.state(gpc, goccults) {
+    RawFaceId::from(match self.state(gpc, goccults)? {
       Disabled => 0,
       Enabled => 1,
     }).into()
@@ -82,7 +84,7 @@ impl PieceTrait for Deck {
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
                gs: &GameState, _vpid: VisiblePieceId) {
-    let face = self.current_face(gpc, &gs.occults);
+    let face = self.current_face(gpc, &gs.occults)?;
     self.shape.svg_piece_raw(f, face, &mut |_|Ok::<_,IE>(()))?;
     if_chain! {
       if let Some(label) = &self.label;
@@ -99,7 +101,7 @@ impl PieceTrait for Deck {
   #[throws(IE)]
   fn describe_html(&self, gpc: &GPiece, goccults: &GameOccults) -> Html {
     Html::lit(
-      match self.state(gpc, goccults) {
+      match self.state(gpc, goccults)? {
         Disabled => DISABLED_DESC,
         Enabled => ENABLED_DESC,
       }
@@ -115,7 +117,8 @@ impl PieceTrait for Deck {
   #[throws(InternalError)]
   fn add_ui_operations(&self, upd: &mut Vec<UoDescription>,
                        gs: &GameState, gpc: &GPiece) {
-    if self.state(gpc, &gs.occults) != Enabled {
+    let state = self.state(gpc, &gs.occults)?;
+    if state != Enabled {
       upd.push(UoDescription {
         kind: UoKind::Piece,
         def_key: 'A',
@@ -124,7 +127,7 @@ impl PieceTrait for Deck {
         wrc: WRC::Unpredictable,
       });
     }
-    if self.state(gpc, &gs.occults) != Disabled {
+    if state != Disabled {
       upd.push(UoDescription {
         kind: UoKind::Piece,
         def_key: 'S',
@@ -152,7 +155,10 @@ impl PieceTrait for Deck {
 
     dbgc!("ui op k entry", &opname);
     
-    let old_state = self.state(gpc, &goccults);
+    let err_via_response =
+      |ie:IE| ApiPieceOpError::ReportViaResponse(ie.into());
+
+    let old_state = self.state(gpc, &goccults).map_err(err_via_response)?;
   
     let (new_state, did) = match opname {
       "activate" =>   (Enabled,  format!("enabled {}",  CORE_DESC)),
@@ -169,8 +175,7 @@ impl PieceTrait for Deck {
       let views = UniformOccultationView(new_view).views()?;
       Ok::<_,IE>((region, views))
     })
-      .transpose()
-      .map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?;
+      .transpose().map_err(err_via_response)?;
 
     let mut xupdates = vec![];
 
