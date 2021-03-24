@@ -74,6 +74,9 @@ pub type OccultationKind = OccultationKindGeneral<(OccDisplacement,ZCoord)>;
 #[derive(Clone,Debug,Serialize,Deserialize)]
 #[derive(Eq,PartialEq,Hash)]
 pub enum OccDisplacement {
+  Stack {
+    pos: Pos,
+  },
   Rect {
     area: Area,
   },
@@ -268,6 +271,7 @@ impl OccDisplacement {
   fn place(&self, ppiece_use_size: Pos, notch: NotchNumber) -> Pos {
     use OccDisplacement as OD;
     match self {
+      OD::Stack{pos} => *pos,
       OD::Rect{area} => (|| Some({
         let notch: Coord = notch.try_into().ok()?;
         let mut spare = ((area.0[1] - area.0[0]).ok()?

@@ -69,9 +69,10 @@ impl Deck {
   #[throws(IE)]
   fn state(&self, gpc: &GPiece, goccults: &GameOccults) -> State {
     match gpc.occult.active_views(&goccults)? {
-      None                                                   => Disabled,
-      Some(OccultationViews { defview: OccK::Visible,..   }) => Counting,
-      Some(OccultationViews { defview: OccK::Scrambled,.. }) => Enabled,
+      None                                                       => Disabled,
+      Some(OccultationViews { defview: OccK::Visible,..       }) => Counting,
+      Some(OccultationViews { defview: OccK::Scrambled /*old*/,.. }) |
+      Some(OccultationViews { defview: OccK::Displaced(..),.. }) => Enabled, 
       x => throw!(internal_error_bydebug(&x)),
     }
   }
@@ -187,7 +188,11 @@ impl PieceTrait for Deck {
     let new_view = match new_state {
       Disabled => None,
       Counting => Some(OccKG::Visible),
-      Enabled  => Some(OccKG::Scrambled),
+      Enabled  => {
+        let displace = OccDisplacement::Stack { pos: gpc.pos };
+        let displace = (displace, gpc.zlevel.z.clone());
+                  Some(OccKG::Displaced(displace))
+      },
     };
     let region_views = new_view.map(|new_view| {
       let region = self.shape.outline.region(gpc.pos)?;
