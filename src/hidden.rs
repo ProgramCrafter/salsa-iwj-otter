@@ -411,7 +411,7 @@ fn recalculate_occultation_general<
   gplayers: &GPlayers, gpieces: &mut GPieces,
   goccults: &mut GameOccults, ipieces: &IPieces, ioccults: &IOccults,
   //
-  to_permute: &mut ToPermute, piece: PieceId,
+  to_recalculate: &mut ToRecalculate, piece: PieceId,
   // if no change, we return ret_vanilla()
   ret_vanilla: VF,
   // otherwise we use log_invisible or log_callback(who_by,old,new,desc)
@@ -599,7 +599,7 @@ fn recalculate_occultation_general<
       = &mut |goccults, occid|
       // rust-lang/rust/issues/58525
     {
-      to_permute.mark_dirty(occid);
+      to_recalculate.mark_dirty(occid);
       goccults.occults.get_mut(occid).unwrap()
     };
     if let Some((occid, old_notch)) = occulteds.old {
@@ -638,7 +638,7 @@ pub fn recalculate_occultation_piece(
   who_by: Html,
   ipieces: &IPieces,
   ioccults: &IOccults,
-  to_permute: &mut ToPermute,
+  to_recalculate: &mut ToRecalculate,
   piece: PieceId,
   (vanilla_wrc, vanilla_op, vanilla_log): PUFOS,
 )
@@ -647,7 +647,7 @@ pub fn recalculate_occultation_piece(
     recalculate_occultation_general(
       &mut gs.gen.unique_gen(),
       &gs.players, &mut gs.pieces, &mut gs.occults, ipieces, ioccults,
-      to_permute, piece,
+      to_recalculate, piece,
       || (vanilla_wrc, vanilla_op, vanilla_log).into(),
       vec![],
       |old, new, Html(show)| vec![ LogEntry { html: Html(format!(
@@ -677,14 +677,14 @@ fn recalculate_occultation_ofmany(
   goccults: &mut GameOccults,
   ipieces: &IPieces,
   ioccults: &IOccults,
-  to_permute: &mut ToPermute,
+  to_recalculate: &mut ToRecalculate,
   ppiece: PieceId,
   updates: &mut Vec<(PieceId, PieceUpdateOps)>,
 ){
   recalculate_occultation_general(
     gen,
     gplayers, gpieces, goccults, ipieces, ioccults,
-    to_permute, ppiece,
+    to_recalculate, ppiece,
     ||(),
     (), |_,_,_|(),
     |puo_pp, ()|{
@@ -698,16 +698,16 @@ mod recompute {
   use super::*;
 
   #[derive(Debug)]
-  pub struct ToPermute {
+  pub struct ToRecalculate {
     outdated: HashSet<OccId>,
   }
   #[derive(Debug)]
   pub struct Implemented(());
 
-  impl ToPermute {
+  impl ToRecalculate {
     pub fn with<R, F: FnOnce(Self) -> (R, Implemented)>(f: F) -> R {
-      let to_permute = ToPermute { outdated: default() };
-      let (r, Implemented(())) = f(to_permute);
+      let to_recalculate = ToRecalculate { outdated: default() };
+      let (r, Implemented(())) = f(to_recalculate);
       r
     }
     pub fn mark_dirty(&mut self, occid: OccId) { self.outdated.insert(occid); }
@@ -729,7 +729,7 @@ mod recompute {
   }
 }
 
-pub use recompute::ToPermute;
+pub use recompute::ToRecalculate;
 
 #[must_use]
 pub struct NascentOccultation(Occultation);
@@ -775,7 +775,7 @@ pub fn create_occultation(
   goccults: &mut GameOccults,
   ipieces: &IPieces,
   ioccults: &IOccults,
-  to_permute: &mut ToPermute,
+  to_recalculate: &mut ToRecalculate,
   region: Area,
   occulter: PieceId,
   views: OccultationViews,
@@ -846,7 +846,7 @@ pub fn create_occultation(
         recalculate_occultation_ofmany(gen,
                                        gplayers, gpieces, goccults,
                                        ipieces, ioccults,
-                                       to_permute,
+                                       to_recalculate,
                                        ppiece, &mut updates)?;
       }
 
@@ -875,7 +875,7 @@ pub fn remove_occultation(
   goccults: &mut GameOccults,
   ipieces: &IPieces,
   ioccults: &IOccults,
-  to_permute: &mut ToPermute,
+  to_recalculate: &mut ToRecalculate,
   occulter: PieceId,
 ) -> Vec<(PieceId, PieceUpdateOps)> {
   let mut aggerr = AggregatedIE::new();
@@ -913,7 +913,7 @@ pub fn remove_occultation(
       recalculate_occultation_ofmany(gen,
                                      gplayers, gpieces, goccults,
                                      ipieces, ioccults,
-                                     to_permute,
+                                     to_recalculate,
                                      ppiece, &mut updates)
         .unwrap_or_else(|e| {
           aggerr.record(e);

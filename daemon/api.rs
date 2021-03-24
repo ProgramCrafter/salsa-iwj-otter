@@ -106,7 +106,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
   let mut ig = iad.gref.lock()?;
   ig.save_game_later();
 
-  ToPermute::with(|mut to_permute| {
+  ToRecalculate::with(|mut to_recalculate| {
     let r = (||{
 
   let g = &mut *ig;
@@ -142,7 +142,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
       form.op.op_complex(ApiPieceOpArgs {
         ioccults, gs, player, piece, ipieces, ipc,
         ig: &iad.gref,
-        to_permute: &mut to_permute,
+        to_recalculate: &mut to_recalculate,
       })?;
     Ok::<_,ApiPieceOpError>(update)
   })() {
@@ -204,7 +204,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
     let g = &mut *ig;
     let gs = &mut g.gs;
 
-    (r, to_permute.implement(&mut gs.players,
+    (r, to_recalculate.implement(&mut gs.players,
                              &mut gs.pieces,
                              &mut gs.occults,
                              &g.ipieces))
@@ -339,7 +339,7 @@ api_route!{
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs {
-      gs,ioccults,player,piece,ipc,ipieces,to_permute, ..
+      gs,ioccults,player,piece,ipc,ipieces,to_recalculate, ..
     } = a;
     let gpl = gs.players.byid_mut(player).unwrap();
     let gpc = gs.pieces.byid_mut(piece).unwrap();
@@ -362,7 +362,7 @@ api_route!{
       // if piece is occulted, definitely repermute its occultation
       // so that we don't leak which piece is which over repeated
       // adjustment clicks
-      to_permute.mark_dirty(occid);
+      to_recalculate.mark_dirty(occid);
     };
 
     let update=
@@ -371,7 +371,7 @@ api_route!{
         who_by,
         ipieces,
         ioccults,
-        to_permute,
+        to_recalculate,
         piece,
         vanilla,
       ).map_err(|e| OnlineError::from(e))?;

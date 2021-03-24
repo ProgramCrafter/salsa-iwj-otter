@@ -243,7 +243,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
   update: MgmtGameInstruction,
   who: &Html,
-  to_permute: &mut ToPermute,
+  to_permute: &mut ToRecalculate,
 )
   -> Result<ExecuteGameInsnResults<'igr, 'ig> ,ME>
 {
@@ -797,7 +797,7 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   mut insns: Vec<MgmtGameInstruction>,
   how: MgmtGameUpdateMode) -> MgmtResponse
 {
-  ToPermute::with(|mut to_permute| {
+  ToRecalculate::with(|mut to_permute| {
     let r = (||{
 
   let mut uh = UpdateHandler::from_how(how);

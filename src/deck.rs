@@ -159,7 +159,7 @@ impl PieceTrait for Deck {
   fn ui_operation(&self, a: ApiPieceOpArgs<'_>,
                   opname: &str, wrc: WhatResponseToClientOp)
                   -> UpdateFromOpComplex {
-    let ApiPieceOpArgs { gs,player,piece,ipieces,ioccults,to_permute,.. } = a;
+    let ApiPieceOpArgs { gs,player,piece,ipieces,ioccults,to_recalculate,.. } = a;
     let gen = &mut gs.gen;
     let gplayers = &mut gs.players;
     let gpieces = &mut gs.pieces;
@@ -206,7 +206,7 @@ impl PieceTrait for Deck {
       xupdates.extend(
         remove_occultation(&mut gen.unique_gen(),
                            gplayers, gpieces, goccults, ipieces, ioccults,
-                           to_permute, piece)
+                           to_recalculate, piece)
           .map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?
       );
     }
@@ -216,7 +216,7 @@ impl PieceTrait for Deck {
       xupdates.extend(
         create_occultation(&mut gen.unique_gen(), &mut gs.max_z,
                            gplayers, gpieces, goccults, ipieces, ioccults,
-                           to_permute,
+                           to_recalculate,
                            region, piece, views)?
       );
       dbgc!("creating occ done", &xupdates);

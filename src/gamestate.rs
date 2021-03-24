@@ -181,7 +181,7 @@ pub struct ApiPieceOpArgs<'a> {
   pub gs: &'a mut GameState,
   pub ipieces: &'a IPieces,
   pub ioccults: &'a IOccults,
-  pub to_permute: &'a mut ToPermute,
+  pub to_recalculate: &'a mut ToRecalculate,
   pub player: PlayerId,
   pub piece: PieceId,
   pub ipc: &'a IPiece,

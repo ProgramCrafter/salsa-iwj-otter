@@ -156,7 +156,7 @@ impl PieceTrait for Hand {
   fn ui_operation(&self, a: ApiPieceOpArgs<'_>,
                   opname: &str, wrc: WhatResponseToClientOp)
                   -> UpdateFromOpComplex {
-    let ApiPieceOpArgs { gs,player,piece,ipieces,ioccults,to_permute,.. } = a;
+    let ApiPieceOpArgs { gs,player,piece,ipieces,ioccults,to_recalculate,.. } = a;
     let gen = &mut gs.gen;
     let gplayers = &mut gs.players;
     let gpieces = &mut gs.pieces;
@@ -203,7 +203,7 @@ impl PieceTrait for Hand {
         let xupdates =
           create_occultation(&mut gen.unique_gen(), &mut gs.max_z,
                              gplayers, gpieces, goccults, ipieces, ioccults,
-                             to_permute,
+                             to_recalculate,
                              region, piece, views)?;
 
         dbgc!("creating occ done", &new_owner, &xupdates);
@@ -213,7 +213,7 @@ impl PieceTrait for Hand {
         let xupdates =
           remove_occultation(&mut gen.unique_gen(),
                              gplayers, gpieces, goccults, ipieces, ioccults,
-                             to_permute, piece)
+                             to_recalculate, piece)
           .map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?;
 
         (None, xupdates, format!("deactivated {}", &old_desc.0))
