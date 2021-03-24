@@ -267,6 +267,7 @@ pub mod piece_specs {
     #[serde(default)] pub edges: IndexVec<FaceId, ColourSpec>,
     pub edge_width: Option<f64>,
     pub shape: Outline,
+    pub label: Option<PieceLabel>,
   }
 }
 

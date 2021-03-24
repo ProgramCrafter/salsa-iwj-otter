@@ -11,6 +11,7 @@ pub const DISABLED_DESC: &str = "a pickup deck (disabled)";
 #[derive(Debug,Serialize,Deserialize)]
 struct Deck {
   shape: GenericSimpleShape<(), shapelib::Rectangle>,
+  label: Option<piece_specs::PieceLabel>,
 }
 
 #[derive(Debug,Clone,Copy,Ord,PartialOrd,Eq,PartialEq)]
@@ -56,6 +57,7 @@ impl PieceSpec for piece_specs::Deck {
     }
     let p = Box::new(Deck {
       shape,
+      label: self.label.clone(),
     }) as Box<dyn PieceTrait>;
     PieceSpecLoaded { p, occultable: None }
   }
@@ -76,9 +78,19 @@ impl PieceTrait for Deck {
   fn nfaces(&self) -> RawFaceId { 1 }
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
-               _gs: &GameState, _vpid: VisiblePieceId) {
+               gs: &GameState, _vpid: VisiblePieceId) {
     let face = self.current_face(gpc);
     self.shape.svg_piece_raw(f, face, &mut |_|Ok::<_,IE>(()))?;
+    if_chain! {
+      if let Some(label) = &self.label;
+      if let Some(count) = gpc.occult.active_total_ppieces(&gs.occults)?;
+      then {
+        label.svg(f,
+                  &self.shape.outline,
+                  self.shape.edges.get(0), 
+                  &Html(count.to_string()))?;
+      }
+    }
   }
 
   #[throws(IE)]
