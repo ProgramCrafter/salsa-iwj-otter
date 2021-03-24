@@ -539,22 +539,24 @@ fn recalculate_occultation_general<
   dbgc!(&puos, &log, &occulteds);
 
   (||{
-    let notches:
-       &mut dyn for<'g> FnMut(&'g mut GameOccults, OccId) -> &mut Notches
+    let occultation:
+       &mut dyn for<'g> FnMut(&'g mut GameOccults, OccId) -> &mut Occultation
       = &mut |goccults, occid|
       // rust-lang/rust/issues/58525
     {
       to_permute.mark_dirty(occid);
-      &mut goccults.occults.get_mut(occid).unwrap().notches
+      goccults.occults.get_mut(occid).unwrap()
     };
     if let Some((occid, old_notch)) = occulteds.old {
-      notches(goccults, occid)
+      occultation(goccults, occid)
+        .notches
         .remove(piece, old_notch)
         .unwrap()
     };
     let passive = if let Some(occid) = occulteds.new {
       let zg = gen.next();
-      let notch = notches(goccults, occid)
+      let occ = occultation(goccults, occid);
+      let notch = occ.notches
         .insert(zg, piece);
       Some(Passive { occid, notch })
     } else {
