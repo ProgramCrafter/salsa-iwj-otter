@@ -149,6 +149,38 @@ impl PieceTrait for SimpleShape {
   fn itemname(&self) -> &str { self.itemname() }
 }
 
+impl piece_specs::PieceLabel {
+  #[throws(IE)]
+  pub fn svg(&self, f: &mut Html,
+             outline: &shapelib::Rectangle,
+             def_colour: Option<&Colour>,
+             text: &Html) {
+    let colour = {
+      if let Some(c) = &self.colour { &c.0 }
+      else if let Some(c) = def_colour { &c.0 }
+      else { "black" }
+    };
+    let fontsz = 4.;
+    let PosC([x,y]) = {
+      use piece_specs::PieceLabelPlace::*;
+      let eff_size = (outline.xy - PosC([2.,2.]))?;
+      let mut pos = (eff_size * -0.5)?;
+      let y = &mut pos.0[1];
+      *y += 0.5 * fontsz;
+      match self.place {
+        BottomLeft => { *y *= -1. },
+        TopLeft => { }
+      };
+      *y += 0.5 * fontsz;
+      pos
+    };
+    write!(f.0,
+ r##"<text x="{}" y="{}" font-size="{}" fill="{}">{}</text>"##,
+               x, y, fontsz, colour, &text.0
+    )?;
+  }  
+}
+
 impl<Desc, Outl:'static> GenericSimpleShape<Desc, Outl>
     where Desc: Debug + Send + Sync + 'static,
           Outl: OutlineTrait,

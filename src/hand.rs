@@ -3,7 +3,7 @@
 // There is NO WARRANTY.
 
 use crate::prelude::*;
-use piece_specs::{PieceLabel, PieceLabelPlace};
+use piece_specs::PieceLabel;
 
 pub const UNCLAIMED_DESC: &str = "a hand repository";
 
@@ -107,31 +107,12 @@ impl PieceTrait for Hand {
     if_chain! {
       if let Some(owned) = owned;
       if let Some(gpl) = gs.players.get(owned.player);
-      if let Some(spec) = &self.label;
-      let colour = {
-        if let Some(c) = &spec.colour { &c.0 }
-        else if let Some(c) = self.shape.edges.get(0) { &c.0 }
-        else { "black" }
-      };
-      let fontsz = 4.;
-      let PosC([x,y]) = {
-        use PieceLabelPlace::*;
-        let eff_size = (self.shape.outline.xy - PosC([2.,2.]))?;
-        let mut pos = (eff_size * -0.5)?;
-        let y = &mut pos.0[1];
-        *y += 0.5 * fontsz;
-        match spec.place {
-          BottomLeft => { *y *= -1. },
-          TopLeft => { }
-        };
-        *y += 0.5 * fontsz;
-        pos
-      };
+      if let Some(label) = &self.label;
       then {
-        write!(f.0,
- r##"<text x="{}" y="{}" font-size="{}" fill="{}">{}</text>"##,
-               x, y, fontsz, colour,
-               htmlescape::encode_minimal(&gpl.nick))?;
+        label.svg(f,
+                  &self.shape.outline,
+                  self.shape.edges.get(0), 
+                  &Html(htmlescape::encode_minimal(&gpl.nick)))?;
       }
     }
   }
