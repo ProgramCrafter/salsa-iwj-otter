@@ -68,8 +68,11 @@ impl Deck {
     if gpc.occult.is_active() { Enabled } else { Disabled }
   }
 
-  fn current_face(&self, gpc: &GPiece) -> FaceId {
-    (gpc.occult.is_active() as RawFaceId).into()
+  fn current_face(&self, gpc: &GPiece, goccults: &GameOccults) -> FaceId {
+    RawFaceId::from(match self.state(gpc, goccults) {
+      Disabled => 0,
+      Enabled => 1,
+    }).into()
   }
 }
 
@@ -79,7 +82,7 @@ impl PieceTrait for Deck {
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
                gs: &GameState, _vpid: VisiblePieceId) {
-    let face = self.current_face(gpc);
+    let face = self.current_face(gpc, &gs.occults);
     self.shape.svg_piece_raw(f, face, &mut |_|Ok::<_,IE>(()))?;
     if_chain! {
       if let Some(label) = &self.label;
