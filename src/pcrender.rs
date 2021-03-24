@@ -57,10 +57,10 @@ impl<P,Z> PriOccultedGeneral<P,Z> {
     }
   }
 
-  pub fn describe(&self, ioccults: &IOccults,
+  pub fn describe(&self, ioccults: &IOccults, goccults: &GameOccults,
                   gpc: &GPiece, ipc: &IPiece) -> Html
   {
-    self.describe_fallible(ioccults, gpc, ipc)
+    self.describe_fallible(ioccults, goccults, gpc, ipc)
       .unwrap_or_else(|e| {
         error!("error describing piece: {:?}", e);
         Html::lit("&lt;internal error describing piece&gt;")
@@ -69,9 +69,10 @@ impl<P,Z> PriOccultedGeneral<P,Z> {
 
   #[throws(IE)]
   pub fn describe_fallible(&self, ioccults: &IOccults,
+                           goccults: &GameOccults,
                            gpc: &GPiece, ipc: &IPiece) -> Html {
     match self.instead(ioccults, ipc)? {
-      Left(y) => ipc.show(y).describe_html(gpc)?,
+      Left(y) => ipc.show(y).describe_html(gpc, goccults)?,
       Right(i) => i.describe_html()?,
     }
   }

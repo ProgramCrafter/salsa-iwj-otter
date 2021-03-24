@@ -267,7 +267,8 @@ struct FormattedLogEntry<'u> {
 // ---------- helpful utilities ----------
 
 #[throws(OE)]
-pub fn log_did_to_piece_whoby(ioccults: &IOccults, by_gpl: &GPlayer,
+pub fn log_did_to_piece_whoby(ioccults: &IOccults, goccults: &GameOccults,
+                              by_gpl: &GPlayer,
                               gpc: &GPiece, ipc: &IPiece, did: &str)
                               -> (Vec<LogEntry>, Option<Html>)
 {
@@ -275,7 +276,7 @@ pub fn log_did_to_piece_whoby(ioccults: &IOccults, by_gpl: &GPlayer,
   let y = gpc.fully_visible_to_everyone();
   let desc = (||{
     Ok::<_,IE>(match ipc.show_or_instead(ioccults, y)? {
-      Left(y) => ipc.show(y).describe_html(gpc)?,
+      Left(y) => ipc.show(y).describe_html(gpc, goccults)?,
       Right(instead) => instead.describe_html()?,
     })
   })().unwrap_or_else(|e|{
@@ -293,10 +294,11 @@ pub fn log_did_to_piece_whoby(ioccults: &IOccults, by_gpl: &GPlayer,
 }
 
 #[throws(OE)]
-pub fn log_did_to_piece(ioccults: &IOccults, by_gpl: &GPlayer,
+pub fn log_did_to_piece(ioccults: &IOccults, goccults: &GameOccults,
+                        by_gpl: &GPlayer,
                         gpc: &GPiece, ipc: &IPiece, did: &str)
                         -> Vec<LogEntry> {
-  log_did_to_piece_whoby(ioccults,by_gpl,gpc,ipc,did)?.0
+  log_did_to_piece_whoby(ioccults,goccults,by_gpl,gpc,ipc,did)?.0
 }
 
 // ---------- prepared updates, queued in memory ----------

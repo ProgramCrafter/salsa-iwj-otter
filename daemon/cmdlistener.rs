@@ -401,7 +401,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
               VisiblePieceId(piece.data())
             );
             let bbox = ipc.show(y).bbox_approx()?;
-            let desc_html = pri.describe(ioccults, gpc, ipc);
+            let desc_html = pri.describe(ioccults,&ig.gs.occults, gpc, ipc);
             Some(MgmtGamePieceVisibleInfo {
               pos, face, desc_html, bbox
             })
@@ -607,7 +607,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let gpc = gs.pieces.as_mut(modperm).remove(piece);
       let desc_html = if let Some(gpc) = &gpc {
         let pri = PieceRenderInstructions::new_visible(default());
-        pri.describe(ioccults, gpc, &ipc)
+        pri.describe(ioccults,&gs.occults, gpc, &ipc)
       } else {
         Html::lit("&lt;piece partially missing from game state!&gt;")
       };

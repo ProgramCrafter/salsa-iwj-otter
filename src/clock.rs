@@ -533,7 +533,7 @@ impl PieceTrait for Clock {
   }
 
   #[throws(IE)]
-  fn describe_html(&self, _gpc: &GPiece) -> Html {
+  fn describe_html(&self, _gpc: &GPiece, _goccults: &GameOccults) -> Html {
     Html::lit("the chess clock")
   }
 
@@ -681,7 +681,7 @@ impl PieceTrait for Clock {
                            held, &self.spec, ig)
       .map_err(|e| APOE::ReportViaResponse(e.into()))?;
 
-    let log = log_did_to_piece(ioccults, gpl, gpc, ipc, &did)
+    let log = log_did_to_piece(ioccults,&gs.occults, gpl, gpc, ipc, &did)
       .unwrap_or_else(|e| {
         error!("failed to log: {:?}", &e);
         vec![LogEntry { html: Html::lit("&lt;failed to log&gt;") }]

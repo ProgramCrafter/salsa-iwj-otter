@@ -131,7 +131,7 @@ fn preview(items: Vec<ItemForOutput>) {
     println!(r#"<th align="left"><kbd>{}</kbd></th>"#,
              Html::from_txt(&spec.item).0);
     println!(r#"<th align="left">{}</th>"#,
-             p.describe_html(&GPiece::dummy())?.0);
+             p.describe_html(&GPiece::dummy(), &default())?.0);
     let only1 = s.face_cols() == 1;
 
     for facecol in 0..(if only1 { 1 } else { max_facecols }) {

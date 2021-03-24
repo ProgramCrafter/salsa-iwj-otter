@@ -535,7 +535,7 @@ fn recalculate_occultation_general<
       let ounocc = ogpc.fully_visible_to_everyone()
         .ok_or_else(||internal_error_bydebug(&(occulteds, &ogpc)))?;
       then {
-        Some(oipc.show(ounocc).describe_html(ogpc)?)
+        Some(oipc.show(ounocc).describe_html(ogpc, goccults)?)
       } else {
         None
       }
@@ -554,7 +554,7 @@ fn recalculate_occultation_general<
       Some(prioc@ PriOG::Visible(_)) |
       Some(prioc@ PriOG::Occulted) |
       Some(prioc@ PriOG::Displaced(..)) => {
-        let show = prioc.describe(ioccults, gpc, ipc);
+        let show = prioc.describe(ioccults, goccults, gpc, ipc);
         call_log_callback(&show)?
       },
       None => {

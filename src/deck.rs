@@ -75,7 +75,7 @@ impl PieceTrait for Deck {
   }
 
   #[throws(IE)]
-  fn describe_html(&self, gpc: &GPiece) -> Html {
+  fn describe_html(&self, gpc: &GPiece, _goccults: &GameOccults) -> Html {
     Html::lit(
       if self.enabled(gpc) { ENABLED_DESC } else { DISABLED_DESC }
     )

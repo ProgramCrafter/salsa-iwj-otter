@@ -141,7 +141,8 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece, gs: &GameState,
                id: VisiblePieceId) -> Result<(),IE>;
 
-  fn describe_html(&self, gpc: &GPiece) -> Result<Html,IE>;
+  fn describe_html(&self, gpc: &GPiece, _goccults: &GameOccults)
+                   -> Result<Html,IE>;
 
   #[throws(IE)]
   /// Piece is responsible for dealing with the possibility that they

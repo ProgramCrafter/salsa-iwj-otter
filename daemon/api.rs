@@ -273,7 +273,7 @@ api_route!{
     let gpc = gs.pieces.byid_mut(piece)?;
 
     let logents = log_did_to_piece(
-      ioccults,gpl,gpc,ipc,
+      ioccults,&gs.occults, gpl,gpc,ipc,
       "grasped"
     )?;
 
@@ -311,7 +311,7 @@ api_route!{
       let pri = piece_pri(ioccults, &gs.occults, player, gpl, piece, gpc, ipc)
         .ok_or(POE::PieceGone)?;
 
-      let pcs = pri.describe(ioccults, gpc, ipc).0;
+      let pcs = pri.describe(ioccults,&gs.occults, gpc, ipc).0;
 
       gpc.held = Some(player);
 
@@ -345,7 +345,7 @@ api_route!{
     let gpc = gs.pieces.byid_mut(piece).unwrap();
 
     let (logents, who_by) = log_did_to_piece_whoby(
-      ioccults,gpl,gpc,ipc,
+      ioccults,&gs.occults,gpl,gpc,ipc,
       "released"
     )?;
     let who_by = who_by.ok_or(POE::PieceGone)?;
@@ -453,7 +453,7 @@ api_route!{
     let gpc = gs.pieces.byid_mut(piece).unwrap();
     let gpl = gs.players.byid_mut(player).unwrap();
     let logents = log_did_to_piece(
-      ioccults,gpl,gpc,ipc,
+      ioccults,&gs.occults,gpl,gpc,ipc,
       "rotated"
     )?;
     gpc.angle = PieceAngle::Compass(self.0);
@@ -474,7 +474,7 @@ api_route!{
     let gpc = gs.pieces.byid_mut(piece).unwrap();
     let gpl = gs.players.byid_mut(player).unwrap();
     let logents = log_did_to_piece(
-      ioccults,gpl,gpc,ipc,
+      ioccults,&gs.occults,gpl,gpc,ipc,
       if gpc.pinned { "pinned" } else { "unpinned" },
     )?;
     gpc.forbid_involved_in_occultation()?;
@@ -521,7 +521,7 @@ api_route!{
           ("flip", wrc@ WRC::UpdateSvg) => {
             let nfaces = ipc.show(y).nfaces();
             let logents = log_did_to_piece(
-              ioccults,gpl,gpc,ipc,
+              ioccults,&gs.occults,gpl,gpc,ipc,
               "flipped"
             )?;
             gpc.face = ((RawFaceId::from(gpc.face) + 1) % nfaces).into();
