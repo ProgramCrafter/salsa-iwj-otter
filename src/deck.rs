@@ -55,12 +55,12 @@ impl PieceSpec for piece_specs::Deck {
 }
 
 impl Deck {
-  fn enabled(&self, gpc: &GPiece) -> bool {
+  fn enabled(&self, gpc: &GPiece, _goccults: &GameOccults) -> bool {
     gpc.occult.is_active()
   }
 
   fn current_face(&self, gpc: &GPiece) -> FaceId {
-    (self.enabled(gpc) as RawFaceId).into()
+    (gpc.occult.is_active() as RawFaceId).into()
   }
 }
 
@@ -75,9 +75,9 @@ impl PieceTrait for Deck {
   }
 
   #[throws(IE)]
-  fn describe_html(&self, gpc: &GPiece, _goccults: &GameOccults) -> Html {
+  fn describe_html(&self, gpc: &GPiece, goccults: &GameOccults) -> Html {
     Html::lit(
-      if self.enabled(gpc) { ENABLED_DESC } else { DISABLED_DESC }
+      if self.enabled(gpc, goccults) { ENABLED_DESC } else { DISABLED_DESC }
     )
   }
 
@@ -89,9 +89,9 @@ impl PieceTrait for Deck {
 
   #[throws(InternalError)]
   fn add_ui_operations(&self, upd: &mut Vec<UoDescription>,
-                       _gs: &GameState, gpc: &GPiece) {
+                       gs: &GameState, gpc: &GPiece) {
     upd.push(
-      if ! self.enabled(gpc) {
+      if ! self.enabled(gpc, &gs.occults) {
         UoDescription {
           kind: UoKind::Piece,
           def_key: 'A',
@@ -129,7 +129,7 @@ impl PieceTrait for Deck {
     dbgc!("ui op k entry", &opname);
 
     let (xupdates, did) =
-      match (opname, self.enabled(gpc))
+      match (opname, self.enabled(gpc, &goccults))
     {
       ("activate", false) => {
         dbgc!("claiming");
