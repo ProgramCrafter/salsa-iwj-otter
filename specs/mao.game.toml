@@ -85,8 +85,8 @@ type = "LibList"
 lib = "wikimedia"
 prefix = "card-"
 items = [
- "bellot-joker-black", "rainbow",
- "bellot-joker-black", "rainbow",
+ "bellot-joker-black", "bellot-joker-black", "rainbow",
+ "bellot-joker-black", "bellot-joker-black", "rainbow",
 ]
 posd = [0, 0]
 
