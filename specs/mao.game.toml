@@ -80,6 +80,17 @@ posd = [0, 0]
 
 
 [[pieces]]
+pos = [150, 84]
+type = "LibList"
+lib = "wikimedia"
+items = [
+	"card-bellot-joker-black",
+	"card-bellot-joker-black",
+]
+posd = [0, 0]
+
+
+[[pieces]]
 pos = [50, 20]
 colour = "brown"
 label.place = "BottomLeft"
