@@ -243,12 +243,14 @@ impl OccDisplacement {
   fn place(&self, _ppiece_use_size: Pos, notch: NotchNumber) -> Pos {
     use OccDisplacement as OD;
     match self {
-      OD::Rect{area} => {
+      OD::Rect{area} => (|| Some({
         let x: Coord = (notch % 3).try_into().unwrap(); // xxx
         let pos = (area.0[0] + PosC([x*4, 0])).unwrap(); // xxx
         let pos = (pos + PosC([5,5])).unwrap(); // xxx
         pos
-      },
+      }))().unwrap_or_else(||{
+        area.middle()
+      })
     }
   }
 }
