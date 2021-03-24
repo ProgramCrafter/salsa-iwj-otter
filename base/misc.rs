@@ -5,8 +5,7 @@
 // This is in this crate for convenience, not because it's to do with
 // Z coordinates.
 
-use arrayvec::ArrayVec;
-use if_chain::if_chain;
+use crate::prelude::*;
 
 pub fn timestring_abbreviate<'x>(base: &str, this: &'x str)
                                  -> (&'x str, bool)
@@ -32,3 +31,16 @@ pub fn raw_angle_transform(compass: u8) -> String {
 }
 
 pub fn default<T:Default>() -> T { Default::default() }
+
+#[macro_export]
+macro_rules! display_as_debug {
+  {$x:ty $( , $($gen_tt:tt)* )?} => {
+    impl $( $($gen_tt)* )? std::fmt::Display for $x {
+      #[throws(std::fmt::Error)]
+      fn fmt(&self, f: &mut std::fmt::Formatter) {
+        <Self as Debug>::fmt(self, f)?
+      }
+    }
+  }
+}
+pub use crate::display_as_debug;

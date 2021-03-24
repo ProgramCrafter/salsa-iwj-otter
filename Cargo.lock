@@ -2113,7 +2113,6 @@ dependencies = [
  "htmlescape",
  "index_vec",
  "inventory",
- "itertools",
  "lazy-init",
  "lazy_static",
  "libc",
@@ -2145,7 +2144,6 @@ dependencies = [
  "uds",
  "url 2.2.1",
  "vecdeque-stableix",
- "void",
 ]
 
 [[package]]
@@ -2172,9 +2170,13 @@ dependencies = [
  "derive_more",
  "fehler",
  "if_chain",
+ "itertools",
+ "num-derive",
+ "num-traits",
  "serde",
  "serde_with",
  "thiserror",
+ "void",
 ]
 
 [[package]]

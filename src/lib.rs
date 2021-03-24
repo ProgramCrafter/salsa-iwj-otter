@@ -16,7 +16,6 @@ pub mod config;
 pub mod deck;
 pub mod debugreader;
 pub mod error;
-pub mod geometry;
 pub mod gamestate;
 pub mod global;
 pub mod hand;

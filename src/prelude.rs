@@ -101,9 +101,12 @@ use nix::time::ClockId;
 pub const CLOCK_REALTIME : ClockId = ClockId::CLOCK_REALTIME ;
 pub const CLOCK_MONOTONIC: ClockId = ClockId::CLOCK_MONOTONIC;
 
+pub use otter_base::geometry::{Coord,Pos,PosC,Area,AreaC};
+pub use otter_base::geometry::CoordinateOverflow;
 pub use otter_base::zcoord::{self, ZCoord};
 pub use otter_base::misc as base_misc;
 pub use base_misc::default;
+pub use base_misc::display_as_debug;
 
 pub use crate::dbgc;
 pub use crate::{deref_to_field, deref_to_field_mut};
@@ -125,7 +128,6 @@ pub use crate::debugreader::DebugReader;
 pub use crate::error::*;
 pub use crate::fake_rng::*;
 pub use crate::gamestate::*;
-pub use crate::geometry::{Coord,Pos,PosC,Area,AreaC};
 pub use crate::global::*;
 pub use crate::hidden::*;
 pub use crate::keydata::*;

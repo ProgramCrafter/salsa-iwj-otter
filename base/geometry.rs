@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-use crate::imports::*;
 use crate::prelude::*;
 
 use std::ops::{Add,Sub,Mul,Neg};
+
+use num_traits::NumCast;
 
 //---------- common types ----------
 
@@ -22,6 +23,61 @@ pub type Pos = PosC<Coord>;
 #[serde(transparent)]
 pub struct AreaC<T>(pub [PosC<T>; 2]);
 pub type Area = AreaC<Coord>;
+
+// ---------- CheckedArith ----------
+
+#[derive(Error,Clone,Copy,Debug,Serialize,Deserialize)]
+#[error("error parsing Z coordinate")]
+pub struct CoordinateOverflow;
+
+pub trait CheckedArith: Copy + Clone + Debug + 'static {
+  fn checked_add(self, rhs: Self) -> Result<Self, CoordinateOverflow>;
+  fn checked_sub(self, rhs: Self) -> Result<Self, CoordinateOverflow>;
+  fn checked_neg(self)            -> Result<Self, CoordinateOverflow>;
+}
+pub trait CheckedArithMul<RHS: Copy + Clone + Debug + 'static>:
+                               Copy + Clone + Debug + 'static {
+  fn checked_mul(self, rhs: RHS) -> Result<Self, CoordinateOverflow>;
+}
+
+macro_rules! checked_inherent { {$n:ident($($formal:tt)*) $($actual:tt)*} => {
+  fn $n(self $($formal)*) -> Result<Self, CoordinateOverflow> {
+    self.$n($($actual)*).ok_or(CoordinateOverflow)
+  }
+} }
+
+impl CheckedArith for i32 {
+  checked_inherent!{checked_add(, rhs: Self) rhs}
+  checked_inherent!{checked_sub(, rhs: Self) rhs}
+  checked_inherent!{checked_neg(           )    }
+}
+impl CheckedArithMul<i32> for i32 {
+  checked_inherent!{checked_mul(, rhs: Self) rhs}
+}
+impl CheckedArithMul<f64> for i32 {
+  fn checked_mul(self, rhs: f64) -> Result<Self, CoordinateOverflow> {
+    let lhs: f64 = self.into();
+    let out: f64 = lhs.checked_mul(rhs)?;
+    let out: Self = NumCast::from(out).ok_or(CoordinateOverflow)?;
+    Ok(out)
+  }
+}
+
+macro_rules! checked_float { {$n:ident($($formal:tt)*) $($modify:tt)*} => {
+  fn $n(self $($formal)*) -> Result<Self, CoordinateOverflow> {
+    let out = self $($modify)*;
+    if out.is_finite() { Ok(out) } else { Err(CoordinateOverflow) }
+  }
+} }
+
+impl CheckedArith for f64 {
+  checked_float!{checked_add(, rhs: Self)  + rhs }
+  checked_float!{checked_sub(, rhs: Self)  - rhs }
+  checked_float!{checked_neg()              .neg()}
+}
+impl CheckedArithMul<f64> for f64 {
+  checked_float!{checked_mul(, rhs: Self)  * rhs }
+}
 
 //---------- Pos ----------
 

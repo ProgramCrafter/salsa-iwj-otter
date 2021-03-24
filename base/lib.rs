@@ -5,5 +5,6 @@
 pub mod imports;
 pub mod prelude;
 
+pub mod geometry;
 pub mod zcoord;
 pub mod misc;

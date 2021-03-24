@@ -20,10 +20,11 @@ use serde::{Deserialize, Serialize};
 use strum::{EnumString, Display};
 use thiserror::Error;
 
+use otter_base::geometry::{Coord,Pos};
+use otter_base::misc::display_as_debug;
+
 use crate::accounts::AccountName;
-use crate::error::display_as_debug;
 use crate::gamestate::PieceSpec;
-use crate::geometry::{Coord,Pos};
 use crate::prelude::default;
 
 pub use implementation::PlayerAccessSpec;

@@ -264,19 +264,6 @@ impl IdForById for PieceId {
 }
 
 #[macro_export]
-macro_rules! display_as_debug {
-  {$x:ty $( , $($gen_tt:tt)* )?} => {
-    impl $( $($gen_tt)* )? std::fmt::Display for $x {
-      #[throws(std::fmt::Error)]
-      fn fmt(&self, f: &mut std::fmt::Formatter) {
-        <Self as Debug>::fmt(self, f)?
-      }
-    }
-  }
-}
-pub use crate::display_as_debug;
-
-#[macro_export]
 macro_rules! error_from_losedetails {
   {$to:ty, $variant:ident, $from:ty} => {
     impl From<$from> for $to {
