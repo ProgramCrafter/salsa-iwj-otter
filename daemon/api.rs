@@ -106,7 +106,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
   let mut ig = iad.gref.lock()?;
   ig.save_game_later();
 
-  ToRecalculate::with(|mut to_recalculate| {
+  let (ok, unprepared_outer) = ToRecalculate::with(|mut to_recalculate| {
     let r = (||{
 
   let g = &mut *ig;
@@ -208,7 +208,15 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
                              &mut gs.pieces,
                              &mut gs.occults,
                              &g.ipieces))
-  })?;
+  });
+
+  if let Some(unprepared) = unprepared_outer {
+    let mut prepub = PrepareUpdatesBuffer::new(&mut ig, None, None);
+    unprepared(&mut prepub);
+    prepub.finish();
+  }
+
+  ok?;
   ""
 }
 

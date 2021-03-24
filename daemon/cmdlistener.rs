@@ -797,7 +797,7 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   mut insns: Vec<MgmtGameInstruction>,
   how: MgmtGameUpdateMode) -> MgmtResponse
 {
-  ToRecalculate::with(|mut to_permute| {
+  let (ok, uu) = ToRecalculate::with(|mut to_permute| {
     let r = (||{
 
   let mut uh = UpdateHandler::from_how(how);
@@ -855,7 +855,16 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
                            &mut gs.occults,
                            &g.ipieces)
     })
-  })?
+  });
+
+  if let Some(uu) = uu {
+    let mut ig = igu.by_mut(Authorisation::authorise_any());
+    let mut prepub = PrepareUpdatesBuffer::new(&mut ig, None, None);
+    uu(&mut prepub);
+    prepub.finish();
+  }
+
+  ok?
 }
 
 #[derive(Debug,Default)]

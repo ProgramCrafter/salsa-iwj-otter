@@ -701,14 +701,23 @@ mod recompute {
   pub struct ToRecalculate {
     outdated: HashSet<OccId>,
   }
-  #[derive(Debug)]
-  pub struct Implemented(());
+  #[must_use]
+  pub struct Implemented(UnpreparedUpdates);
+  impl Debug for Implemented {
+    #[throws(fmt::Error)]
+    fn fmt(&self, f: &mut Formatter) {
+      write!(f, "Implemented({})",
+             if self.0.is_some() { "Some(..)" } else { "None" })?;
+    }
+  }
 
   impl ToRecalculate {
-    pub fn with<R, F: FnOnce(Self) -> (R, Implemented)>(f: F) -> R {
+    pub fn with<R, F: FnOnce(Self) -> (R, Implemented)>
+      (f: F) -> (R, UnpreparedUpdates)
+    {
       let to_recalculate = ToRecalculate { outdated: default() };
-      let (r, Implemented(())) = f(to_recalculate);
-      r
+      let (r, Implemented(uu)) = f(to_recalculate);
+      (r, uu)
     }
     pub fn mark_dirty(&mut self, occid: OccId) { self.outdated.insert(occid); }
     pub fn implement(self,
@@ -724,7 +733,7 @@ mod recompute {
 
       consistency_check(gplayers, gpieces, goccults);
 
-      Implemented(())
+      Implemented(None)
     }
   }
 }
