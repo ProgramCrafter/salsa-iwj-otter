@@ -276,6 +276,8 @@ pub mod pos_traits {
   use std::ops::{Add,Sub,Mul,Neg};
   use crate::prelude::*;
 
+  pub trait Mean { fn mean(&self, other: &Self) -> Self; }
+
   impl<T:CheckedArith> Add<PosC<T>> for PosC<T> {
     type Output = Result<Self, CoordinateOverflow>;
     #[throws(CoordinateOverflow)]
@@ -344,6 +346,15 @@ pub mod pos_traits {
     }
   }
 
+  impl<T> Mean for PosC<T> where T: Mean + Debug {
+    fn mean(&self, other: &Self) -> Self where T: Mean {
+      PosC::try_from_iter_2(
+        izip!(&self.0, &other.0)
+          .map(|(a,b)| Ok::<_,Void>(a.mean(b)))
+      ).unwrap_or_else(|v| match v { })
+    }
+  }
+
   impl PosC<Coord> {
     pub fn promote(&self) -> PosC<f64> { self.map(|v| v as f64) }
   }
@@ -407,6 +418,13 @@ pub mod implementation {
         PosC([ one,  one  ]),
         PosC([ zero, zero ]),
       ])
+    }
+  }
+
+  impl<T> AreaC<T> where T: Mean + Debug {
+    pub fn middle(&self) -> PosC<T> {
+      Mean::mean(&self.0[0],
+                 &self.0[1])
     }
   }
 
