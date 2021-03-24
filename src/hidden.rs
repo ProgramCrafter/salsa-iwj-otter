@@ -391,10 +391,11 @@ fn recalculate_occultation_general<
     }
   }
 
+  let nopiece = || internal_logic_error("piece vanished");
+  let ipc = ipieces.get(piece).ok_or_else(nopiece)?;
+
   // fallible part
   let (puos, log, occulteds): (_, _, OldNewOcculteds<OccId>) = {
-    let nopiece = || internal_logic_error("piece vanished");
-    let ipc = ipieces.get(piece).ok_or_else(nopiece)?;
     let gpc = gpieces.get(piece).ok_or_else(nopiece)?;
 
     #[derive(Debug,Copy,Clone)]
