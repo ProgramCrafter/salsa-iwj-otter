@@ -154,6 +154,8 @@ impl Notches {
     }
   }
 
+  pub fn is_empty(&self) -> bool { self.used == 0 }
+
   #[cfg(test)]
   fn check(&self) {
     let mut count_free = 0;
