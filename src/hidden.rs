@@ -51,14 +51,14 @@ pub struct Occultation {
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
 pub struct OccultationViews {
-  views: Vec<OccultView>,
-  #[serde(default)] defview: OccultationKind,
+  pub views: Vec<OccultView>,
+  #[serde(default)] pub defview: OccultationKind,
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
 pub struct OccultView {
-  #[serde(default)] occult: OccultationKind,
-  players: Vec<PlayerId>,
+  #[serde(default)] pub occult: OccultationKind,
+  pub players: Vec<PlayerId>,
 }
 
 #[derive(Clone,Copy,Debug,Serialize,Deserialize)]
@@ -83,12 +83,12 @@ impl PieceOccult {
   pub fn is_active(&self) -> bool { self.active.is_some() }
 
   #[throws(IE)]
-  pub fn active_nondefault_views(&self, goccults: &GameOccults)
-                                 -> Option<usize> {
+  pub fn active_views<'r>(&'r self, goccults: &'r GameOccults)
+                          -> Option<&'r OccultationViews> {
     if let Some(occid) = self.active {
       let occ = goccults.occults.get(occid).ok_or_else(
         || internal_error_bydebug(&self))?;
-      Some(occ.views.views.len())
+      Some(&occ.views)
     } else {
       None
     }
