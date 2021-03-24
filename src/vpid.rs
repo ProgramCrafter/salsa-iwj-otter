@@ -364,6 +364,14 @@ pub fn permute(occid: OccId,
   dbgc!(&occ);
 }
 
+#[cfg(not(debug_assertions))]
+#[inline]
+pub fn consistency_check(
+  _gplayers: &GPlayers,
+  _gpieces: &GPieces,
+  _goccults: &GameOccults,
+) { }
+
 #[cfg(debug_assertions)]
 pub fn consistency_check(
   gplayers: &GPlayers,

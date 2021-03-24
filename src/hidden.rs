@@ -722,9 +722,7 @@ mod recompute {
         }
       }
 
-      if cfg!(debug_assertions) {
-        consistency_check(gplayers, gpieces, goccults);
-      }
+      consistency_check(gplayers, gpieces, goccults);
 
       Implemented(())
     }
