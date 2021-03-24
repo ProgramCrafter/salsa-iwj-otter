@@ -118,6 +118,7 @@ sub method_wikimedia ($$$) {
     open WT, "$wt" or die $!;
     my (@lics) = @{ $scraper->('licences') };
     s/\W/\\$&/g foreach @lics;
+    s/\\\*$/.*/g foreach @lics;
     my $lic1_re = '(?:'.(join '|', @lics).')';
     my $ok;
     while (<WT>) {
