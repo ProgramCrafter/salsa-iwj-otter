@@ -154,6 +154,7 @@ impl Notches {
     }
   }
 
+  pub fn len(&self) -> NotchNumber { self.used }
   pub fn is_empty(&self) -> bool { self.used == 0 }
 
   #[cfg(test)]

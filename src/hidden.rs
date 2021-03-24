@@ -81,6 +81,7 @@ pub enum OccDisplacement {
 
 impl PieceOccult {
   pub fn is_active(&self) -> bool { self.active.is_some() }
+
   #[throws(IE)]
   pub fn active_nondefault_views(&self, goccults: &GameOccults)
                                  -> Option<usize> {
@@ -92,6 +93,19 @@ impl PieceOccult {
       None
     }
   }
+
+  #[throws(IE)]
+  pub fn active_total_ppieces(&self, goccults: &GameOccults)
+                              -> Option<NotchNumber> {
+    if let Some(occid) = self.active {
+      let occ = goccults.occults.get(occid).ok_or_else(
+        || internal_error_bydebug(&self))?;
+      Some(occ.notches.len())
+    } else {
+      None
+    }
+  }
+
   pub fn passive_occid(&self) -> Option<OccId> { Some(self.passive?.occid) }
   pub fn passive_delete_hook(&self, goccults: &mut GameOccults,
                              piece: PieceId) {
