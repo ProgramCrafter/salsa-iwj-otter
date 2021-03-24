@@ -68,7 +68,15 @@ pub enum OccultationKindGeneral<D> {
   Displaced(D),
   Invisible,
 }
-pub type OccultationKind = OccultationKindGeneral<(Area, ZCoord)>;
+pub type OccultationKind = OccultationKindGeneral<(OccDisplacement,ZCoord)>;
+
+#[derive(Clone,Debug,Serialize,Deserialize)]
+#[derive(Eq,PartialEq,Hash)]
+pub enum OccDisplacement {
+  Rect {
+    area: Area,
+  },
+}
 
 impl PieceOccult {
   pub fn is_active(&self) -> bool { self.active.is_some() }
@@ -199,11 +207,10 @@ pub fn piece_pri(
     if let Some(zg) = occultation.notch_zg(notch);
     then {
       occultation.views.get_kind(player)
-        .map_displaced(|(area, z)| {
-          let x: Coord = (notch.index() % 3).try_into().unwrap(); // xxx
-          let pos = (area.0[0] + PosC([x*4, 0])).unwrap(); // xxx
-          let pos = (pos + PosC([5,5])).unwrap(); // xxx
-          let z = z.plus_offset(notch.into())
+        .map_displaced(|(displace, z)| {
+          let notch: NotchNumber = notch.into();
+          let pos = displace.place(notch);
+          let z = z.plus_offset(notch)
             .unwrap_or_else(|e| { // eek!
               error!("z coordinate overflow ({:?}), bodging! {:?} {:?}",
                      e, piece, &z);
@@ -229,6 +236,20 @@ pub fn piece_pri(
   let vpid = gpl.idmap.fwd_or_insert(piece);
   trace_dbg!("piece_pri", player, piece, occk_dbg, vpid, occulted, gpc);
   Some(PieceRenderInstructions { vpid, occulted })
+}
+
+impl OccDisplacement {
+  fn place(&self, notch: NotchNumber) -> Pos {
+    use OccDisplacement as OD;
+    match self {
+      OD::Rect{area} => {
+        let x: Coord = (notch % 3).try_into().unwrap(); // xxx
+        let pos = (area.0[0] + PosC([x*4, 0])).unwrap(); // xxx
+        let pos = (pos + PosC([5,5])).unwrap(); // xxx
+        pos
+      },
+    }
+  }
 }
 
 impl ShowUnocculted {
