@@ -16,6 +16,8 @@ use otter_base::misc as base_misc;
 use zcoord::{Mutable,ZCoord};
 use base_misc::default;
 
+// ---------- general, errors, etc. ----------
+
 #[derive(Error,Clone,Copy,Debug,Eq,PartialEq)]
 #[error("packed Z coordinate wrong JS type (not a string)")]
 pub struct JsZCoordTypeError;
@@ -43,6 +45,8 @@ impl<E:Display+Copy, V> WasmResult<V> for Result<V, E> {
 fn get_packed_str(js: &JsValue) -> String {
   js.as_string().ok_or(JsZCoordTypeError).e()?
 }
+
+// ---------- zcoord ----------
 
 #[throws(JsValue)]
 #[wasm_bindgen]
@@ -98,6 +102,8 @@ impl ZCoordIterator {
   }
 }
 
+// ---------- timestamps ----------
+
 #[wasm_bindgen]
 pub struct TimestampAbbreviator {
   last: String,
@@ -119,10 +125,14 @@ impl TimestampAbbreviator {
   }
 }
 
+// ---------- angle ----------
+
 #[wasm_bindgen]
 pub fn angle_transform(angle: u8) -> JsString {
   base_misc::raw_angle_transform(angle).into()
 }
+
+// ---------- setup ----------
 
 #[wasm_bindgen]
 pub fn setup(s: &str) -> JsString {
