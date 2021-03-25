@@ -43,7 +43,7 @@ struct Passive {
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
 pub struct Occultation {
-  region: Area, // automatically affect pieces here
+  region: Region<Coord>, // automatically affect pieces here
   occulter: PieceId, // kept in synch with PieceOccult::active
   notches: Notches, // kept in synch with PieceOccult::passive
   ppiece_use_size: Pos, // taken from first piece
@@ -812,7 +812,7 @@ pub fn create_occultation(
   ipieces: &IPieces,
   ioccults: &IOccults,
   to_recalculate: &mut ToRecalculate,
-  region: Area,
+  region: Region<Coord>,
   occulter: PieceId,
   views: OccultationViews,
 ) -> Vec<(PieceId, PieceUpdateOps)> {
@@ -942,7 +942,7 @@ pub fn remove_occultation(
     // that the affected pieces can know what the old situation was.
     // So we set the region to empty, and do a recalculation of the
     // relevant pieces.  Only then can we get rid of the occultation.
-    occ.region = Area::empty();
+    occ.region = Region::empty();
 
     let pieces: Vec<_> = occ.notches.iter().collect();
     for &ppiece in pieces.iter() {

@@ -251,4 +251,16 @@ impl<T> Region<T> {
       Rectangle(a) => a.contains(pos),
     }
   }
+
+  pub fn overlaps(&self, other: &Region<T>) -> bool where T: PartialOrd {
+    use Region::*;
+    match (self, other) {
+      (Rectangle(a), Rectangle(b)) => a.overlaps(b)
+    }
+  }
+
+  pub fn empty() -> Self where T: Copy + num_traits::Zero + num_traits::One {
+    Region::Rectangle(AreaC::empty())
+  }
+
 }
