@@ -137,6 +137,8 @@ card-chequeredge-back	Card_back_04	a card (with a chequered edged back)
 inherit = "card-backs"
 back.type = "Alias"
 back.target = "card-back"
+occulted.method = "ByBack"
+occulted.ilk = "card-back"
 
 files = """
 card-rainbow		Card_back_13	a rainbow card
@@ -149,6 +151,8 @@ scale = 0.25
 orig_size = [167, 243]
 back.type = "Alias"
 back.target = "card-back"
+occulted.method = "ByBack"
+occulted.ilk = "card-back"
 
 files = """
 card-bellot-joker-black		Joker_black_02	a joker
