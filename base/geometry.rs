@@ -79,13 +79,44 @@ impl CheckedArithMul<f64> for f64 {
   checked_float!{checked_mul(, rhs: Self)  * rhs }
 }
 
-//---------- Pos ----------
-
 pub trait Mean { fn mean(&self, other: &Self) -> Self; }
 
 impl Mean for i32 { fn mean(&self, other: &Self) -> Self {
   ((*self as i64 + *other as i64) / 2) as i32
 } }
+
+//---------- Pos ----------
+
+impl PosC<Coord> {
+  pub fn promote(&self) -> PosC<f64> { self.map(|v| v as f64) }
+}
+
+#[derive(Error,Debug,Copy,Clone,Serialize,Deserialize)]
+pub struct PosCFromIteratorError;
+display_as_debug!{PosCFromIteratorError}
+
+impl<T> PosC<T> {
+  #[throws(PosCFromIteratorError)]
+  pub fn from_iter<I: Iterator<Item=T>>(i: I) -> Self { PosC(
+    i
+      .collect::<ArrayVec<_>>()
+      .into_inner()
+      .map_err(|_| PosCFromIteratorError)?
+  )}
+}
+
+impl<T:Debug> PosC<T> {
+  /// Panics if the iterator doesn't yield exactly 2 elements
+  #[throws(E)]
+  pub fn try_from_iter_2<
+    E: Debug,
+    I: Iterator<Item=Result<T,E>>
+  >(i: I) -> Self { PosC(
+    i
+      .collect::<Result<ArrayVec<_>,E>>()?
+      .into_inner().unwrap()
+  )}
+}
 
 impl<T:CheckedArith> Add<PosC<T>> for PosC<T> {
   type Output = Result<Self, CoordinateOverflow>;
@@ -162,37 +193,6 @@ impl<T> Mean for PosC<T> where T: Mean + Debug {
         .map(|(a,b)| Ok::<_,Void>(a.mean(b)))
     ).unwrap_or_else(|v| match v { })
   }
-}
-
-impl PosC<Coord> {
-  pub fn promote(&self) -> PosC<f64> { self.map(|v| v as f64) }
-}
-
-#[derive(Error,Debug,Copy,Clone,Serialize,Deserialize)]
-pub struct PosCFromIteratorError;
-display_as_debug!{PosCFromIteratorError}
-
-impl<T> PosC<T> {
-  #[throws(PosCFromIteratorError)]
-  pub fn from_iter<I: Iterator<Item=T>>(i: I) -> Self { PosC(
-    i
-      .collect::<ArrayVec<_>>()
-      .into_inner()
-      .map_err(|_| PosCFromIteratorError)?
-  )}
-}
-
-impl<T:Debug> PosC<T> {
-  /// Panics if the iterator doesn't yield exactly 2 elements
-  #[throws(E)]
-  pub fn try_from_iter_2<
-    E: Debug,
-    I: Iterator<Item=Result<T,E>>
-  >(i: I) -> Self { PosC(
-    i
-      .collect::<Result<ArrayVec<_>,E>>()?
-      .into_inner().unwrap()
-  )}
 }
 
 // ---------- Rect ----------
