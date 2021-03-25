@@ -38,9 +38,8 @@ A	-	ace
 """
 
 [group.clubs.back]
-type = "Lib"
-lib = "wikimedia"
-item = "card-chequeredge-back"
+type = "Alias"
+target = "card-back"
 
 [group.diamonds]
 inherit = "clubs"

@@ -122,27 +122,33 @@ mgmt-library-load-marker   Box_with_polygons	a library load area marker
 
 [group.card-backs]
 outline = "Rect"
-size = [73, 97]
-
-# sizes to match cards-oxymoron:
-orig_size = [208, 303]
+size = [73, 97] # size to match cards-oxymoron:
 scale = 0.25
+orig_size = [208, 303]
 
 files = """
 card-stripe-back-red	Card_back_03a	a card with a red-striped back
 card-stripe-back-blue	Card_back_03b	a card with a blue-striped back
 card-plain-back-maroon	Card_back_15	a card with a maroon back
 card-chequeredge-back	Card_back_04	a card (with a chequered edged back)
+"""
+
+[group.cards-misc]
+inherit = "card-backs"
+back.type = "Alias"
+back.target = "card-back"
+
+files = """
 card-rainbow		Card_back_13	a rainbow card
 """
 
 [group.cards-bellot]
 outline = "Rect"
-size = [73, 97]
-
-# sizes to match cards-oxymoron:
-orig_size = [167, 243]
+size = [73, 97] # size to match cards-oxymoron:
 scale = 0.25
+orig_size = [167, 243]
+back.type = "Alias"
+back.target = "card-back"
 
 files = """
 card-bellot-joker-black		Joker_black_02	a joker

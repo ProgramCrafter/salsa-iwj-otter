@@ -5,6 +5,12 @@
 table_size = [300, 200]
 table_colour = "#bbd"
 
+[pcaliases.card-back]
+type = "Lib"
+lib = "wikimedia"
+item = "card-plain-back-maroon"
+
+
 [[pieces]]
 pos = [136,115]
 type = "PickupDeck"
