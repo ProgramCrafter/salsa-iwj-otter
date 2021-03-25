@@ -390,19 +390,26 @@ impl Contents {
       face.xform.scale[0] *= -1.;
       faces.push(face);
     } else if let Some(back_spec) = &idata.group.d.back {
-      let p = back_spec.load_occult(pcaliases)?;
-      let p = p.into();
-      back = Some(p);
+      match back_spec.load_occult(pcaliases) {
+        Err(SpecError::AliasNotFound) => { },
+        Err(e) => throw!(e),
+        Ok(p) => {
+          let p = p.into();
+          back = Some(p);
+        }
+      }
     }
     faces.shrink_to_fit();
 
     let occultable = match &idata.occ {
       OccData::None => None,
       OccData::Back(ilk) => {
-        let back = if let Some(back) = &back { back }
-        else { throw!(internal_error_bydebug(&self)) };
-        let back = back.clone();
-        Some((ilk.clone(), back))
+        if let Some(back) = &back {
+          let back = back.clone();
+          Some((ilk.clone(), back))
+        } else {
+          None // We got AliasNotFound, ah well
+        }
       },
       OccData::Internal(occ) => {
         let name = occ.item_name.clone();
