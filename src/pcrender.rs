@@ -126,6 +126,7 @@ impl PieceRenderInstructions {
       pinned     : gpc.pinned,
       uos        : pri.ui_operations(gs, gpc, ipc)?,
       moveable   : gpc.moveable(),
+      occregion  : gpc.occult.active_region(&gs.occults)?.cloned(),
     };
     dbgc!(pri, ipc, gpc, r);
     r

@@ -49,6 +49,7 @@ struct SessionPieceLoadJson<'r> {
   desc: Html,
   uos: &'r [UoDescription],
   moveable: PieceMoveable,
+  occregion: Option<&'r Region<Coord>>,
 }
 
 #[derive(Serialize,Debug)]
@@ -141,6 +142,7 @@ fn session_inner(form: Json<SessionForm>,
         desc,
         moveable: gpc.moveable(),
         uos: &pri.ui_operations(&ig.gs, gpc, ipc)?,
+        occregion: gpc.occult.active_region(&ig.gs.occults)?,
       };
 
       let for_piece = SessionPieceContext {

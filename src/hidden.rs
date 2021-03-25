@@ -107,6 +107,14 @@ impl PieceOccult {
   }
 
   #[throws(IE)]
+  pub fn active_region<'r>(&'r self, goccults: &'r GameOccults)
+                           -> Option<&'r Region<Coord>> {
+    self.active_occ(goccults)?.map(
+      |occ| &occ.region
+    )
+  }
+
+  #[throws(IE)]
   pub fn active_total_ppieces(&self, goccults: &GameOccults)
                               -> Option<NotchNumber> {
     self.active_occ(goccults)?.map(
