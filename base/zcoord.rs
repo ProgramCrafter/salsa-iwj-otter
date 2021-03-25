@@ -67,23 +67,7 @@
 //       in the same order as the provided offset multipliers.
 //       The function is deterministic
 
-use std::cmp::{max, Ordering};
-use std::convert::{TryFrom, TryInto};
-use std::fmt::{self, Debug, Display, Formatter};
-use std::hash::{Hash, Hasher};
-use std::iter;
-use std::num::{TryFromIntError, Wrapping};
-use std::str;
-use std::str::FromStr;
-
-use derive_more::*;
-use fehler::{throw, throws};
-use serde::{Deserialize, Serialize};
-use serde_with::DeserializeFromStr;
-use serde_with::SerializeDisplay;
-use thiserror::Error;
-
-use crate::misc::default;
+use crate::prelude::*;
 
 //---------- core definitions ----------
 
