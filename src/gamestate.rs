@@ -68,12 +68,12 @@ pub struct GPiece{  // usual variable: gpc
   pub zlevel: ZLevel,
   pub pinned: bool,
   pub occult: PieceOccult,
-  #[serde(default)] pub angle: PieceAngle,
+  pub angle: PieceAngle,
   pub gen: Generation,
   pub lastclient: ClientId,
   pub gen_before_lastclient: Generation,
   pub xdata: PieceXDataState,
-  #[serde(default)] pub moveable: PieceMoveable,
+  pub moveable: PieceMoveable,
 }
 
 pub type PieceXDataState = Option<Box<dyn PieceXData>>;

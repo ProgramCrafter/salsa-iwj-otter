@@ -232,11 +232,11 @@ pub struct InstanceContainer {
 #[derive(Debug,Default,Serialize,Deserialize)]
 struct InstanceSaveAccesses<RawTokenStr, PiecesLoadedRef, OccultIlksRef> {
   ipieces: PiecesLoadedRef,
-  #[serde(default)] ioccults: OccultIlksRef,
+  ioccults: OccultIlksRef,
   tokens_players: Vec<(RawTokenStr, PlayerId)>,
   aplayers: SecondarySlotMap<PlayerId, IPlayer>,
   acl: Acl<TablePermission>,
-  #[serde(default)] pub links: Arc<LinksTable>,
+  pub links: Arc<LinksTable>,
 }
 
 display_as_debug!{InstanceLockError}
