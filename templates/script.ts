@@ -125,6 +125,7 @@ var zoom_val : HTMLInputElement;
 var zoom_btn : HTMLInputElement;
 var links_elem : HTMLElement;
 var wresting: boolean;
+var occregions: wasm_bindgen.RegionList;
 
 type PaneName = string;
 const pane_keys : { [key: string]: PaneName } = {
@@ -1050,6 +1051,7 @@ type PreparedPieceState = {
   angle: number,
   uos: UoDescription[],
   moveable: PieceMoveable,
+  occregion: string | null,
 }
 
 pieceops.ModifyQuiet = <PieceHandler>function
@@ -1090,10 +1092,28 @@ function piece_modify(piece: PieceId, p: PieceInfo, info: PreparedPieceState,
     p.z  = info.z;
     p.zg = info.zg;
   });
+  let occregions_changed = occregion_update(piece, p, info);
   piece_checkconflict_nrda(piece,p,conflict_expected);
   redisplay_ancillaries(piece,p);
+  if (occregions_changed) redisplay_held_ancillaries();
   recompute_keybindings();
   console.log('MODIFY DONE');
+}
+function occregion_update(piece: PieceId, p: PieceInfo,
+			  info: PreparedPieceState) {
+  let occregions_changed = (
+    info.occregion != null
+      ? occregions.insert(piece, info.occregion)
+      : occregions.remove(piece)
+  );
+  return occregions_changed;
+}
+function redisplay_held_ancillaries() {
+  for (let piece of Object.keys(pieces)) {
+    let p = pieces[piece];
+    if (p.held != us) continue;
+    redisplay_ancillaries(piece,p);
+  }
 }
 
 type PreparedPieceImage = {
@@ -1309,6 +1329,7 @@ function startup() {
   players = dataload.players!;
   delete body.dataset.load;
   uos_node = document.getElementById("uos")!;
+  occregions = wasm_bindgen.empty_region_list();
 
   space = svg_element('space')!;
   pieces_marker = svg_element("pieces_marker")!;
@@ -1324,6 +1345,7 @@ function startup() {
     p.delem = piece_element('defs',piece);
     p.pelem = piece_element('piece',piece);
     p.queued_moves = 0;
+    occregion_update(piece, p, p); delete p.occregion;
     delete uelem.dataset.info;
     pieces[piece] = p;
     redisplay_ancillaries(piece,p);
