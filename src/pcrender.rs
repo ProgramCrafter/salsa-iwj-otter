@@ -116,6 +116,8 @@ impl PieceRenderInstructions {
                          -> PreparedPieceState {
     let pri = self;
     let (pos, zlevel) = pri.pos_zlevel(gpc);
+    let occregion = gpc.occult.active_region(&gs.occults)?
+      .map(|r| JsonString(r.clone()));
     let r = PreparedPieceState {
       pos        : pos,
       held       : gpc.held,
@@ -126,7 +128,7 @@ impl PieceRenderInstructions {
       pinned     : gpc.pinned,
       uos        : pri.ui_operations(gs, gpc, ipc)?,
       moveable   : gpc.moveable(),
-      occregion  : gpc.occult.active_region(&gs.occults)?.cloned(),
+      occregion,
     };
     dbgc!(pri, ipc, gpc, r);
     r

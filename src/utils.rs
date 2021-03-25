@@ -235,6 +235,17 @@ pub fn toml_merge<'u,
   }
 }
 
+#[derive(Debug,Clone)]
+pub struct JsonString<T:Serialize>(pub T);
+impl<T> Serialize for JsonString<T> where T:Serialize {
+  #[throws(S::Error)]
+  fn serialize<S>(&self, s: S) -> S::Ok where S:Serializer {
+    let json = serde_json::to_string(&self.0)
+      .map_err(|e| <S::Error as serde::ser::Error>::custom(e))?;
+    Serialize::serialize(&json, s)?
+  }
+}
+
 #[macro_export]
 macro_rules! deref_to_field {
   {$({ $($gen:tt)* })? $outer:ty, $inner:ty, $($field:tt)*} => {

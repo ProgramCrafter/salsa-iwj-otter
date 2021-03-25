@@ -49,7 +49,7 @@ struct SessionPieceLoadJson<'r> {
   desc: Html,
   uos: &'r [UoDescription],
   moveable: PieceMoveable,
-  occregion: Option<&'r Region>,
+  occregion: Option<JsonString<&'r Region>>,
 }
 
 #[derive(Serialize,Debug)]
@@ -132,6 +132,8 @@ fn session_inner(form: Json<SessionForm>,
 
       let vangle = pri.angle(gpc).to_compass();
       let (pos, zlevel) = pri.pos_zlevel(gpc);
+      let occregion = gpc.occult.active_region(&ig.gs.occults)?
+        .map(|r| JsonString(r));
 
       let for_info = SessionPieceLoadJson {
         held: &gpc.held,
@@ -142,7 +144,7 @@ fn session_inner(form: Json<SessionForm>,
         desc,
         moveable: gpc.moveable(),
         uos: &pri.ui_operations(&ig.gs, gpc, ipc)?,
-        occregion: gpc.occult.active_region(&ig.gs.occults)?,
+        occregion,
       };
 
       let for_piece = SessionPieceContext {
