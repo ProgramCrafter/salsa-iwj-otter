@@ -676,11 +676,17 @@ var dcy : number | null;
 
 const DRAGTHRESH = 5;
 
+function piece_xy(p: PieceInfo): [number, number] {
+  return [ parseFloat(p.uelem.getAttributeNS(null,"x")!),
+	   parseFloat(p.uelem.getAttributeNS(null,"y")!) ];
+}
+
 function drag_add_piece(piece: PieceId, p: PieceInfo) {
+  let [dox, doy] = piece_xy(p);
   drag_pieces.push({
     piece: piece,
-    dox: parseFloat(p.uelem.getAttributeNS(null,"x")!),
-    doy: parseFloat(p.uelem.getAttributeNS(null,"y")!),
+    dox: dox,
+    doy: doy,
   });
 }
 
