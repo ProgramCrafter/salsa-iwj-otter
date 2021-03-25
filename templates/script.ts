@@ -77,6 +77,7 @@ type PieceInfo = {
   pelem : SVGGraphicsElement,
   queued_moves : number,
   last_seen_moved : DOMHighResTimeStamp | null, // non-0 means halo'd
+  held_us_inoccult: boolean,
 }
 
 let wasm : InitOutput;
@@ -864,10 +865,15 @@ function drag_mousemove(e: MouseEvent) {
       let tp = pieces[tpiece]!;
       var x = Math.round(dp.dox + ddx);
       var y = Math.round(dp.doy + ddy);
+      let need_redisplay_ancillaries = (
+	tp.held == us &&
+	occregions.contains_pos(x,y) != tp.held_us_inoccult
+      );
       tp.uelem.setAttributeNS(null, "x", x+"");
       tp.uelem.setAttributeNS(null, "y", y+"");
       tp.queued_moves++;
       api_piece(api_delay, 'm', tpiece,tp, [x, y] );
+      if (need_redisplay_ancillaries) redisplay_ancillaries(tpiece, tp);
     }
     if (!(dragging & DRAGGING.RAISED) && drag_pieces.length==1) {
       let dp = drag_pieces[0];
