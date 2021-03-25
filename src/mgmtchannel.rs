@@ -180,11 +180,14 @@ impl MgmtChannelForGame {
   }
 
   #[throws(AE)]
-  pub fn list_pieces(&mut self) -> Vec<MgmtGamePieceInfo> {
+  pub fn list_pieces(&mut self) -> (Vec<MgmtGamePieceInfo>, BTreeSet<String>) {
     let insns = vec![ MGI::ListPieces ];
     let mut responses = self.alter_game(insns, None)?;
     match responses.as_mut_slice() {
-      [MGR::Pieces(pieces)] => return mem::take(pieces),
+      [MGR::Pieces { pieces, pcaliases }] => return (
+        mem::take(pieces),
+        mem::take(pcaliases),
+      ),
       wat => Err(anyhow!("ListPieces => {:?}", &wat))?,
     }
   }

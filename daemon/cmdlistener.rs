@@ -435,7 +435,8 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           }
         }))().transpose()
       ).collect::<Result<Vec<_>,_>>()?;
-      Ok(MGR::Pieces(pieces))
+      let pcaliases = ig.pcaliases.keys().cloned().collect();
+      Ok(MGR::Pieces { pieces, pcaliases })
     })?,
 
     MGI::UpdatePlayer {

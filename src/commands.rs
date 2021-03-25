@@ -117,7 +117,10 @@ pub enum MgmtGameResponse {
   Info(MgmtGameResponseGameInfo),
   Synch(Generation),
 
-  Pieces(Vec<MgmtGamePieceInfo>),
+  Pieces {
+    pieces: Vec<MgmtGamePieceInfo>,
+    pcaliases: BTreeSet<String>,
+  },
 
   JoinGame {
     nick: String,

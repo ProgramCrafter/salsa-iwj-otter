@@ -687,8 +687,12 @@ mod reset_game {
       insns.extend(setup_table(&ma, &table_spec)?);
     }
 
-    for p in chan.list_pieces()? {
+    let (pcs, aliases) = chan.list_pieces()?;
+    for p in pcs {
       insns.push(MgmtGameInstruction::DeletePiece(p.piece));
+    }
+    for p in aliases {
+      insns.push(MgmtGameInstruction::DeletePieceAlias(p));
     }
 
     if let Some(table_size) = table_size {
@@ -1046,7 +1050,7 @@ mod library_add {
 
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = access_game(&ma, &args.table_name)?;
-    let pieces = chan.list_pieces()?;
+    let (pieces, _pcaliases) = chan.list_pieces()?;
     let markers = pieces.iter().filter(|p| p.itemname == MAGIC)
       .collect::<Vec<_>>();
 
