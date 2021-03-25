@@ -198,14 +198,14 @@ impl<T:Debug> PosC<T> {
 // ---------- Area ----------
 
 impl<T> AreaC<T> {
-  pub fn contains(&self, p: PosC<T>) -> bool where T: Ord {
+  pub fn contains(&self, p: PosC<T>) -> bool where T: PartialOrd {
     (0..2).all(|i| {
       p.0[i] >= self.0[0].0[i] &&
       p.0[i] <= self.0[1].0[i]
     })
   }
 
-  pub fn overlaps(&self, other: &AreaC<T>) -> bool where T: Ord {
+  pub fn overlaps(&self, other: &AreaC<T>) -> bool where T: PartialOrd {
     ! (0..2).any(|i| (
       other.0[1].0[i] < self .0[0].0[i] ||
       self .0[1].0[i] < other.0[0].0[i]
@@ -245,7 +245,7 @@ pub enum Region<T> {
 }
 
 impl<T> Region<T> {
-  pub fn contains(&self, pos: PosC<T>) -> bool where T: Ord {
+  pub fn contains(&self, pos: PosC<T>) -> bool where T: PartialOrd {
     use Region::*;
     match &self {
       Rectangle(a) => a.contains(pos),
