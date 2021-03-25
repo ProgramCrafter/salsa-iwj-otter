@@ -201,10 +201,12 @@ pub type PieceSpecLoadedOccultable =
 
 #[typetag::serde(tag="type")]
 pub trait PieceSpec: Debug + Sync + Send + 'static {
-  fn count(&self) -> usize { 1 }
-  fn load(&self, i: usize, gpc: &mut GPiece, ir: &InstanceRef)
+  fn count(&self, _pcaliases: &PieceAliases) -> usize { 1 }
+  fn load(&self, i: usize, gpc: &mut GPiece,
+          pcaliases: &PieceAliases, ir: &InstanceRef)
           -> Result<PieceSpecLoaded, SpecError>;
-  fn load_occult(&self) -> Result<Box<dyn OccultedPieceTrait>, SpecError> {
+  fn load_occult(&self, _pcaliases: &PieceAliases)
+                 -> Result<Box<dyn OccultedPieceTrait>, SpecError> {
     throw!(SpE::ComplexPieceWhereSimpleRequired)
   }
 }

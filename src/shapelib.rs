@@ -339,11 +339,11 @@ impl From<ItemSpecLoaded> for PieceSpecLoaded {
 
 impl ItemSpec {
   #[throws(SpecError)]
-  pub fn find_load(&self) -> ItemSpecLoaded {
+  pub fn find_load(&self, pcaliases: &PieceAliases) -> ItemSpecLoaded {
     let lib = libs_lookup(&self.lib)?;
     let idata = lib.items.get(&self.item)
       .ok_or(SpE::LibraryItemNotFound(self.item.clone()))?;
-    lib.load1(idata, &self.item)?
+    lib.load1(idata, &self.item, pcaliases)?
   }
 }
 
@@ -366,7 +366,8 @@ impl Contents {
   }
 
   #[throws(SpecError)]
-  fn load1(&self, idata: &ItemData, name: &str) -> ItemSpecLoaded {
+  fn load1(&self, idata: &ItemData, name: &str, pcaliases: &PieceAliases)
+           -> ItemSpecLoaded {
     let svg_data = self.load_svg(name, name)?;
 
     idata.group.d.outline.check(&idata.group)
@@ -389,7 +390,7 @@ impl Contents {
       face.xform.scale[0] *= -1.;
       faces.push(face);
     } else if let Some(back_spec) = &idata.group.d.back {
-      let p = back_spec.load_occult()?;
+      let p = back_spec.load_occult(pcaliases)?;
       let p = p.into();
       back = Some(p);
     }
@@ -441,7 +442,7 @@ impl Contents {
     let mut out = vec![];
     for (k,v) in &self.items {
       if !pat.matches(&k) { continue }
-      let (loaded, _) = match self.load1(v, &k) {
+      let (loaded, _) = match self.load1(v, &k, &default()) {
         Err(SpecError::LibraryItemNotFound(_)) => continue,
         e@ Err(_) => e?,
         Ok(r) => r,
@@ -461,22 +462,25 @@ impl Contents {
 #[typetag::serde(name="Lib")]
 impl PieceSpec for ItemSpec {
   #[throws(SpecError)]
-  fn load(&self, _: usize, _: &mut GPiece, _ir: &InstanceRef)
+  fn load(&self, _: usize, _: &mut GPiece,
+          pcaliases: &PieceAliases, _ir: &InstanceRef)
           -> PieceSpecLoaded {
-    self.find_load()?.into()
+    self.find_load(pcaliases)?.into()
   }
   #[throws(SpecError)]
-  fn load_occult(&self) -> Box<dyn OccultedPieceTrait> {
-    self.find_load()?.0 as Box<dyn OccultedPieceTrait>
+  fn load_occult(&self, pcaliases: &PieceAliases)
+                 -> Box<dyn OccultedPieceTrait> {
+    self.find_load(pcaliases)?.0 as Box<dyn OccultedPieceTrait>
   }
 }
 
 #[typetag::serde(name="LibList")]
 impl PieceSpec for MultiSpec {
-  fn count(&self) -> usize { self.items.len() }
+  fn count(&self, _pcaliases: &PieceAliases) -> usize { self.items.len() }
 
   #[throws(SpecError)]
-  fn load(&self, i: usize, _: &mut GPiece, _ir: &InstanceRef)
+  fn load(&self, i: usize, _: &mut GPiece,
+          pcaliases: &PieceAliases, _ir: &InstanceRef)
           -> PieceSpecLoaded
   {
     let item = self.items.get(i).ok_or_else(
@@ -484,7 +488,7 @@ impl PieceSpec for MultiSpec {
     )?;
     let item = format!("{}{}{}", &self.prefix, item, &self.suffix);
     let lib = self.lib.clone();
-    ItemSpec { lib, item }.find_load()?.into()
+    ItemSpec { lib, item }.find_load(pcaliases)?.into()
   }
 }
 

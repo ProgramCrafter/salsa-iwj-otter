@@ -403,7 +403,8 @@ fn unprepared_update(piece: PieceId) -> UnpreparedUpdates {
 #[typetag::serde(name="ChessClock")]
 impl PieceSpec for Spec {
   #[throws(SpecError)]
-  fn load(&self, _: usize, gpc: &mut GPiece, _ir: &InstanceRef)
+  fn load(&self, _: usize, gpc: &mut GPiece,
+          _pcaliases: &PieceAliases, _ir: &InstanceRef)
           -> PieceSpecLoaded {
     if self.time <= 0 { throw!(SpecError::NegativeTimeout) }
 

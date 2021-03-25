@@ -77,6 +77,7 @@ fn preview(items: Vec<ItemForOutput>) {
   }
 
   const SEVERAL: usize = 3;
+  let pcaliases = default();
 
   impl Prep {
     fn want_several(&self) -> bool {
@@ -91,7 +92,8 @@ fn preview(items: Vec<ItemForOutput>) {
   let mut pieces: Vec<Prep> = items.into_iter().map(|it| {
     let spec = ItemSpec { lib: it.0, item: it.1.itemname };
     (||{
-      let (p, _occultable) = spec.clone().find_load().context("load")?;
+      let (p, _occultable) = spec.clone().find_load(&pcaliases)
+        .context("load")?;
       // todo show occulted version too
       let mut uos = vec![];
       p.add_ui_operations(&mut uos, &GameState::dummy(), &GPiece::dummy())

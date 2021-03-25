@@ -635,7 +635,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let gref = ig_g.gref.clone();
       let ig = &mut **ig_g;
       let gs = &mut ig.gs;
-      let implicit: u32 = info.count()
+      let implicit: u32 = info.count(&ig.pcaliases)
         .try_into().map_err(
           |_| SpE::InternalError(format!("implicit item count out of range"))
         )?;
@@ -678,7 +678,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           moveable: default(),
         };
         let PieceSpecLoaded { p, occultable } =
-          info.load(piece_i as usize, &mut gpc, &gref)?;
+          info.load(piece_i as usize, &mut gpc, &ig.pcaliases, &gref)?;
         if p.nfaces() <= face.into() {
           throw!(SpecError::FaceNotFound);
         }
