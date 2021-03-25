@@ -107,7 +107,7 @@ pub struct PreparedPieceState {
   pub pinned: bool,
   pub moveable: PieceMoveable,
   pub uos: Vec<UoDescription>,
-  pub occregion: Option<Region<Coord>>,
+  pub occregion: Option<Region>,
 }
 
 #[derive(Debug,Copy,Clone,Serialize,Deserialize,Eq)]

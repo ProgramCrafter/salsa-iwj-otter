@@ -240,27 +240,28 @@ fn empty_area() {
 // ---------- Region ----------
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
-pub enum Region<T> {
+pub enum RegionC<T> {
   Rectangle(AreaC<T>),
 }
+pub type Region = RegionC<Coord>;
 
-impl<T> Region<T> {
+impl<T> RegionC<T> {
   pub fn contains(&self, pos: PosC<T>) -> bool where T: PartialOrd {
-    use Region::*;
+    use RegionC::*;
     match &self {
       Rectangle(a) => a.contains(pos),
     }
   }
 
-  pub fn overlaps(&self, other: &Region<T>) -> bool where T: PartialOrd {
-    use Region::*;
+  pub fn overlaps(&self, other: &RegionC<T>) -> bool where T: PartialOrd {
+    use RegionC::*;
     match (self, other) {
       (Rectangle(a), Rectangle(b)) => a.overlaps(b)
     }
   }
 
   pub fn empty() -> Self where T: Copy + num_traits::Zero + num_traits::One {
-    Region::Rectangle(AreaC::empty())
+    RegionC::Rectangle(AreaC::empty())
   }
 
 }

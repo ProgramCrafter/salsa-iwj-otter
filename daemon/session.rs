@@ -49,7 +49,7 @@ struct SessionPieceLoadJson<'r> {
   desc: Html,
   uos: &'r [UoDescription],
   moveable: PieceMoveable,
-  occregion: Option<&'r Region<Coord>>,
+  occregion: Option<&'r Region>,
 }
 
 #[derive(Serialize,Debug)]

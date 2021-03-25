@@ -14,7 +14,7 @@ use wasm_bindgen::prelude::*;
 
 use otter_base::imports::serde_json;
 
-use otter_base::geometry::{PosC,Region};
+use otter_base::geometry::{PosC,RegionC};
 use otter_base::zcoord;
 use otter_base::misc as base_misc;
 use zcoord::{Mutable,ZCoord};
@@ -145,7 +145,7 @@ pub struct BadRegionArguments;
 type Number = f64;
 
 #[wasm_bindgen]
-pub struct RegionList(HashMap<String, Region<Number>>);
+pub struct RegionList(HashMap<String, RegionC<Number>>);
 
 #[wasm_bindgen]
 pub fn empty_region_list() -> RegionList { RegionList(default()) }
@@ -157,7 +157,7 @@ impl RegionList {
   {
     let piece  = piece .as_string().ok_or(BadRegionArguments).e()?;
     let region = region.as_string().ok_or(BadRegionArguments).e()?;
-    let region: Region<Number> = serde_json::from_str(&region)
+    let region: RegionC<Number> = serde_json::from_str(&region)
       .map_err(|_| BadRegionArguments).e()?;
     self.0.insert(piece, region);
     Ok(())

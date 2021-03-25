@@ -43,7 +43,7 @@ struct Passive {
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
 pub struct Occultation {
-  region: Region<Coord>, // automatically affect pieces here
+  region: Region, // automatically affect pieces here
   occulter: PieceId, // kept in synch with PieceOccult::active
   notches: Notches, // kept in synch with PieceOccult::passive
   ppiece_use_size: Pos, // taken from first piece
@@ -108,7 +108,7 @@ impl PieceOccult {
 
   #[throws(IE)]
   pub fn active_region<'r>(&'r self, goccults: &'r GameOccults)
-                           -> Option<&'r Region<Coord>> {
+                           -> Option<&'r Region> {
     self.active_occ(goccults)?.map(
       |occ| &occ.region
     )
@@ -824,7 +824,7 @@ pub fn create_occultation(
   ipieces: &IPieces,
   ioccults: &IOccults,
   to_recalculate: &mut ToRecalculate,
-  region: Region<Coord>,
+  region: Region,
   occulter: PieceId,
   views: OccultationViews,
 ) -> Vec<(PieceId, PieceUpdateOps)> {

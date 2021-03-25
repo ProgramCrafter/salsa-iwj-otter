@@ -798,7 +798,7 @@ impl Rectangle {
   }
 
   #[throws(CoordinateOverflow)]
-  pub fn region(&self, centre: Pos) -> Region<Coord> {
+  pub fn region(&self, centre: Pos) -> Region {
     Region::Rectangle(self.area(centre)?)
   }
 }
