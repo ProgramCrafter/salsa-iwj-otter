@@ -236,3 +236,19 @@ fn empty_area() {
     assert!(! empty.contains(PosC([x,y])));
   } }
 }
+
+// ---------- Region ----------
+
+#[derive(Clone,Debug,Serialize,Deserialize)]
+pub enum Region<T> {
+  Rectangle(AreaC<T>),
+}
+
+impl<T> Region<T> {
+  pub fn contains(&self, pos: PosC<T>) -> bool where T: Ord {
+    use Region::*;
+    match &self {
+      Rectangle(a) => a.contains(pos),
+    }
+  }
+}
