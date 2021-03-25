@@ -103,7 +103,7 @@ impl Ctx {
       let mut w = su.w(&self.alice)?;
       let p = w.find_piece(pc)?;
       let start = p.posg()?;
-      let end = |d| { let mut e = start; e.0[1] = table_size.0[1] + d; e };
+      let end = |d| { let mut e = start; e.coords[1] = table_size.y() + d; e };
       let try_end = end(10);
       let exp_end = end(0);
       w.action_chain()
@@ -142,7 +142,7 @@ impl Ctx {
     {
       let mut w = su.w(&self.alice)?;
       w.action_chain()
-        .move_w(&w, PosC([10,10]))?
+        .move_w(&w, PosC::new(10,10))?
         .click()
         .release()
         .perform()
@@ -183,7 +183,7 @@ impl Ctx {
       let mut w = su.w(window)?;
       let p = w.find_piece(pc)?;
       let start = p.posg()?;
-      let try_end = (start + PosC([dx, 0]))?;
+      let try_end = (start + PosC::new(dx, 0))?;
 
       let (sx,sy) = w.posg2posw(start)?;
       w.action_chain()

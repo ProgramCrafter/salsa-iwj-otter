@@ -106,7 +106,7 @@ pub fn svg_circle_path(diam: f64) -> Html {
 }
 
 #[throws(SvgE)]
-pub fn svg_rectangle_path(PosC([x,y]): PosC<f64>) -> Html {
+pub fn svg_rectangle_path(PosC{coords: [x,y]}: PosC<f64>) -> Html {
   Html(format!("M {} {} h {} v {} h {} z",
                -x*0.5, -y*0.5, x, y, -x))
 }
@@ -120,7 +120,7 @@ impl<Desc, Outl:'static> OutlineTrait for GenericSimpleShape<Desc, Outl>
     to self.outline {
       fn outline_path(&self, scale: f64) -> Result<Html,IE>;
       fn thresh_dragraise(&self) -> Result<Option<Coord>,IE>;
-      fn bbox_approx(&self) -> Result<[Pos;2], IE>;
+      fn bbox_approx(&self) -> Result<Rect, IE>;
     }
   }
 }
@@ -161,15 +161,15 @@ impl piece_specs::PieceLabel {
       else { "black" }
     };
     let fontsz = 4.;
-    let PosC([x,y]) = {
+    let PosC{ coords: [x,y] } = {
       use piece_specs::PieceLabelPlace::*;
       let inout = match self.place {
         BottomLeft        | TopLeft        =>  1.,
         BottomLeftOutside | TopLeftOutside => -1.,
       };
-      let eff_size = (outline.xy - PosC([2., inout * 2.]))?;
+      let eff_size = (outline.xy - PosC::new(2., inout * 2.))?;
       let mut pos = (eff_size * -0.5)?;
-      let y = &mut pos.0[1];
+      let y = &mut pos.coords[1];
       *y += 0.5 * fontsz * inout;
       match self.place {
         BottomLeft | BottomLeftOutside => { *y *= -1. },
@@ -304,8 +304,8 @@ impl piece_specs::Square {
   #[throws(SpecError)]
   fn xy(&self) -> Pos {
     match *self.size.as_slice() {
-      [s,]  => PosC([s,s]),
-      [x,y] => PosC([x,y]),
+      [s,]  => PosC::new(s,s),
+      [x,y] => PosC::new(x,y),
       _ => throw!(SpecError::ImproperSizeSpec),
     }
   }

@@ -388,7 +388,7 @@ impl ThreadState {
 
 const W: Coord = 40;
 const H: Coord = 14;
-const OUTLINE: Rectangle = Rectangle { xy: PosC([W as f64, H as f64]) };
+const OUTLINE: Rectangle = Rectangle { xy: PosC::new(W as f64, H as f64) };
 
 
 // ==================== piece management, loading, etc. ====================
@@ -426,7 +426,7 @@ impl OutlineTrait for Clock {
     to OUTLINE {
       fn outline_path(&self, scale: f64) -> Result<Html, IE>;
       fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
-      fn bbox_approx(&self) -> Result<[Pos;2], IE>;
+      fn bbox_approx(&self) -> Result<Rect, IE>;
     }
   }
 }

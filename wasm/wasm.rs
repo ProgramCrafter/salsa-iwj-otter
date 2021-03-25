@@ -175,7 +175,7 @@ impl RegionList {
     self.0
       .values()
       .any(
-        |r| r.contains(PosC([x,y]))
+        |r| r.contains(PosC::new(x,y))
       )
   }
 }

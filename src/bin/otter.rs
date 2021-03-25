@@ -1121,10 +1121,10 @@ mod library_add {
       }
       Good([a, b]) => {
         // todo: take account of the space used by the markers themselves
-        let lhs = min(a.0[0], b.0[0]);
-        let rhs = max(a.0[0], b.0[0]);
-        let top = min(a.0[1], b.0[1]);
-        let bot = max(a.0[1], b.0[1]);
+        let lhs = min(a.x(), b.x());
+        let rhs = max(a.x(), b.x());
+        let top = min(a.y(), b.y());
+        let bot = max(a.y(), b.y());
         Placement {
           lhs, rhs, top, bot,
           clhs: lhs, cbot: top,
@@ -1136,10 +1136,10 @@ mod library_add {
     impl Placement {
       /// If returns None, has already maybe tried to take some space
       #[throws(AE)]
-      fn place(&mut self, bbox: &[Pos;2],
+      fn place(&mut self, bbox: &Rect,
                pieces: &Vec<MgmtGamePieceInfo>, ma: &MainOpts)
                -> Option<Pos> {
-        let PosC([w,h]) = (bbox[1] - bbox[0])?;
+        let PosC{ coords: [w,h] } = (bbox.br() - bbox.tl())?;
 
         let mut did_newline = false;
         let (ncbot, tlhs) = 'search: loop {
@@ -1155,12 +1155,12 @@ mod library_add {
             if let Some((nclhs, clash_bot)) = pieces.iter()
               .filter_map(|p| (|| if_chain! {
                 if let Some(pv) = p.visible.as_ref();
-                let tl = (pv.pos + pv.bbox[0])?;
-                let br = (pv.pos + pv.bbox[1])?;
-                if !(tl.0[0] >= self.clhs
-                    || tl.0[1] >= ncbot
-                    || br.0[0] <= tlhs
-                    || br.0[1] <= self.top);
+                let tl = (pv.pos + pv.bbox.tl())?;
+                let br = (pv.pos + pv.bbox.br())?;
+                if !(tl.x() >= self.clhs
+                    || tl.y() >= ncbot
+                    || br.x() <= tlhs
+                    || br.y() <= self.top);
                 then {
                   if ma.verbose > 2 {
                     eprintln!(
@@ -1168,7 +1168,7 @@ mod library_add {
                       &self, tlhs, ncbot, &p.itemname, &tl, &br
                     )
                   }
-                  Ok::<_,AE>(Some((br.0[0], br.0[1])))
+                  Ok::<_,AE>(Some((br.x(), br.y())))
                 } else {
                   Ok::<_,AE>(None)
                 }
@@ -1197,8 +1197,8 @@ mod library_add {
           // if we are simply too wide, we'll just loop until off the bottom
         };
         self.cbot = ncbot;
-        let ttopleft = PosC([tlhs, self.top]);
-        let tnominal = (ttopleft - bbox[0])?;
+        let ttopleft = PosC::new(tlhs, self.top);
+        let tnominal = (ttopleft - bbox.tl())?;
 
         if ma.verbose > 3 { dbgc!(&self, &tnominal); }
         Some(tnominal)

@@ -157,7 +157,7 @@ pub struct MgmtGamePieceVisibleInfo {
   pub pos: Pos,
   pub face: FaceId,
   pub desc_html: Html,
-  pub bbox: [Pos;2],
+  pub bbox: Rect,
 }
 
 #[derive(Debug,Copy,Clone,Serialize,Deserialize)]

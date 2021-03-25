@@ -287,34 +287,34 @@ impl OccDisplacement {
       OD::Stack{pos} => *pos,
       OD::Rect{rect} => (|| Some({
         let notch: Coord = notch.try_into().ok()?;
-        let mut spare = ((rect.0[1] - rect.0[0]).ok()?
+        let mut spare = ((rect.br() - rect.tl()).ok()?
                          - ppiece_use_size).ok()?;
-        for s in &mut spare.0 { *s = max(*s,1) }
+        for s in &mut spare.coords { *s = max(*s,1) }
         let fi = 0;
         let gi = 1;
-        let f_stride = max(ppiece_use_size.0[fi] / 4, 1);
-        let g_stride = max(ppiece_use_size.0[gi] / 3, 1);
-        let f_count = max(spare.0[fi] / f_stride, 1);
-        let g_count = max(spare.0[gi] / g_stride, 1);
+        let f_stride = max(ppiece_use_size.coords[fi] / 4, 1);
+        let g_stride = max(ppiece_use_size.coords[gi] / 3, 1);
+        let f_count = max(spare.coords[fi] / f_stride, 1);
+        let g_count = max(spare.coords[gi] / g_stride, 1);
         let mut f_num = notch % f_count;
         let     g_num = notch / f_count;
         if g_num % 2 != 0 { f_num = f_count - 1 - f_num }
-        let f_coord = rect.0[1].0[fi] - ppiece_use_size.0[fi] / 2 -
+        let f_coord = rect.br().coords[fi] - ppiece_use_size.coords[fi] / 2 -
             f_stride * f_num;
-        let g_coord = rect.0[0].0[gi] + ppiece_use_size.0[gi] / 2 +
+        let g_coord = rect.tl().coords[gi] + ppiece_use_size.coords[gi] / 2 +
           if g_num < g_count {
             g_stride * g_num
-          } else if g_num < spare.0[gi] {
+          } else if g_num < spare.coords[gi] {
             g_num
           } else {
-            spare.0[gi] - 1
+            spare.coords[gi] - 1
           };
         trace_dbg!("placement", spare,
                    f_stride, f_count, f_num, f_coord,
                    g_stride, g_count, g_num, g_coord);
-        let mut pos = PosC([0,0]);
-        pos.0[fi] = f_coord;
-        pos.0[gi] = g_coord;
+        let mut pos = PosC::zero();
+        pos.coords[fi] = f_coord;
+        pos.coords[gi] = g_coord;
         pos
       }))().unwrap_or_else(||{
         rect.middle()
@@ -634,7 +634,7 @@ fn recalculate_occultation_general<
         let ilk = ilk.borrow();
         if let Some(ilk) = ioccults.ilks.get(ilk);         // expected, really
         if let Ok::<_,IE>(bbox) = ilk.p_occ.bbox_approx(); // expected, really
-        if let Ok(size) = bbox[1] - bbox[0];               // expected, really
+        if let Ok(size) = bbox.br() - bbox.tl();           // expected, really
         then { occ.ppiece_use_size = size; }
       };
       let notch = occ.notches
@@ -872,7 +872,7 @@ pub fn create_occultation(
     region,
     occulter,
     views,
-    ppiece_use_size: PosC([0,0]),
+    ppiece_use_size: PosC::zero(),
     notches: default(),
   };
   debug!("creating occultation {:?}", &occultation);

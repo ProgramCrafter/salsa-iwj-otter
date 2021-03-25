@@ -101,9 +101,9 @@ fn preview(items: Vec<ItemForOutput>) {
 
       let bbox = p
         .bbox_approx()?;
-      let mut bbox = bbox
-        .iter()
-        .map(|PosC(xy)| xy.iter().map(|&p| p as f64).collect::<Vec<_>>())
+      let mut bbox = bbox.corners.iter()
+        .map(|PosC{coords}| coords.iter().map(|&p| p as f64)
+             .collect::<Vec<_>>())
         .collect::<Vec<_>>();
       for xy in &mut bbox[0] { *xy -= BORDER }
       for xy in &mut bbox[1] { *xy += BORDER }

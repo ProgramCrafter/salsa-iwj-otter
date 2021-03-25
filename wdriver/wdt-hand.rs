@@ -87,7 +87,7 @@ impl Ctx {
       w.action_chain()
         .move_pos(&pawn)?
         .click_and_hold()
-        .move_w(&w, (hand_posg + PosC([20,0]))?)?
+        .move_w(&w, (hand_posg + PosC::new(20,0))?)?
         .release()
         .perform()?;
       w.synch()?;

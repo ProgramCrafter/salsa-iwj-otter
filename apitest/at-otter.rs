@@ -375,10 +375,9 @@ pub fn update_update_pieces<PI:Idx>(
   let (op, d) = v["op"].as_object().unwrap().iter().next().unwrap();
 
   fn coord(j: &JsV) -> Pos {
-    PosC(
+    PosC::from_iter_2(
       j.as_array().unwrap().iter()
         .map(|n| n.as_i64().unwrap().try_into().unwrap())
-        .collect::<ArrayVec<_>>().into_inner().unwrap()
     )
   }
 
@@ -411,7 +410,7 @@ impl PieceOp for PieceOpData {
   fn api(&self) -> Option<PieceOpData> { Some((self.0, self.1.clone())) }
 }
 impl PieceOp for Pos {
-  fn api(&self) -> Option<PieceOpData> { Some(("m", json![self.0])) }
+  fn api(&self) -> Option<PieceOpData> { Some(("m", json![self.coords])) }
   fn update(&self, pi: &mut PieceInfo<JsV>) { pi.pos = *self }
 }
 impl PieceOp for () {
@@ -501,7 +500,7 @@ impl Ctx {
     let llm: [_;2] = llm.into_inner().unwrap();
     dbgc!(&llm);
 
-    for (llm, &pos) in izip!(&llm, [PosC([5,5]), PosC([50,25])].iter())
+    for (llm, &pos) in izip!(&llm, [PosC::new(5,5), PosC::new(50,25)].iter())
     {
       session.api_piece(GH::With, &llm.id, pos)?;
     }
@@ -559,7 +558,7 @@ impl Ctx {
         .collect::<ArrayVec<[_;2]>>()
         .into_inner().unwrap();
 
-      pawns.sort_by_key(|&p| -pieces[p].pos.0[0]);
+      pawns.sort_by_key(|&p| -pieces[p].pos.x());
       dbgc!(pawns)
     }
 
@@ -572,7 +571,7 @@ impl Ctx {
     // ----- alice: move pawns into alice's hand -----
 
     for (&pawn, &xoffset) in izip!(&a_pawns, [10,20].iter()) {
-      let pos = (a_pieces[hand].pos + PosC([xoffset, 0]))?;
+      let pos = (a_pieces[hand].pos + PosC::new(xoffset, 0))?;
       alice.api_piece(GH::With, (&mut a_pieces, pawn), pos)?;
     }
 
@@ -589,7 +588,7 @@ impl Ctx {
 
     {
       let p = a_pawns[0];
-      let alice_move_to = (a_pieces[p].pos + PosC([5, 5]))?;
+      let alice_move_to = (a_pieces[p].pos + PosC::new(5,5))?;
       let mut a_p = (&mut a_pieces, p);
 
       alice.api_piece(GH::Grab, PuSynch(&mut a_p), ())?;
@@ -619,7 +618,7 @@ impl Ctx {
 
     alice.api_piece(GH::With,
                     (&mut a_pieces, a_pawns[0]),
-                    PosC([ 15, 20 ]))?;
+                    PosC::new( 15, 20 ))?;
 
     alice.synchu(&mut a_pieces)?;
     bob.synchu(&mut b_pieces)?;

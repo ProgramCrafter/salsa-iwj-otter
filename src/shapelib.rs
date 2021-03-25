@@ -175,7 +175,7 @@ struct ItemOccultable {
 impl OutlineTrait for ItemOccultable { delegate! { to self.outline {
   fn outline_path(&self, scale: f64) -> Result<Html, IE>;
   fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
-  fn bbox_approx(&self) -> Result<[Pos; 2], IE>;
+  fn bbox_approx(&self) -> Result<Rect, IE>;
 }}}
 #[typetag::serde(name="Lib")]
 impl OccultedPieceTrait for ItemOccultable {
@@ -191,7 +191,7 @@ impl OccultedPieceTrait for ItemOccultable {
 pub struct ItemEnquiryData {
   pub itemname: String,
   pub f0desc: Html,
-  pub f0bbox: [Pos; 2],
+  pub f0bbox: Rect,
 }
 
 impl ItemEnquiryData {
@@ -204,7 +204,7 @@ impl ItemEnquiryData {
 impl OutlineTrait for Item { delegate! { to self.outline {
   fn outline_path(&self, scale: f64) -> Result<Html, IE>;
   fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
-  fn bbox_approx(&self) -> Result<[Pos; 2], IE>;
+  fn bbox_approx(&self) -> Result<Rect, IE>;
 }}}
 
 impl FaceTransform {
@@ -748,9 +748,9 @@ impl OutlineTrait for Circle {
     Some((self.diam * 0.5) as Coord)
   }
   #[throws(IE)]
-  fn bbox_approx(&self) -> [Pos;2] {
+  fn bbox_approx(&self) -> Rect {
     let d = (self.diam * 0.5).ceil() as Coord;
-    [PosC([-d,-d]), PosC([d, d])]
+    Rect{ corners: [PosC::new(-d,-d), PosC::new(d, d)]}
   }
 }
 
@@ -787,13 +787,13 @@ impl Rectangle {
     let offset = offset.try_map(
       |c| c.floor().to_i32().ok_or(CoordinateOverflow)
     )?;
-    let rect = RectC(
+    let rect = RectC{ corners:
       [-1,1].iter().map(|&signum| Ok::<_,CoordinateOverflow>({
         (centre + (offset * signum)?)?
       }))
         .collect::<Result<ArrayVec<_>,_>>()?
         .into_inner().unwrap()
-    );
+    };
     rect
   }
 
@@ -812,17 +812,17 @@ impl OutlineTrait for Rectangle {
   }
   #[throws(IE)]
   fn thresh_dragraise(&self) -> Option<Coord> {
-    let smallest: f64 = self.xy.0.iter().cloned()
+    let smallest: f64 = self.xy.coords.iter().cloned()
       .map(OrderedFloat::from).min().unwrap().into();
     Some((smallest * 0.5) as Coord)
   }
   #[throws(IE)]
-  fn bbox_approx(&self) -> [Pos;2] {
+  fn bbox_approx(&self) -> Rect {
     let pos: Pos = self.xy.map(
       |v| ((v * 0.5).ceil()) as Coord
     );
     let neg = (-pos)?;
-    [ neg, pos ]
+    Rect{ corners: [ neg, pos ] }
   }
 }
 
@@ -841,14 +841,14 @@ impl OutlineDefn for SquareDefn {
 impl SquareDefn {
   #[throws(LibraryLoadError)]
   fn get(group: &GroupData) -> Rectangle {
-    Rectangle { xy: PosC(
+    Rectangle { xy: PosC{ coords:
       match group.d.size.as_slice() {
         &[s] => [s,s],
         s if s.len() == 2 => s.try_into().unwrap(),
         size => throw!(LLE::WrongNumberOfSizeDimensions
                        { got: size.len(), expected: [1,2]}),
       }
-    )}
+    }}
   }
 }
 

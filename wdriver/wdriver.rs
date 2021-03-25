@@ -272,7 +272,7 @@ impl<'g> WindowGuard<'g> {
     })?;
     (||{
       let vec: ndarray::Array1<f64> =
-        posg.0.iter()
+        posg.coords.iter()
         .cloned()
         .map(|v| v as f64)
         .chain(iter::once(1.))
@@ -340,7 +340,7 @@ impl<'g> PieceElement<'g> {
       );
       let x = a("x")?;
       let y = a("y")?;
-      Ok::<_,AE>(PosC([x,y]))
+      Ok::<_,AE>(PosC::new(x,y))
     })()
       .with_context(|| self.pieceid.to_owned())
       .context("read position of piece out of x,y attributes")?

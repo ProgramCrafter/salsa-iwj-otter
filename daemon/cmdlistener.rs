@@ -28,8 +28,8 @@ const USERLIST: &str = "/etc/userlist";
 const CREATE_PIECES_MAX: u32 = 300;
 const OVERALL_PIECES_MAX: usize = 100_000; // don't make not fit in i32
 
-const DEFAULT_POS_START: Pos = PosC([20,20]);
-const DEFAULT_POS_DELTA: Pos = PosC([5,5]);
+const DEFAULT_POS_START: Pos = PosC::new(20,20);
+const DEFAULT_POS_DELTA: Pos = PosC::new(5,5);
 
 pub struct CommandListener {
   listener: UnixListener,
@@ -322,7 +322,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       (U{ pcs: vec![],
           log: vec![ LogEntry {
             html: Html(format!("{} resized the table to {}x{}",
-                               &who.0, size.0[0], size.0[1])),
+                               &who.0, size.x(), size.y())),
           }],
           raw: Some(vec![ PreparedUpdateEntry::SetTableSize(size) ]) },
        Fine, None, ig)

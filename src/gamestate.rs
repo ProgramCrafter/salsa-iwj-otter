@@ -27,7 +27,7 @@ pub struct Html(pub String);
 #[serde(transparent)]
 pub struct Timestamp(pub u64); /* time_t */
 
-pub const DEFAULT_TABLE_SIZE: Pos = PosC([ 400, 200 ]);
+pub const DEFAULT_TABLE_SIZE: Pos = PosC::new( 400, 200 );
 
 // ---------- general data types ----------
 
@@ -105,7 +105,7 @@ pub trait OutlineTrait: Debug + Sync + Send + 'static {
     self.outline_path(SELECT_SCALE)
   }
   fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
-  fn bbox_approx(&self) -> Result<[Pos;2], IE>;
+  fn bbox_approx(&self) -> Result<Rect, IE>;
 }
 
 #[derive(Debug,Copy,Clone,Serialize,Deserialize)]
@@ -271,13 +271,13 @@ impl ClampTable for Pos {
   fn clamped(self, range: Pos) -> Result<Pos, Pos> {
     let mut output = ArrayVec::new();
     let mut ok = true;
-    for (&pos, &rng) in izip!(self.0.iter(), range.0.iter()) {
+    for (&pos, &rng) in izip!(self.coords.iter(), range.coords.iter()) {
       output.push(match pos.clamped(rng) {
         Ok(pos) => pos,
         Err(pos) => { ok = false; pos },
       })
     }
-    let output = PosC(output.into_inner().unwrap());
+    let output = PosC{ coords: output.into_inner().unwrap() };
     if ok { Ok(output) } else { Err(output) }
   }
 }
@@ -332,7 +332,7 @@ impl GPiece {
   pub fn dummy() -> Self {
     let gen_dummy = Generation(1);
     GPiece {
-      pos: PosC([0,0]),
+      pos: PosC::zero(),
       face: default(),
       held: None,
       zlevel: ZLevel { z: default(), zg: gen_dummy },
@@ -413,7 +413,7 @@ fn xdata_get_mut_inner<
 impl GameState {
   pub fn dummy() -> Self { GameState {
     table_colour: Html::lit("green"),
-    table_size: PosC([300,200]),
+    table_size: PosC::new(300,200),
     pieces: default(),
     gen: Generation(0),
     log: default(),

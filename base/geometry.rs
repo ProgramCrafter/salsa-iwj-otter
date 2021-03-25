@@ -12,16 +12,16 @@ use num_traits::NumCast;
 
 pub type Coord = i32;
 
-#[derive(Clone,Copy,Debug,Serialize,Deserialize,Hash)]
+#[derive(Clone,Copy,Serialize,Deserialize,Hash)]
 #[derive(Eq,PartialEq,Ord,PartialOrd)]
 #[serde(transparent)]
-pub struct PosC<T>(pub [T; 2]);
+pub struct PosC<T>{ pub coords: [T; 2] }
 pub type Pos = PosC<Coord>;
 
-#[derive(Clone,Copy,Debug,Serialize,Deserialize,Hash)]
-#[derive(Eq,PartialEq)]
+#[derive(Clone,Copy,Serialize,Deserialize,Hash)]
+#[derive(Eq,PartialEq,Ord,PartialOrd)]
 #[serde(transparent)]
-pub struct RectC<T>(pub [PosC<T>; 2]);
+pub struct RectC<T>{ pub corners: [PosC<T>; 2] }
 pub type Rect = RectC<Coord>;
 
 // ---------- CheckedArith ----------
@@ -96,13 +96,41 @@ pub struct PosCFromIteratorError;
 display_as_debug!{PosCFromIteratorError}
 
 impl<T> PosC<T> {
+  pub const fn new(x: T, y: T) -> Self { PosC{ coords: [x,y] } }
+  pub fn both(v: T) -> Self where T: Copy { PosC::new(v,v) }
+  pub fn zero() -> Self where T: num_traits::Zero + Copy {
+    PosC::both(<T as num_traits::Zero>::zero())
+  }
+}
+impl<T> PosC<T> where T: Copy {
+  pub fn x(self) -> T { self.coords[0] }
+  pub fn y(self) -> T { self.coords[1] }
+}
+
+impl<T> PosC<T> {
   #[throws(PosCFromIteratorError)]
-  pub fn from_iter<I: Iterator<Item=T>>(i: I) -> Self { PosC(
+  pub fn from_iter<I: Iterator<Item=T>>(i: I) -> Self { PosC{ coords:
     i
       .collect::<ArrayVec<_>>()
       .into_inner()
       .map_err(|_| PosCFromIteratorError)?
-  )}
+  }}
+}
+
+impl<T> PosC<T> where T: Debug {
+  pub fn from_iter_2<I: Iterator<Item=T>>(i: I) -> Self { PosC{ coords:
+    i
+      .collect::<ArrayVec<_>>()
+      .into_inner()
+      .unwrap()
+  }}
+}
+
+impl<T> Debug for PosC<T> where T: Debug + Copy {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) {
+    write!(f, "[{:?},{:?}]", self.x(), self.y())?;
+  }
 }
 
 impl<T:Debug> PosC<T> {
@@ -111,11 +139,11 @@ impl<T:Debug> PosC<T> {
   pub fn try_from_iter_2<
     E: Debug,
     I: Iterator<Item=Result<T,E>>
-  >(i: I) -> Self { PosC(
+  >(i: I) -> Self { PosC{ coords:
     i
       .collect::<Result<ArrayVec<_>,E>>()?
       .into_inner().unwrap()
-  )}
+  }}
 }
 
 impl<T:CheckedArith> Add<PosC<T>> for PosC<T> {
@@ -124,8 +152,8 @@ impl<T:CheckedArith> Add<PosC<T>> for PosC<T> {
   fn add(self, rhs: PosC<T>) -> PosC<T> {
     PosC::try_from_iter_2(
       itertools::zip_eq(
-        self.0.iter().cloned(),
-        rhs .0.iter().cloned(),
+        self.coords.iter().cloned(),
+        rhs .coords.iter().cloned(),
       ).map(
         |(a,b)| a.checked_add(b)
       )
@@ -139,8 +167,8 @@ impl<T:CheckedArith> Sub<PosC<T>> for PosC<T> {
   fn sub(self, rhs: PosC<T>) -> PosC<T> {
     PosC::try_from_iter_2(
       itertools::zip_eq(
-        self.0.iter().cloned(),
-        rhs .0.iter().cloned(),
+        self.coords.iter().cloned(),
+        rhs .coords.iter().cloned(),
       ).map(|(a,b)| a.checked_sub(b))
     )?
   }
@@ -151,7 +179,7 @@ impl<S:Copy+Debug+Clone+'static,T:CheckedArithMul<S>> Mul<S> for PosC<T> {
   #[throws(CoordinateOverflow)]
   fn mul(self, rhs: S) -> PosC<T> {
     PosC::try_from_iter_2(
-      self.0.iter().cloned().map(
+      self.coords.iter().cloned().map(
         |a| a.checked_mul(rhs)
       )
     )?
@@ -163,7 +191,7 @@ impl<T:CheckedArith> Neg for PosC<T> {
   #[throws(CoordinateOverflow)]
   fn neg(self) -> Self {
     PosC::try_from_iter_2(
-      self.0.iter().cloned().map(|a| a.checked_neg())
+      self.coords.iter().cloned().map(|a| a.checked_neg())
     )?
   }
 }
@@ -171,7 +199,7 @@ impl<T:CheckedArith> Neg for PosC<T> {
 impl<T:Copy+Clone+Debug> PosC<T> {
   pub fn map<U:Copy+Clone+Debug, F: FnMut(T) -> U>(self, f: F) -> PosC<U> {
     PosC::from_iter(
-      self.0.iter().cloned().map(f)
+      self.coords.iter().cloned().map(f)
     ).unwrap()
   }
 }
@@ -181,51 +209,61 @@ impl<T:Copy+Clone+Debug> PosC<T> {
     (self, f: F) -> Result<PosC<U>,E>
   {
     PosC::try_from_iter_2(
-      self.0.iter().cloned().map(f)
+      self.coords.iter().cloned().map(f)
     )
   }
 }
 
 impl<T> Mean for PosC<T> where T: Mean + Debug {
   fn mean(&self, other: &Self) -> Self where T: Mean {
-    PosC::try_from_iter_2(
-      izip!(&self.0, &other.0)
-        .map(|(a,b)| Ok::<_,Void>(a.mean(b)))
-    ).unwrap_or_else(|v| match v { })
+    PosC::from_iter_2(
+      izip!(&self.coords, &other.coords)
+        .map(|(a,b)| a.mean(b))
+    )
   }
 }
 
 // ---------- Rect ----------
 
-impl<T> RectC<T> {
-  pub fn contains(&self, p: PosC<T>) -> bool where T: PartialOrd {
-    (0..2).all(|i| {
-      p.0[i] >= self.0[0].0[i] &&
-      p.0[i] <= self.0[1].0[i]
-    })
-  }
+impl<T> RectC<T> where T: Copy {
+  pub fn tl(&self) -> PosC<T> { self.corners[0] }
+  pub fn br(&self) -> PosC<T> { self.corners[1] }
+}
 
-  pub fn overlaps(&self, other: &RectC<T>) -> bool where T: PartialOrd {
-    ! (0..2).any(|i| (
-      other.0[1].0[i] < self .0[0].0[i] ||
-      self .0[1].0[i] < other.0[0].0[i]
-    ))
-  }
-
-  pub fn empty() -> Self where T: Copy + num_traits::Zero + num_traits::One {
-    let zero = <T as num_traits::Zero>::zero();
-    let one = <T as num_traits::One>::one();
-    RectC([
-      PosC([ one,  one  ]),
-      PosC([ zero, zero ]),
-    ])
+impl<T> Debug for RectC<T> where T: Debug + Copy {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) {
+    write!(f, "Rect[{:?},{:?}]", self.tl(), self.br())?;
   }
 }
 
-impl<T> RectC<T> where T: Mean + Debug {
+impl<T> RectC<T> {
+  pub fn contains(&self, p: PosC<T>) -> bool where T: PartialOrd + Copy {
+    (0..2).all(|i| {
+      p.coords[i] >= self.tl().coords[i] &&
+      p.coords[i] <= self.br().coords[i]
+    })
+  }
+
+  pub fn overlaps(&self, other: &RectC<T>) -> bool where T: PartialOrd + Copy {
+    ! (0..2).any(|i| (
+      other.br().coords[i] < self .tl().coords[i] ||
+      self .br().coords[i] < other.tl().coords[i]
+    ))
+  }
+
+  pub fn empty() -> Self where T: num_traits::Zero + num_traits::One + Copy {
+    RectC{ corners: [
+      PosC::both( <T as num_traits::One >::one()  ),
+      PosC::both( <T as num_traits::Zero>::zero() ),
+    ]}
+  }
+}
+
+impl<T> RectC<T> where T: Mean + Debug + Copy {
   pub fn middle(&self) -> PosC<T> {
-    Mean::mean(&self.0[0],
-               &self.0[1])
+    Mean::mean(&self.tl(),
+               &self.br())
   }
 }
 
@@ -233,19 +271,20 @@ impl<T> RectC<T> where T: Mean + Debug {
 fn empty_area() {
   let empty = Rect::empty();
   for x in -3..3 { for y in -3..3 {
-    assert!(! empty.contains(PosC([x,y])));
+    dbg!(empty,x,y);
+    assert!(! empty.contains(PosC::new(x,y)));
   } }
 }
 
 // ---------- Region ----------
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
-pub enum RegionC<T> {
+pub enum RegionC<T:Copy> {
   Rectangle(RectC<T>),
 }
 pub type Region = RegionC<Coord>;
 
-impl<T> RegionC<T> {
+impl<T:Copy> RegionC<T> {
   pub fn contains(&self, pos: PosC<T>) -> bool where T: PartialOrd {
     use RegionC::*;
     match &self {
