@@ -163,6 +163,7 @@ pub struct GameSpec {
   pub table_size: Option<Pos>,
   pub pieces: Vec<PiecesSpec>,
   pub table_colour: Option<ColourSpec>,
+  #[serde(default)] pub pcaliases: HashMap<String, Box<dyn PieceSpec>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

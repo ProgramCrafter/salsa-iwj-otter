@@ -667,6 +667,7 @@ mod reset_game {
       table_size,
       pieces,
       table_colour,
+      pcaliases,
     } = read_spec(&ma, &args.game_file)?;
 
     let mut insns = vec![];
@@ -693,6 +694,10 @@ mod reset_game {
     }
     for p in aliases {
       insns.push(MgmtGameInstruction::DeletePieceAlias(p));
+    }
+
+    for (alias, target) in pcaliases.into_iter() {
+      insns.push(MGI::DefinePieceAlias{ alias, target });
     }
 
     if let Some(table_size) = table_size {
