@@ -650,7 +650,7 @@ impl Ctx {
 #[throws(AE)]
 fn tests(mut c: Ctx) {
   test!(c, "library-load", c.library_load()?);
-  test!(c, "hidden-hand", c.hidden_hand()?);
+  test!(c, "hidden-hand",  c.hidden_hand()?);
 }
 
 #[throws(AE)]
