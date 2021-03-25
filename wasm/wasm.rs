@@ -5,12 +5,16 @@
 use otter_base::imports::*;
 
 use std::fmt::Display;
+use std::collections::hash_map::HashMap;
 
 use fehler::throws;
 use js_sys::JsString;
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
+use otter_base::imports::serde_json;
+
+use otter_base::geometry::{PosC,Region};
 use otter_base::zcoord;
 use otter_base::misc as base_misc;
 use zcoord::{Mutable,ZCoord};
@@ -131,6 +135,51 @@ impl TimestampAbbreviator {
 pub fn angle_transform(angle: u8) -> JsString {
   base_misc::raw_angle_transform(angle).into()
 }
+
+// ---------- region ----------
+
+#[derive(Error,Clone,Copy,Debug,Eq,PartialEq)]
+#[error("region or piece argument not suitable")]
+pub struct BadRegionArguments;
+
+type Number = f64;
+
+#[wasm_bindgen]
+pub struct RegionList(HashMap<String, Region<Number>>);
+
+#[wasm_bindgen]
+pub fn empty_region_list() -> RegionList { RegionList(default()) }
+
+#[wasm_bindgen]
+impl RegionList {
+  pub fn insert(&mut self, piece: JsValue, region: JsValue)
+                -> Result<(), JsValue>
+  {
+    let piece  = piece .as_string().ok_or(BadRegionArguments).e()?;
+    let region = region.as_string().ok_or(BadRegionArguments).e()?;
+    let region: Region<Number> = serde_json::from_str(&region)
+      .map_err(|_| BadRegionArguments).e()?;
+    self.0.insert(piece, region);
+    Ok(())
+  }
+
+  pub fn remove(&mut self, piece: JsValue)
+                -> Result<(), JsValue>
+  {
+    let piece  = piece .as_string().ok_or(BadRegionArguments).e()?;
+    self.0.remove(&piece);
+    Ok(())
+  }
+
+  pub fn contains_pos(&mut self, x: Number, y: Number) -> bool {
+    self.0
+      .values()
+      .any(
+        |r| r.contains(PosC([x,y]))
+      )
+  }
+}
+ 
 
 // ---------- setup ----------
 
