@@ -10,7 +10,7 @@ filename_suffix = ".gif"
 
 [group.clubs]
 item_prefix = "card-oxymoron-"
-outline = "Square"
+outline = "Rect"
 size = [73, 97]
 centre = [36.5, 48.5]
 scale = 0.25

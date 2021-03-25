@@ -735,10 +735,10 @@ pub fn load(libs: &Vec<Config1>) {
 }
 
 #[derive(Clone,Copy,Debug,Serialize,Deserialize)]
-pub struct Circle { pub diam: f64 }
+pub struct CircleShape { pub diam: f64 }
 
 #[dyn_upcast]
-impl OutlineTrait for Circle {
+impl OutlineTrait for CircleShape {
   #[throws(IE)]
   fn outline_path(&self, scale: f64) -> Html {
     svg_circle_path(self.diam * scale)?
@@ -761,7 +761,7 @@ impl OutlineDefn for CircleDefn {
   #[throws(LibraryLoadError)]
   fn check(&self, lgd: &GroupData) { Self::get_size(lgd)?; }
   fn load(&self, lgd: &GroupData) -> Result<Outline,IE> {
-    Ok(Circle {
+    Ok(CircleShape {
       diam: Self::get_size(lgd).map_err(|e| e.ought())?,
     }.into())
   }
@@ -778,9 +778,9 @@ impl CircleDefn {
 }
 
 #[derive(Clone,Copy,Debug,Serialize,Deserialize)]
-pub struct Rectangle { pub xy: PosC<f64> }
+pub struct RectShape { pub xy: PosC<f64> }
 
-impl Rectangle {
+impl RectShape {
   #[throws(CoordinateOverflow)]
   pub fn rect(&self, centre: Pos) -> RectC<Coord> {
     let offset = (self.xy * 0.5)?;
@@ -804,7 +804,7 @@ impl Rectangle {
 }
 
 #[dyn_upcast]
-impl OutlineTrait for Rectangle {
+impl OutlineTrait for RectShape {
   #[throws(IE)]
   fn outline_path(&self, scale: f64) -> Html {
     let xy = (self.xy * scale)?;
@@ -827,9 +827,9 @@ impl OutlineTrait for Rectangle {
 }
 
 #[derive(Deserialize,Debug)]
-struct SquareDefn { }
-#[typetag::deserialize(name="Square")]
-impl OutlineDefn for SquareDefn {
+struct RectDefn { }
+#[typetag::deserialize(name="Rect")]
+impl OutlineDefn for RectDefn {
   #[throws(LibraryLoadError)]
   fn check(&self, lgd: &GroupData) { Self::get(lgd)?; }
   fn load(&self, lgd: &GroupData) -> Result<Outline,IE> {
@@ -838,10 +838,10 @@ impl OutlineDefn for SquareDefn {
     )
   }
 }
-impl SquareDefn {
+impl RectDefn {
   #[throws(LibraryLoadError)]
-  fn get(group: &GroupData) -> Rectangle {
-    Rectangle { xy: PosC{ coords:
+  fn get(group: &GroupData) -> RectShape {
+    RectShape { xy: PosC{ coords:
       match group.d.size.as_slice() {
         &[s] => [s,s],
         s if s.len() == 2 => s.try_into().unwrap(),

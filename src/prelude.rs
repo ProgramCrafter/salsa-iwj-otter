@@ -139,6 +139,7 @@ pub use crate::occultilks::*;
 pub use crate::pcrender::*;
 pub use crate::pieces::*;
 pub use crate::shapelib;
+pub use crate::shapelib::{CircleShape, RectShape};
 pub use crate::slotmap_slot_idx::*;
 pub use crate::spec::*;
 pub use crate::spec::piece_specs::{FaceColourSpecs, SimpleCommon};

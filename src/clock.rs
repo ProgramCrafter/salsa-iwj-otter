@@ -3,7 +3,7 @@
 // There is NO WARRANTY.
 
 use crate::prelude::*;
-use shapelib::Rectangle;
+use shapelib::RectShape;
 
 use nix::sys::time::TimeValLike as TVL;
 
@@ -388,7 +388,7 @@ impl ThreadState {
 
 const W: Coord = 40;
 const H: Coord = 14;
-const OUTLINE: Rectangle = Rectangle { xy: PosC::new(W as f64, H as f64) };
+const OUTLINE: RectShape = RectShape { xy: PosC::new(W as f64, H as f64) };
 
 
 // ==================== piece management, loading, etc. ====================

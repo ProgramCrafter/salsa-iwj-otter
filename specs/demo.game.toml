@@ -13,7 +13,7 @@ edges = ["black","white"]
 
 [[pieces]]
 pos = [90, 20]
-type = "Square"
+type = "Rect"
 size = [10]
 angle.Compass = 1
 faces = ["blue", "grey"]
@@ -33,7 +33,7 @@ item = "chess-b-N"
 
 [[pieces]]
 pos = [120, 30]
-type = "Square"
+type = "Rect"
 size = [10]
 angle.Compass = 1
 faces = [ ]
@@ -45,7 +45,7 @@ pos = [40, 40]
 type = "Hand"
 edge = "white"
 colour = "grey"
-shape.type = "Rectangle"
+shape.type = "Rect"
 shape.xy = [70,20]
 
 [[pieces]]

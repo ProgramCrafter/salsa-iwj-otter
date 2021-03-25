@@ -193,14 +193,14 @@ pub struct CompassAngle(u8);
 mod outline {
   use super::*;
   use crate::prelude::*;
-  use crate::shapelib::{Circle, Rectangle};
+  use crate::shapelib::{CircleShape, RectShape};
   #[dyn_upcast(OutlineTrait)]
   #[enum_dispatch(OutlineTrait)]
   #[derive(Clone,Debug,Serialize,Deserialize)]
   #[serde(tag="type")]
   pub enum Outline {
-    Circle,
-    #[serde(alias="Square")] Rectangle,
+    #[serde(rename="Circle")] CircleShape,
+    #[serde(rename="Rect")]   RectShape,
   }
 }
 pub use outline::*;
@@ -226,7 +226,7 @@ pub mod piece_specs {
   }
 
   #[derive(Debug,Serialize,Deserialize)]
-  pub struct Square {
+  pub struct Rect {
     pub size: Vec<Coord>,
     #[serde(flatten)]
     pub common: SimpleCommon,

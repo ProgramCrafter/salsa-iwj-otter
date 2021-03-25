@@ -152,7 +152,7 @@ impl PieceTrait for SimpleShape {
 impl piece_specs::PieceLabel {
   #[throws(IE)]
   pub fn svg(&self, f: &mut Html,
-             outline: &shapelib::Rectangle,
+             outline: &RectShape,
              def_colour: Option<&Colour>,
              text: &Html) {
     let colour = {
@@ -281,7 +281,7 @@ pub trait SimplePieceSpec: Debug {
 impl SimplePieceSpec for piece_specs::Disc {
   #[throws(SpecError)]
   fn load_raw(&self) -> (SimpleShape, &SimpleCommon) {
-    let outline = shapelib::Circle { diam: self.diam as f64 };
+    let outline = CircleShape { diam: self.diam as f64 };
     (SimpleShape::new(
       Html::lit("disc"),
       outline.into(),
@@ -300,7 +300,7 @@ impl PieceSpec for piece_specs::Disc {
   }
 }
 
-impl piece_specs::Square {
+impl piece_specs::Rect {
   #[throws(SpecError)]
   fn xy(&self) -> Pos {
     match *self.size.as_slice() {
@@ -312,21 +312,25 @@ impl piece_specs::Square {
 }
 
 #[typetag::serde]
-impl SimplePieceSpec for piece_specs::Square {
+impl SimplePieceSpec for piece_specs::Rect {
   #[throws(SpecError)]
   fn load_raw(&self) -> (SimpleShape, &SimpleCommon) {
-    let outline = shapelib::Rectangle { xy: self.xy()?.map(|v| v as f64) };
+    let outline = RectShape { xy: self.xy()?.map(|v| v as f64) };
+    let desc = Html::lit(
+      if outline.xy.x() == outline.xy.y()
+      { "square" } else { "rectangle" }
+    );
     (SimpleShape::new(
-      Html::lit("square"),
+      desc,
       outline.into(),
-      "simple-square",
+      "simple-rect",
       &self.common,
     )?, &self.common)
   }
 }
 
 #[typetag::serde]
-impl PieceSpec for piece_specs::Square {
+impl PieceSpec for piece_specs::Rect {
   #[throws(SpecError)]
   fn load(&self, _: usize, _: &mut GPiece, _ir: &InstanceRef)
           -> PieceSpecLoaded {

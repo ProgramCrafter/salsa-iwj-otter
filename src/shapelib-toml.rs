@@ -153,7 +153,7 @@ pub struct GroupDetails {
   /// If specified, pieces in this group can be occulted.
   pub occulted: Option<OccultationMethod>,
 
-  /// One of `"Circle"` or `"Square"`, to define the outline shape.
+  /// One of `"Circle"` or `"Rect"`, to define the outline shape.
   /// The size is taken from `size`.
   ///
   /// This value is a string, not some weird Rust type, despite

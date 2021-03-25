@@ -55,7 +55,7 @@ count = 8
 
 [[pieces]]
 pos = [20, 85]
-type = "Square"
+type = "Rect"
 faces = ["yellow","#f4f"]
 posd = [10, 0]
 size = [7,7]
@@ -63,7 +63,7 @@ count = 8
 
 [[pieces]]
 pos = [20, 95]
-type = "Square"
+type = "Rect"
 faces = ["#333"]
 posd = [10, 0]
 size = [9,1]
@@ -71,7 +71,7 @@ count = 8
 
 [[pieces]]
 pos = [20, 100]
-type = "Square"
+type = "Rect"
 faces = ["#333"]
 posd = [10, 0]
 size = [9,1]
@@ -79,7 +79,7 @@ count = 8
 
 [[pieces]]
 pos = [17, 110]
-type = "Square"
+type = "Rect"
 faces = ["#333"]
 posd = [5, 0]
 size = [1,9]
@@ -190,7 +190,7 @@ pos = [20, 60]
 type = "Hand"
 edge = "white"
 colour = "grey"
-shape.type = "Rectangle"
+shape.type = "Rect"
 shape.xy = [20,10]
 
 [[pieces]]

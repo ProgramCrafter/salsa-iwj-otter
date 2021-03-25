@@ -112,7 +112,7 @@ files = """
 """
 
 [group.misc]
-outline = "Square"
+outline = "Rect"
 size = [448,326]
 centre = [224, 163]
 scale = 0.025
@@ -121,7 +121,7 @@ mgmt-library-load-marker   Box_with_polygons	a library load area marker
 """
 
 [group.card-backs]
-outline = "Square"
+outline = "Rect"
 size = [73, 97]
 
 # sizes to match cards-oxymoron:
@@ -136,7 +136,7 @@ card-rainbow		Card_back_13	a rainbow card
 """
 
 [group.cards-bellot]
-outline = "Square"
+outline = "Rect"
 size = [73, 97]
 
 # sizes to match cards-oxymoron:
