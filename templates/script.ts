@@ -772,8 +772,9 @@ function set_ungrab(piece: PieceId, p: PieceInfo) {
 }
 
 function clear_halo(piece: PieceId, p: PieceInfo) {
+  let was = p.last_seen_moved;
   p.last_seen_moved = null;
-  redisplay_ancillaries(piece,p);
+  if (was) redisplay_ancillaries(piece,p);
 }
 
 function ancillary_node(piece: PieceId, stroke: string): SVGGraphicsElement {
