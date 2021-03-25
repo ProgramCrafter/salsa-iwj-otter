@@ -6,6 +6,8 @@ use crate::imports::*;
 
 pub use crate::imports::{flexi_logger, thiserror};
 
+pub use crate::imports::serde_json;
+
 pub use std::any::Any;
 pub use std::borrow::Borrow;
 pub use std::borrow::Cow;

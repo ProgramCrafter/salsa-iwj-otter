@@ -32,7 +32,6 @@ pub use parking_lot;
 pub use pwd;
 pub use regex;
 pub use rmp_serde;
-pub use serde_json;
 pub use slotmap;
 pub use toml;
 pub use uds;

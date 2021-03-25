@@ -7,5 +7,7 @@ pub use derive_more;
 pub use if_chain;
 pub use itertools;
 pub use num_derive;
+pub use serde;
+pub use serde_json;
 pub use thiserror;
 pub use void;
