@@ -344,8 +344,8 @@ deploy: stamp/cargo.deploy-build bundled-sources assets libraries
 	rsync -r nwtemplates/*.tera $(DEPLOY_BASE)/nwtemplates/
 	ssh -o BatchMode=true $(DEPLOY_USER) $(DEPLOY_FINISH)
 	git branch -f $(DEPLOYED_BRANCH)
-	-git push origin
-	-git push chiark
+	-git push origin master
+	-git push chiark master
 
 #$(DEPLOY_BASE)/bundled-sources
 
