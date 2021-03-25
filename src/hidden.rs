@@ -87,27 +87,31 @@ impl PieceOccult {
   pub fn is_active(&self) -> bool { self.active.is_some() }
 
   #[throws(IE)]
-  pub fn active_views<'r>(&'r self, goccults: &'r GameOccults)
-                          -> Option<&'r OccultationViews> {
+  fn active_occ<'r>(&'r self, goccults: &'r GameOccults)
+                    -> Option<&'r Occultation> {
     if let Some(occid) = self.active {
       let occ = goccults.occults.get(occid).ok_or_else(
         || internal_error_bydebug(&self))?;
-      Some(&occ.views)
+      Some(occ)
     } else {
       None
     }
   }
 
   #[throws(IE)]
+  pub fn active_views<'r>(&'r self, goccults: &'r GameOccults)
+                          -> Option<&'r OccultationViews> {
+    self.active_occ(goccults)?.map(
+      |occ| &occ.views
+    )
+  }
+
+  #[throws(IE)]
   pub fn active_total_ppieces(&self, goccults: &GameOccults)
                               -> Option<NotchNumber> {
-    if let Some(occid) = self.active {
-      let occ = goccults.occults.get(occid).ok_or_else(
-        || internal_error_bydebug(&self))?;
-      Some(occ.notches.len())
-    } else {
-      None
-    }
+    self.active_occ(goccults)?.map(
+      |occ| occ.notches.len()
+    )
   }
 
   pub fn passive_occid(&self) -> Option<OccId> { Some(self.passive?.occid) }
