@@ -87,6 +87,8 @@ pub enum MgmtGameInstruction {
   ListPieces,
   AddPieces(PiecesSpec),
   DeletePiece(PieceId),
+  DeletePieceAlias(String),
+  DefinePieceAlias { alias: String, target: Box<dyn PieceSpec> },
 
   ResetPlayerAccess(PlayerId),
   RedeliverPlayerAccess(PlayerId),

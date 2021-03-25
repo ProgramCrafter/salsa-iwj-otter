@@ -375,6 +375,17 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
        None, ig)
     },
 
+    MGI::DeletePieceAlias(alias) => {
+      let ig = cs.check_acl(&ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
+      ig.pcaliases.remove(&alias);
+      (U{ pcs: vec![], log: vec![], raw: None }, MGR::Fine, None, ig)
+    },
+    MGI::DefinePieceAlias { alias, target } => {
+      let ig = cs.check_acl(&ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
+      ig.pcaliases.insert(alias, target);
+      (U{ pcs: vec![], log: vec![], raw: None }, MGR::Fine, None, ig)
+    },
+
     MGI::Synch => {
       let (mut ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Play])?;
       let mut buf = PrepareUpdatesBuffer::new(&mut ig, None, None);
