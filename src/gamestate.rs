@@ -201,6 +201,7 @@ pub type PieceSpecLoadedOccultable =
 
 #[typetag::serde(tag="type")]
 pub trait PieceSpec: Debug + Sync + Send + 'static {
+  #[throws(SpecError)]
   fn count(&self, _pcaliases: &PieceAliases) -> usize { 1 }
   fn load(&self, i: usize, gpc: &mut GPiece,
           pcaliases: &PieceAliases, ir: &InstanceRef)

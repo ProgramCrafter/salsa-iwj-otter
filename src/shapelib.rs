@@ -476,6 +476,7 @@ impl PieceSpec for ItemSpec {
 
 #[typetag::serde(name="LibList")]
 impl PieceSpec for MultiSpec {
+  #[throws(SpecError)]
   fn count(&self, _pcaliases: &PieceAliases) -> usize { self.items.len() }
 
   #[throws(SpecError)]
