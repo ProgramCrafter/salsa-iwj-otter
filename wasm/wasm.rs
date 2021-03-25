@@ -153,22 +153,26 @@ pub fn empty_region_list() -> RegionList { RegionList(default()) }
 #[wasm_bindgen]
 impl RegionList {
   pub fn insert(&mut self, piece: JsValue, region: JsValue)
-                -> Result<(), JsValue>
+                -> Result<bool, JsValue>
   {
     let piece  = piece .as_string().ok_or(BadRegionArguments).e()?;
     let region = region.as_string().ok_or(BadRegionArguments).e()?;
     let region: RegionC<Number> = serde_json::from_str(&region)
       .map_err(|_| BadRegionArguments).e()?;
-    self.0.insert(piece, region);
-    Ok(())
+    let changed = match self.0.insert(piece, region.clone()) {
+      Some(old_region) => old_region != region,
+      None => true,
+    };
+    Ok(changed)
   }
 
   pub fn remove(&mut self, piece: JsValue)
-                -> Result<(), JsValue>
+                -> Result<bool, JsValue>
   {
     let piece  = piece .as_string().ok_or(BadRegionArguments).e()?;
-    self.0.remove(&piece);
-    Ok(())
+    let was = self.0.remove(&piece);
+    let changed = was.is_some();
+    Ok(changed)
   }
 
   pub fn contains_pos(&mut self, x: Number, y: Number) -> bool {
