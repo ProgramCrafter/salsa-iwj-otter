@@ -1038,9 +1038,9 @@ impl InstanceGuard<'_> {
   fn load_game(accounts: &AccountsGuard,
                games: &mut GamesGuard,
                name: InstanceName) -> Option<InstanceRef> {
-    let InstanceSaveAccesses::<String,ActualIPieces,IOccults>
-    { tokens_players, mut ipieces, ioccults, mut aplayers, acl, links }
-    = match Self::load_something(&name, "a-") {
+    let InstanceSaveAccesses::<String,ActualIPieces,IOccults> {
+      tokens_players, mut ipieces, ioccults, mut aplayers, acl, links,
+    } = match Self::load_something(&name, "a-") {
       Ok(data) => data,
       Err(e) => if (||{
         let ae = match &e { InternalError::Anyhow(ae) => Some(ae), _=>None }?;
