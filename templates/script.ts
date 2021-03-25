@@ -816,19 +816,21 @@ function redisplay_ancillaries(piece: PieceId, p: PieceInfo) {
     p.pelem.prepend(nelem);
   } 
   if (p.held != null) {
-    let us_inoccult = false;
-    if (p.held == us) {
+    let da = null;
+    if (p.held != us) {
+      da = players[p.held!]!.dasharray;
+    } else {
       let [px, py] = piece_xy(p);
-      if (occregions.contains_pos(px, py)) {
-	us_inoccult = true;
+      let inoccult = occregions.contains_pos(px, py);
+      p.held_us_inoccult = inoccult;
+      if (inoccult) {
+	da = "0.9 0.6"; // dotted dasharray
       }
     }
     let nelem = ancillary_node(piece, held_surround_colour);
-    if (!us_inoccult) {
-      let da = players[p.held!]!.dasharray;
+    if (da !== null) {
       nelem.setAttributeNS(null,'stroke-dasharray',da);
     }
-    p.held_us_inoccult = us_inoccult;
     p.pelem.appendChild(nelem);
   }
 }
