@@ -79,7 +79,7 @@ pub enum OccDisplacement {
     pos: Pos,
   },
   Rect {
-    area: Area,
+    rect: Rect,
   },
 }
 
@@ -285,9 +285,9 @@ impl OccDisplacement {
     use OccDisplacement as OD;
     match self {
       OD::Stack{pos} => *pos,
-      OD::Rect{area} => (|| Some({
+      OD::Rect{rect} => (|| Some({
         let notch: Coord = notch.try_into().ok()?;
-        let mut spare = ((area.0[1] - area.0[0]).ok()?
+        let mut spare = ((rect.0[1] - rect.0[0]).ok()?
                          - ppiece_use_size).ok()?;
         for s in &mut spare.0 { *s = max(*s,1) }
         let fi = 0;
@@ -299,9 +299,9 @@ impl OccDisplacement {
         let mut f_num = notch % f_count;
         let     g_num = notch / f_count;
         if g_num % 2 != 0 { f_num = f_count - 1 - f_num }
-        let f_coord = area.0[1].0[fi] - ppiece_use_size.0[fi] / 2 -
+        let f_coord = rect.0[1].0[fi] - ppiece_use_size.0[fi] / 2 -
             f_stride * f_num;
-        let g_coord = area.0[0].0[gi] + ppiece_use_size.0[gi] / 2 +
+        let g_coord = rect.0[0].0[gi] + ppiece_use_size.0[gi] / 2 +
           if g_num < g_count {
             g_stride * g_num
           } else if g_num < spare.0[gi] {
@@ -317,7 +317,7 @@ impl OccDisplacement {
         pos.0[gi] = g_coord;
         pos
       }))().unwrap_or_else(||{
-        area.middle()
+        rect.middle()
       })
     }
   }
@@ -841,7 +841,7 @@ pub fn create_occultation(
         .chain(iter::once(&views.defview))
         .filter_map(|ok| { use OccKG::*; match ok {
           Visible | Scrambled | Invisible => None,
-          Displaced((_area, ref z)) => Some(z)
+          Displaced((_region, ref z)) => Some(z)
         }})
         .max()
     } {

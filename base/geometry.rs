@@ -21,8 +21,8 @@ pub type Pos = PosC<Coord>;
 #[derive(Clone,Copy,Debug,Serialize,Deserialize,Hash)]
 #[derive(Eq,PartialEq)]
 #[serde(transparent)]
-pub struct AreaC<T>(pub [PosC<T>; 2]);
-pub type Area = AreaC<Coord>;
+pub struct RectC<T>(pub [PosC<T>; 2]);
+pub type Rect = RectC<Coord>;
 
 // ---------- CheckedArith ----------
 
@@ -195,9 +195,9 @@ impl<T:Debug> PosC<T> {
   )}
 }
 
-// ---------- Area ----------
+// ---------- Rect ----------
 
-impl<T> AreaC<T> {
+impl<T> RectC<T> {
   pub fn contains(&self, p: PosC<T>) -> bool where T: PartialOrd {
     (0..2).all(|i| {
       p.0[i] >= self.0[0].0[i] &&
@@ -205,7 +205,7 @@ impl<T> AreaC<T> {
     })
   }
 
-  pub fn overlaps(&self, other: &AreaC<T>) -> bool where T: PartialOrd {
+  pub fn overlaps(&self, other: &RectC<T>) -> bool where T: PartialOrd {
     ! (0..2).any(|i| (
       other.0[1].0[i] < self .0[0].0[i] ||
       self .0[1].0[i] < other.0[0].0[i]
@@ -215,14 +215,14 @@ impl<T> AreaC<T> {
   pub fn empty() -> Self where T: Copy + num_traits::Zero + num_traits::One {
     let zero = <T as num_traits::Zero>::zero();
     let one = <T as num_traits::One>::one();
-    AreaC([
+    RectC([
       PosC([ one,  one  ]),
       PosC([ zero, zero ]),
     ])
   }
 }
 
-impl<T> AreaC<T> where T: Mean + Debug {
+impl<T> RectC<T> where T: Mean + Debug {
   pub fn middle(&self) -> PosC<T> {
     Mean::mean(&self.0[0],
                &self.0[1])
@@ -231,7 +231,7 @@ impl<T> AreaC<T> where T: Mean + Debug {
 
 #[test]
 fn empty_area() {
-  let empty = Area::empty();
+  let empty = Rect::empty();
   for x in -3..3 { for y in -3..3 {
     assert!(! empty.contains(PosC([x,y])));
   } }
@@ -241,7 +241,7 @@ fn empty_area() {
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
 pub enum RegionC<T> {
-  Rectangle(AreaC<T>),
+  Rectangle(RectC<T>),
 }
 pub type Region = RegionC<Coord>;
 
@@ -261,7 +261,7 @@ impl<T> RegionC<T> {
   }
 
   pub fn empty() -> Self where T: Copy + num_traits::Zero + num_traits::One {
-    RegionC::Rectangle(AreaC::empty())
+    RegionC::Rectangle(RectC::empty())
   }
 
 }

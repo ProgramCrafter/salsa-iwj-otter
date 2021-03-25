@@ -187,9 +187,9 @@ impl PieceTrait for Hand {
         });
         let (region, views) = (||{
           dbgc!("claiming region");
-          let area   = self.shape.outline.area  (gpc.pos)?;
+          let rect   = self.shape.outline.rect  (gpc.pos)?;
           let region = self.shape.outline.region(gpc.pos)?;
-          let displace = OccDisplacement::Rect { area };
+          let displace = OccDisplacement::Rect { rect };
           let views = OwnerOccultationView {
             owner: player,
             owner_view: OccK::Visible,

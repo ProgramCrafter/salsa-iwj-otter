@@ -782,24 +782,24 @@ pub struct Rectangle { pub xy: PosC<f64> }
 
 impl Rectangle {
   #[throws(CoordinateOverflow)]
-  pub fn area(&self, centre: Pos) -> AreaC<Coord> {
+  pub fn rect(&self, centre: Pos) -> RectC<Coord> {
     let offset = (self.xy * 0.5)?;
     let offset = offset.try_map(
       |c| c.floor().to_i32().ok_or(CoordinateOverflow)
     )?;
-    let region = AreaC(
+    let rect = RectC(
       [-1,1].iter().map(|&signum| Ok::<_,CoordinateOverflow>({
         (centre + (offset * signum)?)?
       }))
         .collect::<Result<ArrayVec<_>,_>>()?
         .into_inner().unwrap()
     );
-    region
+    rect
   }
 
   #[throws(CoordinateOverflow)]
   pub fn region(&self, centre: Pos) -> Region {
-    Region::Rectangle(self.area(centre)?)
+    Region::Rectangle(self.rect(centre)?)
   }
 }
 
