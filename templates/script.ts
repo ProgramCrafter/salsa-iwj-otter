@@ -815,9 +815,19 @@ function redisplay_ancillaries(piece: PieceId, p: PieceInfo) {
     p.pelem.prepend(nelem);
   } 
   if (p.held != null) {
-    let da = players[p.held!]!.dasharray;
+    let us_inoccult = false;
+    if (p.held == us) {
+      let [px, py] = piece_xy(p);
+      if (occregions.contains_pos(px, py)) {
+	us_inoccult = true;
+      }
+    }
     let nelem = ancillary_node(piece, held_surround_colour);
-    nelem.setAttributeNS(null,'stroke-dasharray',da);
+    if (!us_inoccult) {
+      let da = players[p.held!]!.dasharray;
+      nelem.setAttributeNS(null,'stroke-dasharray',da);
+    }
+    p.held_us_inoccult = us_inoccult;
     p.pelem.appendChild(nelem);
   }
 }
