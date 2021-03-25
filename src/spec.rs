@@ -78,6 +78,8 @@ pub enum SpecError {
   UnsupportedShape,
   NegativeTimeout,
   ComplexPieceWhereSimpleRequired,
+  AliasNotFound,
+  AliasTargetMultiSpec,
 }
 display_as_debug!{SpecError}
 
