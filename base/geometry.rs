@@ -279,6 +279,7 @@ fn empty_area() {
 // ---------- Region ----------
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
+#[derive(Ord,PartialOrd,Eq,PartialEq)]
 pub enum RegionC<T:Copy> {
   Rect(RectC<T>),
 }
