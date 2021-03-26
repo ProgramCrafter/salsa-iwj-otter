@@ -180,6 +180,7 @@ pub type SpE = SpecError;
 // hidden.rs
 pub type OccK = OccultationKind;
 pub use OccultationKindGeneral as OccKG;
+pub use OccultationKindAlwaysOk as OccKA;
 
 // pcrender.rs
 pub use PriOccultedGeneral as PriOG;

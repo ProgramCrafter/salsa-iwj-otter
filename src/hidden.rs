@@ -72,6 +72,25 @@ pub enum OccultationKindGeneral<D> {
 }
 pub type OccultationKind = OccultationKindGeneral<(OccDisplacement,ZCoord)>;
 
+#[derive(Clone,Debug)]
+#[derive(Eq,PartialEq,Hash)]
+pub enum OccultationKindAlwaysOk {
+  Visible,
+  // Scrambled is only allowed as the only view; enforced by our
+  // OccultationViewDef trait impls
+  Displaced((OccDisplacement,ZCoord)),
+  Invisible,
+}
+impl From<OccultationKindAlwaysOk> for OccultationKind {
+  fn from(i: OccultationKindAlwaysOk) -> OccultationKind {
+    match i {
+      OccKA::Visible      => OccKG::Visible,
+      OccKA::Displaced(d) => OccKG::Displaced(d),
+      OccKA::Invisible    => OccKG::Invisible,
+    }
+  }
+}
+
 #[derive(Clone,Debug,Serialize,Deserialize)]
 #[derive(Eq,PartialEq,Hash)]
 pub enum OccDisplacement {
@@ -788,9 +807,9 @@ pub struct UniformOccultationView(
 );
 #[derive(Debug,Clone)]
 pub struct OwnerOccultationView {
-  pub defview: OccultationKind,
+  pub defview: OccultationKindAlwaysOk,
   pub owner: PlayerId,
-  pub owner_view: OccultationKind,
+  pub owner_view: OccultationKindAlwaysOk,
 }
 
 pub trait OccultationViewDef {
@@ -806,10 +825,10 @@ impl OccultationViewDef for UniformOccultationView {
 impl OccultationViewDef for OwnerOccultationView {
   #[throws(IE)]
   fn views(self) -> OccultationViews { OccultationViews {
-    defview: self.defview,
+    defview: self.defview.into(),
     views: vec![OccultView {
       players: vec![self.owner],
-      occult: self.owner_view,
+      occult: self.owner_view.into(),
     }]
   } }
 }

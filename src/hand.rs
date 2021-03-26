@@ -193,8 +193,8 @@ impl PieceTrait for Hand {
           let displace = OccDisplacement::Rect { rect };
           let views = OwnerOccultationView {
             owner: player,
-            owner_view: OccK::Visible,
-            defview: OccK::Displaced((displace, gpc.zlevel.z.clone())),
+            owner_view: OccKA::Visible,
+            defview: OccKA::Displaced((displace, gpc.zlevel.z.clone())),
           }.views()?;
           dbgc!("claiming got region", &region, &views);
           Ok::<_,IE>((region, views))
