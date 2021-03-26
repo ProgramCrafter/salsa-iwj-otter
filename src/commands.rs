@@ -25,10 +25,7 @@ pub enum MgmtCommand {
     game: InstanceName,
     insns: Vec<MgmtGameInstruction>,
   },
-  ListGames {
-    all: Option<bool>, // in scope of selected account by default
-    //   todo: should list games that are accessible, not just own
-  },
+  ListGames { all: Option<bool> },
   AlterGame {
     game: InstanceName,
     insns: Vec<MgmtGameInstruction>,
