@@ -592,8 +592,8 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     MGI::DeletePiece(piece) => {
       let (ig_g, modperm, _) = cs.check_acl_modify_pieces(ag, ig)?;
       let ig = &mut **ig_g;
-      let ipc = ig.ipieces.as_mut(modperm)
-        .remove(piece).ok_or(ME::PieceNotFound)?;
+      let _ipc = ig.ipieces.as_mut(modperm)
+        .get(piece).ok_or(ME::PieceNotFound)?;
       let gs = &mut ig.gs;
       let gpc = gs.pieces.as_mut(modperm).get_mut(piece);
       let mut xupdates = vec![];
@@ -617,6 +617,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       }
       let ioccults = &ig.ioccults;
       let gpc = gs.pieces.as_mut(modperm).remove(piece);
+      let ipc = ig.ipieces.as_mut(modperm).remove(piece).unwrap();
       let desc_html = if let Some(gpc) = &gpc {
         let pri = PieceRenderInstructions::new_visible(default());
         pri.describe(ioccults,&gs.occults, gpc, &ipc)
