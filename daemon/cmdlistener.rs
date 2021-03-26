@@ -831,6 +831,7 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   };
   let res = (||{
     for insn in insns.drain(0..) {
+      trace_dbg!("exeucting game insns", insn);
       let (updates, resp, unprepared, ig) =
         execute_game_insn(cs, ag, igu, insn, &who,
                           &mut to_permute)?;
