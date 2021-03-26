@@ -1264,3 +1264,41 @@ mod library_add {
     call,
   )}
 }
+
+//---------- list-pieces ----------
+
+mod list_pieces {
+  use super::*;
+
+  #[derive(Default,Debug)]
+  struct Args {
+    table_name: String,
+  }
+
+  fn subargs(sa: &mut Args) -> ArgumentParser {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.table_name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
+    ap
+  }
+
+  #[throws(AE)]
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
+    let mut chan = access_game(&ma, &args.table_name)?;
+    let (pieces, pcaliases) = chan.list_pieces()?;
+    for p in pieces {
+      println!("{:?}", p);
+    }
+    for a in pcaliases {
+      println!("{:?}", a);
+    }
+  }
+
+  inventory::submit!{Subcommand(
+    "list-pieces",
+    "List pieces in the game",
+    call,
+  )}
+}
