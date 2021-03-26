@@ -624,6 +624,9 @@ impl Ctx {
     bob.synchu(&mut b_pieces)?;
     assert_eq!(b_pieces[b_pawns[1]].pos,
                a_pieces[a_pawns[0]].pos);
+
+    let command = self.su().ds.ss("reset @table@ demo")?;
+    self.otter(&command)?;
   }
 }
 
