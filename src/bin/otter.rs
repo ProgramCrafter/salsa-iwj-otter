@@ -501,6 +501,7 @@ fn connect(ma: &MainOpts) -> Conn {
 
 const PLAYER_ALWAYS_PERMS: &[TablePermission] = &[
   TP::TestExistence,
+  TP::ShowInList,
   TP::ViewNotSecret,
   TP::Play,
 ];
@@ -600,7 +601,7 @@ mod list_games {
     let mut ap = ArgumentParser::new();
     ap.refer(&mut sa.all)
       .add_option(&["--all"],StoreTrue,
-                    "list all games, not just yours");
+                  "user superuser access to list *all* games");
     ap
   }
 

@@ -121,6 +121,7 @@ pub struct AclEntry<Perm: Eq + Hash> {
 #[derive(FromPrimitive,ToPrimitive)]
 pub enum TablePermission {
   TestExistence,
+  ShowInList,
   ViewNotSecret,
   Play,
   ChangePieces,

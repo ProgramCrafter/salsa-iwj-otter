@@ -180,17 +180,33 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
     }
 
     MC::ListGames { all } => {
-      let (scope, auth) = if all == Some(true) {
-        let auth = authorise_scope_direct(cs, &AS::Server)?;
-        (None, auth.therefore_ok())
+      let ag = AccountsGuard::lock();
+      let names = Instance::list_names(
+        None, Authorisation::authorise_any());
+      let auth_all = if all == Some(true) {
+        let auth =cs.superuser.ok_or(ME::AuthorisationError)?.into();
+        Some(auth)
       } else {
-        let AccountSpecified { notional_account, auth, .. } =
-          cs.account.as_ref().ok_or(ME::SpecifyAccount)?;
-        (Some(notional_account), *auth)
+        None
       };
-      let mut games = Instance::list_names(scope, auth);
-      games.sort_unstable();
-      MR::GamesList(games)
+      let mut names = names.into_iter().map(|name| {
+        let gref = Instance::lookup_by_name_unauth(&name)?;
+        let mut igu = gref.lock_even_poisoned();
+        let _ig = if let Some(auth_all) = auth_all {
+          igu.by_ref(auth_all)
+        } else {
+          cs.check_acl(&ag, &mut igu, PCH::Instance, &[TP::ShowInList])?.0
+        };
+        Ok::<_,ME>(name)
+      }).filter(|ent| matches_doesnot!(
+        ent,
+        = Ok(_),
+        ! Err(ME::GameNotFound) | Err(ME::AuthorisationError),
+        = Err(_),
+      ))
+        .collect::<Result<Vec<_>,_>>() ?;
+      names.sort_unstable();
+      MR::GamesList(names)
     }
 
     MC::AlterGame { game, insns, how } => {
