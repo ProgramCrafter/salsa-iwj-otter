@@ -648,8 +648,10 @@ impl DirSubst {
   pub fn otter<S:AsRef<str>>(&self, xargs: &[S]) {
     let ds = self;
     let exe = ds.subst("@target@/debug/otter")?;
+    let specs = self.subst("@src@/specs")?;
     let mut args: Vec<&str> = vec![];
     args.extend(&["--config", CONFIG]);
+    args.extend(&["--spec-dir", &specs]);
     args.extend(xargs.iter().map(AsRef::as_ref));
     let dbg = format!("running {} {:?}", &exe, &args);
     debug!("{}", &dbg);
