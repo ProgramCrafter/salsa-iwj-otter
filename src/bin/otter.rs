@@ -1333,7 +1333,7 @@ mod list_accounts {
       x => throw!(anyhow!("unexpected response to ListAccounts: {:?}", &x)),
     };
     for a in accounts {
-      println!("{:?}", a);
+      println!("{}", a);
     }
   }
 
