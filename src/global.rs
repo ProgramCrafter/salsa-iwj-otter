@@ -313,6 +313,14 @@ impl<A> Unauthorised<InstanceRef, A> {
     let must_not_escape = self.by_ref(Authorisation::authorise_any());
     Unauthorised::of(must_not_escape.lock()?)
   }
+
+  pub fn lock_even_poisoned<'r>(&'r self) -> Unauthorised<InstanceGuard<'r>, A> {
+    let must_not_escape = self.by_ref(Authorisation::authorise_any());
+    Unauthorised::of(InstanceGuard {
+      c: must_not_escape.lock_even_poisoned(),
+      gref: must_not_escape.clone(),
+    })
+  }
 }
 
 impl Instance {
