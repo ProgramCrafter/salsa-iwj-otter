@@ -387,6 +387,22 @@ impl AccountsGuard {
     self.save_accounts_now()?;
   }
 
+  pub fn list_accounts_all(&self, _: AuthorisationSuperuser)
+                           -> Vec<Arc<AccountName>> {
+    let accounts = self.0.as_ref().expect("loaded");
+    accounts.names.keys()
+      .cloned().collect()
+  }
+
+  pub fn list_accounts_scope(&self, scope: &AccountScope,
+                             _: Authorisation<AccountName>)
+                             -> Vec<Arc<AccountName>> {
+    let accounts = self.0.as_ref().expect("loaded");
+    accounts.names.keys()
+      .filter(|name| &name.scope == scope)
+      .cloned().collect()
+  }
+
   #[throws(AccountsSaveError)]
   pub fn save_accounts_now(&self) {
     let accounts = self.0.as_ref().expect("loaded");

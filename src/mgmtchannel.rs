@@ -68,7 +68,7 @@ impl MgmtChannel {
     self.write(&cmd).context("send command")?;
     let resp = self.read().context("read response")?;
     match &resp {
-      Fine | GamesList{..} | LibraryItems(_) => { },
+      Fine | AccountsList{..} | GamesList{..} | LibraryItems(_) => { },
       AlterGame { error: None, .. } => { },
       Error { error } => {
         Err(error.clone()).context(

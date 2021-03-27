@@ -140,6 +140,19 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       Fine
     }
 
+    MC::ListAccounts { all } => {
+      let ag = AccountsGuard::lock();
+      let names = if all == Some(true) {
+        let auth = cs.superuser.ok_or(ME::AuthorisationError)?;
+        ag.list_accounts_all(auth.into())
+      } else {
+        let AccountSpecified { notional_account, auth, .. } =
+          cs.account.as_ref().ok_or(ME::SpecifyAccount)?;
+        ag.list_accounts_scope(&notional_account.scope, *auth)
+      };
+      MR::AccountsList(names)
+    }
+
     MC::CreateGame { game, insns } => {
       let mut ag = AccountsGuard::lock();
       let mut games = games_lock();

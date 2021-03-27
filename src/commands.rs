@@ -17,6 +17,7 @@ pub enum MgmtCommand {
   CreateAccount(AccountDetails),
   UpdateAccount(AccountDetails),
   DeleteAccount(AccountName),
+  ListAccounts { all: Option<bool> },
 
   SelectAccount(AccountName), // success does not mean account exists
   CheckAccount, // success *does* mean account exists and we have access
@@ -68,6 +69,7 @@ pub enum MgmtResponse {
   Fine,
   Error { error: MgmtError },
   AlterGame { error: Option<MgmtError>, responses: Vec<MgmtGameResponse> },
+  AccountsList(Vec<Arc<AccountName>>),
   GamesList(Vec<Arc<InstanceName>>),
   LibraryItems(Vec<shapelib::ItemEnquiryData>),
 }

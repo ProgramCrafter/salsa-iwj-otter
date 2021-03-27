@@ -1303,3 +1303,43 @@ mod list_pieces {
     call,
   )}
 }
+
+//---------- list-accounts ----------
+
+mod list_accounts {
+  use super::*;
+
+  #[derive(Default,Debug)]
+  struct Args {
+    all: bool,
+  }
+
+  fn subargs(sa: &mut Args) -> ArgumentParser {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.all)
+      .add_option(&["--all"],StoreTrue,
+                  "user superuser access to list all accounts");
+    ap
+  }
+
+  #[throws(AE)]
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
+    let mut conn = connect(&ma)?;
+    let all = Some(args.all);
+    let accounts = match conn.cmd(&MC::ListAccounts { all })? {
+      MR::AccountsList(g) => g,
+      x => throw!(anyhow!("unexpected response to ListAccounts: {:?}", &x)),
+    };
+    for a in accounts {
+      println!("{:?}", a);
+    }
+  }
+
+  inventory::submit!{Subcommand(
+    "list-accounts",
+    "List accounts in your account scope",
+    call,
+  )}
+}
