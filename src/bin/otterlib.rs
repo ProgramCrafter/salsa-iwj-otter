@@ -90,7 +90,7 @@ fn preview(items: Vec<ItemForOutput>) {
   }
 
   let mut pieces: Vec<Prep> = items.into_iter().map(|it| {
-    let spec = ItemSpec { lib: it.0, item: it.1.itemname };
+    let spec = ItemSpec { lib: it.0, item: it.1.itemname.into() };
     (||{
       let (p, _occultable) = spec.clone().find_load(&pcaliases)
         .context("load")?;

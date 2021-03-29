@@ -1056,7 +1056,7 @@ mod library_add {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = access_game(&ma, &args.table_name)?;
     let (pieces, _pcaliases) = chan.list_pieces()?;
-    let markers = pieces.iter().filter(|p| p.itemname == MAGIC)
+    let markers = pieces.iter().filter(|p| p.itemname.as_str() == MAGIC)
       .collect::<Vec<_>>();
 
     let already = if args.incremental { Some(
@@ -1242,7 +1242,7 @@ mod library_add {
       };
       let spec = shapelib::ItemSpec {
         lib: args.tlg.pat.lib.clone(),
-        item: it.itemname.clone(),
+        item: it.itemname.as_str().to_owned(),
       };
       let spec = PiecesSpec {
         pos: Some(pos),

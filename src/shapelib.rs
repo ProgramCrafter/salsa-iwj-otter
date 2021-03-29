@@ -33,7 +33,7 @@ pub trait OutlineDefn: Debug + Sync + Send + 'static {
 pub struct Contents {
   libname: String,
   dirname: String,
-  items: HashMap<String /* item (name) */, ItemData>,
+  items: HashMap<GoodItemName, ItemData>,
 }
 
 #[derive(Debug,Clone)]
@@ -66,6 +66,44 @@ struct OccData_Internal {
   xform: FaceTransform,
   svgd: parking_lot::Mutex<Option<Arc<Html>>>,
 }
+
+mod item_name {
+  use super::*;
+
+  #[derive(Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash)]
+  #[derive(Serialize,Deserialize)]
+  #[serde(transparent)]
+  pub struct GoodItemName(String);
+  impl Borrow<String> for GoodItemName {
+    fn borrow(&self) -> &String { &self.0 }
+  }
+  impl GoodItemName {
+    pub fn as_str(&self) -> &str { &self.0 }
+  }
+  impl From<GoodItemName> for String {
+    fn from(i: GoodItemName) -> String { i.0 }
+  }
+  impl Display for GoodItemName {
+    #[throws(fmt::Error)]
+    fn fmt(&self, f: &mut fmt::Formatter) { f.write_str(&self.0)? }
+  }
+
+  impl TryFrom<String> for GoodItemName {
+    type Error = LibraryLoadError;
+    #[throws(LibraryLoadError)]
+    fn try_from(s: String) -> GoodItemName {
+      if s.as_bytes().iter().all(|&c:&u8| (
+        c.is_ascii_alphanumeric() ||
+        b"-_. ()".contains(&c)
+      )) {
+        GoodItemName(s)
+      } else {
+        throw!(LLE::BadItemName(s))
+      }
+    }
+  }
+}
+pub use item_name::*;
 
 #[derive(Error,Debug)]
 pub enum LibraryLoadError {
@@ -109,6 +147,8 @@ pub enum LibraryLoadError {
   MultipleMultipleFaceDefinitions,
   #[error("{0}")]
   UnsupportedColourSpec(#[from] UnsupportedColourSpec),
+  #[error("bad item name (invalid characters) in {0:?}")]
+  BadItemName(String),
 }
 
 impl LibraryLoadError {
@@ -191,14 +231,14 @@ impl OccultedPieceTrait for ItemOccultable {
 
 #[derive(Debug,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
 pub struct ItemEnquiryData {
-  pub itemname: String,
+  pub itemname: GoodItemName,
   pub f0desc: Html,
   pub f0bbox: Rect,
 }
 
 impl ItemEnquiryData {
   pub fn line_for_list(&self) -> String {
-    format!("{:20}  {}", self.itemname, self.f0desc.0)
+    format!("{:20}  {}", self.itemname.as_str(), self.f0desc.0)
   }
 }
 
@@ -450,15 +490,15 @@ impl Contents {
       pat: pat.to_string(), msg: pe.msg.to_string() })?;
     let mut out = vec![];
     for (k,v) in &self.items {
-      if !pat.matches(&k) { continue }
-      let (loaded, _) = match self.load1(v, &k, &default()) {
+      if !pat.matches(k.as_str()) { continue }
+      let (loaded, _) = match self.load1(v, k.as_str(), &default()) {
         Err(SpecError::LibraryItemNotFound(_)) => continue,
         e@ Err(_) => e?,
         Ok(r) => r,
       };
       let f0bbox = loaded.bbox_approx()?;
       let ier = ItemEnquiryData {
-        itemname: k.clone(),
+        itemname: k.to_owned(),
         f0bbox,
         f0desc: loaded.describe_face(default())?,
       };
@@ -634,6 +674,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
 
       let item_name = format!("{}{}{}", gdefn.item_prefix,
                               fe.item_spec, gdefn.item_suffix);
+      let item_name: GoodItemName = item_name.try_into()?;
 
       let occ = match &group.d.occulted {
         None => OccData::None,
@@ -643,7 +684,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
           }
           let colour: Colour = colour.try_into()?;
           OccData::Internal(Arc::new(OccData_Internal {
-            item_name: Arc::new(subst(&item_name, "_c", &colour.0)?),
+            item_name: Arc::new(subst(item_name.as_str(), "_c", &colour.0)?),
             desc: Html(subst(&fe.desc.0, "_colour", "")?),
             outline: outline.clone(),
             xform: FaceTransform::from_group(&group.d)?,
@@ -658,7 +699,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
         },
       };
 
-      let mut add1 = |item_name: &str, desc: Html| {
+      let mut add1 = |item_name: &GoodItemName, desc: Html| {
         let desc = if let Some(desc_template) = &group.d.desc_template {
           Html(subst(desc_template, "_desc", &desc.0)?)
         } else {
@@ -671,14 +712,14 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
           d: Arc::new(ItemDetails { desc }),
         };
         type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
-        match l.items.entry(item_name.to_owned()) {
+        match l.items.entry(item_name.clone()) {
           H::Occupied(oe) => throw!(LLE::DuplicateItem {
-            item: item_name.to_owned(),
+            item: item_name.as_str().to_owned(),
             group1: oe.get().group.groupname.clone(),
             group2: groupname.clone(),
           }),
           H::Vacant(ve) => {
-            debug!("loaded shape {} {}", libname, item_name);
+            debug!("loaded shape {} {}", libname, item_name.as_str());
             ve.insert(idata);
           }
         };
@@ -689,9 +730,9 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
         add1(&item_name, fe.desc.clone())?;
       } else {
         for (colour, recolourdata) in &group.d.colours {
-          let t_item_name = subst(&item_name, "_c", &recolourdata.abbrev)?;
+          let t_item_name = subst(item_name.as_str(), "_c", &recolourdata.abbrev)?;
           let t_desc = Html(subst(&fe.desc.0, "_colour", colour)?);
-          add1(&t_item_name, t_desc)?;
+          add1(&t_item_name.try_into()?, t_desc)?;
         }
 
       }

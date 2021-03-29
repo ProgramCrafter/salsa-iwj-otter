@@ -453,6 +453,9 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           } else {
             "occulted-item".to_string()
           };
+          let itemname = itemname.try_into().map_err(
+            |e| internal_error_bydebug(&e)
+          )?;
           then {
             Some(MgmtGamePieceInfo {
               piece,

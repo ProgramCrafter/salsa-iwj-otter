@@ -151,7 +151,7 @@ pub struct MgmtPlayerInfo {
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct MgmtGamePieceInfo {
   pub piece: PieceId,
-  pub itemname: String,
+  pub itemname: shapelib::GoodItemName,
   #[serde(flatten)]
   pub visible: Option<MgmtGamePieceVisibleInfo>,
 }
