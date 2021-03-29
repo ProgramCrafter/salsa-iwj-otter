@@ -83,3 +83,5 @@ authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>"]
 
 [workspace]
 members=["wasm", "daemon", "wdriver", "apitest"]
+
+#fin.
