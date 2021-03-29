@@ -144,6 +144,7 @@ const uo_kind_prec : { [kind: string]: number } = {
 
 type PlayerInfo = {
   dasharray : string,
+  nick: string,
 }
 var players : { [player: string]: PlayerInfo };
 

@@ -128,6 +128,7 @@ pub struct PreparedPieceImage {
 #[derive(Serialize,Debug)]
 pub struct DataLoadPlayer {
   dasharray: Html,
+  nick: Html,
 }
 
 pub trait JsonLen {
@@ -409,10 +410,11 @@ impl PreparedUpdateEntry {
       }
       AddPlayer {
         player:_,
-        data: DataLoadPlayer { dasharray },
+        data: DataLoadPlayer { dasharray, nick, },
         new_info_pane,
       } => {
-        dasharray.0.as_bytes().len() + 100
+        dasharray.0.as_bytes().len() +
+        nick     .0.as_bytes().len() + 100
           + new_info_pane.0.len()
       }
       RemovePlayer { player:_, new_info_pane } => {
@@ -441,9 +443,14 @@ impl PreparedUpdateEntry {
 
 impl DataLoadPlayer {
   pub fn from_player(ig: &Instance, player: PlayerId) -> Self {
-    let dasharray = player_dasharray(&ig.gs.players, player);
+    let gplayers = &ig.gs.players;
+    let dasharray = player_dasharray(gplayers, player);
+    let nick = gplayers.get(player).map(|gpl| gpl.nick.as_str())
+      .unwrap_or("<unknown-player>");
+    let nick = Html(htmlescape::encode_minimal(&nick));
     DataLoadPlayer {
       dasharray,
+      nick,
     }
   }
 }
