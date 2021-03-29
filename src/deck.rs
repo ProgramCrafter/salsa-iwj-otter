@@ -12,7 +12,7 @@ pub const ENABLED_DESC: &str = "a pickup deck (enabled)";
 #[derive(Debug,Serialize,Deserialize)]
 struct Deck {
   shape: GenericSimpleShape<(), RectShape>,
-  label: Option<piece_specs::PieceLabel>,
+  label: Option<PieceLabelLoaded>,
 }
 
 #[derive(Debug,Clone,Copy,Ord,PartialOrd,Eq,PartialEq)]
@@ -60,7 +60,7 @@ impl PieceSpec for piece_specs::Deck {
     }
     let p = Box::new(Deck {
       shape,
-      label: self.label.clone(),
+      label: self.label.load()?,
     }) as Box<dyn PieceTrait>;
     PieceSpecLoaded { p, occultable: None }
   }

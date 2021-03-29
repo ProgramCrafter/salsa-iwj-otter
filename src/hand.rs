@@ -3,7 +3,6 @@
 // There is NO WARRANTY.
 
 use crate::prelude::*;
-use piece_specs::PieceLabel;
 
 pub const UNCLAIMED_DESC: &str = "a hand repository";
 
@@ -17,7 +16,7 @@ struct MagicOwner {
 #[derive(Debug,Serialize,Deserialize)]
 struct Hand {
   shape: GenericSimpleShape<(), RectShape>,
-  label: Option<PieceLabel>,
+  label: Option<PieceLabelLoaded>,
 }
 
 #[derive(Debug,Clone,Default,Serialize,Deserialize)]
@@ -70,7 +69,7 @@ impl PieceSpec for piece_specs::Hand {
       &common)?;
     let p = Box::new(Hand {
       shape,
-      label: self.label.clone(),
+      label: self.label.load()?,
     }) as Box<dyn PieceTrait>;
     PieceSpecLoaded { p, occultable: None }
   }

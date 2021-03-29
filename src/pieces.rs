@@ -149,7 +149,30 @@ impl PieceTrait for SimpleShape {
   fn itemname(&self) -> &str { self.itemname() }
 }
 
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct PieceLabelLoaded {
+  #[serde(default)] pub place: piece_specs::PieceLabelPlace,
+  pub colour: Option<Colour>,
+}
+
 impl piece_specs::PieceLabel {
+  #[throws(SpecError)]
+  pub fn load(&self) -> PieceLabelLoaded {
+    let Self { place, ref colour } = *self;
+    let colour = colour.as_ref().map(|c| c.try_into()).transpose()?;
+    PieceLabelLoaded { place, colour }
+  }
+}  
+
+#[ext(pub)]
+impl Option<piece_specs::PieceLabel> {
+  #[throws(SpecError)]
+  fn load(&self) -> Option<PieceLabelLoaded> {
+    self.as_ref().map(|l| l.load()).transpose()?
+  }
+}
+
+impl PieceLabelLoaded {
   #[throws(IE)]
   pub fn svg(&self, f: &mut Html,
              outline: &RectShape,
