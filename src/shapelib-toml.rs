@@ -172,7 +172,7 @@ pub enum OccultationMethod {
   /// The description will be different too: `_colour` will be elided,
   /// along with up to one of any spaces either side of it.
   ByColour {
-    colour: String,
+    colour: ColourSpec,
   },
   ByBack {
     ilk: OccultIlkName,

@@ -107,6 +107,8 @@ pub enum LibraryLoadError {
   RepeatedSubstituionToken(&'static str),
   #[error("{:?}",&self)]
   MultipleMultipleFaceDefinitions,
+  #[error("{0}")]
+  UnsupportedColourSpec(#[from] UnsupportedColourSpec),
 }
 
 impl LibraryLoadError {
@@ -636,11 +638,12 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
       let occ = match &group.d.occulted {
         None => OccData::None,
         Some(OccultationMethod::ByColour { colour }) => {
-          if ! group.d.colours.contains_key(colour.as_str()) {
-            throw!(LLE::OccultationColourMissing(colour.clone()));
+          if ! group.d.colours.contains_key(colour.0.as_str()) {
+            throw!(LLE::OccultationColourMissing(colour.0.clone()));
           }
+          let colour: Colour = colour.try_into()?;
           OccData::Internal(Arc::new(OccData_Internal {
-            item_name: Arc::new(subst(&item_name, "_c", &colour)?),
+            item_name: Arc::new(subst(&item_name, "_c", &colour.0)?),
             desc: Html(subst(&fe.desc.0, "_colour", "")?),
             outline: outline.clone(),
             xform: FaceTransform::from_group(&group.d)?,
