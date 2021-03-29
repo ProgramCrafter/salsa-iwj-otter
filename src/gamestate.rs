@@ -89,6 +89,48 @@ pub struct CommittedLogEntry {
   pub logent: LogEntry,
 }
 
+//---------- GoodItemName ----------
+
+mod item_name {
+  use super::*;
+  use shapelib::LibraryLoadError;
+  use LibraryLoadError as LLE;
+
+  #[derive(Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash)]
+  #[derive(Serialize,Deserialize)]
+  #[serde(transparent)]
+  pub struct GoodItemName(String);
+  impl Borrow<String> for GoodItemName {
+    fn borrow(&self) -> &String { &self.0 }
+  }
+  impl GoodItemName {
+    pub fn as_str(&self) -> &str { &self.0 }
+  }
+  impl From<GoodItemName> for String {
+    fn from(i: GoodItemName) -> String { i.0 }
+  }
+  impl Display for GoodItemName {
+    #[throws(fmt::Error)]
+    fn fmt(&self, f: &mut fmt::Formatter) { f.write_str(&self.0)? }
+  }
+
+  impl TryFrom<String> for GoodItemName {
+    type Error = LibraryLoadError;
+    #[throws(LibraryLoadError)]
+    fn try_from(s: String) -> GoodItemName {
+      if s.as_bytes().iter().all(|&c:&u8| (
+        c.is_ascii_alphanumeric() ||
+        b"-_. ()".contains(&c)
+      )) {
+        GoodItemName(s)
+      } else {
+        throw!(LLE::BadItemName(s))
+      }
+    }
+  }
+}
+pub use item_name::*;
+
 // ---------- piece trait, and rendering ----------
 
 #[typetag::serde(tag="type")]

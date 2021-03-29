@@ -60,50 +60,12 @@ enum OccData {
 #[allow(non_camel_case_types)]
 #[derive(Debug)]
 struct OccData_Internal {
-  item_name: Arc<String>,
+  item_name: Arc<GoodItemName>,
   outline: Outline,
   desc: Html,
   xform: FaceTransform,
   svgd: parking_lot::Mutex<Option<Arc<Html>>>,
 }
-
-mod item_name {
-  use super::*;
-
-  #[derive(Clone,Debug,Eq,PartialEq,Ord,PartialOrd,Hash)]
-  #[derive(Serialize,Deserialize)]
-  #[serde(transparent)]
-  pub struct GoodItemName(String);
-  impl Borrow<String> for GoodItemName {
-    fn borrow(&self) -> &String { &self.0 }
-  }
-  impl GoodItemName {
-    pub fn as_str(&self) -> &str { &self.0 }
-  }
-  impl From<GoodItemName> for String {
-    fn from(i: GoodItemName) -> String { i.0 }
-  }
-  impl Display for GoodItemName {
-    #[throws(fmt::Error)]
-    fn fmt(&self, f: &mut fmt::Formatter) { f.write_str(&self.0)? }
-  }
-
-  impl TryFrom<String> for GoodItemName {
-    type Error = LibraryLoadError;
-    #[throws(LibraryLoadError)]
-    fn try_from(s: String) -> GoodItemName {
-      if s.as_bytes().iter().all(|&c:&u8| (
-        c.is_ascii_alphanumeric() ||
-        b"-_. ()".contains(&c)
-      )) {
-        GoodItemName(s)
-      } else {
-        throw!(LLE::BadItemName(s))
-      }
-    }
-  }
-}
-pub use item_name::*;
 
 #[derive(Error,Debug)]
 pub enum LibraryLoadError {
@@ -461,7 +423,8 @@ impl Contents {
           let svgd = match svgd {
             Some(svgd) => svgd.clone(),
             None => {
-              let occ_data = self.load_svg(&occ.item_name, &name)?;
+              let occ_data = self.load_svg(occ.item_name.as_str(),
+                                           name.as_str())?;
               let occ_data = Arc::new(occ_data);
               *svgd = Some(occ_data.clone());
               occ_data
@@ -683,8 +646,9 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
             throw!(LLE::OccultationColourMissing(colour.0.clone()));
           }
           let colour: Colour = colour.try_into()?;
+          let item_name = subst(item_name.as_str(), "_c", &colour.0)?;
           OccData::Internal(Arc::new(OccData_Internal {
-            item_name: Arc::new(subst(item_name.as_str(), "_c", &colour.0)?),
+            item_name: Arc::new(item_name.try_into()?),
             desc: Html(subst(&fe.desc.0, "_colour", "")?),
             outline: outline.clone(),
             xform: FaceTransform::from_group(&group.d)?,
