@@ -24,6 +24,7 @@ use otter_base::geometry::{Coord,Pos};
 use otter_base::misc::display_as_debug;
 
 use crate::accounts::AccountName;
+use crate::error::UnsupportedColourSpec;
 use crate::gamestate::PieceSpec;
 use crate::prelude::default;
 
@@ -59,7 +60,7 @@ pub struct UrlSpec(pub String);
 #[derive(Error,Clone,Serialize,Deserialize,Debug)]
 pub enum SpecError {
   ImproperSizeSpec,
-  UnsupportedColourSpec,
+  UnsupportedColourSpec(#[from] UnsupportedColourSpec),
   FaceNotFound,
   InternalError(String),
   PosOffTable,
@@ -534,8 +535,8 @@ pub mod implementation {
   }
 
   impl TryFrom<&ColourSpec> for Colour {
-    type Error = SpecError;
-    #[throws(SpecError)]
+    type Error = UnsupportedColourSpec;
+    #[throws(UnsupportedColourSpec)]
     fn try_from(spec: &ColourSpec) -> Colour {
       lazy_static! {
         static ref RE: Regex = Regex::new(concat!(
@@ -547,7 +548,7 @@ pub mod implementation {
       }
       let s = &spec.0;
       if !RE.is_match(s) {
-        throw!(SpecError::UnsupportedColourSpec);
+        throw!(UnsupportedColourSpec);
       }
       Html(spec.0.clone())
     }

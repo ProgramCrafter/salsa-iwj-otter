@@ -359,7 +359,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
     MGI::SetTableColour(colour) => {
       let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
-      let colour: Colour = (&colour).try_into()?;
+      let colour: Colour = (&colour).try_into().map_err(|e| SpE::from(e))?;
       ig.gs.table_colour = colour.clone();
       (U{ pcs: vec![],
           log: vec![ LogEntry {

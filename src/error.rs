@@ -65,6 +65,10 @@ pub enum InternalError {
   Aggregated,
 }
 
+#[derive(Error,Copy,Clone,Debug,Serialize,Deserialize)]
+#[error("Unsupported colour spec")]
+pub struct UnsupportedColourSpec;
+
 #[derive(Error)]
 pub struct InternalLogicError {
   desc: Cow<'static, str>,
