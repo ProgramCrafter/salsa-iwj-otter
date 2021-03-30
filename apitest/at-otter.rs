@@ -538,7 +538,7 @@ impl Ctx {
 
     let [hand] = a_pieces.iter_enumerated()
       .filter(|(_i,p)| {
-        p.info["desc"] == otter::hand::UNCLAIMED_DESC.as_html_str()
+        p.info["desc"] == otter::hand::UNCLAIMED_HAND_DESC
       })
       .map(|(i,_)| i)
       .collect::<ArrayVec<[_;1]>>()

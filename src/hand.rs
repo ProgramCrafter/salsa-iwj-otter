@@ -4,7 +4,7 @@
 
 use crate::prelude::*;
 
-pub const UNCLAIMED_DESC: HtmlLit = Html::lit("a hand repository");
+pub const UNCLAIMED_HAND_DESC: &'static str = "a hand repository";
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 struct MagicOwner {
@@ -35,6 +35,9 @@ impl Sort {
   fn itemname(self) -> &'static str { use Sort::*; match self {
     Hand => "magic-hand",
   } }
+  fn unclaimed_desc(self) -> HtmlLit { use Sort::*; Html::lit(match self {
+    Hand => UNCLAIMED_HAND_DESC,
+  }) }
 }
 
 impl HandState {
@@ -95,13 +98,13 @@ impl PieceSpec for piece_specs::Hand {
   }
 }
 
-impl Hand {
-  fn describe_html_inner(&self, xdata: Option<&HandState>) -> Html {
+impl Sort {
+  fn describe_html_inner(self, xdata: Option<&HandState>) -> Html {
     if_chain! {
       if let Some(xdata) = xdata;
       if let Some(owner) = &xdata.owner;
       then { owner.desc.clone() }
-      else { UNCLAIMED_DESC.into() }
+      else { self.unclaimed_desc().into() }
     }
   }
 }
@@ -140,7 +143,7 @@ impl PieceTrait for Hand {
   #[throws(IE)]
   fn describe_html(&self, gpc: &GPiece, _goccults: &GameOccults) -> Html {
     let xdata = gpc.xdata.get()?;
-    self.describe_html_inner(xdata)
+    self.sort.describe_html_inner(xdata)
   }
 
   delegate!{
@@ -185,7 +188,7 @@ impl PieceTrait for Hand {
     let gpc = gpieces.byid_mut(piece)?;
     let xdata = gpc.xdata.get_mut::<HandState,_>(default)
       .map_err(|e| APOE::ReportViaResponse(e.into()))?;
-    let old_desc = self.describe_html_inner(Some(xdata));
+    let old_desc = self.sort.describe_html_inner(Some(xdata));
     let old_player = xdata.player();
 
     let dasharray = player_dasharray(gplayers, player);
