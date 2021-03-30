@@ -44,6 +44,9 @@ impl Sort {
   fn claim_desc(self) -> HtmlLit { use Sort::*; Html::lit(match self {
     Hand => "Claim this as your hand",
   }) }
+  fn owned_desc(self, nick: &HtmlStr) -> Html { use Sort::*; match self {
+    Hand => hformat!("{}'s hand", nick),
+  } }
 }
 
 impl HandState {
@@ -208,7 +211,7 @@ impl PieceTrait for Hand {
     {
       ("claim", false) => {
         dbgc!("claiming");
-        let new_desc = hformat!("{}'s hand", &nick);
+        let new_desc = self.sort.owned_desc(&nick);
         let new_owner = Some(MagicOwner {
           player,
           dasharray,
