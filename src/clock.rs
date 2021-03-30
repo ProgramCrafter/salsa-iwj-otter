@@ -449,24 +449,29 @@ impl PieceTrait for Clock {
     const Y: &[f32] = &[ 7., 0. ];
 
     struct Show {
-      text:       &'static str,
-      background: &'static str,
-      sigil:      &'static str,
+      text_override: Option<&'static str>,
+      background:           &'static str,
+      sigil:                &'static str,
     }
 
     impl URenderState {
       fn show(self) -> Show {
         use URS::*;
-        let (text, background, sigil) = match self {
-          Running    => ("black",  "yellow",     "&#x25b6;" /* >  */ ),
-          ActiveHeld => ("black",  "yellow",     "&#x2016;" /* || */ ),
-          OtherFlag  => ("black",  "yellow",     ":"                 ),
-          Inactive   => ("black",  "white",      ":"                 ),
-          Stopped    => ("black",  "lightblue",  "&#x25a1;" /* [] */ ),
-          Reset      => ("black",  "lightgreen", "&#x25cb;" /* O  */ ),
-          Flag       => ("white",  "red",        "&#x2691;" /* F  */ ),
+        let (text_override, background, sigil) = match self {
+          Running    => (None,          "yellow",     "&#x25b6;" /* >  */ ),
+          ActiveHeld => (None,          "yellow",     "&#x2016;" /* || */ ),
+          OtherFlag  => (None,          "yellow",     ":"                 ),
+          Inactive   => (None,          "white",      ":"                 ),
+          Stopped    => (None,          "lightblue",  "&#x25a1;" /* [] */ ),
+          Reset      => (None,          "lightgreen", "&#x25cb;" /* O  */ ),
+          Flag       => (Some("white"), "red",        "&#x2691;" /* F  */ ),
         };
-        Show { text, background, sigil }
+        Show { text_override, background, sigil }
+      }
+    }
+    impl Show {
+      fn text(&self) -> &'static str {
+        self.text_override.unwrap_or("black")
       }
     }
     
@@ -504,12 +509,12 @@ impl PieceTrait for Clock {
              "##);
       hwrite!(f, r##"
   <text x="1" y="{}" {} {} fill="{}" >{}{}{}</text>"##,
-             y, font, pointer, Html::lit(show.text),
+             y, font, pointer, Html::lit(show.text()),
              mins_pad, HtmlStr::from_html_str(&mins), Html::lit(show.sigil)
       )?;
       hwrite!(f, r##"
   <text x="14" y="{}" {} {} fill="{}" >{:02}</text>"##,
-             y, font, pointer, Html::lit(show.text),
+             y, font, pointer, Html::lit(show.text()),
              secs
       )?;
       let nick_y = y - 0.5;
