@@ -1061,7 +1061,7 @@ function handle_piece_update(j: TransmitUpdateEntry_Piece) {
   var piece = j.piece;
   var m = j.op as { [k: string]: Object };
   var k = Object.keys(m)[0];
-  let p = pieces[piece]!;
+  let p = pieces[piece];
   pieceops[k](piece,p, m[k]);
 };
 
