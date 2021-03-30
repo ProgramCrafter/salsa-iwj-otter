@@ -30,6 +30,8 @@ enum Sort {
   Hand,
 }
 
+type MkOccCA = fn(&OccDisplacement, &ZCoord) -> OccKA;
+
 impl Sort {
   fn backcompat_upgrade() -> Self { Sort::Hand }
   fn itemname(self) -> &'static str { use Sort::*; match self {
@@ -46,6 +48,10 @@ impl Sort {
   }) }
   fn owned_desc(self, nick: &HtmlStr) -> Html { use Sort::*; match self {
     Hand => hformat!("{}'s hand", nick),
+  } }
+  fn views(self) -> Option<(MkOccCA, MkOccCA)> { use Sort::*; match self {
+    Hand => Some((|_,_| OccKA::Visible,
+                  |d,z| OccKA::Displaced((d.clone(), z.clone())))),
   } }
 }
 
@@ -217,38 +223,47 @@ impl PieceTrait for Hand {
           dasharray,
           desc: new_desc,
         });
-        let (region, views) = (||{
-          dbgc!("claiming region");
-          let rect   = self.shape.outline.rect  (gpc.pos)?;
-          let region = self.shape.outline.region(gpc.pos)?;
-          let displace = OccDisplacement::Rect { rect };
-          let views = OwnerOccultationView {
-            owner: player,
-            owner_view: OccKA::Visible,
-            defview: OccKA::Displaced((displace, gpc.zlevel.z.clone())),
-          }.views()?;
-          dbgc!("claiming got region", &region, &views);
-          Ok::<_,IE>((region, views))
-        })().map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?;
-        
-        // actually do things:
-        dbgc!("creating occ");
-        let xupdates =
-          create_occultation(&mut gen.unique_gen(), &mut gs.max_z,
-                             gplayers, gpieces, goccults, ipieces, ioccults,
-                             to_recalculate,
-                             region, piece, views)?;
-
+        let xupdates = match self.sort.views() {
+          None => default(),
+          Some((mk_owner, mk_defview)) => {
+            let (region, views) = (||{
+              dbgc!("claiming region");
+              let rect   = self.shape.outline.rect  (gpc.pos)?;
+              let region = self.shape.outline.region(gpc.pos)?;
+              let displace = OccDisplacement::Rect { rect };
+              let views = OwnerOccultationView {
+                owner: player,
+                owner_view: mk_owner(&displace, &gpc.zlevel.z),
+                defview: mk_defview(&displace, &gpc.zlevel.z),
+              }.views()?;
+              dbgc!("claiming got region", &region, &views);
+              Ok::<_,IE>((region, views))
+            })().map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?;
+            
+            // actually do things:
+            dbgc!("creating occ");
+            let xupdates =
+              create_occultation(&mut gen.unique_gen(), &mut gs.max_z,
+                                 gplayers, gpieces, goccults,
+                                 ipieces, ioccults,
+                                 to_recalculate,
+                                 region, piece, views)?;
+            xupdates
+          }
+        };
+          
         dbgc!("creating occ done", &new_owner, &xupdates);
         (new_owner, xupdates, hformat!("claimed {}", &old_desc))
       }
       ("deactivate", true) => {
-        let xupdates =
-          remove_occultation(&mut gen.unique_gen(),
-                             gplayers, gpieces, goccults, ipieces, ioccults,
-                             to_recalculate, piece)
-          .map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?;
-
+        let xupdates = match self.sort.views() {
+          None => default(),
+          Some(_) =>
+            remove_occultation(&mut gen.unique_gen(),
+                               gplayers, gpieces, goccults, ipieces, ioccults,
+                               to_recalculate, piece)
+            .map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?,
+        };
         (None, xupdates, hformat!("deactivated {}", &old_desc))
       }
       ("claim", true) |
