@@ -41,7 +41,7 @@ impl Sort {
   } }
   fn unclaimed_desc(self) -> HtmlLit { use Sort::*; Html::lit(match self {
     Hand => UNCLAIMED_HAND_DESC,
-    PlayerLabel => "unclaimed player label",
+    PlayerLabel => "an unclaimed player label",
   }) }
   fn deact_desc(self) -> HtmlLit { use Sort::*; Html::lit(match self {
     Hand => "Deactivate hand",
@@ -126,7 +126,7 @@ impl PieceSpec for piece_specs::PlayerLabel {
   fn load(&self, _: usize, _: &mut GPiece,
           _pcaliases: &PieceAliases, _ir: &InstanceRef)
           -> PieceSpecLoaded {
-    self.c.load(Sort::Hand)?
+    self.c.load(Sort::PlayerLabel)?
   }
 }
 
