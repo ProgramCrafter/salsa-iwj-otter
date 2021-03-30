@@ -492,6 +492,7 @@ impl<'g> WindowGuard<'g> {
     let gen = self.su.mgmt_conn.game_synch(self.w.instance.clone())?;
     (|| {
       loop {
+        info!("{:?} gen={}", self, gen);
         let tgen = self.su.driver.execute_async_script(
           &Subst::from(&[
             ("wanted", &gen.to_string())
@@ -507,7 +508,7 @@ impl<'g> WindowGuard<'g> {
           .context("run async script")?
           .value().as_u64().ok_or(anyhow!("script return is not u64"))?;
         let tgen = Generation(tgen);
-        trace!("{:?} gen={} tgen={}", self, gen, tgen);
+        info!("{:?} gen={} tgen={}", self, gen, tgen);
         if tgen >= gen { break; }
       }
       Ok::<(),AE>(())
