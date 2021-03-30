@@ -5,9 +5,15 @@ tname="$1"; shift;
 mkdir -p tmp
 
 lname="$tname"
-case "$1" in
---as-if=*)	lname="${1#--as-if=}";;
-esac
+
+for a in "$@"; do
+	case "$a" in
+	--test=*)	lname="${a#--test=}";;
+	--as-if=*)	lname="${a#--as-if=}";;
+	*)		break;;
+	esac
+done
+
 lname="$lname.log"
 
 target/debug/"$tname" "$@" 2>&1 | ts -s %.s >tmp/"$lname"
