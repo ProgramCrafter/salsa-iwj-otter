@@ -38,6 +38,12 @@ impl Sort {
   fn unclaimed_desc(self) -> HtmlLit { use Sort::*; Html::lit(match self {
     Hand => UNCLAIMED_HAND_DESC,
   }) }
+  fn deact_desc(self) -> HtmlLit { use Sort::*; Html::lit(match self {
+    Hand => "Deactivate hand",
+  }) }
+  fn claim_desc(self) -> HtmlLit { use Sort::*; Html::lit(match self {
+    Hand => "Claim this as your hand",
+  }) }
 }
 
 impl HandState {
@@ -162,14 +168,14 @@ impl PieceTrait for Hand {
         kind: UoKind::Piece,
         def_key: 'C',
         opname: "deactivate".to_owned(),
-        desc: Html::lit("Deactivate hand").into(),
+        desc: self.sort.deact_desc().into(),
         wrc: WRC::Unpredictable,
       }}
       else { UoDescription {
         kind: UoKind::Piece,
         def_key: 'C',
         opname: "claim".to_owned(),
-        desc: Html::lit("Claim this as your hand").into(),
+        desc: self.sort.claim_desc().into(),
         wrc: WRC::Unpredictable,
       }}
     })
