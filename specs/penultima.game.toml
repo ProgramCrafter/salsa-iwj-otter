@@ -193,6 +193,105 @@ colour = "grey"
 shape.type = "Rect"
 shape.xy = [20,10]
 
+
+[[pieces]]
+# 1
+shape.xy = [20,6]
+pos = [11, 189]
+type = "PlayerLabel"
+colour = "lightgrey"
+edge = "white"
+shape.type = "Rect"
+label.place = "BottomLeft"
+label.colour = "black"
+
+[[pieces]]
+# 2
+shape.xy = [20,6]
+pos = [12, 190]
+type = "PlayerLabel"
+colour = "lightgrey"
+edge = "white"
+shape.type = "Rect"
+label.place = "BottomLeft"
+label.colour = "black"
+
+[[pieces]]
+# 3
+shape.xy = [20,6]
+pos = [13, 191]
+type = "PlayerLabel"
+colour = "lightgrey"
+edge = "white"
+shape.type = "Rect"
+label.place = "BottomLeft"
+label.colour = "black"
+
+[[pieces]]
+# 4
+shape.xy = [20,6]
+pos = [14, 192]
+type = "PlayerLabel"
+colour = "lightgrey"
+edge = "white"
+shape.type = "Rect"
+label.place = "BottomLeft"
+label.colour = "black"
+
+[[pieces]]
+# 6
+shape.xy = [20,6]
+pos = [15, 193]
+type = "PlayerLabel"
+colour = "lightgrey"
+edge = "white"
+shape.type = "Rect"
+
+[[pieces]]
+# 7
+shape.xy = [20,6]
+pos = [16, 194]
+type = "PlayerLabel"
+colour = "lightgrey"
+edge = "white"
+shape.type = "Rect"
+label.place = "BottomLeft"
+label.colour = "black"
+
+[[pieces]]
+# 8
+shape.xy = [20,6]
+pos = [17, 195]
+type = "PlayerLabel"
+colour = "lightgrey"
+edge = "white"
+shape.type = "Rect"
+label.place = "BottomLeft"
+label.colour = "black"
+
+[[pieces]]
+# 9
+shape.xy = [20,6]
+pos = [18, 196]
+type = "PlayerLabel"
+colour = "lightgrey"
+edge = "white"
+shape.type = "Rect"
+label.place = "BottomLeft"
+label.colour = "black"
+
+[[pieces]]
+# 10
+shape.xy = [20,6]
+pos = [19, 197]
+type = "PlayerLabel"
+colour = "lightgrey"
+edge = "white"
+shape.type = "Rect"
+label.place = "BottomLeft"
+label.colour = "black"
+
+
 [[pieces]]
 pos = [240, 100]
 type = "ChessClock"
