@@ -1093,6 +1093,17 @@ pieceops.Modify = <PieceHandler>function
   piece_modify(piece, p, info, false);
 }
 
+pieceops.Delete = <PieceHandler>function
+(piece: PieceId, p: PieceInfo, info: {}) {
+  console.log('PIECE UPDATE DELETE ', piece)
+  p.uelem.remove();
+  p.delem.remove();
+  delete pieces[piece];
+  if (p.held == us) {
+    recompute_keybindings();
+  }
+}
+
 piece_error_handlers.PosOffTable = <PieceErrorHandler>function()
 { return true ; }
 piece_error_handlers.Conflict = <PieceErrorHandler>function()
