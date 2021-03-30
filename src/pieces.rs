@@ -46,7 +46,7 @@ impl From<SVGProcessingError> for MgmtError {
 }
 
 #[throws(SvgE)]
-pub fn svg_rescale_path(input: &Html, scale: f64) -> Html {
+pub fn svg_rescale_path(input: &HtmlStr, scale: f64) -> Html {
   type BM = u64;
   type BI = u32;
   #[derive(Debug,Copy,Clone)]
@@ -71,7 +71,7 @@ pub fn svg_rescale_path(input: &Html, scale: f64) -> Html {
   let mut map = ALWAYS_MAP;
   let mut first = iter::once(());
 
-  for w in input.0.split_ascii_whitespace() {
+  for w in input.as_html_str().split_ascii_whitespace() {
     if first.next().is_none() { write!(&mut out, " ")?; }
     match w {
       "L" | "l" | "M" | "m" |
@@ -91,7 +91,7 @@ pub fn svg_rescale_path(input: &Html, scale: f64) -> Html {
   }
 
   trace!("rescaled by {}: {:?} as {:?}", scale, input, &out);
-  Html(out)
+  Html::from_html_string(out)
 }
 
 #[throws(SvgE)]
@@ -101,14 +101,14 @@ pub fn svg_circle_path(diam: f64) -> Html {
      a 1 1 0 1 0 0  2  z"
   );
   let scale = diam * 0.5;
-  let path = svg_rescale_path(&unit_path, scale)?;
+  let path = svg_rescale_path(unit_path.into(), scale)?;
   path
 }
 
 #[throws(SvgE)]
 pub fn svg_rectangle_path(PosC{coords: [x,y]}: PosC<f64>) -> Html {
-  Html(format!("M {} {} h {} v {} h {} z",
-               -x*0.5, -y*0.5, x, y, -x))
+  hformat!("M {} {} h {} v {} h {} z",
+           -x*0.5, -y*0.5, x, y, -x)
 }
 
 #[dyn_upcast]
@@ -133,14 +133,19 @@ impl PieceTrait for SimpleShape {
                _gs: &GameState, _vpid: VisiblePieceId) {
     self.svg_piece_raw(f, gpc.face, &mut |_|Ok(()))?;
   }
-  #[throws(IE)]
-  fn describe_html(&self, gpc: &GPiece, _goccults: &GameOccults) -> Html {
-    Html(if_chain! {
+//  #[throws(IE)]
+  fn describe_html(&self, gpc: &GPiece, _goccults: &GameOccults)
+//                   -> Html
+-> Result<Html, IE>
+  {
+Ok::<_,IE>(
+    if_chain! {
       if let face = gpc.face;
       if let Some(colour) = self.colours.get(face);
-      then { format!("a {} {}", colour.0, self.desc.0) }
-      else { format!("a {}", self.desc.0) }
-    })
+      then { hformat!("a {} {}", colour, self.desc) }
+      else { hformat!("a {}", self.desc) }
+    }
+)
   }
   fn nfaces(&self) -> RawFaceId {
     self.count_faces().try_into().unwrap()
@@ -179,9 +184,9 @@ impl PieceLabelLoaded {
              def_colour: Option<&Colour>,
              text: &Html) {
     let colour = {
-      if let Some(c) = &self.colour { &c.0 }
-      else if let Some(c) = def_colour { &c.0 }
-      else { "black" }
+      if let Some(c) = &self.colour { c.borrow() }
+      else if let Some(c) = def_colour { c.borrow() }
+      else { Html::lit("black").into() }
     };
     let fontsz = 4.;
     let PosC{ coords: [x,y] } = {
@@ -201,9 +206,9 @@ impl PieceLabelLoaded {
       *y += 0.5 * fontsz;
       pos
     };
-    write!(f.0,
- r##"<text x="{}" y="{}" font-size="{}" fill="{}">{}</text>"##,
-               x, y, fontsz, colour, &text.0
+    hwrite!(f,
+            r##"<text x="{}" y="{}" font-size="{}" fill="{}">{}</text>"##,
+            x, y, fontsz, colour, &text
     )?;
   }  
 }
@@ -261,33 +266,32 @@ impl<Desc, Outl:'static> GenericSimpleShape<Desc, Outl>
   #[throws(IE)]
   pub fn svg_piece_raw(
     &self, f: &mut Html, face: FaceId,
-    stroke_attrs_hook: &mut dyn FnMut(&mut String) -> Result<(),IE>,
+    stroke_attrs_hook: &mut dyn FnMut(&mut Html) -> Result<(),IE>,
   ) {
-    let f = &mut f.0;
-    let ef = |f: &mut String, cmap: &ColourMap, attrname: &str, otherwise| {
+    let ef = |f: &mut Html, cmap: &ColourMap, attrname: &str, otherwise| {
       if let Some(colour) = cmap.get(face) {
-        write!(f, r##" {}="{}""##, attrname, colour.0)
+        hwrite!(f, r##" {}="{}""##, attrname, colour)
       } else {
-        write!(f, "{}", otherwise)
+        hwrite!(f, "{}", otherwise)
       }
     };
     let path = self.outline_path(1.0)?;
 
     if self.colours.len() == 0 {
-      write!(f,
+      hwrite!(f,
              r##"<path fill="none" \
                   stroke-width="{}" stroke="transparent" d="{}"/>"##,
              INVISIBLE_EDGE_SENSITIVE,
-             &path.0)?;
+             &path)?;
     }
-    write!(f, r##"<path"##)?;
+    hwrite!(f, r##"<path"##)?;
     ef(f, &self.colours, "fill", r##" fill="none""##)?;
     if self.edges.len() != 0 {
-      write!(f, r##" stroke-width="{}""##, &self.edge_width)?;
+      hwrite!(f, r##" stroke-width="{}""##, &self.edge_width)?;
     }
     stroke_attrs_hook(f)?;
     ef(f, &self.edges, "stroke", "")?;
-    write!(f, r##" d="{}"/>"##, &path.0)?;
+    hwrite!(f, r##" d="{}"/>"##, &path)?;
   }
 }
 
@@ -306,7 +310,7 @@ impl SimplePieceSpec for piece_specs::Disc {
   fn load_raw(&self) -> (SimpleShape, &SimpleCommon) {
     let outline = CircleShape { diam: self.diam as f64 };
     (SimpleShape::new(
-      Html::lit("disc"),
+      Html::lit("disc").into(),
       outline.into(),
       "simple-disc",
       &self.common,
@@ -343,7 +347,7 @@ impl SimplePieceSpec for piece_specs::Rect {
     let desc = Html::lit(
       if outline.xy.x() == outline.xy.y()
       { "square" } else { "rectangle" }
-    );
+    ).into();
     (SimpleShape::new(
       desc,
       outline.into(),

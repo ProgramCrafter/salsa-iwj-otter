@@ -53,6 +53,7 @@ macro_rules! visible_slotmap_key {
     pub struct $x(pub slotmap::KeyData);
 
     impl_for_slotmap_key!($x($sep));
+    hformat_as_display!{$x}
   }
 }
 #[macro_export]

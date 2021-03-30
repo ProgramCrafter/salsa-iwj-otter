@@ -215,8 +215,9 @@ pub struct FileData {
   #[cfg(doc)] pub r_file_spec: String,
   #[cfg(not(doc))] pub r_file_spec: (),
 
-  /// HTML desscription.  (Shown hn the game log, for example.)
-  pub desc: Html,
+  /// Desscription.  (Shown hn the game log, for example.)
+  /// Will be HTML-escaped.
+  pub desc: String,
 }
 
 #[cfg(doc)]

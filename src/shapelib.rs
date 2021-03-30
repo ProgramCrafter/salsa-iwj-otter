@@ -200,7 +200,7 @@ pub struct ItemEnquiryData {
 
 impl ItemEnquiryData {
   pub fn line_for_list(&self) -> String {
-    format!("{:20}  {}", self.itemname.as_str(), self.f0desc.0)
+    format!("{:20}  {}", self.itemname, self.f0desc.as_html_str())
   }
 }
 
@@ -249,10 +249,10 @@ impl FaceTransform {
 
   #[throws(IE)]
   fn write_svgd(&self, f: &mut Html, svgd: &Html) {
-    write!(&mut f.0,
+    hwrite!(f,
            r##"<g transform="scale({} {}) translate({} {})">{}</g>"##,
            self.scale[0], self.scale[1], -self.centre[0], -self.centre[1],
-           svgd.0)?;
+           svgd)?;
   }
 }
 
@@ -366,7 +366,7 @@ impl Contents {
         SpE::InternalError(m.to_string())
       })?;
 
-    Html(svg_data)
+    Html::from_html_string(svg_data)
   }
 
   #[throws(SpecError)]
@@ -645,14 +645,14 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
           if ! group.d.colours.contains_key(colour.0.as_str()) {
             throw!(LLE::OccultationColourMissing(colour.0.clone()));
           }
-          let colour: Colour = colour.try_into()?;
           let item_name = subst(item_name.as_str(), "_c", &colour.0)?;
+          let desc = subst(&fe.desc, "_colour", "")?.to_html();
           OccData::Internal(Arc::new(OccData_Internal {
             item_name: Arc::new(item_name.try_into()?),
-            desc: Html(subst(&fe.desc.0, "_colour", "")?),
             outline: outline.clone(),
             xform: FaceTransform::from_group(&group.d)?,
             svgd: default(),
+            desc,
           }))
         },
         Some(OccultationMethod::ByBack { ilk }) => {
@@ -663,11 +663,11 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
         },
       };
 
-      let mut add1 = |item_name: &GoodItemName, desc: Html| {
+      let mut add1 = |item_name: &GoodItemName, desc: &str| {
         let desc = if let Some(desc_template) = &group.d.desc_template {
-          Html(subst(desc_template, "_desc", &desc.0)?)
+          subst(desc_template, "_desc", &desc)?.to_html()
         } else {
-          desc
+          desc.to_html()
         };
         let idata = ItemData {
           group: group.clone(),
@@ -691,12 +691,12 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
       };
 
       if group.d.colours.is_empty() {
-        add1(&item_name, fe.desc.clone())?;
+        add1(&item_name, &fe.desc.clone())?;
       } else {
         for (colour, recolourdata) in &group.d.colours {
           let t_item_name = subst(item_name.as_str(), "_c", &recolourdata.abbrev)?;
-          let t_desc = Html(subst(&fe.desc.0, "_colour", colour)?);
-          add1(&t_item_name.try_into()?, t_desc)?;
+          let t_desc = subst(&fe.desc, "_colour", colour)?;
+          add1(&t_item_name.try_into()?, &t_desc)?;
         }
 
       }
@@ -927,8 +927,8 @@ impl TryFrom<String> for FileList {
       };
       let item_spec = n()?;
       let _r_file_spec = n()?;
-      let desc = Html(remain.to_owned());
-      o.push(FileData{ item_spec, r_file_spec: (), desc  });
+      let desc = remain.to_owned();
+      o.push(FileData{ item_spec, r_file_spec: (), desc });
     }
     Ok(FileList(o))
   }

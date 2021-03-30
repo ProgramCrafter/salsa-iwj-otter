@@ -4,7 +4,7 @@
 
 use crate::prelude::*;
 
-pub const UNCLAIMED_DESC: &str = "a hand repository";
+pub const UNCLAIMED_DESC: HtmlLit = Html::lit("a hand repository");
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 struct MagicOwner {
@@ -81,7 +81,7 @@ impl Hand {
       if let Some(xdata) = xdata;
       if let Some(owner) = &xdata.owner;
       then { owner.desc.clone() }
-      else { Html(UNCLAIMED_DESC.into()) }
+      else { UNCLAIMED_DESC.into() }
     }
   }
 }
@@ -98,9 +98,9 @@ impl PieceTrait for Hand {
       then { Some(owned) }
       else { None }
     };
-    self.shape.svg_piece_raw(f, gpc.face, &mut |f: &mut String| {
+    self.shape.svg_piece_raw(f, gpc.face, &mut |f: &mut Html| {
       if let Some(owned) = owned {
-        write!(f, r##" stroke-dasharray="{}" "##, &owned.dasharray.0)?;
+        hwrite!(f, r##" stroke-dasharray="{}" "##, &owned.dasharray)?;
       }
       Ok(())
     })?;
@@ -112,7 +112,7 @@ impl PieceTrait for Hand {
         label.svg(f,
                   &self.shape.outline,
                   self.shape.edges.get(0), 
-                  &Html(htmlescape::encode_minimal(&gpl.nick)))?;
+                  &gpl.nick.to_html())?
       }
     }
   }
@@ -139,14 +139,14 @@ impl PieceTrait for Hand {
         kind: UoKind::Piece,
         def_key: 'C',
         opname: "deactivate".to_owned(),
-        desc: Html::lit("Deactivate hand"),
+        desc: Html::lit("Deactivate hand").into(),
         wrc: WRC::Unpredictable,
       }}
       else { UoDescription {
         kind: UoKind::Piece,
         def_key: 'C',
         opname: "claim".to_owned(),
-        desc: Html::lit("Claim this as your hand"),
+        desc: Html::lit("Claim this as your hand").into(),
         wrc: WRC::Unpredictable,
       }}
     })
@@ -170,7 +170,7 @@ impl PieceTrait for Hand {
 
     let dasharray = player_dasharray(gplayers, player);
     let gpl = gplayers.byid_mut(player)?;
-    let nick = Html(htmlescape::encode_minimal(&gpl.nick));
+    let nick = gpl.nick.to_html();
 
     dbgc!("ui op k entry", &opname, &xdata);
 
@@ -179,7 +179,7 @@ impl PieceTrait for Hand {
     {
       ("claim", false) => {
         dbgc!("claiming");
-        let new_desc = Html(format!("{}'s hand", &nick.0));
+        let new_desc = hformat!("{}'s hand", &nick);
         let new_owner = Some(MagicOwner {
           player,
           dasharray,
@@ -208,7 +208,7 @@ impl PieceTrait for Hand {
                              region, piece, views)?;
 
         dbgc!("creating occ done", &new_owner, &xupdates);
-        (new_owner, xupdates, format!("claimed {}", &old_desc.0))
+        (new_owner, xupdates, hformat!("claimed {}", &old_desc))
       }
       ("deactivate", true) => {
         let xupdates =
@@ -217,7 +217,7 @@ impl PieceTrait for Hand {
                              to_recalculate, piece)
           .map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?;
 
-        (None, xupdates, format!("deactivated {}", &old_desc.0))
+        (None, xupdates, hformat!("deactivated {}", &old_desc))
       }
       ("claim", true) |
       ("deactivate", false) => {
@@ -228,7 +228,7 @@ impl PieceTrait for Hand {
       }
     };
 
-    let log = vec![ LogEntry { html: Html(format!("{} {}", nick.0, did)) }];
+    let log = vec![ LogEntry { html: hformat!("{} {}", nick, did) }];
 
     dbgc!("ui op k did main");
     

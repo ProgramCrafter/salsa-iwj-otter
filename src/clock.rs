@@ -142,6 +142,7 @@ impl fmt::Debug for User {
     write!(f, "User({})", self)
   }
 }
+hformat_as_display!{User}
 
 #[derive(Debug,Clone,Copy,Error,Serialize,Deserialize)]
 struct BadClockUserError;
@@ -439,7 +440,6 @@ impl PieceTrait for Clock {
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece, gs: &GameState,
                vpid: VisiblePieceId) {
-    let f = &mut f.0;
     let state = gpc.xdata()?
       .ok_or_else(|| internal_logic_error("missing/wrong xdata"))?;
     let urenders = self.urender(&state, gpc.held, &gs.players);
@@ -470,20 +470,20 @@ impl PieceTrait for Clock {
       }
     }
     
-    write!(f, r##"
+    hwrite!(f, r##"
 <g transform="translate(-20,-7)">"##,
     )?;
     for (y, u) in izip!(Y.iter(), urenders.iter()) {
-      write!(f, r##"
+      hwrite!(f, r##"
   <rect y="{}" fill="{}" width="40" height="7"/>"##,
-             y,
-             u.st.show().background,
+              y,
+              Html::lit(u.st.show().background),
       )?;
     }
-    write!(f, r##"
+    hwrite!(f, r##"
   <rect fill="none" stroke="black" width="40" height="14"></rect>
   <clipPath id="def.{}.cl"><rect width="40" height="14"></rect></clipPath>"##,
-           vpid
+            &vpid
     )?;
     for (user, y, u) in izip!(USERS.iter(), Y.iter(), urenders.iter()) {
       let y = y + 6.;
@@ -491,49 +491,51 @@ impl PieceTrait for Clock {
       let mins = u.remaining.tv_sec() / 60;
       let secs = u.remaining.tv_sec() % 60;
       let mins = mins.to_string();
-      let mins_pad = iter::repeat("&nbsp;").take(3 - mins.len())
-        .collect::<String>();
+      let mins_pad = Html::from_html_string(
+        iter::repeat("&nbsp;").take(3 - mins.len())
+          .collect()
+      );
 
-      let pointer = r##"
+      let pointer = Html::lit(r##"
   pointer-events="none"
-             "##;
-      let font = r##"
+             "##);
+      let font = Html::lit(r##"
   font-family="Latin Modern Mono, monospace" font-size="6" font-weight="700"
-             "##;
-      write!(f, r##"
+             "##);
+      hwrite!(f, r##"
   <text x="1" y="{}" {} {} fill="{}" >{}{}{}</text>"##,
-             y, font, pointer, show.text,
-             mins_pad, mins, show.sigil
+             y, font, pointer, Html::lit(show.text),
+             mins_pad, HtmlStr::from_html_str(&mins), Html::lit(show.sigil)
       )?;
-      write!(f, r##"
+      hwrite!(f, r##"
   <text x="14" y="{}" {} {} fill="{}" >{:02}</text>"##,
-             y, font, pointer, show.text,
+             y, font, pointer, Html::lit(show.text),
              secs
       )?;
       let nick_y = y - 0.5;
       if let Some(nick) = u.nick {
-        write!(f, r##"
+        hwrite!(f, r##"
   <text x="21" y="{}" {} clip-path="url(#def.{}.cl)" font-size="4">{}</text>
               "##,
                nick_y, pointer,
                vpid,
-               htmlescape::encode_minimal(nick),
+               nick,
         )?;
       } else {
-        write!(f, r##"
+        hwrite!(f, r##"
   <text x="27" y="{}" fill="pink" stroke="red" {}
    stroke-width="0.1" font-size="4">({})</text>"##,
                nick_y, pointer, user,
         )?;
       }
     }
-    write!(f, r##"
+    hwrite!(f, r##"
 </g>"##)?;
   }
 
   #[throws(IE)]
   fn describe_html(&self, _gpc: &GPiece, _goccults: &GameOccults) -> Html {
-    Html::lit("the chess clock")
+    Html::lit("the chess clock").into()
   }
 
   #[throws(InternalError)]
@@ -542,8 +544,11 @@ impl PieceTrait for Clock {
     let state: &State = gpc.xdata_exp()?;
 
     let for_users = || izip!(&USERS, &USERINFOS, &state.users).map(
-      |(&user, userinfo, ust)| (user, userinfo, ust,
-                                userinfo.idchar.to_ascii_uppercase())
+      |(&user, userinfo, ust)| {
+        let upchar = userinfo.idchar.to_ascii_uppercase();
+        let upchar = IsHtmlFormatted(upchar);
+        (user, userinfo, ust, upchar)
+      }
     );
 
     for (user, userinfo, _ust, upchar) in for_users() {
@@ -552,11 +557,11 @@ impl PieceTrait for Clock {
           kind: UoKind::Piece,
           def_key: userinfo.idchar,
           opname: format!("start-{}", userinfo.idchar),
-          desc: Html(if state.current.is_none() {
-            format!("Start, with player {}", &upchar)
+          desc: if state.current.is_none() {
+            hformat!("Start, with player {}", &upchar)
           } else {
-            format!("Make player {} current", &upchar)
-          }),
+            hformat!("Make player {} current", &upchar)
+          },
           wrc: WRC::Predictable,
         });
       }
@@ -567,7 +572,7 @@ impl PieceTrait for Clock {
         kind: UoKind::Piece,
         def_key: 'S',
         opname: "stop".to_string(),
-        desc: Html::lit("Stop"),
+        desc: Html::lit("Stop").into(),
         wrc: WRC::Predictable,
       });
     }
@@ -576,7 +581,7 @@ impl PieceTrait for Clock {
         kind: UoKind::Piece,
         def_key: 'R',
         opname: "reset".to_string(),
-        desc: Html::lit("Reset"),
+        desc: Html::lit("Reset").into(),
         wrc: WRC::Unpredictable,
       });
     }
@@ -585,17 +590,17 @@ impl PieceTrait for Clock {
       if let Some(_gpl) = gs.players.get(ust.player) {
         upd.push(UoDescription {
           kind: UoKind::Piece,
-          def_key: upchar,
+          def_key: upchar.0,
           opname: format!("unclaim-{}", userinfo.idchar),
-          desc: Html(format!("Clear player {}", &upchar)),
+          desc: hformat!("Clear player {}", &upchar),
           wrc: WRC::Unpredictable,
         });
       } else {
         upd.push(UoDescription {
           kind: UoKind::Piece,
-          def_key: upchar,
+          def_key: upchar.0,
           opname: format!("claim-{}", userinfo.idchar),
-          desc: Html(format!("Become player {}", &upchar)),
+          desc: hformat!("Become player {}", &upchar),
           wrc: WRC::Unpredictable,
         });
       }
@@ -683,7 +688,7 @@ impl PieceTrait for Clock {
     let log = log_did_to_piece(ioccults,&gs.occults, gpl, gpc, ipc, &did)
       .unwrap_or_else(|e| {
         error!("failed to log: {:?}", &e);
-        vec![LogEntry { html: Html::lit("&lt;failed to log&gt;") }]
+        vec![LogEntry { html: "<failed to log>".to_html() }]
       });
 
     gpc.moveable = moveable;

@@ -686,17 +686,17 @@ pub fn recalculate_occultation_piece(
       to_recalculate, piece,
       || (vanilla_wrc, vanilla_op, vanilla_log).into(),
       vec![],
-      |old, new, Html(show)| vec![ LogEntry { html: Html(format!(
+      |old, new, show| vec![ LogEntry { html: hformat!(
         "{} {}",
-        &who_by.0,
+        &who_by,
         match (old, new) {
-          (None, None) => format!("modified {} somehow", show),
-          (Some(old), None) => format!("produced {} from {}", show, &old.0),
-          (None, Some(new)) => format!("placed {} into {}", show, &new.0),
-          (Some(old), Some(new)) => format!("moved {} from {} to {}",
-                                            show, &old.0, &new.0),
-        },
-      ))}],
+          (None, None) => hformat!("modified {} somehow", show),
+          (Some(old), None) => hformat!("produced {} from {}", show, old),
+          (None, Some(new)) => hformat!("placed {} into {}", show, new),
+          (Some(old), Some(new)) => hformat!("moved {} from {} to {}",
+                                            show, old, new),
+        }
+      )}],
       |puos, log| PieceUpdate {
         wrc: WRC::Unpredictable,
         ops: PieceUpdateOps::PerPlayer(puos),

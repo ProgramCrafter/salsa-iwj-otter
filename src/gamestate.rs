@@ -19,10 +19,6 @@ pub struct Generation(pub u64);
 
 visible_slotmap_key!{ VisiblePieceId(b'.') }
 
-#[derive(Clone,Serialize,Deserialize,Hash,Eq,Ord,PartialEq,PartialOrd)]
-#[serde(transparent)]
-pub struct Html(pub String);
-
 #[derive(Copy,Clone,Debug,Serialize,Deserialize,Eq,Ord,PartialEq,PartialOrd)]
 #[serde(transparent)]
 pub struct Timestamp(pub u64); /* time_t */
@@ -113,6 +109,7 @@ mod item_name {
     #[throws(fmt::Error)]
     fn fmt(&self, f: &mut fmt::Formatter) { f.write_str(&self.0)? }
   }
+  hformat_as_display!{ GoodItemName }
 
   impl TryFrom<String> for GoodItemName {
     type Error = LibraryLoadError;
@@ -327,25 +324,6 @@ impl ClampTable for Pos {
   }
 }
 
-impl Html {
-  // todo convert to display_as but I need to write display_as::typed::Is
-  pub fn lit(s: &str) -> Self { Html(s.to_owned()) }
-  pub fn from_txt(s: &str) -> Self {
-    Html(htmlescape::encode_minimal(&s))
-  }
-}
-
-impl Debug for Html {
-  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    const MAX: usize = 23;
-    if self.0.len() < MAX {
-      write!(f, "<{}>", &self.0)
-    } else {
-      write!(f, "<{}>...", &self.0[0..MAX-3])
-    }
-  }
-}
-
 // ---------- game state - rendering etc. ----------
 
 impl GPiece {
@@ -457,7 +435,7 @@ fn xdata_get_mut_inner<
 
 impl GameState {
   pub fn dummy() -> Self { GameState {
-    table_colour: Html::lit("green"),
+    table_colour: Html::lit("green").into(),
     table_size: PosC::new(300,200),
     pieces: default(),
     gen: Generation(0),
@@ -488,7 +466,7 @@ impl GameState {
       let front = self.log.front_mut().unwrap();
       let front = &mut front.1;
       let logent = LogEntry {
-        html: Html::lit("[Earlier log entries expired]"),
+        html: Html::lit("[Earlier log entries expired]").into(),
       };
       *front = Arc::new(CommittedLogEntry { logent, when: front.when });
     }

@@ -319,7 +319,7 @@ api_route!{
       let pri = piece_pri(ioccults, &gs.occults, player, gpl, piece, gpc, ipc)
         .ok_or(POE::PieceGone)?;
 
-      let pcs = pri.describe(ioccults,&gs.occults, gpc, ipc).0;
+      let pcs = pri.describe(ioccults,&gs.occults, gpc, ipc);
 
       gpc.held = Some(player);
 
@@ -327,10 +327,10 @@ api_route!{
 
       let pls = &htmlescape::encode_minimal(&gpl.nick);
 
-      let logent = LogEntry { html: Html(match was {
-        Some(was) => format!("{} wrested {} from {}", pls, pcs, was),
-        None => format!("{} wrested {}", pls, pcs),
-      })};
+      let logent = LogEntry { html: match was {
+        Some(was) => hformat!("{} wrested {} from {}", pls, pcs, was),
+        None => hformat!("{} wrested {}", pls, pcs),
+      }};
 
       (WhatResponseToClientOp::Predictable,
        update, vec![logent]).into()

@@ -9,7 +9,7 @@ pub type VisiblePieceAngle = PieceAngle;
 #[derive(Clone,Debug)]
 #[derive(Serialize,Deserialize)]
 #[serde(transparent)]
-pub struct VisibleAngleTransform(String);
+pub struct VisibleAngleTransform(Html);
 
 #[derive(Debug,Clone)]
 pub struct PieceRenderInstructions {
@@ -29,9 +29,10 @@ pub type PriOcculted = PriOccultedGeneral<Pos, ZLevel>;
 
 impl VisiblePieceAngle {
   pub fn to_transform(self) -> VisibleAngleTransform {
-    VisibleAngleTransform(base_misc::raw_angle_transform(
-      self.to_compass().into()
-    ))
+    VisibleAngleTransform(Html::from_html_string(
+      base_misc::raw_angle_transform(
+        self.to_compass().into()
+      )))
   }
 
   pub fn to_compass(self) -> CompassAngle {
@@ -63,7 +64,7 @@ impl<P,Z> PriOccultedGeneral<P,Z> {
     self.describe_fallible(ioccults, goccults, gpc, ipc)
       .unwrap_or_else(|e| {
         error!("error describing piece: {:?}", e);
-        Html::lit("&lt;internal error describing piece&gt;")
+        "<internal error describing piece>".to_html()
       })
   }
 
@@ -184,8 +185,8 @@ impl PieceRenderInstructions {
 
     let transform = angle.to_transform();
 
-    let mut defs = Html(String::new());
-    write!(&mut defs.0,
+    let mut defs = Html::new();
+    hwrite!(&mut defs,
            r##"<g id="piece{}" transform="{}" data-dragraise="{}">"##,
            pri.vpid, &transform.0, dragraise)?;
 
@@ -198,10 +199,10 @@ impl PieceRenderInstructions {
       },
     };
 
-    write!(&mut defs.0, r##"</g>"##)?;
-    write!(&mut defs.0,
+    hwrite!(&mut defs, r##"</g>"##)?;
+    hwrite!(&mut defs,
            r##"<path id="surround{}" d="{}"/>"##,
-           pri.vpid, o.surround_path()?.0)?;
+           pri.vpid, o.surround_path()?)?;
     defs
   }
 
@@ -223,7 +224,7 @@ impl PieceRenderInstructions {
         kind: UoKind::Global,
         def_key: 'f'.into(),
         opname: "flip".to_string(),
-        desc: Html::lit("flip"),
+        desc: Html::lit("flip").into(),
       })
     }
     ipc.show(y).add_ui_operations(&mut out, gs, gpc)?;

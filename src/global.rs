@@ -471,8 +471,10 @@ impl Instance {
       })
     }).collect::<Vec<_>>();
     let render = RenderContext { players };
-    let html = Html(nwtemplates::render("player-info-pane.tera", &render)
-      .context("render player info template")?);
+    let html = Html::from_html_string(
+      nwtemplates::render("player-info-pane.tera", &render)
+        .context("render player info template")?
+    );
     html
   }
 }
@@ -518,13 +520,12 @@ impl Display for InstanceName {
   }
 }
 
-fn link_a_href<K:Display>(k: &K, v: &str) -> Html {
-  let url = htmlescape::encode_minimal(v);
-  Html(format!("<a href={url}>{kind}</a>", url=url, kind=k))
+fn link_a_href(k: &HtmlStr, v: &str) -> Html {
+  hformat!("<a href={}>{}</a>", v, k)
 }
 impl From<(LinkKind, &str)> for Html {
   fn from((k, v): (LinkKind, &str)) -> Html {
-    link_a_href(&k, v)
+    link_a_href(&k.to_html(), v)
   }
 }
 
@@ -533,14 +534,16 @@ impl From<&LinksTable> for Html {
     let mut s = links.iter()
       .filter_map(|(k,v)| {
         let v = v.as_ref()?;
-        Some(Html::from((k, v.as_str())).0)
+        Some(Html::from((k, v.as_str())))
       })
       .chain(iter::once(
-        link_a_href(&"Shapelib", "/_/shapelib.html").0
+        link_a_href(Html::lit("Shapelib").into(), "/_/shapelib.html")
       ))
-      .join(" ");
-    if s.len() != 0 { s = format!("links: {}", s) }
-    Html(s)
+      .collect::<Vec<Html>>()
+      .iter()
+      .hjoin(&Html::lit(" "));
+    if s.len() != 0 { s = hformat!("links: {}", s) }
+    s
   }
 }
 

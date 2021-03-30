@@ -200,6 +200,7 @@ impl Display for AccountName {
     ], |s| f.write_str(s))?
   }
 }
+hformat_as_display!{ AccountName }
 
 impl FromStr for AccountName {
   type Err = InvalidScopedName;

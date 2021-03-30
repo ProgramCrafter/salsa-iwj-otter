@@ -127,13 +127,22 @@ fn preview(items: Vec<ItemForOutput>) {
   println!(r#"<table rules="all">"#);
   for s in &pieces {
     let Prep { spec, p, uos, bbox, size } = s;
+
+    macro_rules! println {
+      ($($x:tt)*) => ({
+        let mut s = Html::new();
+        hwrite!(&mut s, $($x)*).unwrap();
+        std::println!("{}", &s.as_html_str());
+      })
+    }
+
     println!(r#"<tr>"#);
     println!(r#"<th align="left"><kbd>{}</kbd></th>"#,
-             Html::from_txt(&spec.lib).0);
+             Html::from_txt(&spec.lib));
     println!(r#"<th align="left"><kbd>{}</kbd></th>"#,
-             Html::from_txt(&spec.item).0);
+             Html::from_txt(&spec.item));
     println!(r#"<th align="left">{}</th>"#,
-             p.describe_html(&GPiece::dummy(), &default())?.0);
+             p.describe_html(&GPiece::dummy(), &default())?);
     let only1 = s.face_cols() == 1;
 
     for facecol in 0..(if only1 { 1 } else { max_facecols }) {
@@ -169,22 +178,24 @@ fn preview(items: Vec<ItemForOutput>) {
                &viewport, wh[0], wh[1]);
         if inseveral == 1 {
           let dasharray = player_num_dasharray(1.try_into().unwrap());
-          print!(r#"<path d="{}" stroke-dasharray="{}"
+          println!(r#"<path d="{}" stroke-dasharray="{}"
                           fill="none" stroke="{}" />"#,
-                 &surround.0, &dasharray.0, HELD_SURROUND_COLOUR);
+                 &surround, &dasharray, HELD_SURROUND_COLOUR);
         }
-        let mut html = Html("".into());
+        let mut html = Html::lit("").into();
         let gpc = GPiece { face: face.into(), ..GPiece::dummy() };
         p.svg_piece(&mut html, &gpc, &GameState::dummy(), default())?;
-        println!("{}</svg>", html.0);
+        println!("{}</svg>", html);
       }
       println!("</td>");
 
       if max_uos > 0 {
         println!(r#"<td>{}</td>"#,
                  uos.iter()
-                 .map(|uo| Html::from_txt(uo).0)
-                 .join(" "));
+                 .map(|uo| Html::from_txt(uo))
+                 .collect::<Vec<Html>>()
+                 .iter()
+                 .hjoin(&Html::lit(" ")));
       }
     };
     println!("</tr>");

@@ -115,6 +115,7 @@ pub use crate::dbgc;
 pub use crate::{deref_to_field, deref_to_field_mut};
 pub use crate::ensure_eq;
 pub use crate::from_instance_lock_error;
+pub use crate::{hformat, hformat_as_display, hwrite};
 pub use crate::matches_doesnot;
 pub use crate::trace_dbg;
 
@@ -133,6 +134,7 @@ pub use crate::fake_rng::*;
 pub use crate::gamestate::*;
 pub use crate::global::*;
 pub use crate::hidden::*;
+pub use crate::html::*;
 pub use crate::keydata::*;
 pub use crate::mgmtchannel::*;
 pub use crate::nwtemplates;

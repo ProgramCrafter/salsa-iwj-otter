@@ -159,7 +159,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       let auth = authorise_by_account(cs, &ag, &game)?;
 
       let gs = otter::gamestate::GameState {
-        table_colour: Html::lit("green"),
+        table_colour: Html::lit("green").into(),
         table_size: DEFAULT_TABLE_SIZE,
         pieces: default(),
         players: default(),
@@ -350,8 +350,8 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       ig.gs.table_size = size;
       (U{ pcs: vec![],
           log: vec![ LogEntry {
-            html: Html(format!("{} resized the table to {}x{}",
-                               &who.0, size.x(), size.y())),
+            html: hformat!("{} resized the table to {}x{}",
+                           who, size.x(), size.y()),
           }],
           raw: Some(vec![ PreparedUpdateEntry::SetTableSize(size) ]) },
        Fine, None, ig)
@@ -363,8 +363,8 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       ig.gs.table_colour = colour.clone();
       (U{ pcs: vec![],
           log: vec![ LogEntry {
-            html: Html(format!("{} recoloured the tabletop to {}",
-                               &who.0, &colour.0)),
+            html: hformat!("{} recoloured the tabletop to {}",
+                           &who, &colour),
           }],
           raw: Some(vec![ PreparedUpdateEntry::SetTableColour(colour) ]) },
        Fine, None, ig)
@@ -378,7 +378,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let (ig, auth) = cs.check_acl(ag, ig, PCH::Instance, &[TP::Play])?;
       let nick = nick.ok_or(ME::MustSpecifyNick)?;
       let logentry = LogEntry {
-        html: Html(format!("{} [{}] joined the game", &nick, &account)),
+        html: hformat!("{} [{}] joined the game", nick, account),
       };
       let timezone = &arecord.timezone;
       let tz = tz_from_str(&timezone);
@@ -482,10 +482,8 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         ig.check_new_nick(&new_nick)?;
         let gpl = ig.gs.players.byid_mut(player)?;
         log.push(LogEntry {
-          html: Html(format!("{} changed {}'s nick to {}",
-                             &who.0,
-                             htmlescape::encode_minimal(&gpl.nick),
-                             htmlescape::encode_minimal(&new_nick))),
+          html: hformat!("{} changed {}'s nick to {}",
+                         &who, gpl.nick, new_nick),
         });
         gpl.nick = new_nick;
       }
@@ -532,10 +530,10 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         }
         let new_links = Arc::new(new_links);
         *ig_links = new_links.clone();
-        Ok(Html(
-          format!("{} set the links to off-server game resources",
-                  &who.0)
-        ))
+        Ok(
+          hformat!("{} set the links to off-server game resources",
+                   who)
+        )
       })?
     }
 
@@ -547,10 +545,10 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         new_links[kind] = Some(url.into_string());
         let new_links = Arc::new(new_links);
         *ig_links = new_links.clone();
-        Ok(Html(
-          format!("{} set the link {}",
-                  &who.0, &show.0)
-        ))
+        Ok(
+          hformat!("{} set the link {}",
+                  who, show)
+        )
       })?
     }
 
@@ -560,10 +558,10 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         new_links[kind] = None;
         let new_links = Arc::new(new_links);
         *ig_links = new_links.clone();
-        Ok(Html(
-          format!("{} removed the link {}",
-                  &who.0, &kind)
-        ))
+        Ok(
+          hformat!("{} removed the link {}",
+                  who, &kind)
+        )
       })?
     }
 
@@ -599,8 +597,8 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let (gpl, ipl, update) = got.into_iter().next()
         .ok_or(PlayerNotFound)?;
 
-      let html = Html(
-        format!("{} [{}] left the game [{}]"
+      let html =
+        hformat!("{} [{}] left the game [{}]"
                 ,
                 (|| Some(gpl?.nick))()
                 .unwrap_or("<partial data!>".into())
@@ -613,7 +611,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
                 ,
                 &account
                 )
-      );
+        ;
 
       (U{ pcs: vec![],
           log: vec![ LogEntry { html }],
@@ -654,7 +652,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         let pri = PieceRenderInstructions::new_visible(default());
         pri.describe(ioccults,&gs.occults, gpc, &ipc)
       } else {
-        Html::lit("&lt;piece partially missing from game state!&gt;")
+        "<piece partially missing from game state>".to_html()
       };
       if let Some(gpc) = gpc {
         ipc.p.into_inner().delete_hook(&gpc, gs);
@@ -662,8 +660,8 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       if let Some(occilk) = ipc.occilk { ig.ioccults.ilks.dispose(occilk); }
       (U{ pcs: vec![(piece, PieceUpdateOp::Delete())],
           log: vec![ LogEntry {
-            html: Html(format!("A piece {} was removed from the game",
-                          desc_html.0)),
+            html: hformat!("A piece {} was removed from the game",
+                          desc_html),
           }],
           raw: None },
        Fine,
@@ -741,7 +739,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
       (U{ pcs: updates,
           log: vec![ LogEntry {
-            html: Html(format!("{} added {} pieces", &who.0, count_len)),
+            html: hformat!("{} added {} pieces", who, count_len),
           }],
           raw: None },
        Fine, None, ig_g)
@@ -762,7 +760,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       }
       (U{ pcs: vec![ ],
           log: vec![ LogEntry {
-            html: Html(format!("{} cleared the log", &who.0)),
+            html: hformat!("{} cleared the log", who),
           } ],
           raw: None },
        Fine, None, ig)
@@ -772,8 +770,8 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Super])?;
       ig.acl = acl.into();
       let mut log = vec![ LogEntry {
-        html: Html(format!("{} set the table access control list",
-                           &who.0)),
+        html: hformat!("{} set the table access control list",
+                       who),
       } ];
 
       #[throws(InternalError)]
@@ -813,7 +811,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
             "<i>partial data?!</i>".to_string()
           };
           log.push(LogEntry {
-            html: Html(format!("{} removed a player {}", &who.0, &show)),
+            html: hformat!("{} removed a player {}", who, show),
           });
           updates.push(update);
         }
@@ -856,11 +854,11 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
       .filter(|(_,ipr)| ipr.ipl.acctid == acctid)
       .next();
     if let Some(gpl) = ig.gs.players.get(player);
-    then { Html(format!("{} [{}]",
-                        &htmlescape::encode_minimal(&gpl.nick),
-                        &account)) }
-    else { Html(format!("[{}]",
-                        &account)) }
+    then { hformat!("{} [{}]",
+                        gpl.nick,
+                        account) }
+    else { hformat!("[{}]",
+                        account) }
   };
   let res = (||{
     for insn in insns.drain(0..) {
@@ -983,7 +981,7 @@ impl UpdateHandler {
 
         if bulk.logs {
           buf.log_updates(vec![LogEntry {
-            html: Html(format!("{} (re)configured the game", &who.0)),
+            html: hformat!("{} (re)configured the game", who),
           }]);
         }
 

@@ -26,7 +26,7 @@ pub fn player_num_dasharray(player_num: NonZeroUsize) -> Html {
   }
   let spc = dasharray.pop();
   assert_eq!(spc,Some(' '));
-  Html(dasharray)
+  Html::from_html_string(dasharray)
 }
 
 pub fn player_dasharray(gplayers: &GPlayers, player: PlayerId) -> Html {

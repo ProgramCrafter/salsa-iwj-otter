@@ -26,6 +26,7 @@ use otter_base::misc::display_as_debug;
 use crate::accounts::AccountName;
 use crate::error::UnsupportedColourSpec;
 use crate::gamestate::PieceSpec;
+use crate::hformat_as_display;
 use crate::prelude::default;
 
 pub use implementation::PlayerAccessSpec;
@@ -140,6 +141,7 @@ pub enum LinkKind {
   Voice,
   Info,
 }
+hformat_as_display!{LinkKind}
 
 //---------- player accesses, should perhaps be in commands.rs ----------
 
@@ -382,7 +384,7 @@ pub mod implementation {
                -> Result<AccessTokenReport, TDE>;
     fn describe_html(&self) -> Html {
       let inner = Html::from_txt(&format!("{:?}", self));
-      Html(format!("<code>{}</code>", inner.0))
+      hformat!("<code>{}</code>", inner)
     }
   }
 
@@ -550,7 +552,7 @@ pub mod implementation {
       if !RE.is_match(s) {
         throw!(UnsupportedColourSpec);
       }
-      Html(spec.0.clone())
+      Html::from_html_string(spec.0.clone())
     }
   }
 

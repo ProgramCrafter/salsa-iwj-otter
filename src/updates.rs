@@ -147,7 +147,7 @@ impl<T:JsonLen> SecondarySlotMap<PlayerId, T> {
 }
 
 impl JsonLen for Html {
-  fn json_len(&self) -> usize { self.0.as_bytes().len() }
+  fn json_len(&self) -> usize { self.as_html_str().as_bytes().len() }
 }
 
 // ---------- piece updates ----------
@@ -274,7 +274,7 @@ pub fn log_did_to_piece_whoby(ioccults: &IOccults, goccults: &GameOccults,
                               gpc: &GPiece, ipc: &IPiece, did: &str)
                               -> (Vec<LogEntry>, Option<Html>)
 {
-  let who_by = Html(htmlescape::encode_minimal(&by_gpl.nick));
+  let who_by = by_gpl.nick.to_html();
   let y = gpc.fully_visible_to_everyone();
   let desc = (||{
     Ok::<_,IE>(match ipc.show_or_instead(ioccults, y)? {
@@ -283,15 +283,15 @@ pub fn log_did_to_piece_whoby(ioccults: &IOccults, goccults: &GameOccults,
     })
   })().unwrap_or_else(|e|{
     error!("failed to format during logging: {:?}", e);
-    Html::lit("&lt;internal error&gt;")
+    Html::lit("&lt;internal error&gt;").into()
   });
 
-  let log = vec![ LogEntry { html: Html(format!(
+  let log = vec![ LogEntry { html: hformat!(
     "{} {} {}",
-    &who_by.0,
+    who_by,
     did,
-    desc.0,
-  ))}];
+    desc,
+  )}];
   (log, Some(who_by))
 }
 
@@ -406,22 +406,22 @@ impl PreparedUpdateEntry {
         ims.json_len(player)
       }
       Log(logent) => {
-        logent.logent.html.0.as_bytes().len() * 28
+        logent.logent.html.json_len() * 28
       }
       AddPlayer {
         player:_,
         data: DataLoadPlayer { dasharray, nick, },
         new_info_pane,
       } => {
-        dasharray.0.as_bytes().len() +
-        nick     .0.as_bytes().len() + 100
-          + new_info_pane.0.len()
+        dasharray.json_len() +
+        nick     .json_len() + 100
+          + new_info_pane.json_len()
       }
       RemovePlayer { player:_, new_info_pane } => {
-        new_info_pane.0.len() + 100
+        new_info_pane.json_len() + 100
       }
       SetTableColour(colour) => {
-        colour.0.as_bytes().len() + 50
+        colour.json_len() + 50
       }
       SetLinks(links) => {
         links.iter().filter_map(
@@ -446,8 +446,8 @@ impl DataLoadPlayer {
     let gplayers = &ig.gs.players;
     let dasharray = player_dasharray(gplayers, player);
     let nick = gplayers.get(player).map(|gpl| gpl.nick.as_str())
-      .unwrap_or("<unknown-player>");
-    let nick = Html(htmlescape::encode_minimal(&nick));
+      .unwrap_or("<unknown-player>")
+      .to_html();
     DataLoadPlayer {
       dasharray,
       nick,

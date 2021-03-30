@@ -23,8 +23,8 @@ pub fn player_dasharray(player: &'static str) -> String {
   let (player,_) = player.get_idx_version();
   let player: usize = player.try_into().unwrap();
   let player = player.try_into().unwrap();
-  let dasharray = player_num_dasharray(player).0;
-  dasharray
+  let dasharray = player_num_dasharray(player);
+  dasharray.into_html_string()
 }
 
 impl Ctx {

@@ -174,10 +174,10 @@ fn session_inner(form: Json<SessionForm>,
         l.into_iter()
           .map(|(trk,trv)|{
             let when = trv.latest;
-            let html = Html(format!(
+            let html = hformat!(
               "player state accessed via {} [{}]",
-              &trk.desc.0, &trk.account
-            ));
+              trk.desc, trk.account
+            );
             Arc::new(CommittedLogEntry { when, logent: LogEntry { html } })
           })
       },

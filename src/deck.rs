@@ -4,10 +4,10 @@
 
 use crate::prelude::*;
 
-pub const CORE_DESC: &str = "a play/pickup deck";
-pub const DISABLED_DESC: &str = "a play/pickup deck (disabled)";
-pub const COUNTING_DESC: &str = "a play pile (counting)";
-pub const ENABLED_DESC: &str = "a pickup deck (enabled)";
+pub const CORE_DESC    : HtmlLit = Html::lit("a play/pickup deck");
+pub const DISABLED_DESC: HtmlLit = Html::lit("a play/pickup deck (disabled)");
+pub const COUNTING_DESC: HtmlLit = Html::lit("a play pile (counting)");
+pub const ENABLED_DESC : HtmlLit = Html::lit("a pickup deck (enabled)");
 
 #[derive(Debug,Serialize,Deserialize)]
 struct Deck {
@@ -102,20 +102,18 @@ impl PieceTrait for Deck {
         label.svg(f,
                   &self.shape.outline,
                   self.shape.edges.get(0), 
-                  &Html(count.to_string()))?;
+                  &count.to_html())?;
       }
     }
   }
 
   #[throws(IE)]
   fn describe_html(&self, gpc: &GPiece, goccults: &GameOccults) -> Html {
-    Html::lit(
-      match self.state(gpc, goccults)? {
-        Disabled => DISABLED_DESC,
-        Counting => ENABLED_DESC,
-        Enabled => ENABLED_DESC,
-      }
-    )
+    match self.state(gpc, goccults)? {
+      Disabled => DISABLED_DESC,
+      Counting => ENABLED_DESC,
+      Enabled => ENABLED_DESC,
+    }.into()
   }
 
   delegate!{
@@ -133,7 +131,7 @@ impl PieceTrait for Deck {
         kind: UoKind::Piece,
         def_key: 'A',
         opname: "activate".to_owned(),
-        desc: Html::lit("Enable pickup deck"),
+        desc: Html::lit("Enable pickup deck").into(),
         wrc: WRC::Unpredictable,
       });
     }
@@ -142,7 +140,7 @@ impl PieceTrait for Deck {
         kind: UoKind::Piece,
         def_key: 'C',
         opname: "counting".to_owned(),
-        desc: Html::lit("Make into counting play pile"),
+        desc: Html::lit("Make into counting play pile").into(),
         wrc: WRC::Unpredictable,
       });
     }
@@ -151,7 +149,7 @@ impl PieceTrait for Deck {
         kind: UoKind::Piece,
         def_key: 'S',
         opname: "deactivate".to_owned(),
-        desc: Html::lit("Disable pickup deck"),
+        desc: Html::lit("Disable pickup deck").into(),
         wrc: WRC::Unpredictable,
       });
     }
@@ -170,7 +168,7 @@ impl PieceTrait for Deck {
     let gpc = gpieces.byid_mut(piece)?;
 
     let gpl = gplayers.byid_mut(player)?;
-    let nick = Html(htmlescape::encode_minimal(&gpl.nick));
+    let nick = gpl.nick.to_html();
 
     dbgc!("ui op k entry", &opname);
     
@@ -180,9 +178,9 @@ impl PieceTrait for Deck {
     let old_state = self.state(gpc, &goccults).map_err(err_via_response)?;
   
     let (new_state, did) = match opname {
-      "activate"   => (Enabled,  format!("enabled {}",         CORE_DESC)),
-      "counting"   => (Counting, format!("set {} to counting", CORE_DESC)),
-      "deactivate" => (Disabled, format!("disabled {}",        CORE_DESC)),
+      "activate"   => (Enabled,  hformat!("enabled {}",         CORE_DESC)),
+      "counting"   => (Counting, hformat!("set {} to counting", CORE_DESC)),
+      "deactivate" => (Disabled, hformat!("disabled {}",        CORE_DESC)),
       _ => throw!(OE::BadOperation),
     };
   
@@ -228,7 +226,7 @@ impl PieceTrait for Deck {
       dbgc!("creating occ done", &xupdates);
     }
 
-    let log = vec![ LogEntry { html: Html(format!("{} {}", nick.0, did)) }];
+    let log = vec![ LogEntry { html: hformat!("{} {}", nick, did) }];
 
     dbgc!("ui op k did main");
     
