@@ -245,6 +245,11 @@ pub mod piece_specs {
   }
 
   #[derive(Debug,Serialize,Deserialize)]
+  pub struct PlayerLabel {
+    #[serde(flatten)] pub c: OwnedCommon,
+  }
+
+  #[derive(Debug,Serialize,Deserialize)]
   pub struct OwnedCommon {
     pub colour: ColourSpec,
     pub edge: Option<ColourSpec>,

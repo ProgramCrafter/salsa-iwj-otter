@@ -28,6 +28,7 @@ struct HandState {
 #[derive(Debug,Copy,Clone,Serialize,Deserialize)]
 enum Sort {
   Hand,
+  PlayerLabel,
 }
 
 type MkOccCA = fn(&OccDisplacement, &ZCoord) -> OccKA;
@@ -36,22 +37,28 @@ impl Sort {
   fn backcompat_upgrade() -> Self { Sort::Hand }
   fn itemname(self) -> &'static str { use Sort::*; match self {
     Hand => "magic-hand",
+    PlayerLabel => "player-label",
   } }
   fn unclaimed_desc(self) -> HtmlLit { use Sort::*; Html::lit(match self {
     Hand => UNCLAIMED_HAND_DESC,
+    PlayerLabel => "unclaimed player label",
   }) }
   fn deact_desc(self) -> HtmlLit { use Sort::*; Html::lit(match self {
     Hand => "Deactivate hand",
+    PlayerLabel => "Relinquish player label",
   }) }
   fn claim_desc(self) -> HtmlLit { use Sort::*; Html::lit(match self {
     Hand => "Claim this as your hand",
+    PlayerLabel => "Claim player label",
   }) }
   fn owned_desc(self, nick: &HtmlStr) -> Html { use Sort::*; match self {
     Hand => hformat!("{}'s hand", nick),
+    PlayerLabel => hformat!("{}'s player label", nick),
   } }
   fn views(self) -> Option<(MkOccCA, MkOccCA)> { use Sort::*; match self {
     Hand => Some((|_,_| OccKA::Visible,
                   |d,z| OccKA::Displaced((d.clone(), z.clone())))),
+    PlayerLabel => None,
   } }
 }
 
@@ -105,6 +112,16 @@ impl piece_specs::OwnedCommon {
 
 #[typetag::serde]
 impl PieceSpec for piece_specs::Hand {
+  #[throws(SpecError)]
+  fn load(&self, _: usize, _: &mut GPiece,
+          _pcaliases: &PieceAliases, _ir: &InstanceRef)
+          -> PieceSpecLoaded {
+    self.c.load(Sort::Hand)?
+  }
+}
+
+#[typetag::serde]
+impl PieceSpec for piece_specs::PlayerLabel {
   #[throws(SpecError)]
   fn load(&self, _: usize, _: &mut GPiece,
           _pcaliases: &PieceAliases, _ir: &InstanceRef)
