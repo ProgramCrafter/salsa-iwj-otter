@@ -136,6 +136,11 @@ impl From<PlayerNotFound> for ApiPieceOpError {
     ApiPieceOpError::ReportViaResponse(x.into())
   }
 }
+impl From<InternalError> for ApiPieceOpError {
+  fn from(x: InternalError) -> ApiPieceOpError {
+    ApiPieceOpError::ReportViaResponse(x.into())
+  }
+}
 
 #[derive(Error,Debug,Serialize,Clone)]
 pub enum ErrorSignaledViaUpdate<POEPU: Debug> {

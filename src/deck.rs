@@ -172,10 +172,7 @@ impl PieceTrait for Deck {
 
     dbgc!("ui op k entry", &opname);
     
-    let err_via_response =
-      |ie:IE| ApiPieceOpError::ReportViaResponse(ie.into());
-
-    let old_state = self.state(gpc, &goccults).map_err(err_via_response)?;
+    let old_state = self.state(gpc, &goccults)?;
   
     let (new_state, did) = match opname {
       "activate"   => (Enabled,  hformat!("enabled {}",         CORE_DESC)),
@@ -198,7 +195,7 @@ impl PieceTrait for Deck {
       let views = UniformOccultationView(new_view).views()?;
       Ok::<_,IE>((region, views))
     })
-      .transpose().map_err(err_via_response)?;
+      .transpose()?;
 
     let mut xupdates = vec![];
 
@@ -210,8 +207,7 @@ impl PieceTrait for Deck {
       xupdates.extend(
         remove_occultation(&mut gen.unique_gen(),
                            gplayers, gpieces, goccults, ipieces, ioccults,
-                           to_recalculate, piece)
-          .map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?
+                           to_recalculate, piece)?
       );
     }
 

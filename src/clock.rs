@@ -616,8 +616,7 @@ impl PieceTrait for Clock {
     let gpc = gs.pieces.byid_mut(piece)?;
     let held = gpc.held;
     let gpl = gs.players.byid(player)?;
-    let state: &mut State = gpc.xdata_mut_exp()
-      .map_err(|e| APOE::ReportViaResponse(e.into()))?;
+    let state: &mut State = gpc.xdata_mut_exp()?;
     let get_user = || opname.chars().next_back().unwrap().try_into().unwrap();
 
     enum Howish {
@@ -683,8 +682,7 @@ impl PieceTrait for Clock {
     };
 
     state.do_start_or_stop(piece, was_current, was_implied_running,
-                           held, &self.spec, ig)
-      .map_err(|e| APOE::ReportViaResponse(e.into()))?;
+                           held, &self.spec, ig)?;
 
     let log = log_did_to_piece(ioccults,&gs.occults, gpl, gpc, ipc, &did)
       .unwrap_or_else(|e| {

@@ -218,8 +218,7 @@ impl PieceTrait for Hand {
 
     let goccults = &mut gs.occults;
     let gpc = gpieces.byid_mut(piece)?;
-    let xdata = gpc.xdata.get_mut::<HandState,_>(default)
-      .map_err(|e| APOE::ReportViaResponse(e.into()))?;
+    let xdata = gpc.xdata.get_mut::<HandState,_>(default)?;
     let old_desc = self.sort.describe_html_inner(Some(xdata));
     let old_player = xdata.player();
 
@@ -255,7 +254,7 @@ impl PieceTrait for Hand {
               }.views()?;
               dbgc!("claiming got region", &region, &views);
               Ok::<_,IE>((region, views))
-            })().map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?;
+            })()?;
             
             // actually do things:
             dbgc!("creating occ");
@@ -278,8 +277,7 @@ impl PieceTrait for Hand {
           Some(_) =>
             remove_occultation(&mut gen.unique_gen(),
                                gplayers, gpieces, goccults, ipieces, ioccults,
-                               to_recalculate, piece)
-            .map_err(|ie| ApiPieceOpError::ReportViaResponse(ie.into()))?,
+                               to_recalculate, piece)?,
         };
         (None, xupdates, hformat!("deactivated {}", &old_desc))
       }
