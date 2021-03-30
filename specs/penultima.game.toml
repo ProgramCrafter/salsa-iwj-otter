@@ -197,7 +197,7 @@ shape.xy = [20,10]
 [[pieces]]
 # 1
 shape.xy = [20,6]
-pos = [11, 189]
+pos = [50, 58]
 type = "PlayerLabel"
 colour = "lightgrey"
 edge = "white"
@@ -208,7 +208,7 @@ label.colour = "black"
 [[pieces]]
 # 2
 shape.xy = [20,6]
-pos = [12, 190]
+pos = [51, 59]
 type = "PlayerLabel"
 colour = "lightgrey"
 edge = "white"
@@ -219,7 +219,7 @@ label.colour = "black"
 [[pieces]]
 # 3
 shape.xy = [20,6]
-pos = [13, 191]
+pos = [52, 60]
 type = "PlayerLabel"
 colour = "lightgrey"
 edge = "white"
@@ -230,7 +230,7 @@ label.colour = "black"
 [[pieces]]
 # 4
 shape.xy = [20,6]
-pos = [14, 192]
+pos = [53, 61]
 type = "PlayerLabel"
 colour = "lightgrey"
 edge = "white"
@@ -239,18 +239,29 @@ label.place = "BottomLeft"
 label.colour = "black"
 
 [[pieces]]
-# 6
+# 5
 shape.xy = [20,6]
-pos = [15, 193]
+pos = [54, 62]
 type = "PlayerLabel"
 colour = "lightgrey"
 edge = "white"
 shape.type = "Rect"
 
 [[pieces]]
+# 6
+shape.xy = [20,6]
+pos = [60, 57]
+type = "PlayerLabel"
+colour = "lightgrey"
+edge = "white"
+shape.type = "Rect"
+label.place = "BottomLeft"
+label.colour = "black"
+
+[[pieces]]
 # 7
 shape.xy = [20,6]
-pos = [16, 194]
+pos = [61, 58]
 type = "PlayerLabel"
 colour = "lightgrey"
 edge = "white"
@@ -261,7 +272,7 @@ label.colour = "black"
 [[pieces]]
 # 8
 shape.xy = [20,6]
-pos = [17, 195]
+pos = [62, 59]
 type = "PlayerLabel"
 colour = "lightgrey"
 edge = "white"
@@ -272,7 +283,7 @@ label.colour = "black"
 [[pieces]]
 # 9
 shape.xy = [20,6]
-pos = [18, 196]
+pos = [63, 60]
 type = "PlayerLabel"
 colour = "lightgrey"
 edge = "white"
@@ -283,7 +294,7 @@ label.colour = "black"
 [[pieces]]
 # 10
 shape.xy = [20,6]
-pos = [19, 197]
+pos = [64, 61]
 type = "PlayerLabel"
 colour = "lightgrey"
 edge = "white"
