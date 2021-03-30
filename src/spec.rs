@@ -241,6 +241,11 @@ pub mod piece_specs {
 
   #[derive(Debug,Serialize,Deserialize)]
   pub struct Hand {
+    #[serde(flatten)] pub c: OwnedCommon,
+  }
+
+  #[derive(Debug,Serialize,Deserialize)]
+  pub struct OwnedCommon {
     pub colour: ColourSpec,
     pub edge: Option<ColourSpec>,
     pub edge_width: Option<f64>,

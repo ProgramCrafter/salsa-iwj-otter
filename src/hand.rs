@@ -17,11 +17,24 @@ struct MagicOwner {
 struct Hand {
   shape: GenericSimpleShape<(), RectShape>,
   label: Option<PieceLabelLoaded>,
+  #[serde(default="Sort::backcompat_upgrade")] sort: Sort,
 }
 
 #[derive(Debug,Clone,Default,Serialize,Deserialize)]
 struct HandState {
   owner: Option<MagicOwner>,
+}
+
+#[derive(Debug,Copy,Clone,Serialize,Deserialize)]
+enum Sort {
+  Hand,
+}
+
+impl Sort {
+  fn backcompat_upgrade() -> Self { Sort::Hand }
+  fn itemname(self) -> &'static str { use Sort::*; match self {
+    Hand => "magic-hand",
+  } }
 }
 
 impl HandState {
@@ -46,12 +59,9 @@ impl OutlineTrait for Hand {
   }
 }
 
-#[typetag::serde]
-impl PieceSpec for piece_specs::Hand {
+impl piece_specs::OwnedCommon {
   #[throws(SpecError)]
-  fn load(&self, _: usize, _: &mut GPiece,
-          _pcaliases: &PieceAliases, _ir: &InstanceRef)
-          -> PieceSpecLoaded {
+  fn load(&self, sort: Sort) -> PieceSpecLoaded {
     let common = SimpleCommon {
       itemname: None,
       faces: index_vec![self.colour.clone()],
@@ -65,13 +75,23 @@ impl PieceSpec for piece_specs::Hand {
     let shape = GenericSimpleShape::new(
       (),
       shape,
-      "magic-hand",
+      sort.itemname(),
       &common)?;
     let p = Box::new(Hand {
-      shape,
+      shape, sort,
       label: self.label.load()?,
     }) as Box<dyn PieceTrait>;
     PieceSpecLoaded { p, occultable: None }
+  }
+}
+
+#[typetag::serde]
+impl PieceSpec for piece_specs::Hand {
+  #[throws(SpecError)]
+  fn load(&self, _: usize, _: &mut GPiece,
+          _pcaliases: &PieceAliases, _ir: &InstanceRef)
+          -> PieceSpecLoaded {
+    self.c.load(Sort::Hand)?
   }
 }
 
