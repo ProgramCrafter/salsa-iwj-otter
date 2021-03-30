@@ -515,9 +515,10 @@ impl PieceTrait for Clock {
       let nick_y = y - 0.5;
       if let Some(nick) = u.nick {
         hwrite!(f, r##"
-  <text x="21" y="{}" {} clip-path="url(#def.{}.cl)" font-size="4">{}</text>
+  <text x="21" y="{}" fill="{}" {} clip-path="url(#def.{}.cl)" 
+   font-size="4">{}</text>
               "##,
-               nick_y, pointer,
+               nick_y, show.text, pointer,
                vpid,
                nick,
         )?;
