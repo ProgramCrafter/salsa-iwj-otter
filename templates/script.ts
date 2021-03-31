@@ -956,6 +956,12 @@ messages.SetTableSize = <MessageHandler>function
   set_attrs(rect,  wasm_bindgen.space_table_attrs(x, y));
 }
 
+messages.SetTableColour = <MessageHandler>function
+(c: string) {
+  let rect = document.getElementById('table_rect')!;
+  rect.setAttributeNS(null, 'fill', c);
+}
+
 messages.SetLinks = <MessageHandler>function
 (msg: string) {
   if (msg.length != 0 && layout == 'Portrait') {
