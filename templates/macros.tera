@@ -70,17 +70,9 @@ Hi {{nick | escape}}
 {% endmacro errors %}
 
 {% macro space() %}
-    <svg id="space"
-	 xmlns="http://www.w3.org/2000/svg"
-{%- for attr in space_attrs %}
-         {{ attr.0 }}="{{ attr.1 }}"
-{%- endfor %}
-	 >
-      <rect fill="{{ table_colour }}" x="0" y="0"
-{%- for attr in rect_attrs %}
-         {{ attr.0 }}="{{ attr.1 }}"
-{%- endfor %}
-	    />
+    <svg xmlns="http://www.w3.org/2000/svg"
+         id="space" {{ space_attrs }} >
+      <rect fill="{{ table_colour }}" x="0" y="0" {{ rect_attrs }} />
       <g id="pieces_marker"></g>
 {%- for piece in uses %}
       <use id="use{{ piece.id }}" href="#piece{{ piece.id }}"

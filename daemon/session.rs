@@ -13,8 +13,8 @@ struct SessionRenderContext {
   ctoken: RawToken,
   player: PlayerId,
   gen: Generation,
-  space_attrs: SvgAttrs,
-  rect_attrs: SvgAttrs,
+  space_attrs: Html,
+  rect_attrs: Html,
   uses: Vec<SessionPieceContext>,
   defs: Vec<(VisiblePieceId, Html)>,
   nick: String,
@@ -70,6 +70,17 @@ fn session(form: Json<SessionForm>,
            -> Template {
   session_inner(form, layout.map(|pl| pl.0))?
 }
+
+#[ext]
+impl SvgAttrs {
+  fn to_html(&self) -> Html {
+    let mut o = String::new();
+    for (k,v) in self {
+      write!(o, r##"{}="{}""##, k, v).unwrap();
+    }
+    Html::from_html_string(o)
+  }
+} 
 
 fn session_inner(form: Json<SessionForm>,
                  layout: Option<PresentationLayout>)
@@ -213,8 +224,8 @@ fn session_inner(form: Json<SessionForm>,
       player,
       defs: alldefs,
       uses,
-      space_attrs: space_table_attrs(table_size),
-      rect_attrs: space_table_attrs(table_size),
+      space_attrs: space_table_attrs(table_size).to_html(),
+      rect_attrs: space_table_attrs(table_size).to_html(),
       nick,
       sse_url_prefix,
       player_info_pane,
