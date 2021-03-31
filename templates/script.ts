@@ -944,6 +944,18 @@ function player_info_pane_set(j: PlayersUpdate) {
     .innerHTML = j.new_info_pane;
 }
 
+messages.SetTableSize = <MessageHandler>function
+([x, y]: [number, number]) {
+  function set_attrs(elem: Element, l: [string,string][]) {
+    for (let a of l) {
+      elem.setAttributeNS(null,a[0],a[1]);
+    }
+  }
+  let rect = document.getElementById('table_rect')!;
+  set_attrs(space, wasm_bindgen.space_table_attrs(x, y));
+  set_attrs(rect,  wasm_bindgen.space_table_attrs(x, y));
+}
+
 messages.SetLinks = <MessageHandler>function
 (msg: string) {
   if (msg.length != 0 && layout == 'Portrait') {

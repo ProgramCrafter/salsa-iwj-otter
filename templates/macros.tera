@@ -72,7 +72,8 @@ Hi {{nick | escape}}
 {% macro space() %}
     <svg xmlns="http://www.w3.org/2000/svg"
          id="space" {{ space_attrs }} >
-      <rect fill="{{ table_colour }}" x="0" y="0" {{ rect_attrs }} />
+      <rect fill="{{ table_colour }}" x="0" y="0"
+	    id="table_rect" {{ rect_attrs }} />
       <g id="pieces_marker"></g>
 {%- for piece in uses %}
       <use id="use{{ piece.id }}" href="#piece{{ piece.id }}"
