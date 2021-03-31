@@ -944,13 +944,15 @@ impl UpdateHandler {
       Bulk(bulk) => {
         for (upiece, uuop) in updates.pcs {
           use PieceUpdateOp::*;
-          let ne = match (bulk.pieces.get(upiece), uuop) {
+          let oe = bulk.pieces.get(upiece);
+          let ne = match (oe, uuop) {
             ( None               , e        ) => Some( e          ),
             ( Some( Insert(()) ) , Delete() ) => None,
             ( Some( Insert(()) ) , _        ) => Some( Insert(()) ),
             ( Some( Delete(  ) ) , _        ) => Some( Modify(()) ),
             ( _                  , _        ) => Some( Modify(()) ),
           };
+          trace_dbg!("accumulate", upiece, oe, uuop, ne);
           match ne {
             Some(ne) => { bulk.pieces.insert(upiece, ne); },
             None     => { bulk.pieces.remove(upiece);     },
