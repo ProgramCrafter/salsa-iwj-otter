@@ -1093,6 +1093,28 @@ pieceops.Modify = <PieceHandler>function
   piece_modify(piece, p, info, false);
 }
 
+pieceops.Insert = <PieceHandler>function
+(piece: PieceId, xp: any, info: PreparedPieceState) {
+  console.log('PIECE UPDATE INSERT ',piece,info)
+  let delem = document.createElementNS(svg_ns,'defs');
+  delem.setAttributeNS(null,'id','defs'+piece);
+  delem.innerHTML = info.svg;
+  defs_marker.insertAdjacentElement('afterend', delem);
+  let pelem = piece_element('piece',piece);
+  let uelem = document.createElementNS(svg_ns,'use');
+  uelem.setAttributeNS(null,'id',"use"+piece);
+  uelem.setAttributeNS(null,'href',"#piece"+piece);
+  uelem.setAttributeNS(null,'data-piece',piece);
+  let p = {
+    uelem: uelem,
+    pelem: pelem,
+    delem: delem,
+  } as any as PieceInfo; // fudge this, piece_modify_core will fix it
+  pieces[piece] = p;
+  p.uos = info.uos;
+  piece_modify_core(piece, p, info, false);
+}
+
 pieceops.Delete = <PieceHandler>function
 (piece: PieceId, p: PieceInfo, info: {}) {
   console.log('PIECE UPDATE DELETE ', piece)
@@ -1119,6 +1141,12 @@ function piece_modify_image(piece: PieceId, p: PieceInfo,
 function piece_modify(piece: PieceId, p: PieceInfo, info: PreparedPieceState,
 		      conflict_expected: boolean) {
   piece_modify_image(piece, p, info);
+  piece_modify_core(piece, p, info, conflict_expected);
+}
+		       
+function piece_modify_core(piece: PieceId, p: PieceInfo,
+			   info: PreparedPieceState,
+			   conflict_expected: boolean) {
   p.uelem.setAttributeNS(null, "x", info.pos[0]+"");
   p.uelem.setAttributeNS(null, "y", info.pos[1]+"");
   p.held = info.held;
@@ -1172,21 +1200,6 @@ messages.Image = <MessageHandler>function(j: TransmitUpdateEntry_Image) {
   recompute_keybindings();
   console.log('IMAGE DONE');
 }
-
-/*
-pieceops.Insert = <PieceHandler>function
-(piece: PieceId, p: null,
- info: { svg: string, held: PlayerId, pos: Pos, z: number, zg: Generation}) {
-  console.log('PIECE UPDATE INSERT ',piece,info)
-  delem = document.createElementNS(svg_ns,'defs');
-  delem.setAttributeNS(null,'id','defs'+piece);
-  delem.innerHTML = info.svg;
-  space.appendChild(delem);
-  pelem = 
-
-  nelem.setAttributeNS(null,'stroke',stroke);
-  nelem.setAttributeNS(null,'fill','none');
-*/
 
 function piece_set_zlevel(piece: PieceId, p: PieceInfo,
 			  modify : (oldtop_piece: PieceId) => void) {
