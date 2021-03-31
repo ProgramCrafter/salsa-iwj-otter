@@ -924,6 +924,7 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
 #[derive(Debug,Default)]
 struct UpdateHandlerBulk {
   pieces: HashMap<PieceId, PieceUpdateOp<(),()>>,
+  have_deleted: bool,
   logs: bool,
   raw: Vec<PreparedUpdateEntry>,
 }
@@ -952,6 +953,15 @@ impl UpdateHandler {
     match self {
       Bulk(bulk) => {
         for (upiece, uuop) in updates.pcs {
+          match uuop {
+            Insert(()) if bulk.have_deleted => {
+              UpdateHandler::Bulk(mem::take(bulk)).complete(g, who)?;
+            },
+            Delete() => {
+              bulk.have_deleted = true;
+            },
+            _ => { },
+          }
           use PieceUpdateOp::*;
           let oe = bulk.pieces.get(&upiece);
           let ne = match (oe, uuop) {
