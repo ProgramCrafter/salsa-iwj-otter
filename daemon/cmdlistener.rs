@@ -849,8 +849,9 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   struct St {
     uh: UpdateHandler,
     auth: Authorisation<InstanceName>,
+    have_deleted: bool,
   }
-  let mut uh_auth = None;
+  let mut uh_auth: Option<St> = None;
   let mk_uh = || UpdateHandler::from_how(how);
   let who = if_chain! {
     let account = &cs.current_account()?.notional_account;
@@ -869,14 +870,29 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   let res = (||{
     for insn in insns.drain(0..) {
       trace_dbg!("exeucting game insns", insn);
+
+      if let (MGI::AddPieces{..},
+              &mut Some(St { ref mut uh, auth, have_deleted: true }))
+        = (&insn, &mut uh_auth)
+      {
+        // This makes sure that all the updates we have queued up
+        // talking about the old PieceId, will be Prepared (ie, the
+        // vpid lookup done) before we reuse the slot and render the
+        // vpid lookup impossible.
+        let ig = igu.by_mut(auth);
+        mem::replace(uh, mk_uh()).complete(ig, &who)?;
+      };
+      let was_delete = matches!(&insn, MGI::DeletePiece(..));
+
       let (updates, resp, unprepared, ig) =
         execute_game_insn(cs, ag, igu, insn, &who,
                           &mut to_permute)?;
       let st = uh_auth.get_or_insert_with(||{
         let auth = Authorisation::authorised(&*ig.name);
         let uh = mk_uh();
-        St { uh, auth }
+        St { uh, auth, have_deleted: false }
       });
+      st.have_deleted |= was_delete;
       st.uh.accumulate(ig, updates)?;
       responses.push(resp);
       if let Some(unprepared) = unprepared {
