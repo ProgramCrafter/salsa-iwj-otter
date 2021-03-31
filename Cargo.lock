@@ -2104,7 +2104,6 @@ dependencies = [
  "enum-map",
  "enum_dispatch",
  "env_logger",
- "extend",
  "failure",
  "fehler",
  "flexi_logger",
@@ -2167,6 +2166,7 @@ version = "0.0.1"
 dependencies = [
  "arrayvec",
  "derive_more",
+ "extend",
  "fehler",
  "if_chain",
  "itertools",
