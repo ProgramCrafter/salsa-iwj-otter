@@ -112,9 +112,10 @@ impl<T:Iterator> T {
   {
     let j: &HtmlStr = j.as_ref();
     Html::from_html_string(
-      self
-        .map(|h| h.as_ref().as_html_str())
-        .zip( iter::once("").chain(iter::repeat(j.as_html_str())) )
+      izip!(
+        iter::once("").chain(iter::repeat(j.as_html_str())),
+        self.map(|h| h.as_ref().as_html_str()),
+      )
         .map(|(a,b)| iter::once(a).chain(iter::once(b)))
         .flatten()
         .collect::<String>()
