@@ -72,12 +72,15 @@ Hi {{nick | escape}}
 {% macro space() %}
     <svg id="space"
 	 xmlns="http://www.w3.org/2000/svg"
-	 viewBox="0 0 {{ table_size[0] }} {{ table_size[1] }}"
-	 width="{{ table_size[0]*scale }}"
-	 height="{{ table_size[1]*scale }}"
+{%- for attr in space_attrs %}
+         {{ attr.0 }}="{{ attr.1 }}"
+{%- endfor %}
 	 >
       <rect fill="{{ table_colour }}" x="0" y="0"
-	    width="{{ table_size[0] }}" height="{{ table_size[1] }}"/>
+{%- for attr in rect_attrs %}
+         {{ attr.0 }}="{{ attr.1 }}"
+{%- endfor %}
+	    />
       <g id="pieces_marker"></g>
 {%- for piece in uses %}
       <use id="use{{ piece.id }}" href="#piece{{ piece.id }}"

@@ -4,8 +4,6 @@
 
 use crate::prelude::*;
 
-pub const SVG_SCALE: f64 = 6.;
-
 pub const HELD_SURROUND_COLOUR: &str = "black";
 
 #[derive(Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize,EnumString)]

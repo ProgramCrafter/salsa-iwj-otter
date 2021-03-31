@@ -22,6 +22,6 @@ pub use serde_with::SerializeDisplay;
 pub use thiserror::Error;
 pub use void::Void;
 
-pub use crate::geometry::CoordinateOverflow;
+pub use crate::geometry::{CoordinateOverflow, PosC};
 pub use crate::misc::default;
 pub use crate::misc::display_as_debug;

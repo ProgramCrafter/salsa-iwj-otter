@@ -13,7 +13,8 @@ struct SessionRenderContext {
   ctoken: RawToken,
   player: PlayerId,
   gen: Generation,
-  table_size: Pos,
+  space_attrs: SvgAttrs,
+  rect_attrs: SvgAttrs,
   uses: Vec<SessionPieceContext>,
   defs: Vec<(VisiblePieceId, Html)>,
   nick: String,
@@ -21,7 +22,6 @@ struct SessionRenderContext {
   log: Vec<SessionFormattedLogEntry>,
   sse_url_prefix: String,
   links: Html,
-  scale: f64,
   player_info_pane: Html,
   fake_rng: bool,
 }
@@ -203,16 +203,18 @@ fn session_inner(form: Json<SessionForm>,
       None => "".into(),
     };
 
+    let table_size = ig.gs.table_size.promote();
+
     let src = SessionRenderContext {
       table_colour: ig.gs.table_colour.clone(),
       ctoken,
       gen: ig.gs.gen,
       log,
-      table_size: ig.gs.table_size,
       player,
       defs: alldefs,
       uses,
-      scale: SVG_SCALE,
+      space_attrs: space_table_attrs(table_size),
+      rect_attrs: space_table_attrs(table_size),
       nick,
       sse_url_prefix,
       player_info_pane,
