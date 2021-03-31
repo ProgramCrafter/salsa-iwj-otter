@@ -846,6 +846,10 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
     let r = (||{
 
   let mut responses = Vec::with_capacity(insns.len());
+  struct St {
+    uh: UpdateHandler,
+    auth: Authorisation<InstanceName>,
+  }
   let mut uh_auth = None;
   let mk_uh = || UpdateHandler::from_how(how);
   let who = if_chain! {
@@ -868,31 +872,29 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
       let (updates, resp, unprepared, ig) =
         execute_game_insn(cs, ag, igu, insn, &who,
                           &mut to_permute)?;
-      let (uh, _auth) = uh_auth.get_or_insert_with(||{
-        let auth_y = Authorisation::authorised(&*ig.name);
+      let st = uh_auth.get_or_insert_with(||{
+        let auth = Authorisation::authorised(&*ig.name);
         let uh = mk_uh();
-        (uh, auth_y)
+        St { uh, auth }
       });
-      uh.accumulate(ig, updates)?;
+      st.uh.accumulate(ig, updates)?;
       responses.push(resp);
       if let Some(unprepared) = unprepared {
-        let uh = mem::replace(uh, mk_uh());
-        uh.complete(ig, &who)?;
+        mem::replace(&mut st.uh, mk_uh()).complete(ig, &who)?;
         let mut prepub = PrepareUpdatesBuffer::new(ig, None, None);
         unprepared(&mut prepub);
         prepub.finish();
       }
     }
-    if let Some((ref mut uh, auth)) = uh_auth {
-      mem::replace(uh, mk_uh())
-        .complete(igu.by_mut(auth), &who)?;
+    if let Some(ref mut st) = uh_auth {
+      mem::replace(&mut st.uh, mk_uh()).complete(igu.by_mut(st.auth), &who)?;
     }
     Ok(None)
   })();
-  if let Some((uh, auth)) = uh_auth {
-    let ig = igu.by_mut(auth);
-    uh.complete(ig, &who)?;
-    igu.by_mut(auth).save_game_now()?;
+  if let Some(st) = uh_auth {
+    let ig = igu.by_mut(st.auth);
+    st.uh.complete(ig, &who)?;
+    igu.by_mut(st.auth).save_game_now()?;
   }
   Ok::<_,ME>(MgmtResponse::AlterGame {
     responses,
