@@ -845,9 +845,9 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   let (ok, uu) = ToRecalculate::with(|mut to_permute| {
     let r = (||{
 
-  let mut uh = UpdateHandler::from_how(how);
   let mut responses = Vec::with_capacity(insns.len());
-  let mut auth = None;
+  let mut uh_auth = None;
+  let mk_uh = || UpdateHandler::from_how(how);
   let who = if_chain! {
     let account = &cs.current_account()?.notional_account;
     let ig = igu.by_ref(Authorisation::authorise_any());
@@ -868,22 +868,30 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
       let (updates, resp, unprepared, ig) =
         execute_game_insn(cs, ag, igu, insn, &who,
                           &mut to_permute)?;
+      let (uh, _auth) = uh_auth.get_or_insert_with(||{
+        let auth_y = Authorisation::authorised(&*ig.name);
+        let uh = mk_uh();
+        (uh, auth_y)
+      });
       uh.accumulate(ig, updates)?;
       responses.push(resp);
-      let auth_y = Authorisation::authorised(&*ig.name);
-      auth = Some(auth_y);
       if let Some(unprepared) = unprepared {
+        let uh = mem::replace(uh, mk_uh());
         uh.complete(ig, &who)?;
         let mut prepub = PrepareUpdatesBuffer::new(ig, None, None);
         unprepared(&mut prepub);
         prepub.finish();
-        uh = UpdateHandler::from_how(how);
       }
     }
-    if let Some(auth) = auth { uh.complete(igu.by_mut(auth), &who)?; }
+    if let Some((ref mut uh, auth)) = uh_auth {
+      mem::replace(uh, mk_uh())
+        .complete(igu.by_mut(auth), &who)?;
+    }
     Ok(None)
   })();
-  if let Some(auth) = auth {
+  if let Some((uh, auth)) = uh_auth {
+    let ig = igu.by_mut(auth);
+    uh.complete(ig, &who)?;
     igu.by_mut(auth).save_game_now()?;
   }
   Ok::<_,ME>(MgmtResponse::AlterGame {
