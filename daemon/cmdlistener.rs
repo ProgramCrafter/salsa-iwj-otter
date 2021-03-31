@@ -923,7 +923,7 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
 
 #[derive(Debug,Default)]
 struct UpdateHandlerBulk {
-  pieces: slotmap::SparseSecondaryMap<PieceId, PieceUpdateOp<(),()>>,
+  pieces: HashMap<PieceId, PieceUpdateOp<(),()>>,
   logs: bool,
   raw: Vec<PreparedUpdateEntry>,
 }
@@ -952,7 +952,7 @@ impl UpdateHandler {
       Bulk(bulk) => {
         for (upiece, uuop) in updates.pcs {
           use PieceUpdateOp::*;
-          let oe = bulk.pieces.get(upiece);
+          let oe = bulk.pieces.get(&upiece);
           let ne = match (oe, uuop) {
             ( None               , e        ) => Some( e          ),
             ( Some( Insert(()) ) , Delete() ) => None,
@@ -963,7 +963,7 @@ impl UpdateHandler {
           trace_dbg!("accumulate", upiece, oe, uuop, ne);
           match ne {
             Some(ne) => { bulk.pieces.insert(upiece, ne); },
-            None     => { bulk.pieces.remove(upiece);     },
+            None     => { bulk.pieces.remove(&upiece);    },
           };
         }
         bulk.logs |= updates.log.len() != 0;
