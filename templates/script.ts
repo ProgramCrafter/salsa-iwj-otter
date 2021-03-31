@@ -207,7 +207,7 @@ function api_check() {
     if (p == null) break;
     p.queued_moves--;
     if (p.queued_moves == 0) break;
-  } while(1);
+  } while (api_queue.length);
   api_posting = true;
   xhr_post_then('/_/api/'+meth, JSON.stringify(data), api_posted);
 }
