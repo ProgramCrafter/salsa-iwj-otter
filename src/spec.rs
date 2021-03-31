@@ -29,7 +29,7 @@ use crate::gamestate::PieceSpec;
 use crate::hformat_as_display;
 use crate::prelude::default;
 
-pub use implementation::PlayerAccessSpec;
+pub use imp::PlayerAccessSpec;
 
 type SpE = SpecError;
 
@@ -303,7 +303,7 @@ impl From<CompassAngle> for u8 {
 
 //---------- Implementation ----------
 
-pub mod implementation {
+pub mod imp {
   use super::{*, SpE};
   use crate::prelude::*;
 

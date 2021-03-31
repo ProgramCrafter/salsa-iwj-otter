@@ -269,7 +269,7 @@ impl Borrow<RawTokenVal> for RawToken {
 
 impl Debug for RawTokenVal {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    crate::spec::implementation::raw_token_debug_as_str(&self.0, f)
+    crate::spec::imp::raw_token_debug_as_str(&self.0, f)
   }
 }
 
