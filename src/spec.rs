@@ -165,7 +165,7 @@ pub struct UrlOnStdout;
 #[derive(Debug,Serialize,Deserialize)]
 pub struct GameSpec {
   #[serde(default="imp::def_table_size")] pub table_size: Pos,
-  pub pieces: Vec<PiecesSpec>,
+  #[serde(default)] pub pieces: Vec<PiecesSpec>,
   #[serde(default="imp::def_table_colour")] pub table_colour: ColourSpec,
   #[serde(default)] pub pcaliases: HashMap<String, Box<dyn PieceSpec>>,
 }
