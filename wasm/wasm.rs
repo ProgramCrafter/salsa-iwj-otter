@@ -7,6 +7,7 @@ use otter_base::imports::*;
 use std::fmt::Display;
 use std::collections::hash_map::HashMap;
 
+use extend::ext;
 use fehler::throws;
 use js_sys::JsString;
 use thiserror::Error;
@@ -19,6 +20,7 @@ use otter_base::zcoord;
 use otter_base::misc as base_misc;
 use zcoord::{Mutable,ZCoord};
 use base_misc::default;
+use base_misc::SvgAttrs;
 
 // ---------- general, errors, etc. ----------
 
@@ -183,7 +185,26 @@ impl RegionList {
       )
   }
 }
- 
+
+// ---------- reload attributes ----------
+
+#[ext]
+impl SvgAttrs {
+  fn to_jsvalue(&self) -> JsValue {
+    JsValue::from_serde(self).unwrap()
+  }
+}  
+
+#[wasm_bindgen]
+pub fn space_table_attrs(x: Number, y: Number) -> JsValue {
+  base_misc::space_table_attrs(PosC::new(x,y))
+    .to_jsvalue()
+}
+#[wasm_bindgen]
+pub fn space_rect_attrs(x: Number, y: Number) -> JsValue {
+  base_misc::space_rect_attrs(PosC::new(x,y))
+    .to_jsvalue()
+}
 
 // ---------- setup ----------
 
