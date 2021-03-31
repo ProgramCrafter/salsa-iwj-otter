@@ -164,9 +164,9 @@ pub struct UrlOnStdout;
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct GameSpec {
-  pub table_size: Option<Pos>,
+  #[serde(default="imp::def_table_size")] pub table_size: Pos,
   pub pieces: Vec<PiecesSpec>,
-  pub table_colour: Option<ColourSpec>,
+  #[serde(default="imp::def_table_colour")] pub table_colour: ColourSpec,
   #[serde(default)] pub pcaliases: HashMap<String, Box<dyn PieceSpec>>,
 }
 
@@ -309,6 +309,13 @@ pub mod imp {
 
   type AS = AccountScope;
   type TPS = TablePlayerSpec;
+
+  pub fn def_table_size() -> Pos {
+    DEFAULT_TABLE_SIZE
+  }
+  pub fn def_table_colour() -> ColourSpec {
+    ColourSpec(DEFAULT_TABLE_COLOUR.into())
+  }
 
   impl Default for piece_specs::PieceLabelPlace {
     fn default() -> Self { Self::BottomLeft }

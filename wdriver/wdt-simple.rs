@@ -96,8 +96,7 @@ impl Ctx {
       Ok::<_,AE>(())
     };
 
-    let table_size = self.spec.table_size
-      .ok_or(anyhow!("table size missing from spec"))?;
+    let table_size = self.spec.table_size;
 
     let exp_end = {
       let mut w = su.w(&self.alice)?;

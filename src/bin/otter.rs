@@ -700,12 +700,8 @@ mod reset_game {
       insns.push(MGI::DefinePieceAlias{ alias, target });
     }
 
-    if let Some(table_size) = table_size {
-      insns.push(MGI::SetTableSize(table_size));
-    }
-    if let Some(table_colour) = table_colour {
-      insns.push(MGI::SetTableColour(table_colour));
-    }
+    insns.push(MGI::SetTableSize(table_size));
+    insns.push(MGI::SetTableColour(table_colour));
 
     for pspec in pieces.into_iter() {
       insns.push(MGI::AddPieces(pspec));

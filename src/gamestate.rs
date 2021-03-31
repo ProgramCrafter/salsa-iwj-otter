@@ -24,6 +24,7 @@ visible_slotmap_key!{ VisiblePieceId(b'.') }
 pub struct Timestamp(pub u64); /* time_t */
 
 pub const DEFAULT_TABLE_SIZE: Pos = PosC::new( 400, 200 );
+pub const DEFAULT_TABLE_COLOUR: &str = "green";
 
 // ---------- general data types ----------
 
