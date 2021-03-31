@@ -665,11 +665,13 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           }],
           raw: None },
        Fine,
-       Some(
-         Box::new(move |prepub: &mut PrepareUpdatesBuffer|
-                  prepub.piece_updates(xupdates))
-           as SomeUnpreparedUpdates
-       ),
+       if xupdates.len() != 0 {
+         Some(
+           Box::new(move |prepub: &mut PrepareUpdatesBuffer|
+                    prepub.piece_updates(xupdates))
+             as SomeUnpreparedUpdates
+         )
+       } else { None },
        ig_g)
     },
 
