@@ -371,7 +371,7 @@ pub fn update_update_pieces<PI:Idx>(
   let v = v.as_object().unwrap();
   let piece = v["piece"].as_str().unwrap();
   let p = pieces.iter_mut().find(|p| p.id == piece);
-  let p = if let Some(p) = p { p } else { return };
+  if_let!{ Some(p) = p; else return }
   let (op, d) = v["op"].as_object().unwrap().iter().next().unwrap();
 
   fn coord(j: &JsV) -> Pos {

@@ -121,7 +121,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
   let _ = iplayers.byid(player)?;
   let gpl = gs.players.byid(player)?;
   let piece = vpiece_decode(gs, player, gpl, form.piece);
-  let piece = if let Some(piece) = piece { piece } else { return Ok(()) };
+  if_let!{ Some(piece) = piece; else return Ok(()) }
   let was_held = gs.pieces.get(piece).as_ref().map(|gpc| gpc.held);
   use ApiPieceOpError::*;
 
