@@ -48,6 +48,8 @@ impl Debug for Html {
 pub struct HtmlStr(str);
 
 #[derive(Hash,Eq,Ord,PartialEq,PartialOrd)]
+#[derive(Serialize,Deserialize)]
+#[serde(transparent)]
 pub struct HtmlLit(&'static str);
 
 impl From<HtmlLit> for &'static HtmlStr {

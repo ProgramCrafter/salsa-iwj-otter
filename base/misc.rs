@@ -47,20 +47,20 @@ macro_rules! display_as_debug {
 }
 pub use crate::display_as_debug;
 
-pub type SvgAttrs = Vec<(String,String)>;
+pub type SvgAttrs = Vec<(HtmlLit,Html)>;
 
 pub fn space_table_attrs(table_size: PosC<f64>) -> SvgAttrs {
   let PosC { coords: [x, y] } = table_size.into();
   vec![
-    ("viewBox".to_owned(), format!("0 0 {x} {y}", x=x, y=y) ),
-    ("width"  .to_owned(), (SVG_SCALE * x).to_string()  ),
-    ("height" .to_owned(), (SVG_SCALE * y).to_string()  ),
+    (Html::lit("viewBox"), hformat!("0 0 {} {}", x, y) ),
+    (Html::lit("width"  ), (SVG_SCALE * x).to_html()  ),
+    (Html::lit("height" ), (SVG_SCALE * y).to_html()  ),
   ]
 }
 
 pub fn space_rect_attrs(table_size: PosC<f64>) -> SvgAttrs {
   vec![
-    ("width"  .to_owned(), table_size.x().to_string()  ),
-    ("height" .to_owned(), table_size.y().to_string()  ),
+    (Html::lit("width" ), table_size.x().to_html()  ),
+    (Html::lit("height"), table_size.y().to_html()  ),
   ]
 }

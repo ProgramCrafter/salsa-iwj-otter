@@ -74,11 +74,11 @@ fn session(form: Json<SessionForm>,
 #[ext]
 impl SvgAttrs {
   fn to_html(&self) -> Html {
-    let mut o = String::new();
+    let mut o = Html::new();
     for (k,v) in self {
-      write!(o, r##"{}="{}""##, k, v).unwrap();
+      hwrite!(&mut o, r##"{}="{}""##, k, v).unwrap();
     }
-    Html::from_html_string(o)
+    o
   }
 } 
 
