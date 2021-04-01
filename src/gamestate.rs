@@ -58,7 +58,7 @@ pub struct GPlayer { // usual variable: gpl
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-pub struct GPiece{  // usual variable: gpc
+pub struct GPiece {  // usual variable: gpc
   pub pos: Pos,
   pub face: FaceId,
   pub held: Option<PlayerId>,
