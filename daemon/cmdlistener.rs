@@ -871,17 +871,19 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
     for insn in insns.drain(0..) {
       trace_dbg!("exeucting game insns", insn);
 
-      if let (MGI::AddPieces{..},
-              &mut Some(St { ref mut uh, auth, have_deleted: true }))
-        = (&insn, &mut uh_auth)
-      {
-        // This makes sure that all the updates we have queued up
-        // talking about the old PieceId, will be Prepared (ie, the
-        // vpid lookup done) before we reuse the slot and render the
-        // vpid lookup impossible.
-        let ig = igu.by_mut(auth);
-        mem::replace(uh, mk_uh()).complete(ig, &who)?;
-      };
+      if_chain!{
+        if let MGI::AddPieces{..} = &insn;
+        if let Some(st) = &mut uh_auth;
+        if st.have_deleted == true;
+        then {
+          // This makes sure that all the updates we have queued up
+          // talking about the old PieceId, will be Prepared (ie, the
+          // vpid lookup done) before we reuse the slot and render the
+          // vpid lookup impossible.
+          let ig = igu.by_mut(st.auth);
+          mem::replace(&mut st.uh, mk_uh()).complete(ig, &who)?;
+        }
+      }
       let was_delete = matches!(&insn, MGI::DeletePiece(..));
 
       let (updates, resp, unprepared, ig) =
