@@ -21,12 +21,12 @@ use strum::{EnumString, Display};
 use thiserror::Error;
 
 use otter_base::geometry::{Coord,Pos};
+use otter_base::hformat_as_display;
 use otter_base::misc::display_as_debug;
 
 use crate::accounts::AccountName;
 use crate::error::UnsupportedColourSpec;
 use crate::gamestate::PieceSpec;
-use crate::hformat_as_display;
 use crate::prelude::default;
 
 pub use imp::PlayerAccessSpec;

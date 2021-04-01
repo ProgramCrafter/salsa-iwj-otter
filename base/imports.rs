@@ -5,6 +5,7 @@
 pub use arrayvec;
 pub use derive_more;
 pub use extend;
+pub use htmlescape;
 pub use if_chain;
 pub use itertools;
 pub use num_derive;

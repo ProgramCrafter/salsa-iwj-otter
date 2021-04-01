@@ -18,7 +18,6 @@ pub mod debugreader;
 pub mod error;
 pub mod gamestate;
 pub mod global;
-pub mod html;
 pub mod hand;
 pub mod hidden;
 pub mod keydata;

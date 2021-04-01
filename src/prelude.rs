@@ -5,11 +5,11 @@
 use crate::imports::*;
 
 pub use crate::imports::{flexi_logger, thiserror};
-
 pub use crate::imports::serde_json;
 
+pub use otter_base::prelude::*;
+
 pub use std::any::Any;
-pub use std::borrow::Borrow;
 pub use std::borrow::Cow;
 pub use std::cmp::{self, max, min, Ordering};
 pub use std::collections::VecDeque;
@@ -33,9 +33,7 @@ pub use std::io::{Seek, SeekFrom};
 pub use std::iter;
 pub use std::iter::repeat_with;
 pub use std::marker::PhantomData;
-pub use std::mem;
 pub use std::num::{NonZeroUsize, TryFromIntError, Wrapping};
-pub use std::ops::{Deref, DerefMut, Index, IndexMut};
 pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
 pub use std::os::unix;
 pub use std::os::unix::ffi::OsStrExt;
@@ -63,7 +61,6 @@ pub use downcast_rs::{impl_downcast, Downcast};
 pub use either::{Either, Left, Right};
 pub use enum_dispatch::enum_dispatch;
 pub use enum_map::{Enum, EnumMap};
-pub use extend::ext;
 pub use fehler::{throw, throws};
 pub use flexi_logger::LogSpecification;
 pub use fs2::FileExt;
@@ -114,7 +111,6 @@ pub use crate::dbgc;
 pub use crate::{deref_to_field, deref_to_field_mut};
 pub use crate::ensure_eq;
 pub use crate::from_instance_lock_error;
-pub use crate::{hformat, hformat_as_display, hwrite};
 pub use crate::matches_doesnot;
 pub use crate::trace_dbg;
 
@@ -133,7 +129,6 @@ pub use crate::fake_rng::*;
 pub use crate::gamestate::*;
 pub use crate::global::*;
 pub use crate::hidden::*;
-pub use crate::html::*;
 pub use crate::keydata::*;
 pub use crate::mgmtchannel::*;
 pub use crate::nwtemplates;

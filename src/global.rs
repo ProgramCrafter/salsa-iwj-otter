@@ -523,8 +523,10 @@ impl Display for InstanceName {
 fn link_a_href(k: &HtmlStr, v: &str) -> Html {
   hformat!("<a href={}>{}</a>", v, k)
 }
-impl From<(LinkKind, &str)> for Html {
-  fn from((k, v): (LinkKind, &str)) -> Html {
+#[ext(pub)]
+impl (LinkKind, &str) {
+  fn to_html(self) -> Html {
+    let (k, v) = self;
     link_a_href(&k.to_html(), v)
   }
 }
@@ -534,7 +536,7 @@ impl From<&LinksTable> for Html {
     let mut s = links.iter()
       .filter_map(|(k,v)| {
         let v = v.as_ref()?;
-        Some(Html::from((k, v.as_str())))
+        Some((k, v.as_str()).to_html())
       })
       .chain(iter::once(
         link_a_href(Html::lit("Shapelib").into(), "/_/shapelib.html")

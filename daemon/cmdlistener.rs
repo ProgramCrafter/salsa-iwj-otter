@@ -541,7 +541,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       update_links(cs,ag,ig, |ig_links|{
         let mut new_links: LinksTable = (**ig_links).clone();
         let url: Url = (&url).try_into()?;
-        let show: Html = (kind, url.as_str()).into();
+        let show: Html = (kind, url.as_str()).to_html();
         new_links[kind] = Some(url.into_string());
         let new_links = Arc::new(new_links);
         *ig_links = new_links.clone();

@@ -17,7 +17,6 @@ pub use failure;
 pub use flexi_logger;
 pub use fs2;
 pub use glob;
-pub use htmlescape;
 pub use index_vec;
 pub use lazy_init;
 pub use lazy_static;
