@@ -867,24 +867,43 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
     auth: Authorisation<InstanceName>,
     have_deleted: bool,
   }
+  impl St {
+    #[throws(ME)]
+    fn flush<'igr, 'ig>(&mut self,
+             ig: &'igr mut InstanceGuard<'ig>,
+             how: MgmtGameUpdateMode,
+             who: &Html) {
+      mem::replace(
+        &mut self.uh,
+        UpdateHandler::from_how(how),
+      )
+        .complete(ig, &who)?;
+    }
+    #[throws(ME)]
+    fn flushu<'igr, 'ig>(&mut self,
+             igu: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
+             how: MgmtGameUpdateMode,
+             who: &Html) {
+      let ig = igu.by_mut(self.auth);
+      self.flush(ig, how, who)?;
+    }
+  }
   let mut uh_auth: Option<St> = None;
-
-  let mk_uh = || UpdateHandler::from_how(how);
+  let flush_uh = |st: &mut St, igu: &'_ mut _| st.flushu(igu, how, &who);
   let res = (||{
     for insn in insns.drain(0..) {
       trace_dbg!("exeucting game insns", insn);
 
       if_chain!{
         if let MGI::AddPieces{..} = &insn;
-        if let Some(st) = &mut uh_auth;
+        if let Some(ref mut st) = &mut uh_auth;
         if st.have_deleted == true;
         then {
           // This makes sure that all the updates we have queued up
           // talking about the old PieceId, will be Prepared (ie, the
           // vpid lookup done) before we reuse the slot and render the
           // vpid lookup impossible.
-          let ig = igu.by_mut(st.auth);
-          mem::replace(&mut st.uh, mk_uh()).complete(ig, &who)?;
+          flush_uh(st,igu)?;
         }
       }
       let was_delete = matches!(&insn, MGI::DeletePiece(..));
@@ -894,27 +913,26 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
                           &mut to_permute)?;
       let st = uh_auth.get_or_insert_with(||{
         let auth = Authorisation::authorised(&*ig.name);
-        let uh = mk_uh();
+        let uh = UpdateHandler::from_how(how);
         St { uh, auth, have_deleted: false }
       });
       st.have_deleted |= was_delete;
       st.uh.accumulate(ig, updates)?;
       responses.push(resp);
       if let Some(unprepared) = unprepared {
-        mem::replace(&mut st.uh, mk_uh()).complete(ig, &who)?;
+        st.flush(ig,how,&who)?;
         let mut prepub = PrepareUpdatesBuffer::new(ig, None, None);
         unprepared(&mut prepub);
         prepub.finish();
       }
     }
     if let Some(ref mut st) = uh_auth {
-      mem::replace(&mut st.uh, mk_uh()).complete(igu.by_mut(st.auth), &who)?;
+      flush_uh(st,igu)?;
     }
     Ok(None)
   })();
-  if let Some(st) = uh_auth {
-    let ig = igu.by_mut(st.auth);
-    st.uh.complete(ig, &who)?;
+  if let Some(mut st) = uh_auth {
+    flush_uh(&mut st, igu)?;
     igu.by_mut(st.auth).save_game_now()?;
   }
   Ok::<_,ME>(MgmtResponse::AlterGame {
