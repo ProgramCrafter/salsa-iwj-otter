@@ -873,7 +873,7 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
         let uh = mk_uh();
         (uh, auth_y)
       });
-      uh.accumulate(ig, updates, &who)?;
+      uh.accumulate(ig, updates)?;
       responses.push(resp);
       if let Some(unprepared) = unprepared {
         let uh = mem::replace(uh, mk_uh());
@@ -944,9 +944,8 @@ impl UpdateHandler {
   }
 
   #[throws(SVGProcessingError)]
-  fn accumulate(&mut self, g: &mut InstanceGuard,
-                updates: ExecuteGameChangeUpdates,
-                who: &Html) {
+  fn accumulate(&mut self, g: &mut Instance,
+                updates: ExecuteGameChangeUpdates) {
     let mut raw = updates.raw.unwrap_or_default();
     use UpdateHandler::*;
     match self {
