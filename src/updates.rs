@@ -100,6 +100,7 @@ pub struct PreparedPieceUpdateGeneral<U> {
 pub struct PreparedPieceState {
   pub pos: Pos,
   pub svg: Html,
+  pub facehint: Option<FaceId>,
   pub held: Option<PlayerId>,
   pub z: ZCoord,
   pub zg: Generation,

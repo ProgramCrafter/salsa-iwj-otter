@@ -129,6 +129,7 @@ impl PieceRenderInstructions {
       pinned     : gpc.pinned,
       uos        : pri.ui_operations(gs, gpc, ipc)?,
       moveable   : gpc.moveable(),
+      facehint   : pri.facehint(gpc),
       occregion,
     };
     dbgc!(pri, ipc, gpc, r);
@@ -152,6 +153,13 @@ impl PieceRenderInstructions {
     match self.occulted {
       PriOcculted::Visible(_)                            => gpc.angle,
       PriOcculted::Occulted | PriOcculted::Displaced(..) => default(),
+    }
+  }
+
+  pub fn facehint(&self, gpc: &GPiece) -> Option<FaceId> {
+    match self.occulted {
+      PriOcculted::Visible(_)                            => Some(gpc.face),
+      PriOcculted::Occulted | PriOcculted::Displaced(..) => None,
     }
   }
 
