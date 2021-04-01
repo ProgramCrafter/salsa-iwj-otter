@@ -55,6 +55,8 @@ pub struct GPlayer { // usual variable: gpl
   pub nick: String,
   pub layout: PresentationLayout,
   pub idmap: PerPlayerIdMap,
+  #[serde(default)] pub moveheld: SparseSecondaryMap<PieceId, GMoveHistLast>,
+  #[serde(default)] pub movehist: VecDeque<MoveHistEnt>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -71,6 +73,25 @@ pub struct GPiece {  // usual variable: gpc
   pub gen_before_lastclient: Generation,
   pub xdata: PieceXDataState,
   pub moveable: PieceMoveable,
+}
+
+#[derive(Debug,Copy,Clone,Serialize,Deserialize)]
+pub struct MoveHistPosx { // usual variable: posx
+  pub pos: Pos,
+  pub angle: CompassAngle,
+  pub facehint: Option<FaceId>,
+}
+
+#[derive(Debug,Copy,Clone,Serialize,Deserialize)]
+pub struct GMoveHistLast {
+  pub held: PlayerId,
+  pub posx: MoveHistPosx,
+}
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct MoveHistEnt {
+  pub held: PlayerId,
+  pub posx: OldNew<MoveHistPosx>,
 }
 
 pub type PieceXDataState = Option<Box<dyn PieceXData>>;

@@ -383,6 +383,8 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         nick: nick.to_string(),
         layout: arecord.layout,
         idmap: default(),
+        moveheld: default(),
+        movehist: default(),
       };
       let ipl = IPlayer {
         acctid,

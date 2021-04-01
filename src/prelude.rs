@@ -89,7 +89,7 @@ pub use serde::{de::DeserializeOwned, Deserialize, Serialize};
 pub use serde::{Deserializer, Serializer};
 pub use serde_with::DeserializeFromStr;
 pub use serde_with::SerializeDisplay;
-pub use slotmap::{dense::DenseSlotMap, Key as _};
+pub use slotmap::{dense::DenseSlotMap, SparseSecondaryMap, Key as _};
 pub use strum::{EnumString, EnumIter, EnumProperty};
 pub use strum::{IntoEnumIterator, IntoStaticStr};
 pub use thiserror::Error;

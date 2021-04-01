@@ -55,6 +55,7 @@ pub struct PreparedUpdate {
 pub enum PreparedUpdateEntry {
   Piece(PreparedUpdateEntry_Piece),
   Image(PreparedUpdateEntry_Image),
+  MoveHistEnt(SecondarySlotMap<PlayerId, MoveHistEnt>),
   SetTableSize(Pos),
   SetTableColour(Colour),
   SetLinks(Arc<LinksTable>),
@@ -221,6 +222,7 @@ enum TransmitUpdateEntry<'u> {
   },
   Piece(TransmitUpdateEntry_Piece<'u>),
   Image(TransmitUpdateEntry_Image<'u>),
+  MoveHistEnt(&'u MoveHistEnt),
   RecordedUnpredictable {
     piece: VisiblePieceId,
     cseq: ClientSequence,
@@ -405,6 +407,9 @@ impl PreparedUpdateEntry {
       }
       Image(ims) => {
         ims.json_len(player)
+      }
+      MoveHistEnt(ents) => {
+        match ents.get(player) { None => 0, Some(_) => 100 }
       }
       Log(logent) => {
         logent.logent.html.json_len() * 28
@@ -752,7 +757,55 @@ impl<'r> PrepareUpdatesBuffer<'r> {
                piece, &e);
         PreparedUpdateEntry::Error(ErrorSignaledViaUpdate::InternalError)
       });
+
+    // We're track this on behalf of the client, based on the updates
+    // we are sending.  That means we don't ahve to worry about
+    // occultation, etc. etc.
+    let movehist_update = if let PUE::Piece(PUE_P { ops,.. }) = &update {
+      let mut pu = SecondarySlotMap::new();
+      for (player, PreparedPieceUpdate { op,.. }) in ops { if_chain! {
+        if let Some(ns) = op.new_state();
+        if let Some(gpl) = wants!( self.g.gs.players.get_mut(player), ?player);
+        if let Some(mut ent) = wants!( gpl.moveheld.entry(piece),     ?piece);
+        let &PreparedPieceState { pos, angle, facehint, .. } = ns;
+        let new_posx = MoveHistPosx { pos, angle, facehint };
+
+        then {
+          if let slotmap::sparse_secondary::Entry::Occupied(ref mut oe) = ent {
+            let last = oe.get();
+            if ns.held == Some(last.held) { continue }
+
+            // Generate an update
+            let histent = MoveHistEnt {
+              held: last.held,
+              posx: OldNew::from([last.posx, new_posx]),
+            };
+            gpl.movehist.reserve(MOVEHIST_LEN_MAX);
+            if gpl.movehist.len() == MOVEHIST_LEN_MAX {
+              gpl.movehist.pop_front();
+            }
+            gpl.movehist.push_back(histent.clone());
+            pu.insert(player, histent);
+          }
+
+          if let Some(held) = ns.held {
+            ent.insert(GMoveHistLast { held: held, posx: new_posx });
+          } else {
+            ent.remove();
+          }
+        }
+      } }
+
+      if pu.is_empty() {
+        None
+      } else {
+        Some(PUE::MoveHistEnt(pu))
+      }
+    } else {
+      None
+    };
     self.us.push(update);
+    self.us.extend(movehist_update);
   }
 
   #[throws(InternalError)]
@@ -893,6 +946,12 @@ impl PreparedUpdate {
         &PUE::Image(ref pue_i) => {
           match pue_image_to_tue_i(pue_i, player) {
             Some(tue) => TUE::Image(tue),
+            _ => continue,
+          }
+        }
+        PUE::MoveHistEnt(ents) => {
+          match ents.get(player) {
+            Some(mhe) => TUE::MoveHistEnt(mhe),
             _ => continue,
           }
         }

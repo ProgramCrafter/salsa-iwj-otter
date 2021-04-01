@@ -970,6 +970,10 @@ messages.SetLinks = <MessageHandler>function
   links_elem.innerHTML = msg
 }
 
+messages.MoveHistEnt = <MessageHandler>function
+(todo: object) {
+}
+
 // ----- logs -----
 
 messages.Log = <MessageHandler>function
