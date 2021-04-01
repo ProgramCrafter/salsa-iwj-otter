@@ -845,14 +845,6 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   let (ok, uu) = ToRecalculate::with(|mut to_permute| {
     let r = (||{
 
-  let mut responses = Vec::with_capacity(insns.len());
-  struct St {
-    uh: UpdateHandler,
-    auth: Authorisation<InstanceName>,
-    have_deleted: bool,
-  }
-  let mut uh_auth: Option<St> = None;
-  let mk_uh = || UpdateHandler::from_how(how);
   let who = if_chain! {
     let account = &cs.current_account()?.notional_account;
     let ig = igu.by_ref(Authorisation::authorise_any());
@@ -867,6 +859,17 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
     else { hformat!("[{}]",
                         account) }
   };
+
+  let mut responses = Vec::with_capacity(insns.len());
+
+  struct St {
+    uh: UpdateHandler,
+    auth: Authorisation<InstanceName>,
+    have_deleted: bool,
+  }
+  let mut uh_auth: Option<St> = None;
+
+  let mk_uh = || UpdateHandler::from_how(how);
   let res = (||{
     for insn in insns.drain(0..) {
       trace_dbg!("exeucting game insns", insn);
