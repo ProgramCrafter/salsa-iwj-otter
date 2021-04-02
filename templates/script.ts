@@ -340,6 +340,13 @@ function recompute_keybindings() {
     desc: wresting ? 'Exit wresting mode' : 'Enter wresting mode',
     wrc: 'Predictable',
   });
+  add_uo(null, {
+    def_key: 'h',
+    kind: 'ClientExtra',
+    opname: 'motion-hint-history',
+    desc: 'Recent history display',
+    wrc: 'Predictable',
+  });
   var uo_keys = Object.keys(uo_map);
   uo_keys.sort(function (ak,bk) {
     let a = uo_map[ak]!;
@@ -647,6 +654,12 @@ keyops_local['wrest'] = function (uo: UoRecord) {
     " <strong>(wresting mode!)</strong>";
   ungrab_all();
   recompute_keybindings();
+}
+
+keyops_local['motion-hint-history'] = function (uo: UoRecord) {
+  movehist_len_i ++;
+  movehist_len_i %= movehist_lens.length;
+  movehist_revisible();
 }
 
 keyops_local['pin'  ] = function (uo) {
