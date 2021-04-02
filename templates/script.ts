@@ -1529,6 +1529,10 @@ function startup() {
 
   last_log_ts = wasm_bindgen.timestamp_abbreviator(dataload.last_log_ts);
 
+  for (let ent of dataload.movehist.hist) {
+    movehist_record(ent);
+  }
+
   var es = new EventSource(
     sse_url_prefix + "/_/updates?ctoken="+ctoken+'&gen='+gen
   );

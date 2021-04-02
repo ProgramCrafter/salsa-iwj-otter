@@ -24,7 +24,6 @@ struct SessionRenderContext {
   links: Html,
   player_info_pane: Html,
   fake_rng: bool,
-  movehist: movehist::PlHist,
 }
 
 #[derive(Debug,Serialize)]
@@ -58,6 +57,7 @@ struct DataLoad {
   last_log_ts: String,
   players: HashMap<PlayerId, DataLoadPlayer>,
   held_surround_colour: &'static str,
+  movehist: movehist::PlHist,
 }
 
 #[derive(Deserialize)]
@@ -229,13 +229,13 @@ fn session_inner(form: Json<SessionForm>,
       space_attrs: space_table_attrs(table_size).to_html(),
       rect_attrs: space_table_attrs(table_size).to_html(),
       nick,
-      movehist,
       sse_url_prefix,
       player_info_pane,
       ptoken: form.ptoken.clone(),
       links: (&*ig.links).into(),
       fake_rng: config().game_rng.is_fake(),
       load: serde_json::to_string(&DataLoad {
+        movehist,
         players: load_players,
         last_log_ts: timestamp_abbrev.unwrap_or_default(),
         held_surround_colour: HELD_SURROUND_COLOUR,
