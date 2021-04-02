@@ -474,20 +474,20 @@ macro_rules! wants {
 
 #[macro_export]
 macro_rules! want_let {
-  { $variant:ident($binding:pat) = $input:expr;
+  { $($variant:ident)::+($binding:pat) = $input:expr;
     else ? $($d:expr),*; $($otherwise:tt)*
   } => {
     let $binding = match $input {
-      $variant(y) => y,
+      $($variant(y))::+ => y,
       x => {
         want_failed_internal!{ $variant($binding)=$input, x, $($d:expr),* }
         $($otherwise)*
       },
     };
   };
-  { $variant:ident($binding:pat) = $input:expr;
+  { $($variant:ident)::+($binding:pat) = $input:expr;
     else $($otherwise:tt)*
   } => {
-    want_let!{ $variant($binding) = $input; ?; $($otherwise)* }
+    want_let!{ $($variant(y))::+ = $input; ?; $($otherwise)* }
   };
 }
