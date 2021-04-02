@@ -137,6 +137,9 @@ var links_elem : HTMLElement;
 var wresting: boolean;
 var occregions: wasm_bindgen.RegionList;
 
+var movehist_gen: number = 0;
+const MOVEHIST_ENDS = 2.5;
+
 type PaneName = string;
 const pane_keys : { [key: string]: PaneName } = {
   "H" : "help",
@@ -995,8 +998,79 @@ type MoveHistPosx = {
 messages.MoveHistEnt = <MessageHandler>movehist_record;
 
 function movehist_record(ent: MoveHistEnt) {
-  
+  let old_pos = ent.posx[0].pos;
+  let new_pos = ent.posx[1].pos;
+
+  movehist_gen++;
+  movehist_gen %= (movehist_len_max * 2);
+  let meid = 'motionhint-marker-' + movehist_gen;
+
+  let moved = ent.diff['Moved'];
+  if (moved) {
+    let d = moved.d;
+    let da =
+	`0 ${MOVEHIST_ENDS} ${d - MOVEHIST_ENDS*2} ${MOVEHIST_ENDS*2}`;
+    let g = document.createElementNS(svg_ns,'g');
+    let sz = 4;
+    let pi = players[ent.held];
+    let nick = pi ? pi.nick : '';
+    let svg = `
+      <marker id="${meid}" viewBox="2 0 ${sz} ${sz}" 
+	refX="${sz + MOVEHIST_ENDS}" refY="${sz/2}"
+	markerWidth="${sz + 2}" markerHeight="${sz}"
+	stroke="yellow" fill="none"
+	orient="auto-start-reverse" stroke-linejoin="mitre">
+	<path d="M 0 0 L ${sz} ${sz/2} L 0 ${sz}" />
+      </marker>
+      <line x1="${old_pos[0].toString()}"
+	    y1="${old_pos[1].toString()}"
+	    x2="${new_pos[0].toString()}"
+	    y2="${new_pos[1].toString()}"
+	    stroke="yellow"  stroke-dasharray="${da}"
+	    stroke-width="1" pointer-events="none"
+	    marker-end="url(#${meid})" />
+      <text x="${((old_pos[0] + new_pos[0]) / 2).toString()}"
+	    y="${((old_pos[1] + new_pos[1]) / 2).toString()}"
+	    font-size="5" pointer-events="none"
+	    stroke-width="0.1">${nick}</text>
+    `;
+    g.innerHTML = svg;
+    space.insertBefore(g, movehist_end);
+    movehist_revisible();
+  }
 }
+
+function movehist_revisible() {
+  let n = movehist_lens[movehist_len_i];
+  let i = 0;
+  let node = movehist_end;
+  while (i < movehist_len_max) {
+    i++; // i now eg 1..10
+    node = node.previousElementSibling! as SVGGraphicsElement;
+    if (node == movehist_start)
+      return;
+    let prop = i > n ? 0 : (n-i+1)/n;
+    let stroke = (prop * 1.0).toString();
+    let marker = node.firstElementChild!;
+    marker.setAttributeNS(null,'stroke-width',stroke);
+    let line = marker.nextElementSibling!;
+    line.setAttributeNS(null,'stroke-width',stroke);
+    let text = line.nextElementSibling!;
+    if (!prop) {
+      text.setAttributeNS(null,'stroke','none');
+      text.setAttributeNS(null,'fill','none');
+    } else {
+      text.setAttributeNS(null,'fill','yellow');
+      text.setAttributeNS(null,'stroke','orange');
+    }
+  }
+  for (;;) {
+    let del = node.previousElementSibling!;
+    if (del == movehist_start)
+      return;
+    del.remove();
+  }
+}  
 
 // ----- logs -----
 
