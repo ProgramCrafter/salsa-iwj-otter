@@ -47,6 +47,7 @@ type WhatResponseToClientOp = "Predictable" | "Unpredictable" | "UpdateSvg";
 type Timestamp = number; // unix time_t, will break in 285My
 type Layout = 'Portrait' | 'Landscape';
 type PieceMoveable = "No" | "IfWresting" | "Yes";
+type CompassAngle = number;
 
 type UoDescription = {
   kind: UoKind;
@@ -68,7 +69,7 @@ type PieceInfo = {
   cseq_updatesvg : number | null,
   z : ZCoord,
   zg : Generation,
-  angle: number,
+  angle: CompassAngle,
   pinned: boolean,
   moveable: PieceMoveable,
   uos : UoDescription[],
