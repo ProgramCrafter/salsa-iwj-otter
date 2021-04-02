@@ -67,12 +67,12 @@ pub fn space_rect_attrs(table_size: PosC<f64>) -> SvgAttrs {
 
 #[macro_export]
 macro_rules! if_let {
-  { $variant:ident($binding:pat) = $input:expr;
+  { $($variant:ident)::+ ($binding:pat) = $input:expr;
     else $($otherwise:tt)*
   } => {
     let $binding = match $input {
-      $variant(y) => y,
+      $($variant)::+ (y) => y,
       _ => { $($otherwise)* },
     };
-  }
+  };
 }
