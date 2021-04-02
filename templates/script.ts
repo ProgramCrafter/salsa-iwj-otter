@@ -680,7 +680,7 @@ var dcy : number | null;
 
 const DRAGTHRESH = 5;
 
-function piece_xy(p: PieceInfo): [number, number] {
+function piece_xy(p: PieceInfo): Pos {
   return [ parseFloat(p.uelem.getAttributeNS(null,"x")!),
 	   parseFloat(p.uelem.getAttributeNS(null,"y")!) ];
 }
