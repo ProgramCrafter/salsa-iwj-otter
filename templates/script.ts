@@ -984,6 +984,7 @@ messages.SetLinks = <MessageHandler>function
 type MoveHistEnt = {
   held: PlayerId,
   posx: [MoveHistPosx, MoveHistPosx],
+  diff: { 'Moved': { d: number } },
 }
 type MoveHistPosx = {
   pos: Pos,

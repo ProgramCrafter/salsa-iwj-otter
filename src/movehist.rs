@@ -38,9 +38,9 @@ pub struct MoveHistEnt {
   pub diff: MoveHistDiffToShow,
 }
 
-#[derive(Debug,Copy,Clone,Serialize,Deserialize,Eq,PartialEq)]
+#[derive(Debug,Copy,Clone,Serialize,Deserialize)]
 pub enum MoveHistDiffToShow {
-  Moved,
+  Moved { d: f64 },
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
@@ -72,9 +72,12 @@ impl MoveHistPosx {
                            -> Option<MoveHistDiffToShow> {
     use MoveHistDiffToShow as D;
 
-    match (|| Ok::<_,CoordinateOverflow> (
-      (self.pos - other.pos)?.len2()? > MOVEHIST_MIN_DIST*MOVEHIST_MIN_DIST
-    ))() { Ok(false) => {}, _ => return Some(D::Moved), }
+    match (|| Ok::<_,CoordinateOverflow> ({
+      (self.pos - other.pos)?.len()?
+    }))() {
+      Ok(d) if d >= MOVEHIST_MIN_DIST as f64 => return Some(D::Moved{ d }),
+      _ => {},
+    }
 
     None
   }
