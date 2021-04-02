@@ -467,6 +467,11 @@ macro_rules! want {
 }
 
 #[macro_export]
+macro_rules! wants {
+  { $($d:tt)* } => { want!(Some = $($d)*) }
+}
+
+#[macro_export]
 macro_rules! want_let {
   { $variant:ident($binding:pat) = $input:expr;
     else ?($($d:expr),*) $($otherwise:tt)*
