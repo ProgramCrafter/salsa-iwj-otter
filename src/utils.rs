@@ -40,7 +40,8 @@ impl str {
 }
 
 #[derive(Copy,Clone,Debug,From,Into)]
-#[derive(Hash,Eq,PartialEq)]
+#[derive(Hash,Eq,PartialEq,Serialize,Deserialize)]
+#[serde(transparent)]
 pub struct OldNew<T>([T; 2]);
 
 #[derive(Copy,Clone,Debug)]
