@@ -491,35 +491,3 @@ macro_rules! want_let {
     want_let!{ $variant($binding) = $input; ?; $($otherwise)* }
   };
 }
-
-/*
-#[macro_export]
-macro_rules! want {
-  { $variant:ident($binding:pat) = $input:expr; else $($otherwise:tt)* } => {
-    want
-
-    let $binding = match $input {
-      $variant(y) => y,
-      x => {
-        error!("internal error: wanted {}({}) = {}, but got {:?}",
-               stringify!($variant), stringify!($binding),
-               stringify!($input), x);
-        { $($otherwise)* }
-      },
-    };
-  }
-  { $variant:ident($binding:pat) = $input:expr, $(xdbg:extra),*;
-    else $($otherwise:tt)* }
-  => {
-    let $binding = match $input {
-      $variant(y) => y,
-      x => {
-        error!("internal error: wanted {}({}) = {}, but got {:?}",
-               stringify!($variant), stringify!($binding),
-               stringify!($input), x);
-        { $($otherwise)* }
-      },
-    };
-  }
-}
-*/
