@@ -402,6 +402,22 @@ impl GPiece {
     }
   }
 
+  pub fn fully_visible_to(&self, goccults: &GameOccults, player: PlayerId)
+                          -> Option<ShowUnocculted>
+  {
+    const HIDE: Option<ShowUnocculted> = None;
+    const SHOW: Option<ShowUnocculted> = Some(ShowUnocculted(()));
+    if_let!{ Some(passive) = &self.occult.passive; else return SHOW };
+    want_let!{ Some(occ) = goccults.occults.get(passive.occid);
+               else ?passive.occid; return HIDE };
+    return match occ.views.get_kind(player) {
+      OccK::Visible => SHOW,
+      OccK::Scrambled |
+      OccK::Displaced(_) |
+      OccK::Invisible => HIDE,
+    }
+  }
+
   pub fn involved_in_occultation(&self) -> bool {
     self.occult.passive.is_some() ||
     self.occult.active.is_some()
