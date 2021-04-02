@@ -491,3 +491,38 @@ macro_rules! want_let {
     want_let!{ $($variant(y))::+ = $input; ?; $($otherwise)* }
   };
 }
+
+macro_rules! entry_define_insert_remove {
+  { $name:ident, $name_mod:ident, $entry:path, $into_key:ident } =>
+  {
+    #[allow(non_snake_case)]
+    mod $name_mod {
+      use $crate::imports::extend::ext;
+      use $entry as Entry;
+      use Entry::{Occupied, Vacant};
+      #[ext(pub, name=EntryExt)]
+      impl<'e,K,V> Entry<'e,K,V> where K: slotmap::Key {
+        fn insert(self, v: V) {
+          match self {
+            Vacant(ve)   => { ve.insert(v); }
+            Occupied(mut oe) => { oe.insert(v); }
+          }
+        }
+        fn remove(self) -> (K, Option<V>) {
+          match self {
+            Vacant(ve)   => { let k = ve.$into_key();        (k, None)    }
+            Occupied(oe) => { let (k,v) = oe.remove_entry(); (k, Some(v)) }
+          }
+        }
+      }
+    }
+    pub use $name_mod::EntryExt as $name;
+  }
+}
+
+entry_define_insert_remove!{
+  SlotmapSparseSecondaryEntryExt,
+  SlotmapSparseSecondaryEntryExt_mod,
+  slotmap::sparse_secondary::Entry,
+  key
+}
