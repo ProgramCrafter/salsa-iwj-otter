@@ -7,6 +7,7 @@ use super::*; // we are otter::updates::movehist
 pub const MOVEHIST_LENS: &[usize] = &[ 0, 1, 3, 10 ];
 pub const MOVEHIST_LEN_MAX: usize = 10;
 pub const MOVEHIST_LEN_DEF_I: usize = 1;
+pub const MOVEHIST_MIN_DIST: f64 = 7.5;
 
 #[test]
 fn movehist_lens() {
@@ -34,6 +35,12 @@ pub struct MoveHistPosx { // usual variable: posx
 pub struct MoveHistEnt {
   pub held: PlayerId,
   pub posx: OldNew<MoveHistPosx>,
+  pub diff: MoveHistDiffToShow,
+}
+
+#[derive(Debug,Copy,Clone,Serialize,Deserialize,Eq,PartialEq)]
+pub enum MoveHistDiffToShow {
+  Moved,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
@@ -60,6 +67,19 @@ impl Default for GMoveHist {
   } }
 }
 
+impl MoveHistPosx {
+  fn differs_significantly(&self, other: &MoveHistPosx)
+                           -> Option<MoveHistDiffToShow> {
+    use MoveHistDiffToShow as D;
+
+    match (|| Ok::<_,CoordinateOverflow> (
+      (self.pos - other.pos)?.len2()? > MOVEHIST_MIN_DIST*MOVEHIST_MIN_DIST
+    ))() { Ok(false) => {}, _ => return Some(D::Moved), }
+
+    None
+  }
+}
+
 // We're track this on behalf of the client, based on the updates
 // we are sending.  That means we don't ahve to worry about
 // occultation, etc. etc.
@@ -80,16 +100,19 @@ pub fn peek_prep_update(gs: &mut GameState, peek: &PreparedUpdateEntry)
         let last = oe.get();
         if ns.held == Some(last.held) { continue }
 
-        // Generate an update
-        let histent = MoveHistEnt {
-          held: last.held,
-          posx: OldNew::from([last.posx, new_posx]),
-        };
-        if gpl.movehist.hist.len() == MOVEHIST_LEN_MAX {
-          gpl.movehist.hist.pop_front();
+        if let Some(diff) = new_posx.differs_significantly(&last.posx) {
+          // Generate an update
+          let histent = MoveHistEnt {
+            held: last.held,
+            posx: OldNew::from([last.posx, new_posx]),
+            diff,
+          };
+          if gpl.movehist.hist.len() == MOVEHIST_LEN_MAX {
+            gpl.movehist.hist.pop_front();
+          }
+          gpl.movehist.hist.push_back(histent.clone());
+          pu.insert(player, histent);
         }
-        gpl.movehist.hist.push_back(histent.clone());
-        pu.insert(player, histent);
       }
 
       if let Some(held) = ns.held {
