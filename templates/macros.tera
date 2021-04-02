@@ -84,6 +84,9 @@ Hi {{nick | escape}}
 {%- for piece in defs %}
       <defs id="defs{{ piece.0 }}">{{ piece.1 }}</defs>
 {%- endfor %}
+      <g id="movehist_marker"></g>
+      <defs id ="static_defs">
+      </defs>
     </svg>
 {% endmacro space %}
 

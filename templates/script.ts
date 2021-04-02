@@ -125,6 +125,8 @@ var svg_ns : string;
 var space : SVGGraphicsElement;
 var pieces_marker : SVGGraphicsElement;
 var defs_marker : SVGGraphicsElement;
+var movehist_start: SVGGraphicsElement;
+var movehist_end: SVGGraphicsElement;
 var log_elem : HTMLElement;
 var logscroll_elem : HTMLElement;
 var status_node : HTMLElement;
@@ -1429,6 +1431,8 @@ function startup() {
   space = svg_element('space')!;
   pieces_marker = svg_element("pieces_marker")!;
   defs_marker = svg_element("defs_marker")!;
+  movehist_start = svg_element('movehist_marker')!;
+  movehist_end = svg_element('static_defs')!;
   svg_ns = space.getAttribute('xmlns')!;
 
   for (let uelem = pieces_marker.nextElementSibling! as SVGGraphicsElement;
