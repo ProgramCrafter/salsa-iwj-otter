@@ -765,23 +765,35 @@ impl DirSubst {
 
 // -------------------- concurrency management --------------------
 
+pub struct OtterPauseable(nix::unistd::Pid);
 pub struct OtterPaused(nix::unistd::Pid);
 
 impl SetupCore {
+  pub fn otter_pauseable(&self) -> OtterPauseable {
+    OtterPauseable(nix::unistd::Pid::from_raw(
+      self.server_child.id() as nix::libc::pid_t
+    ))
+  }
+
   #[throws(AE)]
   pub fn pause_otter(&self) -> OtterPaused {
-    let pid = nix::unistd::Pid::from_raw(
-      self.server_child.id() as nix::libc::pid_t
-    );
-    nix::sys::signal::kill(pid, nix::sys::signal::SIGSTOP)?;
-    OtterPaused(pid)
+    self.otter_pauseable().pause()?
+  }
+}
+
+impl OtterPauseable {
+  #[throws(AE)]
+  pub fn pause(self) -> OtterPaused {
+    nix::sys::signal::kill(self.0, nix::sys::signal::SIGSTOP)?;
+    OtterPaused(self.0)
   }
 }
 
 impl OtterPaused {
   #[throws(AE)]
-  pub fn resume(self) {
+  pub fn resume(self) -> OtterPauseable {
     nix::sys::signal::kill(self.0, nix::sys::signal::SIGCONT)?;
+    OtterPauseable(self.0)
   }
 }
 
