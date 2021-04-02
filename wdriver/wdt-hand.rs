@@ -65,6 +65,7 @@ impl Ctx {
         .key_up('C')
         .perform()
         .context("claim hand")?;
+      w.synch()?;
 
       w.action_chain()
         .click()
