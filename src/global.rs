@@ -9,8 +9,6 @@ use crate::prelude::*;
 use slotmap::dense as sm;
 use std::sync::PoisonError;
 
-#[allow(non_camel_case_types)] type PUE_P = PreparedUpdateEntry_Piece;
-
 // ---------- newtypes and type aliases ----------
 
 visible_slotmap_key!{ ClientId(b'C') }

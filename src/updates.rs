@@ -6,7 +6,6 @@
 
 use crate::prelude::*;
 
-#[allow(non_camel_case_types)] type PUE_P = PreparedUpdateEntry_Piece;
 #[allow(non_camel_case_types)] type TUE_P<'u> = TransmitUpdateEntry_Piece<'u>;
 #[allow(non_camel_case_types)] type PUE_I = PreparedUpdateEntry_Image;
 #[allow(non_camel_case_types)] type TUE_I<'u> = TransmitUpdateEntry_Image<'u>;

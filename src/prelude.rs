@@ -188,3 +188,4 @@ pub type PUFOS = PieceUpdateFromOpSimple;
 pub type PUO<NS,ZL> = PieceUpdateOp<NS,ZL>;
 pub type PUOs = PieceUpdateOps;
 pub type WRC = WhatResponseToClientOp;
+#[allow(non_camel_case_types)] pub type PUE_P = PreparedUpdateEntry_Piece;
