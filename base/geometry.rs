@@ -104,6 +104,15 @@ impl<T> PosC<T> {
   pub fn zero() -> Self where T: num_traits::Zero + Copy {
     PosC::both(<T as num_traits::Zero>::zero())
   }
+
+  #[throws(CoordinateOverflow)]
+  pub fn len2(self) -> f64 where PosC<T>: PosPromote {
+    self.promote().coords.iter()
+      .try_fold(0., |b, &c| {
+        let c2 = c.checked_mul(c)?;
+        b.checked_add(c2)
+      })?
+  }
 }
 impl<T> PosC<T> where T: Copy {
   pub fn x(self) -> T { self.coords[0] }
