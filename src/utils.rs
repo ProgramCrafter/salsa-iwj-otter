@@ -428,4 +428,92 @@ macro_rules! trace_dbg {
       trace!("{}", buf);
     }
   }
+
 }
+
+#[macro_export]
+macro_rules! want_failed_internal {
+  { $variant:ident($binding:pat) = $input:expr, $x:expr, $($d:expr),* } => {
+    InternalLogicError::new({
+      #[allow(unused_mut)]
+      let mut s = format!("wanted {}({}) = {}, but got {:?}",
+	                  stringify!($variant), stringify!($binding),
+                          stringify!($input), $x);
+      $(
+        write!(&mut s, " {}={:?}", stringify!($d), &$d);
+      )*
+      s
+    }).tolerate()
+  }
+}
+
+#[macro_export]
+macro_rules! want {
+  { $variant:ident = $input:expr,
+    else ?($($d:expr),*)
+  } => (
+    match $input {
+      $variant(y) => Some(y),
+      x => {
+        want_failed_internal!{ $variant(_)=$input, x, $($d:expr),* }
+        None
+      },
+    };
+  );
+  { $variant:ident = $input:expr } => {
+    want!( $variant = $input,
+           else ?() )
+  };
+}
+
+#[macro_export]
+macro_rules! want_let {
+  { $variant:ident($binding:pat) = $input:expr;
+    else ?($($d:expr),*) $($otherwise:tt)*
+  } => {
+    let $binding = match $input {
+      $variant(y) => y,
+      x => {
+        want_failed_internal!{ $variant($binding)=$input, x, $($d:expr),* }
+        $($otherwise)*
+      },
+    };
+  };
+  { $variant:ident($binding:pat) = $input:expr;
+    else $($otherwise:tt)*
+  } => {
+    want_let!{ $variant($binding) = $input; ?(); $($otherwise:tt)* }
+  };
+}
+
+/*
+#[macro_export]
+macro_rules! want {
+  { $variant:ident($binding:pat) = $input:expr; else $($otherwise:tt)* } => {
+    want
+
+    let $binding = match $input {
+      $variant(y) => y,
+      x => {
+        error!("internal error: wanted {}({}) = {}, but got {:?}",
+               stringify!($variant), stringify!($binding),
+               stringify!($input), x);
+        { $($otherwise)* }
+      },
+    };
+  }
+  { $variant:ident($binding:pat) = $input:expr, $(xdbg:extra),*;
+    else $($otherwise:tt)* }
+  => {
+    let $binding = match $input {
+      $variant(y) => y,
+      x => {
+        error!("internal error: wanted {}({}) = {}, but got {:?}",
+               stringify!($variant), stringify!($binding),
+               stringify!($input), x);
+        { $($otherwise)* }
+      },
+    };
+  }
+}
+*/

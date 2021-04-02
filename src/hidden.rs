@@ -649,7 +649,7 @@ fn recalculate_occultation_general<
       let occ = occultation(goccults, occid);
       if_chain!{
         if occ.notches.is_empty();
-        if let Some(ilk) = ipc.occilk.as_ref();            // expected, really
+        if let Some(ilk) = want!( Some = ipc.occilk.as_ref() );
         let ilk = ilk.borrow();
         if let Some(ilk) = ioccults.ilks.get(ilk);         // expected, really
         if let Ok::<_,IE>(bbox) = ilk.p_occ.bbox_approx(); // expected, really
