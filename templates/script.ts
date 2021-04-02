@@ -148,7 +148,7 @@ type PlayerInfo = {
 }
 var players : { [player: string]: PlayerInfo };
 
-type MovementRecord = {
+type MovementRecord = { // for yellow halo, unrelasted to movehist
   piece: PieceId,
   p: PieceInfo,
   this_motion: DOMHighResTimeStamp,
