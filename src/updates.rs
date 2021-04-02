@@ -501,12 +501,10 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
              G: FnOnce(ZC) -> ZC2
              > (self, f:F, g:G) -> PieceUpdateOp<NS2,ZC2>
   {
-    #[derive(Error,Debug)]
-    enum Never { }
     self.try_map(
-      |ns| <Result<_,Never>>::Ok(f(ns)),
-      |zc| <Result<_,Never>>::Ok(g(zc)),
-    ).unwrap()
+      |ns| <Result<_,Void>>::Ok(f(ns)),
+      |zc| <Result<_,Void>>::Ok(g(zc)),
+    ).void_unwrap()
   }
   pub fn new_z_generation(&self) -> Option<Generation>
     where ZC: Borrow<ZLevel>
