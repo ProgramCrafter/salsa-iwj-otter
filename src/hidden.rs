@@ -651,9 +651,9 @@ fn recalculate_occultation_general<
         if occ.notches.is_empty();
         if let Some(ilk) = want!( Some = ipc.occilk.as_ref() );
         let ilk = ilk.borrow();
-        if let Some(ilk) = ioccults.ilks.get(ilk);         // expected, really
-        if let Ok::<_,IE>(bbox) = ilk.p_occ.bbox_approx(); // expected, really
-        if let Ok(size) = bbox.br() - bbox.tl();           // expected, really
+        if let Some(ilk) = want!( Some = ioccults.ilks.get(ilk) );
+        if let Some(bbox) = want!( Ok = ilk.p_occ.bbox_approx() );
+        if let Some(size) = want!( Ok = bbox.br() - bbox.tl() );
         then { occ.ppiece_use_size = size; }
       };
       let notch = occ.notches
