@@ -9,6 +9,9 @@
 <script defer>let wasm_input = fetch('/_/wasm.wasm');</script>
 <script src="/_/wasm.js" defer></script>
 <script id="global-info" data-layout="{{ layout }}"></script>
+<script>
+  movehistlens={{ movehistlens }};
+</script>
 <script src="/_/script.js" defer></script>
 </head>
 <body id="loading_body">

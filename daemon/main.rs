@@ -95,6 +95,7 @@ struct LoadingRenderContext<'r> {
   layout: PresentationLayout,
   ptoken: &'r RawTokenVal,
   debug_js_inject: Arc<String>,
+  movehistlens: JsonString<&'r [usize]>,
 }
 #[get("/")]
 #[throws(OER)]
@@ -121,6 +122,7 @@ fn loading(layout: Option<PresentationLayout>, ia: PlayerQueryString)
       game: g.name.to_string(),
       ptoken: &ia.raw_token,
       debug_js_inject: config().debug_js_inject.clone(),
+      movehistlens: JsonString(MOVEHIST_LENS),
       layout,
     };
     Template::render("loading", &c)
