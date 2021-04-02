@@ -17,7 +17,9 @@ struct MagicOwner {
 struct Hand {
   shape: GenericSimpleShape<(), RectShape>,
   label: Option<PieceLabelLoaded>,
-  #[serde(default="Sort::backcompat_upgrade")] sort: Sort,
+  #[serde(default="Behaviour::backcompat_upgrade")]
+  #[serde(alias="sort")]
+  behaviour: Behaviour,
 }
 
 #[derive(Debug,Clone,Default,Serialize,Deserialize)]
@@ -26,36 +28,36 @@ struct HandState {
 }
 
 #[derive(Debug,Copy,Clone,Serialize,Deserialize)]
-enum Sort {
+enum Behaviour {
   Hand,
   PlayerLabel,
 }
 
 type MkOccCA = fn(&OccDisplacement, &ZCoord) -> OccKA;
 
-impl Sort {
-  fn backcompat_upgrade() -> Self { Sort::Hand }
-  fn itemname(self) -> &'static str { use Sort::*; match self {
+impl Behaviour {
+  fn backcompat_upgrade() -> Self { Behaviour::Hand }
+  fn itemname(self) -> &'static str { use Behaviour::*; match self {
     Hand => "magic-hand",
     PlayerLabel => "player-label",
   } }
-  fn unclaimed_desc(self) -> HtmlLit { use Sort::*; Html::lit(match self {
+  fn unclaimed_desc(self) -> HtmlLit { use Behaviour::*; Html::lit(match self {
     Hand => UNCLAIMED_HAND_DESC,
     PlayerLabel => "an unclaimed player label",
   }) }
-  fn deact_desc(self) -> HtmlLit { use Sort::*; Html::lit(match self {
+  fn deact_desc(self) -> HtmlLit { use Behaviour::*; Html::lit(match self {
     Hand => "Deactivate hand",
     PlayerLabel => "Relinquish player label",
   }) }
-  fn claim_desc(self) -> HtmlLit { use Sort::*; Html::lit(match self {
+  fn claim_desc(self) -> HtmlLit { use Behaviour::*; Html::lit(match self {
     Hand => "Claim this as your hand",
     PlayerLabel => "Claim player label",
   }) }
-  fn owned_desc(self, nick: &HtmlStr) -> Html { use Sort::*; match self {
+  fn owned_desc(self, nick: &HtmlStr) -> Html { use Behaviour::*; match self {
     Hand => hformat!("{}'s hand", nick),
     PlayerLabel => hformat!("{}'s player label", nick),
   } }
-  fn views(self) -> Option<(MkOccCA, MkOccCA)> { use Sort::*; match self {
+  fn views(self) -> Option<(MkOccCA, MkOccCA)> { use Behaviour::*; match self {
     Hand => Some((|_,_| OccKA::Visible,
                   |d,z| OccKA::Displaced((d.clone(), z.clone())))),
     PlayerLabel => None,
@@ -86,7 +88,7 @@ impl OutlineTrait for Hand {
 
 impl piece_specs::OwnedCommon {
   #[throws(SpecError)]
-  fn load(&self, sort: Sort) -> PieceSpecLoaded {
+  fn load(&self, behaviour: Behaviour) -> PieceSpecLoaded {
     let common = SimpleCommon {
       itemname: None,
       faces: index_vec![self.colour.clone()],
@@ -100,10 +102,10 @@ impl piece_specs::OwnedCommon {
     let shape = GenericSimpleShape::new(
       (),
       shape,
-      sort.itemname(),
+      behaviour.itemname(),
       &common)?;
     let p = Box::new(Hand {
-      shape, sort,
+      shape, behaviour,
       label: self.label.load()?,
     }) as Box<dyn PieceTrait>;
     PieceSpecLoaded { p, occultable: None }
@@ -116,7 +118,7 @@ impl PieceSpec for piece_specs::Hand {
   fn load(&self, _: usize, _: &mut GPiece,
           _pcaliases: &PieceAliases, _ir: &InstanceRef)
           -> PieceSpecLoaded {
-    self.c.load(Sort::Hand)?
+    self.c.load(Behaviour::Hand)?
   }
 }
 
@@ -126,11 +128,11 @@ impl PieceSpec for piece_specs::PlayerLabel {
   fn load(&self, _: usize, _: &mut GPiece,
           _pcaliases: &PieceAliases, _ir: &InstanceRef)
           -> PieceSpecLoaded {
-    self.c.load(Sort::PlayerLabel)?
+    self.c.load(Behaviour::PlayerLabel)?
   }
 }
 
-impl Sort {
+impl Behaviour {
   fn describe_html_inner(self, xdata: Option<&HandState>) -> Html {
     if_chain! {
       if let Some(xdata) = xdata;
@@ -175,7 +177,7 @@ impl PieceTrait for Hand {
   #[throws(IE)]
   fn describe_html(&self, gpc: &GPiece, _goccults: &GameOccults) -> Html {
     let xdata = gpc.xdata.get()?;
-    self.sort.describe_html_inner(xdata)
+    self.behaviour.describe_html_inner(xdata)
   }
 
   delegate!{
@@ -194,14 +196,14 @@ impl PieceTrait for Hand {
         kind: UoKind::Piece,
         def_key: 'C',
         opname: "deactivate".to_owned(),
-        desc: self.sort.deact_desc().into(),
+        desc: self.behaviour.deact_desc().into(),
         wrc: WRC::Unpredictable,
       }}
       else { UoDescription {
         kind: UoKind::Piece,
         def_key: 'C',
         opname: "claim".to_owned(),
-        desc: self.sort.claim_desc().into(),
+        desc: self.behaviour.claim_desc().into(),
         wrc: WRC::Unpredictable,
       }}
     })
@@ -219,7 +221,7 @@ impl PieceTrait for Hand {
     let goccults = &mut gs.occults;
     let gpc = gpieces.byid_mut(piece)?;
     let xdata = gpc.xdata.get_mut::<HandState,_>(default)?;
-    let old_desc = self.sort.describe_html_inner(Some(xdata));
+    let old_desc = self.behaviour.describe_html_inner(Some(xdata));
     let old_player = xdata.player();
 
     let dasharray = player_dasharray(gplayers, player);
@@ -233,13 +235,13 @@ impl PieceTrait for Hand {
     {
       ("claim", false) => {
         dbgc!("claiming");
-        let new_desc = self.sort.owned_desc(&nick);
+        let new_desc = self.behaviour.owned_desc(&nick);
         let new_owner = Some(MagicOwner {
           player,
           dasharray,
           desc: new_desc,
         });
-        let xupdates = match self.sort.views() {
+        let xupdates = match self.behaviour.views() {
           None => default(),
           Some((mk_owner, mk_defview)) => {
             let (region, views) = (||{
@@ -272,7 +274,7 @@ impl PieceTrait for Hand {
         (new_owner, xupdates, hformat!("claimed {}", &old_desc))
       }
       ("deactivate", true) => {
-        let xupdates = match self.sort.views() {
+        let xupdates = match self.behaviour.views() {
           None => default(),
           Some(_) =>
             remove_occultation(&mut gen.unique_gen(),
