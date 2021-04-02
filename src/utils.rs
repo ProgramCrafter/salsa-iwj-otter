@@ -450,7 +450,7 @@ macro_rules! want_failed_internal {
 #[macro_export]
 macro_rules! want {
   { $variant:ident = $input:expr,
-    else ?($($d:expr),*)
+    ?($($d:expr),*)
   } => (
     match $input {
       $variant(y) => Some(y),
@@ -462,7 +462,7 @@ macro_rules! want {
   );
   { $variant:ident = $input:expr } => {
     want!( $variant = $input,
-           else ?() )
+           ?() )
   };
 }
 
