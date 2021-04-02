@@ -59,6 +59,8 @@ pub enum InternalError {
   PartialPlayerData,
   #[error("Coordinate overflow")]
   CoordinateOverflow(#[from] CoordinateOverflow),
+  #[error("Organised placement not possible")]
+  OrganisedPlacementFailure,
   #[error("Z Coordinate overflow (game is too crufty?)")]
   ZCoordinateOverflow(#[from] zcoord::Overflow),
   #[error("Multiple errors occurred where only one could be reported")]
@@ -177,6 +179,7 @@ pub enum PieceOpError {
   Conflict,
   PosOffTable,
   PieceGone,
+  Occultation,
 }
 display_as_debug!{PieceOpError}
 

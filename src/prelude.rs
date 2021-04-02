@@ -134,6 +134,7 @@ pub use crate::keydata::*;
 pub use crate::mgmtchannel::*;
 pub use crate::nwtemplates;
 pub use crate::occultilks::*;
+pub use crate::organise;
 pub use crate::pcrender::*;
 pub use crate::pieces::*;
 pub use crate::shapelib;

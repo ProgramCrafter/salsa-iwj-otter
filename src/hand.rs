@@ -206,13 +206,25 @@ impl PieceTrait for Hand {
         desc: self.behaviour.claim_desc().into(),
         wrc: WRC::Unpredictable,
       }}
-    })
+    });
+
+    organise::add_ui_operations(upd, &self.shape.outline.rect(gpc.pos)?)?;
   }
 
   #[throws(ApiPieceOpError)]
-  fn ui_operation(&self, a: ApiPieceOpArgs<'_>,
+  fn ui_operation(&self, mut a: ApiPieceOpArgs<'_>,
                   opname: &str, wrc: WhatResponseToClientOp)
                   -> UpdateFromOpComplex {
+    if let Some(r) = {
+      let gpc = a.gs.pieces.byid_mut(a.piece)?;
+      let rect = self.shape.outline.rect(gpc.pos)
+        .map_err(|CoordinateOverflow|
+                 internal_error_bydebug(&(&gpc.pos, &self.shape)))?;
+      organise::ui_operation(&mut a, opname, wrc, &rect)?                             
+    } {
+      return r;
+    }
+
     let ApiPieceOpArgs { gs,player,piece,ipieces,ioccults,to_recalculate,.. } = a;
     let gen = &mut gs.gen;
     let gplayers = &mut gs.players;

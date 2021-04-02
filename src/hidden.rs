@@ -250,6 +250,18 @@ impl GameOccults {
     let kind = occ.get_kind(player);
     kind
   }
+
+  #[throws(IE)]
+  pub fn pos_occulter(&self, goccults: &GameOccults, pos: Pos)
+                      -> Option<PieceId> {
+    goccults.occults.iter().find_map(|(_occid, occ)| {
+      if occ.in_region(pos) {
+        Some(occ.occulter)
+      } else {
+        None
+      }
+    })
+  }
 }
 
 // ========== public entrypoints ==========
