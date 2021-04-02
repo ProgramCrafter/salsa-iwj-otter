@@ -4,6 +4,15 @@
 
 use super::*; // we are otter::updates::movehist
 
+pub const MOVEHIST_LENS: &[usize] = &[ 1, 3, 10, 0];
+pub const MOVEHIST_LEN_MAX: usize = 10;
+
+#[test]
+fn movehist_len_max() { assert_eq!(
+  MOVEHIST_LENS.iter().max(),
+  Some(&MOVEHIST_LEN_MAX),
+) }
+
 #[derive(Debug,Copy,Clone,Serialize,Deserialize)]
 pub struct MoveHistPosx { // usual variable: posx
   pub pos: Pos,
