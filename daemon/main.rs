@@ -124,9 +124,9 @@ fn loading(layout: Option<PresentationLayout>, ia: PlayerQueryString)
       game: g.name.to_string(),
       ptoken: &ia.raw_token,
       debug_js_inject: config().debug_js_inject.clone(),
-      movehist_lens: JsonString(MOVEHIST_LENS),
-      movehist_len_i: MOVEHIST_LEN_DEF_I,
-      movehist_len_max: MOVEHIST_LEN_MAX,
+      movehist_lens: JsonString(movehist::LENS),
+      movehist_len_i: movehist::LEN_DEF_I,
+      movehist_len_max: movehist::LEN_MAX,
       layout,
     };
     Template::render("loading", &c)

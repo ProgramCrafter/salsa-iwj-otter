@@ -56,7 +56,7 @@ pub struct PreparedUpdate {
 pub enum PreparedUpdateEntry {
   Piece(PreparedUpdateEntry_Piece),
   Image(PreparedUpdateEntry_Image),
-  MoveHistEnt(SecondarySlotMap<PlayerId, MoveHistEnt>),
+  MoveHistEnt(SecondarySlotMap<PlayerId, movehist::Ent>),
   SetTableSize(Pos),
   SetTableColour(Colour),
   SetLinks(Arc<LinksTable>),
@@ -223,7 +223,7 @@ enum TransmitUpdateEntry<'u> {
   },
   Piece(TransmitUpdateEntry_Piece<'u>),
   Image(TransmitUpdateEntry_Image<'u>),
-  MoveHistEnt(&'u MoveHistEnt),
+  MoveHistEnt(&'u movehist::Ent),
   RecordedUnpredictable {
     piece: VisiblePieceId,
     cseq: ClientSequence,

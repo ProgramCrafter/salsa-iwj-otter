@@ -24,7 +24,7 @@ struct SessionRenderContext {
   links: Html,
   player_info_pane: Html,
   fake_rng: bool,
-  movehist: GMoveHist,
+  movehist: movehist::PlHist,
 }
 
 #[derive(Debug,Serialize)]

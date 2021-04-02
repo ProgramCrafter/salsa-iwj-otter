@@ -55,8 +55,8 @@ pub struct GPlayer { // usual variable: gpl
   pub nick: String,
   pub layout: PresentationLayout,
   pub idmap: PerPlayerIdMap,
-  #[serde(default)] pub moveheld: GMoveHeld,
-  #[serde(default)] pub movehist: GMoveHist,
+  #[serde(default)] pub movehist: movehist::PlHist,
+  #[serde(default)] pub moveheld: movehist::PlHeld,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
