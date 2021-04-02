@@ -48,6 +48,7 @@ type Timestamp = number; // unix time_t, will break in 285My
 type Layout = 'Portrait' | 'Landscape';
 type PieceMoveable = "No" | "IfWresting" | "Yes";
 type CompassAngle = number;
+type FaceId = number;
 
 type UoDescription = {
   kind: UoKind;
@@ -971,8 +972,22 @@ messages.SetLinks = <MessageHandler>function
   links_elem.innerHTML = msg
 }
 
-messages.MoveHistEnt = <MessageHandler>function
-(todo: object) {
+// ---------- movehist ----------
+
+type MoveHistEnt = {
+  held: PlayerId,
+  posx: [MoveHistPosx, MoveHistPosx],
+}
+type MoveHistPosx = {
+  pos: Pos,
+  angle: CompassAngle,
+  facehint: FaceId | null,
+}
+
+messages.MoveHistEnt = <MessageHandler>movehist_record;
+
+function movehist_record(ent: MoveHistEnt) {
+  
 }
 
 // ----- logs -----
