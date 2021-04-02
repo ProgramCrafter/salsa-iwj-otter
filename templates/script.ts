@@ -119,7 +119,7 @@ var keyops_local : { [opname: string]: (uo: UoRecord) => void } = Object();
 var last_log_ts: wasm_bindgen.TimestampAbbreviator;
 var last_zoom_factor : number = 1.0;
 var firefox_bug_zoom_factor_compensation : number = 1.0;
-var gen_update_hook : () => void = function() { }
+var gen_update_hook : () => void;
 
 var svg_ns : string;
 var space : SVGGraphicsElement;
@@ -1449,6 +1449,8 @@ function startup() {
     pieces[piece] = p;
     redisplay_ancillaries(piece,p);
   }
+
+  if (gen_update_hook == null) gen_update_hook = function() { };
 
   last_log_ts = wasm_bindgen.timestamp_abbreviator(dataload.last_log_ts);
 
