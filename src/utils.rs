@@ -440,7 +440,7 @@ macro_rules! want_failed_internal {
 	                  stringify!($variant), stringify!($binding),
                           stringify!($input), $x);
       $(
-        write!(&mut s, " {}={:?}", stringify!($d), &$d);
+        write!(&mut s, " {}={:?}", stringify!($d), &$d).unwrap();
       )*
       s
     }).tolerate()
@@ -455,7 +455,7 @@ macro_rules! want {
     match $input {
       $variant(y) => Some(y),
       x => {
-        want_failed_internal!{ $variant(_)=$input, x, $($d:expr),* }
+        want_failed_internal!{ $variant(_)=$input, x, $($d),* }
         None
       },
     };
