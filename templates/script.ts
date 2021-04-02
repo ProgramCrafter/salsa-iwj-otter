@@ -92,6 +92,11 @@ type PieceErrorHandler = (piece: PieceId, p: PieceInfo, m: PieceOpError)
   => boolean;
 interface DispatchTable<H> { [key: string]: H };
 
+// from header
+var movehist_len_i: number;
+var movehist_len_max: number;
+var movehist_lens: number[];
+
 // todo turn all var into let
 // todo any exceptions should have otter in them or something
 var globalinfo_elem : HTMLElement;

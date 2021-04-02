@@ -10,7 +10,9 @@
 <script src="/_/wasm.js" defer></script>
 <script id="global-info" data-layout="{{ layout }}"></script>
 <script>
-  movehistlens={{ movehistlens }};
+  movehist_lens   ={{ movehist_lens    }};
+  movehist_len_i  ={{ movehist_len_i   }};
+  movehist_len_max={{ movehist_len_max }};
 </script>
 <script src="/_/script.js" defer></script>
 </head>
