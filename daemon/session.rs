@@ -24,6 +24,7 @@ struct SessionRenderContext {
   links: Html,
   player_info_pane: Html,
   fake_rng: bool,
+  movehist: GMoveHist,
 }
 
 #[derive(Debug,Serialize)]
@@ -123,6 +124,7 @@ fn session_inner(form: Json<SessionForm>,
     let layout = gpl.layout;
     let mut pieces: Vec<_> = ig.gs.pieces.iter().collect();
     let nick = gpl.nick.clone();
+    let movehist = gpl.movehist.clone();
 
     pieces.sort_by_key(|(_,pr)| &pr.zlevel);
 
@@ -227,6 +229,7 @@ fn session_inner(form: Json<SessionForm>,
       space_attrs: space_table_attrs(table_size).to_html(),
       rect_attrs: space_table_attrs(table_size).to_html(),
       nick,
+      movehist,
       sse_url_prefix,
       player_info_pane,
       ptoken: form.ptoken.clone(),
