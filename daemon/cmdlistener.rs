@@ -280,10 +280,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   use MgmtGameResponse::Fine;
 
   fn tz_from_str(s: &str) -> Timezone {
-    match Timezone::from_str(s) {
-      Ok(tz) => tz,
-      Err(x) => match x { },
-    }
+    Timezone::from_str(s).void_unwrap()
   }
 
   #[throws(MgmtError)]
