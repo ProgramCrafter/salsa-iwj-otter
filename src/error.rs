@@ -79,12 +79,18 @@ pub fn internal_error_bydebug(desc: &dyn Debug) -> IE {
   internal_logic_error(format!("{:?}", desc))
 }
 
+impl InternalLogicError {
+  pub fn new<S: Into<Cow<'static, str>>>(desc: S) -> InternalLogicError {
+    let backtrace = backtrace::Backtrace::new_unresolved();
+    InternalLogicError {
+      desc: desc.into(),
+      backtrace: parking_lot::Mutex::new(backtrace),
+    }
+  }
+}
+
 pub fn internal_logic_error<S: Into<Cow<'static, str>>>(desc: S) -> IE {
-  let backtrace = backtrace::Backtrace::new_unresolved();
-  IE::InternalLogicError(InternalLogicError {
-    desc: desc.into(),
-    backtrace: parking_lot::Mutex::new(backtrace),
-  })
+  IE::InternalLogicError(InternalLogicError::new(desc))
 }
 
 impl Debug for InternalLogicError {
@@ -96,6 +102,10 @@ impl Debug for InternalLogicError {
   }
 }
 display_as_debug!(InternalLogicError);
+
+impl InternalLogicError {
+  pub fn tolerate(self) { error!("tolerating {}", self); }
+}
 
 #[derive(Clone,Error,Debug,Serialize,Deserialize)]
 #[error("{0}")]
