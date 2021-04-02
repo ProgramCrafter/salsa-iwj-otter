@@ -649,11 +649,11 @@ fn recalculate_occultation_general<
       let occ = occultation(goccults, occid);
       if_chain!{
         if occ.notches.is_empty();
-        if let Some(ilk) = want!( Some = ipc.occilk.as_ref() );
+        if let Some(ilk) = wants!( ipc.occilk.as_ref() );
         let ilk = ilk.borrow();
-        if let Some(ilk) = want!( Some = ioccults.ilks.get(ilk) );
+        if let Some(ilk) = wants!( ioccults.ilks.get(ilk) );
         if let Some(bbox) = want!( Ok = ilk.p_occ.bbox_approx() );
-        if let Some(size) = want!( Ok = bbox.br() - bbox.tl() );
+        if let Some(size) = want!( Ok = bbox.br() - bbox.tl(), ?(bbox) );
         then { occ.ppiece_use_size = size; }
       };
       let notch = occ.notches
