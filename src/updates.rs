@@ -6,6 +6,8 @@
 
 use crate::prelude::*;
 
+#[path="movehist.rs"] pub mod movehist;
+
 #[allow(non_camel_case_types)] type TUE_P<'u> = TransmitUpdateEntry_Piece<'u>;
 #[allow(non_camel_case_types)] type PUE_I = PreparedUpdateEntry_Image;
 #[allow(non_camel_case_types)] type TUE_I<'u> = TransmitUpdateEntry_Image<'u>;
@@ -757,52 +759,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
         PreparedUpdateEntry::Error(ErrorSignaledViaUpdate::InternalError)
       });
 
-    // We're track this on behalf of the client, based on the updates
-    // we are sending.  That means we don't ahve to worry about
-    // occultation, etc. etc.
-    let movehist_update = if let PUE::Piece(PUE_P { ops,.. }) = &update {
-      let mut pu = SecondarySlotMap::new();
-      for (player, PreparedPieceUpdate { op,.. }) in ops { if_chain! {
-        if let Some(ns) = op.new_state();
-        if let Some(gpl) = wants!( self.g.gs.players.get_mut(player), ?player);
-        if let Some(mut ent) = wants!( gpl.moveheld.entry(piece),     ?piece);
-        let &PreparedPieceState { pos, angle, facehint, .. } = ns;
-        let new_posx = MoveHistPosx { pos, angle, facehint };
+    let movehist_update = movehist::peek_prep_update(&mut self.g.gs, &update);
 
-        then {
-          if let slotmap::sparse_secondary::Entry::Occupied(ref mut oe) = ent {
-            let last = oe.get();
-            if ns.held == Some(last.held) { continue }
-
-            // Generate an update
-            let histent = MoveHistEnt {
-              held: last.held,
-              posx: OldNew::from([last.posx, new_posx]),
-            };
-            gpl.movehist.reserve(MOVEHIST_LEN_MAX);
-            if gpl.movehist.len() == MOVEHIST_LEN_MAX {
-              gpl.movehist.pop_front();
-            }
-            gpl.movehist.push_back(histent.clone());
-            pu.insert(player, histent);
-          }
-
-          if let Some(held) = ns.held {
-            ent.insert(GMoveHistLast { held: held, posx: new_posx });
-          } else {
-            ent.remove();
-          }
-        }
-      } }
-
-      if pu.is_empty() {
-        None
-      } else {
-        Some(PUE::MoveHistEnt(pu))
-      }
-    } else {
-      None
-    };
     self.us.push(update);
     self.us.extend(movehist_update);
   }

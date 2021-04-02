@@ -145,6 +145,7 @@ pub use crate::sse;
 pub use crate::toml_de;
 pub use crate::tz::*;
 pub use crate::updates::*;
+pub use crate::updates::movehist::{self, GMoveHeld, GMoveHist, MoveHistEnt};
 pub use crate::utils::*;
 pub use crate::ui::*;
 
