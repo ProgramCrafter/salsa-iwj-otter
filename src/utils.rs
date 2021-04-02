@@ -480,7 +480,9 @@ macro_rules! want_let {
     let $binding = match $input {
       $($variant(y))::+ => y,
       x => {
-        want_failed_internal!{ $variant($binding)=$input, x, $($d:expr),* }
+        want_failed_internal!{
+          $($variant)::+($binding)=$input, x, $($d),*
+        }
         $($otherwise)*
       },
     };
@@ -488,7 +490,7 @@ macro_rules! want_let {
   { $($variant:ident)::+($binding:pat) = $input:expr;
     else $($otherwise:tt)*
   } => {
-    want_let!{ $($variant(y))::+ = $input; ?; $($otherwise)* }
+    want_let!{ $($variant($binding))::+ = $input; else ?; $($otherwise)* }
   };
 }
 
