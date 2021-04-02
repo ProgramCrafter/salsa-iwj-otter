@@ -68,7 +68,7 @@ pub struct Opts {
 pub struct SetupCore {
   pub ds: DirSubst,
   pub mgmt_conn: MgmtChannel,
-  pub server_child: Child,
+  server_child: Child,
   pub wanted_tests: TrackWantedTests,
 }
 
@@ -760,6 +760,34 @@ impl DirSubst {
         .context("make static user")
     )
       .collect::<Result<Vec<W>,AE>>()?
+  }
+}
+
+// -------------------- concurrency management --------------------
+
+pub struct OtterPaused(nix::unistd::Pid);
+
+impl SetupCore {
+  #[throws(AE)]
+  pub fn pause_otter(&self) -> OtterPaused {
+    let pid = nix::unistd::Pid::from_raw(
+      self.server_child.id() as nix::libc::pid_t
+    );
+    nix::sys::signal::kill(pid, nix::sys::signal::SIGSTOP)?;
+    OtterPaused(pid)
+  }
+}
+
+impl OtterPaused {
+  #[throws(AE)]
+  pub fn resume(self) {
+    nix::sys::signal::kill(self.0, nix::sys::signal::SIGCONT)?;
+  }
+}
+
+impl Drop for OtterPaused {
+  fn drop(&mut self) {
+    debug!("note, otter server pid={} was still paused", self.0);
   }
 }
 

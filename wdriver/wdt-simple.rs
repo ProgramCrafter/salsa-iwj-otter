@@ -204,8 +204,7 @@ impl Ctx {
 
     dbg!(&sides);
 
-    let pid = nix::unistd::Pid::from_raw(su.server_child.id() as nix::libc::pid_t);
-    nix::sys::signal::kill(pid, nix::sys::signal::SIGSTOP)?;
+    let paused = su.pause_otter()?;
 
     for side in &sides {
       let w = su.w(side.window)?;
@@ -223,7 +222,7 @@ impl Ctx {
         .context("conflicting drag")?;
     }
 
-    nix::sys::signal::kill(pid, nix::sys::signal::SIGCONT)?;
+    paused.resume()?;
 
     #[derive(Debug)]
     struct Got<'s> {
