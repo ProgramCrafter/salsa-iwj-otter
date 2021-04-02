@@ -87,8 +87,11 @@ impl Mean for i32 { fn mean(&self, other: &Self) -> Self {
 
 //---------- Pos ----------
 
-impl PosC<Coord> {
-  pub fn promote(&self) -> PosC<f64> { self.map(|v| v as f64) }
+pub trait PosPromote {
+  fn promote(&self) -> PosC<f64>;
+}
+impl<T> PosPromote for PosC<T> where T: Into<f64> + Copy + Debug {
+  fn promote(&self) -> PosC<f64> { self.map(|v| v.into()) }
 }
 
 #[derive(Error,Debug,Copy,Clone,Serialize,Deserialize)]

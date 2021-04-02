@@ -28,7 +28,7 @@ pub use void::Void;
 
 pub use crate::html::*;
 
-pub use crate::geometry::{CoordinateOverflow, PosC};
+pub use crate::geometry::{CoordinateOverflow, PosC, PosPromote};
 pub use crate::{hformat, hformat_as_display, hwrite};
 pub use crate::misc::default;
 pub use crate::misc::display_as_debug;
