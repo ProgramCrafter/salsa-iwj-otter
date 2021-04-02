@@ -113,6 +113,14 @@ impl<T> PosC<T> {
         b.checked_add(c2)
       })?
   }
+
+  #[throws(CoordinateOverflow)]
+  pub fn len(self) -> f64 where PosC<T>: PosPromote {
+    let d2 = self.len2()?;
+    let d = d2.sqrt();
+    if !d.is_finite() { throw!(CoordinateOverflow) }
+    d
+  }
 }
 impl<T> PosC<T> where T: Copy {
   pub fn x(self) -> T { self.coords[0] }
