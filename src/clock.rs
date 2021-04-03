@@ -659,11 +659,8 @@ impl PieceTrait for Clock {
       },
       "unclaim-x" | "unclaim-y" => {
         let user = get_user();
-        if state.users[user].player != player {
-          throw!(OE::BadPieceStateForOperation);
-        }
         state.users[user].player = default();
-        (Unpredictable, format!("released player {} at the", user))
+        (Unpredictable, format!("cleared player {} at the", user))
       },
       _ => {
         throw!(OE::BadPieceStateForOperation);
