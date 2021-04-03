@@ -80,7 +80,7 @@ fn tests(UsualSetup { su, alice, ..}: UsualSetup) {
     let game_spec = &c.su.ds.subst("@specs@/penultima.game.toml")?;
     let mut alice = c.su.w(&c.alice)?;
     alice.otter(&["reset"],&[&game_spec])?;
-    alice.synch_ignore_js_errors()?;
+    alice.synch()?;
     let url = alice.current_url()?;
     alice.get(url)?;
     alice.synch()?;
