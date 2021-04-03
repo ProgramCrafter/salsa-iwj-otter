@@ -40,6 +40,7 @@
 type PieceId = string;
 type PlayerId = string;
 type Pos = [number, number];
+type Rect = [Pos, Pos];
 type ClientSeq = number;
 type Generation = number;
 type UoKind = 'Client' | "Global"| "Piece" | "ClientExtra" | "GlobalExtra";
@@ -80,7 +81,7 @@ type PieceInfo = {
   queued_moves : number,
   last_seen_moved : DOMHighResTimeStamp | null, // non-0 means halo'd
   held_us_inoccult: boolean,
-  bbox: [Pos, Pos],
+  bbox: Rect,
 }
 
 let wasm : InitOutput;
@@ -1323,7 +1324,7 @@ type PreparedPieceState = {
   uos: UoDescription[],
   moveable: PieceMoveable,
   occregion: string | null,
-  bbox: [Pos, Pos],
+  bbox: Rect,
 }
 
 pieceops.ModifyQuiet = <PieceHandler>function
@@ -1435,7 +1436,7 @@ function redisplay_held_ancillaries() {
 type PreparedPieceImage = {
   svg: string,
   uos: UoDescription[],
-  bbox: [Pos, Pos],
+  bbox: Rect,
 }
 
 type TransmitUpdateEntry_Image = {
