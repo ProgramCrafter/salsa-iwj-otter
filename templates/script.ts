@@ -897,8 +897,7 @@ function drag_mousemove(e: MouseEvent) {
 	tp.held == us &&
 	occregions.contains_pos(x,y) != tp.held_us_inoccult
       );
-      tp.uelem.setAttributeNS(null, "x", x+"");
-      tp.uelem.setAttributeNS(null, "y", y+"");
+      piece_set_pos_core(tp, x, y);
       tp.queued_moves++;
       api_piece(api_delay, 'm', tpiece,tp, [x, y] );
       if (need_redisplay_ancillaries) redisplay_ancillaries(tpiece, tp);
@@ -1286,6 +1285,11 @@ function piece_modify(piece: PieceId, p: PieceInfo, info: PreparedPieceState,
   piece_modify_core(piece, p, info, conflict_expected);
 }
 		       
+function piece_set_pos_core(p: PieceInfo, x: number, y: number) {
+  p.uelem.setAttributeNS(null, "x", x+"");
+  p.uelem.setAttributeNS(null, "y", y+"");
+}
+
 function piece_modify_core(piece: PieceId, p: PieceInfo,
 			   info: PreparedPieceState,
 			   conflict_expected: boolean) {
@@ -1404,9 +1408,7 @@ pieceops.Move = <PieceHandler>function
 (piece,p, info: Pos ) {
   piece_checkconflict_nrda(piece,p,false);
   piece_note_moved(piece, p);
-
-  p.uelem.setAttributeNS(null, "x", info[0]+"");
-  p.uelem.setAttributeNS(null, "y", info[1]+"");
+  piece_set_pos_core(p, info[0], info[1]);
 }
 
 pieceops.SetZLevel = <PieceHandler>function
