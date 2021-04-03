@@ -154,7 +154,9 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
   let log = log_did_to_piece(ioccults, &gs.occults, gpl,agpc,aipc,
                              "organised")?;
 
-  let pieces = gs.pieces.iter().filter_map(|(piece, gpc)| if_chain!{
+  let (pieces, mut zlevels) =
+    gs.pieces.iter().filter_map(|(piece, gpc)| if_chain!
+  {
     if region.contains(gpc.pos);
     if gpc.held.is_none();
     if ! gpc.pinned;
@@ -163,14 +165,21 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
     if let Some(vis) = gpc.fully_visible_to(&gs.occults, player);
     if let Some(bbox) = want!( Ok = ipc.show(vis).bbox_approx(), ?piece );
     then {
-      Some((piece, bbox))
+      Some((
+        (piece, bbox),
+        gpc.zlevel.clone())
+      )
     }
     else {
       None
     }
-  }).collect::<IndexVec<InHand, (PieceId, Rect)>>();
+  }).unzip::<
+    _,_,
+    IndexVec<InHand, (PieceId, Rect)>,
+    IndexVec<InHand, ZLevel>,
+  >();
 
-  // xxx zcoords
+  zlevels.sort();
 
   let layout = 'laid_out: loop {
     for att in Attempt::iter() {
@@ -198,10 +207,12 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
     let updates = {
       let mut updates = Vec::with_capacity(pieces.len());
 
-      for ((piece, _bbox), pos) in izip!(pieces, layout) {
+      for ((piece, _bbox), pos, zlevel) in izip!(pieces, layout, zlevels) {
         want_let!{ Some(gpc) = gs.pieces.get_mut(piece); else continue; }
         gpc.pos = pos;
+        gpc.zlevel = zlevel;
         updates.push((piece, PUOs::Simple(PUO::Move(pos))));
+        updates.push((piece, PUOs::Simple(PUO::SetZLevel(()))));
       }
 
       updates
