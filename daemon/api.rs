@@ -60,7 +60,7 @@ mod op {
   impl<T> Complex for T where T: Core + Simple {
     #[throws(ApiPieceOpError)]
     fn op_complex(&self, a: ApiPieceOpArgs) -> UpdateFromOpComplex {
-      (self.op(a)?, vec![], None)
+      (self.op(a)?, None)
     }
   }
 }
@@ -164,13 +164,12 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
       warn!("api_piece_op ERROR {:?}: {:?}", &form, &err);
       Err(err)?;
     },
-    Ok((PieceUpdate { wrc, log, ops }, updates, unprepared)) => {
+    Ok((PieceUpdate { wrc, log, ops }, unprepared)) => {
       let mut buf = PrepareUpdatesBuffer::new(g,
                                               Some((wrc, client, form.cseq)),
                                               Some(1 + log.len()));
 
       buf.piece_update(piece, ops);
-      buf.piece_updates(updates);
       buf.log_updates(log);
       if let Some(unprepared) = unprepared { unprepared(&mut buf); }
 
@@ -537,7 +536,7 @@ api_route!{
               wrc,
               PieceUpdateOp::Modify(()),
               logents,
-            ).into(), vec![], None)
+            ).into(), None)
           },
 
           _ => break,

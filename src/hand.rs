@@ -309,6 +309,6 @@ impl PieceTrait for Hand {
     (PieceUpdate {
       wrc, log,
       ops: PUOs::Simple(PUO::Modify(())),
-    }, xupdates, None)
+    }, xupdates.into_unprepared())
   }
 }

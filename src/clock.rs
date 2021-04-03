@@ -698,7 +698,7 @@ impl PieceTrait for Clock {
           WhatResponseToClientOp::Unpredictable,
           PieceUpdateOp::Modify(()),
           log);
-        (r.into(), vec![], None)
+        (r.into(), None)
       }
       UniversalImage => {
         let r: UpdateFromOpComplex = (
@@ -707,7 +707,6 @@ impl PieceTrait for Clock {
             log,
             ops: PieceUpdateOps::PerPlayer(default()),
           },
-          vec![],
           unprepared_update(piece),
         );
         r

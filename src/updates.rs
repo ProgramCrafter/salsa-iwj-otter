@@ -167,7 +167,6 @@ pub enum PieceUpdateOp<NS,ZL> {
 
 pub type UpdateFromOpComplex = (
   PieceUpdate,
-  Vec<(PieceId, PieceUpdateOps)>,
   UnpreparedUpdates,
 );
 
@@ -963,6 +962,16 @@ impl PreparedUpdate {
       ents.push(ue);
     };
     TransmitUpdate(self.gen, ents)
+  }
+}
+
+#[ext(pub)]
+impl Vec<(PieceId, PieceUpdateOps)> {
+  fn into_unprepared(self) -> UnpreparedUpdates {
+    Some(Box::new(
+      move |buf: &mut PrepareUpdatesBuffer| {
+        buf.piece_updates(self)
+      }))
   }
 }
 
