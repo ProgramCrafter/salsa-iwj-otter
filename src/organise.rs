@@ -10,6 +10,8 @@ use crate::prelude::*;
 const MARGIN_INSIDE: Coord = 1;
 const HANG_INSIDE:   Coord = 2;
 
+const INTUIT_SORT_Y_THRESH: Coord = 2;
+
 #[throws(InternalError)]
 pub fn add_ui_operations(upd: &mut Vec<UoDescription>,
                          region: &Rect) {
@@ -82,12 +84,74 @@ impl Attempt {
 
 struct PrimaryEnt {
   piece: PieceId,
-  #[allow(dead_code)] pos: Pos,
+  pos: Pos,
   bbox: Rect,
+}
+
+type Primary = IndexVec<InHand, PrimaryEnt>;
+type ZLevels = IndexVec<InHand, ZLevel>;
+type OrderTable = IndexVec<InHand, InHand>;
+
+#[throws(PieceOpError)]
+fn recover_order(region: &Rect, pieces: &Primary, zlevels: &ZLevels)
+                -> OrderTable
+{
+  // This is tricky.  We are trying to recover "the order" so that we
+  // can "just tidy it up".  Also we want this to be stable if the
+  // algorithm is rerun, and to insert any manually added pieces in
+  // the right place.
+  //
+  // What we do is try to recover a reading order as follows.  At each
+  // stage we have a "current" position, which starts out as the left
+  // hand side ad the minimum y.
+  //
+  // Then we try to progress in reading order, defined as follows: The
+  // next piece is the one which best matches the following criteria:
+  //    * no more than THRESH below the last one, and not to the left of it
+  //    * leftmost
+  //    * northernmost
+  //    * minimum z coordinate
+
+  // This algorithm is quadratic.  320^2 = 102K
+  let len = pieces.len();
+  if len > 320 { throw!(POE::OrganisedPlacementOverfull) }
+
+  let mut remain: Vec<InHand> = (0..len).map(Into::into).collect();
+  let mut out = index_vec![];
+
+  let mut last = PosC::new(
+    region.tl().x(),
+    if let Some(min_y) = pieces.iter().map(|ent| ent.pos.y()).min() {
+      min_y
+    } else {
+      return out; // nothing!
+    }
+  );
+
+  while let Some((inremain, &ih)) =
+    remain.iter().enumerate()
+    .min_by_key(|(_inremain, &ih)| {
+      let pos = &pieces[ih].pos;
+      let zlevel = &zlevels[ih];
+      let in_rect =
+        pos.x() >= last.x() &&
+        pos.y() <= last.y() + INTUIT_SORT_Y_THRESH;
+      ( ! in_rect,
+        pos.x(),
+        pos.y(),
+        zlevel )
+    }) {
+      last = pieces[ih].pos;
+      out.push(ih);
+      remain.swap_remove(inremain);
+    }
+
+  out
 }
 
 #[throws(InternalError)]
 fn try_layout(region: &Rect,
+              order: &OrderTable,
               pieces: &IndexVec<InHand, PrimaryEnt>,
               att: Attempt)
               -> Option<IndexVec<InHand, Pos>> {
@@ -102,7 +166,8 @@ fn try_layout(region: &Rect,
   // Everything below n_y is overwriteable
   // Everything below and to the right of cur is overwriteable
 
-  for PrimaryEnt { piece, bbox, .. } in pieces {
+  for &ih in order {
+    let PrimaryEnt { piece, bbox, .. } = &pieces[ih];
     let place = 'placed: loop {
       for xi in 0..3 {
         let place = (cur - att.tl(&bbox)?)?;
@@ -185,11 +250,13 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
     IndexVec<InHand, ZLevel>,
   >();
 
+  let order = recover_order(region, &pieces, &zlevels)?;
+
   zlevels.sort();
 
   let layout = 'laid_out: loop {
     for att in Attempt::iter() {
-      if let Some(layout) = try_layout(region, &pieces, att)? {
+      if let Some(layout) = try_layout(region, &order, &pieces, att)? {
         break 'laid_out layout;
       }
     }
@@ -213,9 +280,11 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
     let updates = {
       let mut updates = Vec::with_capacity(pieces.len());
 
-      for (PrimaryEnt { piece, .. }, pos, zlevel) in
-        izip!(pieces, layout, zlevels)
+      for (ih, pos, zlevel) in
+        izip!(order, layout, zlevels)
       {
+        let PrimaryEnt { piece, .. } = pieces[ih];
+
         want_let!{ Some(gpc) = gs.pieces.get_mut(piece); else continue; }
         gpc.pos = pos;
         gpc.zlevel = zlevel;

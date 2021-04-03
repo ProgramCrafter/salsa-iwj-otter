@@ -180,6 +180,7 @@ pub enum PieceOpError {
   PosOffTable,
   PieceGone,
   Occultation,
+  OrganisedPlacementOverfull,
 }
 display_as_debug!{PieceOpError}
 
