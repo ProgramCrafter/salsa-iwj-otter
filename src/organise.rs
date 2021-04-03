@@ -84,23 +84,32 @@ fn try_layout(region: &Rect,
   let mut out = default();
   if pieces.is_empty() { return Some(out) }
 
+  trace_dbg!("attempt", region, att, pieces.len());
+
   let mut cur = region.tl();
   let mut n_y = region.tl().y();
   // Invariant:
   // Everything below n_y is overwriteable
   // Everything below and to the right of cur is overwriteable
 
-  for (_piece, bbox) in pieces {
+  for (piece, bbox) in pieces {
     let place = 'placed: loop {
-      for _ in 0..3 {
+      for xi in 0..3 {
         let place = (cur - att.tl(&bbox)?)?;
         let br_real = (place + att.br_real(&bbox)?)?;
+        let tr = |w| {
+          trace_dbg!("attempt inner",
+                     region, att, piece, bbox, xi, cur, n_y,
+                     place, br_real, w);
+        };
         if br_real.x() > region.br().x() {
+          tr("EOL");
           cur = PosC::new(
             region.tl().x(),
             n_y,
           );
         } else if br_real.y() > region.br().y() {
+          tr("NOSPC");
           if ! matches!(att, A::Hanging) { return None }
           cur = PosC::new(
             region.tl().x(),
@@ -110,6 +119,7 @@ fn try_layout(region: &Rect,
           n_y = cur.y();
           continue;
         } else {
+          tr("placed");
           break 'placed place;
         }
       }
