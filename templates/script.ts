@@ -136,6 +136,7 @@ var zoom_btn : HTMLInputElement;
 var links_elem : HTMLElement;
 var wresting: boolean;
 var occregions: wasm_bindgen.RegionList;
+let special_count: number | null;
 
 var movehist_gen: number = 0;
 const MOVEHIST_ENDS = 2.5;
@@ -398,6 +399,19 @@ function some_keydown(e: KeyboardEvent) {
     return pane_switch(pane);
   }
 
+  let special_count_key = parseInt(e.key);
+  if (isFinite(special_count_key)) {
+    if (special_count == null) special_count = 0;
+    special_count *= 10;
+    special_count += special_count_key;
+    special_count %= 100;
+    special_count_reupdate();
+  }
+  if (e.key == ' ') {
+    special_count = null;
+    special_count_reupdate();
+  }
+
   let uo = uo_map[e.key];
   if (uo === undefined || uo === null) return;
 
@@ -434,6 +448,32 @@ function pane_switch(newpane: PaneName) {
     old_e.setAttribute('style','display: none;');
   }
   new_e.removeAttribute('style');
+}
+
+function special_count_reupdate() {
+  let style_elem = document.getElementById("space-cursor-style")!;
+  let style_text;
+  if (special_count == null) {
+    style_text = '';
+  } else {
+    let path = 'stroke-linecap="square" d="M -10 -10 10 10 M 10 -10 -10 10"';
+    let svg = 
+`<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="-15 0 85 65" width="100" height="65">
+  <g transform="translate(0 50)">
+    <path stroke-width="8" stroke="#fcf" ${path}/>
+    <path stroke-width="4" stroke="purple" ${path}/>
+    <text x="0" y="0" fill="purple" stroke="#fcf" stroke-width="2"
+       font-family="sans-serif" font-size="50">${special_count}</text>
+  </g></svg>`;
+    console.log(svg);
+    let svg_data = btoa(svg);
+    style_text =
+`svg[id=space] {
+  cursor: url(data:image/svg+xml;base64,${svg_data}) 15 50, text;
+}`;
+  }
+  style_elem.innerHTML = style_text;
 }
 
 keyops_local['left' ] = function (uo: UoRecord) { rotate_targets(uo, +1); }

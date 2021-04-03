@@ -70,6 +70,8 @@ Hi {{nick | escape}}
 {% endmacro errors %}
 
 {% macro space() %}
+    <style id="space-cursor-style">
+    </style>
     <svg xmlns="http://www.w3.org/2000/svg"
          id="space" {{ space_attrs }} >
       <rect fill="{{ table_colour }}" x="0" y="0"
@@ -98,8 +100,9 @@ Hi {{nick | escape}}
     <div class="uos-mid" id="uos-mid"></div>
   </div>
   <div class="uos">
-    <div class="uokey"><strong>Mouse</strong> select/deselect/drag</div>
-    <div class="uokey"><strong>shift</strong> multiple selection</div>
+    <div class="uokey"><strong>Mouse</strong> select/deselect/drag
+                       <strong>shift</strong> multiple selection</div>
+    <div class="uokey"><strong>0-9</strong> special selection</div>
     <div class="uokey">Show
       <strong>H</strong> this help
       <strong>U</strong> players
