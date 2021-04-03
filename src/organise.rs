@@ -84,7 +84,7 @@ fn try_layout(region: &Rect,
   let mut out = default();
   if pieces.is_empty() { return Some(out) }
 
-  trace_dbg!("attempt", region, att, pieces.len());
+  trace_dbg!("attempt      ", region, att, pieces.len());
 
   let mut cur = region.tl();
   let mut n_y = region.tl().y();
