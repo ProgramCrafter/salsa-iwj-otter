@@ -82,7 +82,7 @@ impl Attempt {
 
 #[throws(InternalError)]
 fn try_layout(region: &Rect,
-              pieces: &IndexVec<InHand, (Rect, PieceId)>,
+              pieces: &IndexVec<InHand, (PieceId, Rect)>,
               att: Attempt)
               -> Option<IndexVec<InHand, Pos>> {
   let mut out = default();
@@ -96,7 +96,7 @@ fn try_layout(region: &Rect,
   // Everything below n_y is overwriteable
   // Everything below and to the right of cur is overwriteable
 
-  for (bbox, piece) in pieces {
+  for (piece, bbox) in pieces {
     let place = 'placed: loop {
       for xi in 0..3 {
         let place = (cur - att.tl(&bbox)?)?;
@@ -166,7 +166,7 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
     if let Some(bbox) = want!( Ok = ipc.show(vis).bbox_approx(), ?piece );
     then {
       Some((
-        (bbox, piece),
+        (piece, bbox),
         gpc.zlevel.clone())
       )
     }
@@ -175,7 +175,7 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
     }
   }).unzip::<
     _,_,
-    IndexVec<InHand, (Rect, PieceId)>,
+    IndexVec<InHand, (PieceId, Rect)>,
     IndexVec<InHand, ZLevel>,
   >();
 
@@ -207,7 +207,7 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
     let updates = {
       let mut updates = Vec::with_capacity(pieces.len());
 
-      for ((_bbox, piece), pos, zlevel) in izip!(pieces, layout, zlevels) {
+      for ((piece, _bbox), pos, zlevel) in izip!(pieces, layout, zlevels) {
         want_let!{ Some(gpc) = gs.pieces.get_mut(piece); else continue; }
         gpc.pos = pos;
         gpc.zlevel = zlevel;
