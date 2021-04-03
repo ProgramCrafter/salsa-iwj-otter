@@ -861,6 +861,8 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     return;
   }
 
+  special_count = null;
+  special_count_reupdate();
   drag_cancel();
 
   drag_pieces = [];
