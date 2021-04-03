@@ -851,7 +851,8 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     let clickpos = mouseevent_pos(e);
     clicked = [];
     let uelem = defs_marker;
-    for (let i=0; i<special_count; i++) {
+    while (clicked.length < special_count) {
+      let i = clicked.length;
       uelem = uelem.previousElementSibling as any;
       if (uelem == pieces_marker) {
 	add_log_message(`Not enough pieces!  Stopped after ${i}.`);
