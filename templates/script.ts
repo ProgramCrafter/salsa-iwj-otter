@@ -465,20 +465,35 @@ function special_count_reupdate() {
   if (special_count == null) {
     style_text = '';
   } else {
-    let path = 'stroke-linecap="square" d="M -10 -10 10 10 M 10 -10 -10 10"';
-    let svg = 
+    let svg;
+    let xy;
+    if (special_count != 0) {
+      let path = 'stroke-linecap="square" d="M -10 -10 10 10 M 10 -10 -10 10"';
+      xy = '15 50';
+      svg = 
 `<svg xmlns="http://www.w3.org/2000/svg"
-     viewBox="-15 0 85 65" width="100" height="65">
+     viewBox="-15 0 85 65" width="85" height="65">
   <g transform="translate(0 50)">
     <path stroke-width="8" stroke="#fcf" ${path}/>
     <path stroke-width="4" stroke="purple" ${path}/>
     <text x="0" y="0" fill="purple" stroke="#fcf" stroke-width="2"
        font-family="sans-serif" font-size="50">${special_count}</text>
   </g></svg>`;
+    } else {
+      let path = 'stroke-linecap="square" d="M -10 -10 0 0 10 -10 M 0 0 0 -20"';
+      xy = '15 30';
+      svg =
+`<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="-15 -25 30 30" width="30" height="30">
+  <g transform="translate(0 0)">
+    <path stroke-width="8" stroke="#fcf" ${path}/>
+    <path stroke-width="4" stroke="purple" ${path}/>
+  </g></svg>`;
+    }
     let svg_data = btoa(svg);
     style_text =
 `svg[id=space] {
-  cursor: url(data:image/svg+xml;base64,${svg_data}) 15 50, text;
+  cursor: url(data:image/svg+xml;base64,${svg_data}) ${xy}, text;
 }`;
   }
   style_elem.innerHTML = style_text;
