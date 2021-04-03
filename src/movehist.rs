@@ -4,7 +4,7 @@
 
 use super::*; // we are otter::updates::movehist
 
-pub const LENS: &[usize] = &[ 0, 1, 3, 10 ];
+pub const LENS: &[usize] = &[ 0, 1, 3, 10 ]; // xxx want option with no name
 pub const LEN_MAX: usize = 10;
 pub const LEN_DEF_I: usize = 1;
 pub const MIN_DIST: f64 = 7.5;
