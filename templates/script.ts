@@ -808,9 +808,24 @@ function some_mousedown(e : MouseEvent) {
 }
 
 function drag_mousedown(e : MouseEvent, shifted: boolean) {
-  var target = e.target as SVGGraphicsElement; // we check this just now!
-  var piece = target.dataset.piece!;
-  if (!piece) {
+  let clicked: PieceId[];
+  let held;
+  let pinned;
+
+  if (true) {
+    let target = e.target as SVGGraphicsElement; // we check this just now!
+    let piece: PieceId | undefined = target.dataset.piece;
+    if (piece) {
+      clicked = [piece];
+      let p = pieces[piece]!;
+      held = p.held;
+      pinned = p.pinned;
+    } else {
+      clicked = [];
+    }
+  }
+
+  if (!clicked.length) {
     if (!shifted) {
       let mr;
       while (mr = movements.pop()) {
@@ -821,17 +836,18 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     }
     return;
   }
-  let p = pieces[piece]!;
-  let held = p.held;
 
   drag_cancel();
 
   drag_pieces = [];
   if (held == us) {
     dragging = DRAGGING.MAYBE_UNGRAB;
-    drag_add_piece(piece,p); // contrive to have this one first
+    // contrive to have these first
+    for (let piece of clicked) {
+      drag_add_piece(piece,pieces[piece]!);
+    }
     for (let tpiece of Object.keys(pieces)) {
-      if (tpiece == piece) continue;
+      if (clicked.indexOf(tpiece) >= 0) continue;
       let tp = pieces[tpiece]!;
       if (tp.held != us) continue;
       drag_add_piece(tpiece,tp);
@@ -840,14 +856,17 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     if (!shifted) {
       ungrab_all();
     }
-    if (p.pinned && !wresting) {
+    if (pinned && !wresting) {
       add_log_message('That piece is pinned to the table.');
       return;
     }
     dragging = DRAGGING.MAYBE_GRAB;
-    drag_add_piece(piece,p);
-    set_grab(piece,p, us);
-    api_piece(api, wresting ? 'wrest' : 'grab', piece,p, { });
+    for (let piece of clicked) {
+      let p = pieces[piece]!;
+      drag_add_piece(piece,p);
+      set_grab(piece,p, us);
+      api_piece(api, wresting ? 'wrest' : 'grab', piece,p, { });
+    }
   } else {
     add_log_message('That piece is held by another player.');
     return;
