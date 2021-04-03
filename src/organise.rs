@@ -37,6 +37,7 @@ enum Attempt {
   Nonoverlap,
   Inside,
   Abut,
+  AbutCompr,
   Hanging,
 }
 use Attempt as A;
@@ -48,7 +49,8 @@ impl Attempt {
     match self {
       A::Nonoverlap |
       A::Inside     => (cnr - PosC::both(MARGIN_INSIDE))?,
-      A::Abut       =>  cnr,
+      A::Abut       |
+      A::AbutCompr  =>  cnr,
       A::Hanging    =>  PosC::both(-HANG_INSIDE),
     }
   }
@@ -59,7 +61,8 @@ impl Attempt {
     match self {
       A::Nonoverlap |
       A::Inside     => (cnr + PosC::both(MARGIN_INSIDE))?,
-      A::Abut       =>  cnr,
+      A::Abut       |
+      A::AbutCompr  =>  cnr,
       A::Hanging    =>  PosC::both(HANG_INSIDE),
     }
   }
@@ -70,8 +73,9 @@ impl Attempt {
     match self {
       A::Nonoverlap => (cnr + PosC::both(MARGIN_INSIDE))?,
       A::Inside     |
-      A::Abut       => (bbox.tl() - bbox.tl().map(|v| v/3))?,
-      A::Hanging    => PosC::both(HANG_INSIDE),
+      A::Abut       => (bbox.tl() - bbox.tl().map(|v| v/ 2 ))?,
+      A::AbutCompr  => (bbox.tl() - bbox.tl().map(|v| v/ 3 ))?,
+      A::Hanging    =>  PosC::both(HANG_INSIDE),
     }
   }
 }     
