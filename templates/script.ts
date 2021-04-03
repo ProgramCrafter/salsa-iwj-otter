@@ -341,6 +341,15 @@ function recompute_keybindings() {
     desc: wresting ? 'Exit wresting mode' : 'Enter wresting mode',
     wrc: 'Predictable',
   });
+  if (special_count != null) {
+    add_uo(null, {
+      def_key: 'SPC', // won't match key event; we handle this ad-hoc
+      kind: 'ClientExtra',
+      opname: 'cancel-special',
+      desc: 'cancel special count',
+      wrc: 'Predictable',
+    });
+  }
   add_uo(null, {
     def_key: 'h',
     kind: 'ClientExtra',
@@ -474,6 +483,7 @@ function special_count_reupdate() {
 }`;
   }
   style_elem.innerHTML = style_text;
+  recompute_keybindings();
 }
 
 keyops_local['left' ] = function (uo: UoRecord) { rotate_targets(uo, +1); }
