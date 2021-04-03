@@ -387,6 +387,11 @@ function some_keydown(e: KeyboardEvent) {
   // my tsc says this isComposing thing doesn't exist.  wat.
   if ((e as any).isComposing /* || e.keyCode === 229 */) return;
   if (e.ctrlKey || e.altKey || e.metaKey) return;
+  if (e.target) {
+    // someone else is dealing with it ?
+    let tag = (e.target as HTMLElement).tagName;
+    if (tag == 'INPUT') return;
+  }
 
   let pane = pane_keys[e.key];
   if (pane) {
