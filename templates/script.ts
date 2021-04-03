@@ -1034,7 +1034,7 @@ function movehist_record(ent: MoveHistEnt) {
     let sz = 4;
     let pi = players[ent.held];
     let nick = pi ? pi.nick : '';
-    // xxx place text variously along arrow, rotated
+    // todo: would be nice to place text variously along arrow, rotated
     let svg = `
       <marker id="${meid}" viewBox="2 0 ${sz} ${sz}" 
 	refX="${sz + MOVEHIST_ENDS}" refY="${sz/2}"
