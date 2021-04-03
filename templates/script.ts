@@ -342,11 +342,18 @@ function recompute_keybindings() {
     wrc: 'Predictable',
   });
   if (special_count != null) {
+    let desc;
+    if (special_count == 0) {
+      desc = 'select bottommost';
+    } else {
+      desc = `select ${special_count}`;
+    }
+    desc = `cancel <strong style="color:purple">${desc}</strong>`;
     add_uo(null, {
       def_key: 'SPC', // won't match key event; we handle this ad-hoc
       kind: 'ClientExtra',
       opname: 'cancel-special',
-      desc: 'cancel special count',
+      desc: desc,
       wrc: 'Predictable',
     });
   }
