@@ -735,6 +735,11 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   var piece = target.dataset.piece!;
   if (!piece) {
     if (!shifted) {
+      let mr;
+      while (mr = movements.pop()) {
+	mr.p.last_seen_moved = null;
+	redisplay_ancillaries(mr.piece, mr.p);
+      }
       ungrab_all();
     }
     return;
