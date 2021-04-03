@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
+// xxx  layout in actual mao resorts to Hanging (in eg mao.game.toml)
+// xxx  mao needs updating so Hang is non-awful
+
 use crate::prelude::*;
 
 const MARGIN_INSIDE: Coord = 1;
