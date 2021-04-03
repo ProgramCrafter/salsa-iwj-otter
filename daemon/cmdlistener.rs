@@ -759,6 +759,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           tr.retain(|_k, v| v.latest >= latest);
         }
       }
+      // xxx clear the movehist
       (U{ pcs: vec![ ],
           log: vec![ LogEntry {
             html: hformat!("{} cleared the log", who),
