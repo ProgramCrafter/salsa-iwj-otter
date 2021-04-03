@@ -288,8 +288,8 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
         want_let!{ Some(gpc) = gs.pieces.get_mut(piece); else continue; }
         gpc.pos = pos;
         gpc.zlevel = zlevel;
-        updates.push((piece, PUOs::Simple(PUO::Move(pos))));
-        updates.push((piece, PUOs::Simple(PUO::SetZLevel(()))));
+        updates.push((piece, PUOs::Simple(PUO::MoveQuiet(pos))));
+        updates.push((piece, PUOs::Simple(PUO::SetZLevelQuiet(()))));
       }
 
       updates

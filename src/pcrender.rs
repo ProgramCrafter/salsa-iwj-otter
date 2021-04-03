@@ -90,7 +90,7 @@ impl PieceRenderInstructions {
     use PriOG::*;
     if matches_doesnot!(
       op,
-      = Move(_) | SetZLevel(_),
+      = Move(_) | MoveQuiet(_) | SetZLevel(_) | SetZLevelQuiet(_),
       ! Delete() | Insert(_) | Modify(_) | ModifyQuiet(_),
     ) {
       match self.occulted {

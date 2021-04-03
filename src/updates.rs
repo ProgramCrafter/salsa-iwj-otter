@@ -163,7 +163,9 @@ pub enum PieceUpdateOp<NS,ZL> {
   Modify(NS),
   ModifyQuiet(NS),
   Move(Pos),
+  MoveQuiet(Pos),
   SetZLevel(ZL),
+  SetZLevelQuiet(ZL),
 }
 
 pub type UpdateFromOpComplex = (
@@ -475,7 +477,9 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
       Modify(ns) => Some(ns),
       ModifyQuiet(ns) => Some(ns),
       Move(_) => None,
+      MoveQuiet(_) => None,
       SetZLevel(_) => None,
+      SetZLevelQuiet(_) => None,
     }
   }
   pub fn try_map<NS2, ZC2, E:Error,
@@ -490,7 +494,9 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
       Modify(ns) => Modify(f(ns)?),
       ModifyQuiet(ns) => ModifyQuiet(f(ns)?),
       Move(pos) => Move(pos),
+      MoveQuiet(pos) => MoveQuiet(pos),
       SetZLevel(zl) => SetZLevel(g(zl)?),
+      SetZLevelQuiet(zl) => SetZLevelQuiet(g(zl)?),
     })
   }
   pub fn map_ref(&self) -> PieceUpdateOp<&NS,&ZC> {
@@ -501,7 +507,9 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
       Modify(ns) => Modify(ns),
       ModifyQuiet(ns) => ModifyQuiet(ns),
       Move(pos) => Move(*pos),
+      MoveQuiet(pos) => MoveQuiet(*pos),
       SetZLevel(zl) => SetZLevel(zl),
+      SetZLevelQuiet(zl) => SetZLevelQuiet(zl),
     }
   }
   pub fn map<NS2,ZC2,
@@ -524,7 +532,9 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
       Modify(_) => None,
       ModifyQuiet(_) => None,
       Move(_) => None,
+      MoveQuiet(_) => None,
       SetZLevel(l) => Some(l.borrow().zg),
+      SetZLevelQuiet(l) => Some(l.borrow().zg),
     }
   }
 }

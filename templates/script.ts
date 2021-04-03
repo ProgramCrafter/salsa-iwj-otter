@@ -1408,9 +1408,20 @@ pieceops.Move = <PieceHandler>function
   piece_set_pos_core(p, info[0], info[1]);
 }
 
+pieceops.MoveQuiet = <PieceHandler>function
+(piece,p, info: Pos ) {
+  piece_checkconflict_nrda(piece,p,false);
+  piece_set_pos_core(p, info[0], info[1]);
+}
+
 pieceops.SetZLevel = <PieceHandler>function
 (piece,p, info: { z: ZCoord, zg: Generation }) {
   piece_note_moved(piece,p);
+  piece_set_zlevel_from(piece,p,info);
+}
+
+pieceops.SetZLevelQuiet = <PieceHandler>function
+(piece,p, info: { z: ZCoord, zg: Generation }) {
   piece_set_zlevel_from(piece,p,info);
 }
 
