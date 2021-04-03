@@ -883,6 +883,15 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   window.addEventListener('mouseup',   drag_mouseup,   true);
 }
 
+function mouseevent_pos(e: MouseEvent): Pos {
+  let ctm = space.getScreenCTM()!;
+  let px = (e.clientX - ctm.e)/(ctm.a * firefox_bug_zoom_factor_compensation);
+  let py = (e.clientY - ctm.f)/(ctm.d * firefox_bug_zoom_factor_compensation);
+  let pos: Pos = [px, py];
+  console.log('mouseevent_pos', pos);
+  return pos;
+}
+
 function ungrab_all() {
   for (let tpiece of Object.keys(pieces)) {
     let tp = pieces[tpiece]!;
