@@ -1299,10 +1299,7 @@ function piece_modify_core(piece: PieceId, p: PieceInfo,
   p.pinned = info.pinned;
   p.moveable = info.moveable;
   p.angle = info.angle;
-  piece_set_zlevel(piece,p, (oldtop_piece)=>{
-    p.z  = info.z;
-    p.zg = info.zg;
-  });
+  piece_set_zlevel_from(piece,p,info);
   let occregions_changed = occregion_update(piece, p, info);
   piece_checkconflict_nrda(piece,p,conflict_expected);
   redisplay_ancillaries(piece,p);
@@ -1414,8 +1411,12 @@ pieceops.Move = <PieceHandler>function
 pieceops.SetZLevel = <PieceHandler>function
 (piece,p, info: { z: ZCoord, zg: Generation }) {
   piece_note_moved(piece,p);
+  piece_set_zlevel_from(piece,p,info);
+}
+
+function piece_set_zlevel_from(piece: PieceId, p: PieceInfo,
+			       info: { z: ZCoord, zg: Generation }) {
   piece_set_zlevel(piece,p, (oldtop_piece)=>{
-    let oldtop_p = pieces[oldtop_piece]!;
     p.z  = info.z;
     p.zg = info.zg;
   });
