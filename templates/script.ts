@@ -142,6 +142,8 @@ let special_count: number | null;
 
 var movehist_gen: number = 0;
 const MOVEHIST_ENDS = 2.5;
+const SPECIAL_MULTI_DELTA_EACH = 3;
+const SPECIAL_MULTI_DELTA_MAX = 18;
 
 type PaneName = string;
 const pane_keys : { [key: string]: PaneName } = {
@@ -786,11 +788,11 @@ function piece_xy(p: PieceInfo): Pos {
 	   parseFloat(p.uelem.getAttributeNS(null,"y")!) ];
 }
 
-function drag_add_piece(piece: PieceId, p: PieceInfo) {
+function drag_add_piece(piece: PieceId, p: PieceInfo, delta: number) {
   let [dox, doy] = piece_xy(p);
   drag_pieces.push({
     piece: piece,
-    dox: dox,
+    dox: dox + delta,
     doy: doy,
   });
 }
@@ -894,13 +896,13 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     dragging = DRAGGING.MAYBE_UNGRAB;
     // contrive to have these first
     for (let piece of clicked) {
-      drag_add_piece(piece,pieces[piece]!);
+      drag_add_piece(piece,pieces[piece]!, 0);
     }
     for (let tpiece of Object.keys(pieces)) {
       if (clicked.indexOf(tpiece) >= 0) continue;
       let tp = pieces[tpiece]!;
       if (tp.held != us) continue;
-      drag_add_piece(tpiece,tp);
+      drag_add_piece(tpiece,tp, 0);
     }
   } else if (held == null || wresting) {
     if (!shifted) {
@@ -911,9 +913,13 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       return;
     }
     dragging = DRAGGING.MAYBE_GRAB;
-    for (let piece of clicked) {
+    for (let i=0; i<clicked.length; i++) {
+      let piece = clicked[i];
       let p = pieces[piece]!;
-      drag_add_piece(piece,p);
+      let delta = (-(clicked.length-1)/2 + i) * SPECIAL_MULTI_DELTA_EACH;
+      delta = Math.min(Math.max(delta, -SPECIAL_MULTI_DELTA_MAX),
+		                       +SPECIAL_MULTI_DELTA_MAX);
+      drag_add_piece(piece,p, delta);
       set_grab(piece,p, us);
       api_piece(api, wresting ? 'wrest' : 'grab', piece,p, { });
     }
