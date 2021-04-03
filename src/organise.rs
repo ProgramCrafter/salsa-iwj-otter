@@ -3,6 +3,7 @@
 // There is NO WARRANTY.
 
 // xxx  mao needs updating so Hang is non-awful
+// xxx  need way to select hand when it is totally covered
 
 use crate::prelude::*;
 
