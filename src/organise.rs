@@ -82,6 +82,7 @@ impl Attempt {
 
 struct PrimaryEnt {
   piece: PieceId,
+  #[allow(dead_code)] pos: Pos,
   bbox: Rect,
 }
 
@@ -101,7 +102,7 @@ fn try_layout(region: &Rect,
   // Everything below n_y is overwriteable
   // Everything below and to the right of cur is overwriteable
 
-  for PrimaryEnt { piece, bbox } in pieces {
+  for PrimaryEnt { piece, bbox, .. } in pieces {
     let place = 'placed: loop {
       for xi in 0..3 {
         let place = (cur - att.tl(&bbox)?)?;
@@ -171,7 +172,7 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
     if let Some(bbox) = want!( Ok = ipc.show(vis).bbox_approx(), ?piece );
     then {
       Some((
-        PrimaryEnt { piece, bbox },
+        PrimaryEnt { piece, bbox, pos: gpc.pos },
         gpc.zlevel.clone())
       )
     }
