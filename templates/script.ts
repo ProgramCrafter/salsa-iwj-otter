@@ -845,8 +845,28 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       }
     }
   } else {
-    mouseevent_pos(e);
-    return;
+    // special_count > 0
+    clicked = [];
+    let uelem = defs_marker;
+    for (let i=0; i<special_count; i++) {
+      uelem = uelem.previousElementSibling as any;
+      if (uelem == pieces_marker) {
+	add_log_message(`Not enough pieces!  Stopped after ${i}.`);
+	return;
+      }
+      let piece = uelem.dataset.piece!;
+      let p = pieces[piece];
+      if (i > 0) {
+	if (p.pinned != pinned ||
+	    p.held   != held) {
+	  add_log_message(`Mixed pinned/held states!  Stopped after ${i}`);
+	  return;
+	}
+      }
+      clicked.push(piece);
+      pinned = p.pinned;
+      held   = p.held;
+    }
   }
 
   if (!clicked.length) {
