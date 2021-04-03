@@ -502,7 +502,7 @@ function special_count_reupdate() {
     let svg_data = btoa(svg);
     style_text =
 `svg[id=space] {
-  cursor: url(data:image/svg+xml;base64,${svg_data}) ${xy}, text;
+  cursor: url(data:image/svg+xml;base64,${svg_data}) ${xy}, auto;
 }`;
   }
   style_elem.innerHTML = style_text;
