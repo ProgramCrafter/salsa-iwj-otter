@@ -1108,11 +1108,12 @@ function drag_mouseup(e: MouseEvent) {
 function drag_end() {
   if (dragging == DRAGGING.MAYBE_UNGRAB ||
       (dragging & ~DRAGGING.RAISED) == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
-    let dp = drag_pieces[0]!;
-    let piece = dp.piece;
-    let p = pieces[piece]!;
-    set_ungrab(piece,p);
-    api_piece(api, 'ungrab', piece,p, { });
+    for (let dp of drag_pieces) {
+      let piece = dp.piece;
+      let p = pieces[piece]!;
+      set_ungrab(piece,p);
+      api_piece(api, 'ungrab', piece,p, { });
+    }
   }
   drag_cancel();
 }
