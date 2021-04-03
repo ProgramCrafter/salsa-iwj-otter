@@ -806,7 +806,7 @@ impl OutlineTrait for CircleShape {
   }
   #[throws(IE)]
   fn bbox_approx(&self) -> Rect {
-    let d = (self.diam * 0.5).ceil() as Coord;
+    let d = (self.diam * 0.5).round() as Coord;
     Rect{ corners: [PosC::new(-d,-d), PosC::new(d, d)]}
   }
 }
@@ -876,7 +876,7 @@ impl OutlineTrait for RectShape {
   #[throws(IE)]
   fn bbox_approx(&self) -> Rect {
     let pos: Pos = self.xy.map(
-      |v| ((v * 0.5).ceil()) as Coord
+      |v| ((v * 0.5).round()) as Coord
     );
     let neg = (-pos)?;
     Rect{ corners: [ neg, pos ] }
