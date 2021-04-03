@@ -812,14 +812,18 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   let held;
   let pinned;
 
+  function clicked_one(piece: PieceId) {
+    let p = pieces[piece]!;
+    held = p.held;
+    pinned = p.pinned;
+    return [piece];
+  }
+
   if (true) {
     let target = e.target as SVGGraphicsElement; // we check this just now!
     let piece: PieceId | undefined = target.dataset.piece;
     if (piece) {
-      clicked = [piece];
-      let p = pieces[piece]!;
-      held = p.held;
-      pinned = p.pinned;
+      clicked = clicked_one(piece);
     } else {
       clicked = [];
     }
