@@ -531,7 +531,6 @@ fn setup_table(_ma: &MainOpts, spec: &TableSpec) -> Vec<MGI> {
   let acl = acl.try_into()?;
 
   let mut insns = vec![];
-  insns.push(MGI::ClearLog);
   insns.push(MGI::SetACL { acl });
   insns.push(MGI::SetLinks(links.clone()));
   insns
@@ -700,6 +699,7 @@ mod reset_game {
       insns.push(MGI::DefinePieceAlias{ alias, target });
     }
 
+    insns.push(MGI::ClearLog);
     insns.push(MGI::SetTableSize(table_size));
     insns.push(MGI::SetTableColour(table_colour));
 

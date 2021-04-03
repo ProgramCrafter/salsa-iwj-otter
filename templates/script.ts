@@ -1009,6 +1009,9 @@ type MoveHistPosx = {
 }
 
 messages.MoveHistEnt = <MessageHandler>movehist_record;
+messages.MoveHistClear = <MessageHandler>function() {
+  movehist_revisible_custmax(0);
+}
 
 function movehist_record(ent: MoveHistEnt) {
   let old_pos = ent.posx[0].pos;
@@ -1054,11 +1057,15 @@ function movehist_record(ent: MoveHistEnt) {
   }
 }
 
-function movehist_revisible() {
+function movehist_revisible() { 
+  movehist_revisible_custmax(movehist_len_max);
+}
+
+function movehist_revisible_custmax(len_max: number) {
   let n = movehist_lens[movehist_len_i];
   let i = 0;
   let node = movehist_end;
-  while (i < movehist_len_max) {
+  while (i < len_max) {
     i++; // i now eg 1..10
     node = node.previousElementSibling! as SVGGraphicsElement;
     if (node == movehist_start)

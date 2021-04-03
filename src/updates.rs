@@ -57,6 +57,7 @@ pub enum PreparedUpdateEntry {
   Piece(PreparedUpdateEntry_Piece),
   Image(PreparedUpdateEntry_Image),
   MoveHistEnt(SecondarySlotMap<PlayerId, movehist::Ent>),
+  MoveHistClear,
   SetTableSize(Pos),
   SetTableColour(Colour),
   SetLinks(Arc<LinksTable>),
@@ -223,6 +224,7 @@ enum TransmitUpdateEntry<'u> {
   Piece(TransmitUpdateEntry_Piece<'u>),
   Image(TransmitUpdateEntry_Image<'u>),
   MoveHistEnt(&'u movehist::Ent),
+  MoveHistClear{},
   RecordedUnpredictable {
     piece: VisiblePieceId,
     cseq: ClientSequence,
@@ -414,6 +416,7 @@ impl PreparedUpdateEntry {
       Log(logent) => {
         logent.logent.html.json_len() * 28
       }
+      MoveHistClear => 50,
       AddPlayer {
         player:_,
         data: DataLoadPlayer { dasharray, nick, },
@@ -912,6 +915,9 @@ impl PreparedUpdate {
             Some(mhe) => TUE::MoveHistEnt(mhe),
             _ => continue,
           }
+        }
+        PUE::MoveHistClear => {
+          TUE::MoveHistClear{}
         }
         PUE::Log(logent) => {
           TUE::Log((&tz, &logent))

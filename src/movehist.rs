@@ -83,6 +83,10 @@ impl Posx {
   }
 }
 
+impl PlHist {
+  pub fn clear(&mut self) { self.hist.clear() }
+}
+
 // We're track this on behalf of the client, based on the updates
 // we are sending.  That means we don't ahve to worry about
 // occultation, etc. etc.

@@ -748,6 +748,9 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
     MGI::ClearLog => {
       let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Super])?;
+      for gpl in ig.gs.players.values_mut() {
+        gpl.movehist.clear();
+      }
       ig.gs.log.clear();
       for ipr in ig.iplayers.values_mut() {
         // todo: do this only if there are no hidden pieces?
@@ -759,12 +762,12 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           tr.retain(|_k, v| v.latest >= latest);
         }
       }
-      // xxx clear the movehist
+      let raw = Some(vec![ PUE::MoveHistClear ]);
       (U{ pcs: vec![ ],
           log: vec![ LogEntry {
-            html: hformat!("{} cleared the log", who),
+            html: hformat!("{} cleared the log history", who),
           } ],
-          raw: None },
+          raw },
        Fine, None, ig)
     },
 
