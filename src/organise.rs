@@ -170,6 +170,8 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
     }
   }).collect::<IndexVec<InHand, (PieceId, Rect)>>();
 
+  // xxx zcoords
+
   let layout = 'laid_out: loop {
     for att in Attempt::iter() {
       if let Some(layout) = try_layout(region, &pieces, att)? {
