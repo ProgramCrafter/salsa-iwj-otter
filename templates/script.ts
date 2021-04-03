@@ -475,7 +475,6 @@ function special_count_reupdate() {
     <text x="0" y="0" fill="purple" stroke="#fcf" stroke-width="2"
        font-family="sans-serif" font-size="50">${special_count}</text>
   </g></svg>`;
-    console.log(svg);
     let svg_data = btoa(svg);
     style_text =
 `svg[id=space] {
