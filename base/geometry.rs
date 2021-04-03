@@ -287,6 +287,13 @@ impl<T> RectC<T> where T: Mean + Debug + Copy {
   }
 }
 
+impl<T> RectC<T> where T: CheckedArith + Debug + Copy {
+  #[throws(CoordinateOverflow)]
+  pub fn size(&self) -> PosC<T> {
+    (self.br() - self.tl())?
+  }
+}
+
 #[test]
 fn empty_area() {
   let empty = Rect::empty();
