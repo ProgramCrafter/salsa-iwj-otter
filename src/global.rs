@@ -726,9 +726,9 @@ impl<'ig> InstanceGuard<'ig> {
       }
 
       let estimate = updated_pieces.len() + 1;
-      let mut buf = PrepareUpdatesBuffer::new(self, None , Some(estimate));
+      let mut buf = PrepareUpdatesBuffer::new(self, Some(estimate));
       for &piece in &updated_pieces {
-        buf.piece_update(piece, PieceUpdateOp::Modify(()).into());
+        buf.piece_update(piece, &None, PieceUpdateOp::Modify(()).into());
       }
       buf.finish();
 

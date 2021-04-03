@@ -416,7 +416,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
     MGI::Synch => {
       let (mut ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Play])?;
-      let mut buf = PrepareUpdatesBuffer::new(&mut ig, None, None);
+      let mut buf = PrepareUpdatesBuffer::new(&mut ig, None);
       let gen = buf.gen();
       drop(buf); // does updatenocc
       (U{ pcs: vec![], // we handled the update ourselves,
@@ -667,7 +667,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
        if xupdates.len() != 0 {
          Some(
            Box::new(move |prepub: &mut PrepareUpdatesBuffer|
-                    prepub.piece_updates(xupdates))
+                    prepub.piece_updates_nc(xupdates))
              as SomeUnpreparedUpdates
          )
        } else { None },
@@ -920,7 +920,7 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
       responses.push(resp);
       if let Some(unprepared) = unprepared {
         st.flush(ig,how,&who)?;
-        let mut prepub = PrepareUpdatesBuffer::new(ig, None, None);
+        let mut prepub = PrepareUpdatesBuffer::new(ig, None);
         unprepared(&mut prepub);
         prepub.finish();
       }
@@ -953,7 +953,7 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
 
   if let Some(uu) = uu {
     let mut ig = igu.by_mut(Authorisation::authorise_any());
-    let mut prepub = PrepareUpdatesBuffer::new(&mut ig, None, None);
+    let mut prepub = PrepareUpdatesBuffer::new(&mut ig, None);
     uu(&mut prepub);
     prepub.finish();
   }
@@ -1011,9 +1011,9 @@ impl UpdateHandler {
       }
       Online => {
         let estimate = updates.pcs.len() + updates.log.len();
-        let mut buf = PrepareUpdatesBuffer::new(g, None, Some(estimate));
+        let mut buf = PrepareUpdatesBuffer::new(g, Some(estimate));
         for (upiece, uuop) in updates.pcs {
-          buf.piece_update(upiece, PUOs::Simple(uuop));
+          buf.piece_update(upiece, &None, PUOs::Simple(uuop));
         }
         buf.log_updates(updates.log);
         buf.raw_updates(raw);
@@ -1026,9 +1026,9 @@ impl UpdateHandler {
     use UpdateHandler::*;
     match self {
       Bulk(bulk) => {
-        let mut buf = PrepareUpdatesBuffer::new(g, None, None);
+        let mut buf = PrepareUpdatesBuffer::new(g, None);
         for (upiece, uuop) in bulk.pieces {
-          buf.piece_update(upiece, PUOs::Simple(uuop));
+          buf.piece_update(upiece, &None, PUOs::Simple(uuop));
         }
 
         if bulk.logs {

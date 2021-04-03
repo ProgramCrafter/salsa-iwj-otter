@@ -165,11 +165,11 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
       Err(err)?;
     },
     Ok((PieceUpdate { wrc, log, ops }, unprepared)) => {
+      let by_client = Some((wrc, client, form.cseq));
       let mut buf = PrepareUpdatesBuffer::new(g,
-                                              Some((wrc, client, form.cseq)),
                                               Some(1 + log.len()));
 
-      buf.piece_update(piece, ops);
+      buf.piece_update(piece, &by_client, ops);
       buf.log_updates(log);
       if let Some(unprepared) = unprepared { unprepared(&mut buf); }
 
@@ -192,7 +192,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
     then { unprepared }
     else { None }
   } {
-    let mut prepub = PrepareUpdatesBuffer::new(&mut ig, None, None);
+    let mut prepub = PrepareUpdatesBuffer::new(&mut ig, None);
     unprepared(&mut prepub);
     prepub.finish();
   }
@@ -210,7 +210,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
   });
 
   if let Some(unprepared) = unprepared_outer {
-    let mut prepub = PrepareUpdatesBuffer::new(&mut ig, None, None);
+    let mut prepub = PrepareUpdatesBuffer::new(&mut ig, None);
     unprepared(&mut prepub);
     prepub.finish();
   }

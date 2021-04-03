@@ -529,7 +529,6 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
 pub struct PrepareUpdatesBuffer<'r> {
   g: &'r mut Instance,
   us: Vec<PreparedUpdateEntry>,
-  by_client: IsResponseToClientOp,
   gen: Option<Generation>,
 }
 
@@ -554,15 +553,13 @@ pub enum WhatResponseToClientOp {
 }
 
 impl<'r> PrepareUpdatesBuffer<'r> {
-  pub fn new(g: &'r mut Instance,
-             by_client: IsResponseToClientOp,
-             estimate: Option<usize>) -> Self
+  pub fn new(g: &'r mut Instance, estimate: Option<usize>) -> Self
   {
     let us = estimate.map_or(vec![], Vec::with_capacity);
 
     PrepareUpdatesBuffer {
       gen: None,
-      by_client, us, g,
+      us, g,
     }
   }
 
@@ -571,8 +568,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
                            piece: PieceId,
                            estimate: Option<usize>)
   {
-    let mut updates = PrepareUpdatesBuffer::new(g, None, estimate);
-    updates.piece_update_image(piece)?;
+    let mut updates = PrepareUpdatesBuffer::new(g, estimate);
+    updates.piece_update_image(piece, &None)?;
     updates.finish();
   }
 
@@ -591,10 +588,10 @@ impl<'r> PrepareUpdatesBuffer<'r> {
                             client: ClientId, cseq: ClientSequence)
                             -> Result<(),OE> {
     let by_client = (WRC::Unpredictable, client, cseq);
-    let mut buf = PrepareUpdatesBuffer::new(ig, Some(by_client), None);
+    let mut buf = PrepareUpdatesBuffer::new(ig, None);
     let ops = PUOs::Simple(PieceUpdateOp::Modify(()));
     let state = buf.piece_update_fallible(
-      piece, ops, |pc, gen, _by_client| {
+      piece, &Some(by_client), ops, |pc, gen, _by_client| {
         match partially {
           POEPP::Unprocessed => { }
           POEPP::Partially => { pc.gen = gen; pc.lastclient = default(); }
@@ -631,7 +628,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
   #[throws(InternalError)]
   fn piece_update_fallible_players<U,GUF,WMZ,MUF,MPF>
-    (&mut self, piece: PieceId, gen_update: GUF,
+    (&mut self, piece: PieceId, by_client: &IsResponseToClientOp,
+     gen_update: GUF,
      mut with_max_z: WMZ,
      mut mk_update: MUF,
      mut missing: MPF,
@@ -653,7 +651,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     let ipc = self.g.ipieces.get(piece);
 
     if let Some(ref mut gpc) = gpc {
-      gen_update(gpc, gen, &self.by_client);
+      gen_update(gpc, gen, by_client);
     }
     let gpc = gs.pieces.byid(piece).ok();
 
@@ -687,6 +685,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
 
   #[throws(InternalError)]
   fn piece_update_fallible<GUF>(&mut self, piece: PieceId,
+                                by_client: &IsResponseToClientOp,
                                 ops: PieceUpdateOps,
                                 gen_update: GUF)
                                 -> PreparedUpdateEntry_Piece
@@ -695,7 +694,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     let ops = self.piece_update_fallible_players
       ::<PreparedPieceUpdate,_,_,_,_>
     (
-      piece, gen_update,
+      piece,by_client, gen_update,
 
       |max_z, gpc| max_z.update_max(&gpc.zlevel.z),
 
@@ -723,17 +722,19 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     )?;
 
     PreparedUpdateEntry_Piece {
-      by_client: self.by_client,
+      by_client: by_client.clone(),
       ops
     }
   }
 
-  pub fn piece_update(&mut self, piece: PieceId, ops: PieceUpdateOps) {
+  pub fn piece_update(&mut self, piece: PieceId,
+                      by_client: &IsResponseToClientOp,
+                      ops: PieceUpdateOps) {
     // Caller needs us to be infallible since it is too late by
     // this point to back out a game state change.
 
     let update = self.piece_update_fallible(
-      piece, ops,
+      piece,by_client, ops,
       |pc, gen, by_client|
     {
       match *by_client {
@@ -765,11 +766,12 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   }
 
   #[throws(InternalError)]
-  pub fn piece_update_image(&mut self, piece: PieceId) {
+  pub fn piece_update_image(&mut self, piece: PieceId,
+                            by_client: &IsResponseToClientOp) {
     // Use this only for updates which do not change the set of valid UOs
     // or other operations or move the piece etc.
     let ims = self.piece_update_fallible_players(
-      piece, |_,_,_|(), |_,_|(),
+      piece,by_client, |_,_,_|(), |_,_|(),
 
       |ioccults,gs,gpc,ipc,_player,pri| {
         let im = pri.as_ref().map(|pri| {
@@ -784,9 +786,9 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     self.us.push(PUE::Image(PreparedUpdateEntry_Image { ims }))
   }
 
-  pub fn piece_updates(&mut self, updates: Vec<(PieceId, PieceUpdateOps)>) {
+  pub fn piece_updates_nc(&mut self, updates: Vec<(PieceId, PieceUpdateOps)>) {
     for (piece, ops) in updates {
-      self.piece_update(piece, ops);
+      self.piece_update(piece,&None, ops);
     }
   }
 
@@ -967,10 +969,10 @@ impl PreparedUpdate {
 
 #[ext(pub)]
 impl Vec<(PieceId, PieceUpdateOps)> {
-  fn into_unprepared(self) -> UnpreparedUpdates {
+  fn into_unprepared_nc(self) -> UnpreparedUpdates {
     Some(Box::new(
       move |buf: &mut PrepareUpdatesBuffer| {
-        buf.piece_updates(self)
+        buf.piece_updates_nc(self)
       }))
   }
 }
