@@ -82,6 +82,7 @@ type PieceInfo = {
   last_seen_moved : DOMHighResTimeStamp | null, // non-0 means halo'd
   held_us_inoccult: boolean,
   bbox: Rect,
+  drag_delta: number,
 }
 
 let wasm : InitOutput;
@@ -788,11 +789,11 @@ function piece_xy(p: PieceInfo): Pos {
 	   parseFloat(p.uelem.getAttributeNS(null,"y")!) ];
 }
 
-function drag_add_piece(piece: PieceId, p: PieceInfo, delta: number) {
+function drag_add_piece(piece: PieceId, p: PieceInfo) {
   let [dox, doy] = piece_xy(p);
   drag_pieces.push({
     piece: piece,
-    dox: dox + delta,
+    dox: dox + p.drag_delta,
     doy: doy,
   });
 }
@@ -897,13 +898,13 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     dragging = DRAGGING.MAYBE_UNGRAB;
     // contrive to have these first
     for (let piece of clicked) {
-      drag_add_piece(piece,pieces[piece]!, 0);
+      drag_add_piece(piece,pieces[piece]!);
     }
     for (let tpiece of Object.keys(pieces)) {
       if (clicked.indexOf(tpiece) >= 0) continue;
       let tp = pieces[tpiece]!;
       if (tp.held != us) continue;
-      drag_add_piece(tpiece,tp, 0);
+      drag_add_piece(tpiece,tp);
     }
   } else if (held == null || wresting) {
     if (!shifted) {
@@ -918,9 +919,9 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       let piece = clicked[i];
       let p = pieces[piece]!;
       let delta = (-(clicked.length-1)/2 + i) * SPECIAL_MULTI_DELTA_EACH;
-      delta = Math.min(Math.max(delta, -SPECIAL_MULTI_DELTA_MAX),
-		                       +SPECIAL_MULTI_DELTA_MAX);
-      drag_add_piece(piece,p, delta);
+      p.drag_delta = Math.min(Math.max(delta, -SPECIAL_MULTI_DELTA_MAX),
+		                              +SPECIAL_MULTI_DELTA_MAX);
+      drag_add_piece(piece,p);
       set_grab(piece,p, us);
       api_piece(api, wresting ? 'wrest' : 'grab', piece,p, { });
     }
@@ -966,11 +967,13 @@ function ungrab_all() {
 
 function set_grab(piece: PieceId, p: PieceInfo, owner: PlayerId) {
   p.held = owner;
+  if (owner != us) p.drag_delta = 0;
   redisplay_ancillaries(piece,p);
   recompute_keybindings();
 }
 function set_ungrab(piece: PieceId, p: PieceInfo) {
   p.held = null;
+  p.drag_delta = 0;
   redisplay_ancillaries(piece,p);
   recompute_keybindings();
 }
