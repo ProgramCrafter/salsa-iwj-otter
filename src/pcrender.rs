@@ -119,10 +119,12 @@ impl PieceRenderInstructions {
     let (pos, zlevel) = pri.pos_zlevel(gpc);
     let occregion = gpc.occult.active_region(&gs.occults)?
       .map(|r| JsonString(r.clone()));
+    let (svg, bbox) = pri.make_defs(ioccults, gs, gpc, ipc)?;
     let r = PreparedPieceState {
       pos        : pos,
       held       : gpc.held,
-      svg        : pri.make_defs(ioccults, gs, gpc, ipc)?,
+      svg        : svg,
+      bbox       : bbox,
       z          : zlevel.z.clone(),
       zg         : zlevel.zg,
       angle      : pri.angle(gpc).to_compass(),
@@ -141,8 +143,10 @@ impl PieceRenderInstructions {
                          gpc: &GPiece, ipc: &IPiece)
                          -> PreparedPieceImage {
     let pri = self;
+    let (svg, bbox) = pri.make_defs(ioccults, gs, gpc, ipc)?;
     let r = PreparedPieceImage {
-      svg        : pri.make_defs(ioccults, gs, gpc, ipc)?,
+      svg        : svg,
+      bbox       : bbox,
       uos        : pri.ui_operations(gs, gpc, ipc)?,
     };
     dbgc!(pri, ipc, gpc, r);
@@ -173,7 +177,7 @@ impl PieceRenderInstructions {
 
   #[throws(IE)]
   pub fn make_defs<'p>(&self, ioccults: &IOccults, gs: &GameState,
-                         gpc: &GPiece, ipc: &IPiece) -> Html
+                         gpc: &GPiece, ipc: &IPiece) -> (Html, Rect)
   {
     let pri = self;
     let instead = pri.instead(ioccults, ipc)?;
@@ -184,6 +188,7 @@ impl PieceRenderInstructions {
     };
 
     let angle = pri.angle(gpc);
+    let bbox = o.bbox_approx()?;
 
     let dragraise = match o.thresh_dragraise()? {
       Some(n) if n < 0 => throw!(SvgE::NegativeDragraise),
@@ -211,7 +216,7 @@ impl PieceRenderInstructions {
     hwrite!(&mut defs,
            r##"<path id="surround{}" d="{}"/>"##,
            pri.vpid, o.surround_path()?)?;
-    defs
+    (defs, bbox)
   }
 
   #[throws(InternalError)]

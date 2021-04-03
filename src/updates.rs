@@ -112,6 +112,7 @@ pub struct PreparedPieceState {
   pub moveable: PieceMoveable,
   pub uos: Vec<UoDescription>,
   pub occregion: Option<JsonString<Region>>,
+  pub bbox: Rect,
 }
 
 #[derive(Debug,Copy,Clone,Serialize,Deserialize,Eq)]
@@ -126,6 +127,7 @@ impl Default for PieceMoveable { fn default() -> Self { PieceMoveable::Yes } }
 #[derive(Debug,Clone,Serialize)]
 pub struct PreparedPieceImage {
   pub svg: Html,
+  pub bbox: Rect,
   pub uos: Vec<UoDescription>,
 }
 

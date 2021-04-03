@@ -50,6 +50,7 @@ struct SessionPieceLoadJson<'r> {
   uos: &'r [UoDescription],
   moveable: PieceMoveable,
   occregion: Option<JsonString<&'r Region>>,
+  pub bbox: &'r Rect,
 }
 
 #[derive(Serialize,Debug)]
@@ -139,7 +140,7 @@ fn session_inner(form: Json<SessionForm>,
                           piece, gpc, ipc);
       let pri = if let Some(pri) = pri { pri } else { continue /*invisible*/};
 
-      let defs = pri.make_defs(ioccults, &ig.gs, gpc, ipc)?;
+      let (defs, bbox) = pri.make_defs(ioccults, &ig.gs, gpc, ipc)?;
       alldefs.push((pri.vpid, defs));
       let desc = pri.describe(ioccults,&ig.gs.occults, &gpc, ipc);
 
@@ -155,6 +156,7 @@ fn session_inner(form: Json<SessionForm>,
         pinned: gpc.pinned,
         angle: vangle,
         desc,
+        bbox: &bbox,
         moveable: gpc.moveable(),
         uos: &pri.ui_operations(&ig.gs, gpc, ipc)?,
         occregion,

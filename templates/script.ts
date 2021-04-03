@@ -80,6 +80,7 @@ type PieceInfo = {
   queued_moves : number,
   last_seen_moved : DOMHighResTimeStamp | null, // non-0 means halo'd
   held_us_inoccult: boolean,
+  bbox: [Pos, Pos],
 }
 
 let wasm : InitOutput;
@@ -1299,6 +1300,7 @@ type PreparedPieceState = {
   uos: UoDescription[],
   moveable: PieceMoveable,
   occregion: string | null,
+  bbox: [Pos, Pos],
 }
 
 pieceops.ModifyQuiet = <PieceHandler>function
@@ -1358,6 +1360,7 @@ function piece_modify_image(piece: PieceId, p: PieceInfo,
   p.delem.innerHTML = info.svg;
   p.pelem= piece_element('piece',piece)!;
   p.uos = info.uos;
+  p.bbox = info.bbox;
 }
 
 function piece_modify(piece: PieceId, p: PieceInfo, info: PreparedPieceState,
@@ -1380,6 +1383,7 @@ function piece_modify_core(piece: PieceId, p: PieceInfo,
   p.pinned = info.pinned;
   p.moveable = info.moveable;
   p.angle = info.angle;
+  p.bbox = info.bbox;
   piece_set_zlevel_from(piece,p,info);
   let occregions_changed = occregion_update(piece, p, info);
   piece_checkconflict_nrda(piece,p,conflict_expected);
@@ -1408,6 +1412,7 @@ function redisplay_held_ancillaries() {
 type PreparedPieceImage = {
   svg: string,
   uos: UoDescription[],
+  bbox: [Pos, Pos],
 }
 
 type TransmitUpdateEntry_Image = {
