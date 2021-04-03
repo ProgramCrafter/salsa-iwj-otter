@@ -231,6 +231,8 @@ pub struct ApiPieceOpArgs<'a> {
   pub player: PlayerId,
   pub piece: PieceId,
   pub ipc: &'a IPiece,
+  pub cseq: ClientSequence,
+  pub client: ClientId,
 }
 
 #[derive(Debug)]

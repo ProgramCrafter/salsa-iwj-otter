@@ -141,7 +141,8 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
     form.op.check_held(gpc,player)?;
     let update =
       form.op.op_complex(ApiPieceOpArgs {
-        ioccults, gs, player, piece, ipieces, ipc,
+        ioccults, gs, player, piece, ipieces, ipc, client,
+        cseq: form.cseq,
         ig: &iad.gref,
         to_recalculate: &mut to_recalculate,
       })?;
