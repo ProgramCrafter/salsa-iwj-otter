@@ -126,7 +126,7 @@ fn try_layout(region: &Rect,
 
 #[throws(ApiPieceOpError)]
 pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
-                    wrc: WhatResponseToClientOp, region: &Rect)
+                    _wrc: WhatResponseToClientOp, region: &Rect)
                     -> Option<UpdateFromOpComplex> {
   let _do_sort = match opname {
     "organise" => (),
@@ -192,7 +192,7 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
     };
 
     Some((PieceUpdate {
-      wrc,
+      wrc: WRC::Predictable,
       log,
       ops: PUOs::PerPlayer(default()),
     }, updates.into_unprepared_nc()))
