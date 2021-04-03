@@ -667,7 +667,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
        if xupdates.len() != 0 {
          Some(
            Box::new(move |prepub: &mut PrepareUpdatesBuffer|
-                    prepub.piece_updates_nc(xupdates))
+                    prepub.piece_updates(xupdates, &None))
              as SomeUnpreparedUpdates
          )
        } else { None },

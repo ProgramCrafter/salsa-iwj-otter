@@ -230,7 +230,7 @@ impl PieceTrait for Deck {
       wrc, log,
       ops: PUOs::Simple(PUO::Modify(())),
     },
-     xupdates.into_unprepared_nc())
+     xupdates.into_unprepared(None))
   }
 
   fn occultation_notify_hook(&self, piece: PieceId) -> UnpreparedUpdates {

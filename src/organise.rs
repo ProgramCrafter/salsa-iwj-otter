@@ -299,6 +299,6 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
       wrc: WRC::Predictable,
       log,
       ops: PUOs::PerPlayer(default()),
-    }, updates.into_unprepared_nc()))
+    }, updates.into_unprepared(None)))
   })() // <- no ?, shows it's infallible
 }

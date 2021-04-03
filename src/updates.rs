@@ -789,9 +789,11 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     self.us.push(PUE::Image(PreparedUpdateEntry_Image { ims }))
   }
 
-  pub fn piece_updates_nc(&mut self, updates: Vec<(PieceId, PieceUpdateOps)>) {
+  pub fn piece_updates(&mut self,
+                       updates: Vec<(PieceId, PieceUpdateOps)>,
+                       by_client: &IsResponseToClientOp) {
     for (piece, ops) in updates {
-      self.piece_update(piece,&None, ops);
+      self.piece_update(piece, by_client, ops);
     }
   }
 
@@ -975,10 +977,11 @@ impl PreparedUpdate {
 
 #[ext(pub)]
 impl Vec<(PieceId, PieceUpdateOps)> {
-  fn into_unprepared_nc(self) -> UnpreparedUpdates {
+  fn into_unprepared(self, by_client: IsResponseToClientOp)
+                     -> UnpreparedUpdates {
     Some(Box::new(
       move |buf: &mut PrepareUpdatesBuffer| {
-        buf.piece_updates_nc(self)
+        buf.piece_updates(self, &by_client)
       }))
   }
 }
