@@ -820,7 +820,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     return [piece];
   }
 
-  if (true) {
+  if (special_count == null) {
     let target = e.target as SVGGraphicsElement; // we check this just now!
     let piece: PieceId | undefined = target.dataset.piece;
     if (piece) {
@@ -828,6 +828,25 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     } else {
       clicked = [];
     }
+  } else if (special_count == 0) {
+    let clickpos = mouseevent_pos(e);
+    let uelem = pieces_marker;
+    for (;;) {
+      uelem = uelem.nextElementSibling as any;
+      if (uelem == defs_marker) {
+	clicked = [];
+	break;
+      }
+      let piece = uelem.dataset.piece!;
+      let p = pieces[piece]!;
+      if (p_bbox_contains(p, clickpos)) {
+	clicked = clicked_one(piece);
+	break;
+      }
+    }
+  } else {
+    mouseevent_pos(e);
+    return;
   }
 
   if (!clicked.length) {
@@ -890,6 +909,16 @@ function mouseevent_pos(e: MouseEvent): Pos {
   let pos: Pos = [px, py];
   console.log('mouseevent_pos', pos);
   return pos;
+}
+
+function p_bbox_contains(p: PieceInfo, test: Pos) {
+  let ctr = piece_xy(p);
+  for (let i of [0,1]) {
+    let offset = test[i] - ctr[i];
+    if (offset < p.bbox[0][i] || offset > p.bbox[1][i])
+      return false;
+  }
+  return true;
 }
 
 function ungrab_all() {
