@@ -846,6 +846,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     }
   } else {
     // special_count > 0
+    let clickpos = mouseevent_pos(e);
     clicked = [];
     let uelem = defs_marker;
     for (let i=0; i<special_count; i++) {
@@ -856,6 +857,9 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       }
       let piece = uelem.dataset.piece!;
       let p = pieces[piece];
+      if (!p_bbox_contains(p, clickpos)) {
+	continue;
+      }
       if (i > 0) {
 	if (p.pinned != pinned ||
 	    p.held   != held) {
