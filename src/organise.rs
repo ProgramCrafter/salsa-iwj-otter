@@ -138,7 +138,7 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
   let aipc = ipieces.get(apiece).ok_or(internal_error_bydebug(&apiece))?;
   let gpl = gs.players.byid(player)?;
   let log = log_did_to_piece(ioccults, &gs.occults, gpl,agpc,aipc,
-                             "oranised")?;
+                             "organised")?;
 
   let pieces = gs.pieces.iter().filter_map(|(piece, gpc)| if_chain!{
     if region.contains(gpc.pos);
