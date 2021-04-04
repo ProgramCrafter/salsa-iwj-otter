@@ -55,6 +55,7 @@ deref_to_field_mut!{Setup, SetupCore, core}
 #[derive(Debug)]
 pub struct Window {
   pub name: String,
+  pub player: PlayerId,
   pub instance: InstanceName,
 }
 
@@ -383,7 +384,8 @@ fn check_window_name_sanity(name: &str) -> &str {
 
 impl Setup {
   #[throws(AE)]
-  pub fn new_window<'s>(&'s mut self, instance: &Instance, name: &str)
+  pub fn new_window<'s>(&'s mut self, instance: &Instance, name: &str,
+                        player: PlayerId)
                         -> Window {
     let name = check_window_name_sanity(name)?;
     let window = (||{
@@ -411,6 +413,7 @@ impl Setup {
       Ok::<_,AE>(Window {
         name: name.to_owned(),
         instance: instance.0.clone(),
+        player,
       })
     })()
       .with_context(|| name.to_owned())
@@ -631,6 +634,7 @@ impl Drop for Setup {
         let w = Window {
           name: name.clone(),
           instance: TABLE.parse().context(TABLE)?,
+          player: default(),
         };
         self.w(&w)?.screenshot("final", log::Level::Info)
           .context(name)
@@ -674,11 +678,12 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
 impl Setup {
   #[throws(AE)]
   pub fn setup_static_users(&mut self, instance: &Instance) -> Vec<Window> {
-    self.core.ds.clone()
-      .setup_static_users(self.opts.layout)?
+    let susus = self.core.ds.clone()
+      .setup_static_users(&mut self.mgmt_conn(), self.opts.layout)?;
+    susus
       .into_iter().map(|sus|
     {
-      let w = self.new_window(instance, sus.nick)?;
+      let w = self.new_window(instance, sus.nick, sus.player)?;
       self.w(&w)?.get(sus.url)?;
       self.w(&w)?.screenshot("initial", log::Level::Trace)?;
       Ok::<_,AE>(w)

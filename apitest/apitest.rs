@@ -721,15 +721,18 @@ pub fn prepare_game(ds: &DirSubst, table: &str) -> InstanceName {
 pub struct StaticUserSetup {
   pub nick: &'static str,
   pub url: String,
+  pub player: PlayerId,
 }
 
 impl DirSubst {
   #[throws(AE)]
-  pub fn setup_static_users(&self, layout: PresentationLayout)
+  pub fn setup_static_users(&self, mgmt_conn: &mut MgmtChannelForGame,
+                            layout: PresentationLayout)
      -> Vec<StaticUserSetup>
   {
     #[throws(AE)]
-    fn mk(su: &DirSubst, layout: PresentationLayout, u: StaticUser)
+    fn mk(su: &DirSubst, mgmt_conn: &mut MgmtChannelForGame,
+          layout: PresentationLayout, u: StaticUser)
           -> StaticUserSetup
     {
       let nick: &str = u.into();
@@ -746,13 +749,18 @@ impl DirSubst {
                        --account server:@nick@       \
                        --fixed-token @token@         \
                        join-game @table@")?)?;
+
+      let player = mgmt_conn.has_player(
+        &subst.subst("server:@nick@")?.parse()?
+      )?.unwrap().0;
+
       let url = subst.subst("@url@/@pl@?@token@")?;
-      StaticUserSetup { nick, url }
+      StaticUserSetup { nick, url, player }
     }
 
     StaticUser::iter().map(
       |u| (||{
-        let ssu = mk(self, layout, u).context("create")?;
+        let ssu = mk(self, mgmt_conn, layout, u).context("create")?;
         Ok::<_,AE>(ssu)
       })()
         .with_context(|| format!("{:?}", u))
