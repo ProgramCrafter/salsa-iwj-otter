@@ -137,6 +137,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
     debug!("client={:?} pc.lastclient={:?} pc.gen_before={:?} pc.gen={:?} q_gen={:?} u_gen={:?}", &client, &gpc.lastclient, &gpc.gen_before_lastclient, &gpc.gen, &q_gen, &u_gen);
 
     if u_gen > q_gen { throw!(PieceOpError::Conflict) }
+    trace_dbg!("form.op", player, piece, &form.op, &gpc);
     form.op.check_held(gpc,player)?;
     let update =
       form.op.op_complex(ApiPieceOpArgs {
