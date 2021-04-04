@@ -78,10 +78,15 @@ pub enum MgmtResponse {
 pub enum MgmtGameInstruction {
   Noop,
   Info,
-  /// For testing, mostly.
-  Synch,
   SetTableSize(Pos),
   SetTableColour(ColourSpec),
+
+  /// For testing, mostly.
+  Synch,
+  /// For testing only
+  PieceIdLookupFwd { piece: PieceId, player: PlayerId, },
+  /// For testing only
+  PieceIdLookupRev { vpid: VisiblePieceId, player: PlayerId, },
 
   ListPieces,
   AddPieces(PiecesSpec),
@@ -115,6 +120,9 @@ pub enum MgmtGameResponse {
   Fine,
   Info(MgmtGameResponseGameInfo),
   Synch(Generation),
+
+  InternalPieceId(Option<PieceId>),
+  VisiblePieceId(Option<VisiblePieceId>),
 
   Pieces {
     pieces: Vec<MgmtGamePieceInfo>,

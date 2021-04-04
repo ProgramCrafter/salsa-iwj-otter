@@ -426,6 +426,25 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
        None, ig)
     },
 
+    MGI::PieceIdLookupFwd { player, piece } => {
+      let superuser = cs.superuser.ok_or(ME::SuperuserAuthorisationRequired)?;
+      let ig = ig.by_mut(superuser.into());
+      let gpl = ig.gs.players.byid(player)?;
+      let vpid = gpl.idmap.fwd(piece);
+      (U{ pcs: vec![], log: vec![], raw: None },
+       MGR::VisiblePieceId(vpid),
+       None, ig)
+    },
+    MGI::PieceIdLookupRev { player, vpid } => {
+      let superuser = cs.superuser.ok_or(ME::SuperuserAuthorisationRequired)?;
+      let ig = ig.by_mut(superuser.into());
+      let gpl = ig.gs.players.byid(player)?;
+      let piece = gpl.idmap.rev(vpid);
+      (U{ pcs: vec![], log: vec![], raw: None },
+       MGR::InternalPieceId(piece),
+       None, ig)
+    },
+
     MGI::ListPieces => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
       let ioccults = &ig.ioccults;
       let pieces = ig.gs.pieces.iter().filter_map(
