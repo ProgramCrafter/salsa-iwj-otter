@@ -646,11 +646,10 @@ fn main() {
       &mut |_|false
     )?;
     let spec = su.ds.game_spec_data()?;
-    let [alice, bob]: [Player; 2] = su.ds.setup_static_users(
-      default(),
-      |sus| Ok(Player { nick: sus.nick, url: sus.url })
-    )?
-      .try_into().unwrap();
+    let [alice, bob]: [Player; 2] =
+      su.ds.setup_static_users(default())?
+      .into_iter().map(|sus| Player { nick: sus.nick, url: sus.url })
+      .collect::<ArrayVec<_>>().into_inner().unwrap();
     
     let su_rc = Rc::new(RefCell::new(su));
     tests(Ctx { opts, spec, su_rc, alice, bob })?;

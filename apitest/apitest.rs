@@ -725,10 +725,8 @@ pub struct StaticUserSetup {
 
 impl DirSubst {
   #[throws(AE)]
-  pub fn setup_static_users
-    <W, F: FnMut(StaticUserSetup) -> Result<W, AE>>
-    (&mut self, layout: PresentationLayout, mut f: F)
-     -> Vec<W>
+  pub fn setup_static_users(&mut self, layout: PresentationLayout)
+     -> Vec<StaticUserSetup>
   {
     #[throws(AE)]
     fn mk(su: &DirSubst, layout: PresentationLayout, u: StaticUser)
@@ -755,13 +753,12 @@ impl DirSubst {
     StaticUser::iter().map(
       |u| (||{
         let ssu = mk(self, layout, u).context("create")?;
-        let w = f(ssu).context("set up")?;
-        Ok::<_,AE>(w)
+        Ok::<_,AE>(ssu)
       })()
         .with_context(|| format!("{:?}", u))
         .context("make static user")
     )
-      .collect::<Result<Vec<W>,AE>>()?
+      .collect::<Result<Vec<StaticUserSetup>,AE>>()?
   }
 }
 

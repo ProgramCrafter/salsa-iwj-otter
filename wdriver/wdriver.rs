@@ -674,12 +674,16 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
 impl Setup {
   #[throws(AE)]
   pub fn setup_static_users(&mut self, instance: &Instance) -> Vec<Window> {
-    self.core.ds.clone().setup_static_users(self.opts.layout, |sus|{
+    self.core.ds.clone()
+      .setup_static_users(self.opts.layout)?
+      .into_iter().map(|sus|
+    {
       let w = self.new_window(instance, sus.nick)?;
       self.w(&w)?.get(sus.url)?;
       self.w(&w)?.screenshot("initial", log::Level::Trace)?;
-      Ok(w)
-    })?
+      Ok::<_,AE>(w)
+    })
+      .collect::<Result<_,_>>()?
   }
 }
 
