@@ -189,7 +189,7 @@ impl Ctx {
           .unwrap()
       };
       assert!(
-        find(P_ALICE) > find(P_BOB)
+        dbgc!( find(P_ALICE) ) > dbgc!( find(P_BOB) )
       );
       Ok::<_,AE>(())
     };
