@@ -283,6 +283,12 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     Timezone::from_str(s).void_unwrap()
   }
 
+  fn no_updates<'igr,'ig>(ig: &'igr mut InstanceGuard<'ig>,
+                          mgr: MgmtGameResponse)
+                          -> ExecuteGameInsnResults<'igr, 'ig> {
+    (U{ pcs: vec![], log: vec![], raw: None }, mgr, None, ig)
+  }
+
   #[throws(MgmtError)]
   fn readonly<'igr, 'ig: 'igr, 'cs,
               F: FnOnce(&InstanceGuard) -> Result<MgmtGameResponse,ME>,
@@ -406,12 +412,12 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     MGI::DeletePieceAlias(alias) => {
       let ig = cs.check_acl(&ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
       ig.pcaliases.remove(&alias);
-      (U{ pcs: vec![], log: vec![], raw: None }, MGR::Fine, None, ig)
+      no_updates(ig, MGR::Fine)
     },
     MGI::DefinePieceAlias { alias, target } => {
       let ig = cs.check_acl(&ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
       ig.pcaliases.insert(alias, target);
-      (U{ pcs: vec![], log: vec![], raw: None }, MGR::Fine, None, ig)
+      no_updates(ig, MGR::Fine)
     },
 
     MGI::Synch => {
@@ -419,11 +425,8 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let mut buf = PrepareUpdatesBuffer::new(&mut ig, None);
       let gen = buf.gen();
       drop(buf); // does updatenocc
-      (U{ pcs: vec![], // we handled the update ourselves,
-          log: vec![], // return no update info
-          raw: None },
-       MGR::Synch(gen),
-       None, ig)
+      // we handled the update ourselves, return no update info
+      no_updates(ig, MGR::Synch(gen))
     },
 
     MGI::PieceIdLookupFwd { player, piece } => {
@@ -431,18 +434,14 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let ig = ig.by_mut(superuser.into());
       let gpl = ig.gs.players.byid(player)?;
       let vpid = gpl.idmap.fwd(piece);
-      (U{ pcs: vec![], log: vec![], raw: None },
-       MGR::VisiblePieceId(vpid),
-       None, ig)
+      no_updates(ig, MGR::VisiblePieceId(vpid))
     },
     MGI::PieceIdLookupRev { player, vpid } => {
       let superuser = cs.superuser.ok_or(ME::SuperuserAuthorisationRequired)?;
       let ig = ig.by_mut(superuser.into());
       let gpl = ig.gs.players.byid(player)?;
       let piece = gpl.idmap.rev(vpid);
-      (U{ pcs: vec![], log: vec![], raw: None },
-       MGR::InternalPieceId(piece),
-       None, ig)
+      no_updates(ig, MGR::InternalPieceId(piece))
     },
 
     MGI::ListPieces => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
@@ -588,10 +587,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         (ag, ig, player, TP::ResetOthersAccess)?;
 
       let token = ig.player_access_reset(ag, player, auth)?;
-      (U{ pcs: vec![],
-          log: vec![],
-          raw: None },
-       MGR::PlayerAccessToken(token), None, ig)
+      no_updates(ig, MGR::PlayerAccessToken(token))
     }
 
     MGI::RedeliverPlayerAccess(player) => {
@@ -599,10 +595,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         (ag, ig, player, TP::RedeliverOthersAccess)?;
 
       let token = ig.player_access_redeliver(ag, player, auth)?;
-      (U{ pcs: vec![],
-          log: vec![],
-          raw: None },
-       MGR::PlayerAccessToken(token), None, ig)
+      no_updates(ig, MGR::PlayerAccessToken(token))
     },
 
     MGI::LeaveGame(player) => {
