@@ -244,11 +244,11 @@ macro_rules! usual_wanted_tests {
 macro_rules! test {
   ($c:expr, $tname:expr, $s:stmt) => {
     if $c.wanted_tests().wantp($tname) {
-      debug!("-------------------- {} starting --------------------", $tname);
+      debug!("==================== {} starting ====================", $tname);
       $s
-      info!("-------------------- {} completed --------------------", $tname);
+      info!("==================== {} completed ====================", $tname);
     } else {
-      trace!("- - - {} skipped - - -", $tname);
+      trace!("= = = {} skipped = = =", $tname);
     }
   }
 }

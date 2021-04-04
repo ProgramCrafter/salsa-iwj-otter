@@ -194,7 +194,7 @@ impl JsLogfileImp {
   pub fn fetch(&mut self, driver: &T4d) {
     self.counter += 1;
     let head = format!(
- "============================== JS {} {} ==============================",
+ "-------------------- JS {} {} --------------------",
       &self.name, self.counter
     );
     writeln!(&mut self.fh, "{}", &head)?;
