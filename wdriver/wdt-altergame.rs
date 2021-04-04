@@ -86,6 +86,42 @@ fn tests(UsualSetup { su, alice, ..}: UsualSetup) {
     alice.synch()?;
   });
 
+  test!(c, "reset-move", {
+    let _pausable = c.su.otter_pauseable();
+    let game_spec = &c.su.ds.subst("@specs@/mao.game.toml")?;
+    let mut alice = c.su.w(&c.alice)?;
+    alice.otter(&["reset"],&[&game_spec])?;
+    alice.synch()?;
+
+    let p1 = Pos::new(150,84);
+    let _p2 = Pos::new(73,31);
+
+    let p1w = alice.posg2posw(p1)?;
+    let got = alice.execute_script(
+      &Subst::from(&[("xy", format!("{},{}", p1w.0, p1w.1))]).subst(r#"
+        let elem = document.elementFromPoint(@xy@);
+        for (;;) {
+            let id = elem.getAttribute('id');
+            if (id) return id;
+            elem = elem.parentElement
+            if (!elem) return null;
+        }
+    "#)?)?;
+    let elem = got.value();
+    dbg!(elem);
+               /*                              
+    
+    let paused = pauseable.pause()?;
+    w.action_chain()
+      .move_pos(&p1)
+      .click_and_hold()
+      .move_pos(&p2)
+      .release()
+      .perform();
+
+    let got_p2 = */
+  });
+
   debug!("finishing");
 }
 
