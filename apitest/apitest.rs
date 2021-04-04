@@ -725,7 +725,7 @@ pub struct StaticUserSetup {
 
 impl DirSubst {
   #[throws(AE)]
-  pub fn setup_static_users(&mut self, layout: PresentationLayout)
+  pub fn setup_static_users(&self, layout: PresentationLayout)
      -> Vec<StaticUserSetup>
   {
     #[throws(AE)]

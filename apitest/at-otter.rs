@@ -641,7 +641,7 @@ fn tests(mut c: Ctx) {
 #[throws(AE)]
 fn main() {
   {
-    let (opts, _cln, _instance, mut su) = setup_core(
+    let (opts, _cln, _instance, su) = setup_core(
       &[module_path!()],
       &mut |_|false
     )?;
