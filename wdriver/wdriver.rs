@@ -493,7 +493,7 @@ impl<'g> WindowGuard<'g> {
 
   #[throws(AE)]
   fn synch_raw(&mut self) {
-    let gen = self.su.mgmt_conn.game_synch(self.w.instance.clone())?;
+    let gen = self.su.mgmt_conn().game_synch(self.w.instance.clone())?;
     (|| {
       loop {
         info!("{:?} gen={}", self, gen);

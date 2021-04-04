@@ -332,8 +332,8 @@ impl Session {
      mut f: F
   ) {
     let exp = {
-      let mut su = self.su_rc.borrow_mut();
-      su.mgmt_conn.game_synch(TABLE.parse().unwrap())?
+      self.su_rc.borrow_mut().mgmt_conn()
+        .game_synch(TABLE.parse().unwrap())?
     };
     let efwrap = ef.map(|ef| {
       move |s: &mut _, g, v: &_| { ef(s,g,v)?; Ok::<_,AE>(None) }
@@ -529,7 +529,7 @@ impl Ctx {
     prepare_game(&self.su().ds, TABLE)?;
     let mut alice = self.connect_player(&self.alice)?;
     let mut bob = self.connect_player(&self.bob)?;
-    self.su_mut().mgmt_conn.fakerng_load(&[&"1",&"0"])?;
+    self.su_mut().mgmt_conn().fakerng_load(&[&"1",&"0"])?;
 
     let mut a_pieces = alice.pieces::<PIA>()?;
     let mut b_pieces = alice.pieces::<PIB>()?;

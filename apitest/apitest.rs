@@ -14,6 +14,8 @@ pub mod imports {
 pub use imports::*;
 pub use otter::prelude::*;
 
+pub use std::cell::{RefCell, RefMut};
+
 pub use num_traits::NumCast;
 pub use serde_json::json;
 pub use structopt::StructOpt;
@@ -67,7 +69,7 @@ pub struct Opts {
 #[derive(Debug)]
 pub struct SetupCore {
   pub ds: DirSubst,
-  pub mgmt_conn: MgmtChannelForGame,
+  pub mgmt_conn: RefCell<MgmtChannelForGame>,
   server_child: Child,
   pub wanted_tests: TrackWantedTests,
 }
@@ -779,6 +781,10 @@ impl SetupCore {
   pub fn pause_otter(&self) -> OtterPaused {
     self.otter_pauseable().pause()?
   }
+
+  pub fn mgmt_conn<'m>(&'m self) -> RefMut<'m, MgmtChannelForGame> {
+    self.mgmt_conn.borrow_mut()
+  }
 }
 
 impl OtterPauseable {
@@ -903,7 +909,7 @@ pub fn setup_core<O>(module_paths: &[&str], early_args: EarlyArgPredicate) ->
    ),
    SetupCore {
      ds,
-     mgmt_conn,
+     mgmt_conn: mgmt_conn.into(),
      server_child,
      wanted_tests,
    })
