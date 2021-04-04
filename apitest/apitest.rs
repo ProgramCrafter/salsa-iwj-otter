@@ -67,7 +67,7 @@ pub struct Opts {
 #[derive(Debug)]
 pub struct SetupCore {
   pub ds: DirSubst,
-  pub mgmt_conn: MgmtChannel,
+  pub mgmt_conn: MgmtChannelForGame,
   server_child: Child,
   pub wanted_tests: TrackWantedTests,
 }
@@ -885,6 +885,11 @@ pub fn setup_core<O>(module_paths: &[&str], early_args: EarlyArgPredicate) ->
 
   let (mgmt_conn, server_child) =
     prepare_gameserver(&cln, &ds).always_context("setup game server")?;
+
+  let mgmt_conn = mgmt_conn.for_game(
+    TABLE.parse()?,
+    MgmtGameUpdateMode::Online
+  );
 
   let instance_name =
     prepare_game(&ds, TABLE).context("setup game")?;

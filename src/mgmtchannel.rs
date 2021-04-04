@@ -123,6 +123,7 @@ impl IoTryClone for UnixStream {
 }
 
 
+#[derive(Debug)]
 pub struct MgmtChannelForGame {
   pub chan: MgmtChannel,
   pub game: InstanceName,
