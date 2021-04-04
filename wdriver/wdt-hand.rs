@@ -80,6 +80,9 @@ impl Ctx {
     {
       let mut w = su.w(&self.bob)?;
       chk(&mut w, HAND, Some(ALICE))?;
+
+      w.get(w.current_url()?)?;
+      chk(&mut w, HAND, Some(ALICE))?;
     }
 
     {
