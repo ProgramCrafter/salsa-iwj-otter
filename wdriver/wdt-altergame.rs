@@ -87,14 +87,14 @@ fn tests(UsualSetup { su, alice, ..}: UsualSetup) {
   });
 
   test!(c, "reset-move", {
-    let _pausable = c.su.otter_pauseable();
+    let pauseable = c.su.otter_pauseable();
     let game_spec = &c.su.ds.subst("@specs@/mao.game.toml")?;
     let mut alice = c.su.w(&c.alice)?;
     alice.otter(&["reset"],&[&game_spec])?;
     alice.synch()?;
 
     let p1 = Pos::new(150,84);
-    let _p2 = Pos::new(73,31);
+    let p2 = Pos::new(73,31);
 
     let p1w = alice.posg2posw(p1)?;
     let got = alice.execute_script(
@@ -107,19 +107,29 @@ fn tests(UsualSetup { su, alice, ..}: UsualSetup) {
             if (!elem) return null;
         }
     "#)?)?;
-    let elem = got.value();
-    dbg!(elem);
-               /*                              
+    let elem = got.value().as_str().unwrap();
+    let piece = elem.strip_prefix("use").unwrap().to_owned();
+    let p = alice.find_piece(&piece)?;
     
     let paused = pauseable.pause()?;
-    w.action_chain()
-      .move_pos(&p1)
+    alice.action_chain()
+      .move_w(&alice, p1)?
       .click_and_hold()
-      .move_pos(&p2)
+      .move_w(&alice, p2)?
       .release()
-      .perform();
+      .perform()?;
 
-    let got_p2 = */
+    let got_p2 = p.posg()?;
+    assert_eq!(p2, got_p2);
+    alice.fetch_js_log()?;
+
+    let _pauseable = paused.resume()?;
+    alice.synch()?;
+    alice.get(alice.current_url()?)?;
+    alice.synch()?;
+    let p = alice.find_piece(&piece)?;
+    let got_p2 = p.posg()?;
+    assert_eq!(p2, got_p2);
   });
 
   debug!("finishing");
