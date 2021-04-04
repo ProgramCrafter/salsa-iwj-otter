@@ -255,26 +255,17 @@ macro_rules! test {
 
 // -------------------- Extra anyhow result handling --------------------
 
-pub trait AlwaysContext<T,E> {
-  fn always_context(self, msg: &'static str) -> anyhow::Result<T>;
-}
-
-impl<T,E> AlwaysContext<T,E> for Result<T,E>
-where Self: anyhow::Context<T,E>,
-{
-  fn always_context(self, msg: &'static str) -> anyhow::Result<T> {
+#[ext(pub)]
+impl<T,E> Result<T,E> {
+  fn always_context(self, msg: &'static str) -> anyhow::Result<T>
+  where Self: anyhow::Context<T,E>
+  {
     let x = self.context(msg);
     if x.is_ok() { info!("completed {}.", msg) };
     x
   }
-}
 
-pub trait JustWarn<T> {
-  fn just_warn(self) -> Option<T>;
-}
-
-impl<T> JustWarn<T> for Result<T,AE> {
-  fn just_warn(self) -> Option<T> {
+  fn just_warn(self) -> Option<T> where E: Display {
     match self {
       Ok(x) => Some(x),
       Err(e) => {
