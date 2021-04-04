@@ -147,7 +147,7 @@ fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<String>) {
   driver.get(URL).context("navigate to front page")?;
   screenshot(&mut driver, &mut count, "front", log::Level::Trace)?;
 
-  fetch_log(&driver, "front")?;
+  fetch_js_log(&driver, "front")?;
   
   let t = Some(5_000 * MS);
   driver.set_timeouts(t4::TimeoutConfiguration::new(t,t,t))
@@ -158,7 +158,7 @@ fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<String>) {
 
 /// current window must be `name`
 #[throws(AE)]
-fn fetch_log(driver: &T4d, name: &str) {
+fn fetch_js_log(driver: &T4d, name: &str) {
   (||{
     let got = driver.execute_script(r#"
       var returning = window.console.saved;
@@ -364,7 +364,7 @@ impl<'g> WindowGuard<'g> {
 
   #[throws(AE)]
   pub fn fetch_js_log(&self) {
-    fetch_log(&self.su.driver, &self.w.name)?
+    fetch_js_log(&self.su.driver, &self.w.name)?
   }
 }
 
@@ -499,7 +499,7 @@ impl<'g> Deref for WindowGuard<'g> {
 
 impl<'g> Drop for WindowGuard<'g> {
   fn drop(&mut self) {
-    fetch_log(&self.su.driver, &self.w.name)
+    fetch_js_log(&self.su.driver, &self.w.name)
       .just_warn();
   }
 }
