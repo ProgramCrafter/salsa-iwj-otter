@@ -132,7 +132,9 @@ fn prepare_geckodriver(opts: &Opts, cln: &cleanup_notify::Handle) {
 }
 
 #[throws(AE)]
-fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<JsLogfile>) {
+fn prepare_thirtyfour(ds: &DirSubst)
+                      -> (T4d, ScreenShotCount, Vec<JsLogfile>)
+{
   let mut count = 0;
   let mut caps = t4::DesiredCapabilities::firefox();
   let prefs: HashMap<_,_> = [
@@ -144,7 +146,7 @@ fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<JsLogfile>) {
     .context("create 34 WebDriver")?;
 
   const FRONT: &str = "front";
-  let js_logfile = JsLogfileImp::open(FRONT)?;
+  let js_logfile = JsLogfileImp::open(&ds, FRONT)?;
 
   driver.set_window_name(FRONT).context("set initial window name")?;
   screenshot(&mut driver, &mut count, "startup", log::Level::Trace)?;
@@ -170,7 +172,7 @@ pub struct JsLogfileImp {
 
 impl JsLogfileImp {
   #[throws(AE)]
-  pub fn open(name: &str) -> Self {
+  pub fn open(_ds: &DirSubst, name: &str) -> Self {
     let name = name.to_owned();
     JsLogfileImp { name }
   }
@@ -483,7 +485,7 @@ impl Setup {
       ))
         .context("execute script to create window")?;
 
-      let js_logfile = JsLogfileImp::open(&name)?;
+      let js_logfile = JsLogfileImp::open(&self.core.ds, &name)?;
       let js_logfile = Rc::new(RefCell::new(js_logfile));
       self.windows_squirreled.push(js_logfile.clone());
 
@@ -744,7 +746,7 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
 
   prepare_geckodriver(&opts, &cln).always_context("setup webdriver server")?;
   let (driver, screenshot_count, windows_squirreled) =
-    prepare_thirtyfour().always_context("prepare web session")?;
+    prepare_thirtyfour(&core.ds).always_context("prepare web session")?;
 
   (Setup {
     core,
