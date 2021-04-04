@@ -257,7 +257,7 @@ macro_rules! test {
 
 #[ext(pub)]
 impl<T,E> Result<T,E> {
-  fn always_context(self, msg: &'static str) -> anyhow::Result<T>
+  fn did(self, msg: &'static str) -> anyhow::Result<T>
   where Self: anyhow::Context<T,E>
   {
     let x = self.context(msg);
@@ -886,7 +886,7 @@ pub fn setup_core<O>(module_paths: &[&str], early_args: EarlyArgPredicate) ->
   let ds = prepare_tmpdir(&opts, &current_exe)?;
 
   let (mgmt_conn, server_child) =
-    prepare_gameserver(&cln, &ds).always_context("setup game server")?;
+    prepare_gameserver(&cln, &ds).did("setup game server")?;
 
   let mgmt_conn = mgmt_conn.for_game(
     TABLE.parse()?,

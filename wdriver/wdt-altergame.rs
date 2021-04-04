@@ -36,7 +36,7 @@ impl Ctx {
       }
       Ok::<_,AE>(())
     })()
-      .context(desc).context("check link")?
+      .context(desc).did("check link")?
   }
 
   #[throws(AE)]
@@ -51,7 +51,7 @@ impl Ctx {
       self.check_link(desc, Some(url))?;
       Ok::<_,AE>(())
     })()
-      .context(desc).context("test link")?
+      .context(desc).did("test link")?
   }
 
   #[throws(AE)]
@@ -61,7 +61,7 @@ impl Ctx {
       self.check_link(desc, None)?;
       Ok::<_,AE>(())
     })()
-      .context(desc).context("test remove link")?
+      .context(desc).did("test remove link")?
   }
 }
 
@@ -117,7 +117,8 @@ fn tests(UsualSetup { su, alice, ..}: UsualSetup) {
       .click_and_hold()
       .move_w(&alice, p2)?
       .release()
-      .perform()?;
+      .perform()
+      .did("click and hold while paused")?;
 
     let got_p2 = p.posg()?;
     assert_eq!(p2, got_p2);

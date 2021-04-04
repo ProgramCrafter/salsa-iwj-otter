@@ -57,20 +57,20 @@ impl Ctx {
         .move_pos(&hand)?
         .click()
         .perform()
-        .context("select hand")?;
+        .did("select hand")?;
       w.synch()?;
 
       w.action_chain()
         .key_down('C')
         .key_up('C')
         .perform()
-        .context("claim hand")?;
+        .did("claim hand")?;
       w.synch()?;
 
       w.action_chain()
         .click()
         .perform()
-        .context("deselect")?;
+        .did("deselect")?;
 
       chk(&mut w, HAND, Some(ALICE))?;
 
@@ -112,19 +112,19 @@ impl Ctx {
         .move_pos(&hand)?
         .click()
         .perform()
-        .context("select hand")?;
+        .did("select hand")?;
       w.synch()?;
 
       w.action_chain()
         .key_down('C')
         .key_up('C')
         .perform()
-        .context("unclaim hand")?;
+        .did("unclaim hand")?;
 
       w.action_chain()
         .click()
         .perform()
-        .context("deselect")?;
+        .did("deselect")?;
 
       chk(&mut w, HAND, None)?;
     }

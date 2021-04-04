@@ -757,13 +757,13 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
       &mut |s: &OsStr| s.to_str().unwrap().starts_with("--test=")
     )?;
 
-  prepare_xserver(&cln, &core.ds).always_context("setup X server")?;
+  prepare_xserver(&cln, &core.ds).did("setup X server")?;
 
   let final_hook = FinalInfoCollection;
 
-  prepare_geckodriver(&opts, &cln).always_context("setup webdriver server")?;
+  prepare_geckodriver(&opts, &cln).did("setup webdriver server")?;
   let (driver, screenshot_count, windows_squirreled) =
-    prepare_thirtyfour(&core.ds).always_context("prepare web session")?;
+    prepare_thirtyfour(&core.ds).did("prepare web session")?;
 
   (Setup {
     core,
@@ -806,7 +806,7 @@ pub struct UsualSetup {
 impl UsualSetup {
   #[throws(AE)]
   pub fn new(exe_module_path: &str) -> UsualSetup {
-    let (mut su, inst) = setup(exe_module_path).always_context("setup")?;
+    let (mut su, inst) = setup(exe_module_path).did("usual setup")?;
     let [alice, bob] : [Window; 2] =
       su.setup_static_users(&inst)?.try_into().unwrap();
     let spec = su.ds.game_spec_data()?;

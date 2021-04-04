@@ -71,7 +71,7 @@ impl Ctx {
         .key_down('l')
         .key_up('l')
         .perform()
-        .always_context("rotate")?;
+        .did("rotate")?;
 
       chk(&w)?;
       w.synch()?;
@@ -111,7 +111,7 @@ impl Ctx {
         .move_w(&w, try_end)?
         .release()
         .perform()
-        .always_context("drag off")?;
+        .did("drag off")?;
 
       w.synch()?;
       chk(&w, exp_end)?;
@@ -145,7 +145,7 @@ impl Ctx {
         .click()
         .release()
         .perform()
-        .always_context("unselect by clicking elsewhere")?;
+        .did("unselect by clicking elsewhere")?;
 
       chk(&w)?;
       w.synch()?;
@@ -190,7 +190,7 @@ impl Ctx {
         .click()
         .click()
         .perform()
-        .context("select and release")?;
+        .did("select and release")?;
 
       w.synch()?;
 
@@ -219,7 +219,7 @@ impl Ctx {
         .release()
 
         .perform()
-        .context("conflicting drag")?;
+        .did("conflicting drag")?;
     }
 
     paused.resume()?;
@@ -275,9 +275,9 @@ fn tests(UsualSetup { su, alice, bob, spec, ..}: UsualSetup) {
   test!(c, "drag", c.drag()?);
 
   test!(c, "drag-rotate-unselect", {
-    let pc = c.rotate().always_context("rotate")?;
-    c.drag_off(pc).always_context("drag off")?;
-    c.unselect(pc).always_context("unselect")?;
+    let pc = c.rotate().did("rotate")?;
+    c.drag_off(pc).did("drag off")?;
+    c.unselect(pc).did("unselect")?;
   });
 
   test!(c, "conflict", c.conflict()?);
