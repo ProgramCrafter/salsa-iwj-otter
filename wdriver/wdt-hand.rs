@@ -148,8 +148,13 @@ impl Ctx {
 
       w.action_chain()
         .move_pc(&w, P_ALICE)?
+        .click()
+        .release()
+
         .click_and_hold()
         .move_w(&w, DEST)?
+        .release()
+
         .perform()
         .did("alice, drag pawn over target")?;
       w.synch()?;
@@ -172,6 +177,8 @@ impl Ctx {
       let mut w = su.w(&self.alice)?;
 
       w.action_chain()
+        .move_pc(&w, P_ALICE)?
+        .click()
         .release()
         .perform()
         .did("alice, drop pawn on target")?;
