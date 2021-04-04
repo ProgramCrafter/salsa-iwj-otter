@@ -17,6 +17,8 @@ use t4::Capabilities;
 
 use once_cell::sync::OnceCell;
 
+pub use std::rc::Rc;
+
 #[derive(Debug,Clone)]
 #[derive(StructOpt)]
 pub struct Opts {
@@ -48,7 +50,7 @@ pub struct Setup {
   current_window: WindowState,
   screenshot_count: ScreenShotCount,
   final_hook: FinalInfoCollection,
-  windows_squirreled: Vec<String>, // see Drop impl
+  windows_squirreled: Vec<JsLogfile>, // see Drop impl
 }
 deref_to_field_mut!{Setup, SetupCore, core}
 
@@ -57,6 +59,7 @@ pub struct Window {
   pub name: String,
   pub player: PlayerId,
   pub instance: InstanceName,
+  js_logfile: JsLogfile,
   vpid_cache: RefCell<HashMap<String, Vpid>>,
 }
 
@@ -129,7 +132,7 @@ fn prepare_geckodriver(opts: &Opts, cln: &cleanup_notify::Handle) {
 }
 
 #[throws(AE)]
-fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<String>) {
+fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<JsLogfile>) {
   let mut count = 0;
   let mut caps = t4::DesiredCapabilities::firefox();
   let prefs: HashMap<_,_> = [
@@ -141,53 +144,74 @@ fn prepare_thirtyfour() -> (T4d, ScreenShotCount, Vec<String>) {
     .context("create 34 WebDriver")?;
 
   const FRONT: &str = "front";
-  let window_names = vec![FRONT.into()];
+  let js_logfile = JsLogfileImp::open(FRONT)?;
+
   driver.set_window_name(FRONT).context("set initial window name")?;
   screenshot(&mut driver, &mut count, "startup", log::Level::Trace)?;
   driver.get(URL).context("navigate to front page")?;
   screenshot(&mut driver, &mut count, "front", log::Level::Trace)?;
 
-  fetch_js_log(&driver, "front")?;
+  js_logfile.fetch(&driver)?;
+  let js_logs = vec![Rc::new(RefCell::new(js_logfile))];
   
   let t = Some(5_000 * MS);
   driver.set_timeouts(t4::TimeoutConfiguration::new(t,t,t))
     .context("set webdriver timeouts")?;
 
-  (driver, count, window_names)
+  (driver, count, js_logs)
 }
 
-/// current window must be `name`
-#[throws(AE)]
-fn fetch_js_log(driver: &T4d, name: &str) {
-  (||{
-    let got = driver.execute_script(r#"
-      var returning = window.console.saved;
-      window.console.saved = [];
-      return returning;
+pub type JsLogfile = Rc<RefCell<JsLogfileImp>>;
+
+#[derive(Clone,Debug)]
+pub struct JsLogfileImp {
+  name: String,
+}
+
+impl JsLogfileImp {
+  #[throws(AE)]
+  pub fn open(name: &str) -> Self {
+    let name = name.to_owned();
+    JsLogfileImp { name }
+  }
+
+  pub fn name(&self) -> String {
+    self.name.clone()
+  }
+
+  /// current window must be this one, named `name` as we passed to open
+  #[throws(AE)]
+  pub fn fetch(&self, driver: &T4d) {
+    (||{
+      let got = driver.execute_script(r#"
+        var returning = window.console.saved;
+        window.console.saved = [];
+        return returning;
     "#).context("get log")?;
 
-    for ent in got.value().as_array()
-      .ok_or(anyhow!("saved isn't an array?"))?
-    {
-      #[derive(Deserialize,Debug)]
-      struct LogEnt(String, Vec<JsV>);
-      impl fmt::Display for LogEnt {
-        #[throws(fmt::Error)]
-        fn fmt(&self, f: &mut fmt::Formatter) {
-          write!(f, "{}:", self.0)?;
-          for a in &self.1 { write!(f, " {}", a)?; }
+      for ent in got.value().as_array()
+        .ok_or(anyhow!("saved isn't an array?"))?
+      {
+        #[derive(Deserialize,Debug)]
+        struct LogEnt(String, Vec<JsV>);
+        impl fmt::Display for LogEnt {
+          #[throws(fmt::Error)]
+          fn fmt(&self, f: &mut fmt::Formatter) {
+            write!(f, "{}:", self.0)?;
+            for a in &self.1 { write!(f, " {}", a)?; }
+          }
         }
+
+        let ent: LogEnt = serde_json::from_value(ent.clone())
+          .context("parse log entry")?;
+
+        debug!("JS {} {}", &self.name, &ent);
       }
-
-      let ent: LogEnt = serde_json::from_value(ent.clone())
-        .context("parse log entry")?;
-
-      debug!("JS {} {}", name, &ent);
-    }
-    Ok::<_,AE>(())
-  })()
-    .with_context(|| name.to_owned())
-    .context("fetch JS log messages")?;
+      Ok::<_,AE>(())
+    })()
+      .with_context(|| self.name.clone())
+      .context("fetch JS log messages")?;
+  }
 }
 
 type ScreenCTM = ndarray::Array2::<f64>;
@@ -364,7 +388,7 @@ impl<'g> WindowGuard<'g> {
 
   #[throws(AE)]
   pub fn fetch_js_log(&self) {
-    fetch_js_log(&self.su.driver, &self.w.name)?
+    self.w.js_logfile.borrow_mut().fetch(&self.su.driver)?
   }
 }
 
@@ -459,17 +483,20 @@ impl Setup {
       ))
         .context("execute script to create window")?;
 
+      let js_logfile = JsLogfileImp::open(&name)?;
+      let js_logfile = Rc::new(RefCell::new(js_logfile));
+      self.windows_squirreled.push(js_logfile.clone());
+
       Ok::<_,AE>(Window {
         name: name.to_owned(),
         instance: instance.0.clone(),
         vpid_cache: default(),
-        player,
+        player, js_logfile,
       })
     })()
       .with_context(|| name.to_owned())
       .context("create window")?;
 
-    self.windows_squirreled.push(name.to_owned());
     window
   }
 }
@@ -499,8 +526,10 @@ impl<'g> Deref for WindowGuard<'g> {
 
 impl<'g> Drop for WindowGuard<'g> {
   fn drop(&mut self) {
-    fetch_js_log(&self.su.driver, &self.w.name)
-      .just_warn();
+    (|| Ok::<_,AE>(
+      self.w.js_logfile.try_borrow_mut().context("borrow js log")?
+        .fetch(&self.su.driver)?
+    ))().just_warn();
   }
 }
 
@@ -676,16 +705,18 @@ impl<'a> t4::action_chain::ActionChain<'a> {
 impl Drop for Setup {
   fn drop(&mut self) {
     (||{
-      for name in mem::take(&mut self.windows_squirreled) {
+      for jslog in mem::take(&mut self.windows_squirreled) {
         // This constructor is concurrency-hazardous.  It's only OK
         // here because we have &mut self.  If there is only one
         // Setup, there can be noone else with a Window with an
         // identical name to be interfered with by us.
+        let name = jslog.try_borrow()?.name();
         let w = Window {
           name: name.clone(),
           instance: TABLE.parse().context(TABLE)?,
           player: default(),
           vpid_cache: default(),
+          js_logfile: jslog.clone(),
         };
         self.w(&w)?.screenshot("final", log::Level::Info)
           .context(name)
