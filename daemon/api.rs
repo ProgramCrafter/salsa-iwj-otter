@@ -342,6 +342,7 @@ api_route!{
 api_route!{
   api_ungrab, "/_/api/ungrab",
   struct ApiPieceUngrab {
+    #[serde(default)] autoraise: bool,
   }
 
   as:
@@ -351,6 +352,45 @@ api_route!{
       gs,ioccults,player,piece,ipc,ipieces,to_recalculate, ..
     } = a;
     let gpl = gs.players.byid_mut(player).unwrap();
+
+    let new_z = if_chain! {
+
+      if self.autoraise;
+      let tgpc = gs.pieces.byid(piece)?;
+      if gs.max_z > tgpc.zlevel;
+
+      let use_region = |rpiece: PieceId, rgpc: &GPiece| if_chain!{
+        if let Some(rvis) = rgpc.fully_visible_to_everyone();
+        if let Some(ripc) = wants!( ipieces.get(rpiece), ?rpiece );
+        if let Some(rregion) = wantok!( ripc.show(rvis).abs_bbox(rgpc) );
+        then { Some(rregion) }
+        else { None }
+      };
+
+      if gs.pieces.iter().find(|&(opiece, ogpc)| {
+
+        if ogpc.zlevel < tgpc.zlevel { return false }
+
+        let cannot_overlap = if_chain! {
+          if let Some(tregion) = use_region( piece, tgpc);
+          if let Some(oregion) = use_region(opiece, ogpc);
+          if ! tregion.overlaps(&oregion);
+          then { true }
+          else { false }
+        };
+        return ! cannot_overlap;
+      })
+        .is_some();
+
+      then {
+        let z = gs.max_z.z.clone_mut().increment().map_err(
+          |e| APOE::ReportViaResponse(IE::from(e).into()))?;
+        Some(ZLevel { z, zg: gs.gen })
+      }
+      else { None }
+
+    };
+
     let gpc = gs.pieces.byid_mut(piece).unwrap();
 
     let (logents, who_by) = log_did_to_piece_whoby(
@@ -362,10 +402,16 @@ api_route!{
     if gpc.held != Some(player) { throw!(OnlineError::PieceHeld) }
     gpc.held = None;
 
+    let wrc = if let Some(zlevel) = new_z {
+      gpc.zlevel = zlevel;
+      WhatResponseToClientOp::Unpredictable
+    } else {
+      WhatResponseToClientOp::Predictable
+    };
+
     let update = PieceUpdateOp::Modify(());
-    let vanilla = (WhatResponseToClientOp::Predictable,
-                   update,
-                   logents);
+
+    let vanilla = (wrc, update, logents);
       
     if let Some(occid) = gpc.occult.passive_occid() {
       // if piece is occulted, definitely repermute its occultation
