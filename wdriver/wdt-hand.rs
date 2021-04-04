@@ -12,8 +12,8 @@ struct Ctx {
 deref_to_field!{Ctx, Setup, su}
 usual_wanted_tests!{Ctx, su}
 
-const HAND: &str = "6.1";
-const PAWN: &str = "7.1";
+const HAND: &str = "6v1";
+const PAWN: &str = "7v1";
 const ALICE: &str = "1#1";
 
 #[throws(AE)]
@@ -39,7 +39,7 @@ impl Ctx {
       w.synch()?;
 
       let dasharray = player.map(player_dasharray).transpose()?;
-      let euse = w.find_element(By::Id(&format!("piece{}", pc)))?;
+      let euse = w.find_element(By::Id(&w.vpidelem("piece", pc)?))?;
       let epath = euse.find_element(By::Tag("path"))?;
       let attr = epath.get_attribute("stroke-dasharray")?;
 

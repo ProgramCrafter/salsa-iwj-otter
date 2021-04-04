@@ -59,6 +59,12 @@ pub struct Window {
   pub instance: InstanceName,
 }
 
+#[derive(Debug,Clone,Eq,PartialEq,Ord,PartialOrd,Hash)]
+pub struct Vpid(pub String);
+impl Display for Vpid {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str(&self.0) }
+}
+
 impl Window {
   pub fn table(&self) -> String { self.instance.to_string() }
 }
@@ -204,11 +210,42 @@ impl Debug for WindowGuard<'_> {
 
 impl<'g> WindowGuard<'g> {
   #[throws(AE)]
-  pub fn find_piece(&'g self, pieceid: &'g str) -> PieceElement<'g> {
-    let id = format!("use{}", pieceid);
-    let elem = self.su.driver.find_element(By::Id(&id))?;
+  pub fn piece_vpid(&'g self, some_pieceid: &'_ str) -> Vpid {
+    if some_pieceid.contains('.') { return Vpid(some_pieceid.to_owned()) }
+    let (l, r) = some_pieceid.split_once('v').unwrap();
+    let s = format!(r#"{{ "idx":{}, "version":{} }}"#, l,r); // cheesy!
+    let kd: slotmap::KeyData = serde_json::from_str(&s).unwrap();
+    let piece: PieceId = kd.into();
+    let resp = self.su.mgmt_conn().cmd(&MC::AlterGame {
+      game: TABLE.parse().unwrap(),
+      how: MgmtGameUpdateMode::Online,
+      insns: vec![ MgmtGameInstruction::PieceIdLookupFwd {
+        piece,
+        player: self.w.player,
+      } ],
+    })?;
+    let vpid = if_chain!{
+      if let MgmtResponse::AlterGame { error: None, responses } = &resp;
+      if let [MgmtGameResponse::VisiblePieceId(vpid)] = responses.as_slice();
+      then { vpid }
+      else { unreachable(Err::<Void,_>(&resp).unwrap()) }
+    };
+    Vpid(vpid.unwrap().to_string())
+  }
+
+  #[throws(AE)]
+  pub fn vpidelem(&'g self, prefix: &'_ str, some_pieceid: &'_ str) -> String {
+    prefix.to_string() + &self.piece_vpid(some_pieceid)?.0
+  }
+
+  #[throws(AE)]
+  pub fn find_piece(&'g self, pieceid: &'_ str) -> PieceElement<'g> {
+    let pieceid = self.piece_vpid(pieceid)?;
+    let elemid = format!("use{}", &pieceid);
+    let elem = self.su.driver.find_element(By::Id(&elemid))?;
     PieceElement {
-      pieceid, elem,
+      elem,
+      pieceid: pieceid.clone(),
       w: self,
     }
   }
@@ -230,7 +267,7 @@ impl<'g> WindowGuard<'g> {
     let held = self.execute_script(&format!(r##"
         let pc = pieces['{}'];
         return pc.held;
-                       "##, &pc))?;
+                       "##, &self.piece_vpid(pc)?))?;
     let held = held.value();
     dbg!(held);
     match held {
@@ -330,7 +367,7 @@ pub type WebCoord = i32;
 pub type WebPos = (WebCoord, WebCoord);
 
 pub struct PieceElement<'g> {
-  pieceid: &'g str,
+  pieceid: Vpid,
   w: &'g WindowGuard<'g>,
   elem: t4::WebElement<'g>,
 }
@@ -613,7 +650,7 @@ impl<'a> t4::action_chain::ActionChain<'a> {
   }
 
   #[throws(AE)]
-  fn move_pc<'g>(self, w: &'g WindowGuard, pc: &str) -> Self {
+  fn move_pc<'g>(self, w: &'g WindowGuard, pc: &'_ str) -> Self {
     (||{
       let p = w.find_piece(pc).context("find")?;
       let pos = p.posw().context("get pos")?;

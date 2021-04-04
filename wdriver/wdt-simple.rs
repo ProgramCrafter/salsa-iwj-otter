@@ -21,8 +21,8 @@ impl Ctx {
     let alice_p1g = {
       let mut w = su.w(&self.alice)?;
       w.synch()?;
-      let p1 = w.find_piece("1.1")?;
-      let p2 = w.find_piece("2.1")?;
+      let p1 = w.find_piece("1v1")?;
+      let p2 = w.find_piece("2v1")?;
       let p1g_old = p1.posg()?;
       let (p2x,p2y) = p2.posw()?;
 
@@ -44,19 +44,19 @@ impl Ctx {
     {
       let mut w = su.w(&self.bob)?;
       w.synch()?;
-      let p1 = w.find_piece("1.1")?;
+      let p1 = w.find_piece("1v1")?;
       assert_eq!(p1.posg()?, alice_p1g);
     }
   }
 
   #[throws(AE)]
   fn rotate(&mut self) -> &'static str {
-    let pc = "4.1";
+    let pc = "4v1";
     let su = &mut self.su;
 
     let chk = |w: &WindowGuard<'_>| {
       let transform = format!("rotate(-90)");
-      let pd = w.find_element(By::Id(&format!("piece{}",pc)))?;
+      let pd = w.find_element(By::Id(&w.vpidelem("piece",pc)?))?;
       assert_eq!(pd.get_attribute("transform")?, Some(transform));
       Ok::<_,AE>(())
     };
@@ -160,11 +160,11 @@ impl Ctx {
 
   #[throws(AE)]
   fn conflict(&mut self) {
-    let pc = "1.1";
+    let pc = "1v1";
     let su = &mut self.su;
 
     {
-      let pc = "4.1";
+      let pc = "4v1";
       let w = su.w(&self.alice)?;
       w.action_chain()
         .move_pc(&w, pc)?
