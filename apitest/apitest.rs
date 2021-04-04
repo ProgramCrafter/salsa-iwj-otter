@@ -261,7 +261,7 @@ impl<T,E> Result<T,E> {
   where Self: anyhow::Context<T,E>
   {
     let x = self.context(msg);
-    if x.is_ok() { info!("completed {}.", msg) };
+    if x.is_ok() { info!("did {}.", msg) };
     x
   }
 
