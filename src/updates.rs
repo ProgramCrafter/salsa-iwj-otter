@@ -652,7 +652,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
      -> SecondarySlotMap<PlayerId, U>
   where
     GUF: FnOnce(&mut GPiece, Generation, &IsResponseToClientOp),
-    WMZ: FnMut(&mut ZCoord, &GPiece),
+    WMZ: FnMut(&mut ZLevel, &GPiece),
     MUF: FnMut(&IOccults, &GameState, &GPiece, &IPiece,
                PlayerId, &Option<PieceRenderInstructions>)
                -> Result<Option<U>,IE>,
@@ -711,7 +711,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     (
       piece,by_client, gen_update,
 
-      |max_z, gpc| max_z.update_max(&gpc.zlevel.z),
+      |max_z, gpc| max_z.update_max(&gpc.zlevel),
 
       |ioccults,gs,gpc,ipc,player,pri| {
         let ops = match ops {

@@ -165,7 +165,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
         players: default(),
         log: default(),
         gen: Generation(0),
-        max_z: default(),
+        max_z: ZLevel::zero(),
         occults: default(),
       };
 
@@ -731,7 +731,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
       let mut updates = Vec::with_capacity(count_len);
       let mut pos = pos.unwrap_or(DEFAULT_POS_START);
-      let mut z = gs.max_z.clone_mut();
+      let mut z = gs.max_z.z.clone_mut();
       for piece_i in count {
         let ilks = &mut ig.ioccults.ilks;
         let face = face.unwrap_or_default();
@@ -757,7 +757,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           ilks.insert(ilkname, OccultIlkData { p_occ })
         });
         gpc.pos.clamped(gs.table_size).map_err(|_| SpecError::PosOffTable)?;
-        if gpc.zlevel.z > gs.max_z { gs.max_z = gpc.zlevel.z.clone() }
+        if gpc.zlevel > gs.max_z { gs.max_z = gpc.zlevel.clone() }
         let piece = gs.pieces.as_mut(modperm).insert(gpc);
         let p = IPieceTraitObj::new(p);
         ig.ipieces.as_mut(modperm).insert(piece, IPiece { p, occilk });

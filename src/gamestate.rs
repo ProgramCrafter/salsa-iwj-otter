@@ -28,7 +28,8 @@ pub const DEFAULT_TABLE_COLOUR: &str = "green";
 
 // ---------- general data types ----------
 
-#[derive(Debug,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
+#[derive(Debug,Clone,Eq,PartialEq,Ord,PartialOrd)]
+#[derive(Serialize,Deserialize)]
 pub struct ZLevel {
   pub z: ZCoord,
   pub zg: Generation,
@@ -43,7 +44,7 @@ pub struct GameState { // usual variable: gs
   pub pieces: GPieces,
   pub gen: Generation,
   pub log: VecDeque<(Generation, Arc<CommittedLogEntry>)>,
-  pub max_z: ZCoord,
+  pub max_z: ZLevel,
   pub players: GPlayers,
   pub occults: GameOccults,
 }
@@ -445,10 +446,14 @@ impl GameState {
     pieces: default(),
     gen: Generation(0),
     log: default(),
-    max_z: default(),
+    max_z: ZLevel::zero(),
     players: default(),
     occults: default(),
   } }
+}
+
+impl ZLevel {
+  pub fn zero() -> Self { ZLevel { z: default(), zg: Generation(0) } }
 }
 
 // ---------- log expiry ==========

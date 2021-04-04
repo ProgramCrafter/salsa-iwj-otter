@@ -864,7 +864,7 @@ impl OccultationViewDef for OwnerOccultationView {
 #[throws(OnlineError)]
 pub fn create_occultation(
   gen: &mut UniqueGenGen,
-  max_z: &mut ZCoord,
+  max_z: &mut ZLevel,
   gplayers: &mut GPlayers,
   gpieces: &mut GPieces,
   goccults: &mut GameOccults,
@@ -894,6 +894,7 @@ pub fn create_occultation(
     } {
       // We expect that ogpc.zlevel.z.increment() is shorter than
       // the displ_z, but in case it isn't, we must look at both.
+      let max_z = &mut max_z.z;
       (||{
         max_z.update_max(&ogpc.zlevel.z.clone_mut().increment()?);
         max_z.update_max(&displ_z.plus_offset(! 0)?);
