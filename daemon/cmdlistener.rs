@@ -308,6 +308,23 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   }
 
   #[throws(MgmtError)]
+  fn pieceid_lookup<'igr, 'ig: 'igr, 'cs, 
+                    F: FnOnce(&PerPlayerIdMap) -> MGR>
+    (
+      cs: &'cs CommandStream,
+      ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
+      player: PlayerId,
+      f: F,
+    ) -> ExecuteGameInsnResults<'igr, 'ig>
+  {
+    let superuser = cs.superuser.ok_or(ME::SuperuserAuthorisationRequired)?;
+    let ig = ig.by_mut(superuser.into());
+    let gpl = ig.gs.players.byid(player)?;
+    let resp = f(&gpl.idmap);
+    no_updates(ig, resp)
+  }
+
+  #[throws(MgmtError)]
   fn update_links<'igr, 'ig: 'igr, 'cs,
                F: FnOnce(&mut Arc<LinksTable>) -> Result<Html,ME>>
     (
@@ -430,18 +447,16 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     },
 
     MGI::PieceIdLookupFwd { player, piece } => {
-      let superuser = cs.superuser.ok_or(ME::SuperuserAuthorisationRequired)?;
-      let ig = ig.by_mut(superuser.into());
-      let gpl = ig.gs.players.byid(player)?;
-      let vpid = gpl.idmap.fwd(piece);
-      no_updates(ig, MGR::VisiblePieceId(vpid))
+      pieceid_lookup(
+        cs, ig, player,
+        |ppidm| MGR::VisiblePieceId(ppidm.fwd(piece))
+      )?
     },
     MGI::PieceIdLookupRev { player, vpid } => {
-      let superuser = cs.superuser.ok_or(ME::SuperuserAuthorisationRequired)?;
-      let ig = ig.by_mut(superuser.into());
-      let gpl = ig.gs.players.byid(player)?;
-      let piece = gpl.idmap.rev(vpid);
-      no_updates(ig, MGR::InternalPieceId(piece))
+      pieceid_lookup(
+        cs, ig, player,
+        |ppidm| MGR::InternalPieceId(ppidm.rev(vpid))
+      )?
     },
 
     MGI::ListPieces => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
