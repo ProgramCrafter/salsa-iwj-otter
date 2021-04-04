@@ -1548,6 +1548,7 @@ function startup() {
   }
 
   if (gen_update_hook == null) gen_update_hook = function() { };
+  gen_update_hook();
 
   last_log_ts = wasm_bindgen.timestamp_abbreviator(dataload.last_log_ts);
 

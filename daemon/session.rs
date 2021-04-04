@@ -86,6 +86,7 @@ impl SvgAttrs {
 fn session_inner(form: Json<SessionForm>,
                  layout: Option<PresentationLayout>)
                  -> Result<Template,OE> {
+  sleep(Duration::from_secs(2));
   // make session in this game, log a message to other players
   let iad = lookup_token(form.ptoken.borrow())?;
   let player = iad.ident;
