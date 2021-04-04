@@ -161,7 +161,7 @@ fn fetch_log(driver: &T4d, name: &str) {
     for ent in got.value().as_array()
       .ok_or(anyhow!("saved isn't an array?"))?
     {
-      #[derive(Deserialize)]
+      #[derive(Deserialize,Debug)]
       struct LogEnt(String, Vec<JsV>);
       impl fmt::Display for LogEnt {
         #[throws(fmt::Error)]
@@ -312,6 +312,10 @@ impl<'g> WindowGuard<'g> {
     log
   }
 
+  #[throws(AE)]
+  pub fn fetch_js_log(&self) {
+    fetch_log(&self.su.driver, &self.w.name)?
+  }
 }
 
 #[ext(pub)]

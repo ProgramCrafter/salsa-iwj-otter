@@ -858,7 +858,7 @@ pub fn setup_core<O>(module_paths: &[&str], early_args: EarlyArgPredicate) ->
   }
 
   builder
-    .filter_level(log::LevelFilter::Info)
+    .filter_level(log::LevelFilter::Debug)
     .parse_env("OTTER_TEST_LOG")
     .init();
   debug!("starting");
