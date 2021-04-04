@@ -57,6 +57,7 @@ pub struct Window {
   pub name: String,
   pub player: PlayerId,
   pub instance: InstanceName,
+  vpid_cache: RefCell<HashMap<String, Vpid>>,
 }
 
 #[derive(Debug,Clone,Eq,PartialEq,Ord,PartialOrd,Hash)]
@@ -212,6 +213,10 @@ impl<'g> WindowGuard<'g> {
   #[throws(AE)]
   pub fn piece_vpid(&'g self, some_pieceid: &'_ str) -> Vpid {
     if some_pieceid.contains('.') { return Vpid(some_pieceid.to_owned()) }
+
+    let mut cache = self.w.vpid_cache.borrow_mut();
+    if let Some(got) = cache.get(some_pieceid) { return got.clone() }
+
     let (l, r) = some_pieceid.split_once('v').unwrap();
     let s = format!(r#"{{ "idx":{}, "version":{} }}"#, l,r); // cheesy!
     let kd: slotmap::KeyData = serde_json::from_str(&s).unwrap();
@@ -230,7 +235,14 @@ impl<'g> WindowGuard<'g> {
       then { vpid }
       else { unreachable(Err::<Void,_>(&resp).unwrap()) }
     };
-    Vpid(vpid.unwrap().to_string())
+
+    let got = Vpid(vpid.unwrap().to_string());
+    cache.insert(some_pieceid.to_owned(), got.clone());
+    got
+  }
+
+  pub fn vpid_clear_cache(&'g self) {
+    self.w.vpid_cache.borrow_mut().clear();
   }
 
   #[throws(AE)]
@@ -450,6 +462,7 @@ impl Setup {
       Ok::<_,AE>(Window {
         name: name.to_owned(),
         instance: instance.0.clone(),
+        vpid_cache: default(),
         player,
       })
     })()
@@ -672,6 +685,7 @@ impl Drop for Setup {
           name: name.clone(),
           instance: TABLE.parse().context(TABLE)?,
           player: default(),
+          vpid_cache: default(),
         };
         self.w(&w)?.screenshot("final", log::Level::Info)
           .context(name)
