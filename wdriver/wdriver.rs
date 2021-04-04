@@ -146,7 +146,7 @@ fn prepare_thirtyfour(ds: &DirSubst)
     .context("create 34 WebDriver")?;
 
   const FRONT: &str = "front";
-  let js_logfile = JsLogfileImp::open(&ds, FRONT)?;
+  let mut js_logfile = JsLogfileImp::open(&ds, FRONT)?;
 
   driver.set_window_name(FRONT).context("set initial window name")?;
   screenshot(&mut driver, &mut count, "startup", log::Level::Trace)?;
@@ -165,16 +165,24 @@ fn prepare_thirtyfour(ds: &DirSubst)
 
 pub type JsLogfile = Rc<RefCell<JsLogfileImp>>;
 
-#[derive(Clone,Debug)]
+#[derive(Debug)]
 pub struct JsLogfileImp {
   name: String,
+  path: String,
+  fh: File,
+  counter: usize,
 }
 
 impl JsLogfileImp {
   #[throws(AE)]
-  pub fn open(_ds: &DirSubst, name: &str) -> Self {
+  pub fn open(ds: &DirSubst, name: &str) -> Self {
+    let path = ds.also(&[("name", name)]).subst(
+      "@abstmp@/js-@name@.log"
+    )?;
     let name = name.to_owned();
-    JsLogfileImp { name }
+    let fh = File::create(&path).with_context(|| path.clone())?;
+    let counter = 0;
+    JsLogfileImp { name, path, fh, counter }
   }
 
   pub fn name(&self) -> String {
@@ -183,7 +191,14 @@ impl JsLogfileImp {
 
   /// current window must be this one, named `name` as we passed to open
   #[throws(AE)]
-  pub fn fetch(&self, driver: &T4d) {
+  pub fn fetch(&mut self, driver: &T4d) {
+    self.counter += 1;
+    let head = format!(
+ "============================== JS {} {} ==============================",
+      &self.name, self.counter
+    );
+    writeln!(&mut self.fh, "{}", &head)?;
+
     (||{
       let got = driver.execute_script(r#"
         var returning = window.console.saved;
@@ -207,12 +222,14 @@ impl JsLogfileImp {
         let ent: LogEnt = serde_json::from_value(ent.clone())
           .context("parse log entry")?;
 
-        debug!("JS {} {}", &self.name, &ent);
+        writeln!(&mut self.fh, "{:?}", &ent)?;
       }
       Ok::<_,AE>(())
     })()
       .with_context(|| self.name.clone())
       .context("fetch JS log messages")?;
+
+    info!("{}", head);
   }
 }
 
