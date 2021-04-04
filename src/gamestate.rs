@@ -214,6 +214,15 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
   fn occultation_notify_hook(&self, _piece: PieceId) -> UnpreparedUpdates {
     None
   }
+
+  #[throws(IE)]
+  fn abs_bbox(&self, p: &GPiece) -> Rect {
+    Rect { corners: self.bbox_approx()?.corners.iter().map(
+      |c| *c + p.pos
+    )
+           .collect::<Result<ArrayVec<_>,_>>()?
+           .into_inner().unwrap() }
+  }
 }
 
 #[typetag::serde]
