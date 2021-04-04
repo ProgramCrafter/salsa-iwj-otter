@@ -1246,6 +1246,7 @@ pieceops.Insert = <PieceHandler>function
   } as any as PieceInfo; // fudge this, piece_modify_core will fix it
   pieces[piece] = p;
   p.uos = info.uos;
+  p.queued_moves = 0;
   piece_modify_core(piece, p, info, false);
 }
 
