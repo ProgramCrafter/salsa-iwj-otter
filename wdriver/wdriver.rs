@@ -64,6 +64,8 @@ pub struct Window {
 }
 
 #[derive(Debug,Clone,Eq,PartialEq,Ord,PartialOrd,Hash)]
+#[derive(Deserialize)]
+#[serde(transparent)]
 pub struct Vpid(pub String);
 impl Display for Vpid {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str(&self.0) }
@@ -250,6 +252,12 @@ impl Debug for WindowGuard<'_> {
       .field("w.instance", &self.w.instance.to_string())
       .finish()?
   }
+}
+
+#[derive(Deserialize,Clone,Debug)]
+pub struct WPiece {
+  piece: Vpid,
+  p: JsV,
 }
 
 impl<'g> WindowGuard<'g> {
@@ -657,6 +665,25 @@ impl<'g> WindowGuard<'g> {
       Ok::<(),AE>(())
     })()
       .context("check for in-client trapped errors")?;
+  }
+
+  /// These come in stacking order, bottom to top.
+  #[throws(AE)]
+  pub fn pieces(&mut self) -> Vec<WPiece> {
+    self.su.driver.execute_script(r#"
+      let uelem = pieces_marker;
+      let out = [];
+      for (;;) {
+        uelem = uelem.nextElementSibling;
+        let piece = uelem.dataset.piece;
+        if (!piece) break;
+        let p = pieces[piece];
+        out.push({ piece: piece, p: p });
+      }
+      return out;
+    "#)
+      .did("fetch ids")?
+      .convert()?
   }
 }
 
