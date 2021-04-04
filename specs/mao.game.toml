@@ -43,7 +43,7 @@ shape.xy = [25,30]
 
 
 [[pieces]]
-pos = [50, 20]
+pos = [53, 25]
 colour = "brown"
 label.place = "BottomLeftOutside"
 label.colour = "black"
@@ -52,10 +52,10 @@ type = "Hand"
 edge = "white"
 edge_width = 0.75
 shape.type = "Rect"
-shape.xy = [97,25]
+shape.xy = [93,25]
 
 [[pieces]]
-pos = [150, 14]
+pos = [150, 23]
 colour = "red"
 label.place = "BottomLeftOutside"
 label.colour = "black"
@@ -64,10 +64,10 @@ type = "Hand"
 edge = "white"
 edge_width = 0.75
 shape.type = "Rect"
-shape.xy = [97,25]
+shape.xy = [93,25]
 
 [[pieces]]
-pos = [250, 20]
+pos = [247, 25]
 colour = "orange"
 label.place = "BottomLeftOutside"
 label.colour = "black"
@@ -76,10 +76,10 @@ type = "Hand"
 edge = "white"
 edge_width = 0.75
 shape.type = "Rect"
-shape.xy = [97,25]
+shape.xy = [93,25]
 
 [[pieces]]
-pos = [250, 65]
+pos = [247, 70]
 colour = "yellow"
 label.place = "BottomLeftOutside"
 label.colour = "black"
@@ -88,10 +88,10 @@ type = "Hand"
 edge = "darkgrey"
 edge_width = 1.0
 shape.type = "Rect"
-shape.xy = [97,25]
+shape.xy = [93,25]
 
 [[pieces]]
-pos = [250, 135]
+pos = [247, 130]
 colour = "green"
 label.place = "TopLeftOutside"
 label.colour = "black"
@@ -100,10 +100,10 @@ type = "Hand"
 edge = "white"
 edge_width = 0.75
 shape.type = "Rect"
-shape.xy = [97,25]
+shape.xy = [93,25]
 
 [[pieces]]
-pos = [250, 180]
+pos = [247, 175]
 colour = "blue"
 label.place = "TopLeftOutside"
 label.colour = "black"
@@ -112,10 +112,10 @@ type = "Hand"
 edge = "white"
 edge_width = 0.75
 shape.type = "Rect"
-shape.xy = [97,25]
+shape.xy = [93,25]
 
 [[pieces]]
-pos = [150, 186]
+pos = [150, 177]
 colour = "purple"
 label.place = "TopLeftOutside"
 label.colour = "black"
@@ -124,10 +124,10 @@ type = "Hand"
 edge = "white"
 edge_width = 0.75
 shape.type = "Rect"
-shape.xy = [97,25]
+shape.xy = [93,25]
 
 [[pieces]]
-pos = [50, 180]
+pos = [53, 175]
 colour = "grey"
 label.place = "TopLeftOutside"
 label.colour = "black"
@@ -136,10 +136,10 @@ type = "Hand"
 edge = "white"
 edge_width = 0.75
 shape.type = "Rect"
-shape.xy = [97,25]
+shape.xy = [93,25]
 
 [[pieces]]
-pos = [50, 65]
+pos = [53, 70]
 colour = "black"
 label.place = "BottomLeftOutside"
 label.colour = "black"
@@ -148,10 +148,10 @@ type = "Hand"
 edge = "white"
 edge_width = 0.75
 shape.type = "Rect"
-shape.xy = [97,25]
+shape.xy = [93,25]
 
 [[pieces]]
-pos = [50, 135]
+pos = [53, 130]
 colour = "white"
 label.place = "TopLeftOutside"
 label.colour = "black"
@@ -160,7 +160,7 @@ type = "Hand"
 edge = "darkgrey"
 edge_width = 1.0
 shape.type = "Rect"
-shape.xy = [97,25]
+shape.xy = [93,25]
 
 
 
