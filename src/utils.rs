@@ -471,6 +471,10 @@ macro_rules! want {
 macro_rules! wants {
   { $($d:tt)* } => { want!(Some = $($d)*) }
 }
+#[macro_export]
+macro_rules! wantok {
+  { $($d:tt)* } => { want!(Ok = $($d)*) }
+}
 
 #[macro_export]
 macro_rules! want_let {
