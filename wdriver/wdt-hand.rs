@@ -102,7 +102,7 @@ impl Ctx {
       let mut w = su.w(side)?;
       w.synch()?;
       let log = w.retrieve_log((&mut |_: &'_ _| false) as LogIgnoreBeforeFn)?;
-      assert_eq!(log.find_conflict(), None);
+      log.assert_no_conflicts();
     }
 
     {

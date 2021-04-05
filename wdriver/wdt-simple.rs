@@ -245,8 +245,10 @@ impl Ctx {
       assert_eq!(n.held, y.held);
 
       for got in &gots {
-        let conflict = got.log.find_conflict().is_some();
-        assert_eq!(conflict, !got.yes);
+        let conflicts = got.log.find_conflicts();
+        assert_eq!(conflicts.len(),
+                   if got.yes { 0 } else { 1},
+                   "wrong # conflicts {:?}", &conflicts);
       }
 
       let yw = su.w(&y.window)?;

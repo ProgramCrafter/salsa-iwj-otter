@@ -447,8 +447,13 @@ impl<'g> WindowGuard<'g> {
 
 #[ext(pub)]
 impl Vec<String> {
-  fn find_conflict(&self) -> Option<&String> {
-    self.iter().find(|m| m.starts_with("Conflict!"))
+  fn find_conflicts(&self) -> Vec<String> {
+    self.iter().filter(|m| m.starts_with("Conflict!"))
+      .cloned().collect()
+  }
+
+  fn assert_no_conflicts(&self) {
+    assert_eq!(self.find_conflicts(), vec![] as Vec<String>);
   }
 }
 
