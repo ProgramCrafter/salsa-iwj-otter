@@ -321,7 +321,7 @@ stamp/at-%.check:	$(AT_DEPS)
 	$(AT_RUN)
 	$(stamp)
 
-for-wdt:		$(AT_DEPS)
+for-wdt:		$(WDT_DEPS)
 stamp/wdt-%.check:	$(WDT_DEPS)
 	$(WDT_RUN)
 	$(stamp)
