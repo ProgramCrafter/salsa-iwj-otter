@@ -220,7 +220,7 @@ impl Ctx {
       fn deref<'t>(&'t self) -> &'t Side<'s> { &self.side }
     }
 
-    let check = |su: &mut Setup, before_gen|{
+    let check = |su: &mut Setup, before_gen, check_end_pos|{
 
       let gots = sides.iter().map(|side|{
         let mut w = su.w(side.window)?;
@@ -240,9 +240,12 @@ impl Ctx {
 
       let y = gots.iter().filter(|got|  got.yes).next().expect("y");
       let n = gots.iter().filter(|got| !got.yes).next().expect("n");
-      assert_eq!(y.now, y.try_end);
-      assert_eq!(n.now, y.try_end);
-      assert_eq!(n.now, y.try_end);
+
+      if check_end_pos {
+        assert_eq!(y.now, y.try_end);
+        assert_eq!(n.now, y.try_end);
+        assert_eq!(n.now, y.try_end);
+      }
       assert_eq!(n.held, y.held);
 
       for got in &gots {
@@ -261,7 +264,7 @@ impl Ctx {
 
       let gen = yw.synch()?;
 
-      Ok::<_,AE>(gen)
+      Ok::<_,AE>((gen, y.now))
     };
 
 
@@ -281,13 +284,27 @@ impl Ctx {
         .perform()
         .did("conflicting drag")?;
     }
+    let pauseable = paused.resume()?;
 
-    paused.resume()?;
-
-    let gen_before = check(su, sides[0].before_gen)
+    let (gen_before, pos_now) = check(su, sides[0].before_gen, true)
       .did("conflicting drag, check")?;
 
-    let _ = gen_before;
+    let paused = pauseable.pause()?;
+    for side in &sides {
+      let w = su.w(side.window)?;
+      w.action_chain()
+
+        .move_w(&w, pos_now)?
+        .click()
+        .release()
+
+        .perform()
+        .did("conflicting grasp")?;
+    }
+    let _pauseable = paused.resume()?;
+
+    check(su, gen_before, false)
+      .did("conflicting grasp, check")?;
   }
 }
 
