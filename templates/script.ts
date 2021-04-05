@@ -959,8 +959,7 @@ function ungrab_all() {
   for (let tpiece of Object.keys(pieces)) {
     let tp = pieces[tpiece]!;
     if (tp.held == us) {
-      set_ungrab(tpiece,tp);
-      api_piece(api, 'ungrab', tpiece,tp, { });
+      do_ungrab(tpiece,tp);
     }
   }
 }
@@ -971,11 +970,12 @@ function set_grab(piece: PieceId, p: PieceInfo, owner: PlayerId) {
   redisplay_ancillaries(piece,p);
   recompute_keybindings();
 }
-function set_ungrab(piece: PieceId, p: PieceInfo) {
+function do_ungrab(piece: PieceId, p: PieceInfo) {
   p.held = null;
   p.drag_delta = 0;
   redisplay_ancillaries(piece,p);
   recompute_keybindings();
+  api_piece(api, 'ungrab', piece,p, { });
 }
 
 function clear_halo(piece: PieceId, p: PieceInfo) {
@@ -1114,8 +1114,7 @@ function drag_end() {
     for (let dp of drag_pieces) {
       let piece = dp.piece;
       let p = pieces[piece]!;
-      set_ungrab(piece,p);
-      api_piece(api, 'ungrab', piece,p, { });
+      do_ungrab(piece,p);
     }
   }
   drag_cancel();
