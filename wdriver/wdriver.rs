@@ -632,7 +632,7 @@ impl<'g> WindowGuard<'g> {
   }
 
   #[throws(AE)]
-  fn synch_raw(&mut self) -> String {
+  fn synch_raw(&mut self) -> Generation {
     let gen = self.su.mgmt_conn().game_synch(self.w.instance.clone())?;
     (|| {
       loop {
@@ -658,23 +658,25 @@ impl<'g> WindowGuard<'g> {
       Ok::<(),AE>(())
     })()
       .context("await gen update via async js script")?;
-    synch_logentry(gen).into_html_string()
+    gen
   }
 
   #[throws(AE)]
-  pub fn synch_ignore_js_errors(&mut self) {
-    self.synch_raw()?;
+  pub fn synch_ignore_js_errors(&mut self) -> Generation {
+    let gen = self.synch_raw()?;
 
     self.su.driver.execute_script(r#"
       let e = document.getElementById('error');
       e.innerHTML = "";
     "#)
       .context("clear in-client trapped errors")?;
+
+    gen
   }
 
   #[throws(AE)]
-  pub fn synch(&mut self) {
-    self.synch_raw()?;
+  pub fn synch(&mut self) -> Generation {
+    let gen = self.synch_raw()?;
 
     (|| {
       let errors = self.su.driver.execute_script(r#"
@@ -697,6 +699,8 @@ impl<'g> WindowGuard<'g> {
       Ok::<(),AE>(())
     })()
       .context("check for in-client trapped errors")?;
+
+    gen
   }
 
   /// These come in stacking order, bottom to top.

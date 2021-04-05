@@ -176,6 +176,7 @@ impl Ctx {
       window: &'s Window,
       start: Pos,
       try_end: Pos,
+      gen: Generation,
     }
 
     let mut mk_side = |window, dx| {
@@ -192,9 +193,9 @@ impl Ctx {
         .perform()
         .did("select and release")?;
 
-      w.synch()?;
+      let gen = w.synch()?;
 
-      Ok::<_,AE>(Side { window, start, try_end })
+      Ok::<_,AE>(Side { window, start, try_end, gen })
     };
 
     let sides = [
