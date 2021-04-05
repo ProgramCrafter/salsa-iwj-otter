@@ -251,14 +251,16 @@ impl Ctx {
                    "wrong # conflicts {:?}", &conflicts);
       }
 
-      let yw = su.w(&y.window)?;
+      let mut yw = su.w(&y.window)?;
       yw.action_chain()
         .move_w(&yw, y.now)?
         .click()
         .perform()
         .did("ungrab to tidy")?;
 
-      Ok::<_,AE>(())
+      let gen = yw.synch()?;
+
+      Ok::<_,AE>(gen)
     };
 
 
@@ -282,7 +284,9 @@ impl Ctx {
 
     paused.resume()?;
 
-    check(su).did("conflicting drag, check")?;
+    let gen_before = check(su).did("conflicting drag, check")?;
+
+    let _ = gen_before;
   }
 }
 
