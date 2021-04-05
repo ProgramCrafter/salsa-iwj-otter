@@ -204,6 +204,55 @@ impl Ctx {
 
     dbg!(&sides);
 
+
+    #[derive(Debug)]
+    struct Got<'s> {
+      side: &'s Side<'s>,
+      yes: bool,
+      now: Pos,
+      log: Vec<String>,
+      held: Option<String>,
+      client: String,
+    }
+    impl<'s> Deref for Got<'s> {
+      type Target = Side<'s>;
+      fn deref<'t>(&'t self) -> &'t Side<'s> { &self.side }
+    }
+
+    let check = |su: &mut Setup|{
+
+      let gots = sides.iter().map(|side|{
+        let mut w = su.w(side.window)?;
+        w.synch()?;
+        let p = w.find_piece(pc)?;
+        let now = p.posg()?;
+
+        let log = w.retrieve_log(Html::lit("black knight"))?;
+        let held = w.piece_held(&pc)?;
+        let client = w.client()?;
+        let yes = held.as_ref() == Some(&client);
+
+        Ok::<_,AE>(Got { side, now, log, held, client, yes })
+      }).collect::<Result<Vec<_>,AE>>()?;
+
+      dbg!(&gots);
+
+      let y = gots.iter().filter(|got|  got.yes).next().expect("y");
+      let n = gots.iter().filter(|got| !got.yes).next().expect("n");
+      assert_eq!(y.now, y.try_end);
+      assert_eq!(n.now, y.try_end);
+      assert_eq!(n.now, y.try_end);
+      assert_eq!(n.held, y.held);
+
+      for got in &gots {
+        let conflict = got.log.find_conflict().is_some();
+        assert_eq!(conflict, !got.yes);
+      }
+
+      Ok::<_,AE>(())
+    };
+
+
     let paused = su.pause_otter()?;
 
     for side in &sides {
@@ -224,47 +273,7 @@ impl Ctx {
 
     paused.resume()?;
 
-    #[derive(Debug)]
-    struct Got<'s> {
-      side: &'s Side<'s>,
-      yes: bool,
-      now: Pos,
-      log: Vec<String>,
-      held: Option<String>,
-      client: String,
-    }
-    impl<'s> Deref for Got<'s> {
-      type Target = Side<'s>;
-      fn deref<'t>(&'t self) -> &'t Side<'s> { &self.side }
-    }
-
-    let gots = sides.iter().map(|side|{
-      let mut w = su.w(side.window)?;
-      w.synch()?;
-      let p = w.find_piece(pc)?;
-      let now = p.posg()?;
-
-      let log = w.retrieve_log(Html::lit("black knight"))?;
-      let held = w.piece_held(&pc)?;
-      let client = w.client()?;
-      let yes = held.as_ref() == Some(&client);
-
-      Ok::<_,AE>(Got { side, now, log, held, client, yes })
-    }).collect::<Result<Vec<_>,AE>>()?;
-
-    dbg!(&gots);
-
-    let y = gots.iter().filter(|got|  got.yes).next().expect("y");
-    let n = gots.iter().filter(|got| !got.yes).next().expect("n");
-    assert_eq!(y.now, y.try_end);
-    assert_eq!(n.now, y.try_end);
-    assert_eq!(n.now, y.try_end);
-    assert_eq!(n.held, y.held);
-
-    for got in &gots {
-      let conflict = got.log.find_conflict().is_some();
-      assert_eq!(conflict, !got.yes);
-    }
+    check(su).did("conflicting drag, check")?;
   }
 }
 
