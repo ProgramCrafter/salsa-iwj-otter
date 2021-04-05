@@ -316,10 +316,12 @@ AT_WDT_RUN = $(NAILING_CARGO_JUST_RUN) $(abspath $<)
 AT_RUN = $(AT_WDT_RUN) $(basename $(notdir $@))
 WDT_RUN = $(AT_WDT_RUN) wdriver --test=$(basename $(notdir $@))
 
+for-at:			$(AT_DEPS)
 stamp/at-%.check:	$(AT_DEPS)
 	$(AT_RUN)
 	$(stamp)
 
+for-wdt:		$(AT_DEPS)
 stamp/wdt-%.check:	$(WDT_DEPS)
 	$(WDT_RUN)
 	$(stamp)
