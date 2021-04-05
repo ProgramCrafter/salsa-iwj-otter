@@ -1209,8 +1209,12 @@ function movehist_record(ent: MoveHistEnt) {
   let moved = ent.diff['Moved'];
   if (moved) {
     let d = moved.d;
-    let da =
-	`0 ${MOVEHIST_ENDS} ${d - MOVEHIST_ENDS*2} ${MOVEHIST_ENDS*2}`;
+    let ends = [];
+    for (let end of [0,1]) {
+      let s = (!end ? MOVEHIST_ENDS : d - MOVEHIST_ENDS) / d;
+      ends.push([ (1-s) * old_pos[0] + s * new_pos[0],
+		  (1-s) * old_pos[1] + s * new_pos[1] ]);
+    }
     let g = document.createElementNS(svg_ns,'g');
     let sz = 4;
     let pi = players[ent.held];
@@ -1218,21 +1222,21 @@ function movehist_record(ent: MoveHistEnt) {
     // todo: would be nice to place text variously along arrow, rotated
     let svg = `
       <marker id="${meid}" viewBox="2 0 ${sz} ${sz}" 
-	refX="${sz + MOVEHIST_ENDS}" refY="${sz/2}"
+	refX="${sz}" refY="${sz/2}"
 	markerWidth="${sz + 2}" markerHeight="${sz}"
 	stroke="yellow" fill="none"
 	orient="auto-start-reverse" stroke-linejoin="mitre">
 	<path d="M 0 0 L ${sz} ${sz/2} L 0 ${sz}" />
       </marker>
-      <line x1="${old_pos[0].toString()}"
-	    y1="${old_pos[1].toString()}"
-	    x2="${new_pos[0].toString()}"
-	    y2="${new_pos[1].toString()}"
-	    stroke="yellow"  stroke-dasharray="${da}"
+      <line x1="${ends[0][0].toString()}"
+	    y1="${ends[0][1].toString()}"
+	    x2="${ends[1][0].toString()}"
+	    y2="${ends[1][1].toString()}"
+	    stroke="yellow"
 	    stroke-width="1" pointer-events="none"
 	    marker-end="url(#${meid})" />
-      <text x="${((old_pos[0] + new_pos[0]) / 2).toString()}"
-	    y="${((old_pos[1] + new_pos[1]) / 2).toString()}"
+      <text x="${((ends[0][0] + ends[1][0]) / 2).toString()}"
+	    y="${((ends[0][1] + ends[1][1]) / 2).toString()}"
 	    font-size="5" pointer-events="none"
 	    stroke-width="0.1">${nick}</text>
     `;
