@@ -258,8 +258,11 @@ impl Ctx {
 
       paused.resume()?;
 
-      w.synch()?;
-    }
+      let gen = w.synch()?;
+
+      let log = w.retrieve_log(gen)?;
+      assert_eq!( log.find_conflicts(), Vec::<String>::default() );
+    };
   }
 }
 
