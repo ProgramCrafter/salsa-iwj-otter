@@ -852,7 +852,11 @@ pub fn setup_core<O>(module_paths: &[&str], early_args: EarlyArgPredicate) ->
   builder
     .format_timestamp_micros()
     .format_level(true)
-    .filter_module("otter_apitest_tests", log::LevelFilter::Debug);
+    .filter_module("otter_apitest_tests", log::LevelFilter::Debug)
+    .filter_module("html5ever::tokenizer", log::LevelFilter::Info)
+    .filter_module("html5ever::tree_builder", log::LevelFilter::Info)
+    .filter_module("selectors::matching", log::LevelFilter::Info)
+    ;
 
   for module in module_paths {
     builder
