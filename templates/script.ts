@@ -922,7 +922,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       p.drag_delta = Math.min(Math.max(delta, -SPECIAL_MULTI_DELTA_MAX),
 		                              +SPECIAL_MULTI_DELTA_MAX);
       drag_add_piece(piece,p);
-      set_grab(piece,p, us);
+      set_grab_us(piece,p);
       api_piece(api, wresting ? 'wrest' : 'grab', piece,p, { });
     }
   } else {
@@ -964,9 +964,9 @@ function ungrab_all() {
   }
 }
 
-function set_grab(piece: PieceId, p: PieceInfo, owner: PlayerId) {
-  p.held = owner;
-  if (owner != us) p.drag_delta = 0;
+function set_grab_us(piece: PieceId, p: PieceInfo) {
+  p.held = us;
+  p.drag_delta = 0;
   redisplay_ancillaries(piece,p);
   recompute_keybindings();
 }
