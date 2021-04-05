@@ -176,7 +176,7 @@ impl Ctx {
       window: &'s Window,
       start: Pos,
       try_end: Pos,
-      gen: Generation,
+      before_gen: Generation,
     }
 
     let mut mk_side = |window, dx| {
@@ -195,7 +195,7 @@ impl Ctx {
 
       let gen = w.synch()?;
 
-      Ok::<_,AE>(Side { window, start, try_end, gen })
+      Ok::<_,AE>(Side { window, start, try_end, before_gen: gen })
     };
 
     let sides = [
@@ -220,7 +220,7 @@ impl Ctx {
       fn deref<'t>(&'t self) -> &'t Side<'s> { &self.side }
     }
 
-    let check = |su: &mut Setup|{
+    let check = |su: &mut Setup, before_gen|{
 
       let gots = sides.iter().map(|side|{
         let mut w = su.w(side.window)?;
@@ -228,7 +228,7 @@ impl Ctx {
         let p = w.find_piece(pc)?;
         let now = p.posg()?;
 
-        let log = w.retrieve_log(Html::lit("black knight"))?;
+        let log = w.retrieve_log(before_gen)?;
         let held = w.piece_held(&pc)?;
         let client = w.client()?;
         let yes = held.as_ref() == Some(&client);
@@ -285,7 +285,8 @@ impl Ctx {
 
     paused.resume()?;
 
-    let gen_before = check(su).did("conflicting drag, check")?;
+    let gen_before = check(su, sides[0].before_gen)
+      .did("conflicting drag, check")?;
 
     let _ = gen_before;
   }
