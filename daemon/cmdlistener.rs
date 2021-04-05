@@ -443,6 +443,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let gen = buf.gen();
       drop(buf); // does updatenocc
       // we handled the update ourselves, return no update info
+      ig.save_game_now()?;
       no_updates(ig, MGR::Synch(gen))
     },
 
