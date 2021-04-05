@@ -410,6 +410,9 @@ impl<'g> WindowGuard<'g> {
           != Some(true)
       })
       .collect::<Result<Vec<String>,_>>()?;
+
+    assert!( ! log.is_empty() );
+
     log
   }
 
