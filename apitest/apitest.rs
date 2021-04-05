@@ -813,7 +813,7 @@ impl MgmtChannel {
   fn game_synch(&mut self, game: InstanceName) -> Generation {
     let cmd = MgmtCommand::AlterGame {
       how: MgmtGameUpdateMode::Online,
-      insns: vec![ MgmtGameInstruction::Synch ],
+      insns: vec![ MgmtGameInstruction::SynchLog ],
       game
     };
     let gen = if_chain!{

@@ -453,6 +453,14 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       no_updates(ig, mgr)
     }
 
+    MGI::SynchLog => {
+      let superuser = cs.superuser.ok_or(ME::SuperuserAuthorisationRequired)?;
+      let ig = ig.by_mut(superuser.into());
+      let (gen, mgr) = some_synch_core(ig)?;
+      let log = LogEntry { html: synch_logentry(gen) };
+      (U{ pcs: vec![], log: vec![log], raw: None }, mgr, None, ig)
+    },
+
     MGI::PieceIdLookupFwd { player, piece } => {
       pieceid_lookup(
         cs, ig, player,

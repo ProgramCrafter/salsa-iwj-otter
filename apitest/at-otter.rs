@@ -608,6 +608,21 @@ impl Ctx {
       alice.api_piece(GH::Raw, &mut a_p, alice_move_to)?;
       bob.synchx(Some(&mut b_pieces), None, |_sess, gen, k, v| {
         dbg!(gen, k, v);
+
+        if_chain! {
+          if k == "Log";
+          if let Some(html) = (|| Some({
+            v
+              .as_object()?
+              .get("logent")?
+              .as_object()?
+              .get("html")?
+              .as_str()?
+          }))();
+          if html.starts_with(SYNCH_LOGENTRY_PREFIX.as_html_str());
+          then { return; }
+        }
+
         panic!("bob saw something when alice moved displaced occulted");
       })?;
 

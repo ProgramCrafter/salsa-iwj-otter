@@ -604,7 +604,7 @@ impl<'g> WindowGuard<'g> {
   }
 
   #[throws(AE)]
-  fn synch_raw(&mut self) {
+  fn synch_raw(&mut self) -> String {
     let gen = self.su.mgmt_conn().game_synch(self.w.instance.clone())?;
     (|| {
       loop {
@@ -630,6 +630,7 @@ impl<'g> WindowGuard<'g> {
       Ok::<(),AE>(())
     })()
       .context("await gen update via async js script")?;
+    synch_logentry(gen).into_html_string()
   }
 
   #[throws(AE)]

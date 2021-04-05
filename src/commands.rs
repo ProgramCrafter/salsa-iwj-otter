@@ -82,7 +82,7 @@ pub enum MgmtGameInstruction {
   SetTableColour(ColourSpec),
 
   /// For testing, mostly.
-  Synch,
+  Synch, SynchLog,
   /// For testing only
   PieceIdLookupFwd { piece: PieceId, player: PlayerId, },
   /// For testing only

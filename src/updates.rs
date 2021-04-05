@@ -1011,3 +1011,9 @@ fn serialize_logentry<S:Serializer>(&(tz,logent): &TransmitUpdateLogEntry,
   let f: FormattedLogEntry = (tz, logent).into();
   f.serialize(s)
 }
+
+pub const SYNCH_LOGENTRY_PREFIX: HtmlLit = Html::lit("### SynchLog ");
+
+pub fn synch_logentry(gen: Generation) -> Html {
+  hformat!("{} gen={} ###", SYNCH_LOGENTRY_PREFIX, gen.0)
+}
