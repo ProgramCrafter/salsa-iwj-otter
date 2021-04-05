@@ -1809,6 +1809,10 @@ function startup() {
   }
   recompute_keybindings();
   space.addEventListener('mousedown', some_mousedown);
+  space.addEventListener('dragstart', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }, true);
   document.addEventListener('keydown',   some_keydown);
 }
 
