@@ -1086,21 +1086,22 @@ function drag_mousemove(e: MouseEvent) {
       api_piece(api_delay, 'm', tpiece,tp, [x, y] );
       if (need_redisplay_ancillaries) redisplay_ancillaries(tpiece, tp);
     }
-    if (!(dragging & DRAGGING.RAISED) && drag_pieces.length==1) {
-      let dp = drag_pieces[0];
-      let piece = dp.piece;
-      let p = pieces[piece]!;
-      let dragraise = +p.pelem.dataset.dragraise!;
-      if (dragraise > 0 && ddr2 >= dragraise*dragraise) {
-	dragging |= DRAGGING.RAISED;
-	console.log('CHECK RAISE ', dragraise, dragraise*dragraise, ddr2);
-	p.held_us_raising = true;
-	piece_set_zlevel(piece,p, (oldtop_piece) => {
-	  let oldtop_p = pieces[oldtop_piece]!;
-	  let z = wasm_bindgen.increment(oldtop_p.z);
-	  p.z = z;
-	  api_piece(api, "setz", piece,p, { z: z });
-	});
+    if (!(dragging & DRAGGING.RAISED)) {
+      for (let dp of drag_pieces) {
+	let piece = dp.piece;
+	let p = pieces[piece]!;
+	let dragraise = +p.pelem.dataset.dragraise!;
+	if (dragraise > 0 && ddr2 >= dragraise*dragraise) {
+	  dragging |= DRAGGING.RAISED;
+	  console.log('CHECK RAISE ', dragraise, dragraise*dragraise, ddr2);
+	  p.held_us_raising = true;
+	  piece_set_zlevel(piece,p, (oldtop_piece) => {
+	    let oldtop_p = pieces[oldtop_piece]!;
+	    let z = wasm_bindgen.increment(oldtop_p.z);
+	    p.z = z;
+	    api_piece(api, "setz", piece,p, { z: z });
+	  });
+	}
       }
     }
   }
