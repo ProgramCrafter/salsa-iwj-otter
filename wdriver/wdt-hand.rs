@@ -205,15 +205,70 @@ impl Ctx {
     chk_alice_on_top(&self.alice).did("chk alice")?;
     chk_alice_on_top(&self.bob  ).did("chk bob"  )?;
   }
+
+  #[throws(AE)]
+  fn regrab_race(&mut self){
+    let su = &mut self.su;
+    const MIDHAND: Pos = PosC::new(40, 40);
+    const OUTHAND: Pos = PosC::new(20, 20);
+
+    {
+      let mut w = su.w(&self.bob)?;
+
+      w.action_chain()
+        
+        .move_pc(&w, PAWN)?
+        .click_and_hold()
+        .move_w(&w, (MIDHAND + Pos::new(-20,0))?)?
+        .release()
+
+        .move_w(&w, MIDHAND)?
+        .click()
+        .release()
+
+        .key_down('C')
+        .key_up('C')
+
+        .perform()
+        .did("bob, setup")?;
+
+      w.synch()?;
+    }
+
+    {
+      let pauseable = su.otter_pauseable();
+      
+      let mut w = su.w(&self.alice)?;
+      w.synch()?;
+      let start = w.find_piece(PAWN)?.posw()?;
+
+      let paused = pauseable.pause()?;
+
+      w.action_chain()
+        .move_pos(start)?
+        .click_and_hold()
+        .move_w(&w, OUTHAND)?
+        .release()
+
+        .click()
+
+        .perform()
+        .did("alice, drag out, and re-select")?;
+
+      paused.resume()?;
+
+      w.synch()?;
+    }
+  }
 }
 
 #[throws(AE)]
 fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
   let mut c = Ctx { su, alice, bob };
 
-  test!(c, "claim", c.claim()?);
-
-  test!(c, "ungrab-race", c.ungrab_race()?);
+  test!(c, "claim",       c.claim()       ?);
+  test!(c, "ungrab-race", c.ungrab_race() ?);
+  test!(c, "regrab-race", c.regrab_race() ?);
 
   debug!("finishing");
 }
