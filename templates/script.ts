@@ -959,7 +959,7 @@ function ungrab_all() {
   for (let tpiece of Object.keys(pieces)) {
     let tp = pieces[tpiece]!;
     if (tp.held == us) {
-	  set_ungrab(tpiece,tp);
+      set_ungrab(tpiece,tp);
       api_piece(api, 'ungrab', tpiece,tp, { });
     }
   }
