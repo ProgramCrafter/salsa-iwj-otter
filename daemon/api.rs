@@ -436,7 +436,7 @@ api_route!{
 }
 
 api_route!{
-  api_raise, "/_/api/setz",
+  api_setz, "/_/api/setz",
   struct ApiPieceSetZ {
     z: ZCoord,
   }
@@ -607,7 +607,7 @@ pub fn mount(rocket_instance: Rocket) -> Rocket {
   rocket_instance.mount("/", routes![
     api_grab,
     api_ungrab,
-    api_raise,
+    api_setz,
     api_move,
     api_rotate,
     api_wrest,
