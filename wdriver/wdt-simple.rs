@@ -249,6 +249,13 @@ impl Ctx {
         assert_eq!(conflict, !got.yes);
       }
 
+      let yw = su.w(&y.window)?;
+      yw.action_chain()
+        .move_w(&yw, y.now)?
+        .click()
+        .perform()
+        .did("ungrab to tidy")?;
+
       Ok::<_,AE>(())
     };
 
