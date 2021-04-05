@@ -260,6 +260,15 @@ pub struct WPiece {
   p: JsV,
 }
 
+pub trait LogIgnoreBefore {
+  fn matches(&mut self, s: &str) -> bool;
+}
+type LogIgnoreBeforeFn<'r> = &'r mut dyn FnMut(&str) -> bool;
+
+impl<'r> LogIgnoreBefore for LogIgnoreBeforeFn<'r> {
+  fn matches<'s>(&mut self, s: &'s str) -> bool { self(s) }
+}
+
 impl<'g> WindowGuard<'g> {
   #[throws(AE)]
   pub fn piece_vpid(&'g self, some_pieceid: &'_ str) -> Vpid {
@@ -395,25 +404,31 @@ impl<'g> WindowGuard<'g> {
   }
 
   #[throws(AE)]
-  pub fn retrieve_log(
-    &self,
-    ignore_before: &mut dyn FnMut(&str) -> bool)
-    -> Vec<String>
+  pub fn retrieve_log<I: LogIgnoreBefore>(&self, mut ignore_before: I)
+                                          -> Vec<String>
   {
-    let log = self.find_elements(By::ClassName("logmsg"))?;
-    let log = log.iter()
-      .rev()
-      .map(|e| e.inner_html())
-      .take_while(|h| {
-        h.as_ref().ok()
-          .map(|s: &String| ignore_before(s))
-          != Some(true)
-      })
-      .collect::<Result<Vec<String>,_>>()?;
+    #[throws(AE)]
+    fn inner<'g, 'i>
+      (w: &'g WindowGuard, ignore_before: LogIgnoreBeforeFn<'i>)
+       -> Vec<String>
+    {
+      let log = w.find_elements(By::ClassName("logmsg"))?;
+      let log = log.iter()
+        .rev()
+        .map(|e| e.inner_html())
+        .take_while(|h| {
+          h.as_ref().ok()
+            .map(|s: &String| ignore_before(s))
+            != Some(true)
+        })
+        .collect::<Result<Vec<String>,_>>()?;
 
-    assert!( ! log.is_empty() );
+      assert!( ! log.is_empty() );
 
-    dbg!(log)
+      dbg!(log)
+    }
+
+    inner(&self, &mut move |s| ignore_before.matches(s))?
   }
 
   #[throws(AE)]

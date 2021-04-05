@@ -101,7 +101,7 @@ impl Ctx {
     for side in &[&self.alice, &self.bob] {
       let mut w = su.w(side)?;
       w.synch()?;
-      let log = w.retrieve_log(&mut |_|false)?;
+      let log = w.retrieve_log((&mut |_: &'_ _| false) as LogIgnoreBeforeFn)?;
       assert_eq!(log.find_conflict(), None);
     }
 

@@ -244,7 +244,8 @@ impl Ctx {
       let p = w.find_piece(pc)?;
       let now = p.posg()?;
 
-      let log = w.retrieve_log(&mut |s| s.contains("black knight"))?;
+      let log = w.retrieve_log((&mut |s: &str| s.contains("black knight"))
+                               as LogIgnoreBeforeFn)?;
       let held = w.piece_held(&pc)?;
       let client = w.client()?;
       let yes = held.as_ref() == Some(&client);
