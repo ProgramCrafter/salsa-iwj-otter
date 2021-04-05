@@ -274,25 +274,29 @@ api_route!{
   struct ApiPieceGrab {
   }
 
-  as:
-  #[throws(ApiPieceOpError)]
-  fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
-    let ApiPieceOpArgs { gs,ioccults,player,piece,ipc, .. } = a;
-    let gpl = gs.players.byid_mut(player)?;
-    let gpc = gs.pieces.byid_mut(piece)?;
+  impl op::Core as {
+  }
 
-    let logents = log_did_to_piece(
-      ioccults,&gs.occults, gpl,gpc,ipc,
-      "grasped"
-    )?;
+  impl op::Simple as {
+    #[throws(ApiPieceOpError)]
+    fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
+      let ApiPieceOpArgs { gs,ioccults,player,piece,ipc, .. } = a;
+      let gpl = gs.players.byid_mut(player)?;
+      let gpc = gs.pieces.byid_mut(piece)?;
 
-    if gpc.held.is_some() { throw!(OnlineError::PieceHeld) }
-    gpc.held = Some(player);
+      let logents = log_did_to_piece(
+        ioccults,&gs.occults, gpl,gpc,ipc,
+        "grasped"
+      )?;
+
+      if gpc.held.is_some() { throw!(OnlineError::PieceHeld) }
+      gpc.held = Some(player);
     
-    let update = PieceUpdateOp::ModifyQuiet(());
+      let update = PieceUpdateOp::ModifyQuiet(());
 
-    (WhatResponseToClientOp::Predictable,
-     update, logents).into()
+      (WhatResponseToClientOp::Predictable,
+       update, logents).into()
+    }
   }
 }
 
