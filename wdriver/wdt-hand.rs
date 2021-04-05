@@ -267,6 +267,9 @@ impl Ctx {
       dbgc!(&who.name);
       let w = su.w(who)?;
 
+      let held = w.piece_held(PAWN)?;
+      assert_eq!( held.unwrap(), ALICE );
+
       let log = w.retrieve_log(*gen)?;
       assert_eq!( log.find_conflicts(), Vec::<String>::new() );
     }
