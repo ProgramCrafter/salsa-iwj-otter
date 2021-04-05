@@ -166,7 +166,7 @@ impl Ctx {
       w.action_chain()
         .move_pc(&w, P_BOB)?
         .click_and_hold()
-        .move_w(&w, DEST)?
+        .move_w(&w, (DEST + PosC::new(2,0))?)?
         .release()
         .perform()
         .did("bob, drag pawn to target")?;
