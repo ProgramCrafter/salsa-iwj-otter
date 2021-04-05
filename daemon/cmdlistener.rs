@@ -325,6 +325,16 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   }
 
   #[throws(MgmtError)]
+  fn some_synch_core(ig: &mut InstanceGuard<'_>) -> (Generation, MGR) {
+    let mut buf = PrepareUpdatesBuffer::new(ig, None);
+    let gen = buf.gen();
+    drop(buf); // does updatenocc
+    ig.save_game_now()?;
+    // we handled the update ourselves, return no update info, just MGR
+    (gen, MGR::Synch(gen))
+  }
+
+  #[throws(MgmtError)]
   fn update_links<'igr, 'ig: 'igr, 'cs,
                F: FnOnce(&mut Arc<LinksTable>) -> Result<Html,ME>>
     (
@@ -438,14 +448,10 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     },
 
     MGI::Synch => {
-      let (mut ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Play])?;
-      let mut buf = PrepareUpdatesBuffer::new(&mut ig, None);
-      let gen = buf.gen();
-      drop(buf); // does updatenocc
-      // we handled the update ourselves, return no update info
-      ig.save_game_now()?;
-      no_updates(ig, MGR::Synch(gen))
-    },
+      let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Play])?;
+      let (_gen, mgr) = some_synch_core(ig)?;
+      no_updates(ig, mgr)
+    }
 
     MGI::PieceIdLookupFwd { player, piece } => {
       pieceid_lookup(
