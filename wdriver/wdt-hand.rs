@@ -273,6 +273,15 @@ impl Ctx {
       let log = w.retrieve_log(*gen)?;
       assert_eq!( log.find_conflicts(), Vec::<String>::new() );
     }
+
+    {
+      let mut w = su.w(&self.alice)?;
+      w.action_chain()
+        .click()
+        .perform()
+        .did("alice, ungrasp for tidy up")?;
+      w.synch()?;
+    }
   }
 }
 
