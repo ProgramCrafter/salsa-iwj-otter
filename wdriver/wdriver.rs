@@ -413,7 +413,7 @@ impl<'g> WindowGuard<'g> {
 
     assert!( ! log.is_empty() );
 
-    log
+    dbg!(log)
   }
 
   #[throws(AE)]
