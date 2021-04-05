@@ -266,11 +266,10 @@ impl Ctx {
 
 
     let paused = su.pause_otter()?;
-
     for side in &sides {
       let w = su.w(side.window)?;
-
       w.action_chain()
+
         .move_w(&w, side.start)?
         .click()
         .release()
