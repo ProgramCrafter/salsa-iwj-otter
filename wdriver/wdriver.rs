@@ -266,7 +266,15 @@ pub trait LogIgnoreBefore {
 type LogIgnoreBeforeFn<'r> = &'r mut dyn FnMut(&str) -> bool;
 
 impl<'r> LogIgnoreBefore for LogIgnoreBeforeFn<'r> {
-  fn matches<'s>(&mut self, s: &'s str) -> bool { self(s) }
+  fn matches(&mut self, s: &str) -> bool { self(s) }
+}
+impl LogIgnoreBefore for HtmlLit {
+  fn matches(&mut self, s: &str) -> bool { s.contains(self.as_html_str()) }
+}
+impl LogIgnoreBefore for Generation {
+  fn matches(&mut self, s: &str) -> bool {
+    s == synch_logentry(*self).as_html_str()
+  }
 }
 
 impl<'g> WindowGuard<'g> {
