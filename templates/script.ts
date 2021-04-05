@@ -207,7 +207,7 @@ function string_report_error(error_message: String) {
   // todo want to fix this for at least basic game reconfigs, auto-reload?
 }
 
-function api(meth: string, data: Object) {
+function api_immediate(meth: string, data: Object) {
   api_queue.push([meth, data]);
   api_check();
 }
@@ -235,7 +235,7 @@ function api_posted() {
   api_check();
 }
 
-function api_piece(f: (meth: string, payload: Object) => void,
+function api_piece_x(f: (meth: string, payload: Object) => void,
 		   meth: string,
 		   piece: PieceId, p: PieceInfo,
 		   op: Object) {
@@ -249,6 +249,11 @@ function api_piece(f: (meth: string, payload: Object) => void,
     cseq : cseq,
     op : op,
   })
+}
+function api_piece(meth: string,
+		   piece: PieceId, p: PieceInfo,
+		   op: Object) {
+  api_piece_x(api_immediate, meth, piece, p, op);
 }
 
 function svg_element(id: string): SVGGraphicsElement | null {
@@ -448,7 +453,7 @@ function some_keydown(e: KeyboardEvent) {
 
   for (var piece of uo.targets!) {
     let p = pieces[piece]!;
-    api_piece(api, 'k', piece, p, { opname: uo.opname, wrc: uo.wrc });
+    api_piece('k', piece, p, { opname: uo.opname, wrc: uo.wrc });
     if (uo.wrc == 'UpdateSvg') {
       p.cseq_updatesvg = p.cseq;
       redisplay_ancillaries(piece,p);
@@ -523,7 +528,7 @@ function rotate_targets(uo: UoRecord, dangle: number): boolean {
     p.angle %= 8;
     let transform = wasm_bindgen.angle_transform(p.angle);
     p.pelem.setAttributeNS(null,'transform',transform);
-    api_piece(api, 'rotate', piece,p, p.angle);
+    api_piece('rotate', piece,p, p.angle);
   }
   recompute_keybindings();
   return true;
@@ -723,7 +728,7 @@ function lower_pieces(targets_todo: LowerTodoList):
       piece_set_zlevel(e.piece, p, (oldtop_piece) => {
 	let z = zrange.next();
 	p.z = z;
-	api_piece(api, "setz", e.piece, e.p, { z });
+	api_piece("setz", e.piece, e.p, { z });
       });
     }
   }
@@ -756,7 +761,7 @@ function pin_unpin(uo: UoRecord, newpin: boolean) {
   for (let piece of uo.targets!) {
     let p = pieces[piece]!;
     p.pinned = newpin;
-    api_piece(api, 'pin', piece,p, newpin);
+    api_piece('pin', piece,p, newpin);
     redisplay_ancillaries(piece,p);
   }
   recompute_keybindings();
@@ -924,7 +929,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
 		                              +SPECIAL_MULTI_DELTA_MAX);
       drag_add_piece(piece,p);
       set_grab_us(piece,p);
-      api_piece(api, wresting ? 'wrest' : 'grab', piece,p, { });
+      api_piece(wresting ? 'wrest' : 'grab', piece,p, { });
     }
   } else {
     add_log_message('That piece is held by another player.');
@@ -979,7 +984,7 @@ function do_ungrab(piece: PieceId, p: PieceInfo) {
   p.drag_delta = 0;
   redisplay_ancillaries(piece,p);
   recompute_keybindings();
-  api_piece(api, 'ungrab', piece,p, { autoraise });
+  api_piece('ungrab', piece,p, { autoraise });
 }
 
 function clear_halo(piece: PieceId, p: PieceInfo) {
@@ -1083,7 +1088,7 @@ function drag_mousemove(e: MouseEvent) {
       );
       piece_set_pos_core(tp, x, y);
       tp.queued_moves++;
-      api_piece(api_delay, 'm', tpiece,tp, [x, y] );
+      api_piece_x(api_delay, 'm', tpiece,tp, [x, y] );
       if (need_redisplay_ancillaries) redisplay_ancillaries(tpiece, tp);
     }
     if (!(dragging & DRAGGING.RAISED)) {
@@ -1099,7 +1104,7 @@ function drag_mousemove(e: MouseEvent) {
 	    let oldtop_p = pieces[oldtop_piece]!;
 	    let z = wasm_bindgen.increment(oldtop_p.z);
 	    p.z = z;
-	    api_piece(api, "setz", piece,p, { z: z });
+	    api_piece("setz", piece,p, { z: z });
 	  });
 	}
       }
