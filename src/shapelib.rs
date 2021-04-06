@@ -15,7 +15,10 @@ use parking_lot::{MappedRwLockReadGuard, RwLockReadGuard};
 //  Item           } once loaded and part of a game,
 //  Outline        }  no Arc's as we serialise/deserialize during save/load
 
-pub type Registry = HashMap<String, shapelib::Contents>;
+#[derive(Default)]
+pub struct Registry {
+  pieces: HashMap<String, shapelib::Contents>,
+}
 
 #[derive(Debug)]
 pub struct GroupData {
@@ -314,19 +317,19 @@ impl OccultedPieceTrait for Item {
 static SHAPELIBS: RwLock<Option<Registry>> = const_rwlock(None);
 
 pub fn libs_list() -> Vec<String> {
-  let libs = SHAPELIBS.read();
-  libs.as_ref().map(
-    |l| l.keys().cloned().collect()
+  let reg = SHAPELIBS.read();
+  reg.as_ref().map(
+    |reg| reg.pieces.keys().cloned().collect()
   ).unwrap_or_default()
 }
 
 #[throws(SpecError)]
 pub fn libs_lookup(libname: &str)
                    -> MappedRwLockReadGuard<'static, Contents> {
-  let libs = SHAPELIBS.read();
-  RwLockReadGuard::try_map( libs, |libs: &Option<Registry>| -> Option<_> {
+  let reg = SHAPELIBS.read();
+  RwLockReadGuard::try_map( reg, |reg: &Option<Registry>| -> Option<_> {
     (|| Some({
-      libs.as_ref()?.get(libname)?
+      reg.as_ref()?.pieces.get(libname)?
     }))()
   })
     .map_err(|_| SpE::LibraryNotFound)
@@ -725,6 +728,7 @@ pub fn load1(l: &Explicit1) {
   let count = data.items.len();
   SHAPELIBS.write()
     .get_or_insert_with(default)
+    .pieces
     .insert(l.name.clone(), data);
   info!("loaded {} shapes in library {:?} from {:?} and {:?}",
         count, &l.name, &l.catalogue, &l.dirname);
