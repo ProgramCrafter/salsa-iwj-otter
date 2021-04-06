@@ -48,6 +48,7 @@ struct ItemDetails {
 #[derive(Debug,Clone)]
 struct ItemData {
   d: Arc<ItemDetails>,
+  sort: Option<String>,
   group: Arc<GroupData>,
   outline: Outline,
   occ: OccData,
@@ -164,6 +165,7 @@ struct FaceTransform {
 #[derive(Debug,Serialize,Deserialize)]
 pub struct Item {
   itemname: String,
+  sort: Option<String>,
   faces: IndexVec<FaceId, ItemFace>,
   svgs: IndexVec<SvgId, Html>,
   descs: IndexVec<DescId, Html>,
@@ -451,7 +453,8 @@ impl Contents {
       },
     };
 
-    let it = Item { faces, descs, svgs, outline, back,
+    let sort = idata.sort.clone();
+    let it = Item { faces, sort, descs, svgs, outline, back,
                     itemname: name.to_string() };
     (Box::new(it), occultable)
   }
@@ -611,6 +614,13 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
                               fe.item_spec, gdefn.item_suffix);
       let item_name: GoodItemName = item_name.try_into()?;
 
+      let sort = match (gdefn.sort.as_str(), fe.extra_fields.get("sort")) {
+        ("", None) => None,
+        (gd,  None) => Some(gd.to_string()),
+        ("", Some(ef)) => Some(ef.to_string()),
+        (gd, Some(ef)) => Some(subst(gd, "_s", ef)?),
+      };
+
       let occ = match &group.d.occulted {
         None => OccData::None,
         Some(OccultationMethod::ByColour { colour }) => {
@@ -635,7 +645,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
         },
       };
 
-      let mut add1 = |item_name: &GoodItemName, desc: &str| {
+      let mut add1 = |item_name: &GoodItemName, sort, desc: &str| {
         let desc = if let Some(desc_template) = &group.d.desc_template {
           subst(desc_template, "_desc", &desc)?.to_html()
         } else {
@@ -645,6 +655,7 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
           group: group.clone(),
           occ: occ.clone(),
           outline: outline.clone(),
+          sort,
           d: Arc::new(ItemDetails { desc }),
         };
         type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
@@ -663,12 +674,14 @@ fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
       };
 
       if group.d.colours.is_empty() {
-        add1(&item_name, &fe.desc.clone())?;
+        add1(&item_name, sort, &fe.desc.clone())?;
       } else {
         for (colour, recolourdata) in &group.d.colours {
+          let t_sort = sort.as_ref().map(
+            |s| subst(&s, "_c", colour)).transpose()?;
           let t_item_name = subst(item_name.as_str(), "_c", &recolourdata.abbrev)?;
           let t_desc = subst(&fe.desc, "_colour", colour)?;
-          add1(&t_item_name.try_into()?, &t_desc)?;
+          add1(&t_item_name.try_into()?, t_sort, &t_desc)?;
         }
 
       }

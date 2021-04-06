@@ -79,7 +79,11 @@ pub struct GroupDefn {
   /// adding fields to each line.  This is done by adding a line at
   /// the start starting with `:` and then additing one additional
   /// whitespace separated value on each data line.  Unknown
-  /// `fieldname` values are ignored.
+  /// `fieldname` values are ignored.  Currently the extra fields
+  /// supported are:
+  ///
+  ///  * `sort`: Specifies the sort key.  See the `sort` group
+  ///    definition property.
   ///
   /// The values for these extra fields come just before the
   /// dwscription, after the other whitespace-delimited fields, in the
@@ -90,6 +94,16 @@ pub struct GroupDefn {
   /// These two fields default to `""`.
   #[serde(default)] pub item_prefix: String,
   #[serde(default)] pub item_suffix: String,
+
+  /// The sort key (used for item sorting in hands).
+  ///
+  /// If neither the group property, nor the `files` extra field, are
+  /// specified, the item name is used.
+  ///
+  /// If both are specified, the group property is used as a template.
+  /// `_s` is replaced by the sort extra field from the `files` list
+  /// `_c` is replaced by the colour, if applicable.
+  #[serde(default)] pub sort: String,
 
   #[doc(hidden)]
   #[serde(flatten)] pub d: GroupDetails,
