@@ -70,6 +70,7 @@ fn preview(items: Vec<ItemForOutput>) {
 
   struct Prep {
     spec: ItemSpec,
+    sortkey: Option<String>,
     p: Box<dyn PieceTrait>,
     uos: Vec<String>,
     bbox: Vec<Vec<f64>>,
@@ -91,6 +92,7 @@ fn preview(items: Vec<ItemForOutput>) {
 
   let mut pieces: Vec<Prep> = items.into_iter().map(|it| {
     let spec = ItemSpec { lib: it.0, item: it.1.itemname.into() };
+    let sortkey = it.1.sortkey;
     (||{
       let (p, _occultable) = spec.clone().find_load(&pcaliases)
         .context("load")?;
@@ -113,7 +115,7 @@ fn preview(items: Vec<ItemForOutput>) {
         .map(|(min,max)| max-min)
         .collect::<Vec<_>>();
 
-      Ok::<_,AE>(Prep { spec, p, uos, bbox, size })
+      Ok::<_,AE>(Prep { spec, p, sortkey, uos, bbox, size })
     })().with_context(|| format!("{:?}", &spec))
   }).collect::<Result<Vec<_>,_>>()?;
 
@@ -126,7 +128,7 @@ fn preview(items: Vec<ItemForOutput>) {
   println!("{}", &HTML_PRELUDE);
   println!(r#"<table rules="all">"#);
   for s in &pieces {
-    let Prep { spec, p, uos, bbox, size } = s;
+    let Prep { spec, sortkey, p, uos, bbox, size } = s;
 
     macro_rules! println {
       ($($x:tt)*) => ({
@@ -141,6 +143,10 @@ fn preview(items: Vec<ItemForOutput>) {
              Html::from_txt(&spec.lib));
     println!(r#"<th align="left"><kbd>{}</kbd>"#,
              Html::from_txt(&spec.item));
+    if let Some(sortkey) = sortkey {
+      println!(r#"<br><kbd>[{}]</kbd>"#,
+               Html::from_txt(sortkey));
+    }
     println!(r#"</th>"#);
     println!(r#"<th align="left">{}</th>"#,
              p.describe_html(&GPiece::dummy(), &default())?);
