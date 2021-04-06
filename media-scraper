@@ -223,7 +223,7 @@ foreach my $groupname (sort keys %$groups) {
   my $method_impl = $method_fn->($scraper, $method);
   foreach (split(/\n/, $gcfg->('files'))) {
     s/^\s+//;
-    next if m/^\#/ || m/^$/;
+    next if m/^\#/ || m/^$/ || m/^\:/;
     m/^(\S+)\s+(\S+)/ or die "bad line in files: \`$_'";
     my $lministem = $1;
     my $rministem = $2;

@@ -54,9 +54,10 @@ pub struct LibraryTomlFile {
 // `GroupDefn` is processed.
 #[derive(Debug,Deserialize)]
 pub struct GroupDefn {
-  /// `files` is a multi-line string, each line of which has three
-  /// fields (the first two terminated by whitespace).  The fields
-  /// are those in [`FileData`].  `#` comments are supported.
+  /// `files` is a multi-line string, each line of which has
+  /// (normally) three fields (the leading ones terminated by
+  /// whitespace).  The fields are those in [`FileData`].  `#`
+  /// comments are supported.
   ///
   /// Each non-empty non-comment line in `files` specifies a single
   /// SVG to be made aavailable as a piece.
@@ -73,6 +74,16 @@ pub struct GroupDefn {
   /// Item names are conventionally structured using a hierarchical
   /// name with `-` between the components.  Do not put `/` or `_` in
   /// item names.
+  ///
+  /// It is also possible to specify additional data for each item by
+  /// adding fields to each line.  This is done by adding a line at
+  /// the start starting with `:` and then additing one additional
+  /// whitespace separated value on each data line.  Unknown
+  /// `fieldname` values are ignored.
+  ///
+  /// The values for these extra fields come just before the
+  /// dwscription, after the other whitespace-delimited fields, in the
+  /// same order as specified in the `:` heading line.
   pub files: FileList,
 
   /// See the discussioin of the item name.
@@ -202,7 +213,7 @@ pub struct FileList(pub Vec<FileData>);
 
 /// Contents of each line in [`files`](GroupDefn::files)
 ///
-/// This is not a key value list.  The first two fields are found by
+/// This is not a key value list.  The leading fields are found by
 /// splitting on whitespace, and the final field is the rest of the
 /// line.
 #[derive(Deserialize,Debug)]
@@ -218,6 +229,9 @@ pub struct FileData {
   /// this field is not used and is conventionally set to "`-`".
   #[cfg(doc)] pub r_file_spec: String,
   #[cfg(not(doc))] pub r_file_spec: (),
+
+  /// Extra fields, normally not present.
+  pub extra_fields: HashMap<String, String>,
 
   /// Desscription.  (Shown hn the game log, for example.)
   /// Will be HTML-escaped.

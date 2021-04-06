@@ -105,6 +105,8 @@ pub enum LibraryLoadError {
   #[error("{:?}",&self)]
   FilesListLineMissingWhitespace(usize),
   #[error("{:?}",&self)]
+  FilesListFieldsMustBeAtStart(usize),
+  #[error("{:?}",&self)]
   MissingSubstituionToken(&'static str),
   #[error("{:?}",&self)]
   RepeatedSubstituionToken(&'static str),
@@ -885,9 +887,20 @@ impl TryFrom<String> for FileList {
 //  #[throws(LLE)]
   fn try_from(s: String) -> Result<FileList,LLE> {
     let mut o = Vec::new();
+    let mut xfields = Vec::new();
     for (lno,l) in s.lines().enumerate() {
       let l = l.trim();
       if l=="" || l.starts_with("#") { continue }
+      if let Some(xfields_spec) = l.strip_prefix(':') {
+        if ! (o.is_empty() && xfields.is_empty()) {
+          throw!(LLE::FilesListFieldsMustBeAtStart(lno));
+        }
+        xfields = xfields_spec.split_ascii_whitespace()
+          .filter(|s| !s.is_empty())
+          .map(|s| s.to_owned())
+          .collect::<Vec<_>>();
+        continue;
+      }
       let mut remain = &*l;
       let mut n = ||{
         let ws = remain.find(char::is_whitespace)
@@ -898,8 +911,11 @@ impl TryFrom<String> for FileList {
       };
       let item_spec = n()?;
       let _r_file_spec = n()?;
+      let extra_fields = xfields.iter()
+        .map(|field| Ok::<_,LLE>((field.to_owned(), n()?.to_owned())))
+        .collect::<Result<_,_>>()?;
       let desc = remain.to_owned();
-      o.push(FileData{ item_spec, r_file_spec: (), desc });
+      o.push(FileData{ item_spec, r_file_spec: (), extra_fields, desc });
     }
     Ok(FileList(o))
   }
