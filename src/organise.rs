@@ -29,6 +29,13 @@ pub fn add_ui_operations(upd: &mut Vec<UoDescription>,
     desc: Html::lit("Organise").into(),
     wrc: WRC::Predictable,
   });
+  upd.push(UoDescription {
+    kind: UoKind::Piece,
+    def_key: 'O',
+    opname: "organise-sort".to_string(),
+    desc: Html::lit("Organise and Sort").into(),
+    wrc: WRC::Predictable,
+  });
 }
 
 define_index_type!{ struct InHand = usize; }
@@ -82,13 +89,14 @@ impl Attempt {
   }
 }     
 
-struct PrimaryEnt {
+struct PrimaryEnt<'pe> {
+  sortkey: Option<&'pe str>,
   piece: PieceId,
   pos: Pos,
   bbox: Rect,
 }
 
-type Primary = IndexVec<InHand, PrimaryEnt>;
+type Primary<'pe> = IndexVec<InHand, PrimaryEnt<'pe>>;
 type ZLevels = IndexVec<InHand, ZLevel>;
 type OrderTable = IndexVec<InHand, InHand>;
 
@@ -131,12 +139,15 @@ fn recover_order(region: &Rect, pieces: &Primary, zlevels: &ZLevels)
   while let Some((inremain, &ih)) =
     remain.iter().enumerate()
     .min_by_key(|(_inremain, &ih)| {
-      let pos = &pieces[ih].pos;
+      let p = &pieces[ih];
+      let sortkey = &p.sortkey;
+      let pos = &p.pos;
       let zlevel = &zlevels[ih];
       let in_rect =
         pos.x() >= last.x() &&
         pos.y() <= last.y() + INTUIT_SORT_Y_THRESH;
-      ( ! in_rect,
+      ( sortkey,
+        ! in_rect,
         pos.x(),
         pos.y(),
         zlevel )
@@ -213,8 +224,9 @@ fn try_layout(region: &Rect,
 pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
                     _wrc: WhatResponseToClientOp, region: &Rect)
                     -> Option<UpdateFromOpComplex> {
-  let _do_sort = match opname {
-    "organise" => (),
+  let do_sort = match opname {
+    "organise" => false,
+    "organise-sort" => true,
     _ => return None,
   };
   let ApiPieceOpArgs { ref mut gs, player,ipieces,ioccults,.. } = *a;
@@ -234,10 +246,16 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
     if let PieceMoveable::Yes = gpc.moveable();
     if let Some(ipc) = wants!( ipieces.get(piece), ?piece );
     if let Some(vis) = gpc.fully_visible_to(&gs.occults, player);
-    if let Some(bbox) = want!( Ok = ipc.show(vis).bbox_approx(), ?piece );
+    let ipc = ipc.show(vis);
+    if let Some(bbox) = want!( Ok = ipc.bbox_approx(), ?piece );
+    let sortkey = if do_sort {
+      Some(ipc.sortkey().unwrap_or(ipc.itemname()))
+    } else {
+      None
+    };
     then {
       Some((
-        PrimaryEnt { piece, bbox, pos: gpc.pos },
+        PrimaryEnt { piece, bbox, sortkey, pos: gpc.pos },
         gpc.zlevel.clone())
       )
     }
