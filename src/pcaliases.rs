@@ -11,6 +11,7 @@ type Fwd = BTreeMap<String, Box<dyn PieceSpec>>;
 pub struct PieceAliasesSave(Fwd);
 
 #[derive(Debug,Default,Serialize,Deserialize)]
+#[serde(transparent)]
 pub struct PieceAliases {
   fwd: Fwd,
 }

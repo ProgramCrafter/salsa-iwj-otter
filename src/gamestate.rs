@@ -248,7 +248,7 @@ pub struct ApiPieceOpArgs<'a> {
 #[derive(Debug)]
 pub struct PieceSpecLoaded {
   pub p: Box<dyn PieceTrait>,
-  pub occultable:  PieceSpecLoadedOccultable,
+  pub occultable: PieceSpecLoadedOccultable,
 }
 pub type PieceSpecLoadedOccultable =
   Option<(OccultIlkName, Arc<dyn OccultedPieceTrait>)>;
