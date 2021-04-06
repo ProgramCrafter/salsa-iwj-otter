@@ -48,6 +48,10 @@ pub struct LibraryTomlFile {
 /// implementation convenient (for complicated reasons).  At the
 /// library TOML file level, there is no meaningful difference between
 /// the fields in this struct, and the ones in `GroupDetails`
+//
+// At the implementation level, each loaded item contains an
+// `Arc<GroupDetails>`, which is simply stored directly.  The
+// `GroupDefn` is processed.
 #[derive(Debug,Deserialize)]
 pub struct GroupDefn {
   /// `files` is a multi-line string, each line of which has three
