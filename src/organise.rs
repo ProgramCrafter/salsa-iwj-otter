@@ -79,14 +79,15 @@ impl Attempt {
   }
 
   #[throws(CoordinateOverflow)]
-  fn br_tile(self, bbox: &Rect) -> Pos {
-    let cnr = bbox.br();
-    let atleast = (HANG_TILE_SHOW - PosC::both(HANG_INSIDE))?;
+  fn stride(self, bbox: &Rect) -> Pos {
+    let tl = bbox.tl();
+    let br = bbox.br();
+    let atleast = HANG_TILE_SHOW;
     let want = match self {
-      A::Nonoverlap => return (cnr + PosC::both(MARGIN_INSIDE))?,
+      A::Nonoverlap => return (br - tl)?,
       A::Inside     |
-      A::Abut       => (bbox.tl() - bbox.tl().map(|v| v/ 2 ))?,
-      A::AbutCompr  => (bbox.tl() - bbox.tl().map(|v| v/ 3 ))?,
+      A::Abut       => (- bbox.tl())?,
+      A::AbutCompr  => (- bbox.tl().map(|v| v/ 3 ))?,
       A::Hanging    => return atleast,
     };
     PosC::from_iter_2(
@@ -219,7 +220,7 @@ fn try_layout(region: &Rect,
       }
       throw!(IE::OrganisedPlacementFailure);
     };
-    let br_tile = (place + att.br_tile(&bbox)?)?;
+    let br_tile = ((place + att.tl(&bbox)?)? + att.stride(&bbox)?)?;
     cur.coords[0] = br_tile.x();
     n_y = max(n_y, br_tile.y());
     out.push(place);
