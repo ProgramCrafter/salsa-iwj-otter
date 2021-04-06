@@ -81,13 +81,19 @@ impl Attempt {
   #[throws(CoordinateOverflow)]
   fn br_tile(self, bbox: &Rect) -> Pos {
     let cnr = bbox.br();
-    match self {
-      A::Nonoverlap => (cnr + PosC::both(MARGIN_INSIDE))?,
+    let atleast = (HANG_TILE_SHOW - PosC::both(HANG_INSIDE))?;
+    let want = match self {
+      A::Nonoverlap => return (cnr + PosC::both(MARGIN_INSIDE))?,
       A::Inside     |
       A::Abut       => (bbox.tl() - bbox.tl().map(|v| v/ 2 ))?,
       A::AbutCompr  => (bbox.tl() - bbox.tl().map(|v| v/ 3 ))?,
-      A::Hanging    => (HANG_TILE_SHOW - PosC::both(HANG_INSIDE))?,
-    }
+      A::Hanging    => return atleast,
+    };
+    PosC::from_iter_2(
+      izip!(atleast.coords.iter(), want.coords.iter()).map(
+        |(v, atleast)| Ord::max(*v,*atleast)
+      )
+    )
   }
 }     
 
