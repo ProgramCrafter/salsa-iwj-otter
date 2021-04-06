@@ -25,6 +25,7 @@ pub mod mgmtchannel;
 pub mod nwtemplates;
 pub mod occultilks;
 pub mod organise;
+pub mod pcaliases;
 pub mod pcrender;
 pub mod pieces;
 pub mod shapelib;
