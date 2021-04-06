@@ -10,6 +10,8 @@ use crate::prelude::*;
 const MARGIN_INSIDE: Coord = 1;
 const HANG_INSIDE:   Coord = 2;
 
+const HANG_TILE_SHOW: Pos = PosC::new(4,8);
+
 const INTUIT_SORT_Y_THRESH: Coord = 2;
 
 #[throws(InternalError)]
@@ -84,7 +86,7 @@ impl Attempt {
       A::Inside     |
       A::Abut       => (bbox.tl() - bbox.tl().map(|v| v/ 2 ))?,
       A::AbutCompr  => (bbox.tl() - bbox.tl().map(|v| v/ 3 ))?,
-      A::Hanging    =>  PosC::both(HANG_INSIDE),
+      A::Hanging    => (HANG_TILE_SHOW - PosC::both(HANG_INSIDE))?,
     }
   }
 }     
