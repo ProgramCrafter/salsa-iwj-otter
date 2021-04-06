@@ -12,7 +12,7 @@ src=.
 
 default: all check
 all: debug
-full-check: all check cargo-syntaxcheck-release
+full-check: all check cargo-syntaxcheck-release shapelib
 everything: debug doc release check bundled-sources
 
 shapelib: templates/shapelib.html stamp/cargo.doc-otter-only
