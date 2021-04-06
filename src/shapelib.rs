@@ -17,7 +17,7 @@ use parking_lot::{MappedRwLockReadGuard, RwLockReadGuard};
 
 #[derive(Default)]
 pub struct Registry {
-  pieces: HashMap<String, shapelib::Contents>,
+  libs: HashMap<String, shapelib::Contents>,
 }
 
 #[derive(Debug)]
@@ -319,7 +319,7 @@ static SHAPELIBS: RwLock<Option<Registry>> = const_rwlock(None);
 pub fn libs_list() -> Vec<String> {
   let reg = SHAPELIBS.read();
   reg.as_ref().map(
-    |reg| reg.pieces.keys().cloned().collect()
+    |reg| reg.libs.keys().cloned().collect()
   ).unwrap_or_default()
 }
 
@@ -329,7 +329,7 @@ pub fn libs_lookup(libname: &str)
   let reg = SHAPELIBS.read();
   RwLockReadGuard::try_map( reg, |reg: &Option<Registry>| -> Option<_> {
     (|| Some({
-      reg.as_ref()?.pieces.get(libname)?
+      reg.as_ref()?.libs.get(libname)?
     }))()
   })
     .map_err(|_| SpE::LibraryNotFound)
@@ -695,7 +695,7 @@ pub fn load1(l: &Explicit1) {
   let count = data.items.len();
   SHAPELIBS.write()
     .get_or_insert_with(default)
-    .pieces
+    .libs
     .insert(l.name.clone(), data);
   info!("loaded {} shapes in library {:?} from {:?} and {:?}",
         count, &l.name, &l.catalogue, &l.dirname);
