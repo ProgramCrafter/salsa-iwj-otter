@@ -139,8 +139,9 @@ fn preview(items: Vec<ItemForOutput>) {
     println!(r#"<tr>"#);
     println!(r#"<th align="left"><kbd>{}</kbd></th>"#,
              Html::from_txt(&spec.lib));
-    println!(r#"<th align="left"><kbd>{}</kbd></th>"#,
+    println!(r#"<th align="left"><kbd>{}</kbd>"#,
              Html::from_txt(&spec.item));
+    println!(r#"</th>"#);
     println!(r#"<th align="left">{}</th>"#,
              p.describe_html(&GPiece::dummy(), &default())?);
     let only1 = s.face_cols() == 1;
