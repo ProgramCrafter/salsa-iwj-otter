@@ -16,25 +16,27 @@ centre = [36.5, 48.5]
 scale = 0.25
 
 item_suffix = "-c"
+sort = "card-playing-_sc"
 desc_template = "the _desc of clubs"
 
 occulted.method = "ByBack"
 occulted.ilk = "card-back"
 
 files = """
-2	-	two
-3	-	three
-4	-	four
-5	-	five
-6	-	six
-7	-	seven
-8	-	eight
-9	-	nine
-T	-	ten
-J	-	jack
-Q	-	queen
-K	-	king
-A	-	ace
+:		sort
+2	-	02	two
+3	-	03	three
+4	-	04	four
+5	-	05	five
+6	-	06	six
+7	-	07	seven
+8	-	08	eight
+9	-	09	nine
+T	-	10	ten
+J	-	11	jack
+Q	-	12	queen
+K	-	13	king
+A	-	14	ace
 """
 
 [group.clubs.back]
@@ -44,14 +46,17 @@ target = "card-back"
 [group.diamonds]
 inherit = "clubs"
 item_suffix = "-d"
+sort = "card-playing-_sd"
 desc_template = "the _desc of diamonds"
 
 [group.hearts]
 inherit = "clubs"
+sort = "card-playing-_sh"
 item_suffix = "-h"
 desc_template = "the _desc of hearts"
 
 [group.spades]
 inherit = "clubs"
+sort = "card-playing-_ss"
 item_suffix = "-s"
 desc_template = "the _desc of spades"
