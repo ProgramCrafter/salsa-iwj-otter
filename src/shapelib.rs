@@ -201,6 +201,7 @@ impl OccultedPieceTrait for ItemOccultable {
 #[derive(Debug,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
 pub struct ItemEnquiryData {
   pub itemname: GoodItemName,
+  pub sortkey: Option<String>,
   pub f0desc: Html,
   pub f0bbox: Rect,
 }
@@ -304,6 +305,7 @@ impl PieceTrait for Item {
   }
 
   fn itemname(&self) -> &str { &self.itemname }
+  fn sortkey(&self) -> Option<&str> { self.sort.as_ref().map(AsRef::as_ref) }
 }
 
 #[typetag::serde(name="LibItem")]
@@ -474,6 +476,7 @@ impl Contents {
       let f0bbox = loaded.bbox_approx()?;
       let ier = ItemEnquiryData {
         itemname: k.to_owned(),
+        sortkey: v.sort.to_owned(),
         f0bbox,
         f0desc: loaded.describe_face(default())?,
       };

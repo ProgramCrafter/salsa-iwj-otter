@@ -210,6 +210,7 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
   }
 
   fn itemname(&self) -> &str;
+  fn sortkey(&self) -> Option<&str> { None }
 
   fn occultation_notify_hook(&self, _piece: PieceId) -> UnpreparedUpdates {
     None
