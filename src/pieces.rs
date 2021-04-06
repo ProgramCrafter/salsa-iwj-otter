@@ -300,7 +300,11 @@ pub trait SimplePieceSpec: Debug {
   fn load_raw(&self) -> Result<(SimpleShape, &SimpleCommon), SpecError>;
   #[throws(SpecError)]
   fn load(&self) -> PieceSpecLoaded {
-    PieceSpecLoaded { p: Box::new(self.load_raw()?.0), occultable: None }
+    PieceSpecLoaded {
+      p: Box::new(self.load_raw()?.0),
+      loaded_via_alias: None,
+      occultable: None,
+    }
   }
 }
 

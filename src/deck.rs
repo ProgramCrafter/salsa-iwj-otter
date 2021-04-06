@@ -62,7 +62,11 @@ impl PieceSpec for piece_specs::Deck {
       shape,
       label: self.label.load()?,
     }) as Box<dyn PieceTrait>;
-    PieceSpecLoaded { p, occultable: None }
+    PieceSpecLoaded {
+      p,
+      loaded_via_alias: None,
+      occultable: None,
+    }
   }
 }
 

@@ -340,7 +340,11 @@ pub type ItemSpecLoaded = (Box<Item>, PieceSpecLoadedOccultable);
 
 impl From<ItemSpecLoaded> for PieceSpecLoaded {
   fn from((p, occultable):  ItemSpecLoaded) -> PieceSpecLoaded {
-    PieceSpecLoaded { p, occultable }
+    PieceSpecLoaded {
+      p,
+      occultable,
+      loaded_via_alias: None,
+    }
   }
 }
 

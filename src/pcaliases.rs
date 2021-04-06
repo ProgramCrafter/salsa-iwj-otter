@@ -59,7 +59,9 @@ impl PieceSpec for Alias {
   fn load(&self, i: usize, gpc: &mut GPiece,
           pcaliases: &PieceAliases, ir: &InstanceRef)
           -> PieceSpecLoaded {
-    self.resolve(pcaliases)?.load(i, gpc, &default(), ir)?
+    let mut r = self.resolve(pcaliases)?.load(i, gpc, &default(), ir)?;
+    r.loaded_via_alias = Some(self.target.clone());
+    r
   }
   #[throws(SpecError)]
   fn load_occult(&self, pcaliases: &PieceAliases)

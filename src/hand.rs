@@ -108,7 +108,11 @@ impl piece_specs::OwnedCommon {
       shape, behaviour,
       label: self.label.load()?,
     }) as Box<dyn PieceTrait>;
-    PieceSpecLoaded { p, occultable: None }
+    PieceSpecLoaded {
+      p,
+      loaded_via_alias: None,
+      occultable: None,
+    }
   }
 }
 

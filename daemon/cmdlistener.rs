@@ -763,7 +763,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           xdata: None,
           moveable: default(),
         };
-        let PieceSpecLoaded { p, occultable } =
+        let PieceSpecLoaded { p, loaded_via_alias, occultable } =
           info.load(piece_i as usize, &mut gpc, &ig.pcaliases, &gref)?;
         if p.nfaces() <= face.into() {
           throw!(SpecError::FaceNotFound);
@@ -775,7 +775,9 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         if gpc.zlevel > gs.max_z { gs.max_z = gpc.zlevel.clone() }
         let piece = gs.pieces.as_mut(modperm).insert(gpc);
         let p = IPieceTraitObj::new(p);
-        ig.ipieces.as_mut(modperm).insert(piece, IPiece { p, occilk });
+        ig.ipieces.as_mut(modperm).insert(piece, IPiece {
+          p, occilk, loaded_via_alias,
+        });
         updates.push((piece, PieceUpdateOp::Insert(())));
         pos = (pos + posd)?;
       }
