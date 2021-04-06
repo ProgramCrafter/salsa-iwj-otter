@@ -4,29 +4,25 @@
 
 use crate::prelude::*;
 
-type Fwd = BTreeMap<String, Box<dyn PieceSpec>>;
-
-#[derive(Debug,Default,Serialize,Deserialize)]
-#[serde(transparent)]
-pub struct PieceAliasesSave(Fwd);
+type Map = BTreeMap<String, Box<dyn PieceSpec>>;
 
 #[derive(Debug,Default,Serialize,Deserialize)]
 #[serde(transparent)]
 pub struct PieceAliases {
-  fwd: Fwd,
+  map: Map,
 }
 
 impl PieceAliases {
   pub fn remove(&mut self, alias: &str) {
-    self.fwd.remove(alias);
+    self.map.remove(alias);
   }
 
   pub fn insert(&mut self, alias: String, target: Box<dyn PieceSpec>) {
-    self.fwd.insert(alias, target);
+    self.map.insert(alias, target);
   }
 
   pub fn keys(&self) -> impl Iterator<Item=&String> {
-    self.fwd.keys()
+    self.map.keys()
   }
 }
 
@@ -40,7 +36,7 @@ impl Alias {
   fn resolve<'a>(&self, pcaliases: &'a PieceAliases) -> &'a dyn PieceSpec {
     Box::as_ref(
       pcaliases
-        .fwd
+        .map
         .get(&self.target)
         .ok_or(SpecError::AliasNotFound)?
     )
