@@ -181,6 +181,7 @@ pub enum PieceOpError {
   PieceGone,
   Occultation,
   PieceUnrotateable,
+  OcculterAlreadyRotated,
   OrganisedPlacementOverfull,
 }
 display_as_debug!{PieceOpError}

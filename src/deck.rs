@@ -59,6 +59,7 @@ impl PieceSpec for piece_specs::Deck {
       throw!(SpE::WrongNumberOfFaces);
     }
     gpc.moveable = PieceMoveable::IfWresting;
+    gpc.rotateable = false;
     let p = Box::new(Deck {
       shape,
       label: self.label.load()?,
@@ -161,7 +162,7 @@ impl PieceTrait for Deck {
   }
 
   #[throws(ApiPieceOpError)]
-  fn ui_operation(&self, _: ShowUnocculted,
+  fn ui_operation(&self, vis: ShowUnocculted,
                   a: ApiPieceOpArgs<'_>,
                   opname: &str, wrc: WhatResponseToClientOp)
                   -> UpdateFromOpComplex {
@@ -177,7 +178,8 @@ impl PieceTrait for Deck {
     let nick = gpl.nick.to_html();
 
     dbgc!("ui op k entry", &opname);
-    
+
+    let rot_checked = gpc.occulter_check_unrotated(vis)?;
     let old_state = self.state(gpc, &goccults)?;
   
     let (new_state, did) = match opname {
@@ -222,7 +224,7 @@ impl PieceTrait for Deck {
       xupdates.extend(
         create_occultation(&mut gen.unique_gen(), &mut gs.max_z,
                            gplayers, gpieces, goccults, ipieces, ioccults,
-                           to_recalculate,
+                           to_recalculate, rot_checked,
                            region, piece, views)?
       );
       dbgc!("creating occ done", &xupdates);

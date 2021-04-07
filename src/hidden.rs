@@ -19,6 +19,9 @@ visible_slotmap_key!{ OccId(b'H') }
 #[derive(Copy,Clone,Debug)]
 pub struct ShowUnocculted(());
 
+#[derive(Copy,Clone,Debug)]
+pub struct OcculterRotationChecked(());
+
 #[derive(Debug,Serialize,Deserialize)]
 #[serde(transparent)]
 pub struct IPieceTraitObj(Box<dyn PieceTrait>);
@@ -413,6 +416,13 @@ impl GPiece {
       None => Some(ShowUnocculted(())),
     }
   }
+
+  pub fn occulter_check_unrotated(&self, _:ShowUnocculted)
+      -> Result<OcculterRotationChecked, PieceOpError> {
+    if self.angle.is_rotated() { Err(POE::OcculterAlreadyRotated) }
+    else { Ok(OcculterRotationChecked(())) }
+  }
+
 
   pub fn fully_visible_to(&self, goccults: &GameOccults, player: PlayerId)
                           -> Option<ShowUnocculted>
@@ -871,6 +881,7 @@ pub fn create_occultation(
   ipieces: &IPieces,
   ioccults: &IOccults,
   to_recalculate: &mut ToRecalculate,
+  _: OcculterRotationChecked,
   region: Region,
   occulter: PieceId,
   views: OccultationViews,

@@ -123,6 +123,7 @@ impl PieceSpec for piece_specs::Hand {
           _pcaliases: &PieceAliases, _ir: &InstanceRef)
           -> PieceSpecLoaded {
     gpc.moveable = PieceMoveable::IfWresting;
+    gpc.rotateable = false;
     self.c.load(Behaviour::Hand)?
   }
 }
@@ -217,7 +218,7 @@ impl PieceTrait for Hand {
   }
 
   #[throws(ApiPieceOpError)]
-  fn ui_operation(&self, _: ShowUnocculted, mut a: ApiPieceOpArgs<'_>,
+  fn ui_operation(&self, vis: ShowUnocculted, mut a: ApiPieceOpArgs<'_>,
                   opname: &str, wrc: WhatResponseToClientOp)
                   -> UpdateFromOpComplex {
     if let Some(r) = {
@@ -237,6 +238,7 @@ impl PieceTrait for Hand {
 
     let goccults = &mut gs.occults;
     let gpc = gpieces.byid_mut(piece)?;
+    let rot_checked = gpc.occulter_check_unrotated(vis);
     let xdata = gpc.xdata.get_mut::<HandState,_>(default)?;
     let old_desc = self.behaviour.describe_html_inner(Some(xdata));
     let old_player = xdata.player();
@@ -261,6 +263,7 @@ impl PieceTrait for Hand {
         let xupdates = match self.behaviour.views() {
           None => default(),
           Some((mk_owner, mk_defview)) => {
+            let rot_checked = rot_checked?;
             let (region, views) = (||{
               dbgc!("claiming region");
               let rect   = self.shape.outline.rect  (gpc.pos)?;
@@ -281,7 +284,7 @@ impl PieceTrait for Hand {
               create_occultation(&mut gen.unique_gen(), &mut gs.max_z,
                                  gplayers, gpieces, goccults,
                                  ipieces, ioccults,
-                                 to_recalculate,
+                                 to_recalculate, rot_checked,
                                  region, piece, views)?;
             xupdates
           }
