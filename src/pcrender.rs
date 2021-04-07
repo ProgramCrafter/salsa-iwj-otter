@@ -129,6 +129,7 @@ impl PieceRenderInstructions {
       zg         : zlevel.zg,
       angle      : pri.angle(gpc).to_compass(),
       pinned     : gpc.pinned,
+      rotateable : gpc.rotateable(),
       uos        : pri.ui_operations(gs, gpc, ipc)?,
       moveable   : gpc.moveable(),
       facehint   : pri.facehint(gpc),

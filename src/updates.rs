@@ -110,6 +110,7 @@ pub struct PreparedPieceState {
   pub angle: CompassAngle,
   pub pinned: bool,
   pub moveable: PieceMoveable,
+  pub rotateable: bool,
   pub uos: Vec<UoDescription>,
   pub occregion: Option<JsonString<Region>>,
   pub bbox: Rect,

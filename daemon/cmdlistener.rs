@@ -762,6 +762,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           pos, face,
           xdata: None,
           moveable: default(),
+          rotateable: true,
         };
         let PieceSpecLoaded { p, loaded_via_alias, occultable } =
           info.load(piece_i as usize, &mut gpc, &ig.pcaliases, &gref)?;

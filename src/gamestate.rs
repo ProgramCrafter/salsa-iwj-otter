@@ -74,6 +74,7 @@ pub struct GPiece {  // usual variable: gpc
   pub gen_before_lastclient: Generation,
   pub xdata: PieceXDataState,
   pub moveable: PieceMoveable,
+  #[serde(default)] pub rotateable: bool,
 }
 
 pub type PieceXDataState = Option<Box<dyn PieceXData>>;
@@ -368,6 +369,10 @@ impl GPiece {
     if self.occult.is_active() { PieceMoveable::No }
     else { self.moveable }
   }
+  pub fn rotateable(&self) -> bool {
+    if self.occult.is_active() { false }
+    else { self.rotateable }
+  }
 
   pub fn dummy() -> Self {
     let gen_dummy = Generation(1);
@@ -384,6 +389,7 @@ impl GPiece {
       gen_before_lastclient: gen_dummy,
       xdata: None,
       moveable: default(),
+      rotateable: true,
     }
   }
 }

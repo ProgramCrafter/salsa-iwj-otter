@@ -49,6 +49,7 @@ struct SessionPieceLoadJson<'r> {
   desc: Html,
   uos: &'r [UoDescription],
   moveable: PieceMoveable,
+  rotateable: bool,
   occregion: Option<JsonString<&'r Region>>,
   pub bbox: &'r Rect,
 }
@@ -158,6 +159,7 @@ fn session_inner(form: Json<SessionForm>,
         desc,
         bbox: &bbox,
         moveable: gpc.moveable(),
+        rotateable: gpc.rotateable(),
         uos: &pri.ui_operations(&ig.gs, gpc, ipc)?,
         occregion,
       };

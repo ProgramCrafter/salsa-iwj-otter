@@ -510,6 +510,9 @@ api_route!{
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,ioccults,player,piece,ipc, .. } = a;
     let gpc = gs.pieces.byid_mut(piece).unwrap();
+    if ! gpc.rotateable() || gpc.occult.is_active() {
+      throw!(POE::PieceUnrotateable)
+    }
     let gpl = gs.players.byid_mut(player).unwrap();
     let logents = log_did_to_piece(
       ioccults,&gs.occults,gpl,gpc,ipc,

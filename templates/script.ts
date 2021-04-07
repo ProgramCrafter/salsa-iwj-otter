@@ -74,6 +74,7 @@ type PieceInfo = {
   angle: CompassAngle,
   pinned: boolean,
   moveable: PieceMoveable,
+  rotateable: boolean,
   uos : UoDescription[],
   uelem : SVGGraphicsElement,
   delem : SVGGraphicsElement,
@@ -300,20 +301,27 @@ function recompute_keybindings() {
     };
   };
   if (all_targets.length) {
-    add_uo(all_targets, {
-      def_key: 'l',
-      kind: 'Client',
-      wrc: 'Predictable',
-      opname: "left",
-      desc: "rotate left",
-    });
-    add_uo(all_targets, {
-      def_key: 'r',
-      kind: 'Client',
-      wrc: 'Predictable',
-      opname: "right",
-      desc: "rotate right",
-    });
+    let got_rotateable = false;
+    for (let t of all_targets) {
+      if (pieces[t]!.rotateable)
+	got_rotateable = true;
+    }
+    if (got_rotateable) {
+      add_uo(all_targets, {
+	def_key: 'l',
+	kind: 'Client',
+	wrc: 'Predictable',
+	opname: "left",
+	desc: "rotate left",
+      });
+      add_uo(all_targets, {
+	def_key: 'r',
+	kind: 'Client',
+	wrc: 'Predictable',
+	opname: "right",
+	desc: "rotate right",
+      });
+    }
     add_uo(all_targets, {
       def_key: 'b',
       kind: 'Client',
@@ -524,6 +532,7 @@ keyops_local['right'] = function (uo: UoRecord) { rotate_targets(uo, -1); }
 function rotate_targets(uo: UoRecord, dangle: number): boolean {
   for (let piece of uo.targets!) {
     let p = pieces[piece]!;
+    if (!p.rotateable) continue;
     p.angle += dangle + 8;
     p.angle %= 8;
     let transform = wasm_bindgen.angle_transform(p.angle);
@@ -1412,6 +1421,7 @@ type PreparedPieceState = {
   angle: number,
   uos: UoDescription[],
   moveable: PieceMoveable,
+  rotateable: boolean,
   occregion: string | null,
   bbox: Rect,
 }
@@ -1496,6 +1506,7 @@ function piece_modify_core(piece: PieceId, p: PieceInfo,
   p.held_us_raising = false;
   p.pinned = info.pinned;
   p.moveable = info.moveable;
+  p.rotateable = info.rotateable;
   p.angle = info.angle;
   p.bbox = info.bbox;
   piece_set_zlevel_from(piece,p,info);
