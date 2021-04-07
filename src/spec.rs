@@ -282,6 +282,12 @@ pub mod piece_specs {
 
 // ---------- Implementation - angles ----------
 
+impl PieceAngle {
+  pub fn is_rotated(&self) -> bool { match self {
+    &PieceAngle::Compass(CompassAngle(a)) => a != 0,
+  } }
+}
+
 impl Default for PieceAngle {
   fn default() -> Self { PieceAngle::Compass(default()) }
 }
