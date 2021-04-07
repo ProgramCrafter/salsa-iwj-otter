@@ -1,0 +1,375 @@
+BUILDING AND TESTING OTTER
+==========================
+
+Otter is mostly written in Rust.
+
+The web UI frontend is written in Typescript, with a small amount of
+Rust support code delivered via WebAssembly.
+
+
+You will need at least 6000 megabytes of disk space, or more, and a
+good internet connection.  Your computer will be compiling a lot of
+code.
+
+These instructions have been tested on Debian buster.
+
+
+Setup
+-----
+
+1. 
+```
+     sudo apt install build-essential cpio git curl     \
+                      pkg-config libssl-dev             \
+                      node-typescript inkscape bubblewrap \
+                      netpbm imagemagick
+```
+
+2. Install Rust.  This is most easily done with [rustup](https://rustup.rs)):
+
+```
+     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+   and then follow the instructions about your `PATH`.  If this rune
+   alarms you, see below about Rust privsep.
+
+3. Switch your Rust install to use Rust Nightly and add the WASM
+   target:
+
+```
+     rustup default nightly
+     rustup target add wasm32-unknown-unknown
+```
+
+   Unfortunately, it is possible that the Rust nightly you find when
+   you run this is missing some pieces.  The following is known to
+   work (with otter from the time of writing):
+```
+     rustup default nightly-2021-01-26
+```
+
+4. Install the `usvg` SVG launderer, which we need for shape libraries
+
+```
+     cargo install usvg
+```
+
+   This will put it in `~/.cargo/bin`, which you presumably have on
+   your `PATH` (or the above `rustup` and `cargo` runes wouldn't work).
+
+
+** If you just want to edit and preview the shape libraries
+   (ie the piece shapes) you can stop here **
+
+
+5. Install some more build tools:
+
+```
+     cargo install bundle-sources
+```
+
+
+Build
+-----
+
+```
+     git clone https://salsa.debian.org/iwj/otter
+     cd otter
+     make -j8 all bundled-sources
+```
+
+Or if you just want to edit the piece libraries:
+
+```
+    make -j8 shapelib
+```
+And then open `./templates/shapelib.html` in your browser
+
+
+Ad-hoc tests
+------------
+
+In one shell:
+
+```
+     target/debug/daemon-otter server-test.toml
+```
+
+The server does not daemonise, and the default config there makes it
+quite verbose.  So, in another shell:
+
+```
+    target/debug/otter                                               \
+        --account server: --config server-test.toml --spec-dir=specs \
+        reset --reset-table test server::test demo
+
+    target/debug/otter                                               \
+        --account server: --config server-test.toml --spec-dir=specs \
+        join-game server::test
+```
+
+The URL printed can then be visited in a local browser.
+
+
+Resetting/restoring things after tests, updating server, etc.
+-------------------------------------------------------------
+
+After the server is updated, you can just `^C` and restart it.  Games
+are constantly saved (although there is an up-to-1s lag on the most
+frequently udpated game state).
+
+If you want to clear out the server state, delete the files `[ag]-*`
+and `accounts`.  NB that you should do this with the server not
+running, because the server has most of that information in memory and
+will like to write it out again.
+
+If you update Typescript (JS code) you will need to rerun `make` to
+rebuild the JS output.
+
+Apart from that, if you update JS or WASM code or Tera templates, you
+do not need to restart the server - it will pick up changes
+automatically.
+
+When testing, you do not need to `make bundled-sources` more than
+once, at the beginning.  So don't, because it's slow.  But you
+definitely should run it for every update if you make a deployment for
+other people to use.  Otherwise you might be running a privately
+modified server without offering your users its source code.  See
+LICENCE.
+
+If you Do Something to the output from cargo, you should `rm stamp/*`,
+since the `Makefile` won't notice, otherwise, that, the relevant cargo
+rune(s) need to be re-run.  Needlessly deleting all the stamp files
+wastes only a handful of seconds (on my stupidly fast laptop).
+Deleting the xtamp files is not needed if you simpl edit Rust source
+files.
+
+
+Navigating the otter source code
+--------------------------------
+
+* `src/`
+
+  The main Rust source code.  This is mixture of code used only or
+  mainly by the server and code used by the `otter` command line
+  utility; these aren't split up in a wholly principled way.  In Rust
+  terms this is a "library crate".
+
+* `src/bin/*.rs`
+
+  Support executables, including in particular the command line
+  utility `otter` which is used to set up and join games.
+
+* `daemon/`
+
+  The Otter server.  This is a simple binary crate.  Much
+  functionality belonging primarily, or only, to the server, is in
+  `src/`, simply because it was easier not to disentangle it.
+  Anything that needs Rocket (the web framework) is in `daemon/`.
+
+* `base/`
+
+  Code shared by the host and the WebAssembly.  Notably, the Z
+  coordinate handling, but also a a few other minor functions needed
+  by both client and server.  To avoid duplicating them are written
+  once in Rust and compiled twice - once for the host and once for
+  WebAssembly for use in the client.  This crate is kept fairly small
+  to keeep the WebAssembly binary small (currently, ~100kby).
+
+* `wasm/`
+
+  WebAssembly/Rust bindings for the items in `zcoord/`.  Produces the
+  single wasm file for use by the JavaScript, and corresponding
+  Typescript annotations etc.
+
+* `templates/script.ts`
+
+  The main Typescript (typed Javascript) code.  Otter's web
+  compatibility target is the earliest browser versions that properly
+  support WebAssembly.
+
+* `templates/session.tera`, `macros.tera`, etc.
+
+  Tera templates generating the main HTML screen.  These templates are
+  filled in from structs in the Rust source code.  The main files are
+  `session.tera` (portrait), `landscape.tera`, and `macros.tera`
+  (common), and their rendering uses an instance of
+  `SessionRenderContext` from `src/session.rs`.
+
+* `nwtemplates/`
+
+  "Non-web templataes".  Tera templates for things other than web
+  pages.  Currently this includes the server's outgoing emails.  These
+  have to be in a separate directory because Tera (invoked by Rocket)
+  likes to load everything applicable it finds in its own `templates/`
+  directory.  These are used via `src/nwtemplates.rs`.
+
+* `apitest/`
+
+  Tests of the server which use its APIs - specifically, the
+  management socket (also used by the `otter` command line tool) and
+  the web API, but which do not use any JavaScript.
+
+  These are not standard Rust `#[test]` tests because they need to
+  reinvoke themselves via `bwrap` for test isolation reasons, and
+  because their dependencies are extensive and not properly capturable
+  in Cargo.  They are run by `make check`.
+
+  The file `apitest/apitest.rs` also contains code which is reused by
+  the WebDriver tests.
+
+* `wdriver/`
+
+  WebDriver-based end-to-end tests.  Each `wdt-*.rs` is one test
+  utility.  `wdriver.rs` is the library for these, and contains most
+  of the heavy lifting.
+
+  The tests produce a single portmanteau binary to reduce compile
+  times.  You run it with `target/debug/wdriver --test=wdt-something`.
+
+* `specs/`.  The table and game specs, as used directly by `otter`.
+
+* `library/`: The shape libraries.
+
+  The program `./media-scraper` (which is not run by the `Makefile`)
+  reads `library/*.toml` for instructions and generates `files.make`
+  fragments.  These fragments arrange to run `./usvg-processor` which
+  launders SVGs through `usvg`.  `usvg-processor`.
+
+  The shape libraries have a different, more relaxed, copyright
+  licence.
+
+* `webassembly-types`: A git-subtree of "WebAssembly Types".
+
+
+Automatic in-browser tests (`wdriver`)
+--------------------------------------
+
+* `apt install firefox`
+
+* `https://github.com/mozilla/geckodriver/releases/tag/v0.28.0`
+  download appropriate tarball, put "geckodriver" on PATH
+
+`make check` runs all the tests; `make wdt` runs only those tests.  You can run
+an individual test with a rune like this:
+
+```
+  OTTER_TEST_LOG=otter_webdriver_tests=trace CARGO_MANIFEST_DIR=~ian/Rustup/Game/server time target/debug/wdriver --test=wdt-simple --geckodriver-args=
+```
+
+(This rune has some example logging options in it, for you to change
+if you like. You can omit the `CARGO_MANIFEST_DIR` for an in-tree
+non-privsep build.)  After a test has run, you can find screenshots,
+etc. in `tmp/wdt-simple` or whatever.  You can restart the same game
+server setup as the test used, with the state left by the test, with a
+rune like this:
+
+```
+  target/debug/daemon-otter tmp/wdt-simple/server-config.toml
+```
+and then play with it at this url:
+```
+  http://localhost:8000/?kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe
+```
+
+
+Rust, cargo, curl|bash-ware; privsep
+------------------------------------
+
+If you are not the kind of person to worry about your software supply
+chains you can skp this part.
+
+If you follow the above instructions you will have downloaded and
+executed - and, therefore, trusted:
+
+ * Various Debian packages - safe
+ * Rustup (the Rust downloader/installer) - this is pretty safe
+ * Rust itself - again, pretty safe
+ * Otter itself - well, I wrote this; up to you.
+ * 450 transitive dependencies of otter (from crates.io)
+ * 50 transitive dependencies of bundle-sources
+ * the transitive dependencies of resvg
+ * a geckodriver binary directly from mozilla
+
+You will have trusted the integrity of the following:
+
+ * The Debian archive (via its apt keyring) (very good)
+ * Rustup's and Rust's TLS keyholders (good, I think)
+ * The HTTP TLS cabal (sigh)
+ * github (pretty good in practice)
+ * whatever mozilla do to make binaries, in particular geckodriver
+ * crates.io (extremely poor traceability)
+ * the project management of hundreds of random crates.io libraries
+
+If this makes you uncomfortable, as it should, you may wish to
+consider running everything in a separate shell account, or a VM or
+container of some kind.
+
+(I have a not-properly-released tool called "nailing-cargo" which
+makes it possible to do most things in my main account but run the
+Rust stuff in a separate less-privileged account.  There is support
+for this in the Makefile.  But if you want to run *everything* in the
+lesser account, you don't need to bother with that.)
+
+
+Dependencies - apologia
+-----------------------
+
+ * Rust Nightly
+
+   This is needed almost solely because Rocket needs it.  Rocket is
+   the web framework I am using.  The next version of Rocket (0.5.x),
+   which is in development, will not need Nightly, but it will also be
+   a serious compatibility break.  The existing Rocket (0.4.x) will
+   almost certainly never be ported to Stable Rust.  When Rocket 0.5.x
+   is out, porting Otter to it will go on my list - but it won't be
+   trivial.  Sorry.
+
+ * The many dependencies of Otter
+
+   These are partly because Rocket is a large piece of software with
+   much functionality.  But also because I favoured my own programming
+   convenience and in some cases was experimenting with different
+   approaches.  In practice, it seems to me that once I'm using Rocket
+   and WASM and resvg and so on, there is not that much to be gained
+   by trying to prune the dependencies of the otter package itself.
+
+ * bundle-rust-sources
+
+   This is mine, but it needs to be properly released.
+
+ * geckodriver (for the automated in-browser tests)
+
+   This is done with a protocol called "WebDriver" which is a
+   cross-browser way to puppet a browser.  There is a thing called
+   "geckodriver" which converts that to a firefox-specific protocol
+   for the same purpose, called "Marionette".  (In practice all this
+   seems to have lots of bugs and misfeatures.)
+
+   AFAICT the usual approach for using geckodriver to have it *bind to
+   a fixed TCP port accessible to all local programs*.  My wrapper
+   tooling arranges to run this in an ephemeral $HOME and a private
+   network namespace.
+
+   AFAICT the only practical way to get geckodriver is to download the
+   binary.  I got mine here:
+     https://github.com/mozilla/geckodriver/releases/tag/v0.28.0 You
+   You just dump the binary on your PATH.
+
+
+Final weirdness
+---------------
+
+ * The `Makefile` `deploy` target is very specific to my setup.
+
+ * For running on chiark I build with the Rust target
+   `x86_64-unknown-linux-musl` which on my system is configured to
+   produce a completely statically linked bionary.  I have this in my
+   `~/.cargo/config` (in the lesser privsep account):
+
+```
+[target.x86_64-unknown-linux-musl]
+rustflags = ["-C", "target-feature=+crt-static"]
+# ^ from https://stackoverflow.com/questions/31770604/how-to-generate-statically-linked-executables
+```
