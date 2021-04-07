@@ -541,7 +541,7 @@ impl PieceTrait for Clock {
   }
 
   #[throws(InternalError)]
-  fn add_ui_operations(&self, upd: &mut Vec<UoDescription>,
+  fn add_ui_operations(&self, _: ShowUnocculted, upd: &mut Vec<UoDescription>,
                        gs: &GameState, gpc: &GPiece) {
     let state: &State = gpc.xdata_exp()?;
 
@@ -610,7 +610,7 @@ impl PieceTrait for Clock {
   }
 
   #[throws(ApiPieceOpError)]
-  fn ui_operation(&self, args: ApiPieceOpArgs<'_>,
+  fn ui_operation(&self, _: ShowUnocculted, args: ApiPieceOpArgs<'_>,
                   opname: &str, _wrc: WhatResponseToClientOp)
                   -> UpdateFromOpComplex {
     let ApiPieceOpArgs { gs,piece,player,ioccults,ipc,ig,.. } = args;

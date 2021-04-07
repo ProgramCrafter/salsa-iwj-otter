@@ -605,7 +605,7 @@ api_route!{
         };
       }
 
-      ipc.show(y).ui_operation(a, &self.opname, self.wrc)?
+      ipc.show(y).ui_operation(y, a, &self.opname, self.wrc)?
     }
   }
 }

@@ -241,7 +241,7 @@ impl PieceRenderInstructions {
         desc: Html::lit("flip").into(),
       })
     }
-    ipc.show(y).add_ui_operations(&mut out, gs, gpc)?;
+    ipc.show(y).add_ui_operations(y, &mut out, gs, gpc)?;
     out
   }
 }

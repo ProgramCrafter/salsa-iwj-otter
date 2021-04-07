@@ -64,6 +64,8 @@ pub enum OutputKind {
 
 pub type ItemForOutput = (String, ItemEnquiryData);
 
+pub const VIS: ShowUnocculted = ShowUnocculted::new_visible();
+
 #[throws(AE)]
 fn preview(items: Vec<ItemForOutput>) {
   const BORDER: f64 = 1.;
@@ -98,7 +100,7 @@ fn preview(items: Vec<ItemForOutput>) {
         .context("load")?;
       // todo show occulted version too
       let mut uos = vec![];
-      p.add_ui_operations(&mut uos, &GameState::dummy(), &GPiece::dummy())
+      p.add_ui_operations(VIS, &mut uos, &GameState::dummy(), &GPiece::dummy())
         .context("add uos")?;
       let uos = uos.into_iter().map(|uo| uo.opname).collect::<Vec<_>>();
       let spec = spec.clone();

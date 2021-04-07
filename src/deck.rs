@@ -128,7 +128,7 @@ impl PieceTrait for Deck {
   }
 
   #[throws(InternalError)]
-  fn add_ui_operations(&self, upd: &mut Vec<UoDescription>,
+  fn add_ui_operations(&self, _: ShowUnocculted, upd: &mut Vec<UoDescription>,
                        gs: &GameState, gpc: &GPiece) {
     let state = self.state(gpc, &gs.occults)?;
     if state != Enabled {
@@ -161,7 +161,8 @@ impl PieceTrait for Deck {
   }
 
   #[throws(ApiPieceOpError)]
-  fn ui_operation(&self, a: ApiPieceOpArgs<'_>,
+  fn ui_operation(&self, _: ShowUnocculted,
+                  a: ApiPieceOpArgs<'_>,
                   opname: &str, wrc: WhatResponseToClientOp)
                   -> UpdateFromOpComplex {
     let ApiPieceOpArgs { gs,player,piece,ipieces,ioccults,to_recalculate,.. } = a;

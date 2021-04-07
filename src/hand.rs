@@ -192,7 +192,7 @@ impl PieceTrait for Hand {
   }
 
   #[throws(InternalError)]
-  fn add_ui_operations(&self, upd: &mut Vec<UoDescription>,
+  fn add_ui_operations(&self, _: ShowUnocculted, upd: &mut Vec<UoDescription>,
                        _gs: &GameState, gpc: &GPiece) {
     upd.push(if_chain! {
       if let Some(xdata) = gpc.xdata.get::<HandState>()?;
@@ -217,7 +217,7 @@ impl PieceTrait for Hand {
   }
 
   #[throws(ApiPieceOpError)]
-  fn ui_operation(&self, mut a: ApiPieceOpArgs<'_>,
+  fn ui_operation(&self, _: ShowUnocculted, mut a: ApiPieceOpArgs<'_>,
                   opname: &str, wrc: WhatResponseToClientOp)
                   -> UpdateFromOpComplex {
     if let Some(r) = {

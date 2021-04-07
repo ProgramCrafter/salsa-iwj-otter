@@ -172,10 +172,11 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
   fn nfaces(&self) -> RawFaceId;
 
   #[throws(InternalError)]
-  fn add_ui_operations(&self, _upd: &mut Vec<UoDescription>,
+  fn add_ui_operations(&self, _: ShowUnocculted,
+                       _upd: &mut Vec<UoDescription>,
                        _gs: &GameState, _gpc: &GPiece) { }
 
-  fn ui_operation(&self, _a: ApiPieceOpArgs<'_>,
+  fn ui_operation(&self, _: ShowUnocculted, _a: ApiPieceOpArgs<'_>,
                   _opname: &str, _wrc: WhatResponseToClientOp)
                   -> Result<UpdateFromOpComplex, ApiPieceOpError> {
     throw!(OE::BadOperation)
