@@ -223,10 +223,11 @@ impl PieceTrait for Hand {
                   -> UpdateFromOpComplex {
     if let Some(r) = {
       let gpc = a.gs.pieces.byid_mut(a.piece)?;
+      let rot_checked = gpc.occulter_check_unrotated(vis)?;
       let rect = self.shape.outline.rect(gpc.pos)
         .map_err(|CoordinateOverflow|
                  internal_error_bydebug(&(&gpc.pos, &self.shape)))?;
-      organise::ui_operation(&mut a, opname, wrc, &rect)?                             
+      organise::ui_operation(&mut a, rot_checked, opname, wrc, &rect)?                             
     } {
       return r;
     }

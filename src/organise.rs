@@ -230,8 +230,8 @@ fn try_layout(region: &Rect,
 
 
 #[throws(ApiPieceOpError)]
-pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, opname: &str,
-                    _wrc: WhatResponseToClientOp, region: &Rect)
+pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, _: OcculterRotationChecked,
+                    opname: &str, _wrc: WhatResponseToClientOp, region: &Rect)
                     -> Option<UpdateFromOpComplex> {
   let do_sort = match opname {
     "organise" => false,
