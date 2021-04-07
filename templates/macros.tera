@@ -87,6 +87,7 @@ Hi {{nick | escape}}
       <defs id="defs{{ piece.0 }}">{{ piece.1 }}</defs>
 {%- endfor %}
       <g id="movehist_marker"></g>
+      <g id="movehist_end"></g>
       <defs id ="static_defs">
       </defs>
     </svg>

@@ -1846,7 +1846,7 @@ function startup() {
   pieces_marker = svg_element("pieces_marker")!;
   defs_marker = svg_element("defs_marker")!;
   movehist_start = svg_element('movehist_marker')!;
-  movehist_end = svg_element('static_defs')!;
+  movehist_end = svg_element('movehist_end')!;
   svg_ns = space.getAttribute('xmlns')!;
 
   for (let uelem = pieces_marker.nextElementSibling! as SVGGraphicsElement;
