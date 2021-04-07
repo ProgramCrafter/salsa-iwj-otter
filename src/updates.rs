@@ -391,11 +391,15 @@ impl PreparedUpdateEntry_Image {
 }
 
 impl JsonLen for PreparedPieceState {
-  fn json_len(&self) -> usize { self.svg.json_len() + self.uos.json_len() }
+  fn json_len(&self) -> usize {
+    300 + self.svg.json_len() + self.uos.json_len()
+  }
 }
 
 impl JsonLen for PreparedPieceImage {
-  fn json_len(&self) -> usize { self.svg.json_len() + self.uos.json_len() }
+  fn json_len(&self) -> usize {
+    100 + self.svg.json_len() + self.uos.json_len()
+  }
 }
 impl<T:JsonLen> JsonLen for Vec<T> {
   fn json_len(&self) -> usize { self.iter().map(|x| x.json_len() + 10).sum() }
