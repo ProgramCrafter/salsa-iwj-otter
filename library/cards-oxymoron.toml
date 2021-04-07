@@ -16,7 +16,7 @@ centre = [36.5, 48.5]
 scale = 0.25
 
 item_suffix = "-c"
-sort = "card-playing-_sc"
+sort = "card-playing-c_s"
 desc_template = "the _desc of clubs"
 
 occulted.method = "ByBack"
@@ -46,17 +46,17 @@ target = "card-back"
 [group.diamonds]
 inherit = "clubs"
 item_suffix = "-d"
-sort = "card-playing-_sd"
+sort = "card-playing-d_s"
 desc_template = "the _desc of diamonds"
 
 [group.hearts]
 inherit = "clubs"
-sort = "card-playing-_sh"
+sort = "card-playing-h_s"
 item_suffix = "-h"
 desc_template = "the _desc of hearts"
 
 [group.spades]
 inherit = "clubs"
-sort = "card-playing-_ss"
+sort = "card-playing-s_s"
 item_suffix = "-s"
 desc_template = "the _desc of spades"
