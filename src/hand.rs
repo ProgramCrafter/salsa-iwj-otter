@@ -119,9 +119,10 @@ impl piece_specs::OwnedCommon {
 #[typetag::serde]
 impl PieceSpec for piece_specs::Hand {
   #[throws(SpecError)]
-  fn load(&self, _: usize, _: &mut GPiece,
+  fn load(&self, _: usize, gpc: &mut GPiece,
           _pcaliases: &PieceAliases, _ir: &InstanceRef)
           -> PieceSpecLoaded {
+    gpc.moveable = PieceMoveable::IfWresting;
     self.c.load(Behaviour::Hand)?
   }
 }

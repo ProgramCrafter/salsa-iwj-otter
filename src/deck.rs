@@ -37,7 +37,7 @@ impl OutlineTrait for Deck {
 #[typetag::serde(name="PickupDeck")]
 impl PieceSpec for piece_specs::Deck {
   #[throws(SpecError)]
-  fn load(&self, _: usize, _: &mut GPiece,
+  fn load(&self, _: usize, gpc: &mut GPiece,
           _pcaliases: &PieceAliases, _ir: &InstanceRef)
           -> PieceSpecLoaded {
     let common = SimpleCommon {
@@ -58,6 +58,7 @@ impl PieceSpec for piece_specs::Deck {
     if shape.count_faces() != 2 {
       throw!(SpE::WrongNumberOfFaces);
     }
+    gpc.moveable = PieceMoveable::IfWresting;
     let p = Box::new(Deck {
       shape,
       label: self.label.load()?,
