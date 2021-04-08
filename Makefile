@@ -220,8 +220,8 @@ stamp/cargo.deploy-build: $(call rsrcs,.)
 
 sphinx-doc: docs/html/index.html
 
-docs/build/html/index.html: docs/conf.py $(wildcard docs/*.md docs/*.rst)
-	$(SPHINXBUILD) -M html docs docs/build $(SPHINXOPTS)
+docs/html/index.html: docs/conf.py $(wildcard docs/*.md docs/*.rst)
+	$(SPHINXBUILD) -M html docs docs $(SPHINXOPTS)
 
 #---------- wasm ----------
 
