@@ -16,7 +16,7 @@ full-check: all check cargo-syntaxcheck-release shapelib sphinx-doc
 everything: debug doc release check bundled-sources
 
 shapelib: templates/shapelib.html stamp/cargo.doc-otter-only
-	@echo 'Now you can visit these in your web browser:'
+	@echo 'Shape library preview and docs can now be found here:'
 	@echo '  file://$(PWD)/$<'
 	@echo '  file://$(abspath $(TARGET_DIR)/doc/otter/shapelib_toml/index.html)'
 
@@ -219,6 +219,8 @@ stamp/cargo.deploy-build: $(call rsrcs,.)
 #---------- sphnix ----------
 
 sphinx-doc: docs/html/index.html
+	@echo 'Documentation can now be found here:'
+	@echo '  file://$(PWD)/$<'
 
 docs/html/index.html: docs/conf.py $(wildcard docs/*.md docs/*.rst)
 	$(SPHINXBUILD) -M html docs docs $(SPHINXOPTS)
