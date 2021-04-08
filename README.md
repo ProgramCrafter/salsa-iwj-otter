@@ -1,7 +1,8 @@
-OTTER - ONLINE TABLE TOP ENVIRONMENT RENDERER
-=============================================
+Introduction
+============
 
-Otter is an online game system.
+Otter, the Online Table Top Environment Renderer, is an online game
+system.
 
 But it is not like most online game systems.  It does not know (nor
 does it need to know) the rules of the game you are playing.  Instead,
@@ -37,7 +38,7 @@ Mao with Otter.
 
 
 Playing a game with Otter
---------------------------
+-------------------------
 
 The Otter game environment is accessed from a web browser running
 JavaScript, using a magic https link obtained from joining the game.

@@ -1,5 +1,5 @@
-OTTER - USER DOCUMENTATION
-==========================
+Using Otter as a player or game host
+====================================
 
 Basics; joining a game
 ----------------------

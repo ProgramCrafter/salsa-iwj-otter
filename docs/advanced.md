@@ -1,5 +1,18 @@
-Making your own game
-====================
+Advanced usage
+==============
+
+Adding pieces to a game in progress
+-----------------------------------
+
+Use the `otter library-list` and `otter library-add` commands, you can
+add pieces to a game while it is in progress.
+
+You may want to refer to the shape library preview ("Shapelib" link in
+the game UI).
+
+
+Defining your own game
+----------------------
 
 If you want to use existing piece shapes that Otter already knows
 about, you can do this by providing a `<something>.game.toml` file.
@@ -7,8 +20,8 @@ The format of these files is a TOML document representing a `GameSpec`
 as found in `src/spec.rs` in the Otter source code.
 
 
-Adding shapes
-=============
+Adding shapes (pieces, cards, etc.)
+-----------------------------------
 
 Otter uses SVGs.  The sources for the SVGs are all in the otter source
 tree, in the `library/` directory.
