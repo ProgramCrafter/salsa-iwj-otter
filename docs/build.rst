@@ -1,0 +1,165 @@
+Building
+========
+
+Otter is mostly written in Rust.  The web UI frontend is written in
+Typescript.  The shape libraries are SVGs and need SVG manipulation
+libraries.  The main documentation is done with Sphinx.
+
+Setup
+-----
+
+1. Install the packaged build dependencies::
+
+
+     sudo apt install build-essential cpio git curl     \
+                      pkg-config libssl-dev             \
+                      node-typescript inkscape bubblewrap \
+                      netpbm imagemagick \
+                      python3-sphinx python3-recommonmark
+
+
+2. Install Rust.  This is most easily done with rustup_::
+
+     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+   and then follow the instructions about your ``PATH``.  If this rune
+   alarms you, see below about Rust privsep.
+
+.. _rustup: https://rustup.rs
+
+3. Switch your Rust install to use Rust Nightly and add the WASM
+   target::
+
+     rustup default nightly
+     rustup target add wasm32-unknown-unknown
+
+   Unfortunately, it is possible that the Rust nightly you find when
+   you run this is missing some pieces.  The following is known to
+   work (with otter from the time of writing)::
+
+     rustup default nightly-2021-01-26
+
+4. Install the ``usvg`` SVG launderer, which we need for shape libraries::
+
+     cargo install usvg
+
+   This will put it in ``~/.cargo/bin``, which you presumably have on
+   your ``PATH`` (or the above ``rustup`` and ``cargo`` runes wouldn't work).
+
+
+   **If you just want to edit and preview the shape libraries (ie the piece shapes) you can stop here.**
+
+5. Install some more build tools::
+
+     cargo install bundle-sources
+
+6. Install the webdriver binary from Mozilla.  Visit
+
+     https://github.com/mozilla/geckodriver/releases/tag/v0.28.0
+
+   and just dump the resulting ``geckodriver`` binary on your ``PATH``.
+
+
+Build
+-----
+
+::
+
+     git clone https://salsa.debian.org/iwj/otter
+     cd otter
+     make -j8 all bundled-sources
+
+Build just the shape library preview
+....................................
+
+::
+
+    make -j8 shapelib
+
+And then open ``./templates/shapelib.html`` in your browser
+
+
+curl|bash-ware; privsep
+-----------------------
+
+**If you are not the kind of person to worry about computer security -
+especially your software supply chains - you can skip this part.**
+
+If you follow the above instructions, you will have downloaded and
+executed - and, therefore, trusted:
+
+ * Various Debian packages - safe
+ * Rustup (the Rust downloader/installer) - this is pretty safe
+ * Rust itself - again, pretty safe
+ * Otter itself - well, I wrote this; up to you.
+ * 450 transitive dependencies of otter (from crates.io)
+ * 50 transitive dependencies of bundle-sources
+ * the transitive dependencies of resvg
+ * a geckodriver binary directly from mozilla
+
+You will have trusted the integrity of the following:
+
+ * The Debian archive (via its apt keyring) (very good)
+ * Rustup's and Rust's TLS keyholders (good, I think)
+ * The HTTP TLS cabal (sigh)
+ * github (pretty good in practice)
+ * whatever mozilla do to make binaries, in particular geckodriver
+ * crates.io (extremely poor traceability)
+ * the project management of hundreds of random crates.io libraries
+
+If this makes you uncomfortable, as it should, you may wish to
+consider running everything in a separate shell account, or a VM or
+container of some kind.
+
+(I have a not-properly-released tool called "nailing-cargo" which
+makes it possible to do most things in my main account but run the
+Rust stuff in a separate less-privileged account.  There is support
+for this in the Makefile.  But if you want to run *everything* in the
+lesser account, you don't need to bother with that.)
+
+
+Apologia
+........
+
+Rust Nightly
+````````````
+
+This is needed almost solely because Rocket needs it.  Rocket is
+the web framework I am using.  The next version of Rocket (0.5.x),
+which is in development, will not need Nightly, but it will also be
+a serious compatibility break.  The existing Rocket (0.4.x) will
+almost certainly never be ported to Stable Rust.  When Rocket 0.5.x
+is out, porting Otter to it will go on my list - but it won't be
+trivial.  Sorry.
+
+The many dependencies of Otter
+``````````````````````````````
+
+These are partly because Rocket is a large piece of software with
+much functionality.  But also because I favoured my own programming
+convenience and in some cases was experimenting with different
+approaches.  In practice, it seems to me that once I'm using Rocket
+and WASM and resvg and so on, there is not that much to be gained
+by trying to prune the dependencies of the otter package itself.
+
+bundle-rust-sources
+```````````````````
+
+This is mine, but it needs to be properly released.
+
+geckodriver (for the automated in-browser tests)
+````````````````````````````````````````````````
+
+This is done with a protocol called "WebDriver" which is a
+cross-browser way to puppet a browser.  There is a thing called
+"geckodriver" which converts that to a firefox-specific protocol
+for the same purpose, called "Marionette".  (In practice all this
+seems to have lots of bugs and misfeatures.)
+
+AFAICT the usual approach for using geckodriver to have it *bind to
+a fixed TCP port accessible to all local programs*.  My wrapper
+tooling arranges to run this in an ephemeral $HOME and a private
+network namespace.
+
+AFAICT the only practical way to get geckodriver is to download the
+binary from Mozilla.
