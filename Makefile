@@ -51,6 +51,8 @@ WASM_BINDGEN_OPTIONS =						\
 
 BUNDLE_SOURCES ?= bundle-rust-sources
 
+SPHINXBUILD   = sphinx-build
+
 ifndef INKSCAPE_EXTENSIONS
 INKSCAPE ?= inkscape
 INKSCAPE_EXTENSIONS := $(shell $(INKSCAPE) -x)
@@ -138,7 +140,7 @@ WASM := wasm32-unknown-unknown
 check: stamp/cargo.check at wdt
 	@echo 'All tests passed.'
 
-doc: cargo-doc
+doc: cargo-doc sphinx-doc
 
 debug release:: %: stamp/cargo.% assets libraries extra-%
 
@@ -213,6 +215,13 @@ stamp/cargo.wasm-%: $(call rsrcs, base wasm Cargo.*)
 stamp/cargo.deploy-build: $(call rsrcs,.)
 	$(CARGO) -T$(DEPLOY_ARCH) build $(call cr,$(DEPLOY_RELEASE)) -p otter -p otter-daemon
 	$(stamp)
+
+#---------- sphnix ----------
+
+sphinx-doc: docs/html/index.html
+
+docs/build/html/index.html: docs/conf.py $(wildcard docs/*.md docs/*.rst)
+	$(SPHINXBUILD) -M html docs docs/build $(SPHINXOPTS)
 
 #---------- wasm ----------
 

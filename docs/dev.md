@@ -22,7 +22,8 @@ Setup
      sudo apt install build-essential cpio git curl     \
                       pkg-config libssl-dev             \
                       node-typescript inkscape bubblewrap \
-                      netpbm imagemagick
+                      netpbm imagemagick \
+                      python3-sphinx python3-recommonmark
 ```
 
 2. Install Rust.  This is most easily done with [rustup](https://rustup.rs)):
