@@ -10,6 +10,10 @@ Welcome to Otter's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   README
+   user
+   advanced
+   dev
 
 
 Indices and tables
