@@ -14,6 +14,7 @@ Otter - Online Table Top Environment Renderer
    user
    advanced
    build
+   install
    dev
 
 

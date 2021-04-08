@@ -89,7 +89,7 @@ itself is meant as prompts and hints rather than full documentation.
 Notable features you might otherwise overlook include these:
 
 Pressuing "h" repeatedly cycles through various amounts of history
-view (the overliad yellow arrows showing what recently happened).
+view (the overlaid yellow arrows showing what recently happened).
 
 Typing numbers will get you into a multiple selection mode, which you
 can use (for example) to draw yourself a hand of multiple cards.
@@ -104,8 +104,8 @@ and `O` keyboard commands.
 
 There is a Wresting mode for making exceptional changes to the game
 state, such as forcibly grasping a piece out of another player's
-grasp.  Don't forget to exit Wresting mode when you're finished with
-it.
+grasp, or moving the chessboard.  Don't forget to exit Wresting mode
+when you're finished with it.
 
 
 Bugs and errors
@@ -120,11 +120,11 @@ Typically this will improve matters.  Hopefully the game state on the
 server side is not too badly affected.
 
 If you can reproduce a bug, please file a bug report;
-  https://salsa.debian.org/iwj/otter/-/issues/new
+<https://salsa.debian.org/iwj/otter/-/issues/new>.
 
 Of course you might want to reload the Otter game page if you have
 trouble with your network or web browser.  The state is all on the
-server, so you can reload when you want to.
+server, so you can reload or reconnect whenever you like.
 
 
 Game administration

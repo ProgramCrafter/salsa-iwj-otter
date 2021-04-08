@@ -16,8 +16,10 @@ Defining your own game
 
 If you want to use existing piece shapes that Otter already knows
 about, you can do this by providing a `<something>.game.toml` file.
+
 The format of these files is a TOML document representing a `GameSpec`
-as found in `src/spec.rs` in the Otter source code.
+as found in `src/spec.rs` in the Otter source code.  Unfortunately
+this is not yet documented.
 
 
 Adding shapes (pieces, cards, etc.)
@@ -37,15 +39,16 @@ whole game server, by running `make -j8 shapelib`, and looking at
 `templates/shapelib.html`.  As above, this make rune will print the
 `file://` url for you.
 
-See BUILDING AND TESTING for information about how to install the
+See the build instructions for information about how to install the
 tools you will need.
 
 Some of these SVGs were scraped from Wikimedia.  The scraper machinery
 can perhaps be adapted to scrape SVGs from elsewhere.
 
-You can also add your own SVGs in the library/edited/ directory.
-If you do that, please make sure to include the actual source code.
-If you copied or adapted an SVG from somewhere, provide details.
+You can also add your own SVGs in the `library/edited/` directory.  If
+you do that, please make sure to include the actual source code there
+too.  If you copied or adapted an SVG from somewhere, note the details
+of where you got it (eg, in a git commit message).
 
 Contributions should be via git branch, eg a merge request on Salsa:
 [https://salsa.debian.org/iwj/otter](https://salsa.debian.org/iwj/otter)

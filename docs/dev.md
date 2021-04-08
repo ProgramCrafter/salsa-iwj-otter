@@ -1,21 +1,17 @@
-BUILDING AND TESTING OTTER
-==========================
+Developing
+==========
 
 Otter is mostly written in Rust.
 
 The web UI frontend is written in Typescript, with a small amount of
 Rust support code delivered via WebAssembly.
 
-
-You will need at least 6000 megabytes of disk space, or more, and a
-good internet connection.  Your computer will be compiling a lot of
-code.
-
-These instructions have been tested on Debian buster.
+The HTML and SVG skeleton is in a templating language called Tera,
+which is a jinja-like but from the Rust community.
 
 
-Ad-hoc tests
-------------
+Ad-hoc testing, playing about, etc.
+-----------------------------------
 
 In one shell:
 
@@ -195,24 +191,11 @@ rune like this:
 ```
   target/debug/daemon-otter tmp/wdt-simple/server-config.toml
 ```
-and then play with it at this url:
+and then play with it at these urls:
 ```
   http://localhost:8000/?kmqAKPwK4TfReFjMor8MJhdRPBcwIBpe
+  http://localhost:8000/?ccg9kzoTh758QrVE1xMY7BQWB36dNJTx
 ```
 
-
-Final weirdness
----------------
-
- * The `Makefile` `deploy` target is very specific to my setup.
-
- * For running on chiark I build with the Rust target
-   `x86_64-unknown-linux-musl` which on my system is configured to
-   produce a completely statically linked bionary.  I have this in my
-   `~/.cargo/config` (in the lesser privsep account):
-
-```
-[target.x86_64-unknown-linux-musl]
-rustflags = ["-C", "target-feature=+crt-static"]
-# ^ from https://stackoverflow.com/questions/31770604/how-to-generate-statically-linked-executables
-```
+(Yes, those are a fixed game access links, hardcoded by the tests.
+You can bookmark them.)

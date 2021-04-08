@@ -5,6 +5,12 @@ Otter is mostly written in Rust.  The web UI frontend is written in
 Typescript.  The shape libraries are SVGs and need SVG manipulation
 libraries.  The main documentation is done with Sphinx.
 
+You will need at least 6000 megabytes of disk space, or more, and a
+good internet connection.  Your computer will be compiling a lot of
+code.
+
+These instructions were once tested on Debian buster.
+
 Setup
 -----
 

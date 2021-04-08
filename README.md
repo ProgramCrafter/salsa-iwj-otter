@@ -9,7 +9,7 @@ does it need to know) the rules of the game you are playing.  Instead,
 it lets you and your friends play with common tabletop/boardgame
 elements such as hands of cards, boards, and so on.
 
-So it's something like a "tabletop simulater" (but it does not have
+So it's something like a "tabletop simulator" (but it does not have
 any 3D, or a physics engine, or anything like that).
 
 This means that with Otter:
@@ -20,7 +20,7 @@ This means that with Otter:
  * If Otter already has the necessarily game elements (cards, say) all
    you need to do is write a spec file saying what should be on the
    table at the start of the game.  For example, most Whist variants
-   that start with a standard pack of 52 cards are already playble.
+   that start with a standard pack of 52 cards are already playable.
 
  * You can play games where the rules change as the game goes along,
    or are made up by the players, or are too complicated to write as a
@@ -109,11 +109,12 @@ tyranny of programmers `:-)`.
 I would love contributions, particularly to address the limitations I
 mention above, and to improve the user experience.
 
-I am also working to make it possible to let you define your own games
-(including your own pieces, cards, boards, and so on) without having
-to install them on the server.
+I am also working to make it possible to let users define their own
+games (including thier own pieces, cards, boards, and so on) without
+having to install them on the server.
 
 The Otter software project is hosted on Debian's GitLab, at
-  https://salsa.debian.org/iwj/otter
+<https://salsa.debian.org/iwj/otter>.
+
 Merge requests (accompanied by a `Signed-off-by` indicating sign-off
 of the Developer Certificate of Origin) would be very welcome.
