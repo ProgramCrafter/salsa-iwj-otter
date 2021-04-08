@@ -20,8 +20,8 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Otter'
-copyright = '2021, Ian Jackson'
-author = 'Ian Jackson'
+copyright = '2021 Ian Jackson and the contributors to Otter'
+author = 'Ian Jackson et al'
 
 # The short X.Y version
 version = ''
@@ -141,7 +141,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'Otter.tex', 'Otter Documentation',
-     'Ian Jackson', 'manual'),
+     'Ian Jackson and the contributors to Otter', 'manual'),
 ]
 
 
@@ -162,8 +162,8 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'Otter', 'Otter Documentation',
-     author, 'Otter', 'One line description of project.',
-     'Miscellaneous'),
+     author, 'Otter', 'Online Table Top Environment Renderer',
+     'Games'),
 ]
 
 
