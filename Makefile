@@ -198,11 +198,11 @@ stamp/cargo-wdt.debug: $(call rsrcs,.)
 	$(stamp)
 
 stamp/cargo.doc: $(call rsrcs,.)
-	$(CARGO) doc --workspace 2>&1 | egrep -vf .cargo-doc-suppress-errors
+	$(CARGO) doc $(CARGO_DOC_OPTS) --workspace 2>&1 |egrep -vf .cargo-doc-suppress-errors
 	$(stamp)
 
 stamp/cargo.doc-otter-only: $(call rsrcs,.)
-	$(CARGO) doc --workspace -p otter --no-deps
+	$(CARGO) doc $(CARGO_DOC_OPTS) --workspace -p otter --no-deps
 	$(stamp)
 
 $(addprefix stamp/cargo.wasm-,$(DR)):: \
