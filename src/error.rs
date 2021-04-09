@@ -35,8 +35,6 @@ from_instance_lock_error!{OnlineError}
 
 #[derive(Error,Debug)]
 pub enum InternalError {
-  #[error("Game corrupted by previous crash")]
-  GameCorrupted,
   #[error("Accounts file corrupted for acctid={0:?} account={1:?}")]
   AccountsCorrupted(AccountId, Arc<AccountName>),
   #[error("Error saving accounts file: {0}")]
@@ -224,7 +222,6 @@ impl AggregatedIE {
 
 #[derive(Error,Debug)]
 pub enum InstanceLockError {
-  GameCorrupted,
   GameBeingDestroyed,
 }
 #[macro_export]
@@ -235,7 +232,6 @@ macro_rules! from_instance_lock_error {
         use InstanceLockError::*;
         match e {
           GameBeingDestroyed => $into::GameBeingDestroyed,
-          GameCorrupted      => InternalError::GameCorrupted.into(),
         }
       }
     }

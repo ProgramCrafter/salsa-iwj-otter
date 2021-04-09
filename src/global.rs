@@ -3,7 +3,6 @@
 use crate::prelude::*;
 
 use slotmap::dense as sm;
-use std::sync::PoisonError;
 
 // ---------- newtypes and type aliases ----------
 
@@ -238,9 +237,6 @@ struct InstanceSaveAccesses<RawTokenStr, PiecesLoadedRef, OccultIlksRef,
 }
 
 display_as_debug!{InstanceLockError}
-impl<X> From<PoisonError<X>> for InstanceLockError {
-  fn from(_: PoisonError<X>) -> Self { Self::GameCorrupted }
-}
 
 pub struct PrivateCaller(());
 // outsiders cannot construct this
@@ -277,7 +273,7 @@ impl Debug for Instance {
 impl InstanceRef {
   #[throws(InstanceLockError)]
   pub fn lock(&self) -> InstanceGuard<'_> {
-    let c = self.0.lock()?;
+    let c = self.0.lock().unwrap_or_else(|e| e.into_inner());
     if !c.live { throw!(InstanceLockError::GameBeingDestroyed) }
     InstanceGuard { c, gref: self.clone() }
   }
