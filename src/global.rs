@@ -278,7 +278,7 @@ impl InstanceRef {
     InstanceGuard { c, gref: self.clone() }
   }
 
-  pub fn lock_even_poisoned(&self) -> MutexGuard<InstanceContainer> {
+  pub fn lock_even_destroying(&self) -> MutexGuard<InstanceContainer> {
     match self.0.lock() {
       Ok(g) => g,
       Err(poison) => poison.into_inner(),
@@ -303,10 +303,10 @@ impl<A> Unauthorised<InstanceRef, A> {
     Unauthorised::of(must_not_escape.lock()?)
   }
 
-  pub fn lock_even_poisoned<'r>(&'r self) -> Unauthorised<InstanceGuard<'r>, A> {
+  pub fn lock_even_destroying<'r>(&'r self) -> Unauthorised<InstanceGuard<'r>, A> {
     let must_not_escape = self.by_ref(Authorisation::authorise_any());
     Unauthorised::of(InstanceGuard {
-      c: must_not_escape.lock_even_poisoned(),
+      c: must_not_escape.lock_even_destroying(),
       gref: must_not_escape.clone(),
     })
   }
@@ -1281,7 +1281,7 @@ pub fn process_all_players_for_account<
   (games: &mut GamesGuard, acctid: AccountId, mut f: F)
 {
   for gref in games.values() {
-    let c = gref.lock_even_poisoned();
+    let c = gref.lock_even_destroying();
     let remove: Vec<_> = c.g.iplayers.iter().filter_map(|(player,pr)| {
       if pr.ipl.acctid == acctid { Some(player) } else { None }
     }).collect();
@@ -1400,7 +1400,7 @@ fn client_expire_old_clients() {
     type Ret;
     fn iter<'g>(&mut self, gref: &'g InstanceRef, max_age: Instant)
             -> (MutexGuard<'g, InstanceContainer>, Option<Self::Ret>) {
-      let c = gref.lock_even_poisoned();
+      let c = gref.lock_even_destroying();
       let ret = 'ret: loop {
         for (client, cl) in &c.g.clients {
           if cl.lastseen > max_age { continue }
@@ -1462,14 +1462,14 @@ fn global_expire_old_logs() {
 
   let read = GLOBAL.games_table.read().unwrap();
   for gref in read.values() {
-    if gref.lock_even_poisoned().g.gs.want_expire_some_logs(cutoff) {
+    if gref.lock_even_destroying().g.gs.want_expire_some_logs(cutoff) {
       want_expire.push(gref.clone())
     }
   }
   drop(read);
 
   for gref in want_expire.drain(..) {
-    let mut g = gref.lock_even_poisoned();
+    let mut g = gref.lock_even_destroying();
     info!("expiring old log entries in {:?}", &g.g.name);
     g.g.gs.do_expire_old_logs(cutoff);
   }

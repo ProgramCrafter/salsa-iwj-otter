@@ -204,7 +204,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       };
       let mut names = names.into_iter().map(|name| {
         let gref = Instance::lookup_by_name_unauth(&name)?;
-        let mut igu = gref.lock_even_poisoned();
+        let mut igu = gref.lock_even_destroying();
         let _ig = if let Some(auth_all) = auth_all {
           igu.by_ref(auth_all)
         } else {
@@ -234,7 +234,7 @@ fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
       let mut games = games_lock();
       let auth = authorise_by_account(cs, &mut ag, &game)?;
       let gref = Instance::lookup_by_name_locked(&games, &game, auth)?;
-      let ig = gref.lock_even_poisoned();
+      let ig = gref.lock_even_destroying();
       Instance::destroy_game(&mut games, ig, auth)?;
       Fine
     }
