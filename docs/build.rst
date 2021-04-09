@@ -20,7 +20,7 @@ Setup
      sudo apt install build-essential cpio git curl     \
                       pkg-config libssl-dev             \
                       node-typescript inkscape bubblewrap \
-                      netpbm imagemagick \
+                      netpbm imagemagick libtoml-parser-perl \
                       python3-sphinx python3-recommonmark
 
 
