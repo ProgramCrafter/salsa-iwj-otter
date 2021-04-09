@@ -429,27 +429,35 @@ function some_keydown(e: KeyboardEvent) {
     if (tag == 'INPUT') return;
   }
 
+  let y = function() { e.preventDefault(); e.stopPropagation(); }
+
   let pane = pane_keys[e.key];
   if (pane) {
+    y();
     return pane_switch(pane);
   }
 
   let special_count_key = parseInt(e.key);
   if (isFinite(special_count_key)) {
+    y();
     if (special_count == null) special_count = 0;
     special_count *= 10;
     special_count += special_count_key;
     special_count %= 100;
     special_count_reupdate();
+    return;
   }
   if (e.key == ' ') {
+    y();
     special_count = null;
     special_count_reupdate();
+    return;
   }
 
   let uo = uo_map[e.key];
   if (uo === undefined || uo === null) return;
 
+  y();
   console.log('KEY UO', e, uo);
   if (uo.kind == 'Client' || uo.kind == 'ClientExtra') {
     let f = keyops_local[uo.opname];
