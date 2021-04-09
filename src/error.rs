@@ -7,7 +7,7 @@ use crate::prelude::*;
 #[derive(Error,Debug)]
 pub enum OnlineError {
   #[error("Game in process of being destroyed")]
-  GameBeingDestroyed,
+  GameBeingDestroyed(#[from] GameBeingDestroyed),
   #[error("client session not recognised (terminated by server?)")]
   NoClient,
   #[error("player not part of game (removed?)")]
@@ -31,7 +31,6 @@ pub enum OnlineError {
   #[error("UI operation not valid in the curret piece state")]
   BadPieceStateForOperation,
 }
-from_instance_lock_error!{OnlineError}
 
 #[derive(Error,Debug)]
 pub enum InternalError {
@@ -220,23 +219,9 @@ impl AggregatedIE {
   }
 }
 
-#[derive(Error,Debug)]
-pub enum InstanceLockError {
-  GameBeingDestroyed,
-}
-#[macro_export]
-macro_rules! from_instance_lock_error {
-  ($into:ident) => {
-    impl From<InstanceLockError> for $into {
-      fn from(e: InstanceLockError) -> $into {
-        use InstanceLockError::*;
-        match e {
-          GameBeingDestroyed => $into::GameBeingDestroyed,
-        }
-      }
-    }
-  }
-}
+#[derive(Error,Clone,Debug,Serialize,Deserialize)]
+#[error("game is being destroyed")]
+pub struct GameBeingDestroyed;
 
 pub trait ById {
   type Id;

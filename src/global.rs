@@ -236,8 +236,6 @@ struct InstanceSaveAccesses<RawTokenStr, PiecesLoadedRef, OccultIlksRef,
   pub links: Arc<LinksTable>,
 }
 
-display_as_debug!{InstanceLockError}
-
 pub struct PrivateCaller(());
 // outsiders cannot construct this
 // workaround for inability to have private trait methods
@@ -271,10 +269,10 @@ impl Debug for Instance {
 // ---------- Main API for instance lifecycle ----------
 
 impl InstanceRef {
-  #[throws(InstanceLockError)]
+  #[throws(GameBeingDestroyed)]
   pub fn lock(&self) -> InstanceGuard<'_> {
     let c = self.0.lock();
-    if !c.live { throw!(InstanceLockError::GameBeingDestroyed) }
+    if !c.live { throw!(GameBeingDestroyed) }
     InstanceGuard { c, gref: self.clone() }
   }
 
@@ -294,7 +292,7 @@ impl InstanceWeakRef {
 }
 
 impl<A> Unauthorised<InstanceRef, A> {
-  #[throws(InstanceLockError)]
+  #[throws(GameBeingDestroyed)]
   pub fn lock<'r>(&'r self) -> Unauthorised<InstanceGuard<'r>, A> {
     let must_not_escape = self.by_ref(Authorisation::authorise_any());
     Unauthorised::of(must_not_escape.lock()?)

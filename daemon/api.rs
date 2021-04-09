@@ -74,7 +74,7 @@ impl From<&OnlineErrorResponse> for rocket::http::Status {
     use OnlineError::*;
     match oe.0 {
       ServerFailure(_) => Status::InternalServerError,
-      NoClient | NoPlayer(_) | GameBeingDestroyed
+      NoClient | NoPlayer(_) | GameBeingDestroyed(_)
         => Status::NotFound,
       OE::PieceHeld | OE::PieceImmoveable |
       OE::OverlappingOccultation | OE::Occultation |

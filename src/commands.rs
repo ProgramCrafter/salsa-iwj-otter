@@ -187,7 +187,7 @@ pub enum MgmtError {
   MustSpecifyNick,
   AlreadyExists,
   NickCollision,
-  GameBeingDestroyed,
+  GameBeingDestroyed(#[from] GameBeingDestroyed),
   GameNotFound,
   GameCorrupted,
   AccountNotFound(#[from] AccountNotFound),
@@ -220,8 +220,6 @@ impl From<InternalError> for MgmtError {
     MgmtError::ServerFailure(format!("ServerFailure {}\n", &e))
   }
 }
-
-from_instance_lock_error!{MgmtError}
 
 impl AccessTokenInfo {
   pub fn report(self) -> Vec<String> {
