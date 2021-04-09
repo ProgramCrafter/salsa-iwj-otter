@@ -191,15 +191,29 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
   }
 }
 
+fn config_read() -> MappedRwLockReadGuard<'static, WholeServerConfig> {
+  {
+    let g = GLOBAL.config.read();
+    let g = RwLockReadGuard::try_map(g, |g| g.as_ref());
+    if let Ok(g) = g { return g }
+  }
+  {
+    let mut g = GLOBAL.config.write();
+    g.get_or_insert_with(default);
+    let g = RwLockWriteGuard::downgrade(g);
+    RwLockReadGuard::try_map(g, |g| g.as_ref()).unwrap()
+  }
+}
+
 pub fn config() -> Arc<ServerConfig> {
-  GLOBAL.config.read().server.clone()
+  config_read().server.clone()
 }
 pub fn log_config() -> LogSpecification {
-  GLOBAL.config.read().log.clone()
+  config_read().log.clone()
 }
 
 fn set_config(whole: WholeServerConfig) {
-  *GLOBAL.config.write() = whole;
+  *GLOBAL.config.write() = Some(whole);
 }
 
 impl ServerConfig {

@@ -77,6 +77,7 @@ pub use num_traits::{Bounded, FromPrimitive, ToPrimitive};
 pub use ordered_float::OrderedFloat;
 pub use parking_lot::{Condvar, Mutex, MutexGuard};
 pub use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+pub use parking_lot::{MappedRwLockReadGuard};
 pub use percent_encoding::percent_decode_str;
 pub use percent_encoding::utf8_percent_encode;
 pub use percent_encoding::NON_ALPHANUMERIC;

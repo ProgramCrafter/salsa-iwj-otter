@@ -206,7 +206,7 @@ pub struct Global {
   // <- InstanceContainer ->
   // inner locks which the game needs:
   dirty: Mutex<VecDeque<InstanceRef>>,
-  pub config: RwLock<WholeServerConfig>,
+  pub config: RwLock<Option<WholeServerConfig>>,
 
   // fast global lookups
   players: RwLock<TokenTable<PlayerId>>,
