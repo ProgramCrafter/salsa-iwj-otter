@@ -175,8 +175,7 @@ impl Read for UpdateReader {
         Some(())
       })() == None { return Ok(0) }
 
-      ig.c = cv.wait_timeout(ig.c, UPDATE_KEEPALIVE)
-        .map_err(|e| self.wn.trouble("cv / mutex poison",&e))?.0;
+      cv.wait_for(&mut ig.c, UPDATE_KEEPALIVE);
 
       write!(buf, "event: commsworking\n\
                    data: online {} {} G{}\n\n",

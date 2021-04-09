@@ -192,14 +192,14 @@ impl TryFrom<ServerConfigSpec> for WholeServerConfig {
 }
 
 pub fn config() -> Arc<ServerConfig> {
-  GLOBAL.config.read().unwrap().server.clone()
+  GLOBAL.config.read().server.clone()
 }
 pub fn log_config() -> LogSpecification {
-  GLOBAL.config.read().unwrap().log.clone()
+  GLOBAL.config.read().log.clone()
 }
 
 fn set_config(whole: WholeServerConfig) {
-  *GLOBAL.config.write().unwrap() = whole;
+  *GLOBAL.config.write() = whole;
 }
 
 impl ServerConfig {
@@ -219,7 +219,7 @@ impl ServerConfig {
 
   #[throws(AE)]
   pub fn lock_save_area(&self) {
-    let mut st = GLOBAL.save_area_lock.lock().unwrap();
+    let mut st = GLOBAL.save_area_lock.lock();
     let st = &mut *st;
     if st.is_none() {
       let lockfile = format!("{}/lock", config().save_dir);
@@ -232,7 +232,7 @@ impl ServerConfig {
   }
 
   pub fn save_dir(&self) -> &String {
-    let st = GLOBAL.save_area_lock.lock().unwrap();
+    let st = GLOBAL.save_area_lock.lock();
     let mut _f: &File = st.as_ref().unwrap();
     &self.save_dir
   }

@@ -273,16 +273,13 @@ impl Debug for Instance {
 impl InstanceRef {
   #[throws(InstanceLockError)]
   pub fn lock(&self) -> InstanceGuard<'_> {
-    let c = self.0.lock().unwrap_or_else(|e| e.into_inner());
+    let c = self.0.lock();
     if !c.live { throw!(InstanceLockError::GameBeingDestroyed) }
     InstanceGuard { c, gref: self.clone() }
   }
 
   pub fn lock_even_destroying(&self) -> MutexGuard<InstanceContainer> {
-    match self.0.lock() {
-      Ok(g) => g,
-      Err(poison) => poison.into_inner(),
-    }
+    self.0.lock()
   }
 
   pub fn downgrade_to_weak(&self) -> InstanceWeakRef {
@@ -389,7 +386,7 @@ impl Instance {
   pub fn lookup_by_name_unauth(name: &InstanceName)
       -> Unauthorised<InstanceRef, InstanceName>
   {
-    let games = GLOBAL.games_table.read().unwrap();
+    let games = GLOBAL.games_table.read();
     Self::lookup_by_name_locked_unauth(&games, name)?
   }
 
@@ -429,7 +426,7 @@ impl Instance {
   pub fn list_names(account: Option<&AccountName>,
                     _: Authorisation<AccountName>)
                     -> Vec<Arc<InstanceName>> {
-    let games = GLOBAL.games_table.read().unwrap();
+    let games = GLOBAL.games_table.read();
     let out: Vec<Arc<InstanceName>> =
       games.keys()
       .filter(|k| account == None || account == Some(&k.account))
@@ -469,7 +466,7 @@ impl Instance {
 }
 
 pub fn games_lock() -> RwLockWriteGuard<'static, GamesTable> {
-  GLOBAL.games_table.write().unwrap()
+  GLOBAL.games_table.write()
 }
 
 // ---------- Simple trait implementations ----------
@@ -545,7 +542,7 @@ impl<Id> InstanceAccessDetails<Id>
 {
   #[throws(OE)]
   pub fn from_token(token: &RawTokenVal) -> InstanceAccessDetails<Id> {
-    let g = Id::global_tokens(PRIVATE_Y).read().unwrap();
+    let g = Id::global_tokens(PRIVATE_Y).read();
     let i = g.get(token).ok_or(Id::ERROR)?;
     i.clone()
   }
@@ -804,7 +801,7 @@ impl<'ig> InstanceGuard<'ig> {
     };
 
     let current_tokens: ArrayVec<[&RawToken;2]> = {
-      let players = GLOBAL.players.read().unwrap();
+      let players = GLOBAL.players.read();
       self.tokens_players.tr.iter().
         filter(|&token| (||{
           let iad = players.get(token)?;
@@ -901,18 +898,18 @@ impl<'ig> InstanceGuard<'ig> {
     iad: InstanceAccessDetails<Id>
   ) {
     Id::tokens_registry(&mut self.c.g, PRIVATE_Y).tr.insert(token.clone());
-    Id::global_tokens(PRIVATE_Y).write().unwrap().insert(token, iad);
+    Id::global_tokens(PRIVATE_Y).write().insert(token, iad);
   }
 
   fn forget_all_tokens<Id:AccessId>(tokens: &mut TokenRegistry<Id>) {
     let global: &RwLock<TokenTable<Id>> = AccessId::global_tokens(PRIVATE_Y);
-    let mut global = global.write().unwrap();
+    let mut global = global.write();
     for t in tokens.tr.drain() { global.remove(&t); }
   }
 
   fn tokens_deregister_for_id<Id:AccessId, F: Fn(Id) -> bool
                               > (&mut self, oldid: F) {
-    let mut tokens = AccessId::global_tokens(PRIVATE_Y).write().unwrap();
+    let mut tokens = AccessId::global_tokens(PRIVATE_Y).write();
     tokens.retain(|k,v| if_chain! {
       if oldid(v.ident);
       if Id::tokens_registry(self, PRIVATE_Y).tr.remove(k);
@@ -1008,7 +1005,7 @@ impl InstanceGuard<'_> {
       let ioccults = &s.c.g.ioccults;
       let pcaliases = &s.c.g.pcaliases;
       let tokens_players: Vec<(&str, PlayerId)> = {
-        let global_players = GLOBAL.players.read().unwrap();
+        let global_players = GLOBAL.players.read();
         s.c.g.tokens_players.tr
           .iter()
           .map(|token|
@@ -1138,7 +1135,7 @@ impl InstanceGuard<'_> {
     for (token, _) in &tokens_players {
       g.tokens_players.tr.insert(RawToken(token.clone()));
     }
-    let mut global = GLOBAL.players.write().unwrap();
+    let mut global = GLOBAL.players.write();
     for ((token, player), acctid) in
       tokens_players.drain(0..)
       .zip(acctids_players)
@@ -1259,7 +1256,7 @@ impl RawToken {
 
 pub fn lookup_token<Id:AccessId>(s: &RawTokenVal)
       -> Result<InstanceAccessDetails<Id>, Id::Error> {
-  Id::global_tokens(PRIVATE_Y).read().unwrap().get(s).cloned()
+  Id::global_tokens(PRIVATE_Y).read().get(s).cloned()
     .ok_or(Id::ERROR)
 }
 
@@ -1353,7 +1350,7 @@ impl<'p> IntoIterator for &'p mut GPieces {
 impl InstanceGuard<'_> {
   pub fn save_game_later(&mut self) {
     if self.c.game_dirty { return }
-    GLOBAL.dirty.lock().unwrap().push_back(self.gref.clone());
+    GLOBAL.dirty.lock().push_back(self.gref.clone());
     self.c.game_dirty = true;
   }
 
@@ -1368,7 +1365,7 @@ pub fn game_flush_task() {
   let mut inner_queue = VecDeque::new();
   loop {
     {
-      mem::swap(&mut inner_queue, &mut *GLOBAL.dirty.lock().unwrap());
+      mem::swap(&mut inner_queue, &mut *GLOBAL.dirty.lock());
     }
     thread::sleep(GAME_SAVE_LAG);
     for _ in 0..inner_queue.len() {
@@ -1414,7 +1411,7 @@ fn client_expire_old_clients() {
     fn old(&mut self, client: ClientId) -> Option<Self::Ret>;
   }
 
-  for gref in GLOBAL.games_table.read().unwrap().values() {
+  for gref in GLOBAL.games_table.read().values() {
     struct Any;
     impl ClientIterator for Any {
       type Ret = ();
@@ -1460,7 +1457,7 @@ fn global_expire_old_logs() {
 
   let mut want_expire = vec![];
 
-  let read = GLOBAL.games_table.read().unwrap();
+  let read = GLOBAL.games_table.read();
   for gref in read.values() {
     if gref.lock_even_destroying().g.gs.want_expire_some_logs(cutoff) {
       want_expire.push(gref.clone())
