@@ -840,6 +840,13 @@ type MouseFindClicked = null | {
   pinned: boolean
 };
 
+function mouse_clicked_one(piece: PieceId): MouseFindClicked {
+  let p = pieces[piece]!;
+  let held = p.held;
+  let pinned = p.pinned;
+  return { clicked: [piece], held, pinned };
+}
+
 function mouse_find_clicked(e: MouseEvent, target: SVGGraphicsElement,
 			    piece: PieceId): MouseFindClicked
 {
@@ -847,15 +854,8 @@ function mouse_find_clicked(e: MouseEvent, target: SVGGraphicsElement,
   let held;
   let pinned;
 
-  function clicked_one(piece: PieceId): MouseFindClicked {
-    let p = pieces[piece]!;
-    held = p.held;
-    pinned = p.pinned;
-    return { clicked: [piece], held, pinned };
-  }
-
   if (special_count == null) {
-    return clicked_one(piece);
+    return mouse_clicked_one(piece);
   } else if (special_count == 0) {
     let clickpos = mouseevent_pos(e);
     let uelem = pieces_marker;
@@ -865,7 +865,7 @@ function mouse_find_clicked(e: MouseEvent, target: SVGGraphicsElement,
       let piece = uelem.dataset.piece!;
       let p = pieces[piece]!;
       if (p_bbox_contains(p, clickpos)) {
-	return clicked_one(piece);
+	return mouse_clicked_one(piece);
       }
     }
     return null;
