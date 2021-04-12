@@ -906,8 +906,7 @@ function mouse_find_clicked(e: MouseEvent, target: SVGGraphicsElement,
     return mouse_clicked_one(piece);
   } else if (special_count == 0) {
     return mouse_find_lowest(e);
-  } else {
-    // special_count > 0
+  } else { // special_count > 0
     let clickpos = mouseevent_pos(e);
     return mouse_find_predicate(
       special_count,
