@@ -884,28 +884,28 @@ function mouse_find_predicate(
   else return { clicked, held: held!, pinned: pinned! };
 }
 
+function mouse_find_lowest(e: MouseEvent) {
+  let clickpos = mouseevent_pos(e);
+  let uelem = pieces_marker;
+  for (;;) {
+    uelem = uelem.nextElementSibling as any;
+    if (uelem == defs_marker) break;
+    let piece = uelem.dataset.piece!;
+    let p = pieces[piece]!;
+    if (p_bbox_contains(p, clickpos)) {
+      return mouse_clicked_one(piece);
+    }
+  }
+  return null;
+}
+
 function mouse_find_clicked(e: MouseEvent, target: SVGGraphicsElement,
 			    piece: PieceId): MouseFindClicked
 {
-  let clicked: PieceId[];
-  let held;
-  let pinned;
-
   if (special_count == null) {
     return mouse_clicked_one(piece);
   } else if (special_count == 0) {
-    let clickpos = mouseevent_pos(e);
-    let uelem = pieces_marker;
-    for (;;) {
-      uelem = uelem.nextElementSibling as any;
-      if (uelem == defs_marker) break;
-      let piece = uelem.dataset.piece!;
-      let p = pieces[piece]!;
-      if (p_bbox_contains(p, clickpos)) {
-	return mouse_clicked_one(piece);
-      }
-    }
-    return null;
+    return mouse_find_lowest(e);
   } else {
     // special_count > 0
     let clickpos = mouseevent_pos(e);
@@ -914,8 +914,6 @@ function mouse_find_clicked(e: MouseEvent, target: SVGGraphicsElement,
       function(p) { return p_bbox_contains(p, clickpos); }
     )
   }
-
-  return { clicked, held, pinned };
 }
 
 function drag_mousedown(e : MouseEvent, shifted: boolean) {
