@@ -834,42 +834,41 @@ function some_mousedown(e : MouseEvent) {
   }
 }
 
-function drag_mousedown(e : MouseEvent, shifted: boolean) {
+type MouseFindClicked = null | {
+  clicked: PieceId[],
+  held: PlayerId | null,
+  pinned: boolean
+};
+
+function mouse_find_clicked(e: MouseEvent, target: SVGGraphicsElement,
+			    piece: PieceId): MouseFindClicked
+{
   let clicked: PieceId[];
   let held;
   let pinned;
 
-  function clicked_one(piece: PieceId) {
+  function clicked_one(piece: PieceId): MouseFindClicked {
     let p = pieces[piece]!;
     held = p.held;
     pinned = p.pinned;
-    return [piece];
+    return { clicked: [piece], held, pinned };
   }
 
   if (special_count == null) {
-    let target = e.target as SVGGraphicsElement; // we check this just now!
-    let piece: PieceId | undefined = target.dataset.piece;
-    if (piece) {
-      clicked = clicked_one(piece);
-    } else {
-      clicked = [];
-    }
+    return clicked_one(piece);
   } else if (special_count == 0) {
     let clickpos = mouseevent_pos(e);
     let uelem = pieces_marker;
     for (;;) {
       uelem = uelem.nextElementSibling as any;
-      if (uelem == defs_marker) {
-	clicked = [];
-	break;
-      }
+      if (uelem == defs_marker) break;
       let piece = uelem.dataset.piece!;
       let p = pieces[piece]!;
       if (p_bbox_contains(p, clickpos)) {
-	clicked = clicked_one(piece);
-	break;
+	return clicked_one(piece);
       }
     }
+    return null;
   } else {
     // special_count > 0
     let clickpos = mouseevent_pos(e);
@@ -880,7 +879,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       uelem = uelem.previousElementSibling as any;
       if (uelem == pieces_marker) {
 	add_log_message(`Not enough pieces!  Stopped after ${i}.`);
-	return;
+	return null;
       }
       let piece = uelem.dataset.piece!;
       let p = pieces[piece];
@@ -891,16 +890,25 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
 	if (p.pinned != pinned ||
 	    p.held   != held) {
 	  add_log_message(`Mixed pinned/held states!  Stopped after ${i}`);
-	  return;
+	  return null;
 	}
       }
       clicked.push(piece);
       pinned = p.pinned;
       held   = p.held;
     }
+    held = held!;
+    pinned = pinned!;
   }
 
-  if (!clicked.length) {
+  return { clicked, held, pinned };
+}
+
+function drag_mousedown(e : MouseEvent, shifted: boolean) {
+  let target = e.target as SVGGraphicsElement; // we check this just now!
+  let piece: PieceId | undefined = target.dataset.piece;
+
+  if (!piece) {
     if (!shifted) {
       let mr;
       while (mr = movements.pop()) {
@@ -911,6 +919,12 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     }
     return;
   }
+
+  let c = mouse_find_clicked(e, target, piece);
+  if (c == null) return;
+  let clicked = c.clicked;
+  let held = c.held;
+  let pinned = c.pinned;
 
   special_count = null;
   special_count_reupdate();
