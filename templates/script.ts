@@ -847,6 +847,43 @@ function mouse_clicked_one(piece: PieceId): MouseFindClicked {
   return { clicked: [piece], held, pinned };
 }
 
+function mouse_find_predicate(
+  wanted: number | null,
+  predicate: (p: PieceInfo) => boolean
+): MouseFindClicked {
+  let clicked: PieceId[];
+  let held;
+  let pinned;
+
+  clicked = [];
+  let uelem = defs_marker;
+  while (wanted == null || clicked.length < wanted) {
+    let i = clicked.length;
+    uelem = uelem.previousElementSibling as any;
+    if (uelem == pieces_marker) {
+      add_log_message(`Not enough pieces!  Stopped after ${i}.`);
+      return null;
+    }
+    let piece = uelem.dataset.piece!;
+    let p = pieces[piece];
+    if (!predicate(p)) {
+      continue;
+    }
+    if (i > 0) {
+      if (p.pinned != pinned ||
+	  p.held   != held) {
+	add_log_message(`Mixed pinned/held states!  Stopped after ${i}`);
+	return null;
+      }
+    }
+    clicked.push(piece);
+    pinned = p.pinned;
+    held   = p.held;
+  }
+  if (clicked.length == 0) return null;
+  else return { clicked, held: held!, pinned: pinned! };
+}
+
 function mouse_find_clicked(e: MouseEvent, target: SVGGraphicsElement,
 			    piece: PieceId): MouseFindClicked
 {
@@ -872,33 +909,10 @@ function mouse_find_clicked(e: MouseEvent, target: SVGGraphicsElement,
   } else {
     // special_count > 0
     let clickpos = mouseevent_pos(e);
-    clicked = [];
-    let uelem = defs_marker;
-    while (clicked.length < special_count) {
-      let i = clicked.length;
-      uelem = uelem.previousElementSibling as any;
-      if (uelem == pieces_marker) {
-	add_log_message(`Not enough pieces!  Stopped after ${i}.`);
-	return null;
-      }
-      let piece = uelem.dataset.piece!;
-      let p = pieces[piece];
-      if (!p_bbox_contains(p, clickpos)) {
-	continue;
-      }
-      if (i > 0) {
-	if (p.pinned != pinned ||
-	    p.held   != held) {
-	  add_log_message(`Mixed pinned/held states!  Stopped after ${i}`);
-	  return null;
-	}
-      }
-      clicked.push(piece);
-      pinned = p.pinned;
-      held   = p.held;
-    }
-    held = held!;
-    pinned = pinned!;
+    return mouse_find_predicate(
+      special_count,
+      function(p) { return p_bbox_contains(p, clickpos); }
+    )
   }
 
   return { clicked, held, pinned };
