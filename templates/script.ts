@@ -853,7 +853,7 @@ function mouse_find_predicate(
 ): MouseFindClicked {
   let clicked: PieceId[];
   let held;
-  let pinned;
+  let pinned = false;
 
   clicked = [];
   let uelem = defs_marker;
@@ -866,18 +866,18 @@ function mouse_find_predicate(
     }
     let piece = uelem.dataset.piece!;
     let p = pieces[piece];
+    if (p.pinned && !wresting) continue;
     if (!predicate(p)) {
       continue;
     }
+    if (p.pinned) pinned = true;
     if (i > 0) {
-      if (p.pinned != pinned ||
-	  p.held   != held) {
-	add_log_message(`Mixed pinned/held states!  Stopped after ${i}`);
+      if (p.held   != held) {
+	add_log_message(`Mixed held states!  Stopped after ${i}`);
 	return null;
       }
     }
     clicked.push(piece);
-    pinned = p.pinned;
     held   = p.held;
   }
   if (clicked.length == 0) return null;
