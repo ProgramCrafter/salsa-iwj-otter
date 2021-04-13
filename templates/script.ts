@@ -987,6 +987,13 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
 
   drag_pieces = [];
   if (held == us) {
+    if (shifted) {
+      for (let tpiece of clicked) {
+	let tp = pieces[tpiece]!;
+	do_ungrab(tpiece,tp);
+      }
+      return;
+    }
     dragging = DRAGGING.MAYBE_UNGRAB;
     // contrive to have these first
     for (let piece of clicked) {
