@@ -102,7 +102,7 @@ Navigating the otter source code
 
 * `wasm/`
 
-  WebAssembly/Rust bindings for the items in `zcoord/`.  Produces the
+  WebAssembly/Rust bindings for the items in `base/`.  Produces the
   single wasm file for use by the JavaScript, and corresponding
   Typescript annotations etc.
 
