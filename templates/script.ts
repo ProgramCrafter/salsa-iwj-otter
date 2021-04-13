@@ -880,6 +880,14 @@ function mouse_find_predicate(
       break;
     }
     let piece = uelem.dataset.piece!;
+
+    function is_already() {
+      if (note_already != null) {
+	already_count++;
+	note_already[piece] = true;
+      }
+    }
+
     let p = pieces[piece];
     if (p.pinned && !wresting) continue;
     if (p.held && p.held != us && !wresting) continue;
@@ -893,10 +901,7 @@ function mouse_find_predicate(
       if (p.held != us) continue; // skip ones we don't have
     } else { // user is going to be selecting
       if (p.held == us) {
-	if (note_already != null) {
-	  already_count++;
-	  note_already[piece] = true;
-	}
+	is_already();
 	continue; // skip ones we have already
       }
       if (held == null) held = p.held; // wrestish
