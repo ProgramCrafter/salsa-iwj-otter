@@ -65,7 +65,7 @@ If you Do Something to the output from cargo, you should `rm stamp/*`,
 since the `Makefile` won't notice, otherwise, that the relevant cargo
 rune(s) need to be re-run.  Needlessly deleting all the stamp files
 wastes only a handful of seconds (on my stupidly fast laptop).
-Deleting the xtamp files is not needed if you simply edit Rust source
+Deleting the stamp files is not needed if you simply edit Rust source
 files.
 
 
