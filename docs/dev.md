@@ -40,7 +40,7 @@ Resetting/restoring things after tests, updating server, etc.
 
 After the server is updated, you can just `^C` and restart it.  Games
 are constantly saved (although there is an up-to-1s lag on the most
-frequently udpated game state).
+frequently updated game state).
 
 If you want to clear out the server state, delete the files `[ag]-*`
 and `accounts`.  NB that you should do this with the server not
@@ -62,10 +62,10 @@ modified server without offering your users its source code.  See
 LICENCE.
 
 If you Do Something to the output from cargo, you should `rm stamp/*`,
-since the `Makefile` won't notice, otherwise, that, the relevant cargo
+since the `Makefile` won't notice, otherwise, that the relevant cargo
 rune(s) need to be re-run.  Needlessly deleting all the stamp files
 wastes only a handful of seconds (on my stupidly fast laptop).
-Deleting the xtamp files is not needed if you simpl edit Rust source
+Deleting the xtamp files is not needed if you simply edit Rust source
 files.
 
 
@@ -87,7 +87,7 @@ Navigating the otter source code
 * `daemon/`
 
   The Otter server.  This is a simple binary crate.  Much
-  functionality belonging primarily, or only, to the server, is in
+  functionality belonging primarily, or only, to the server is in
   `src/`, simply because it was easier not to disentangle it.
   Anything that needs Rocket (the web framework) is in `daemon/`.
 
@@ -95,7 +95,7 @@ Navigating the otter source code
 
   Code shared by the host and the WebAssembly.  Notably, the Z
   coordinate handling, but also a a few other minor functions needed
-  by both client and server.  To avoid duplicating them are written
+  by both client and server.  To avoid duplicating they are written
   once in Rust and compiled twice - once for the host and once for
   WebAssembly for use in the client.  This crate is kept fairly small
   to keeep the WebAssembly binary small (currently, ~100kby).
@@ -122,7 +122,7 @@ Navigating the otter source code
 
 * `nwtemplates/`
 
-  "Non-web templataes".  Tera templates for things other than web
+  "Non-web templates".  Tera templates for things other than web
   pages.  Currently this includes the server's outgoing emails.  These
   have to be in a separate directory because Tera (invoked by Rocket)
   likes to load everything applicable it finds in its own `templates/`
@@ -158,7 +158,7 @@ Navigating the otter source code
   The program `./media-scraper` (which is not run by the `Makefile`)
   reads `library/*.toml` for instructions and generates `files.make`
   fragments.  These fragments arrange to run `./usvg-processor` which
-  launders SVGs through `usvg`.  `usvg-processor`.
+  launders SVGs through `usvg`.
 
   The shape libraries have a different, more relaxed, copyright
   licence.
@@ -197,5 +197,5 @@ and then play with it at these urls:
   http://localhost:8000/?ccg9kzoTh758QrVE1xMY7BQWB36dNJTx
 ```
 
-(Yes, those are a fixed game access links, hardcoded by the tests.
+(Yes, those are fixed game access links, hardcoded by the tests.
 You can bookmark them.)

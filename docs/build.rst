@@ -39,7 +39,7 @@ Setup
      rustup default nightly
      rustup target add wasm32-unknown-unknown
 
-   Unfortunately, it is possible that the Rust nightly you find when
+   Unfortunately, it is possible that the Rust Nightly you find when
    you run this is missing some pieces.  The following is known to
    work (with otter from the time of writing)::
 
@@ -162,7 +162,7 @@ cross-browser way to puppet a browser.  There is a thing called
 for the same purpose, called "Marionette".  (In practice all this
 seems to have lots of bugs and misfeatures.)
 
-AFAICT the usual approach for using geckodriver to have it *bind to
+AFAICT the usual approach for using geckodriver is to have it *bind to
 a fixed TCP port accessible to all local programs*.  My wrapper
 tooling arranges to run this in an ephemeral $HOME and a private
 network namespace.

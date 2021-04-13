@@ -17,7 +17,7 @@ This means that with Otter:
  * Supporting a new game, that Otter doesn't know about yet, would
    usually not involve writing or modifying any computer programs.
 
- * If Otter already has the necessarily game elements (cards, say) all
+ * If Otter already has the necessary game elements (cards, say) all
    you need to do is write a spec file saying what should be on the
    table at the start of the game.  For example, most Whist variants
    that start with a standard pack of 52 cards are already playable.
@@ -47,7 +47,7 @@ You will need to be able to talk to your friends about the game, while
 you play.  Otter works well when used together with a voice chat - we
 have had success with Jitsi in voice-only mode.
 
-Most relatively modern desktop browsers should to work with Otter.
+Most relatively modern desktop browsers should be able to work with Otter.
 (The most advanced feature needed is support for WebAssembly.)
 
 
@@ -110,7 +110,7 @@ I would love contributions, particularly to address the limitations I
 mention above, and to improve the user experience.
 
 I am also working to make it possible to let users define their own
-games (including thier own pieces, cards, boards, and so on) without
+games (including their own pieces, cards, boards, and so on) without
 having to install them on the server.
 
 The Otter software project is hosted on Debian's GitLab, at
