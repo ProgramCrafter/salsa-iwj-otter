@@ -959,7 +959,7 @@ function mouse_find_lowest(e: MouseEvent) {
 
 function mouse_find_clicked(e: MouseEvent,
 			    target: SVGGraphicsElement, piece: PieceId,
-			    allow_for_deselect: boolean,
+			    count_allow_for_deselect: boolean,
 			    note_already: PieceSet | null,
 			    ): MouseFindClicked
 {
@@ -970,7 +970,7 @@ function mouse_find_clicked(e: MouseEvent,
   } else { // special_count > 0
     let clickpos = mouseevent_pos(e);
     return mouse_find_predicate(
-      special_count, allow_for_deselect, note_already,
+      special_count, count_allow_for_deselect, note_already,
       function(p) { return p_bbox_contains(p, clickpos); }
     )
   }
@@ -994,8 +994,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
 
   let note_already = shifted ? null : Object.create(null);
 
-  let c = mouse_find_clicked(e, target, piece,
-			     shifted, note_already);
+  let c = mouse_find_clicked(e, target, piece, false, note_already);
   if (c == null) return;
   let clicked = c.clicked;
   let held = c.held;
