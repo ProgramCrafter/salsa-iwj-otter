@@ -1013,6 +1013,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       add_log_message('That piece is pinned to the table.');
       return;
     }
+    grab_clicked(clicked);
     dragging = DRAGGING.MAYBE_GRAB;
     let for_drag = note_already
 	? Object.keys(note_already).concat(clicked)
@@ -1025,7 +1026,6 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
 		                              +SPECIAL_MULTI_DELTA_MAX);
       drag_add_piece(piece,p);
     }
-    grab_clicked(clicked);
   } else {
     add_log_message('That piece is held by another player.');
     return;
