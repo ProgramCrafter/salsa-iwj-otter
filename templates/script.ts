@@ -869,6 +869,12 @@ function grab_clicked(clicked: PieceId[]) {
     api_piece(wresting ? 'wrest' : 'grab', piece,p, { });
   }
 }
+function ungrab_clicked(clicked: PieceId[]) {
+  for (let tpiece of clicked) {
+    let tp = pieces[tpiece]!;
+    do_ungrab(tpiece,tp);
+  }
+}
 
 function mouse_clicked_one(piece: PieceId): MouseFindClicked {
   let p = pieces[piece]!;
@@ -1008,10 +1014,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   drag_pieces = [];
   if (held == us) {
     if (shifted) {
-      for (let tpiece of clicked) {
-	let tp = pieces[tpiece]!;
-	do_ungrab(tpiece,tp);
-      }
+      ungrab_clicked(clicked);
       return;
     }
     drag_start_prepare(DRAGGING.MAYBE_UNGRAB);
