@@ -896,9 +896,11 @@ function mouse_find_predicate(
       continue;
     }
     if (p.pinned) pinned = true;
+
     if (i == 0) {
       held = p.held;
-    } else if (allow_for_deselect && held == us) {
+      if (held == us && !allow_for_deselect) held = null;
+    } else if (held == us) {
       // user is going to be deselecting
       if (p.held != us) {
 	// skip ones we don't have
@@ -909,8 +911,10 @@ function mouse_find_predicate(
       if (p.held == us) {
 	is_already();
 	continue; // skip ones we have already
+      } else if (p.held == null) {
+      } else {
+	held = p.held; // wrestish
       }
-      if (held == null) held = p.held; // wrestish
     }
     clicked.push(piece);
   }
@@ -1003,10 +1007,13 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       return;
     }
     dragging = DRAGGING.MAYBE_GRAB;
-    for (let i=0; i<clicked.length; i++) {
-      let piece = clicked[i];
+    let for_drag = note_already
+	? Object.keys(note_already).concat(clicked)
+	: clicked;
+    for (let i=0; i<for_drag.length; i++) {
+      let piece = for_drag[i];
       let p = pieces[piece]!;
-      let delta = (-(clicked.length-1)/2 + i) * SPECIAL_MULTI_DELTA_EACH;
+      let delta = (-(for_drag.length-1)/2 + i) * SPECIAL_MULTI_DELTA_EACH;
       p.drag_delta = Math.min(Math.max(delta, -SPECIAL_MULTI_DELTA_MAX),
 		                              +SPECIAL_MULTI_DELTA_MAX);
       drag_add_piece(piece,p);
