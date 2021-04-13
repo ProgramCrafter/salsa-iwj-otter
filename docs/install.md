@@ -16,7 +16,7 @@ get at least a list of fields by looking at the Rustdoc-generated "API
 doc" for the type `otter::config::ServerConfigSpec`, which is probably
 in `target/doc/otter/config/struct.ServerConfigSpec.html`.
 
-Here a copy of the config file from chiark.  As you can see I am
+Here is a copy of the config file from chiark.  As you can see I am
 running Otter as an "application server".  My usual Apache
 configuration handles the TLS.  (Rocket's TLS is not advertised as
 being suitable for production use.)

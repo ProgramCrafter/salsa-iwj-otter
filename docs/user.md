@@ -11,8 +11,8 @@ To join a game, you run a command like this on the server host:
                              game owner             game name
 ```
 
-Tbis will print a URL.  You cut and paste that URL into your browser.
-It is not usually necessary to expliitly leave a game, although
+This will print a URL.  You cut and paste that URL into your browser.
+It is not usually necessary to explicitly leave a game, although
 a `leave-game` subcommand is available.
 
 You can have the same URL open in multiple browsers if you wish.  The
@@ -45,7 +45,7 @@ Keyboard commands and special functions
 
 Otter makes use of keyboard commands for many functions.  The UI will
 display a list of the currently-valid keyboard commands.  Note that
-the set of valid command can depend on what you have selected, and
+the set of valid commands can depend on what you have selected, and
 what state it is in.
 
 
@@ -83,12 +83,12 @@ UI features
 
 The UI has a number of features intended to ease play of various
 games.  It can be worth experimenting with the UI in a test game, to
-see how things work.  The information presented by the game interfae
+see how things work.  The information presented by the game interface
 itself is meant as prompts and hints rather than full documentation.
 
 Notable features you might otherwise overlook include these:
 
-Pressuing "h" repeatedly cycles through various amounts of history
+Pressing "h" repeatedly cycles through various amounts of history
 view (the overlaid yellow arrows showing what recently happened).
 
 Typing numbers will get you into a multiple selection mode, which you
@@ -148,11 +148,11 @@ This particular file says that all local shell account users may join
 the game.
 
 `demo` refers to the file `demo.game.spec`.  The "game spec" says what
-shape table is and what pieces there are.  This is a simple demo game.
+shape the table is and what pieces there are.  This is a simple demo game.
 
 Currently there are also `penultima` and `mao` game specs.
 
-After a game has finished and you wnat to play again, you can put
+After a game has finished and you want to play again, you can put
 everything back to the starting state (or, even, the starting state
 for a different game) with something like this:
 

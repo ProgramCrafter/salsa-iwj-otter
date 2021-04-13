@@ -4,7 +4,7 @@ Advanced usage
 Adding pieces to a game in progress
 -----------------------------------
 
-Use the `otter library-list` and `otter library-add` commands, you can
+Using the `otter library-list` and `otter library-add` commands, you can
 add pieces to a game while it is in progress.
 
 You may want to refer to the shape library preview ("Shapelib" link in
