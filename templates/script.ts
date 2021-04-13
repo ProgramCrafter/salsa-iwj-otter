@@ -867,18 +867,20 @@ function mouse_find_predicate(
     let piece = uelem.dataset.piece!;
     let p = pieces[piece];
     if (p.pinned && !wresting) continue;
+    if (p.held && p.held != us && !wresting) continue;
     if (!predicate(p)) {
       continue;
     }
     if (p.pinned) pinned = true;
-    if (i > 0) {
-      if (p.held   != held) {
-	add_log_message(`Mixed held states!  Stopped after ${i}`);
-	return null;
-      }
+    if (i == 0) {
+      held = p.held;
+    } else if (held == us) { // user is going to be deselecting
+      if (p.held != us) continue; // skip ones we don't have
+    } else { // user is going to be selecting
+      if (p.held == us) continue; // skip ones we have already
+      if (held == null) held = p.held; // wrestish
     }
     clicked.push(piece);
-    held   = p.held;
   }
   if (clicked.length == 0) return null;
   else return { clicked, held: held!, pinned: pinned! };
