@@ -861,8 +861,11 @@ function mouse_find_predicate(
     let i = clicked.length;
     uelem = uelem.previousElementSibling as any;
     if (uelem == pieces_marker) {
-      add_log_message(`Not enough pieces!  Stopped after ${i}.`);
-      return null;
+      if (wanted != null) {
+	add_log_message(`Not enough pieces!  Stopped after ${i}.`);
+	return null;
+      }
+      break;
     }
     let piece = uelem.dataset.piece!;
     let p = pieces[piece];
