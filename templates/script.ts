@@ -920,7 +920,8 @@ function mouse_find_predicate(
     if (i == 0) {
       held = p.held;
       if (held == us && !allow_for_deselect) held = null;
-    } else if (held == us) {
+    }
+    if (held == us) {
       // user is going to be deselecting
       if (p.held != us) {
 	// skip ones we don't have
