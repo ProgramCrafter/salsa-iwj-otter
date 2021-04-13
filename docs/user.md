@@ -93,6 +93,9 @@ view (the overlaid yellow arrows showing what recently happened).
 
 Typing numbers will get you into a multiple selection mode, which you
 can use (for example) to draw yourself a hand of multiple cards.
+Typing just "1" will let you select the first available card, even if
+it's not the one on top (eg because you want to draw a card and
+someone is holding onto the deck).
 
 Typing a zero will get you into a special selection mode for selecting
 the lowermost piece.  This can useful to grasp a hand or pickup deck
