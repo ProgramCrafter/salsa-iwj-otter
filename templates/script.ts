@@ -859,15 +859,17 @@ function mouse_clicked_one(piece: PieceId): MouseFindClicked {
 
 function mouse_find_predicate(
   wanted: number | null,
+  note_already: PieceSet | null,
   predicate: (p: PieceInfo) => boolean
 ): MouseFindClicked {
   let clicked: PieceId[];
   let held;
   let pinned = false;
+  let already_count = 0;
 
   clicked = [];
   let uelem = defs_marker;
-  while (wanted == null || clicked.length < wanted) {
+  while (wanted == null || (clicked.length + already_count) < wanted) {
     let i = clicked.length;
     uelem = uelem.previousElementSibling as any;
     if (uelem == pieces_marker) {
@@ -890,7 +892,13 @@ function mouse_find_predicate(
     } else if (held == us) { // user is going to be deselecting
       if (p.held != us) continue; // skip ones we don't have
     } else { // user is going to be selecting
-      if (p.held == us) continue; // skip ones we have already
+      if (p.held == us) {
+	if (note_already != null) {
+	  already_count++;
+	  note_already[piece] = true;
+	}
+	continue; // skip ones we have already
+      }
       if (held == null) held = p.held; // wrestish
     }
     clicked.push(piece);
@@ -914,8 +922,10 @@ function mouse_find_lowest(e: MouseEvent) {
   return null;
 }
 
-function mouse_find_clicked(e: MouseEvent, target: SVGGraphicsElement,
-			    piece: PieceId): MouseFindClicked
+function mouse_find_clicked(e: MouseEvent,
+			    target: SVGGraphicsElement, piece: PieceId,
+			    note_already: PieceSet | null
+			    ): MouseFindClicked
 {
   if (special_count == null) {
     return mouse_clicked_one(piece);
@@ -924,7 +934,7 @@ function mouse_find_clicked(e: MouseEvent, target: SVGGraphicsElement,
   } else { // special_count > 0
     let clickpos = mouseevent_pos(e);
     return mouse_find_predicate(
-      special_count,
+      special_count, note_already,
       function(p) { return p_bbox_contains(p, clickpos); }
     )
   }
@@ -946,7 +956,9 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     return;
   }
 
-  let c = mouse_find_clicked(e, target, piece);
+  let note_already = shifted ? null : Object.create(null);
+
+  let c = mouse_find_clicked(e, target, piece, note_already);
   if (c == null) return;
   let clicked = c.clicked;
   let held = c.held;
@@ -971,7 +983,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     }
   } else if (held == null || wresting) {
     if (!shifted) {
-      ungrab_all();
+      ungrab_all_except(note_already);
     }
     if (pinned && !wresting) {
       add_log_message('That piece is pinned to the table.');
