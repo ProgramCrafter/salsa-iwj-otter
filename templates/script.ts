@@ -859,6 +859,7 @@ function mouse_clicked_one(piece: PieceId): MouseFindClicked {
 
 function mouse_find_predicate(
   wanted: number | null,
+  allow_for_deselect: boolean,
   note_already: PieceSet | null,
   predicate: (p: PieceInfo) => boolean
 ): MouseFindClicked {
@@ -897,8 +898,13 @@ function mouse_find_predicate(
     if (p.pinned) pinned = true;
     if (i == 0) {
       held = p.held;
-    } else if (held == us) { // user is going to be deselecting
-      if (p.held != us) continue; // skip ones we don't have
+    } else if (allow_for_deselect && held == us) {
+      // user is going to be deselecting
+      if (p.held != us) {
+	// skip ones we don't have
+	is_already();
+	continue;
+      }
     } else { // user is going to be selecting
       if (p.held == us) {
 	is_already();
@@ -929,7 +935,8 @@ function mouse_find_lowest(e: MouseEvent) {
 
 function mouse_find_clicked(e: MouseEvent,
 			    target: SVGGraphicsElement, piece: PieceId,
-			    note_already: PieceSet | null
+			    allow_for_deselect: boolean,
+			    note_already: PieceSet | null,
 			    ): MouseFindClicked
 {
   if (special_count == null) {
@@ -939,7 +946,7 @@ function mouse_find_clicked(e: MouseEvent,
   } else { // special_count > 0
     let clickpos = mouseevent_pos(e);
     return mouse_find_predicate(
-      special_count, note_already,
+      special_count, allow_for_deselect, note_already,
       function(p) { return p_bbox_contains(p, clickpos); }
     )
   }
@@ -963,7 +970,8 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
 
   let note_already = shifted ? null : Object.create(null);
 
-  let c = mouse_find_clicked(e, target, piece, note_already);
+  let c = mouse_find_clicked(e, target, piece,
+			     shifted, note_already);
   if (c == null) return;
   let clicked = c.clicked;
   let held = c.held;
