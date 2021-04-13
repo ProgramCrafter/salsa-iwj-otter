@@ -840,6 +840,14 @@ type MouseFindClicked = null | {
   pinned: boolean
 };
 
+function grab_clicked(clicked: PieceId[]) {
+  for (let piece of clicked) {
+    let p = pieces[piece]!;
+    set_grab_us(piece,p);
+    api_piece(wresting ? 'wrest' : 'grab', piece,p, { });
+  }
+}
+
 function mouse_clicked_one(piece: PieceId): MouseFindClicked {
   let p = pieces[piece]!;
   let held = p.held;
@@ -975,9 +983,8 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       p.drag_delta = Math.min(Math.max(delta, -SPECIAL_MULTI_DELTA_MAX),
 		                              +SPECIAL_MULTI_DELTA_MAX);
       drag_add_piece(piece,p);
-      set_grab_us(piece,p);
-      api_piece(wresting ? 'wrest' : 'grab', piece,p, { });
     }
+    grab_clicked(clicked);
   } else {
     add_log_message('That piece is held by another player.');
     return;
