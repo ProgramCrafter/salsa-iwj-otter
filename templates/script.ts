@@ -840,6 +840,8 @@ type MouseFindClicked = null | {
   pinned: boolean
 };
 
+type PieceSet = { [piece: string]: true };
+
 function grab_clicked(clicked: PieceId[]) {
   for (let piece of clicked) {
     let p = pieces[piece]!;
@@ -1015,13 +1017,17 @@ function p_bbox_contains(p: PieceInfo, test: Pos) {
   return true;
 }
 
-function ungrab_all() {
+function ungrab_all_except(dont: PieceSet | null) {
   for (let tpiece of Object.keys(pieces)) {
+    if (dont && dont[tpiece]) continue;
     let tp = pieces[tpiece]!;
     if (tp.held == us) {
       do_ungrab(tpiece,tp);
     }
   }
+}
+function ungrab_all() {
+  ungrab_all_except(null);
 }
 
 function set_grab_us(piece: PieceId, p: PieceInfo) {
