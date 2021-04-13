@@ -812,13 +812,33 @@ function piece_xy(p: PieceInfo): Pos {
 	   parseFloat(p.uelem.getAttributeNS(null,"y")!) ];
 }
 
-function drag_add_piece(piece: PieceId, p: PieceInfo) {
-  let [dox, doy] = piece_xy(p);
-  drag_pieces.push({
-    piece: piece,
-    dox: dox + p.drag_delta,
-    doy: doy,
-  });
+function drag_start_prepare(new_dragging: DRAGGING) {
+  dragging = new_dragging;
+
+  let spos_map = Object.create(null);
+  for (let piece of Object.keys(pieces)) {
+    let p = pieces[piece]!;
+    if (p.held != us) continue;
+    let spos = piece_xy(p);
+    let sposk = `${spos[0]} ${spos[1]}`;
+    if (spos_map[sposk] === undefined) spos_map[sposk] = [spos, []];
+    spos_map[sposk][1].push([spos, piece,p]);
+  }
+
+  for (let sposk of Object.keys(spos_map)) {
+    let [[dox, doy], ents] = spos_map[sposk];
+    for (let i=0; i<ents.length; i++) {
+      let [p, piece] = ents[i];
+      let delta = (-(ents.length-1)/2 + i) * SPECIAL_MULTI_DELTA_EACH;
+      p.drag_delta = Math.min(Math.max(delta, -SPECIAL_MULTI_DELTA_MAX),
+		                              +SPECIAL_MULTI_DELTA_MAX);
+      drag_pieces.push({
+	piece: piece,
+	dox: dox + p.drag_delta,
+	doy: doy,
+      });
+    }
+  }
 }
 
 function some_mousedown(e : MouseEvent) {
@@ -994,17 +1014,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       }
       return;
     }
-    dragging = DRAGGING.MAYBE_UNGRAB;
-    // contrive to have these first
-    for (let piece of clicked) {
-      drag_add_piece(piece,pieces[piece]!);
-    }
-    for (let tpiece of Object.keys(pieces)) {
-      if (clicked.indexOf(tpiece) >= 0) continue;
-      let tp = pieces[tpiece]!;
-      if (tp.held != us) continue;
-      drag_add_piece(tpiece,tp);
-    }
+    drag_start_prepare(DRAGGING.MAYBE_UNGRAB);
   } else if (held == null || wresting) {
     if (!shifted) {
       ungrab_all_except(note_already);
@@ -1014,18 +1024,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       return;
     }
     grab_clicked(clicked);
-    dragging = DRAGGING.MAYBE_GRAB;
-    let for_drag = note_already
-	? Object.keys(note_already).concat(clicked)
-	: clicked;
-    for (let i=0; i<for_drag.length; i++) {
-      let piece = for_drag[i];
-      let p = pieces[piece]!;
-      let delta = (-(for_drag.length-1)/2 + i) * SPECIAL_MULTI_DELTA_EACH;
-      p.drag_delta = Math.min(Math.max(delta, -SPECIAL_MULTI_DELTA_MAX),
-		                              +SPECIAL_MULTI_DELTA_MAX);
-      drag_add_piece(piece,p);
-    }
+    drag_start_prepare(DRAGGING.MAYBE_GRAB);
   } else {
     add_log_message('That piece is held by another player.');
     return;
