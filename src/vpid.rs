@@ -189,6 +189,7 @@ impl Notches {
   }
 }
 
+#[cfg(not(miri))]
 #[test]
 fn exhaustive() {
   enum Can {
