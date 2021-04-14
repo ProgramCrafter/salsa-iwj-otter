@@ -135,10 +135,13 @@ WASM := wasm32-unknown-unknown
 #---------- toplevel aggregate targets ----------
 
 check: stamp/cargo.debug-check at wdt
-	@echo 'All tests passed.'
+	@echo 'Tests passed.'
 
 full-check: stamp/cargo.release-check
 full-check: stamp/cargo.release-miri stamp/cargo.debug-miri
+
+full-check:
+	@echo 'Full tests passed.'
 
 doc: cargo-doc sphinx-doc
 
