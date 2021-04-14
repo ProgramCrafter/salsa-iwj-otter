@@ -44,6 +44,10 @@ uds="0.2"
 url="2"
 vecdeque-stableix="1"
 
+[build-dependencies]
+usvg="=0.13.0"
+bundle-sources="0.0.1"
+
 [dependencies.enum-map]
 version="0.6"
 features=["serde"]
