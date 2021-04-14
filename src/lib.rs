@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-#![feature(type_alias_impl_trait)]
+#![feature(min_type_alias_impl_trait)]
 #![allow(clippy::redundant_closure_call)]
 
 pub mod imports;

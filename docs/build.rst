@@ -40,10 +40,11 @@ Setup
      rustup target add wasm32-unknown-unknown
 
    Unfortunately, it is possible that the Rust Nightly you find when
-   you run this is missing some pieces.  The following is known to
-   work (with otter from the time of writing)::
+   you run this is missing some pieces, or is not compatible with the
+   version of Otter you have.  The following is known to work (with
+   otter from the time of writing)::
 
-     rustup default nightly-2021-01-26
+     rustup default nightly-2021-04-13
 
 4. Install the ``usvg`` SVG launderer, which we need for shape libraries::
 
