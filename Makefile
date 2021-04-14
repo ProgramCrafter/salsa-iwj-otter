@@ -41,7 +41,6 @@ BUNDLED_SOURCES += $(BUNDLED_SOURCES_FILES)
 CARGO ?= cargo
 TARGET_DIR ?= target
 
-USVG ?= usvg
 USVG_OPTIONS = "--sans-serif-family=DejaVu Sans"
 
 WASM_BINDGEN = $(TARGET_DIR)/debug/wasm-bindgen
@@ -96,17 +95,14 @@ WASM_PACKED=$(TARGET_DIR)/packed-wasm
 #---------- local programs ----------
 
 define lp
-$(if $(wildcard $(BUILD_SUBDIR)/$2),
-$(shell echo >&2 'Makefile: lp: Using program $4 from $(BUILD_SUBDIR)/$2')
-$1 := $(abspath $(BUILD_SUBDIR)/$2/target/$3/$4)
-$(abspath $(BUILD_SUBDIR)/$2/target/$3/$4):; cd ../$2 && $$(CARGO) build $(call cr,$3)
-BUNDLED_SOURCES_DIRS += $2
-BUNDLED_SOURCES_LINKS += $2/
-)
+stamp/cargo.$2: $(call rsrcs, ! -name \*.rs)
+	$$(CARGO) build $(call cr,$3) -p $2
+	$$(stamp)
+$1 := $(abspath $(TARGET_DIR)/$3/$4)
 endef
 
 $(eval $(call lp,BUNDLE_SOURCES,bundle-sources,debug,bundle-rust-sources))
-$(eval $(call lp,USVG,resvg,release,usvg))
+$(eval $(call lp,USVG,usvg,release,usvg))
 
 #---------- variables defining bits of source etc. ----------
 
@@ -250,7 +246,7 @@ bundled-sources:: $(addprefix bundled-sources/, $(BUNDLED_SOURCES_DIRS))
 TARGET_BUNDLED=$(TARGET_DIR)/bundled-sources
 
 $(addprefix bundled-sources/, $(BUNDLED_SOURCES_DIRS)): \
-bundled-sources/%: $(wildcard $(BUNDLE_SOURCES))
+bundled-sources/%: stamp/cargo.bundle-sources
 	set -e; d=$(abspath $(TARGET_BUNDLED)); \
 	$(NAILING_CARGO_JUST_RUN) mkdir -p $$d; \
 	$(if $(filter-out otter,$*), cd ../$*;) \
@@ -274,12 +270,13 @@ bundled-sources::
 #---------- svg processing ----------
 
 LIBRARIES ?= $(basename $(wildcard library/*.toml))
+USVG_DEP = stamp/cargo.usvg
 
 include $(addsuffix /files.make, $(LIBRARIES))
 
 USVG_PROCESSOR = usvg-processor
 LIBRARY_PROCESS_SVG = ./$(USVG_PROCESSOR) $@ $(wordlist 1,2,$^) '$(USVG_CMD) $(USVG_OPTIONS)'
-$(LIBRARY_FILES): $(USVG_PROCESSOR) $(USVG_BINARY) $(MAKEFILE_DEP)
+$(LIBRARY_FILES): $(USVG_PROCESSOR) $(USVG_DEP) $(MAKEFILE_DEP)
 
 # actual command for each of $(LIBRARY_FILES) is in one of the files.make
 

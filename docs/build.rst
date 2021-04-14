@@ -46,21 +46,9 @@ Setup
 
      rustup default nightly-2021-04-13
 
-4. Install the ``usvg`` SVG launderer, which we need for shape libraries::
-
-     cargo install usvg
-
-   This will put it in ``~/.cargo/bin``, which you presumably have on
-   your ``PATH`` (or the above ``rustup`` and ``cargo`` runes wouldn't work).
-
-
    **If you just want to edit and preview the shape libraries (ie the piece shapes) you can stop here.**
 
-5. Install some more build tools::
-
-     cargo install bundle-sources
-
-6. Install the webdriver binary from Mozilla.  Visit
+4. Install the webdriver binary from Mozilla.  Visit
 
      https://github.com/mozilla/geckodriver/releases/tag/v0.28.0
 
@@ -99,9 +87,7 @@ executed - and, therefore, trusted:
  * Rustup (the Rust downloader/installer) - this is pretty safe
  * Rust itself - again, pretty safe
  * Otter itself - well, I wrote this; up to you.
- * 450 transitive dependencies of otter (from crates.io)
- * 50 transitive dependencies of bundle-sources
- * the transitive dependencies of resvg
+ * 475 transitive dependencies of otter (from crates.io)
  * a geckodriver binary directly from mozilla
 
 You will have trusted the integrity of the following:
@@ -148,11 +134,6 @@ convenience and in some cases was experimenting with different
 approaches.  In practice, it seems to me that once I'm using Rocket
 and WASM and resvg and so on, there is not that much to be gained
 by trying to prune the dependencies of the otter package itself.
-
-bundle-rust-sources
-```````````````````
-
-This is mine, but it needs to be properly released.
 
 geckodriver (for the automated in-browser tests)
 ````````````````````````````````````````````````
