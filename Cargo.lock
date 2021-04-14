@@ -2190,6 +2190,7 @@ dependencies = [
  "backtrace",
  "boolinator",
  "bundle-sources",
+ "byteorder",
  "cast_trait_object",
  "chrono",
  "chrono-tz",
