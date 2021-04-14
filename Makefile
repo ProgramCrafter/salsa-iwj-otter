@@ -217,7 +217,7 @@ stamp/cargo.wasm-%: $(call rsrcs, base wasm Cargo.*)
 	$(stamp)
 
 stamp/cargo.deploy-build: $(call rsrcs,.)
-	$(CARGO) -T$(DEPLOY_ARCH) build $(call cr,$(DEPLOY_RELEASE)) -p otter -p otter-daemon
+	$(CARGO) build --target $(DEPLOY_ARCH) $(call cr,$(DEPLOY_RELEASE)) -p otter -p otter-daemon
 	$(stamp)
 
 #---------- sphnix ----------
