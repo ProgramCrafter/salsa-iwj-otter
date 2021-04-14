@@ -62,7 +62,10 @@ Build
 
      git clone https://salsa.debian.org/iwj/otter
      cd otter
-     make -j8 all bundled-sources
+     make -j8 all bundled-sources && echo it worked
+
+Expect to see ``it worked`` at the end.  If you don't see that, it
+failed, and the error message is buried in the scrollback.
 
 Build just the shape library preview
 ....................................
