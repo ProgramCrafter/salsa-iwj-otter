@@ -91,7 +91,7 @@ Hi {{nick | escape}}
       <use href="#rectsel_path" stroke-width="1.0 "stroke="purple"/>
       <use href="#rectsel_path" stroke-width="0.5" stroke="#fcf"  />
       <defs id ="static_defs">
-      <g id="rectsel_path"><path stroke-dasharray="1 1" d=""/></g>
+      <g id="rectsel_path"><path fill="none" stroke-dasharray="1 1" d=""/></g>
       </defs>
     </svg>
 {% endmacro space %}
