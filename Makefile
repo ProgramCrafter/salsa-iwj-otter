@@ -249,19 +249,23 @@ bundled-sources:: $(addprefix bundled-sources/, $(BUNDLED_SOURCES_DIRS))
 
 TARGET_BUNDLED=$(TARGET_DIR)/bundled-sources
 
+$(TARGET_BUNDLED):
+	$(NAILING_CARGO_JUST_RUN) mkdir -p $@
+
 $(addprefix bundled-sources/, $(BUNDLED_SOURCES_DIRS)): \
-bundled-sources/%: stamp/cargo.bundle-sources
+bundled-sources/%: stamp/cargo.bundle-sources $(TARGET_BUNDLED)
 	set -e; d=$(abspath $(TARGET_BUNDLED)); \
-	$(NAILING_CARGO_JUST_RUN) mkdir -p $$d; \
 	$(if $(filter-out otter,$*), cd ../$*;) \
 	$(BUNDLE_SOURCES_CMD) --output $$d/$*
 
 bundled-sources:: $(addprefix $(TARGET_BUNDLED)/, $(BUNDLED_SOURCES_FILES))
 
-$(addprefix $(TARGET_BUNDLED)/, $(BUNDLED_SOURCES_LIT)): $(TARGET_BUNDLED)/%: %
+$(addprefix $(TARGET_BUNDLED)/, $(BUNDLED_SOURCES_LIT)): \
+$(TARGET_BUNDLED)/%: % $(TARGET_BUNDLED)
 	$(NAILING_CARGO_JUST_RUN) cp $(abspath $(src))/$< $(abspath $@)
 
-$(TARGET_BUNDLED)/index.html: bundled-sources-make-index $(MAKEFILE_DEP)
+$(TARGET_BUNDLED)/index.html: bundled-sources-make-index \
+		$(MAKEFILE_DEP) $(TARGET_BUNDLED)
 	$(NAILING_CARGO_JUST_RUN) sh -ec ' 			\
 		cd $(abspath $(src)); mkdir -p $(dir $@);	\
 		./$< >$@.tmp $(BUNDLED_SOURCES_LINKS);		\
