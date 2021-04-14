@@ -13,6 +13,7 @@ src=.
 default: all check
 all: debug
 full-check: all check cargo-syntaxcheck-release shapelib sphinx-doc
+full-check: for-deploy release
 everything: debug doc release check bundled-sources
 
 shapelib: templates/shapelib.html stamp/cargo.doc-otter-only
@@ -351,7 +352,8 @@ DEPLOY_USER=ian@login.chiark.greenend.org.uk
 DEPLOY_BASE=$(DEPLOY_USER):/volatile/Otter
 DEPLOY_FINISH=/home/Otter/etc/deploy-finish
 
-deploy: stamp/cargo.deploy-build bundled-sources assets libraries
+for-deploy: stamp/cargo.deploy-build
+deploy: for-deploy bundled-sources assets libraries
 	rsync -zv --progress $(addprefix $(DEPLOY_TARGET_DIR)/,$(PROGRAMS)) $(DEPLOY_BASE)/bin/
 	rsync -rv --progress $(TARGET_DIR)/bundled-sources/. $(DEPLOY_BASE)/bundled-sources
 	rsync -r README.md $(DEPLOY_BASE)/.
