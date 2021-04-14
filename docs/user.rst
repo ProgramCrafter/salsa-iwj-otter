@@ -5,15 +5,17 @@ Basics; joining a game
 ----------------------
 
 To join a game, you run a command like this on the server host:
-```
+
+::
+
   otter [--nick <nick>] join-game unix:ijackson::test
                                        /^^^^^^^  ^^^^\
                              game owner             game name
-```
+
 
 This will print a URL.  You cut and paste that URL into your browser.
 It is not usually necessary to explicitly leave a game, although
-a `leave-game` subcommand is available.
+a ``leave-game`` subcommand is available.
 
 You can have the same URL open in multiple browsers if you wish.  The
 browser you use must support JavaScript and WebAssembly.  Cookies are
@@ -88,12 +90,12 @@ itself is meant as prompts and hints rather than full documentation.
 
 Notable features you might otherwise overlook include these:
 
-Pressing "h" repeatedly cycles through various amounts of history
+Pressing ``h`` repeatedly cycles through various amounts of history
 view (the overlaid yellow arrows showing what recently happened).
 
 Typing numbers will get you into a multiple selection mode, which you
 can use (for example) to draw yourself a hand of multiple cards.
-Typing just "1" will let you select the first available card, even if
+Typing just ``1`` will let you select the first available card, even if
 it's not the one on top (eg because you want to draw a card and
 someone is holding onto the deck).
 
@@ -102,8 +104,8 @@ the lowermost piece.  This can useful to grasp a hand or pickup deck
 if it is covered in cards so you can't see it.
 
 Hands have an organise function, which lets you neaten the layout of
-the cards, or even sort them.  Select the hand and look for the `o`
-and `O` keyboard commands.
+the cards, or even sort them.  Select the hand and look for the ``o``
+and ``O`` keyboard commands.
 
 There is a Wresting mode for making exceptional changes to the game
 state, such as forcibly grasping a piece out of another player's
@@ -123,7 +125,7 @@ Typically this will improve matters.  Hopefully the game state on the
 server side is not too badly affected.
 
 If you can reproduce a bug, please file a bug report;
-<https://salsa.debian.org/iwj/otter/-/issues/new>.
+https://salsa.debian.org/iwj/otter/-/issues/new .
 
 Of course you might want to reload the Otter game page if you have
 trouble with your network or web browser.  The state is all on the
@@ -133,38 +135,38 @@ server, so you can reload or reconnect whenever you like.
 Game administration
 -------------------
 
-Creating and modifying games is done via the `otter` command line
-utility.  See its `--help` message for full details.
+Creating and modifying games is done via the ``otter`` command line
+utility.  See its ``--help`` message for full details.
 
 The most usual game-creation command looks something like this:
 
-```
-otter reset --reset-table local-users unix:ijackson::test demo
-                         /^^^^^^^^^^^                    /^^^^
-                         `table spec            game spec
-```
+::
 
-Here `local-users` refers to the file `local-users.table.spec` in the
-Otter specs directory (`/volatile/Otter/specs` on chiark).  The table
+  otter reset --reset-table local-users unix:ijackson::test demo
+                           /^^^^^^^^^^^                    /^^^^
+                           `table spec            game spec
+
+Here ``local-users`` refers to the file ``local-users.table.spec`` in the
+Otter specs directory (``/volatile/Otter/specs`` on chiark).  The table
 spec file handles access control (and some other global properties)
 This particular file says that all local shell account users may join
 the game.
 
-`demo` refers to the file `demo.game.spec`.  The "game spec" says what
+``demo`` refers to the file ``demo.game.spec``.  The "game spec" says what
 shape the table is and what pieces there are.  This is a simple demo game.
 
-Currently there are also `penultima` and `mao` game specs.
+Currently there are also ``penultima`` and ``mao`` game specs.
 
 After a game has finished and you want to play again, you can put
 everything back to the starting state (or, even, the starting state
 for a different game) with something like this:
 
-```
-otter reset unix:ijackson::test demo
-           /^^^^^^^^^^^^^^^^^^^ ^^^^\
-        game name                   game spec
-```
+::
 
-The `otter` command line tool has further subcommands for
+  otter reset unix:ijackson::test demo
+             /^^^^^^^^^^^^^^^^^^^ ^^^^\
+          game name                   game spec
+
+The ``otter`` command line tool has further subcommands for
 adding/removing players, for ad-hoc addition of pieces from the
 library to an existing game, and so on.
