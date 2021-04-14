@@ -5,7 +5,7 @@ path="wdriver.rs"
 
 [dependencies]
 fehler="1"
-ndarray="0.14"
+ndarray="0.15"
 num-traits="0.2"
 structopt="0.3"
 thirtyfour_sync="0.22"
