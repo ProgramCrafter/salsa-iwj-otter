@@ -4253,9 +4253,9 @@ checksum = "110352d4e9076c67839003c7788d8604e24dcded13e0b375af3efaa8cf468517"
 
 [[package]]
 name = "usvg"
-version = "0.13.0"
+version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2f20237d0e6e190b1179fe6d859a6f98c4160f4efdd0a2e577b9cd2b24c5ae2"
+checksum = "49cf4a80e688e21577387cf750f0d6c18cd0dfc524ba9cf3ef7e01eae5301288"
 dependencies = [
  "base64 0.13.0",
  "data-url",
