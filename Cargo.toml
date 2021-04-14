@@ -49,7 +49,7 @@ usvg="0.13"
 bundle-sources="0.0.1"
 
 [dependencies.enum-map]
-version="0.6"
+version="1"
 features=["serde"]
 
 [dependencies.flexi_logger]
