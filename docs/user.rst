@@ -159,13 +159,13 @@ The most usual game-creation command looks something like this:
                            /^^^^^^^^^^^ /^^^^^^^^^^^^^^^^^' '^^^\
                            `table spec  `game name     game spec'
 
-Here ``local-users`` refers to the file ``local-users.table.spec`` in the
+Here ``local-users`` refers to the file ``local-users.table.toml`` in the
 Otter specs directory (``/volatile/Otter/specs`` on chiark).  The table
 spec file handles access control (and some other global properties)
 This particular file says that all local shell account users may join
 the game.
 
-``demo`` refers to the file ``demo.game.spec``.  The "game spec" says what
+``demo`` refers to the file ``demo.game.toml``.  The "game spec" says what
 shape the table is and what pieces there are.  This is a simple demo game.
 
 Currently there are also ``penultima`` and ``mao`` game specs.
