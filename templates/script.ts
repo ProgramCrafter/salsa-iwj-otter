@@ -1276,6 +1276,13 @@ function rectsel_mouseup(e: MouseEvent) {
   rectsel_path.firstElementChild!.setAttributeNS(null,'d','');
   let pos2 = rectsel_nontrivial_pos2(e);
 
+  if (pos2 == null) {
+    // clicked not on a piece, and didn't drag
+    special_count = null;
+    special_count_reupdate();
+    // we'll bail in a moment, after possibly unselecting things
+  }
+
   let note_already = Object.create(null);
   let c = null;
 
@@ -1316,6 +1323,10 @@ function rectsel_mouseup(e: MouseEvent) {
     }
     return;
   }
+
+  // did the special
+  special_count = null;
+  special_count_reupdate();
 
   if (rectsel_shifted && c.held == us) {
     ungrab_clicked(c.clicked);
