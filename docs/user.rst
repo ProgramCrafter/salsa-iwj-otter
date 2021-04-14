@@ -41,6 +41,19 @@ last will see the piece "jump" out of your grasp.
 But in general different players can manipulate separate pieces (eg,
 separate cards) concurrently.
 
+There are two layouts.  You can switch with the controls near the zoom
+adjustment.  (What you see will depend on what the game is, of
+course.)
+
+Landscape
+`````````
+
+.. image:: landscape.png
+
+Portrait
+````````
+
+.. image:: portrait.png
 
 Keyboard commands and special functions
 ---------------------------------------
