@@ -1273,7 +1273,7 @@ function rectsel_mouseup(e: MouseEvent) {
   console.log('rectsel mouseup');
   window.removeEventListener('mousemove', rectsel_mousemove, true);
   window.removeEventListener('mouseup',   rectsel_mouseup,   true);
-  rectsel_path.setAttributeNS(null,'path','');
+  rectsel_path.firstElementChild!.setAttributeNS(null,'d','');
   let pos2 = rectsel_nontrivial_pos2(e);
 
   let note_already = Object.create(null);
