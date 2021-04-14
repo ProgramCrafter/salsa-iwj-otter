@@ -8,7 +8,7 @@ fehler="1"
 ndarray="0.15"
 num-traits="0.2"
 structopt="0.3"
-thirtyfour_sync="0.22"
+thirtyfour_sync="0.23"
 x11rb="0.8"
 
 [dependencies.otter-api-tests]
