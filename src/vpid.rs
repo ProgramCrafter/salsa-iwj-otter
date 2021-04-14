@@ -157,6 +157,7 @@ impl Notches {
   pub fn len(&self) -> NotchNumber { self.used }
   pub fn is_empty(&self) -> bool { self.used == 0 }
 
+  #[cfg(not(miri))]
   #[cfg(test)]
   fn check(&self) {
     let mut count_free = 0;
