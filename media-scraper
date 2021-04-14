@@ -272,7 +272,7 @@ END
 	    $cfp ="\$@.$ci.tmp";
 	    print $makefile <<END or die $!;
 LIBRARY_CLEAN += $ncoloured
-$ncoloured: $lupstream \$(MAKEFILE_DEP) $makepath
+$ncoloured: $lupstream \$(MAKEFILE_DEP) \$(USVG_DEP) $makepath
 	\$(USVG_CMD) -c - <\$< >$cfp
 END
 	  }
