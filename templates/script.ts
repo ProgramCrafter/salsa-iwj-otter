@@ -132,6 +132,7 @@ var pieces_marker : SVGGraphicsElement;
 var defs_marker : SVGGraphicsElement;
 var movehist_start: SVGGraphicsElement;
 var movehist_end: SVGGraphicsElement;
+var rectsel_path: SVGGraphicsElement;
 var log_elem : HTMLElement;
 var logscroll_elem : HTMLElement;
 var status_node : HTMLElement;
@@ -807,6 +808,10 @@ var dcy : number | null;
 
 const DRAGTHRESH = 5;
 
+let rectsel_start: Pos | null;
+let rectsel_shifted: boolean | null;
+const RECTSELTHRESH = 5;
+
 function piece_xy(p: PieceInfo): Pos {
   return [ parseFloat(p.uelem.getAttributeNS(null,"x")!),
 	   parseFloat(p.uelem.getAttributeNS(null,"y")!) ];
@@ -988,14 +993,10 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   let piece: PieceId | undefined = target.dataset.piece;
 
   if (!piece) {
-    if (!shifted) {
-      let mr;
-      while (mr = movements.pop()) {
-	mr.p.last_seen_moved = null;
-	redisplay_ancillaries(mr.piece, mr.p);
-      }
-      ungrab_all();
-    }
+    rectsel_start = mouseevent_pos(e);
+    rectsel_shifted = shifted;
+    window.addEventListener('mousemove', rectsel_mousemove, true);
+    window.addEventListener('mouseup',   rectsel_mouseup,   true);
     return;
   }
 
@@ -1237,6 +1238,91 @@ function drag_cancel() {
   window.removeEventListener('mouseup',   drag_mouseup,   true);
   dragging = DRAGGING.NO;
   drag_pieces = [];
+}
+
+function rectsel_nontrivial_pos2(e: MouseEvent): Pos | null {
+  let pos2 = mouseevent_pos(e);
+  let d2 = 0;
+  for (let i of [0,1]) {
+    let d = pos2[i] - rectsel_start![i];
+    d2 += d*d;
+  }
+  return d2 > RECTSELTHRESH*RECTSELTHRESH ? pos2 : null;
+}
+
+function rectsel_mousemove(e: MouseEvent) {
+  let pos2 = rectsel_nontrivial_pos2(e);
+  let path;
+  if (pos2 == null) {
+    path = "";
+  } else {
+    path = "M";
+    for (let p of [rectsel_start!, pos2]) {
+      for (let i of [0,1]) {
+	path += ` ${ p[i] }`;
+      }
+    }
+  }
+  rectsel_path.firstElementChild!.setAttributeNS(null,'d',path);
+}
+
+function rectsel_mouseup(e: MouseEvent) {
+  console.log('rectsel mouseup');
+  window.removeEventListener('mousemove', rectsel_mousemove, true);
+  window.removeEventListener('mouseup',   rectsel_mouseup,   true);
+  rectsel_path.setAttributeNS(null,'path','');
+  let pos2 = rectsel_nontrivial_pos2(e);
+
+  let note_already = Object.create(null);
+  let c = null;
+
+  if (pos2 != null) {
+    if (special_count != null && special_count == 0) {
+      add_log_message(`Cannot drag-select lowest.`);
+      return;
+    }
+    let tl = [0,0];
+    let br = [0,0];
+    for (let i of [0,1]) {
+      tl[i] = Math.min(rectsel_start![i], pos2[i]);
+      br[i] = Math.max(rectsel_start![i], pos2[i]);
+    }
+    c = mouse_find_predicate(
+      special_count, rectsel_shifted!, note_already,
+      function(p: PieceInfo) {
+	let pp = piece_xy(p);
+	for (let i of [0,1]) {
+	  if (pp[i] < tl[i] || pp[i] > br[i]) return false;
+	}
+	return true;
+      }
+    );
+  }
+
+  if (!c) {
+    // clicked not on a piece, didn't end up selecting anything
+    // either because drag region had nothing in it, or special
+    // failed, or some such.
+    if (!rectsel_shifted) {
+      let mr;
+      while (mr = movements.pop()) {
+	mr.p.last_seen_moved = null;
+	redisplay_ancillaries(mr.piece, mr.p);
+      }
+      ungrab_all();
+    }
+    return;
+  }
+
+  if (rectsel_shifted && c.held == us) {
+    ungrab_clicked(c.clicked);
+    return;
+  } else {
+    if (!rectsel_shifted) {
+      ungrab_all_except(note_already);
+    }
+    grab_clicked(c.clicked);
+  }
 }
 
 // ----- general -----
@@ -1847,6 +1933,7 @@ function startup() {
   defs_marker = svg_element("defs_marker")!;
   movehist_start = svg_element('movehist_marker')!;
   movehist_end = svg_element('movehist_end')!;
+  rectsel_path = svg_element('rectsel_path')!;
   svg_ns = space.getAttribute('xmlns')!;
 
   for (let uelem = pieces_marker.nextElementSibling! as SVGGraphicsElement;

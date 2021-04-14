@@ -88,7 +88,10 @@ Hi {{nick | escape}}
 {%- endfor %}
       <g id="movehist_marker"></g>
       <g id="movehist_end"></g>
+      <use href="#rectsel_path" stroke-width="8" stroke="#fcf"  />
+      <use href="#rectsel_path" stroke-width="4" stroke="purple"/>
       <defs id ="static_defs">
+      <g id="rectsel_path"><path stroke-dasharray="1 1" d=""/></g>
       </defs>
     </svg>
 {% endmacro space %}
