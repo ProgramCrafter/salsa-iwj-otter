@@ -1256,10 +1256,15 @@ function rectsel_mousemove(e: MouseEvent) {
   if (pos2 == null) {
     path = "";
   } else {
-    path = `M ${ rectsel_start! [0]} ${ rectsel_start! [1] }
-              ${ pos2           [0]} ${ rectsel_start! [1] }
-              ${ pos2           [0]} ${ pos2           [1] }
-              ${ rectsel_start! [0]} ${ pos2           [1] } Z`;
+    let pos1 = rectsel_start!;
+    path = `M ${ pos1 [0]} ${ pos1 [1] }
+              ${ pos2 [0]} ${ pos1 [1] }
+            M ${ pos1 [0]} ${ pos2 [1] }
+              ${ pos2 [0]} ${ pos2 [1] }
+            M ${ pos1 [0]} ${ pos1 [1] }
+              ${ pos1 [0]} ${ pos2 [1] }
+            M ${ pos2 [0]} ${ pos1 [1] }
+              ${ pos2 [0]} ${ pos2 [1] }`;
   }
   rectsel_path.firstElementChild!.setAttributeNS(null,'d',path);
 }
