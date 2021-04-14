@@ -88,8 +88,8 @@ Hi {{nick | escape}}
 {%- endfor %}
       <g id="movehist_marker"></g>
       <g id="movehist_end"></g>
-      <use href="#rectsel_path" stroke-width="8" stroke="#fcf"  />
-      <use href="#rectsel_path" stroke-width="4" stroke="purple"/>
+      <use href="#rectsel_path" stroke-width="1.0 "stroke="purple"/>
+      <use href="#rectsel_path" stroke-width="0.5" stroke="#fcf"  />
       <defs id ="static_defs">
       <g id="rectsel_path"><path stroke-dasharray="1 1" d=""/></g>
       </defs>
