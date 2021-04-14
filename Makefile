@@ -137,8 +137,11 @@ WASM := wasm32-unknown-unknown
 
 #---------- toplevel aggregate targets ----------
 
-check: stamp/cargo.check at wdt
+check: stamp/cargo.debug-check at wdt
 	@echo 'All tests passed.'
+
+full-check: stamp/cargo.release-check
+full-check: stamp/cargo.release-miri stamp/cargo.debug-miri
 
 doc: cargo-doc sphinx-doc
 
@@ -187,8 +190,12 @@ stamp/cargo.wasm-bindgen: $(call rsrcs, ! -name \*.rs)
 		--manifest-path=$(abspath wasm/Cargo.toml) -p wasm-bindgen-cli
 	$(stamp)
 
-stamp/cargo.check: $(call rsrcs,.)
-	$(CARGO) test --workspace
+stamp/cargo.%-check: $(call rsrcs,.)
+	$(CARGO) test --workspace $(call cr,$*)
+	$(stamp)
+
+stamp/cargo.%-miri: $(call rsrcs,.)
+	$(CARGO) miri test --workspace $(call cr,$*)
 	$(stamp)
 
 stamp/cargo-at.debug: $(call rsrcs,.)
