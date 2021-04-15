@@ -44,22 +44,25 @@ pub struct Broken {
   kind: io::ErrorKind,
 }
 
+impl<RW> Fuse<RW> {
+  #[throws(io::Error)]
+  fn get(&mut self) -> &mut RW {
+    self.0.as_mut().map_err(|broken| broken.clone())?
+  }
+}
+
 impl<R:Read> Read for Fuse<R> {
   #[throws(io::Error)]
   fn read(&mut self, buf: &mut [u8]) -> usize {
-    match &mut self.0 {
-      Err(broken) => throw!(broken.clone()),
-      Ok(inner) => {
-        let r = inner.read(buf);
-        if let Err(e) = &r {
-          self.0 = Err(Broken {
-            msg: e.to_string(),
-            kind: e.kind(),
-          });
-        }
-        r?
-      }
+    let inner = self.get()?;
+    let r = inner.read(buf);
+    if let Err(e) = &r {
+      self.0 = Err(Broken {
+        msg: e.to_string(),
+        kind: e.kind(),
+      });
     }
+    r?
   }
 }
 
