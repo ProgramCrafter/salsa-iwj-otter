@@ -353,6 +353,14 @@ stamp/wdt-%.lcheck:	$(WDT_DEPS)
 	$(WDT_RUN) --as-if=lwdt-$* --layout=Landscape
 	$(stamp)
 
+#---------- docs publication ----------
+
+PUBLISH_USER=ianmdlvl@login.chiark.greenend.org.uk
+PUBLISH_DOC_SPHINX=$(PUBLISH_USER):public-html/otter/docs
+
+publish: doc-sphinx
+	rsync -r --delete-delay docs/html/. $(PUBLISH_DOC_SPHINX)/.
+
 #---------- deployment ----------
 
 DEPLOY_USER=ian@login.chiark.greenend.org.uk
