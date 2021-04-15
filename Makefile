@@ -12,7 +12,7 @@ src=.
 
 default: all check
 all: debug
-full-check: all check cargo-syntaxcheck-release shapelib sphinx-doc
+full-check: all check cargo-syntaxcheck-release shapelib doc-sphinx
 full-check: for-deploy release
 everything: debug doc release check bundled-sources
 
@@ -143,7 +143,7 @@ full-check: stamp/cargo.release-miri stamp/cargo.debug-miri
 full-check:
 	@echo 'Full tests passed.'
 
-doc: cargo-doc sphinx-doc
+doc: cargo-doc doc-sphinx
 
 debug release:: %: stamp/cargo.% assets libraries extra-%
 
@@ -225,7 +225,7 @@ stamp/cargo.deploy-build: $(call rsrcs,.)
 
 #---------- sphnix ----------
 
-sphinx-doc: docs/html/index.html
+doc-sphinx: docs/html/index.html
 	@echo 'Documentation can now be found here:'
 	@echo '  file://$(PWD)/$<'
 
