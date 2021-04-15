@@ -63,6 +63,7 @@ DEPLOY_ARCH=x86_64-unknown-linux-musl
 DEPLOY_RELEASE=debug
 DEPLOY_TARGET_DIR=$(TARGET_DIR)/$(addsuffix /,$(DEPLOY_ARCH))$(DEPLOY_RELEASE)
 DEPLOYED_BRANCH=deployed
+PUBLISHED_BRANCH=published
 
 #---------- nailing-cargo ----------
 
@@ -360,6 +361,7 @@ PUBLISH_DOC_SPHINX=$(PUBLISH_USER):public-html/otter/docs
 
 publish: doc-sphinx
 	rsync -r --delete-delay docs/html/. $(PUBLISH_DOC_SPHINX)/.
+	git branch -f $(PUBLISHED_BRANCH)
 
 #---------- deployment ----------
 
