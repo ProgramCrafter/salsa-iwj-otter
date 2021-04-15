@@ -49,13 +49,13 @@ impl<RW> Fuse<RW> {
   fn get(&mut self) -> &mut RW {
     self.0.as_mut().map_err(|broken| broken.clone())?
   }
-}
 
-impl<R:Read> Read for Fuse<R> {
   #[throws(io::Error)]
-  fn read(&mut self, buf: &mut [u8]) -> usize {
+  fn with<F,T>(&mut self, f: F) -> T
+    where F: FnOnce(&mut RW) -> Result<T, io::Error>
+  {
     let inner = self.get()?;
-    let r = inner.read(buf);
+    let r = f(inner);
     if let Err(e) = &r {
       self.0 = Err(Broken {
         msg: e.to_string(),
@@ -63,6 +63,13 @@ impl<R:Read> Read for Fuse<R> {
       });
     }
     r?
+  }
+}
+
+impl<R:Read> Read for Fuse<R> {
+  #[throws(io::Error)]
+  fn read(&mut self, buf: &mut [u8]) -> usize {
+    self.with(|inner| inner.read(buf))?
   }
 }
 
