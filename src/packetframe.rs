@@ -72,6 +72,16 @@ impl<R:Read> Read for Fuse<R> {
     self.with(|inner| inner.read(buf))?
   }
 }
+impl<W:Write> Write for Fuse<W> {
+  #[throws(io::Error)]
+  fn write(&mut self, buf: &[u8]) -> usize {
+    self.with(|inner| inner.write(buf))?
+  }
+  #[throws(io::Error)]
+  fn flush(&mut self) {
+    self.with(|inner| inner.flush())?
+  }
+}
 
 impl From<Broken> for io::Error {
   fn from(broken: Broken) -> io::Error {
