@@ -19,13 +19,16 @@ Setup
 
 1. Install the packaged build dependencies::
 
-
-     sudo apt install build-essential cpio git curl moreutils \
-                      pkg-config libssl-dev             \
-                      node-typescript inkscape bubblewrap xvfb \
-                      netpbm imagemagick libtoml-parser-perl \
-                      potrace                                \
+     sudo apt install build-essential cpio git curl            \
+                      pkg-config libssl-dev                    \
+                      node-typescript inkscape                 \
+                      netpbm imagemagick libtoml-parser-perl   \
+                      potrace                                  \
                       python3-sphinx python3-recommonmark
+
+And for running the tests (``make check``) you will need::
+
+     sudo apt install bubblewrap xvfb moreutils
 
 
 2. Install Rust.  This is most easily done with rustup_::
