@@ -285,7 +285,8 @@ fn write_test(){
     let y = frame.read(&mut buf).unwrap();
     dbgc!(&buf[0..y]);
   }
-  {
+  let expect_boom = |rd: &mut FrameReader<_>| {
+    let mut buf = [0u8;10];
     let mut frame = rd.new_frame().unwrap();
     let y = frame.read(&mut buf).unwrap();
     dbgc!(&buf[0..y]);
@@ -293,5 +294,6 @@ fn write_test(){
     dbgc!(&r);
     assert_eq!(r.kind(), ErrorKind::Other);
     assert!(r.into_inner().unwrap().is::<SenderError>());
-  }
+  };
+  expect_boom(&mut rd);
 }
