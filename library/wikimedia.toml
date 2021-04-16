@@ -39,27 +39,27 @@ abbrev = "w"
 
 [group.chess.colours.black]
 abbrev = "b"
-map = { "000000" = "cccccc", "ffffff" = "000000" }
+map = { "#000000" = "#cccccc", "#ffffff" = "#000000" }
 
 [group.chess.colours."light blue"]
 abbrev = "blue"
-map = {"ffffff" = "04cbe5"}
+map = {"#ffffff" = "#04cbe5"}
 
 [group.chess.colours."red"]
 abbrev = "red"
-map = {"ffffff" = "e64104", "000000" = "bbbbbb" }
+map = {"#ffffff" = "#e64104", "#000000" = "#bbbbbb" }
 
 [group.chess.colours."yellow"]
 abbrev = "yellow"
-map = {"ffffff" = "ffc505"}
+map = {"#ffffff" = "#ffc505" }
 
 [group.chess.colours."purple"]
 abbrev = "purple"
-map = {"ffffff" = "c105ff", "000000" = "bbbbbb" }
+map = {"#ffffff" = "#c105ff", "#000000" = "#bbbbbb" }
 
 [group.chess.colours."grey"]
 abbrev = "grey"
-map = { "ffffff" = "888888" }
+map = { "#ffffff" = "#888888" }
 
 [group.chess-26]
 inherit = "chess"
