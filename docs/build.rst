@@ -8,10 +8,10 @@ libraries.  The main documentation is done with Sphinx.
 You will need at least 10G of disk space, or more, and a good internet
 connection.  Your computer will be compiling a lot of code.
 
-These instructions were once tested on Debian 10 "buster".  Otter
-won't build on Debian 9 "stretch" because the Typescript compiler
-(tsc) is too old.  tsc 3.3.3333 is known to work.  Ubuntu 20.04LTS
-"focal" should work.
+These instructions were once tested on Debian 11 "bullseye" and Debian
+10 "buster".  Otter won't build on Debian 9 "stretch" because the
+Typescript compiler (tsc) is too old.  tsc 3.3.3333 is known to work.
+Ubuntu 20.04LTS "focal" should work.
 
 Setup
 -----
