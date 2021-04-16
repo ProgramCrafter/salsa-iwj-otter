@@ -54,9 +54,10 @@ SPHINXBUILD   = sphinx-build
 
 ifndef INKSCAPE_EXTENSIONS
 INKSCAPE ?= inkscape
+INKSCAPE_SDD_QUIETEN ?= 2>/dev/null
 # inkscape 0.92.4: --extension-directory works, no --system-data-directory
 # inkscape 1.0.2: --system-data-directory, no --extension-directory
-INKSCAPE_EXTENSIONS := $(shell set -e; { sdd=$$( $(INKSCAPE) --system-data-directory ) && echo "$$sdd/extensions"; } || $(INKSCAPE) --extension-directory )
+INKSCAPE_EXTENSIONS := $(shell set -e; { sdd=$$( $(INKSCAPE) --system-data-directory $(INKSCAPE_SDD_QUIETEN) ) && echo "$$sdd/extensions"; } || $(INKSCAPE) --extension-directory )
 endif
 RECOLOUR_SVG ?= ./run-inkscape-extension $(INKSCAPE_EXTENSIONS)/color_replace.py
 
