@@ -22,7 +22,7 @@ Setup
 
      sudo apt install build-essential cpio git curl moreutils \
                       pkg-config libssl-dev             \
-                      node-typescript inkscape bubblewrap \
+                      node-typescript inkscape bubblewrap xvfb \
                       netpbm imagemagick libtoml-parser-perl \
                       potrace                                \
                       python3-sphinx python3-recommonmark
