@@ -72,15 +72,15 @@ impl MgmtChannel {
   pub fn read<T:DeserializeOwned>(&mut self) -> T {
     use MgmtChannelReadError::*;
     let f = self.read.new_frame()?.ok_or(MgmtChannelReadError::EOF)?;
-    let r = serde_json::from_reader(f);
+    let r = rmp_serde::decode::from_read(f);
     let v = r.map_err(|e| Parse(format!("{}", &e)))?;
     v
   }
 
-  #[throws(io::Error)]
+  #[throws(MgmtChannelWriteError)]
   pub fn write<T:Serialize>(&mut self, val: &T) {
     let mut f = self.write.new_frame()?;
-    serde_json::to_writer(&mut f, val)?;
+    rmp_serde::encode::write_named(&mut f, val)?;
     f.finish()?;
     self.write.flush()?;
   }
