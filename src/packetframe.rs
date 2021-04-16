@@ -269,7 +269,7 @@ fn write_test(){
   let mut wr = FrameWriter::new(&mut msg);
   {
     let mut frame = wr.new_frame().unwrap();
-    frame.write(b"hi").unwrap();
+    frame.write(b"hello").unwrap();
     frame.finish().unwrap();
   }
   {
