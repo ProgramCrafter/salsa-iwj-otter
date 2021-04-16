@@ -13,7 +13,26 @@ pub enum MgmtChannelReadError {
 }
 display_as_debug!{MgmtChannelReadError}
 
-pub type MgmtChannelWriteError = rmp_serde::encode::Error;
+#[derive(Debug,Error)]
+pub enum MgmtChannelWriteError {
+  Serialize(rmp_serde::encode::Error), // but not ValueWriteError so no from
+  IO(#[from] io::Error),
+}
+display_as_debug!{MgmtChannelWriteError}
+
+impl From<rmp_serde::encode::Error> for MgmtChannelWriteError {
+  fn from(re: rmp_serde::encode::Error) -> MgmtChannelWriteError {
+    use rmp_serde::encode::Error::*;
+    use MgmtChannelWriteError as MCWE;
+    use rmp::encode::ValueWriteError as RVWE;
+    match re {
+      InvalidValueWrite(RVWE::InvalidMarkerWrite(ioe)) => MCWE::IO(ioe),
+      InvalidValueWrite(RVWE::InvalidDataWrite  (ioe)) => MCWE::IO(ioe),
+      ser@ (UnknownLength | InvalidDataModel(_) |
+            DepthLimitExceeded | Syntax(_)) => MCWE::Serialize(ser),
+    }
+  }
+}
 
 pub struct MgmtChannel {
   read: io::Lines<BufReader<Box<dyn Read>>>,

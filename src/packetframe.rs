@@ -206,9 +206,7 @@ impl<W:Write> FrameWriter<W> {
 
   #[throws(MgmtChannelWriteError)]
   pub fn write_rmp<T:Serialize>(&mut self, t: &T) {
-    let mut frame = self.new_frame()
-      .map_err(|e| rmp_serde::encode::Error::InvalidValueWrite(
-        rmp::encode::ValueWriteError::InvalidMarkerWrite(e)))?;
+    let mut frame = self.new_frame()?;
     rmp_serde::encode::write_named(&mut frame, t)?
   }
 
