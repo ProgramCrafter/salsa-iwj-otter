@@ -296,4 +296,10 @@ fn write_test(){
     assert!(r.into_inner().unwrap().is::<SenderError>());
   };
   expect_boom(&mut rd);
+
+  let mut rd = FrameReader::new(&*msg);
+  {
+    let mut _frame = rd.new_frame().unwrap();
+  }
+  expect_boom(&mut rd);
 }
