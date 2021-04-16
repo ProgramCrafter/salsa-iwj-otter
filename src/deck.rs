@@ -117,7 +117,7 @@ impl PieceTrait for Deck {
   fn describe_html(&self, gpc: &GPiece, goccults: &GameOccults) -> Html {
     match self.state(gpc, goccults)? {
       Disabled => DISABLED_DESC,
-      Counting => ENABLED_DESC,
+      Counting => COUNTING_DESC,
       Enabled => ENABLED_DESC,
     }.into()
   }
