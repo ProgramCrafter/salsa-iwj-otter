@@ -45,15 +45,15 @@ There are two layouts.  You can switch with the controls near the zoom
 adjustment.  (What you see will depend on what the game is, of
 course.)
 
-Landscape
-`````````
-
-.. image:: landscape.png
-
 Portrait
 ````````
 
 .. image:: portrait.png
+
+Landscape
+`````````
+
+.. image:: landscape.png
 
 Keyboard commands and special functions
 ---------------------------------------
