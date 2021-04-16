@@ -4,8 +4,19 @@ set -e
 out="$1"; shift
 tsconfig="$1"; shift
 
+tsc_version=$(LC_ALL=C.UTF-8 tsc --version)
+
 files_json='['
 for f in "$@"; do
+	case "$f" in
+	*webassembly-types*)
+		case "${tsc_version#Version }" in
+		3.*) ;;
+		*) continue ;;
+		esac
+		;;
+	esac
+
 	files_json="${files_json}\"$f\", "
 done
 files_json="$files_json]"
