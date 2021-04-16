@@ -895,7 +895,7 @@ function mouse_find_predicate(
   predicate: (p: PieceInfo) => boolean
 ): MouseFindClicked {
   let clicked: PieceId[];
-  let held;
+  let held: string | null;
   let pinned = false;
   let already_count = 0;
 
@@ -932,7 +932,7 @@ function mouse_find_predicate(
       held = p.held;
       if (held == us && !allow_for_deselect) held = null;
     }
-    if (held == us) {
+    if (held! == us) {
       // user is going to be deselecting
       if (p.held != us) {
 	// skip ones we don't have
