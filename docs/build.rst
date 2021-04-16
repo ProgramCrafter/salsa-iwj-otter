@@ -54,7 +54,7 @@ Setup
 
    **If you just want to edit and preview the shape libraries (ie the piece shapes) you can stop here.**
 
-4. Install the webdriver binary from Mozilla.  Visit
+4. For the tests, install the webdriver binary from Mozilla.  Visit
 
      https://github.com/mozilla/geckodriver/releases/tag/v0.28.0
 

@@ -169,13 +169,9 @@ Navigating the otter source code
 Automatic in-browser tests (`wdriver`)
 --------------------------------------
 
-* `apt install firefox`
-
-* `https://github.com/mozilla/geckodriver/releases/tag/v0.28.0`
-  download appropriate tarball, put "geckodriver" on PATH
-
-`make check` runs all the tests; `make wdt` runs only those tests.  You can run
-an individual test with a rune like this:
+`make check` runs all the tests; `make wdt` runs only the webdriver
+(in-browser) tests.  You can run an individual test with a rune like
+this:
 
 ```
   OTTER_TEST_LOG=otter_webdriver_tests=trace CARGO_MANIFEST_DIR=~ian/Rustup/Game/server time target/debug/wdriver --test=wdt-simple --geckodriver-args=
