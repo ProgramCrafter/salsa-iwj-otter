@@ -58,7 +58,7 @@ INKSCAPE ?= inkscape
 # inkscape 1.0.2: --system-data-directory, no --extension-directory
 INKSCAPE_EXTENSIONS := $(shell set -e; { sdd=$$( $(INKSCAPE) --system-data-directory ) && echo "$$sdd/extensions"; } || $(INKSCAPE) --extension-directory )
 endif
-RECOLOUR_SVG ?= $(INKSCAPE_EXTENSIONS)/color_replace.py
+RECOLOUR_SVG ?= ./run-inkscape-extension $(INKSCAPE_EXTENSIONS)/color_replace.py
 
 DEPLOY_ARCH=x86_64-unknown-linux-musl
 DEPLOY_RELEASE=debug

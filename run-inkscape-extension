@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# inkscape 0.92.4 on Debian buster:
+# These scripts are perfectly good scripts; they are executable,
+# and they work with the #! that is provided.  They do not work with
+# python2.
+#
+# inkscape 1.0.2 on Debian bullseye:
+# These files are not executable.  They say #!/usr/bin/env python
+# but the system probably doesn't have any such thing, because
+# that would (on a sane system) refer to python2 and there is
+# only python3.
+#
+# I don't think it is going to be possible to sanely find out what
+# python version is actually expected.  But I think a *reasonable*
+# demand on the environment is that either:
+#   - These if these scripts are executable, they can be executed
+#   - Otherwise, they are not using ancient and obsolete python
+
+$(
+  if test -x "$1"; then :; else
+    type -p python3 || type -p python
+  fi
+) "$@"
