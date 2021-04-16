@@ -117,6 +117,10 @@ impl Display for Broken {
 }
 
 impl<R:BufRead> FrameReader<R> {
+  pub fn new(r: R) -> FrameReader<R> {
+    FrameReader { inner: Fuse(Ok(r)), in_frame: None }
+  }
+
   #[throws(io::Error)]
   pub fn new_frame<'r>(&'r mut self) -> ReadFrame<'r,R> {
     if self.in_frame.is_some() {
@@ -173,6 +177,10 @@ impl<'r, R:BufRead> Read for ReadFrame<'r, R> {
 }
 
 impl<W:Write> FrameWriter<W> {
+  pub fn new(w: W) -> FrameWriter<W> {
+    FrameWriter { inner: Fuse(Ok(w)), in_frame: None }
+  }
+
   #[throws(io::Error)]
   pub fn new_frame<'w>(&'w mut self) -> WriteFrame<'w,W> {
     self.tidy(Err(SenderError))?;
@@ -215,7 +223,7 @@ impl<'w,W:Write> Drop for WriteFrameRaw<'w,W> {
       .unwrap_or_else(|_: io::Error| () /* Fuse will replicate this */);
   }
 }
-impl<'r, R:Write> Write for WriteFrameRaw<'r, R> {
+impl<'w,W:Write> Write for WriteFrameRaw<'w,W> {
   #[throws(io::Error)]
   fn write(&mut self, buf: &[u8]) -> usize {
     let now = min(buf.len(), CHUNK_MAX.into());
@@ -228,4 +236,21 @@ impl<'r, R:Write> Write for WriteFrameRaw<'r, R> {
   fn flush(&mut self) {
     self.fw.inner.flush()?
   }
+}
+impl<'w,W:Write> Write for WriteFrame<'w,W> {
+  #[throws(io::Error)]
+  fn write(&mut self, buf: &[u8]) -> usize { self.buf.write(buf)? }
+  #[throws(io::Error)]
+  fn flush(&mut self) { self.buf.flush()? }
+}
+
+#[test]
+fn write_test(){
+  let mut buf = vec![];
+  let mut wr = FrameWriter::new(&mut buf);
+  {
+    let mut frame = wr.new_frame().unwrap();
+    frame.write(b"hi").unwrap();
+  }
+  dbg!(buf);
 }
