@@ -85,17 +85,17 @@ impl<RW> Fuse<RW> {
 impl<R:Read> Read for Fuse<R> {
   #[throws(io::Error)]
   fn read(&mut self, buf: &mut [u8]) -> usize {
-    self.with(|inner| inner.read(buf))?
+    self.with(|inner| dbgc!(inner.read(buf)))?
   }
 }
 impl<W:Write> Write for Fuse<W> {
   #[throws(io::Error)]
   fn write(&mut self, buf: &[u8]) -> usize {
-    self.with(|inner| inner.write(buf))?
+    self.with(|inner| dbgc!(inner.write(buf)))?
   }
   #[throws(io::Error)]
   fn flush(&mut self) {
-    self.with(|inner| inner.flush())?
+    self.with(|inner| dbgc!(inner.flush()))?
   }
 }
 
@@ -139,15 +139,20 @@ impl<R:BufRead> FrameReader<R> {
     assert_ne!(buf.len(), 0);
     let remaining = self.in_frame.as_mut().unwrap();
     if *remaining == 0 {
-      *remaining = match self.inner.read_u16::<BO>()? {
-        0         => return Ok(Ok(0)),
-        CHUNK_ERR => return Ok(Err(SenderError)),
-        x         => x as usize,
+      *remaining = match match self.inner.read_u16::<BO>()? {
+        0         => Left(Ok(0)),
+        CHUNK_ERR => Left(Err(SenderError)),
+        x         => Right(x as usize),
+      } {
+        Left(r) => { self.in_frame = None; return Ok(r); }
+        Right(x) => x,
       }
     }
+    dbgc!(buf.len(), &remaining);
 
     let n = min(buf.len(), *remaining);
     let r = self.inner.read(&mut buf[0..n])?;
+    dbgc!(&r);
     assert!(r <= n);
     *remaining -= n;
     Ok(Ok(r))
@@ -165,14 +170,17 @@ impl<'r, R:BufRead> Read for ReadFrame<'r, R> {
   #[throws(io::Error)]
   fn read(&mut self, buf: &mut [u8]) -> usize {
     if buf.len() == 0 { return 0 }
-    match self.fr {
+    dbgc!(buf.len(), self.fr.as_ref().err());
+    let fr = match self.fr {
       Ok(ref mut fr) => fr,
       Err(None) => return 0,
       Err(Some(e@ SenderError)) => throw!(e),
+    };
+    match dbgc!(fr.do_read(buf))? {
+      Ok(0) => { self.fr = Err(None); 0 },
+      Ok(x) => x,
+      Err(e@ SenderError) => { self.fr = Err(Some(e)); throw!(e) },
     }
-      .do_read(buf)?
-      .map_err(|e: SenderError| { self.fr = Err(Some(e)); e })
-      ?
   }
 }
 
@@ -183,7 +191,7 @@ impl<W:Write> FrameWriter<W> {
 
   #[throws(io::Error)]
   pub fn new_frame<'w>(&'w mut self) -> WriteFrame<'w,W> {
-    self.tidy(Err(SenderError))?;
+    self.tidy()?;
     self.in_frame = Some(());
     let raw = WriteFrameRaw { fw: self };
     let buf = BufWriter::with_capacity(CHUNK_DEF.into(), raw);
@@ -191,7 +199,18 @@ impl<W:Write> FrameWriter<W> {
   }
 
   #[throws(io::Error)]
-  fn tidy(&mut self, how: Result<(), SenderError>) {
+  pub fn flush(&mut self) {
+    self.tidy()?;
+    self.inner.flush()?;
+  }
+
+  #[throws(io::Error)]
+  fn tidy(&mut self) {
+    self.finish_any_frame(Err(SenderError))?;
+  }
+
+  #[throws(io::Error)]
+  fn finish_any_frame(&mut self, how: Result<(), SenderError>) {
     if let Some(_) = self.in_frame {
       self.inner.write_u16::<BO>(match how {
         Ok(()) => 0,
@@ -209,7 +228,7 @@ impl<'w,W:Write> WriteFrame<'w,W> {
       .into_inner()
       .map_err(|e| e.into_error())?
       .fw
-      .tidy(how)?
+      .finish_any_frame(how)?
   }
 
   #[throws(io::Error)]
@@ -219,7 +238,7 @@ impl<'w,W:Write> WriteFrameRaw<'w,W> {
 }
 impl<'w,W:Write> Drop for WriteFrameRaw<'w,W> {
   fn drop(&mut self) {
-    self.fw.tidy(Err(SenderError))
+    self.fw.tidy()
       .unwrap_or_else(|_: io::Error| () /* Fuse will replicate this */);
   }
 }
@@ -251,6 +270,27 @@ fn write_test(){
   {
     let mut frame = wr.new_frame().unwrap();
     frame.write(b"hi").unwrap();
+    frame.finish().unwrap();
   }
-  dbg!(buf);
+  {
+    let mut frame = wr.new_frame().unwrap();
+    frame.write(b"boom").unwrap();
+  }
+  dbg!(&buf);
+  let mut rd = FrameReader::new(&*buf);
+  let mut buf = [0u8;10];
+  {
+    let mut frame = rd.new_frame().unwrap();
+    let y = frame.read(&mut buf).unwrap();
+    dbg!(&buf[0..y]);
+  }
+  {
+    let mut frame = rd.new_frame().unwrap();
+    let y = frame.read(&mut buf).unwrap();
+    dbg!(&buf[0..y]);
+    let r = frame.read(&mut buf).unwrap_err();
+    dbg!(&r);
+    assert_eq!(r.kind(), ErrorKind::Other);
+    assert!(r.into_inner().unwrap().is::<SenderError>());
+  }
 }
