@@ -24,6 +24,7 @@ Setup
                       pkg-config libssl-dev             \
                       node-typescript inkscape bubblewrap \
                       netpbm imagemagick libtoml-parser-perl \
+                      potrace                                \
                       python3-sphinx python3-recommonmark
 
 
