@@ -28,7 +28,7 @@ Setup
 
 And for running the tests (``make check``) you will need::
 
-     sudo apt install bubblewrap xvfb moreutils
+     sudo apt install bubblewrap xvfb moreutils firefox-esr
 
 
 2. Install Rust.  This is most easily done with rustup_::
