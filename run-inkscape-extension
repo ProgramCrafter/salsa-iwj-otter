@@ -14,7 +14,7 @@
 # I don't think it is going to be possible to sanely find out what
 # python version is actually expected.  But I think a *reasonable*
 # demand on the environment is that either:
-#   - These if these scripts are executable, they can be executed
+#   - If these scripts are executable, they can be executed
 #   - Otherwise, they are not using ancient and obsolete python
 
 $(
