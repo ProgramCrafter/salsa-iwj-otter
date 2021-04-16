@@ -265,8 +265,8 @@ impl<'w,W:Write> Write for WriteFrame<'w,W> {
 
 #[test]
 fn write_test(){
-  let mut buf = vec![];
-  let mut wr = FrameWriter::new(&mut buf);
+  let mut msg = vec![];
+  let mut wr = FrameWriter::new(&mut msg);
   {
     let mut frame = wr.new_frame().unwrap();
     frame.write(b"hi").unwrap();
@@ -276,21 +276,22 @@ fn write_test(){
     let mut frame = wr.new_frame().unwrap();
     frame.write(b"boom").unwrap();
   }
-  dbg!(&buf);
-  let mut rd = FrameReader::new(&*buf);
+  dbgc!(&msg);
+  let mut rd = FrameReader::new(&*msg);
   let mut buf = [0u8;10];
   {
     let mut frame = rd.new_frame().unwrap();
     let y = frame.read(&mut buf).unwrap();
-    dbg!(&buf[0..y]);
+    dbgc!(&buf[0..y]);
   }
   {
     let mut frame = rd.new_frame().unwrap();
     let y = frame.read(&mut buf).unwrap();
-    dbg!(&buf[0..y]);
+    dbgc!(&buf[0..y]);
     let r = frame.read(&mut buf).unwrap_err();
-    dbg!(&r);
+    dbgc!(&r);
     assert_eq!(r.kind(), ErrorKind::Other);
     assert!(r.into_inner().unwrap().is::<SenderError>());
   }
+  dbgc!(&buf);
 }
