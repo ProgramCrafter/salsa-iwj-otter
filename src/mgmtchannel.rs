@@ -13,6 +13,8 @@ pub enum MgmtChannelReadError {
 }
 display_as_debug!{MgmtChannelReadError}
 
+pub type MgmtChannelWriteError = rmp_serde::encode::Error;
+
 pub struct MgmtChannel {
   read: io::Lines<BufReader<Box<dyn Read>>>,
   write: BufWriter<Box<dyn Write>>,

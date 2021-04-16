@@ -22,7 +22,7 @@ const CHUNK_DEF: u16 = 8192;
 type BO = BigEndian;
 
 #[derive(Debug)]
-struct Fuse<RW>(Result<RW, Broken>);
+pub struct Fuse<RW>(Result<RW, Broken>);
 
 #[derive(Debug)]
 pub struct FrameReader<R: BufRead> {
@@ -62,12 +62,12 @@ pub struct Broken {
 
 impl<RW> Fuse<RW> {
   #[throws(io::Error)]
-  fn get(&mut self) -> &mut RW {
+  pub fn get(&mut self) -> &mut RW {
     self.0.as_mut().map_err(|broken| broken.clone())?
   }
 
   #[throws(io::Error)]
-  fn with<F,T>(&mut self, f: F) -> T
+  pub fn with<F,T>(&mut self, f: F) -> T
     where F: FnOnce(&mut RW) -> Result<T, io::Error>
   {
     let inner = self.get()?;
@@ -202,6 +202,14 @@ impl<W:Write> FrameWriter<W> {
   pub fn flush(&mut self) {
     self.tidy()?;
     self.inner.flush()?;
+  }
+
+  #[throws(MgmtChannelWriteError)]
+  pub fn write_rmp<T:Serialize>(&mut self, t: &T) {
+    let mut frame = self.new_frame()
+      .map_err(|e| rmp_serde::encode::Error::InvalidValueWrite(
+        rmp::encode::ValueWriteError::InvalidMarkerWrite(e)))?;
+    rmp_serde::encode::write_named(&mut frame, t)?
   }
 
   #[throws(io::Error)]
