@@ -26,7 +26,7 @@ Setup
                       potrace                                  \
                       python3-sphinx python3-recommonmark
 
-And for running the tests (``make check``) you will need::
+   And for running the tests (``make check``) you will need::
 
      sudo apt install bubblewrap xvfb moreutils firefox-esr
 
