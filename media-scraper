@@ -265,7 +265,8 @@ END
 	my $cfp;
 	my $emitmap = sub {
 	  my ($from, $to) = @_;
-	  confess if $from =~ m/\W/ || $to =~ m/\W/;
+	  confess if $from =~ m/.\W|[^\w#]/
+	          || $to   =~ m/.\W|[^\w#]/;
 
 	  $coloured = $ncoloured;
 	  if (!defined $cfp) {
