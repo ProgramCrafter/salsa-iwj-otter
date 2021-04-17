@@ -157,7 +157,7 @@ impl<R:Read> FrameReader<R> {
     let r = self.inner.read(&mut buf[0..n])?;
     //dbgc!(&r);
     assert!(r <= n);
-    *remaining -= n;
+    *remaining -= r;
     Ok(Ok(r))
   }
 
