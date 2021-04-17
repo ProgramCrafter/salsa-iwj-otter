@@ -348,6 +348,7 @@ fn write_test(){
     let mut frame = rd.new_frame().unwrap();
     frame.read_to_end(&mut buf).unwrap();
     assert_eq!(&*buf ,expected);
+    dbgc!(str::from_utf8(&buf).unwrap());
   }
 
   let mut rd = FrameReader::new(&*msg.buf);
