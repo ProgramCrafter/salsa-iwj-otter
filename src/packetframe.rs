@@ -154,6 +154,8 @@ impl ReaderState {
   }
 }
 
+fn badeof() -> ReadError { RE::IO(io::ErrorKind::UnexpectedEof.into()) }
+
 impl<R:Read> FrameReader<R> {
   pub fn new(r: R) -> FrameReader<R> where R:BufRead {
     Self::new_unbuf(r)
@@ -179,7 +181,6 @@ impl<R:Read> FrameReader<R> {
 
   #[throws(ReadError)]
   fn do_read(&mut self, buf: &mut [u8]) -> usize {
-    let badeof = || RE::IO(io::ErrorKind::UnexpectedEof.into());
     assert_ne!(buf.len(), 0);
     let remaining = match self.state {
       Idle => panic!(),
