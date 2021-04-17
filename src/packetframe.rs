@@ -142,7 +142,19 @@ impl<R:Read> FrameReader<R> {
     assert_ne!(buf.len(), 0);
     let remaining = self.in_frame.as_mut().unwrap();
     if *remaining == 0 {
-      *remaining = match match self.inner.read_u16::<BO>()? {
+      *remaining = match match {
+        let mut lbuf = [0u8;2];
+        let mut q = &mut lbuf[..];
+        match io::copy(
+          &mut (&mut self.inner).take(2),
+          &mut q,
+        )? {
+          0 => return Ok(Ok(0)),
+          1 => return Err(io::ErrorKind::UnexpectedEof.into()),
+          2 => (&lbuf[..]).read_u16::<BO>().unwrap(),
+          _ => panic!(),
+        }
+      } {
         0         => Left(Ok(0)),
         CHUNK_ERR => Left(Err(SenderError)),
         x         => Right(x as usize),
