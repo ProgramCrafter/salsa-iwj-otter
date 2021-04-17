@@ -406,6 +406,12 @@ fn write_test(){
     assert!(r.into_inner().unwrap().is::<SenderError>());
     assert_eq!(before, b"boom");
   }
+  fn expect_bad_eof<R:Read>(frame: &mut ReadFrame<R>) {
+    let mut buf = [0u8;10];
+    let r = frame.read(&mut buf).unwrap_err();
+    assert_eq!(r.kind(), ErrorKind::UnexpectedEof);
+    r.into_inner().map(|i| panic!("unexpected {:?}", &i));
+  }
 
   // a very simple test as far as the first boom
   let mut rd = FrameReader::new(&*msg.buf);
@@ -482,9 +488,7 @@ fn write_test(){
   {
     let mut rd = FrameReader::new(&[0x55][..]);
     let mut frame = rd.new_frame().unwrap();
-    let r = frame.read(&mut buf).unwrap_err();
-    assert_eq!(r.kind(), ErrorKind::UnexpectedEof);
-    r.into_inner().map(|i| panic!("unexpected {:?}", &i));
+    expect_bad_eof(&mut frame);
   }
 
   // Unexpected EOF mid-data
@@ -493,9 +497,7 @@ fn write_test(){
     let mut frame = rd.new_frame().unwrap();
     let y = frame.read(&mut buf).unwrap();
     assert_eq!(y, 1);
-    let r = frame.read(&mut buf).unwrap_err();
-    assert_eq!(r.kind(), ErrorKind::UnexpectedEof);
-    r.into_inner().map(|i| panic!("unexpected {:?}", &i));
+    expect_bad_eof(&mut frame);
   }
 
   // Unexpected EOF after nonempty chunk
@@ -504,8 +506,6 @@ fn write_test(){
     let mut frame = rd.new_frame().unwrap();
     let y = frame.read(&mut buf).unwrap();
     assert_eq!(&buf[0..y], b"hello");
-    let r = frame.read(&mut buf).unwrap_err();
-    assert_eq!(r.kind(), ErrorKind::UnexpectedEof);
-    r.into_inner().map(|i| panic!("unexpected {:?}", &i));
+    expect_bad_eof(&mut frame);
   }
 }
