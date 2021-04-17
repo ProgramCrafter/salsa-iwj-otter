@@ -377,4 +377,32 @@ fn write_test(){
     expect_good(&mut rd, b"longer!");
   };
   read_all(&mut &*msg.buf);
+
+  #[derive(Debug)]
+  struct LumpReader<R: Read> {
+    inner: R,
+    inlump: usize,
+    lumpsize: usize,
+  }
+  impl<R:Read> LumpReader<R> {
+    fn new(lumpsize: usize, inner: R) -> Self {
+      LumpReader { inner, lumpsize, inlump: 0 }
+    }
+  }
+  impl<R:Read> Read for LumpReader<R> {
+    #[throws(io::Error)]
+    fn read(&mut self, buf: &mut [u8]) -> usize {
+      if self.inlump == 0 { self.inlump = self.lumpsize }
+      let want = min(self.inlump, buf.len());
+      let r = self.inner.read(&mut buf[0..want])?;
+      self.inlump -= r;
+      r
+    }
+  }
+
+  for lumpsize in 1..msg.buf.len() {
+    dbgc!(lumpsize);
+    let mut lr = LumpReader::new(lumpsize, &*msg.buf);
+    read_all(&mut lr);
+  }
 }
