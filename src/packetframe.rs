@@ -356,7 +356,7 @@ fn write_test(){
   {
     let mut frame = rd.new_frame().unwrap();
     let y = frame.read(&mut buf).unwrap();
-    dbgc!(&buf[0..y]);
+    dbgc!(str::from_utf8(&buf[0..y]).unwrap());
   }
   expect_boom(&mut rd);
 
