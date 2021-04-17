@@ -330,13 +330,6 @@ fn write_test(){
   })().unwrap();
   dbgc!(&msg);
 
-  let mut rd = FrameReader::new(&*msg.buf);
-  let mut buf = [0u8;10];
-  {
-    let mut frame = rd.new_frame().unwrap();
-    let y = frame.read(&mut buf).unwrap();
-    dbgc!(&buf[0..y]);
-  }
   let expect_boom = |rd: &mut FrameReader<_>| {
     let mut buf = [0u8;10];
     let mut frame = rd.new_frame().unwrap();
@@ -347,6 +340,14 @@ fn write_test(){
     assert_eq!(r.kind(), ErrorKind::Other);
     assert!(r.into_inner().unwrap().is::<SenderError>());
   };
+
+  let mut rd = FrameReader::new(&*msg.buf);
+  let mut buf = [0u8;10];
+  {
+    let mut frame = rd.new_frame().unwrap();
+    let y = frame.read(&mut buf).unwrap();
+    dbgc!(&buf[0..y]);
+  }
   expect_boom(&mut rd);
 
   let mut rd = FrameReader::new(&*msg.buf);
