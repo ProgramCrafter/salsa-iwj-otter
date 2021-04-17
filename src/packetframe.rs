@@ -60,6 +60,7 @@ use ReaderState::*;
 
 #[derive(Debug,Error)]
 enum ReadError {
+  GoodEof,
   IO(#[from] io::Error),
   SE(#[from] SenderError),
 }
@@ -171,6 +172,7 @@ impl<R:Read> FrameReader<R> {
       while ! self.state.idle() {
         match self.do_read(&mut buf) {
           Ok(_) | Err(RE::SE(_)) => {},
+          Err(RE::GoodEof) => break,
           Err(RE::IO(ioe)) => throw!(ioe),
         }
       }
@@ -193,7 +195,7 @@ impl<R:Read> FrameReader<R> {
             &mut q,
           )? {
             // length of chunk header
-            0 => { match self.state { FrameStart => return 0,
+            0 => { match self.state { FrameStart => throw!(RE::GoodEof),
                                       InFrame(0) => throw!(badeof()),
                                       _ => panic!(), } },
             1 => throw!(badeof()),
@@ -246,7 +248,7 @@ impl<'r, R:Read> Read for ReadFrame<'r, R> {
     };
     //dbgc!(fr.in_frame);
     match fr.do_read(buf) {
-      Ok(0) => { self.fr = Err(None); 0 },
+      Ok(0) | Err(RE::GoodEof) => { self.fr = Err(None); 0 },
       Ok(x) => x,
       Err(RE::IO(ioe)) => throw!(ioe),
       Err(RE::SE(e@ SenderError)) => { self.fr = Err(Some(e)); throw!(e) },
