@@ -271,8 +271,44 @@ impl<'w,W:Write> Write for WriteFrame<'w,W> {
 
 #[test]
 fn write_test(){
-  let mut msg = vec![];
-  let mut wr = FrameWriter::new(&mut msg);
+  #[derive(Clone,Default)]
+  struct Framed {
+    buf: Vec<u8>,
+  }
+  deref_to_field_mut!{ Framed, Vec<u8>, buf }
+  impl Debug for Framed {
+    #[throws(fmt::Error)]
+    fn fmt(&self, f: &mut fmt::Formatter) {
+      let mut delim = iter::once("[").chain(iter::repeat(" "));
+      let mut p = self.buf.as_slice();
+      macro_rules! byte { () => {
+        let b = p.read_u8().unwrap();
+        write!(f, "{:02x}", b)?;
+      } }
+      while p.len() > 0 {
+        write!(f, "{}", delim.next().unwrap())?;
+        if_let!{ Ok(l) = p.read_u16::<BO>(); else byte!(); continue; }
+        write!(f, "{:04x} ", l)?;
+        let l = l.into();
+        if_chain! {
+          if l <= p.len();
+          let s = &p[0..l];
+          if let Ok(s) = str::from_utf8(s);
+          then {
+            p = &p[l..];
+            write!(f, "{:?}", s)?;
+          }
+          else {
+            for _ in 0..min(l, p.len()) { byte!(); }
+          }
+        }
+      }
+      write!(f, "]")?;
+    }
+  }
+
+  let mut msg = Framed::default();
+  let mut wr = FrameWriter::new(&mut msg.buf);
   {
     let mut frame = wr.new_frame().unwrap();
     frame.write(b"hello").unwrap();
@@ -284,7 +320,7 @@ fn write_test(){
   }
   dbgc!(&msg);
 
-  let mut rd = FrameReader::new(&*msg);
+  let mut rd = FrameReader::new(&*msg.buf);
   let mut buf = [0u8;10];
   {
     let mut frame = rd.new_frame().unwrap();
@@ -303,7 +339,7 @@ fn write_test(){
   };
   expect_boom(&mut rd);
 
-  let mut rd = FrameReader::new(&*msg);
+  let mut rd = FrameReader::new(&*msg.buf);
   {
     let mut _frame = rd.new_frame().unwrap();
   }
