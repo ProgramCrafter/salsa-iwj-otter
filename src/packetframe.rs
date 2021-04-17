@@ -337,15 +337,17 @@ fn write_test(){
   fn expect_boom<R:Read>(rd: &mut FrameReader<R>) {
     let mut buf = [0u8;10];
     let mut frame = rd.new_frame().unwrap();
+    let mut before: Vec<u8> = vec![];
     let r = loop {
       match frame.read(&mut buf) {
-        Ok(y) => dbgc!(&buf[0..y]),
+        Ok(y) => before.extend(&buf[0..y]),
         Err(e) => break e,
       };
     };
     dbgc!(&r);
     assert_eq!(r.kind(), ErrorKind::Other);
     assert!(r.into_inner().unwrap().is::<SenderError>());
+    assert_eq!(before, b"boom");
   }
   fn expect_good<R:Read>(rd: &mut FrameReader<R>, expected: &[u8]) {
     let mut buf = vec![];
