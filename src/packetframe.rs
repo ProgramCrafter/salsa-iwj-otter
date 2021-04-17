@@ -85,17 +85,17 @@ impl<RW> Fuse<RW> {
 impl<R:Read> Read for Fuse<R> {
   #[throws(io::Error)]
   fn read(&mut self, buf: &mut [u8]) -> usize {
-    self.with(|inner| dbgc!(inner.read(buf)))?
+    self.with(|inner| inner.read(buf))?
   }
 }
 impl<W:Write> Write for Fuse<W> {
   #[throws(io::Error)]
   fn write(&mut self, buf: &[u8]) -> usize {
-    self.with(|inner| dbgc!(inner.write(buf)))?
+    self.with(|inner| inner.write(buf))?
   }
   #[throws(io::Error)]
   fn flush(&mut self) {
-    self.with(|inner| dbgc!(inner.flush()))?
+    self.with(|inner| inner.flush())?
   }
 }
 
