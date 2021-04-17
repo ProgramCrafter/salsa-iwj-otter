@@ -288,7 +288,9 @@ fn write_test(){
       while p.len() > 0 {
         write!(f, "{}", delim.next().unwrap())?;
         if_let!{ Ok(l) = p.read_u16::<BO>(); else byte!(); continue; }
-        write!(f, "{:04x} ", l)?;
+        write!(f, "{:04x}", l)?;
+        if l == 0 || l == CHUNK_ERR { continue }
+        write!(f, " ")?;
         let l = l.into();
         if_chain! {
           if l <= p.len();
