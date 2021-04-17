@@ -436,6 +436,10 @@ fn write_test(){
     let mut frame = wr.new_frame().unwrap();
     frame.write(b"boom").unwrap();
   }
+  {
+    let frame = wr.new_frame().unwrap();
+    frame.finish().unwrap();
+  }
   (||{
     msg.buf.write_u16::<BO>(3)?;
     msg.buf.write(b"lon")?;
@@ -537,6 +541,7 @@ fn write_test(){
 
       expect_good(&mut rd, b"hello");
       expect_boom(&mut rd);
+      expect_good(&mut rd, b"");
       expect_good(&mut rd, b"longer!");
       expect_good_eof(&mut rd);
     }
