@@ -55,6 +55,7 @@ enum ReaderState {
   Idle,
   FrameStart,
   InFrame(usize),
+  HadEof,
 }
 use ReaderState::*;
 
@@ -150,7 +151,7 @@ impl<W:Write> Write for Fuse<W> {
 impl ReaderState {
   fn idle(&self) -> bool {
     matches_doesnot!(self,
-                     = Idle,
+                     = Idle | HadEof,
                      ! FrameStart | InFrame(_))
   }
 }
@@ -166,7 +167,7 @@ impl<R:Read> FrameReader<R> {
   }
 
   #[throws(io::Error)]
-  pub fn new_frame<'r>(&'r mut self) -> ReadFrame<'r,R> {
+  pub fn new_frame<'r>(&'r mut self) -> Option<ReadFrame<'r,R>> {
     if ! self.state.idle() {
       let mut buf = vec![0u8; CHUNK_DEF.into()];
       while ! self.state.idle() {
@@ -178,7 +179,13 @@ impl<R:Read> FrameReader<R> {
       }
     }
     self.state = FrameStart;
-    ReadFrame { fr: Ok(self) }
+    match Self::chunk_remaining(&mut self.inner, &mut self.state) {
+      Ok(_) => {},
+      Err(RE::GoodEof) => { self.state = HadEof; return None },
+      Err(RE::IO(e)) => throw!(e),
+      Err(RE::SE(e)) => throw!(e),
+    }
+    Some(ReadFrame { fr: Ok(self) })
   }
 
   #[throws(ReadError)]
@@ -186,6 +193,7 @@ impl<R:Read> FrameReader<R> {
                          -> &'s mut usize {
     match *state {
       Idle => panic!(),
+      HadEof => throw!(RE::GoodEof),
       FrameStart | InFrame(0) => {
         *state = InFrame(match match {
           let mut lbuf = [0u8;2];
@@ -235,10 +243,12 @@ impl<R:Read> FrameReader<R> {
   }
 
   #[throws(MgmtChannelReadError)]
-  pub fn read_rmp<T:DeserializeOwned>(&mut self) -> T {
-    let mut frame = self.new_frame()?;
-    rmp_serde::decode::from_read(&mut frame)
-      .map_err(|e| MgmtChannelReadError::Parse(format!("{}", &e)))?
+  pub fn read_rmp<T:DeserializeOwned>(&mut self) -> Option<T> {
+    let frame = self.new_frame()?;
+    if_let!{ Some(mut frame) = frame; else return Ok(None); };
+    let v = rmp_serde::decode::from_read(&mut frame)
+      .map_err(|e| MgmtChannelReadError::Parse(format!("{}", &e)))?;
+    Some(v)
   }
 }
 
@@ -416,7 +426,7 @@ fn write_test(){
   // utility functions for helping with test reads
   fn expect_boom<R:Read>(rd: &mut FrameReader<R>) {
     let mut buf = [0u8;10];
-    let mut frame = rd.new_frame().unwrap();
+    let mut frame = rd.new_frame().unwrap().unwrap();
     let mut before: Vec<u8> = vec![];
     let r = loop {
       match frame.read(&mut buf) {
@@ -443,7 +453,7 @@ fn write_test(){
   let mut rd = FrameReader::new(&*msg.buf);
   let mut buf = [0u8;10];
   {
-    let mut frame = rd.new_frame().unwrap();
+    let mut frame = rd.new_frame().unwrap().unwrap();
     let y = frame.read(&mut buf).unwrap();
     dbgc!(str::from_utf8(&buf[0..y]).unwrap());
   }
@@ -459,16 +469,14 @@ fn write_test(){
   // utilitiesfor reading the whole input, collecting into vecs
   fn expect_good<R:Read>(rd: &mut FrameReader<R>, expected: &[u8]) {
     let mut buf = vec![];
-    let mut frame = rd.new_frame().unwrap();
+    let mut frame = rd.new_frame().unwrap().unwrap();
     frame.read_to_end(&mut buf).unwrap();
     assert_eq!(&*buf ,expected);
     dbgc!(str::from_utf8(&buf).unwrap());
   }
   fn expect_good_eof<R:Read>(rd: &mut FrameReader<R>) {
-    let mut buf = [0u8;10];
-    let mut frame = rd.new_frame().unwrap();
-    let r = frame.read(&mut buf).unwrap(); dbgc!(&r); assert_eq!(r, 0);
-    let r = frame.read(&mut buf).unwrap(); dbgc!(&r); assert_eq!(r, 0);
+    let frame = rd.new_frame().unwrap(); assert!(frame.is_none());
+    let frame = rd.new_frame().unwrap(); assert!(frame.is_none());
   }
   let read_all = |input: &mut dyn Read| {
     let mut rd = FrameReader::new_unbuf(input);
@@ -513,14 +521,14 @@ fn write_test(){
   // Unexpected EOF mid-chunk-header
   {
     let mut rd = FrameReader::new(&[0x55][..]);
-    let mut frame = rd.new_frame().unwrap();
-    expect_bad_eof(&mut frame);
+    let r = rd.new_frame().unwrap_err();
+    expect_is_bad_eof(r);
   }
 
   // Unexpected EOF mid-data
   {
     let mut rd = FrameReader::new(&msg.buf[0..3]);
-    let mut frame = rd.new_frame().unwrap();
+    let mut frame = rd.new_frame().unwrap().unwrap();
     let y = frame.read(&mut buf).unwrap();
     assert_eq!(y, 1);
     expect_bad_eof(&mut frame);
@@ -529,7 +537,7 @@ fn write_test(){
   // Unexpected EOF after nonempty chunk
   {
     let mut rd = FrameReader::new(&msg.buf[0..7]);
-    let mut frame = rd.new_frame().unwrap();
+    let mut frame = rd.new_frame().unwrap().unwrap();
     let y = frame.read(&mut buf).unwrap();
     assert_eq!(&buf[0..y], b"hello");
     expect_bad_eof(&mut frame);
