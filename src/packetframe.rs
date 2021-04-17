@@ -58,6 +58,14 @@ enum ReaderState {
 }
 use ReaderState::*;
 
+#[derive(Debug,Error)]
+enum ReadError {
+  IO(#[from] io::Error),
+  SE(#[from] SenderError),
+}
+display_as_debug!{ReadError}
+use ReadError as RE;
+
 // ---------- write ----------
 
 #[derive(Debug)]
@@ -159,17 +167,19 @@ impl<R:Read> FrameReader<R> {
     if ! self.state.idle() {
       let mut buf = vec![0u8; CHUNK_DEF.into()];
       while ! self.state.idle() {
-        let _: Result<_, SenderError> = self.do_read(&mut buf)?;
+        match self.do_read(&mut buf) {
+          Ok(_) | Err(RE::SE(_)) => {},
+          Err(RE::IO(ioe)) => throw!(ioe),
+        }
       }
     }
     self.state = FrameStart;
     ReadFrame { fr: Ok(self) }
   }
 
-  fn do_read(&mut self, buf: &mut [u8]) ->
-    Result<Result<usize, SenderError>, io::Error>
-  {
-    let badeof = || Err(io::ErrorKind::UnexpectedEof.into());
+  #[throws(ReadError)]
+  fn do_read(&mut self, buf: &mut [u8]) -> usize {
+    let badeof = || RE::IO(io::ErrorKind::UnexpectedEof.into());
     assert_ne!(buf.len(), 0);
     let remaining = match self.state {
       Idle => panic!(),
@@ -181,10 +191,10 @@ impl<R:Read> FrameReader<R> {
             &mut (&mut self.inner).take(2),
             &mut q,
           )? {
-            0 => { match self.state { FrameStart => return Ok(Ok(0)),
-                                      InFrame(0) => return badeof(),
+            0 => { match self.state { FrameStart => return 0,
+                                      InFrame(0) => throw!(badeof()),
                                       _ => panic!(), } },
-            1 => return badeof(),
+            1 => throw!(badeof()),
             2 => (&lbuf[..]).read_u16::<BO>().unwrap(),
             _ => panic!(),
           }
@@ -193,7 +203,7 @@ impl<R:Read> FrameReader<R> {
           CHUNK_ERR => Left(Err(SenderError)),
           x         => Right(x as usize),
         } {
-          Left(r) => { self.state = Idle; return Ok(r); }
+          Left(r) => { self.state = Idle; return r?; }
           Right(x) => x,
         });
         match self.state { InFrame(ref mut x) => x, _ => panic!() }
@@ -206,10 +216,10 @@ impl<R:Read> FrameReader<R> {
     let n = min(buf.len(), *remaining);
     let r = self.inner.read(&mut buf[0..n])?;
     assert!(r <= n);
-    if r == 0 { return badeof(); }
+    if r == 0 { throw!(badeof()); }
     *remaining -= r;
     //dbgc!(r, self.in_frame);
-    Ok(Ok(r))
+    r
   }
 
   #[throws(MgmtChannelReadError)]
@@ -231,10 +241,11 @@ impl<'r, R:Read> Read for ReadFrame<'r, R> {
       Err(Some(e@ SenderError)) => throw!(e),
     };
     //dbgc!(fr.in_frame);
-    match fr.do_read(buf)? {
+    match fr.do_read(buf) {
       Ok(0) => { self.fr = Err(None); 0 },
       Ok(x) => x,
-      Err(e@ SenderError) => { self.fr = Err(Some(e)); throw!(e) },
+      Err(RE::IO(ioe)) => throw!(ioe),
+      Err(RE::SE(e@ SenderError)) => { self.fr = Err(Some(e)); throw!(e) },
     }
   }
 }
