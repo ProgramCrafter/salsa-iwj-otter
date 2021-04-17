@@ -25,13 +25,13 @@ type BO = BigEndian;
 pub struct Fuse<RW>(Result<RW, Broken>);
 
 #[derive(Debug)]
-pub struct FrameReader<R: BufRead> {
+pub struct FrameReader<R: Read> {
   inner: Fuse<R>,
   in_frame: Option<usize>,
 }
 
 #[derive(Debug)]
-pub struct ReadFrame<'r,R:BufRead> {
+pub struct ReadFrame<'r,R:Read> {
   fr: Result<&'r mut FrameReader<R>, Option<SenderError>>,
 }
 
@@ -116,8 +116,11 @@ impl Display for Broken {
   }
 }
 
-impl<R:BufRead> FrameReader<R> {
-  pub fn new(r: R) -> FrameReader<R> {
+impl<R:Read> FrameReader<R> {
+  pub fn new(r: R) -> FrameReader<R> where R:BufRead {
+    Self::new_unbuf(r)
+  }
+  fn new_unbuf(r: R) -> FrameReader<R> {
     FrameReader { inner: Fuse(Ok(r)), in_frame: None }
   }
 
@@ -166,7 +169,7 @@ impl<R:BufRead> FrameReader<R> {
   }
 }
 
-impl<'r, R:BufRead> Read for ReadFrame<'r, R> {
+impl<'r, R:Read> Read for ReadFrame<'r, R> {
   #[throws(io::Error)]
   fn read(&mut self, buf: &mut [u8]) -> usize {
     if buf.len() == 0 { return 0 }
