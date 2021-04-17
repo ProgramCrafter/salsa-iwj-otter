@@ -503,7 +503,7 @@ fn write_test(){
     let mut rd = FrameReader::new(&msg.buf[0..7]);
     let mut frame = rd.new_frame().unwrap();
     let y = frame.read(&mut buf).unwrap();
-    assert_eq!(y, 5);
+    assert_eq!(&buf[0..y], b"hello");
     let r = frame.read(&mut buf).unwrap_err();
     assert_eq!(r.kind(), ErrorKind::UnexpectedEof);
     r.into_inner().map(|i| panic!("unexpected {:?}", &i));
