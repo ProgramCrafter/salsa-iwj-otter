@@ -427,4 +427,12 @@ fn write_test(){
     let mut lr = LumpReader::new(lumpsize, &*msg.buf);
     read_all(&mut lr);
   }
+
+  {
+    let mut rd = FrameReader::new(&[0x55][..]);
+    let mut frame = rd.new_frame().unwrap();
+    let r = frame.read(&mut buf).unwrap_err();
+    assert_eq!(r.kind(), ErrorKind::UnexpectedEof);
+    r.into_inner().map(|i| panic!("unexpected {:?}", &i));
+  }
 }
