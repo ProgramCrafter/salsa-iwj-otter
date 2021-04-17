@@ -151,11 +151,11 @@ impl<R:Read> FrameReader<R> {
         Right(x) => x,
       }
     }
-    dbgc!(buf.len(), &remaining);
+    //dbgc!(buf.len(), &remaining);
 
     let n = min(buf.len(), *remaining);
     let r = self.inner.read(&mut buf[0..n])?;
-    dbgc!(&r);
+    //dbgc!(&r);
     assert!(r <= n);
     *remaining -= n;
     Ok(Ok(r))
@@ -173,13 +173,13 @@ impl<'r, R:Read> Read for ReadFrame<'r, R> {
   #[throws(io::Error)]
   fn read(&mut self, buf: &mut [u8]) -> usize {
     if buf.len() == 0 { return 0 }
-    dbgc!(buf.len(), self.fr.as_ref().err());
+    //dbgc!(buf.len(), self.fr.as_ref().err());
     let fr = match self.fr {
       Ok(ref mut fr) => fr,
       Err(None) => return 0,
       Err(Some(e@ SenderError)) => throw!(e),
     };
-    match dbgc!(fr.do_read(buf))? {
+    match fr.do_read(buf)? {
       Ok(0) => { self.fr = Err(None); 0 },
       Ok(x) => x,
       Err(e@ SenderError) => { self.fr = Err(Some(e)); throw!(e) },
