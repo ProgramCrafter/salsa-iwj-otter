@@ -400,7 +400,7 @@ fn write_test(){
     }
   }
 
-  for lumpsize in 1..msg.buf.len() {
+  for lumpsize in 1..=msg.buf.len() {
     dbgc!(lumpsize);
     let mut lr = LumpReader::new(lumpsize, &*msg.buf);
     read_all(&mut lr);
