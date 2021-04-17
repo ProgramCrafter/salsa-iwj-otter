@@ -15,29 +15,29 @@
 
 use crate::prelude::*;
 
+// ---------- common ----------
+
 const CHUNK_MAX: u16 = 65534;
 const CHUNK_ERR: u16 = 65535;
 const CHUNK_DEF: u16 = 8192;
 
 type BO = BigEndian;
 
+#[derive(Debug,Copy,Clone,Error)]
+#[error("error occurred at peer, during construction of frame data")]
+pub struct SenderError;
+
 #[derive(Debug)]
 pub struct Fuse<RW>(Result<RW, Broken>);
 
-#[derive(Debug,Copy,Clone)]
-enum ReaderState {
-  Idle,
-  FrameStart,
-  InFrame(usize),
+/// An error saved by `Fuse` so it can be repeatedly returned.
+#[derive(Clone,Error,Debug)]
+pub struct Broken {
+  msg: String,
+  kind: io::ErrorKind,
 }
-use ReaderState::*;
-impl ReaderState {
-  fn idle(&self) -> bool {
-    matches_doesnot!(self,
-                     = Idle,
-                     ! FrameStart | InFrame(_))
-  }
-}
+
+// ---------- read ----------
 
 #[derive(Debug)]
 pub struct FrameReader<R: Read> {
@@ -50,6 +50,16 @@ pub struct ReadFrame<'r,R:Read> {
   fr: Result<&'r mut FrameReader<R>, Option<SenderError>>,
 }
 
+#[derive(Debug,Copy,Clone)]
+enum ReaderState {
+  Idle,
+  FrameStart,
+  InFrame(usize),
+}
+use ReaderState::*;
+
+// ---------- write ----------
+
 #[derive(Debug)]
 pub struct FrameWriter<W:Write> {
   inner: Fuse<W>,
@@ -60,19 +70,31 @@ pub struct FrameWriter<W:Write> {
 struct WriteFrameRaw<'w,W:Write> {
   fw: &'w mut FrameWriter<W>,
 }
+
 #[derive(Debug)]
 pub struct WriteFrame<'w,W:Write> {
   buf: BufWriter<WriteFrameRaw<'w,W>>,
 }
 
-#[derive(Debug,Copy,Clone,Error)]
-#[error("error occurred at peer, during construction of frame data")]
-pub struct SenderError;
+// ==================== implementation -====================
 
-#[derive(Clone,Error,Debug)]
-pub struct Broken {
-  msg: String,
-  kind: io::ErrorKind,
+impl From<SenderError> for io::Error {
+  fn from(se: SenderError) -> io::Error {
+    io::Error::new(io::ErrorKind::Other, se)
+  }
+}
+
+// ---------- fuse ----------
+
+impl Display for Broken {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    f.write_str(&self.msg)
+  }
+}
+impl From<Broken> for io::Error {
+  fn from(broken: Broken) -> io::Error {
+    io::Error::new(broken.kind, broken)
+  }
 }
 
 impl<RW> Fuse<RW> {
@@ -114,20 +136,13 @@ impl<W:Write> Write for Fuse<W> {
   }
 }
 
-impl From<Broken> for io::Error {
-  fn from(broken: Broken) -> io::Error {
-    io::Error::new(broken.kind, broken)
-  }
-}
-impl From<SenderError> for io::Error {
-  fn from(se: SenderError) -> io::Error {
-    io::Error::new(io::ErrorKind::Other, se)
-  }
-}
+// ---------- read ----------
 
-impl Display for Broken {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    f.write_str(&self.msg)
+impl ReaderState {
+  fn idle(&self) -> bool {
+    matches_doesnot!(self,
+                     = Idle,
+                     ! FrameStart | InFrame(_))
   }
 }
 
@@ -224,6 +239,8 @@ impl<'r, R:Read> Read for ReadFrame<'r, R> {
   }
 }
 
+// ---------- write ----------
+
 impl<W:Write> FrameWriter<W> {
   pub fn new(w: W) -> FrameWriter<W> {
     FrameWriter { inner: Fuse(Ok(w)), in_frame: None }
@@ -280,8 +297,6 @@ impl<'w,W:Write> WriteFrame<'w,W> {
   #[throws(io::Error)]
   pub fn finish(self) { self.finish_with(Ok(()))? }
 }
-impl<'w,W:Write> WriteFrameRaw<'w,W> {
-}
 impl<'w,W:Write> Drop for WriteFrameRaw<'w,W> {
   fn drop(&mut self) {
     self.fw.tidy()
@@ -309,8 +324,12 @@ impl<'w,W:Write> Write for WriteFrame<'w,W> {
   fn flush(&mut self) { self.buf.flush()? }
 }
 
+// ==================== tests ====================
+
 #[test]
 fn write_test(){
+
+  // pretty printing the test message buffer
   #[derive(Clone,Default)]
   struct Framed {
     buf: Vec<u8>,
@@ -349,6 +368,7 @@ fn write_test(){
     }
   }
 
+  // make the test message buffer
   let mut msg = Framed::default();
   let mut wr = FrameWriter::new(&mut msg.buf);
   {
@@ -370,6 +390,7 @@ fn write_test(){
   })().unwrap();
   dbgc!(&msg);
 
+  // utility functions for helping with test reads
   fn expect_boom<R:Read>(rd: &mut FrameReader<R>) {
     let mut buf = [0u8;10];
     let mut frame = rd.new_frame().unwrap();
@@ -385,6 +406,25 @@ fn write_test(){
     assert!(r.into_inner().unwrap().is::<SenderError>());
     assert_eq!(before, b"boom");
   }
+
+  // a very simple test as far as the first boom
+  let mut rd = FrameReader::new(&*msg.buf);
+  let mut buf = [0u8;10];
+  {
+    let mut frame = rd.new_frame().unwrap();
+    let y = frame.read(&mut buf).unwrap();
+    dbgc!(str::from_utf8(&buf[0..y]).unwrap());
+  }
+  expect_boom(&mut rd);
+
+  // check how dropping a reading frame works
+  let mut rd = FrameReader::new(&*msg.buf);
+  {
+    let mut _frame = rd.new_frame().unwrap();
+  }
+  expect_boom(&mut rd);
+
+  // utilitiesfor reading the whole input, collecting into vecs
   fn expect_good<R:Read>(rd: &mut FrameReader<R>, expected: &[u8]) {
     let mut buf = vec![];
     let mut frame = rd.new_frame().unwrap();
@@ -398,22 +438,6 @@ fn write_test(){
     let r = frame.read(&mut buf).unwrap(); dbgc!(&r); assert_eq!(r, 0);
     let r = frame.read(&mut buf).unwrap(); dbgc!(&r); assert_eq!(r, 0);
   }
-
-  let mut rd = FrameReader::new(&*msg.buf);
-  let mut buf = [0u8;10];
-  {
-    let mut frame = rd.new_frame().unwrap();
-    let y = frame.read(&mut buf).unwrap();
-    dbgc!(str::from_utf8(&buf[0..y]).unwrap());
-  }
-  expect_boom(&mut rd);
-
-  let mut rd = FrameReader::new(&*msg.buf);
-  {
-    let mut _frame = rd.new_frame().unwrap();
-  }
-  expect_boom(&mut rd);
-
   let read_all = |input: &mut dyn Read| {
     let mut rd = FrameReader::new_unbuf(input);
     expect_good(&mut rd, b"hello");
@@ -423,6 +447,8 @@ fn write_test(){
   };
   read_all(&mut &*msg.buf);
 
+  // try lumpy reads (ie, short reads) at every plausible boundary size
+  // this approach is not very principled but ought to test every boundary
   #[cfg(not(miri))]
   for lumpsize in 1..=msg.buf.len() {
     #[derive(Debug)]
@@ -452,6 +478,7 @@ fn write_test(){
     read_all(&mut lr);
   }
 
+  // Unexpected EOF mid-chunk-header
   {
     let mut rd = FrameReader::new(&[0x55][..]);
     let mut frame = rd.new_frame().unwrap();
@@ -460,6 +487,7 @@ fn write_test(){
     r.into_inner().map(|i| panic!("unexpected {:?}", &i));
   }
 
+  // Unexpected EOF mid-data
   {
     let mut rd = FrameReader::new(&msg.buf[0..3]);
     let mut frame = rd.new_frame().unwrap();
@@ -470,6 +498,7 @@ fn write_test(){
     r.into_inner().map(|i| panic!("unexpected {:?}", &i));
   }
 
+  // Unexpected EOF after nonempty chunk
   {
     let mut rd = FrameReader::new(&msg.buf[0..7]);
     let mut frame = rd.new_frame().unwrap();
