@@ -277,6 +277,7 @@ fn write_test(){
     frame.write(b"boom").unwrap();
   }
   dbgc!(&msg);
+
   let mut rd = FrameReader::new(&*msg);
   let mut buf = [0u8;10];
   {
@@ -293,5 +294,4 @@ fn write_test(){
     assert_eq!(r.kind(), ErrorKind::Other);
     assert!(r.into_inner().unwrap().is::<SenderError>());
   }
-  dbgc!(&buf);
 }
