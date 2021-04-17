@@ -340,6 +340,12 @@ fn write_test(){
     assert_eq!(r.kind(), ErrorKind::Other);
     assert!(r.into_inner().unwrap().is::<SenderError>());
   };
+  let expect_good = |rd: &mut FrameReader<_>, expected: &[u8]| {
+    let mut buf = vec![];
+    let mut frame = rd.new_frame().unwrap();
+    frame.read_to_end(&mut buf).unwrap();
+    assert_eq!(&*buf ,expected);
+  }; 
 
   let mut rd = FrameReader::new(&*msg.buf);
   let mut buf = [0u8;10];
@@ -355,4 +361,12 @@ fn write_test(){
     let mut _frame = rd.new_frame().unwrap();
   }
   expect_boom(&mut rd);
+
+  let read_all = || {
+    let mut rd = FrameReader::new(&*msg.buf);
+    expect_good(&mut rd, b"hello");
+    expect_boom(&mut rd);
+    expect_good(&mut rd, b"longer!");
+  };
+  read_all();
 }
