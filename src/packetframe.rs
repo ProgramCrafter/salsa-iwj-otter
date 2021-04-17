@@ -402,6 +402,7 @@ fn write_test(){
     }
   }
 
+  #[cfg(not(miri))]
   for lumpsize in 1..=msg.buf.len() {
     dbgc!(lumpsize);
     let mut lr = LumpReader::new(lumpsize, &*msg.buf);
