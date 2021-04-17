@@ -333,7 +333,7 @@ fn write_test(){
   })().unwrap();
   dbgc!(&msg);
 
-  let expect_boom = |rd: &mut FrameReader<_>| {
+  fn expect_boom<R:Read>(rd: &mut FrameReader<R>) {
     let mut buf = [0u8;10];
     let mut frame = rd.new_frame().unwrap();
     let y = frame.read(&mut buf).unwrap();
@@ -342,13 +342,13 @@ fn write_test(){
     dbgc!(&r);
     assert_eq!(r.kind(), ErrorKind::Other);
     assert!(r.into_inner().unwrap().is::<SenderError>());
-  };
-  let expect_good = |rd: &mut FrameReader<_>, expected: &[u8]| {
+  }
+  fn expect_good<R:Read>(rd: &mut FrameReader<R>, expected: &[u8]) {
     let mut buf = vec![];
     let mut frame = rd.new_frame().unwrap();
     frame.read_to_end(&mut buf).unwrap();
     assert_eq!(&*buf ,expected);
-  }; 
+  }
 
   let mut rd = FrameReader::new(&*msg.buf);
   let mut buf = [0u8;10];
@@ -365,11 +365,11 @@ fn write_test(){
   }
   expect_boom(&mut rd);
 
-  let read_all = || {
-    let mut rd = FrameReader::new(&*msg.buf);
+  let read_all = |input: &mut dyn Read| {
+    let mut rd = FrameReader::new_unbuf(input);
     expect_good(&mut rd, b"hello");
     expect_boom(&mut rd);
     expect_good(&mut rd, b"longer!");
   };
-  read_all();
+  read_all(&mut &*msg.buf);
 }
