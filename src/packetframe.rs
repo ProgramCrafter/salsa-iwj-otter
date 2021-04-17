@@ -204,12 +204,12 @@ impl<R:Read> FrameReader<R> {
           }
         } {
           // value in chunk header
-          0         => Left(Ok(0)),
-          CHUNK_ERR => Left(Err(SenderError)),
+          0         => Left(RE::GoodEof),
+          CHUNK_ERR => Left(RE::SE(SenderError)),
           x         => Right(x as usize),
         } {
           // Left( end of frame )  Right( nonempty chunk len )
-          Left(r) => { self.state = Idle; return r?; }
+          Left(e) => { self.state = Idle; throw!(e); }
           Right(x) => x,
         });
         match self.state { InFrame(ref mut x) => x, _ => panic!() }
