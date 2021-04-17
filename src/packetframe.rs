@@ -155,9 +155,9 @@ impl<R:Read> FrameReader<R> {
 
     let n = min(buf.len(), *remaining);
     let r = self.inner.read(&mut buf[0..n])?;
-    //dbgc!(&r);
     assert!(r <= n);
     *remaining -= r;
+    //dbgc!(r, self.in_frame);
     Ok(Ok(r))
   }
 
@@ -179,6 +179,7 @@ impl<'r, R:Read> Read for ReadFrame<'r, R> {
       Err(None) => return 0,
       Err(Some(e@ SenderError)) => throw!(e),
     };
+    //dbgc!(fr.in_frame);
     match fr.do_read(buf)? {
       Ok(0) => { self.fr = Err(None); 0 },
       Ok(x) => x,
