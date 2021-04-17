@@ -192,6 +192,7 @@ impl<R:Read> FrameReader<R> {
             &mut (&mut self.inner).take(2),
             &mut q,
           )? {
+            // length of chunk header
             0 => { match self.state { FrameStart => return 0,
                                       InFrame(0) => throw!(badeof()),
                                       _ => panic!(), } },
@@ -200,10 +201,12 @@ impl<R:Read> FrameReader<R> {
             _ => panic!(),
           }
         } {
+          // value in chunk header
           0         => Left(Ok(0)),
           CHUNK_ERR => Left(Err(SenderError)),
           x         => Right(x as usize),
         } {
+          // Left( end of frame )  Right( nonempty chunk len )
           Left(r) => { self.state = Idle; return r?; }
           Right(x) => x,
         });
