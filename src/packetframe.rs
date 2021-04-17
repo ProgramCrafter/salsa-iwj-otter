@@ -437,4 +437,14 @@ fn write_test(){
     assert_eq!(r.kind(), ErrorKind::UnexpectedEof);
     r.into_inner().map(|i| panic!("unexpected {:?}", &i));
   }
+
+  {
+    let mut rd = FrameReader::new(&msg.buf[0..3]);
+    let mut frame = rd.new_frame().unwrap();
+    let y = frame.read(&mut buf).unwrap();
+    assert_eq!(y, 1);
+    let r = frame.read(&mut buf).unwrap_err();
+    assert_eq!(r.kind(), ErrorKind::UnexpectedEof);
+    r.into_inner().map(|i| panic!("unexpected {:?}", &i));
+  }
 }
