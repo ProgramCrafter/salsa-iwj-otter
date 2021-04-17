@@ -432,7 +432,7 @@ fn write_test(){
     assert_eq!(&*buf ,expected);
     dbgc!(str::from_utf8(&buf).unwrap());
   }
-  fn expect_eof<R:Read>(rd: &mut FrameReader<R>) {
+  fn expect_good_eof<R:Read>(rd: &mut FrameReader<R>) {
     let mut buf = [0u8;10];
     let mut frame = rd.new_frame().unwrap();
     let r = frame.read(&mut buf).unwrap(); dbgc!(&r); assert_eq!(r, 0);
@@ -443,7 +443,7 @@ fn write_test(){
     expect_good(&mut rd, b"hello");
     expect_boom(&mut rd);
     expect_good(&mut rd, b"longer!");
-    expect_eof(&mut rd);
+    expect_good_eof(&mut rd);
   };
   read_all(&mut &*msg.buf);
 
