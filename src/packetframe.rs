@@ -139,6 +139,7 @@ impl<R:Read> FrameReader<R> {
   fn do_read(&mut self, buf: &mut [u8]) ->
     Result<Result<usize, SenderError>, io::Error>
   {
+    let badeof = || Err(io::ErrorKind::UnexpectedEof.into());
     assert_ne!(buf.len(), 0);
     let remaining = self.in_frame.as_mut().unwrap();
     if *remaining == 0 {
@@ -150,7 +151,7 @@ impl<R:Read> FrameReader<R> {
           &mut q,
         )? {
           0 => return Ok(Ok(0)),
-          1 => return Err(io::ErrorKind::UnexpectedEof.into()),
+          1 => return badeof(),
           2 => (&lbuf[..]).read_u16::<BO>().unwrap(),
           _ => panic!(),
         }
@@ -168,6 +169,7 @@ impl<R:Read> FrameReader<R> {
     let n = min(buf.len(), *remaining);
     let r = self.inner.read(&mut buf[0..n])?;
     assert!(r <= n);
+    if r == 0 { return badeof(); }
     *remaining -= r;
     //dbgc!(r, self.in_frame);
     Ok(Ok(r))
