@@ -320,6 +320,14 @@ fn write_test(){
     let mut frame = wr.new_frame().unwrap();
     frame.write(b"boom").unwrap();
   }
+  (||{
+    msg.buf.write_u16::<BO>(3)?;
+    msg.buf.write(b"lon")?;
+    msg.buf.write_u16::<BO>(4)?;
+    msg.buf.write(b"ger!")?;
+    msg.buf.write_u16::<BO>(0)?;
+    Ok::<_,AE>(())
+  })().unwrap();
   dbgc!(&msg);
 
   let mut rd = FrameReader::new(&*msg.buf);
