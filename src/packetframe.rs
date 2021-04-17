@@ -24,10 +24,25 @@ type BO = BigEndian;
 #[derive(Debug)]
 pub struct Fuse<RW>(Result<RW, Broken>);
 
+#[derive(Debug,Copy,Clone)]
+enum ReaderState {
+  Idle,
+  FrameStart,
+  InFrame(usize),
+}
+use ReaderState::*;
+impl ReaderState {
+  fn idle(&self) -> bool {
+    matches_doesnot!(self,
+                     = Idle,
+                     ! FrameStart | InFrame(_))
+  }
+}
+
 #[derive(Debug)]
 pub struct FrameReader<R: Read> {
   inner: Fuse<R>,
-  in_frame: Option<usize>,
+  state: ReaderState,
 }
 
 #[derive(Debug)]
@@ -121,18 +136,18 @@ impl<R:Read> FrameReader<R> {
     Self::new_unbuf(r)
   }
   fn new_unbuf(r: R) -> FrameReader<R> {
-    FrameReader { inner: Fuse(Ok(r)), in_frame: None }
+    FrameReader { inner: Fuse(Ok(r)), state: Idle }
   }
 
   #[throws(io::Error)]
   pub fn new_frame<'r>(&'r mut self) -> ReadFrame<'r,R> {
-    if self.in_frame.is_some() {
+    if ! self.state.idle() {
       let mut buf = vec![0u8; CHUNK_DEF.into()];
-      while self.in_frame.is_some() {
+      while ! self.state.idle() {
         let _: Result<_, SenderError> = self.do_read(&mut buf)?;
       }
     }
-    self.in_frame = Some(0);
+    self.state = FrameStart;
     ReadFrame { fr: Ok(self) }
   }
 
@@ -141,29 +156,36 @@ impl<R:Read> FrameReader<R> {
   {
     let badeof = || Err(io::ErrorKind::UnexpectedEof.into());
     assert_ne!(buf.len(), 0);
-    let remaining = self.in_frame.as_mut().unwrap();
-    if *remaining == 0 {
-      *remaining = match match {
-        let mut lbuf = [0u8;2];
-        let mut q = &mut lbuf[..];
-        match io::copy(
-          &mut (&mut self.inner).take(2),
-          &mut q,
-        )? {
-          0 => return Ok(Ok(0)),
-          1 => return badeof(),
-          2 => (&lbuf[..]).read_u16::<BO>().unwrap(),
-          _ => panic!(),
-        }
-      } {
-        0         => Left(Ok(0)),
-        CHUNK_ERR => Left(Err(SenderError)),
-        x         => Right(x as usize),
-      } {
-        Left(r) => { self.in_frame = None; return Ok(r); }
-        Right(x) => x,
-      }
-    }
+    let remaining = match self.state {
+      Idle => panic!(),
+      FrameStart | InFrame(0) => {
+        self.state = InFrame(match match {
+          let mut lbuf = [0u8;2];
+          let mut q = &mut lbuf[..];
+          match io::copy(
+            &mut (&mut self.inner).take(2),
+            &mut q,
+          )? {
+            0 => { match self.state { FrameStart => return Ok(Ok(0)),
+                                      InFrame(0) => return badeof(),
+                                      _ => panic!(), } },
+            1 => return badeof(),
+            2 => (&lbuf[..]).read_u16::<BO>().unwrap(),
+            _ => panic!(),
+          }
+        } {
+          0         => Left(Ok(0)),
+          CHUNK_ERR => Left(Err(SenderError)),
+          x         => Right(x as usize),
+        } {
+          Left(r) => { self.state = Idle; return Ok(r); }
+          Right(x) => x,
+        });
+        match self.state { InFrame(ref mut x) => x, _ => panic!() }
+      },
+      InFrame(ref mut remaining) => remaining,
+    };
+
     //dbgc!(buf.len(), &remaining);
 
     let n = min(buf.len(), *remaining);
