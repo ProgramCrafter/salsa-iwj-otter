@@ -336,9 +336,12 @@ fn write_test(){
   fn expect_boom<R:Read>(rd: &mut FrameReader<R>) {
     let mut buf = [0u8;10];
     let mut frame = rd.new_frame().unwrap();
-    let y = frame.read(&mut buf).unwrap();
-    dbgc!(&buf[0..y]);
-    let r = frame.read(&mut buf).unwrap_err();
+    let r = loop {
+      match frame.read(&mut buf) {
+        Ok(y) => dbgc!(&buf[0..y]),
+        Err(e) => break e,
+      };
+    };
     dbgc!(&r);
     assert_eq!(r.kind(), ErrorKind::Other);
     assert!(r.into_inner().unwrap().is::<SenderError>());
