@@ -429,11 +429,14 @@ fn write_test(){
     assert!(r.into_inner().unwrap().is::<SenderError>());
     assert_eq!(before, b"boom");
   }
+  fn expect_is_bad_eof(ioe: io::Error) {
+    assert_eq!(ioe.kind(), ErrorKind::UnexpectedEof);
+    ioe.into_inner().map(|i| panic!("unexpected {:?}", &i));
+  }
   fn expect_bad_eof<R:Read>(frame: &mut ReadFrame<R>) {
     let mut buf = [0u8;10];
     let r = frame.read(&mut buf).unwrap_err();
-    assert_eq!(r.kind(), ErrorKind::UnexpectedEof);
-    r.into_inner().map(|i| panic!("unexpected {:?}", &i));
+    expect_is_bad_eof(r);
   }
 
   // a very simple test as far as the first boom
