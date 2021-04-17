@@ -182,22 +182,22 @@ impl<R:Read> FrameReader<R> {
   }
 
   #[throws(ReadError)]
-  fn do_read(&mut self, buf: &mut [u8]) -> usize {
-    assert_ne!(buf.len(), 0);
-    let remaining = match self.state {
+  fn chunk_remaining<'s>(inner: &mut Fuse<R>, state: &'s mut ReaderState)
+                         -> &'s mut usize {
+    match *state {
       Idle => panic!(),
       FrameStart | InFrame(0) => {
-        self.state = InFrame(match match {
+        *state = InFrame(match match {
           let mut lbuf = [0u8;2];
           let mut q = &mut lbuf[..];
           match io::copy(
-            &mut (&mut self.inner).take(2),
+            &mut inner.take(2),
             &mut q,
           )? {
             // length of chunk header
-            0 => { match self.state { FrameStart => throw!(RE::GoodEof),
-                                      InFrame(0) => throw!(badeof()),
-                                      _ => panic!(), } },
+            0 => { match state { FrameStart => throw!(RE::GoodEof),
+                                 InFrame(0) => throw!(badeof()),
+                                 _ => panic!(), } },
             1 => throw!(badeof()),
             2 => (&lbuf[..]).read_u16::<BO>().unwrap(),
             _ => panic!(),
@@ -209,13 +209,19 @@ impl<R:Read> FrameReader<R> {
           x         => Right(x as usize),
         } {
           // Left( end of frame )  Right( nonempty chunk len )
-          Left(e) => { self.state = Idle; throw!(e); }
+          Left(e) => { *state = Idle; throw!(e); }
           Right(x) => x,
         });
-        match self.state { InFrame(ref mut x) => x, _ => panic!() }
+        match *state { InFrame(ref mut x) => x, _ => panic!() }
       },
       InFrame(ref mut remaining) => remaining,
-    };
+    }
+  }
+
+  #[throws(ReadError)]
+  fn do_read(&mut self, buf: &mut [u8]) -> usize {
+    assert_ne!(buf.len(), 0);
+    let remaining = Self::chunk_remaining(&mut self.inner, &mut self.state)?;
 
     //dbgc!(buf.len(), &remaining);
 
