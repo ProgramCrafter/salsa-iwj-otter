@@ -69,4 +69,4 @@ perl -i~ -pe '
 git commit -s -m "Cargo.toml: Update all versions to $version
 
 Commit made automatically by update-versions.
-" $files
+" $files Cargo.lock
