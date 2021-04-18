@@ -1,0 +1,42 @@
+#!/bin/bash
+# usage:
+#    ./update-cargo-metadata
+# copies from toplevel Cargo.toml to others
+# the part copied is the paragraph which starts with version=
+
+set -e
+
+fail () { echo >&2 "${0##*/}: error: $*"; exit 12; }
+
+[ $# = 0 ] || fail "bad usage"
+
+files=$(git ls-files :\*/Cargo.toml :Cargo.toml)
+
+for f in $files; do
+    perl -i~ -pe '
+	BEGIN {
+            $/ = "\n\n";
+	    open I, "Cargo.toml" or die $!;
+	    our $re = qr{^version\s*\=};
+            our $std;
+	    while (<I>) {
+		next unless m{$re};
+		$std = $_;
+		last;
+	    }
+	    die "not found in ./Cargo.toml" unless defined $std;
+#	    $std =~ s{\s*$}{};
+	}
+
+	next unless m{$re};
+	next if $y++;
+#	s{\s*$}{};;
+#	$_ = $std.$&;
+	$_ = $std;
+	END {
+	    $y or die "not found in '$f'";
+	}
+    ' $f
+done
+
+echo "working tree file(s) maybe updated, check with git."
