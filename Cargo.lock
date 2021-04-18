@@ -2226,7 +2226,7 @@ dependencies = [
  "rmp-serde",
  "serde",
  "serde_with",
- "slotmap",
+ "slotmap-fork-otter",
  "structopt",
  "strum",
  "tempfile",
@@ -3481,9 +3481,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 
 [[package]]
-name = "slotmap"
+name = "slotmap-fork-otter"
 version = "1.0.2"
-source = "git+https://github.com/ijackson/slotmap?branch=entry-return-stale-key#508ddf21d9d28dfd122e7abe195e0d0d824aea33"
+source = "git+https://github.com/ijackson/slotmap?branch=slotmap-fork-otter#d107a9b6f23b10e447546c105e8d5b6026de3f29"
 dependencies = [
  "serde",
  "version_check 0.9.3",
