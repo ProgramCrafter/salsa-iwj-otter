@@ -489,12 +489,11 @@ fn write_test(){
     expect_good(&mut rd, b"longer!");
     expect_good_eof(&mut rd);
   };
-  read_all(&mut &*msg.buf);
 
   // try lumpy reads (ie, short reads) at every plausible boundary size
   // this approach is not very principled but ought to test every boundary
   #[cfg(not(miri))]
-  for lumpsize in 1..=msg.buf.len() {
+  for lumpsize in 1..=msg.buf.len()+1 {
     #[derive(Debug)]
     struct LumpReader<R: Read> {
       inner: R,
