@@ -4,12 +4,16 @@
 
 [package]
 name="otter-daemon"
-version="0.0.1"
+description="Otter game system; server executable crate."
 
-authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>",
-         "and the contributors to Otter"]
+version="0.3.0"
 license="AGPL-3.0-or-later"
 edition="2018"
+homepage="https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/"
+repository="https://salsa.debian.org/iwj/otter"
+keywords=["games"]
+authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>",
+         "and the contributors to Otter"]
 
 [[bin]]
 name="daemon-otter"
