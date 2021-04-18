@@ -38,3 +38,10 @@ git commit -s -m "Cargo.toml: Update all versions to $version
 
 Commit made automatically by update-versions.
 " $files
+
+cat <<END
+Cargo.toml versions updated but Cargo.lock will be out of date now!
+Suggest
+   cargo update -p <some package that has not changed>
+and commit the result.
+END
