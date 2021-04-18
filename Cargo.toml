@@ -77,6 +77,6 @@ index_vec    = { version="0.1.1", features=["serde"       ] }
 serde        = { version="1"    , features=["derive", "rc"] }
 strum        = { version="0.20" , features=["derive"      ] }
 
-slotmap = { git="https://github.com/ijackson/slotmap", branch="entry-return-stale-key", features=["serde"], }
+slotmap = { git="https://github.com/ijackson/slotmap", branch="entry-return-stale-key", features=["serde"] }
 
 #fin.
