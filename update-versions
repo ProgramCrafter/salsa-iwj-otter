@@ -25,27 +25,48 @@ if [ "x$dirty" != x ]; then
     fail 'some Cargo.toml[s] are dirty.'
 fi
 
+names=""
 for f in $files; do
-    perl -i~ -pe '
+    name=$(perl -i~ -pe '
+        BEGIN { open N, ">&STDOUT" or die $!; }
         if (m{^\[package\]\s*$}...m{^\[}) {
           $y=1 if s{^version=".*}{version="'$version'"};
+          print N "$1" if m{^name="(.*)"};
         }
 	if (m{^\[dependencies\]\s*$}...m{^\[}) {
             s{^(otter[-\w]*)\.path=.*}{$&\n$1.version="'$version'"};
             s{^(otter[-\w]*)\.version.*\n}{};
         }
-        END { $y or die "appropriate line not found in '$f'" }
-    ' "$f"
+        END {
+            $y or die "appropriate line not found in '$f'";
+            close N or die $!;
+        }
+    ' "$f")
+    case "$name" in
+    ''|*' '*) fail "bad name(s) for $f: $name" ;;
+    esac
+    names+="$name "
 done
+
+perl -i~ -pe '
+    BEGIN {
+        $/ = "\n\n";
+        foreach my $name (qw('"$names"')) { $done{$name} = 0; }
+    }
+    next unless m{^\[\[package\]\]};
+    next unless m{^name\s*=\s*"([-\w+]*)"\s*$}m;
+    my $name = $1;
+    next unless exists $done{$name};
+    $done{$name}++;
+    s{^(version\s*=\s*)"[^"]+"}{$1"'$version'"}m or die "$name no vsn ?";
+    END {
+        foreach my $name (sort keys %done) {
+            die "$name missing ?" unless $done{$name} == 1;
+        }
+    }
+' Cargo.lock
 
 git commit -s -m "Cargo.toml: Update all versions to $version
 
 Commit made automatically by update-versions.
 " $files
-
-nailing-cargo update -p otter-base
-
-cat <<END
-Cargo.toml versions updated and committed.
-Cargo.lock updates made but *not* committed.  They must be reviewed!
-END
