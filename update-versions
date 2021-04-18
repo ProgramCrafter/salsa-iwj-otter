@@ -30,6 +30,10 @@ for f in $files; do
         if (m{^\[package\]\s*$}...m{^\[}) {
           $y=1 if s{^version=".*}{version="'$version'"};
         }
+	if (m{^\[dependencies\]\s*$}...m{^\[}) {
+            s{^(otter[-\w]*)\.path=.*}{$&\n$1.version="'$version'"};
+            s{^(otter[-\w]*)\.version.*\n}{};
+        }
         END { $y or die "appropriate line not found in '$f'" }
     ' "$f"
 done
