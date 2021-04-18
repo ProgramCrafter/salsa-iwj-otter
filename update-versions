@@ -1,0 +1,39 @@
+#!/bin/bash
+# usage:
+#   ./update-versions [--all-meta] 0.5.0
+
+set -e
+
+fail () { echo >&2 "${0##*/}: error: $*"; exit 12; }
+
+case "$1" in
+-*)		fail "unknown option $1" ;;
+esac
+
+version="$1"
+case "$version" in
+'')         fail 'need new version number' ;;
+*[^0-9.]*)  fail 'version number contains bad character' ;;
+[^0-9]*)    fail 'version number starts with non-digit' ;;
+esac
+
+files=$(git ls-files :\*/Cargo.toml :Cargo.toml)
+dirty=$(git status -u --porcelain $files)
+
+if [ "x$dirty" != x ]; then
+    printf >&2 "%s\n" "$dirty"
+    fail 'some Cargo.toml[s] are dirty.'
+fi
+
+for f in $files; do
+    perl -i~ -pe '
+      next unless m{^\[package\]\s*$}...m{^\[};
+        $y=1 if s{^version=".*}{version="'$version'"};
+        END { $y or die "appropriate line not found in '$f'" }
+    ' "$f"
+done
+
+git commit -s -m "Cargo.toml: Update all versions to $version
+
+Commit made automatically by update-versions.
+" $files
