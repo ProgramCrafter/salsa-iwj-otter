@@ -17,9 +17,11 @@ use crate::prelude::*;
 
 // ---------- common ----------
 
-const CHUNK_MAX: u16 = 65534;
-const CHUNK_ERR: u16 = 65535;
-const CHUNK_DEF: u16 = 8192;
+type ChunkLen = u16;
+
+const CHUNK_MAX: ChunkLen = 65534;
+const CHUNK_ERR: ChunkLen = 65535;
+const CHUNK_DEF: ChunkLen = 8192;
 
 type BO = BigEndian;
 
