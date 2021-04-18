@@ -15,7 +15,7 @@ dryrun=x-dry-run-unset
 cargo_dryrun=--not-a-cargo-option-please-crash
 
 case "$#.$1" in
-2.--real)    dryrun=''    ; cargo_dryrun=''         ; ;;
+2.--real)    dryrun=x     ; cargo_dryrun=''         ; ;;
 2.--dry-run) dryrun=dryrun; cargo_dryrun='--dry-run'; ;;
 *)           fail "bad usage" ;;
 esac
@@ -25,6 +25,7 @@ keyid=0x559AE46C2D6B6D3265E7CBA1E3E3392348B50D39
 branch="$2"
 
 dryrun () { echo "WOULD  $*"; }
+x () { echo >&2 "+ $*"; "$@"; }
 
 trouble=false
 trouble () { echo >&2 "***TROUBLE***: $*"; trouble=true; }
