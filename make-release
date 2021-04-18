@@ -107,6 +107,9 @@ Successfully released to
   - all git branches
   - cargo publish
 
+Consider
+  - make deploy
+
 You need to write release announcements
   - sgo-software-announce
   - blog
