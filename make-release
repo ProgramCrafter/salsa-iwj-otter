@@ -100,6 +100,8 @@ done
 #---------- finish ----------
 
 $dryrun cat <<END
+
+
 Successfully released to
   - git tags
   - all git branches
@@ -108,4 +110,5 @@ Successfully released to
 You need to write release announcements
   - sgo-software-announce
   - blog
+
 END
