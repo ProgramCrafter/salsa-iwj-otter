@@ -78,6 +78,6 @@ index_vec    = { version="0.1.1", features=["serde"       ] }
 serde        = { version="1"    , features=["derive", "rc"] }
 strum        = { version="0.20" , features=["derive"      ] }
 
-slotmap = { package="slotmap-fork-otter", git="https://github.com/ijackson/slotmap", branch="slotmap-fork-otter", features=["serde"] }
+slotmap = { package="slotmap-fork-otter", version="1", git="https://github.com/ijackson/slotmap", branch="slotmap-fork-otter", features=["serde"] }
 
 #fin.
