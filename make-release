@@ -86,7 +86,7 @@ $dryrun git push origin $branch
 
 $dryrun make -j12 publish
 
-$dryrun git tag -s -u "$keyid" -m "Otter v$version"
+$dryrun git tag -s -u "$keyid" -m "Otter v$version" $tag
 $dryrun git push chiark $tag
 $dryrun git push origin $tag
 
