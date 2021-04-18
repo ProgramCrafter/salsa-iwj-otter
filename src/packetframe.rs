@@ -164,10 +164,10 @@ fn badeof() -> ReadError { RE::IO(io::ErrorKind::UnexpectedEof.into()) }
 
 impl<R:Read> FrameReader<R> {
   pub fn new(r: R) -> FrameReader<R> where R:BufRead {
-    Self::new_unbuf(r)
+    Self::new_raw(Fuse::new(r))
   }
-  fn new_unbuf(r: R) -> FrameReader<R> {
-    FrameReader { inner: Fuse::new(r), state: Idle }
+  fn new_raw(r: Fuse<R>) -> FrameReader<R> {
+    FrameReader { inner: r, state: Idle }
   }
 
   #[throws(io::Error)]
@@ -509,13 +509,18 @@ fn write_test(){
       }
     }
 
-    dbgc!(lumpsize);
-    let lr = LumpReader::new(lumpsize, &*msg.buf);
-    let mut rd = FrameReader::new_unbuf(lr);
-    expect_good(&mut rd, b"hello");
-    expect_boom(&mut rd);
-    expect_good(&mut rd, b"longer!");
-    expect_good_eof(&mut rd);
+    for bufsize in 1..=msg.buf.len()+1 {
+      dbgc!(lumpsize, bufsize);
+      let rd = LumpReader::new(lumpsize, &*msg.buf);
+      let rd = BufReader::with_capacity(bufsize, rd);
+      let rd = Fuse::new(rd);
+      let mut rd = FrameReader::new_raw(rd);
+
+      expect_good(&mut rd, b"hello");
+      expect_boom(&mut rd);
+      expect_good(&mut rd, b"longer!");
+      expect_good_eof(&mut rd);
+    }
   }
 
   // Unexpected EOF mid-chunk-header
