@@ -3,11 +3,13 @@
 # There is NO WARRANTY.
 
 [package]
-edition="2018"
-license="AGPL-3.0-or-later"
 name="otter"
 version="0.3.0"
-authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>"]
+
+authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>",
+         "and the contributors to Otter"]
+license="AGPL-3.0-or-later"
+edition="2018"
 
 [workspace]
 members=["wasm", "daemon", "wdriver", "apitest"]

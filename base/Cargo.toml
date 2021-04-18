@@ -1,15 +1,20 @@
+# Copyright 2020-2021 Ian Jackson and contributors to Otter
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# There is NO WARRANTY.
 
 [package]
 name = "otter-base"
-authors = ["Ian Jackson <ijackson@chiark.greenend.org.uk>"]
-license = "AGPL-3.0-or-later"
-
 version = "0.0.1"
+
+authors = ["Ian Jackson <ijackson@chiark.greenend.org.uk>",
+           "and the contributors to Otter"]
+license = "AGPL-3.0-or-later"
 edition = "2018"
 
 [lib]
 name = "otter_base"
 path = "lib.rs"
+
 
 [dependencies]
 
