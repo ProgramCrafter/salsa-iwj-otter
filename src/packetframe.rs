@@ -30,7 +30,7 @@ type BO = BigEndian;
 pub struct SenderError;
 
 #[derive(Debug)]
-pub struct Fuse<RW>(Result<RW, Broken>);
+pub struct Fuse<RW>{ inner: Result<RW, Broken> }
 
 /// An error saved by `Fuse` so it can be repeatedly returned.
 #[derive(Clone,Error,Debug)]
@@ -110,9 +110,11 @@ impl From<Broken> for io::Error {
 }
 
 impl<RW> Fuse<RW> {
+  pub fn new(rw: RW) -> Self { Fuse { inner: Ok(rw) } }
+
   #[throws(io::Error)]
   pub fn get(&mut self) -> &mut RW {
-    self.0.as_mut().map_err(|broken| broken.clone())?
+    self.inner.as_mut().map_err(|broken| broken.clone())?
   }
 
   #[throws(io::Error)]
@@ -122,7 +124,7 @@ impl<RW> Fuse<RW> {
     let inner = self.get()?;
     let r = f(inner);
     if let Err(e) = &r {
-      self.0 = Err(Broken {
+      self.inner = Err(Broken {
         msg: e.to_string(),
         kind: e.kind(),
       });
@@ -165,7 +167,7 @@ impl<R:Read> FrameReader<R> {
     Self::new_unbuf(r)
   }
   fn new_unbuf(r: R) -> FrameReader<R> {
-    FrameReader { inner: Fuse(Ok(r)), state: Idle }
+    FrameReader { inner: Fuse::new(r), state: Idle }
   }
 
   #[throws(io::Error)]
@@ -278,7 +280,7 @@ impl<'r, R:Read> Read for ReadFrame<'r, R> {
 
 impl<W:Write> FrameWriter<W> {
   pub fn new(w: W) -> FrameWriter<W> {
-    FrameWriter { inner: Fuse(Ok(w)), in_frame: None }
+    FrameWriter { inner: Fuse::new(w), in_frame: None }
   }
 
   #[throws(io::Error)]
