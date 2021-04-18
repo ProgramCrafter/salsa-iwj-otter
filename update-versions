@@ -1,6 +1,6 @@
 #!/bin/bash
 # usage:
-#   ./update-versions [--all-meta] 0.5.0
+#   ./update-versions 0.5.0
 
 set -e
 
@@ -30,8 +30,8 @@ for f in $files; do
     name=$(perl -i~ -pe '
         BEGIN { open N, ">&STDOUT" or die $!; }
         if (m{^\[package\]\s*$}...m{^\[}) {
-          $y=1 if s{^version=".*}{version="'$version'"};
-          print N "$1" if m{^name="(.*)"};
+            $y=1 if s{^version=".*}{version="'$version'"};
+            print N "$1" if m{^name="(.*)"};
         }
 	if (m{^\[dependencies\]\s*$}...m{^\[}) {
             s{^(otter[-\w]*)\.path=.*}{$&\n$1.version="'$version'"};
