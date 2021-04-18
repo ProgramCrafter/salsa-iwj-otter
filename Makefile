@@ -382,8 +382,8 @@ deploy: for-deploy bundled-sources assets libraries
 	rsync -r nwtemplates/*.tera $(DEPLOY_BASE)/nwtemplates/
 	ssh -o BatchMode=true $(DEPLOY_USER) $(DEPLOY_FINISH)
 	git branch -f $(DEPLOYED_BRANCH)
-	-git push origin master
-	-git push chiark master
+	-git push origin main
+	-git push chiark main
 
 #$(DEPLOY_BASE)/bundled-sources
 
