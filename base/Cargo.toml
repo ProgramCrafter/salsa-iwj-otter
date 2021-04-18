@@ -3,7 +3,7 @@
 # There is NO WARRANTY.
 
 [package]
-name = "otter-base"
+name="otter-base"
 description="Otter game system; WASM/hostside common code crate."
 
 version="0.3.0"
@@ -16,14 +16,14 @@ authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>",
          "and the contributors to Otter"]
 
 [lib]
-name = "otter_base"
-path = "lib.rs"
+name="otter_base"
+path="lib.rs"
 
 
 [dependencies]
 
-arrayvec = "0.5"
-derive_more = "0.99"
+arrayvec="0.5"
+derive_more="0.99"
 extend="1"
 htmlescape="0.3"
 if_chain = "1"
@@ -34,9 +34,9 @@ serde_json="1"
 void="1"
 
 # Repeated in other Cargo.toml's because importing does not work properly
-fehler = "1"
+fehler="1"
 serde = { version = "1", features = ["derive","rc"] }
-serde_with = "1"
-thiserror = "1"
+serde_with="1"
+thiserror="1"
 
 #fin.
