@@ -482,13 +482,6 @@ fn write_test(){
     let frame = rd.new_frame().unwrap(); assert!(frame.is_none());
     let frame = rd.new_frame().unwrap(); assert!(frame.is_none());
   }
-  let read_all = |input: &mut dyn Read| {
-    let mut rd = FrameReader::new_unbuf(input);
-    expect_good(&mut rd, b"hello");
-    expect_boom(&mut rd);
-    expect_good(&mut rd, b"longer!");
-    expect_good_eof(&mut rd);
-  };
 
   // try lumpy reads (ie, short reads) at every plausible boundary size
   // this approach is not very principled but ought to test every boundary
@@ -517,8 +510,12 @@ fn write_test(){
     }
 
     dbgc!(lumpsize);
-    let mut lr = LumpReader::new(lumpsize, &*msg.buf);
-    read_all(&mut lr);
+    let lr = LumpReader::new(lumpsize, &*msg.buf);
+    let mut rd = FrameReader::new_unbuf(lr);
+    expect_good(&mut rd, b"hello");
+    expect_boom(&mut rd);
+    expect_good(&mut rd, b"longer!");
+    expect_good_eof(&mut rd);
   }
 
   // Unexpected EOF mid-chunk-header
