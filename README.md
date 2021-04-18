@@ -118,3 +118,11 @@ The Otter software project is hosted on Debian's GitLab, at
 
 Merge requests (accompanied by a `Signed-off-by` indicating sign-off
 of the Developer Certificate of Origin) would be very welcome.
+
+
+References
+----------
+
+ * [Source repository on Salsa, Debian's GitLab](https://salsa.debian.org/iwj/otter)
+ * [This documentation, online copy](https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/)
+ * Mailing lists for [annoucements](https://www.chiark.greenend.org.uk/mailman/listinfo/sgo-software-announce) and [discussion](https://www.chiark.greenend.org.uk/mailman/listinfo/sgo-software-discuss)
