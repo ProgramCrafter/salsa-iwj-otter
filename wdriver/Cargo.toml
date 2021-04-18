@@ -1,9 +1,25 @@
+# Copyright 2020-2021 Ian Jackson and contributors to Otter
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# There is NO WARRANTY.
+
+[package]
+name="otter-webdriver-tests"
+version="0.0.1"
+
+authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>",
+         "and the contributors to Otter"]
+license="AGPL-3.0-or-later"
+edition="2018"
 
 [[bin]]
 name="wdriver"
 path="wdriver.rs"
 
+
 [dependencies]
+
+otter-api-tests.path="../apitest"
+
 fehler="1"
 ndarray="0.15"
 num-traits="0.2"
@@ -11,22 +27,7 @@ structopt="0.3"
 thirtyfour_sync="0.23"
 x11rb="0.8"
 
-[dependencies.otter-api-tests]
-path="../apitest"
-
-[dependencies.serde]
-version="1"
-features=["derive", "rc"]
-
-[dependencies.strum]
-version="0.20"
-features=["derive"]
-
-[package]
-edition="2018"
-license="AGPL-3.0-or-later"
-name="otter-webdriver-tests"
-version="0.0.1"
-authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>"]
+serde        = { version="1"    , features=["derive", "rc"] }
+strum        = { version="0.20" , features=["derive"      ] }
 
 #fin.

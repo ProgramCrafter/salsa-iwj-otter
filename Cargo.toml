@@ -14,6 +14,10 @@ edition="2018"
 [workspace]
 members=["wasm", "daemon", "wdriver", "apitest"]
 
+[build-dependencies]
+usvg="0.13"
+bundle-sources="0.0.1"
+
 
 [dependencies]
 
@@ -70,10 +74,5 @@ serde        = { version="1"    , features=["derive", "rc"] }
 strum        = { version="0.20" , features=["derive"      ] }
 
 slotmap = { git="https://github.com/ijackson/slotmap", branch="entry-return-stale-key", features=["serde"], }
-
-
-[build-dependencies]
-usvg="0.13"
-bundle-sources="0.0.1"
 
 #fin.

@@ -1,9 +1,29 @@
+# Copyright 2020-2021 Ian Jackson and contributors to Otter
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# There is NO WARRANTY.
+
+[package]
+name="otter-api-tests"
+version="0.0.1"
+
+authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>",
+         "and the contributors to Otter"]
+license="AGPL-3.0-or-later"
+edition="2018"
+
+[lib]
+name="otter_api_tests"
+path="apitest.rs"
 
 [[bin]]
 name="at-otter"
 path="at-otter.rs"
 
+
 [dependencies]
+
+otter.path=".."
+
 ego-tree="0.6"
 fehler="1"
 humantime="2"
@@ -11,30 +31,9 @@ num-traits="0.2"
 scraper="0.12"
 structopt="0.3"
 
-[dependencies.otter]
-path=".."
+reqwest      = { version="0.11" , features=["blocking","json","stream"] }
+serde        = { version="1"    , features=["derive", "rc"] }
+strum        = { version="0.20" , features=["derive"      ] }
 
-[dependencies.reqwest]
-version="0.11"
-features=["blocking", "json", "stream"]
-
-[dependencies.serde]
-version="1"
-features=["derive", "rc"]
-
-[dependencies.strum]
-version="0.20"
-features=["derive"]
-
-[lib]
-name="otter_api_tests"
-path="apitest.rs"
-
-[package]
-edition="2018"
-license="AGPL-3.0-or-later"
-name="otter-api-tests"
-version="0.0.1"
-authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>"]
 
 #fin.

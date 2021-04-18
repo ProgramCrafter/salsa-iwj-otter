@@ -1,27 +1,34 @@
+# Copyright 2020-2021 Ian Jackson and contributors to Otter
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# There is NO WARRANTY.
 
-[build-dependencies]
-wasm-bindgen-cli="0.2"
+[package]
+name="otter-wasm"
+version="0.0.1"
 
-[dependencies]
-console_error_panic_hook="0.1"
-fehler="1"
-js-sys="0.3"
-wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
-wee_alloc="0.4"
-
-[dependencies.otter-base]
-path="../base"
+authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>",
+         "and the contributors to Otter"]
+license="AGPL-3.0-or-later"
+edition="2018"
 
 [lib]
 name="otter_wasm"
 path="wasm.rs"
 crate-type=["cdylib"]
 
-[package]
-edition="2018"
-license="AGPL-3.0-or-later"
-name="otter-wasm"
-version="0.0.1"
-authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>"]
+[build-dependencies]
+wasm-bindgen-cli="0.2"
+
+
+[dependencies]
+
+otter-base.path="../base"
+
+console_error_panic_hook="0.1"
+fehler="1"
+js-sys="0.3"
+wee_alloc="0.4"
+
+wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 
 #fin.
