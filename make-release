@@ -1,0 +1,111 @@
+#!/bin/bash
+#
+# usage:
+#    ./make-release --dry-run|--real <branch>
+# eg
+#    ./make-release --dry-run main
+
+#---------- argument parsing and options ----------
+
+set -e
+
+fail () { echo >&2 "${0##*/}: error: $*"; exit 12; }
+
+dryrun=x-dry-run-unset
+cargo_dryrun=--not-a-cargo-option-please-crash
+
+case "$#.$1" in
+2.--real)    dryrun=''    ; cargo_dryrun=''         ; ;;
+2.--dry-run) dryrun=dryrun; cargo_dryrun='--dry-run'; ;;
+*)           fail "bad usage" ;;
+esac
+
+keyid=0x559AE46C2D6B6D3265E7CBA1E3E3392348B50D39
+
+branch="$2"
+
+dryrun () { echo "WOULD  $*"; }
+
+trouble=false
+trouble () { echo >&2 "***TROUBLE***: $*"; trouble=true; }
+
+#---------- checks ----------
+
+version=$(perl <Cargo.toml -ne '
+    next unless m{^version\s*=\s*\"([0-9.]+)\"\s*$};
+    print "$1\n" or die $!;
+    exit 0;
+')
+
+case "$version" in
+'') fail "no version?" ;;
+esac
+
+echo "version $version"
+
+equals () {
+    diff <(git rev-parse refs/heads/$1) <(git rev-parse HEAD) \
+	|| trouble "HEAD not equal to $1"
+}
+
+equals $branch
+equals tested
+
+bad=$(git status --porcelain)
+if [ "x$bad" != x ]; then
+    printf >&2 '%s\n' "$bad"
+    trouble 'tree is dirty'
+fi
+
+tag="otter-$version"
+tag_exists=$(git for-each-ref "[r]efs/tags/$tag")
+if [ "x$tag_exists" != x ]; then trouble "tag $tag already exists"; fi
+
+
+cargo_order='base . daemon wasm apitest wdriver'
+missing=(git ls-files :\*/Cargo.toml :Cargo.toml)
+for x in $cargo_order; do missing+=(:!$x/Cargo.toml); done
+missing=$( "${missing[@]}" )
+if [ "x$missing" != x ]; then trouble "missing cargo package(s) $missing"; fi
+
+#---------- end of checks ----------
+
+if $trouble; then
+    $dryrun fail "trouble! checks failed!"
+else
+    echo 'checks passed'
+fi
+
+#---------- actually do the work ----------
+
+$dryrun git push chiark $branch
+$dryrun git push origin $branch
+
+#---------- non-idempotent things ----------
+
+$dryrun make -j12 publish
+
+$dryrun git tag -s -u "$keyid" -m "Otter v$version"
+$dryrun git push chiark $tag
+$dryrun git push origin $tag
+
+
+for cargo_dir in $cargo_order; do
+    $dryrun_no_more_cargo \
+    nailing-cargo --no-nail --linkfarm=git --- \
+        sh -xec "cd $cargo_dir; cargo publish $cargo_dryrun"
+    dryrun_no_more_cargo=$dryrun
+done
+
+#---------- finish ----------
+
+$dryrun cat <<END
+Successfully released to
+  - git tags
+  - all git branches
+  - cargo publish
+
+You need to write release announcements
+  - sgo-software-announce
+  - blog
+END
