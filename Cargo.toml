@@ -12,7 +12,11 @@ authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>"]
 [workspace]
 members=["wasm", "daemon", "wdriver", "apitest"]
 
+
 [dependencies]
+
+otter-base.path="base"
+	
 anyhow="1"
 argparse="0.2"
 backtrace="0.3"
@@ -57,36 +61,17 @@ uds="0.2"
 url="2"
 vecdeque-stableix="1"
 
+enum-map     = { version="1"    , features=["serde"       ] }
+flexi_logger = { version="0.17" , features=["specfile"    ] }
+index_vec    = { version="0.1.1", features=["serde"       ] }
+serde        = { version="1"    , features=["derive", "rc"] }
+strum        = { version="0.20" , features=["derive"      ] }
+
+slotmap = { git="https://github.com/ijackson/slotmap", branch="entry-return-stale-key", features=["serde"], }
+
+
 [build-dependencies]
 usvg="0.13"
 bundle-sources="0.0.1"
-
-[dependencies.enum-map]
-version="1"
-features=["serde"]
-
-[dependencies.flexi_logger]
-version="0.17"
-features=["specfile"]
-
-[dependencies.index_vec]
-version="0.1.1"
-features=["serde"]
-
-[dependencies.otter-base]
-path="base"
-
-[dependencies.serde]
-version="1"
-features=["derive", "rc"]
-
-[dependencies.slotmap]
-branch="entry-return-stale-key"
-git="https://github.com/ijackson/slotmap"
-features=["serde"]
-
-[dependencies.strum]
-version="0.20"
-features=["derive"]
 
 #fin.
