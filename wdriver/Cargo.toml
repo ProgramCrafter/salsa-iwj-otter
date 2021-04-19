@@ -23,7 +23,7 @@ path="wdriver.rs"
 [dependencies]
 
 otter-api-tests.path="../apitest"
-otter-api-tests.version="0.5.1"
+otter-api-tests.version="=0.5.1"
 
 fehler="1"
 ndarray="0.15"

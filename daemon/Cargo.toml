@@ -23,9 +23,9 @@ path="main.rs"
 [dependencies]
 
 otter.path=".."
-otter.version="0.5.1"
+otter.version="=0.5.1"
 otter-base.path="../base"
-otter-base.version="0.5.1"
+otter-base.version="=0.5.1"
 
 fehler="1"
 num-traits="0.2"
