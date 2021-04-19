@@ -253,7 +253,7 @@ bundled-sources:: $(addprefix bundled-sources/, $(BUNDLED_SOURCES_DIRS))
 TARGET_BUNDLED=$(TARGET_DIR)/bundled-sources
 
 $(TARGET_BUNDLED):
-	$(NAILING_CARGO_JUST_RUN) mkdir -p $@
+	$(NAILING_CARGO_JUST_RUN) mkdir -p $(abspath $@)
 
 $(addprefix bundled-sources/, $(BUNDLED_SOURCES_DIRS)): \
 bundled-sources/%: stamp/cargo.bundle-sources $(TARGET_BUNDLED)
