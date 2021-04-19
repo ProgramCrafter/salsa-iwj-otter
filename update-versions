@@ -34,7 +34,7 @@ for f in $files; do
             print N "$1" if m{^name="(.*)"};
         }
 	if (m{^\[dependencies\]\s*$}...m{^\[}) {
-            s{^(otter[-\w]*)\.path=.*}{$&\n$1.version="'$version'"};
+            s{^(otter[-\w]*)\.path=.*}{$&\n$1.version="='$version'"};
             s{^(otter[-\w]*)\.version.*\n}{};
         }
         END {
@@ -58,7 +58,7 @@ perl -i~ -pe '
     my $name = $1;
     next unless exists $done{$name};
     $done{$name}++;
-    s{^(version\s*=\s*)"[^"]+"}{$1"'=$version'"}m or die "$name no vsn ?";
+    s{^(version\s*=\s*)"[^"]+"}{$1"'$version'"}m or die "$name no vsn ?";
     END {
         foreach my $name (sort keys %done) {
             die "$name missing ?" unless $done{$name} == 1;
