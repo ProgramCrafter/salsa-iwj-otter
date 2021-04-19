@@ -94,8 +94,13 @@ $dryrun git push origin $tag
 for cargo_dir in $cargo_order; do
     $dryrun_no_more_cargo \
     nailing-cargo --no-nail --linkfarm=git --- \
-        sh -xec "cd $cargo_dir; cargo publish $cargo_dryrun"
+        sh -xec "
+          find . ! -type l ! -type d ! -path './target/*' -print0 \
+              | xargs -0r rm --
+          cd $cargo_dir; cargo publish $cargo_dryrun
+        "
     dryrun_no_more_cargo=$dryrun
+
 done
 
 #---------- finish ----------
