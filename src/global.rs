@@ -138,7 +138,7 @@ pub struct Client {
 //
 // Games are created in this order:
 //
-//  save/a-<nameforfs>    MessagePack of InstanceSaveAccess
+//  save/a-<nameforfs>    MessagePack of InstanceSaveAuxiliary
 //     if, on reload, this does not exist, the game is considered
 //     not to exist, so at this stage the game conclusively does
 //     not exist
@@ -220,13 +220,13 @@ pub type GamesTable = HashMap<Arc<InstanceName>, InstanceRef>;
 pub struct InstanceContainer {
   live: bool,
   game_dirty: bool,
-  access_dirty: bool,
+  aux_dirty: bool,
   g: Instance,
 }
 
 #[derive(Debug,Default,Serialize,Deserialize)]
-struct InstanceSaveAccesses<RawTokenStr, PiecesLoadedRef, OccultIlksRef,
-                            PieceAliasesRef> {
+struct InstanceSaveAuxiliary<RawTokenStr, PiecesLoadedRef, OccultIlksRef,
+                             PieceAliasesRef> {
   ipieces: PiecesLoadedRef,
   ioccults: OccultIlksRef,
   pcaliases: PieceAliasesRef,
@@ -333,7 +333,7 @@ impl Instance {
     let cont = InstanceContainer {
       live: true,
       game_dirty: false,
-      access_dirty: false,
+      aux_dirty: false,
       g,
     };
 
@@ -348,7 +348,7 @@ impl Instance {
       Occupied(_) => throw!(ME::AlreadyExists),
     };
 
-    ig.save_access_now()?;
+    ig.save_aux_now()?;
     ig.save_game_now()?;
 
     (||{
@@ -574,7 +574,7 @@ impl<'ig> InstanceGuard<'ig> {
       };
 
       self.save_game_now()?;
-      self.save_access_now()?;
+      self.save_aux_now()?;
       Ok::<_,InternalError>(update)
     })().map_err(|e|{
       self.c.g.iplayers.remove(player);
@@ -726,7 +726,7 @@ impl<'ig> InstanceGuard<'ig> {
         |oldplayer| self.iplayers.remove(oldplayer)
           .map(|ipr| ipr.ipl)
       ).collect();
-      self.save_access_now().unwrap_or_else(
+      self.save_aux_now().unwrap_or_else(
         |e| warn!(
           "trouble garbage collecting accesses for deleted player: {:?}",
           &e)
@@ -757,7 +757,7 @@ impl<'ig> InstanceGuard<'ig> {
       id: self.tokens_players.id,
     };
     self.tokens_deregister_for_id(|id:PlayerId| id==player);
-    self.save_access_now().map_err(|e|{
+    self.save_aux_now().map_err(|e|{
       // oof, the tokens are already out of the global map, but
       // not saved, so they might come back.  We need to leave
       // them here so they can be deleted later.
@@ -817,7 +817,7 @@ impl<'ig> InstanceGuard<'ig> {
       drop(current_tokens);
 
       self.invalidate_tokens(player)?;
-      self.save_access_now()?;
+      self.save_aux_now()?;
 
       let token = access
         .override_token()
@@ -832,7 +832,7 @@ impl<'ig> InstanceGuard<'ig> {
         acctid
       };
       self.token_register(token.clone(), iad);
-      self.save_access_now()?;
+      self.save_aux_now()?;
 
       token
 
@@ -880,7 +880,7 @@ impl<'ig> InstanceGuard<'ig> {
   }
 
   pub fn modify_pieces(&mut self) -> ModifyingPieces {
-    self.save_game_and_access_later();
+    self.save_game_and_aux_later();
     // want this to be borrowed from self, so that we tie it properly
     // to the same game.  But in practice we don't expect to write
     // bugs where we get different games mixed up.  Borrowing self
@@ -922,10 +922,10 @@ impl<'ig> InstanceGuard<'ig> {
 
 enum SavefilenameParseResult {
   NotGameFile,
-  AccessFile,
+  AuxiliaryFile,
   TempToDelete,
   GameFile {
-    access_leaf: Vec<u8>,
+    aux_leaf: Vec<u8>,
     name: InstanceName,
   },
 }
@@ -942,7 +942,7 @@ fn savefilename(name: &InstanceName, prefix: &str, suffix: &str) -> String {
 fn savefilename_parse(leaf: &[u8]) -> SavefilenameParseResult {
   use SavefilenameParseResult::*;
 
-  if leaf.starts_with(b"a-") { return AccessFile }
+  if leaf.starts_with(b"a-") { return AuxiliaryFile }
   let rhs = match leaf.strip_prefix(b"g-") {
     Some(rhs) => rhs,
     None => return NotGameFile,
@@ -955,7 +955,7 @@ fn savefilename_parse(leaf: &[u8]) -> SavefilenameParseResult {
   let name = InstanceName::from_str(&rhs)?;
 
   GameFile {
-    access_leaf: [ b"a-", after_ftype_prefix ].concat(),
+    aux_leaf: [ b"a-", after_ftype_prefix ].concat(),
     name,
   }
 }
@@ -986,8 +986,8 @@ impl InstanceGuard<'_> {
 
   #[throws(InternalError)]
   pub fn save_game_now(&mut self) {
-    if self.c.access_dirty {
-      self.save_access_now()?;
+    if self.c.aux_dirty {
+      self.save_aux_now()?;
     }
     self.save_something("g-", |s,w| {
       rmp_serde::encode::write_named(w, &s.c.g.gs)
@@ -997,7 +997,7 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(InternalError)]
-  fn save_access_now(&mut self) {
+  fn save_aux_now(&mut self) {
     self.save_something("a-", |s, w| {
       let ipieces = &s.c.g.ipieces;
       let ioccults = &s.c.g.ioccults;
@@ -1018,14 +1018,14 @@ impl InstanceGuard<'_> {
       ).collect();
       let acl = s.c.g.acl.clone().into();
       let links = s.c.g.links.clone();
-      let isa = InstanceSaveAccesses {
+      let isa = InstanceSaveAuxiliary {
         ipieces, ioccults, tokens_players, aplayers, acl, links,
         pcaliases,
       };
       rmp_serde::encode::write_named(w, &isa)
     })?;
-    self.c.access_dirty = false;
-    info!("saved accesses for {}", &self.name);
+    self.c.aux_dirty = false;
+    info!("saved aux for {}", &self.name);
   }
 
   #[throws(InternalError)]
@@ -1043,7 +1043,7 @@ impl InstanceGuard<'_> {
   fn load_game(accounts: &AccountsGuard,
                games: &mut GamesGuard,
                name: InstanceName) -> Option<InstanceRef> {
-    let InstanceSaveAccesses::<String,ActualIPieces,IOccults,PieceAliases> {
+    let InstanceSaveAuxiliary::<String,ActualIPieces,IOccults,PieceAliases> {
       tokens_players, mut ipieces, ioccults, mut aplayers, acl, links,
       pcaliases,
     } = match Self::load_something(&name, "a-") {
@@ -1119,7 +1119,7 @@ impl InstanceGuard<'_> {
     let cont = InstanceContainer {
       live: true,
       game_dirty: false,
-      access_dirty: false,
+      aux_dirty: false,
       g,
     };
     let gref = InstanceRef(Arc::new(Mutex::new(cont)));
@@ -1174,14 +1174,14 @@ pub fn load_games(accounts: &mut AccountsGuard,
           fs::remove_file(de.path())
             .context("stale temporary file")?;
         }
-        AccessFile => {
+        AuxiliaryFile => {
           a_leaves.entry(leaf.to_owned()).or_insert_with(
             || Found(de.path())
           );
         }
-        GameFile { access_leaf, name } => {
+        GameFile { aux_leaf, name } => {
           InstanceGuard::load_game(accounts, games, name)?;
-          a_leaves.insert(access_leaf, Used);
+          a_leaves.insert(aux_leaf, Used);
         }
       }
       <Result<_,anyhow::Error>>::Ok(())
@@ -1352,10 +1352,10 @@ impl InstanceGuard<'_> {
     self.c.game_dirty = true;
   }
 
-  pub fn save_game_and_access_later(&mut self) {
-    if self.c.access_dirty { return }
+  pub fn save_game_and_aux_later(&mut self) {
+    if self.c.aux_dirty { return }
     self.save_game_later();
-    self.c.access_dirty = true;
+    self.c.aux_dirty = true;
   }
 }
 
