@@ -31,15 +31,19 @@ impl<A> Copy for Authorisation<A> { }
 pub type AuthorisationSuperuser = Authorisation<Global>;
 
 impl<T> Authorisation<T> {
+  /// Proof obligation: access to this `T` has been authorised.
   pub const fn authorised(_v: &T) -> Authorisation<T> {
     Authorisation(PhantomData)
   }
   pub fn map<U>(self, _f: fn(&T) -> &U) -> Authorisation<U> {
     self.therefore_ok()
   }
+  /// Minor proof obligation: in this case, authorised access to `T`
+  /// implies authorised access to `U`.
   pub fn therefore_ok<U>(self) -> Authorisation<U> {
     Authorisation(PhantomData)
   }
+  /// Proof obligation: access to `T` has been authorised.
   pub const fn authorise_any() -> Authorisation<T> {
     Authorisation(PhantomData)
   }
