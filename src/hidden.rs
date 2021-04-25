@@ -17,6 +17,9 @@ visible_slotmap_key!{ OccId(b'H') }
 // ========== data structures ==========
 
 #[derive(Copy,Clone,Debug)]
+/// Proof token.
+///
+/// Proof obligation when constructing.
 pub struct ShowUnocculted(());
 
 #[derive(Copy,Clone,Debug)]
@@ -358,14 +361,16 @@ impl OccDisplacement {
 }
 
 impl ShowUnocculted {
-  /// override
+  /// Override.  Proof obligation: this context does not require
+  /// honouring occultation.
   pub const fn new_visible() -> ShowUnocculted {
     ShowUnocculted(())
   }
 }
 
 impl PieceRenderInstructions {
-  /// override
+  /// Override.  Proof obligation: this context does not require
+  /// honouring occultation.
   pub fn new_visible(vpid: VisiblePieceId) -> PieceRenderInstructions {
     PieceRenderInstructions {
       vpid,
