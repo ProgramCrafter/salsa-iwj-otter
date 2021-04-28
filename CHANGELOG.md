@@ -5,7 +5,10 @@ Version UNRELEASED
    Manipulation Rummy.
  * New "private.table.toml" and "same-scope.table.toml" for
    less-public games.
- * Build system improvements and fixes.
+ * otter(1) now honours OTTERCLI_LOG (in Rust env_logger format).
+ * Change CLI to server management wire protocol to binary-framed
+   MessagePack (was newline-framed JSON).
+ * Build system and test suite improvements and fixes.
 
 Version 0.5.1
 =============
