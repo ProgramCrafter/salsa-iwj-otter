@@ -977,10 +977,12 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
       });
       st.have_deleted |= was_delete;
       st.uh.accumulate(ig, updates)?;
-      if ! expand.is_empty() {
+      if matches!(&resp, MGR::InsnExpanded) {
         let mut expand: VecDeque<_> = expand.into();
         expand.append(&mut insns);
         insns = expand;
+      } else {
+        assert!(expand.is_empty())
       }
       responses.push(resp);
       if let Some(unprepared) = unprepared {

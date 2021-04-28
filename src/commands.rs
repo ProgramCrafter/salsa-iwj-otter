@@ -121,6 +121,7 @@ pub enum MgmtGameResponse {
   Fine,
   Info(MgmtGameResponseGameInfo),
   InsnMark(Box<[u8]>),
+  InsnExpanded,
   Synch(Generation),
 
   InternalPieceId(Option<PieceId>),
