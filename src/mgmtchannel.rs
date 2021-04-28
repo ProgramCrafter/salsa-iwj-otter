@@ -69,20 +69,22 @@ impl MgmtChannel {
   }
 
   #[throws(MgmtChannelReadError)]
-  pub fn read<T:DeserializeOwned>(&mut self) -> T {
+  pub fn read<T:DeserializeOwned+Debug>(&mut self) -> T {
     use MgmtChannelReadError::*;
     let f = self.read.new_frame()?.ok_or(MgmtChannelReadError::EOF)?;
     let r = rmp_serde::decode::from_read(f);
     let v = r.map_err(|e| Parse(format!("{}", &e)))?;
+    trace!("read OK {:?}", &v);
     v
   }
 
   #[throws(MgmtChannelWriteError)]
-  pub fn write<T:Serialize>(&mut self, val: &T) {
+  pub fn write<T:Serialize+Debug>(&mut self, val: &T) {
     let mut f = self.write.new_frame()?;
     rmp_serde::encode::write_named(&mut f, val)?;
     f.finish()?;
     self.write.flush()?;
+    trace!("wrote OK {:?}", val);
   }
 
   #[throws(AE)]
