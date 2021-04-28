@@ -970,11 +970,6 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
       let (updates, resp, unprepared, expand, ig) =
         execute_game_insn(cs, ag, igu, insn, &who,
                           &mut to_permute)?;
-      if ! expand.is_empty() {
-        let mut expand: VecDeque<_> = expand.into();
-        expand.append(&mut insns);
-        insns = expand;
-      }
       let st = uh_auth.get_or_insert_with(||{
         let auth = Authorisation::authorised(&*ig.name);
         let uh = UpdateHandler::from_how(how);
@@ -982,6 +977,11 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
       });
       st.have_deleted |= was_delete;
       st.uh.accumulate(ig, updates)?;
+      if ! expand.is_empty() {
+        let mut expand: VecDeque<_> = expand.into();
+        expand.append(&mut insns);
+        insns = expand;
+      }
       responses.push(resp);
       if let Some(unprepared) = unprepared {
         st.flush(ig,how,&who)?;
