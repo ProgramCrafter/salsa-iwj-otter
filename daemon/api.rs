@@ -486,8 +486,8 @@ api_route!{
       let logents = vec![];
       match self.0.clamped(gs.table_size) {
         Ok(pos) => gpc.pos = pos,
-        Err(pos) => {
-          gpc.pos = pos;
+        Err(pote) => {
+          gpc.pos = pote.clamped;
           throw!(ApiPieceOpError::PartiallyProcessed(
             PieceOpError::PosOffTable,
             logents,

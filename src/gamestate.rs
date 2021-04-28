@@ -316,30 +316,34 @@ impl Timestamp {
   }
 }
 
-pub trait ClampTable: Sized {
-  fn clamped(self, range: Self) -> Result<Self, Self>;
+#[derive(Error,Debug,Copy,Clone)]
+pub struct PosOffTableError<T:Debug> { pub clamped: T }
+display_as_debug!{PosOffTableError<T>, <T:Debug>}
+
+pub trait ClampTable: Sized+Debug {
+  fn clamped(self, range: Self) -> Result<Self, PosOffTableError<Self>>;
 }
 
 impl ClampTable for Coord {
-  fn clamped(self, range: Coord) -> Result<Coord, Coord> {
-    if self < 0     { return Err(0,   ) }
-    if self > range { return Err(range) }
+  fn clamped(self, range: Coord) -> Result<Coord, PosOffTableError<Coord>> {
+    if self < 0     { return Err(PosOffTableError{ clamped: 0,    }) }
+    if self > range { return Err(PosOffTableError{ clamped: range }) }
     return Ok(self)
   }
 }
 
 impl ClampTable for Pos {
-  fn clamped(self, range: Pos) -> Result<Pos, Pos> {
+  fn clamped(self, range: Pos) -> Result<Pos, PosOffTableError<Pos>> {
     let mut output = ArrayVec::new();
     let mut ok = true;
     for (&pos, &rng) in izip!(self.coords.iter(), range.coords.iter()) {
       output.push(match pos.clamped(rng) {
         Ok(pos) => pos,
-        Err(pos) => { ok = false; pos },
+        Err(e) => { ok = false; e.clamped },
       })
     }
     let output = PosC{ coords: output.into_inner().unwrap() };
-    if ok { Ok(output) } else { Err(output) }
+    if ok { Ok(output) } else { Err(PosOffTableError { clamped: output }) }
   }
 }
 
