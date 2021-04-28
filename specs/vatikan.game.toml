@@ -1,0 +1,154 @@
+# Copyright 2020-2021 Ian Jackson and contributors to Otter
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# There is NO WARRANTY.
+
+# Suitable for some 2-deck variants of Maniupulation Rummy
+# including
+#   Carousel (for 3-5)
+#   Vatikan
+#   Rummikub (treat Aces as 1, only)
+#
+# And, after removing the jokers from the top of the deck before
+# shuffling (ie before activating the pickup deck):
+#   Machiavelli
+#   Shanghai
+#   Finagle
+
+table_size = [300, 200]
+table_colour = "#bbd"
+
+[pcaliases.card-back]
+type = "Lib"
+lib = "wikimedia"
+item = "card-plain-back-maroon"
+
+
+[[pieces]]
+pos = [150,184]
+type = "PickupDeck"
+faces = ["lightblue", "grey"]
+edges = ["black", "white"]
+label.place = "TopLeftOutside"
+label.colour = "black"
+shape.type = "Rect"
+shape.xy = [25,30]
+
+
+[[pieces]]
+pos = [53, 25]
+colour = "black"
+label.place = "BottomLeftOutside"
+label.colour = "black"
+
+type = "Hand"
+edge = "white"
+edge_width = 0.75
+shape.type = "Rect"
+shape.xy = [93,25]
+
+[[pieces]]
+pos = [150, 23]
+colour = "grey"
+label.place = "BottomLeftOutside"
+label.colour = "black"
+
+type = "Hand"
+edge = "white"
+edge_width = 0.75
+shape.type = "Rect"
+shape.xy = [93,25]
+
+[[pieces]]
+pos = [247, 25]
+colour = "white"
+label.place = "BottomLeftOutside"
+label.colour = "black"
+
+type = "Hand"
+edge = "white"
+edge_width = 0.75
+shape.type = "Rect"
+shape.xy = [93,25]
+
+[[pieces]]
+pos = [247, 175]
+colour = "green"
+label.place = "TopLeftOutside"
+label.colour = "black"
+
+type = "Hand"
+edge = "white"
+edge_width = 0.75
+shape.type = "Rect"
+shape.xy = [93,25]
+
+[[pieces]]
+pos = [53, 175]
+colour = "purple"
+label.place = "TopLeftOutside"
+label.colour = "black"
+
+type = "Hand"
+edge = "white"
+edge_width = 0.75
+shape.type = "Rect"
+shape.xy = [93,25]
+
+
+[[pieces]]
+pos = [150, 184]
+type = "LibList"
+lib = "cards-oxymoron"
+prefix = "card-oxymoron-"
+suffix = "-c"
+items = [
+    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
+    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
+]
+posd = [0, 0]
+
+[[pieces]]
+pos = [150, 184]
+type = "LibList"
+lib = "cards-oxymoron"
+prefix = "card-oxymoron-"
+suffix = "-d"
+items = [
+    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
+    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
+]
+posd = [0, 0]
+
+[[pieces]]
+pos = [150, 184]
+type = "LibList"
+lib = "cards-oxymoron"
+prefix = "card-oxymoron-"
+suffix = "-h"
+items = [
+    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
+    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
+]
+posd = [0, 0]
+
+[[pieces]]
+pos = [150, 184]
+type = "LibList"
+lib = "cards-oxymoron"
+prefix = "card-oxymoron-"
+suffix = "-s"
+items = [
+    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
+    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
+]
+posd = [0, 0]
+
+[[pieces]]
+pos = [150, 184]
+type = "LibList"
+lib = "wikimedia"
+prefix = "card-"
+items = [
+ "bellot-joker-black", "rainbow",
+]
+posd = [0, 0]
