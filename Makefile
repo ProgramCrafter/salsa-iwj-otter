@@ -329,6 +329,7 @@ wdt:	$(foreach f, $(WDT_TESTS), stamp/$f.check) \
 	$(foreach f, $(WDT_LANDSCAPE_TESTS), stamp/$f.lcheck) \
 
 RUNTEST_DEPS =	apitest/run1 stamp/cargo.debug $(FILEASSETS) \
+		$(wildcard specs/*.toml) \
 		$(wildcard libraries/*.toml) $(LIBRARY_FILES)
 
 AT_DEPS =	$(filter-out templates/script.js, $(RUNTEST_DEPS)) \
