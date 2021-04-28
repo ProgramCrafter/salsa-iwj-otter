@@ -165,15 +165,6 @@ impl<R:Read> FrameReader<R> {
     FrameReader { inner: r, state: HadFrameEnd(Ok(())) }
   }
 
-  #[throws(MgmtChannelReadError)]
-  pub fn read_rmp<T:DeserializeOwned>(&mut self) -> Option<T> {
-    let frame = self.new_frame()?;
-    if_let!{ Some(mut frame) = frame; else return Ok(None); };
-    let v = rmp_serde::decode::from_read(&mut frame)
-      .map_err(|e| MgmtChannelReadError::Parse(format!("{}", &e)))?;
-    Some(v)
-  }
-
   #[throws(io::Error)]
   pub fn new_frame<'r>(&'r mut self) -> Option<ReadFrame<'r,R>> {
     self.finish_reading_frame()?;
@@ -315,12 +306,6 @@ impl<W:Write> FrameWriter<W> {
   pub fn flush(&mut self) {
     self.tidy()?;
     self.inner.flush()?;
-  }
-
-  #[throws(MgmtChannelWriteError)]
-  pub fn write_rmp<T:Serialize>(&mut self, t: &T) {
-    let mut frame = self.new_frame()?;
-    rmp_serde::encode::write_named(&mut frame, t)?
   }
 
   #[throws(io::Error)]
