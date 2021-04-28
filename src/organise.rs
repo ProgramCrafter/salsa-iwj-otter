@@ -292,9 +292,8 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, _: OcculterRotationChecked,
 
   for &pos in &layout {
     // Some sanity checks
-    if pos.clamped(gs.table_size).is_err() {
-      throw!(APOE::ReportViaUpdate(POE::PosOffTable))
-    }
+    pos.clamped(gs.table_size).map_err(
+      |_| APOE::ReportViaUpdate(POE::PosOffTable))?;
     match gs.occults.pos_occulter(&gs.occults, pos)? {
       None => {},
       Some(occulter) if occulter == apiece => {},
