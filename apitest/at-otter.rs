@@ -645,12 +645,46 @@ impl Ctx {
     let command = self.su().ds.ss("reset @table@ demo")?;
     self.otter(&command)?;
   }
+
+  #[throws(AE)]
+  fn specs(&mut self) {
+    struct Specs {
+      def: String,
+      ents: Box<dyn Iterator<Item=String>>,
+    }
+    impl Specs {
+      fn next(&mut self) -> (bool, String) {
+        if let Some(y) = self.ents.next() { (true, y) }
+        else { (false, self.def.clone()) }
+      }
+    }
+    let specs = |mid, def| {
+      let sv = self.su().ds.also(&[("mid",mid),("def",def)]);
+      let def = sv.subst("@specs@/@def@.@mid@.toml").unwrap();
+      let pat = sv.subst("@specs@/*.@mid@.toml").unwrap();
+      let ents = glob::glob(&pat).unwrap()
+        .map(|s| s.unwrap().to_str().unwrap().to_owned());
+      let ents = Box::new(ents);
+      Specs { def, ents }
+    };
+    let mut perms = specs("table", "private");
+    let mut games = specs("game",  "demo");
+    loop {
+      let (py, perm) = perms.next();
+      let (gy, game) = games.next();
+      if !(py || gy) { break }
+      let command = self.su().ds.also(&[("game",&game),("perm",&perm)])
+        .ss("reset --reset-table @perm@ @table@ @game@")?;
+      self.otter(&command).context(perm).context(game)?;
+    }
+  }
 }
 
 #[throws(AE)]
 fn tests(mut c: Ctx) {
   test!(c, "library-load", c.library_load()?);
   test!(c, "hidden-hand",  c.hidden_hand()?);
+  test!(c, "specs",        c.specs()?);
 }
 
 #[throws(AE)]
