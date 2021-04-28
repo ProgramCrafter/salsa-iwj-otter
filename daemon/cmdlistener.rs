@@ -451,6 +451,11 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       no_updates(ig, MGR::Fine)
     },
 
+    MGI::InsnMark(token) => {
+      let (ig, _) = cs.check_acl(&ag,ig,PCH::Instance, &[TP::TestExistence])?;
+      no_updates(ig, MGR::InsnMark(token))
+    }
+
     MGI::Synch => {
       let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Play])?;
       let (_gen, mgr) = some_synch_core(ig)?;

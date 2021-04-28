@@ -81,6 +81,7 @@ pub enum MgmtGameInstruction {
   SetTableSize(Pos),
   SetTableColour(ColourSpec),
 
+  InsnMark(Box<[u8]>),
   /// For testing, mostly.
   Synch, SynchLog,
   /// For testing only
@@ -119,6 +120,7 @@ pub struct MgmtPlayerDetails {
 pub enum MgmtGameResponse {
   Fine,
   Info(MgmtGameResponseGameInfo),
+  InsnMark(Box<[u8]>),
   Synch(Generation),
 
   InternalPieceId(Option<PieceId>),
