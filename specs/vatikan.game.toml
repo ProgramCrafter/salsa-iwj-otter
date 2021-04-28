@@ -13,6 +13,9 @@
 #   Machiavelli
 #   Shanghai
 #   Finagle
+#
+# Inforemation about game variants from:
+#  https://www.pagat.com/rummy/carousel.html
 
 table_size = [300, 200]
 table_colour = "#bbd"
