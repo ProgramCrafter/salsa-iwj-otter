@@ -348,6 +348,11 @@ fn main() {
     access, socket_path, verbose, config_filename, superuser,
     subcommand, subargs, spec_dir, layout,
   }|{
+    env_logger::Builder::new()
+      .filter_level(log::LevelFilter::Info)
+      .parse_env("OTTERCLI_LOG")
+      .init();
+
     let config = Thunk::<Result<(Arc<ServerConfig>,String),APE>,_>::new(
       move ||{
         (||{
