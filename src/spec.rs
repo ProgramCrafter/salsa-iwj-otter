@@ -101,6 +101,7 @@ pub enum TablePlayerSpec {
   Account(AccountName),
   AccountGlob(String),
   Local(String),
+  SameScope,
   AllLocal,
 }
 
@@ -358,7 +359,7 @@ pub mod imp {
   }
 
   impl TablePlayerSpec {
-    pub fn account_glob(&self, _instance_name: &InstanceName) -> String {
+    pub fn account_glob(&self, instance_name: &InstanceName) -> String {
       fn scope_glob(scope: AccountScope) -> String {
         let mut out = "".to_string();
         scope.display_name(&[""], |s| Ok::<_,Void>(out += s)).unwrap();
@@ -368,6 +369,7 @@ pub mod imp {
       match self {
         TPS::Account(account) => account.to_string(),
         TPS::AccountGlob(s) => s.clone(),
+        TPS::SameScope => scope_glob(instance_name.account.scope.clone()),
         TPS::Local(user) => scope_glob(AS::Unix { user: user.clone() }),
         TPS::AllLocal => {
           // abuse that usernames are not encoded
