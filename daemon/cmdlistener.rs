@@ -377,6 +377,9 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
     MGI::SetTableSize(size) => {
       let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
+      for p in ig.gs.pieces.values() {
+        p.pos.clamped(size).map_err(|_| SpecError::PosOffTable)?;
+      }
       ig.gs.table_size = size;
       (U{ pcs: vec![],
           log: vec![ LogEntry {
