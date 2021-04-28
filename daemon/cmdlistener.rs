@@ -378,7 +378,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     MGI::SetTableSize(size) => {
       let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
       for p in ig.gs.pieces.values() {
-        p.pos.clamped(size).map_err(|_| SpecError::PosOffTable)?;
+        p.pos.clamped(size)?;
       }
       ig.gs.table_size = size;
       (U{ pcs: vec![],
@@ -775,7 +775,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         let occilk = occultable.map(|(ilkname, p_occ)| {
           ilks.insert(ilkname, OccultIlkData { p_occ })
         });
-        gpc.pos.clamped(gs.table_size).map_err(|_| SpecError::PosOffTable)?;
+        gpc.pos.clamped(gs.table_size)?;
         if gpc.zlevel > gs.max_z { gs.max_z = gpc.zlevel.clone() }
         let piece = gs.pieces.as_mut(modperm).insert(gpc);
         let p = IPieceTraitObj::new(p);

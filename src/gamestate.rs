@@ -347,6 +347,13 @@ impl ClampTable for Pos {
   }
 }
 
+impl<T:Debug> From<PosOffTableError<T>> for SpecError {
+  fn from(_: PosOffTableError<T>) -> SpecError { SpecError::PosOffTable }
+}
+impl<T:Debug> From<PosOffTableError<T>> for MgmtError {
+  fn from(pote: PosOffTableError<T>) -> MgmtError { ME::BadSpec(pote.into()) }
+}
+
 // ---------- game state - rendering etc. ----------
 
 impl GPiece {
