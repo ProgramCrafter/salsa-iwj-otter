@@ -262,6 +262,7 @@ type ExecuteGameInsnResults<'igr, 'ig> = (
   ExecuteGameChangeUpdates,
   MgmtGameResponse,
   UnpreparedUpdates, // These happena after everything else
+  Vec<MgmtGameInstruction>,
   &'igr mut InstanceGuard<'ig>,
 );
 
@@ -286,7 +287,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   fn no_updates<'igr,'ig>(ig: &'igr mut InstanceGuard<'ig>,
                           mgr: MgmtGameResponse)
                           -> ExecuteGameInsnResults<'igr, 'ig> {
-    (U{ pcs: vec![], log: vec![], raw: None }, mgr, None, ig)
+    (U{ pcs: vec![], log: vec![], raw: None }, mgr, None, vec![], ig)
   }
 
   #[throws(MgmtError)]
@@ -304,7 +305,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   {
     let (ig, _) = cs.check_acl(ag, ig, PCH::Instance, p)?;
     let resp = f(ig)?;
-    (U{ pcs: vec![], log: vec![], raw: None }, resp, None, ig)
+    (U{ pcs: vec![], log: vec![], raw: None }, resp, None, vec![], ig)
   }
 
   #[throws(MgmtError)]
@@ -350,7 +351,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     (U{ log,
         pcs: vec![],
         raw: Some(vec![ PreparedUpdateEntry::SetLinks(ig.links.clone()) ])},
-     Fine, None, ig)
+     Fine, None, vec![], ig)
   }
 
   impl<'cs> CommandStream<'cs> {
@@ -387,7 +388,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
                            who, size.x(), size.y()),
           }],
           raw: Some(vec![ PreparedUpdateEntry::SetTableSize(size) ]) },
-       Fine, None, ig)
+       Fine, None, vec![], ig)
     }
 
     MGI::SetTableColour(colour) => {
@@ -400,7 +401,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
                            &who, &colour),
           }],
           raw: Some(vec![ PreparedUpdateEntry::SetTableColour(colour) ]) },
-       Fine, None, ig)
+       Fine, None, vec![], ig)
     }
 
     MGI::JoinGame {
@@ -436,7 +437,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           log: vec![ logentry ],
           raw: Some(vec![ update ] )},
        MGR::JoinGame { nick, player, token: atr },
-       None, ig)
+       None, vec![], ig)
     },
 
     MGI::DeletePieceAlias(alias) => {
@@ -461,7 +462,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let ig = ig.by_mut(superuser.into());
       let (gen, mgr) = some_synch_core(ig)?;
       let log = LogEntry { html: synch_logentry(gen) };
-      (U{ pcs: vec![], log: vec![log], raw: None }, mgr, None, ig)
+      (U{ pcs: vec![], log: vec![log], raw: None }, mgr, None, vec![], ig)
     },
 
     MGI::PieceIdLookupFwd { player, piece } => {
@@ -540,7 +541,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       (U{ log,
           pcs: vec![],
           raw: None},
-       Fine, None, ig)
+       Fine, None, vec![], ig)
     },
 
     MGI::Info => readonly(cs,ag,ig, &[TP::ViewNotSecret], |ig|{
@@ -660,7 +661,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       (U{ pcs: vec![],
           log: vec![ LogEntry { html }],
           raw: Some(vec![ update ]) },
-       Fine, None, ig)
+       Fine, None, vec![], ig)
     },
 
     MGI::DeletePiece(piece) => {
@@ -716,6 +717,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
              as SomeUnpreparedUpdates
          )
        } else { None },
+       vec![],
        ig_g)
     },
 
@@ -791,7 +793,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
             html: hformat!("{} added {} pieces", who, count_len),
           }],
           raw: None },
-       Fine, None, ig_g)
+       Fine, None, vec![], ig_g)
     },
 
     MGI::ClearLog => {
@@ -816,7 +818,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
             html: hformat!("{} cleared the log history", who),
           } ],
           raw },
-       Fine, None, ig)
+       Fine, None, vec![], ig)
     },
 
     MGI::SetACL { acl } => {
@@ -877,7 +879,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       (U{ pcs: vec![ ],
           log,
           raw: Some(updates) },
-       Fine, None, ig)
+       Fine, None, vec![], ig)
     },
   };
   Ok(y)
@@ -890,7 +892,7 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   cs: &'cs CommandStream,
   ag: &mut AccountsGuard,
   igu: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
-  mut insns: Vec<MgmtGameInstruction>,
+  insns: Vec<MgmtGameInstruction>,
   how: MgmtGameUpdateMode) -> MgmtResponse
 {
   let (ok, uu) = ToRecalculate::with(|mut to_permute| {
@@ -941,8 +943,9 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   }
   let mut uh_auth: Option<St> = None;
   let flush_uh = |st: &mut St, igu: &'_ mut _| st.flushu(igu, how, &who);
+  let mut insns: VecDeque<_> = insns.into();
   let res = (||{
-    for insn in insns.drain(0..) {
+    while let Some(insn) = insns.pop_front() {
       trace_dbg!("exeucting game insns", insn);
 
       if_chain!{
@@ -959,9 +962,14 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
       }
       let was_delete = matches!(&insn, MGI::DeletePiece(..));
 
-      let (updates, resp, unprepared, ig) =
+      let (updates, resp, unprepared, expand, ig) =
         execute_game_insn(cs, ag, igu, insn, &who,
                           &mut to_permute)?;
+      if ! expand.is_empty() {
+        let mut expand: VecDeque<_> = expand.into();
+        expand.append(&mut insns);
+        insns = expand;
+      }
       let st = uh_auth.get_or_insert_with(||{
         let auth = Authorisation::authorised(&*ig.name);
         let uh = UpdateHandler::from_how(how);
