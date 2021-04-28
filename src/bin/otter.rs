@@ -516,7 +516,8 @@ const PLAYER_DEFAULT_PERMS: &[TablePermission] = &[
 ];
 
 #[throws(AE)]
-fn setup_table(_ma: &MainOpts, spec: &TableSpec) -> Vec<MGI> {
+fn setup_table(_ma: &MainOpts, instance_name: &InstanceName, spec: &TableSpec)
+               -> Vec<MGI> {
   let TableSpec { players, player_perms, acl, links } = spec;
   let mut player_perms = player_perms.clone()
     .unwrap_or(PLAYER_DEFAULT_PERMS.iter().cloned().collect());
@@ -524,7 +525,7 @@ fn setup_table(_ma: &MainOpts, spec: &TableSpec) -> Vec<MGI> {
 
   let acl: RawAcl<_> =
     players.iter().map(|tps| AclEntry {
-      account_glob: tps.account_glob(),
+      account_glob: tps.account_glob(instance_name),
       allow: player_perms.clone(),
       deny: default(),
     })
@@ -663,8 +664,9 @@ mod reset_game {
 
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
+    let instance_name = ma.instance_name(&args.table_name);
     let mut chan = access_account(&ma)?.chan.for_game(
-      ma.instance_name(&args.table_name),
+      instance_name.clone(),
       MgmtGameUpdateMode::Bulk,
     );
     let GameSpec {
@@ -689,7 +691,7 @@ mod reset_game {
         Err(e)
       })?;
 
-      insns.extend(setup_table(&ma, &table_spec)?);
+      insns.extend(setup_table(&ma, &instance_name, &table_spec)?);
     }
 
     let (pcs, aliases) = chan.list_pieces()?;

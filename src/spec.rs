@@ -358,7 +358,7 @@ pub mod imp {
   }
 
   impl TablePlayerSpec {
-    pub fn account_glob(&self) -> String {
+    pub fn account_glob(&self, _instance_name: &InstanceName) -> String {
       fn scope_glob(scope: AccountScope) -> String {
         let mut out = "".to_string();
         scope.display_name(&[""], |s| Ok::<_,Void>(out += s)).unwrap();
