@@ -168,7 +168,8 @@ impl MgmtChannelForGame {
     };
     let responses = match self.cmd(&cmd)? {
       MgmtResponse::AlterGame { error: None, responses }
-      if responses.len() == insns_len => {
+      if responses.len() == insns_len ||
+         responses.iter().any(|r| matches!(r, MGR::InsnExpanded)) => {
         responses
       },
       wat => Err(anyhow!("unexpected AlterGame response: {:?} => {:?}",
