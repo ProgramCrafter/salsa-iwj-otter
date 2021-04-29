@@ -575,6 +575,16 @@ impl<T:DeserializeOwned+SomeSpec> SpecParse for SpecParseToml<T> {
   }
 }
 impl<T> SpecParseToml<T> { pub fn new() -> Self { Self(default()) } }
+#[allow(dead_code)]
+struct SpecRaw<T>(pub PhantomData<T>);
+impl<T:SomeSpec> SpecParse for SpecRaw<T> {
+  type T = String;
+  type S = T;
+  #[throws(AE)]
+  fn parse(buf: String) -> String { buf }
+}
+#[allow(dead_code)]
+impl<T> SpecRaw<T> { pub fn new() -> Self { Self(default()) } }
 
 #[throws(AE)]
 fn read_spec<P:SpecParse>(ma: &MainOpts, specname: &str, _: P) -> P::T
