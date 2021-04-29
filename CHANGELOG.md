@@ -10,6 +10,10 @@ Version UNRELEASED
    MessagePack (was newline-framed JSON).
  * Build system and test suite improvements and fixes.
 
+
+ * Move game spec parsing from client to server
+   (WIP for server-side bundles)
+
 Version 0.5.1
 =============
 
