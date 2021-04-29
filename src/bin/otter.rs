@@ -575,7 +575,6 @@ impl<T:DeserializeOwned+SomeSpec> SpecParse for SpecParseToml<T> {
   }
 }
 impl<T> SpecParseToml<T> { pub fn new() -> Self { Self(default()) } }
-#[allow(dead_code)]
 struct SpecRaw<T>(pub PhantomData<T>);
 impl<T:SomeSpec> SpecParse for SpecRaw<T> {
   type T = String;
@@ -583,7 +582,6 @@ impl<T:SomeSpec> SpecParse for SpecRaw<T> {
   #[throws(AE)]
   fn parse(buf: String) -> String { buf }
 }
-#[allow(dead_code)]
 impl<T> SpecRaw<T> { pub fn new() -> Self { Self(default()) } }
 
 #[throws(AE)]
@@ -696,12 +694,8 @@ mod reset_game {
       instance_name.clone(),
       MgmtGameUpdateMode::Bulk,
     );
-    let GameSpec {
-      table_size,
-      pieces,
-      table_colour,
-      pcaliases,
-    } = read_spec(&ma, &args.game_file, SpecParseToml::new())?;
+    let spec_toml = read_spec(&ma, &args.game_file,
+                              SpecRaw::<GameSpec>::new())?;
 
     let mut insns = vec![];
 
@@ -721,25 +715,7 @@ mod reset_game {
       insns.extend(setup_table(&ma, &instance_name, &table_spec)?);
     }
 
-    let (pcs, aliases) = chan.list_pieces()?;
-    for p in pcs {
-      insns.push(MgmtGameInstruction::DeletePiece(p.piece));
-    }
-    for p in aliases {
-      insns.push(MgmtGameInstruction::DeletePieceAlias(p));
-    }
-
-    for (alias, target) in pcaliases.into_iter() {
-      insns.push(MGI::DefinePieceAlias{ alias, target });
-    }
-
-    insns.push(MGI::ClearLog);
-    insns.push(MGI::SetTableSize(table_size));
-    insns.push(MGI::SetTableColour(table_colour));
-
-    for pspec in pieces.into_iter() {
-      insns.push(MGI::AddPieces(pspec));
-    }
+    insns.push(MGI::ResetFromGameSpec { spec_toml });
 
     chan.alter_game(insns, None)?;
 

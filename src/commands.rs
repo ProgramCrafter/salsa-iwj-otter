@@ -95,6 +95,8 @@ pub enum MgmtGameInstruction {
   DeletePieceAlias(String),
   DefinePieceAlias { alias: String, target: Box<dyn PieceSpec> },
 
+  ResetFromGameSpec { spec_toml: String },
+
   ResetPlayerAccess(PlayerId),
   RedeliverPlayerAccess(PlayerId),
 
@@ -203,6 +205,8 @@ pub enum MgmtError {
   BadSpec(#[from] SpecError),
   TokenDeliveryFailed(#[from] TokenDeliveryError),
   CoordinateOverflow(#[from] CoordinateOverflow),
+  TomlSyntaxError(String),
+  TomlStructureError(String),
   RngIsReal,
 }
 impl Display for MgmtError {

@@ -451,6 +451,35 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       no_updates(ig, MGR::Fine)
     },
 
+    MGI::ResetFromGameSpec { spec_toml: spec } => {
+      let ig = cs.check_acl(&ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
+      let spec: toml::Value = spec.parse()
+        .map_err(|e: toml::de::Error| ME::TomlSyntaxError(e.to_string()))?;
+      let GameSpec {
+        pieces, table_size, table_colour, pcaliases,
+      } = toml_de::from_value(&spec)
+        .map_err(|e: toml_de::Error| ME::TomlStructureError(e.to_string()))?;
+      let mut insns = vec![];
+      for piece in ig.gs.pieces.keys() {
+        insns.push(MGI::DeletePiece(piece));
+      }
+      for (alias, target) in pcaliases.into_iter() {
+        insns.push(MGI::DefinePieceAlias{ alias, target });
+      }
+      insns.push(MGI::ClearLog);
+      insns.push(MGI::SetTableSize(table_size));
+      insns.push(MGI::SetTableColour(table_colour));
+      for pspec in pieces.into_iter() {
+        insns.push(MGI::AddPieces(pspec));
+      }
+      let html = hformat!("{} reset the game", &who);
+      (U{ pcs: vec![],
+          log: vec![ LogEntry { html } ],
+          raw: None },
+       MGR::InsnExpanded,
+       None, insns, ig)
+    }
+
     MGI::InsnMark(token) => {
       let (ig, _) = cs.check_acl(&ag,ig,PCH::Instance, &[TP::TestExistence])?;
       no_updates(ig, MGR::InsnMark(token))
