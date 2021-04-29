@@ -557,23 +557,40 @@ impl SomeSpec for TableSpec {
   const FNCOMP : &'static str = "table";
 }
 
+trait SpecParse {
+  type T;
+  type S: SomeSpec;
+  fn parse(s: String) -> Result<Self::T,AE>;
+}
+#[derive(Debug,Copy,Clone)]
+struct SpecParseToml<T>(pub PhantomData<T>);
+impl<T:DeserializeOwned+SomeSpec> SpecParse for SpecParseToml<T> {
+  type T = T;
+  type S = T;
+  #[throws(AE)]
+  fn parse(buf: String) -> T {
+    let tv: toml::Value = buf.parse().context("parse TOML")?;
+    let spec: T = toml_de::from_value(&tv).context("parse value")?;
+    spec
+  }
+}
+impl<T> SpecParseToml<T> { pub fn new() -> Self { Self(default()) } }
+
 #[throws(AE)]
-fn read_spec<T: DeserializeOwned + SomeSpec>
-  (ma: &MainOpts, specname: &str) -> T
+fn read_spec<P:SpecParse>(ma: &MainOpts, specname: &str, _: P) -> P::T
 {
   let filename = if specname.contains('/') {
     specname.to_string()
   } else {
-    format!("{}/{}.{}.toml", &ma.spec_dir, specname, T::FNCOMP)
+    format!("{}/{}.{}.toml", &ma.spec_dir, specname, P::S::FNCOMP)
   };
   (||{
     let mut f = File::open(&filename).context("open")?;
     let mut buf = String::new();
     f.read_to_string(&mut buf).context("read")?;
-    let tv: toml::Value = buf.parse().context("parse TOML")?;
-    let spec: T = toml_de::from_value(&tv).context("parse value")?;
+    let spec = P::parse(buf)?;
     Ok::<_,AE>(spec)
-  })().with_context(|| format!("read {} {:?}", T::WHAT, &filename))?
+  })().with_context(|| format!("read {} {:?}", P::S::WHAT, &filename))?
 }
 
 #[throws(AE)]
@@ -674,12 +691,12 @@ mod reset_game {
       pieces,
       table_colour,
       pcaliases,
-    } = read_spec(&ma, &args.game_file)?;
+    } = read_spec(&ma, &args.game_file, SpecParseToml::new())?;
 
     let mut insns = vec![];
 
     if let Some(table_file) = args.table_file {
-      let table_spec = read_spec(&ma, &table_file)?;
+      let table_spec = read_spec(&ma, &table_file, SpecParseToml::new())?;
       let game = chan.game.clone();
       chan.cmd(&MgmtCommand::CreateGame {
         game,
