@@ -940,7 +940,8 @@ enum SavefilenameParseResult {
   },
 }
 
-fn savefilename(name: &InstanceName, prefix: &str, suffix: &str) -> String {
+pub fn savefilename(name: &InstanceName, prefix: &str, suffix: &str)
+                    -> String {
   [ config().save_dir().as_str(), &"/", prefix ]
     .iter().map(Deref::deref)
     .chain(iter::once( name.to_string().as_str() ))
