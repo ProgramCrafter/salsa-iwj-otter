@@ -310,10 +310,9 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     }
   };
 
-  let mut for_response = for_response.new_frame()?;
-  rmp_serde::encode::write_named(&mut for_response, &resp).context("respond")?;
-  bulk_download(&mut for_response).context("download")?;
-  for_response.finish().context("flush")?;
+  let mut wf = for_response.write_withbulk(&resp).context("respond")?;
+  bulk_download(&mut wf).context("download")?;
+  wf.finish().context("flush")?;
   Ok(())
 }
 
