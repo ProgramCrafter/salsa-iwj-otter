@@ -122,6 +122,7 @@ pub use crate::accounts::loaded_acl::{self, EffectiveACL, LoadedAcl, PermSet};
 pub use crate::accounts::*;
 pub use crate::authproofs::{self, Authorisation, Unauthorised};
 pub use crate::authproofs::AuthorisationSuperuser;
+pub use crate::bundles::{self, InstanceBundles};
 pub use crate::commands::{AccessTokenInfo, AccessTokenReport, MgmtError};
 pub use crate::commands::{MgmtCommand, MgmtResponse};
 pub use crate::commands::{MgmtGameInstruction, MgmtGameResponse};

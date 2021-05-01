@@ -36,6 +36,7 @@ pub struct InstanceWeakRef(std::sync::Weak<InstanceOuter>);
 #[derive(Debug)]
 pub struct InstanceOuter {
   c: Mutex<InstanceContainer>,
+  b: Mutex<InstanceBundles>,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize,Default)]
@@ -288,6 +289,10 @@ impl InstanceRef {
   pub fn downgrade_to_weak(&self) -> InstanceWeakRef {
     InstanceWeakRef(Arc::downgrade(&self.0))
   }
+
+  pub fn lock_bundles(&self) -> MutexGuard<'_, InstanceBundles> {
+    self.0.b.lock()
+  }
 }
 
 impl InstanceWeakRef {
@@ -309,6 +314,11 @@ impl<A> Unauthorised<InstanceRef, A> {
       c: must_not_escape.lock_even_destroying(),
       gref: must_not_escape.clone(),
     })
+  }
+
+  pub fn lock_bundles<'r>(&'r self) -> Unauthorised<MutexGuard<'r, InstanceBundles>, A> {
+    let must_not_escape = self.by_ref(Authorisation::authorise_any());
+    Unauthorised::of(must_not_escape.lock_bundles())
   }
 }
 
@@ -343,7 +353,8 @@ impl Instance {
     };
 
     let c = Mutex::new(c);
-    let gref = InstanceRef(Arc::new(InstanceOuter { c }));
+    let b = Mutex::new(InstanceBundles::new());
+    let gref = InstanceRef(Arc::new(InstanceOuter { c, b }));
     let mut ig = gref.lock()?;
 
     let entry = games.entry(name);
@@ -405,6 +416,7 @@ impl Instance {
                       mut g: MutexGuard<InstanceContainer>,
                       _: Authorisation<InstanceName>) {
     let a_savefile = savefilename(&g.g.name, "a-", "");
+    let b_dir = bundles::b_dir(&g.g.name);
 
     let g_file = savefilename(&g.g.name, "g-", "");
     fs::remove_file(&g_file).context("remove").context(g_file)?;
@@ -427,6 +439,7 @@ impl Instance {
           );
       }
       best_effort(|f| fs::remove_file(f), &a_savefile, "auth file");
+      best_effort(|f| fs::remove_dir_all(f), &b_dir, "bundles dir");
 
     })(); // <- No ?, ensures that IEFE is infallible (barring panics)
   }
@@ -931,7 +944,7 @@ impl<'ig> InstanceGuard<'ig> {
 // ---------- save/load ----------
 
 #[derive(Copy,Clone,Debug)]
-enum SaveFileOrDir { File, #[allow(dead_code)]/*xxx*/ Dir }
+enum SaveFileOrDir { File, Dir }
 
 impl SaveFileOrDir {
   #[throws(io::Error)]
@@ -968,6 +981,7 @@ fn savefilename_parse(leaf: &[u8]) -> SavefilenameParseResult {
   use SavefilenameParseResult::*;
 
   if leaf.starts_with(b"a-") { return Auxiliary(SaveFileOrDir::File) }
+  if leaf.starts_with(b"b-") { return Auxiliary(SaveFileOrDir::Dir ) }
   let rhs = match leaf.strip_prefix(b"g-") {
     Some(rhs) => rhs,
     None => return NotGameFile,
@@ -979,7 +993,7 @@ fn savefilename_parse(leaf: &[u8]) -> SavefilenameParseResult {
 
   let name = InstanceName::from_str(&rhs)?;
 
-  let aux_leaves = [ b"a-" ].iter().map(|prefix| {
+  let aux_leaves = [ b"a-", b"b-" ].iter().map(|prefix| {
     let mut s: Vec<_> = (prefix[..]).into(); s.extend(after_ftype_prefix); s
   }).collect();
   GameFile { name, aux_leaves }
@@ -1130,7 +1144,7 @@ impl InstanceGuard<'_> {
       (tokens, accounts.bulk_check(&acctids))
     };
 
-    let g = Instance {
+    let mut g = Instance {
       gs, iplayers, links,
       acl: acl.into(),
       ipieces: IPieces(ipieces),
@@ -1141,6 +1155,10 @@ impl InstanceGuard<'_> {
       tokens_clients: default(),
       tokens_players: default(),
     };
+
+    let b = InstanceBundles::load_game_bundles(&mut g)?;
+    let b = Mutex::new(b);
+
     let c = InstanceContainer {
       live: true,
       game_dirty: false,
@@ -1148,7 +1166,7 @@ impl InstanceGuard<'_> {
       g,
     };
     let c = Mutex::new(c);
-    let gref = InstanceRef(Arc::new(InstanceOuter { c }));
+    let gref = InstanceRef(Arc::new(InstanceOuter { c, b }));
     let mut g = gref.lock().unwrap();
 
     let ig = &mut *g;

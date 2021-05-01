@@ -11,6 +11,7 @@ pub mod prelude;
 
 pub mod accounts;
 pub mod authproofs;
+pub mod bundles;
 pub mod clock;
 pub mod commands;
 pub mod config;

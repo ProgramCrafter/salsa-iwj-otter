@@ -68,7 +68,7 @@ type PCH = PermissionCheckHow;
 
 //#[throws(CSE)]
 fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
-                            _bulk_upload: ReadFrame<R>,
+                            mut bulk_upload: ReadFrame<R>,
                             mut for_response: WriteFrame<W>)
                             -> Result<(), CSE>
   where R: Read, W: Write
@@ -212,6 +212,28 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
         })?;
 
       resp
+    }
+
+    MC::UploadBundle { game, hash, kind } => {
+      let (mut upload, auth) = {
+        let ag = AccountsGuard::lock();
+        let gref = Instance::lookup_by_name_unauth(&game)?;
+        let bundles = gref.lock_bundles();
+        let mut igu = gref.lock()?;
+        let (ig, auth) = cs.check_acl(&ag, &mut igu, PCH::Instance,
+                                      &[TP::UploadBundles])?;
+        let mut bundles = bundles.by(auth);
+        let upload = bundles.start_upload(ig, kind)?;
+        (upload, auth)
+      };
+      upload.bulk(&mut bulk_upload)?;
+      {
+        let gref = Instance::lookup_by_name(&game, auth)?;
+        let mut bundles = gref.lock_bundles();
+        let mut ig = gref.lock()?;
+        bundles.finish_upload(&mut ig, upload, &hash)?;
+      };
+      Fine
     }
 
     MC::ListGames { all } => {

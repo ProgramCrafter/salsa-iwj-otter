@@ -42,6 +42,8 @@ pub enum InternalError {
   MessagePackEncodeFail(#[from] rmp_serde::encode::Error),
   #[error("Server MessagePack decoding error (game load failed) {0}")]
   MessagePackDecodeFail(#[from] rmp_serde::decode::Error),
+  #[error("Duplicate bundle: {index} {kinds:?}")]
+  DuplicateBundle { index: bundles::Index, kinds: [bundles::Kind;2] },
   #[error("Server internal logic error {0}")]
   InternalLogicError(InternalLogicError),
   #[error("SVG processing/generation error {0:?}")]

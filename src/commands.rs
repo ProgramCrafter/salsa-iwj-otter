@@ -37,6 +37,26 @@ pub enum MgmtCommand {
     game: InstanceName,
   },
 
+  /*
+  ClearBundles {
+    game: InstanceName,
+  },*/
+  UploadBundle {
+    game: InstanceName,
+    hash: bundles::Hash,
+    kind: bundles::Kind,
+  },
+  /*
+  ListBundles {
+    game: InstanceName,
+  },
+  DownloadBundle {
+    game: InstanceName,
+    index: bundles::Index,
+    kind: bundles::Kind,
+  },
+  */
+
   LibraryListByGlob {
     glob: shapelib::ItemSpec,
   },
@@ -208,6 +228,9 @@ pub enum MgmtError {
   TomlSyntaxError(String),
   TomlStructureError(String),
   RngIsReal,
+  UploadCorrupted,
+  TooManyBundles,
+  BadBundle(String),
 }
 impl Display for MgmtError {
   #[throws(fmt::Error)]

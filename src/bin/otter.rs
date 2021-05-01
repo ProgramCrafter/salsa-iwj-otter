@@ -513,6 +513,7 @@ const PLAYER_ALWAYS_PERMS: &[TablePermission] = &[
 
 const PLAYER_DEFAULT_PERMS: &[TablePermission] = &[
   TP::ChangePieces,
+  TP::UploadBundles,
 ];
 
 #[throws(AE)]

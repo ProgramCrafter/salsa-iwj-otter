@@ -85,6 +85,13 @@ pub enum SpecError {
 }
 display_as_debug!{SpecError}
 
+//---------- Bundle "otter.toml" file ----------
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct BundleMeta {
+  pub title: String,
+}
+
 //---------- Table TOML file ----------
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -128,6 +135,7 @@ pub enum TablePermission {
   ViewNotSecret,
   Play,
   ChangePieces,
+  UploadBundles,
   SetLinks,
   ResetOthersAccess,
   RedeliverOthersAccess,
