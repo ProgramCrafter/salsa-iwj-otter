@@ -559,12 +559,51 @@ impl<D: Digest, R: Read> Read for DigestRead<D, R> {
 #[test]
 fn test_digest_read() {
   let ibuffer = b"abc";
+  let exp = Sha512Trunc256::digest(&ibuffer[..]);
   let inner = &ibuffer[..];
   let mut dr = DigestRead::<Sha512Trunc256,_>::new(inner);
   let mut obuffer = [0;4];
   assert_eq!( dr.read(&mut obuffer).unwrap(), 3 );
   assert_eq!( &obuffer, b"abc\0" );
   let got = dr.finish();
-  let exp = Sha512Trunc256::digest(&ibuffer[..]);
   assert_eq!( got, exp );
+}
+
+#[derive(Debug,Copy,Clone)]
+pub struct DigestWrite<D: Digest, W: Write> {
+  d: D,
+  w: W,
+}
+
+impl<D: Digest, W: Write> DigestWrite<D, W> {
+  pub fn new(w: W) -> Self { DigestWrite { w, d: D::new() } }
+  pub fn into_inner(self) -> (D, W) { (self.d, self.w) }
+  pub fn finish(self) -> (digest::Output<D>, W) {
+    (self.d.finalize(), self.w)
+  }
+}
+
+impl<D: Digest, W: Write> Write for DigestWrite<D, W> {
+  #[throws(io::Error)]
+  fn write(&mut self, buf: &[u8]) -> usize {
+    let count = self.w.write(buf)?;
+    self.d.update(&buf[0..count]);
+    count
+  }
+  #[throws(io::Error)]
+  fn flush(&mut self) { self.w.flush()? }
+}
+
+#[test]
+fn test_digest_write() {
+  let ibuffer = b"xyz";
+  let exp = Sha512Trunc256::digest(&ibuffer[..]);
+  let mut obuffer = [0;4];
+  let inner = &mut obuffer[..];
+  let mut dw = DigestWrite::<Sha512Trunc256,_>::new(inner);
+  assert_eq!( dw.write(&ibuffer[..]).unwrap(), 3);
+  let (got, recov) = dw.finish();
+  assert_eq!( recov, b"\0" );
+  assert_eq!( got, exp );
+  assert_eq!( &obuffer, b"xyz\0" );
 }
