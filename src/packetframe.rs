@@ -263,7 +263,26 @@ impl<R:Read> FrameReader<R> {
         Err(RHE::IO(e)) => throw!(e),
       }
     }
-  }   
+  }
+
+  #[throws(MgmtChannelReadError)]
+  pub fn read_withbulk<'c,T>(&'c mut self) -> (T, ReadFrame<impl Read + 'c>)
+  where T: DeserializeOwned + Debug
+  {
+    use MgmtChannelReadError::*;
+    let mut f = self.new_frame()?.ok_or(MgmtChannelReadError::EOF)?;
+    let r = rmp_serde::decode::from_read(&mut f);
+    let v = r.map_err(|e| Parse(format!("{}", &e)))?;
+    trace!("read OK {:?}", &v);
+    (v, f)
+  }
+
+  #[throws(MgmtChannelReadError)]
+  pub fn read<T>(&mut self) -> T
+  where T: DeserializeOwned + Debug
+  {
+    self.read_withbulk()?.0
+  }
 }
 
 trait ReadOutput {
@@ -323,6 +342,25 @@ impl<W:Write> FrameWriter<W> {
       self.in_frame = None;
       self.inner.flush()?;
     }
+  }
+
+  #[throws(MgmtChannelWriteError)]
+  pub fn write_withbulk<'c,T>(&'c mut self, val: &T)
+                              -> WriteFrame<impl Write + 'c>
+  where T: Serialize + Debug
+  {
+    let mut f = self.new_frame()?;
+    rmp_serde::encode::write_named(&mut f, val)?;
+    trace!("writing {:?}", val);
+    f
+  }
+
+  #[throws(MgmtChannelWriteError)]
+  pub fn write<T>(&mut self, val: &T)
+  where T: Serialize + Debug
+  {
+    let f = self.write_withbulk(val)?;
+    f.finish()?;
   }
 }
 

@@ -1153,7 +1153,7 @@ impl CommandStream<'_> {
   pub fn mainloop(mut self) {
     loop {
       use MgmtChannelReadError::*;
-      let resp = match self.chan.read::<MgmtCommand>() {
+      let resp = match self.chan.read.read::<MgmtCommand>() {
         Ok(cmd) => {
           let mut cmd_s = log_enabled!(log::Level::Info)
             .as_some_from(|| format!("{:?}", &cmd))
@@ -1180,7 +1180,7 @@ impl CommandStream<'_> {
         Err(IO(e)) => Err(e).context("read command stream")?,
         Err(Parse(s)) => MgmtResponse::Error { error: ME::ParseFailed(s) },
       };
-      self.chan.write(&resp).context("swrite command stream")?;
+      self.chan.write.write(&resp).context("swrite command stream")?;
     }
   }
 }

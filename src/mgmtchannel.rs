@@ -35,8 +35,8 @@ impl From<rmp_serde::encode::Error> for MgmtChannelWriteError {
 }
 
 pub struct MgmtChannel {
-  read:  FrameReader<BufReader<Box<dyn Read >>>,
-  write: FrameWriter<BufWriter<Box<dyn Write>>>,
+  pub read:  FrameReader<BufReader<Box<dyn Read >>>,
+  pub write: FrameWriter<BufWriter<Box<dyn Write>>>,
 }
 
 impl Debug for MgmtChannel{ 
@@ -68,49 +68,11 @@ impl MgmtChannel {
     MgmtChannel { read, write }
   }
 
-  #[throws(MgmtChannelReadError)]
-  pub fn read_withbulk<'c,T>(&'c mut self) -> (T, ReadFrame<impl Read + 'c>)
-  where T: DeserializeOwned + Debug
-  {
-    use MgmtChannelReadError::*;
-    let mut f = self.read.new_frame()?.ok_or(MgmtChannelReadError::EOF)?;
-    let r = rmp_serde::decode::from_read(&mut f);
-    let v = r.map_err(|e| Parse(format!("{}", &e)))?;
-    trace!("read OK {:?}", &v);
-    (v, f)
-  }
-
-  #[throws(MgmtChannelReadError)]
-  pub fn read<T>(&mut self) -> T
-  where T: DeserializeOwned + Debug
-  {
-    self.read_withbulk()?.0
-  }
-
-  #[throws(MgmtChannelWriteError)]
-  pub fn write_withbulk<'c,T>(&mut self, val: &T)
-                              -> WriteFrame<impl Write + 'c>
-  where T: Serialize + Debug
-  {
-    let mut f = self.write.new_frame()?;
-    rmp_serde::encode::write_named(&mut f, val)?;
-    trace!("writing {:?}", val);
-    f
-  }
-
-  #[throws(MgmtChannelWriteError)]
-  pub fn write<T>(&mut self, val: &T)
-  where T: Serialize + Debug
-  {
-    let f = self.write_withbulk(val)?;
-    f.finish()?;
-  }
-
   #[throws(AE)]
   pub fn cmd(&mut self, cmd: &MgmtCommand) -> MgmtResponse {
     use MgmtResponse::*;
-    self.write(&cmd).context("send command")?;
-    let resp = self.read().context("read response")?;
+    self.write.write(&cmd).context("send command")?;
+    let resp = self.read.read().context("read response")?;
     match &resp {
       Fine | AccountsList{..} | GamesList{..} | LibraryItems(_) => { },
       AlterGame { error: None, .. } => { },
