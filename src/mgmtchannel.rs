@@ -69,21 +69,41 @@ impl MgmtChannel {
   }
 
   #[throws(MgmtChannelReadError)]
-  pub fn read<T:DeserializeOwned+Debug>(&mut self) -> T {
+  pub fn read_withbulk<'c,T>(&'c mut self) -> (T, ReadFrame<impl Read + 'c>)
+  where T: DeserializeOwned + Debug
+  {
     use MgmtChannelReadError::*;
-    let f = self.read.new_frame()?.ok_or(MgmtChannelReadError::EOF)?;
-    let r = rmp_serde::decode::from_read(f);
+    let mut f = self.read.new_frame()?.ok_or(MgmtChannelReadError::EOF)?;
+    let r = rmp_serde::decode::from_read(&mut f);
     let v = r.map_err(|e| Parse(format!("{}", &e)))?;
     trace!("read OK {:?}", &v);
-    v
+    (v, f)
+  }
+
+  #[throws(MgmtChannelReadError)]
+  pub fn read<T>(&mut self) -> T
+  where T: DeserializeOwned + Debug
+  {
+    self.read_withbulk()?.0
   }
 
   #[throws(MgmtChannelWriteError)]
-  pub fn write<T:Serialize+Debug>(&mut self, val: &T) {
+  pub fn write_withbulk<'c,T>(&mut self, val: &T)
+                              -> WriteFrame<impl Write + 'c>
+  where T: Serialize + Debug
+  {
     let mut f = self.write.new_frame()?;
     rmp_serde::encode::write_named(&mut f, val)?;
+    trace!("writing {:?}", val);
+    f
+  }
+
+  #[throws(MgmtChannelWriteError)]
+  pub fn write<T>(&mut self, val: &T)
+  where T: Serialize + Debug
+  {
+    let f = self.write_withbulk(val)?;
     f.finish()?;
-    trace!("wrote OK {:?}", val);
   }
 
   #[throws(AE)]
