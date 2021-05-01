@@ -1311,6 +1311,57 @@ mod list_pieces {
   )}
 }
 
+//---------- upload-bundle ----------
+
+mod upload_bundle {
+  use super::*;
+
+  #[derive(Default,Debug)]
+  struct Args {
+    table_name: String,
+    bundle_file: String,
+  }
+
+  fn subargs(sa: &mut Args) -> ArgumentParser {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.table_name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
+    ap.refer(&mut sa.bundle_file).required()
+      .add_argument("BUNDLE",Store,"bundle file");
+    ap
+  }
+
+  #[throws(AE)]
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
+    let instance_name = ma.instance_name(&args.table_name);
+    let mut chan = access_game(&ma, &args.table_name)?;
+    let f = File::open(&args.bundle_file)
+      .with_context(|| args.bundle_file.clone())
+      .context("open bundle file")?;
+    let mut f = BufReader::new(f);
+    let hash = {
+      let mut dw = DigestWrite::<bundles::Digester,_>::new(io::sink());
+      io::copy(&mut f, &mut dw).context("read bundle file (for hash)")?;
+      dw.finish().0
+    };
+    let kind = bundles::Kind::Zip;
+    f.seek(io::SeekFrom::Start(0)).context("rewind bundle file")?;
+    let cmd = MC::UploadBundle {
+      game: instance_name.clone(),
+      hash: bundles::Hash(hash.into()), kind,
+    };
+    chan.cmd_withbulk(&cmd, &mut f, &mut io::sink())?;
+  }
+
+  inventory::submit!{Subcommand(
+    "upload-bundle",
+    "Upload a bundle",
+    call,
+  )}
+}
+
 //---------- list-accounts ----------
 
 mod list_accounts {
