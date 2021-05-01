@@ -414,17 +414,21 @@ impl Instance {
       games.remove(&g.g.name);
       InstanceGuard::forget_all_tokens(&mut g.g.tokens_clients);
       InstanceGuard::forget_all_tokens(&mut g.g.tokens_players);
-    })(); // <- No ?, ensures that IEFE is infallible (barring panics)
 
-    (||{ // Best effort:
-      fs::remove_file(&a_savefile)
-    })()
-      .unwrap_or_else(
-        |e| warn!("failed to delete stale auth file {:?}: {:?}",
-                  &a_savefile, e)
-        // apart from that, ignore the error
-        // load_games will clean it up later.
-      );
+      fn best_effort<F>(rm: F, path: &str, desc: &str)
+      where F: FnOnce(&str) -> Result<(), io::Error>
+      {
+        rm(path)
+          .unwrap_or_else(
+            |e| warn!("failed to delete stale {} {:?}: {:?}",
+                      desc, path, e)
+            // apart from that, ignore the error
+            // load_games will clean it up later.
+          );
+      }
+      best_effort(|f| fs::remove_file(f), &a_savefile, "auth file");
+
+    })(); // <- No ?, ensures that IEFE is infallible (barring panics)
   }
 
   pub fn list_names(account: Option<&AccountName>,
