@@ -532,3 +532,39 @@ entry_define_insert_remove!{
   slotmap::sparse_secondary::Entry,
   key
 }
+
+#[derive(Debug,Copy,Clone)]
+pub struct DigestRead<D: Digest, R: Read> {
+  d: D,
+  r: R,
+}
+
+impl<D: Digest, R: Read> DigestRead<D, R> {
+  pub fn new(r: R) -> Self { DigestRead { r, d: D::new() } }
+  pub fn into_inner(self) -> (D, R) { (self.d, self.r) }
+  pub fn finish(self) -> digest::Output<D> {
+    self.d.finalize()
+  }
+}
+
+impl<D: Digest, R: Read> Read for DigestRead<D, R> {
+  #[throws(io::Error)]
+  fn read(&mut self, buf: &mut [u8]) -> usize {
+    let count = self.r.read(buf)?;
+    self.d.update(&buf[0..count]);
+    count
+  }
+}
+
+#[test]
+fn test_digest_read() {
+  let ibuffer = b"abc";
+  let inner = &ibuffer[..];
+  let mut dr = DigestRead::<Sha512Trunc256,_>::new(inner);
+  let mut obuffer = [0;4];
+  assert_eq!( dr.read(&mut obuffer).unwrap(), 3 );
+  assert_eq!( &obuffer, b"abc\0" );
+  let got = dr.finish();
+  let exp = Sha512Trunc256::digest(&ibuffer[..]);
+  assert_eq!( got, exp );
+}
