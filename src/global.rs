@@ -28,10 +28,15 @@ pub struct InstanceName {
 }
 
 #[derive(Debug,Clone)]
-pub struct InstanceRef (Arc<Mutex<InstanceContainer>>);
+pub struct InstanceRef(Arc<InstanceOuter>);
 
 #[derive(Debug,Clone)]
-pub struct InstanceWeakRef (std::sync::Weak<Mutex<InstanceContainer>>);
+pub struct InstanceWeakRef(std::sync::Weak<InstanceOuter>);
+
+#[derive(Debug)]
+pub struct InstanceOuter {
+  c: Mutex<InstanceContainer>,
+}
 
 #[derive(Debug,Clone,Serialize,Deserialize,Default)]
 #[serde(transparent)]
@@ -271,13 +276,13 @@ impl Debug for Instance {
 impl InstanceRef {
   #[throws(GameBeingDestroyed)]
   pub fn lock(&self) -> InstanceGuard<'_> {
-    let c = self.0.lock();
+    let c = self.0.c.lock();
     if !c.live { throw!(GameBeingDestroyed) }
     InstanceGuard { c, gref: self.clone() }
   }
 
   pub fn lock_even_destroying(&self) -> MutexGuard<InstanceContainer> {
-    self.0.lock()
+    self.0.c.lock()
   }
 
   pub fn downgrade_to_weak(&self) -> InstanceWeakRef {
@@ -337,7 +342,7 @@ impl Instance {
       g,
     };
 
-    let gref = InstanceRef(Arc::new(Mutex::new(cont)));
+    let gref = InstanceRef(Arc::new(InstanceOuter { c: Mutex::new(cont) }));
     let mut ig = gref.lock()?;
 
     let entry = games.entry(name);
@@ -1122,7 +1127,7 @@ impl InstanceGuard<'_> {
       aux_dirty: false,
       g,
     };
-    let gref = InstanceRef(Arc::new(Mutex::new(cont)));
+    let gref = InstanceRef(Arc::new(InstanceOuter { c: Mutex::new(cont) }));
     let mut g = gref.lock().unwrap();
 
     let ig = &mut *g;
