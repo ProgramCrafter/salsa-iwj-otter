@@ -69,7 +69,7 @@ type PCH = PermissionCheckHow;
 //#[throws(CSE)]
 fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
                             mut bulk_upload: ReadFrame<R>,
-                            mut for_response: WriteFrame<W>)
+                            for_response: &mut FrameWriter<W>)
                             -> Result<(), CSE>
   where R: Read, W: Write
 {
@@ -310,6 +310,7 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     }
   };
 
+  let mut for_response = for_response.new_frame()?;
   rmp_serde::encode::write_named(&mut for_response, &resp).context("respond")?;
   bulk_download(&mut for_response).context("download")?;
   for_response.finish().context("flush")?;
@@ -1213,8 +1214,7 @@ impl CommandStream<'_> {
       use MgmtChannelReadError::*;
       match self.chan.read.read_withbulk::<MgmtCommand>() {
         Ok((cmd, rbulk)) => {
-          let wf = self.chan.write.new_frame()?;
-          execute_and_respond(&mut self.d, cmd, rbulk, wf)?;
+          execute_and_respond(&mut self.d, cmd, rbulk, &mut self.chan.write)?;
         },
         Err(EOF) => break,
         Err(IO(e)) => Err(e).context("read command stream")?,
