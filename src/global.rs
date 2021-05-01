@@ -930,12 +930,26 @@ impl<'ig> InstanceGuard<'ig> {
 
 // ---------- save/load ----------
 
+#[derive(Copy,Clone,Debug)]
+enum SaveFileOrDir { File, #[allow(dead_code)]/*xxx*/ Dir }
+
+impl SaveFileOrDir {
+  #[throws(io::Error)]
+  fn remove<P:AsRef<std::path::Path>>(self, path: P) {
+    match self {
+      SaveFileOrDir::File => fs::remove_file(path)?,
+      SaveFileOrDir::Dir  => fs::remove_dir_all(path)?,
+    }
+  }
+}
+
+#[derive(Debug)]
 enum SavefilenameParseResult {
   NotGameFile,
-  AuxiliaryFile,
+  Auxiliary(SaveFileOrDir),
   TempToDelete,
   GameFile {
-    aux_leaf: Vec<u8>,
+    aux_leaves: Vec<Vec<u8>>,
     name: InstanceName,
   },
 }
@@ -953,7 +967,7 @@ pub fn savefilename(name: &InstanceName, prefix: &str, suffix: &str)
 fn savefilename_parse(leaf: &[u8]) -> SavefilenameParseResult {
   use SavefilenameParseResult::*;
 
-  if leaf.starts_with(b"a-") { return AuxiliaryFile }
+  if leaf.starts_with(b"a-") { return Auxiliary(SaveFileOrDir::File) }
   let rhs = match leaf.strip_prefix(b"g-") {
     Some(rhs) => rhs,
     None => return NotGameFile,
@@ -965,10 +979,10 @@ fn savefilename_parse(leaf: &[u8]) -> SavefilenameParseResult {
 
   let name = InstanceName::from_str(&rhs)?;
 
-  GameFile {
-    aux_leaf: [ b"a-", after_ftype_prefix ].concat(),
-    name,
-  }
+  let aux_leaves = [ b"a-" ].iter().map(|prefix| {
+    let mut s: Vec<_> = (prefix[..]).into(); s.extend(after_ftype_prefix); s
+  }).collect();
+  GameFile { name, aux_leaves }
 }
 
 impl InstanceGuard<'_> {
@@ -1169,7 +1183,7 @@ impl InstanceGuard<'_> {
 #[throws(anyhow::Error)]
 pub fn load_games(accounts: &mut AccountsGuard,
                   games: &mut GamesGuard) {
-  enum AFState { Found(PathBuf), Used }
+  enum AFState { Found(PathBuf, SaveFileOrDir), Used }
   use AFState::*;
   use SavefilenameParseResult::*;
   let mut a_leaves = HashMap::new();
@@ -1186,14 +1200,16 @@ pub fn load_games(accounts: &mut AccountsGuard,
           fs::remove_file(de.path())
             .context("stale temporary file")?;
         }
-        AuxiliaryFile => {
+        Auxiliary(fd) => {
           a_leaves.entry(leaf.to_owned()).or_insert_with(
-            || Found(de.path())
+            || Found(de.path(), fd)
           );
         }
-        GameFile { aux_leaf, name } => {
+        GameFile { aux_leaves, name } => {
           InstanceGuard::load_game(accounts, games, name)?;
-          a_leaves.insert(aux_leaf, Used);
+          for aux_leaf in aux_leaves {
+            a_leaves.insert(aux_leaf, Used);
+          }
         }
       }
       <Result<_,anyhow::Error>>::Ok(())
@@ -1201,8 +1217,8 @@ pub fn load_games(accounts: &mut AccountsGuard,
   }
   (||{
     for (leaf, state) in &a_leaves {
-      if let Found(path) = state {
-        fs::remove_file(&path)
+      if let Found(path, fd) = state {
+        fd.remove(&path)
           .with_context(|| format!("leaf={:?}", leaf))?;
       }
     }
