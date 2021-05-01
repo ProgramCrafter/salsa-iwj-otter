@@ -36,11 +36,15 @@ pub struct CommandListener {
 }
 
 struct CommandStream<'d> {
+  chan: MgmtChannel,
+  d: CommandStreamData<'d>,
+}
+
+struct CommandStreamData<'d> {
   euid: Result<Uid, ConnectionEuidDiscoverEerror>,
   desc: &'d str,
   account: Option<AccountSpecified>,
   superuser: Option<AuthorisationSuperuser>,
-  chan: MgmtChannel,
 }
 
 #[derive(Debug,Clone)]
@@ -63,7 +67,7 @@ type PCH = PermissionCheckHow;
 // ---------- management command implementations
 
 #[throws(ME)]
-fn execute(cs: &mut CommandStream, cmd: MgmtCommand) -> MgmtResponse {
+fn execute(cs: &mut CommandStreamData, cmd: MgmtCommand) -> MgmtResponse {
   match cmd {
     MC::Noop => Fine,
 
@@ -268,7 +272,7 @@ type ExecuteGameInsnResults<'igr, 'ig> = (
 
 //#[throws(ME)]
 fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
-  cs: &'cs CommandStream,
+  cs: &'cs CommandStreamData,
   ag: &'_ mut AccountsGuard,
   ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
   update: MgmtGameInstruction,
@@ -296,7 +300,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
               P: Into<PermSet<TablePermission>>>
   
     (
-      cs: &'cs CommandStream,
+      cs: &'cs CommandStreamData,
       ag: &AccountsGuard,
       ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
       p: P,
@@ -312,7 +316,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   fn pieceid_lookup<'igr, 'ig: 'igr, 'cs, 
                     F: FnOnce(&PerPlayerIdMap) -> MGR>
     (
-      cs: &'cs CommandStream,
+      cs: &'cs CommandStreamData,
       ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
       player: PlayerId,
       f: F,
@@ -339,7 +343,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   fn update_links<'igr, 'ig: 'igr, 'cs,
                F: FnOnce(&mut Arc<LinksTable>) -> Result<Html,ME>>
     (
-      cs: &'cs CommandStream,
+      cs: &'cs CommandStreamData,
       ag: &'_ mut AccountsGuard,
       ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
       f: F
@@ -354,7 +358,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
      Fine, None, vec![], ig)
   }
 
-  impl<'cs> CommandStream<'cs> {
+  impl<'cs> CommandStreamData<'cs> {
     #[throws(MgmtError)]
     fn check_acl_manip_player_access<'igr, 'ig: 'igr>(
       &self,
@@ -923,7 +927,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
 #[throws(ME)]
 fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
-  cs: &'cs CommandStream,
+  cs: &'cs CommandStreamData,
   ag: &mut AccountsGuard,
   igu: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
   insns: Vec<MgmtGameInstruction>,
@@ -1159,15 +1163,15 @@ impl CommandStream<'_> {
             cmd_s.truncate(MAX-3);
             cmd_s += "..";
           }
-          match execute(&mut self, cmd) {
+          match execute(&mut self.d, cmd) {
             Ok(resp) => {
               info!("command connection {}: executed {}",
-                    &self.desc, cmd_s);
+                    &self.d.desc, cmd_s);
               resp
             }
             Err(error) => {
               info!("command connection {}: error {:?} from {}",
-                    &self.desc, &error, cmd_s);
+                    &self.d.desc, &error, cmd_s);
               MgmtResponse::Error { error }
             }
           }
@@ -1179,7 +1183,9 @@ impl CommandStream<'_> {
       self.chan.write(&resp).context("swrite command stream")?;
     }
   }
+}
 
+impl CommandStreamData<'_> {
   #[throws(MgmtError)]
   fn current_account(&self) -> &AccountSpecified {
     self.account.as_ref().ok_or(ME::SpecifyAccount)?
@@ -1245,11 +1251,12 @@ impl CommandListener {
 
         let chan = MgmtChannel::new(conn)?;
 
-        let cs = CommandStream {
+        let d = CommandStreamData {
           account: None, desc: &desc,
-          chan, euid: euid.map(Uid::from_raw),
+          euid: euid.map(Uid::from_raw),
           superuser: None,
         };
+        let cs = CommandStream { chan, d };
         cs.mainloop()?;
         
         <Result<_,StartupError>>::Ok(())
@@ -1273,7 +1280,7 @@ impl From<ConnectionEuidDiscoverEerror> for AuthorisationError {
   }
 }
 
-impl CommandStream<'_> {
+impl CommandStreamData<'_> {
   #[throws(AuthorisationError)]
   fn authorised_uid(&self, wanted: Option<Uid>, xinfo: Option<&str>)
                     -> Authorisation<Uid> {
@@ -1297,7 +1304,7 @@ impl CommandStream<'_> {
   }
 }
 
-impl CommandStream<'_> {
+impl CommandStreamData<'_> {
   pub fn is_superuser<T:Serialize>(&self) -> Option<Authorisation<T>> {
     self.superuser.map(Into::into)
   }
@@ -1347,7 +1354,7 @@ impl CommandStream<'_> {
     p: P,
   ) -> (&'igr mut InstanceGuard<'ig>, Authorisation<InstanceName>) {
     #[throws(MgmtError)]
-    fn get_auth(cs: &CommandStream,
+    fn get_auth(cs: &CommandStreamData,
                 ag: &AccountsGuard,
                 ig: &mut Unauthorised<InstanceGuard, InstanceName>,
                 how: PermissionCheckHow,
@@ -1418,7 +1425,7 @@ impl CommandStream<'_> {
 
 #[throws(MgmtError)]
 fn authorise_for_account(
-  cs: &CommandStream,
+  cs: &CommandStreamData,
   _accounts: &AccountsGuard,
   wanted: &AccountName,
 ) -> Authorisation<AccountName> {
@@ -1434,7 +1441,7 @@ fn authorise_for_account(
 }
 
 #[throws(MgmtError)]
-fn authorise_by_account(cs: &CommandStream, ag: &AccountsGuard,
+fn authorise_by_account(cs: &CommandStreamData, ag: &AccountsGuard,
                         wanted: &InstanceName)
                         -> Authorisation<InstanceName> {
   let account = &wanted.account;
@@ -1444,7 +1451,7 @@ fn authorise_by_account(cs: &CommandStream, ag: &AccountsGuard,
 }
 
 #[throws(MgmtError)]
-fn authorise_scope_direct(cs: &CommandStream, wanted: &AccountScope)
+fn authorise_scope_direct(cs: &CommandStreamData, wanted: &AccountScope)
                           -> Authorisation<AccountScope> {
   // Usually, use authorise_by_account
   do_authorise_scope(cs, wanted)
@@ -1452,7 +1459,7 @@ fn authorise_scope_direct(cs: &CommandStream, wanted: &AccountScope)
 }
 
 #[throws(AuthorisationError)]
-fn do_authorise_scope(cs: &CommandStream, wanted: &AccountScope)
+fn do_authorise_scope(cs: &CommandStreamData, wanted: &AccountScope)
                    -> Authorisation<AccountScope> {
   if let Some(y) = cs.is_superuser() { return y }
 
