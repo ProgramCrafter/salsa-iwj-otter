@@ -66,9 +66,27 @@ type PCH = PermissionCheckHow;
 
 // ---------- management command implementations
 
-#[throws(ME)]
-fn execute(cs: &mut CommandStreamData, cmd: MgmtCommand) -> MgmtResponse {
-  match cmd {
+//#[throws(CSE)]
+fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
+                            _bulk_upload: ReadFrame<R>,
+                            mut for_response: WriteFrame<W>)
+                            -> Result<(), CSE>
+  where R: Read, W: Write
+{
+  let /*mut*/ bulk_download:
+    &mut dyn FnMut(&mut dyn Write) -> Result<(),MgmtChannelWriteError>
+    = &mut |_| Ok(());
+
+  let mut cmd_s = log_enabled!(log::Level::Info)
+    .as_some_from(|| format!("{:?}", &cmd))
+    .unwrap_or_default();
+  const MAX: usize = 200;
+  if cmd_s.len() > MAX-3 {
+    cmd_s.truncate(MAX-3);
+    cmd_s += "..";
+  }
+
+  let resp = (|| Ok::<_,MgmtError>(match cmd {
     MC::Noop => Fine,
 
     MC::SetSuperuser(enable) => {
@@ -255,7 +273,25 @@ fn execute(cs: &mut CommandStreamData, cmd: MgmtCommand) -> MgmtResponse {
       config().game_rng.set_fake(ents, superuser)?;
       Fine
     }
-  }
+  }))();
+
+  let resp = match resp {
+    Ok(resp) => {
+      info!("command connection {}: executed {}",
+            &cs.desc, cmd_s);
+      resp
+    }
+    Err(error) => {
+      info!("command connection {}: error {:?} from {}",
+            &cs.desc, &error, cmd_s);
+      MgmtResponse::Error { error }
+    }
+  };
+
+  rmp_serde::encode::write_named(&mut for_response, &resp).context("respond")?;
+  bulk_download(&mut for_response).context("download")?;
+  for_response.finish().context("flush")?;
+  Ok(())
 }
 
 // ---------- game command implementations ----------
@@ -1153,34 +1189,18 @@ impl CommandStream<'_> {
   pub fn mainloop(mut self) {
     loop {
       use MgmtChannelReadError::*;
-      let resp = match self.chan.read.read::<MgmtCommand>() {
-        Ok(cmd) => {
-          let mut cmd_s = log_enabled!(log::Level::Info)
-            .as_some_from(|| format!("{:?}", &cmd))
-            .unwrap_or_default();
-          const MAX: usize = 200;
-          if cmd_s.len() > MAX-3 {
-            cmd_s.truncate(MAX-3);
-            cmd_s += "..";
-          }
-          match execute(&mut self.d, cmd) {
-            Ok(resp) => {
-              info!("command connection {}: executed {}",
-                    &self.d.desc, cmd_s);
-              resp
-            }
-            Err(error) => {
-              info!("command connection {}: error {:?} from {}",
-                    &self.d.desc, &error, cmd_s);
-              MgmtResponse::Error { error }
-            }
-          }
-        }
+      match self.chan.read.read_withbulk::<MgmtCommand>() {
+        Ok((cmd, rbulk)) => {
+          let wf = self.chan.write.new_frame()?;
+          execute_and_respond(&mut self.d, cmd, rbulk, wf)?;
+        },
         Err(EOF) => break,
         Err(IO(e)) => Err(e).context("read command stream")?,
-        Err(Parse(s)) => MgmtResponse::Error { error: ME::ParseFailed(s) },
-      };
-      self.chan.write.write(&resp).context("swrite command stream")?;
+        Err(Parse(s)) => {
+          let resp = MgmtResponse::Error { error: ME::ParseFailed(s) };
+          self.chan.write.write(&resp).context("swrite command stream")?;
+        }
+      }
     }
   }
 }
