@@ -69,10 +69,16 @@ impl MgmtChannel {
   }
 
   #[throws(AE)]
-  pub fn cmd(&mut self, cmd: &MgmtCommand) -> MgmtResponse {
+  pub fn cmd_withbulk<U,D>(&mut self, cmd: &MgmtCommand,
+                           up: &mut U, down: &mut D)
+                           -> MgmtResponse
+  where U: Read, D: Write
+  {
     use MgmtResponse::*;
-    self.write.write(&cmd).context("send command")?;
-    let resp = self.read.read().context("read response")?;
+    let mut wbulk = self.write.write_withbulk(&cmd).context("send command")?;
+    io::copy(up,&mut wbulk).context("copy bulk upload")?;
+    wbulk.finish().context("finish sending command and data")?;
+    let (resp, mut rbulk)= self.read.read_withbulk().context("read response")?;
     match &resp {
       Fine | AccountsList{..} | GamesList{..} | LibraryItems(_) => { },
       AlterGame { error: None, .. } => { },
@@ -95,7 +101,14 @@ impl MgmtChannel {
         ))?;
       }
     };
+
+    io::copy(&mut rbulk, down).context("copy bulk download")?;
     resp
+  }
+
+  #[throws(AE)]
+  pub fn cmd(&mut self, cmd: &MgmtCommand) -> MgmtResponse {
+    self.cmd_withbulk(cmd, &mut io::empty(), &mut io::sink())?
   }
 
   #[throws(AE)]
