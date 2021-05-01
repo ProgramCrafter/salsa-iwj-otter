@@ -83,7 +83,6 @@ impl MgmtChannel {
     let mut f = self.write.new_frame()?;
     rmp_serde::encode::write_named(&mut f, val)?;
     f.finish()?;
-    self.write.flush()?;
     trace!("wrote OK {:?}", val);
   }
 

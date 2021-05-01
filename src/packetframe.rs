@@ -321,6 +321,7 @@ impl<W:Write> FrameWriter<W> {
         Err(SenderError) => CHUNK_ERR,
       })?;
       self.in_frame = None;
+      self.inner.flush()?;
     }
   }
 }
