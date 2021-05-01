@@ -335,14 +335,15 @@ impl Instance {
       links: default(),
     };
 
-    let cont = InstanceContainer {
+    let c = InstanceContainer {
       live: true,
       game_dirty: false,
       aux_dirty: false,
       g,
     };
 
-    let gref = InstanceRef(Arc::new(InstanceOuter { c: Mutex::new(cont) }));
+    let c = Mutex::new(c);
+    let gref = InstanceRef(Arc::new(InstanceOuter { c }));
     let mut ig = gref.lock()?;
 
     let entry = games.entry(name);
@@ -1121,13 +1122,14 @@ impl InstanceGuard<'_> {
       tokens_clients: default(),
       tokens_players: default(),
     };
-    let cont = InstanceContainer {
+    let c = InstanceContainer {
       live: true,
       game_dirty: false,
       aux_dirty: false,
       g,
     };
-    let gref = InstanceRef(Arc::new(InstanceOuter { c: Mutex::new(cont) }));
+    let c = Mutex::new(c);
+    let gref = InstanceRef(Arc::new(InstanceOuter { c }));
     let mut g = gref.lock().unwrap();
 
     let ig = &mut *g;
