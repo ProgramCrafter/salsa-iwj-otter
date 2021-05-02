@@ -75,4 +75,12 @@ macro_rules! if_let {
       _ => { $($otherwise)* },
     };
   };
+  { $($variant:ident)::+ {$binding:ident} = $input:expr;
+    else $($otherwise:tt)*
+  } => {
+    let $binding = match $input {
+      $($variant)::+ { $binding } => $binding,
+      _ => { $($otherwise)* },
+    };
+  };
 }
