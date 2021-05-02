@@ -55,7 +55,7 @@ pub fn b_dir(instance: &InstanceName) -> String {
   savefilename(instance, "b-", "")
 }
 fn b_file<S>(instance: &InstanceName, index: Index, suffix: S) -> String
-where S: Display
+where S: Display + Debug
 {
   format!("{}/{:05}.{}",
           savefilename(instance, "b-", ""),
