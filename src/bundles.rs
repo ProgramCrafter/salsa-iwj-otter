@@ -184,8 +184,22 @@ impl InstanceBundles {
     self.bundles.push(slot);
     let id = Id { kind, index };
     let tmp = id.path_tmp(&ig.name);
-    let file = fs::File::create(&tmp)
-      .with_context(|| tmp.clone()).context("create").map_err(IE::from)?;
+
+    let file = (|| Ok::<_,AE>({
+      let mkf = || fs::File::create(&tmp);
+      match mkf() {
+        Ok(f) => f,
+        Err(e) if e.kind() == ErrorKind::NotFound => {
+          let d = b_dir(&ig.name);
+          fs::create_dir(&d).context("create containing directory")?;
+          mkf().context("crate (after creating containing directory)")?
+        }
+        e@ Err(_) => e.context("create")?,
+      }
+    }))()
+      .with_context(|| tmp.to_owned()).context("upload file")
+      .map_err(IE::from)?;
+    
     let file = BufWriter::new(file);
     let file = DigestWrite::new(file);
     let instance = ig.name.clone();
