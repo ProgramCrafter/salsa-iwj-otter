@@ -92,8 +92,10 @@ pub enum MgmtResponse {
   AccountsList(Vec<Arc<AccountName>>),
   GamesList(Vec<Arc<InstanceName>>),
   LibraryItems(Vec<shapelib::ItemEnquiryData>),
-  Bundles(bundles::MgmtList),
+  Bundles { bundles: MgmtBundleList },
 }
+
+pub type MgmtBundleList = BTreeMap<bundles::Id, bundles::State>;
 
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtGameInstruction {

@@ -1388,11 +1388,10 @@ mod list_bundles {
     let resp = chan.cmd(&MC::ListBundles {
       game: instance_name.clone(),
     })?;
-    if_let!{ MR::Bundles(bundles) = resp;
+    if_let!{ MR::Bundles { bundles } = resp;
              else throw!(anyhow!("unexpected {:?}", &resp)) };
-    for (index, note) in bundles.into_iter().enumerate() {
-      if_let!{ Some(note) = note; else continue; }
-      println!("{} {:?}", bundles::Index::try_from(index).unwrap(), &note);
+    for (id, state) in bundles {
+      println!("{} {:?}", id, &state);
     }
   }
 

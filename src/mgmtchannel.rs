@@ -81,7 +81,7 @@ impl MgmtChannel {
     let (resp, mut rbulk)= self.read.read_withbulk().context("read response")?;
     match &resp {
       Fine | AccountsList{..} | GamesList{..} |
-      LibraryItems(_) | Bundles(..) => { },
+      LibraryItems(_) | Bundles{..} => { },
       AlterGame { error: None, .. } => { },
       Error { error } => {
         Err(error.clone()).context(

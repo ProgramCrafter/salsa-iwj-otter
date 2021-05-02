@@ -250,7 +250,8 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       let (_ig, auth) = cs.check_acl(&ag, &mut igu, PCH::Instance,
                                     TP_ACCESS_BUNDLES)?;
       let bundles = bundles.by(auth);
-      MR::Bundles(bundles.list())
+      let bundles = bundles.list();
+      MR::Bundles { bundles }
     }
 
     MC::ListGames { all } => {

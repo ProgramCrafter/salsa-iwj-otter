@@ -55,8 +55,6 @@ pub struct InstanceBundles {
   bundles: Vec<Option<Note>>,
 }
 
-pub type MgmtList = Vec<Option<Note>>;
-
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct Note {
   pub kind: Kind,
@@ -180,7 +178,14 @@ fn incorporate_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
 impl InstanceBundles {
   pub fn new() -> Self { InstanceBundles{ bundles: default() } }
 
-  pub fn list(&self) -> MgmtList { self.bundles.clone() }
+  pub fn list(&self) -> MgmtBundleList {
+    self.bundles.iter().enumerate().filter_map(|(index, slot)| {
+      let note = slot.as_ref()?;
+      let index = index.try_into().unwrap();
+      Some((Id { index, kind: note.kind },
+            note.state.clone()))
+    }).collect()
+  }
 
   #[throws(IE)]
   pub fn load_game_bundles(ig: &mut Instance) -> Self {

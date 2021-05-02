@@ -126,7 +126,7 @@ pub use crate::bundles::{self, InstanceBundles};
 pub use crate::commands::{AccessTokenInfo, AccessTokenReport, MgmtError};
 pub use crate::commands::{MgmtCommand, MgmtResponse};
 pub use crate::commands::{MgmtGameInstruction, MgmtGameResponse};
-pub use crate::commands::{MgmtGameUpdateMode};
+pub use crate::commands::{MgmtBundleList, MgmtGameUpdateMode};
 pub use crate::config::*;
 pub use crate::debugreader::DebugReader;
 pub use crate::error::*;
