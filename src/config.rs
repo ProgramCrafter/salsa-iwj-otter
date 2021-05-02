@@ -67,9 +67,35 @@ pub struct ServerConfig {
   pub game_rng: RngWrap,
 }
 
+#[derive(Debug,Copy,Clone)]
+pub enum ResolveContext {
+  ForServerReal,
+  Other,
+}
+impl Default for ResolveContext {
+  fn default() -> Self { ResolveContext::Other }
+}
+impl ResolveContext {
+  #[throws(io::Error)]
+  fn chdir(self, cd: &str) {
+    use ResolveContext::*;
+    match self {
+      ForServerReal => env::set_current_dir(cd)?,
+      Other => { },
+    }
+  }
+  fn relative(self, cd: &Option<String>, leaf: &str) -> String {
+    use ResolveContext::*;
+    match (self, cd) {
+      (ForServerReal, _) | (Other, None) => leaf.to_owned(),
+      (Other, Some(cd)) => format!("{}/{}", cd, leaf),
+    }
+  }
+}
+
 impl ServerConfigSpec {
   #[throws(AE)]
-  pub fn resolve(self) -> WholeServerConfig {
+  pub fn resolve(self, rctx: ResolveContext) -> WholeServerConfig {
     let ServerConfigSpec {
       change_directory, base_dir, save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
@@ -80,16 +106,16 @@ impl ServerConfigSpec {
 
     let game_rng = fake_rng.make_game_rng();
 
-    if let Some(cd) = change_directory {
-      env::set_current_dir(&cd)
-        .context(cd)
+    if let Some(ref cd) = change_directory {
+      rctx.chdir(cd)
+        .with_context(|| cd.clone())
         .context("config change_directory")?;
     }
 
     let defpath = |specd: Option<String>, leaf: &str| -> String {
       specd.unwrap_or_else(|| match &base_dir {
         Some(base) => format!("{}/{}", &base, &leaf),
-        None       => leaf.to_owned(),
+        None       => rctx.relative(&change_directory, leaf),
       })
     };
 
@@ -212,7 +238,7 @@ impl ServerConfig {
     File::open(&config_filename).with_context(||config_filename.to_string())?
       .read_to_string(&mut buf)?;
     let spec: ServerConfigSpec = toml_de::from_str(&buf)?;
-    let whole = spec.resolve()?;
+    let whole = spec.resolve(ResolveContext::ForServerReal)?;
     set_config(whole);
   }
 
@@ -243,6 +269,6 @@ impl Default for WholeServerConfig {
       public_url = "INTERNAL ERROR"
       "#)
       .expect("parse dummy config as ServerConfigSpec");
-    spec.resolve().expect("empty spec into config")
+    spec.resolve(default()).expect("empty spec into config")
   }
 }
