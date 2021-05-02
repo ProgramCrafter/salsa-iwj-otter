@@ -84,3 +84,8 @@ macro_rules! if_let {
     };
   };
 }
+
+#[ext(pub, name=DebugExt)]
+impl<T:Debug> T {
+  fn to_debug(&self) -> String { format!("{:?}", self) }
+}
