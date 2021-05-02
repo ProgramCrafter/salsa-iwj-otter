@@ -170,6 +170,7 @@ impl InstanceBundles {
         Err(IncorporateError::IE(ie)) => throw!(ie),
       }
     }
+    debug!("loaded bundles {} {:?}", &ig.name, ib);
     ib
   }
 
