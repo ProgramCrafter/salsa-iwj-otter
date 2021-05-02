@@ -364,7 +364,7 @@ fn main() {
                          "config file", "etc", DEFAULT_CONFIG_LEAFNAME,
                          ".")
             });
-          ServerConfig::read(Some(&config_filename))
+          ServerConfig::read(Some(&config_filename), default())
             .context("read config file")?;
           Ok::<_,AE>((otter::config::config(), config_filename))
         })().map_err(|e| ArgumentParseError(

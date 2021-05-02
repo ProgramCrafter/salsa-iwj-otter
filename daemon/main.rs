@@ -262,7 +262,8 @@ fn main() {
 
   let opts = Opts::from_args();
 
-  ServerConfig::read(opts.config_filename.as_ref().map(String::as_str))?;
+  ServerConfig::read(opts.config_filename.as_ref().map(String::as_str),
+                     ResolveContext::ForServerReal)?;
 
   std::env::set_var("ROCKET_CLI_COLORS", "off");
 

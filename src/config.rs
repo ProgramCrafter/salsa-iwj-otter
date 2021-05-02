@@ -229,7 +229,7 @@ fn set_config(whole: WholeServerConfig) {
 
 impl ServerConfig {
   #[throws(StartupError)]
-  pub fn read(config_filename: Option<&str>) {
+  pub fn read(config_filename: Option<&str>, rctx: ResolveContext) {
     let config_filename = config_filename.map(|s| s.to_string())
       .unwrap_or_else(
         || format!("{}/{}", DEFAULT_CONFIG_DIR, DEFAULT_CONFIG_LEAFNAME)
@@ -238,7 +238,7 @@ impl ServerConfig {
     File::open(&config_filename).with_context(||config_filename.to_string())?
       .read_to_string(&mut buf)?;
     let spec: ServerConfigSpec = toml_de::from_str(&buf)?;
-    let whole = spec.resolve(ResolveContext::ForServerReal)?;
+    let whole = spec.resolve(rctx)?;
     set_config(whole);
   }
 
