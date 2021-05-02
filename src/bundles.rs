@@ -17,6 +17,7 @@ pub enum Kind {
   #[strum(to_string="zip")]       Zip,
 //  #[strum(to_string="game.toml")] GameSpec, // identification problems
 }
+impl Kind { pub fn only() -> Self { Kind::Zip } }
 
 pub type Index = u16;
 const BUNDLES_MAX: Index = 64;

@@ -1346,7 +1346,7 @@ mod upload_bundle {
       io::copy(&mut f, &mut dw).context("read bundle file (for hash)")?;
       dw.finish().0
     };
-    let kind = bundles::Kind::Zip;
+    let kind = bundles::Kind::only();
     f.seek(io::SeekFrom::Start(0)).context("rewind bundle file")?;
     let cmd = MC::UploadBundle {
       game: instance_name.clone(),
