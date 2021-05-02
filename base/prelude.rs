@@ -24,7 +24,7 @@ pub use serde::{Deserialize, Serialize};
 pub use serde_with::DeserializeFromStr;
 pub use serde_with::SerializeDisplay;
 pub use thiserror::Error;
-pub use void::Void;
+pub use void::{self, Void};
 
 pub use crate::html::*;
 
