@@ -1362,7 +1362,7 @@ mod upload_bundle {
   )}
 }
 
-//---------- list-bundle ----------
+//---------- list-bundles ----------
 
 mod list_bundles {
   use super::*;
