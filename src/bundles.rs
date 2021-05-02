@@ -12,7 +12,7 @@ pub use crate::prelude::Sha512Trunc256 as Digester;
 pub struct Hash(pub [u8; 32]);
 
 #[derive(Debug,Copy,Clone,Hash,Eq,PartialEq,Serialize,Deserialize)]
-#[derive(EnumString,Display,Ord,PartialOrd)]
+#[derive(EnumString,strum::Display,Ord,PartialOrd)]
 pub enum Kind {
   #[strum(to_string="zip")]       Zip,
 //  #[strum(to_string="game.toml")] GameSpec, // identification problems
