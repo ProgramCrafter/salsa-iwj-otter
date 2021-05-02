@@ -1392,7 +1392,7 @@ mod list_bundles {
              else throw!(anyhow!("unexpected {:?}", &resp)) };
     for (index, note) in bundles.into_iter().enumerate() {
       if_let!{ Some(note) = note; else continue; }
-      println!("{:05} {:?}", index, &note);
+      println!("{} {:?}", bundles::Index::try_from(index).unwrap(), &note);
     }
   }
 

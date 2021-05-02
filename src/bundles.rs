@@ -19,8 +19,31 @@ pub enum Kind {
 }
 impl Kind { pub fn only() -> Self { Kind::Zip } }
 
-pub type Index = u16;
-const BUNDLES_MAX: Index = 64;
+#[derive(Copy,Clone,Debug,Hash,PartialEq,Eq,Ord,PartialOrd)]
+#[derive(Serialize,Deserialize)]
+#[serde(transparent)]
+pub struct Index(u16);
+impl From<Index> for usize {
+  fn from(i: Index) -> usize { i.0.into() }
+}
+impl TryFrom<usize> for Index {
+  type Error = TryFromIntError;
+  #[throws(Self::Error)]
+  fn try_from(i: usize) -> Index { Index(i.try_into()?) }
+}
+impl Display for Index {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) {
+    write!(f, "{:05}", self.0)?;
+  }
+}
+impl FromStr for Index {
+  type Err = std::num::ParseIntError;
+  #[throws(Self::Err)]
+  fn from_str(s: &str) -> Index { Index(u16::from_str(s)?) }
+}
+
+const BUNDLES_MAX: Index = Index(64);
 
 #[derive(Copy,Clone,Debug,Hash,PartialEq,Eq,Ord,PartialOrd)]
 #[derive(Serialize,Deserialize)]
@@ -60,7 +83,7 @@ pub fn b_dir(instance: &InstanceName) -> String {
 fn b_file<S>(instance: &InstanceName, index: Index, suffix: S) -> String
 where S: Display + Debug
 {
-  format!("{}/{:05}.{}",
+  format!("{}/{}.{}",
           savefilename(instance, "b-", ""),
           index, suffix)
 }
