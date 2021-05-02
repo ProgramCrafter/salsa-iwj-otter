@@ -80,9 +80,7 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
                             -> Result<(), CSE>
   where R: Read, W: Write
 {
-  let /*mut*/ bulk_download:
-    &mut dyn FnMut(&mut dyn Write) -> Result<(),MgmtChannelWriteError>
-    = &mut |_| Ok(());
+  let /*mut*/ bulk_download: Option<Box<dyn Read>> = None;
 
   let mut cmd_s = log_enabled!(log::Level::Info)
     .as_some_from(|| format!("{:?}", &cmd))
@@ -329,7 +327,9 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
   };
 
   let mut wf = for_response.write_withbulk(&resp).context("respond")?;
-  bulk_download(&mut wf).context("download")?;
+  if let Some(mut bulk_download) = bulk_download {
+    io::copy(&mut bulk_download, &mut wf).context("download")?;
+  }
   wf.finish().context("flush")?;
   Ok(())
 }
