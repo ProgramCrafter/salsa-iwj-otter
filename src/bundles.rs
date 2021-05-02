@@ -31,23 +31,25 @@ pub struct InstanceBundles {
   bundles: Vec<Option<Note>>,
 }
 
-#[derive(Debug,Clone)]
-struct Note {
-  kind: Kind,
-  state: State,
+pub type MgmtList = Vec<Option<Note>>;
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct Note {
+  pub kind: Kind,
+  pub state: State,
 }
 
 type BadBundle = String; // todo: make this a newtype
 
-#[derive(Debug,Clone)]
-enum State {
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub enum State {
   Uploading,
   BadBundle(BadBundle),
   Loaded(Loaded),
 }
 
-#[derive(Debug,Clone)]
-struct Loaded {
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct Loaded {
   meta: BundleMeta,
 }
 
@@ -146,6 +148,8 @@ fn incorporate_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
 
 impl InstanceBundles {
   pub fn new() -> Self { InstanceBundles{ bundles: default() } }
+
+  pub fn list(&self) -> MgmtList { self.bundles.clone() }
 
   #[throws(IE)]
   pub fn load_game_bundles(ig: &mut Instance) -> Self {

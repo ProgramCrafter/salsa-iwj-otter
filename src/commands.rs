@@ -46,10 +46,10 @@ pub enum MgmtCommand {
     hash: bundles::Hash,
     kind: bundles::Kind,
   },
-  /*
   ListBundles {
     game: InstanceName,
   },
+  /*
   DownloadBundle {
     game: InstanceName,
     index: bundles::Index,
@@ -92,6 +92,7 @@ pub enum MgmtResponse {
   AccountsList(Vec<Arc<AccountName>>),
   GamesList(Vec<Arc<InstanceName>>),
   LibraryItems(Vec<shapelib::ItemEnquiryData>),
+  Bundles(bundles::MgmtList),
 }
 
 #[derive(Debug,Serialize,Deserialize)]

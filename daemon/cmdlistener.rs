@@ -62,6 +62,13 @@ enum PermissionCheckHow {
 
 type PCH = PermissionCheckHow;
 
+pub const TP_ACCESS_BUNDLES: &[TP] = &[
+  TP::ViewNotSecret,
+  TP::Play,
+  TP::ChangePieces,
+  TP::UploadBundles,
+];
+
 // ========== management API ==========
 
 // ---------- management command implementations
@@ -234,6 +241,16 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
         bundles.finish_upload(&mut ig, upload, &hash)?;
       };
       Fine
+    }
+    MC::ListBundles { game } => {
+      let ag = AccountsGuard::lock();
+      let gref = Instance::lookup_by_name_unauth(&game)?;
+      let bundles = gref.lock_bundles();
+      let mut igu = gref.lock()?;
+      let (_ig, auth) = cs.check_acl(&ag, &mut igu, PCH::Instance,
+                                    TP_ACCESS_BUNDLES)?;
+      let bundles = bundles.by(auth);
+      MR::Bundles(bundles.list())
     }
 
     MC::ListGames { all } => {
