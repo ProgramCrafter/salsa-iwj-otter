@@ -88,6 +88,13 @@ where S: Display + Debug
           index, suffix)
 }
 
+impl Display for Id {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut fmt::Formatter) {
+    write!(f, "{}.{}", self.index, self.kind)?
+  }
+}
+
 impl Id {
   fn path_tmp(&self, instance: &InstanceName) -> String {
     b_file(instance, self.index, "tmp")
