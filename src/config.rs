@@ -67,17 +67,16 @@ pub struct ServerConfig {
   pub game_rng: RngWrap,
 }
 
-impl TryFrom<ServerConfigSpec> for WholeServerConfig {
-  type Error = AE;
-  #[throws(Self::Error)]
-  fn try_from(spec: ServerConfigSpec) -> WholeServerConfig {
+impl ServerConfigSpec {
+  #[throws(AE)]
+  pub fn resolve(self) -> WholeServerConfig {
     let ServerConfigSpec {
       change_directory, base_dir, save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
       template_dir, nwtemplate_dir, wasm_dir,
       log, bundled_sources, shapelibs, sendmail,
       debug_js_inject_file, check_bundled_sources, fake_rng,
-    } = spec;
+    } = self;
 
     let game_rng = fake_rng.make_game_rng();
 
@@ -213,7 +212,7 @@ impl ServerConfig {
     File::open(&config_filename).with_context(||config_filename.to_string())?
       .read_to_string(&mut buf)?;
     let spec: ServerConfigSpec = toml_de::from_str(&buf)?;
-    let whole = spec.try_into()?;
+    let whole = spec.resolve()?;
     set_config(whole);
   }
 
@@ -244,6 +243,6 @@ impl Default for WholeServerConfig {
       public_url = "INTERNAL ERROR"
       "#)
       .expect("parse dummy config as ServerConfigSpec");
-    spec.try_into().expect("empty spec into config")
+    spec.resolve().expect("empty spec into config")
   }
 }
