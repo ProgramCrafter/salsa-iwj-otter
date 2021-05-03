@@ -582,6 +582,9 @@ impl<D: Digest, W: Write> DigestWrite<D, W> {
     (self.d.finalize(), self.w)
   }
 }
+impl<D: Digest> DigestWrite<D, io::Sink> {
+  pub fn sink() -> Self { DigestWrite::new(io::sink()) }
+}
 
 impl<D: Digest, W: Write> Write for DigestWrite<D, W> {
   #[throws(io::Error)]
