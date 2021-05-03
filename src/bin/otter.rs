@@ -1342,7 +1342,7 @@ mod upload_bundle {
       .context("open bundle file")?;
     let mut f = BufReader::new(f);
     let hash = {
-      let mut dw = DigestWrite::<bundles::Digester,_>::sink();
+      let mut dw = bundles::DigestWrite::sink();
       io::copy(&mut f, &mut dw).context("read bundle file (for hash)")?;
       dw.finish().0
     };

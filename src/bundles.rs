@@ -7,6 +7,7 @@
 use crate::prelude::*;
 
 pub use crate::prelude::Sha512Trunc256 as Digester;
+pub type DigestWrite<W> = crate::utils::DigestWrite<Digester, W>;
 
 #[derive(Debug,Copy,Clone,Hash,Eq,PartialEq,Serialize,Deserialize)]
 pub struct Hash(pub [u8; 32]);
@@ -142,7 +143,7 @@ impl From<&'static str> for IncorporateError {
 pub struct Uploading {
   instance: Arc<InstanceName>,
   id: Id,
-  file: DigestWrite<Digester, BufWriter<fs::File>>,
+  file: DigestWrite<BufWriter<fs::File>>,
 }
 
 #[throws(IE)]

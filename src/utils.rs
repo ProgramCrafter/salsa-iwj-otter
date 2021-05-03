@@ -603,7 +603,7 @@ fn test_digest_write() {
   let exp = Sha512Trunc256::digest(&ibuffer[..]);
   let mut obuffer = [0;4];
   let inner = &mut obuffer[..];
-  let mut dw = DigestWrite::<Sha512Trunc256,_>::new(inner);
+  let mut dw = bundles::DigestWrite::new(inner);
   assert_eq!( dw.write(&ibuffer[..]).unwrap(), 3);
   let (got, recov) = dw.finish();
   assert_eq!( recov, b"\0" );
