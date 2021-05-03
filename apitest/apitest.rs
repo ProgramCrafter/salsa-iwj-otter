@@ -595,7 +595,7 @@ pub fn prepare_tmpdir<'x>(opts: &'x Opts, mut current_exe: &'x str) -> DirSubst 
 
 #[throws(AE)]
 pub fn prepare_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst)
-                      -> (MgmtChannel, Child) {
+                      -> (MgmtChannelForGame, Child) {
   let config = ds.subst(r##"
 change_directory = "@abstmp@"
 base_dir = "@build@"
@@ -635,7 +635,7 @@ _ = "error" # rocket
 
 #[throws(AE)]
 fn start_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst)
-                    -> (MgmtChannel, Child) {
+                    -> (MgmtChannelForGame, Child) {
   let server_exe = ds.subst("@target@/debug/daemon-otter")?;
   let mut cmd = Command::new(&server_exe);
   cmd
@@ -658,6 +658,11 @@ fn start_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst)
 
   mgmt_conn.cmd(&MgmtCommand::SetSuperuser(true))?;
   mgmt_conn.cmd(&MgmtCommand::SelectAccount("server:".parse()?))?;  
+
+  let mgmt_conn = mgmt_conn.for_game(
+    TABLE.parse()?,
+    MgmtGameUpdateMode::Online
+  );
 
   (mgmt_conn, child)
 }
@@ -990,11 +995,6 @@ pub fn setup_core<O>(module_paths: &[&str], early_args: EarlyArgPredicate) ->
 
   let (mgmt_conn, server_child) =
     prepare_gameserver(&cln, &ds).did("setup game server")?;
-
-  let mgmt_conn = mgmt_conn.for_game(
-    TABLE.parse()?,
-    MgmtGameUpdateMode::Online
-  );
 
   let instance_name =
     prepare_game(&ds, &default(), TABLE).context("setup game")?;
