@@ -518,6 +518,7 @@ fn write_test(){
   expect_boom(&mut rd);
 
   // utilitiesfor reading the whole input, collecting into vecs
+  #[cfg(not(miri))]
   fn expect_good<R:Read>(rd: &mut FrameReader<R>, expected: &[u8]) {
     let mut buf = vec![];
     let mut frame = rd.new_frame().unwrap().unwrap();
@@ -525,6 +526,7 @@ fn write_test(){
     assert_eq!(&*buf ,expected);
     dbgc!(str::from_utf8(&buf).unwrap());
   }
+  #[cfg(not(miri))]
   fn expect_good_eof<R:Read>(rd: &mut FrameReader<R>) {
     let frame = rd.new_frame().unwrap(); assert!(frame.is_none());
     let frame = rd.new_frame().unwrap(); assert!(frame.is_none());
