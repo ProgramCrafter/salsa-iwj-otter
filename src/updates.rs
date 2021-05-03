@@ -240,11 +240,11 @@ enum TransmitUpdateEntry<'u> {
   AddPlayer {
     player: PlayerId,
     data: &'u DataLoadPlayer,
-    new_info_pane: &'u Arc<Html>,
+    new_info_pane: &'u Html,
   },
   RemovePlayer {
     player: PlayerId,
-    new_info_pane: &'u Arc<Html>,
+    new_info_pane: &'u Html,
   },
   SetLinks(Html),
   #[serde(serialize_with="serialize_logentry")]
