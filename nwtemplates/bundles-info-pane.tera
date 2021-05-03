@@ -4,7 +4,7 @@
      There is NO WARRANTY. -->
 {% for b in bundles %}
 <div class="bundle">
-<a href=""><code class="b_id">{{ b.id }}</code></a>
+<a class="b_link" href=""><code class="b_id">{{ b.id }}</code></a>
 <span class="b_title">{{ b.title }}</span>
 </div>
 {% endfor %}

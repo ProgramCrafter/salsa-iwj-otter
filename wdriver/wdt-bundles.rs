@@ -28,7 +28,8 @@ fn tests(UsualSetup { su, alice, ..}: UsualSetup) {
 
     let check = |w: &mut WindowGuard<'_>| Ok::<_,Explode>({
       w.synch()?;
-      let bundle_id = w.find_element(By::ClassName("b_id"))?;
+      let bundle_link = w.find_element(By::ClassName("b_link"))?;
+      let bundle_id = bundle_link.find_element(By::ClassName("b_id"))?;
       let html = bundle_id.inner_html()?;
       assert_eq!(&html, "00000.zip");
     });
