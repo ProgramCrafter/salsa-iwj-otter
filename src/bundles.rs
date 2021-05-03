@@ -183,7 +183,6 @@ fn load_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
   };
 
   *slot = Some(Note { kind: id.kind, state });
-  ib.update_mgmt_list(ig);
 }
 
 #[throws(IncorporateError)]
@@ -212,7 +211,7 @@ impl InstanceBundles {
     })
   }
 
-  fn update_mgmt_list(&self, ig: &mut Instance) {
+  fn updated(&self, ig: &mut Instance) {
     ig.bundle_list = self.iter().map(|(id, state)| {
       (id, state.clone())
     }).collect()
@@ -242,7 +241,7 @@ impl InstanceBundles {
       }
     }
     debug!("loaded bundles {} {:?}", &ig.name, ib);
-    ib.update_mgmt_list(ig);
+    ib.updated(ig);
     ib
   }
 
@@ -276,7 +275,7 @@ impl InstanceBundles {
     let file = BufWriter::new(file);
     let file = DigestWrite::new(file);
     let instance = ig.name.clone();
-    self.update_mgmt_list(ig);
+    self.updated(ig);
     Uploading { file, instance, id }
   }
 }
@@ -304,6 +303,7 @@ impl InstanceBundles {
       .with_context(|| tmp.clone()).context("flush").map_err(IE::from)?;
     if hash.as_slice() != &expected.0[..] { throw!(ME::UploadCorrupted) }
     load_bundle(self, ig, id, &tmp)?;
+    self.updated(ig);
     match self.bundles.get(usize::from(id.index)) {
       Some(Some(Note { state: State::Loaded(..), .. })) => {
         fs::rename(&tmp, &install)
