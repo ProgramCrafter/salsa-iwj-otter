@@ -29,7 +29,6 @@ pub use std::hash::Hash;
 pub use std::io;
 pub use std::io::ErrorKind;
 pub use std::io::{BufRead, BufReader, BufWriter, Read, Write};
-pub use std::io::{Seek, SeekFrom};
 pub use std::iter;
 pub use std::iter::repeat_with;
 pub use std::marker::PhantomData;

@@ -607,3 +607,9 @@ fn test_digest_write() {
   assert_eq!( got, exp );
   assert_eq!( &obuffer, b"xyz\0" );
 }
+
+#[ext(pub, name=SeekExt)]
+impl<T: io::Seek> T {
+  #[throws(io::Error)]
+  fn rewind(&mut self) { self.seek(io::SeekFrom::Start(0))? }
+}

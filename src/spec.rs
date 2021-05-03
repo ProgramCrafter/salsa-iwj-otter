@@ -540,7 +540,7 @@ pub mod imp {
         let mut messagefile = tempfile::tempfile().context("tempfile")?;
         messagefile.write_all(message.as_bytes()).context("write")?;
         messagefile.flush().context("flush")?;
-        messagefile.seek(SeekFrom::Start(0)).context("seek")?;
+        messagefile.rewind().context("seek")?;
         Ok::<_,AE>(messagefile)
       })().context("write email to temporary file.")?;
 
