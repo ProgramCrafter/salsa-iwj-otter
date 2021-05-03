@@ -199,6 +199,17 @@ impl Ctx {
       su_rc: self.su_rc.clone(),
     }
   }
+
+  pub fn chdir_root<F>(&mut self, f: F)
+  where F: FnOnce(&mut Self) -> Result<(),AE>
+  {
+    let tmp = &(*self.su_rc).borrow().ds.abstmp.clone();
+    env::set_current_dir("/").expect("cd /");
+    self.rctx = ResolveContext::RelativeTo(tmp.clone());
+    f(self).expect("run test");
+    env::set_current_dir(&tmp).expect("cd back");
+    self.rctx = default();
+  }
 }
 
 mod pi {
@@ -683,9 +694,9 @@ impl Ctx {
 
 #[throws(AE)]
 fn tests(mut c: Ctx) {
-  test!(c, "library-load", c.library_load()?);
-  test!(c, "hidden-hand",  c.hidden_hand()?);
-  test!(c, "specs",        c.specs()?);
+  test!(c, "library-load", c.chdir_root(|c| c.library_load() ));
+  test!(c, "hidden-hand",                   c.hidden_hand()  ?);
+  test!(c, "specs",        c.chdir_root(|c| c.specs()        ));
 }
 
 #[throws(AE)]
