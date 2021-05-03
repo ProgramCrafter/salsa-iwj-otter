@@ -88,6 +88,18 @@ pub struct Instance(pub InstanceName);
 
 impl AsRef<Opts> for Opts { fn as_ref(&self) -> &Opts { self } }
 
+pub enum Explode { }
+impl<E:Display> From<E> for Explode {
+  fn from(e: E) -> Explode { panic!("exploding on error: {}", e) }
+}
+impl From<Explode> for anyhow::Error {
+  fn from(e: Explode) -> AE { match e { } }
+}
+/*
+impl<E:Error> From<Explode> for E {
+  fn from(e: Explode) -> E { match e { } }
+}*/
+
 // -------------------- Substition --------------------
 
 pub trait Substitutor {
