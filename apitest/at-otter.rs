@@ -203,7 +203,7 @@ impl Ctx {
   pub fn chdir_root<F>(&mut self, f: F)
   where F: FnOnce(&mut Self) -> Result<(),AE>
   {
-    let tmp = &(*self.su_rc).borrow().ds.abstmp.clone();
+    let tmp = self.su().ds.abstmp.clone();
     env::set_current_dir("/").expect("cd /");
     self.prctx = PathResolveContext::RelativeTo(tmp.clone());
     f(self).expect("run test");
