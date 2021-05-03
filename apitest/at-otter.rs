@@ -484,12 +484,12 @@ pub use GrabHow as GH;
 
 impl Ctx {
   #[throws(AE)]
-  pub fn otter<S:AsRef<str>>(&mut self, args: &[S]) {
+  pub fn otter<S:AsRef<str>>(&mut self, args: &[S]) -> OtterOutput {
     let args: Vec<String> =
       ["--account", "server:"].iter().cloned().map(Into::into)
       .chain(args.iter().map(|s| s.as_ref().to_owned()))
       .collect();
-    self.su().ds.otter_prctx(&self.prctx, &args)?;
+    self.su().ds.otter_prctx(&self.prctx, &args)?
   }
 
   #[throws(AE)]

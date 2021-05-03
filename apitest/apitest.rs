@@ -632,6 +632,7 @@ _ = "error" # rocket
 #[error("wait status: {0}")]
 pub struct ExitStatusError(pub std::process::ExitStatus);
 
+#[derive(Debug)]
 pub struct OtterOutput {
   output: Option<NamedTempFile>,
 }
