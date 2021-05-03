@@ -101,6 +101,18 @@ impl Id {
   fn path(&self, instance: &InstanceName) -> String {
     b_file(instance, self.index, self.kind)
   }
+
+  #[throws(IE)]
+  pub fn open(&self, instance_name: &InstanceName) -> Option<fs::File> {
+    let path = self.path(instance_name);
+    match File::open(&path) {
+      Ok(f) => Some(f),
+      Err(e) if e.kind() == ErrorKind::NotFound => None,
+      Err(e) => void::unreachable(
+        Err::<Void,_>(e).context(path).context("open bundle")?
+      ),
+    }
+  }
 }
 
 #[derive(Error,Debug)]
