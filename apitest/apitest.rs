@@ -628,6 +628,12 @@ _ = "error" # rocket
   fs::write(CONFIG, &config)
     .context(CONFIG).context("create server config")?;
 
+  start_gameserver(cln, ds)?
+}
+
+#[throws(AE)]
+fn start_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst)
+                    -> (MgmtChannel, Child) {
   let server_exe = ds.subst("@target@/debug/daemon-otter")?;
   let mut cmd = Command::new(&server_exe);
   cmd
