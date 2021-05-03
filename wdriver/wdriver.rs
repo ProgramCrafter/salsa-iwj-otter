@@ -936,3 +936,4 @@ fn main(){
 portmanteau_has!("wdt-altergame.rs", wdt_altergame);
 portmanteau_has!("wdt-hand.rs",      wdt_hand);
 portmanteau_has!("wdt-simple.rs",    wdt_simple);
+portmanteau_has!("wdt-bundles.rs",   wdt_bundles);
