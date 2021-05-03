@@ -632,13 +632,42 @@ _ = "error" # rocket
 #[error("wait status: {0}")]
 pub struct ExitStatusError(pub std::process::ExitStatus);
 
+pub struct OtterOutput {
+  output: Option<NamedTempFile>,
+}
+impl Deref for OtterOutput {
+  type Target = fs::File;
+  fn deref(&self) -> &fs::File { self.output.as_ref().unwrap().as_file() }
+}
+impl DerefMut for OtterOutput {
+  fn deref_mut(&mut self) -> &mut fs::File {
+    self.output.as_mut().unwrap().as_file_mut()
+  }
+}
+impl From<OtterOutput> for String {
+  fn from(mut oo: OtterOutput) -> String {
+    let mut s = String::new();
+    let mut o = oo.output.take().unwrap();
+    o.rewind().unwrap();
+    o.read_to_string(&mut s).unwrap();
+    s
+  }
+}
+impl Drop for OtterOutput {
+  fn drop(&mut self) {
+    if let Some(mut o) = self.output.take() {
+      io::copy(&mut o, &mut io::stdout()).expect("copy otter stdout");
+    }
+  }
+}
+
 impl DirSubst {
   pub fn specs_dir(&self) -> String {
     format!("{}/specs" , &self.src)
   }
 
   #[throws(AE)]
-  pub fn otter<'s,S>(&self, xargs: &'s [S])
+  pub fn otter<'s,S>(&self, xargs: &'s [S]) -> OtterOutput
   where &'s S: Into<String>
   {
     self.otter_prctx(&default(), xargs)?
@@ -646,6 +675,7 @@ impl DirSubst {
 
   #[throws(AE)]
   pub fn otter_prctx<'s,S>(&self, prctx: &PathResolveContext, xargs: &'s [S])
+                           -> OtterOutput
   where &'s S: Into<String>
   {
     let ds = self;
@@ -656,10 +686,14 @@ impl DirSubst {
     args.push("--spec-dir".to_owned()); args.push(prctx.resolve(&specs) );
     args.extend(xargs.iter().map(|s| s.into()));
     let dbg = format!("running {} {:?}", &exe, &args);
+    let mut output = NamedTempFile::new_in(
+      ds.subst("@abstmp@").unwrap()
+    ).unwrap();
     debug!("{}", &dbg);
     (||{
       let mut cmd = Command::new(&exe);
       cmd.args(&args);
+      cmd.stdout(output.as_file().try_clone().unwrap());
       let st = cmd
         .spawn().context("spawn")?
         .wait().context("wait")?;
@@ -670,6 +704,9 @@ impl DirSubst {
     })()
       .context(dbg)
       .context("run otter client")?;
+
+    output.rewind().unwrap();
+    OtterOutput { output: Some(output) }
   }
 
   #[throws(AE)]

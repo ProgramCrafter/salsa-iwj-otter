@@ -95,6 +95,7 @@ pub use sha2::{Sha512, Sha512Trunc256};
 pub use slotmap::{dense::DenseSlotMap, SparseSecondaryMap, Key as _};
 pub use strum::{EnumString, EnumIter, EnumProperty};
 pub use strum::{IntoEnumIterator, IntoStaticStr};
+pub use tempfile::NamedTempFile;
 pub use thiserror::Error;
 pub use url::Url;
 pub use vecdeque_stableix::Deque as StableIndexVecDeque;
