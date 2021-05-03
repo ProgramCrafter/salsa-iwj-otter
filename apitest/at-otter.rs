@@ -725,7 +725,7 @@ fn tests(mut c: Ctx) {
 #[throws(Explode)]
 fn main() {
   {
-    let (opts, _cln, _instance, su) = setup_core(
+    let (opts, _instance, su) = setup_core(
       &[module_path!()],
       &mut |_|false
     )?;

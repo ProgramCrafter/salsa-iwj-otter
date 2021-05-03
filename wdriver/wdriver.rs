@@ -816,17 +816,17 @@ impl Drop for Setup {
 
 #[throws(AE)]
 pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
-  let (opts, cln, instance, core) =
+  let (opts, instance, core) =
     apitest::setup_core(
       &[exe_module_path, "otter_webdriver_tests"],
       &mut |s: &OsStr| s.to_str().unwrap().starts_with("--test=")
     )?;
 
-  prepare_xserver(&cln, &core.ds).did("setup X server")?;
+  prepare_xserver(&core.cln, &core.ds).did("setup X server")?;
 
   let final_hook = FinalInfoCollection;
 
-  prepare_geckodriver(&opts, &cln).did("setup webdriver server")?;
+  prepare_geckodriver(&opts, &core.cln).did("setup webdriver server")?;
   let (driver, screenshot_count, windows_squirreled) =
     prepare_thirtyfour(&core.ds).did("prepare web session")?;
 

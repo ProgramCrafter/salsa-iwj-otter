@@ -72,6 +72,7 @@ pub struct SetupCore {
   pub mgmt_conn: RefCell<MgmtChannelForGame>,
   server_child: Child,
   pub wanted_tests: TrackWantedTests,
+  pub cln: cleanup_notify::Handle,
 }
 
 #[derive(Clone,Debug)]
@@ -326,6 +327,7 @@ pub mod cleanup_notify {
   use std::panic::catch_unwind;
   use std::process::Command;
 
+  #[derive(Debug)]
   pub struct Handle(RawFd);
 
   #[throws(io::Error)]
@@ -940,7 +942,7 @@ impl MgmtChannel {
 
 #[throws(AE)]
 pub fn setup_core<O>(module_paths: &[&str], early_args: EarlyArgPredicate) ->
-  (O, cleanup_notify::Handle, Instance, SetupCore)
+  (O, Instance, SetupCore)
   where O: StructOpt + AsRef<Opts>
 {
   let mut builder = env_logger::Builder::new();
@@ -1000,12 +1002,11 @@ pub fn setup_core<O>(module_paths: &[&str], early_args: EarlyArgPredicate) ->
   let wanted_tests = opts.tests.track();
 
   (caller_opts,
-   cln,
    Instance(
      instance_name
    ),
    SetupCore {
-     ds,
+     ds, cln,
      mgmt_conn: mgmt_conn.into(),
      server_child,
      wanted_tests,
