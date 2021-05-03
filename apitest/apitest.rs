@@ -88,6 +88,7 @@ pub struct Instance(pub InstanceName);
 
 impl AsRef<Opts> for Opts { fn as_ref(&self) -> &Opts { self } }
 
+#[derive(Debug)]
 pub enum Explode { }
 impl<E:Display> From<E> for Explode {
   fn from(e: E) -> Explode { panic!("exploding on error: {}", e) }
@@ -95,6 +96,14 @@ impl<E:Display> From<E> for Explode {
 impl From<Explode> for anyhow::Error {
   fn from(e: Explode) -> AE { match e { } }
 }
+#[ext(pub, name=ResultExplodeExt)]
+impl<T> Result<T,Explode> {
+  fn y(self) -> T { match self { Ok(y) => y, Err(n) => match n { } } }
+  fn did(self, msg: &'static str) -> anyhow::Result<T> {
+    ResultGenDidExt::<_,AE>::did(Ok(self.y()), msg)
+  }
+}
+  
 /*
 impl<E:Error> From<Explode> for E {
   fn from(e: Explode) -> E { match e { } }
@@ -267,17 +276,26 @@ macro_rules! test {
 
 // -------------------- Extra anyhow result handling --------------------
 
+pub trait PropagateDid {
+  fn propagate_did<T>(self, msg: &'static str) -> anyhow::Result<T>;
+}
+
+#[ext(pub, name=ResultGenDidExt)]
+impl<T,E> Result<T,E> where Result<T,E>: anyhow::Context<T,E> {
+  fn did(self, msg: &'static str) -> anyhow::Result<T>
+  {
+    match self {
+      Ok(y) => { info!("did {}.", msg); Ok(y) }
+      n@ Err(_) => n.context(msg),
+    }
+  }
+}
+
 #[ext(pub)]
 impl<T,E> Result<T,E> {
-  fn did(self, msg: &'static str) -> anyhow::Result<T>
-  where Self: anyhow::Context<T,E>
+  fn just_warn(self) -> Option<T>
+  where E: Display
   {
-    let x = self.context(msg);
-    if x.is_ok() { info!("did {}.", msg) };
-    x
-  }
-
-  fn just_warn(self) -> Option<T> where E: Display {
     match self {
       Ok(x) => Some(x),
       Err(e) => {
