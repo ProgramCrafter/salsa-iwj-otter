@@ -13,7 +13,7 @@ struct Ctx {
 usual_wanted_tests!{Ctx, su}
 
 impl Ctx {
-  #[throws(AE)]
+  #[throws(Explode)]
   fn check_link(&mut self, desc: &'static str, url: Option<&str>) {
     (||{
       let mut w = self.su.w(&self.alice)?;
@@ -39,12 +39,12 @@ impl Ctx {
       .context(desc).did("check link")?
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn otter(&mut self, verb: &[&str], args: &[&str]) {
     self.su.w(&self.alice)?.otter(verb, args)?
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn test_link(&mut self, kind: LinkKind, desc: &'static str, url: &str) {
     (||{
       self.otter(&["set-link"], &[&kind.to_string(), url])?;
@@ -54,7 +54,7 @@ impl Ctx {
       .context(desc).did("test link")?
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn test_remove_link(&mut self, kind: LinkKind, desc: &'static str) {
     (||{
       self.otter(&["set-link"], &[&kind.to_string(), ""])?;
@@ -65,7 +65,7 @@ impl Ctx {
   }
 }
 
-#[throws(AE)]
+#[throws(Explode)]
 fn tests(UsualSetup { su, alice, ..}: UsualSetup) {
   let mut c = Ctx { su, alice };
 
@@ -136,5 +136,5 @@ fn tests(UsualSetup { su, alice, ..}: UsualSetup) {
   debug!("finishing");
 }
 
-#[throws(AE)]
-pub fn main() { as_usual(tests, module_path!())? }
+#[throws(Explode)]
+pub fn main() { as_usual(tests, module_path!())?; }

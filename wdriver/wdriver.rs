@@ -877,8 +877,8 @@ impl UsualSetup {
   }
 }
 
-#[throws(AE)]
-pub fn as_usual<F: FnOnce(UsualSetup) -> Result<(), AE>>(
+#[throws(Explode)]
+pub fn as_usual<F: FnOnce(UsualSetup) -> Result<(), Explode>>(
   f: F, exe_module_path: &str,
 ) {
   let usual = UsualSetup::new(exe_module_path)?;
@@ -890,7 +890,7 @@ pub fn as_usual<F: FnOnce(UsualSetup) -> Result<(), AE>>(
 
 pub struct PortmanteauMember {
   path: &'static str,
-  f: fn() -> Result<(), AE>,
+  f: fn() -> Result<(), Explode>,
 }
 inventory::collect!(PortmanteauMember);
 

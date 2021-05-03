@@ -83,7 +83,7 @@ mod scraper_ext {
     }
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   pub fn parse_html(resp: reqwest::blocking::Response) -> Html {
     assert_eq!(resp.status(), 200);
     let body = resp.text()?;
@@ -94,10 +94,10 @@ mod scraper_ext {
 
   #[ext(pub, name=RequestBuilderExt)]
   impl reqwest::blocking::RequestBuilder {
-    #[throws(AE)]
+    #[throws(Explode)]
     fn send(self) -> reqwest::blocking::Response { self.send()? }
 
-    #[throws(AE)]
+    #[throws(Explode)]
     fn send_parse_html(self) -> Html {
       let resp = self.send()?;
       parse_html(resp)?
@@ -109,7 +109,7 @@ use scraper_ext::{HtmlExt, RequestBuilderExt};
 
 type Update = JsV;
 
-#[throws(AE)]
+#[throws(Explode)]
 fn updates_parser<R:Read>(input: R, out: &mut mpsc::Sender<Update>) {
   let mut accum: HashMap<String, String> = default();
   for l in BufReader::new(input).lines() {
@@ -138,7 +138,7 @@ fn updates_parser<R:Read>(input: R, out: &mut mpsc::Sender<Update>) {
 }
 
 impl Ctx {
-  #[throws(AE)]
+  #[throws(Explode)]
   fn connect_player<'su>(&self, player: &Player) -> Session {
     let client = reqwest::blocking::Client::new();
     let loading = client.get(&player.url).send_parse_html()?;
@@ -201,7 +201,7 @@ impl Ctx {
   }
 
   pub fn chdir_root<F>(&mut self, f: F)
-  where F: FnOnce(&mut Self) -> Result<(),AE>
+  where F: FnOnce(&mut Self) -> Result<(),Explode>
   {
     let tmp = self.su().ds.abstmp.clone();
     env::set_current_dir("/").expect("cd /");
@@ -230,7 +230,7 @@ pub struct PieceInfo<I> {
 }
 
 impl Session {
-  #[throws(AE)]
+  #[throws(Explode)]
   fn pieces<PI:Idx>(&self) -> Pieces<PI> {
     let pieces = self.dom
       .element("#pieces_marker")
@@ -255,7 +255,7 @@ impl Session {
     pieces
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn api_piece_op_single<O:PieceOp>(&mut self, piece: &str, o: O) {
     let (opname, payload) = if let Some(o) = o.api() { o } else { return };
 
@@ -276,7 +276,7 @@ impl Session {
     assert_eq!(resp.status(), 200);
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn api_piece<P:PieceSpecForOp, O:PieceOp>(
     &mut self, g: GrabHow, mut p: P, o: O
   ) {
@@ -297,7 +297,7 @@ impl Session {
     }
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn await_update<
     R,
     F: FnMut(&mut Session, Generation, &str, &JsV) -> Option<R>,
@@ -333,7 +333,7 @@ impl Session {
     }
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn synchx<
     PI: Idx,
     F: FnMut(&mut Session, Generation, &str, &JsV),
@@ -363,12 +363,12 @@ impl Session {
     )?;
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn synchu<PI:Idx>(&mut self, pieces: &mut Pieces<PI>) {
     self.synchx(Some(pieces), None, |_session, _gen, _k, _v| ())?;
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn synch(&mut self) {
     self.synchx::<PIA,_>(None, None, |_session, _gen, _k, _v|())?;
   }
@@ -492,7 +492,7 @@ impl Ctx {
     self.su().ds.otter_prctx(&self.prctx, &args)?
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn library_load(&mut self) {
     prepare_game(&self.su().ds, &self.prctx, TABLE)?;
 
@@ -536,7 +536,7 @@ impl Ctx {
     assert_eq!(added.len(), 6);
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn hidden_hand(&mut self) {
     prepare_game(&self.su().ds, &default(), TABLE)?;
     let mut alice = self.connect_player(&self.alice)?;
@@ -658,7 +658,7 @@ impl Ctx {
     self.otter(&command)?;
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn specs(&mut self) {
     struct Specs {
       def: String,
@@ -713,7 +713,7 @@ impl Ctx {
   }
 }
 
-#[throws(AE)]
+#[throws(Explode)]
 fn tests(mut c: Ctx) {
   test!(c, "library-load", c.chdir_root(|c| c.library_load() ));
   test!(c, "hidden-hand",                   c.hidden_hand()  ?);
@@ -722,7 +722,7 @@ fn tests(mut c: Ctx) {
   test!(c, "bundles",                       c.bundles()      ?);
 }
 
-#[throws(AE)]
+#[throws(Explode)]
 fn main() {
   {
     let (opts, _cln, _instance, su) = setup_core(

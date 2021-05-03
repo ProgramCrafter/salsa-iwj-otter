@@ -14,7 +14,7 @@ deref_to_field!{Ctx, Setup, su}
 usual_wanted_tests!{Ctx, su}
 
 impl Ctx {
-  #[throws(AE)]
+  #[throws(Explode)]
   fn drag(&mut self){
     let su = &mut self.su;
 
@@ -49,7 +49,7 @@ impl Ctx {
     }
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn rotate(&mut self) -> &'static str {
     let pc = "4v1";
     let su = &mut self.su;
@@ -86,7 +86,7 @@ impl Ctx {
     pc
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn drag_off(&mut self, pc: &'static str) {
     let su = &mut self.su;
 
@@ -128,7 +128,7 @@ impl Ctx {
     pc
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn unselect(&mut self, pc: &'static str) {
     let su = &mut self.su;
 
@@ -158,7 +158,7 @@ impl Ctx {
     }
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn conflict(&mut self) {
     let pc = "1v1";
     let su = &mut self.su;
@@ -308,7 +308,7 @@ impl Ctx {
   }
 }
 
-#[throws(AE)]
+#[throws(Explode)]
 fn tests(UsualSetup { su, alice, bob, spec, ..}: UsualSetup) {
   let mut c = Ctx { su, alice, bob, spec };
 
@@ -325,5 +325,5 @@ fn tests(UsualSetup { su, alice, bob, spec, ..}: UsualSetup) {
   debug!("finishing");
 }
 
-#[throws(AE)]
+#[throws(Explode)]
 pub fn main() { as_usual(tests, module_path!())? }

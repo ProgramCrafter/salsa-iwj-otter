@@ -17,7 +17,7 @@ impl Ctx {
   }
 }
 
-#[throws(AE)]
+#[throws(Explode)]
 fn tests(UsualSetup { su, alice, ..}: UsualSetup) {
   let mut c = Ctx { su, alice };
 
@@ -44,5 +44,5 @@ fn tests(UsualSetup { su, alice, ..}: UsualSetup) {
   debug!("finishing");
 }
 
-#[throws(AE)]
+#[throws(Explode)]
 pub fn main() { as_usual(tests, module_path!())?; }

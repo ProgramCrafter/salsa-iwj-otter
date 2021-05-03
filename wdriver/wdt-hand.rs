@@ -17,7 +17,7 @@ const PAWN: &str = "7v1";
 const PAWN2: &str = "8v1";
 const ALICE: &str = "1#1";
 
-#[throws(AE)]
+#[throws(Explode)]
 pub fn player_dasharray(player: &'static str) -> String {
   let player: PlayerId = player.try_into().context(player)?;
   let player: slotmap::KeyData = player.into();
@@ -29,7 +29,7 @@ pub fn player_dasharray(player: &'static str) -> String {
 }
 
 impl Ctx {
-  #[throws(AE)]
+  #[throws(Explode)]
   fn claim(&mut self){
     let su = &mut self.su;
 
@@ -135,7 +135,7 @@ impl Ctx {
     }
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn ungrab_race(&mut self){
     let su = &mut self.su;
 
@@ -206,7 +206,7 @@ impl Ctx {
     chk_alice_on_top(&self.bob  ).did("chk bob"  )?;
   }
 
-  #[throws(AE)]
+  #[throws(Explode)]
   fn regrab_race(&mut self){
     let su = &mut self.su;
     const MIDHAND: Pos = PosC::new(40, 40);
@@ -262,7 +262,7 @@ impl Ctx {
   }
 }
 
-#[throws(AE)]
+#[throws(Explode)]
 fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
   let mut c = Ctx { su, alice, bob };
 
@@ -273,5 +273,5 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
   debug!("finishing");
 }
 
-#[throws(AE)]
+#[throws(Explode)]
 pub fn main() { as_usual(tests, module_path!())? }
