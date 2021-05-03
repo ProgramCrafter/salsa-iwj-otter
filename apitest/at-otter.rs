@@ -694,11 +694,14 @@ impl Ctx {
   #[throws(Explode)]
   fn bundles(&mut self) {
     let bundle_file = self.su().ds.subst("@src@/examples/test-bundle.zip")?;
-    let ds = self.su().ds.also(&[("bundle", bundle_file)]);
+    let ds = self.su().ds.also(&[("bundle", &bundle_file)]);
     self.otter(&ds.ss("upload-bundle @table@ @bundle@")?)?;
     let mut bundles = self.otter(&ds.ss("list-bundles @table@")?)?;
     let bundles = String::from(&mut bundles);
     assert!(bundles.starts_with("00000.zip Loaded"));
+    self.otter(&ds.ss("download-bundle @table@ 0")?)?;
+    let st = Command::new("cmp").args(&[&bundle_file, "00000.zip"]).status()?;
+    if ! st.success() { panic!("cmp failed {}", st) }
   }
 }
 
