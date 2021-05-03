@@ -84,18 +84,18 @@ impl ResolveContext {
       Other => { },
     }
   }
-  fn relative(self, cd: &Option<String>, leaf: &str) -> String {
+  fn resolve(self, cd: &str, input: &str) -> String {
     use ResolveContext::*;
-    match (self, cd) {
-      (ForServerReal, _) | (Other, None) => leaf.to_owned(),
-      (Other, Some(cd)) => format!("{}/{}", cd, leaf),
+    match (self, input.as_bytes()) {
+      (ForServerReal, &[b'/',..]) | (Other, _) => input.to_owned(),
+      (ForServerReal, _) => format!("{}/{}", cd, input),
     }
   }
 }
 
 impl ServerConfigSpec {
-  #[throws(AE)]
-  pub fn resolve(self, rctx: ResolveContext) -> WholeServerConfig {
+  //#[throws(AE)]
+  pub fn resolve(self, rctx: ResolveContext) -> Result<WholeServerConfig,AE> {
     let ServerConfigSpec {
       change_directory, base_dir, save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
@@ -106,17 +106,22 @@ impl ServerConfigSpec {
 
     let game_rng = fake_rng.make_game_rng();
 
+    let rpath: Box<dyn Fn(&str) -> String>;
     if let Some(ref cd) = change_directory {
       rctx.chdir(cd)
         .with_context(|| cd.clone())
         .context("config change_directory")?;
-    }
+      let cd = cd.to_owned();
+      rpath = Box::new(move |p| rctx.resolve(&cd, p));
+    } else {
+      rpath = Box::new(|p| p.to_owned());
+    };
 
     let defpath = |specd: Option<String>, leaf: &str| -> String {
-      specd.unwrap_or_else(|| match &base_dir {
+      rpath(&specd.unwrap_or_else(|| match &base_dir {
         Some(base) => format!("{}/{}", &base, &leaf),
-        None       => rctx.relative(&change_directory, leaf),
-      })
+        None       => leaf.to_owned(),
+      }))
     };
 
     let save_dir        = defpath(save_dir,        "save"              );
@@ -132,9 +137,9 @@ impl ServerConfigSpec {
       vec![ shapelib::Config1::PathGlob(glob) ]
     });
 
-    let sendmail = sendmail.unwrap_or_else(
+    let sendmail = rpath(&sendmail.unwrap_or_else(
       || DEFAULT_SENDMAIL_PROGRAM.into()
-    );
+    ));
 
     let public_url = public_url
       .trim_end_matches('/')
@@ -209,10 +214,10 @@ impl ServerConfigSpec {
       bundled_sources, shapelibs, sendmail,
       debug_js_inject, check_bundled_sources, game_rng,
     };
-    WholeServerConfig {
+    Ok(WholeServerConfig {
       server: Arc::new(server),
       log,
-    }
+    })
   }
 }
 
