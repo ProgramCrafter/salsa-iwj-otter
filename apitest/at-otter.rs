@@ -690,6 +690,16 @@ impl Ctx {
       self.otter(&command).context(perm).context(game)?;
     }
   }
+
+  #[throws(Explode)]
+  fn bundles(&mut self) {
+    let bundle_file = self.su().ds.subst("@src@/examples/test-bundle.zip")?;
+    let ds = self.su().ds.also(&[("bundle", bundle_file)]);
+    self.otter(&ds.ss("upload-bundle @table@ @bundle@")?)?;
+    let mut bundles = self.otter(&ds.ss("list-bundles @table@")?)?;
+    let bundles = String::from(&mut bundles);
+    assert!(bundles.starts_with("00000.zip Loaded"));
+  }
 }
 
 #[throws(AE)]
@@ -697,6 +707,7 @@ fn tests(mut c: Ctx) {
   test!(c, "library-load", c.chdir_root(|c| c.library_load() ));
   test!(c, "hidden-hand",                   c.hidden_hand()  ?);
   test!(c, "specs",        c.chdir_root(|c| c.specs()        ));
+  test!(c, "bundles",                       c.bundles()      ?);
 }
 
 #[throws(AE)]
