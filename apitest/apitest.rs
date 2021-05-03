@@ -198,6 +198,7 @@ impl Substitutor for DirSubst {
       "target" => format!("{}/target", &self.start_dir),
       "specs"  => self.specs_dir(),
       "table"  => TABLE.to_owned(),
+      "command_socket" => "command.socket".to_owned(),
       _ => return None,
     })
   }
@@ -593,10 +594,7 @@ pub fn prepare_tmpdir<'x>(opts: &'x Opts, mut current_exe: &'x str) -> DirSubst 
 #[throws(AE)]
 pub fn prepare_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst)
                       -> (MgmtChannel, Child) {
-  let subst = ds.also(&[
-    ("command_socket", "command.socket"),
-  ]);
-  let config = subst.subst(r##"
+  let config = ds.subst(r##"
 change_directory = "@abstmp@"
 base_dir = "@build@"
 public_url = "@url@"
@@ -647,7 +645,7 @@ _ = "error" # rocket
     .context("game server")?;
 
   let mut mgmt_conn = MgmtChannel::connect(
-    &subst.subst("@command_socket@")?
+    &ds.subst("@command_socket@")?
   )?;
 
   mgmt_conn.cmd(&MgmtCommand::SetSuperuser(true))?;
