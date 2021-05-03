@@ -182,7 +182,8 @@ fn load_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
     Err(LoadError::IE(ie))         => throw!(ie),
   };
 
-  *slot = Some(Note { kind: id.kind, state })
+  *slot = Some(Note { kind: id.kind, state });
+  ib.update_mgmt_list(ig);
 }
 
 #[throws(IncorporateError)]
@@ -211,8 +212,8 @@ impl InstanceBundles {
     })
   }
 
-  pub fn list(&self) -> MgmtBundleList {
-    self.iter().map(|(id, state)| {
+  fn update_mgmt_list(&self, ig: &mut Instance) {
+    ig.bundle_list = self.iter().map(|(id, state)| {
       (id, state.clone())
     }).collect()
   }
@@ -241,6 +242,7 @@ impl InstanceBundles {
       }
     }
     debug!("loaded bundles {} {:?}", &ig.name, ib);
+    ib.update_mgmt_list(ig);
     ib
   }
 
@@ -274,6 +276,7 @@ impl InstanceBundles {
     let file = BufWriter::new(file);
     let file = DigestWrite::new(file);
     let instance = ig.name.clone();
+    self.update_mgmt_list(ig);
     Uploading { file, instance, id }
   }
 }

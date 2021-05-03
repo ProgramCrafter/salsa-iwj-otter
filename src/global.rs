@@ -56,6 +56,7 @@ pub struct Instance {
   pub tokens_clients: TokenRegistry<ClientId>,
   pub acl: LoadedAcl<TablePermission>,
   pub links: Arc<LinksTable>,
+  pub bundle_list: MgmtBundleList, // copy for easy access
 }
 
 pub struct PlayerRecord {
@@ -343,6 +344,7 @@ impl Instance {
       tokens_players: default(),
       tokens_clients: default(),
       links: default(),
+      bundle_list: default(),
     };
 
     let c = InstanceContainer {
@@ -1155,6 +1157,7 @@ impl InstanceGuard<'_> {
       clients: default(),
       tokens_clients: default(),
       tokens_players: default(),
+      bundle_list: default(), // set by load_game_bundles
     };
 
     let b = InstanceBundles::load_game_bundles(&mut g)?;
