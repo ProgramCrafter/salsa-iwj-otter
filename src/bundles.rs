@@ -73,7 +73,12 @@ impl AssetUrlKey {
     AssetUrlKey::Y(buf)
   }
 }
-pub type AssetUrlToken = digest::Output<Digester>;
+#[derive(Clone)]
+pub struct AssetUrlToken(digest::Output<Digester>);
+impl Debug for AssetUrlToken {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) { write!(f, "AssetUrlToken{{..}}")?; }
+}
 impl AssetUrlKey {
   pub fn token<V>(&self, what: &str, v: V) -> AssetUrlToken
   where V: Serialize {
@@ -85,7 +90,7 @@ impl AssetUrlKey {
     write!(dw, "{}\0", what).unwrap();
     dw.write(&k[..]).unwrap();
     rmp_serde::encode::write(&mut dw, &v).expect("serialize failed!");
-    dw.finish().0
+    AssetUrlToken(dw.finish().0)
   }
 }
 
