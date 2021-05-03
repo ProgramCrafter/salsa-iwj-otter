@@ -222,7 +222,7 @@ fn main() {
 //    .format_level(true)
 //    .filter_module(exe_module_path, log::LevelFilter::Debug)
     .filter_level(log::LevelFilter::Info)
-    .parse_env("OTTERLIB_LOG")
+    .parse_env("OTTER_CLI_LOG")
     .init();
 
   const SPLIT: &[char] = &[',', ' '];

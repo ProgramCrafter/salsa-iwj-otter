@@ -350,7 +350,7 @@ fn main() {
   }|{
     env_logger::Builder::new()
       .filter_level(log::LevelFilter::Info)
-      .parse_env("OTTERCLI_LOG")
+      .parse_env("OTTER_CLI_LOG")
       .init();
 
     let config = Thunk::<Result<(Arc<ServerConfig>,String),APE>,_>::new(
