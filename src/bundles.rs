@@ -19,7 +19,7 @@ pub enum Kind {
 }
 impl Kind { pub fn only() -> Self { Kind::Zip } }
 
-#[derive(Copy,Clone,Debug,Hash,PartialEq,Eq,Ord,PartialOrd)]
+#[derive(Copy,Clone,Default,Debug,Hash,PartialEq,Eq,Ord,PartialOrd)]
 #[derive(Serialize,Deserialize)]
 #[serde(transparent)]
 pub struct Index(u16);
@@ -47,7 +47,7 @@ const BUNDLES_MAX: Index = Index(64);
 
 #[derive(Copy,Clone,Debug,Hash,PartialEq,Eq,Ord,PartialOrd)]
 #[derive(Serialize,Deserialize)]
-pub struct Id { index: Index, kind: Kind, }
+pub struct Id { pub index: Index, pub kind: Kind, }
 
 #[derive(Debug,Clone)]
 pub struct InstanceBundles {

@@ -52,8 +52,7 @@ pub enum MgmtCommand {
   /*
   DownloadBundle {
     game: InstanceName,
-    index: bundles::Index,
-    kind: bundles::Kind,
+    id: bundles::Id,
   },
   */
 
