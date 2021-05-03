@@ -703,6 +703,14 @@ impl Ctx {
     let st = Command::new("cmp").args(&[&bundle_file, "00000.zip"]).status()?;
     if ! st.success() { panic!("cmp failed {}", st) }
   }
+
+  #[throws(Explode)]
+  fn put_back(&mut self) {
+    // Put things back for the ad-hoc human tester
+    let su = self.su();
+    prepare_game(&su.ds, &self.prctx, TABLE)?;
+    su.ds.setup_static_users(&mut *su.mgmt_conn.borrow_mut(), default())?;
+  }
 }
 
 #[throws(AE)]
@@ -711,6 +719,7 @@ fn tests(mut c: Ctx) {
   test!(c, "hidden-hand",                   c.hidden_hand()  ?);
   test!(c, "specs",        c.chdir_root(|c| c.specs()        ));
   test!(c, "bundles",                       c.bundles()      ?);
+  test!(c, "put-back",                      c.put_back()     ?);
 }
 
 #[throws(AE)]
