@@ -18,7 +18,7 @@ struct Ctx {
   spec: GameSpec,
   alice: Player,
   bob: Player,
-  rctx: ResolveContext,
+  prctx: PathResolveContext,
 }
 
 impl Ctx {
@@ -205,10 +205,10 @@ impl Ctx {
   {
     let tmp = &(*self.su_rc).borrow().ds.abstmp.clone();
     env::set_current_dir("/").expect("cd /");
-    self.rctx = ResolveContext::RelativeTo(tmp.clone());
+    self.prctx = PathResolveContext::RelativeTo(tmp.clone());
     f(self).expect("run test");
     env::set_current_dir(&tmp).expect("cd back");
-    self.rctx = default();
+    self.prctx = default();
   }
 }
 
@@ -489,12 +489,12 @@ impl Ctx {
       ["--account", "server:"].iter().cloned().map(Into::into)
       .chain(args.iter().map(|s| s.as_ref().to_owned()))
       .collect();
-    self.su().ds.otter_rctx(&self.rctx, &args)?;
+    self.su().ds.otter_prctx(&self.prctx, &args)?;
   }
 
   #[throws(AE)]
   fn library_load(&mut self) {
-    prepare_game(&self.su().ds, &self.rctx, TABLE)?;
+    prepare_game(&self.su().ds, &self.prctx, TABLE)?;
 
     let command = self.su().ds.ss(
       "library-add @table@ wikimedia chess-blue-?"
@@ -715,7 +715,7 @@ fn main() {
     drop(mc);
     
     let su_rc = Rc::new(RefCell::new(su));
-    tests(Ctx { opts, spec, su_rc, alice, bob, rctx: default() })?;
+    tests(Ctx { opts, spec, su_rc, alice, bob, prctx: default() })?;
   }
   info!("ok");
 }

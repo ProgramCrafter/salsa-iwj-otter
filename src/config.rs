@@ -65,37 +65,37 @@ pub struct ServerConfig {
   pub debug_js_inject: Arc<String>,
   pub check_bundled_sources: bool,
   pub game_rng: RngWrap,
-  pub rctx: ResolveContext,
+  pub prctx: PathResolveContext,
 }
 
 #[derive(Debug,Copy,Clone)]
-pub enum ResolveMethod {
-  ForServerReal,
-  Other,
+pub enum PathResolveMethod {
+  Chdir,
+  Prefix,
 }
-impl Default for ResolveMethod { fn default() -> Self { Self::Other } }
+impl Default for PathResolveMethod { fn default() -> Self { Self::Prefix } }
 #[derive(Debug,Clone)]
-pub enum ResolveContext {
+pub enum PathResolveContext {
   RelativeTo(String),
   Noop,
 }
-impl Default for ResolveContext { fn default() -> Self { Self::Noop } }
+impl Default for PathResolveContext { fn default() -> Self { Self::Noop } }
 
-impl ResolveMethod {
+impl PathResolveMethod {
   #[throws(io::Error)]
-  fn chdir(self, cd: &str) -> ResolveContext {
-    use ResolveMethod::*;
-    use ResolveContext::*;
+  fn chdir(self, cd: &str) -> PathResolveContext {
+    use PathResolveMethod::*;
+    use PathResolveContext::*;
     match self {
-      ForServerReal => { env::set_current_dir(cd)?; Noop },
-      Other if cd == "." => Noop,
-      Other => RelativeTo(cd.to_string()),
+      Chdir => { env::set_current_dir(cd)?; Noop },
+      Prefix if cd == "." => Noop,
+      Prefix => RelativeTo(cd.to_string()),
     }
   }
 }
-impl ResolveContext {
+impl PathResolveContext {
   pub fn resolve(&self, input: &str) -> String {
-    use ResolveContext::*;
+    use PathResolveContext::*;
     match (self, input.as_bytes()) {
       (Noop           , _         ) |
       (RelativeTo(_  ), &[b'/',..]) => input.to_owned(),
@@ -106,7 +106,8 @@ impl ResolveContext {
 
 impl ServerConfigSpec {
   //#[throws(AE)]
-  pub fn resolve(self, rmeth: ResolveMethod) -> Result<WholeServerConfig,AE> {
+  pub fn resolve(self, prmeth: PathResolveMethod)
+                 -> Result<WholeServerConfig,AE> {
     let ServerConfigSpec {
       change_directory, base_dir, save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
@@ -117,17 +118,17 @@ impl ServerConfigSpec {
 
     let game_rng = fake_rng.make_game_rng();
 
-    let rctx;
+    let prctx;
     if let Some(ref cd) = change_directory {
-      rctx = rmeth.chdir(cd)
+      prctx = prmeth.chdir(cd)
         .with_context(|| cd.clone())
         .context("config change_directory")?;
     } else {
-      rctx = ResolveContext::Noop;
+      prctx = PathResolveContext::Noop;
     };
 
     let defpath = |specd: Option<String>, leaf: &str| -> String {
-      rctx.resolve(&specd.unwrap_or_else(|| match &base_dir {
+      prctx.resolve(&specd.unwrap_or_else(|| match &base_dir {
         Some(base) => format!("{}/{}", &base, &leaf),
         None       => leaf.to_owned(),
       }))
@@ -146,7 +147,7 @@ impl ServerConfigSpec {
       vec![ shapelib::Config1::PathGlob(glob) ]
     });
 
-    let sendmail = rctx.resolve(&sendmail.unwrap_or_else(
+    let sendmail = prctx.resolve(&sendmail.unwrap_or_else(
       || DEFAULT_SENDMAIL_PROGRAM.into()
     ));
 
@@ -221,7 +222,7 @@ impl ServerConfigSpec {
       http_port, public_url, sse_wildcard_url, rocket_workers,
       template_dir, nwtemplate_dir, wasm_dir,
       bundled_sources, shapelibs, sendmail,
-      debug_js_inject, check_bundled_sources, game_rng, rctx,
+      debug_js_inject, check_bundled_sources, game_rng, prctx,
     };
     trace_dbg!("config resolved", &server);
     Ok(WholeServerConfig {
@@ -244,7 +245,7 @@ fn set_config(whole: WholeServerConfig) {
 
 impl ServerConfig {
   #[throws(StartupError)]
-  pub fn read(config_filename: Option<&str>, rmeth: ResolveMethod) {
+  pub fn read(config_filename: Option<&str>, prmeth: PathResolveMethod) {
     let config_filename = config_filename.map(|s| s.to_string())
       .unwrap_or_else(
         || format!("{}/{}", DEFAULT_CONFIG_DIR, DEFAULT_CONFIG_LEAFNAME)
@@ -253,7 +254,7 @@ impl ServerConfig {
     File::open(&config_filename).with_context(||config_filename.to_string())?
       .read_to_string(&mut buf)?;
     let spec: ServerConfigSpec = toml_de::from_str(&buf)?;
-    let whole = spec.resolve(rmeth)?;
+    let whole = spec.resolve(prmeth)?;
     set_config(whole);
   }
 
