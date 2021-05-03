@@ -133,16 +133,16 @@ impl Id {
 #[derive(Debug,Copy,Clone,Error)]
 #[error("{0}")]
 #[repr(transparent)]
-pub struct NotBundleError(&'static str);
-impl From<&'static str> for NotBundleError {
-  fn from(s: &'static str) -> NotBundleError {
+pub struct NotBundle(&'static str);
+impl From<&'static str> for NotBundle {
+  fn from(s: &'static str) -> NotBundle {
     unsafe { mem::transmute(s) }
   }
 }
 
 #[derive(Error,Debug)]
 enum IncorporateError {
-  #[error("NotBundle({0})")] NotBundle(#[from] NotBundleError),
+  #[error("NotBundle({0})")] NotBundle(#[from] NotBundle),
   #[error("{0}")] IE(#[from] IE),
 }
 
@@ -194,8 +194,8 @@ fn load_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
 }
 
 impl FromStr for Id {
-  type Err = NotBundleError;
-  #[throws(NotBundleError)]
+  type Err = NotBundle;
+  #[throws(NotBundle)]
   fn from_str(fleaf: &str) -> Id {
     let [lhs, rhs] = fleaf.splitn(2, '.')
       .collect::<ArrayVec<[&str;2]>>()
