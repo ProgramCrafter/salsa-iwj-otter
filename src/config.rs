@@ -214,6 +214,7 @@ impl ServerConfigSpec {
       bundled_sources, shapelibs, sendmail,
       debug_js_inject, check_bundled_sources, game_rng,
     };
+    trace_dbg!("config resolved", &server);
     Ok(WholeServerConfig {
       server: Arc::new(server),
       log,
