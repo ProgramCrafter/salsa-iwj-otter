@@ -654,6 +654,15 @@ impl From<OtterOutput> for String {
     s
   }
 }
+impl From<&mut OtterOutput> for String {
+  fn from(oo: &mut OtterOutput) -> String {
+    let mut s = String::new();
+    let o = oo.output.as_mut().unwrap();
+    o.rewind().unwrap();
+    o.read_to_string(&mut s).unwrap();
+    s
+  }
+}
 impl Drop for OtterOutput {
   fn drop(&mut self) {
     if let Some(mut o) = self.output.take() {
