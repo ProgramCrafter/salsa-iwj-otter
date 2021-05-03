@@ -203,12 +203,17 @@ fn incorporate_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
 impl InstanceBundles {
   pub fn new() -> Self { InstanceBundles{ bundles: default() } }
 
-  pub fn list(&self) -> MgmtBundleList {
+  fn iter(&self) -> impl Iterator<Item=(Id, &State)> {
     self.bundles.iter().enumerate().filter_map(|(index, slot)| {
-      let note = slot.as_ref()?;
+      let Note { kind, ref state } = *slot.as_ref()?;
       let index = index.try_into().unwrap();
-      Some((Id { index, kind: note.kind },
-            note.state.clone()))
+      Some((Id { index, kind }, state))
+    })
+  }
+
+  pub fn list(&self) -> MgmtBundleList {
+    self.iter().map(|(id, state)| {
+      (id, state.clone())
     }).collect()
   }
 
