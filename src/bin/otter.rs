@@ -1391,7 +1391,7 @@ mod list_bundles {
     if_let!{ MR::Bundles { bundles } = resp;
              else throw!(anyhow!("unexpected {:?}", &resp)) };
     for (id, state) in bundles {
-      println!("{} {:?}", id, &state);
+      println!("{} {}", id, &state);
     }
   }
 

@@ -75,6 +75,19 @@ pub struct Loaded {
   meta: BundleMeta,
 }
 
+impl Display for State {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) {
+    match self {
+      State::Loaded(Loaded{ meta }) => {
+        let BundleMeta { title } = meta;
+        write!(f, "Loaded {:?}", title)?;
+      }
+      other => write!(f, "{:?}", other)?,
+    }
+  }
+}
+
 pub fn b_dir(instance: &InstanceName) -> String {
   savefilename(instance, "b-", "")
 }
