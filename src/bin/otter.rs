@@ -1341,11 +1341,8 @@ mod upload_bundle {
       .with_context(|| args.bundle_file.clone())
       .context("open bundle file")?;
     let mut f = BufReader::new(f);
-    let hash = {
-      let mut dw = bundles::DigestWrite::sink();
-      io::copy(&mut f, &mut dw).context("read bundle file (for hash)")?;
-      dw.finish().0
-    };
+    let hash = bundles::DigestWrite::of(&mut f)
+      .context("read bundle file (for hash)")?;
     let kind = bundles::Kind::only();
     f.rewind().context("rewind bundle file")?;
     let cmd = MC::UploadBundle {

@@ -584,6 +584,13 @@ impl<D: Digest, W: Write> DigestWrite<D, W> {
 }
 impl<D: Digest> DigestWrite<D, io::Sink> {
   pub fn sink() -> Self { DigestWrite::new(io::sink()) }
+
+  #[throws(io::Error)]
+  pub fn of<R>(r: &mut R) -> digest::Output<D> where R: Read {
+    let mut dw = DigestWrite::<D,_>::sink();
+    io::copy(r, &mut dw)?;
+    dw.finish().0
+  }
 }
 
 impl<D: Digest, W: Write> Write for DigestWrite<D, W> {
