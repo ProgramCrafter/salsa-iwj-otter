@@ -70,7 +70,7 @@ pub struct Opts {
 pub struct SetupCore {
   pub ds: DirSubst,
   pub mgmt_conn: RefCell<MgmtChannelForGame>,
-  server_child: Child,
+  pub server_child: Child,
   pub wanted_tests: TrackWantedTests,
   pub cln: cleanup_notify::Handle,
 }
@@ -665,6 +665,15 @@ fn start_gameserver(cln: &cleanup_notify::Handle, ds: &DirSubst)
   );
 
   (mgmt_conn, child)
+}
+
+impl SetupCore {
+  #[throws(AE)]
+  pub fn restart_gameserver(&mut self) {
+    let (mgmt_conn, child) = start_gameserver(&self.cln, &self.ds)?;
+    self.mgmt_conn = RefCell::new(mgmt_conn);
+    self.server_child = child;
+  }
 }
 
 // ---------- game spec ----------

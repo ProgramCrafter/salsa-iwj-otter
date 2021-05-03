@@ -711,6 +711,22 @@ impl Ctx {
     let st = Command::new("cmp").args(&[&bundle_file, "00000.zip"]).status()?;
     if ! st.success() { panic!("cmp failed {}", st) }
   }
+
+  #[throws(Explode)]
+  fn save_load(&mut self) {
+    {
+      let mut su = self.su_rc.borrow_mut();
+      let old_pid = su.server_child.id() as nix::libc::pid_t;
+      nix::sys::signal::kill(nix::unistd::Pid::from_raw(old_pid),
+                             nix::sys::signal::SIGTERM)?;
+      let st = dbgc!(su.server_child.wait()?);
+      assert_eq!(st.signal(), Some(nix::sys::signal::SIGTERM as i32));
+      su.restart_gameserver()?;
+    }
+    let alice = self.connect_player(&self.alice)?;
+    let pieces = alice.pieces::<PIA>()?;
+    dbgc!(pieces);
+  }
 }
 
 #[throws(Explode)]
@@ -720,6 +736,7 @@ fn tests(mut c: Ctx) {
   test!(c, "specs",        c.chdir_root(|c| c.specs()        ));
   test!(c, "put-back",                      c.put_back()     ?);
   test!(c, "bundles",                       c.bundles()      ?);
+  test!(c, "save-load",                     c.save_load()    ?);
 }
 
 #[throws(Explode)]
