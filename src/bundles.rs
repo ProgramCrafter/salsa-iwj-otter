@@ -47,6 +47,48 @@ hformat_as_display!{Id}
 
 const BUNDLES_MAX: Index = Index(64);
 
+#[derive(Clone)]
+pub enum AssetUrlKey {
+  Dummy,
+  Y(AssetUrlKeyRaw),
+}
+type AssetUrlKeyRaw = [u8; 32];
+impl Debug for AssetUrlKey {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) {
+    use AssetUrlKey::*;
+    match self {
+      Y(_) => write!(f, "AssetUrlKey::Y{{..}}")?,
+      Dummy => write!(f, "AssetUrlKey::Dummy")?,
+    }
+  }
+}
+impl AssetUrlKey {
+  #[throws(IE)]
+  pub fn new_random() -> AssetUrlKey {
+    let mut buf: AssetUrlKeyRaw = default();
+    let mut rng: rand::rngs::ThreadRng = thread_rng();
+    rand::RngCore::try_fill_bytes(&mut rng, &mut buf)
+      .context("generate new AssetUrlKey")?;
+    AssetUrlKey::Y(buf)
+  }
+}
+pub type AssetUrlToken = digest::Output<Digester>;
+impl AssetUrlKey {
+  pub fn token<V>(&self, what: &str, v: V) -> AssetUrlToken
+  where V: Serialize {
+    let k = match self {
+      AssetUrlKey::Y(k) => k,
+      _ => panic!("dummy AssetUrlKey being used!"),
+    };
+    let mut dw = DigestWrite::sink();
+    write!(dw, "{}\0", what).unwrap();
+    dw.write(&k[..]).unwrap();
+    rmp_serde::encode::write(&mut dw, &v).expect("serialize failed!");
+    dw.finish().0
+  }
+}
+
 #[derive(Copy,Clone,Debug,Hash,PartialEq,Eq,Ord,PartialOrd)]
 #[derive(Serialize,Deserialize)]
 pub struct Id { pub index: Index, pub kind: Kind, }

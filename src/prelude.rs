@@ -123,6 +123,7 @@ pub use crate::accounts::*;
 pub use crate::authproofs::{self, Authorisation, Unauthorised};
 pub use crate::authproofs::AuthorisationSuperuser;
 pub use crate::bundles::{self, InstanceBundles, MgmtBundleListExt};
+pub use crate::bundles::{AssetUrlKey, AssetUrlToken};
 pub use crate::commands::{AccessTokenInfo, AccessTokenReport, MgmtError};
 pub use crate::commands::{MgmtCommand, MgmtResponse};
 pub use crate::commands::{MgmtGameInstruction, MgmtGameResponse};
