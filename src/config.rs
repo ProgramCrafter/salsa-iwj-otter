@@ -87,8 +87,8 @@ impl ResolveContext {
   fn resolve(self, cd: &str, input: &str) -> String {
     use ResolveContext::*;
     match (self, input.as_bytes()) {
-      (ForServerReal, &[b'/',..]) | (Other, _) => input.to_owned(),
-      (ForServerReal, _) => format!("{}/{}", cd, input),
+      (Other, &[b'/',..]) | (ForServerReal, _) => input.to_owned(),
+      (Other, _) => format!("{}/{}", cd, input),
     }
   }
 }
