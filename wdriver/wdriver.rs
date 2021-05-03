@@ -59,6 +59,7 @@ pub struct Window {
   pub name: String,
   pub player: PlayerId,
   pub instance: InstanceName,
+  pub url: String,
   js_logfile: JsLogfile,
   vpid_cache: RefCell<HashMap<String, Vpid>>,
 }
@@ -516,7 +517,7 @@ fn check_window_name_sanity(name: &str) -> &str {
 impl Setup {
   #[throws(AE)]
   pub fn new_window<'s>(&'s mut self, instance: &Instance, name: &str,
-                        player: PlayerId)
+                        player: PlayerId, url: String)
                         -> Window {
     let name = check_window_name_sanity(name)?;
     let window = (||{
@@ -549,7 +550,7 @@ impl Setup {
         name: name.to_owned(),
         instance: instance.0.clone(),
         vpid_cache: default(),
-        player, js_logfile,
+        url, player, js_logfile,
       })
     })()
       .with_context(|| name.to_owned())
@@ -799,6 +800,7 @@ impl Drop for Setup {
           player: default(),
           vpid_cache: default(),
           js_logfile: jslog.clone(),
+          url: default(),
         };
         self.w(&w)?.screenshot("final", log::Level::Info)
           .context(name)
@@ -847,7 +849,8 @@ impl Setup {
     susus
       .into_iter().map(|sus|
     {
-      let w = self.new_window(instance, sus.nick, sus.player)?;
+      let w = self.new_window(instance, sus.nick,
+                              sus.player, sus.url.clone())?;
       self.w(&w)?.get(sus.url)?;
       self.w(&w)?.screenshot("initial", log::Level::Trace)?;
       Ok::<_,AE>(w)
