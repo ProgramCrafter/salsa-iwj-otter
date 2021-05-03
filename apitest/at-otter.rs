@@ -718,8 +718,8 @@ fn tests(mut c: Ctx) {
   test!(c, "library-load", c.chdir_root(|c| c.library_load() ));
   test!(c, "hidden-hand",                   c.hidden_hand()  ?);
   test!(c, "specs",        c.chdir_root(|c| c.specs()        ));
-  test!(c, "bundles",                       c.bundles()      ?);
   test!(c, "put-back",                      c.put_back()     ?);
+  test!(c, "bundles",                       c.bundles()      ?);
 }
 
 #[throws(AE)]
