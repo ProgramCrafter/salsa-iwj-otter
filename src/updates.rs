@@ -70,6 +70,9 @@ pub enum PreparedUpdateEntry {
     player: PlayerId,
     new_info_pane: Arc<Html>,
   },
+  UpdateBundles {
+    new_info_pane: Arc<Html>,
+  },
   Log(Arc<CommittedLogEntry>),
   Error(ErrorSignaledViaUpdate<PUE_P>),
 }
@@ -245,6 +248,9 @@ enum TransmitUpdateEntry<'u> {
   RemovePlayer {
     player: PlayerId,
     new_info_pane: &'u Html,
+  },
+  UpdateBundles {
+    new_info_pane: &'u Arc<Html>,
   },
   SetLinks(Html),
   #[serde(serialize_with="serialize_logentry")]
@@ -436,6 +442,9 @@ impl PreparedUpdateEntry {
           + new_info_pane.json_len()
       }
       RemovePlayer { player:_, new_info_pane } => {
+        new_info_pane.json_len() + 100
+      }
+      UpdateBundles { new_info_pane } => {
         new_info_pane.json_len() + 100
       }
       SetTableColour(colour) => {
@@ -952,6 +961,9 @@ impl PreparedUpdate {
         }
         &PUE::RemovePlayer { player, ref new_info_pane } => {
           TUE::RemovePlayer { player, new_info_pane }
+        }
+        &PUE::UpdateBundles { ref new_info_pane } => {
+          TUE::UpdateBundles { new_info_pane }
         }
         PUE::Error(e) => {
           match *e {

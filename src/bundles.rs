@@ -42,6 +42,7 @@ impl FromStr for Index {
   #[throws(Self::Err)]
   fn from_str(s: &str) -> Index { Index(u16::from_str(s)?) }
 }
+hformat_as_display!{Id}
 
 const BUNDLES_MAX: Index = Index(64);
 
@@ -214,7 +215,18 @@ impl InstanceBundles {
   fn updated(&self, ig: &mut Instance) {
     ig.bundle_list = self.iter().map(|(id, state)| {
       (id, state.clone())
-    }).collect()
+    }).collect();
+
+    let new_info_pane = ig.bundle_list.info_pane().unwrap_or_else(|e|{
+      let m = "error rendering bundle list";
+      error!("{}: {}", m, e);
+      Html::from_txt(m)
+    });
+    let new_info_pane = Arc::new(new_info_pane);
+    let mut prepub = PrepareUpdatesBuffer::new(ig, Some(1));
+    prepub.raw_updates(vec![
+      PUE::UpdateBundles { new_info_pane }
+    ]);
   }
 
   #[throws(IE)]
@@ -288,6 +300,33 @@ impl Uploading {
     io::copy(data, &mut self.file)
       .with_context(|| self.id.path_tmp(&*self.instance))
       .context("copy").map_err(IE::from)?
+  }
+}
+
+#[ext(pub)]
+impl MgmtBundleList {
+  #[throws(IE)]
+  fn info_pane(&self) -> Html {
+    #[derive(Serialize,Debug)]
+    struct RenderPane {
+      bundles: Vec<RenderBundle>,
+    }
+    #[derive(Serialize,Debug)]
+    struct RenderBundle {
+      id: Html,
+      title: Html,
+    }
+    let bundles = self.iter().filter_map(|(&id, state)| {
+      if_let!{ State::Loaded(Loaded { meta }) = state; else return None; }
+      let BundleMeta { title } = meta;
+      let id = hformat!("{}", id);
+      let title = Html::from_txt(title);
+      Some(RenderBundle { id, title })
+    }).collect();
+
+    Html::from_html_string(
+      nwtemplates::render("bundles-info-pane.tera", &RenderPane { bundles })?
+    )
   }
 }
 

@@ -110,6 +110,7 @@ Hi {{nick | escape}}
     <div class="uokey">Show
       <strong>H</strong> this help
       <strong>U</strong> players
+      <strong>B</strong> bundles
     </div>
   </div>
  </div>
@@ -119,6 +120,15 @@ Hi {{nick | escape}}
 <div><strong>Players</strong> (<strong>H</strong>/<strong>U</strong>: return to help)</div>
   <div id="player_list">
 {{ player_info_pane }}
+  </div>
+  </div>
+ </div>
+
+ <div id="pane_bundles" class="somepane" style="display:none">
+  <div id="bundle_list_columns">
+<div><strong>Bundles</strong> (<strong>H</strong>/<strong>B</strong>: return to help)</div>
+  <div id="bundle_list">
+{{ bundles_info_pane }}
   </div>
   </div>
  </div>

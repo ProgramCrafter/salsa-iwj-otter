@@ -23,6 +23,7 @@ struct SessionRenderContext {
   sse_url_prefix: String,
   links: Html,
   player_info_pane: Html,
+  bundles_info_pane: Html,
   fake_rng: bool,
 }
 
@@ -235,6 +236,7 @@ fn session_inner(form: Json<SessionForm>,
       nick,
       sse_url_prefix,
       player_info_pane,
+      bundles_info_pane: ig.bundle_list.info_pane()?,
       ptoken: form.ptoken.clone(),
       links: (&*ig.links).into(),
       fake_rng: config().game_rng.is_fake(),

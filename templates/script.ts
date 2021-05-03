@@ -153,6 +153,7 @@ type PaneName = string;
 const pane_keys : { [key: string]: PaneName } = {
   "H" : "help",
   "U" : "players",
+  "B" : "bundles",
 };
 
 const uo_kind_prec : { [kind: string]: number } = {
@@ -1357,6 +1358,12 @@ messages.RemovePlayer = <MessageHandler>function
 
 function player_info_pane_set(j: PlayersUpdate) {
   document.getElementById('player_list')!
+    .innerHTML = j.new_info_pane;
+}
+
+messages.UpdateBundles = <MessageHandler>function
+(j: { new_info_pane: string }) {
+  document.getElementById('bundle_list')!
     .innerHTML = j.new_info_pane;
 }
 
