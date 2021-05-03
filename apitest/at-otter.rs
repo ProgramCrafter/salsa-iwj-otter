@@ -18,6 +18,7 @@ struct Ctx {
   spec: GameSpec,
   alice: Player,
   bob: Player,
+  rctx: ResolveContext,
 }
 
 impl Ctx {
@@ -477,12 +478,12 @@ impl Ctx {
       ["--account", "server:"].iter().cloned().map(Into::into)
       .chain(args.iter().map(|s| s.as_ref().to_owned()))
       .collect();
-    self.su().ds.otter(&args)?;
+    self.su().ds.otter_rctx(&self.rctx, &args)?;
   }
 
   #[throws(AE)]
   fn library_load(&mut self) {
-    prepare_game(&self.su().ds, TABLE)?;
+    prepare_game(&self.su().ds, &self.rctx, TABLE)?;
 
     let command = self.su().ds.ss(
       "library-add @table@ wikimedia chess-blue-?"
@@ -526,7 +527,7 @@ impl Ctx {
 
   #[throws(AE)]
   fn hidden_hand(&mut self) {
-    prepare_game(&self.su().ds, TABLE)?;
+    prepare_game(&self.su().ds, &default(), TABLE)?;
     let mut alice = self.connect_player(&self.alice)?;
     let mut bob = self.connect_player(&self.bob)?;
     self.su_mut().mgmt_conn().fakerng_load(&[&"1",&"0"])?;
@@ -703,7 +704,7 @@ fn main() {
     drop(mc);
     
     let su_rc = Rc::new(RefCell::new(su));
-    tests(Ctx { opts, spec, su_rc, alice, bob })?;
+    tests(Ctx { opts, spec, su_rc, alice, bob, rctx: default() })?;
   }
   info!("ok");
 }

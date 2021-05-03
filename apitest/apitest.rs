@@ -638,14 +638,23 @@ impl DirSubst {
   }
 
   #[throws(AE)]
-  pub fn otter<S:AsRef<str>>(&self, xargs: &[S]) {
+  pub fn otter<'s,S>(&self, xargs: &'s [S])
+  where &'s S: Into<String>
+  {
+    self.otter_rctx(&default(), xargs)?
+  }
+
+  #[throws(AE)]
+  pub fn otter_rctx<'s,S>(&self, rctx: &ResolveContext, xargs: &'s [S])
+  where &'s S: Into<String>
+  {
     let ds = self;
     let exe = ds.subst("@target@/debug/otter")?;
     let specs = self.subst("@src@/specs")?;
-    let mut args: Vec<&str> = vec![];
-    args.extend(&["--config", CONFIG]);
-    args.extend(&["--spec-dir", &specs]);
-    args.extend(xargs.iter().map(AsRef::as_ref));
+    let mut args: Vec<String> = vec![];
+    args.push("--config"  .to_owned()); args.push(rctx.resolve(&CONFIG));
+    args.push("--spec-dir".to_owned()); args.push(rctx.resolve(&specs) );
+    args.extend(xargs.iter().map(|s| s.into()));
     let dbg = format!("running {} {:?}", &exe, &args);
     debug!("{}", &dbg);
     (||{
@@ -685,13 +694,14 @@ impl DirSubst {
 }
 
 #[throws(AE)]
-pub fn prepare_game(ds: &DirSubst, table: &str) -> InstanceName {
+pub fn prepare_game(ds: &DirSubst, rctx: &ResolveContext, table: &str)
+                    -> InstanceName {
   let game_spec = ds.game_spec_path()?;
   let subst = ds.also(&[
-    ("table",     table),
-    ("game_spec", &game_spec),
+    ("table",     table.to_owned()),
+    ("game_spec", rctx.resolve(&game_spec)),
   ]);
-  ds.otter(&subst.ss(
+  ds.otter_rctx(rctx, &subst.ss(
     "--account server:                                  \
      reset                                              \
      --reset-table @specs@/test.table.toml              \
@@ -901,7 +911,7 @@ pub fn setup_core<O>(module_paths: &[&str], early_args: EarlyArgPredicate) ->
   );
 
   let instance_name =
-    prepare_game(&ds, TABLE).context("setup game")?;
+    prepare_game(&ds, &default(), TABLE).context("setup game")?;
 
   let wanted_tests = opts.tests.track();
 
