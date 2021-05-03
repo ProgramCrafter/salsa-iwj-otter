@@ -7,6 +7,8 @@ Version UNRELEASED
    less-public games.
  * otter(1) and otterlib(!) now honour OTTER_CLI_LOG
    (in Rust env_logger format).
+ * otter(1) no longer acts on change_directory server config
+   setting (but still resolves paths in config relative to that dir).
  * Change CLI to server management wire protocol to binary-framed
    MessagePack (was newline-framed JSON).
  * Build system and test suite improvements and fixes.
