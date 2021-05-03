@@ -692,6 +692,14 @@ impl Ctx {
   }
 
   #[throws(Explode)]
+  fn put_back(&mut self) {
+    // Put things back for the ad-hoc human tester
+    let su = self.su();
+    prepare_game(&su.ds, &self.prctx, TABLE)?;
+    su.ds.setup_static_users(&mut *su.mgmt_conn.borrow_mut(), default())?;
+  }
+
+  #[throws(Explode)]
   fn bundles(&mut self) {
     let bundle_file = self.su().ds.example_bundle();
     let ds = self.su().ds.also(&[("bundle", &bundle_file)]);
@@ -702,14 +710,6 @@ impl Ctx {
     self.otter(&ds.ss("download-bundle @table@ 0")?)?;
     let st = Command::new("cmp").args(&[&bundle_file, "00000.zip"]).status()?;
     if ! st.success() { panic!("cmp failed {}", st) }
-  }
-
-  #[throws(Explode)]
-  fn put_back(&mut self) {
-    // Put things back for the ad-hoc human tester
-    let su = self.su();
-    prepare_game(&su.ds, &self.prctx, TABLE)?;
-    su.ds.setup_static_users(&mut *su.mgmt_conn.borrow_mut(), default())?;
   }
 }
 
