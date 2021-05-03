@@ -369,3 +369,20 @@ impl InstanceBundles {
     };
   }
 }
+
+#[test]
+fn id_file_parse() {
+  let check_y = |s,index,kind| {
+    let id = Id { index, kind };
+    assert_eq!(Id::from_str(s).unwrap(), id);
+    assert_eq!(id.to_string(), s);
+  };
+  let check_n = |s,m| {
+    assert_eq!(Id::from_str(s).unwrap_err().to_string(), m)
+  };
+  check_y("00000.zip", Index(0), Kind::Zip);
+  check_n("00000zip",  "no dot");
+  check_n("xxxxx.zip", "bad index");
+  check_n("00000.xyz", "bad extension");
+  check_n("65536.zip", "bad index");
+}
