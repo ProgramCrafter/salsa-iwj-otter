@@ -201,6 +201,36 @@ fn resource<'r>(leaf: CheckedResourceLeaf) -> impl Responder<'r> {
   Content(leaf.ctype, NamedFile::open(path)?)
 }
 
+#[derive(Error,Debug)]
+enum BundleDownloadError {
+  BadAssetUrlToken(#[from] BadAssetUrlToken),
+  NotFound,
+  IE(#[from] IE),
+}
+display_as_debug!{BundleDownloadError}
+
+#[get("/_/bundle/<instance>/<id>/<token>")]
+#[throws(BundleDownloadError)]
+fn bundle<'r>(instance: Parse<InstanceName>,
+              id: Parse<bundles::Id>,
+              token: Parse<AssetUrlToken>) -> impl Responder<'r> {
+  let instance = &instance.0;
+  let id = id.0;
+  let gref = Instance::lookup_by_name_unauth(instance)
+    .map_err(|_| BadAssetUrlToken)?;
+  let auth = {
+    let gref = gref.by_ref(Authorisation::authorise_any());
+    let ig = gref.lock().map_err(|_| BadAssetUrlToken)?;
+    ig.asset_url_key.check("bundle", &(instance, id), &token.0)?
+  }.map(|(_,id)| id);
+  let f = id.open_by_name(instance, auth).map_err(IE::from)?;
+  let ctype = match id.kind {
+    bundles::Kind::Zip => ContentType::ZIP,
+  };
+  if_let!{ Some(f) = f; else throw!(BundleDownloadError::NotFound) }
+  Content(ctype, rocket::response::Stream::from(f))
+}
+
 #[derive(Debug,Copy,Clone)]
 struct ContentTypeFixup;
 impl fairing::Fairing for ContentTypeFixup {
@@ -335,6 +365,7 @@ fn main() {
     .mount("/", routes![
       loading_l,
       loading_p,
+      bundle,
       resource,
       updates,
     ])
