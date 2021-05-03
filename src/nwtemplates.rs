@@ -36,7 +36,8 @@ pub fn render<D: Serialize>(template_name: &str, data: &D) -> String {
     let g = STATE.read();
     RwLockReadGuard::map(g, |g| &g.as_ref().unwrap().tera)
   }
-  get_tera().render(template_name, data)
-    .map_err(|e| anyhow!(e.to_string()))
-    ?
+  get_tera().render(template_name, data).map_err(|e| {
+    error!("template render error: {:?}", &e);
+    anyhow!(e.to_string())
+  })?
 }
