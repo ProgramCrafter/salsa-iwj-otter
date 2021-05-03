@@ -693,7 +693,7 @@ impl Ctx {
 
   #[throws(Explode)]
   fn bundles(&mut self) {
-    let bundle_file = self.su().ds.subst("@src@/examples/test-bundle.zip")?;
+    let bundle_file = self.su().ds.example_bundle();
     let ds = self.su().ds.also(&[("bundle", &bundle_file)]);
     self.otter(&ds.ss("upload-bundle @table@ @bundle@")?)?;
     let mut bundles = self.otter(&ds.ss("list-bundles @table@")?)?;

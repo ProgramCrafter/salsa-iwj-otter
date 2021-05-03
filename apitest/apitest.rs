@@ -688,6 +688,10 @@ impl DirSubst {
     format!("{}/specs" , &self.src)
   }
 
+  pub fn example_bundle(&self) -> String {
+    self.subst("@src@/examples/test-bundle.zip").unwrap()
+  }
+
   #[throws(AE)]
   pub fn otter<'s,S>(&self, xargs: &'s [S]) -> OtterOutput
   where &'s S: Into<String>
