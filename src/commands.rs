@@ -49,12 +49,10 @@ pub enum MgmtCommand {
   ListBundles {
     game: InstanceName,
   },
-  /*
   DownloadBundle {
     game: InstanceName,
     id: bundles::Id,
   },
-  */
 
   LibraryListByGlob {
     glob: shapelib::ItemSpec,
@@ -233,6 +231,7 @@ pub enum MgmtError {
   UploadCorrupted,
   TooManyBundles,
   BadBundle(String),
+  BundleNotFound,
 }
 impl Display for MgmtError {
   #[throws(fmt::Error)]

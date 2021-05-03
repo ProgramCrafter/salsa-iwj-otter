@@ -1402,6 +1402,75 @@ mod list_bundles {
   )}
 }
 
+//---------- download-bundle ----------
+
+mod download_bundle {
+  use super::*;
+
+  #[derive(Default,Debug)]
+  struct Args {
+    table_name: String,
+    index: bundles::Index,
+    output: Option<PathBuf>,
+  }
+
+  fn subargs(sa: &mut Args) -> ArgumentParser {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.table_name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
+    ap.refer(&mut sa.index).required()
+      .add_argument("INDEX",Store,"bundle number");
+    ap.refer(&mut sa.output).metavar("OUTPUT")
+      .add_option(&["-o","--output"],StoreOption,
+                  "write output to OUTPUT (rather than NNNNN.zip");
+    ap
+  }
+
+  #[throws(AE)]
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
+    let instance_name = ma.instance_name(&args.table_name);
+    let mut chan = access_game(&ma, &args.table_name)?;
+    let kind = bundles::Kind::only();
+    let id = bundles::Id { kind, index: args.index };
+    let path = args.output.unwrap_or_else(|| id.to_string().into());
+
+    let (f, path_tmp): (Box<dyn Write>, _) =
+      if path.as_os_str().as_bytes() == b"-"
+    {
+      (Box::new(io::stdout()), None)
+    } else {
+      let tmp = {
+        let mut w = path.as_os_str().to_owned();
+        w.push(".tmp");
+        PathBuf::from(w)
+      };
+      let f = fs::File::create(&tmp)
+        .with_context(|| tmp.to_debug()).context("create temporary")?;
+      (Box::new(f), Some((path, tmp)))
+    };
+    let mut f = BufWriter::new(f);
+    let cmd = MC::DownloadBundle {
+      game: instance_name.clone(),
+      id,
+    };
+    chan.cmd_withbulk(&cmd, &mut io::empty(), &mut f)
+      .context("download bundle")?;
+    f.flush().context("flush bundle file")?;
+    if let Some((path, tmp)) = path_tmp {
+      fs::rename(&tmp,&path)
+        .with_context(|| path.to_debug()).context("rename after download")?;
+    }
+  }
+
+  inventory::submit!{Subcommand(
+    "download-bundle",
+    "download bundle",
+    call,
+  )}
+}
+
 //---------- list-accounts ----------
 
 mod list_accounts {

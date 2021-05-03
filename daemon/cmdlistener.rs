@@ -80,7 +80,7 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
                             -> Result<(), CSE>
   where R: Read, W: Write
 {
-  let /*mut*/ bulk_download: Option<Box<dyn Read>> = None;
+  let mut bulk_download: Option<Box<dyn Read>> = None;
 
   let mut cmd_s = log_enabled!(log::Level::Info)
     .as_some_from(|| format!("{:?}", &cmd))
@@ -250,6 +250,16 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       let bundles = bundles.by(auth);
       let bundles = bundles.list();
       MR::Bundles { bundles }
+    }
+    MC::DownloadBundle { game, id } => {
+      let ag = AccountsGuard::lock();
+      let gref = Instance::lookup_by_name_unauth(&game)?;
+      let mut igu = gref.lock()?;
+      let (ig, _) = cs.check_acl(&ag, &mut igu, PCH::Instance,
+                                     TP_ACCESS_BUNDLES)?;
+      let f = id.open(&ig.name)?.ok_or_else(|| ME::BundleNotFound)?;
+      bulk_download = Some(Box::new(f));
+      Fine
     }
 
     MC::ListGames { all } => {
