@@ -130,14 +130,20 @@ impl Id {
   }
 }
 
+#[derive(Debug,Copy,Clone,Error)]
+#[error("{0}")]
+#[repr(transparent)]
+pub struct NotBundleError(&'static str);
+impl From<&'static str> for NotBundleError {
+  fn from(s: &'static str) -> NotBundleError {
+    unsafe { mem::transmute(s) }
+  }
+}
+
 #[derive(Error,Debug)]
 enum IncorporateError {
-  NotBundle(&'static str),
-  IE(#[from] IE),
-}
-display_as_debug!{IncorporateError}
-impl From<&'static str> for IncorporateError {
-  fn from(why: &'static str) -> Self { Self::NotBundle(why) }
+  #[error("NotBundle({0})")] NotBundle(#[from] NotBundleError),
+  #[error("{0}")] IE(#[from] IE),
 }
 
 pub struct Uploading {
@@ -187,19 +193,25 @@ fn load_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
   *slot = Some(Note { kind: id.kind, state });
 }
 
+impl FromStr for Id {
+  type Err = NotBundleError;
+  #[throws(NotBundleError)]
+  fn from_str(fleaf: &str) -> Id {
+    let [lhs, rhs] = fleaf.splitn(2, '.')
+      .collect::<ArrayVec<[&str;2]>>()
+      .into_inner().map_err(|_| "no dot")?;
+    let index = lhs.parse().map_err(|_| "bad index")?;
+    let kind = rhs.parse().map_err(|_| "bad extension")?;
+    Id { index, kind }
+  }
+}
+
 #[throws(IncorporateError)]
 fn incorporate_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
                       fpath: &str) {
   let fleaf = fpath.rsplitn(2, '/').next().unwrap();
-
-  let [lhs, rhs] = fleaf.splitn(2, '.')
-    .collect::<ArrayVec<[&str;2]>>()
-    .into_inner().map_err(|_| "no dot")?;
-
-  let index = lhs.parse().map_err(|_| "bad index")?;
-  let kind = rhs.parse().map_err(|_| "bad extension")?;
-
-  load_bundle(ib, ig, Id { index, kind }, fpath)?;
+  let id = fleaf.parse()?;
+  load_bundle(ib, ig, id, fpath)?;
 }
 
 impl InstanceBundles {
