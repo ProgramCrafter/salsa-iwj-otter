@@ -65,37 +65,48 @@ pub struct ServerConfig {
   pub debug_js_inject: Arc<String>,
   pub check_bundled_sources: bool,
   pub game_rng: RngWrap,
+  pub rctx: ResolveContext,
 }
 
 #[derive(Debug,Copy,Clone)]
-pub enum ResolveContext {
+pub enum ResolveMethod {
   ForServerReal,
   Other,
 }
-impl Default for ResolveContext {
-  fn default() -> Self { ResolveContext::Other }
+impl Default for ResolveMethod { fn default() -> Self { Self::Other } }
+#[derive(Debug,Clone)]
+pub enum ResolveContext {
+  RelativeTo(String),
+  Noop,
 }
-impl ResolveContext {
+impl Default for ResolveContext { fn default() -> Self { Self::Noop } }
+
+impl ResolveMethod {
   #[throws(io::Error)]
-  fn chdir(self, cd: &str) {
+  fn chdir(self, cd: &str) -> ResolveContext {
+    use ResolveMethod::*;
     use ResolveContext::*;
     match self {
-      ForServerReal => env::set_current_dir(cd)?,
-      Other => { },
+      ForServerReal => { env::set_current_dir(cd)?; Noop },
+      Other if cd == "." => Noop,
+      Other => RelativeTo(cd.to_string()),
     }
   }
-  fn resolve(self, cd: &str, input: &str) -> String {
+}
+impl ResolveContext {
+  pub fn resolve(&self, input: &str) -> String {
     use ResolveContext::*;
     match (self, input.as_bytes()) {
-      (Other, &[b'/',..]) | (ForServerReal, _) => input.to_owned(),
-      (Other, _) => format!("{}/{}", cd, input),
+      (Noop           , _         ) |
+      (RelativeTo(_  ), &[b'/',..]) => input.to_owned(),
+      (RelativeTo(cd), _          ) => format!("{}/{}", &cd, input),
     }
   }
 }
 
 impl ServerConfigSpec {
   //#[throws(AE)]
-  pub fn resolve(self, rctx: ResolveContext) -> Result<WholeServerConfig,AE> {
+  pub fn resolve(self, rmeth: ResolveMethod) -> Result<WholeServerConfig,AE> {
     let ServerConfigSpec {
       change_directory, base_dir, save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
@@ -106,19 +117,17 @@ impl ServerConfigSpec {
 
     let game_rng = fake_rng.make_game_rng();
 
-    let rpath: Box<dyn Fn(&str) -> String>;
+    let rctx;
     if let Some(ref cd) = change_directory {
-      rctx.chdir(cd)
+      rctx = rmeth.chdir(cd)
         .with_context(|| cd.clone())
         .context("config change_directory")?;
-      let cd = cd.to_owned();
-      rpath = Box::new(move |p| rctx.resolve(&cd, p));
     } else {
-      rpath = Box::new(|p| p.to_owned());
+      rctx = ResolveContext::Noop;
     };
 
     let defpath = |specd: Option<String>, leaf: &str| -> String {
-      rpath(&specd.unwrap_or_else(|| match &base_dir {
+      rctx.resolve(&specd.unwrap_or_else(|| match &base_dir {
         Some(base) => format!("{}/{}", &base, &leaf),
         None       => leaf.to_owned(),
       }))
@@ -137,7 +146,7 @@ impl ServerConfigSpec {
       vec![ shapelib::Config1::PathGlob(glob) ]
     });
 
-    let sendmail = rpath(&sendmail.unwrap_or_else(
+    let sendmail = rctx.resolve(&sendmail.unwrap_or_else(
       || DEFAULT_SENDMAIL_PROGRAM.into()
     ));
 
@@ -212,7 +221,7 @@ impl ServerConfigSpec {
       http_port, public_url, sse_wildcard_url, rocket_workers,
       template_dir, nwtemplate_dir, wasm_dir,
       bundled_sources, shapelibs, sendmail,
-      debug_js_inject, check_bundled_sources, game_rng,
+      debug_js_inject, check_bundled_sources, game_rng, rctx,
     };
     trace_dbg!("config resolved", &server);
     Ok(WholeServerConfig {
@@ -235,7 +244,7 @@ fn set_config(whole: WholeServerConfig) {
 
 impl ServerConfig {
   #[throws(StartupError)]
-  pub fn read(config_filename: Option<&str>, rctx: ResolveContext) {
+  pub fn read(config_filename: Option<&str>, rmeth: ResolveMethod) {
     let config_filename = config_filename.map(|s| s.to_string())
       .unwrap_or_else(
         || format!("{}/{}", DEFAULT_CONFIG_DIR, DEFAULT_CONFIG_LEAFNAME)
@@ -244,7 +253,7 @@ impl ServerConfig {
     File::open(&config_filename).with_context(||config_filename.to_string())?
       .read_to_string(&mut buf)?;
     let spec: ServerConfigSpec = toml_de::from_str(&buf)?;
-    let whole = spec.resolve(rctx)?;
+    let whole = spec.resolve(rmeth)?;
     set_config(whole);
   }
 
