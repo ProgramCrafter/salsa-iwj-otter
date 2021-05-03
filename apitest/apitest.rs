@@ -901,12 +901,11 @@ pub fn setup_core<O>(module_paths: &[&str], early_args: EarlyArgPredicate) ->
     .format_timestamp_micros()
     .format_level(true);
   for too_verbose in &[
-    "otter_apitest_tests",
     "html5ever::tokenizer",
     "html5ever::tree_builder",
     "selectors::matching",
   ] {
-    builder.filter_module(too_verbose, log::LevelFilter::Debug);
+    builder.filter_module(too_verbose, log::LevelFilter::Info);
   }
 
   for module in module_paths {
