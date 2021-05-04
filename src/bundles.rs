@@ -35,16 +35,6 @@ pub struct InstanceBundles {
   bundles: Vec<Option<Note>>,
 }
 
-//---------- private definitions ----------
-
-const BUNDLES_MAX: Index = Index(64);
-
-#[derive(Debug,Clone,Serialize,Deserialize)]
-pub struct Note {
-  pub kind: Kind,
-  pub state: State,
-}
-
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub enum State {
   Uploading,
@@ -54,24 +44,15 @@ pub enum State {
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct Loaded {
-  meta: BundleMeta,
+  pub meta: BundleMeta,
 }
 
+/// returned by start_upload
 pub struct Uploading {
   instance: Arc<InstanceName>,
   id: Id,
   file: DigestWrite<BufWriter<fs::File>>,
 }
-
-type BadBundle = String; // todo: make this a newtype
-
-#[derive(Error,Debug)]
-pub enum LoadError {
-  BadBundle(BadBundle),
-  IE(#[from] IE),
-}
-display_as_debug!{LoadError}
-use LoadError as LE;
 
 #[derive(Debug,Copy,Clone,Error)]
 #[error("{0}")]
@@ -79,10 +60,31 @@ use LoadError as LE;
 pub struct NotBundle(&'static str);
 
 #[derive(Error,Debug)]
+pub enum LoadError {
+  BadBundle(BadBundle),
+  IE(#[from] IE),
+}
+display_as_debug!{LoadError}
+
+//---------- private definitions ----------
+
+const BUNDLES_MAX: Index = Index(64);
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+struct Note {
+  pub kind: Kind,
+  pub state: State,
+}
+
+pub type BadBundle = String;
+
+#[derive(Error,Debug)]
 enum IncorporateError {
   #[error("NotBundle({0})")] NotBundle(#[from] NotBundle),
   #[error("{0}")] IE(#[from] IE),
 }
+
+use LoadError as LE;
 
 //---------- straightformward impls ----------
 
