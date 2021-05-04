@@ -325,7 +325,7 @@ EXAMPLE_BUNDLE_INPUT_DEPS := $(shell					\
 	cd examples/test-bundle/ && find \! \( -name '*~' -o -name '.*' \) \
 )
 
-examples/test-bundle.zip: \
+examples/test-bundle.zip: $(MAKEFILE_DEP) \
  $(addprefix examples/test-bundle/, $(EXAMPLE_BUNDLE_INPUT_DEPS))
 	set -e; rm -f $@.tmp; cd examples/test-bundle/; \
 	zip -DXy ../$(notdir $@).tmp $(EXAMPLE_BUNDLE_INPUT_DEPS)
