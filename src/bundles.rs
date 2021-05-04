@@ -73,8 +73,9 @@ impl AssetUrlKey {
     AssetUrlKey::Y(buf)
   }
 }
+type AssetUrlTokenRaw = digest::Output<Digester>;
 #[derive(Clone)]
-pub struct AssetUrlToken(digest::Output<Digester>);
+pub struct AssetUrlToken(AssetUrlTokenRaw);
 impl Debug for AssetUrlToken {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut Formatter) { write!(f, "AssetUrlToken{{..}}")?; }
@@ -93,6 +94,27 @@ impl AssetUrlKey {
     AssetUrlToken(dw.finish().0)
   }
 }
+impl Display for AssetUrlToken {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) {
+    f.write_str(&base64::encode_config(&self.0, base64::URL_SAFE_NO_PAD))?
+  }
+}
+impl FromStr for AssetUrlToken {
+  type Err = BadAssetUrlToken;
+  #[throws(BadAssetUrlToken)]
+  fn from_str(s: &str) -> Self {
+    let mut buf: AssetUrlTokenRaw = default();
+    let l = base64::decode_config_slice(
+      s.as_bytes(), base64::URL_SAFE_NO_PAD, &mut buf)
+      .map_err(|_| BadAssetUrlToken)?;
+    if l != buf.len() { throw!(BadAssetUrlToken) }
+    AssetUrlToken(buf)
+  }
+}
+#[derive(Error,Debug,Copy,Clone,Serialize)]
+pub struct BadAssetUrlToken;
+display_as_debug!{BadAssetUrlToken}
 
 #[derive(Copy,Clone,Debug,Hash,PartialEq,Eq,Ord,PartialOrd)]
 #[derive(Serialize,Deserialize)]

@@ -2188,6 +2188,7 @@ dependencies = [
  "anyhow",
  "argparse",
  "backtrace",
+ "base64 0.13.0",
  "boolinator",
  "bundle-sources",
  "byteorder",
