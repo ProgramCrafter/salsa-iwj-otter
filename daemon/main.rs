@@ -242,9 +242,9 @@ fn bundle<'r>(instance: Parse<InstanceName>,
   let id = id.0;
   let gref = Instance::lookup_by_name_unauth(instance)
     .map_err(|_| BadAssetUrlToken)?;
+  let ig = gref.lock().map_err(|_| BadAssetUrlToken)?;
   let auth = {
-    let gref = gref.by_ref(Authorisation::authorise_any());
-    let ig = gref.lock().map_err(|_| BadAssetUrlToken)?;
+    let ig = ig.by_ref(Authorisation::authorise_any());
     ig.asset_url_key.check("bundle", &(instance, id), &token)?
   }.map(|(_,id)| id);
   let f = id.open_by_name(instance, auth).map_err(IE::from)?;
