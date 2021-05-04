@@ -47,7 +47,7 @@ hformat_as_display!{Id}
 
 const BUNDLES_MAX: Index = Index(64);
 
-#[derive(Clone)]
+#[derive(Clone,Serialize,Deserialize)]
 pub enum AssetUrlKey {
   Dummy,
   Y(AssetUrlKeyRaw),
@@ -63,6 +63,7 @@ impl Debug for AssetUrlKey {
     }
   }
 }
+impl Default for AssetUrlKey { fn default() -> Self { Self::Dummy } }
 impl AssetUrlKey {
   #[throws(IE)]
   pub fn new_random() -> AssetUrlKey {

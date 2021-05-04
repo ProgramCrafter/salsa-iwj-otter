@@ -242,6 +242,7 @@ struct InstanceSaveAuxiliary<RawTokenStr, PiecesLoadedRef, OccultIlksRef,
   aplayers: SecondarySlotMap<PlayerId, IPlayer>,
   acl: Acl<TablePermission>,
   pub links: Arc<LinksTable>,
+  asset_url_key: AssetUrlKey,
 }
 
 pub struct PrivateCaller(());
@@ -1062,9 +1063,10 @@ impl InstanceGuard<'_> {
       ).collect();
       let acl = s.c.g.acl.clone().into();
       let links = s.c.g.links.clone();
+      let asset_url_key = s.c.g.asset_url_key.clone();
       let isa = InstanceSaveAuxiliary {
         ipieces, ioccults, tokens_players, aplayers, acl, links,
-        pcaliases,
+        pcaliases, asset_url_key,
       };
       rmp_serde::encode::write_named(w, &isa)
     })?;
@@ -1089,7 +1091,7 @@ impl InstanceGuard<'_> {
                name: InstanceName) -> Option<InstanceRef> {
     let InstanceSaveAuxiliary::<String,ActualIPieces,IOccults,PieceAliases> {
       tokens_players, mut ipieces, ioccults, mut aplayers, acl, links,
-      pcaliases,
+      pcaliases, asset_url_key,
     } = match Self::load_something(&name, "a-") {
       Ok(data) => data,
       Err(e) => if (||{
@@ -1160,7 +1162,7 @@ impl InstanceGuard<'_> {
       tokens_clients: default(),
       tokens_players: default(),
       bundle_list: default(), // set by load_game_bundles
-      asset_url_key: AssetUrlKey::Dummy,
+      asset_url_key,
     };
 
     let b = InstanceBundles::load_game_bundles(&mut g)?;
