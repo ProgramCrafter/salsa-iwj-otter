@@ -217,15 +217,15 @@ pub enum BundleDownloadError {
   IE(#[from] IE),
 }
 display_as_debug!{BundleDownloadError}
+use BundleDownloadError as BDE;
 
 impl From<&BundleDownloadError> for rocket::http::Status {
   fn from(e: &BundleDownloadError) -> rocket::http::Status {
-    use BundleDownloadError as B;
     use rocket::http::Status as S;
     match e {
-      B::NotFound => S::NotFound,
-      B::BadAssetUrlToken(_) => S::Forbidden,
-      B::IE(_) => S::InternalServerError,
+      BDE::NotFound => S::NotFound,
+      BDE::BadAssetUrlToken(_) => S::Forbidden,
+      BDE::IE(_) => S::InternalServerError,
     }
   }
 }
