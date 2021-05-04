@@ -59,7 +59,6 @@ enum ReaderState {
   InBuffer { ibuf_used: ChunkLen, chunk_remaining: ChunkLen },
   InChunk { remaining: ChunkLen },
   HadFrameEnd(Result<(), SenderError>),
-  // xxx HadUnexpectedStreamEof,
 }
 use ReaderState::*;
 
