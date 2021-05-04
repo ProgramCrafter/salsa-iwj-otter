@@ -247,12 +247,16 @@ fn bundle<'r>(instance: Parse<InstanceName>,
     let ig = ig.by_ref(Authorisation::authorise_any());
     ig.asset_url_key.check("bundle", &(instance, id), &token)?
   }.map(|(_,id)| id);
-  let f = id.open_by_name(instance, auth).map_err(IE::from)?;
+  let path = id.path(&ig, auth);
+  let f = match rocket::response::NamedFile::open(&path) {
+    Err(e) if e.kind() == ErrorKind::NotFound => throw!(BDE::NotFound),
+    Err(e) => throw!(IE::from(AE::from(e).context(path).context("bundle"))),
+    Ok(y) => y,
+  };
   let ctype = match id.kind {
     bundles::Kind::Zip => ContentType::ZIP,
   };
-  if_let!{ Some(f) = f; else throw!(BundleDownloadError::NotFound) }
-  Content(ctype, rocket::response::Stream::from(f))
+  Content(ctype, f)
 }
 
 #[derive(Debug,Copy,Clone)]
