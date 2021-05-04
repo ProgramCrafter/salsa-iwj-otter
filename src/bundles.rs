@@ -189,6 +189,28 @@ where S: Display + Debug
           index, suffix)
 }
 
+#[ext(pub)]
+impl<R> ZipArchive<R> where R: Read + io::Seek {
+  fn by_name_caseless<'a>(&'a mut self, name: &str)
+                          -> Result<ZipFile<'a>, ZipError>
+  {
+    fn search<'a,R>(za: &'a mut ZipArchive<R>, name: &str)
+                    -> Result<usize, ZipError>
+    where R: Read + io::Seek
+    {
+      for i in 0..za.len() {
+        let m = za.by_index(i);
+        if matches!(m, Err(ZipError::FileNotFound)) { continue }
+        let m = m?;
+        if m.name_raw().eq_ignore_ascii_case(name.as_bytes()) { return Ok(i) }
+      }
+      return Err(ZipError::FileNotFound);
+    }
+    let i = search(self, name)?;
+    self.by_index(i)
+  }
+}
+
 impl Display for Id {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut fmt::Formatter) {
@@ -266,6 +288,13 @@ fn load_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
     IE(#[from] IE),
   }
   display_as_debug!{LoadError}
+  use LoadError as LE;
+
+  impl From<ZipError> for LoadError {
+    fn from(ze: ZipError) -> LoadError {
+      LE::BadBundle(format!("bad zipfile: {}", ze))
+    }
+  }
 
   let iu: usize = id.index.into();
 
@@ -281,9 +310,26 @@ fn load_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
   let slot = &mut ib.bundles[iu];
 
   #[throws(LoadError)]
-  fn inner(_ig: &mut Instance,
-           _id: Id, _path: &str) -> Loaded {
-    Loaded { meta: BundleMeta { title: "title!".to_owned() } }
+  fn inner(_ig: &mut Instance, id: Id, path: &str) -> Loaded {
+    match id.kind { Kind::Zip => () }
+    let za = File::open(path)
+      .with_context(|| path.to_owned()).context("open zipfile")
+      .map_err(IE::from)?;
+    let mut za = ZipArchive::new(za)?;
+
+    let meta = {
+      let mut mf = za.by_name_caseless("otter.toml")?;
+      let mut meta = String::new();
+      mf.read_to_string(&mut meta).map_err(
+        |e| LE::BadBundle(format!("access toml zip member: {}", e)))?;
+      let meta = meta.parse().map_err(
+        |e| LE::BadBundle(format!("parse zip member as toml: {}", e)))?;
+      let meta = toml_de::from_value(&meta).map_err(
+        |e| LE::BadBundle(format!("interpret zip member metadata: {}", e)))?;
+      meta
+    };
+
+    Loaded { meta }
     // todo: find zipfile, read metdata toml
     // todo:: show in UI for download
     // todo: do actual things, eg libraries and specs

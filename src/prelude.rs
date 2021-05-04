@@ -101,6 +101,8 @@ pub use thiserror::Error;
 pub use url::Url;
 pub use vecdeque_stableix::Deque as StableIndexVecDeque;
 pub use void::{unreachable, Void, ResultVoidExt, ResultVoidErrExt};
+pub use zipfile::read::{ZipArchive, ZipFile};
+pub use zipfile::result::ZipError;
 
 use nix::time::ClockId;
 pub const CLOCK_REALTIME : ClockId = ClockId::CLOCK_REALTIME ;
