@@ -109,7 +109,7 @@ const ACCOUNTS_FILE: &str = "accounts";
 //---------- AccountScope and AccountName (ncl. string format) ----------
 
 impl AccountScope {
-  /// Return value is parseable and filesystem- and html-safe
+  /// Return value is parseable and filesystem- and url- and html-safe
   #[throws(E)]
   pub fn display_name<'out,
                   NS: IntoIterator<Item=&'out &'out str>,

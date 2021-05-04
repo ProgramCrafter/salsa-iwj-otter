@@ -532,6 +532,7 @@ impl Display for InstanceName {
     )?
   }
 }
+hformat_as_display!{InstanceName}
 
 fn link_a_href(k: &HtmlStr, v: &str) -> Html {
   hformat!("<a href={}>{}</a>", v, k)

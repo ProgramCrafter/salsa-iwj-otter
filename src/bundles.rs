@@ -125,6 +125,8 @@ impl FromStr for AssetUrlToken {
     AssetUrlToken(buf)
   }
 }
+hformat_as_display!{AssetUrlToken}
+
 #[derive(Error,Debug,Copy,Clone,Serialize)]
 pub struct BadAssetUrlToken;
 display_as_debug!{BadAssetUrlToken}
@@ -425,14 +427,17 @@ impl MgmtBundleList {
     #[derive(Serialize,Debug)]
     struct RenderBundle {
       id: Html,
+      url: Html,
       title: Html,
     }
     let bundles = self.iter().filter_map(|(&id, state)| {
       if_let!{ State::Loaded(Loaded { meta }) = state; else return None; }
       let BundleMeta { title } = meta;
-      let id = hformat!("{}", id);
       let title = Html::from_txt(title);
-      Some(RenderBundle { id, title })
+      let token = id.token(ig);
+      let url = hformat!("/_/bundle/{}/{}/{}", &*ig.name, &id, &token);
+      let id = hformat!("{}", id);
+      Some(RenderBundle { id, url, title })
     }).collect();
 
     Html::from_html_string(
