@@ -10,6 +10,7 @@ pub mod imports;
 pub mod prelude;
 
 pub mod accounts;
+pub mod asseturl;
 pub mod authproofs;
 pub mod bundles;
 pub mod clock;
