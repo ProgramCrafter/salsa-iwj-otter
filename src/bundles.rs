@@ -394,7 +394,7 @@ fn id_file_parse() {
   };
   check_y("00000.zip", Index(0), Kind::Zip);
   check_n("00000zip",  "no dot");
-  check_n("xxxxx.zip", "bad index");
+  check_n("womba.zip", "bad index");
   check_n("00000.xyz", "bad extension");
   check_n("65536.zip", "bad index");
 }
