@@ -18,7 +18,7 @@ Setup
 
 1. Install the packaged build dependencies::
 
-     sudo apt install build-essential cpio git curl            \
+     sudo apt install build-essential cpio git curl zip        \
                       pkg-config libssl-dev                    \
                       node-typescript inkscape                 \
                       netpbm imagemagick libtoml-parser-perl   \

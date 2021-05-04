@@ -8,6 +8,7 @@ templates/CC-BY-SA-4.0
 templates/otter_wasm.ns.d.ts
 templates/shapelib.html
 save/lock
+/examples/test-bundle.zip
 /library/*/files.make
 /library/*/*.usvg
 /library/*/*.coloured.svg

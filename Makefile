@@ -146,7 +146,7 @@ full-check: stamp/cargo.release-miri stamp/cargo.debug-miri
 full-check:
 	@echo 'Full tests passed.'
 
-doc: cargo-doc doc-sphinx
+doc: cargo-doc doc-sphinx examples
 
 debug release:: %: stamp/cargo.% assets libraries extra-%
 
@@ -155,6 +155,9 @@ cargo: cargo-debug cargo-wasm-release
 cargo-debug cargo-release cargo-check cargo-doc \
 cargo-wasm-debug cargo-wasm-release:: \
 cargo-%: stamp/cargo.%
+
+examples: examples/test-bundle.zip
+.PHONY: examples
 
 cargo-wasm: cargo-wasm-release
 
@@ -316,6 +319,17 @@ templates/shapelib.html: $(TARGET_DIR)/debug/otterlib $(LIBRARY_FILES)
 	--libs '$(addprefix $(PWD)/, $(addsuffix .toml, $(LIBRARIES)))' \
 		preview >$@.tmp && mv -f $@.tmp $@
 
+#---------- examples ----------
+
+EXAMPLE_BUNDLE_INPUT_DEPS := $(shell					\
+	cd examples && find test-bundle \! \( -name '*~' -o -name '.*' \) \
+)
+
+examples/test-bundle.zip: $(addprefix examples/,$(EXAMPLE_BUNDLE_INPUT_DEPS))
+	set -e; rm -f $@.tmp; cd examples; zip -DXy $(notdir $@).tmp \
+		$(EXAMPLE_BUNDLE_INPUT_DEPS)
+	mv -f $@.tmp $@
+
 #---------- webdriver tests (wdt) ----------
 
 AT_TESTS := $(basename $(notdir $(wildcard apitest/at-*.rs)))
@@ -329,7 +343,7 @@ wdt:	$(foreach f, $(WDT_TESTS), stamp/$f.check) \
 	$(foreach f, $(WDT_LANDSCAPE_TESTS), stamp/$f.lcheck) \
 
 RUNTEST_DEPS =	apitest/run1 stamp/cargo.debug $(FILEASSETS) \
-		$(wildcard specs/*.toml) \
+		$(wildcard specs/*.toml) examples/test-bundle.zip \
 		$(wildcard libraries/*.toml) $(LIBRARY_FILES)
 
 AT_DEPS =	$(filter-out templates/script.js, $(RUNTEST_DEPS)) \
