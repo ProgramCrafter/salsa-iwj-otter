@@ -189,13 +189,27 @@ where S: Display + Debug
           index, suffix)
 }
 
+#[derive(Error,Debug)]
+pub enum LoadError {
+  BadBundle(BadBundle),
+  IE(#[from] IE),
+}
+display_as_debug!{LoadError}
+use LoadError as LE;
+
+impl From<ZipError> for LoadError {
+  fn from(ze: ZipError) -> LoadError {
+    LE::BadBundle(format!("bad zipfile: {}", ze))
+  }
+}
+
 #[ext(pub)]
 impl<R> ZipArchive<R> where R: Read + io::Seek {
-  fn by_name_caseless<'a>(&'a mut self, name: &str)
-                          -> Result<ZipFile<'a>, ZipError>
+  #[throws(LoadError)]
+  fn by_name_caseless<'a>(&'a mut self, name: &str) -> ZipFile<'a>
   {
     fn search<'a,R>(za: &'a mut ZipArchive<R>, name: &str)
-                    -> Result<usize, ZipError>
+                    -> Result<usize, LoadError>
     where R: Read + io::Seek
     {
       for i in 0..za.len() {
@@ -204,10 +218,10 @@ impl<R> ZipArchive<R> where R: Read + io::Seek {
         let m = m?;
         if m.name_raw().eq_ignore_ascii_case(name.as_bytes()) { return Ok(i) }
       }
-      return Err(ZipError::FileNotFound);
+      return Err(LE::BadBundle(format!("bundle missing {}", name)));
     }
     let i = search(self, name)?;
-    self.by_index(i)
+    self.by_index(i)?
   }
 }
 
@@ -282,20 +296,6 @@ pub struct Uploading {
 #[throws(IE)]
 fn load_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
                id: Id, path: &str) {
-  #[derive(Error,Debug)]
-  enum LoadError {
-    BadBundle(BadBundle),
-    IE(#[from] IE),
-  }
-  display_as_debug!{LoadError}
-  use LoadError as LE;
-
-  impl From<ZipError> for LoadError {
-    fn from(ze: ZipError) -> LoadError {
-      LE::BadBundle(format!("bad zipfile: {}", ze))
-    }
-  }
-
   let iu: usize = id.index.into();
 
   match ib.bundles.get(iu) {
