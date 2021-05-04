@@ -253,6 +253,7 @@ fn bundle<'r>(instance: Parse<InstanceName>,
     Err(e) => throw!(IE::from(AE::from(e).context(path).context("bundle"))),
     Ok(y) => y,
   };
+  drop(ig);
   let ctype = match id.kind {
     bundles::Kind::Zip => ContentType::ZIP,
   };
