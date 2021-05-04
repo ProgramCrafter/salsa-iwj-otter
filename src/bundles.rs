@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-#![allow(dead_code)] // todo
-
 use crate::prelude::*;
 
 pub use crate::prelude::Sha512Trunc256 as Digester;
