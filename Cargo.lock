@@ -2233,6 +2233,7 @@ dependencies = [
  "slotmap-fork-otter",
  "structopt",
  "strum",
+ "subtle",
  "tempfile",
  "tera",
  "toml 0.5.8",

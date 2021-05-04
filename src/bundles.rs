@@ -93,6 +93,18 @@ impl AssetUrlKey {
     rmp_serde::encode::write(&mut dw, &v).expect("serialize failed!");
     AssetUrlToken(dw.finish().0)
   }
+
+  #[throws(BadAssetUrlToken)]
+  pub fn check<V>(&self, what: &str, v: &V, got: &AssetUrlToken)
+                  -> Authorisation<V>
+  where V: Serialize {
+    let exp = self.token(what, v);
+    if ! bool::from(ConstantTimeEq::ct_eq(
+      &exp.0[..],
+      &got.0[..],
+    )) { throw!(BadAssetUrlToken) }
+    else { Authorisation::authorised(v) }
+  }
 }
 impl Display for AssetUrlToken {
   #[throws(fmt::Error)]
