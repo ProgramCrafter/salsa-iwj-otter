@@ -4,6 +4,8 @@
 
 use crate::prelude::*;
 
+//---------- public types ----------
+
 pub use crate::prelude::Sha512Trunc256 as Digester;
 pub type DigestWrite<W> = crate::utils::DigestWrite<Digester, W>;
 
@@ -22,6 +24,68 @@ impl Kind { pub fn only() -> Self { Kind::Zip } }
 #[derive(Serialize,Deserialize)]
 #[serde(transparent)]
 pub struct Index(u16);
+
+#[derive(Copy,Clone,Debug,Hash,PartialEq,Eq,Ord,PartialOrd)]
+#[derive(Serialize,Deserialize)]
+pub struct Id { pub index: Index, pub kind: Kind, }
+
+#[derive(Debug,Clone)]
+pub struct InstanceBundles {
+  // todo: this vec is needed during loading only!
+  bundles: Vec<Option<Note>>,
+}
+
+//---------- private definitions ----------
+
+const BUNDLES_MAX: Index = Index(64);
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct Note {
+  pub kind: Kind,
+  pub state: State,
+}
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub enum State {
+  Uploading,
+  BadBundle(BadBundle),
+  Loaded(Loaded),
+}
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct Loaded {
+  meta: BundleMeta,
+}
+
+pub struct Uploading {
+  instance: Arc<InstanceName>,
+  id: Id,
+  file: DigestWrite<BufWriter<fs::File>>,
+}
+
+type BadBundle = String; // todo: make this a newtype
+
+#[derive(Error,Debug)]
+pub enum LoadError {
+  BadBundle(BadBundle),
+  IE(#[from] IE),
+}
+display_as_debug!{LoadError}
+use LoadError as LE;
+
+#[derive(Debug,Copy,Clone,Error)]
+#[error("{0}")]
+#[repr(transparent)]
+pub struct NotBundle(&'static str);
+
+#[derive(Error,Debug)]
+enum IncorporateError {
+  #[error("NotBundle({0})")] NotBundle(#[from] NotBundle),
+  #[error("{0}")] IE(#[from] IE),
+}
+
+//---------- straightformward impls ----------
+
 impl From<Index> for usize {
   fn from(i: Index) -> usize { i.0.into() }
 }
@@ -43,54 +107,13 @@ impl FromStr for Index {
 }
 hformat_as_display!{Id}
 
-const BUNDLES_MAX: Index = Index(64);
-
-#[derive(Copy,Clone,Debug,Hash,PartialEq,Eq,Ord,PartialOrd)]
-#[derive(Serialize,Deserialize)]
-pub struct Id { pub index: Index, pub kind: Kind, }
-
-impl Authorisation<InstanceName> {
-  pub fn bundles(self) -> Authorisation<Id> { self.therefore_ok() }
-}
-
-#[derive(Debug,Clone)]
-pub struct InstanceBundles {
-  // todo: this vec is needed during loading only!
-  bundles: Vec<Option<Note>>,
-}
-
-#[derive(Debug,Clone,Serialize,Deserialize)]
-pub struct Note {
-  pub kind: Kind,
-  pub state: State,
-}
-
-type BadBundle = String; // todo: make this a newtype
-
-#[derive(Debug,Clone,Serialize,Deserialize)]
-pub enum State {
-  Uploading,
-  BadBundle(BadBundle),
-  Loaded(Loaded),
-}
-
-#[derive(Debug,Clone,Serialize,Deserialize)]
-pub struct Loaded {
-  meta: BundleMeta,
-}
-
-impl Display for State {
-  #[throws(fmt::Error)]
-  fn fmt(&self, f: &mut Formatter) {
-    match self {
-      State::Loaded(Loaded{ meta }) => {
-        let BundleMeta { title } = meta;
-        write!(f, "Loaded {:?}", title)?;
-      }
-      other => write!(f, "{:?}", other)?,
-    }
+impl From<&'static str> for NotBundle {
+  fn from(s: &'static str) -> NotBundle {
+    unsafe { mem::transmute(s) }
   }
 }
+
+//---------- pathname handling (including Id leafname) ----------
 
 pub fn b_dir(instance: &InstanceName) -> String {
   savefilename(instance, "b-", "")
@@ -103,46 +126,23 @@ where S: Display + Debug
           index, suffix)
 }
 
-#[derive(Error,Debug)]
-pub enum LoadError {
-  BadBundle(BadBundle),
-  IE(#[from] IE),
-}
-display_as_debug!{LoadError}
-use LoadError as LE;
-
-impl From<ZipError> for LoadError {
-  fn from(ze: ZipError) -> LoadError {
-    LE::BadBundle(format!("bad zipfile: {}", ze))
-  }
-}
-
-#[ext(pub)]
-impl<R> ZipArchive<R> where R: Read + io::Seek {
-  #[throws(LoadError)]
-  fn by_name_caseless<'a>(&'a mut self, name: &str) -> ZipFile<'a>
-  {
-    fn search<'a,R>(za: &'a mut ZipArchive<R>, name: &str)
-                    -> Result<usize, LoadError>
-    where R: Read + io::Seek
-    {
-      for i in 0..za.len() {
-        let m = za.by_index(i);
-        if matches!(m, Err(ZipError::FileNotFound)) { continue }
-        let m = m?;
-        if m.name_raw().eq_ignore_ascii_case(name.as_bytes()) { return Ok(i) }
-      }
-      return Err(LE::BadBundle(format!("bundle missing {}", name)));
-    }
-    let i = search(self, name)?;
-    self.by_index(i)?
-  }
-}
-
 impl Display for Id {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut fmt::Formatter) {
     write!(f, "{}.{}", self.index, self.kind)?
+  }
+}
+
+impl FromStr for Id {
+  type Err = NotBundle;
+  #[throws(NotBundle)]
+  fn from_str(fleaf: &str) -> Id {
+    let [lhs, rhs] = fleaf.splitn(2, '.')
+      .collect::<ArrayVec<[&str;2]>>()
+      .into_inner().map_err(|_| "no dot")?;
+    let index = lhs.parse().map_err(|_| "bad index")?;
+    let kind = rhs.parse().map_err(|_| "bad extension")?;
+    Id { index, kind }
   }
 }
 
@@ -185,26 +185,83 @@ impl Id {
   }
 }
 
-#[derive(Debug,Copy,Clone,Error)]
-#[error("{0}")]
-#[repr(transparent)]
-pub struct NotBundle(&'static str);
-impl From<&'static str> for NotBundle {
-  fn from(s: &'static str) -> NotBundle {
-    unsafe { mem::transmute(s) }
+//---------- displaing/presenting/authorising ----------
+
+impl Authorisation<InstanceName> {
+  pub fn bundles(self) -> Authorisation<Id> { self.therefore_ok() }
+}
+
+impl Display for State {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) {
+    match self {
+      State::Loaded(Loaded{ meta }) => {
+        let BundleMeta { title } = meta;
+        write!(f, "Loaded {:?}", title)?;
+      }
+      other => write!(f, "{:?}", other)?,
+    }
   }
 }
 
-#[derive(Error,Debug)]
-enum IncorporateError {
-  #[error("NotBundle({0})")] NotBundle(#[from] NotBundle),
-  #[error("{0}")] IE(#[from] IE),
+#[ext(pub)]
+impl MgmtBundleList {
+  #[throws(IE)]
+  fn info_pane(&self, ig: &Instance) -> Html {
+    #[derive(Serialize,Debug)]
+    struct RenderPane {
+      bundles: Vec<RenderBundle>,
+    }
+    #[derive(Serialize,Debug)]
+    struct RenderBundle {
+      id: Html,
+      url: Html,
+      title: Html,
+    }
+    let bundles = self.iter().filter_map(|(&id, state)| {
+      if_let!{ State::Loaded(Loaded { meta }) = state; else return None; }
+      let BundleMeta { title } = meta;
+      let title = Html::from_txt(title);
+      let token = id.token(ig);
+      let url = hformat!("/_/bundle/{}/{}?{}", &*ig.name, &id, &token);
+      let id = hformat!("{}", id);
+      Some(RenderBundle { id, url, title })
+    }).collect();
+
+    Html::from_html_string(
+      nwtemplates::render("bundles-info-pane.tera", &RenderPane { bundles })?
+    )
+  }
 }
 
-pub struct Uploading {
-  instance: Arc<InstanceName>,
-  id: Id,
-  file: DigestWrite<BufWriter<fs::File>>,
+//---------- loading ----------
+
+impl From<ZipError> for LoadError {
+  fn from(ze: ZipError) -> LoadError {
+    LE::BadBundle(format!("bad zipfile: {}", ze))
+  }
+}
+
+#[ext(pub)]
+impl<R> ZipArchive<R> where R: Read + io::Seek {
+  #[throws(LoadError)]
+  fn by_name_caseless<'a>(&'a mut self, name: &str) -> ZipFile<'a>
+  {
+    fn search<'a,R>(za: &'a mut ZipArchive<R>, name: &str)
+                    -> Result<usize, LoadError>
+    where R: Read + io::Seek
+    {
+      for i in 0..za.len() {
+        let m = za.by_index(i);
+        if matches!(m, Err(ZipError::FileNotFound)) { continue }
+        let m = m?;
+        if m.name_raw().eq_ignore_ascii_case(name.as_bytes()) { return Ok(i) }
+      }
+      return Err(LE::BadBundle(format!("bundle missing {}", name)));
+    }
+    let i = search(self, name)?;
+    self.by_index(i)?
+  }
 }
 
 #[throws(IE)]
@@ -258,18 +315,7 @@ fn load_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
   *slot = Some(Note { kind: id.kind, state });
 }
 
-impl FromStr for Id {
-  type Err = NotBundle;
-  #[throws(NotBundle)]
-  fn from_str(fleaf: &str) -> Id {
-    let [lhs, rhs] = fleaf.splitn(2, '.')
-      .collect::<ArrayVec<[&str;2]>>()
-      .into_inner().map_err(|_| "no dot")?;
-    let index = lhs.parse().map_err(|_| "bad index")?;
-    let kind = rhs.parse().map_err(|_| "bad extension")?;
-    Id { index, kind }
-  }
-}
+//---------- scanning/incorporating/uploading ----------
 
 #[throws(IncorporateError)]
 fn incorporate_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
@@ -378,36 +424,6 @@ impl Uploading {
     io::copy(data, &mut self.file)
       .with_context(|| self.id.path_tmp(&*self.instance))
       .context("copy").map_err(IE::from)?
-  }
-}
-
-#[ext(pub)]
-impl MgmtBundleList {
-  #[throws(IE)]
-  fn info_pane(&self, ig: &Instance) -> Html {
-    #[derive(Serialize,Debug)]
-    struct RenderPane {
-      bundles: Vec<RenderBundle>,
-    }
-    #[derive(Serialize,Debug)]
-    struct RenderBundle {
-      id: Html,
-      url: Html,
-      title: Html,
-    }
-    let bundles = self.iter().filter_map(|(&id, state)| {
-      if_let!{ State::Loaded(Loaded { meta }) = state; else return None; }
-      let BundleMeta { title } = meta;
-      let title = Html::from_txt(title);
-      let token = id.token(ig);
-      let url = hformat!("/_/bundle/{}/{}?{}", &*ig.name, &id, &token);
-      let id = hformat!("{}", id);
-      Some(RenderBundle { id, url, title })
-    }).collect();
-
-    Html::from_html_string(
-      nwtemplates::render("bundles-info-pane.tera", &RenderPane { bundles })?
-    )
   }
 }
 
