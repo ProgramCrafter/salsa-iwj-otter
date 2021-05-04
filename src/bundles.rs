@@ -435,7 +435,7 @@ impl MgmtBundleList {
       let BundleMeta { title } = meta;
       let title = Html::from_txt(title);
       let token = id.token(ig);
-      let url = hformat!("/_/bundle/{}/{}/{}", &*ig.name, &id, &token);
+      let url = hformat!("/_/bundle/{}/{}?{}", &*ig.name, &id, &token);
       let id = hformat!("{}", id);
       Some(RenderBundle { id, url, title })
     }).collect();

@@ -174,6 +174,15 @@ impl<'r, T> FromParam<'r> for Parse<T>
   }
 }
 
+pub struct BundleToken(pub AssetUrlToken);
+impl<'r> FromFormValue<'r> for BundleToken {
+  type Error = BundleDownloadError;
+  #[throws(BundleDownloadError)]
+  fn from_form_value(param: &'r RawStr) -> Self {
+    BundleToken(param.as_str().parse()?)
+  }
+}
+
 #[get("/_/updates?<ctoken>&<gen>")]
 #[throws(OER)]
 fn updates<'r>(ctoken: InstanceAccess<ClientId>, gen: u64,
@@ -202,18 +211,33 @@ fn resource<'r>(leaf: CheckedResourceLeaf) -> impl Responder<'r> {
 }
 
 #[derive(Error,Debug)]
-enum BundleDownloadError {
+pub enum BundleDownloadError {
   BadAssetUrlToken(#[from] BadAssetUrlToken),
   NotFound,
   IE(#[from] IE),
 }
 display_as_debug!{BundleDownloadError}
 
-#[get("/_/bundle/<instance>/<id>/<token>")]
+impl From<&BundleDownloadError> for rocket::http::Status {
+  fn from(e: &BundleDownloadError) -> rocket::http::Status {
+    use BundleDownloadError as B;
+    use rocket::http::Status as S;
+    match e {
+      B::NotFound => S::NotFound,
+      B::BadAssetUrlToken(_) => S::Forbidden,
+      B::IE(_) => S::InternalServerError,
+    }
+  }
+}
+
+#[get("/_/bundle/<instance>/<id>")]
 #[throws(BundleDownloadError)]
 fn bundle<'r>(instance: Parse<InstanceName>,
               id: Parse<bundles::Id>,
-              token: Parse<AssetUrlToken>) -> impl Responder<'r> {
+              token: WholeQueryString<BundleToken>)
+              -> impl Responder<'r>
+{
+  if_let!{ Some(BundleToken(token)) = token.0; else throw!(BadAssetUrlToken) };
   let instance = &instance.0;
   let id = id.0;
   let gref = Instance::lookup_by_name_unauth(instance)
@@ -221,7 +245,7 @@ fn bundle<'r>(instance: Parse<InstanceName>,
   let auth = {
     let gref = gref.by_ref(Authorisation::authorise_any());
     let ig = gref.lock().map_err(|_| BadAssetUrlToken)?;
-    ig.asset_url_key.check("bundle", &(instance, id), &token.0)?
+    ig.asset_url_key.check("bundle", &(instance, id), &token)?
   }.map(|(_,id)| id);
   let f = id.open_by_name(instance, auth).map_err(IE::from)?;
   let ctype = match id.kind {
