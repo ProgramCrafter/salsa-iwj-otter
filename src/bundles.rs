@@ -201,14 +201,19 @@ impl Id {
     b_file(instance, self.index, "tmp")
   }
 
-  fn path(&self, instance: &InstanceName) -> String {
+  fn path_(&self, instance: &InstanceName) -> String {
     b_file(instance, self.index, self.kind)
+  }
+
+  pub fn path(&self, instance: &Unauthorised<InstanceGuard<'_>, InstanceName>,
+          auth: Authorisation<Id>) -> String {
+    self.path_(&instance.by_ref(auth.therefore_ok()).name)
   }
 
   #[throws(IE)]
   pub fn open_by_name(&self, instance_name: &InstanceName,
                       _: Authorisation<Id>) -> Option<fs::File> {
-    let path = self.path(instance_name);
+    let path = self.path_(instance_name);
     match File::open(&path) {
       Ok(f) => Some(f),
       Err(e) if e.kind() == ErrorKind::NotFound => None,
@@ -453,7 +458,7 @@ impl InstanceBundles {
                        expected: &Hash) {
     let (hash, mut file) = file.finish();
     let tmp = id.path_tmp(&ig.name);
-    let install = id.path(&ig.name);
+    let install = id.path_(&ig.name);
     file.flush()
       .with_context(|| tmp.clone()).context("flush").map_err(IE::from)?;
     if hash.as_slice() != &expected.0[..] { throw!(ME::UploadCorrupted) }
