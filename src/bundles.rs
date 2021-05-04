@@ -221,6 +221,10 @@ impl Id {
     let auth = Authorisation::authorised(name).bundles();
     self.open_by_name(name, auth)?
   }
+
+  pub fn token(&self, instance: &Instance) -> AssetUrlToken {
+    instance.asset_url_key.token("bundle", &(&*instance.name, *self))
+  }
 }
 
 #[derive(Debug,Copy,Clone,Error)]
