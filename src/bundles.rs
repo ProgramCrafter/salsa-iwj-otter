@@ -51,6 +51,10 @@ const BUNDLES_MAX: Index = Index(64);
 #[derive(Serialize,Deserialize)]
 pub struct Id { pub index: Index, pub kind: Kind, }
 
+impl Authorisation<InstanceName> {
+  pub fn bundles(self) -> Authorisation<Id> { self.therefore_ok() }
+}
+
 #[derive(Debug,Clone)]
 pub struct InstanceBundles {
   // todo: this vec is needed during loading only!
@@ -118,7 +122,8 @@ impl Id {
   }
 
   #[throws(IE)]
-  pub fn open(&self, instance_name: &InstanceName) -> Option<fs::File> {
+  pub fn open(&self, instance_name: &InstanceName,
+              _: Authorisation<Id>) -> Option<fs::File> {
     let path = self.path(instance_name);
     match File::open(&path) {
       Ok(f) => Some(f),
