@@ -37,3 +37,4 @@ pub use slotmap;
 pub use toml;
 pub use uds;
 pub use vecdeque_stableix;
+pub use zip as zipfile;
