@@ -328,7 +328,7 @@ impl InstanceBundles {
       (id, state.clone())
     }).collect();
 
-    let new_info_pane = ig.bundle_list.info_pane().unwrap_or_else(|e|{
+    let new_info_pane = ig.bundle_list.info_pane(ig).unwrap_or_else(|e|{
       let m = "error rendering bundle list";
       error!("{}: {}", m, e);
       Html::from_txt(m)
@@ -417,7 +417,7 @@ impl Uploading {
 #[ext(pub)]
 impl MgmtBundleList {
   #[throws(IE)]
-  fn info_pane(&self) -> Html {
+  fn info_pane(&self, ig: &Instance) -> Html {
     #[derive(Serialize,Debug)]
     struct RenderPane {
       bundles: Vec<RenderBundle>,
