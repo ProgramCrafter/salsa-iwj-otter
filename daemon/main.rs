@@ -219,6 +219,13 @@ pub enum BundleDownloadError {
 display_as_debug!{BundleDownloadError}
 use BundleDownloadError as BDE;
 
+impl<'r> Responder<'r> for BundleDownloadError {
+  fn respond_to(self, _: &rocket::Request)
+                -> Result<rocket::Response<'r>, rocket::http::Status> {
+    Err((&self).into())
+  }
+}
+
 impl From<&BundleDownloadError> for rocket::http::Status {
   fn from(e: &BundleDownloadError) -> rocket::http::Status {
     use rocket::http::Status as S;
