@@ -322,12 +322,13 @@ templates/shapelib.html: $(TARGET_DIR)/debug/otterlib $(LIBRARY_FILES)
 #---------- examples ----------
 
 EXAMPLE_BUNDLE_INPUT_DEPS := $(shell					\
-	cd examples && find test-bundle \! \( -name '*~' -o -name '.*' \) \
+	cd examples/test-bundle/ && find \! \( -name '*~' -o -name '.*' \) \
 )
 
-examples/test-bundle.zip: $(addprefix examples/,$(EXAMPLE_BUNDLE_INPUT_DEPS))
-	set -e; rm -f $@.tmp; cd examples; zip -DXy $(notdir $@).tmp \
-		$(EXAMPLE_BUNDLE_INPUT_DEPS)
+examples/test-bundle.zip: \
+ $(addprefix examples/test-bundle/, $(EXAMPLE_BUNDLE_INPUT_DEPS))
+	set -e; rm -f $@.tmp; cd examples/test-bundle/; \
+	zip -DXy ../$(notdir $@).tmp $(EXAMPLE_BUNDLE_INPUT_DEPS)
 	mv -f $@.tmp $@
 
 #---------- webdriver tests (wdt) ----------
