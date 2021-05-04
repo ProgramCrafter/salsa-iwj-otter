@@ -122,8 +122,8 @@ impl Id {
   }
 
   #[throws(IE)]
-  pub fn open(&self, instance_name: &InstanceName,
-              _: Authorisation<Id>) -> Option<fs::File> {
+  pub fn open_by_name(&self, instance_name: &InstanceName,
+                      _: Authorisation<Id>) -> Option<fs::File> {
     let path = self.path(instance_name);
     match File::open(&path) {
       Ok(f) => Some(f),
@@ -132,6 +132,13 @@ impl Id {
         Err::<Void,_>(e).context(path).context("open bundle")?
       ),
     }
+  }
+
+  #[throws(IE)]
+  pub fn open(&self, instance: &Instance) -> Option<fs::File> {
+    let name = &*instance.name;
+    let auth = Authorisation::authorised(name).bundles();
+    self.open_by_name(name, auth)?
   }
 }
 

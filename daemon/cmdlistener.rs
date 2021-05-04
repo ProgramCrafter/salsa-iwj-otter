@@ -253,10 +253,9 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       let ag = AccountsGuard::lock();
       let gref = Instance::lookup_by_name_unauth(&game)?;
       let mut igu = gref.lock()?;
-      let (ig, auth) = cs.check_acl(&ag, &mut igu, PCH::Instance,
+      let (ig, _) = cs.check_acl(&ag, &mut igu, PCH::Instance,
                                      TP_ACCESS_BUNDLES)?;
-      let f = id.open(&ig.name,auth.bundles())?
-        .ok_or_else(|| ME::BundleNotFound)?;
+      let f = id.open(&ig)?.ok_or_else(|| ME::BundleNotFound)?;
       bulk_download = Some(Box::new(f));
       Fine
     }
