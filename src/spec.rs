@@ -204,7 +204,13 @@ pub enum PieceAngle {
 pub struct CompassAngle(u8);
 
 //---------- Piece specs ----------
-// the implementations are in pieces.rs
+// the implementations are in shapelib.rs and pieces.rs
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct ItemSpec {
+  pub lib: String,
+  pub item: String,
+}
 
 mod outline {
   use super::*;

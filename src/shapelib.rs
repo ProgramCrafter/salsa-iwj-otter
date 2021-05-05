@@ -129,12 +129,6 @@ const INHERIT_DEPTH_LIMIT: u8 = 20;
 
 type TV = toml::Value;
 
-#[derive(Debug,Clone,Serialize,Deserialize)]
-pub struct ItemSpec {
-  pub lib: String,
-  pub item: String,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MultiSpec {
   pub lib: String,
