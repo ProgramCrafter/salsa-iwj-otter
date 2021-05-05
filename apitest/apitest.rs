@@ -388,7 +388,7 @@ pub mod cleanup_notify {
               for fd in 2.. {
                 if fd == notify_writing_end { continue }
                 let r = close(fd);
-                if fd >= writing_end && matches!(r, Err(Sys(EBADF))) {
+                if fd > writing_end && matches!(r, Err(Sys(EBADF))) {
                   break;
                 }                  
               }
