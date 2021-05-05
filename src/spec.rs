@@ -66,7 +66,7 @@ pub enum SpecError {
   InternalError(String),
   PosOffTable,
   LibraryNotFound,
-  LibraryItemNotFound(String),
+  LibraryItemNotFound(ItemSpec),
   AclInvalidAccountGlob,
   AclEntryOverlappingAllowDeny,
   InconsistentPieceCount,

@@ -353,23 +353,34 @@ impl ItemSpec {
   pub fn find_load(&self, pcaliases: &PieceAliases) -> ItemSpecLoaded {
     let lib = libs_lookup(&self.lib)?;
     let idata = lib.items.get(&self.item)
-      .ok_or(SpE::LibraryItemNotFound(self.item.clone()))?;
-    lib.load1(idata, &self.item, pcaliases)?
+      .ok_or(SpE::LibraryItemNotFound(self.clone()))?;
+    lib.load1(idata, &self.lib, &self.item, pcaliases)?
+  }
+
+  fn from_strs<L,I>(lib: &L, item: &I) -> Self
+    where L: ToOwned<Owned=String> + ?Sized,
+          I: ToOwned<Owned=String> + ?Sized,
+  {
+    let lib  = lib .to_owned();
+    let item = item.to_owned();
+    ItemSpec{ lib, item }
   }
 }
 
 impl Contents {
   #[throws(SpecError)]
-  fn load_svg(&self, item_name: &str, for_name: &str) -> Html {
+  fn load_svg(&self, item_name: &str, lib_name_for: &str, item_for: &str)
+              -> Html {
     let svg_path = format!("{}/{}.usvg", self.dirname, item_name);
     let svg_data = fs::read_to_string(&svg_path)
       .map_err(|e| if e.kind() == ErrorKind::NotFound {
-        warn!("library item lib={} itme={} for={} data file {:?} not found",
-              &self.libname, item_name, for_name, &svg_path);
-        SpE::LibraryItemNotFound(for_name.to_owned())
+        warn!("library item lib={} itme={} for={:?} data file {:?} not found",
+              &self.libname, item_name, item_for, &svg_path);
+        let spec_for = ItemSpec::from_strs(lib_name_for, item_for);
+        SpE::LibraryItemNotFound(spec_for)
       } else {
         let m = "error accessing/reading library item data file";
-        error!("{}: {} {}: {}", &m, &svg_path, for_name, &e);
+        error!("{}: {} {:?}: {}", &m, &svg_path, item_for, &e);
         SpE::InternalError(m.to_string())
       })?;
 
@@ -377,9 +388,10 @@ impl Contents {
   }
 
   #[throws(SpecError)]
-  fn load1(&self, idata: &ItemData, name: &str, pcaliases: &PieceAliases)
+  fn load1(&self, idata: &ItemData, lib_name: &str, name: &str,
+           pcaliases: &PieceAliases)
            -> ItemSpecLoaded {
-    let svg_data = self.load_svg(name, name)?;
+    let svg_data = self.load_svg(name, lib_name, name)?;
 
     idata.group.d.outline.check(&idata.group)
       .map_err(|e| SpE::InternalError(format!("rechecking outline: {}",&e)))?;
@@ -431,7 +443,7 @@ impl Contents {
             Some(svgd) => svgd.clone(),
             None => {
               let occ_data = self.load_svg(occ.item_name.as_str(),
-                                           name /* original */)?;
+                                           /* original: */ lib_name,name)?;
               let occ_data = Arc::new(occ_data);
               *svgd = Some(occ_data.clone());
               occ_data
@@ -462,7 +474,9 @@ impl Contents {
     let mut out = vec![];
     for (k,v) in &self.items {
       if !pat.matches(k.as_str()) { continue }
-      let (loaded, _) = match self.load1(v, k.as_str(), &default()) {
+      let (loaded, _) = match
+        self.load1(v, &self.libname, k.as_str(), &default())
+      {
         Err(SpecError::LibraryItemNotFound(_)) => continue,
         e@ Err(_) => e?,
         Ok(r) => r,
