@@ -231,25 +231,15 @@ fn main() {
     let tlibs = Config1::PathGlob(libs.to_owned());
     load(&vec![tlibs.clone()])?;
   }
-  let mut items: Vec<ItemForOutput> =
-    libs_list()
-    .into_iter()
-    .map(|lib| {
-      let contents = libs_lookup(&lib)?;
-      let items = opts.items
-        .split(SPLIT)
-        .map(|items| contents.list_glob(items))
-        .collect::<Result<Vec<_>,_>>()?
-        .into_iter()
-        .flatten();
-      Ok::<_,AE>((lib, items))
-    })
-    .collect::<Result<Vec<_>,_>>()?
-    .into_iter()
-    .map(|(lib, items)| {
-      items.into_iter().map(|item| (lib.clone(),item)).collect::<Vec<_>>()
-    }).flatten()
-    .collect();
+  let mut items: Vec<ItemForOutput> = default();
+  for lib in libs_list() {
+    let contents = libs_lookup(&lib)?;
+    for pat in opts.items.split(SPLIT) {
+      for item in contents.list_glob(pat)? {
+        items.push((lib.clone(), item))
+      }
+    }
+  }
   items.sort();
 
   match opts.outkind {
