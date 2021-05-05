@@ -429,7 +429,7 @@ impl Contents {
         }
       },
       OccData::Internal(occ) => {
-        let name = occ.item_name.clone();
+        let occ_name = occ.item_name.clone();
         let svgd = {
           let mut svgd = occ.svgd.lock();
           let svgd = &mut *svgd;
@@ -437,7 +437,7 @@ impl Contents {
             Some(svgd) => svgd.clone(),
             None => {
               let occ_data = self.load_svg(occ.item_name.as_str(),
-                                           name.as_str())?;
+                                           name /* original */)?;
               let occ_data = Arc::new(occ_data);
               *svgd = Some(occ_data.clone());
               occ_data
@@ -451,7 +451,7 @@ impl Contents {
           desc: occ.desc.clone(),
           outline: occ.outline.clone(),
         }) as Arc<dyn OccultedPieceTrait>;
-        Some((OccultIlkName(name), it))
+        Some((OccultIlkName(occ_name), it))
       },
     };
 
