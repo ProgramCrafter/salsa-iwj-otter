@@ -377,7 +377,7 @@ impl Contents {
         warn!("library item lib={} itme={} for={:?} data file {:?} not found",
               &self.libname, item_name, item_for, &svg_path);
         let spec_for = ItemSpec::from_strs(lib_name_for, item_for);
-        SpE::LibraryItemNotFound(spec_for)
+        SpE::LibraryItemNotPrepared(spec_for)
       } else {
         let m = "error accessing/reading library item data file";
         error!("{}: {} {:?}: {}", &m, &svg_path, item_for, &e);
@@ -478,6 +478,7 @@ impl Contents {
         self.load1(v, &self.libname, k.as_str(), &default())
       {
         Err(SpecError::LibraryItemNotFound(_)) => continue,
+        Err(SpecError::LibraryItemNotPrepared(_)) => continue,
         e@ Err(_) => e?,
         Ok(r) => r,
       };
