@@ -308,8 +308,11 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     }
 
     MC::LibraryListByGlob { glob: spec } => {
-      let lib = shapelib::libs_lookup(&spec.lib)?;
-      let results = lib.list_glob(&spec.item)?;
+      let libs = shapelib::lib_name_lookup(&spec.lib)?;
+      let mut results: Vec<shapelib::ItemEnquiryData> = default();
+      for lib in &*libs {
+        results.extend(lib.list_glob(&spec.item)?);
+      }
       MR::LibraryItems(results)
     }
 
