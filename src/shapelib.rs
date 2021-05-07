@@ -557,18 +557,39 @@ fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
   Cow::Owned(build)
 }
 
+trait LibrarySource {
+  fn read_catalogue(&self) -> Result<String, LLE>;
+  fn svg_dir(&self) -> String;
+}
+
+struct BuiltinLibrary<'l> {
+  dirname: &'l str,
+  toml_path: &'l str,
+}
+
+impl LibrarySource for BuiltinLibrary<'_> {
+  #[throws(LibraryLoadError)]
+  fn read_catalogue(&self) -> String {
+    let ioe = |io| LLE::FileError(self.toml_path.to_string(), io);
+    let f = File::open(self.toml_path).map_err(ioe)?;
+    let mut f = BufReader::new(f);
+    let mut s = String::new();
+    f.read_to_string(&mut s).map_err(ioe)?;
+    s
+  }
+  fn svg_dir(&self) -> String {
+    self.dirname.to_string()
+  }
+}
+
 #[throws(LibraryLoadError)]
-fn load_catalogue(libname: &str, dirname: &str, toml_path: &str) -> Contents {
-  let ioe = |io| LLE::FileError(toml_path.to_string(), io);
-  let f = File::open(toml_path).map_err(ioe)?;
-  let mut f = BufReader::new(f);
-  let mut s = String::new();
-  f.read_to_string(&mut s).map_err(ioe)?;
+fn load_catalogue(libname: &str, src: &dyn LibrarySource) -> Contents {
+  let s = src.read_catalogue()?;
   let toplevel: toml::Value = s.parse()?;
   let mut l = Contents {
     libname: libname.to_string(),
     items: HashMap::new(),
-    dirname: dirname.to_string(),
+    dirname: src.svg_dir(),
   };
   let empty_table = toml::value::Value::Table(default());
   let groups =
@@ -718,7 +739,8 @@ pub struct Explicit1 {
 
 #[throws(LibraryLoadError)]
 pub fn load1(l: &Explicit1) {
-  let data = load_catalogue(&l.name, &l.dirname, &l.catalogue)?;
+  let src = BuiltinLibrary { dirname: &l.dirname, toml_path: &l.catalogue };
+  let data = load_catalogue(&l.name, &src)?;
   let count = data.items.len();
   SHAPELIBS.write()
     .get_or_insert_with(default)
