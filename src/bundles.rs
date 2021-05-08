@@ -303,8 +303,6 @@ fn load_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
     };
 
     Loaded { meta }
-    // todo: find zipfile, read metdata toml
-    // todo:: show in UI for download
     // todo: do actual things, eg libraries and specs
   }
 
