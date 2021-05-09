@@ -275,7 +275,7 @@ pub trait ReadSeek: Read + io::Seek { }
 impl<T> ReadSeek for T where T: Read + io::Seek { }
 
 #[throws(LoadError)]
-fn parse_bundle(id: Id, file: &mut dyn ReadSeek) -> Parsed {
+fn parse_bundle(id: Id, file: &mut dyn ReadSeek, _zpath: &str) -> Parsed {
   let file = BufReader::new(file);
   match id.kind { Kind::Zip => () }
   let mut za = ZipArchive::new(file)?;
@@ -299,18 +299,12 @@ fn parse_bundle(id: Id, file: &mut dyn ReadSeek) -> Parsed {
 
 //---------- scanning/incorporating/uploading ----------
 
-#[throws(LoadError)]
-fn load_bundle(ib: &mut InstanceBundles, _ig: &mut Instance,
-               id: Id, fpath: &str) {
-  let mut file = File::open(fpath)
-    .with_context(|| fpath.to_owned()).context("open zipfile")
-    .map_err(IE::from)?;
+#[throws(InternalError)]
+fn incorporate_bundle(ib: &mut InstanceBundles, _ig: &mut Instance,
+                 id: Id, parsed: Parsed) {
+  let Parsed { meta } = parsed;
 
-  let Parsed { meta } = parse_bundle(id, &mut file)?;
-  
   let iu: usize = id.index.into();
-
-  if ib.bundles.get(iu).is_none() { ib.bundles.resize_with(iu+1, default); }
   let slot = &mut ib.bundles[iu];
   match slot {
     None => { },
@@ -320,7 +314,7 @@ fn load_bundle(ib: &mut InstanceBundles, _ig: &mut Instance,
       kinds: [note.kind, id.kind],
     })
   };
-
+  
   let state = State::Loaded(Loaded { meta });
   *slot = Some(Note { kind: id.kind, state });
 }
@@ -379,14 +373,25 @@ impl InstanceBundles {
         },
       };
 
-      match load_bundle(&mut ib, ig, id, fpath) {
-        Ok(()) => { },
+      let mut file = File::open(fpath)
+        .with_context(|| fpath.to_owned()).context("open zipfile")
+        .map_err(IE::from)?;
+
+      let iu: usize = id.index.into();
+      if ib.bundles.get(iu).is_none() {
+        ib.bundles.resize_with(iu+1, default);
+      }
+
+      let parsed = match parse_bundle(id, &mut file, fpath) {
+        Ok(y) => y,
         Err(LE::BadBundle(why)) => {
           debug!("bundle file {:?} bad {}", &fpath, why);
           continue;
         }
         Err(LE::IE(ie)) => throw!(ie),
-      }
+      };
+
+      incorporate_bundle(&mut ib, ig, id, parsed)?;
     }
     debug!("loaded bundles {} {:?}", &ig.name, ib);
     ib.updated(ig);
@@ -406,7 +411,11 @@ impl InstanceBundles {
     let tmp = id.path_tmp(&ig.name);
 
     let file = (|| Ok::<_,AE>({
-      let mkf = || fs::File::create(&tmp);
+      let mkf = || {
+        fs::OpenOptions::new()
+          .read(true).write(true).create_new(true)
+          .open(&tmp)
+      };
       match mkf() {
         Ok(f) => f,
         Err(e) if e.kind() == ErrorKind::NotFound => {
@@ -444,15 +453,19 @@ impl InstanceBundles {
   pub fn finish_upload(&mut self, ig: &mut Instance,
                        Uploading { instance:_, id, file }: Uploading,
                        expected: &Hash) {
-    let (hash, mut file) = file.finish();
+    let (hash, file) = file.finish();
     let tmp = id.path_tmp(&ig.name);
     let install = id.path_(&ig.name);
-    file.flush()
+    let mut file = file.into_inner().map_err(|e| e.into_error())
       .with_context(|| tmp.clone()).context("flush").map_err(IE::from)?;
     if hash.as_slice() != &expected.0[..] { throw!(ME::UploadCorrupted) }
-    file.rewind().context("rewind"). map_err(IE::from)?;
 
-    load_bundle(self, ig, id, &tmp)?;
+    file.rewind().context("rewind"). map_err(IE::from)?;
+    let mut file = BufReader::new(file);
+
+    let parsed = parse_bundle(id, &mut file, &install)?;
+    incorporate_bundle(self, ig, id, parsed)?;
+
     self.updated(ig);
     match self.bundles.get(usize::from(id.index)) {
       Some(Some(Note { state: State::Loaded(..), .. })) => {
