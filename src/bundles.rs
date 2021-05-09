@@ -271,11 +271,12 @@ impl<R> ZipArchive<R> where R: Read + io::Seek {
   }
 }
 
-pub trait BufReadSeek: BufRead + io::Seek { }
-impl<T> BufReadSeek for T where T: BufRead + io::Seek { }
+pub trait ReadSeek: Read + io::Seek { }
+impl<T> ReadSeek for T where T: Read + io::Seek { }
 
 #[throws(LoadError)]
-fn parse_bundle(id: Id, file: &mut dyn BufReadSeek) -> Parsed {
+fn parse_bundle(id: Id, file: &mut dyn ReadSeek) -> Parsed {
+  let file = BufReader::new(file);
   match id.kind { Kind::Zip => () }
   let mut za = ZipArchive::new(file)?;
 
@@ -301,10 +302,9 @@ fn parse_bundle(id: Id, file: &mut dyn BufReadSeek) -> Parsed {
 #[throws(LoadError)]
 fn load_bundle(ib: &mut InstanceBundles, _ig: &mut Instance,
                id: Id, fpath: &str) {
-  let file = File::open(fpath)
+  let mut file = File::open(fpath)
     .with_context(|| fpath.to_owned()).context("open zipfile")
     .map_err(IE::from)?;
-  let mut file = BufReader::new(file);
 
   let Parsed { meta } = parse_bundle(id, &mut file)?;
   
