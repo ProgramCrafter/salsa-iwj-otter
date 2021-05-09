@@ -245,7 +245,12 @@ impl MgmtBundleList {
 
 impl From<ZipError> for LoadError {
   fn from(ze: ZipError) -> LoadError {
-    LE::BadBundle(format!("bad zipfile: {}", ze))
+    match ze {
+      ZipError::Io(ioe) => IE::from(
+        AE::from(ioe).context("zipfile io error")
+      ).into(),
+      _ => LE::BadBundle(format!("bad zipfile: {}", ze))
+    }
   }
 }
 
@@ -274,13 +279,91 @@ impl<R> ZipArchive<R> where R: Read + io::Seek {
 pub trait ReadSeek: Read + io::Seek { }
 impl<T> ReadSeek for T where T: Read + io::Seek { }
 
-#[throws(LoadError)]
-fn parse_bundle(id: Id, file: &mut dyn ReadSeek, _zpath: &str) -> Parsed {
+trait BundleParseError: Sized {
+  fn required<XE,T,F>(bpath: &str, f:F) -> Result<T,Self>
+  where XE: Into<LoadError>,
+        F: FnOnce() -> Result<T,XE>;
+
+  fn besteffort<XE,T,F,G>(bpath: &str, f:F, g:G) -> Result<T,Self>
+  where XE: Into<LoadError>,
+        F: FnOnce() -> Result<T,XE>,
+        G: FnOnce() -> T;
+}
+
+#[derive(Debug,Error)]
+enum ReloadError {
+  IE(IE),
+  Unloadable(BadBundle),
+}
+display_as_debug!{ReloadError}
+
+impl BundleParseError for ReloadError {
+  fn required<XE,T,F>(bpath: &str, f:F) -> Result<T,ReloadError>
+  where XE: Into<LoadError>,
+        F: FnOnce() -> Result<T,XE>
+  {
+    use ReloadError as RLE;
+    f().map_err(|xe| {
+      let le: LE = xe.into();
+      match le {
+        LE::BadBundle(why) => RLE::Unloadable(
+          format!("{}: {}", bpath, &why)
+        ),
+        LE::IE(IE::Anyhow(ae)) => RLE::IE(IE::Anyhow(
+          ae.context(bpath.to_owned())
+        )),
+        LE::IE(ie) => RLE::IE(ie),
+      }
+    })
+  }
+
+  fn besteffort<XE,T,F,G>(bpath: &str, f:F, g:G) -> Result<T,ReloadError>
+  where XE: Into<LoadError>,
+        F: FnOnce() -> Result<T,XE>,
+        G: FnOnce() -> T,
+  {
+    Ok(f().unwrap_or_else(|e| {
+      match e.into() {
+        LE::IE(ie) => {
+          error!("reloading, error, partially skipping {}: {}", bpath, ie);
+        },
+        LE::BadBundle(why) => {
+          warn!("reloading, partially skipping {}: {}", bpath, why);
+        },
+      }
+      g()
+    }))
+  }
+}
+
+impl BundleParseError for LoadError { 
+  fn required<XE,T,F>(_bpath: &str, f:F) -> Result<T,LoadError>
+  where XE: Into<LoadError>,
+        F: FnOnce() -> Result<T,XE>
+  {
+    f().map_err(Into::into)
+  }
+
+  fn besteffort<XE,T,F,G>(_bpath: &str, f:F, _:G) -> Result<T,LoadError>
+  where XE: Into<LoadError>,
+        F: FnOnce() -> Result<T,XE>,
+        G: FnOnce() -> T,
+  {
+    f().map_err(Into::into)
+  }
+}
+
+#[throws(EH)]
+fn parse_bundle<EH>(id: Id, file: &mut dyn ReadSeek, bpath: &str) -> Parsed
+  where EH: BundleParseError
+{
   let file = BufReader::new(file);
   match id.kind { Kind::Zip => () }
-  let mut za = ZipArchive::new(file)?;
+  let mut za = EH::required(bpath, ||{
+    ZipArchive::new(file)
+  })?;
 
-  let meta = {
+  let meta = EH::besteffort(bpath, ||{
     let mut mf = za.by_name_caseless("otter.toml")?;
     let mut meta = String::new();
     mf.read_to_string(&mut meta).map_err(
@@ -289,8 +372,12 @@ fn parse_bundle(id: Id, file: &mut dyn ReadSeek, _zpath: &str) -> Parsed {
       |e| LE::BadBundle(format!("parse zip member as toml: {}", e)))?;
     let meta = toml_de::from_value(&meta).map_err(
       |e| LE::BadBundle(format!("interpret zip member metadata: {}", e)))?;
-    meta
-  };
+    Ok::<_,LE>(meta)
+  }, ||{
+    BundleMeta {
+      title: "[bundle metadata could not be reloaded]".to_owned()
+    }
+  })?;
 
   // todo: do actual things, eg libraries and specs
 
@@ -463,7 +550,7 @@ impl InstanceBundles {
     file.rewind().context("rewind"). map_err(IE::from)?;
     let mut file = BufReader::new(file);
 
-    let parsed = parse_bundle(id, &mut file, &install)?;
+    let parsed = parse_bundle::<LoadError>(id, &mut file, &install)?;
     incorporate_bundle(self, ig, id, parsed)?;
 
     self.updated(ig);
