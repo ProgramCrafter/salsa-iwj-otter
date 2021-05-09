@@ -48,9 +48,15 @@ pub struct Loaded {
 
 /// returned by start_upload
 pub struct Uploading {
-  instance: Arc<InstanceName>,
   id: Id,
+  instance: Arc<InstanceName>,
   file: DigestWrite<BufWriter<fs::File>>,
+}
+
+/// returned by start_upload
+pub struct Uploaded {
+  id: Id,
+  file: fs::File,
 }
 
 #[derive(Debug,Copy,Clone,Error)]
@@ -526,26 +532,32 @@ impl InstanceBundles {
 
 impl Uploading {
   #[throws(MgmtError)]
-  pub fn bulk<R>(&mut self, data: &mut R)
+  pub fn bulk<R>(self, data: &mut R, expected: &Hash) -> Uploaded
   where R: Read
   {
-    io::copy(data, &mut self.file)
-      .with_context(|| self.id.path_tmp(&*self.instance))
-      .context("copy").map_err(IE::from)?
+    let Uploading { id, mut file, instance } = self;
+    let tmp = id.path_tmp(&instance);
+
+    io::copy(data, &mut file)
+      .with_context(|| tmp.clone())
+      .context("copy").map_err(IE::from)?;
+
+    let (hash, file) = file.finish();
+
+    let file = file.into_inner().map_err(|e| e.into_error())
+      .with_context(|| tmp.clone()).context("flush").map_err(IE::from)?;
+    if hash.as_slice() != &expected.0[..] { throw!(ME::UploadCorrupted) }
+
+    Uploaded { id, file }
   }
 }
 
 impl InstanceBundles {
   #[throws(MgmtError)]
   pub fn finish_upload(&mut self, ig: &mut Instance,
-                       Uploading { instance:_, id, file }: Uploading,
-                       expected: &Hash) {
-    let (hash, file) = file.finish();
+                       Uploaded { id, mut file }: Uploaded) {
     let tmp = id.path_tmp(&ig.name);
     let install = id.path_(&ig.name);
-    let mut file = file.into_inner().map_err(|e| e.into_error())
-      .with_context(|| tmp.clone()).context("flush").map_err(IE::from)?;
-    if hash.as_slice() != &expected.0[..] { throw!(ME::UploadCorrupted) }
 
     file.rewind().context("rewind"). map_err(IE::from)?;
     let mut file = BufReader::new(file);

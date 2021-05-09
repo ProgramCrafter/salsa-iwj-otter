@@ -220,7 +220,7 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     }
 
     MC::UploadBundle { game, hash, kind } => {
-      let (mut upload, auth) = {
+      let (upload, auth) = {
         let ag = AccountsGuard::lock();
         let gref = Instance::lookup_by_name_unauth(&game)?;
         let bundles = gref.lock_bundles();
@@ -231,12 +231,12 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
         let upload = bundles.start_upload(ig, kind)?;
         (upload, auth)
       };
-      upload.bulk(&mut bulk_upload)?;
+      let uploaded = upload.bulk(&mut bulk_upload, &hash)?;
       {
         let gref = Instance::lookup_by_name(&game, auth)?;
         let mut bundles = gref.lock_bundles();
         let mut ig = gref.lock()?;
-        bundles.finish_upload(&mut ig, upload, &hash)?;
+        bundles.finish_upload(&mut ig, uploaded)?;
       };
       Fine
     }
