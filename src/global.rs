@@ -1166,7 +1166,7 @@ impl InstanceGuard<'_> {
       asset_url_key,
     };
 
-    let b = InstanceBundles::load_game_bundles(&mut g)?;
+    let b = InstanceBundles::reload_game_bundles(&mut g)?;
     let b = Mutex::new(b);
 
     let c = InstanceContainer {

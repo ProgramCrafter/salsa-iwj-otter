@@ -38,7 +38,6 @@ pub struct InstanceBundles {
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub enum State {
   Uploading,
-  BadBundle(BadBundle),
   Loaded(Loaded),
 }
 
@@ -68,6 +67,11 @@ display_as_debug!{LoadError}
 
 //---------- private definitions ----------
 
+#[derive(Debug,Clone,Serialize,Deserialize)]
+struct Parsed {
+  pub meta: BundleMeta,
+}
+
 const BUNDLES_MAX: Index = Index(64);
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
@@ -77,12 +81,6 @@ struct Note {
 }
 
 pub type BadBundle = String;
-
-#[derive(Error,Debug)]
-enum IncorporateError {
-  #[error("NotBundle({0})")] NotBundle(#[from] NotBundle),
-  #[error("{0}")] IE(#[from] IE),
-}
 
 use LoadError as LE;
 
@@ -113,6 +111,13 @@ impl From<&'static str> for NotBundle {
   fn from(s: &'static str) -> NotBundle {
     unsafe { mem::transmute(s) }
   }
+}
+
+impl From<LoadError> for MgmtError {
+  fn from(le: LoadError) -> MgmtError { match le {
+    LE::BadBundle(why) => ME::BadBundle(why),
+    LE::IE(ie) => ME::from(ie),
+  } }
 }
 
 //---------- pathname handling (including Id leafname) ----------
@@ -266,63 +271,58 @@ impl<R> ZipArchive<R> where R: Read + io::Seek {
   }
 }
 
-#[throws(IE)]
-fn load_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
-               id: Id, path: &str) {
-  let iu: usize = id.index.into();
+pub trait BufReadSeek: BufRead + io::Seek { }
+impl<T> BufReadSeek for T where T: BufRead + io::Seek { }
 
-  match ib.bundles.get(iu) {
-    None => ib.bundles.resize_with(iu+1, default),
-    Some(None) => { },
-    Some(Some(Note { kind:_, state: State::Uploading })) => { },
-    Some(Some(ref note)) => throw!(IE::DuplicateBundle {
-      index: id.index,
-      kinds: [note.kind, id.kind],
-    })
-  };
-  let slot = &mut ib.bundles[iu];
+#[throws(LoadError)]
+fn parse_bundle(id: Id, file: &mut dyn BufReadSeek) -> Parsed {
+  match id.kind { Kind::Zip => () }
+  let mut za = ZipArchive::new(file)?;
 
-  #[throws(LoadError)]
-  fn inner(_ig: &mut Instance, id: Id, path: &str) -> Loaded {
-    match id.kind { Kind::Zip => () }
-    let za = File::open(path)
-      .with_context(|| path.to_owned()).context("open zipfile")
-      .map_err(IE::from)?;
-    let mut za = ZipArchive::new(za)?;
-
-    let meta = {
-      let mut mf = za.by_name_caseless("otter.toml")?;
-      let mut meta = String::new();
-      mf.read_to_string(&mut meta).map_err(
-        |e| LE::BadBundle(format!("access toml zip member: {}", e)))?;
-      let meta = meta.parse().map_err(
-        |e| LE::BadBundle(format!("parse zip member as toml: {}", e)))?;
-      let meta = toml_de::from_value(&meta).map_err(
-        |e| LE::BadBundle(format!("interpret zip member metadata: {}", e)))?;
-      meta
-    };
-
-    Loaded { meta }
-    // todo: do actual things, eg libraries and specs
-  }
-
-  let state = match inner(ig,id,path) {
-    Ok(loaded)                     => State::Loaded(loaded),
-    Err(LoadError::BadBundle(bad)) => State::BadBundle(bad),
-    Err(LoadError::IE(ie))         => throw!(ie),
+  let meta = {
+    let mut mf = za.by_name_caseless("otter.toml")?;
+    let mut meta = String::new();
+    mf.read_to_string(&mut meta).map_err(
+      |e| LE::BadBundle(format!("access toml zip member: {}", e)))?;
+    let meta = meta.parse().map_err(
+      |e| LE::BadBundle(format!("parse zip member as toml: {}", e)))?;
+    let meta = toml_de::from_value(&meta).map_err(
+      |e| LE::BadBundle(format!("interpret zip member metadata: {}", e)))?;
+    meta
   };
 
-  *slot = Some(Note { kind: id.kind, state });
+  // todo: do actual things, eg libraries and specs
+
+  Parsed { meta }
 }
 
 //---------- scanning/incorporating/uploading ----------
 
-#[throws(IncorporateError)]
-fn incorporate_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
-                      fpath: &str) {
-  let fleaf = fpath.rsplitn(2, '/').next().unwrap();
-  let id = fleaf.parse()?;
-  load_bundle(ib, ig, id, fpath)?;
+#[throws(LoadError)]
+fn load_bundle(ib: &mut InstanceBundles, _ig: &mut Instance,
+               id: Id, fpath: &str) {
+  let file = File::open(fpath)
+    .with_context(|| fpath.to_owned()).context("open zipfile")
+    .map_err(IE::from)?;
+  let mut file = BufReader::new(file);
+
+  let Parsed { meta } = parse_bundle(id, &mut file)?;
+  
+  let iu: usize = id.index.into();
+
+  if ib.bundles.get(iu).is_none() { ib.bundles.resize_with(iu+1, default); }
+  let slot = &mut ib.bundles[iu];
+  match slot {
+    None => { },
+    Some(Note { kind:_, state: State::Uploading }) => { },
+    Some(ref note) => throw!(IE::DuplicateBundle {
+      index: id.index,
+      kinds: [note.kind, id.kind],
+    })
+  };
+
+  let state = State::Loaded(Loaded { meta });
+  *slot = Some(Note { kind: id.kind, state });
 }
 
 impl InstanceBundles {
@@ -354,7 +354,7 @@ impl InstanceBundles {
   }
 
   #[throws(IE)]
-  pub fn load_game_bundles(ig: &mut Instance) -> Self {
+  pub fn reload_game_bundles(ig: &mut Instance) -> Self {
     let bd = b_dir(&ig.name);
     let mo = glob::MatchOptions {
       require_literal_leading_dot: true,
@@ -368,12 +368,24 @@ impl InstanceBundles {
       let fpath = fpath.context("bundle glob")?;
       let fpath = fpath
         .to_str().ok_or_else(|| anyhow!("glob unicode conversion"))?;
-      match incorporate_bundle(&mut ib, ig, fpath) {
-        Ok(()) => { },
-        Err(IncorporateError::NotBundle(why)) => {
+
+      let fleaf = fpath.rsplitn(2, '/').next().unwrap();
+      let id: Id = match fleaf.parse() {
+        Ok(y) => y,
+        Err(NotBundle(why)) => {
           debug!("bundle file {:?} skippping {}", &fpath, why);
+          // xxx delete?
+          continue;
+        },
+      };
+
+      match load_bundle(&mut ib, ig, id, fpath) {
+        Ok(()) => { },
+        Err(LE::BadBundle(why)) => {
+          debug!("bundle file {:?} bad {}", &fpath, why);
+          continue;
         }
-        Err(IncorporateError::IE(ie)) => throw!(ie),
+        Err(LE::IE(ie)) => throw!(ie),
       }
     }
     debug!("loaded bundles {} {:?}", &ig.name, ib);
@@ -438,6 +450,8 @@ impl InstanceBundles {
     file.flush()
       .with_context(|| tmp.clone()).context("flush").map_err(IE::from)?;
     if hash.as_slice() != &expected.0[..] { throw!(ME::UploadCorrupted) }
+    file.rewind().context("rewind"). map_err(IE::from)?;
+
     load_bundle(self, ig, id, &tmp)?;
     self.updated(ig);
     match self.bundles.get(usize::from(id.index)) {
@@ -445,9 +459,6 @@ impl InstanceBundles {
         fs::rename(&tmp, &install)
           .with_context(||install.clone())
           .context("install").map_err(IE::from)?;
-      }
-      Some(Some(Note { state: State::BadBundle(ref bad), .. })) => {
-        throw!(ME::BadBundle(bad.clone()))
       }
       ref x => panic!("unexpected {:?}", x),
     };
