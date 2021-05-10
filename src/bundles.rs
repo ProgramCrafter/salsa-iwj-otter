@@ -168,6 +168,10 @@ impl Id {
     b_file(instance, self.index, self.kind)
   }
 
+  fn path_dir(&self, instance: &InstanceName) -> String {
+    b_file(instance, self.index, "d")
+  }
+
   pub fn path(&self, instance: &Unauthorised<InstanceGuard<'_>, InstanceName>,
           auth: Authorisation<Id>) -> String {
     self.path_(&instance.by_ref(auth.therefore_ok()).name)
@@ -388,6 +392,13 @@ where EH: BundleParseError,
   Parsed { meta }
 }
 
+#[throws(LE)]
+fn process_bundle(id: Id, instance: &InstanceName) {
+  let dir = id.path_dir(instance);
+  fs::create_dir(&dir)
+    .with_context(|| dir.clone()).context("mkdir").map_err(IE::from)?;
+}
+
 //---------- scanning/incorporating/uploading ----------
 
 #[throws(InternalError)]
@@ -549,6 +560,8 @@ impl Uploading {
     let mut file = BufReader::new(file);
 
     let parsed = parse_bundle::<LoadError,_>(id, &mut file, &tmp)?;
+
+    process_bundle(id, &*instance)?;
 
     Uploaded { id, parsed }
   }
