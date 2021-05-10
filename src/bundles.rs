@@ -56,7 +56,7 @@ pub struct Uploading {
 /// returned by start_upload
 pub struct Uploaded {
   id: Id,
-  file: fs::File,
+  parsed: Parsed,
 }
 
 #[derive(Debug,Copy,Clone,Error)]
@@ -544,25 +544,26 @@ impl Uploading {
 
     let (hash, file) = file.finish();
 
-    let file = file.into_inner().map_err(|e| e.into_error())
+    let mut file = file.into_inner().map_err(|e| e.into_error())
       .with_context(|| tmp.clone()).context("flush").map_err(IE::from)?;
     if hash.as_slice() != &expected.0[..] { throw!(ME::UploadCorrupted) }
 
-    Uploaded { id, file }
+    file.rewind().context("rewind"). map_err(IE::from)?;
+    let mut file = BufReader::new(file);
+
+    let parsed = parse_bundle::<LoadError>(id, &mut file, &tmp)?;
+
+    Uploaded { id, parsed }
   }
 }
 
 impl InstanceBundles {
   #[throws(MgmtError)]
   pub fn finish_upload(&mut self, ig: &mut Instance,
-                       Uploaded { id, mut file }: Uploaded) {
+                       Uploaded { id, parsed }: Uploaded) {
     let tmp = id.path_tmp(&ig.name);
     let install = id.path_(&ig.name);
 
-    file.rewind().context("rewind"). map_err(IE::from)?;
-    let mut file = BufReader::new(file);
-
-    let parsed = parse_bundle::<LoadError>(id, &mut file, &install)?;
     incorporate_bundle(self, ig, id, parsed)?;
 
     self.updated(ig);
