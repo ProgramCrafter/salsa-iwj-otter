@@ -356,21 +356,16 @@ impl<W:Write> FrameWriter<W> {
   }
 
   #[throws(MgmtChannelWriteError)]
-  pub fn write_withbulk<'c,T>(&'c mut self, val: &T)
-                              -> WriteFrame<impl Write + 'c>
-  where T: Serialize + Debug
+  pub fn write_withbulk<'c>(&'c mut self) -> ResponseWriter<impl Write + 'c>
   {
-    let mut f = self.new_frame()?;
-    rmp_serde::encode::write_named(&mut f, val)?;
-    trace!("writing {:?}", val);
-    f
+    ResponseWriter { f: self.new_frame()? }
   }
 
   #[throws(MgmtChannelWriteError)]
   pub fn write<T>(&mut self, val: &T)
   where T: Serialize + Debug
   {
-    let f = self.write_withbulk(val)?;
+    let f = self.write_withbulk()?.respond(val)?;
     f.finish()?;
   }
 }
@@ -413,6 +408,19 @@ impl<'w,W:Write> Write for WriteFrame<'w,W> {
   fn write(&mut self, buf: &[u8]) -> usize { self.buf.write(buf)? }
   #[throws(io::Error)]
   fn flush(&mut self) { self.buf.flush()? }
+}
+
+pub struct ResponseWriter<'c,W:Write> { f: WriteFrame<'c,W> }
+
+impl<'c,W:Write> ResponseWriter<'c,W> {
+  #[throws(MgmtChannelWriteError)]
+  pub fn respond<'t,T>(mut self, val: &'t T) -> WriteFrame<'c, impl Write + 'c>
+  where T: Serialize + Debug
+  {
+    rmp_serde::encode::write_named(&mut self.f, val)?;
+    trace!("writing {:?}", val);
+    self.f
+  }
 }
 
 // ==================== tests ====================

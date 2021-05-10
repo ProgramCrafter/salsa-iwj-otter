@@ -76,7 +76,9 @@ impl MgmtChannel {
         P: FnMut(ProgressInfo) -> Result<(),AE>,
   {
     use MgmtResponse::*;
-    let mut wbulk = self.write.write_withbulk(&cmd).context("send command")?;
+    let mut wbulk = self.write
+      .write_withbulk().context("start sending command")?
+      .respond(&cmd).context("send command")?;
     io::copy(up,&mut wbulk).context("copy bulk upload")?;
     wbulk.finish().context("finish sending command and data")?;
     let (mut resp, mut rbulk) =
