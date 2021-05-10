@@ -295,27 +295,13 @@ impl<R> IndexedZip<R> where R: Read + io::Seek {
     }
     IndexedZip { za, members }
   }
-}
 
-#[ext(pub)]
-impl<R> ZipArchive<R> where R: Read + io::Seek {
   #[throws(LoadError)]
-  fn by_name_caseless<'a>(&'a mut self, name: &str) -> ZipFile<'a>
+  fn by_name_caseless<'a>(&'a mut self, name: &str) -> Option<ZipFile<'a>>
   {
-    fn search<'a,R>(za: &'a mut ZipArchive<R>, name: &str)
-                    -> Result<usize, LoadError>
-    where R: Read + io::Seek
-    {
-      for i in 0..za.len() {
-        let m = za.by_index(i);
-        if matches!(m, Err(ZipError::FileNotFound)) { continue }
-        let m = m?;
-        if m.name_raw().eq_ignore_ascii_case(name.as_bytes()) { return Ok(i) }
-      }
-      return Err(LE::BadBundle(format!("bundle missing {}", name)));
-    }
-    let i = search(self, name)?;
-    self.by_index(i)?
+    if_let!{ Some(&i) = self.members.get(&UniCase::new(name.to_owned()));
+             else return Ok(None) }
+    Some(self.za.by_index(i)?)
   }
 }
 
@@ -404,7 +390,9 @@ where EH: BundleParseError,
   })?;
 
   let meta = EH::besteffort(bpath, ||{
-    let mut mf = za.by_name_caseless("otter.toml")?;
+    const META: &str = "otter.toml";
+    let mut mf = za.by_name_caseless(META)?
+      .ok_or_else(|| LE::BadBundle(format!("bundle missing {}", META)))?;
     let mut meta = String::new();
     mf.read_to_string(&mut meta).map_err(
       |e| LE::BadBundle(format!("access toml zip member: {}", e)))?;
