@@ -475,13 +475,12 @@ impl InstanceBundles {
         ib.bundles.resize_with(iu+1, default);
       }
 
-      let parsed = match parse_bundle(id, &mut file, fpath) {
+      let parsed = match parse_bundle::<ReloadError>(id, &mut file, fpath) {
         Ok(y) => y,
-        Err(LE::BadBundle(why)) => {
-          debug!("bundle file {:?} bad {}", &fpath, why);
+        Err(e) => {
+          debug!("bundle file {:?} reload failed {}", &fpath, e);
           continue;
         }
-        Err(LE::IE(ie)) => throw!(ie),
       };
 
       incorporate_bundle(&mut ib, ig, id, parsed)?;
