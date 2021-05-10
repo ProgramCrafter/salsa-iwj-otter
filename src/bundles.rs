@@ -265,6 +265,38 @@ impl From<ZipError> for LoadError {
   }
 }
 
+pub struct IndexedZip<R> where R: Read + io::Seek {
+  za: ZipArchive<BufReader<R>>,
+  members: BTreeMap<UniCase<String>, usize>,
+}
+deref_to_field_mut!{{ R: Read + io::Seek }
+                    IndexedZip<R>, ZipArchive<BufReader<R>>, za }
+
+impl<R> IndexedZip<R> where R: Read + io::Seek {
+  #[throws(LoadError)]
+  fn new(file: R) -> Self {
+    let file = BufReader::new(file);
+    let mut za = ZipArchive::new(file)?;
+    let mut members = BTreeMap::new();
+    for i in 0..za.len() {
+      let entry = za.by_index_raw(i)?;
+      let sname = entry.name().to_owned();
+      let uname = UniCase::new(sname.to_owned());
+      if let Some(previously) = members.insert(uname, i) {
+        let sname = sname.to_owned();
+        drop(entry);
+        let previously = za.by_index_raw(previously)?;
+        let previously = previously.name();
+        throw!(LE::BadBundle(format!(
+          "duplicate files, differing only in case, {:?} vs {:?}",
+          &previously, sname,
+        )));
+      }
+    }
+    IndexedZip { za, members }
+  }
+}
+
 #[ext(pub)]
 impl<R> ZipArchive<R> where R: Read + io::Seek {
   #[throws(LoadError)]
@@ -366,10 +398,9 @@ fn parse_bundle<EH,F>(id: Id, file: &mut F, bpath: &str) -> Parsed
 where EH: BundleParseError,
       F: Read + io::Seek
 {
-  let file = BufReader::new(file);
   match id.kind { Kind::Zip => () }
   let mut za = EH::required(bpath, ||{
-    ZipArchive::new(file)
+    IndexedZip::new(file)
   })?;
 
   let meta = EH::besteffort(bpath, ||{

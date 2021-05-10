@@ -557,7 +557,7 @@ fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
   Cow::Owned(build)
 }
 
-trait LibrarySource {
+pub trait LibrarySource {
   fn read_catalogue(&self) -> Result<String, LLE>;
   fn svg_dir(&self) -> String;
 }

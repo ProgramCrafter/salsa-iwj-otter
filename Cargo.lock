@@ -2260,6 +2260,7 @@ dependencies = [
  "toml 0.5.8",
  "typetag",
  "uds",
+ "unicase 2.6.0",
  "url 2.2.1",
  "usvg",
  "vecdeque-stableix",

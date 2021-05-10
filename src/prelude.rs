@@ -98,6 +98,7 @@ pub use strum::{IntoEnumIterator, IntoStaticStr};
 pub use subtle::ConstantTimeEq;
 pub use tempfile::NamedTempFile;
 pub use thiserror::Error;
+pub use unicase::UniCase;
 pub use url::Url;
 pub use vecdeque_stableix::Deque as StableIndexVecDeque;
 pub use void::{unreachable, Void, ResultVoidExt, ResultVoidErrExt};
