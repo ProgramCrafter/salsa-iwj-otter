@@ -3,6 +3,7 @@
 // There is NO WARRANTY.
 
 use crate::prelude::*;
+use crate::packetframe::ResponseWriter;
 
 //---------- public types ----------
 
@@ -393,7 +394,10 @@ where EH: BundleParseError,
 }
 
 #[throws(LE)]
-fn process_bundle(id: Id, instance: &InstanceName) {
+fn process_bundle<W>(id: Id, instance: &InstanceName,
+                     _for_progress: &ResponseWriter<W>)
+where W: Write
+{
   let dir = id.path_dir(instance);
   fs::create_dir(&dir)
     .with_context(|| dir.clone()).context("mkdir").map_err(IE::from)?;
@@ -540,8 +544,9 @@ impl InstanceBundles {
 
 impl Uploading {
   #[throws(MgmtError)]
-  pub fn bulk<R>(self, data: &mut R, expected: &Hash) -> Uploaded
-  where R: Read
+  pub fn bulk<R,W>(self, data: &mut R, expected: &Hash,
+                   for_progress: &mut ResponseWriter<W>) -> Uploaded
+  where R: Read, W: Write
   {
     let Uploading { id, mut file, instance } = self;
     let tmp = id.path_tmp(&instance);
@@ -561,7 +566,7 @@ impl Uploading {
 
     let parsed = parse_bundle::<LoadError,_>(id, &mut file, &tmp)?;
 
-    process_bundle(id, &*instance)?;
+    process_bundle(id, &*instance, for_progress)?;
 
     Uploaded { id, parsed }
   }

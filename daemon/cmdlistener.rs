@@ -81,7 +81,7 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
   where R: Read, W: Write
 {
   let mut bulk_download: Option<Box<dyn Read>> = None;
-  let for_response = for_response
+  let mut for_response = for_response
     .write_withbulk().context("start to respond")?;
 
   let mut cmd_s = log_enabled!(log::Level::Info)
@@ -233,7 +233,7 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
         let upload = bundles.start_upload(ig, kind)?;
         (upload, auth)
       };
-      let uploaded = upload.bulk(&mut bulk_upload, &hash)?;
+      let uploaded = upload.bulk(&mut bulk_upload, &hash, &mut for_response)?;
       {
         let gref = Instance::lookup_by_name(&game, auth)?;
         let mut bundles = gref.lock_bundles();
