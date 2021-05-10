@@ -569,14 +569,13 @@ impl Uploading {
 
 impl InstanceBundles {
   #[throws(MgmtError)]
-  pub fn finish_upload(&mut self, ig: &mut InstanceGuard,
+  pub fn finish_upload(&mut self, ig: &mut Instance,
                        Uploaded { id, parsed }: Uploaded) {
     let tmp = id.path_tmp(&ig.name);
     let install = id.path_(&ig.name);
 
     incorporate_bundle(self, ig, id, parsed)?;
 
-    ig.save_aux_now()?;
     self.updated(ig);
     match self.bundles.get(usize::from(id.index)) {
       Some(Some(Note { state: State::Loaded(..), .. })) => {

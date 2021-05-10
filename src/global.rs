@@ -1043,7 +1043,7 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(InternalError)]
-  pub fn save_aux_now(&mut self) {
+  fn save_aux_now(&mut self) {
     self.save_something("a-", |s, w| {
       let ipieces = &s.c.g.ipieces;
       let ioccults = &s.c.g.ioccults;
