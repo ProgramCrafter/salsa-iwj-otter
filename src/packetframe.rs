@@ -14,6 +14,7 @@
 //!    0xffffu16    marker, error!
 
 use crate::prelude::*;
+use crate::commands::ProgressInfo;
 
 // ---------- common ----------
 
@@ -420,6 +421,13 @@ impl<'c,W:Write> ResponseWriter<'c,W> {
     rmp_serde::encode::write_named(&mut self.f, val)?;
     trace!("writing {:?}", val);
     self.f
+  }
+
+  
+  #[throws(MgmtChannelWriteError)]
+  pub fn progress(&mut self, pi: ProgressInfo) {
+    let resp = crate::commands::MgmtResponse::Progress(pi);
+    rmp_serde::encode::write_named(&mut self.f, &resp)?;
   }
 }
 
