@@ -282,9 +282,6 @@ impl<R> ZipArchive<R> where R: Read + io::Seek {
   }
 }
 
-pub trait ReadSeek: Read + io::Seek { }
-impl<T> ReadSeek for T where T: Read + io::Seek { }
-
 trait BundleParseError: Sized {
   fn required<XE,T,F>(bpath: &str, f:F) -> Result<T,Self>
   where XE: Into<LoadError>,
@@ -360,8 +357,9 @@ impl BundleParseError for LoadError {
 }
 
 #[throws(EH)]
-fn parse_bundle<EH>(id: Id, file: &mut dyn ReadSeek, bpath: &str) -> Parsed
-  where EH: BundleParseError
+fn parse_bundle<EH,F>(id: Id, file: &mut F, bpath: &str) -> Parsed
+where EH: BundleParseError,
+      F: Read + io::Seek
 {
   let file = BufReader::new(file);
   match id.kind { Kind::Zip => () }
@@ -475,7 +473,7 @@ impl InstanceBundles {
         ib.bundles.resize_with(iu+1, default);
       }
 
-      let parsed = match parse_bundle::<ReloadError>(id, &mut file, fpath) {
+      let parsed = match parse_bundle::<ReloadError,_>(id, &mut file, fpath) {
         Ok(y) => y,
         Err(e) => {
           debug!("bundle file {:?} reload failed {}", &fpath, e);
@@ -550,7 +548,7 @@ impl Uploading {
     file.rewind().context("rewind"). map_err(IE::from)?;
     let mut file = BufReader::new(file);
 
-    let parsed = parse_bundle::<LoadError>(id, &mut file, &tmp)?;
+    let parsed = parse_bundle::<LoadError,_>(id, &mut file, &tmp)?;
 
     Uploaded { id, parsed }
   }
