@@ -84,6 +84,7 @@ pub struct AccountDetails {
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtResponse {
   Fine,
+  Progress(ProgressInfo),
   Error { error: MgmtError },
   AlterGame { error: Option<MgmtError>, responses: Vec<MgmtGameResponse> },
   AccountsList(Vec<Arc<AccountName>>),
@@ -131,6 +132,12 @@ pub enum MgmtGameInstruction {
   ClearLog,
   SetACL { acl: Acl<TablePermission> },
   // RemovePlayer { player: PlayerId },  todo, does a special setacl
+}
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct ProgressInfo {
+  count: usize,
+  of: usize,
 }
 
 #[derive(Debug,Serialize,Deserialize)]

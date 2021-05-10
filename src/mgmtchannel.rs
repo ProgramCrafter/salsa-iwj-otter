@@ -69,17 +69,25 @@ impl MgmtChannel {
   }
 
   #[throws(AE)]
-  pub fn cmd_withbulk<U,D>(&mut self, cmd: &MgmtCommand,
-                           up: &mut U, down: &mut D)
-                           -> MgmtResponse
-  where U: Read, D: Write
+  pub fn cmd_withbulk<U,D,P>(&mut self, cmd: &MgmtCommand,
+                             up: &mut U, down: &mut D, progress: &mut P)
+                             -> MgmtResponse
+  where U: Read, D: Write,
+        P: FnMut(ProgressInfo) -> Result<(),AE>,
   {
     use MgmtResponse::*;
     let mut wbulk = self.write.write_withbulk(&cmd).context("send command")?;
     io::copy(up,&mut wbulk).context("copy bulk upload")?;
     wbulk.finish().context("finish sending command and data")?;
-    let (resp, mut rbulk)= self.read.read_withbulk().context("read response")?;
+    let (mut resp, mut rbulk) =
+      self.read.read_withbulk()
+      .context("read response")?;
+    while let MR::Progress(pi) = resp {
+      resp = (&mut rbulk).read_rmp()?;
+      progress(pi)?;
+    }
     match &resp {
+      Progress(_) => panic!(),
       Fine | AccountsList{..} | GamesList{..} |
       LibraryItems(_) | Bundles{..} => { },
       AlterGame { error: None, .. } => { },
@@ -109,7 +117,7 @@ impl MgmtChannel {
 
   #[throws(AE)]
   pub fn cmd(&mut self, cmd: &MgmtCommand) -> MgmtResponse {
-    self.cmd_withbulk(cmd, &mut io::empty(), &mut io::sink())?
+    self.cmd_withbulk(cmd, &mut io::empty(), &mut io::sink(), &mut |_|Ok(()))?
   }
 
   #[throws(AE)]
