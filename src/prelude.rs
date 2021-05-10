@@ -144,6 +144,7 @@ pub use crate::nwtemplates;
 pub use crate::occultilks::*;
 pub use crate::organise;
 pub use crate::packetframe::{FrameReader, FrameWriter, ReadFrame, WriteFrame};
+pub use crate::packetframe::{ReadExt};
 pub use crate::pcaliases::*;
 pub use crate::pcrender::*;
 pub use crate::pieces::*;

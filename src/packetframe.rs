@@ -268,10 +268,8 @@ impl<R:Read> FrameReader<R> {
   pub fn read_withbulk<'c,T>(&'c mut self) -> (T, ReadFrame<impl Read + 'c>)
   where T: DeserializeOwned + Debug
   {
-    use MgmtChannelReadError::*;
     let mut f = self.new_frame()?.ok_or(MgmtChannelReadError::EOF)?;
-    let r = rmp_serde::decode::from_read(&mut f);
-    let v = r.map_err(|e| Parse(format!("{}", &e)))?;
+    let v = f.read_rmp()?;
     trace!("read OK {:?}", &v);
     (v, f)
   }
@@ -281,6 +279,20 @@ impl<R:Read> FrameReader<R> {
   where T: DeserializeOwned + Debug
   {
     self.read_withbulk()?.0
+  }
+}
+
+#[ext(pub, name=ReadExt)]
+impl<R: Read> R {
+  #[throws(MgmtChannelReadError)]
+  fn read_rmp<T>(&mut self) -> T
+  where T: DeserializeOwned,
+        R: Read
+  {
+    use MgmtChannelReadError as MCRE;
+    let r = rmp_serde::decode::from_read(self);
+    let v = r.map_err(|e| MCRE::Parse(format!("{}", &e)))?;
+    v
   }
 }
 
