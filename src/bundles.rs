@@ -3,7 +3,6 @@
 // There is NO WARRANTY.
 
 use crate::prelude::*;
-use crate::packetframe::ResponseWriter;
 
 //---------- public types ----------
 
@@ -407,7 +406,8 @@ impl BundleParseErrorHandling for BundleParseUpload {
 }
 
 #[throws(EH::Err)]
-fn parse_bundle<EH>(id: Id, file: &mut dyn ReadSeek, eh: EH) -> Parsed
+fn parse_bundle<EH>(id: Id, file: &mut dyn ReadSeek, eh: EH,
+                    _for_progress: &mut dyn ProgressReporter) -> Parsed
   where EH: BundleParseErrorHandling,
 {
   match id.kind { Kind::Zip => () }
@@ -533,7 +533,7 @@ impl InstanceBundles {
       }
 
       let eh = BundleParseReload { bpath: fpath };
-      let parsed = match parse_bundle(id, &mut file, eh) {
+      let parsed = match parse_bundle(id, &mut file, eh, &mut ()) {
         Ok(y) => y,
         Err(e) => {
           debug!("bundle file {:?} reload failed {}", &fpath, e);
@@ -589,9 +589,9 @@ impl InstanceBundles {
 
 impl Uploading {
   #[throws(MgmtError)]
-  pub fn bulk<R,W>(self, data: &mut R, expected: &Hash,
-                   for_progress: &mut ResponseWriter<W>) -> Uploaded
-  where R: Read, W: Write
+  pub fn bulk<R>(self, data: &mut R, expected: &Hash,
+                 for_progress: &mut dyn ProgressReporter) -> Uploaded
+  where R: Read
   {
     let Uploading { id, mut file, instance } = self;
     let tmp = id.path_tmp(&instance);
@@ -609,7 +609,8 @@ impl Uploading {
     file.rewind().context("rewind"). map_err(IE::from)?;
     let mut file = BufReader::new(file);
 
-    let parsed = parse_bundle(id, &mut file, BundleParseUpload)?;
+    let parsed = parse_bundle(id, &mut file, BundleParseUpload,
+                              for_progress)?;
 
     process_bundle(id, &*instance, for_progress)?;
 
