@@ -593,24 +593,24 @@ fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
 }
 
 pub trait LibrarySource {
+  fn catalogue_data(&self) -> &str;
   fn svg_dir(&self) -> String;
   fn note_svg(&mut self, _basename: &GoodItemName) { }
 }
 
 struct BuiltinLibrary<'l> {
+  catalogue_data: &'l str,
   dirname: &'l str,
 }
 
 impl LibrarySource for BuiltinLibrary<'_> {
-  fn svg_dir(&self) -> String {
-    self.dirname.to_string()
-  }
+  fn catalogue_data(&self) -> &str { self.catalogue_data }
+  fn svg_dir(&self) -> String { self.dirname.to_string() }
 }
 
 #[throws(LibraryLoadError)]
-fn load_catalogue(libname: &str, catalogue_data: String,
-                  src: &mut dyn LibrarySource) -> Contents {
-  let toplevel: toml::Value = catalogue_data.parse()?;
+fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
+  let toplevel: toml::Value = src.catalogue_data().parse()?;
   let mut l = Contents {
     libname: libname.to_string(),
     items: HashMap::new(),
@@ -777,9 +777,10 @@ pub fn load1(l: &Explicit1) {
     s
   };
 
-  let mut src = BuiltinLibrary { dirname: &l.dirname };
+  let catalogue_data = catalogue_data.as_str();
+  let mut src = BuiltinLibrary { dirname: &l.dirname, catalogue_data };
 
-  let data = load_catalogue(&l.name, catalogue_data, &mut src)?;
+  let data = load_catalogue(&l.name, &mut src)?;
   let count = data.items.len();
   SHAPELIBS.write()
     .get_or_insert_with(default)
