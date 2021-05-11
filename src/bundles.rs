@@ -272,9 +272,11 @@ pub struct IndexedZip<R> where R: Read + io::Seek {
 deref_to_field_mut!{{ R: Read + io::Seek }
                     IndexedZip<R>, ZipArchive<BufReader<R>>, za }
 
+pub struct ZipIndex(pub usize);
+
 impl<R> IndexedZip<R> where R: Read + io::Seek {
   #[throws(LoadError)]
-  fn new(file: R) -> Self {
+  pub fn new(file: R) -> Self {
     let file = BufReader::new(file);
     let mut za = ZipArchive::new(file)?;
     let mut members = BTreeMap::new();
@@ -297,11 +299,24 @@ impl<R> IndexedZip<R> where R: Read + io::Seek {
   }
 
   #[throws(LoadError)]
-  fn by_name_caseless<'a>(&'a mut self, name: &str) -> Option<ZipFile<'a>>
+  pub fn by_name_caseless<'a>(&'a mut self, name: &str) -> Option<ZipFile<'a>>
   {
     if_let!{ Some(&i) = self.members.get(&UniCase::new(name.to_owned()));
              else return Ok(None) }
     Some(self.za.by_index(i)?)
+  }
+
+  #[throws(LoadError)]
+  pub fn i<'z>(&'z mut self, i: ZipIndex) -> ZipFile<'z> {
+    self.by_index(i.0)?
+  }
+}
+
+impl<'z,R> IntoIterator for &'z IndexedZip<R> where R: Read + io::Seek {
+  type Item = (&'z UniCase<String>, ZipIndex);
+  type IntoIter = impl Iterator<Item=Self::Item>;
+  fn into_iter(self) -> Self::IntoIter {
+    self.members.iter().map(|(name,&index)| (name, ZipIndex(index)))
   }
 }
 
