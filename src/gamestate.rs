@@ -110,6 +110,9 @@ mod item_name {
   impl From<GoodItemName> for String {
     fn from(i: GoodItemName) -> String { i.0 }
   }
+  impl Borrow<str> for GoodItemName {
+    fn borrow(&self) -> &str { &self.0 }
+  }
   impl Display for GoodItemName {
     #[throws(fmt::Error)]
     fn fmt(&self, f: &mut fmt::Formatter) { f.write_str(&self.0)? }
