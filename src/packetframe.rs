@@ -14,7 +14,6 @@
 //!    0xffffu16    marker, error!
 
 use crate::prelude::*;
-use crate::commands::ProgressInfo;
 
 // ---------- common ----------
 

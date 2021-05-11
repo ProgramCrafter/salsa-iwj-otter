@@ -437,9 +437,8 @@ where EH: BundleParseErrorHandling,
 }
 
 #[throws(LE)]
-fn process_bundle<W>(id: Id, instance: &InstanceName,
-                     _for_progress: &ResponseWriter<W>)
-where W: Write
+fn process_bundle(id: Id, instance: &InstanceName,
+                  _for_progress: &dyn ProgressReporter)
 {
   let dir = id.path_dir(instance);
   fs::create_dir(&dir)

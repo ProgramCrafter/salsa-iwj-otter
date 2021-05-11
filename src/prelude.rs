@@ -149,6 +149,7 @@ pub use crate::packetframe::{ReadExt};
 pub use crate::pcaliases::*;
 pub use crate::pcrender::*;
 pub use crate::pieces::*;
+pub use crate::progress::*;
 pub use crate::shapelib;
 pub use crate::shapelib::{CircleShape, RectShape};
 pub use crate::slotmap_slot_idx::*;

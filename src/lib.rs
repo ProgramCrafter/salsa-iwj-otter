@@ -32,6 +32,7 @@ pub mod packetframe;
 pub mod pcaliases;
 pub mod pcrender;
 pub mod pieces;
+pub mod progress;
 pub mod shapelib;
 pub mod spec;
 pub mod sse;

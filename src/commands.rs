@@ -134,12 +134,6 @@ pub enum MgmtGameInstruction {
   // RemovePlayer { player: PlayerId },  todo, does a special setacl
 }
 
-#[derive(Debug,Clone,Serialize,Deserialize)]
-pub struct ProgressInfo {
-  count: usize,
-  of: usize,
-}
-
 #[derive(Debug,Serialize,Deserialize)]
 pub struct MgmtPlayerDetails {
   pub nick: Option<String>,
