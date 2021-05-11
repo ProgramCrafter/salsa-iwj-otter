@@ -176,6 +176,8 @@ struct ItemOccultable {
   outline: Outline,
 }
 
+/// Represents a `T` which is an SVG basename which has been noted
+/// for processing during bundle load.
 #[derive(Debug,Copy,Clone,Hash,Eq,PartialEq,Ord,PartialOrd)]
 #[repr(transparent)]
 struct SvgBaseName<T:?Sized>(T);
