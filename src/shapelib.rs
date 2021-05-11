@@ -179,9 +179,6 @@ struct ItemOccultable {
 #[derive(Debug,Copy,Clone,Hash,Eq,PartialEq,Ord,PartialOrd)]
 #[repr(transparent)]
 struct SvgBaseName<T:?Sized>(T);
-impl<T> From<T> for SvgBaseName<T> {
-  fn from(i: T) -> Self { Self(i) }
-}
 impl<T> Display for SvgBaseName<T> where T: Display + ?Sized {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut fmt::Formatter) { write!(f, "{}", &self.0)? }
@@ -201,6 +198,12 @@ impl<T> SvgBaseName<T> where T: ?Sized {
   }
 }
 deref_to_field!{{ T: ?Sized } SvgBaseName<T>, T, 0 }
+impl<T> SvgBaseName<T> where T: Borrow<GoodItemName> {
+  fn note(src: &mut dyn LibrarySource, i: T) -> Self {
+    src.note_svg(i.borrow());
+    SvgBaseName(i)
+  }
+}
 
 #[dyn_upcast]
 impl OutlineTrait for ItemOccultable { delegate! { to self.outline {
@@ -590,6 +593,7 @@ fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
 pub trait LibrarySource {
   fn read_catalogue(&self) -> Result<String, LLE>;
   fn svg_dir(&self) -> String;
+  fn note_svg(&mut self, _basename: &GoodItemName) { }
 }
 
 struct BuiltinLibrary<'l> {
@@ -613,7 +617,7 @@ impl LibrarySource for BuiltinLibrary<'_> {
 }
 
 #[throws(LibraryLoadError)]
-fn load_catalogue(libname: &str, src: &dyn LibrarySource) -> Contents {
+fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
   let s = src.read_catalogue()?;
   let toplevel: toml::Value = s.parse()?;
   let mut l = Contents {
@@ -692,7 +696,7 @@ fn load_catalogue(libname: &str, src: &dyn LibrarySource) -> Contents {
           }
           let item_name = subst(item_name.as_str(), "_c", &colour.0)?;
           let item_name: GoodItemName = item_name.try_into()?;
-          let item_name = Arc::new(item_name).into();
+          let item_name = SvgBaseName::note(src, Arc::new(item_name));
           let desc = subst(&fe.desc, "_colour", "")?.to_html();
           OccData::Internal(Arc::new(OccData_Internal {
             item_name,
@@ -724,7 +728,8 @@ fn load_catalogue(libname: &str, src: &dyn LibrarySource) -> Contents {
           d: Arc::new(ItemDetails { desc }),
         };
         type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
-        match l.items.entry(item_name.clone().into()) {
+        let new_item = SvgBaseName::note(src, item_name.clone());
+        match l.items.entry(new_item) {
           H::Occupied(oe) => throw!(LLE::DuplicateItem {
             item: item_name.as_str().to_owned(),
             group1: oe.get().group.groupname.clone(),
@@ -771,8 +776,11 @@ pub struct Explicit1 {
 
 #[throws(LibraryLoadError)]
 pub fn load1(l: &Explicit1) {
-  let src = BuiltinLibrary { dirname: &l.dirname, toml_path: &l.catalogue };
-  let data = load_catalogue(&l.name, &src)?;
+  let mut src = BuiltinLibrary {
+    dirname: &l.dirname,
+    toml_path: &l.catalogue,
+  };
+  let data = load_catalogue(&l.name, &mut src)?;
   let count = data.items.len();
   SHAPELIBS.write()
     .get_or_insert_with(default)
