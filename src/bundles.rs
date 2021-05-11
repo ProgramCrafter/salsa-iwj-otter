@@ -320,12 +320,13 @@ impl<'z,R> IntoIterator for &'z IndexedZip<R> where R: Read + io::Seek {
   }
 }
 
-trait BundleParseError: Sized {
-  fn required<XE,T,F>(bpath: &str, f:F) -> Result<T,Self>
+trait BundleParseErrorHandling: Copy {
+  type Err;
+  fn required<XE,T,F>(self, f:F) -> Result<T, Self::Err>
   where XE: Into<LoadError>,
         F: FnOnce() -> Result<T,XE>;
 
-  fn besteffort<XE,T,F,G>(bpath: &str, f:F, g:G) -> Result<T,Self>
+  fn besteffort<XE,T,F,G>(self, f:F, g:G) -> Result<T, Self::Err>
   where XE: Into<LoadError>,
         F: FnOnce() -> Result<T,XE>,
         G: FnOnce() -> T;
@@ -338,8 +339,11 @@ enum ReloadError {
 }
 display_as_debug!{ReloadError}
 
-impl BundleParseError for ReloadError {
-  fn required<XE,T,F>(bpath: &str, f:F) -> Result<T,ReloadError>
+#[derive(Debug,Copy,Clone)]
+struct BundleParseReload<'s>{ pub bpath: &'s str }
+impl BundleParseErrorHandling for BundleParseReload<'_> {
+  type Err = ReloadError;
+  fn required<XE,T,F>(self, f:F) -> Result<T,ReloadError>
   where XE: Into<LoadError>,
         F: FnOnce() -> Result<T,XE>
   {
@@ -348,17 +352,17 @@ impl BundleParseError for ReloadError {
       let le: LE = xe.into();
       match le {
         LE::BadBundle(why) => RLE::Unloadable(
-          format!("{}: {}", bpath, &why)
+          format!("{}: {}", self.bpath, &why)
         ),
         LE::IE(IE::Anyhow(ae)) => RLE::IE(IE::Anyhow(
-          ae.context(bpath.to_owned())
+          ae.context(self.bpath.to_owned())
         )),
         LE::IE(ie) => RLE::IE(ie),
       }
     })
   }
 
-  fn besteffort<XE,T,F,G>(bpath: &str, f:F, g:G) -> Result<T,ReloadError>
+  fn besteffort<XE,T,F,G>(self, f:F, g:G) -> Result<T,ReloadError>
   where XE: Into<LoadError>,
         F: FnOnce() -> Result<T,XE>,
         G: FnOnce() -> T,
@@ -366,10 +370,12 @@ impl BundleParseError for ReloadError {
     Ok(f().unwrap_or_else(|e| {
       match e.into() {
         LE::IE(ie) => {
-          error!("reloading, error, partially skipping {}: {}", bpath, ie);
+          error!("reloading, error, partially skipping {}: {}",
+                 self.bpath, ie);
         },
         LE::BadBundle(why) => {
-          warn!("reloading, partially skipping {}: {}", bpath, why);
+          warn!("reloading, partially skipping {}: {}",
+                self.bpath, why);
         },
       }
       g()
@@ -377,15 +383,18 @@ impl BundleParseError for ReloadError {
   }
 }
 
-impl BundleParseError for LoadError { 
-  fn required<XE,T,F>(_bpath: &str, f:F) -> Result<T,LoadError>
+#[derive(Debug,Copy,Clone)]
+struct BundleParseUpload;
+impl BundleParseErrorHandling for BundleParseUpload {
+  type Err = LoadError;
+  fn required<XE,T,F>(self, f:F) -> Result<T,LoadError>
   where XE: Into<LoadError>,
         F: FnOnce() -> Result<T,XE>
   {
     f().map_err(Into::into)
   }
 
-  fn besteffort<XE,T,F,G>(_bpath: &str, f:F, _:G) -> Result<T,LoadError>
+  fn besteffort<XE,T,F,G>(self, f:F, _:G) -> Result<T,LoadError>
   where XE: Into<LoadError>,
         F: FnOnce() -> Result<T,XE>,
         G: FnOnce() -> T,
@@ -394,17 +403,17 @@ impl BundleParseError for LoadError {
   }
 }
 
-#[throws(EH)]
-fn parse_bundle<EH,F>(id: Id, file: &mut F, bpath: &str) -> Parsed
-where EH: BundleParseError,
+#[throws(EH::Err)]
+fn parse_bundle<EH,F>(id: Id, file: &mut F, eh: EH) -> Parsed
+where EH: BundleParseErrorHandling,
       F: Read + io::Seek
 {
   match id.kind { Kind::Zip => () }
-  let mut za = EH::required(bpath, ||{
+  let mut za = eh.required(||{
     IndexedZip::new(file)
   })?;
 
-  let meta = EH::besteffort(bpath, ||{
+  let meta = eh.besteffort(||{
     const META: &str = "otter.toml";
     let mut mf = za.by_name_caseless(META)?
       .ok_or_else(|| LE::BadBundle(format!("bundle missing {}", META)))?;
@@ -522,7 +531,8 @@ impl InstanceBundles {
         ib.bundles.resize_with(iu+1, default);
       }
 
-      let parsed = match parse_bundle::<ReloadError,_>(id, &mut file, fpath) {
+      let eh = BundleParseReload { bpath: fpath };
+      let parsed = match parse_bundle(id, &mut file, eh) {
         Ok(y) => y,
         Err(e) => {
           debug!("bundle file {:?} reload failed {}", &fpath, e);
@@ -598,7 +608,7 @@ impl Uploading {
     file.rewind().context("rewind"). map_err(IE::from)?;
     let mut file = BufReader::new(file);
 
-    let parsed = parse_bundle::<LoadError,_>(id, &mut file, &tmp)?;
+    let parsed = parse_bundle(id, &mut file, BundleParseUpload)?;
 
     process_bundle(id, &*instance, for_progress)?;
 
