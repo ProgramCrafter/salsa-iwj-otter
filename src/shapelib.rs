@@ -36,7 +36,7 @@ pub trait OutlineDefn: Debug + Sync + Send + 'static {
 pub struct Contents {
   libname: String,
   dirname: String,
-  items: HashMap<GoodItemName, ItemData>,
+  items: HashMap<SvgBaseName<GoodItemName>, ItemData>,
 }
 
 #[derive(Debug,Clone)]
@@ -64,7 +64,7 @@ enum OccData {
 #[allow(non_camel_case_types)]
 #[derive(Debug)]
 struct OccData_Internal {
-  item_name: Arc<GoodItemName>,
+  item_name: SvgBaseName<Arc<GoodItemName>>,
   outline: Outline,
   desc: Html,
   xform: FaceTransform,
@@ -175,6 +175,32 @@ struct ItemOccultable {
   xform: FaceTransform,
   outline: Outline,
 }
+
+#[derive(Debug,Copy,Clone,Hash,Eq,PartialEq,Ord,PartialOrd)]
+#[repr(transparent)]
+struct SvgBaseName<T:?Sized>(T);
+impl<T> From<T> for SvgBaseName<T> {
+  fn from(i: T) -> Self { Self(i) }
+}
+impl<T> Display for SvgBaseName<T> where T: Display + ?Sized {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut fmt::Formatter) { write!(f, "{}", &self.0)? }
+}
+impl<T> Borrow<str> for SvgBaseName<T> where T: Borrow<str> {
+  fn borrow(&self) -> &str { self.0.borrow() }
+}
+impl<T> SvgBaseName<T> {
+  fn into_inner(self) -> T { self.0 }
+}
+impl<T> SvgBaseName<T> where T: ?Sized {
+  fn as_str(&self) -> &str where T: Borrow<str> { self.0.borrow() }
+  fn unnest<'l,U>(&'l self) -> &SvgBaseName<U> where U: ?Sized, T: Borrow<U> {
+    let s: &'l U = self.0.borrow();
+    let u: &'l SvgBaseName<U> = unsafe { mem::transmute(s) };
+    u
+  }
+}
+deref_to_field!{{ T: ?Sized } SvgBaseName<T>, T, 0 }
 
 #[dyn_upcast]
 impl OutlineTrait for ItemOccultable { delegate! { to self.outline {
@@ -352,9 +378,9 @@ impl ItemSpec {
   #[throws(SpecError)]
   pub fn find_load(&self, pcaliases: &PieceAliases) -> ItemSpecLoaded {
     let lib = libs_lookup(&self.lib)?;
-    let idata = lib.items.get(&self.item)
+    let (item, idata) = lib.items.get_key_value(self.item.as_str())
       .ok_or(SpE::LibraryItemNotFound(self.clone()))?;
-    lib.load1(idata, &self.lib, &self.item, pcaliases)?
+    lib.load1(idata, &self.lib, item.unnest::<str>(), pcaliases)?
   }
 
   fn from_strs<L,I>(lib: &L, item: &I) -> Self
@@ -369,7 +395,8 @@ impl ItemSpec {
 
 impl Contents {
   #[throws(SpecError)]
-  fn load_svg(&self, item_name: &str, lib_name_for: &str, item_for: &str)
+  fn load_svg(&self, item_name: &SvgBaseName<str>,
+              lib_name_for: &str, item_for: &str)
               -> Html {
     let svg_path = format!("{}/{}.usvg", self.dirname, item_name);
     let svg_data = fs::read_to_string(&svg_path)
@@ -388,10 +415,11 @@ impl Contents {
   }
 
   #[throws(SpecError)]
-  fn load1(&self, idata: &ItemData, lib_name: &str, name: &str,
+  fn load1(&self, idata: &ItemData, lib_name: &str,
+           name: &SvgBaseName<str>,
            pcaliases: &PieceAliases)
            -> ItemSpecLoaded {
-    let svg_data = self.load_svg(name, lib_name, name)?;
+    let svg_data = self.load_svg(name, lib_name, &**name)?;
 
     idata.group.d.outline.check(&idata.group)
       .map_err(|e| SpE::InternalError(format!("rechecking outline: {}",&e)))?;
@@ -442,8 +470,10 @@ impl Contents {
           let svgd = match svgd {
             Some(svgd) => svgd.clone(),
             None => {
-              let occ_data = self.load_svg(occ.item_name.as_str(),
-                                           /* original: */ lib_name,name)?;
+              let occ_data = self.load_svg(
+                occ.item_name.unnest::<GoodItemName>().unnest(),
+                /* original: */ lib_name, name.as_str()
+              )?;
               let occ_data = Arc::new(occ_data);
               *svgd = Some(occ_data.clone());
               occ_data
@@ -457,7 +487,7 @@ impl Contents {
           desc: occ.desc.clone(),
           outline: occ.outline.clone(),
         }) as Arc<dyn OccultedPieceTrait>;
-        Some((OccultIlkName(occ_name), it))
+        Some((OccultIlkName(occ_name.into_inner()), it))
       },
     };
 
@@ -475,7 +505,7 @@ impl Contents {
     for (k,v) in &self.items {
       if !pat.matches(k.as_str()) { continue }
       let (loaded, _) = match
-        self.load1(v, &self.libname, k.as_str(), &default())
+        self.load1(v, &self.libname, k.unnest(), &default())
       {
         Err(SpecError::LibraryItemNotFound(_)) => continue,
         Err(SpecError::LibraryItemNotPrepared(_)) => continue,
@@ -484,7 +514,7 @@ impl Contents {
       };
       let f0bbox = loaded.bbox_approx()?;
       let ier = ItemEnquiryData {
-        itemname: k.to_owned(),
+        itemname: (**k).to_owned(),
         sortkey: v.sort.to_owned(),
         f0bbox,
         f0desc: loaded.describe_face(default())?,
@@ -661,9 +691,11 @@ fn load_catalogue(libname: &str, src: &dyn LibrarySource) -> Contents {
             throw!(LLE::OccultationColourMissing(colour.0.clone()));
           }
           let item_name = subst(item_name.as_str(), "_c", &colour.0)?;
+          let item_name: GoodItemName = item_name.try_into()?;
+          let item_name = Arc::new(item_name).into();
           let desc = subst(&fe.desc, "_colour", "")?.to_html();
           OccData::Internal(Arc::new(OccData_Internal {
-            item_name: Arc::new(item_name.try_into()?),
+            item_name,
             outline: outline.clone(),
             xform: FaceTransform::from_group(&group.d)?,
             svgd: default(),
@@ -692,7 +724,7 @@ fn load_catalogue(libname: &str, src: &dyn LibrarySource) -> Contents {
           d: Arc::new(ItemDetails { desc }),
         };
         type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
-        match l.items.entry(item_name.clone()) {
+        match l.items.entry(item_name.clone().into()) {
           H::Occupied(oe) => throw!(LLE::DuplicateItem {
             item: item_name.as_str().to_owned(),
             group1: oe.get().group.groupname.clone(),
