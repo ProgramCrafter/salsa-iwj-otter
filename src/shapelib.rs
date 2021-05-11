@@ -766,7 +766,7 @@ pub struct Explicit1 {
 }
 
 #[throws(LibraryLoadError)]
-pub fn load1(l: &Explicit1) {
+pub fn load_1_library(l: &Explicit1) {
   let toml_path = &l.catalogue;
   let catalogue_data = {
     let ioe = |io| LLE::FileError(toml_path.to_string(), io);
@@ -839,12 +839,12 @@ impl Config1 {
 }
 
 #[throws(LibraryLoadError)]
-pub fn load(libs: &Vec<Config1>) {
+pub fn load_global_libs(libs: &Vec<Config1>) {
   for l in libs {
     let libs = l.resolve()?;
     let n = libs.len();
     for e in libs {
-      load1(&e)?;
+      load_1_library(&e)?;
     }
     info!("loaded {} shape libraries from {:?}", n, &l);
           

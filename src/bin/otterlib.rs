@@ -229,7 +229,7 @@ fn main() {
 
   for libs in opts.libs.split(SPLIT) {
     let tlibs = Config1::PathGlob(libs.to_owned());
-    load(&vec![tlibs.clone()])?;
+    load_global_libs(&vec![tlibs.clone()])?;
   }
   let mut items: Vec<ItemForOutput> = default();
   for lib in libs_list() {
