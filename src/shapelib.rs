@@ -593,35 +593,24 @@ fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
 }
 
 pub trait LibrarySource {
-  fn read_catalogue(&self) -> Result<String, LLE>;
   fn svg_dir(&self) -> String;
   fn note_svg(&mut self, _basename: &GoodItemName) { }
 }
 
 struct BuiltinLibrary<'l> {
   dirname: &'l str,
-  toml_path: &'l str,
 }
 
 impl LibrarySource for BuiltinLibrary<'_> {
-  #[throws(LibraryLoadError)]
-  fn read_catalogue(&self) -> String {
-    let ioe = |io| LLE::FileError(self.toml_path.to_string(), io);
-    let f = File::open(self.toml_path).map_err(ioe)?;
-    let mut f = BufReader::new(f);
-    let mut s = String::new();
-    f.read_to_string(&mut s).map_err(ioe)?;
-    s
-  }
   fn svg_dir(&self) -> String {
     self.dirname.to_string()
   }
 }
 
 #[throws(LibraryLoadError)]
-fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
-  let s = src.read_catalogue()?;
-  let toplevel: toml::Value = s.parse()?;
+fn load_catalogue(libname: &str, catalogue_data: String,
+                  src: &mut dyn LibrarySource) -> Contents {
+  let toplevel: toml::Value = catalogue_data.parse()?;
   let mut l = Contents {
     libname: libname.to_string(),
     items: HashMap::new(),
@@ -778,11 +767,19 @@ pub struct Explicit1 {
 
 #[throws(LibraryLoadError)]
 pub fn load1(l: &Explicit1) {
-  let mut src = BuiltinLibrary {
-    dirname: &l.dirname,
-    toml_path: &l.catalogue,
+  let toml_path = &l.catalogue;
+  let catalogue_data = {
+    let ioe = |io| LLE::FileError(toml_path.to_string(), io);
+    let f = File::open(toml_path).map_err(ioe)?;
+    let mut f = BufReader::new(f);
+    let mut s = String::new();
+    f.read_to_string(&mut s).map_err(ioe)?;
+    s
   };
-  let data = load_catalogue(&l.name, &mut src)?;
+
+  let mut src = BuiltinLibrary { dirname: &l.dirname };
+
+  let data = load_catalogue(&l.name, catalogue_data, &mut src)?;
   let count = data.items.len();
   SHAPELIBS.write()
     .get_or_insert_with(default)
