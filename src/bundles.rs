@@ -254,6 +254,9 @@ impl MgmtBundleList {
 
 //---------- loading ----------
 
+trait ReadSeek: Read + io::Seek { }
+impl<T> ReadSeek for T where T: Read + io::Seek { }
+
 impl From<ZipError> for LoadError {
   fn from(ze: ZipError) -> LoadError {
     match ze {
@@ -404,9 +407,8 @@ impl BundleParseErrorHandling for BundleParseUpload {
 }
 
 #[throws(EH::Err)]
-fn parse_bundle<EH,F>(id: Id, file: &mut F, eh: EH) -> Parsed
-where EH: BundleParseErrorHandling,
-      F: Read + io::Seek
+fn parse_bundle<EH>(id: Id, file: &mut dyn ReadSeek, eh: EH) -> Parsed
+  where EH: BundleParseErrorHandling,
 {
   match id.kind { Kind::Zip => () }
   let mut za = eh.required(||{
