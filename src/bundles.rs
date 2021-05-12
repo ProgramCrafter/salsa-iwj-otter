@@ -300,7 +300,7 @@ deref_to_field_mut!{IndexedZip, ZipArchive, za }
 pub struct ZipIndex(pub usize);
 impl Display for ZipIndex {
   #[throws(fmt::Error)]
-  fn fmt(&self, f: &mut Formatter) { write!(f,"{}",self.0)? }
+  fn fmt(&self, f: &mut Formatter) { Display::fmt(&self.0,f)? }
 }
 
 impl IndexedZip where {
