@@ -84,7 +84,7 @@ pub struct AccountDetails {
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtResponse {
   Fine,
-  Progress(ProgressInfo),
+  Progress(ProgressInfo<'static>),
   Error { error: MgmtError },
   AlterGame { error: Option<MgmtError>, responses: Vec<MgmtGameResponse> },
   AccountsList(Vec<Arc<AccountName>>),

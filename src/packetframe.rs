@@ -424,8 +424,8 @@ impl<'c,W:Write> ResponseWriter<'c,W> {
 
   
   #[throws(MgmtChannelWriteError)]
-  pub fn progress(&mut self, pi: ProgressInfo) {
-    let resp = crate::commands::MgmtResponse::Progress(pi);
+  pub fn progress(&mut self, pi: ProgressInfo<'_>) {
+    let resp = crate::commands::MgmtResponse::Progress(pi.into_owned());
     rmp_serde::encode::write_named(&mut self.f, &resp)?;
   }
 }
