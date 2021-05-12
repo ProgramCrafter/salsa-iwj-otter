@@ -73,9 +73,16 @@ display_as_debug!{LoadError}
 
 //---------- private definitions ----------
 
+type ZipArchive = zipfile::read::ZipArchive<BufReader<File>>;
+
 #[derive(Debug,Clone,Serialize,Deserialize)]
 struct Parsed {
-  pub meta: BundleMeta,
+  meta: BundleMeta,
+}
+
+#[derive(Debug)]
+struct ForProcess {
+  za: IndexedZip,
 }
 
 const BUNDLES_MAX: Index = Index(64);
@@ -267,18 +274,18 @@ impl From<ZipError> for LoadError {
   }
 }
 
-pub struct IndexedZip<R> where R: Read + io::Seek {
-  za: ZipArchive<BufReader<R>>,
+#[derive(Debug)]
+pub struct IndexedZip {
+  za: ZipArchive,
   members: BTreeMap<UniCase<String>, usize>,
 }
-deref_to_field_mut!{{ R: Read + io::Seek }
-                    IndexedZip<R>, ZipArchive<BufReader<R>>, za }
+deref_to_field_mut!{IndexedZip, ZipArchive, za }
 
 pub struct ZipIndex(pub usize);
 
-impl<R> IndexedZip<R> where R: Read + io::Seek {
+impl IndexedZip where {
   #[throws(LoadError)]
-  pub fn new(file: R) -> Self {
+  pub fn new(file: File) -> Self {
     let file = BufReader::new(file);
     let mut za = ZipArchive::new(file)?;
     let mut members = BTreeMap::new();
@@ -314,7 +321,7 @@ impl<R> IndexedZip<R> where R: Read + io::Seek {
   }
 }
 
-impl<'z,R> IntoIterator for &'z IndexedZip<R> where R: Read + io::Seek {
+impl<'z> IntoIterator for &'z IndexedZip {
   type Item = (&'z UniCase<String>, ZipIndex);
   type IntoIter = impl Iterator<Item=Self::Item>;
   fn into_iter(self) -> Self::IntoIter {
@@ -406,8 +413,9 @@ impl BundleParseErrorHandling for BundleParseUpload {
 }
 
 #[throws(EH::Err)]
-fn parse_bundle<EH>(id: Id, file: &mut dyn ReadSeek, eh: EH,
-                    mut for_progress: &mut dyn progress::Reporter) -> Parsed
+fn parse_bundle<EH>(id: Id, file: File, eh: EH,
+                    mut for_progress: &mut dyn progress::Reporter)
+                    -> (ForProcess, Parsed)
   where EH: BundleParseErrorHandling,
 {
   match id.kind { Kind::Zip => () }
@@ -446,11 +454,12 @@ fn parse_bundle<EH>(id: Id, file: &mut dyn ReadSeek, eh: EH,
 
   // todo: do actual things, eg libraries and specs
 
-  Parsed { meta }
+  (ForProcess { za }, Parsed { meta })
 }
 
 #[throws(LE)]
-fn process_bundle(id: Id, instance: &InstanceName,
+fn process_bundle(ForProcess { za:_ }: ForProcess,
+                  id: Id, instance: &InstanceName,
                   _for_progress: &dyn progress::Reporter)
 {
   let dir = id.path_dir(instance);
@@ -534,7 +543,7 @@ impl InstanceBundles {
         },
       };
 
-      let mut file = File::open(fpath)
+      let file = File::open(fpath)
         .with_context(|| fpath.to_owned()).context("open zipfile")
         .map_err(IE::from)?;
 
@@ -544,7 +553,7 @@ impl InstanceBundles {
       }
 
       let eh = BundleParseReload { bpath: fpath };
-      let parsed = match parse_bundle(id, &mut file, eh, &mut ()) {
+      let (_za, parsed) = match parse_bundle(id, file, eh, &mut ()) {
         Ok(y) => y,
         Err(e) => {
           debug!("bundle file {:?} reload failed {}", &fpath, e);
@@ -620,12 +629,11 @@ impl Uploading {
     if hash.as_slice() != &expected.0[..] { throw!(ME::UploadCorrupted) }
 
     file.rewind().context("rewind"). map_err(IE::from)?;
-    let mut file = BufReader::new(file);
 
-    let parsed = parse_bundle(id, &mut file, BundleParseUpload,
+    let (za, parsed) = parse_bundle(id, file, BundleParseUpload,
                               &mut for_progress)?;
 
-    process_bundle(id, &*instance, &mut for_progress)?;
+    process_bundle(za, id, &*instance, &mut for_progress)?;
 
     Uploaded { id, parsed }
   }
