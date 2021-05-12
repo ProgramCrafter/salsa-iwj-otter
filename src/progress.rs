@@ -59,33 +59,46 @@ impl Reporter for () {
   fn item_(&mut self, item: usize, desc: Cow<'_, str>) { }
 }
 
-impl<'t,T> From<&'t T> for Count<'t>
-where T: EnumCount + ToPrimitive + EnumMessage
-{
-  fn from(t: &'t T) -> Count<'t> {
+pub trait Enum: EnumCount + ToPrimitive + EnumMessage { }
+impl<T> From<T> for Count<'static> where T: Enum {
+  fn from(t: T) -> Count<'static> {
     Count {
       i: t.to_usize().unwrap(),
       n: T::COUNT,
-      desc: Cow::Borrowed(t.get_message().unwrap_or("...")),
+      // Show be Borrowed  https://github.com/Peternator7/strum/issues/159
+      desc: Cow::Owned(t.get_message().unwrap_or("...").to_owned()),
     }
   }
 }
+impl<'t> From<&'t str> for Count<'t> {
+  fn from(s: &'t str) -> Count<'t> {
+    Count { i:0, n:0, desc: Cow::Borrowed(s) }
+  }
+}
+impl From<String> for Count<'static> {
+  fn from(s: String) -> Count<'static> {
+    Count { i:0, n:0, desc: Cow::Owned(s) }
+  }
+}
+impl<'t> From<()> for Count<'t> { fn from(_:()) -> Count<'t> {
+    Count { i:0, n:0, desc: Cow::Borrowed("") }
+} }
 
 #[ext(pub, name=ReporterExt)]
 impl &mut dyn Reporter {
-  fn phase_item<P,E>(&mut self, phase: P, item: E)
-  where for <'p> &'p P: Into<Count<'p>>,
-        for <'e> &'e E: Into<Count<'e>>,
+  fn phase_item<'p,'e,P,E>(&mut self, phase: P, item: E)
+  where P: Into<Count<'p>>,
+        E: Into<Count<'e>>,
   {
-    let phase = &phase; let phase = phase.into();
-    let item  = &item;  let item  = item .into();
+    let phase = phase.into();
+    let item  = item .into();
     self.report(ProgressInfo { phase, item });
   }
 
-  fn phase<P>(&mut self, phase: P, len: usize)
-  where for <'p> &'p P: Into<Count<'p>>,
+  fn phase<'p,P>(&mut self, phase: P, len: usize)
+  where P: Into<Count<'p>>,
   {
-    self.phase_begin_((&phase).into(), len)
+    self.phase_begin_(phase.into(), len)
   }
 
   fn item<'s,S>(&mut self, item: usize, desc: S)

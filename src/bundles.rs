@@ -440,6 +440,7 @@ enum Phase {
   #[strum(message="scan")]                   Scan,
   #[strum(message="parse shape catalogues")] ParseLibs,
 }
+impl progress::Enum for Phase { }
 
 #[throws(EH::Err)]
 fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
@@ -457,6 +458,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
     #[strum(message="metadata")]   Meta,
     #[strum(message="shape libs")] Libs,
   }
+  impl progress::Enum for ToScan { }
   for_progress.phase_item(Phase::Scan, ToScan::Meta);
   
   let meta = eh.besteffort(||{
