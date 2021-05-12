@@ -3,7 +3,6 @@
 // There is NO WARRANTY.
 
 use crate::prelude::*;
-use crate::packetframe::ResponseWriter;
 
 #[derive(Debug,Clone,Serialize,Deserialize,IntoOwned)]
 pub struct ProgressInfo<'pi> {
@@ -20,16 +19,44 @@ pub struct Count<'pi> {
 
 pub trait Reporter {
   fn report(&mut self, info: ProgressInfo<'_>);
+  fn phase_begin_(&mut self, phase: Count<'_>, len: usize);
+  fn item_(&mut self, entry: usize, desc: Cow<'_, str>);
 }
 
-impl<W> Reporter for ResponseWriter<'_, W> where W: Write {
+pub struct ResponseReporter<'c,'w,W> where W: Write {
+  chan: &'c mut ResponseWriter<'w,W>,
+  phase: Count<'static>,
+  len: usize,
+}
+impl<'c,'w,W> ResponseReporter<'c,'w,W> where W: Write {
+  pub fn new(chan: &'c mut ResponseWriter<'w,W>) -> Self { Self {
+    chan,
+    phase: Count { i:0, n:0, desc: Cow::Borrowed("") },
+    len: 0,
+  } }
+}
+
+impl<W> Reporter for ResponseReporter<'_,'_,W> where W: Write {
   fn report(&mut self, pi: ProgressInfo<'_>) {
-    self.progress(pi).unwrap_or(());
+    self.chan.progress(pi).unwrap_or(());
+  }
+  fn phase_begin_(&mut self, phase: Count<'_>, len: usize) {
+    self.phase = phase.into_owned();
+    self.len = len;
+  }
+  fn item_(&mut self, entry: usize, desc: Cow<'_, str>) {
+    self.report(ProgressInfo {
+      phase: self.phase.clone(),
+      entry: Count { i: entry, n: self.len, desc }
+    })
   }
 }
 
+#[allow(unused_variables)]
 impl Reporter for () {
-  fn report(&mut self, _pi: ProgressInfo<'_>) { }
+  fn report(&mut self, pi: ProgressInfo<'_>) { }
+  fn phase_begin_(&mut self, phase: Count<'_>, len: usize) { }
+  fn item_(&mut self, entry: usize, desc: Cow<'_, str>) { }
 }
 
 impl<'t,T> From<&'t T> for Count<'t>
@@ -53,5 +80,17 @@ impl &mut dyn Reporter {
     let phase = &phase; let phase = phase.into();
     let entry = &entry; let entry = entry.into();
     self.report(ProgressInfo { phase, entry });
+  }
+
+  fn phase_begin<P>(&mut self, phase: P, len: usize)
+  where for <'p> &'p P: Into<Count<'p>>,
+  {
+    self.phase_begin_((&phase).into(), len)
+  }
+
+  fn item<'s,S>(&mut self, entry: usize, desc: S)
+  where S: Into<Cow<'s, str>>,
+  {
+    self.item_(entry, desc.into())
   }
 }

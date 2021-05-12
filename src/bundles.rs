@@ -600,10 +600,12 @@ impl InstanceBundles {
 
 impl Uploading {
   #[throws(MgmtError)]
-  pub fn bulk<R>(self, data: &mut R, expected: &Hash,
-                 for_progress: &mut dyn progress::Reporter) -> Uploaded
-  where R: Read
+  pub fn bulk<R,PW>(self, data: &mut R, expected: &Hash,
+                    for_progress: &mut ResponseWriter<PW>) -> Uploaded
+  where R: Read, PW: Write
   {
+    let mut for_progress = progress::ResponseReporter::new(for_progress);
+
     let Uploading { id, mut file, instance } = self;
     let tmp = id.path_tmp(&instance);
 
@@ -621,9 +623,9 @@ impl Uploading {
     let mut file = BufReader::new(file);
 
     let parsed = parse_bundle(id, &mut file, BundleParseUpload,
-                              for_progress)?;
+                              &mut for_progress)?;
 
-    process_bundle(id, &*instance, for_progress)?;
+    process_bundle(id, &*instance, &mut for_progress)?;
 
     Uploaded { id, parsed }
   }
