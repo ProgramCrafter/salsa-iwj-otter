@@ -7,27 +7,56 @@ use crate::packetframe::ResponseWriter;
 
 #[derive(Debug,Clone,Serialize,Deserialize,IntoOwned)]
 pub struct ProgressInfo<'pi> {
-  phase_num: usize,
-  phases: usize,
-  phase_desc: Cow<'pi, str>,
-  count: usize,
-  of: usize,
-  desc: Cow<'pi, str>,
+  phase: Count<'pi>,
+  entry: Count<'pi>,
 }
 
-pub trait ProgressReporter {
+#[derive(Debug,Clone,Serialize,Deserialize,IntoOwned)]
+pub struct Count<'pi> {
+  pub i: usize,
+  pub n: usize,
+  pub desc: Cow<'pi, str>,
+}
+
+pub trait Reporter {
   fn report(&mut self, info: ProgressInfo<'_>)
             -> Result<(), MgmtChannelWriteError>;
 }
 
-impl<W> ProgressReporter for ResponseWriter<'_, W> where W: Write {
+impl<W> Reporter for ResponseWriter<'_, W> where W: Write {
   #[throws(MgmtChannelWriteError)]
   fn report(&mut self, pi: ProgressInfo<'_>) {
     self.progress(pi)?
   }
 }
 
-impl ProgressReporter for () {
+impl Reporter for () {
   #[throws(MgmtChannelWriteError)]
   fn report(&mut self, _pi: ProgressInfo<'_>) { }
+}
+
+impl<T> From<T> for Count<'static>
+where T: EnumCount + ToPrimitive + AsStaticRef<str>
+{
+  fn from(t: T) -> Count<'static> {
+    Count {
+      i: t.to_usize().unwrap(),
+      n: T::COUNT,
+      desc: Cow::Borrowed(t.as_static()),
+    }
+  }
+}
+
+#[ext(pub)]
+impl &mut dyn Reporter {
+  #[throws(MgmtChannelWriteError)]
+  fn phase_entry<'p,'e,P,E>(&mut self, phase: P, entry: E)
+  where P: Into<Count<'p>>,
+        E: Into<Count<'e>>,
+  {
+    self.report(ProgressInfo {
+      phase: phase.into(),
+      entry: entry.into(),
+    })?
+  }
 }

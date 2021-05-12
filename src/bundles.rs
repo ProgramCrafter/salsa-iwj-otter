@@ -407,7 +407,7 @@ impl BundleParseErrorHandling for BundleParseUpload {
 
 #[throws(EH::Err)]
 fn parse_bundle<EH>(id: Id, file: &mut dyn ReadSeek, eh: EH,
-                    _for_progress: &mut dyn ProgressReporter) -> Parsed
+                    _for_progress: &mut dyn progress::Reporter) -> Parsed
   where EH: BundleParseErrorHandling,
 {
   match id.kind { Kind::Zip => () }
@@ -440,7 +440,7 @@ fn parse_bundle<EH>(id: Id, file: &mut dyn ReadSeek, eh: EH,
 
 #[throws(LE)]
 fn process_bundle(id: Id, instance: &InstanceName,
-                  _for_progress: &dyn ProgressReporter)
+                  _for_progress: &dyn progress::Reporter)
 {
   let dir = id.path_dir(instance);
   fs::create_dir(&dir)
@@ -590,7 +590,7 @@ impl InstanceBundles {
 impl Uploading {
   #[throws(MgmtError)]
   pub fn bulk<R>(self, data: &mut R, expected: &Hash,
-                 for_progress: &mut dyn ProgressReporter) -> Uploaded
+                 for_progress: &mut dyn progress::Reporter) -> Uploaded
   where R: Read
   {
     let Uploading { id, mut file, instance } = self;
