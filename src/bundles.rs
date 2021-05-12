@@ -416,7 +416,7 @@ impl BundleParseErrorHandling for BundleParseUpload {
 }
 
 #[throws(EH::Err)]
-fn parse_bundle<EH>(id: Id, file: File, eh: EH,
+fn parse_bundle<EH>(id: Id, _instance_name: &InstanceName, file: File, eh: EH,
                     mut for_progress: &mut dyn progress::Reporter)
                     -> (ForProcess, Parsed)
   where EH: BundleParseErrorHandling,
@@ -556,7 +556,7 @@ impl InstanceBundles {
       }
 
       let eh = BundleParseReload { bpath: fpath };
-      let (_za, parsed) = match parse_bundle(id, file, eh, &mut ()) {
+      let (_za, parsed) = match parse_bundle(id, &ig.name, file, eh, &mut ()) {
         Ok(y) => y,
         Err(e) => {
           debug!("bundle file {:?} reload failed {}", &fpath, e);
@@ -633,7 +633,7 @@ impl Uploading {
 
     file.rewind().context("rewind"). map_err(IE::from)?;
 
-    let (za, parsed) = parse_bundle(id, file, BundleParseUpload,
+    let (za, parsed) = parse_bundle(id, &instance, file, BundleParseUpload,
                               &mut for_progress)?;
 
     process_bundle(za, id, &*instance, &mut for_progress)?;
