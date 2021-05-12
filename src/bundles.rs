@@ -437,6 +437,7 @@ impl BundleParseErrorHandling for BundleParseUpload {
 
 #[derive(Copy,Clone,Debug,EnumCount,EnumMessage,ToPrimitive)]
 enum Phase {
+  #[strum(message="transfer upload data")]   Upload,
   #[strum(message="scan")]                   Scan,
   #[strum(message="parse shape catalogues")] ParseLibs,
 }
@@ -715,6 +716,8 @@ impl Uploading {
   {
     let mut for_progress = progress::ResponseReporter::new(for_progress);
     let mut for_progress: &mut dyn progress::Reporter = &mut for_progress;
+
+    for_progress.phase_item(Phase::Upload, ());
 
     let Uploading { id, mut file, instance } = self;
     let tmp = id.path_tmp(&instance);
