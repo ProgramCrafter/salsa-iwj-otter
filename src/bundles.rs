@@ -532,6 +532,9 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
   impl shapelib::LibrarySource for LibraryInBundle<'_> {
     fn catalogue_data(&self) -> &str { &self.catalogue_data }
     fn svg_dir(&self) -> String { self.svg_dir.clone() }
+    fn note_svg(&mut self, basename: &GoodItemName) {
+      self.need_svgs.push(basename.clone())
+    }
   }
 
   for (progress_count, LibScanned { libname, dir_inzip, inzip })
