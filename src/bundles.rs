@@ -424,7 +424,7 @@ fn parse_bundle<EH>(id: Id, file: &mut dyn ReadSeek, eh: EH,
   enum ToScan {
     #[strum(message="metadata")] Meta,
   }
-  for_progress.phase_entry(Phase::Scan, ToScan::Meta);
+  for_progress.phase_item(Phase::Scan, ToScan::Meta);
   
   let meta = eh.besteffort(||{
     const META: &str = "otter.toml";

@@ -7,7 +7,7 @@ use crate::prelude::*;
 #[derive(Debug,Clone,Serialize,Deserialize,IntoOwned)]
 pub struct ProgressInfo<'pi> {
   phase: Count<'pi>,
-  entry: Count<'pi>,
+  item:  Count<'pi>,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize,IntoOwned)]
@@ -20,7 +20,7 @@ pub struct Count<'pi> {
 pub trait Reporter {
   fn report(&mut self, info: ProgressInfo<'_>);
   fn phase_begin_(&mut self, phase: Count<'_>, len: usize);
-  fn item_(&mut self, entry: usize, desc: Cow<'_, str>);
+  fn item_(&mut self, item: usize, desc: Cow<'_, str>);
 }
 
 pub struct ResponseReporter<'c,'w,W> where W: Write {
@@ -44,10 +44,10 @@ impl<W> Reporter for ResponseReporter<'_,'_,W> where W: Write {
     self.phase = phase.into_owned();
     self.len = len;
   }
-  fn item_(&mut self, entry: usize, desc: Cow<'_, str>) {
+  fn item_(&mut self, item: usize, desc: Cow<'_, str>) {
     self.report(ProgressInfo {
       phase: self.phase.clone(),
-      entry: Count { i: entry, n: self.len, desc }
+      item: Count { i: item, n: self.len, desc }
     })
   }
 }
@@ -56,7 +56,7 @@ impl<W> Reporter for ResponseReporter<'_,'_,W> where W: Write {
 impl Reporter for () {
   fn report(&mut self, pi: ProgressInfo<'_>) { }
   fn phase_begin_(&mut self, phase: Count<'_>, len: usize) { }
-  fn item_(&mut self, entry: usize, desc: Cow<'_, str>) { }
+  fn item_(&mut self, item: usize, desc: Cow<'_, str>) { }
 }
 
 impl<'t,T> From<&'t T> for Count<'t>
@@ -73,24 +73,24 @@ where T: EnumCount + ToPrimitive + EnumMessage
 
 #[ext(pub, name=ReporterExt)]
 impl &mut dyn Reporter {
-  fn phase_entry<P,E>(&mut self, phase: P, entry: E)
+  fn phase_item<P,E>(&mut self, phase: P, item: E)
   where for <'p> &'p P: Into<Count<'p>>,
         for <'e> &'e E: Into<Count<'e>>,
   {
     let phase = &phase; let phase = phase.into();
-    let entry = &entry; let entry = entry.into();
-    self.report(ProgressInfo { phase, entry });
+    let item  = &item;  let item  = item .into();
+    self.report(ProgressInfo { phase, item });
   }
 
-  fn phase_begin<P>(&mut self, phase: P, len: usize)
+  fn phase<P>(&mut self, phase: P, len: usize)
   where for <'p> &'p P: Into<Count<'p>>,
   {
     self.phase_begin_((&phase).into(), len)
   }
 
-  fn item<'s,S>(&mut self, entry: usize, desc: S)
+  fn item<'s,S>(&mut self, item: usize, desc: S)
   where S: Into<Cow<'s, str>>,
   {
-    self.item_(entry, desc.into())
+    self.item_(item, desc.into())
   }
 }
