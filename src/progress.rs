@@ -19,44 +19,39 @@ pub struct Count<'pi> {
 }
 
 pub trait Reporter {
-  fn report(&mut self, info: ProgressInfo<'_>)
-            -> Result<(), MgmtChannelWriteError>;
+  fn report(&mut self, info: ProgressInfo<'_>);
 }
 
 impl<W> Reporter for ResponseWriter<'_, W> where W: Write {
-  #[throws(MgmtChannelWriteError)]
   fn report(&mut self, pi: ProgressInfo<'_>) {
-    self.progress(pi)?
+    self.progress(pi).unwrap_or(());
   }
 }
 
 impl Reporter for () {
-  #[throws(MgmtChannelWriteError)]
   fn report(&mut self, _pi: ProgressInfo<'_>) { }
 }
 
-impl<T> From<T> for Count<'static>
-where T: EnumCount + ToPrimitive + AsStaticRef<str>
+impl<'t,T> From<&'t T> for Count<'t>
+where T: EnumCount + ToPrimitive + EnumMessage
 {
-  fn from(t: T) -> Count<'static> {
+  fn from(t: &'t T) -> Count<'t> {
     Count {
       i: t.to_usize().unwrap(),
       n: T::COUNT,
-      desc: Cow::Borrowed(t.as_static()),
+      desc: Cow::Borrowed(t.get_message().unwrap_or("...")),
     }
   }
 }
 
-#[ext(pub)]
+#[ext(pub, name=ReporterExt)]
 impl &mut dyn Reporter {
-  #[throws(MgmtChannelWriteError)]
-  fn phase_entry<'p,'e,P,E>(&mut self, phase: P, entry: E)
-  where P: Into<Count<'p>>,
-        E: Into<Count<'e>>,
+  fn phase_entry<P,E>(&mut self, phase: P, entry: E)
+  where for <'p> &'p P: Into<Count<'p>>,
+        for <'e> &'e E: Into<Count<'e>>,
   {
-    self.report(ProgressInfo {
-      phase: phase.into(),
-      entry: entry.into(),
-    })?
+    let phase = &phase; let phase = phase.into();
+    let entry = &entry; let entry = entry.into();
+    self.report(ProgressInfo { phase, entry });
   }
 }

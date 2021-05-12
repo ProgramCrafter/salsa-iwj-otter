@@ -407,7 +407,7 @@ impl BundleParseErrorHandling for BundleParseUpload {
 
 #[throws(EH::Err)]
 fn parse_bundle<EH>(id: Id, file: &mut dyn ReadSeek, eh: EH,
-                    _for_progress: &mut dyn progress::Reporter) -> Parsed
+                    mut for_progress: &mut dyn progress::Reporter) -> Parsed
   where EH: BundleParseErrorHandling,
 {
   match id.kind { Kind::Zip => () }
@@ -415,6 +415,17 @@ fn parse_bundle<EH>(id: Id, file: &mut dyn ReadSeek, eh: EH,
     IndexedZip::new(file)
   })?;
 
+  #[derive(Copy,Clone,Debug,EnumCount,EnumMessage,ToPrimitive)]
+  enum Phase {
+    #[strum(message="scan")] Scan,
+  }
+
+  #[derive(Copy,Clone,Debug,EnumCount,EnumMessage,ToPrimitive)]
+  enum ToScan {
+    #[strum(message="metadata")] Meta,
+  }
+  for_progress.phase_entry(Phase::Scan, ToScan::Meta);
+  
   let meta = eh.besteffort(||{
     const META: &str = "otter.toml";
     let mut mf = za.by_name_caseless(META)?
