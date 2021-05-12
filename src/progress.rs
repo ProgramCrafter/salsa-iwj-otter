@@ -7,8 +7,12 @@ use crate::packetframe::ResponseWriter;
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct ProgressInfo {
-  pub count: usize,
-  pub of: usize,
+  phase_num: usize,
+  phases: usize,
+  phase_desc: String,
+  count: usize,
+  of: usize,
+  desc: String,
 }
 
 pub trait ProgressReporter {
