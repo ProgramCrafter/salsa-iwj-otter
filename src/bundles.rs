@@ -73,7 +73,7 @@ display_as_debug!{LoadError}
 
 //---------- private definitions ----------
 
-type ZipArchive = zipfile::read::ZipArchive<BufReader<File>>;
+pub type ZipArchive = zipfile::read::ZipArchive<BufReader<File>>;
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 struct Parsed {
@@ -314,9 +314,12 @@ impl IndexedZip where {
              else return Ok(None) }
     Some(self.za.by_index(i)?)
   }
+}
 
+#[ext(pub)]
+impl ZipArchive {
   #[throws(LoadError)]
-  pub fn i<'z>(&'z mut self, i: ZipIndex) -> ZipFile<'z> {
+  fn i<'z>(&'z mut self, i: ZipIndex) -> ZipFile<'z> {
     self.by_index(i.0)?
   }
 }
