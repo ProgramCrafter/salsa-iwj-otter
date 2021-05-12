@@ -435,6 +435,12 @@ impl BundleParseErrorHandling for BundleParseUpload {
   }
 }
 
+#[derive(Copy,Clone,Debug,EnumCount,EnumMessage,ToPrimitive)]
+enum Phase {
+  #[strum(message="scan")]                   Scan,
+  #[strum(message="parse shape catalogues")] ParseLibs,
+}
+
 #[throws(EH::Err)]
 fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
                     mut for_progress: &mut dyn progress::Reporter)
@@ -445,12 +451,6 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
   let mut za = eh.required(||{
     IndexedZip::new(file)
   })?;
-
-  #[derive(Copy,Clone,Debug,EnumCount,EnumMessage,ToPrimitive)]
-  enum Phase {
-    #[strum(message="scan")] Scan,
-    #[strum(message="parse shape catalogues")] ParseLibs,
-  }
 
   #[derive(Copy,Clone,Debug,EnumCount,EnumMessage,ToPrimitive)]
   enum ToScan {
