@@ -506,7 +506,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
         .collect::<ArrayVec<[&str;2]>>()
         .into_inner();
       if unicase::eq(dir, "library");
-      if let Some((ext, base)) = file.rsplit_once('.');
+      if let Some((base, ext)) = file.rsplit_once('.');
       if unicase::eq(ext, "toml");
       then {
         libs.push(LibScanned {
