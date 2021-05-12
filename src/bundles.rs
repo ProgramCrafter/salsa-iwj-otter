@@ -83,6 +83,15 @@ struct Parsed {
 #[derive(Debug)]
 struct ForProcess {
   za: IndexedZip,
+  newlibs: Vec<ForProcessLib>,
+}
+
+#[derive(Debug)]
+struct ForProcessLib {
+  contents: shapelib::Contents,
+  dir_inzip: String,
+  svg_dir: String,
+  need_svgs: Vec<GoodItemName>,
 }
 
 const BUNDLES_MAX: Index = Index(64);
@@ -131,6 +140,12 @@ impl From<LoadError> for MgmtError {
     LE::BadBundle(why) => ME::BadBundle(why),
     LE::IE(ie) => ME::from(ie),
   } }
+}
+
+impl LoadError {
+  fn badlib(libname: &str, e: &dyn Display) -> LoadError {
+    LE::BadBundle(format!("bad library: {}: {}", libname, e))
+  }
 }
 
 //---------- pathname handling (including Id leafname) ----------
@@ -421,7 +436,7 @@ impl BundleParseErrorHandling for BundleParseUpload {
 }
 
 #[throws(EH::Err)]
-fn parse_bundle<EH>(id: Id, _instance_name: &InstanceName, file: File, eh: EH,
+fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
                     mut for_progress: &mut dyn progress::Reporter)
                     -> (ForProcess, Parsed)
   where EH: BundleParseErrorHandling,
@@ -434,11 +449,13 @@ fn parse_bundle<EH>(id: Id, _instance_name: &InstanceName, file: File, eh: EH,
   #[derive(Copy,Clone,Debug,EnumCount,EnumMessage,ToPrimitive)]
   enum Phase {
     #[strum(message="scan")] Scan,
+    #[strum(message="parse shape catalogues")] ParseLibs,
   }
 
   #[derive(Copy,Clone,Debug,EnumCount,EnumMessage,ToPrimitive)]
   enum ToScan {
-    #[strum(message="metadata")] Meta,
+    #[strum(message="metadata")]   Meta,
+    #[strum(message="shape libs")] Libs,
   }
   for_progress.phase_item(Phase::Scan, ToScan::Meta);
   
@@ -460,19 +477,92 @@ fn parse_bundle<EH>(id: Id, _instance_name: &InstanceName, file: File, eh: EH,
     }
   })?;
 
+  for_progress.phase_item(Phase::Scan, ToScan::Libs);
+
+  #[derive(Debug)]
+  struct LibScanned {
+    libname: String,
+    dir_inzip: String,
+    inzip: ZipIndex,
+  }
+
+  let mut libs = Vec::new();
+  for (name,i) in &za {
+    eh.besteffort(|| Ok::<_,LE>(if_chain!{
+      if let Ok([dir, file]) = name.as_ref().split('/')
+        .collect::<ArrayVec<[&str;2]>>()
+        .into_inner();
+      if unicase::eq(dir, "library");
+      if let Some((ext, base)) = file.rsplit_once('.');
+      if unicase::eq(ext, "toml");
+      then {
+        libs.push(LibScanned {
+          dir_inzip: format!("{}/{}", &dir, &base),
+          libname: base.to_lowercase(),
+          inzip: i,
+        });
+      }
+    }), ||())?;
+  }
+
+  for_progress.phase(Phase::ParseLibs, libs.len());
+
+  let mut newlibs = Vec::new();
+
+  #[derive(Debug,Clone)]
+  struct LibraryInBundle<'l> {
+    catalogue_data: String,
+    svg_dir: &'l String,
+    need_svgs: Vec<GoodItemName>,
+  }
+
+  impl shapelib::LibrarySource for LibraryInBundle<'_> {
+    fn catalogue_data(&self) -> &str { &self.catalogue_data }
+    fn svg_dir(&self) -> String { self.svg_dir.clone() }
+  }
+
+  for (progress_count, LibScanned { libname, dir_inzip, inzip })
+    in libs.into_iter().enumerate()
+  {
+    for_progress.item(progress_count, &libname);
+
+    eh.besteffort(|| Ok::<_,LE>({
+      let svg_dir = format!("{}/lib{}", id.path_dir(&instance), &inzip);
+
+      let mut zf = za.i(inzip)?;
+      let mut catalogue_data = String::new();
+      zf.read_to_string(&mut catalogue_data)
+        .map_err(|e| LE::badlib(&libname, &e))?;
+      let mut src = LibraryInBundle {
+        catalogue_data: catalogue_data,
+        svg_dir: &svg_dir,
+        need_svgs: Vec::new(),
+      };
+      let contents = shapelib::load_catalogue(&libname, &mut src)
+        .map_err(|e| LE::badlib(&libname, &e))?;
+      newlibs.push(ForProcessLib {
+        need_svgs: src.need_svgs,
+        contents, svg_dir, dir_inzip,
+      });
+    }), ||())?;
+  }
+
   // todo: do actual things, eg libraries and specs
 
-  (ForProcess { za }, Parsed { meta })
+  (ForProcess { za, newlibs },
+   Parsed { meta })
 }
 
 #[throws(LE)]
-fn process_bundle(ForProcess { za:_ }: ForProcess,
+fn process_bundle(ForProcess { za:_, newlibs:_ }: ForProcess,
                   id: Id, instance: &InstanceName,
                   _for_progress: &dyn progress::Reporter)
 {
   let dir = id.path_dir(instance);
   fs::create_dir(&dir)
     .with_context(|| dir.clone()).context("mkdir").map_err(IE::from)?;
+
+  // todo: do something with newlibs
 }
 
 //---------- scanning/incorporating/uploading ----------

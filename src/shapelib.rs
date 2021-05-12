@@ -609,7 +609,7 @@ impl LibrarySource for BuiltinLibrary<'_> {
 }
 
 #[throws(LibraryLoadError)]
-fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
+pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
   let toplevel: toml::Value = src.catalogue_data().parse()?;
   let mut l = Contents {
     libname: libname.to_string(),
