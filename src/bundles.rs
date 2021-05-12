@@ -328,9 +328,10 @@ impl IndexedZip where {
   }
 
   #[throws(LoadError)]
-  pub fn by_name_caseless<'a>(&'a mut self, name: &str) -> Option<ZipFile<'a>>
+  pub fn by_name_caseless<'a, S>(&'a mut self, name: S) -> Option<ZipFile<'a>>
+  where S: Into<String>
   {
-    if_let!{ Some(&i) = self.members.get(&UniCase::new(name.to_owned()));
+    if_let!{ Some(&i) = self.members.get(&UniCase::new(name.into()));
              else return Ok(None) }
     Some(self.za.by_index(i)?)
   }
