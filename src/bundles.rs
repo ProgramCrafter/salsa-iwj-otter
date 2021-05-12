@@ -281,7 +281,12 @@ pub struct IndexedZip {
 }
 deref_to_field_mut!{IndexedZip, ZipArchive, za }
 
+#[derive(Debug,Copy,Clone,Hash,Eq,PartialEq,Ord,PartialOrd)]
 pub struct ZipIndex(pub usize);
+impl Display for ZipIndex {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) { write!(f,"{}",self.0)? }
+}
 
 impl IndexedZip where {
   #[throws(LoadError)]
