@@ -116,6 +116,7 @@ pub enum MgmtGameInstruction {
   DeletePieceAlias(String),
   DefinePieceAlias { alias: String, target: Box<dyn PieceSpec> },
 
+  ClearGame { },
   ResetFromGameSpec { spec_toml: String },
 
   ResetPlayerAccess(PlayerId),

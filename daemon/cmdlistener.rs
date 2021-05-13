@@ -570,6 +570,12 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       no_updates(ig, MGR::Fine)
     },
 
+    MGI::ClearGame { } => {
+      reset_game(cs,ag,ig, Box::new(|_ig, _insns|{
+        let html = hformat!("{} cleared out the game", &who);
+        Ok(LogEntry { html })
+      }))?
+    }
     MGI::ResetFromGameSpec { spec_toml: spec } => {
       let spec: toml::Value = spec.parse()
         .map_err(|e: toml::de::Error| ME::TomlSyntaxError(e.to_string()))?;
