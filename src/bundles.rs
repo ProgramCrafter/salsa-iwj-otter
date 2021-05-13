@@ -482,7 +482,7 @@ impl progress::Enum for ReaquireProgress { }
 
 #[throws(EH::Err)]
 fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
-                    mut for_progress: &mut dyn progress::Reporter)
+                    mut for_progress: &mut dyn progress::Originator)
                     -> (ForProcess, Parsed)
   where EH: BundleParseErrorHandling,
 {
@@ -599,7 +599,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
 #[throws(LE)]
 fn process_bundle(ForProcess { mut za, mut newlibs }: ForProcess,
                   id: Id, instance: &InstanceName,
-                  mut for_progress: &mut dyn progress::Reporter)
+                  mut for_progress: &mut dyn progress::Originator)
 {
   for_progress.phase_item(Phase::Reaquire, ReaquireProgress::Prepare);
 
@@ -634,7 +634,7 @@ enum PictureFormat {
 
 #[throws(LE)]
 fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
-             mut for_progress: &mut dyn progress::Reporter,
+             mut for_progress: &mut dyn progress::Originator,
              dir_inzip: &str, svg_dir: &str,
              item: &GoodItemName) {
   let (format, mut zf) = 'format: loop {
@@ -829,8 +829,8 @@ impl Uploading {
                     for_progress: &mut ResponseWriter<PW>) -> Uploaded
   where R: Read, PW: Write
   {
-    let mut for_progress = progress::ResponseReporter::new(for_progress);
-    let mut for_progress: &mut dyn progress::Reporter = &mut for_progress;
+    let mut for_progress = progress::ResponseOriginator::new(for_progress);
+    let mut for_progress: &mut dyn progress::Originator = &mut for_progress;
 
     for_progress.phase_item(Phase::Upload, ());
 

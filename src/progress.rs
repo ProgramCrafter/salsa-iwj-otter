@@ -17,18 +17,18 @@ pub struct Count<'pi> {
   pub desc: Cow<'pi, str>,
 }
 
-pub trait Reporter {
+pub trait Originator {
   fn report(&mut self, info: ProgressInfo<'_>);
   fn phase_begin_(&mut self, phase: Count<'_>, len: usize);
   fn item_(&mut self, item: usize, desc: Cow<'_, str>);
 }
 
-pub struct ResponseReporter<'c,'w,W> where W: Write {
+pub struct ResponseOriginator<'c,'w,W> where W: Write {
   chan: &'c mut ResponseWriter<'w,W>,
   phase: Count<'static>,
   len: usize,
 }
-impl<'c,'w,W> ResponseReporter<'c,'w,W> where W: Write {
+impl<'c,'w,W> ResponseOriginator<'c,'w,W> where W: Write {
   pub fn new(chan: &'c mut ResponseWriter<'w,W>) -> Self { Self {
     chan,
     phase: Count { i:0, n:0, desc: Cow::Borrowed("") },
@@ -36,7 +36,7 @@ impl<'c,'w,W> ResponseReporter<'c,'w,W> where W: Write {
   } }
 }
 
-impl<W> Reporter for ResponseReporter<'_,'_,W> where W: Write {
+impl<W> Originator for ResponseOriginator<'_,'_,W> where W: Write {
   fn report(&mut self, pi: ProgressInfo<'_>) {
     self.chan.progress(pi).unwrap_or(());
   }
@@ -53,7 +53,7 @@ impl<W> Reporter for ResponseReporter<'_,'_,W> where W: Write {
 }
 
 #[allow(unused_variables)]
-impl Reporter for () {
+impl Originator for () {
   fn report(&mut self, pi: ProgressInfo<'_>) { }
   fn phase_begin_(&mut self, phase: Count<'_>, len: usize) { }
   fn item_(&mut self, item: usize, desc: Cow<'_, str>) { }
@@ -84,8 +84,8 @@ impl<'t> From<()> for Count<'t> { fn from(_:()) -> Count<'t> {
     Count { i:0, n:0, desc: Cow::Borrowed("") }
 } }
 
-#[ext(pub, name=ReporterExt)]
-impl &mut dyn Reporter {
+#[ext(pub, name=OriginatorExt)]
+impl &mut dyn Originator {
   fn phase_item<'p,'e,P,E>(&mut self, phase: P, item: E)
   where P: Into<Count<'p>>,
         E: Into<Count<'e>>,

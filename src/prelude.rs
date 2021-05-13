@@ -150,7 +150,7 @@ pub use crate::packetframe::{ReadExt, ResponseWriter};
 pub use crate::pcaliases::*;
 pub use crate::pcrender::*;
 pub use crate::pieces::*;
-pub use crate::progress::{self, ProgressInfo, ReporterExt as _};
+pub use crate::progress::{self, ProgressInfo, OriginatorExt as _};
 pub use crate::shapelib;
 pub use crate::shapelib::{CircleShape, RectShape, LibraryLoadError};
 pub use crate::slotmap_slot_idx::*;
