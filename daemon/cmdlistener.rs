@@ -445,11 +445,13 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   }
 
   #[throws(MgmtError)]
-  fn clear_game<'igr, 'ig: 'igr, 'cs>(
+  fn reset_game<'igr, 'ig: 'igr, 'cs>(
     cs: &'cs CommandStreamData,
     ag: &'_ mut AccountsGuard,
     ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
-  ) -> (&'igr mut InstanceGuard<'ig>, Vec<MgmtGameInstruction>)
+    f: Box<dyn FnOnce(&mut InstanceGuard, &mut Vec<MgmtGameInstruction>)
+                      -> Result<LogEntry, MgmtError> + '_>
+  ) -> ExecuteGameInsnResults<'igr, 'ig>
   {
     let ig = cs.check_acl(&ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
 
@@ -462,7 +464,13 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       insns.push(MGI::DeletePiece(piece));
     }
 
-    (ig, insns)
+    let logent = f(ig, &mut insns)?;
+
+    (U{ pcs: vec![],
+        log: vec![ logent ],
+        raw: None },
+     MGR::InsnExpanded,
+     None, insns, ig)
   }
 
   impl<'cs> CommandStreamData<'cs> {
@@ -570,24 +578,20 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       } = toml_de::from_value(&spec)
         .map_err(|e: toml_de::Error| ME::TomlStructureError(e.to_string()))?;
 
-      let (ig, mut insns) = clear_game(cs,ag,ig)?;
-
-      // Define new stuff
-      for (alias, target) in pcaliases.into_iter() {
-        insns.push(MGI::DefinePieceAlias{ alias, target });
-      }
-      insns.push(MGI::ClearLog);
-      insns.push(MGI::SetTableSize(table_size));
-      insns.push(MGI::SetTableColour(table_colour));
-      for pspec in pieces.into_iter() {
-        insns.push(MGI::AddPieces(pspec));
-      }
-      let html = hformat!("{} reset the game", &who);
-      (U{ pcs: vec![],
-          log: vec![ LogEntry { html } ],
-          raw: None },
-       MGR::InsnExpanded,
-       None, insns, ig)
+      reset_game(cs,ag,ig, Box::new(|_ig, insns|{
+        // Define new stuff:
+        for (alias, target) in pcaliases.into_iter() {
+          insns.push(MGI::DefinePieceAlias{ alias, target });
+        }
+        insns.push(MGI::ClearLog);
+        insns.push(MGI::SetTableSize(table_size));
+        insns.push(MGI::SetTableColour(table_colour));
+        for pspec in pieces.into_iter() {
+          insns.push(MGI::AddPieces(pspec));
+        }
+        let html = hformat!("{} reset the game", &who);
+        Ok(LogEntry { html })
+      }))?
     }
 
     MGI::InsnMark(token) => {
