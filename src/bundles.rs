@@ -106,6 +106,12 @@ pub type BadBundle = String;
 
 use LoadError as LE;
 
+#[derive(Debug,Copy,Clone)]
+enum BundleSavefile {
+  Bundle(Id),
+  PreviousUploadFailed(Index),
+}
+
 //---------- straightformward impls ----------
 
 impl From<Index> for usize {
@@ -148,6 +154,16 @@ impl LoadError {
   }
 }
 
+impl BundleSavefile {
+  pub fn index(&self) -> Index {
+    use BundleSavefile::*;
+    match self {
+      Bundle(id) => id.index,
+      &PreviousUploadFailed(index) => index,
+    }
+  }
+}
+
 //---------- pathname handling (including Id leafname) ----------
 
 pub fn b_dir(instance: &InstanceName) -> String {
@@ -168,16 +184,27 @@ impl Display for Id {
   }
 }
 
-impl FromStr for Id {
+impl FromStr for BundleSavefile {
   type Err = NotBundle;
   #[throws(NotBundle)]
-  fn from_str(fleaf: &str) -> Id {
+  fn from_str(fleaf: &str) -> BundleSavefile {
     let [lhs, rhs] = fleaf.splitn(2, '.')
       .collect::<ArrayVec<[&str;2]>>()
       .into_inner().map_err(|_| "no dot")?;
     let index = lhs.parse().map_err(|_| "bad index")?;
+    if rhs == "tmp" { return BundleSavefile::PreviousUploadFailed(index) }
     let kind = rhs.parse().map_err(|_| "bad extension")?;
-    Id { index, kind }
+    BundleSavefile::Bundle(Id { index, kind })
+  }
+}
+impl FromStr for Id {
+  type Err = NotBundle;
+  #[throws(NotBundle)]
+  fn from_str(fleaf: &str) -> Id {
+    match fleaf.parse()? {
+      BundleSavefile::Bundle(id) => id,
+      BundleSavefile::PreviousUploadFailed(_) => throw!(NotBundle("tmp")),
+    }
   }
 }
 
@@ -720,7 +747,7 @@ impl InstanceBundles {
         .to_str().ok_or_else(|| anyhow!("glob unicode conversion"))?;
 
       let fleaf = fpath.rsplitn(2, '/').next().unwrap();
-      let id: Id = match fleaf.parse() {
+      let parsed: BundleSavefile = match fleaf.parse() {
         Ok(y) => y,
         Err(NotBundle(why)) => {
           debug!("bundle file {:?} skippping {}", &fpath, why);
@@ -729,14 +756,17 @@ impl InstanceBundles {
         },
       };
 
-      let file = File::open(fpath)
-        .with_context(|| fpath.to_owned()).context("open zipfile")
-        .map_err(IE::from)?;
-
-      let iu: usize = id.index.into();
+      let iu: usize = parsed.index().into();
       if ib.bundles.get(iu).is_none() {
         ib.bundles.resize_with(iu+1, default);
       }
+
+      if_let!{ BundleSavefile::Bundle(id) = parsed;
+               else continue; }
+
+      let file = File::open(fpath)
+        .with_context(|| fpath.to_owned()).context("open zipfile")
+        .map_err(IE::from)?;
 
       let eh = BundleParseReload { bpath: fpath };
       let (_za, parsed) = match parse_bundle(id, &ig.name, file, eh, &mut ()) {
