@@ -444,6 +444,27 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
      Fine, None, vec![], ig)
   }
 
+  #[throws(MgmtError)]
+  fn clear_game<'igr, 'ig: 'igr, 'cs>(
+    cs: &'cs CommandStreamData,
+    ag: &'_ mut AccountsGuard,
+    ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
+  ) -> (&'igr mut InstanceGuard<'ig>, Vec<MgmtGameInstruction>)
+  {
+    let ig = cs.check_acl(&ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
+
+    // Clear out old stuff
+    let mut insns = vec![];
+    for alias in ig.pcaliases.keys() {
+      insns.push(MGI::DeletePieceAlias(alias.clone()));
+    }
+    for piece in ig.gs.pieces.keys() {
+      insns.push(MGI::DeletePiece(piece));
+    }
+
+    (ig, insns)
+  }
+
   impl<'cs> CommandStreamData<'cs> {
     #[throws(MgmtError)]
     fn check_acl_manip_player_access<'igr, 'ig: 'igr>(
@@ -542,7 +563,6 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     },
 
     MGI::ResetFromGameSpec { spec_toml: spec } => {
-      let ig = cs.check_acl(&ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
       let spec: toml::Value = spec.parse()
         .map_err(|e: toml::de::Error| ME::TomlSyntaxError(e.to_string()))?;
       let GameSpec {
@@ -550,14 +570,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       } = toml_de::from_value(&spec)
         .map_err(|e: toml_de::Error| ME::TomlStructureError(e.to_string()))?;
 
-      // Clear out old stuff
-      let mut insns = vec![];
-      for alias in ig.pcaliases.keys() {
-        insns.push(MGI::DeletePieceAlias(alias.clone()));
-      }
-      for piece in ig.gs.pieces.keys() {
-        insns.push(MGI::DeletePiece(piece));
-      }
+      let (ig, mut insns) = clear_game(cs,ag,ig)?;
 
       // Define new stuff
       for (alias, target) in pcaliases.into_iter() {
