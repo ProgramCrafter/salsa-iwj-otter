@@ -1,0 +1,14 @@
+# Copyright 2020-2021 Ian Jackson and contributors to Otter
+# SPDX-License-Identifier: AGPL-3.0-or-later OR CC-BY-SA-3.0
+# There is NO WARRANTY.
+
+[group.lemon]
+outline = "Circle"
+scale = 0.20
+size = [45]
+
+item_prefix = "example-"
+
+files = """
+lemon	-	a lemon
+"""
