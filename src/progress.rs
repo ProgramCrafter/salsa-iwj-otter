@@ -6,8 +6,8 @@ use crate::prelude::*;
 
 #[derive(Debug,Clone,Serialize,Deserialize,IntoOwned)]
 pub struct ProgressInfo<'pi> {
-  phase: Count<'pi>,
-  item:  Count<'pi>,
+  pub phase: Count<'pi>,
+  pub item:  Count<'pi>,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize,IntoOwned)]

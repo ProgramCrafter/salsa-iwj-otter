@@ -1349,7 +1349,11 @@ mod upload_bundle {
       game: instance_name.clone(),
       hash: bundles::Hash(hash.into()), kind,
     };
-    chan.cmd_withbulk(&cmd, &mut f, &mut io::sink(), &mut |_|Ok((/*todo*/)))?;
+    let mut progress = termprogress::new();
+    chan.cmd_withbulk(&cmd, &mut f, &mut io::sink(), &mut |pi|{
+      progress.report(&pi);
+      Ok(())
+    })?;
   }
 
   inventory::submit!{Subcommand(
