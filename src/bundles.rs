@@ -441,8 +441,17 @@ enum Phase {
   #[strum(message="transfer upload data")]   Upload,
   #[strum(message="scan")]                   Scan,
   #[strum(message="parse shape catalogues")] ParseLibs,
+  #[strum(message="start processing")]       Reaquire,
+  #[strum(message="process piece images")]   Pieces,
 }
 impl progress::Enum for Phase { }
+
+#[derive(Copy,Clone,Debug,EnumCount,EnumMessage,ToPrimitive)]
+enum ReaquireProgress {
+  #[strum(message="reaquire game lock")]     Reaquire,
+  #[strum(message="prepare")]                Prepare,
+}
+impl progress::Enum for ReaquireProgress { }
 
 #[throws(EH::Err)]
 fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
@@ -531,7 +540,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
     for_progress.item(progress_count, &libname);
 
     eh.besteffort(|| Ok::<_,LE>({
-      let svg_dir = format!("{}/lib{}", id.path_dir(&instance), &inzip);
+      let svg_dir = format!("{}/lib{:06}", id.path_dir(&instance), &inzip);
 
       let mut zf = za.i(inzip)?;
       let mut catalogue_data = String::new();
@@ -551,22 +560,94 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
     }), ||())?;
   }
 
-  // todo: do actual things, eg libraries and specs
+  for_progress.phase_item(Phase::Reaquire, ReaquireProgress::Reaquire);
 
   (ForProcess { za, newlibs },
    Parsed { meta })
 }
 
 #[throws(LE)]
-fn process_bundle(ForProcess { za:_, newlibs:_ }: ForProcess,
+fn process_bundle(ForProcess { mut za, mut newlibs }: ForProcess,
                   id: Id, instance: &InstanceName,
-                  _for_progress: &dyn progress::Reporter)
+                  mut for_progress: &mut dyn progress::Reporter)
 {
+  for_progress.phase_item(Phase::Reaquire, ReaquireProgress::Prepare);
+
   let dir = id.path_dir(instance);
   fs::create_dir(&dir)
     .with_context(|| dir.clone()).context("mkdir").map_err(IE::from)?;
+  
+  let svg_count = newlibs.iter().map(|pl| pl.need_svgs.len()).sum();
+  for_progress.phase(Phase::Pieces, svg_count);
+  
+  let mut svg_count = 0;
+  for ForProcessLib { need_svgs, svg_dir, dir_inzip, .. } in &mut newlibs {
 
-  // todo: do something with newlibs
+    fs::create_dir(&svg_dir)
+      .with_context(|| svg_dir.clone()).context("mkdir").map_err(IE::from)?;
+      
+    for item in mem::take(need_svgs) {
+      make_usvg(&mut za, &mut svg_count, for_progress,
+                dir_inzip, svg_dir, &item)?;
+    }
+  }
+}
+
+//---------- piece image processing ----------
+
+#[derive(Copy,Clone,Debug,Display,EnumIter)]
+// In preference order
+enum PictureFormat {
+  Svg,
+//  Png,
+}
+
+#[throws(LE)]
+fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
+             mut for_progress: &mut dyn progress::Reporter,
+             dir_inzip: &str, svg_dir: &str,
+             item: &GoodItemName) {
+  let (format, mut zf) = 'format: loop {
+    for format in PictureFormat::iter() {
+      let input_basename = format!("{}/{}.{}", dir_inzip, item, format);
+      if let Some(zf) = za.by_name_caseless(input_basename)? {
+        break 'format (format, zf);
+      }
+    }
+    throw!(LE::BadBundle(format!(
+      "missing image file, looked for one of {}/{}.{}", dir_inzip, item,
+      PictureFormat::iter().join(" ."),
+    )));
+  };
+
+  for_progress.item(*progress_count, zf.name());
+  *progress_count += 1;
+
+  let mut input = tempfile::tempfile_in(&svg_dir)
+    .context("create").map_err(IE::from)?;
+  io::copy(&mut zf, &mut input)
+    .context("copy from zip").with_context(|| zf.name().to_owned())
+    .map_err(|e| LE::BadBundle(e.to_string()))?;
+  input.rewind()
+    .context("rewind").map_err(IE::from)?;
+
+  let usvg_path = format!("{}/{}.usvg", svg_dir, item);
+  let output = File::create(&usvg_path)
+    .with_context(|| usvg_path.clone()).context("create").map_err(IE::from)?;
+
+  match format {
+    PictureFormat::Svg => {
+      let got = Command::new(&config().usvg_bin).args(&["-c","-"])
+        .stdin(input).stdout(output)
+        .output().context("run usvg").map_err(IE::from)?;
+      if ! got.status.success() {
+        throw!(LE::BadBundle(format!(
+          "{}: usvg conversion failed: {}: {}",
+          zf.name(), got.status, String::from_utf8_lossy(&got.stderr)
+        )));
+      }
+    },
+  }
 }
 
 //---------- scanning/incorporating/uploading ----------
