@@ -549,10 +549,17 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         pieces, table_size, table_colour, pcaliases,
       } = toml_de::from_value(&spec)
         .map_err(|e: toml_de::Error| ME::TomlStructureError(e.to_string()))?;
+
+      // Clear out old stuff
       let mut insns = vec![];
+      for alias in ig.pcaliases.keys() {
+        insns.push(MGI::DeletePieceAlias(alias.clone()));
+      }
       for piece in ig.gs.pieces.keys() {
         insns.push(MGI::DeletePiece(piece));
       }
+
+      // Define new stuff
       for (alias, target) in pcaliases.into_iter() {
         insns.push(MGI::DefinePieceAlias{ alias, target });
       }
