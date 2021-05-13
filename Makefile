@@ -390,6 +390,7 @@ DEPLOY_FINISH=/home/Otter/etc/deploy-finish
 for-deploy: stamp/cargo.deploy-build
 deploy: for-deploy bundled-sources assets libraries
 	rsync -zv --progress $(addprefix $(DEPLOY_TARGET_DIR)/,$(PROGRAMS)) $(DEPLOY_BASE)/bin/
+	rsync -zv --progress $(TARGET_DIR)/release/usvg $(DEPLOY_BASE)/libexec/
 	rsync -rv --progress $(TARGET_DIR)/bundled-sources/. $(DEPLOY_BASE)/bundled-sources
 	rsync -r README.md $(DEPLOY_BASE)/.
 	rsync -r --delete --exclude=\*~ library specs $(DEPLOY_BASE)/.

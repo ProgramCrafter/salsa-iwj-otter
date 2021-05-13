@@ -11,6 +11,8 @@ bundled_sources = "target/bundled-sources"
 save_dir = "."
 template_dir = "templates"
 wasm_dir = "target/packed-wasm"
+libexec_dir = "target/debug"
+usvg_bin = "target/release/usvg"
 
 #save_dir = "/home/rustcargo/Rustup/Game/server"
 

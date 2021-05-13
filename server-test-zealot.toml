@@ -14,6 +14,8 @@ template_dir = "/home/ian/Rustup/Game/server/templates"
 nwtemplate_dir = "/home/ian/Rustup/Game/server/nwtemplates"
 bundled_sources = "/home/rustcargo/Rustup/Game/server/target/bundled-sources"
 wasm_dir = "/home/rustcargo/Rustup/Game/server/target/packed-wasm"
+libexec_dir = "/home/rustcargo/Rustup/Game/server/target/debug"
+usvg_bin = "/home/rustcargo/Rustup/Game/server/target/release/usvg"
 
 shapelibs = [ "/home/ian/Rustup/Game/server/library/*.toml" ]
 

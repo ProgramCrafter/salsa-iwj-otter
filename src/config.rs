@@ -22,6 +22,8 @@ pub struct ServerConfigSpec {
   pub change_directory: Option<String>,
   pub base_dir: Option<String>,
   pub save_dir: Option<String>,
+  pub libexec_dir: Option<String>,
+  pub usvg_bin: Option<String>,
   pub command_socket: Option<String>,
   pub debug: Option<bool>,
   pub http_port: Option<u16>,
@@ -59,6 +61,8 @@ pub struct ServerConfig {
   pub template_dir: String,
   pub nwtemplate_dir: String,
   pub wasm_dir: String,
+  pub libexec_dir: String,
+  pub usvg_bin: String,
   pub bundled_sources: String,
   pub shapelibs: Vec<shapelib::Config1>,
   pub sendmail: String,
@@ -111,7 +115,7 @@ impl ServerConfigSpec {
     let ServerConfigSpec {
       change_directory, base_dir, save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
-      template_dir, nwtemplate_dir, wasm_dir,
+      template_dir, nwtemplate_dir, wasm_dir, libexec_dir, usvg_bin,
       log, bundled_sources, shapelibs, sendmail,
       debug_js_inject_file, check_bundled_sources, fake_rng,
     } = self;
@@ -139,8 +143,12 @@ impl ServerConfigSpec {
     let template_dir    = defpath(template_dir,    "assets"            );
     let wasm_dir        = defpath(wasm_dir,        "assets"            );
     let nwtemplate_dir  = defpath(nwtemplate_dir,  "nwtemplates"       );
+    let libexec_dir     = defpath(libexec_dir,     "libexec"           );
     let bundled_sources = defpath(bundled_sources, "bundled-sources"   );
     const DEFAULT_LIBRARY_GLOB: &str = "library/*.toml";
+
+    let usvg_bin = usvg_bin.unwrap_or_else(
+      || format!("{}/usvg", &libexec_dir));
 
     let shapelibs = shapelibs.unwrap_or_else(||{
       let glob = defpath(None, DEFAULT_LIBRARY_GLOB);
@@ -220,8 +228,8 @@ impl ServerConfigSpec {
     let server = ServerConfig {
       save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
-      template_dir, nwtemplate_dir, wasm_dir,
-      bundled_sources, shapelibs, sendmail,
+      template_dir, nwtemplate_dir, wasm_dir, libexec_dir,
+      bundled_sources, shapelibs, sendmail, usvg_bin,
       debug_js_inject, check_bundled_sources, game_rng, prctx,
     };
     trace_dbg!("config resolved", &server);

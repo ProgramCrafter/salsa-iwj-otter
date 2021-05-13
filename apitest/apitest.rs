@@ -609,6 +609,8 @@ nwtemplate_dir = "@src@/nwtemplates"
 bundled_sources = "@target@/bundled-sources"
 wasm_dir = "@target@/packed-wasm"
 shapelibs = [ "@src@/library/*.toml" ]
+libexec_dir = "@target@/debug"
+usvg_bin = "@target@/release/usvg"
 
 debug_js_inject_file = "@src@/templates/log-save.js"
 check_bundled_sources = false # For testing only! see LICENCE!
