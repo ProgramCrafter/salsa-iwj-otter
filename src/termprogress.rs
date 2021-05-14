@@ -28,6 +28,7 @@ pub fn new() -> Box<dyn Reporter> {
         term,
         width: width.into(),
         needs_clear: None,
+        spinner: 0,
       })
     } else {
       Box::new(NullReporter)
@@ -39,10 +40,12 @@ pub struct TermReporter {
   term: console::Term,
   width: Col,
   needs_clear: Option<()>,
+  spinner: usize,
 }
 
 const LHS_TARGET: Col = 25;
-const LHS_FRAC: f32 = (LHS_TARGET as f32)/80.0;
+const LHS_FRAC: f32 = (LHS_TARGET as f32) / 78.0;
+const SPINNER: &[char] = &['-', '\\', '/'];
 
 impl Reporter for TermReporter {
   fn report(&mut self, pi: &ProgressInfo<'_>) {
@@ -50,13 +53,23 @@ impl Reporter for TermReporter {
       self.width = width.into()
     }
 
-    let mid = min(LHS_TARGET, ((self.width as f32) * LHS_FRAC) as Col);
     let mut out = String::new();
-    self.bar(&mut out, mid,              &pi.phase);
-    self.bar(&mut out, self.width - mid, &pi.item);
+    let w = self.width;
+    if let Some(w) = w.checked_sub(1) {
+      out.push(SPINNER[self.spinner]);
+      self.spinner += 1; self.spinner %= SPINNER.len();
+      if let Some(w) = w.checked_sub(1) {
+        let lhs = min(LHS_TARGET, ((w as f32) * LHS_FRAC) as Col);
+        self.bar(&mut out, lhs,     &pi.phase);
+        out.push('|');
+        self.bar(&mut out, w - lhs, &pi.item);
+      }
+    }
     self.clear_line();
-    self.needs_clear = Some(());
-    self.term.write_str(&out).unwrap_or(());
+    if out.len() > 0 {
+      self.needs_clear = Some(());
+      self.term.write_str(&out).unwrap_or(());
+    }
     self.term.flush().unwrap_or(());
   }
 }
