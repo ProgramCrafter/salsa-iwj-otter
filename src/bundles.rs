@@ -825,7 +825,7 @@ impl InstanceBundles {
 
 impl Uploading {
   #[throws(MgmtError)]
-  pub fn bulk<R,PW>(self, data: &mut R, expected: &Hash,
+  pub fn bulk<R,PW>(self, data: &mut R, size: usize, expected: &Hash,
                     for_progress: &mut ResponseWriter<PW>) -> Uploaded
   where R: Read, PW: Write
   {
@@ -837,11 +837,13 @@ impl Uploading {
     let Uploading { id, mut file, instance } = self;
     let tmp = id.path_tmp(&instance);
 
-    io::copy(data, &mut file)
+    let copied_size = io::copy(data, &mut file)
       .with_context(|| tmp.clone())
       .context("copy").map_err(IE::from)?;
 
     let (hash, file) = file.finish();
+
+    if copied_size != size as u64 { throw!(ME::UploadTruncated) }
 
     let mut file = file.into_inner().map_err(|e| e.into_error())
       .with_context(|| tmp.clone()).context("flush").map_err(IE::from)?;

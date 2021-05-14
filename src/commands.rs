@@ -43,6 +43,7 @@ pub enum MgmtCommand {
   },*/
   UploadBundle {
     game: InstanceName,
+    size: usize,
     hash: bundles::Hash,
     kind: bundles::Kind,
   },
@@ -230,6 +231,7 @@ pub enum MgmtError {
   TomlSyntaxError(String),
   TomlStructureError(String),
   RngIsReal,
+  UploadTruncated,
   UploadCorrupted,
   TooManyBundles,
   BadBundle(String),

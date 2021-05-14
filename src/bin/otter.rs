@@ -1340,12 +1340,17 @@ mod upload_bundle {
     let f = File::open(&args.bundle_file)
       .with_context(|| args.bundle_file.clone())
       .context("open bundle file")?;
+    let size = f
+      .metadata().context("fstat bundle file")?
+      .len()
+      .try_into().map_err(|_| anyhow!("bundle file far too large"))?;
     let mut f = BufReader::new(f);
     let hash = bundles::DigestWrite::of(&mut f)
       .context("read bundle file (for hash)")?;
     let kind = bundles::Kind::only();
     f.rewind().context("rewind bundle file")?;
     let cmd = MC::UploadBundle {
+      size,
       game: instance_name.clone(),
       hash: bundles::Hash(hash.into()), kind,
     };
