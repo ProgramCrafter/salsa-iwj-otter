@@ -5,6 +5,8 @@ use crate::prelude::*;
 
 use unicode_width::UnicodeWidthChar;
 
+const FORCE_VAR: &str = "OTTER_TERMPROGRESS_FORCE";
+
 type Col = usize;
 
 pub trait Reporter {
@@ -20,19 +22,36 @@ impl Reporter for NullReporter {
 
 pub fn new() -> Box<dyn Reporter> {
   let term = console::Term::buffered_stderr();
-  if_chain!{
-    if term.is_term();
-    if let Some((_, width)) = term.size_checked();
-    then {
-      Box::new(TermReporter {
-        term,
-        width: width.into(),
-        needs_clear: None,
-        spinner: 0,
-      })
-    } else {
-      Box::new(NullReporter)
+
+  let mut newlines = false;
+  let mut recheck_width = true;
+  let width = if let Ok(val) = env::var(FORCE_VAR) {
+    let mut val = &val[..];
+    if let Some(rhs) = val.strip_prefix("+") {
+        val = rhs;
+        newlines = true;
     }
+    let width = val.parse()
+      .expect(&format!("bad {} syntax", FORCE_VAR));
+    recheck_width = false;
+    Some(width)
+  } else {
+    if_chain!{
+      if term.is_term();
+      if let Some((_, width)) = term.size_checked();
+      then { Some(width.into()) }
+      else { None }
+    }
+  };
+
+  if let Some(width) = width {
+    Box::new(TermReporter {
+      term, width, newlines, recheck_width,
+      needs_clear: None,
+      spinner: 0,
+    })
+  } else {
+    Box::new(NullReporter)
   }
 }
 
@@ -41,6 +60,8 @@ pub struct TermReporter {
   width: Col,
   needs_clear: Option<()>,
   spinner: usize,
+  newlines: bool,
+  recheck_width: bool,
 }
 
 const LHS_TARGET: Col = 25;
@@ -49,8 +70,10 @@ const SPINNER: &[char] = &['-', '\\', '/'];
 
 impl Reporter for TermReporter {
   fn report(&mut self, pi: &ProgressInfo<'_>) {
-    if let Some((_, width)) = self.term.size_checked() {
-      self.width = width.into()
+    if self.recheck_width {
+      if let Some((_, width)) = self.term.size_checked() {
+        self.width = width.into()
+      }
     }
 
     let mut out = String::new();
@@ -67,8 +90,12 @@ impl Reporter for TermReporter {
     }
     self.clear_line();
     if out.len() > 0 {
-      self.needs_clear = Some(());
-      self.term.write_str(&out).unwrap_or(());
+      if self.newlines {
+        writeln!(&mut self.term, "{}", out).unwrap_or(());
+      } else {
+        self.needs_clear = Some(());
+        self.term.write_str(&out).unwrap_or(());
+      }
     }
     self.term.flush().unwrap_or(());
   }
