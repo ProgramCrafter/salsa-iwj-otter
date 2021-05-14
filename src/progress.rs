@@ -107,3 +107,58 @@ impl &mut dyn Originator {
     self.item_(item, desc.into())
   }
 }
+
+pub struct ReadOriginator<'oo,'o,R:Read> {
+  r: R,
+  total_len: usize,
+  orig: &'oo mut &'o mut dyn Originator,
+  // state:
+  counter: usize,
+  last_report: usize,
+}
+
+impl<'oo,'o,R:Read> ReadOriginator<'oo,'o,R> {
+  pub fn new<'p,P>(orig: &'oo mut &'o mut dyn Originator, phase: P,
+                   total_len: usize, r: R) -> Self
+  where P: Into<Count<'p>>
+  {
+    orig.phase(phase, total_len);
+    let mut ro = ReadOriginator {
+      r, orig, total_len,
+      counter: 0,
+      last_report: 0,
+    };
+    ro.report();
+    ro
+  }
+
+  fn report(&mut self) {
+    let t = self.total_len.to_string();
+    let c = format!("{:>width$}", self.counter, width=t.len());
+    let m = |s: String| {
+      izip!( iter::once("").chain(["",""," "].iter().cloned().cycle()),
+             s.chars().rev() )
+        .map(|(s,c)| [s.chars().next(), Some(c)])
+        .flatten()
+        .flatten()
+        .collect::<String>()
+        .chars().rev()
+        .collect::<String>()
+    };
+    let desc = format!("{} / {}", m(c), m(t));
+    self.orig.item(self.counter, desc);
+    self.last_report = self.counter;
+  }
+}
+
+impl<R:Read> Read for ReadOriginator<'_,'_,R> {
+  #[throws(io::Error)]
+  fn read(&mut self, buf: &mut [u8]) -> usize {
+    let got = self.r.read(buf)?;
+    self.counter += got;
+    if self.counter - self.last_report > 10000 {
+      self.report();
+    }
+    got
+  }
+}
