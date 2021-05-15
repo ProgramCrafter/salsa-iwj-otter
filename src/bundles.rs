@@ -825,19 +825,20 @@ impl InstanceBundles {
 
 impl Uploading {
   #[throws(MgmtError)]
-  pub fn bulk<R,PW>(self, data: &mut R, size: usize, expected: &Hash,
+  pub fn bulk<R,PW>(self, data: R, size: usize, expected: &Hash,
                     for_progress: &mut ResponseWriter<PW>) -> Uploaded
   where R: Read, PW: Write
   {
     let mut for_progress = progress::ResponseOriginator::new(for_progress);
     let mut for_progress: &mut dyn progress::Originator = &mut for_progress;
 
-    for_progress.phase_item(Phase::Upload, ());
-
     let Uploading { id, mut file, instance } = self;
     let tmp = id.path_tmp(&instance);
 
-    let copied_size = io::copy(data, &mut file)
+    let mut data_reporter = progress::ReadOriginator::new(
+      &mut for_progress, Phase::Upload, size, data);
+
+    let copied_size = io::copy(&mut data_reporter, &mut file)
       .with_context(|| tmp.clone())
       .context("copy").map_err(IE::from)?;
 
