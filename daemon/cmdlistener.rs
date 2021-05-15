@@ -113,7 +113,7 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
   ) -> (R, Authorisation<InstanceName>)
   where F: FnMut(
     &mut InstanceGuard<'ig>,
-    MutexGuard<'ig, InstanceBundles>,
+    BundlesGuard<'ig>,
   ) -> Result<R, MgmtError>
   {
     let bundles = gref.lock_bundles();
@@ -256,8 +256,8 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       let (upload, auth) = {
         let (ag, gref) = start_modify_game(&game)?;
         modify_bundles(
-          cs, &ag, &gref, &[TP::UploadBundles],
-          &mut |mut ig, mut bundles: MutexGuard<'_, InstanceBundles>| {
+          cs,&ag,&gref, &[TP::UploadBundles],
+          &mut |mut ig, mut bundles: BundlesGuard<'_>| {
             bundles.start_upload(&mut ig, kind)
           }
         )?
@@ -293,8 +293,8 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     MC::ClearBundles { game } => {
       let (ag, gref) = start_modify_game(&game)?;
       modify_bundles(
-        cs, &ag, &gref, &[TP::ClearBundles],
-        &mut |mut ig, mut bundles: MutexGuard<'_, InstanceBundles>| {
+        cs,&ag,&gref, &[TP::ClearBundles],
+        &mut |mut ig, mut bundles: BundlesGuard<'_>| {
           bundles.clear(&mut ig)
         })?;
       Fine

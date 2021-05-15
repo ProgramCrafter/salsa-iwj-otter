@@ -104,6 +104,8 @@ pub struct Client {
   pub lastseen: Instant,
 }
 
+pub type BundlesGuard<'b> = MutexGuard<'b, InstanceBundles>;
+
 // KINDS OF PERSISTENT STATE
 //
 //               TokenTable   TokenTable    GameState    Instance GameState
@@ -319,7 +321,7 @@ impl<A> Unauthorised<InstanceRef, A> {
     })
   }
 
-  pub fn lock_bundles<'r>(&'r self) -> Unauthorised<MutexGuard<'r, InstanceBundles>, A> {
+  pub fn lock_bundles<'r>(&'r self) -> Unauthorised<BundlesGuard<'_>, A> {
     let must_not_escape = self.by_ref(Authorisation::authorise_any());
     Unauthorised::of(must_not_escape.lock_bundles())
   }
