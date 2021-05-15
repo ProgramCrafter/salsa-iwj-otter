@@ -24,6 +24,11 @@ impl PieceAliases {
   pub fn keys(&self) -> impl Iterator<Item=&String> {
     self.map.keys()
   }
+
+  pub fn is_empty(&self) -> bool {
+    let PieceAliases { map } = self;
+    map.is_empty()
+  }
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]

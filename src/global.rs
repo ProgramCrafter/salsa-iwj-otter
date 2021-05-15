@@ -1372,6 +1372,11 @@ impl IPieces {
   pub fn as_mut(&mut self, _: ModifyingPieces) -> &mut ActualIPieces {
     &mut self.0
   }
+
+  pub fn is_empty(&self) -> bool {
+    let  IPieces(actual) = self;
+    actual.is_empty()
+  }
 }
 
 // ---------- gamestate pieces table ----------

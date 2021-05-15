@@ -71,8 +71,24 @@ impl OccultIlks {
       self.lookup.remove(&data.k);
     }
   }
+
+  pub fn is_empty(&self) -> bool {
+    let OccultIlks { lookup, table } = self;
+    #[allow(unused_parens)]
+    (
+         lookup.is_empty()
+      && table.is_empty()
+    )
+  }
 }
 
 impl Borrow<Id> for OId {
   fn borrow(&self) -> &Id { &self.0 }
+}
+
+impl IOccults {
+  pub fn is_empty(&self) -> bool {
+    let IOccults { ilks } = self;
+    ilks.is_empty()
+  }
 }

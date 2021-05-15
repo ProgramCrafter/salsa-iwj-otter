@@ -268,6 +268,11 @@ impl GameOccults {
       }
     })
   }
+
+  pub fn is_empty(&self) -> bool {
+    let GameOccults { occults } = self;
+    occults.is_empty()
+  }
 }
 
 // ========== public entrypoints ==========
