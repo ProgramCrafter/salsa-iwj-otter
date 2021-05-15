@@ -354,8 +354,9 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       let (results, _auth) =
         access_bundles(
           cs,&ag,&gref, &[TP::UploadBundles],
-          &mut |mut _ig, _| {
-            let libs = shapelib::lib_name_lookup(&spec.lib)?;
+          &mut |ig, _| {
+            let regs = ig.all_shapelibs();
+            let libs = regs.lib_name_lookup(&spec.lib)?;
             let mut results: Vec<shapelib::ItemEnquiryData> = default();
             for lib in &*libs {
               results.extend(lib.list_glob(&spec.item)?);

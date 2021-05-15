@@ -6,7 +6,7 @@ pub use crate::prelude::*;
 pub use crate::shapelib_toml::*;
 
 use parking_lot::{const_rwlock, RwLock};
-use parking_lot::{MappedRwLockReadGuard, RwLockReadGuard};
+use parking_lot::RwLockReadGuard;
 
 // Naming convention:
 //  *Data, *List   from toml etc. (processed if need be)
@@ -14,6 +14,8 @@ use parking_lot::{MappedRwLockReadGuard, RwLockReadGuard};
 //  *Details       some shared structure
 //  Item           } once loaded and part of a game,
 //  Outline        }  no Arc's as we serialise/deserialize during save/load
+
+static GLOBAL_SHAPELIBS: RwLock<Option<Registry>> = const_rwlock(None);
 
 #[derive(Default)]
 pub struct Registry {
@@ -345,27 +347,60 @@ impl OccultedPieceTrait for Item {
   }
 }
 
-static SHAPELIBS: RwLock<Option<Registry>> = const_rwlock(None);
-
-pub fn lib_name_list() -> Vec<String> {
-  let reg = SHAPELIBS.read();
-  reg.as_ref().map(
-    |reg| reg.libs.keys().cloned().collect()
-  ).unwrap_or_default()
+pub struct AllRegistries<'ig> {
+  global: RwLockReadGuard<'static, Option<Registry>>,
+  #[allow(dead_code)] ig: &'ig Instance,
+}
+pub struct AllRegistriesIterator<'i> {
+  regs: &'i AllRegistries<'i>,
+  count: u8,
 }
 
-#[throws(SpecError)]
-pub fn lib_name_lookup(libname: &str)
-                   -> MappedRwLockReadGuard<'static, [Contents]> {
-  let reg = SHAPELIBS.read();
-  RwLockReadGuard::try_map( reg, |reg: &Option<Registry>| -> Option<_> {
-    (|| Some({
-      reg.as_ref()?.libs.get(libname)?
-        .as_slice()
-    }))()
-  })
-    .map_err(|_| SpE::LibraryNotFound)
-    ?
+impl<'i> Iterator for AllRegistriesIterator<'i> {
+  type Item = &'i Registry;
+  fn next(&mut self) -> Option<&'i Registry> {
+    loop {
+      let r = match self.count {
+        0 => self.regs.global.as_ref(),
+        _ => return None,
+      };
+      self.count += 1;
+      if r.is_some() { return r }
+    }
+  }
+}
+
+impl Instance {
+  pub fn all_shapelibs(&self) -> AllRegistries<'_> {
+    AllRegistries {
+      global: GLOBAL_SHAPELIBS.read(),
+      ig: self,
+    }
+  }
+} 
+impl<'ig> AllRegistries<'ig> {
+  pub fn iter(&'ig self) -> AllRegistriesIterator<'ig> {
+    AllRegistriesIterator {
+      regs: self,
+      count: 0,
+    }
+  }
+}
+
+pub fn lib_name_list(ig: &Instance) -> Vec<String> {
+  // xxx put bundle id in here or something show it shows up in libs list
+  ig.all_shapelibs().iter().map(
+    |reg| reg.libs.keys().cloned()
+  ).flatten().collect()
+}
+
+impl<'ig> AllRegistries<'ig> {
+  pub fn lib_name_lookup(&self, libname: &str) -> Result<&[Contents], SpE> {
+    for reg in self.iter() {
+      if let Some(r) = reg.libs.get(libname) { return Ok(r) }
+    }
+    return Err(SpE::LibraryNotFound);
+  }
 }
 
 pub type ItemSpecLoaded = (Box<Item>, PieceSpecLoadedOccultable);
@@ -383,7 +418,8 @@ impl From<ItemSpecLoaded> for PieceSpecLoaded {
 impl ItemSpec {
   #[throws(SpecError)]
   pub fn find_load(&self, ig: &Instance, depth: SpecDepth) -> ItemSpecLoaded {
-    let libs = lib_name_lookup(&self.lib)?;
+    let regs = ig.all_shapelibs();
+    let libs = regs.lib_name_lookup(&self.lib)?;
     let (lib, (item, idata)) = libs.iter().rev().find_map(
       |lib| Some((lib, lib.items.get_key_value(self.item.as_str())?))
     )
@@ -767,7 +803,7 @@ pub struct Explicit1 {
 }
 
 #[throws(LibraryLoadError)]
-pub fn load_1_library(l: &Explicit1) {
+pub fn load_1_global_library(l: &Explicit1) {
   let toml_path = &l.catalogue;
   let catalogue_data = {
     let ioe = |io| LLE::FileError(toml_path.to_string(), io);
@@ -783,7 +819,7 @@ pub fn load_1_library(l: &Explicit1) {
 
   let data = load_catalogue(&l.name, &mut src)?;
   let count = data.items.len();
-  SHAPELIBS.write()
+  GLOBAL_SHAPELIBS.write()
     .get_or_insert_with(default)
     .libs
     .entry(l.name.clone()).or_default()
@@ -846,7 +882,7 @@ pub fn load_global_libs(libs: &Vec<Config1>) {
     let libs = l.resolve()?;
     let n = libs.len();
     for e in libs {
-      load_1_library(&e)?;
+      load_1_global_library(&e)?;
     }
     info!("loaded {} shape libraries from {:?}", n, &l);
           

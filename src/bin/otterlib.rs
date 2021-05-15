@@ -233,8 +233,10 @@ fn main() {
     load_global_libs(&vec![tlibs.clone()])?;
   }
   let mut items: Vec<ItemForOutput> = default();
-  for lib in lib_name_list() {
-    for contents in &*lib_name_lookup(&lib)? {
+  let ig_dummy = Instance::dummy();
+  let all_registries = ig_dummy.all_shapelibs();
+  for lib in lib_name_list(&ig_dummy) {
+    for contents in all_registries.lib_name_lookup(&lib)? {
       for pat in opts.items.split(SPLIT) {
         for item in contents.list_glob(pat)? {
           items.push((lib.clone(), item))
