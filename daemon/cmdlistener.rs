@@ -75,7 +75,7 @@ pub const TP_ACCESS_BUNDLES: &[TP] = &[
 
 //#[throws(CSE)]
 fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
-                            mut bulk_upload: ReadFrame<R>,
+                            bulk_upload: ReadFrame<R>,
                             for_response: &mut FrameWriter<W>)
                             -> Result<(), CSE>
   where R: Read, W: Write
@@ -233,7 +233,7 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
         let upload = bundles.start_upload(ig, kind)?;
         (upload, auth)
       };
-      let uploaded = upload.bulk(&mut bulk_upload, size,
+      let uploaded = upload.bulk(bulk_upload, size,
                                  &hash, &mut for_response)?;
       {
         let gref = Instance::lookup_by_name(&game, auth)?;
