@@ -984,8 +984,10 @@ impl LibGlobArgs {
     ap: &'_ mut ArgumentParser<'ap>
   ) {
     use argparse::*;
+    // xxx allow lack of library name to list library names
     ap.refer(&mut self.pat.lib).required()
       .add_argument("LIB-NAME",Store,"library name");
+    // xxx allow lack of pattern to list whole library
     ap.refer(&mut self.pat.item).required()
       .add_argument("ITEM-GLOB-PATTERN",Store,"item glob pattern");
   }

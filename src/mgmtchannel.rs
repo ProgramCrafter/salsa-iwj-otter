@@ -125,6 +125,7 @@ impl MgmtChannel {
   #[throws(AE)]
   pub fn list_items(&mut self, pat: &shapelib::ItemSpec)
                 -> Vec<shapelib::ItemEnquiryData> {
+    // xxx allow globbing of library names
     let cmd = MgmtCommand::LibraryListByGlob { glob: pat.clone() };
     let mut items = match self.cmd(&cmd)? {
       MgmtResponse::LibraryItems(items) => items,
