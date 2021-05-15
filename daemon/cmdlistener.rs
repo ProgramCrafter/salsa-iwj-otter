@@ -968,18 +968,20 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           throw!(SpecError::FaceNotFound);
         }
         let gs = &mut ig.gs;
-        let ilks = &mut ig.ioccults.ilks;
-        let occilk = occultable.map(|(ilkname, p_occ)| {
-          ilks.insert(ilkname, OccultIlkData { p_occ })
-        });
         gpc.pos.clamped(gs.table_size)?;
         if gpc.zlevel > gs.max_z { gs.max_z = gpc.zlevel.clone() }
         let piece = gs.pieces.as_mut(modperm).insert(gpc);
         let p = IPieceTraitObj::new(p);
-        ig.ipieces.as_mut(modperm).insert(piece, IPiece {
-          p, occilk, loaded_via_alias,
-        });
-        updates.push((piece, PieceUpdateOp::Insert(())));
+        (||{
+          let ilks = &mut ig.ioccults.ilks;
+          let occilk = occultable.map(|(ilkname, p_occ)| {
+            ilks.insert(ilkname, OccultIlkData { p_occ })
+          });
+          ig.ipieces.as_mut(modperm).insert(piece, IPiece {
+            p, occilk, loaded_via_alias,
+          });
+          updates.push((piece, PieceUpdateOp::Insert(())));
+        })(); // <- no ?, infallible (to avoid leaking ilk)
         pos = (pos + posd)?;
       }
 
