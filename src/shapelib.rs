@@ -685,6 +685,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
       groupname: groupname.clone(),
       d,
     });
+    group.d.outline.check(&group)?;
     if [
       group.d.flip,
       group.d.back.is_some(),
