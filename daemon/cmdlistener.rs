@@ -349,6 +349,25 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       Fine
     }
 
+    MC::LibraryListLibraries { game } => {
+      let (ag, gref) = start_access_game(&game)?;
+      let (libs, _auth) =
+        access_bundles(
+          cs,&ag,&gref, &[TP::UploadBundles],
+          &mut |ig, _| Ok(
+            ig.all_shapelibs()
+              .iter()
+              .map(|reg| reg.iter())
+              .flatten()
+              .map(|ll| ll.iter())
+              .flatten()
+              .map(|l| l.enquiry())
+              .collect::<Vec<shapelib::LibraryEnquiryData>>()
+          )
+        )?;
+      MR::Libraries(libs)
+    }
+
     MC::LibraryListByGlob { game, glob: spec } => {
       let (ag, gref) = start_access_game(&game)?;
       let (results, _auth) =

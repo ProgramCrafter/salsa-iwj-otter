@@ -54,6 +54,9 @@ pub enum MgmtCommand {
     id: bundles::Id,
   },
 
+  LibraryListLibraries {
+    game: InstanceName,
+  },
   LibraryListByGlob {
     game: InstanceName,
     glob: shapelib::ItemSpec,
@@ -90,6 +93,7 @@ pub enum MgmtResponse {
   AlterGame { error: Option<MgmtError>, responses: Vec<MgmtGameResponse> },
   AccountsList(Vec<Arc<AccountName>>),
   GamesList(Vec<Arc<InstanceName>>),
+  Libraries(Vec<shapelib::LibraryEnquiryData>),
   LibraryItems(Vec<shapelib::ItemEnquiryData>),
   Bundles { bundles: MgmtBundleList },
 }

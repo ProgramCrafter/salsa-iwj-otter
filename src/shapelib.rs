@@ -236,6 +236,23 @@ impl Display for ItemEnquiryData {
   }
 }
 
+#[derive(Debug,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
+pub struct LibraryEnquiryData {
+  pub libname: String,
+}
+impl Display for LibraryEnquiryData {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) {
+    if self.libname.chars().all(|c| {
+      c.is_alphanumeric() || c=='-' || c=='_' || c=='.'
+    }) {
+      Display::fmt(&self.libname, f)?;
+    } else {
+      Debug::fmt(&self.libname, f)?;
+    }
+  }
+}
+
 #[dyn_upcast]
 impl OutlineTrait for Item { delegate! { to self.outline {
   fn outline_path(&self, scale: f64) -> Result<Html, IE>;
@@ -354,6 +371,10 @@ impl Registry {
   pub fn clear(&mut self) {
     self.libs.clear()
   }
+
+  pub fn iter(&self) -> impl Iterator<Item=&[Contents]> {
+    self.libs.values().map(|v| v.as_slice())
+  }
 }
 
 pub struct AllRegistries<'ig> {
@@ -405,6 +426,11 @@ pub fn lib_name_list(ig: &Instance) -> Vec<String> {
 }
 
 impl<'ig> AllRegistries<'ig> {
+  pub fn all_libs(&self) -> impl Iterator<Item=&[Contents]> {
+    self.iter().map(|reg| &reg.libs).flatten().map(
+      |(_libname, lib)| lib.as_slice()
+    )
+  }
   pub fn lib_name_lookup(&self, libname: &str) -> Result<&[Contents], SpE> {
     for reg in self.iter() {
       if let Some(r) = reg.libs.get(libname) { return Ok(r) }
@@ -549,6 +575,12 @@ impl Contents {
     let it = Item { faces, sort, descs, svgs, outline, back,
                     itemname: name.to_string() };
     (Box::new(it), occultable)
+  }
+
+  pub fn enquiry(&self) -> LibraryEnquiryData {
+    LibraryEnquiryData {
+      libname: self.libname.clone(),
+    }
   }
 
   #[throws(MgmtError)]
