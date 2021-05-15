@@ -9,7 +9,7 @@ use crate::prelude::*;
 pub use crate::prelude::Sha512Trunc256 as Digester;
 pub type DigestWrite<W> = crate::utils::DigestWrite<Digester, W>;
 
-#[derive(Debug,Copy,Clone,Hash,Eq,PartialEq,Serialize,Deserialize)]
+#[derive(Copy,Clone,Hash,Eq,PartialEq,Serialize,Deserialize)]
 pub struct Hash(pub [u8; 32]);
 
 #[derive(Debug,Copy,Clone,Hash,Eq,PartialEq,Serialize,Deserialize)]
@@ -175,6 +175,13 @@ impl BundleSavefile {
       Bundle(id) => id.index,
       &PreviousUploadFailed(index) => index,
     }
+  }
+}
+
+impl Debug for Hash {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) {
+    for v in self.0 { write!(f, "{:02x}", v)?; }
   }
 }
 
