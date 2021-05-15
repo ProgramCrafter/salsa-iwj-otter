@@ -659,7 +659,6 @@ enum PictureFormat {
   Svg,
 //  Png,   xxx implement this
 }
-// xxx also, decide whether library toml should have src file field
 
 #[throws(LE)]
 fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
