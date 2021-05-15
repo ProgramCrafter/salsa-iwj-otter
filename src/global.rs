@@ -490,6 +490,25 @@ impl Instance {
     );
     html
   }
+
+  pub fn dummy() -> Instance {
+    Instance {
+      name: Arc::new("server::".parse().unwrap()),
+      gs: GameState::dummy(),
+      ipieces: IPieces(default()),
+      pcaliases: default(),
+      ioccults: default(),
+      clients: default(),
+      tokens_players: default(),
+      tokens_clients: default(),
+      acl: default(),
+      links: default(),
+      bundle_list: default(),
+      asset_url_key: AssetUrlKey::Dummy,
+      iplayers: default(),
+    }
+  }
+
 }
 
 pub fn games_lock() -> RwLockWriteGuard<'static, GamesTable> {

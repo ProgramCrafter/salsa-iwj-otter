@@ -26,6 +26,9 @@ pub struct Timestamp(pub u64); /* time_t */
 pub const DEFAULT_TABLE_SIZE: Pos = PosC::new( 400, 200 );
 pub const DEFAULT_TABLE_COLOUR: &str = "green";
 
+#[derive(Copy,Clone,Debug,Eq,Ord,PartialEq,PartialOrd)]
+pub struct SpecDepth(u16);
+
 // ---------- general data types ----------
 
 #[derive(Debug,Clone,Eq,PartialEq,Ord,PartialOrd)]
@@ -264,10 +267,9 @@ pub type PieceSpecLoadedOccultable =
 pub trait PieceSpec: Debug + Sync + Send + 'static {
   #[throws(SpecError)]
   fn count(&self, _pcaliases: &PieceAliases) -> usize { 1 }
-  fn load(&self, i: usize, gpc: &mut GPiece,
-          pcaliases: &PieceAliases, ir: &InstanceRef)
+  fn load(&self, i: usize, gpc: &mut GPiece, ig: &Instance, depth: SpecDepth)
           -> Result<PieceSpecLoaded, SpecError>;
-  fn load_occult(&self, _pcaliases: &PieceAliases)
+  fn load_occult(&self, _ig: &Instance, _:SpecDepth)
                  -> Result<Box<dyn OccultedPieceTrait>, SpecError> {
     throw!(SpE::ComplexPieceWhereSimpleRequired)
   }
@@ -300,6 +302,15 @@ impl UniqueGenGen<'_> {
     let r = *self.gen;
     self.gen.increment();
     r
+  }
+}
+
+impl SpecDepth {
+  pub fn zero() -> Self { Self(0) }
+  pub fn increment(self) -> Option<Self> {
+    const MAX: SpecDepth = SpecDepth(5);
+    if self > MAX { return None }
+    Some(Self(self.0 + 1))
   }
 }
 

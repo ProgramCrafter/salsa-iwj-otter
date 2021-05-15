@@ -381,11 +381,11 @@ impl From<ItemSpecLoaded> for PieceSpecLoaded {
 
 impl ItemSpec {
   #[throws(SpecError)]
-  pub fn find_load(&self, pcaliases: &PieceAliases) -> ItemSpecLoaded {
+  pub fn find_load(&self, ig: &Instance, depth: SpecDepth) -> ItemSpecLoaded {
     let lib = libs_lookup(&self.lib)?;
     let (item, idata) = lib.items.get_key_value(self.item.as_str())
       .ok_or(SpE::LibraryItemNotFound(self.clone()))?;
-    lib.load1(idata, &self.lib, item.unnest::<str>(), pcaliases)?
+    lib.load1(idata, &self.lib, item.unnest::<str>(), ig, depth)?
   }
 
   fn from_strs<L,I>(lib: &L, item: &I) -> Self
@@ -422,7 +422,7 @@ impl Contents {
   #[throws(SpecError)]
   fn load1(&self, idata: &ItemData, lib_name: &str,
            name: &SvgBaseName<str>,
-           pcaliases: &PieceAliases)
+           ig: &Instance, depth:SpecDepth)
            -> ItemSpecLoaded {
     let svg_data = self.load_svg(name, lib_name, &**name)?;
 
@@ -446,7 +446,7 @@ impl Contents {
       face.xform.scale[0] *= -1.;
       faces.push(face);
     } else if let Some(back_spec) = &idata.group.d.back {
-      match back_spec.load_occult(pcaliases) {
+      match back_spec.load_occult(ig, depth) {
         Err(SpecError::AliasNotFound) => { },
         Err(e) => throw!(e),
         Ok(p) => {
@@ -510,7 +510,8 @@ impl Contents {
     for (k,v) in &self.items {
       if !pat.matches(k.as_str()) { continue }
       let (loaded, _) = match
-        self.load1(v, &self.libname, k.unnest(), &default())
+        self.load1(v, &self.libname, k.unnest(),
+                   &Instance::dummy(), SpecDepth::zero())
       {
         Err(SpecError::LibraryItemNotFound(_)) => continue,
         Err(SpecError::LibraryItemNotPrepared(_)) => continue,
@@ -533,15 +534,14 @@ impl Contents {
 #[typetag::serde(name="Lib")]
 impl PieceSpec for ItemSpec {
   #[throws(SpecError)]
-  fn load(&self, _: usize, _: &mut GPiece,
-          pcaliases: &PieceAliases, _ir: &InstanceRef)
+  fn load(&self, _: usize, _: &mut GPiece, ig: &Instance, depth: SpecDepth)
           -> PieceSpecLoaded {
-    self.find_load(pcaliases)?.into()
+    self.find_load(ig,depth)?.into()
   }
   #[throws(SpecError)]
-  fn load_occult(&self, pcaliases: &PieceAliases)
+  fn load_occult(&self, ig: &Instance, depth: SpecDepth)
                  -> Box<dyn OccultedPieceTrait> {
-    self.find_load(pcaliases)?.0 as Box<dyn OccultedPieceTrait>
+    self.find_load(ig,depth)?.0 as Box<dyn OccultedPieceTrait>
   }
 }
 
@@ -551,8 +551,7 @@ impl PieceSpec for MultiSpec {
   fn count(&self, _pcaliases: &PieceAliases) -> usize { self.items.len() }
 
   #[throws(SpecError)]
-  fn load(&self, i: usize, _: &mut GPiece,
-          pcaliases: &PieceAliases, _ir: &InstanceRef)
+  fn load(&self, i: usize, _: &mut GPiece, ig: &Instance, depth:SpecDepth)
           -> PieceSpecLoaded
   {
     let item = self.items.get(i).ok_or_else(
@@ -560,7 +559,7 @@ impl PieceSpec for MultiSpec {
     )?;
     let item = format!("{}{}{}", &self.prefix, item, &self.suffix);
     let lib = self.lib.clone();
-    ItemSpec { lib, item }.find_load(pcaliases)?.into()
+    ItemSpec { lib, item }.find_load(ig,depth)?.into()
   }
 }
 

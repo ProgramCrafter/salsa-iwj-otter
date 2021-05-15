@@ -41,6 +41,13 @@ impl Alias {
         .ok_or(SpecError::AliasNotFound)?
     )
   }
+
+  #[throws(SpecError)]
+  fn new_depth(&self, depth: SpecDepth) -> SpecDepth {
+    depth.increment().ok_or_else(||{
+      SpE::AliasLoop(self.target.clone())
+    })?
+  }
 }
 
 #[typetag::serde]
@@ -52,17 +59,17 @@ impl PieceSpec for Alias {
     self.resolve(pcaliases)?.count(&default())?
   }
   #[throws(SpecError)]
-  fn load(&self, i: usize, gpc: &mut GPiece,
-          pcaliases: &PieceAliases, ir: &InstanceRef)
+  fn load(&self, i: usize, gpc: &mut GPiece, ig: &Instance, depth: SpecDepth)
           -> PieceSpecLoaded {
-    let mut r = self.resolve(pcaliases)?.load(i, gpc, &default(), ir)?;
+    let mut r = self.resolve(&ig.pcaliases)?
+      .load(i, gpc, ig, self.new_depth(depth)?)?;
     r.loaded_via_alias = Some(self.target.clone());
     r
   }
   #[throws(SpecError)]
-  fn load_occult(&self, pcaliases: &PieceAliases)
+  fn load_occult(&self, ig: &Instance, depth: SpecDepth)
                  -> Box<dyn OccultedPieceTrait> {
-    self.resolve(pcaliases)?.load_occult(&default())?
+    self.resolve(&ig.pcaliases)?.load_occult(ig, self.new_depth(depth)?)?
   }
 }
 

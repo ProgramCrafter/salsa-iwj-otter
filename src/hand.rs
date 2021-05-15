@@ -119,8 +119,7 @@ impl piece_specs::OwnedCommon {
 #[typetag::serde]
 impl PieceSpec for piece_specs::Hand {
   #[throws(SpecError)]
-  fn load(&self, _: usize, gpc: &mut GPiece,
-          _pcaliases: &PieceAliases, _ir: &InstanceRef)
+  fn load(&self, _: usize, gpc: &mut GPiece, _ig: &Instance, _:SpecDepth)
           -> PieceSpecLoaded {
     gpc.moveable = PieceMoveable::IfWresting;
     gpc.rotateable = false;
@@ -131,8 +130,7 @@ impl PieceSpec for piece_specs::Hand {
 #[typetag::serde]
 impl PieceSpec for piece_specs::PlayerLabel {
   #[throws(SpecError)]
-  fn load(&self, _: usize, _: &mut GPiece,
-          _pcaliases: &PieceAliases, _ir: &InstanceRef)
+  fn load(&self, _: usize, _: &mut GPiece, _ig: &Instance, _:SpecDepth)
           -> PieceSpecLoaded {
     self.c.load(Behaviour::PlayerLabel)?
   }

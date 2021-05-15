@@ -83,6 +83,7 @@ pub enum SpecError {
   ComplexPieceWhereSimpleRequired,
   AliasNotFound,
   AliasTargetMultiSpec,
+  AliasLoop(String),
 }
 display_as_debug!{SpecError}
 

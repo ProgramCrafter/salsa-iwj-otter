@@ -878,7 +878,6 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
     MGI::AddPieces(PiecesSpec{ pos,posd,count,face,pinned,angle,info }) => {
       let (ig_g, modperm, _) = cs.check_acl_modify_pieces(ag, ig)?;
-      let gref = ig_g.gref.clone();
       let ig = &mut **ig_g;
       let gs = &mut ig.gs;
       let implicit: u32 = info.count(&ig.pcaliases)?
@@ -908,7 +907,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let mut pos = pos.unwrap_or(DEFAULT_POS_START);
       let mut z = gs.max_z.z.clone_mut();
       for piece_i in count {
-        let ilks = &mut ig.ioccults.ilks;
+        let gs = &mut ig.gs;
         let face = face.unwrap_or_default();
         let mut gpc = GPiece {
           held: None,
@@ -925,10 +924,12 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           rotateable: true,
         };
         let PieceSpecLoaded { p, loaded_via_alias, occultable } =
-          info.load(piece_i as usize, &mut gpc, &ig.pcaliases, &gref)?;
+          info.load(piece_i as usize, &mut gpc, &ig, SpecDepth::zero())?;
         if p.nfaces() <= face.into() {
           throw!(SpecError::FaceNotFound);
         }
+        let gs = &mut ig.gs;
+        let ilks = &mut ig.ioccults.ilks;
         let occilk = occultable.map(|(ilkname, p_occ)| {
           ilks.insert(ilkname, OccultIlkData { p_occ })
         });

@@ -80,7 +80,7 @@ fn preview(items: Vec<ItemForOutput>) {
   }
 
   const SEVERAL: usize = 3;
-  let pcaliases = default();
+  let ig_dummy = Instance::dummy();
 
   impl Prep {
     fn want_several(&self) -> bool {
@@ -96,7 +96,8 @@ fn preview(items: Vec<ItemForOutput>) {
     let spec = ItemSpec { lib: it.0, item: it.1.itemname.into() };
     let sortkey = it.1.sortkey;
     (||{
-      let (p, _occultable) = spec.clone().find_load(&pcaliases)
+      let (p, _occultable) = spec.clone()
+        .find_load(&ig_dummy, SpecDepth::zero())
         .context("load")?;
       // todo show occulted version too
       let mut uos = vec![];

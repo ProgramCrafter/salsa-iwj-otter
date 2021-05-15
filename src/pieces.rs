@@ -325,8 +325,7 @@ impl SimplePieceSpec for piece_specs::Disc {
 #[typetag::serde]
 impl PieceSpec for piece_specs::Disc {
   #[throws(SpecError)]
-  fn load(&self, _: usize, _: &mut GPiece,
-          _pcaliases: &PieceAliases, _ir: &InstanceRef)
+  fn load(&self, _: usize, _: &mut GPiece, _ig: &Instance, _:SpecDepth)
           -> PieceSpecLoaded {
     SimplePieceSpec::load(self)?
   }
@@ -364,8 +363,7 @@ impl SimplePieceSpec for piece_specs::Rect {
 #[typetag::serde]
 impl PieceSpec for piece_specs::Rect {
   #[throws(SpecError)]
-  fn load(&self, _: usize, _: &mut GPiece,
-          _pcaliases: &PieceAliases, _ir: &InstanceRef)
+  fn load(&self, _: usize, _: &mut GPiece, _ig: &Instance, _:SpecDepth)
           -> PieceSpecLoaded {
     SimplePieceSpec::load(self)?
   }
