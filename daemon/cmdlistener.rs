@@ -104,7 +104,7 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
   }
 
   #[throws(MgmtError)]
-  fn modify_bundles<'ig,F,R>(
+  fn access_bundles<'ig,F,R>(
     cs: &mut CommandStreamData,
     ag: &AccountsGuard,
     gref: &'ig Unauthorised<InstanceRef, InstanceName>,
@@ -255,7 +255,7 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     MC::UploadBundle { game, size, hash, kind } => {
       let (upload, auth) = {
         let (ag, gref) = start_access_game(&game)?;
-        modify_bundles(
+        access_bundles(
           cs,&ag,&gref, &[TP::UploadBundles],
           &mut |mut ig, mut bundles: BundlesGuard<'_>| {
             bundles.start_upload(&mut ig, kind)
@@ -292,7 +292,7 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     }
     MC::ClearBundles { game } => {
       let (ag, gref) = start_access_game(&game)?;
-      modify_bundles(
+      access_bundles(
         cs,&ag,&gref, &[TP::ClearBundles],
         &mut |mut ig, mut bundles: BundlesGuard<'_>| {
           bundles.clear(&mut ig)
