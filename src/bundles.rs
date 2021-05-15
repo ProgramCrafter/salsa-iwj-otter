@@ -911,14 +911,21 @@ impl InstanceBundles {
   pub fn clear(&mut self, ig: &mut Instance) {
 
     // Check we are not in bundle state USED
-    for (m, ok) in [
-      ( "pieces",            ig.gs.pieces.is_empty()  ),
-      ( "pieces - occults",  ig.gs.occults.is_empty() ),
-      ( "pieces - ipieces",  ig.ipieces.is_empty()    ),
-      ( "piece aliases",     ig.pcaliases.is_empty()  ),
-      ( "pieces - ioccults", ig.ioccults.is_empty()   ),
-    ] {
-      if ! ok { throw!(ME::BundlesInUse(m.to_string())) }
+    let checks: &[(_,_, Option<&dyn Debug>)] = &[
+      ( "pieces",            ig.gs.pieces.is_empty(),  None  ),
+      ( "piece aliases",     ig.pcaliases.is_empty(),  None  ),
+      ( "pieces - occults",  ig.gs.occults.is_empty(), Some(&ig.gs.occults) ),
+      ( "pieces - ipieces",  ig.ipieces.is_empty(),    Some(&ig.ipieces   ) ),
+      ( "pieces - ioccults", ig.ioccults.is_empty(),   Some(&ig.ioccults  ) ),
+    ];
+    for (m, ok, pr) in checks {
+      if ! ok {
+        if let Some(pr) = pr {
+          error!("{}: failed to clear because leftover {}: {:?}",
+                 &ig.name, m, pr);
+        }
+        throw!(ME::BundlesInUse(m.to_string()))
+      }
     }
 
     // If we are in UNUSED, become BROKEN
