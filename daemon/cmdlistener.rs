@@ -274,20 +274,23 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     }
     MC::ListBundles { game } => {
       let (ag, gref) = start_access_game(&game)?;
-      let mut igu = gref.lock()?;
-      let (ig, _) = cs.check_acl(&ag, &mut igu, PCH::Instance,
-                                 TP_ACCESS_BUNDLES)?;
-      let bundles = ig.bundle_list.clone();
+      let (bundles,_auth) =
+        access_bundles(
+          cs,&ag,&gref,TP_ACCESS_BUNDLES,
+          &mut |ig,_|{
+            Ok(ig.bundle_list.clone())
+          })?;
       MR::Bundles { bundles }
     }
     MC::DownloadBundle { game, id } => {
-      let ag = AccountsGuard::lock();
-      let gref = Instance::lookup_by_name_unauth(&game)?;
-      let mut igu = gref.lock()?;
-      let (ig, _) = cs.check_acl(&ag, &mut igu, PCH::Instance,
-                                     TP_ACCESS_BUNDLES)?;
-      let f = id.open(&ig)?.ok_or_else(|| ME::BundleNotFound)?;
-      bulk_download = Some(Box::new(f));
+      let (ag, gref) = start_access_game(&game)?;
+      access_bundles(
+        cs,&ag,&gref,TP_ACCESS_BUNDLES,
+        &mut |ig,_|{
+          let f = id.open(&ig)?.ok_or_else(|| ME::BundleNotFound)?;
+          bulk_download = Some(Box::new(f));
+          Ok(())
+        })?;
       Fine
     }
     MC::ClearBundles { game } => {
