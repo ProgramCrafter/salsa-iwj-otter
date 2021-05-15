@@ -546,7 +546,7 @@ impl Ctx {
       "library-list @table@ wikimedia chess-yellow-?"
     )?;
     let output: String = self.otter(&command)?.into();
-    assert!( Regex::new("(?m)^chess-yellow-K  *the yellow king$")?
+    assert!( Regex::new("(?m)^wikimedia  *chess-yellow-K  *the yellow king$")?
              .find(&output)
              .is_some(),
              "got: {}", &output);

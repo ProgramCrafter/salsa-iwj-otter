@@ -221,6 +221,7 @@ impl OccultedPieceTrait for ItemOccultable {
 
 #[derive(Debug,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
 pub struct ItemEnquiryData {
+  pub libname: String,
   pub itemname: GoodItemName,
   pub sortkey: Option<String>,
   pub f0desc: Html,
@@ -230,7 +231,8 @@ pub struct ItemEnquiryData {
 impl Display for ItemEnquiryData {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut Formatter) {
-    write!(f, "{:20}  {}", self.itemname, self.f0desc.as_html_str())?;
+    write!(f, "{:<10} {:20}  {}", &self.libname, &self.itemname,
+           self.f0desc.as_html_str())?;
   }
 }
 
@@ -566,6 +568,7 @@ impl Contents {
       };
       let f0bbox = loaded.bbox_approx()?;
       let ier = ItemEnquiryData {
+        libname: self.libname.clone(),
         itemname: (**k).to_owned(),
         sortkey: v.sort.to_owned(),
         f0bbox,

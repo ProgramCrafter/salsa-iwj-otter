@@ -62,7 +62,7 @@ pub enum OutputKind {
   Preview,
 }
 
-pub type ItemForOutput = (String, ItemEnquiryData);
+pub type ItemForOutput = ItemEnquiryData;
 
 pub const VIS: ShowUnocculted = ShowUnocculted::new_visible();
 
@@ -93,8 +93,8 @@ fn preview(items: Vec<ItemForOutput>) {
   }
 
   let mut pieces: Vec<Prep> = items.into_iter().map(|it| {
-    let spec = ItemSpec { lib: it.0, item: it.1.itemname.into() };
-    let sortkey = it.1.sortkey;
+    let spec = ItemSpec { lib: it.libname.into(), item: it.itemname.into() };
+    let sortkey = it.sortkey;
     (||{
       let (p, _occultable) = spec.clone()
         .find_load(&ig_dummy, SpecDepth::zero())
@@ -239,7 +239,7 @@ fn main() {
     for contents in all_registries.lib_name_lookup(&lib)? {
       for pat in opts.items.split(SPLIT) {
         for item in contents.list_glob(pat)? {
-          items.push((lib.clone(), item))
+          items.push(item)
         }
       }
     }
@@ -247,8 +247,8 @@ fn main() {
   items.sort();
 
   match opts.outkind {
-    OutputKind::List => for item in &items {
-      println!("{:<10} {}", &item.0, &item.1);
+    OutputKind::List => for item in items {
+      println!("{}", item);
     }
     OutputKind::Preview => {
       preview(items)?
