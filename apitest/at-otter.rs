@@ -543,7 +543,7 @@ impl Ctx {
     prepare_game(&self.su().ds, &self.prctx, TABLE)?;
 
     let command = self.su().ds.ss(
-      "library-list @table@ wikimedia chess-yellow-?"
+      "library-list @table@ chess-yellow-?"
     )?;
     let output: String = self.otter(&command)?.into();
     assert!( Regex::new("(?m)^wikimedia  *chess-yellow-K  *the yellow king$")?
@@ -552,7 +552,7 @@ impl Ctx {
              "got: {}", &output);
 
     let command = self.su().ds.ss(
-      "library-add @table@ wikimedia chess-blue-?"
+      "library-add --lib wikimedia @table@ chess-blue-?"
     )?;
     let added = self.some_library_add(&command)?;
     assert_eq!(added.len(), 6);
@@ -733,7 +733,7 @@ impl Ctx {
     let st = Command::new("cmp").args(&[&bundle_file, "00000.zip"]).status()?;
     if ! st.success() { panic!("cmp failed {}", st) }
 
-    let command = ds.ss("library-add @table@ lemon example-lemon")?;
+    let command = ds.ss("library-add --lib lemon @table@ example-lemon")?;
     let added = self.some_library_add(&command)?;
     assert_eq!( added.len(), 1 );
 

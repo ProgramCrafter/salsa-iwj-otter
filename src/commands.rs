@@ -59,7 +59,8 @@ pub enum MgmtCommand {
   },
   LibraryListByGlob {
     game: InstanceName,
-    glob: shapelib::ItemSpec,
+    lib: Option<String>,
+    pat: String,
   },
 
   LoadFakeRng(Vec<String>),

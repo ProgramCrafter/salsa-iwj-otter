@@ -368,17 +368,23 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       MR::Libraries(libs)
     }
 
-    MC::LibraryListByGlob { game, glob: spec } => {
+    MC::LibraryListByGlob { game, lib, pat } => {
       let (ag, gref) = start_access_game(&game)?;
       let (results, _auth) =
         access_bundles(
           cs,&ag,&gref, &[TP::UploadBundles],
           &mut |ig, _| {
             let regs = ig.all_shapelibs();
-            let libs = regs.lib_name_lookup(&spec.lib)?;
             let mut results: Vec<shapelib::ItemEnquiryData> = default();
-            for lib in &*libs {
-              results.extend(lib.list_glob(&spec.item)?);
+            let libss = if let Some(lib) = &lib {
+              vec![regs.lib_name_lookup(lib)?]
+            } else {
+              regs.all_libs().collect()
+            };
+            for libs in libss {
+              for lib in libs {
+                results.extend(lib.list_glob(&pat)?);
+              }
             }
             Ok(results)
           })?;

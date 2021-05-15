@@ -991,16 +991,12 @@ mod delete_game {
 
 //---------- library-list ----------
 
-#[derive(Debug)]
+#[derive(Debug,Default)]
 struct LibGlobArgs {
   table_name: String,
-  pat: shapelib::ItemSpec,
+  lib: Option<String>,
+  pat: Option<String>,
 }
-
-impl Default for LibGlobArgs { fn default() -> Self { Self {
-  table_name: default(),
-  pat: shapelib::ItemSpec { lib: default(), item: default() },
-} } }
 
 impl LibGlobArgs {
   fn add_arguments<'ap, 'tlg: 'ap>(
@@ -1010,12 +1006,19 @@ impl LibGlobArgs {
     use argparse::*;
     ap.refer(&mut self.table_name).required()
       .add_argument("TABLE-NAME",Store,"table name");
-    // xxx allow lack of library name to list library names
-    ap.refer(&mut self.pat.lib).required()
-      .add_argument("LIB-NAME",Store,"library name");
-    // xxx allow lack of pattern to list whole library
-    ap.refer(&mut self.pat.item).required()
-      .add_argument("ITEM-GLOB-PATTERN",Store,"item glob pattern");
+    ap.refer(&mut self.lib).metavar("LIBRARY")
+      .add_option(&["--lib"],StoreOption,"look only in LIBRARY");
+    ap.refer(&mut self.pat)
+      .add_argument("ITEM-GLOB-PATTERN",StoreOption,"item glob pattern");
+  }
+
+  fn lib(&self) -> Option<String> {
+    self.lib.clone()
+  }
+  fn pat(&self) -> String {
+    self.pat.as_ref().map(Deref::deref)
+      .unwrap_or("*")
+      .into()
   }
 }
 
@@ -1036,7 +1039,20 @@ mod library_list {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = access_game(&ma, &args.table_name)?;
 
-    let items = chan.list_items(&args.pat)?;
+    if args.lib.is_none() && args.pat.is_none() {
+      let game = chan.game.clone();
+      let libs = match chan.cmd(&MC::LibraryListLibraries { game })? {
+        MgmtResponse::Libraries(libs) => libs,
+        x => throw!(anyhow!(
+          "unexpected response to LibrarylistLibraries: {:?}", &x)),
+      };
+      for lib in libs {
+        println!("{}", lib);
+      }
+      return;
+    }
+
+    let items = chan.list_items(args.lib.clone(), args.pat())?;
     for it in &items {
       println!("{}", it);
     }
@@ -1245,7 +1261,7 @@ mod library_add {
       }
     }
 
-    let items = chan.list_items(&args.tlg.pat)?;
+    let items = chan.list_items(args.tlg.lib(), args.tlg.pat())?;
 
     let mut exitcode = 0;
     let mut insns = vec![];
@@ -1272,7 +1288,7 @@ mod library_add {
         }
       };
       let spec = shapelib::ItemSpec {
-        lib: args.tlg.pat.lib.clone(),
+        lib: it.libname.clone(),
         item: it.itemname.as_str().to_owned(),
       };
       let spec = PiecesSpec {
