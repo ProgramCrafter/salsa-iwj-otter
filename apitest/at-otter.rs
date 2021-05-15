@@ -497,7 +497,7 @@ impl Ctx {
     prepare_game(&self.su().ds, &self.prctx, TABLE)?;
 
     let command = self.su().ds.ss(
-      "library-list wikimedia chess-yellow-?"
+      "library-list @table@ wikimedia chess-yellow-?"
     )?;
     let output: String = self.otter(&command)?.into();
     assert!( Regex::new("(?m)^chess-yellow-K  *the yellow king$")?

@@ -349,12 +349,19 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       Fine
     }
 
-    MC::LibraryListByGlob { glob: spec } => {
-      let libs = shapelib::lib_name_lookup(&spec.lib)?;
-      let mut results: Vec<shapelib::ItemEnquiryData> = default();
-      for lib in &*libs {
-        results.extend(lib.list_glob(&spec.item)?);
-      }
+    MC::LibraryListByGlob { game, glob: spec } => {
+      let (ag, gref) = start_access_game(&game)?;
+      let (results, _auth) =
+        access_bundles(
+          cs,&ag,&gref, &[TP::UploadBundles],
+          &mut |mut _ig, _| {
+            let libs = shapelib::lib_name_lookup(&spec.lib)?;
+            let mut results: Vec<shapelib::ItemEnquiryData> = default();
+            for lib in &*libs {
+              results.extend(lib.list_glob(&spec.item)?);
+            }
+            Ok(results)
+          })?;
       MR::LibraryItems(results)
     }
 

@@ -55,6 +55,7 @@ pub enum MgmtCommand {
   },
 
   LibraryListByGlob {
+    game: InstanceName,
     glob: shapelib::ItemSpec,
   },
 

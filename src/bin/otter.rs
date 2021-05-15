@@ -971,10 +971,12 @@ mod delete_game {
 
 #[derive(Debug)]
 struct LibGlobArgs {
+  table_name: String,
   pat: shapelib::ItemSpec,
 }
 
 impl Default for LibGlobArgs { fn default() -> Self { Self {
+  table_name: default(),
   pat: shapelib::ItemSpec { lib: default(), item: default() },
 } } }
 
@@ -984,6 +986,8 @@ impl LibGlobArgs {
     ap: &'_ mut ArgumentParser<'ap>
   ) {
     use argparse::*;
+    ap.refer(&mut self.table_name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
     // xxx allow lack of library name to list library names
     ap.refer(&mut self.pat.lib).required()
       .add_argument("LIB-NAME",Store,"library name");
@@ -1007,7 +1011,7 @@ mod library_list {
 
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let mut chan = connect(&ma)?;
+    let mut chan = access_game(&ma, &args.table_name)?;
 
     let items = chan.list_items(&args.pat)?;
     for it in &items {
@@ -1031,7 +1035,6 @@ mod library_add {
 
   #[derive(Default,Debug)]
   struct Args {
-    table_name: String,
     tlg: LibGlobArgs,
     adjust_markers: Option<bool>,
     incremental: bool,
@@ -1044,8 +1047,7 @@ mod library_add {
   fn subargs(sa: &mut Args) -> ArgumentParser {
     use argparse::*;
     let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.table_name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
+    sa.tlg.add_arguments(&mut ap);
     ap.refer(&mut sa.adjust_markers)
       .add_option(&["--no-adjust-markers"],StoreConst(Some(false)),
                   "do not adjust the number of insertion markers, just fail")
@@ -1055,7 +1057,6 @@ mod library_add {
                   "do not place pieces already on the board; \
                    if they don't all fit, place as many as possible")
       .add_option(&["--no-incremental"],StoreConst(false),"");
-    sa.tlg.add_arguments(&mut ap);
     ap
   }
 
@@ -1063,7 +1064,7 @@ mod library_add {
     const MAGIC: &str = "mgmt-library-load-marker";
 
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let mut chan = access_game(&ma, &args.table_name)?;
+    let mut chan = access_game(&ma, &args.tlg.table_name)?;
     let (pieces, _pcaliases) = chan.list_pieces()?;
     let markers = pieces.iter().filter(|p| p.itemname.as_str() == MAGIC)
       .collect::<Vec<_>>();

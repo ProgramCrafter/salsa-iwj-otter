@@ -122,20 +122,6 @@ impl MgmtChannel {
     self.cmd_withbulk(cmd, &mut io::empty(), &mut io::sink(), &mut |_|Ok(()))?
   }
 
-  #[throws(AE)]
-  pub fn list_items(&mut self, pat: &shapelib::ItemSpec)
-                -> Vec<shapelib::ItemEnquiryData> {
-    // xxx allow globbing of library names
-    let cmd = MgmtCommand::LibraryListByGlob { glob: pat.clone() };
-    let mut items = match self.cmd(&cmd)? {
-      MgmtResponse::LibraryItems(items) => items,
-      wat => Err(anyhow!("unexpected LibraryListByGlob response: {:?}",
-                         &wat))?,
-    };
-    items.sort();
-    items
-  }
-
   pub fn for_game(self, game: InstanceName, how: MgmtGameUpdateMode)
                   -> MgmtChannelForGame {
     MgmtChannelForGame {
@@ -224,6 +210,24 @@ impl MgmtChannelForGame {
       wat => Err(anyhow!("ListPieces => {:?}", &wat))?,
     }
   }
+
+  #[throws(AE)]
+  pub fn list_items(&mut self, pat: &shapelib::ItemSpec)
+                -> Vec<shapelib::ItemEnquiryData> {
+    // xxx allow globbing of library names
+    let cmd = MgmtCommand::LibraryListByGlob {
+      game: self.game.clone(),
+      glob: pat.clone(),
+    };
+    let mut items = match self.cmd(&cmd)? {
+      MgmtResponse::LibraryItems(items) => items,
+      wat => Err(anyhow!("unexpected LibraryListByGlob response: {:?}",
+                         &wat))?,
+    };
+    items.sort();
+    items
+  }
+
 /*
   fn get_info(&mut self) -> Result<
       (MgmtGameResponseGameInfo, HashMap<String,PlayerId>
