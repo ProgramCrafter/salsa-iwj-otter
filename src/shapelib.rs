@@ -347,6 +347,14 @@ impl OccultedPieceTrait for Item {
   }
 }
 
+impl Registry {
+  pub fn add(&mut self, data: Contents) {
+    self.libs
+      .entry(data.libname.clone()).or_default()
+      .push(data);
+  }
+}
+
 pub struct AllRegistries<'ig> {
   global: RwLockReadGuard<'static, Option<Registry>>,
   #[allow(dead_code)] ig: &'ig Instance,
@@ -821,9 +829,7 @@ pub fn load_1_global_library(l: &Explicit1) {
   let count = data.items.len();
   GLOBAL_SHAPELIBS.write()
     .get_or_insert_with(default)
-    .libs
-    .entry(l.name.clone()).or_default()
-    .push(data);
+    .add(data);
   info!("loaded {} shapes in library {:?} from {:?} and {:?}",
         count, &l.name, &l.catalogue, &l.dirname);
 }
