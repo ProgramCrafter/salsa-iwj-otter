@@ -46,7 +46,7 @@ impl OccultIlks {
     &self.table.get(*id.borrow())?.v
   }
 
-  pub fn insert(&mut self, k: K, v: V) -> OId {
+  pub fn create(&mut self, k: K, v: V) -> OId {
     let OccultIlks { lookup, table } = self;
     let id = *lookup
       .entry(k)

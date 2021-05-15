@@ -977,7 +977,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         (||{
           let ilks = &mut ig.ioccults.ilks;
           let occilk = occultable.map(|(ilkname, p_occ)| {
-            ilks.insert(ilkname, OccultIlkData { p_occ })
+            ilks.create(ilkname, OccultIlkData { p_occ })
           });
           ig.ipieces.as_mut(modperm).insert(piece, IPiece {
             p, occilk, loaded_via_alias,
