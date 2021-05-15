@@ -1125,7 +1125,7 @@ mod library_add {
     const WANTED: usize = 2;
     let situation = if markers.len() < WANTED {
       let to_add = WANTED - markers.len();
-      let spec = shapelib::ItemSpec {
+      let spec = ItemSpec {
         lib: "wikimedia".to_string(), // todo: make an argument
         item: MAGIC.to_string(),
       };
