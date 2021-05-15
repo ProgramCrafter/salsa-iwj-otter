@@ -64,7 +64,7 @@ impl<T> From<T> for Count<'static> where T: Enum {
   fn from(t: T) -> Count<'static> {
     Count {
       i: t.to_usize().unwrap(),
-      n: T::COUNT,
+      n: T::COUNT - 1,
       // Show be Borrowed  https://github.com/Peternator7/strum/issues/159
       desc: Cow::Owned(t.get_message().unwrap_or("...").to_owned()),
     }
@@ -145,7 +145,7 @@ impl<'oo,'o,R:Read> ReadOriginator<'oo,'o,R> {
         .chars().rev()
         .collect::<String>()
     };
-    let desc = format!("{} / {}", m(c), m(t));
+    let desc = format!(" {} / {}", m(c), m(t));
     self.orig.item(self.counter, desc);
     self.last_report = self.counter;
   }
