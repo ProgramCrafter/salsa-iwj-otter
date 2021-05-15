@@ -733,6 +733,18 @@ impl Ctx {
     let st = Command::new("cmp").args(&[&bundle_file, "00000.zip"]).status()?;
     if ! st.success() { panic!("cmp failed {}", st) }
 
+    let command = ds.ss("library-add @table@ lemon example-lemon")?;
+    let added = self.some_library_add(&command)?;
+    assert_eq!( added.len(), 1 );
+
+    let output: String = self.otter(&ds.ss("list-pieces @table@")?)?.into();
+    assert!( Regex::new(
+      r#"(?m)(?:[^\w-]|^)example-lemon[^\w-].*\Wa lemon(?:\W|$)"#
+    )?
+             .find(&output)
+             .is_some(),
+             "got: {}", &output);
+
     self.otter(&ds.ss("clear-game @table@")?)?;
     self.otter(&ds.ss("reset @table@ demo")?)?;
   }
