@@ -66,10 +66,9 @@ pub struct NotBundle(&'static str);
 
 #[derive(Error,Debug)]
 pub enum LoadError {
-  BadBundle(BadBundle),
-  IE(#[from] IE),
+  #[error("bad bundle: {0}")]     BadBundle(BadBundle),
+  #[error("internal error: {0}")] IE(#[from] IE),
 }
-display_as_debug!{LoadError}
 
 // Bundle states:
 //
