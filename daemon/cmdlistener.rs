@@ -93,6 +93,16 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     cmd_s += "..";
   }
 
+  #[throws(MgmtError)]
+  fn start_modify_game(game: &InstanceName)
+      -> (AccountsGuard, Unauthorised<InstanceRef, InstanceName>)
+  {
+    (
+      AccountsGuard::lock(),
+      Instance::lookup_by_name_unauth(&game)?,
+    )
+  }
+
   let resp = (|| Ok::<_,MgmtError>(match cmd {
     MC::Noop => Fine,
 
@@ -223,8 +233,7 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
 
     MC::UploadBundle { game, size, hash, kind } => {
       let (upload, auth) = {
-        let ag = AccountsGuard::lock();
-        let gref = Instance::lookup_by_name_unauth(&game)?;
+        let (ag, gref) = start_modify_game(&game)?;
         let bundles = gref.lock_bundles();
         let mut igu = gref.lock()?;
         let (ig, auth) = cs.check_acl(&ag, &mut igu, PCH::Instance,
@@ -244,8 +253,7 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       Fine
     }
     MC::ListBundles { game } => {
-      let ag = AccountsGuard::lock();
-      let gref = Instance::lookup_by_name_unauth(&game)?;
+      let (ag, gref) = start_modify_game(&game)?;
       let mut igu = gref.lock()?;
       let (ig, _) = cs.check_acl(&ag, &mut igu, PCH::Instance,
                                  TP_ACCESS_BUNDLES)?;
@@ -294,8 +302,7 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     }
 
     MC::AlterGame { game, insns, how } => {
-      let mut ag = AccountsGuard::lock();
-      let gref = Instance::lookup_by_name_unauth(&game)?;
+      let (mut ag, gref) = start_modify_game(&game)?;
       let mut g = gref.lock()?;
       execute_for_game(cs, &mut ag, &mut g, insns, how)?
     }
