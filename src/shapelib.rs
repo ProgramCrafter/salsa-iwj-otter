@@ -78,47 +78,41 @@ pub enum LibraryLoadError {
   #[error(transparent)]
   TomlParseError(#[from] toml::de::Error),
   #[error("error reading/opening library file: {0}: {1}")]
-  FileError(String, io::Error),
+                                                  FileError(String, io::Error),
   #[error("OS error globbing for files: {0}")]
-  GlobFileError(#[from] glob::GlobError),
-  #[error("{:?}",&self)]
-  InternalError(#[from] InternalError),
+                                      GlobFileError(#[from] glob::GlobError),
+  #[error("internal error: {0}")]     InternalError(#[from] InternalError),
   #[error("bad glob pattern: {pat:?} (near char {pos}): {msg}")]
-  BadGlobPattern { pat: String, msg: &'static str, pos: usize },
+                 BadGlobPattern { pat: String, msg: &'static str, pos: usize },
   #[error("glob pattern {pat:?} matched non-utf-8 filename {actual:?}")]
-  GlobNonUTF8 { pat: String, actual: PathBuf },
+                                  GlobNonUTF8 { pat: String, actual: PathBuf },
   #[error("glob pattern {pat:?} matched filename with no extension {path:?}")]
-  GlobNoExtension { pat: String, path: String },
-  #[error("{:?}",&self)]
-  OccultationColourMissing(String),
-  #[error("{:?}",&self)]
-  BackMissingForOccultation,
-  #[error("{:?}",&self)]
-  ExpectedTable(String),
-  #[error("{:?}",&self)]
-  ExpectedString(String),
-  #[error("{:?}",&self)]
-  WrongNumberOfSizeDimensions { got: usize, expected: [usize;2] },
-  #[error("{:?}",&self)]
-  InheritMissingParent(String, String),
-  #[error("{:?}",&self)]
-  InheritDepthLimitExceeded(String),
-  #[error("{:?}",&self)]
-  DuplicateItem { item: String, group1: String, group2: String },
-  #[error("{:?}",&self)]
-  FilesListLineMissingWhitespace(usize),
-  #[error("{:?}",&self)]
-  FilesListFieldsMustBeAtStart(usize),
-  #[error("{:?}",&self)]
-  MissingSubstituionToken(&'static str),
-  #[error("{:?}",&self)]
-  RepeatedSubstituionToken(&'static str),
-  #[error("{:?}",&self)]
-  MultipleMultipleFaceDefinitions,
-  #[error("{0}")]
-  UnsupportedColourSpec(#[from] UnsupportedColourSpec),
-  #[error("bad item name (invalid characters) in {0:?}")]
-  BadItemName(String),
+                                 GlobNoExtension { pat: String, path: String },
+  #[error("occultation colour missing: {0:?}")]
+                                            OccultationColourMissing(String),
+  #[error("back missing for occultation")]  BackMissingForOccultation,
+  #[error("expected TOML table: {0:?}")]    ExpectedTable(String),
+  #[error("expected TOML string: {0:?}")]   ExpectedString(String),
+  #[error("wrong number of size dimensions {got}, expected {expected:?}")]
+              WrongNumberOfSizeDimensions { got: usize, expected: [usize;2] },
+  #[error("group {0:?} inherits from nonexistent parent {1:?}")]
+                                         InheritMissingParent(String, String),
+  #[error("inheritance depth limit exceeded: {0:?}")]
+                                            InheritDepthLimitExceeded(String),
+  #[error("duplicate item {item:?} in groups {group1:?} and {group2:?}")]
+               DuplicateItem { item: String, group1: String, group2: String },
+  #[error("files list line {0} missing whitespace")]
+                                        FilesListLineMissingWhitespace(usize),
+  #[error("files list line {0}, field must be at start")]
+                                        FilesListFieldsMustBeAtStart(usize),
+  #[error("missing or unrecognised substitution token {0}")]
+                                        MissingSubstituionToken(&'static str),
+  #[error("repeated substitution token {0}")]
+                                        RepeatedSubstituionToken(&'static str),
+  #[error("piece defines multiple faces in multiple ways")]
+                                        MultipleMultipleFaceDefinitions,
+  #[error("{0}")] UnsupportedColourSpec(#[from] UnsupportedColourSpec),
+  #[error("bad item name (invalid characters) in {0:?}")] BadItemName(String),
 }
 
 impl LibraryLoadError {
