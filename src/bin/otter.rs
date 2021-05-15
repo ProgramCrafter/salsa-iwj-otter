@@ -436,11 +436,27 @@ fn main() {
                             &subcommand));
 
   call(sc, mo, subargs).unwrap_or_else(|e|{
-    eprint!("otter: error");
-    for e in e.chain() {
-      eprint!(": {}", &e);
+    #[derive(Default,Debug)] struct Sol { any: bool }
+    impl Sol {
+      fn nl(&mut self) {
+        if self.any { eprintln!("") };
+        self.any = false;
+      }
+      fn head(&mut self) {
+        if ! self.any { eprint!("otter: error"); }
+        self.any = true
+      }
     }
-    eprintln!("");
+    let mut sol: Sol = default();
+    for e in e.chain() {
+      let s = e.to_string();
+      let long = s.len() > 80;
+      if long && sol.any { sol.nl() }
+      sol.head();
+      eprint!(": {}", s);
+      if long { sol.nl() }
+    }
+    sol.nl();
     exit(12);
   })
 }
