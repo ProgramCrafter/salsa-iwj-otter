@@ -433,7 +433,6 @@ impl<'ig> AllRegistries<'ig> {
 }
 
 pub fn lib_name_list(ig: &Instance) -> Vec<String> {
-  // xxx put bundle id in here or something show it shows up in libs list
   ig.all_shapelibs().iter().map(
     |reg| reg.libs.keys().cloned()
   ).flatten().collect()

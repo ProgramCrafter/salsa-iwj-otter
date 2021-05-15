@@ -214,7 +214,6 @@ impl MgmtChannelForGame {
   #[throws(AE)]
   pub fn list_items(&mut self, lib: Option<String>, pat: String)
                 -> Vec<ItemEnquiryData> {
-    // xxx allow globbing of library names
     let cmd = MgmtCommand::LibraryListByGlob {
       game: self.game.clone(),
       lib, pat,
