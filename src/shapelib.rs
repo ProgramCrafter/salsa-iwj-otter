@@ -227,9 +227,10 @@ pub struct ItemEnquiryData {
   pub f0bbox: Rect,
 }
 
-impl ItemEnquiryData {
-  pub fn line_for_list(&self) -> String {
-    format!("{:20}  {}", self.itemname, self.f0desc.as_html_str())
+impl Display for ItemEnquiryData {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) {
+    write!(f, "{:20}  {}", self.itemname, self.f0desc.as_html_str())?;
   }
 }
 

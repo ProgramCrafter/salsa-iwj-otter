@@ -248,7 +248,7 @@ fn main() {
 
   match opts.outkind {
     OutputKind::List => for item in &items {
-      println!("{:<10} {}", &item.0, item.1.line_for_list());
+      println!("{:<10} {}", &item.0, &item.1);
     }
     OutputKind::Preview => {
       preview(items)?

@@ -1037,7 +1037,7 @@ mod library_list {
 
     let items = chan.list_items(&args.pat)?;
     for it in &items {
-      println!("{}", it.line_for_list());
+      println!("{}", it);
     }
 
     Ok(())
