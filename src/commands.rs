@@ -94,8 +94,8 @@ pub enum MgmtResponse {
   AlterGame { error: Option<MgmtError>, responses: Vec<MgmtGameResponse> },
   AccountsList(Vec<Arc<AccountName>>),
   GamesList(Vec<Arc<InstanceName>>),
-  Libraries(Vec<shapelib::LibraryEnquiryData>),
-  LibraryItems(Vec<shapelib::ItemEnquiryData>),
+  Libraries(Vec<LibraryEnquiryData>),
+  LibraryItems(Vec<ItemEnquiryData>),
   Bundles { bundles: MgmtBundleList },
 }
 

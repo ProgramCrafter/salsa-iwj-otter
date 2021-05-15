@@ -362,7 +362,7 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
               .map(|ll| ll.iter())
               .flatten()
               .map(|l| l.enquiry())
-              .collect::<Vec<shapelib::LibraryEnquiryData>>()
+              .collect::<Vec<LibraryEnquiryData>>()
           )
         )?;
       MR::Libraries(libs)
@@ -375,7 +375,7 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
           cs,&ag,&gref, &[TP::UploadBundles],
           &mut |ig, _| {
             let regs = ig.all_shapelibs();
-            let mut results: Vec<shapelib::ItemEnquiryData> = default();
+            let mut results: Vec<ItemEnquiryData> = default();
             let libss = if let Some(lib) = &lib {
               vec![regs.lib_name_lookup(lib)?]
             } else {
