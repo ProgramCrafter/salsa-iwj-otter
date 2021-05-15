@@ -512,22 +512,8 @@ impl Ctx {
   }
 
   #[throws(Explode)]
-  fn library_load(&mut self) {
-    prepare_game(&self.su().ds, &self.prctx, TABLE)?;
-
-    let command = self.su().ds.ss(
-      "library-list @table@ wikimedia chess-yellow-?"
-    )?;
-    let output: String = self.otter(&command)?.into();
-    assert!( Regex::new("(?m)^chess-yellow-K  *the yellow king$")?
-             .find(&output)
-             .is_some(),
-             "got: {}", &output);
-
-    let command = self.su().ds.ss(
-      "library-add @table@ wikimedia chess-blue-?"
-    )?;
-    let add_err = self.otter(&command)
+  fn some_library_add(&mut self, command: &[String]) -> Vec<String> {
+    let add_err = self.otter(command)
       .expect_err("library-add succeeded after reset!");
     assert_eq!(add_err.downcast::<ExitStatusError>()?.0.code(),
                Some(EXIT_NOTFOUND));
@@ -547,7 +533,28 @@ impl Ctx {
         then { added.push(piece); }
       }
     )?;
+
     dbgc!(&added);
+    added
+  }
+
+  #[throws(Explode)]
+  fn library_load(&mut self) {
+    prepare_game(&self.su().ds, &self.prctx, TABLE)?;
+
+    let command = self.su().ds.ss(
+      "library-list @table@ wikimedia chess-yellow-?"
+    )?;
+    let output: String = self.otter(&command)?.into();
+    assert!( Regex::new("(?m)^chess-yellow-K  *the yellow king$")?
+             .find(&output)
+             .is_some(),
+             "got: {}", &output);
+
+    let command = self.su().ds.ss(
+      "library-add @table@ wikimedia chess-blue-?"
+    )?;
+    let added = self.some_library_add(&command)?;
     assert_eq!(added.len(), 6);
   }
 
