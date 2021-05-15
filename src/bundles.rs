@@ -783,7 +783,6 @@ impl InstanceBundles {
         Ok(y) => y,
         Err(NotBundle(why)) => {
           debug!("bundle file {:?} skippping {}", &fpath, why);
-          // xxx delete?
           continue;
         },
       };
