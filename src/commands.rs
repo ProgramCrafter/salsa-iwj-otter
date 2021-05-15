@@ -208,52 +208,42 @@ pub enum MgmtGameUpdateMode {
 
 #[derive(Debug,Clone,Error,Serialize,Deserialize)]
 pub enum MgmtError {
-  ParseFailed(String),
-  AuthorisationError,
-  SuperuserAuthorisationRequired,
-  SpecifyAccount,
-  MustSpecifyNick,
-  AlreadyExists,
-  NickCollision,
-  GameBeingDestroyed(#[from] GameBeingDestroyed),
-  GameNotFound,
-  GameCorrupted,
-  AccountNotFound(#[from] AccountNotFound),
-  PlayerNotFound(#[from] PlayerNotFound),
-  PieceNotFound,
-  LimitExceeded,
-  ServerFailure(String),
-  ZCoordinateOverflow(#[from] zcoord::Overflow),
-  BadGlob { pat: String, msg: String },
-  BadSpec(#[from] SpecError),
-  TokenDeliveryFailed(#[from] TokenDeliveryError),
-  CoordinateOverflow(#[from] CoordinateOverflow),
-  TomlSyntaxError(String),
-  TomlStructureError(String),
-  RngIsReal,
-  UploadTruncated,
-  UploadCorrupted,
-  TooManyBundles,
-  BadBundle(String),
-  BundleNotFound,
-  BundlesInUse(String),
-}
-impl Display for MgmtError {
-  #[throws(fmt::Error)]
-  fn fmt(&self, f: &mut fmt::Formatter) {
-    use MgmtError::*;
-    match self {
-      ServerFailure(s) => write!(f, "ServerFailure: {}", &s)?,
-      TokenDeliveryFailed(tde) =>
-        write!(f, "access token delivery failed: {}", &tde)?,
-      _ => <Self as Debug>::fmt(self,f)?,
-    }
-  }
+  #[error("failed to parse protocol command: {0}")] CommandParseFailed(String),
+  #[error("not authorised")]                         AuthorisationError,
+  #[error("superuse authorisation requiredr")] SuperuserAuthorisationRequired,
+  #[error("command requires account specified")]     SpecifyAccount,
+  #[error("command requires nick specified")]        MustSpecifyNick,
+  #[error("object or item already exists")]          AlreadyExists,
+  #[error("game already has player with that nick")] NickCollision,
+  #[error("{0}")] GameBeingDestroyed (#[from] GameBeingDestroyed),
+  #[error("game not found")]                         GameNotFound,
+  #[error("xxx GameCorrupted")]                      GameCorrupted,
+  #[error("{0}")] AccountNotFound     (#[from] AccountNotFound),
+  #[error("{0}")] PlayerNotFound      (#[from] PlayerNotFound),
+  #[error("piece not found in game")]                PieceNotFound,
+  #[error("limit exceeded")]                         LimitExceeded,
+  #[error("server failure: {0}")]                    ServerFailure(String),
+  #[error("{0}")] ZCoordinateOverflow (#[from] zcoord::Overflow),
+  #[error("bad glob pattern: {pat:?}: {msg}")]
+                                           BadGlob { pat: String, msg: String },
+  #[error("{0}")] BadSpec             (#[from] SpecError),
+  #[error("access token delivery failed: {0}")]
+                  TokenDeliveryFailed (#[from] TokenDeliveryError),
+  #[error("{0}")] CoordinateOverflow  (#[from] CoordinateOverflow),
+  #[error("TOML syntax error: {0}")]                 TomlSyntaxError(String),
+  #[error("TOML structure error: {0}")]              TomlStructureError(String),
+  #[error("RNG is real, command not supported")]     RngIsReal,
+  #[error("upload truncated")]                       UploadTruncated,
+  #[error("upload corrupted")]                       UploadCorrupted,
+  #[error("too many bundles")]                       TooManyBundles,
+  #[error("bad bundle: {0}")]                        BadBundle(String),
+  #[error("bundle not found")]                       BundleNotFound,
+  #[error("bundle(s) in use, cannot clear ({0})")]   BundlesInUse(String),
 }
 
 impl From<InternalError> for MgmtError {
   fn from(e: InternalError) -> MgmtError {
-    MgmtError::ServerFailure(format!("ServerFailure {}\n", &e))
+    MgmtError::ServerFailure(format!("internal error: {}\n", &e))
   }
 }
 

@@ -1332,7 +1332,7 @@ impl CommandStream<'_> {
         Err(EOF) => break,
         Err(IO(e)) => Err(e).context("read command stream")?,
         Err(Parse(s)) => {
-          let resp = MgmtResponse::Error { error: ME::ParseFailed(s) };
+          let resp = MgmtResponse::Error { error: ME::CommandParseFailed(s) };
           self.chan.write.write(&resp).context("swrite command stream")?;
         }
       }
