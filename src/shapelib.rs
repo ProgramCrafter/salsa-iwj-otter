@@ -38,6 +38,7 @@ pub trait OutlineDefn: Debug + Sync + Send + 'static {
 pub struct Contents {
   libname: String,
   dirname: String,
+  bundle: Option<bundles::Id>,
   items: HashMap<SvgBaseName<GoodItemName>, ItemData>,
 }
 
@@ -247,11 +248,15 @@ impl Display for ItemEnquiryData {
 
 #[derive(Debug,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
 pub struct LibraryEnquiryData {
+  pub bundle: Option<bundles::Id>,
   pub libname: String,
 }
 impl Display for LibraryEnquiryData {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut Formatter) {
+    if let Some(id) = self.bundle.as_ref() {
+      write!(f, "[{}] ", id)?;
+    }
     if self.libname.chars().all(|c| {
       c.is_alphanumeric() || c=='-' || c=='_' || c=='.'
     }) {
@@ -589,6 +594,7 @@ impl Contents {
   pub fn enquiry(&self) -> LibraryEnquiryData {
     LibraryEnquiryData {
       libname: self.libname.clone(),
+      bundle: self.bundle,
     }
   }
 
@@ -686,6 +692,7 @@ pub trait LibrarySource {
   fn catalogue_data(&self) -> &str;
   fn svg_dir(&self) -> String;
   fn note_svg(&mut self, _basename: &GoodItemName) { }
+  fn bundle(&self) -> Option<bundles::Id>;
 }
 
 struct BuiltinLibrary<'l> {
@@ -696,12 +703,14 @@ struct BuiltinLibrary<'l> {
 impl LibrarySource for BuiltinLibrary<'_> {
   fn catalogue_data(&self) -> &str { self.catalogue_data }
   fn svg_dir(&self) -> String { self.dirname.to_string() }
+  fn bundle(&self) -> Option<bundles::Id> { None }
 }
 
 #[throws(LibraryLoadError)]
 pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
   let toplevel: toml::Value = src.catalogue_data().parse()?;
   let mut l = Contents {
+    bundle: src.bundle(),
     libname: libname.to_string(),
     items: HashMap::new(),
     dirname: src.svg_dir(),

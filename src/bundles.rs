@@ -574,6 +574,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
     catalogue_data: String,
     svg_dir: &'l String,
     need_svgs: Vec<GoodItemName>,
+    id: &'l Id,
   }
 
   impl shapelib::LibrarySource for LibraryInBundle<'_> {
@@ -582,6 +583,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
     fn note_svg(&mut self, basename: &GoodItemName) {
       self.need_svgs.push(basename.clone())
     }
+    fn bundle(&self) -> Option<bundles::Id> { Some(*self.id) }
   }
 
   for (progress_count, LibScanned { libname, dir_inzip, inzip })
@@ -600,6 +602,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
         catalogue_data: catalogue_data,
         svg_dir: &svg_dir,
         need_svgs: Vec::new(),
+        id: &id,
       };
       let contents = shapelib::load_catalogue(&libname, &mut src)
         .map_err(|e| LE::badlib(&libname, &e))?;
