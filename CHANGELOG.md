@@ -12,10 +12,11 @@ Version UNRELEASED
  * Change CLI to server management wire protocol to binary-framed
    MessagePack (was newline-framed JSON).
  * Build system and test suite improvements and fixes.
-
+ * Per-game libraries; library-list now takes a game name.
 
  * Move game spec parsing from client to server
-   (WIP for server-side bundles)
+ * Server-side bundles
+ * Better error messages, especially from otter(1)
 
 Version 0.5.1
 =============
