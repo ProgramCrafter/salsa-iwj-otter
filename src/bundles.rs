@@ -71,6 +71,18 @@ pub enum LoadError {
 }
 display_as_debug!{LoadError}
 
+// Bundle states:
+//
+//              GameState   Instance      Note       main file    .d
+//              pieces &c   libs, specs
+//
+//  ABSENT        unused     absent       None        absent      absent
+//  NEARLY-ABSENT unused     absent       Uploading   absent      absent
+//  WRECKAGE      unused     absent       Uploading   maybe .tmp  wreckage
+//  BROKEN        unused     absent       Loaded      .zip        populated
+//  UNUSED        unused     available    Loaded      .zip        populated
+//  USED          used       available    Loaded      .zip        populated
+
 //---------- private definitions ----------
 
 pub type ZipArchive = zipfile::read::ZipArchive<BufReader<File>>;
