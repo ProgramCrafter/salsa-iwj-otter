@@ -1031,7 +1031,8 @@ mod library_list {
     ap
   }
 
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+  #[throws(AE)]
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = access_game(&ma, &args.table_name)?;
 
@@ -1039,8 +1040,6 @@ mod library_list {
     for it in &items {
       println!("{}", it);
     }
-
-    Ok(())
   }
 
   inventory::submit!{Subcommand(
