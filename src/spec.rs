@@ -22,7 +22,6 @@ use thiserror::Error;
 
 use otter_base::geometry::{Coord,Pos};
 use otter_base::hformat_as_display;
-use otter_base::misc::display_as_debug;
 
 use crate::accounts::AccountName;
 use crate::error::UnsupportedColourSpec;
@@ -60,31 +59,30 @@ pub struct UrlSpec(pub String);
 
 #[derive(Error,Clone,Serialize,Deserialize,Debug)]
 pub enum SpecError {
-  ImproperSizeSpec,
-  UnsupportedColourSpec(#[from] UnsupportedColourSpec),
-  FaceNotFound,
-  InternalError(String),
-  PosOffTable,
-  LibraryNotFound,
-  LibraryItemNotFound(ItemSpec),
-  AclInvalidAccountGlob,
-  AclEntryOverlappingAllowDeny,
-  InconsistentPieceCount,
-  BadUrlSyntax,
-  UrlTooLong,
-  CompassAngleInvalid,
-  ZeroFaces,
-  InconsistentFacesEdgecoloursCount,
-  WrongNumberOfFaces,
-  SpecifiedWidthOfNoEdges,
-  UnsupportedShape,
-  NegativeTimeout,
-  ComplexPieceWhereSimpleRequired,
-  AliasNotFound,
-  AliasTargetMultiSpec,
-  AliasLoop(String),
+  #[error("improper size specification")]    ImproperSizeSpec,
+  #[error("{0}")] UnsupportedColourSpec(#[from] UnsupportedColourSpec),
+  #[error("specified face not found")]       FaceNotFound,
+  #[error("internal error: {0}")]            InternalError(String),
+  #[error("specified position is off table")] PosOffTable,
+  #[error("library not found")]              LibraryNotFound,
+  #[error("item not found inlibrary")]       LibraryItemNotFound(ItemSpec),
+  #[error("acl contains invalid account glob")] AclInvalidAccountGlob,
+  #[error("acl entry allow/deny overlap")]   AclEntryOverlappingAllowDeny,
+  #[error("inconsistent piece count")]       InconsistentPieceCount,
+  #[error("bad url syntax")]                 BadUrlSyntax,
+  #[error("url too long")]                   UrlTooLong,
+  #[error("compass angle invalid")]          CompassAngleInvalid,
+  #[error("piece has zero faces")]           ZeroFaces,
+  #[error("inconsistent face/edge colours")] InconsistentFacesEdgecoloursCount,
+  #[error("wrong number of faces")]          WrongNumberOfFaces,
+  #[error("specified with of edges, but no edges")] SpecifiedWidthOfNoEdges,
+  #[error("shape not supported")]            UnsupportedShape,
+  #[error("negative timeout")]               NegativeTimeout,
+  #[error("complex piece where simple needed")] ComplexPieceWhereSimpleRequired,
+  #[error("piece alias not found")]          AliasNotFound,
+  #[error("piece alias target is multi spec")] AliasTargetMultiSpec,
+  #[error("piece alias loop")]               AliasLoop(String),
 }
-display_as_debug!{SpecError}
 
 //---------- Bundle "otter.toml" file ----------
 
