@@ -67,7 +67,6 @@ pub enum SpecError {
   PosOffTable,
   LibraryNotFound,
   LibraryItemNotFound(ItemSpec),
-  LibraryItemNotPrepared(ItemSpec),
   AclInvalidAccountGlob,
   AclEntryOverlappingAllowDeny,
   InconsistentPieceCount,
