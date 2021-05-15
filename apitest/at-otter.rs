@@ -710,6 +710,9 @@ impl Ctx {
     self.otter(&ds.ss("download-bundle @table@ 0")?)?;
     let st = Command::new("cmp").args(&[&bundle_file, "00000.zip"]).status()?;
     if ! st.success() { panic!("cmp failed {}", st) }
+
+    self.otter(&ds.ss("clear-game @table@")?)?;
+    self.otter(&ds.ss("reset @table@ demo")?)?;
   }
 
   #[throws(Explode)]
