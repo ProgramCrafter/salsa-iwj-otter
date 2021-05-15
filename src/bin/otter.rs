@@ -1477,6 +1477,43 @@ mod download_bundle {
   )}
 }
 
+//---------- clear game ----------
+
+mod clear_game {
+  use super::*;
+
+  #[derive(Default,Debug)]
+  struct Args {
+    table_name: String,
+  }
+
+  fn subargs(sa: &mut Args) -> ArgumentParser {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.table_name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
+    ap
+  }
+
+  #[throws(AE)]
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
+    let instance_name = ma.instance_name(&args.table_name);
+    let mut chan = access_game(&ma, &args.table_name)?;
+
+    chan.alter_game(vec![MGI::ClearGame{ }], None)
+      .context("clear table")?;
+    chan.cmd(&MC::ClearBundles { game: instance_name.clone() })
+      .context("clear bundles")?;
+  }
+
+  inventory::submit!{Subcommand(
+    "clear-game",
+    "clear the table and clear out all bundles",
+    call,
+  )}
+}
+
 //---------- list-accounts ----------
 
 mod list_accounts {
