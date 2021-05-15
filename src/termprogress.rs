@@ -113,7 +113,7 @@ impl TermReporter {
     let w_change = if info.n == 0 { 0 } else {
       min(
         ((info.i as f32) / (info.n as f32) * (fwidth as f32)) as Col,
-        LHS_TARGET
+        fwidth // just in case
       )
     };
     let mut desc = desc
