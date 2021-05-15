@@ -896,7 +896,9 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       if let Some(gpc) = gpc {
         ipc.p.into_inner().delete_hook(&gpc, gs);
       }
-      if let Some(occilk) = ipc.occilk { ig.ioccults.ilks.dispose(occilk); }
+      if let Some(occilk) = ipc.occilk {
+        ig.ioccults.ilks.dispose(occilk);
+      }
       (U{ pcs: vec![(piece, PieceUpdateOp::Delete())],
           log: vec![ LogEntry {
             html: hformat!("A piece {} was removed from the game",
