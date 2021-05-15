@@ -75,20 +75,22 @@ display_as_debug!{LoadError}
 
 pub type ZipArchive = zipfile::read::ZipArchive<BufReader<File>>;
 
+define_index_type!{ pub struct LibInBundleI = usize; }
+
 #[derive(Debug)]
 struct Parsed {
   meta: BundleMeta,
+  libs: IndexVec<LibInBundleI, shapelib::Contents>,
 }
 
 #[derive(Debug)]
 struct ForProcess {
   za: IndexedZip,
-  newlibs: Vec<ForProcessLib>,
+  newlibs: IndexVec<LibInBundleI, ForProcessLib>,
 }
 
 #[derive(Debug)]
 struct ForProcessLib {
-  contents: shapelib::Contents,
   dir_inzip: String,
   svg_dir: String,
   need_svgs: Vec<GoodItemName>,
@@ -583,17 +585,22 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
       };
       let contents = shapelib::load_catalogue(&libname, &mut src)
         .map_err(|e| LE::badlib(&libname, &e))?;
-      newlibs.push(ForProcessLib {
-        need_svgs: src.need_svgs,
-        contents, svg_dir, dir_inzip,
-      });
+      newlibs.push((
+        contents,
+        ForProcessLib {
+          need_svgs: src.need_svgs,
+          svg_dir, dir_inzip,
+        }
+      ));
     }), ||())?;
   }
 
   for_progress.phase_item(Phase::Reaquire, ReaquireProgress::Reaquire);
 
+  let (libs, newlibs) = newlibs.into_iter().unzip();
+
   (ForProcess { za, newlibs },
-   Parsed { meta })
+   Parsed { meta, libs })
 }
 
 #[throws(LE)]
@@ -686,7 +693,7 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
 #[throws(InternalError)]
 fn incorporate_bundle(ib: &mut InstanceBundles, _ig: &mut Instance,
                  id: Id, parsed: Parsed) {
-  let Parsed { meta } = parsed;
+  let Parsed { meta, libs } = parsed;
 
   let iu: usize = id.index.into();
   let slot = &mut ib.bundles[iu];
@@ -698,7 +705,9 @@ fn incorporate_bundle(ib: &mut InstanceBundles, _ig: &mut Instance,
       kinds: [note.kind, id.kind],
     })
   };
-  
+
+  let _ = libs; // xxx actually incorporate
+
   let state = State::Loaded(Loaded { meta });
   *slot = Some(Note { kind: id.kind, state });
 }
