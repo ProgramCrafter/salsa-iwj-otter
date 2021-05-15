@@ -222,7 +222,6 @@ pub enum MgmtError {
   #[error("game already has player with that nick")] NickCollision,
   #[error("{0}")] GameBeingDestroyed (#[from] GameBeingDestroyed),
   #[error("game not found")]                         GameNotFound,
-  #[error("xxx GameCorrupted")]                      GameCorrupted,
   #[error("{0}")] AccountNotFound     (#[from] AccountNotFound),
   #[error("{0}")] PlayerNotFound      (#[from] PlayerNotFound),
   #[error("piece not found in game")]                PieceNotFound,
