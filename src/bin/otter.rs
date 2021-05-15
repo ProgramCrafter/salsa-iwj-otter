@@ -435,7 +435,14 @@ fn main() {
                             env::args().next().unwrap(),
                             &subcommand));
 
-  call(sc, mo, subargs).expect("execution error");
+  call(sc, mo, subargs).unwrap_or_else(|e|{
+    eprint!("otter: error");
+    for e in e.chain() {
+      eprint!(": {}", &e);
+    }
+    eprintln!("");
+    exit(12);
+  })
 }
 
 struct Conn {
