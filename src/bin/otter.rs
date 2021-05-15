@@ -98,13 +98,12 @@ struct Subcommand (
 );
 inventory::collect!(Subcommand);
 
-#[derive(Error,Debug,Clone)]
+#[derive(Error,Debug,Clone,Display)]
 struct ArgumentParseError(String);
-display_as_debug!(ArgumentParseError);
 
 impl From<&anyhow::Error> for ArgumentParseError {
   fn from(ae: &anyhow::Error) -> ArgumentParseError {
-    eprintln!("error during argument parsing/startup: {:?}\n", ae);
+    eprintln!("error during argument parsing/startup: {}\n", ae);
     exit(EXIT_USAGE);
   }
 }
