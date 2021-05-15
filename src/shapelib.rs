@@ -17,7 +17,7 @@ use parking_lot::{MappedRwLockReadGuard, RwLockReadGuard};
 
 #[derive(Default)]
 pub struct Registry {
-  libs: HashMap<String, shapelib::Contents>,
+  libs: HashMap<String, Vec<shapelib::Contents>>,
 }
 
 #[derive(Debug)]
@@ -347,7 +347,7 @@ impl OccultedPieceTrait for Item {
 
 static SHAPELIBS: RwLock<Option<Registry>> = const_rwlock(None);
 
-pub fn libs_list() -> Vec<String> {
+pub fn lib_name_list() -> Vec<String> {
   let reg = SHAPELIBS.read();
   reg.as_ref().map(
     |reg| reg.libs.keys().cloned().collect()
@@ -355,12 +355,13 @@ pub fn libs_list() -> Vec<String> {
 }
 
 #[throws(SpecError)]
-pub fn libs_lookup(libname: &str)
-                   -> MappedRwLockReadGuard<'static, Contents> {
+pub fn lib_name_lookup(libname: &str)
+                   -> MappedRwLockReadGuard<'static, [Contents]> {
   let reg = SHAPELIBS.read();
   RwLockReadGuard::try_map( reg, |reg: &Option<Registry>| -> Option<_> {
     (|| Some({
       reg.as_ref()?.libs.get(libname)?
+        .as_slice()
     }))()
   })
     .map_err(|_| SpE::LibraryNotFound)
@@ -382,8 +383,10 @@ impl From<ItemSpecLoaded> for PieceSpecLoaded {
 impl ItemSpec {
   #[throws(SpecError)]
   pub fn find_load(&self, ig: &Instance, depth: SpecDepth) -> ItemSpecLoaded {
-    let lib = libs_lookup(&self.lib)?;
-    let (item, idata) = lib.items.get_key_value(self.item.as_str())
+    let libs = lib_name_lookup(&self.lib)?;
+    let (lib, (item, idata)) = libs.iter().rev().find_map(
+      |lib| Some((lib, lib.items.get_key_value(self.item.as_str())?))
+    )
       .ok_or(SpE::LibraryItemNotFound(self.clone()))?;
     lib.load1(idata, &self.lib, item.unnest::<str>(), ig, depth)?
   }
@@ -784,7 +787,8 @@ pub fn load_1_library(l: &Explicit1) {
   SHAPELIBS.write()
     .get_or_insert_with(default)
     .libs
-    .insert(l.name.clone(), data);
+    .entry(l.name.clone()).or_default()
+    .push(data);
   info!("loaded {} shapes in library {:?} from {:?} and {:?}",
         count, &l.name, &l.catalogue, &l.dirname);
 }

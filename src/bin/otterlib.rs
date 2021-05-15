@@ -233,11 +233,12 @@ fn main() {
     load_global_libs(&vec![tlibs.clone()])?;
   }
   let mut items: Vec<ItemForOutput> = default();
-  for lib in libs_list() {
-    let contents = libs_lookup(&lib)?;
-    for pat in opts.items.split(SPLIT) {
-      for item in contents.list_glob(pat)? {
-        items.push((lib.clone(), item))
+  for lib in lib_name_list() {
+    for contents in &*lib_name_lookup(&lib)? {
+      for pat in opts.items.split(SPLIT) {
+        for item in contents.list_glob(pat)? {
+          items.push((lib.clone(), item))
+        }
       }
     }
   }
