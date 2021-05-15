@@ -31,7 +31,6 @@ pub struct Id { pub index: Index, pub kind: Kind, }
 
 #[derive(Debug,Clone)]
 pub struct InstanceBundles {
-  // todo: this vec is needed during loading only!
   bundles: Vec<Option<Note>>,
 }
 

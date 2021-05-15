@@ -314,9 +314,6 @@ impl fairing::Fairing for ReportStartup {
 
 #[throws(StartupError)]
 fn main() {
-  // todo test suite for cli at least
-  // todo test suite for web api
-
   use structopt::StructOpt;
   #[derive(StructOpt)]
   struct Opts {

@@ -32,7 +32,6 @@ pub enum MgmtCommand {
     insns: Vec<MgmtGameInstruction>,
     how: MgmtGameUpdateMode,
   },
-  // todo: MarkGameUncorrupted
   DestroyGame {
     game: InstanceName,
   },

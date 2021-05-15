@@ -680,7 +680,6 @@ mod list_games {
 }
 
 // todo: list-players
-// todo: list-accounts
 // todo: delete-account
 
 //---------- reset-game ----------
