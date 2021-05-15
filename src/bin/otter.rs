@@ -1288,7 +1288,7 @@ mod library_add {
         }
       };
       let spec = shapelib::ItemSpec {
-        lib: it.libname.clone(),
+        lib: it.lib.libname.clone(),
         item: it.itemname.as_str().to_owned(),
       };
       let spec = PiecesSpec {

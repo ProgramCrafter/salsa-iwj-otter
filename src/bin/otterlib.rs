@@ -93,7 +93,10 @@ fn preview(items: Vec<ItemForOutput>) {
   }
 
   let mut pieces: Vec<Prep> = items.into_iter().map(|it| {
-    let spec = ItemSpec { lib: it.libname.into(), item: it.itemname.into() };
+    let spec = ItemSpec {
+      lib: it.lib.libname.into(),
+      item: it.itemname.into(),
+    };
     let sortkey = it.sortkey;
     (||{
       let (p, _occultable) = spec.clone()
