@@ -228,6 +228,15 @@ pub struct ItemEnquiryData {
   pub f0bbox: Rect,
 }
 
+impl From<&ItemEnquiryData> for ItemSpec {
+  fn from(it: &ItemEnquiryData) -> ItemSpec {
+    ItemSpec {
+      lib: it.lib.libname.clone(),
+      item: it.itemname.as_str().to_owned(),
+    }
+  }
+}
+
 impl Display for ItemEnquiryData {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut Formatter) {

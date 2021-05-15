@@ -1287,10 +1287,7 @@ mod library_add {
           }
         }
       };
-      let spec = shapelib::ItemSpec {
-        lib: it.lib.libname.clone(),
-        item: it.itemname.as_str().to_owned(),
-      };
+      let spec = ItemSpec::from(it);
       let spec = PiecesSpec {
         pos: Some(pos),
         posd: None, count: Some(1), face: None, pinned: Some(false),
