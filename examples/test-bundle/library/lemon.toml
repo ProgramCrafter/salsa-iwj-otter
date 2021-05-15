@@ -4,8 +4,9 @@
 
 [group.lemon]
 outline = "Circle"
-size = [10]
-orig_size = [400,400]
+size = [14]
+orig_size = [533,533]
+centre = [248, 257]
 
 item_prefix = "example-"
 
