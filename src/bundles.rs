@@ -967,8 +967,13 @@ impl InstanceBundles {
         }
       }
 
+      let new_asset_key = AssetUrlKey::new_random()?;
+
       // Right, everything is at most NEARLY-ASENT, make them ABSENT
       self.bundles.clear();
+
+      // Prevent old, removed, players from accessing any new bundles.
+      ig.asset_url_key = new_asset_key;
 
       Ok::<_,IE>(())
     })()?;
