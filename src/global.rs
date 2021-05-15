@@ -58,6 +58,7 @@ pub struct Instance {
   pub links: Arc<LinksTable>,
   pub bundle_list: MgmtBundleList, // copy for easy access
   pub asset_url_key: AssetUrlKey,
+  pub local_libs: shapelib::Registry,
 }
 
 pub struct PlayerRecord {
@@ -350,6 +351,7 @@ impl Instance {
       links: default(),
       bundle_list: default(),
       asset_url_key: AssetUrlKey::new_random()?,
+      local_libs: default(),
     };
 
     let c = InstanceContainer {
@@ -507,6 +509,7 @@ impl Instance {
       links: default(),
       bundle_list: default(),
       asset_url_key: AssetUrlKey::Dummy,
+      local_libs: default(),
       iplayers: default(),
     }
   }
@@ -1184,6 +1187,7 @@ impl InstanceGuard<'_> {
       tokens_clients: default(),
       tokens_players: default(),
       bundle_list: default(), // set by load_game_bundles
+      local_libs: default(), // set by load_game_bundles
       asset_url_key,
     };
 

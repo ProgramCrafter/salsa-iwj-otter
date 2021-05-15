@@ -703,7 +703,7 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
 //---------- scanning/incorporating/uploading ----------
 
 #[throws(InternalError)]
-fn incorporate_bundle(ib: &mut InstanceBundles, _ig: &mut Instance,
+fn incorporate_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
                  id: Id, parsed: Parsed) {
   let Parsed { meta, libs } = parsed;
 
@@ -718,7 +718,9 @@ fn incorporate_bundle(ib: &mut InstanceBundles, _ig: &mut Instance,
     })
   };
 
-  let _ = libs; // xxx actually incorporate
+  for lib in libs {
+    ig.local_libs.add(lib);
+  }
 
   let state = State::Loaded(Loaded { meta });
   *slot = Some(Note { kind: id.kind, state });
@@ -929,8 +931,7 @@ impl InstanceBundles {
     }
 
     // If we are in UNUSED, become BROKEN
-    // xxx: make shape libs and specs inaccessible to mgmt commands
-    let _ = ();
+    ig.local_libs.clear();
 
     (||{
       // If we are in BROKEN, become WRECKAGE

@@ -353,11 +353,15 @@ impl Registry {
       .entry(data.libname.clone()).or_default()
       .push(data);
   }
+
+  pub fn clear(&mut self) {
+    self.libs.clear()
+  }
 }
 
 pub struct AllRegistries<'ig> {
   global: RwLockReadGuard<'static, Option<Registry>>,
-  #[allow(dead_code)] ig: &'ig Instance,
+  ig: &'ig Instance,
 }
 pub struct AllRegistriesIterator<'i> {
   regs: &'i AllRegistries<'i>,
@@ -370,6 +374,7 @@ impl<'i> Iterator for AllRegistriesIterator<'i> {
     loop {
       let r = match self.count {
         0 => self.regs.global.as_ref(),
+        1 => Some(&self.regs.ig.local_libs),
         _ => return None,
       };
       self.count += 1;
