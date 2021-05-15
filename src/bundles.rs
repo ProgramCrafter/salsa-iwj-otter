@@ -830,13 +830,13 @@ impl Uploading {
   where R: Read, PW: Write
   {
     let mut for_progress = progress::ResponseOriginator::new(for_progress);
-    let mut for_progress: &mut dyn progress::Originator = &mut for_progress;
+    let for_progress: &mut dyn progress::Originator = &mut for_progress;
 
     let Uploading { id, mut file, instance } = self;
     let tmp = id.path_tmp(&instance);
 
     let mut data_reporter = progress::ReadOriginator::new(
-      &mut for_progress, Phase::Upload, size, data);
+      for_progress, Phase::Upload, size, data);
 
     let copied_size = io::copy(&mut data_reporter, &mut file)
       .with_context(|| tmp.clone())

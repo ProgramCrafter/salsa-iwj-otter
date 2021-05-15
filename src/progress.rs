@@ -108,17 +108,17 @@ impl &mut dyn Originator {
   }
 }
 
-pub struct ReadOriginator<'oo,'o,R:Read> {
+pub struct ReadOriginator<'o,R:Read> {
   r: R,
   total_len: usize,
-  orig: &'oo mut &'o mut dyn Originator,
+  orig: &'o mut dyn Originator,
   // state:
   counter: usize,
   last_report: usize,
 }
 
-impl<'oo,'o,R:Read> ReadOriginator<'oo,'o,R> {
-  pub fn new<'p,P>(orig: &'oo mut &'o mut dyn Originator, phase: P,
+impl<'oo,'o,R:Read> ReadOriginator<'o,R> {
+  pub fn new<'p,P>(mut orig: &'o mut dyn Originator, phase: P,
                    total_len: usize, r: R) -> Self
   where P: Into<Count<'p>>
   {
@@ -151,7 +151,7 @@ impl<'oo,'o,R:Read> ReadOriginator<'oo,'o,R> {
   }
 }
 
-impl<R:Read> Read for ReadOriginator<'_,'_,R> {
+impl<R:Read> Read for ReadOriginator<'_,R> {
   #[throws(io::Error)]
   fn read(&mut self, buf: &mut [u8]) -> usize {
     let got = self.r.read(buf)?;
