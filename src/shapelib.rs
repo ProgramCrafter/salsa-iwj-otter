@@ -608,6 +608,7 @@ impl PieceSpec for MultiSpec {
     let item = self.items.get(i).ok_or_else(
       || SpE::InternalError(format!("item {:?} from {:?}", i, &self))
     )?;
+    // xxx dedupe
     let item = format!("{}{}{}", &self.prefix, item, &self.suffix);
     let lib = self.lib.clone();
     ItemSpec { lib, item }.find_load(ig,depth)?.into()
