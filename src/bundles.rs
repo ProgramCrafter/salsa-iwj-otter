@@ -75,7 +75,7 @@ display_as_debug!{LoadError}
 
 pub type ZipArchive = zipfile::read::ZipArchive<BufReader<File>>;
 
-#[derive(Debug,Clone,Serialize,Deserialize)]
+#[derive(Debug)]
 struct Parsed {
   meta: BundleMeta,
 }
