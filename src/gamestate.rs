@@ -331,8 +331,8 @@ impl Timestamp {
 }
 
 #[derive(Error,Debug,Copy,Clone)]
+#[error("position off table")]
 pub struct PosOffTableError<T:Debug> { pub clamped: T }
-display_as_debug!{PosOffTableError<T>, <T:Debug>}
 
 pub trait ClampTable: Sized+Debug {
   fn clamped(self, range: Self) -> Result<Self, PosOffTableError<Self>>;
