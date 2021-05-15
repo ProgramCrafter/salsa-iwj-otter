@@ -103,6 +103,27 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     )
   }
 
+  #[throws(MgmtError)]
+  fn modify_bundles<'ig,F,R>(
+    cs: &mut CommandStreamData,
+    ag: &AccountsGuard,
+    gref: &'ig Unauthorised<InstanceRef, InstanceName>,
+    perms: &[TablePermission],
+    f: &mut F,
+  ) -> (R, Authorisation<InstanceName>)
+  where F: FnMut(
+    &mut InstanceGuard<'ig>,
+    MutexGuard<'ig, InstanceBundles>,
+  ) -> Result<R, MgmtError>
+  {
+    let bundles = gref.lock_bundles();
+    let mut igu = gref.lock()?;
+    let (mut ig, auth) = cs.check_acl(&ag, &mut igu, PCH::Instance, perms)?;
+    let bundles = bundles.by(auth);
+    let r = f(&mut ig, bundles)?;
+    (r, auth)
+  }
+
   let resp = (|| Ok::<_,MgmtError>(match cmd {
     MC::Noop => Fine,
 
@@ -234,13 +255,12 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     MC::UploadBundle { game, size, hash, kind } => {
       let (upload, auth) = {
         let (ag, gref) = start_modify_game(&game)?;
-        let bundles = gref.lock_bundles();
-        let mut igu = gref.lock()?;
-        let (ig, auth) = cs.check_acl(&ag, &mut igu, PCH::Instance,
-                                      &[TP::UploadBundles])?;
-        let mut bundles = bundles.by(auth);
-        let upload = bundles.start_upload(ig, kind)?;
-        (upload, auth)
+        modify_bundles(
+          cs, &ag, &gref, &[TP::UploadBundles],
+          &mut |mut ig, mut bundles: MutexGuard<'_, InstanceBundles>| {
+            bundles.start_upload(&mut ig, kind)
+          }
+        )?
       };
       let uploaded = upload.bulk(bulk_upload, size,
                                  &hash, &mut for_response)?;
