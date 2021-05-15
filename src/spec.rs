@@ -138,6 +138,7 @@ pub enum TablePermission {
   ChangePieces,
   UploadBundles,
   SetLinks,
+  ClearBundles,
   ResetOthersAccess,
   RedeliverOthersAccess,
   ModifyOtherPlayer,

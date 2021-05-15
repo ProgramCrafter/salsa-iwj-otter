@@ -290,6 +290,15 @@ fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       bulk_download = Some(Box::new(f));
       Fine
     }
+    MC::ClearBundles { game } => {
+      let (ag, gref) = start_modify_game(&game)?;
+      modify_bundles(
+        cs, &ag, &gref, &[TP::ClearBundles],
+        &mut |mut ig, mut bundles: MutexGuard<'_, InstanceBundles>| {
+          bundles.clear(&mut ig)
+        })?;
+      Fine
+    }
 
     MC::ListGames { all } => {
       let ag = AccountsGuard::lock();

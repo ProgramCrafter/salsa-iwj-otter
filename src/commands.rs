@@ -37,10 +37,9 @@ pub enum MgmtCommand {
     game: InstanceName,
   },
 
-  /*
   ClearBundles {
     game: InstanceName,
-  },*/
+  },
   UploadBundle {
     game: InstanceName,
     size: usize,
@@ -236,6 +235,7 @@ pub enum MgmtError {
   TooManyBundles,
   BadBundle(String),
   BundleNotFound,
+  BundlesInUse(String),
 }
 impl Display for MgmtError {
   #[throws(fmt::Error)]

@@ -904,6 +904,70 @@ impl InstanceBundles {
   }
 }
 
+//---------- clearing ----------
+
+impl InstanceBundles {
+  #[throws(MgmtError)]
+  pub fn clear(&mut self, ig: &mut Instance) {
+
+    // Check we are not in bundle state USED
+    for (m, ok) in [
+      ( "pieces",            ig.gs.pieces.is_empty()  ),
+      ( "pieces - occults",  ig.gs.occults.is_empty() ),
+      ( "pieces - ipieces",  ig.ipieces.is_empty()    ),
+      ( "piece aliases",     ig.pcaliases.is_empty()  ),
+      ( "pieces - ioccults", ig.ioccults.is_empty()   ),
+    ] {
+      if ! ok { throw!(ME::BundlesInUse(m.to_string())) }
+    }
+
+    // If we are in UNUSED, become BROKEN
+    // xxx: make shape libs and specs inaccessible to mgmt commands
+    let _ = ();
+
+    (||{
+      // If we are in BROKEN, become WRECKAGE
+      let mut to_clean
+        : Vec<(&dyn Fn(&str) -> io::Result<()>, String)>
+        = vec![];
+      for (index, slot) in self.bundles.iter_mut().enumerate() {
+        if_let!{ Some(note) = slot; else continue }
+        let id = Id {
+          index: index.try_into()
+            .map_err(|_e| internal_error_bydebug(&(index, &note)))?,
+          kind: note.kind,
+        };
+        let tmp = id.path_tmp(&ig.name);
+        let install = id.path_(&ig.name);
+        match fs::rename(&install, &tmp) {
+          Err(e) if e.kind() == ErrorKind::NotFound => { }
+          x => x.with_context(|| tmp.clone())
+            .with_context(|| install.clone())
+            .context("rename away")?
+        }
+        note.state = State::Uploading;
+        // These will happen in order, turning each bundle from
+        // WRECKAGE into NEARLY-ABSENT
+        to_clean.push((&|p| fs::remove_dir_all(p), id.path_dir(&ig.name) ));
+        to_clean.push((&|p| fs::remove_file   (p), tmp                   ));
+      }
+
+      // Actually try to clean up WRECKAGE into NEARLY-ABSENT
+      for (f,p) in to_clean {
+        match f(&p) {
+          Err(e) if e.kind() == ErrorKind::NotFound => { }
+          x => x.with_context(|| p.clone()).context("clean up")?
+        }
+      }
+
+      // Right, everything is at most NEARLY-ASENT, make them ABSENT
+      self.bundles.clear();
+
+      Ok::<_,IE>(())
+    })()?;
+  }
+}
+
 #[test]
 fn id_file_parse() {
   let check_y = |s,index,kind| {
