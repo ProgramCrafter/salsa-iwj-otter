@@ -1261,7 +1261,16 @@ mod library_add {
       }
     }
 
-    let items = chan.list_items(args.tlg.lib(), args.tlg.pat())?;
+    let mut items = chan.list_items(args.tlg.lib(), args.tlg.pat())?;
+
+    fn k(ied: &ItemEnquiryData) -> (&str, &GoodItemName) { (
+      &ied.lib.libname,
+      &ied.itemname,
+    ) }
+    items.sort_by(|a,b| Ord::cmp( &k(a), &k(b) ));
+    items.reverse();
+    items.dedup_by(|a,b| PartialEq::eq( &k(a), &k(b) ));
+    items.reverse();
 
     let mut exitcode = 0;
     let mut insns = vec![];
