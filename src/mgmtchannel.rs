@@ -35,8 +35,8 @@ impl From<rmp_serde::encode::Error> for MgmtChannelWriteError {
 }
 
 pub struct MgmtChannel {
-  pub read:  FrameReader<BufReader<Box<dyn Read >>>,
-  pub write: FrameWriter<BufWriter<Box<dyn Write>>>,
+  pub read:  FrameReader<Box<dyn Read >>,
+  pub write: FrameWriter<Box<dyn Write>>,
 }
 
 impl Debug for MgmtChannel{ 
@@ -60,10 +60,8 @@ impl MgmtChannel {
   pub fn new<U: IoTryClone + Read + Write + 'static>(conn: U) -> MgmtChannel {
     let read = conn.try_clone().context("dup the command stream")?;
     let read = Box::new(read) as Box<dyn Read>;
-    let read = BufReader::new(read);
     let read = FrameReader::new(read);
     let write = Box::new(conn) as Box<dyn Write>;
-    let write = BufWriter::new(write);
     let write = FrameWriter::new(write);
     MgmtChannel { read, write }
   }
