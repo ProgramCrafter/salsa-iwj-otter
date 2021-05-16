@@ -144,6 +144,10 @@ impl<RW> Fuse<RW> {
     }
     r?
   }
+
+  pub fn get_even_broken(&self) -> &RW {
+    self.inner.as_ref().unwrap_or_else(|e| e.inner.as_ref().unwrap())
+  }
 }
 
 impl<R:Read> Read for Fuse<R> {
