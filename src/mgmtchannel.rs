@@ -122,6 +122,10 @@ impl MgmtChannel {
     self.cmd_withbulk(cmd, &mut io::empty(), &mut io::sink(), &mut |_|Ok(()))?
   }
 
+  pub fn read_inner_mut(&mut self) -> &mut TimedFdReader {
+    self.read.inner_mut()
+  }
+
   pub fn for_game(self, game: InstanceName, how: MgmtGameUpdateMode)
                   -> MgmtChannelForGame {
     MgmtChannelForGame {

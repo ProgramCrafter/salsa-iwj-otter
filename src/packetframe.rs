@@ -151,8 +151,11 @@ impl<RW> Fuse<RW> {
     r?
   }
 
-  pub fn get_even_broken(&self) -> &RW {
+  pub fn inner_even_broken(&self) -> &RW {
     self.inner.as_ref().unwrap_or_else(|e| e.inner.as_ref().unwrap())
+  }
+  pub fn inner_even_broken_mut(&mut self) -> &mut RW {
+    self.inner.as_mut().unwrap_or_else(|e| e.inner.as_mut().unwrap())
   }
 }
 
@@ -303,6 +306,14 @@ impl<R:Read> FrameReader<R> {
   {
     self.read_withbulk()?.0
   }
+
+pub fn inner    (&    self)->&    R{ self.inner.get_ref().inner_even_broken() }
+pub fn inner_mut(&mut self)->&mut R{ self.inner.get_mut().inner_even_broken_mut() }
+}
+
+impl<'r,R:Read> ReadFrame<'r,R> {
+  pub fn inner    (&    self) -> &    R { self.fr.inner()     }
+  pub fn inner_mut(&mut self) -> &mut R { self.fr.inner_mut() }
 }
 
 #[ext(pub, name=ReadExt)]
