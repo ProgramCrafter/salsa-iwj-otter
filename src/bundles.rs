@@ -817,6 +817,7 @@ impl InstanceBundles {
   #[throws(MgmtError)]
   pub fn start_upload(&mut self, ig: &mut Instance, kind: Kind)
                       -> Uploading {
+    // todo: if bundle hash is here already, simply promote it
     let state = State::Uploading;
     let slot = Some(Note { kind, state });
     let index = self.bundles.len();
