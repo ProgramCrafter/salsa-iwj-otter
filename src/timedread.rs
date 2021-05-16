@@ -69,9 +69,9 @@ impl TimedFdReader {
     self.deadline = deadline;
   }
   pub fn set_timeout(&mut self, timeout: Option<Duration>) {
-    self.deadline = timeout.map(|timeout|{
+    self.set_deadline(timeout.map(|timeout|{
       Instant::now() + timeout
-    });
+    }));
   }
 }
 
