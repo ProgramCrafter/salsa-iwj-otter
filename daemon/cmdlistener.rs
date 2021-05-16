@@ -13,6 +13,9 @@ use authproofs::*;
 
 // ---------- newtypes, type aliases, basic definitions ----------
 
+pub const IDLE_TIMEOUT:   Duration = Duration::from_secs(60);
+pub const UPLOAD_TIMEOUT: Duration = Duration::from_secs(60);
+
 use pwd::Passwd;
 use std::os::unix::io::AsRawFd;
 use std::os::unix::net::UnixListener;
@@ -262,6 +265,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
           }
         )?
       };
+      bulk_upload.inner_mut().set_timeout(Some(UPLOAD_TIMEOUT));
       let uploaded = upload.bulk(bulk_upload, size,
                                  &hash, &mut for_response)?;
       {
@@ -1350,12 +1354,21 @@ impl CommandStream<'_> {
   pub fn mainloop(mut self) {
     loop {
       use MgmtChannelReadError::*;
-      match self.chan.read.read_withbulk::<MgmtCommand>() {
+      match {
+        self.chan.read.inner_mut().set_timeout(Some(IDLE_TIMEOUT));
+        let r = self.chan.read.read_withbulk::<MgmtCommand>();
+        r
+      } {
         Ok((cmd, mut rbulk)) => {
           execute_and_respond(&mut self.d, cmd, &mut rbulk,
                               &mut self.chan.write)?;
         },
         Err(EOF) => break,
+        Err(IO(e)) if e.kind() == ErrorKind::TimedOut => {
+          info!("{}: idle timeout reading command stream", &self.d.desc);
+          self.write_error(ME::IdleTimeout)?;
+          break;
+        }
         Err(IO(e)) => Err(e).context("read command stream")?,
         Err(Parse(s)) => self.write_error(ME::CommandParseFailed(s))?,
       }

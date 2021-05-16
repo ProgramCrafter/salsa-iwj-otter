@@ -868,7 +868,10 @@ impl Uploading {
     let mut data_reporter = progress::ReadOriginator::new(
       for_progress, Phase::Upload, size, data);
 
-    let copied_size = io::copy(&mut data_reporter, &mut file)
+    let copied_size = match io::copy(&mut data_reporter, &mut file) {
+      Err(e) if e.kind() == ErrorKind::TimedOut => throw!(ME::UploadTimeout),
+      x => x,
+    }
       .with_context(|| tmp.clone())
       .context("copy").map_err(IE::from)?;
 

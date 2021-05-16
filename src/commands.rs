@@ -242,6 +242,8 @@ pub enum MgmtError {
   #[error("bad bundle: {0}")]                        BadBundle(String),
   #[error("bundle not found")]                       BundleNotFound,
   #[error("bundle(s) in use, cannot clear ({0})")]   BundlesInUse(String),
+  #[error("idle timeout waiting for mgmt command")]  IdleTimeout,
+  #[error("upload took too long (timed out)")]       UploadTimeout,
 }
 
 impl From<InternalError> for MgmtError {
