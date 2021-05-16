@@ -762,23 +762,37 @@ impl InstanceBundles {
   }
 
   #[throws(IE)]
-  pub fn reload_game_bundles(ig: &mut Instance) -> Self {
-    let bd = b_dir(&ig.name);
+  fn scan_game_bundles(instance: &InstanceName)
+                       -> impl Iterator<Item=Result<
+      (String, Result<BundleSavefile, NotBundle>),
+      IE
+      >>
+  {
+    let bd = b_dir(&instance);
     let mo = glob::MatchOptions {
       require_literal_leading_dot: true,
       ..default()
     };
-    let mut ib = InstanceBundles::new();
-    for fpath in
-      glob::glob_with(&format!("{}/*", bd), mo)
+    
+    glob::glob_with(&format!("{}/*", bd), mo)
       .context("pattern for bundle glob")?
-    {
-      let fpath = fpath.context("bundle glob")?;
-      let fpath = fpath
-        .to_str().ok_or_else(|| anyhow!("glob unicode conversion"))?;
+      .map(|fpath|{
+        let fpath = fpath.context("bundle glob")?;
+        let fpath = fpath
+          .to_str().ok_or_else(|| anyhow!("glob unicode conversion"))?;
+        let fleaf = fpath.rsplitn(2, '/').next().unwrap();
+        let parsed: Result<BundleSavefile, NotBundle> = fleaf.parse();
+        Ok::<_,IE>((fpath.to_owned(), parsed))
+      })
+  }
 
-      let fleaf = fpath.rsplitn(2, '/').next().unwrap();
-      let parsed: BundleSavefile = match fleaf.parse() {
+  #[throws(IE)]
+  pub fn reload_game_bundles(ig: &mut Instance) -> Self {
+    let mut ib = InstanceBundles::new();
+
+    for entry in InstanceBundles::scan_game_bundles(&ig.name)? {
+      let (fpath, parsed) = entry?;
+      let parsed: BundleSavefile = match parsed {
         Ok(y) => y,
         Err(NotBundle(why)) => {
           debug!("bundle file {:?} skippping {}", &fpath, why);
@@ -794,11 +808,11 @@ impl InstanceBundles {
       if_let!{ BundleSavefile::Bundle(id) = parsed;
                else continue; }
 
-      let file = File::open(fpath)
-        .with_context(|| fpath.to_owned()).context("open zipfile")
+      let file = File::open(&fpath)
+        .with_context(|| fpath.clone()).context("open zipfile")
         .map_err(IE::from)?;
 
-      let eh = BundleParseReload { bpath: fpath };
+      let eh = BundleParseReload { bpath: &fpath };
       let (_za, parsed) = match parse_bundle(id, &ig.name, file, eh, &mut ()) {
         Ok(y) => y,
         Err(e) => {
