@@ -1356,12 +1356,15 @@ impl CommandStream<'_> {
         },
         Err(EOF) => break,
         Err(IO(e)) => Err(e).context("read command stream")?,
-        Err(Parse(s)) => {
-          let resp = MgmtResponse::Error { error: ME::CommandParseFailed(s) };
-          self.chan.write.write(&resp).context("swrite command stream")?;
-        }
+        Err(Parse(s)) => self.write_error(ME::CommandParseFailed(s))?,
       }
     }
+  }
+
+  #[throws(CSE)]
+  pub fn write_error(&mut self, error: MgmtError) {
+    let resp = MgmtResponse::Error { error };
+    self.chan.write.write(&resp).context("swrite error to command stream")?;
   }
 }
 
