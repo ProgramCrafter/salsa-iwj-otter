@@ -2267,6 +2267,7 @@ dependencies = [
  "lazy_static",
  "libc",
  "log 0.4.14",
+ "mio 0.7.11",
  "nix",
  "num",
  "num-derive",

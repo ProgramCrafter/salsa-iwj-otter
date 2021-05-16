@@ -36,7 +36,7 @@ pub use std::num::{NonZeroUsize, TryFromIntError, Wrapping};
 pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
 pub use std::os::unix;
 pub use std::os::unix::ffi::OsStrExt;
-pub use std::os::unix::io::IntoRawFd;
+pub use std::os::unix::io::{AsRawFd, IntoRawFd, RawFd};
 pub use std::os::unix::net::UnixStream;
 pub use std::os::unix::process::{CommandExt, ExitStatusExt};
 pub use std::path::PathBuf;
