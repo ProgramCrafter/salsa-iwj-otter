@@ -436,7 +436,8 @@ impl Instance {
       InstanceGuard::forget_all_tokens(&mut g.g.tokens_clients);
       InstanceGuard::forget_all_tokens(&mut g.g.tokens_players);
 
-      // xxx truncate bundles, part of ClearBundles too!
+      InstanceBundles::truncate_all_besteffort(&g.g.name);
+
       fn best_effort<F>(rm: F, path: &str, desc: &str)
       where F: FnOnce(&str) -> Result<(), io::Error>
       {

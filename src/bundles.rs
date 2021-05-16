@@ -933,6 +933,33 @@ impl InstanceBundles {
 //---------- clearing ----------
 
 impl InstanceBundles {
+  pub fn truncate_all_besteffort(instance: &InstanceName) {
+    if_let!{
+      Ok(bundles) = InstanceBundles::scan_game_bundles(instance);
+      match Err(e) => {
+        error!("failed to scan game bundles for {}: {}", instance, e);
+        return;
+      }
+    };
+    for entry in bundles {
+      if_let!{
+        Ok((fpath,_what)) = entry;
+        match Err(e) => {
+          error!("failed to make sense of a pathname for {}: {}", instance, e);
+          continue;
+        }
+      };
+      if_let!{
+        Ok(_) = File::create(&fpath);
+        match Err(e) => {
+          warn!("failed to truncate a bundle for {}: {}: {}",
+                instance, fpath, e);
+          continue;
+        }
+      }
+    }
+  }
+
   #[throws(MgmtError)]
   pub fn clear(&mut self, ig: &mut Instance) {
 
@@ -983,6 +1010,8 @@ impl InstanceBundles {
         to_clean.push((&|p| fs::remove_dir_all(p), id.path_dir(&ig.name) ));
         to_clean.push((&|p| fs::remove_file   (p), tmp                   ));
       }
+
+      InstanceBundles::truncate_all_besteffort(&ig.name);
 
       // Actually try to clean up WRECKAGE into NEARLY-ABSENT
       for (f,p) in to_clean {
