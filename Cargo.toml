@@ -85,7 +85,7 @@ zip="0.5"
 enum-map     = { version="1"    , features=["serde"       ] }
 flexi_logger = { version="0.17" , features=["specfile"    ] }
 index_vec    = { version="0.1.1", features=["serde"       ] }
-mio          = { version="0.7",   features=["os-ext"      ] }
+mio          = { version="0.7",   features=["os-ext", "os-poll" ] }
 serde        = { version="1"    , features=["derive", "rc"] }
 strum        = { version="0.20" , features=["derive"      ] }
 
