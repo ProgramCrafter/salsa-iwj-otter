@@ -32,13 +32,19 @@ type BO = BigEndian;
 pub struct SenderError;
 
 #[derive(Debug)]
-pub struct Fuse<RW>{ inner: Result<RW, Broken> }
+pub struct Fuse<RW>{ inner: Result<RW, BrokenFuse<RW>> }
 
 /// An error saved by `Fuse` so it can be repeatedly returned.
 #[derive(Clone,Error,Debug)]
 pub struct Broken {
   msg: String,
   kind: io::ErrorKind,
+}
+
+#[derive(Debug)]
+pub struct BrokenFuse<RW> {
+  inner: Option<RW>, // always Some unless we panic crazily
+  error: Broken,
 }
 
 // ---------- read ----------
@@ -114,7 +120,7 @@ impl<RW> Fuse<RW> {
 
   #[throws(io::Error)]
   pub fn get(&mut self) -> &mut RW {
-    self.inner.as_mut().map_err(|broken| broken.clone())?
+    self.inner.as_mut().map_err(|broken| broken.error.clone())?
   }
 
   #[throws(io::Error)]
@@ -124,10 +130,17 @@ impl<RW> Fuse<RW> {
     let inner = self.get()?;
     let r = f(inner);
     if let Err(e) = &r {
-      self.inner = Err(Broken {
+      let error = Broken {
         msg: e.to_string(),
         kind: e.kind(),
-      });
+      };
+      let inner = mem::replace(&mut self.inner, Err(BrokenFuse {
+        inner: None,
+        error,
+      }));
+      self.inner.as_mut().map(|_|()).unwrap_err().inner = Some(
+        inner.map_err(|e| e.error).unwrap()
+      );
     }
     r?
   }
