@@ -291,7 +291,7 @@ impl<R:Read> FrameReader<R> {
   }
 
   #[throws(MgmtChannelReadError)]
-  pub fn read_withbulk<'c,T>(&'c mut self) -> (T, ReadFrame<impl Read + 'c>)
+  pub fn read_withbulk<'c,T>(&'c mut self) -> (T, ReadFrame<'c,R>)
   where T: DeserializeOwned + Debug
   {
     let mut f = self.new_frame()?.ok_or(MgmtChannelReadError::EOF)?;

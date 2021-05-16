@@ -74,11 +74,11 @@ pub const TP_ACCESS_BUNDLES: &[TP] = &[
 // ---------- management command implementations
 
 //#[throws(CSE)]
-fn execute_and_respond<R,W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
-                            bulk_upload: ReadFrame<R>,
-                            for_response: &mut FrameWriter<W>)
-                            -> Result<(), CSE>
-  where R: Read, W: Write
+fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
+                          bulk_upload: &mut ReadFrame<TimedFdReader>,
+                          for_response: &mut FrameWriter<W>)
+                          -> Result<(), CSE>
+  where W: Write
 {
   let mut bulk_download: Option<Box<dyn Read>> = None;
   let mut for_response = for_response
@@ -1351,8 +1351,9 @@ impl CommandStream<'_> {
     loop {
       use MgmtChannelReadError::*;
       match self.chan.read.read_withbulk::<MgmtCommand>() {
-        Ok((cmd, rbulk)) => {
-          execute_and_respond(&mut self.d, cmd, rbulk, &mut self.chan.write)?;
+        Ok((cmd, mut rbulk)) => {
+          execute_and_respond(&mut self.d, cmd, &mut rbulk,
+                              &mut self.chan.write)?;
         },
         Err(EOF) => break,
         Err(IO(e)) => Err(e).context("read command stream")?,
