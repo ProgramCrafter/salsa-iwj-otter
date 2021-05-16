@@ -44,6 +44,11 @@ impl nix::Error {
 }
 
 impl TimedFdReader {
+  #[throws(io::Error)]
+  pub fn new<F>(fd: F) -> TimedFdReader where F: IntoRawFd {
+    Self::from_fd( Fd::from_raw_fd( fd.into_raw_fd() ))?
+  }
+
   /// Takes ownership of the fd
   #[throws(io::Error)]
   pub fn from_fd(fd: Fd) -> Self {
@@ -58,6 +63,15 @@ impl TimedFdReader {
     )?;
     let events = mio::event::Events::with_capacity(1);
     TimedFdReader { fd, poll, events, deadline: None }
+  }
+
+  pub fn set_deadline(&mut self, deadline: Option<Instant>) {
+    self.deadline = deadline;
+  }
+  pub fn set_timeout(&mut self, timeout: Option<Duration>) {
+    self.deadline = timeout.map(|timeout|{
+      Instant::now() + timeout
+    });
   }
 }
 
