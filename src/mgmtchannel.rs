@@ -88,6 +88,7 @@ impl MgmtChannel {
       resp = (&mut rbulk).read_rmp()?;
       progress.report(&pi);
     }
+    progress.clear();
     match &resp {
       Progress(_) => panic!(),
       Fine | AccountsList{..} | GamesList{..} |
