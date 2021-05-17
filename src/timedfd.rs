@@ -61,12 +61,17 @@ impl nix::Error {
 }
 
 impl<RW> TimedFd<RW> where RW: TimedFdReadWrite {
+  /// Takes ownership of the fd
+  ///
+  /// Will change the fd's open-file to nonblocking.
   #[throws(io::Error)]
   pub fn new<F>(fd: F) -> TimedFd<RW> where F: IntoRawFd {
     Self::from_fd( Fd::from_raw_fd( fd.into_raw_fd() ))?
   }
 
   /// Takes ownership of the fd
+  ///
+  /// Will change the fd's open-file to nonblocking.
   #[throws(io::Error)]
   fn from_fd(fd: Fd) -> Self {
     fcntl(fd.as_raw_fd(), FcntlArg::F_SETFL(OFlag::O_NONBLOCK))
