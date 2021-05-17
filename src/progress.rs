@@ -155,14 +155,10 @@ impl<R:Read> Read for ReadOriginator<'_,R> {
   #[throws(io::Error)]
   fn read(&mut self, buf: &mut [u8]) -> usize {
     let got = self.r.read(buf)?;
- if false {
- // todo: this has a potential deadlock unless the client is concurrent
- // todo: which it currently isn't, so disable it
     self.counter += got;
     if self.counter - self.last_report > 10000 {
       self.report();
     }
- }
     got
   }
 }
