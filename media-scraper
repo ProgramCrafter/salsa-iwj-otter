@@ -240,6 +240,7 @@ foreach my $groupname (sort keys %$groups) {
       my ($linput, $lprocessed) = @_;
       print $makefile <<END or die $!;
 LIBRARY_FILES += $lprocessed
+LIBRARY_FILE_INPUTS += $lprocessed:$linput
 $lprocessed: $linput $licpath $input
 	\$(LIBRARY_PROCESS_SVG)
 END
