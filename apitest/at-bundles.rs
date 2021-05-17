@@ -4,13 +4,7 @@
 
 use crate::*;
 
-type Setup = Rc<RefCell<SetupCore>>;
-
-#[allow(dead_code)]
-struct Ctx {
-  opts: Opts,
-  su_rc: Setup,
-}
+type Ctx = UsualCtx;
 
 impl Ctx {
 }
@@ -21,10 +15,5 @@ fn tests(_c: Ctx) {
 
 #[throws(Explode)]
 pub fn main() {
-  let (opts, _instance, su) = setup_core(
-    &[module_path!()],
-  )?;
-
-  let su_rc = Rc::new(RefCell::new(su));
-  tests(Ctx { opts, su_rc })?;
+  tests(Ctx::setup()?)?;
 }
