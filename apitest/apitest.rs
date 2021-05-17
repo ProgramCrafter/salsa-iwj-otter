@@ -1075,4 +1075,5 @@ pub fn portmanteau_main(prefix: &str){
     .expect("unrecognosed {wdt,at}-* portanteau member");
 
   f()?;
+  info!("ok");
 }
