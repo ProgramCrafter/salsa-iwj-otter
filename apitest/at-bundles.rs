@@ -19,15 +19,15 @@ impl Ctx {
     assert_eq!( added.len(), 1 );
 
     let output: String = self.otter(&ds.ss("list-pieces @table@")?)?.into();
-    assert!( Regex::new(
+    assert_eq!( Regex::new(
       &format!(
         r#"(?m)(?:[^\w-]|^){}[^\w-].*\W{}(?:\W|$)"#,
         item, desc,
       )
     )?
-             .find(&output)
-             .is_some(),
-             "got: {}", &output);
+                .find_iter(&output).count(),
+                1,
+                "got: {}", &output);
   }
 
   #[throws(Explode)]
