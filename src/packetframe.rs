@@ -129,7 +129,12 @@ impl<RW> Fuse<RW> {
   {
     let inner = self.get()?;
     let r = f(inner);
-    if let Err(e) = &r {
+    // These are often retried, or treated specially, by higher
+    // layers.  EWOULDBLOCK can generally only occur as an actual
+    // error if the fd is wrongly made nonblocking.
+    if let Err(e) = r {
+      if e.kind() ==  ErrorKind::Interrupted ||
+         e.kind() ==  ErrorKind::WouldBlock { throw!(e) }
       let error = Broken {
         msg: e.to_string(),
         kind: e.kind(),
@@ -141,6 +146,7 @@ impl<RW> Fuse<RW> {
       self.inner.as_mut().map(|_|()).unwrap_err().inner = Some(
         inner.map_err(|e| e.error).unwrap()
       );
+      throw!(e);
     }
     r?
   }
