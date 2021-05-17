@@ -145,7 +145,7 @@ impl<'oo,'o,R:Read> ReadOriginator<'o,R> {
         .chars().rev()
         .collect::<String>()
     };
-    let desc = format!(" {} / {}", m(c), m(t));
+    let desc = format!(" {} of {}", m(c), m(t));
     self.orig.item(self.counter, desc);
     self.last_report = self.counter;
   }
