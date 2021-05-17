@@ -331,7 +331,8 @@ examples/%.zip: $(MAKEFILE_DEP)
 	zip $(ZIPFLAGS) -DXy ../$(notdir $@).tmp $(ZIP_INPUTS)
 	mv -f $@.tmp $@
 
-examples/test-bundle.zip: ZIP_INPUTS=$(EXAMPLE_BUNDLE_INPUT_DEPS) \
+examples/test-bundle.zip: ZIP_INPUTS=$(EXAMPLE_BUNDLE_INPUT_DEPS)
+examples/test-bundle.zip: \
  $(addprefix examples/test-bundle/, $(EXAMPLE_BUNDLE_INPUT_DEPS))
 
 examples/big-bundle.zip: examples/big-bundle/otter.toml
