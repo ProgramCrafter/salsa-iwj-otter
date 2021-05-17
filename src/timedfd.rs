@@ -25,10 +25,15 @@ pub trait TimedFdReadWrite {
 }
 
 pub type TimedFdReader = TimedFd<TimedFdRead>;
+pub type TimedFdWriter = TimedFd<TimedFdWrite>;
 
 #[derive(Debug,Copy,Clone)] pub struct TimedFdRead;
 impl TimedFdReadWrite for TimedFdRead {
   const INTEREST : mio::Interest = mio::Interest::READABLE;
+}
+#[derive(Debug,Copy,Clone)] pub struct TimedFdWrite;
+impl TimedFdReadWrite for TimedFdWrite {
+  const INTEREST : mio::Interest = mio::Interest::WRITABLE;
 }
 
 pub struct Fd(RawFd);
@@ -125,6 +130,16 @@ impl Read for TimedFd<TimedFdRead> {
   #[throws(io::Error)]
   fn read(&mut self, buf: &mut [u8]) -> usize {
     self.rw(|fd| unistd::read(fd, buf))?
+  }
+}
+
+impl Write for TimedFd<TimedFdWrite> {
+  #[throws(io::Error)]
+  fn write(&mut self, buf: &[u8]) -> usize {
+    self.rw(|fd| unistd::write(fd, buf))?
+  }
+  #[throws(io::Error)]
+  fn flush(&mut self) {
   }
 }
 
