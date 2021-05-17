@@ -409,6 +409,7 @@ deploy: for-deploy bundled-sources assets libraries
 clean-for-retest:
 	rm -f templates/script.js library/*/*.usvg stamp/*
 	rm -rf $(LIBRARY_CLEAN)
+	rm -f examples/test-bundle.zip
 	find * -name '*~' -print0 | xargs -0r rm --
 
 clean: clean-nailing clean-for-retest
