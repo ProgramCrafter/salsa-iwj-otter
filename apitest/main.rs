@@ -494,6 +494,11 @@ impl UsualCtx {
   }
 
   #[throws(Explode)]
+  pub fn prepare_game(&mut self) {
+    prepare_game(&self.su().ds, &self.prctx, TABLE)?;
+  }
+
+  #[throws(Explode)]
   fn some_library_add(&mut self, command: &[String]) -> Vec<String> {
     let add_err = self.otter(command)
       .expect_err("library-add succeeded after reset!");

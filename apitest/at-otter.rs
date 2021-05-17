@@ -9,7 +9,7 @@ type Ctx = UsualCtx;
 impl Ctx {
   #[throws(Explode)]
   fn library_load(&mut self) {
-    prepare_game(&self.su().ds, &self.prctx, TABLE)?;
+    self.prepare_game()?;
 
     let command = self.su().ds.ss(
       "library-list @table@ chess-yellow-?"
@@ -29,7 +29,7 @@ impl Ctx {
 
   #[throws(Explode)]
   fn hidden_hand(&mut self) {
-    prepare_game(&self.su().ds, &default(), TABLE)?;
+    self.prepare_game()?;
     let mut alice = self.connect_player(&self.alice)?;
     let mut bob = self.connect_player(&self.bob)?;
     self.su_mut().mgmt_conn().fakerng_load(&[&"1",&"0"])?;
@@ -185,8 +185,8 @@ impl Ctx {
   #[throws(Explode)]
   fn put_back(&mut self) {
     // Put things back for the ad-hoc human tester
+    self.prepare_game()?;
     let su = self.su();
-    prepare_game(&su.ds, &self.prctx, TABLE)?;
     su.ds.setup_static_users(&mut *su.mgmt_conn.borrow_mut(), default())?;
   }
 
