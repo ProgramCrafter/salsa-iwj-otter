@@ -11,6 +11,7 @@ type Col = usize;
 
 pub trait Reporter {
   fn report(&mut self, pi: &ProgressInfo<'_>);
+  fn clear(&mut self);
 }
 
 pub struct NullReporter;
@@ -18,6 +19,7 @@ pub struct NullReporter;
 #[allow(unused_variables)]
 impl Reporter for NullReporter {
   fn report(&mut self, pi: &ProgressInfo<'_>) { }
+  fn clear(&mut self) { }
 }
 
 pub fn new() -> Box<dyn Reporter> {
@@ -99,6 +101,11 @@ impl Reporter for TermReporter {
     }
     self.term.flush().unwrap_or(());
   }
+
+  fn clear(&mut self) {
+    self.clear_line();
+    self.term.flush().unwrap_or(());
+  }
 }
 
 impl TermReporter {
@@ -149,7 +156,6 @@ impl TermReporter {
 
 impl Drop for TermReporter {
   fn drop(&mut self) {
-    self.clear_line();
-    self.term.flush().unwrap_or(());
+    self.clear();
   }
 }
