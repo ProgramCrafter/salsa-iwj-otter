@@ -58,7 +58,7 @@ impl MgmtChannel {
 
   #[throws(AE)]
   pub fn new<U>(conn: U) -> MgmtChannel
-  where U: IoTryClone + Read + Write + IntoRawFd + 'static,
+  where U: IoTryClone + Read + Write + IntoRawFd + Send + 'static,
   {
     let read = conn.try_clone().context("dup the command stream")?;
     let read = TimedFdReader::new(read).context("set up timed reader")?;
@@ -73,7 +73,7 @@ impl MgmtChannel {
                            up: &mut U, down: &mut D,
                            progress: &mut dyn termprogress::Reporter)
                            -> MgmtResponse
-  where U: Read, D: Write,
+  where U: Read + Send, D: Write,
   {
     use MgmtResponse::*;
     let mut wbulk = self.write
