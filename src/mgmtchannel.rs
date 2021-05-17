@@ -47,6 +47,8 @@ impl Debug for MgmtChannel{
 }
 
 impl MgmtChannel {
+  pub const PROGRESS: ProgressUpdateMode = PUM::Simplex;
+
   #[throws(AE)]
   pub fn connect(socket_path: &str) -> MgmtChannel {
     let unix = UnixStream::connect(socket_path)

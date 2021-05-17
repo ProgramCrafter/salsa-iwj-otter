@@ -1398,7 +1398,7 @@ mod upload_bundle {
       size,
       game: instance_name.clone(),
       hash: bundles::Hash(hash.into()), kind,
-      progress: PUM::Simplex,
+      progress: MgmtChannel::PROGRESS,
     };
     let mut progress = termprogress::new();
     chan.cmd_withbulk(&cmd, &mut f, &mut io::sink(), &mut *progress)?;
