@@ -875,13 +875,16 @@ impl Uploading {
   where R: Read, PW: Write
   {
     let mut for_progress = progress::ResponseOriginator::new(for_progress);
-    let for_progress: &mut dyn progress::Originator = &mut for_progress;
 
     let Uploading { id, mut file, instance } = self;
     let tmp = id.path_tmp(&instance);
 
+    let mut null_progress = ();
+    let for_progress_upload: &mut dyn progress::Originator =
+      if false { &mut for_progress } else { &mut null_progress };
+    
     let mut data_reporter = progress::ReadOriginator::new(
-      for_progress, Phase::Upload, size, data);
+      for_progress_upload, Phase::Upload, size, data);
 
     let copied_size = match io::copy(&mut data_reporter, &mut file) {
       Err(e) if e.kind() == ErrorKind::TimedOut => throw!(ME::UploadTimeout),
@@ -901,9 +904,9 @@ impl Uploading {
     file.rewind().context("rewind"). map_err(IE::from)?;
 
     let (za, parsed) = parse_bundle(id, &instance, file, BundleParseUpload,
-                                    for_progress)?;
+                                    &mut for_progress)?;
 
-    process_bundle(za, id, &*instance, for_progress)?;
+    process_bundle(za, id, &*instance, &mut for_progress)?;
 
     Uploaded { id, parsed }
   }
