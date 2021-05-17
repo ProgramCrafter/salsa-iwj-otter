@@ -12,6 +12,9 @@ struct Ctx {
   su_rc: Setup,
 }
 
+impl Ctx {
+}
+
 #[throws(Explode)]
 fn tests(_c: Ctx) {
 }
