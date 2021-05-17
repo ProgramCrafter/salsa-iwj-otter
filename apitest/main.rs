@@ -494,7 +494,12 @@ impl UsualCtx {
   }
 
   #[throws(Explode)]
-  fn place_library_load_markers(&mut self) -> Session {
+  fn some_library_add(&mut self, command: &[String]) -> Vec<String> {
+    let add_err = self.otter(command)
+      .expect_err("library-add succeeded after reset!");
+    assert_eq!(add_err.downcast::<ExitStatusError>()?.0.code(),
+               Some(EXIT_NOTFOUND));
+
     let mut session = self.connect_player(&self.alice)?;
     let pieces = session.pieces::<PIA>()?;
     let llm = pieces.into_iter()
@@ -509,17 +514,6 @@ impl UsualCtx {
     }
 
     session.synch()?;
-    session
-  }
-
-  #[throws(Explode)]
-  fn some_library_add(&mut self, command: &[String]) -> Vec<String> {
-    let add_err = self.otter(command)
-      .expect_err("library-add succeeded after reset!");
-    assert_eq!(add_err.downcast::<ExitStatusError>()?.0.code(),
-               Some(EXIT_NOTFOUND));
-
-    let mut session = self.place_library_load_markers()?;
 
     self.otter(&command)
       .expect("library-add failed after place!");
