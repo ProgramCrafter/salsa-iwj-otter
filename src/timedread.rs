@@ -97,7 +97,13 @@ impl Read for TimedFdReader {
       } else {
         None
       };
-      self.poll.poll(&mut self.events, timeout)?;
+      loop {
+        match self.poll.poll(&mut self.events, timeout) {
+          Err(e) if e.kind() == ErrorKind::Interrupted => continue,
+          Err(e) => throw!(e),
+          Ok(()) => break,
+        }
+      }
       if self.events.is_empty() { throw!(io::ErrorKind::TimedOut) }
     }
   }
