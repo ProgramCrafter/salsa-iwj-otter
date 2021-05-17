@@ -35,8 +35,8 @@ impl From<rmp_serde::encode::Error> for MgmtChannelWriteError {
 }
 
 pub struct MgmtChannel {
-  pub read:  FrameReader<Box<dyn Read >>,
-  pub write: FrameWriter<Box<dyn Write>>,
+  pub read:  FrameReader<TimedFdReader>,
+  pub write: FrameWriter<TimedFdWriter>,
 }
 
 impl Debug for MgmtChannel{ 
@@ -57,11 +57,13 @@ impl MgmtChannel {
   }
 
   #[throws(AE)]
-  pub fn new<U: IoTryClone + Read + Write + 'static>(conn: U) -> MgmtChannel {
+  pub fn new<U>(conn: U) -> MgmtChannel
+  where U: IoTryClone + Read + Write + IntoRawFd + 'static,
+  {
     let read = conn.try_clone().context("dup the command stream")?;
-    let read = Box::new(read) as Box<dyn Read>;
+    let read = TimedFdReader::new(read).context("set up timed reader")?;
     let read = FrameReader::new(read);
-    let write = Box::new(conn) as Box<dyn Write>;
+    let write = TimedFdWriter::new(conn).context("set up timed writerr")?;
     let write = FrameWriter::new(write);
     MgmtChannel { read, write }
   }
