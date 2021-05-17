@@ -460,6 +460,7 @@ impl<'c,W:Write> ResponseWriter<'c,W> {
   pub fn progress(&mut self, pi: ProgressInfo<'_>) {
     let resp = crate::commands::MgmtResponse::Progress(pi.into_owned());
     rmp_serde::encode::write_named(&mut self.f, &resp)?;
+    self.f.flush()?;
   }
 }
 
