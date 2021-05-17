@@ -383,7 +383,7 @@ WDT_DEPS =	$(RUNTEST_DEPS) \
 
 AT_WDT_RUN = $(NAILING_CARGO_JUST_RUN) $(abspath $<)
 
-AT_RUN = $(AT_WDT_RUN) $(basename $(notdir $@))
+AT_RUN = $(AT_WDT_RUN) apitest --test=$(basename $(notdir $@))
 WDT_RUN = $(AT_WDT_RUN) wdriver --test=$(basename $(notdir $@))
 
 for-at:			$(AT_DEPS)

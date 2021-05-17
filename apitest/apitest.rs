@@ -1051,7 +1051,9 @@ pub fn portmanteau_main(prefix: &str){
         s
       } else {
         let s = s.strip_prefix("--test=")
-          .expect("found non-long-option looking for --test={wdt,at}-*");
+          .expect(&format!(
+            "found non-long-option looking for --test={}-*: {:?}",
+            prefix, s));
         if ! plausible(s) {
           panic!("found non --no-bwrap --{}-* option looking for --{}-*",
                  prefix,prefix);
