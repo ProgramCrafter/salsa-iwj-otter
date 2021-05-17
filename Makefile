@@ -410,7 +410,7 @@ clean-for-retest:
 	rm -f templates/script.js library/*/*.usvg stamp/*
 	rm -rf $(LIBRARY_CLEAN)
 	rm -f examples/test-bundle.zip
-	find * -name '*~' -print0 | xargs -0r rm --
+	find * \( -name '*~' -o -name '*.tmp' \) -print0 | xargs -0r rm --
 
 clean: clean-nailing clean-for-retest
 	rm -rf target
