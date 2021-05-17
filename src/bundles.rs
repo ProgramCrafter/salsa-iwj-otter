@@ -950,7 +950,7 @@ impl InstanceBundles {
   pub fn truncate_all_besteffort(instance: &InstanceName) {
     if_let!{
       Ok(bundles) = InstanceBundles::scan_game_bundles(instance);
-      match Err(e) => {
+      Err(e) => {
         error!("failed to scan game bundles for {}: {}", instance, e);
         return;
       }
@@ -958,14 +958,14 @@ impl InstanceBundles {
     for entry in bundles {
       if_let!{
         Ok((fpath,_what)) = entry;
-        match Err(e) => {
+        Err(e) => {
           error!("failed to make sense of a pathname for {}: {}", instance, e);
           continue;
         }
       };
       if_let!{
         Ok(_) = File::create(&fpath);
-        match Err(e) => {
+        Err(e) => {
           warn!("failed to truncate a bundle for {}: {}: {}",
                 instance, fpath, e);
           continue;
