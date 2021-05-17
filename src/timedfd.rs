@@ -12,11 +12,23 @@ use nix::errno::Errno;
 
 use mio::Token;
 
-pub struct TimedFdReader {
+pub struct TimedFd<RW: TimedFdReadWrite> {
   fd: Fd,
   poll: mio::Poll,
   events: mio::event::Events,
   deadline: Option<Instant>,
+  rw: PhantomData<RW>,
+}
+
+pub trait TimedFdReadWrite {
+  const INTEREST: mio::Interest;
+}
+
+pub type TimedFdReader = TimedFd<TimedFdRead>;
+
+#[derive(Debug,Copy,Clone)] pub struct TimedFdRead;
+impl TimedFdReadWrite for TimedFdRead {
+  const INTEREST : mio::Interest = mio::Interest::READABLE;
 }
 
 pub struct Fd(RawFd);
@@ -43,15 +55,15 @@ impl nix::Error {
   }
 }
 
-impl TimedFdReader {
+impl<RW> TimedFd<RW> where RW: TimedFdReadWrite {
   #[throws(io::Error)]
-  pub fn new<F>(fd: F) -> TimedFdReader where F: IntoRawFd {
+  pub fn new<F>(fd: F) -> TimedFd<RW> where F: IntoRawFd {
     Self::from_fd( Fd::from_raw_fd( fd.into_raw_fd() ))?
   }
 
   /// Takes ownership of the fd
   #[throws(io::Error)]
-  pub fn from_fd(fd: Fd) -> Self {
+  fn from_fd(fd: Fd) -> Self {
     fcntl(fd.as_raw_fd(), FcntlArg::F_SETFL(OFlag::O_NONBLOCK))
       .map_err(|e| e.as_ioe())?;
 
@@ -59,10 +71,10 @@ impl TimedFdReader {
     poll.registry().register(
       &mut mio::unix::SourceFd(&fd.as_raw_fd()),
       Token(0),
-      mio::Interest::READABLE,
+      RW::INTEREST,
     )?;
     let events = mio::event::Events::with_capacity(1);
-    TimedFdReader { fd, poll, events, deadline: None }
+    TimedFd { fd, poll, events, deadline: None, rw: PhantomData }
   }
 
   pub fn set_deadline(&mut self, deadline: Option<Instant>) {
@@ -75,7 +87,7 @@ impl TimedFdReader {
   }
 }
 
-impl Read for TimedFdReader {
+impl Read for TimedFd<TimedFdRead> {
   #[throws(io::Error)]
   fn read(&mut self, buf: &mut [u8]) -> usize {
     'again: loop {
