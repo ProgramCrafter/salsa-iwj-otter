@@ -201,6 +201,7 @@ impl Substitutor for DirSubst {
       "specs"  => self.specs_dir(),
       "table"  => TABLE.to_owned(),
       "command_socket" => "command.socket".to_owned(),
+      "examples"       => format!("{}/examples", &self.src),
       _ => return None,
     })
   }
@@ -730,7 +731,7 @@ impl DirSubst {
   }
 
   pub fn example_bundle(&self) -> String {
-    self.subst("@src@/examples/test-bundle.zip").unwrap()
+    self.subst("@examples@/test-bundle.zip").unwrap()
   }
 
   #[throws(AE)]
