@@ -160,7 +160,7 @@ pub use crate::spec::*;
 pub use crate::spec::piece_specs::{FaceColourSpecs, SimpleCommon};
 pub use crate::sse;
 pub use crate::toml_de;
-pub use crate::timedread::*;
+pub use crate::timedfd::*;
 pub use crate::termprogress;
 pub use crate::tz::*;
 pub use crate::updates::*;

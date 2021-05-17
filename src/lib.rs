@@ -37,7 +37,7 @@ pub mod shapelib;
 pub mod spec;
 pub mod sse;
 pub mod termprogress;
-pub mod timedread;
+pub mod timedfd;
 pub mod tz;
 pub mod updates;
 pub mod ui;
