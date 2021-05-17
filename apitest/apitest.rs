@@ -958,7 +958,7 @@ impl MgmtChannel {
 // ==================== core entrypoint, for wdriver too ====================
 
 #[throws(AE)]
-pub fn setup_core<O>(module_paths: &[&str], early_args: EarlyArgPredicate) ->
+pub fn setup_core<O>(module_paths: &[&str]) ->
   (O, Instance, SetupCore)
   where O: StructOpt + AsRef<Opts>
 {
@@ -995,7 +995,10 @@ pub fn setup_core<O>(module_paths: &[&str], early_args: EarlyArgPredicate) ->
     .to_owned();
 
   if !opts.no_bwrap {
-    reinvoke_via_bwrap(&opts, &current_exe, early_args)
+    reinvoke_via_bwrap(
+      &opts, &current_exe,
+      &mut |s: &OsStr| s.to_str().unwrap().starts_with("--test=")
+    )
       .context("reinvoke via bwrap")?;
   }
 

@@ -819,7 +819,6 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
   let (opts, instance, core) =
     apitest::setup_core(
       &[exe_module_path, "otter_webdriver_tests"],
-      &mut |s: &OsStr| s.to_str().unwrap().starts_with("--test=")
     )?;
 
   prepare_xserver(&core.cln, &core.ds).did("setup X server")?;

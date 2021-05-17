@@ -781,7 +781,6 @@ pub fn main() {
   {
     let (opts, _instance, su) = setup_core(
       &[module_path!()],
-      &mut |s: &OsStr| s.to_str().unwrap().starts_with("--test=")
     )?;
     let spec = su.ds.game_spec_data()?;
     let mut mc = su.mgmt_conn();
