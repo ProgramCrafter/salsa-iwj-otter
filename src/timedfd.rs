@@ -105,7 +105,7 @@ impl<RW> TimedFd<RW> where RW: TimedFdReadWrite {
         if event.token() == Token(0) {
           match f(self.fd.as_raw_fd()) {
             Ok(got) => { break 'again got },
-            Err(NE::Sys(Errno::EINTR)) => { continue 'again }
+            Err(NE::Sys(Errno::EINTR)) => continue 'again,
             Err(NE::Sys(Errno::EAGAIN)) => break,
             Err(ne) => throw!(ne.as_ioe()),
           }
