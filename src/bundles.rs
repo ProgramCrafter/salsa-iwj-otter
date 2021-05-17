@@ -925,7 +925,7 @@ impl Uploading {
 impl InstanceBundles {
   #[throws(MgmtError)]
   pub fn finish_upload(&mut self, ig: &mut Instance,
-                       Uploaded { id, parsed }: Uploaded) {
+                       Uploaded { id, parsed }: Uploaded) -> Id {
     let tmp = id.path_tmp(&ig.name);
     let install = id.path_(&ig.name);
 
@@ -940,6 +940,7 @@ impl InstanceBundles {
       }
       ref x => panic!("unexpected {:?}", x),
     };
+    id
   }
 }
 

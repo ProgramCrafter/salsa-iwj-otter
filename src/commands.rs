@@ -97,6 +97,7 @@ pub enum MgmtResponse {
   Libraries(Vec<LibraryEnquiryData>),
   LibraryItems(Vec<ItemEnquiryData>),
   Bundles { bundles: MgmtBundleList },
+  Bundle { bundle: bundles::Id },
 }
 
 pub type MgmtBundleList = BTreeMap<bundles::Id, bundles::State>;

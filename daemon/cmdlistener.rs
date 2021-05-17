@@ -268,13 +268,13 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       bulk_upload.inner_mut().set_timeout(Some(UPLOAD_TIMEOUT));
       let uploaded = upload.bulk(bulk_upload, size,
                                  &hash, progress, &mut for_response)?;
-      {
+      let bundle = {
         let gref = Instance::lookup_by_name(&game, auth)?;
         let mut bundles = gref.lock_bundles();
         let mut ig = gref.lock()?;
-        bundles.finish_upload(&mut ig, uploaded)?;
+        bundles.finish_upload(&mut ig, uploaded)?
       };
-      Fine
+      MR::Bundle { bundle }
     }
     MC::ListBundles { game } => {
       let (ag, gref) = start_access_game(&game)?;

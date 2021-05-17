@@ -1401,7 +1401,12 @@ mod upload_bundle {
       progress: MgmtChannel::PROGRESS,
     };
     let mut progress = termprogress::new();
-    chan.cmd_withbulk(&cmd, &mut f, &mut io::sink(), &mut *progress)?;
+    let resp = chan.cmd_withbulk(&cmd, &mut f, &mut io::sink(),
+                                 &mut *progress)?;
+    if_let!{ MR::Bundle { bundle } = resp;
+             else throw!(anyhow!("unexpected {:?}", &resp)) };
+    progress.clear();
+    println!("{}", bundle);
   }
 
   inventory::submit!{Subcommand(

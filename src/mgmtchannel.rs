@@ -113,7 +113,7 @@ impl MgmtChannel {
     match &resp {
       Progress(_) => panic!(),
       Fine | AccountsList{..} | GamesList{..} |
-      Libraries(_) | LibraryItems(_) | Bundles{..} => { },
+      Libraries(_) | LibraryItems(_) | Bundles{..} | Bundle{..} => { },
       AlterGame { error: None, .. } => { },
       Error { error } => {
         Err(error.clone()).context(
