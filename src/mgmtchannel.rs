@@ -69,11 +69,11 @@ impl MgmtChannel {
   }
 
   #[throws(AE)]
-  pub fn cmd_withbulk<U,D,P>(&mut self, cmd: &MgmtCommand,
-                             up: &mut U, down: &mut D, progress: &mut P)
-                             -> MgmtResponse
+  pub fn cmd_withbulk<U,D>(&mut self, cmd: &MgmtCommand,
+                           up: &mut U, down: &mut D,
+                           progress: &mut dyn termprogress::Reporter)
+                           -> MgmtResponse
   where U: Read, D: Write,
-        P: FnMut(ProgressInfo) -> Result<(),AE>,
   {
     use MgmtResponse::*;
     let mut wbulk = self.write
@@ -86,7 +86,7 @@ impl MgmtChannel {
       .context("read response")?;
     while let MR::Progress(pi) = resp {
       resp = (&mut rbulk).read_rmp()?;
-      progress(pi)?;
+      progress.report(&pi);
     }
     match &resp {
       Progress(_) => panic!(),
@@ -119,7 +119,8 @@ impl MgmtChannel {
 
   #[throws(AE)]
   pub fn cmd(&mut self, cmd: &MgmtCommand) -> MgmtResponse {
-    self.cmd_withbulk(cmd, &mut io::empty(), &mut io::sink(), &mut |_|Ok(()))?
+    self.cmd_withbulk(cmd, &mut io::empty(), &mut io::sink(),
+                      &mut termprogress::NullReporter)?
   }
 
   pub fn read_inner_mut(&mut self) -> &mut TimedFdReader {

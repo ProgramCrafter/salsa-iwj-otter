@@ -1400,10 +1400,7 @@ mod upload_bundle {
       hash: bundles::Hash(hash.into()), kind,
     };
     let mut progress = termprogress::new();
-    chan.cmd_withbulk(&cmd, &mut f, &mut io::sink(), &mut |pi|{
-      progress.report(&pi);
-      Ok(())
-    })?;
+    chan.cmd_withbulk(&cmd, &mut f, &mut io::sink(), &mut *progress)?;
   }
 
   inventory::submit!{Subcommand(
@@ -1506,7 +1503,8 @@ mod download_bundle {
       game: instance_name.clone(),
       id,
     };
-    chan.cmd_withbulk(&cmd, &mut io::empty(), &mut f, &mut |_| Ok(()))
+    chan.cmd_withbulk(&cmd, &mut io::empty(), &mut f,
+                      &mut termprogress::NullReporter)
       .context("download bundle")?;
     f.flush().context("flush bundle file")?;
     if let Some((path, tmp)) = path_tmp {
