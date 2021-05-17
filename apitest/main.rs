@@ -27,10 +27,10 @@ struct UsualCtx {
 }
 
 impl UsualCtx {
-  fn su(&self) -> std::cell::Ref<SetupCore> { RefCell::borrow(&self.su_rc) }
-  fn su_mut(&self) -> RefMut<SetupCore> { self.su_rc.borrow_mut() }
+  pub fn su(&self) -> std::cell::Ref<SetupCore>{ RefCell::borrow(&self.su_rc) }
+  pub fn su_mut(&self) -> RefMut<SetupCore> { self.su_rc.borrow_mut() }
 
-  fn wanted_tests(&self) -> TrackWantedTestsGuard {
+  pub fn wanted_tests(&self) -> TrackWantedTestsGuard {
     TrackWantedTestsGuard(self.su_mut())
   }
 }
