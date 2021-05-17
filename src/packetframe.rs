@@ -390,8 +390,7 @@ impl<W:Write> FrameWriter<W> {
   }
 
   #[throws(MgmtChannelWriteError)]
-  pub fn write_withbulk<'c>(&'c mut self) -> ResponseWriter<impl Write + 'c>
-  {
+  pub fn write_withbulk<'c>(&'c mut self) -> ResponseWriter<'c,W> {
     ResponseWriter { f: self.new_frame()? }
   }
 
@@ -448,7 +447,7 @@ pub struct ResponseWriter<'c,W:Write> { f: WriteFrame<'c,W> }
 
 impl<'c,W:Write> ResponseWriter<'c,W> {
   #[throws(MgmtChannelWriteError)]
-  pub fn respond<'t,T>(mut self, val: &'t T) -> WriteFrame<'c, impl Write + 'c>
+  pub fn respond<'t,T>(mut self, val: &'t T) -> WriteFrame<'c,W>
   where T: Serialize + Debug
   {
     rmp_serde::encode::write_named(&mut self.f, val)?;
