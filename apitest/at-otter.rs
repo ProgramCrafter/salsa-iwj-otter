@@ -2,14 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-use otter_api_tests::*;
-
-pub use std::cell::{RefCell, RefMut};
-pub use std::rc::Rc;
+use crate::*;
 
 pub use index_vec::Idx;
-
-type Setup = Rc<RefCell<SetupCore>>;
 
 #[allow(dead_code)]
 struct Ctx {
