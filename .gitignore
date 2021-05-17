@@ -9,6 +9,8 @@ templates/otter_wasm.ns.d.ts
 templates/shapelib.html
 save/lock
 /examples/test-bundle.zip
+/examples/big-bundle
+/examples/big-bundle.zip
 /library/*/files.make
 /library/*/*.usvg
 /library/*/*.coloured.svg
