@@ -85,15 +85,15 @@ impl<RW> TimedFd<RW> where RW: TimedFdReadWrite {
       Instant::now() + timeout
     }));
   }
-}
 
-impl Read for TimedFd<TimedFdRead> {
   #[throws(io::Error)]
-  fn read(&mut self, buf: &mut [u8]) -> usize {
+  fn rw<F,O>(&mut self, mut f: F) -> O
+  where F: FnMut(i32) -> Result<O, nix::Error>
+  {
     'again: loop {
       for event in &self.events {
         if event.token() == Token(0) {
-          match unistd::read(self.fd.as_raw_fd(), buf) {
+          match f(self.fd.as_raw_fd()) {
             Ok(got) => { break 'again got },
             Err(NE::Sys(Errno::EINTR)) => { continue 'again }
             Err(NE::Sys(Errno::EAGAIN)) => break,
@@ -118,6 +118,13 @@ impl Read for TimedFd<TimedFdRead> {
       }
       if self.events.is_empty() { throw!(io::ErrorKind::TimedOut) }
     }
+  }
+}
+
+impl Read for TimedFd<TimedFdRead> {
+  #[throws(io::Error)]
+  fn read(&mut self, buf: &mut [u8]) -> usize {
+    self.rw(|fd| unistd::read(fd, buf))?
   }
 }
 
