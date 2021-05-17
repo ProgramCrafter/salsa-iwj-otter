@@ -1024,3 +1024,50 @@ pub fn setup_core<O>(module_paths: &[&str], early_args: EarlyArgPredicate) ->
      wanted_tests,
    })
 }
+
+pub struct PortmanteauMember {
+  pub path: &'static str,
+  pub f: fn() -> Result<(), Explode>,
+}
+inventory::collect!(PortmanteauMember);
+
+#[macro_export]
+macro_rules! portmanteau_has {
+  ($path:literal, $mod:ident) => {
+    #[path = $path] mod $mod;
+    inventory::submit!(PortmanteauMember { path: $path, f: $mod::main });
+  }
+}
+
+#[throws(AE)]
+pub fn portmanteau_main(prefix: &str){
+  let arg = 'arg: loop {
+    for (ai, s) in env::args().enumerate() {
+      let plausible = |s: &str| s.starts_with(&format!("{}-",prefix));
+
+      break 'arg if ai == 0 {
+        let s = s.rsplitn(2,'/').next().unwrap();
+        if ! plausible(s) { continue }
+        s
+      } else {
+        let s = s.strip_prefix("--test=")
+          .expect("found non-long-option looking for --test={wdt,at}-*");
+        if ! plausible(s) {
+          panic!("found non --no-bwrap --{}-* option looking for --{}-*",
+                 prefix,prefix);
+        }
+        s
+      }.to_owned();
+    }
+    panic!("ran out of options looking for --test={}-*", prefix);
+  };
+
+  let f = inventory::iter::<PortmanteauMember>.into_iter()
+    .find_map(|pm| {
+      let n = pm.path.strip_suffix(".rs").unwrap();
+      if n == arg { Some(pm.f) } else { None }
+    })
+    .expect("unrecognosed {wdt,at}-* portanteau member");
+
+  f()?;
+}
