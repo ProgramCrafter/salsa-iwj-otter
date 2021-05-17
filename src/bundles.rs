@@ -871,17 +871,27 @@ impl InstanceBundles {
 impl Uploading {
   #[throws(MgmtError)]
   pub fn bulk<R,PW>(self, data: R, size: usize, expected: &Hash,
-                    for_progress: &mut ResponseWriter<PW>) -> Uploaded
+                    progress_mode: ProgressUpdateMode,
+                    progress_stream: &mut ResponseWriter<PW>) -> Uploaded
   where R: Read, PW: Write
   {
-    let mut for_progress = progress::ResponseOriginator::new(for_progress);
+    let mut for_progress_buf;
+    let mut null_progress = ();
+    let for_progress: &mut dyn progress::Originator =
+      if progress_mode >= PUM::Simplex {
+        for_progress_buf = progress::ResponseOriginator::new(progress_stream);
+        &mut for_progress_buf
+      } else {
+        &mut null_progress
+      };
 
     let Uploading { id, mut file, instance } = self;
     let tmp = id.path_tmp(&instance);
 
     let mut null_progress = ();
     let for_progress_upload: &mut dyn progress::Originator =
-      if false { &mut for_progress } else { &mut null_progress };
+      if progress_mode >= PUM::Duplex
+      { for_progress } else { &mut null_progress };
     
     let mut data_reporter = progress::ReadOriginator::new(
       for_progress_upload, Phase::Upload, size, data);
@@ -904,9 +914,9 @@ impl Uploading {
     file.rewind().context("rewind"). map_err(IE::from)?;
 
     let (za, parsed) = parse_bundle(id, &instance, file, BundleParseUpload,
-                                    &mut for_progress)?;
+                                    for_progress)?;
 
-    process_bundle(za, id, &*instance, &mut for_progress)?;
+    process_bundle(za, id, &*instance, for_progress)?;
 
     Uploaded { id, parsed }
   }

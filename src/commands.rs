@@ -44,6 +44,7 @@ pub enum MgmtCommand {
     size: usize,
     hash: bundles::Hash,
     kind: bundles::Kind,
+    #[serde(default)] progress: ProgressUpdateMode,
   },
   ListBundles {
     game: InstanceName,
@@ -208,6 +209,16 @@ pub struct MgmtGamePieceVisibleInfo {
 pub enum MgmtGameUpdateMode {
   Online,
   Bulk,
+}
+
+#[derive(Debug,Copy,Clone,Eq,PartialEq,Ord,PartialOrd,Serialize,Deserialize)]
+pub enum ProgressUpdateMode {
+  None,
+  Simplex,
+  Duplex,
+}
+impl Default for ProgressUpdateMode {
+  fn default() -> Self { PUM::None }
 }
 
 #[derive(Debug,Clone,Error,Serialize,Deserialize)]

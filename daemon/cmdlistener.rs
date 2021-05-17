@@ -255,7 +255,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       resp
     }
 
-    MC::UploadBundle { game, size, hash, kind } => {
+    MC::UploadBundle { game, size, hash, kind, progress } => {
       let (upload, auth) = {
         let (ag, gref) = start_access_game(&game)?;
         access_bundles(
@@ -267,7 +267,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       };
       bulk_upload.inner_mut().set_timeout(Some(UPLOAD_TIMEOUT));
       let uploaded = upload.bulk(bulk_upload, size,
-                                 &hash, &mut for_response)?;
+                                 &hash, progress, &mut for_response)?;
       {
         let gref = Instance::lookup_by_name(&game, auth)?;
         let mut bundles = gref.lock_bundles();

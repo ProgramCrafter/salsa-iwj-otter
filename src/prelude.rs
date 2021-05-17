@@ -133,6 +133,7 @@ pub use crate::commands::{AccessTokenInfo, AccessTokenReport, MgmtError};
 pub use crate::commands::{MgmtCommand, MgmtResponse};
 pub use crate::commands::{MgmtGameInstruction, MgmtGameResponse};
 pub use crate::commands::{MgmtBundleList, MgmtGameUpdateMode};
+pub use crate::commands::{ProgressUpdateMode};
 pub use crate::config::*;
 pub use crate::debugreader::DebugReader;
 pub use crate::error::*;
@@ -182,6 +183,7 @@ pub type AS = AccountScope;
 
 // commands.rs
 pub type ME = MgmtError;
+pub type PUM = ProgressUpdateMode;
 
 // error.rs
 pub type APOE = ApiPieceOpError;
