@@ -44,6 +44,16 @@ impl Ctx {
 
     self.check_library_item("lemon","example-lemon","a lemon")?;
 
+    let id =
+      self.su().mgmt_conn().list_pieces()?
+      .0.iter()
+      .find(|pi| pi.itemname.as_str() == "example-lemon")
+      .unwrap()
+      .piece;
+    self.su().mgmt_conn().alter_game(vec![MGI::DeletePiece(id)], None)?;
+
+    self.check_library_item("lemon","example-lemon","a lemon")?;
+
     self.otter(&ds.ss("clear-game @table@")?)?;
     self.reset_game(&ds.ss("reset @table@ demo")?)?;
   }
