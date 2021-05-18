@@ -498,6 +498,11 @@ impl UsualCtx {
     prepare_game(&self.su().ds, &self.prctx, TABLE)?;
   }
 
+  #[throws(AE)]
+  pub fn reset_game<S:AsRef<str>>(&mut self, args: &[S]) -> OtterOutput {
+    self.otter(args)?
+  }
+
   #[throws(Explode)]
   fn some_library_add(&mut self, command: &[String]) -> Vec<String> {
     let add_err = self.otter(command)

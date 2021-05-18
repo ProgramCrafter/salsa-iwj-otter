@@ -45,7 +45,7 @@ impl Ctx {
     self.check_library_item("lemon","example-lemon","a lemon")?;
 
     self.otter(&ds.ss("clear-game @table@")?)?;
-    self.otter(&ds.ss("reset @table@ demo")?)?;
+    self.reset_game(&ds.ss("reset @table@ demo")?)?;
   }
 }
 
