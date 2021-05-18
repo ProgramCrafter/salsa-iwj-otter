@@ -3845,9 +3845,9 @@ checksum = "8eaa81235c7058867fa8c0e7314f33dcce9c215f535d1913822a2b3f5e289f3c"
 
 [[package]]
 name = "thirtyfour"
-version = "0.23.2"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab29d60ed607cd80895f7cece7030aadd2ad451ab215841dcf9b89ff6b24e1db"
+checksum = "904ce044793ccb3fbcb13eaf27e49d6aae8d6e32e6e6fc3fd1f2917114d404ad"
 dependencies = [
  "async-trait",
  "base64 0.13.0",
@@ -3866,9 +3866,9 @@ dependencies = [
 
 [[package]]
 name = "thirtyfour_sync"
-version = "0.23.0"
+version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c147a119de416e3697c4adf18c10504a18594f9983ffa4267aeabe1e6ab87ee"
+checksum = "d251f1b2fe963ca84e32843fd8df6522e65f24e32a5bf6f8a21bb179dae0e901"
 dependencies = [
  "base64 0.13.0",
  "log 0.4.14",
