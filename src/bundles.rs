@@ -548,9 +548,10 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
   let mut libs = Vec::new();
   for (name,i) in &za {
     eh.besteffort(|| Ok::<_,LE>(if_chain!{
-      if let Ok([dir, file]) = name.as_ref().split('/')
-        .collect::<ArrayVec<[&str;2]>>()
-        .into_inner();
+      let mut split = name.as_ref().split('/');
+      if let Some(dir)  = split.next();
+      if let Some(file) = split.next();
+      if let None       = split.next();
       if unicase::eq(dir, "library");
       if let Some((base, ext)) = file.rsplit_once('.');
       if unicase::eq(ext, "toml");
