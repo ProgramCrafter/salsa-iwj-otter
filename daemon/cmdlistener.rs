@@ -811,7 +811,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         // todo want a FromIterator impl
         for (k,v) in spec_links.drain() {
           let url: Url = (&v).try_into()?;
-          new_links[k] = Some(url.into_string());
+          new_links[k] = Some(url.into());
         }
         let new_links = Arc::new(new_links);
         *ig_links = new_links.clone();
@@ -827,7 +827,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         let mut new_links: LinksTable = (**ig_links).clone();
         let url: Url = (&url).try_into()?;
         let show: Html = (kind, url.as_str()).to_html();
-        new_links[kind] = Some(url.into_string());
+        new_links[kind] = Some(url.into());
         let new_links = Arc::new(new_links);
         *ig_links = new_links.clone();
         Ok(
