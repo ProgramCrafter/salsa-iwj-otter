@@ -562,14 +562,14 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     spec_toml: String,
   ) -> ExecuteGameInsnResults<'igr, 'ig>
   {
-    let spec: toml::Value = spec_toml.parse()
-      .map_err(|e: toml::de::Error| ME::TomlSyntaxError(e.to_string()))?;
-    let GameSpec {
-      pieces, table_size, table_colour, pcaliases,
-    } = toml_de::from_value(&spec)
-      .map_err(|e: toml_de::Error| ME::TomlStructureError(e.to_string()))?;
-
     reset_game(cs,ag,ig, Box::new(|_ig, insns|{
+      let spec: toml::Value = spec_toml.parse()
+        .map_err(|e: toml::de::Error| ME::TomlSyntaxError(e.to_string()))?;
+      let GameSpec {
+        pieces, table_size, table_colour, pcaliases,
+      } = toml_de::from_value(&spec)
+        .map_err(|e: toml_de::Error| ME::TomlStructureError(e.to_string()))?;
+
       // Define new stuff:
       for (alias, target) in pcaliases.into_iter() {
         insns.push(MGI::DefinePieceAlias{ alias, target });
