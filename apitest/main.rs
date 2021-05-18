@@ -24,6 +24,7 @@ struct UsualCtx {
   alice: Player,
   bob: Player,
   prctx: PathResolveContext,
+  has_lib_markers: bool,
 }
 
 impl UsualCtx {
@@ -496,34 +497,42 @@ impl UsualCtx {
   #[throws(Explode)]
   pub fn prepare_game(&mut self) {
     prepare_game(&self.su().ds, &self.prctx, TABLE)?;
+    self.has_lib_markers = false;
   }
 
   #[throws(AE)]
   pub fn reset_game<S:AsRef<str>>(&mut self, args: &[S]) -> OtterOutput {
+    self.has_lib_markers = false;
     self.otter(args)?
   }
 
   #[throws(Explode)]
   fn some_library_add(&mut self, command: &[String]) -> Vec<String> {
-    let add_err = self.otter(command)
-      .expect_err("library-add succeeded after reset!");
-    assert_eq!(add_err.downcast::<ExitStatusError>()?.0.code(),
-               Some(EXIT_NOTFOUND));
+    let mut session = if ! dbgc!(self.has_lib_markers) {
+      let add_err = self.otter(command)
+        .expect_err("library-add succeeded after reset!");
+      assert_eq!(add_err.downcast::<ExitStatusError>()?.0.code(),
+                 Some(EXIT_NOTFOUND));
 
-    let mut session = self.connect_player(&self.alice)?;
-    let pieces = session.pieces::<PIA>()?;
-    let llm = pieces.into_iter()
-      .filter(|pi| pi.info["desc"] == "a library load area marker")
-      .collect::<ArrayVec<_>>();
-    let llm: [_;2] = llm.into_inner().unwrap();
-    dbgc!(&llm);
+      let mut session = self.connect_player(&self.alice)?;
+      let pieces = session.pieces::<PIA>()?;
+      let llm = pieces.into_iter()
+        .filter(|pi| pi.info["desc"] == "a library load area marker")
+        .collect::<ArrayVec<_>>();
+      let llm: [_;2] = llm.into_inner().unwrap();
+      dbgc!(&llm);
 
-    for (llm, &pos) in izip!(&llm, [PosC::new(5,5), PosC::new(50,25)].iter())
-    {
-      session.api_piece(GH::With, &llm.id, pos)?;
-    }
+      for (llm, &pos) in izip!(&llm, [PosC::new(5,5), PosC::new(50,25)].iter())
+      {
+        session.api_piece(GH::With, &llm.id, pos)?;
+      }
+      self.has_lib_markers = true;
 
-    session.synch()?;
+      session.synch()?;
+      session
+    } else {
+      self.connect_player(&self.alice)?
+    };
 
     self.otter(&command)
       .expect("library-add failed after place!");
@@ -559,7 +568,11 @@ impl UsualCtx {
     drop(mc);
 
     let su_rc = Rc::new(RefCell::new(su));
-    UsualCtx { opts, spec, su_rc, alice, bob, prctx: default() }
+    UsualCtx {
+      opts, spec, su_rc, alice, bob,
+      has_lib_markers: false,
+      prctx: default(),
+    }
   }
 }
 
