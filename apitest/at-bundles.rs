@@ -44,6 +44,8 @@ impl Ctx {
 
     self.check_library_item("lemon","example-lemon","a lemon")?;
 
+    self.stop_and_restart_server()?;
+
     let id =
       self.su().mgmt_conn().list_pieces()?
       .0.iter()
