@@ -182,7 +182,11 @@ pub type AE = anyhow::Error;
 pub type AS = AccountScope;
 
 // commands.rs
+pub type MC = MgmtCommand;
 pub type ME = MgmtError;
+pub type MGI = MgmtGameInstruction;
+pub type MGR = MgmtGameResponse;
+pub type MR = MgmtResponse;
 pub type PUM = ProgressUpdateMode;
 
 // error.rs
