@@ -559,11 +559,13 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     ag: &'_ mut AccountsGuard,
     ig: &'igr mut Unauthorised<InstanceGuard<'ig>, InstanceName>,
     who: &'_ Html,
-    spec_toml: String,
+    get_spec_toml: Box<dyn FnOnce(&InstanceGuard)
+                                  -> Result<String, MgmtError>>,
   ) -> ExecuteGameInsnResults<'igr, 'ig>
   {
-    reset_game(cs,ag,ig, Box::new(|_ig, insns|{
-      let spec: toml::Value = spec_toml.parse()
+    reset_game(cs,ag,ig, Box::new(|ig, insns|{
+      let spec = get_spec_toml(ig)?;
+      let spec: toml::Value = spec.parse()
         .map_err(|e: toml::de::Error| ME::TomlSyntaxError(e.to_string()))?;
       let GameSpec {
         pieces, table_size, table_colour, pcaliases,
@@ -689,7 +691,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       }))?
     }
     MGI::ResetFromGameSpec { spec_toml: spec } => {
-      reset_game_from_spec(cs,ag,ig,who, spec)?
+      reset_game_from_spec(cs,ag,ig,who, Box::new(|_| Ok::<_,ME>(spec)))?
     }
 
     MGI::InsnMark(token) => {
