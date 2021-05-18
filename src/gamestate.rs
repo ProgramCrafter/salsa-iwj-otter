@@ -229,7 +229,7 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
     Rect { corners: self.bbox_approx()?.corners.iter().map(
       |c| *c + p.pos
     )
-           .collect::<Result<ArrayVec<_>,_>>()?
+           .collect::<Result<ArrayVec<_,2>,_>>()?
            .into_inner().unwrap() }
   }
 }

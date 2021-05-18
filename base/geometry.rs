@@ -131,7 +131,7 @@ impl<T> PosC<T> {
   #[throws(PosCFromIteratorError)]
   pub fn from_iter<I: Iterator<Item=T>>(i: I) -> Self { PosC{ coords:
     i
-      .collect::<ArrayVec<_>>()
+      .collect::<ArrayVec<_,2>>()
       .into_inner()
       .map_err(|_| PosCFromIteratorError)?
   }}
@@ -140,7 +140,7 @@ impl<T> PosC<T> {
 impl<T> PosC<T> where T: Debug {
   pub fn from_iter_2<I: Iterator<Item=T>>(i: I) -> Self { PosC{ coords:
     i
-      .collect::<ArrayVec<_>>()
+      .collect::<ArrayVec<_,2>>()
       .into_inner()
       .unwrap()
   }}
@@ -161,7 +161,7 @@ impl<T:Debug> PosC<T> {
     I: Iterator<Item=Result<T,E>>
   >(i: I) -> Self { PosC{ coords:
     i
-      .collect::<Result<ArrayVec<_>,E>>()?
+      .collect::<Result<ArrayVec<_,2>,E>>()?
       .into_inner().unwrap()
   }}
 }

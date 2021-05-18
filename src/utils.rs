@@ -55,7 +55,7 @@ impl<T> OldNew<T> {
   pub fn map<U, F: FnMut(&T) -> U>(&self, f: F) -> OldNew<U> {
     OldNew(
       self.iter().map(f)
-        .collect::<ArrayVec<[U; 2]>>()
+        .collect::<ArrayVec<U,2>>()
         .into_inner()
         .unwrap_or_else(|_|panic!())
     )
@@ -64,7 +64,7 @@ impl<T> OldNew<T> {
   pub fn as_refs(&self) -> OldNew<&T> {
     OldNew(
       self.iter()
-        .collect::<ArrayVec<[&T; 2]>>()
+        .collect::<ArrayVec<&T,2>>()
         .into_inner()
         .unwrap_or_else(|_|panic!())
     )

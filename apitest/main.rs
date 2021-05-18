@@ -518,7 +518,7 @@ impl UsualCtx {
       let pieces = session.pieces::<PIA>()?;
       let llm = pieces.into_iter()
         .filter(|pi| pi.info["desc"] == "a library load area marker")
-        .collect::<ArrayVec<_>>();
+        .collect::<ArrayVec<_,2>>();
       let llm: [_;2] = llm.into_inner().unwrap();
       dbgc!(&llm);
 
@@ -632,7 +632,7 @@ impl UsualCtx {
     let [alice, bob]: [Player; 2] =
       su.ds.setup_static_users(&mut mc, default())?
       .into_iter().map(|sus| Player { nick: sus.nick, url: sus.url })
-      .collect::<ArrayVec<_>>().into_inner().unwrap();
+      .collect::<ArrayVec<_,2>>().into_inner().unwrap();
     drop(mc);
 
     let su_rc = Rc::new(RefCell::new(su));

@@ -44,7 +44,7 @@ impl Ctx {
         p.info["desc"] == otter::hand::UNCLAIMED_HAND_DESC
       })
       .map(|(i,_)| i)
-      .collect::<ArrayVec<[_;1]>>()
+      .collect::<ArrayVec<_,1>>()
       .into_inner().unwrap();
     dbgc!(&hand);
 
@@ -60,7 +60,7 @@ impl Ctx {
         .filter(|(_i,p)| p.info["desc"].as_str().unwrap().ends_with(" pawn"))
         .map(|(i,_)| i)
         .take(2)
-        .collect::<ArrayVec<[_;2]>>()
+        .collect::<ArrayVec<_,2>>()
         .into_inner().unwrap();
 
       pawns.sort_by_key(|&p| -pieces[p].pos.x());

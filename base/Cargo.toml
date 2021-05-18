@@ -22,7 +22,7 @@ path="lib.rs"
 
 [dependencies]
 
-arrayvec="0.5"
+arrayvec="0.7"
 derive_more="0.99"
 extend="1"
 htmlescape="0.3"

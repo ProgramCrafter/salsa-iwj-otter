@@ -285,7 +285,7 @@ impl FaceTransform {
         })
         .cycle()
         .take(2)
-        .collect::<ArrayVec<[_;2]>>()
+        .collect::<ArrayVec<_,2>>()
         .into_inner()
         .unwrap()
     } else {
@@ -303,7 +303,7 @@ impl FaceTransform {
       }.iter().cloned().zip(&scale).map(|(size,scale)| {
         size * 0.5 / scale
       })
-        .collect::<ArrayVec<[_;2]>>()
+        .collect::<ArrayVec<_,2>>()
         .into_inner()
         .unwrap()
     }))?;
@@ -1005,7 +1005,7 @@ impl RectShape {
       [-1,1].iter().map(|&signum| Ok::<_,CoordinateOverflow>({
         (centre + (offset * signum)?)?
       }))
-        .collect::<Result<ArrayVec<_>,_>>()?
+        .collect::<Result<ArrayVec<_,2>,_>>()?
         .into_inner().unwrap()
     };
     rect

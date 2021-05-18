@@ -12,7 +12,7 @@ pub const SVG_SCALE: f64 = 6.;
 pub fn timestring_abbreviate<'x>(base: &str, this: &'x str)
                                  -> (&'x str, bool)
 {
-  fn split(s: &str) -> ArrayVec<[&str; 3]> {
+  fn split(s: &str) -> ArrayVec<&str, 3> {
     s.splitn(3, ' ').collect()
   }
   let base3 = split(base);

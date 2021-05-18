@@ -1146,7 +1146,7 @@ mod library_add {
       Poor(insns,
            "surplus marker(s) removed")
     } else {
-      let mut good: ArrayVec<_> = default();
+      let mut good: ArrayVec<_,2> = default();
       for p in &markers {
         good.push(p.visible.as_ref().ok_or_else(
           || anyhow!("library marker(s) with hidden position!")

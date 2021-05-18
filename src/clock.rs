@@ -237,7 +237,7 @@ impl Clock {
 
       URender { st, remaining, nick }
     })
-      .collect::<ArrayVec<_>>()
+      .collect::<ArrayVec<_,2>>()
       .into_inner().unwrap();
 
     if r.iter().filter(|ur| ur.st == URS::Reset).count() == 1 {

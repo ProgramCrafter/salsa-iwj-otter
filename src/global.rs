@@ -853,7 +853,7 @@ impl<'ig> InstanceGuard<'ig> {
       access
     };
 
-    let current_tokens: ArrayVec<[&RawToken;2]> = {
+    let current_tokens: ArrayVec<&RawToken,2> = {
       let players = GLOBAL.players.read();
       self.tokens_players.tr.iter().
         filter(|&token| (||{

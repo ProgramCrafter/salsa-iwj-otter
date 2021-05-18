@@ -208,7 +208,7 @@ impl FromStr for BundleSavefile {
   #[throws(NotBundle)]
   fn from_str(fleaf: &str) -> BundleSavefile {
     let [lhs, rhs] = fleaf.splitn(2, '.')
-      .collect::<ArrayVec<[&str;2]>>()
+      .collect::<ArrayVec<&str,2>>()
       .into_inner().map_err(|_| "no dot")?;
     let index = lhs.parse().map_err(|_| "bad index")?;
     if rhs == "tmp" { return BundleSavefile::PreviousUploadFailed(index) }
