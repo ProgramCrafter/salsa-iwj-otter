@@ -9,7 +9,9 @@ type Ctx = UsualCtx;
 impl Ctx {
   #[throws(Explode)]
   fn bundles(&mut self) {
-    self.upload_and_check_bundle("lemon","example-lemon","a lemon")?;
+    self.upload_and_check_bundle(
+      "test-bundle","lemon", "example-lemon","a lemon"
+    )?;
   }
 }
 

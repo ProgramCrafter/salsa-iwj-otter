@@ -587,12 +587,13 @@ impl UsualCtx {
   }
 
   #[throws(Explode)]
-  pub fn upload_and_check_bundle(&mut self,
+  pub fn upload_and_check_bundle(&mut self, bundle_stem: &str,
                                  libname: &str, item: &str,
                                  desc: &str)
   {
-    let bundle_file = self.su().ds.example_bundle();
-    let ds = self.su().ds.also(&[("bundle", &bundle_file)]);
+    let ds = self.su().ds.also(&[("bundle_stem", &bundle_stem)]);
+    let bundle_file = ds.subst("@examples@/@bundle_stem@.zip")?;
+    let ds = ds.also(&[("bundle", &bundle_file)]);
     self.otter(&ds.ss("upload-bundle @table@ @bundle@")?)?;
     let mut bundles = self.otter(&ds.ss("list-bundles @table@")?)?;
     let bundles = String::from(&mut bundles);
