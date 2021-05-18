@@ -551,6 +551,17 @@ impl UsualCtx {
     dbgc!(&added);
     added
   }
+
+  #[throws(Explode)]
+  fn stop_and_restart_server(&mut self) {
+    let mut su = self.su_rc.borrow_mut();
+    let old_pid = su.server_child.id() as nix::libc::pid_t;
+    nix::sys::signal::kill(nix::unistd::Pid::from_raw(old_pid),
+                           nix::sys::signal::SIGTERM)?;
+    let st = dbgc!(su.server_child.wait()?);
+    assert_eq!(st.signal(), Some(nix::sys::signal::SIGTERM as i32));
+    su.restart_gameserver()?;
+  }
 }
 
 impl UsualCtx {
