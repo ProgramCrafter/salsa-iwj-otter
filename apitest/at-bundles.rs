@@ -13,11 +13,19 @@ impl Ctx {
       "test-bundle","lemon", "example-lemon","a lemon"
     )?;
   }
+ 
+  #[throws(Explode)]
+  fn big(&mut self) {
+    self.upload_and_check_bundle(
+      "big-bundle","duped-example", "chess-purple-cannon", "a purple cannon"
+    )?;
+  }
 }
 
 #[throws(Explode)]
 fn tests(mut c: Ctx) {
   test!(c, "bundles",                       c.bundles()      ?);
+  test!(c, "big",                           c.big()          ?);
 }
 
 #[throws(Explode)]

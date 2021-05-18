@@ -376,6 +376,7 @@ RUNTEST_DEPS =	apitest/run1 stamp/cargo.debug $(FILEASSETS) \
 		$(wildcard libraries/*.toml) $(LIBRARY_FILES)
 
 AT_DEPS =	$(filter-out templates/script.js, $(RUNTEST_DEPS)) \
+		examples/big-bundle.zip \
 		stamp/cargo-at.debug
 
 WDT_DEPS =	$(RUNTEST_DEPS) \
