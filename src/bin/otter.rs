@@ -1398,18 +1398,22 @@ mod alter_game_adhoc {
     let args = parse_args::<Args,_>(args, subargs, &ok_id, None);
     let mut chan = access_game(&ma, &args.table_name)?;
 
-    let insns = args.insns.iter().enumerate().map(|(i,s)|{
-      serde_json::from_str(&s)
+    let insns = args.insns.iter().enumerate().map(|(i,s)| match fmtname {
+      "json" => serde_json::from_str(&s).map_err(AE::from),
+      _ => panic!(),
+    }
         .with_context(|| s.clone())
         .with_context(|| format!("parse insn (#{})", i))
-    }).collect::<Result<Vec<MgmtGameInstruction>,AE>>()?;
+    ).collect::<Result<Vec<MgmtGameInstruction>,AE>>()?;
 
     let resps = chan.alter_game(insns,None)?;
 
     for resp in resps {
-      println!("{}",
-               serde_json::to_string(&resp)
-               .context("re-format response")?);
+      println!("{}", match fmtname {
+        "json" => serde_json::to_string(&resp).map_err(AE::from),
+        _ => panic!(),
+      }
+          .context("re-format response")?);
     }
     Ok(())
   }
