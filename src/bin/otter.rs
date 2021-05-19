@@ -108,9 +108,9 @@ impl From<&anyhow::Error> for ArgumentParseError {
   }
 }
 
-fn parse_args<'apm,T:Default,U>(
+fn parse_args<T:Default,U>(
   args: Vec<String>,
-  apmaker: &'apm dyn for <'a> Fn(&'a mut T) -> ArgumentParser<'a>,
+  apmaker: &dyn for <'a> Fn(&'a mut T) -> ArgumentParser<'a>,
   completer: &dyn Fn(T) -> Result<U, ArgumentParseError>,
   extra_help: Option<&dyn Fn(&mut dyn Write) -> Result<(), io::Error>>,
 ) -> U {
