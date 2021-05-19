@@ -1456,7 +1456,7 @@ mod alter_game_adhoc {
 
   inventory::submit!{Subcommand(
     "alter-game-json",
-    "run an ad-hoc AlterGame commandr",
+    "run an ad-hoc AlterGame command (JSON)",
     call,
   )}
   inventory::submit!{Subcommand(
