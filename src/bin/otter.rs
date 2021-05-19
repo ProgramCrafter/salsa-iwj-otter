@@ -1410,6 +1410,57 @@ impl AdhocFormat {
   }
 }
 
+//---------- adhoc command ----------
+
+mod command_adhoc {
+  use super::*;
+
+  #[derive(Default,Debug)]
+  struct Args {
+    cmds: Vec<String>,
+  }
+
+  fn subargs<'ap,'a:'ap,'m:'ap>(
+    sa: &'a mut Args,
+    ahf: AdhocFormat,
+  ) -> ArgumentParser<'ap> {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.cmds).required()
+      .add_argument(format!("{}-COMMAND", ahf.metavar()).leak(),
+                    Collect,
+                    format!("{}-encoded MgmtCommand", ahf.name())
+                    .leak());
+    ap
+  }
+
+  #[throws(AE)]
+  fn call(sc: &'static Subcommand, ma: MainOpts, args: Vec<String>) {
+    let ahf = sc.into();
+
+    let subargs: ApMaker<_> = &|sa| subargs(sa,ahf);
+    let args = parse_args::<Args,_>(args, subargs, &ok_id, None);
+    let mut conn = connect(&ma)?;
+
+    let cmds: Vec<MgmtCommand> = ahf.parse(args.cmds, "cmd")?;
+    for (i, cmd) in cmds.into_iter().enumerate() {
+      let resp = conn.cmd(&cmd).with_context(|| format!("cmd #{}", i))?;
+      ahf.report(resp)?;
+    }
+  }
+
+  inventory::submit!{Subcommand(
+    "command-json",
+    "run ad-hoc management command(s) (JSON)",
+    call,
+  )}
+  inventory::submit!{Subcommand(
+    "command-ron",
+    "run ad-hoc management command(s) (Rusty Object Notation)",
+    call,
+  )}
+}
+
 //---------- alter game ----------
 
 mod alter_game_adhoc {
