@@ -1356,6 +1356,54 @@ mod list_pieces {
   )}
 }
 
+//---------- alter game json ----------
+
+mod alter_game_json {
+  use super::*;
+
+  #[derive(Default,Debug)]
+  struct Args {
+    table_name: String,
+    json: Vec<String>,
+  }
+
+  fn subargs(sa: &mut Args) -> ArgumentParser {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.table_name).required()
+      .add_argument("TABLE-NAME",Store,"table name");
+    ap.refer(&mut sa.json).required()
+      .add_argument("JSON-INSN",Collect,"JSON-encoded MgmtGameInstruction");
+    ap
+  }
+
+  #[throws(AE)]
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
+    let mut chan = access_game(&ma, &args.table_name)?;
+
+    let insns = args.json.iter().enumerate().map(|(i,s)|{
+      serde_json::from_str(&s)
+        .with_context(|| s.clone())
+        .with_context(|| format!("parse json insn (#{})", i))
+    }).collect::<Result<Vec<MgmtGameInstruction>,AE>>()?;
+
+    let resps = chan.alter_game(insns,None)?;
+
+    for resp in resps {
+      println!("{}",
+               serde_json::to_string(&resp)
+               .context("re-format json")?);
+    }
+  }
+
+  inventory::submit!{Subcommand(
+    "alter-game-json",
+    "run an ad-hoc AlterGame commandr",
+    call,
+  )}
+}
+
 //---------- upload-bundle ----------
 
 mod upload_bundle {
