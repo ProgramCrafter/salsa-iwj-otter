@@ -1398,17 +1398,15 @@ impl AdhocFormat {
   }
 
   #[throws(AE)]
-  pub fn report<T>(&self, resps: Vec<T>)
+  pub fn report<T>(&self, resp: T)
   where T: Serialize
   {
-    for resp in resps {
-      println!("{}", match self.0 {
-        "json" => serde_json::to_string(&resp).map_err(AE::from),
-        "ron"  => ron::ser::  to_string(&resp).map_err(AE::from),
-        _ => panic!(),
-      }
-          .context("re-format response")?);
+    println!("{}", match self.0 {
+      "json" => serde_json::to_string(&resp).map_err(AE::from),
+      "ron"  => ron::ser::  to_string(&resp).map_err(AE::from),
+      _ => panic!(),
     }
+        .context("re-format response")?);
   }
 }
 
@@ -1449,7 +1447,9 @@ mod alter_game_adhoc {
 
     let insns: Vec<MgmtGameInstruction> = ahf.parse(args.insns, "insn")?;
     let resps = chan.alter_game(insns,None)?;
-    ahf.report(resps)?;
+    for resp in resps {
+      ahf.report(resp)?;
+    }
 
     Ok(())
   }
