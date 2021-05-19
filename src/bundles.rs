@@ -34,6 +34,9 @@ pub struct InstanceBundles {
   bundles: Vec<Option<Note>>,
 }
 
+pub type FileInBundleId = (Id, ZipIndex);
+pub type SpecsInBundles = HashMap<UniCase<String>, FileInBundleId>;
+
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub enum State {
   Uploading,
@@ -91,6 +94,7 @@ define_index_type!{ pub struct LibInBundleI = usize; }
 struct Parsed {
   meta: BundleMeta,
   libs: IndexVec<LibInBundleI, shapelib::Contents>,
+  specs: SpecsInBundles,
 }
 
 #[derive(Debug)]
@@ -546,6 +550,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
   }
 
   let mut libs = Vec::new();
+  let mut specs = HashMap::new();
   for (name,i) in &za {
     eh.besteffort(|| Ok::<_,LE>(if_chain!{
       let mut split = name.as_ref().split('/');
@@ -562,6 +567,20 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
               libname: base.to_lowercase(),
               inzip: i,
             });
+          }
+        }} else if unicase::eq(dir, "specs") { if_chain!{
+          let mut split = file.rsplitn(3,'.');
+          if let Some(ext) = split.next(); if unicase::eq(ext, "toml");
+          if let Some(ext) = split.next(); if unicase::eq(ext, "game");
+          if let Some(base) = split.next();
+          then {
+            use hash_map::Entry::*;
+            match specs.entry(base.to_owned().into()) {
+              Occupied(oe) => throw!(LE::BadBundle(format!(
+                "duplicate spec {:?} vs {:?} - files varying only in case!",
+                file, oe.key()))),
+              Vacant(ve) => { ve.insert((id,i)); }
+            }
           }
         }}
       }
@@ -624,7 +643,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
   let (libs, newlibs) = newlibs.into_iter().unzip();
 
   (ForProcess { za, newlibs },
-   Parsed { meta, libs })
+   Parsed { meta, libs, specs })
 }
 
 #[throws(LE)]
@@ -729,7 +748,22 @@ pub fn load_spec_to_read(ig: &Instance, spec_name: &str) -> String {
 
   let spec_leaf = format!("{}.game.toml", spec_name);
 
-  // todo: game specs from bundles
+  if let Some((id, index)) = ig.bundle_specs.get(&UniCase::from(spec_name)) {
+    let fpath = id.path_(&ig.name);
+    let f = File::open(&fpath)
+      .with_context(|| fpath.clone()).context("reopen bundle")
+      .map_err(IE::from)?;
+    match id.kind {
+      Kind::Zip => {
+        let mut za = ZipArchive::new(BufReader::new(f)).map_err(
+          |e| LE::BadBundle(format!("re-examine zipfile: {}", e)))?;
+        let mut f = za.i(*index).map_err(
+          |e| LE::BadBundle(format!("re-find zipfile member: {}", e)))?;
+        return read_from_read(&mut f, &mut |e|{
+          LE::BadBundle(format!("read zipfile member: {}", e))}.into())?;
+      }
+    }
+  }
 
   if spec_name.chars().all(
     |c| c.is_ascii_alphanumeric() || c=='-' || c =='_'
@@ -760,7 +794,7 @@ pub fn load_spec_to_read(ig: &Instance, spec_name: &str) -> String {
 #[throws(InternalError)]
 fn incorporate_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
                  id: Id, parsed: Parsed) {
-  let Parsed { meta, libs } = parsed;
+  let Parsed { meta, libs, specs } = parsed;
 
   let iu: usize = id.index.into();
   let slot = &mut ib.bundles[iu];
@@ -776,13 +810,18 @@ fn incorporate_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
   for lib in libs {
     ig.local_libs.add(lib);
   }
+  ig.bundle_specs.extend(specs);
 
   let state = State::Loaded(Loaded { meta });
   *slot = Some(Note { kind: id.kind, state });
 }
 
 impl InstanceBundles {
-  pub fn new() -> Self { InstanceBundles{ bundles: default() } }
+  pub fn new() -> Self {
+    InstanceBundles{
+      bundles: default(),
+    }
+  }
 
   fn iter(&self) -> impl Iterator<Item=(Id, &State)> {
     self.bundles.iter().enumerate().filter_map(|(index, slot)| {
@@ -1087,6 +1126,7 @@ impl InstanceBundles {
 
       // Right, everything is at most NEARLY-ASENT, make them ABSENT
       self.bundles.clear();
+      ig.bundle_specs.clear();
 
       // Prevent old, removed, players from accessing any new bundles.
       ig.asset_url_key = new_asset_key;

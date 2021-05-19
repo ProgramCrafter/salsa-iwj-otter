@@ -57,6 +57,7 @@ pub struct Instance {
   pub acl: LoadedAcl<TablePermission>,
   pub links: Arc<LinksTable>,
   pub bundle_list: MgmtBundleList, // copy for easy access
+  pub bundle_specs: bundles::SpecsInBundles,
   pub asset_url_key: AssetUrlKey,
   pub local_libs: shapelib::Registry,
 }
@@ -350,6 +351,7 @@ impl Instance {
       tokens_clients: default(),
       links: default(),
       bundle_list: default(),
+      bundle_specs: default(),
       asset_url_key: AssetUrlKey::new_random()?,
       local_libs: default(),
     };
@@ -509,6 +511,7 @@ impl Instance {
       acl: default(),
       links: default(),
       bundle_list: default(),
+      bundle_specs: default(),
       asset_url_key: AssetUrlKey::Dummy,
       local_libs: default(),
       iplayers: default(),
@@ -1189,6 +1192,7 @@ impl InstanceGuard<'_> {
       tokens_players: default(),
       bundle_list: default(), // set by load_game_bundles
       local_libs: default(), // set by load_game_bundles
+      bundle_specs: default(), // set by load_game_bundles
       asset_url_key,
     };
 
