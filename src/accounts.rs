@@ -598,4 +598,26 @@ pub mod loaded_acl {
       ).collect() }
     }
   }
+
+  #[test]
+  fn perm_set() {
+    for p in TablePermission::iter() {
+      let acl = Acl { ents: vec![ AclEntry {
+        account_glob: "foo".to_string(),
+        allow: [p].iter().cloned().collect(),
+        deny: default(),
+      }]};
+      let lacl: LoadedAcl<_> = acl.into();
+      let eacl = EffectiveACL {
+        owner_account: None,
+        acl: &lacl,
+      };
+
+      for q in TablePermission::iter() {
+        let auth = eacl.check("foo", [q].into());
+        assert_eq!( auth.is_ok(), p == q,
+                    "{:?} {:?} {:?}", p, q, auth);
+      }
+    }
+  }
 }

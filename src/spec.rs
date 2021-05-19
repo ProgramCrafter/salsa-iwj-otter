@@ -17,7 +17,7 @@ use fehler::{throw,throws};
 use index_vec::{define_index_type, IndexVec};
 use num_derive::{FromPrimitive, ToPrimitive};
 use serde::{Deserialize, Serialize};
-use strum::{EnumString, Display};
+use strum::{Display, EnumIter, EnumString};
 use thiserror::Error;
 
 use otter_base::geometry::{Coord,Pos};
@@ -127,7 +127,7 @@ pub struct AclEntry<Perm: Eq + Hash> {
 
 #[derive(Debug,Clone,Copy,Serialize,Deserialize)]
 #[derive(Hash,Eq,PartialEq,Ord,PartialOrd)]
-#[derive(FromPrimitive,ToPrimitive)]
+#[derive(FromPrimitive,ToPrimitive,EnumIter)]
 pub enum TablePermission {
   TestExistence,
   ShowInList,
