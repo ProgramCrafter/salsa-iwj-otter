@@ -547,7 +547,7 @@ pub mod loaded_acl {
   {
     fn from(i: I) -> Self {
       PermSet(
-        i.into_iter().fold(0, |b, i| b | i.borrow().to_u64().unwrap()),
+        i.into_iter().fold(0, |b, i| b | 1 << (i.borrow().to_u8().unwrap())),
         PhantomData,
       )
     }
@@ -557,7 +557,7 @@ pub mod loaded_acl {
     let mut s = HashSet::new();
     for n in 0.. {
       let v = match FromPrimitive::from_u64(n) { Some(v) => v, None => break };
-      if packed.0 & n != 0 { s.insert(v); }
+      if packed.0 & (1 << n) != 0 { s.insert(v); }
     }
     s
   }
