@@ -20,12 +20,23 @@ impl Ctx {
       "big-bundle","duped-example", "chess-purple-cannon", "a purple cannon"
     )?;
   }
+ 
+  #[throws(Explode)]
+  fn builtin_spec(&mut self) {
+    self.su().mgmt_conn.borrow_mut().alter_game(
+      vec![ MGI::ResetFromNamedSpec {
+        spec: "demo".to_owned(),
+      }],
+      None,
+    )?;
+  }
 }
 
 #[throws(Explode)]
 fn tests(mut c: Ctx) {
   test!(c, "bundles",                       c.bundles()      ?);
   test!(c, "big",                           c.big()          ?);
+  test!(c, "builtin-spec",                  c.builtin_spec() ?);
 }
 
 #[throws(Explode)]
