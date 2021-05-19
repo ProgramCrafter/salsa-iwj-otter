@@ -607,7 +607,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
   }
 
   let y = match update {
-    MGI::Noop { } => readonly(cs,ag,ig, &[], |_| Ok(Fine))?,
+    MGI::Noop { } => readonly(cs,ag,ig, &[TP::TestExistence], |_| Ok(Fine))?,
 
     MGI::SetTableSize(size) => {
       let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
