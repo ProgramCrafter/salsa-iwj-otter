@@ -94,7 +94,7 @@ impl MainOpts {
 struct Subcommand (
   &'static str, // command
   &'static str, // desc
-  fn(&Subcommand, MainOpts, Vec<String>) -> Result<(),E>,
+  fn(&'static Subcommand, MainOpts, Vec<String>) -> Result<(),E>,
 );
 inventory::collect!(Subcommand);
 
@@ -1362,6 +1362,53 @@ mod list_pieces {
   )}
 }
 
+//---------- adhoc json/ron etc. ----------
+
+#[derive(Debug,Copy,Clone)]
+struct AdhocFormat(&'static str);
+
+impl From<&'static Subcommand> for AdhocFormat {
+  fn from(sc: &'static Subcommand) -> Self { AdhocFormat(
+    sc.0.rsplitn(2,'-').next().unwrap()
+  )}
+}
+
+impl AdhocFormat {
+  pub fn metavar(&self) -> String { self.0.to_uppercase() }
+  pub fn name(&self) -> String { match self.0 {
+    // special cases go here
+    _ => return self.0.to_uppercase(),
+  }/*.into()*/ }
+
+  #[throws(AE)]
+  pub fn parse<T>(&self, input: Vec<String>, what: &str) -> Vec<T>
+  where T: DeserializeOwned
+  {
+    input.into_iter().enumerate().map(|(i,s)| match self.0 {
+      "json" => serde_json::from_str(&s).map_err(AE::from),
+      "ron"  => ron::de::   from_str(&s).map_err(AE::from),
+      _ => panic!(),
+    }
+        .with_context(|| s.clone())
+        .with_context(|| format!("parse {} (#{})", what, i))
+    ).collect::<Result<Vec<T>,AE>>()?
+  }
+
+  #[throws(AE)]
+  pub fn report<T>(&self, resps: Vec<T>)
+  where T: Serialize
+  {
+    for resp in resps {
+      println!("{}", match self.0 {
+        "json" => serde_json::to_string(&resp).map_err(AE::from),
+        "ron"  => ron::ser::  to_string(&resp).map_err(AE::from),
+        _ => panic!(),
+      }
+          .context("re-format response")?);
+    }
+  }
+}
+
 //---------- alter game ----------
 
 mod alter_game_adhoc {
@@ -1375,48 +1422,33 @@ mod alter_game_adhoc {
 
   fn subargs<'ap,'a:'ap,'m:'ap>(
     sa: &'a mut Args,
-    fmtname: &'_ str,
+    ahf: AdhocFormat,
   ) -> ArgumentParser<'ap> {
     use argparse::*;
-    let ufmtname = fmtname.to_uppercase();
     let mut ap = ArgumentParser::new();
     ap.refer(&mut sa.table_name).required()
       .add_argument("TABLE-NAME",Store,"table name");
     ap.refer(&mut sa.insns).required()
-      .add_argument(format!("{}-INSN", &ufmtname).leak(),
+      .add_argument(format!("{}-INSN", ahf.metavar()).leak(),
                     Collect,
-                    format!("{}-encoded MgmtGameInstruction", &ufmtname)
+                    format!("{}-encoded MgmtGameInstruction", ahf.name())
                     .leak());
     ap
   }
 
-  fn call(sc: &Subcommand, ma: MainOpts, args: Vec<String>) -> Result<(),AE> {
-    let fmtname = sc.0.rsplitn(2,'-').next().unwrap();
+  fn call(sc: &'static Subcommand, ma: MainOpts, args: Vec<String>)
+          -> Result<(),AE> {
+    let ahf = sc.into();
 
     let subargs: &dyn for<'a> Fn(&'a mut Args) -> ArgumentParser<'a>
-      = &|sa| subargs(sa,fmtname);
+      = &|sa| subargs(sa,ahf);
     let args = parse_args::<Args,_>(args, subargs, &ok_id, None);
     let mut chan = access_game(&ma, &args.table_name)?;
 
-    let insns = args.insns.iter().enumerate().map(|(i,s)| match fmtname {
-      "json" => serde_json::from_str(&s).map_err(AE::from),
-      "ron"  => ron::de::   from_str(&s).map_err(AE::from),
-      _ => panic!(),
-    }
-        .with_context(|| s.clone())
-        .with_context(|| format!("parse insn (#{})", i))
-    ).collect::<Result<Vec<MgmtGameInstruction>,AE>>()?;
-
+    let insns: Vec<MgmtGameInstruction> = ahf.parse(args.insns, "insn")?;
     let resps = chan.alter_game(insns,None)?;
+    ahf.report(resps)?;
 
-    for resp in resps {
-      println!("{}", match fmtname {
-        "json" => serde_json::to_string(&resp).map_err(AE::from),
-        "ron"  => ron::ser::  to_string(&resp).map_err(AE::from),
-        _ => panic!(),
-      }
-          .context("re-format response")?);
-    }
     Ok(())
   }
 
