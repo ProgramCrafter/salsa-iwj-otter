@@ -92,8 +92,17 @@ impl AsRef<Opts> for Opts { fn as_ref(&self) -> &Opts { self } }
 
 #[derive(Debug)]
 pub enum Explode { }
-impl<E:Display> From<E> for Explode {
-  fn from(e: E) -> Explode { panic!("exploding on error: {}", e) }
+impl<'e, E:Into<Box<dyn Error + 'e>>> From<E> for Explode {
+  fn from(e: E) -> Explode {
+    let mut m = "exploding on error".to_string();
+    let e: Box<dyn Error> = e.into();
+    let mut e: Option<&dyn Error> = Some(&*e);
+    while let Some(te) = e {
+      m += &format!(": {}", &te);
+      e = te.source();
+    }
+    panic!("{}", m);
+  }
 }
 impl From<Explode> for anyhow::Error {
   fn from(e: Explode) -> AE { match e { } }
