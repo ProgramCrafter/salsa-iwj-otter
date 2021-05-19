@@ -108,9 +108,12 @@ impl From<&anyhow::Error> for ArgumentParseError {
   }
 }
 
+pub type ApMaker<'apm, T> =
+  &'apm dyn for <'a> Fn(&'a mut T) -> ArgumentParser<'a>;
+
 fn parse_args<T:Default,U>(
   args: Vec<String>,
-  apmaker: &dyn for <'a> Fn(&'a mut T) -> ArgumentParser<'a>,
+  apmaker: ApMaker<T>,
   completer: &dyn Fn(T) -> Result<U, ArgumentParseError>,
   extra_help: Option<&dyn Fn(&mut dyn Write) -> Result<(), io::Error>>,
 ) -> U {
@@ -1440,8 +1443,7 @@ mod alter_game_adhoc {
           -> Result<(),AE> {
     let ahf = sc.into();
 
-    let subargs: &dyn for<'a> Fn(&'a mut Args) -> ArgumentParser<'a>
-      = &|sa| subargs(sa,ahf);
+    let subargs: ApMaker<_> = &|sa| subargs(sa,ahf);
     let args = parse_args::<Args,_>(args, subargs, &ok_id, None);
     let mut chan = access_game(&ma, &args.table_name)?;
 
