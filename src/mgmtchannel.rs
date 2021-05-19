@@ -124,8 +124,8 @@ impl MgmtChannel {
         if let MgmtCommand::AlterGame { insns, .. } = &cmd {
           if responses.len() < insns.len() {
             Err(error.clone())
-              .context("AlterGame insn failed")
-              .with_context(|| format!(" {:?}", &insns[responses.len()]))?;
+              .with_context(|| format!("{:?}", &insns[responses.len()]))
+              .context("AlterGame insn failed")?;
           }
         }
         Err(error.clone()).context(format!(
