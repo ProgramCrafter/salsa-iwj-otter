@@ -552,15 +552,18 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
       if let Some(dir)  = split.next();
       if let Some(file) = split.next();
       if let None       = split.next();
-      if unicase::eq(dir, "library");
-      if let Some((base, ext)) = file.rsplit_once('.');
-      if unicase::eq(ext, "toml");
       then {
-        libs.push(LibScanned {
-          dir_inzip: format!("{}/{}", &dir, &base),
-          libname: base.to_lowercase(),
-          inzip: i,
-        });
+        if unicase::eq(dir, "library") { if_chain!{
+          if let Some((base, ext)) = file.rsplit_once('.');
+          if unicase::eq(ext, "toml");
+          then {
+            libs.push(LibScanned {
+              dir_inzip: format!("{}/{}", &dir, &base),
+              libname: base.to_lowercase(),
+              inzip: i,
+            });
+          }
+        }}
       }
     }), ||())?;
   }
