@@ -693,14 +693,12 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
 
     MGI::ResetFromNamedSpec { spec } => {
       reset_game_from_spec(cs,ag,ig,who, Box::new(move |ig| {
-        let (mut spec_f, what) = bundles::load_spec_to_read(ig,&spec)?;
+        let (mut spec_f, e_f) = bundles::load_spec_to_read(ig,&spec)?;
         let mut buf = String::new();
         spec_f.read_to_string(&mut buf).map_err(|e| match e.kind() {
           ErrorKind::InvalidData => ME::GameSpecInvalidData,
           ErrorKind::UnexpectedEof => ME::BadBundle(e.to_string()),
-          _ => IE::from(
-            AE::from(e).context(what).context("read spec")
-          ).into()
+          _ => e_f(e),
         })?;
         Ok::<_,ME>(buf)
       }))?

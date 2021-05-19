@@ -711,9 +711,10 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
 //---------- specs ----------
 
 #[throws(MgmtError)]
-pub fn load_spec_to_read(ig: &Instance, spec_name: &str)
-  -> (Box<dyn Read>, String)
-{
+pub fn load_spec_to_read(ig: &Instance, spec_name: &str) -> (
+  Box<dyn Read>,
+  Box<dyn FnOnce(io::Error) -> MgmtError>
+) {
   let spec_leaf = format!("{}.game.toml", spec_name);
 
   // todo: game specs from bundles
@@ -725,7 +726,12 @@ pub fn load_spec_to_read(ig: &Instance, spec_name: &str)
     debug!("{}: trying to loading builtin spec from {}",
            &ig.name, &path);
     match File::open(&path) {
-      Ok(f) => return (Box::new(f) as _, path),
+      Ok(f) => return (
+        Box::new(f) as _,
+        Box::new(move |e| IE::from(
+          AE::from(e).context(path.clone()).context("read spec")
+        ).into()) as _,
+      ),
       Err(e) if e.kind() == ErrorKind::NotFound => { },
       Err(e) => throw!(IE::from(
         AE::from(e).context(path).context("try open game spec")
