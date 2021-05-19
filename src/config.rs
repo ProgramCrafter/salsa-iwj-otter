@@ -36,6 +36,7 @@ pub struct ServerConfigSpec {
   pub log: Option<toml::Value>,
   pub bundled_sources: Option<String>,
   pub shapelibs: Option<Vec<shapelib::Config1>>,
+  pub specs_dir: Option<String>,
   pub sendmail: Option<String>,
   pub debug_js_inject_file: Option<String>,
   #[serde(default)] pub fake_rng: FakeRngSpec,
@@ -65,6 +66,7 @@ pub struct ServerConfig {
   pub usvg_bin: String,
   pub bundled_sources: String,
   pub shapelibs: Vec<shapelib::Config1>,
+  pub specs_dir: String,
   pub sendmail: String,
   pub debug_js_inject: Arc<String>,
   pub check_bundled_sources: bool,
@@ -115,7 +117,7 @@ impl ServerConfigSpec {
     let ServerConfigSpec {
       change_directory, base_dir, save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
-      template_dir, nwtemplate_dir, wasm_dir, libexec_dir, usvg_bin,
+      template_dir, specs_dir, nwtemplate_dir, wasm_dir, libexec_dir, usvg_bin,
       log, bundled_sources, shapelibs, sendmail,
       debug_js_inject_file, check_bundled_sources, fake_rng,
     } = self;
@@ -139,6 +141,7 @@ impl ServerConfigSpec {
     };
 
     let save_dir        = defpath(save_dir,        "save"              );
+    let specs_dir       = defpath(specs_dir,       "specs"             );
     let command_socket  = defpath(command_socket,  "var/command.socket");
     let template_dir    = defpath(template_dir,    "assets"            );
     let wasm_dir        = defpath(wasm_dir,        "assets"            );
@@ -228,7 +231,7 @@ impl ServerConfigSpec {
     let server = ServerConfig {
       save_dir, command_socket, debug,
       http_port, public_url, sse_wildcard_url, rocket_workers,
-      template_dir, nwtemplate_dir, wasm_dir, libexec_dir,
+      template_dir, specs_dir, nwtemplate_dir, wasm_dir, libexec_dir,
       bundled_sources, shapelibs, sendmail, usvg_bin,
       debug_js_inject, check_bundled_sources, game_rng, prctx,
     };

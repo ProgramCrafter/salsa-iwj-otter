@@ -708,6 +708,34 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
   }
 }
 
+//---------- specs ----------
+
+#[throws(MgmtError)]
+pub fn load_spec_to_read(ig: &Instance, spec_name: &str)
+  -> (Box<dyn Read>, String)
+{
+  let spec_leaf = format!("{}.game.toml", spec_name);
+
+  // todo: game specs from bundles
+
+  if spec_name.chars().all(
+    |c| c.is_ascii_alphanumeric() || c=='-' || c =='_'
+  ) {
+    let path = format!("{}/{}", config().specs_dir, &spec_leaf);
+    debug!("{}: trying to loading builtin spec from {}",
+           &ig.name, &path);
+    match File::open(&path) {
+      Ok(f) => return (Box::new(f) as _, path),
+      Err(e) if e.kind() == ErrorKind::NotFound => { },
+      Err(e) => throw!(IE::from(
+        AE::from(e).context(path).context("try open game spec")
+      )),
+    }
+  }
+
+  Err(ME::GameSpecNotFound)?
+}
+
 //---------- scanning/incorporating/uploading ----------
 
 #[throws(InternalError)]

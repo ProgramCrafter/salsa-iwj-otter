@@ -119,6 +119,7 @@ pub enum MgmtGameInstruction {
   DefinePieceAlias { alias: String, target: Box<dyn PieceSpec> },
 
   ClearGame { },
+  ResetFromNamedSpec { spec: String },
   ResetFromGameSpec { spec_toml: String },
 
   ResetPlayerAccess(PlayerId),
@@ -249,6 +250,8 @@ pub enum MgmtError {
   #[error("bad bundle: {0}")]                        BadBundle(String),
   #[error("bundle not found")]                       BundleNotFound,
   #[error("bundle(s) in use, cannot clear ({0})")]   BundlesInUse(String),
+  #[error("game spec not found")]                    GameSpecNotFound,
+  #[error("game contains invalid UTF-8")]            GameSpecInvalidData,
   #[error("idle timeout waiting for mgmt command")]  IdleTimeout,
   #[error("upload took too long (timed out)")]       UploadTimeout,
 }
