@@ -460,7 +460,7 @@ pub mod loaded_acl {
   use authproofs::*;
 
   pub trait Perm: FromPrimitive + ToPrimitive +
-    Copy + Eq + Hash + Sync + Send + 'static
+    Copy + Eq + Hash + Debug + Sync + Send + 'static
   {
     type Auth;
     const NOT_FOUND: MgmtError;
