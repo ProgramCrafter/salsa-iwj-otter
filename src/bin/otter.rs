@@ -108,9 +108,9 @@ impl From<&anyhow::Error> for ArgumentParseError {
   }
 }
 
-fn parse_args<T:Default,U>(
+fn parse_args<'apm,T:Default,U>(
   args: Vec<String>,
-  apmaker: &dyn Fn(&mut T) -> ArgumentParser,
+  apmaker: &'apm dyn for <'a> Fn(&'a mut T) -> ArgumentParser<'a>,
   completer: &dyn Fn(T) -> Result<U, ArgumentParseError>,
   extra_help: Option<&dyn Fn(&mut dyn Write) -> Result<(), io::Error>>,
 ) -> U {
@@ -240,6 +240,12 @@ pub fn in_basedir(verbose: bool,
       format!("{}/{}/{}", basedir, then_in, leaf)
     }
   }
+}
+
+// argparse is pretty insistent about references and they are awkward
+#[ext]
+impl String {
+  fn leak(self) -> &'static str { Box::<str>::leak(self.into()) }
 }
 
 fn main() {
@@ -1358,34 +1364,44 @@ mod list_pieces {
 
 //---------- alter game json ----------
 
-mod alter_game_json {
+mod alter_game_adhoc {
   use super::*;
 
   #[derive(Default,Debug)]
   struct Args {
     table_name: String,
-    json: Vec<String>,
+    insns: Vec<String>,
   }
 
-  fn subargs(sa: &mut Args) -> ArgumentParser {
+  fn subargs<'ap,'a:'ap,'m:'ap>(
+    sa: &'a mut Args,
+    fmtname: &'_ str,
+  ) -> ArgumentParser<'ap> {
     use argparse::*;
+    let ufmtname = fmtname.to_uppercase();
     let mut ap = ArgumentParser::new();
     ap.refer(&mut sa.table_name).required()
       .add_argument("TABLE-NAME",Store,"table name");
-    ap.refer(&mut sa.json).required()
-      .add_argument("JSON-INSN",Collect,"JSON-encoded MgmtGameInstruction");
+    ap.refer(&mut sa.insns).required()
+      .add_argument(format!("{}-INSN", &ufmtname).leak(),
+                    Collect,
+                    format!("{}-encoded MgmtGameInstruction", &ufmtname)
+                    .leak());
     ap
   }
 
-  #[throws(AE)]
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
-    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
+  fn call(sc: &Subcommand, ma: MainOpts, args: Vec<String>) -> Result<(),AE> {
+    let fmtname = sc.0.rsplitn(2,'-').next().unwrap();
+
+    let subargs: &dyn for<'a> Fn(&'a mut Args) -> ArgumentParser<'a>
+      = &|sa| subargs(sa,fmtname);
+    let args = parse_args::<Args,_>(args, subargs, &ok_id, None);
     let mut chan = access_game(&ma, &args.table_name)?;
 
-    let insns = args.json.iter().enumerate().map(|(i,s)|{
+    let insns = args.insns.iter().enumerate().map(|(i,s)|{
       serde_json::from_str(&s)
         .with_context(|| s.clone())
-        .with_context(|| format!("parse json insn (#{})", i))
+        .with_context(|| format!("parse insn (#{})", i))
     }).collect::<Result<Vec<MgmtGameInstruction>,AE>>()?;
 
     let resps = chan.alter_game(insns,None)?;
@@ -1393,8 +1409,9 @@ mod alter_game_json {
     for resp in resps {
       println!("{}",
                serde_json::to_string(&resp)
-               .context("re-format json")?);
+               .context("re-format response")?);
     }
+    Ok(())
   }
 
   inventory::submit!{Subcommand(
