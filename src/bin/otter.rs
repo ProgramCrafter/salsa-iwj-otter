@@ -1362,7 +1362,7 @@ mod list_pieces {
   )}
 }
 
-//---------- alter game json ----------
+//---------- alter game ----------
 
 mod alter_game_adhoc {
   use super::*;
@@ -1400,6 +1400,7 @@ mod alter_game_adhoc {
 
     let insns = args.insns.iter().enumerate().map(|(i,s)| match fmtname {
       "json" => serde_json::from_str(&s).map_err(AE::from),
+      "ron"  => ron::de::   from_str(&s).map_err(AE::from),
       _ => panic!(),
     }
         .with_context(|| s.clone())
@@ -1411,6 +1412,7 @@ mod alter_game_adhoc {
     for resp in resps {
       println!("{}", match fmtname {
         "json" => serde_json::to_string(&resp).map_err(AE::from),
+        "ron"  => ron::ser::  to_string(&resp).map_err(AE::from),
         _ => panic!(),
       }
           .context("re-format response")?);
@@ -1421,6 +1423,11 @@ mod alter_game_adhoc {
   inventory::submit!{Subcommand(
     "alter-game-json",
     "run an ad-hoc AlterGame commandr",
+    call,
+  )}
+  inventory::submit!{Subcommand(
+    "alter-game-ron",
+    "run an ad-hoc AlterGame command (Rusty Object Notation)",
     call,
   )}
 }
