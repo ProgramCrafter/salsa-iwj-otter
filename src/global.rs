@@ -58,6 +58,7 @@ pub struct Instance {
   pub links: Arc<LinksTable>,
   pub bundle_list: MgmtBundleList, // copy for easy access
   pub bundle_specs: bundles::SpecsInBundles,
+  pub bundle_hashes: bundles::HashCache,
   pub asset_url_key: AssetUrlKey,
   pub local_libs: shapelib::Registry,
 }
@@ -247,6 +248,7 @@ struct InstanceSaveAuxiliary<RawTokenStr, PiecesLoadedRef, OccultIlksRef,
   acl: Acl<TablePermission>,
   pub links: Arc<LinksTable>,
   asset_url_key: AssetUrlKey,
+  #[serde(default)] pub bundle_hashes: bundles::HashCache,
 }
 
 pub struct PrivateCaller(());
@@ -352,6 +354,7 @@ impl Instance {
       links: default(),
       bundle_list: default(),
       bundle_specs: default(),
+      bundle_hashes: default(),
       asset_url_key: AssetUrlKey::new_random()?,
       local_libs: default(),
     };
@@ -512,6 +515,7 @@ impl Instance {
       links: default(),
       bundle_list: default(),
       bundle_specs: default(),
+      bundle_hashes: default(),
       asset_url_key: AssetUrlKey::Dummy,
       local_libs: default(),
       iplayers: default(),
@@ -1071,7 +1075,7 @@ impl InstanceGuard<'_> {
   }
 
   #[throws(InternalError)]
-  fn save_aux_now(&mut self) {
+  pub fn save_aux_now(&mut self) {
     self.save_something("a-", |s, w| {
       let ipieces = &s.c.g.ipieces;
       let ioccults = &s.c.g.ioccults;
@@ -1093,9 +1097,10 @@ impl InstanceGuard<'_> {
       let acl = s.c.g.acl.clone().into();
       let links = s.c.g.links.clone();
       let asset_url_key = s.c.g.asset_url_key.clone();
+      let bundle_hashes = s.c.g.bundle_hashes.clone();
       let isa = InstanceSaveAuxiliary {
         ipieces, ioccults, tokens_players, aplayers, acl, links,
-        pcaliases, asset_url_key,
+        pcaliases, asset_url_key, bundle_hashes,
       };
       rmp_serde::encode::write_named(w, &isa)
     })?;
@@ -1120,7 +1125,7 @@ impl InstanceGuard<'_> {
                name: InstanceName) -> Option<InstanceRef> {
     let InstanceSaveAuxiliary::<String,ActualIPieces,IOccults,PieceAliases> {
       tokens_players, mut ipieces, ioccults, mut aplayers, acl, links,
-      pcaliases, asset_url_key,
+      pcaliases, asset_url_key, bundle_hashes,
     } = match Self::load_something(&name, "a-") {
       Ok(data) => data,
       Err(e) => if (||{
@@ -1194,6 +1199,7 @@ impl InstanceGuard<'_> {
       local_libs: default(), // set by load_game_bundles
       bundle_specs: default(), // set by load_game_bundles
       asset_url_key,
+      bundle_hashes,
     };
 
     let b = InstanceBundles::reload_game_bundles(&mut g)?;

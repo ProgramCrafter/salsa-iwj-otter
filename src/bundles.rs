@@ -46,6 +46,13 @@ pub enum State {
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct Loaded {
   pub meta: BundleMeta,
+  size: usize,
+  hash: bundles::Hash,
+}
+
+#[derive(Debug,Clone,Serialize,Deserialize,Default)]
+pub struct HashCache {
+  hashes: Vec<Option<Hash>>,
 }
 
 /// returned by start_upload
@@ -75,15 +82,16 @@ pub enum LoadError {
 
 // Bundle states:
 //
-//              GameState   Instance      Note       main file    .d
-//              pieces &c   libs, specs
+//             GameState     Instance        Note       main file    .d
+//             pieces &c  libs,   HashCache
+//                        specs    mem,aux
 //
-//  ABSENT        unused     absent       None        absent      absent
-//  NEARLY-ABSENT unused     absent       Uploading   absent      absent
-//  WRECKAGE      unused     absent       Uploading   maybe .tmp  wreckage
-//  BROKEN        unused     absent       Loaded      .zip        populated
-//  UNUSED        unused     available    Loaded      .zip        populated
-//  USED          used       available    Loaded      .zip        populated
+// ABSENT        unused  absent    no,maybe  None       absent      absent
+// NEARLY-ABSENT unused  absent     maybe    Uploading  absent      absent
+// WRECKAGE      unused  absent     maybe    Uploading  maybe .tmp  wreckage
+// BROKEN        unused  absent     maybe    Loaded     .zip        populated
+// UNUSED        unused  available  yes,yes  Loaded     .zip        populated
+// USED          used    available  yes,yes  .zip        populated
 
 //---------- private definitions ----------
 
@@ -96,6 +104,8 @@ struct Parsed {
   meta: BundleMeta,
   libs: IndexVec<LibInBundleI, shapelib::Contents>,
   specs: SpecsInBundles,
+  size: usize,
+  hash: Hash,
 }
 
 #[derive(Debug)]
@@ -181,10 +191,20 @@ impl BundleSavefile {
   }
 }
 
+#[throws(fmt::Error)]
+fn fmt_hex(f: &mut Formatter, buf: &[u8]) {
+  for v in buf { write!(f, "{:02x}", v)?; }
+}
+
 impl Debug for Hash {
   #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) { fmt_hex(f, &self.0)? }
+}
+impl Display for Hash {
+  #[throws(fmt::Error)]
   fn fmt(&self, f: &mut Formatter) {
-    for v in self.0 { write!(f, "{:02x}", v)?; }
+    fmt_hex(f, &self.0[0..12])?;
+    write!(f,"..")?;
   }
 }
 
@@ -285,9 +305,9 @@ impl Display for State {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut Formatter) {
     match self {
-      State::Loaded(Loaded{ meta }) => {
+      State::Loaded(Loaded{ meta, size, hash }) => {
         let BundleMeta { title } = meta;
-        write!(f, "Loaded {:?}", title)?;
+        write!(f, "Loaded {:?} {:10} {}", title, size, hash)?;
       }
       other => write!(f, "{:?}", other)?,
     }
@@ -309,7 +329,7 @@ impl MgmtBundleList {
       title: Html,
     }
     let bundles = self.iter().filter_map(|(&id, state)| {
-      if_let!{ State::Loaded(Loaded { meta }) = state; else return None; }
+      if_let!{ State::Loaded(Loaded { meta,.. }) = state; else return None; }
       let BundleMeta { title } = meta;
       let title = Html::from_txt(title);
       let token = id.token(ig);
@@ -505,7 +525,8 @@ enum FinishProgress {
 impl progress::Enum for FinishProgress { }
 
 #[throws(EH::Err)]
-fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
+fn parse_bundle<EH>(id: Id, instance: &InstanceName,
+                    file: File, size: usize, hash: &'_ Hash, eh: EH,
                     mut for_progress: &mut dyn progress::Originator)
                     -> (ForProcess, Parsed)
   where EH: BundleParseErrorHandling,
@@ -643,7 +664,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
   let (libs, newlibs) = newlibs.into_iter().unzip();
 
   (ForProcess { za, newlibs },
-   Parsed { meta, libs, specs })
+   Parsed { meta, libs, specs, size, hash: *hash })
 }
 
 #[throws(LE)]
@@ -792,8 +813,8 @@ pub fn load_spec_to_read(ig: &Instance, spec_name: &str) -> String {
 
 #[throws(InternalError)]
 fn incorporate_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
-                 id: Id, parsed: Parsed) {
-  let Parsed { meta, libs, specs } = parsed;
+                      id: Id, parsed: Parsed) {
+  let Parsed { meta, libs, specs, size, hash } = parsed;
 
   let iu: usize = id.index.into();
   let slot = &mut ib.bundles[iu];
@@ -811,7 +832,7 @@ fn incorporate_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
   }
   ig.bundle_specs.extend(specs);
 
-  let state = State::Loaded(Loaded { meta });
+  let state = State::Loaded(Loaded { meta, size, hash });
   *slot = Some(Note { kind: id.kind, state });
 }
 
@@ -886,6 +907,15 @@ impl InstanceBundles {
         },
       };
 
+      let iu: usize = parsed.index().into();
+      let hash = match ig.bundle_hashes.hashes.get(iu) {
+        Some(Some(hash)) => hash,
+        _ => {
+          error!("bundle hash missing for {} {:?}", &ig.name, &parsed);
+          continue;
+        }
+      };
+
       ib.bundles.get_or_extend_with(parsed.index().into(), default);
 
       if_let!{ BundleSavefile::Bundle(id) = parsed;
@@ -895,8 +925,15 @@ impl InstanceBundles {
         .with_context(|| fpath.clone()).context("open zipfile")
         .map_err(IE::from)?;
 
+      let size = file.metadata()
+        .with_context(|| fpath.clone()).context("fstat zipfile")
+        .map_err(IE::from)?
+        .len().try_into()
+        .with_context(|| fpath.clone()).context("zipfile too long!")?;
+
       let eh = BundleParseReload { bpath: &fpath };
-      let (_za, parsed) = match parse_bundle(id, &ig.name, file, eh, &mut ()) {
+      let (_za, parsed) = match
+        parse_bundle(id, &ig.name, file, size, hash, eh, &mut ()) {
         Ok(y) => y,
         Err(e) => {
           debug!("bundle file {:?} reload failed {}", &fpath, e);
@@ -990,13 +1027,17 @@ impl Uploading {
 
     let mut file = file.into_inner().map_err(|e| e.into_error())
       .with_context(|| tmp.clone()).context("flush").map_err(IE::from)?;
-    if hash.as_slice() != &expected.0[..] { throw!(ME::UploadCorrupted) }
+
+    let hash = hash.try_into().unwrap();
+    let hash = Hash(hash);
+    if &hash != expected { throw!(ME::UploadCorrupted) }
 
     file.rewind().context("rewind"). map_err(IE::from)?;
 
     let mut for_progress = &mut *for_progress_box;
 
-    let (za, parsed) = parse_bundle(id, &instance, file, BundleParseUpload,
+    let (za, parsed) = parse_bundle(id, &instance,
+                                    file, size, &hash, BundleParseUpload,
                                     for_progress)?;
 
     process_bundle(za, id, &*instance, for_progress)?;
@@ -1009,12 +1050,17 @@ impl Uploading {
 
 impl InstanceBundles {
   #[throws(MgmtError)]
-  pub fn finish_upload(&mut self, ig: &mut Instance,
+  pub fn finish_upload(&mut self, ig: &mut InstanceGuard,
                        Uploaded { id, parsed, mut for_progress_box }: Uploaded)
                        -> Id {
     let tmp = id.path_tmp(&ig.name);
     let install = id.path_(&ig.name);
     let mut for_progress = &mut *for_progress_box;
+
+    *ig.bundle_hashes.hashes
+      .get_or_extend_with(id.index.into(), default)
+      = Some(parsed.hash);
+    ig.save_aux_now()?;
 
     for_progress.phase_item(Phase::Finish, FinishProgress::Incorporate);
 
@@ -1131,6 +1177,7 @@ impl InstanceBundles {
       // Right, everything is at most NEARLY-ASENT, make them ABSENT
       self.bundles.clear();
       ig.bundle_specs.clear();
+      ig.bundle_hashes.hashes.clear();
 
       // Prevent old, removed, players from accessing any new bundles.
       ig.asset_url_key = new_asset_key;
