@@ -1506,6 +1506,52 @@ mod alter_game_adhoc {
 
 //---------- upload-bundle ----------
 
+struct BundleForUpload {
+  f: BufReader<File>,
+  size: usize,
+  hash: bundles::Hash,
+  kind: bundles::Kind,
+}
+
+impl BundleForUpload {
+  #[throws(AE)]
+  fn prepare(file: &str) -> Self {
+    let f = File::open(file.clone())
+      .with_context(|| file.to_owned())
+      .context("open bundle file")?;
+    let size = f
+      .metadata().context("fstat bundle file")?
+      .len()
+      .try_into().map_err(|_| anyhow!("bundle file far too large"))?;
+    let mut f = BufReader::new(f);
+    let hash = bundles::DigestWrite::of(&mut f)
+      .context("read bundle file (for hash)")?;
+    let hash = bundles::Hash(hash.into());
+    let kind = bundles::Kind::only();
+    f.rewind().context("rewind bundle file")?;
+    BundleForUpload { f, size, hash, kind }
+  }
+
+  #[throws(AE)]
+  fn upload(self, ma: &MainOpts, chan: &mut MgmtChannelForGame,
+            progress: &mut dyn termprogress::Reporter)
+            -> bundles::Id {
+    let BundleForUpload { mut f, size, hash, kind } = self;
+    let cmd = MC::UploadBundle {
+      size,
+      game: ma.instance(),
+      hash, kind,
+      progress: MgmtChannel::PROGRESS,
+    };
+    let resp = chan.cmd_withbulk(&cmd, &mut f, &mut io::sink(),
+                                 &mut *progress)?;
+    if_let!{ MR::Bundle { bundle } = resp;
+             else throw!(anyhow!("unexpected {:?}", &resp)) };
+    progress.clear();
+    bundle
+  }
+}
+
 mod upload_bundle {
   use super::*;
 
@@ -1526,30 +1572,9 @@ mod upload_bundle {
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ma.access_game()?;
-    let f = File::open(&args.bundle_file)
-      .with_context(|| args.bundle_file.clone())
-      .context("open bundle file")?;
-    let size = f
-      .metadata().context("fstat bundle file")?
-      .len()
-      .try_into().map_err(|_| anyhow!("bundle file far too large"))?;
-    let mut f = BufReader::new(f);
-    let hash = bundles::DigestWrite::of(&mut f)
-      .context("read bundle file (for hash)")?;
-    let kind = bundles::Kind::only();
-    f.rewind().context("rewind bundle file")?;
-    let cmd = MC::UploadBundle {
-      size,
-      game: ma.instance(),
-      hash: bundles::Hash(hash.into()), kind,
-      progress: MgmtChannel::PROGRESS,
-    };
     let mut progress = termprogress::new();
-    let resp = chan.cmd_withbulk(&cmd, &mut f, &mut io::sink(),
-                                 &mut *progress)?;
-    if_let!{ MR::Bundle { bundle } = resp;
-             else throw!(anyhow!("unexpected {:?}", &resp)) };
-    progress.clear();
+    let for_upload = BundleForUpload::prepare(&args.bundle_file)?;
+    let bundle = for_upload.upload(&ma, &mut chan, &mut *progress)?;
     println!("{}", bundle);
   }
 
