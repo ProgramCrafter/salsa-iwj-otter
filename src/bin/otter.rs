@@ -711,7 +711,7 @@ mod reset_game {
   #[derive(Default,Debug)]
   struct Args {
     table_name: String,
-    game_file: String,
+    game_spec: String,
     table_file: Option<String>,
   }
 
@@ -723,10 +723,10 @@ mod reset_game {
                   "reset the players and access too");
     ap.refer(&mut sa.table_name).required()
       .add_argument("TABLE-NAME",Store,"table name");
-    ap.refer(&mut sa.game_file).required()
-      .add_argument("GAME-SPEC[-TOML]",Store,
-                    "game spec (path to .toml file, \
-                     or found in specs directory if no '/')");
+    ap.refer(&mut sa.game_spec).required()
+      .add_argument("GAME-SPEC",Store,
+                    "game spec, as found in server, \
+                     or local filename if it contains a '/')");
     ap
   }
 
@@ -737,8 +737,15 @@ mod reset_game {
       instance_name.clone(),
       MgmtGameUpdateMode::Bulk,
     );
-    let spec_toml = read_spec(&ma, &args.game_file,
-                              SpecRaw::<GameSpec>::new())?;
+
+    let reset_insn =
+      if let Some(filename) = spec_arg_is_path(&args.game_spec) {
+        let spec_toml = read_spec_from_path(
+          filename, SpecRaw::<GameSpec>::new())?;
+        MGI::ResetFromGameSpec { spec_toml }
+      } else {
+        MGI::ResetFromNamedSpec { spec: args.game_spec.clone() }
+      };
 
     let mut insns = vec![];
 
@@ -758,7 +765,7 @@ mod reset_game {
       insns.extend(setup_table(&ma, &instance_name, &table_spec)?);
     }
 
-    insns.push(MGI::ResetFromGameSpec { spec_toml });
+    insns.push(reset_insn);
 
     chan.alter_game(insns, None)?;
 
