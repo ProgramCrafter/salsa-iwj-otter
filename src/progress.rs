@@ -85,7 +85,7 @@ impl<'t> From<()> for Count<'t> { fn from(_:()) -> Count<'t> {
 } }
 
 #[ext(pub, name=OriginatorExt)]
-impl &mut dyn Originator {
+impl &'_ mut (dyn Originator + '_) {
   fn phase_item<'p,'e,P,E>(&mut self, phase: P, item: E)
   where P: Into<Count<'p>>,
         E: Into<Count<'e>>,
