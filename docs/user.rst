@@ -155,9 +155,9 @@ The most usual game-creation command looks something like this:
 
 ::
 
-  otter unix:ijackson::test reset --reset-table local-users demo
-       /~^^^^^^^^^^^^^^^^^'                    /^^^^^^^^^^^ '^^^\
-       `game name                   table spec'         game spec'
+  otter -g unix:ijackson::test reset --reset-table local-users demo
+          /~^^^^^^^^^^^^^^^^^'                    /^^^^^^^^^^^ '^^^\
+          `game name                   table spec'         game spec'
 
 Here ``local-users`` refers to the file ``local-users.table.toml`` in the
 Otter specs directory (``/volatile/Otter/specs`` on chiark).  The table
@@ -176,9 +176,9 @@ for a different game) with something like this:
 
 ::
 
-  otter unix:ijackson::test reset demo
-       /^^^^^^^^^^^^^^^^^^'       '^^^\
-       `game name                      `game spec
+  otter -g unix:ijackson::test reset demo
+          /^^^^^^^^^^^^^^^^^^'       '^^^\
+          `game name                      `game spec
 
 The ``otter`` command line tool has further subcommands for
 adding/removing players, for ad-hoc addition of pieces from the
