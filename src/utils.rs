@@ -623,3 +623,19 @@ impl<T: io::Seek> T {
   #[throws(io::Error)]
   fn rewind(&mut self) { self.seek(io::SeekFrom::Start(0))? }
 }
+
+#[ext(pub)]
+impl<T> Vec<T> {
+  fn ensure_element_with<F>(&mut self, i: usize, f: F) where F: FnMut() -> T {
+    if self.get(i).is_none() {
+      self.resize_with(i+1, f);
+    }
+  }
+}
+
+#[ext(pub)]
+impl<I,T> IndexVec<I,T> where I: index_vec::Idx {
+  fn ensure_element_with<F>(&mut self, i: I, f: F) where F: FnMut() -> T {
+    self.raw.ensure_element_with(i.index(), f)
+  }
+}

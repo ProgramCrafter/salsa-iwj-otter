@@ -886,10 +886,7 @@ impl InstanceBundles {
         },
       };
 
-      let iu: usize = parsed.index().into();
-      if ib.bundles.get(iu).is_none() {
-        ib.bundles.resize_with(iu+1, default);
-      }
+      ib.bundles.ensure_element_with(parsed.index().into(), default);
 
       if_let!{ BundleSavefile::Bundle(id) = parsed;
                else continue; }
