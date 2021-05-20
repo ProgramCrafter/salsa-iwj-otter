@@ -616,14 +616,26 @@ impl<T:SomeSpec> SpecParse for SpecRaw<T> {
 }
 impl<T> SpecRaw<T> { pub fn new() -> Self { Self(default()) } }
 
-#[throws(AE)]
-fn read_spec<P:SpecParse>(ma: &MainOpts, specname: &str, _: P) -> P::T
-{
-  let filename = if specname.contains('/') {
-    specname.to_string()
+fn spec_arg_is_path(specname: &str) -> Option<String> {
+  if specname.contains('/') {
+    Some(specname.to_string())
   } else {
-    format!("{}/{}.{}.toml", &ma.spec_dir, specname, P::S::FNCOMP)
-  };
+    None
+  }
+}
+
+#[throws(AE)]
+fn read_spec<P:SpecParse>(ma: &MainOpts, specname: &str, p: P) -> P::T
+{
+  let filename = spec_arg_is_path(specname).unwrap_or_else(
+    || format!("{}/{}.{}.toml", &ma.spec_dir, specname, P::S::FNCOMP)
+  );
+  read_spec_from_path(filename, p)?
+}
+
+#[throws(AE)]
+fn read_spec_from_path<P:SpecParse>(filename: String, _: P) -> P::T
+{
   (||{
     let mut f = File::open(&filename).context("open")?;
     let mut buf = String::new();
