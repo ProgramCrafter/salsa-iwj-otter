@@ -570,11 +570,11 @@ impl UsualCtx {
       ("itemlib", itemlib),
       ("item",    item   ),
     ]);
-    let command = ds.ss("library-add --lib @itemlib@ @table@ @item@")?;
+    let command = ds.gss("library-add --lib @itemlib@ @item@")?;
     let added = self.some_library_add(&command)?;
     assert_eq!( added.len(), 1 );
 
-    let output: String = self.otter(&ds.ss("list-pieces @table@")?)?.into();
+    let output: String = self.otter(&ds.gss("list-pieces")?)?.into();
     assert_eq!( Regex::new(
       &format!(
         r#"(?m)(?:[^\w-]|^){}[^\w-].*\W{}(?:\W|$)"#,
@@ -596,11 +596,11 @@ impl UsualCtx {
     let ds = self.su().ds.also(&[("bundle_stem", &bundle_stem)]);
     let bundle_file = ds.subst("@examples@/@bundle_stem@.zip")?;
     let ds = ds.also(&[("bundle", &bundle_file)]);
-    self.otter(&ds.ss("upload-bundle @table@ @bundle@")?)?;
-    let mut bundles = self.otter(&ds.ss("list-bundles @table@")?)?;
+    self.otter(&ds.gss("upload-bundle @bundle@")?)?;
+    let mut bundles = self.otter(&ds.gss("list-bundles")?)?;
     let bundles = String::from(&mut bundles);
     assert!(bundles.starts_with("00000.zip Loaded"));
-    self.otter(&ds.ss("download-bundle @table@ 0")?)?;
+    self.otter(&ds.gss("download-bundle 0")?)?;
     let st = Command::new("cmp").args(&[&bundle_file, "00000.zip"]).status()?;
     if ! st.success() { panic!("cmp failed {}", st) }
 
@@ -620,8 +620,8 @@ impl UsualCtx {
 
     with(self)?;
 
-    self.otter(&ds.ss("clear-game @table@")?)?;
-    self.reset_game(&ds.ss("reset @table@ demo")?)?;
+    self.otter(&ds.gss("clear-game")?)?;
+    self.reset_game(&ds.gss("reset demo")?)?;
   }
 }
 

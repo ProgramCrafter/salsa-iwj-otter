@@ -20,7 +20,7 @@ impl Ctx {
       "big-bundle","duped-example", "chess-purple-cannon", "a purple cannon",
       &mut |ctx|
     {
-      let cmd = ctx.su().ds.ss("reset @table@ modded-spec")?;
+      let cmd = ctx.su().ds.gss("reset modded-spec")?;
       ctx.reset_game(&cmd)?;
 
       let alice = ctx.connect_player(&ctx.alice)?;

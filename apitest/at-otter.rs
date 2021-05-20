@@ -11,8 +11,8 @@ impl Ctx {
   fn library_load(&mut self) {
     self.prepare_game()?;
 
-    let command = self.su().ds.ss(
-      "library-list @table@ chess-yellow-?"
+    let command = self.su().ds.gss(
+      "library-list chess-yellow-?"
     )?;
     let output: String = self.otter(&command)?.into();
     assert!( Regex::new("(?m)^wikimedia  *chess-yellow-K  *the yellow king$")?
@@ -20,8 +20,8 @@ impl Ctx {
              .is_some(),
              "got: {}", &output);
 
-    let command = self.su().ds.ss(
-      "library-add --lib wikimedia @table@ chess-blue-?"
+    let command = self.su().ds.gss(
+      "library-add --lib wikimedia chess-blue-?"
     )?;
     let added = self.some_library_add(&command)?;
     assert_eq!(added.len(), 6);
@@ -145,7 +145,7 @@ impl Ctx {
     assert_eq!(b_pieces[b_pawns[1]].pos,
                a_pieces[a_pawns[0]].pos);
 
-    let command = self.su().ds.ss("reset @table@ demo")?;
+    let command = self.su().ds.gss("reset demo")?;
     self.reset_game(&command)?;
   }
 
@@ -177,7 +177,7 @@ impl Ctx {
       let (gy, game) = games.next();
       if !(py || gy) { break }
       let command = self.su().ds.also(&[("game",&game),("perm",&perm)])
-        .ss("reset --reset-table @perm@ @table@ @game@")?;
+        .gss("reset --reset-table @perm@ @game@")?;
       self.reset_game(&command).context(perm).context(game)?;
     }
   }

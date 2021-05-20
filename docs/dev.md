@@ -25,11 +25,11 @@ quite verbose.  So, in another shell:
 ```
     target/debug/otter                                               \
         --account server: --config server-test.toml --spec-dir=specs \
-        reset --reset-table test server::test demo
+        --game test server::test reset --reset-table demo
 
     target/debug/otter                                               \
         --account server: --config server-test.toml --spec-dir=specs \
-        join-game server::test
+        --game server::test join-game
 ```
 
 The URL printed can then be visited in a local browser.

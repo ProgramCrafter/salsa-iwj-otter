@@ -624,9 +624,9 @@ impl<'g> WindowGuard<'g> {
   #[throws(AE)]
   pub fn otter(&mut self, verb: &[&str], args: &[&str]) {
     let args: Vec<String> =
-      ["--account", "server:"].iter().cloned().map(Into::into)
+      ["--account", "server:", "--game", &self.w.table()]
+      .iter().cloned().map(Into::into)
       .chain(verb.iter().cloned().map(Into::into))
-      .chain(iter::once(self.w.table()))
       .chain(args.iter().cloned().map(Into::into))
       .collect();
     self.su.ds.otter(&args)?;

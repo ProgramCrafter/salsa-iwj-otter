@@ -68,11 +68,20 @@ struct MainOpts {
   verbose: i32,
   superuser: bool,
   spec_dir: String,
+  game: Option<String>,
 }
 
 impl MainOpts {
-  pub fn instance_name(&self, table_name: &str) -> InstanceName {
-    match table_name.strip_prefix(":") {
+  pub fn game(&self) -> &str {
+    self.game.as_ref().map(|s| s.as_str()).unwrap_or_else(||{
+      eprintln!(
+        "game (table) name not specified; pass --game option");
+      exit(EXIT_USAGE);
+    })
+  }
+
+  pub fn instance(&self) -> InstanceName {
+    match self.game().strip_prefix(":") {
       Some(rest) => {
         InstanceName {
           account: self.account.clone(),
@@ -80,16 +89,35 @@ impl MainOpts {
         }
       }
       None => {
-        table_name.parse().unwrap_or_else(|e|{
+        self.game().parse().unwrap_or_else(|e|{
           eprintln!(
-            "instance name must start with : or be valid full name: {}",
+            "game (table) name must start with : or be valid full name: {}",
             &e);
           exit(EXIT_USAGE);
         })
       }
     }
   }
+
+  #[throws(AE)]
+  fn access_account(&self) -> Conn {
+    let mut conn = connect(self)?;
+    conn.prep_access_account(self)?;
+    conn
+  }
+
+  #[throws(AE)]
+  fn access_game(&self) -> MgmtChannelForGame {
+    self.access_account()?.chan.for_game(
+      self.instance(),
+      MgmtGameUpdateMode::Online,
+    )
+  }
 }
+
+#[derive(Default,Debug)]
+struct NoArgs { }
+fn noargs(_sa: &mut NoArgs) -> ArgumentParser { ArgumentParser::new() }
 
 struct Subcommand (
   &'static str, // command
@@ -266,6 +294,7 @@ fn main() {
     subcommand: String,
     subargs: Vec<String>,
     spec_dir: Option<String>,
+    game: Option<String>,
   }
   let (subcommand, subargs, mo) = parse_args::<RawMainArgs,_>(
     env::args().collect(),
@@ -290,6 +319,10 @@ fn main() {
                   StoreOption,
                   "use NICK as nick for joining games (now and in the future) \
                    (default: derive from account name");
+    ap.refer(&mut rma.game).metavar("TABLE-NAME")
+      .add_option(&["--game"],
+                  StoreOption,
+                  "Select the game to operate on");
     ap.refer(&mut rma.timezone).metavar("TZ")
       .add_option(&["--timezone"],
                   StoreOption,
@@ -354,7 +387,7 @@ fn main() {
   }, &|RawMainArgs {
     account, nick, timezone,
     access, socket_path, verbose, config_filename, superuser,
-    subcommand, subargs, spec_dir, layout,
+    subcommand, subargs, spec_dir, layout, game,
   }|{
     env_logger::Builder::new()
       .filter_level(log::LevelFilter::Info)
@@ -417,6 +450,7 @@ fn main() {
       verbose,
       superuser,
       spec_dir,
+      game,
     }))
   }, Some(&|w|{
     writeln!(w, "\nSubcommands:")?;
@@ -645,21 +679,6 @@ fn read_spec_from_path<P:SpecParse>(filename: String, _: P) -> P::T
   })().with_context(|| format!("read {} {:?}", P::S::WHAT, &filename))?
 }
 
-#[throws(AE)]
-fn access_account(ma: &MainOpts) -> Conn {
-  let mut conn = connect(&ma)?;
-  conn.prep_access_account(ma)?;
-  conn
-}
-
-#[throws(AE)]
-fn access_game(ma: &MainOpts, table_name: &String) -> MgmtChannelForGame {
-  access_account(ma)?.chan.for_game(
-    ma.instance_name(table_name),
-    MgmtGameUpdateMode::Online,
-  )
-}
-
 //---------- list-games ----------
 
 mod list_games {
@@ -710,7 +729,6 @@ mod reset_game {
 
   #[derive(Default,Debug)]
   struct Args {
-    table_name: String,
     game_spec: String,
     table_file: Option<String>,
   }
@@ -721,8 +739,6 @@ mod reset_game {
     ap.refer(&mut sa.table_file).metavar("TABLE-SPEC[-TOML]")
       .add_option(&["--reset-table"],StoreOption,
                   "reset the players and access too");
-    ap.refer(&mut sa.table_name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
     ap.refer(&mut sa.game_spec).required()
       .add_argument("GAME-SPEC",Store,
                     "game spec, as found in server, \
@@ -732,11 +748,8 @@ mod reset_game {
 
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let instance_name = ma.instance_name(&args.table_name);
-    let mut chan = access_account(&ma)?.chan.for_game(
-      instance_name.clone(),
-      MgmtGameUpdateMode::Bulk,
-    );
+    let instance_name = ma.instance();
+    let mut chan = ma.access_game()?;
 
     let reset_insn =
       if let Some(filename) = spec_arg_is_path(&args.game_spec) {
@@ -790,7 +803,6 @@ mod set_link {
 
   #[derive(Debug,Default)]
   struct Args {
-    table_name: String,
     kind: Option<LinkKind>,
     url: Option<String>,
   }
@@ -798,8 +810,6 @@ mod set_link {
   fn subargs(sa: &mut Args) -> ArgumentParser {
     use argparse::*;
     let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.table_name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
     ap.refer(&mut sa.kind)
       .add_argument("LINK-KIND",StoreOption,"link kind");
     ap.refer(&mut sa.url)
@@ -810,7 +820,7 @@ mod set_link {
   #[throws(AE)]
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let mut chan = access_game(&ma, &args.table_name)?;
+    let mut chan = ma.access_game()?;
 
     match args.url {
       None => {
@@ -858,7 +868,6 @@ mod join_game {
   #[derive(Default,Debug)]
   struct Args {
     reset_access: bool,
-    table_name: String,
   }
 
   fn subargs(sa: &mut Args) -> ArgumentParser {
@@ -867,14 +876,12 @@ mod join_game {
     ap.refer(&mut sa.reset_access)
       .add_option(&["--reset"],StoreTrue,
                   "generate and deliver new player access token");
-    ap.refer(&mut sa.table_name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
     ap
   }
 
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let mut chan = access_game(&ma, &args.table_name)?;
+    let mut chan = ma.access_game()?;
 
     let mut insns = vec![];
     match chan.has_player(&ma.account)? {
@@ -946,22 +953,11 @@ mod join_game {
 mod leave_game {
   use super::*;
 
-  #[derive(Default,Debug)]
-  struct Args {
-    table_name: String,
-  }
-
-  fn subargs(sa: &mut Args) -> ArgumentParser {
-    use argparse::*;
-    let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.table_name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
-    ap
-  }
+  type Args = NoArgs;
 
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
-    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let mut chan = access_game(&ma, &args.table_name)?;
+    let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
+    let mut chan = ma.access_game()?;
 
     let player = match chan.has_player(&ma.account)? {
       None => {
@@ -988,22 +984,11 @@ mod leave_game {
 mod delete_game {
   use super::*;
 
-  #[derive(Default,Debug)]
-  struct Args {
-    table_name: String,
-  }
-
-  fn subargs(sa: &mut Args) -> ArgumentParser {
-    use argparse::*;
-    let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.table_name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
-    ap
-  }
+  type Args = NoArgs;
 
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
-    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let mut chan = access_game(&ma, &args.table_name)?;
+    let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
+    let mut chan = ma.access_game()?;
     let game = chan.game.clone();
     chan.cmd(&MC::DestroyGame { game })?;
     Ok(())
@@ -1020,7 +1005,6 @@ mod delete_game {
 
 #[derive(Debug,Default)]
 struct LibGlobArgs {
-  table_name: String,
   lib: Option<String>,
   pat: Option<String>,
 }
@@ -1031,8 +1015,6 @@ impl LibGlobArgs {
     ap: &'_ mut ArgumentParser<'ap>
   ) {
     use argparse::*;
-    ap.refer(&mut self.table_name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
     ap.refer(&mut self.lib).metavar("LIBRARY")
       .add_option(&["--lib"],StoreOption,"look only in LIBRARY");
     ap.refer(&mut self.pat)
@@ -1064,7 +1046,7 @@ mod library_list {
   #[throws(AE)]
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let mut chan = access_game(&ma, &args.table_name)?;
+    let mut chan = ma.access_game()?;
 
     if args.lib.is_none() && args.pat.is_none() {
       let game = chan.game.clone();
@@ -1128,7 +1110,7 @@ mod library_add {
     const MAGIC: &str = "mgmt-library-load-marker";
 
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let mut chan = access_game(&ma, &args.tlg.table_name)?;
+    let mut chan = ma.access_game()?;
     let (pieces, _pcaliases) = chan.list_pieces()?;
     let markers = pieces.iter().filter(|p| p.itemname.as_str() == MAGIC)
       .collect::<Vec<_>>();
@@ -1351,23 +1333,12 @@ mod library_add {
 mod list_pieces {
   use super::*;
 
-  #[derive(Default,Debug)]
-  struct Args {
-    table_name: String,
-  }
-
-  fn subargs(sa: &mut Args) -> ArgumentParser {
-    use argparse::*;
-    let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.table_name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
-    ap
-  }
+  type Args = NoArgs;
 
   #[throws(AE)]
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
-    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let mut chan = access_game(&ma, &args.table_name)?;
+    let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
+    let mut chan = ma.access_game()?;
     let (pieces, pcaliases) = chan.list_pieces()?;
     for p in pieces {
       println!("{:?}", p);
@@ -1487,7 +1458,6 @@ mod alter_game_adhoc {
 
   #[derive(Default,Debug)]
   struct Args {
-    table_name: String,
     insns: Vec<String>,
   }
 
@@ -1497,8 +1467,6 @@ mod alter_game_adhoc {
   ) -> ArgumentParser<'ap> {
     use argparse::*;
     let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.table_name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
     ap.refer(&mut sa.insns).required()
       .add_argument(format!("{}-INSN", ahf.metavar()).leak(),
                     Collect,
@@ -1513,7 +1481,7 @@ mod alter_game_adhoc {
 
     let subargs: ApMaker<_> = &|sa| subargs(sa,ahf);
     let args = parse_args::<Args,_>(args, subargs, &ok_id, None);
-    let mut chan = access_game(&ma, &args.table_name)?;
+    let mut chan = ma.access_game()?;
 
     let insns: Vec<MgmtGameInstruction> = ahf.parse(args.insns, "insn")?;
     let resps = chan.alter_game(insns,None)?;
@@ -1543,15 +1511,12 @@ mod upload_bundle {
 
   #[derive(Default,Debug)]
   struct Args {
-    table_name: String,
     bundle_file: String,
   }
 
   fn subargs(sa: &mut Args) -> ArgumentParser {
     use argparse::*;
     let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.table_name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
     ap.refer(&mut sa.bundle_file).required()
       .add_argument("BUNDLE",Store,"bundle file");
     ap
@@ -1560,8 +1525,7 @@ mod upload_bundle {
   #[throws(AE)]
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let instance_name = ma.instance_name(&args.table_name);
-    let mut chan = access_game(&ma, &args.table_name)?;
+    let mut chan = ma.access_game()?;
     let f = File::open(&args.bundle_file)
       .with_context(|| args.bundle_file.clone())
       .context("open bundle file")?;
@@ -1576,7 +1540,7 @@ mod upload_bundle {
     f.rewind().context("rewind bundle file")?;
     let cmd = MC::UploadBundle {
       size,
-      game: instance_name.clone(),
+      game: ma.instance(),
       hash: bundles::Hash(hash.into()), kind,
       progress: MgmtChannel::PROGRESS,
     };
@@ -1601,26 +1565,14 @@ mod upload_bundle {
 mod list_bundles {
   use super::*;
 
-  #[derive(Default,Debug)]
-  struct Args {
-    table_name: String,
-  }
-
-  fn subargs(sa: &mut Args) -> ArgumentParser {
-    use argparse::*;
-    let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.table_name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
-    ap
-  }
+  type Args = NoArgs;
 
   #[throws(AE)]
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
-    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let instance_name = ma.instance_name(&args.table_name);
-    let mut chan = access_game(&ma, &args.table_name)?;
+    let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
+    let mut chan = ma.access_game()?;
     let resp = chan.cmd(&MC::ListBundles {
-      game: instance_name.clone(),
+      game: ma.instance(),
     })?;
     if_let!{ MR::Bundles { bundles } = resp;
              else throw!(anyhow!("unexpected {:?}", &resp)) };
@@ -1643,7 +1595,6 @@ mod download_bundle {
 
   #[derive(Default,Debug)]
   struct Args {
-    table_name: String,
     index: bundles::Index,
     output: Option<PathBuf>,
   }
@@ -1651,8 +1602,6 @@ mod download_bundle {
   fn subargs(sa: &mut Args) -> ArgumentParser {
     use argparse::*;
     let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.table_name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
     ap.refer(&mut sa.index).required()
       .add_argument("INDEX",Store,"bundle number");
     ap.refer(&mut sa.output).metavar("OUTPUT")
@@ -1664,8 +1613,7 @@ mod download_bundle {
   #[throws(AE)]
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let instance_name = ma.instance_name(&args.table_name);
-    let mut chan = access_game(&ma, &args.table_name)?;
+    let mut chan = ma.access_game()?;
     let kind = bundles::Kind::only();
     let id = bundles::Id { kind, index: args.index };
     let path = args.output.unwrap_or_else(|| id.to_string().into());
@@ -1686,7 +1634,7 @@ mod download_bundle {
     };
     let mut f = BufWriter::new(f);
     let cmd = MC::DownloadBundle {
-      game: instance_name.clone(),
+      game: ma.instance(),
       id,
     };
     chan.cmd_withbulk(&cmd, &mut io::empty(), &mut f,
@@ -1711,28 +1659,16 @@ mod download_bundle {
 mod clear_game {
   use super::*;
 
-  #[derive(Default,Debug)]
-  struct Args {
-    table_name: String,
-  }
-
-  fn subargs(sa: &mut Args) -> ArgumentParser {
-    use argparse::*;
-    let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.table_name).required()
-      .add_argument("TABLE-NAME",Store,"table name");
-    ap
-  }
+  type Args = NoArgs;
 
   #[throws(AE)]
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
-    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let instance_name = ma.instance_name(&args.table_name);
-    let mut chan = access_game(&ma, &args.table_name)?;
+    let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
+    let mut chan = ma.access_game()?;
 
     chan.alter_game(vec![MGI::ClearGame{ }], None)
       .context("clear table")?;
-    chan.cmd(&MC::ClearBundles { game: instance_name.clone() })
+    chan.cmd(&MC::ClearBundles { game: ma.instance() })
       .context("clear bundles")?;
   }
 

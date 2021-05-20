@@ -166,6 +166,12 @@ pub trait Substitutor {
       .map(str::to_string)
       .collect()
   }
+
+  #[throws(AE)]
+  fn gss(&self, s: &str) -> Vec<String> 
+  where Self: Sized {
+    self.ss(&format!("--game @table@ {}", s))?
+  }
 }
 
 #[derive(Clone,Debug)]
@@ -817,10 +823,10 @@ pub fn prepare_game(ds: &DirSubst, prctx: &PathResolveContext, table: &str)
     ("game_spec", prctx.resolve(&game_spec)),
   ]);
   ds.otter_prctx(prctx, &subst.ss(
-    "--account server:                                  \
+    "--account server: --game @table@                   \
      reset                                              \
      --reset-table @specs@/test.table.toml              \
-                   @table@ @game_spec@ \
+                   @game_spec@                          \
     ")?).context("reset table")?;
 
   let instance: InstanceName = table.parse()
@@ -861,10 +867,10 @@ impl DirSubst {
       ].iter());
 
       su.otter(&subst
-                  .ss("--super                          \
+                  .ss("--super --game @table@        \
                        --account server:@nick@       \
                        --fixed-token @token@         \
-                       join-game @table@")?)?;
+                       join-game")?)?;
 
       let player = mgmt_conn.has_player(
         &subst.subst("server:@nick@")?.parse()?
