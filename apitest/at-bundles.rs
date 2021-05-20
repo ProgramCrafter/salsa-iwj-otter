@@ -10,15 +10,24 @@ impl Ctx {
   #[throws(Explode)]
   fn bundles(&mut self) {
     self.upload_and_check_bundle(
-      "test-bundle","lemon", "example-lemon","a lemon"
-    )?;
+      "test-bundle","lemon", "example-lemon","a lemon",
+      &mut |_|Ok(()))?;
   }
  
   #[throws(Explode)]
   fn big(&mut self) {
     self.upload_and_check_bundle(
-      "big-bundle","duped-example", "chess-purple-cannon", "a purple cannon"
-    )?;
+      "big-bundle","duped-example", "chess-purple-cannon", "a purple cannon",
+      &mut |ctx|
+    {
+      ctx.su().mgmt_conn.borrow_mut().alter_game(
+        vec![ MGI::ResetFromNamedSpec {
+          spec: "modded-spec".to_owned(),
+        }],
+        None,
+      )?;
+      Ok(())
+    })?;
   }
  
   #[throws(Explode)]

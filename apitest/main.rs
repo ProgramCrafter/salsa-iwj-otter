@@ -587,10 +587,12 @@ impl UsualCtx {
   }
 
   #[throws(Explode)]
-  pub fn upload_and_check_bundle(&mut self, bundle_stem: &str,
-                                 libname: &str, item: &str,
-                                 desc: &str)
-  {
+  pub fn upload_and_check_bundle(
+    &mut self, bundle_stem: &str,
+    libname: &str, item: &str,
+    desc: &str,
+    with: &mut dyn FnMut(&mut UsualCtx) -> Result<(), Explode>
+  ) {
     let ds = self.su().ds.also(&[("bundle_stem", &bundle_stem)]);
     let bundle_file = ds.subst("@examples@/@bundle_stem@.zip")?;
     let ds = ds.also(&[("bundle", &bundle_file)]);
@@ -615,6 +617,8 @@ impl UsualCtx {
     self.su().mgmt_conn().alter_game(vec![MGI::DeletePiece(id)], None)?;
 
     self.check_library_item(libname,item,desc)?;
+
+    with(self)?;
 
     self.otter(&ds.ss("clear-game @table@")?)?;
     self.reset_game(&ds.ss("reset @table@ demo")?)?;
