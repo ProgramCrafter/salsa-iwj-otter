@@ -46,8 +46,8 @@ pub enum State {
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct Loaded {
   pub meta: BundleMeta,
-  size: usize,
-  hash: bundles::Hash,
+  pub size: usize,
+  pub hash: bundles::Hash,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize,Default)]

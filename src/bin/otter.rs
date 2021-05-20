@@ -729,8 +729,9 @@ mod reset_game {
 
   #[derive(Default,Debug)]
   struct Args {
-    game_spec: String,
     table_file: Option<String>,
+    game_spec: String,
+    bundles: Vec<String>,
   }
 
   fn subargs(sa: &mut Args) -> ArgumentParser {
@@ -743,6 +744,11 @@ mod reset_game {
       .add_argument("GAME-SPEC",Store,
                     "game spec, as found in server, \
                      or local filename if it contains a '/')");
+    ap.refer(&mut sa.bundles).required()
+      .add_argument("BUNDLES",Collect,
+                    "Bundle files to use.  If any are specified, \
+                     all needed bundles must be specified, as any \
+                     not mentioned will be cleared from the server.");
     ap
   }
 
@@ -776,6 +782,50 @@ mod reset_game {
       })?;
 
       insns.extend(setup_table(&ma, &instance_name, &table_spec)?);
+    }
+
+    if args.bundles.len() != 0 {
+      let local = args.bundles.into_iter().map(|file| {
+        BundleForUpload::prepare(file)
+      }).collect::<Result<Vec<_>,_>>()?;
+
+      let resp = chan.cmd(&MgmtCommand::ListBundles { game: ma.instance() })?;
+      let remote = match resp {
+        MR::Bundles { bundles } => bundles,
+        x => throw!(anyhow!("unexpected response to ListBundles: {:?}",x)),
+      };
+
+      match Itertools::zip_longest(
+        local.iter().rev(),
+        remote.iter().rev(),
+      ).map(|eob| {
+        use EitherOrBoth::*;
+        use bundles::State::*;
+        match eob {
+          Left(local) => Err(format!("server is missing {}", local.file)),
+          Right(_) => Ok(()),
+          Both(_local, (id, Uploading))
+            => Err(format!("server has incomplete upload :{}", id)),
+          Both(local, (id, Loaded(remote))) => {
+            if (local.size,  local.hash) !=
+               (remote.size, remote.hash) {
+               Err(format!("server's {} does not match {}", id, &local.file))
+            } else {
+               Ok(())
+            }
+          }
+        }
+      }).find_map(Result::err) {
+        None => {
+          eprintln!("Reusing server's existing bundles");
+        },
+        Some(why) => {
+          if ma.verbose >= 0 {
+            eprintln!("Re-uploading bundles: {}", why);
+          }
+          todo!();
+        },
+      }
     }
 
     insns.push(reset_insn);
@@ -1507,6 +1557,7 @@ mod alter_game_adhoc {
 //---------- upload-bundle ----------
 
 struct BundleForUpload {
+  file: String,
   f: BufReader<File>,
   size: usize,
   hash: bundles::Hash,
@@ -1515,9 +1566,9 @@ struct BundleForUpload {
 
 impl BundleForUpload {
   #[throws(AE)]
-  fn prepare(file: &str) -> Self {
-    let f = File::open(file.clone())
-      .with_context(|| file.to_owned())
+  fn prepare(file: String) -> Self {
+    let f = File::open(&file)
+      .with_context(|| file.clone())
       .context("open bundle file")?;
     let size = f
       .metadata().context("fstat bundle file")?
@@ -1529,14 +1580,14 @@ impl BundleForUpload {
     let hash = bundles::Hash(hash.into());
     let kind = bundles::Kind::only();
     f.rewind().context("rewind bundle file")?;
-    BundleForUpload { f, size, hash, kind }
+    BundleForUpload { file, f, size, hash, kind }
   }
 
   #[throws(AE)]
   fn upload(self, ma: &MainOpts, chan: &mut MgmtChannelForGame,
             progress: &mut dyn termprogress::Reporter)
             -> bundles::Id {
-    let BundleForUpload { mut f, size, hash, kind } = self;
+    let BundleForUpload { mut f, size, hash, kind,.. } = self;
     let cmd = MC::UploadBundle {
       size,
       game: ma.instance(),
@@ -1573,7 +1624,7 @@ mod upload_bundle {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ma.access_game()?;
     let mut progress = termprogress::new();
-    let for_upload = BundleForUpload::prepare(&args.bundle_file)?;
+    let for_upload = BundleForUpload::prepare(args.bundle_file)?;
     let bundle = for_upload.upload(&ma, &mut chan, &mut *progress)?;
     println!("{}", bundle);
   }
