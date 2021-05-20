@@ -266,6 +266,11 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
         )?
       };
       bulk_upload.inner_mut().set_timeout(Some(UPLOAD_TIMEOUT));
+      // If the timeout fires after the bulk data has all arrived, it
+      // won't take effect, because: it only takes effect when we try
+      // to read from the stresm, and after we have the data, we
+      // won't read again until we go on to the next command - which
+      // will have its own timeout.
       let uploaded = upload.bulk(bulk_upload, size,
                                  &hash, progress, &mut for_response)?;
       let bundle = {
