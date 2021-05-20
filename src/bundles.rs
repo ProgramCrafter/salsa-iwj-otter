@@ -711,10 +711,19 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
 //---------- specs ----------
 
 #[throws(MgmtError)]
-pub fn load_spec_to_read(ig: &Instance, spec_name: &str) -> (
-  Box<dyn Read>,
-  Box<dyn FnOnce(io::Error) -> MgmtError>
-) {
+pub fn load_spec_to_read(ig: &Instance, spec_name: &str) -> String {
+  #[throws(MgmtError)]
+  fn read_from_read(spec_f: &mut dyn Read,
+                    e_f: &mut dyn FnMut(io::Error) -> MgmtError) -> String {
+    let mut buf = String::new();
+    spec_f.read_to_string(&mut buf).map_err(|e| match e.kind() {
+      ErrorKind::InvalidData => ME::GameSpecInvalidData,
+      ErrorKind::UnexpectedEof => ME::BadBundle(e.to_string()),
+      _ => e_f(e),
+    })?;
+    buf
+  }
+
   let spec_leaf = format!("{}.game.toml", spec_name);
 
   // todo: game specs from bundles
@@ -726,12 +735,13 @@ pub fn load_spec_to_read(ig: &Instance, spec_name: &str) -> (
     debug!("{}: trying to loading builtin spec from {}",
            &ig.name, &path);
     match File::open(&path) {
-      Ok(f) => return (
-        Box::new(f) as _,
-        Box::new(move |e| IE::from(
-          AE::from(e).context(path.clone()).context("read spec")
-        ).into()) as _,
-      ),
+      Ok(mut f) => {
+        return read_from_read(&mut f, &mut |e| {
+          IE::from(
+            AE::from(e).context(path.clone()).context("read spec")
+          ).into()
+        })?;
+      },
       Err(e) if e.kind() == ErrorKind::NotFound => { },
       Err(e) => throw!(IE::from(
         AE::from(e).context(path).context("try open game spec")
