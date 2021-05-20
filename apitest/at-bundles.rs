@@ -26,6 +26,16 @@ impl Ctx {
         }],
         None,
       )?;
+
+      let alice = ctx.connect_player(&ctx.alice)?;
+      let pieces = alice.pieces::<PIA>()?;
+      dbgc!(&pieces);
+      for expect in &["a purple knight", "a yellow bishop"] {
+        pieces.iter().find(
+          |p| p.info["desc"].as_str() == Some(expect)
+        ).expect(expect);
+      }
+
       Ok(())
     })?;
   }
