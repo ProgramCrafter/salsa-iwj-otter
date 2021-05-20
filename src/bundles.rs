@@ -307,7 +307,7 @@ impl Display for State {
     match self {
       State::Loaded(Loaded{ meta, size, hash }) => {
         let BundleMeta { title } = meta;
-        write!(f, "Loaded {:?} {:10} {}", title, size, hash)?;
+        write!(f, "Loaded {:10} {} {:?}", size, hash, title)?;
       }
       other => write!(f, "{:?}", other)?,
     }
