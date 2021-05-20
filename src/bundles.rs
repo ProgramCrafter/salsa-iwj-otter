@@ -59,7 +59,7 @@ pub struct Uploading {
 pub struct Uploaded<'p> {
   id: Id,
   parsed: Parsed,
-  for_progress: Box<dyn progress::Originator + 'p>,
+  for_progress_box: Box<dyn progress::Originator + 'p>,
 }
 
 #[derive(Debug,Copy,Clone,Error)]
@@ -491,18 +491,18 @@ impl BundleParseErrorHandling for BundleParseUpload {
 enum Phase {
   #[strum(message="transfer upload data")]   Upload,
   #[strum(message="scan")]                   Scan,
-  #[strum(message="parse shape catalogues")] ParseLibs,
-  #[strum(message="start processing")]       Reaquire,
   #[strum(message="process piece images")]   Pieces,
+  #[strum(message="finish")]                 Finish,
 }
 impl progress::Enum for Phase { }
 
 #[derive(Copy,Clone,Debug,EnumCount,EnumMessage,ToPrimitive)]
-enum ReaquireProgress {
-  #[strum(message="reaquire game lock")]     Reaquire,
-  #[strum(message="prepare")]                Prepare,
+enum FinishProgress {
+  #[strum(message="reaquire game lock")]          Reaquire,
+  #[strum(message="incorporate into game state")] Incorporate,
+  #[strum(message="install confirmed bundle")]    Install,
 }
-impl progress::Enum for ReaquireProgress { }
+impl progress::Enum for FinishProgress { }
 
 #[throws(EH::Err)]
 fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
@@ -511,16 +511,21 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
   where EH: BundleParseErrorHandling,
 {
   match id.kind { Kind::Zip => () }
+
+  #[derive(Copy,Clone,Debug,EnumCount,EnumMessage,ToPrimitive)]
+  enum ToScan {
+    #[strum(message="zipfile member names")]     Names,
+    #[strum(message="metadata")]                 Meta,
+    #[strum(message="relevant zipfile members")] Contents,
+    #[strum(message="parse shape catalogues")]   ParseLibs,
+  }
+  impl progress::Enum for ToScan { }
+
+  for_progress.phase_item(Phase::Scan, ToScan::Names);
   let mut za = eh.required(||{
     IndexedZip::new(file)
   })?;
 
-  #[derive(Copy,Clone,Debug,EnumCount,EnumMessage,ToPrimitive)]
-  enum ToScan {
-    #[strum(message="metadata")]   Meta,
-    #[strum(message="shape libs")] Libs,
-  }
-  impl progress::Enum for ToScan { }
   for_progress.phase_item(Phase::Scan, ToScan::Meta);
   
   let meta = eh.besteffort(||{
@@ -541,7 +546,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
     }
   })?;
 
-  for_progress.phase_item(Phase::Scan, ToScan::Libs);
+  for_progress.phase_item(Phase::Scan, ToScan::Contents);
 
   #[derive(Debug)]
   struct LibScanned {
@@ -588,7 +593,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
     }), ||())?;
   }
 
-  for_progress.phase(Phase::ParseLibs, libs.len());
+  for_progress.phase_item(Phase::Scan, ToScan::ParseLibs);
 
   let mut newlibs = Vec::new();
 
@@ -609,11 +614,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
     fn bundle(&self) -> Option<bundles::Id> { Some(*self.id) }
   }
 
-  for (progress_count, LibScanned { libname, dir_inzip, inzip })
-    in libs.into_iter().enumerate()
-  {
-    for_progress.item(progress_count, &libname);
-
+  for LibScanned { libname, dir_inzip, inzip } in libs {
     eh.besteffort(|| Ok::<_,LE>({
       let svg_dir = format!("{}/lib{:06}", id.path_dir(&instance), &inzip);
 
@@ -639,8 +640,6 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName, file: File, eh: EH,
     }), ||())?;
   }
 
-  for_progress.phase_item(Phase::Reaquire, ReaquireProgress::Reaquire);
-
   let (libs, newlibs) = newlibs.into_iter().unzip();
 
   (ForProcess { za, newlibs },
@@ -652,13 +651,12 @@ fn process_bundle(ForProcess { mut za, mut newlibs }: ForProcess,
                   id: Id, instance: &InstanceName,
                   mut for_progress: &mut dyn progress::Originator)
 {
-  for_progress.phase_item(Phase::Reaquire, ReaquireProgress::Prepare);
-
   let dir = id.path_dir(instance);
   fs::create_dir(&dir)
     .with_context(|| dir.clone()).context("mkdir").map_err(IE::from)?;
   
   let svg_count = newlibs.iter().map(|pl| pl.need_svgs.len()).sum();
+
   for_progress.phase(Phase::Pieces, svg_count);
   
   let mut svg_count = 0;
@@ -964,7 +962,7 @@ impl Uploading {
                     -> Uploaded<'p>
   where R: Read, PW: Write
   {
-    let mut for_progress: Box<dyn progress::Originator> =
+    let mut for_progress_box: Box<dyn progress::Originator> =
       if progress_mode >= PUM::Simplex {
         Box::new(progress::ResponseOriginator::new(progress_stream))
       } else {
@@ -977,7 +975,7 @@ impl Uploading {
     let mut null_progress = ();
     let for_progress_upload: &mut dyn progress::Originator =
       if progress_mode >= PUM::Duplex
-      { &mut *for_progress } else { &mut null_progress };
+      { &mut *for_progress_box } else { &mut null_progress };
     
     let mut data_reporter = progress::ReadOriginator::new(
       for_progress_upload, Phase::Upload, size, data);
@@ -999,26 +997,33 @@ impl Uploading {
 
     file.rewind().context("rewind"). map_err(IE::from)?;
 
+    let mut for_progress = &mut *for_progress_box;
+
     let (za, parsed) = parse_bundle(id, &instance, file, BundleParseUpload,
-                                    &mut *for_progress)?;
+                                    for_progress)?;
 
-    process_bundle(za, id, &*instance, &mut *for_progress)?;
+    process_bundle(za, id, &*instance, for_progress)?;
 
-    Uploaded { id, parsed, for_progress }
+    for_progress.phase_item(Phase::Finish, FinishProgress::Reaquire);
+
+    Uploaded { id, parsed, for_progress_box }
   }
 }
 
 impl InstanceBundles {
   #[throws(MgmtError)]
   pub fn finish_upload(&mut self, ig: &mut Instance,
-                       Uploaded { id, parsed, for_progress }: Uploaded)
+                       Uploaded { id, parsed, mut for_progress_box }: Uploaded)
                        -> Id {
     let tmp = id.path_tmp(&ig.name);
     let install = id.path_(&ig.name);
+    let mut for_progress = &mut *for_progress_box;
 
-    let _ = for_progress;
+    for_progress.phase_item(Phase::Finish, FinishProgress::Incorporate);
 
     incorporate_bundle(self, ig, id, parsed)?;
+
+    for_progress.phase_item(Phase::Finish, FinishProgress::Install);
 
     self.updated(ig);
     match self.bundles.get(usize::from(id.index)) {
