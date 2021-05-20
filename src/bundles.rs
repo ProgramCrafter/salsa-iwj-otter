@@ -886,7 +886,7 @@ impl InstanceBundles {
         },
       };
 
-      ib.bundles.ensure_element_with(parsed.index().into(), default);
+      ib.bundles.get_or_extend_with(parsed.index().into(), default);
 
       if_let!{ BundleSavefile::Bundle(id) = parsed;
                else continue; }

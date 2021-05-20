@@ -626,16 +626,19 @@ impl<T: io::Seek> T {
 
 #[ext(pub)]
 impl<T> Vec<T> {
-  fn ensure_element_with<F>(&mut self, i: usize, f: F) where F: FnMut() -> T {
+  fn get_or_extend_with<F>(&mut self, i: usize, f: F) -> &mut T
+  where F: FnMut() -> T {
     if self.get(i).is_none() {
       self.resize_with(i+1, f);
     }
+    &mut self[i]
   }
 }
 
 #[ext(pub)]
 impl<I,T> IndexVec<I,T> where I: index_vec::Idx {
-  fn ensure_element_with<F>(&mut self, i: I, f: F) where F: FnMut() -> T {
-    self.raw.ensure_element_with(i.index(), f)
+  fn get_or_extend_with<F>(&mut self, i: I, f: F) -> &mut T
+  where F: FnMut() -> T {
+    self.raw.get_or_extend_with(i.index(), f)
   }
 }
