@@ -20,12 +20,8 @@ impl Ctx {
       "big-bundle","duped-example", "chess-purple-cannon", "a purple cannon",
       &mut |ctx|
     {
-      ctx.su().mgmt_conn.borrow_mut().alter_game(
-        vec![ MGI::ResetFromNamedSpec {
-          spec: "modded-spec".to_owned(),
-        }],
-        None,
-      )?;
+      let cmd = ctx.su().ds.ss("reset @table@ modded-spec")?;
+      ctx.reset_game(&cmd)?;
 
       let alice = ctx.connect_player(&ctx.alice)?;
       let pieces = alice.pieces::<PIA>()?;
