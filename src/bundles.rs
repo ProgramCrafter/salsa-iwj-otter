@@ -56,9 +56,10 @@ pub struct Uploading {
 }
 
 /// returned by start_upload
-pub struct Uploaded {
+pub struct Uploaded<'p> {
   id: Id,
   parsed: Parsed,
+  for_progress: Box<dyn progress::Originator + 'p>,
 }
 
 #[derive(Debug,Copy,Clone,Error)]
@@ -957,19 +958,17 @@ impl InstanceBundles {
 
 impl Uploading {
   #[throws(MgmtError)]
-  pub fn bulk<R,PW>(self, data: R, size: usize, expected: &Hash,
+  pub fn bulk<'p,R,PW>(self, data: R, size: usize, expected: &Hash,
                     progress_mode: ProgressUpdateMode,
-                    progress_stream: &mut ResponseWriter<PW>) -> Uploaded
+                    progress_stream: &'p mut ResponseWriter<PW>)
+                    -> Uploaded<'p>
   where R: Read, PW: Write
   {
-    let mut for_progress_buf;
-    let mut null_progress = ();
-    let for_progress: &mut dyn progress::Originator =
+    let mut for_progress: Box<dyn progress::Originator> =
       if progress_mode >= PUM::Simplex {
-        for_progress_buf = progress::ResponseOriginator::new(progress_stream);
-        &mut for_progress_buf
+        Box::new(progress::ResponseOriginator::new(progress_stream))
       } else {
-        &mut null_progress
+        Box::new(())
       };
 
     let Uploading { id, mut file, instance } = self;
@@ -978,7 +977,7 @@ impl Uploading {
     let mut null_progress = ();
     let for_progress_upload: &mut dyn progress::Originator =
       if progress_mode >= PUM::Duplex
-      { for_progress } else { &mut null_progress };
+      { &mut *for_progress } else { &mut null_progress };
     
     let mut data_reporter = progress::ReadOriginator::new(
       for_progress_upload, Phase::Upload, size, data);
@@ -1001,20 +1000,23 @@ impl Uploading {
     file.rewind().context("rewind"). map_err(IE::from)?;
 
     let (za, parsed) = parse_bundle(id, &instance, file, BundleParseUpload,
-                                    for_progress)?;
+                                    &mut *for_progress)?;
 
-    process_bundle(za, id, &*instance, for_progress)?;
+    process_bundle(za, id, &*instance, &mut *for_progress)?;
 
-    Uploaded { id, parsed }
+    Uploaded { id, parsed, for_progress }
   }
 }
 
 impl InstanceBundles {
   #[throws(MgmtError)]
   pub fn finish_upload(&mut self, ig: &mut Instance,
-                       Uploaded { id, parsed }: Uploaded) -> Id {
+                       Uploaded { id, parsed, for_progress }: Uploaded)
+                       -> Id {
     let tmp = id.path_tmp(&ig.name);
     let install = id.path_(&ig.name);
+
+    let _ = for_progress;
 
     incorporate_bundle(self, ig, id, parsed)?;
 
