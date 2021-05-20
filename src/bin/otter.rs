@@ -320,7 +320,7 @@ fn main() {
                   "use NICK as nick for joining games (now and in the future) \
                    (default: derive from account name");
     ap.refer(&mut rma.game).metavar("TABLE-NAME")
-      .add_option(&["--game"],
+      .add_option(&["--game","-g"],
                   StoreOption,
                   "Select the game to operate on");
     ap.refer(&mut rma.timezone).metavar("TZ")

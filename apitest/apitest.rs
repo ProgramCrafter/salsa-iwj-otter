@@ -170,7 +170,7 @@ pub trait Substitutor {
   #[throws(AE)]
   fn gss(&self, s: &str) -> Vec<String> 
   where Self: Sized {
-    self.ss(&format!("--game @table@ {}", s))?
+    self.ss(&format!("-g @table@ {}", s))?
   }
 }
 
@@ -867,7 +867,7 @@ impl DirSubst {
       ].iter());
 
       su.otter(&subst
-                  .ss("--super --game @table@        \
+                  .ss("--super -g@table@             \
                        --account server:@nick@       \
                        --fixed-token @token@         \
                        join-game")?)?;
