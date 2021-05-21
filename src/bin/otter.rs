@@ -741,6 +741,7 @@ mod reset_game {
     table_file: Option<String>,
     game_spec: String,
     bundles: Vec<String>,
+    bundles_only: bool,
   }
 
   fn subargs(sa: &mut Args) -> ArgumentParser {
@@ -758,6 +759,13 @@ mod reset_game {
                     "Bundle files to use.  If any are specified, \
                      all needed bundles must be specified, as any \
                      not mentioned will be cleared from the server.");
+    let mut bundles_only = ap.refer(&mut sa.bundles_only);
+    bundles_only.add_option(&["--bundles-only"],StoreTrue,
+              "insist that server has only the specified BUNDLES \
+               (clearing out the server if no BUNDLES were specified)");
+    bundles_only.add_option(&["--bundles-at-least"],StoreFalse,
+              "don't care if the server has additional bundles uploaded \
+               earlier (default)");
     ap
   }
 
@@ -793,7 +801,7 @@ mod reset_game {
       insns.extend(setup_table(&ma, &instance_name, &table_spec)?);
     }
 
-    if args.bundles.len() != 0 {
+    if args.bundles_only || args.bundles.len() != 0 {
       let local = args.bundles.into_iter().map(|file| {
         BundleForUpload::prepare(file)
       }).collect::<Result<Vec<_>,_>>()?;
@@ -804,6 +812,7 @@ mod reset_game {
         x => throw!(anyhow!("unexpected response to ListBundles: {:?}",x)),
       };
 
+      let bundles_only = args.bundles_only;
       match Itertools::zip_longest(
         local.iter().rev(),
         remote.iter().rev(),
@@ -811,7 +820,10 @@ mod reset_game {
         use EitherOrBoth::*;
         use bundles::State::*;
         match eob {
-          Right(_) => {
+          Right((id, remote)) => if bundles_only {
+            Err(format!("server has additional bundle(s) eg {} {}",
+                        id, remote))
+          } else {
             Ok(())
           },
           Left(local) => {
@@ -839,6 +851,9 @@ mod reset_game {
         Err(why) => {
           if ma.verbose >= 0 {
             eprintln!("Re-uploading bundles: {}", why);
+          }
+          if bundles_only {
+            clear_game(&ma, &mut chan)?;
           }
           let progress = ma.progressbar()?;
           let mut progress = termprogress::Nest::new(local.len(), progress);
@@ -1753,6 +1768,14 @@ mod download_bundle {
 
 //---------- clear game ----------
 
+#[throws(AE)]
+fn clear_game(ma: &MainOpts, chan: &mut MgmtChannelForGame) {
+  chan.alter_game(vec![MGI::ClearGame{ }], None)
+    .context("clear table")?;
+  chan.cmd(&MC::ClearBundles { game: ma.instance() })
+    .context("clear bundles")?;
+}
+
 mod clear_game {
   use super::*;
 
@@ -1762,11 +1785,7 @@ mod clear_game {
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
     let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
     let mut chan = ma.access_game()?;
-
-    chan.alter_game(vec![MGI::ClearGame{ }], None)
-      .context("clear table")?;
-    chan.cmd(&MC::ClearBundles { game: ma.instance() })
-      .context("clear bundles")?;
+    clear_game(&ma, &mut chan)?;
   }
 
   inventory::submit!{Subcommand(
