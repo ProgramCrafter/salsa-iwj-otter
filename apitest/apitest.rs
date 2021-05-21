@@ -751,9 +751,7 @@ impl<S> OtterArgsSpec for [S] where for <'s> &'s S: Into<String> {
   }
 }
 impl<S> OtterArgsSpec for Vec<S> where for <'s> &'s S: Into<String> {
-  fn to_args(&self) -> Vec<String> {
-    self.iter().map(|s| s.into()).collect()
-  }
+  fn to_args(&self) -> Vec<String> { self.as_slice().to_args() }
 }
 
 impl DirSubst {
