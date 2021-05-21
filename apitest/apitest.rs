@@ -131,34 +131,27 @@ pub trait Substitutor {
   }
 
   #[throws(AE)]
-  fn subst<S: AsRef<str>>(&self, s: S) -> String 
-  where Self: Sized {
-    #[throws(AE)]
-    fn inner(self_: &dyn Substitutor, s: &dyn AsRef<str>) -> String {
-      let s = s.as_ref();
-      let re = Regex::new(r"@(\w+)@").expect("bad re!");
-      let mut errs = vec![];
-      let out = re.replace_all(s, |caps: &regex::Captures| {
-        let kw = caps.get(1).expect("$1 missing!").as_str();
-        if kw == "" { return "".to_owned() }
-        let v = self_.get(kw);
-        v.unwrap_or_else(||{
-          errs.push(kw.to_owned());
-          "".to_owned()
-        })
-      });
-      if ! errs.is_empty() {
-        throw!(anyhow!("bad substitution(s) {:?} in {:?}",
-                       &errs, s));
-      }
-      out.into()
+  fn subst(&self, s: &str) -> String {
+    let re = Regex::new(r"@(\w+)@").expect("bad re!");
+    let mut errs = vec![];
+    let out = re.replace_all(s, |caps: &regex::Captures| {
+      let kw = caps.get(1).expect("$1 missing!").as_str();
+      if kw == "" { return "".to_owned() }
+      let v = self.get(kw);
+      v.unwrap_or_else(||{
+        errs.push(kw.to_owned());
+        "".to_owned()
+      })
+    });
+    if ! errs.is_empty() {
+      throw!(anyhow!("bad substitution(s) {:?} in {:?}",
+                     &errs, s));
     }
-    inner(self, &s)?
+    out.into()
   }
 
   #[throws(AE)]
-  fn ss(&self, s: &str) -> Vec<String> 
-  where Self: Sized {
+  fn ss(&self, s: &str) -> Vec<String> {
     self.subst(s)?
       .trim()
       .split(' ')
