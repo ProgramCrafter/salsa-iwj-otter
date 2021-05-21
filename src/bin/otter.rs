@@ -832,7 +832,9 @@ mod reset_game {
         }
       }).find_map(Result::err).map_or_else(|| Ok(()), Err) {
         Ok(()) => {
-          eprintln!("Reusing server's existing bundles");
+          if ma.verbose >= 0 {
+            eprintln!("Reusing server's existing bundles");
+          }
         },
         Err(why) => {
           if ma.verbose >= 0 {
