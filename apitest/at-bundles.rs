@@ -49,9 +49,9 @@ impl Ctx {
   fn reset_with_bundles(&mut self) {
     self.clear_reset_to_demo()?;
 
-    self.otter_resetting(&self.ds().gss(
-      "reset demo-in-test-bundle @examples@/test-bundle.zip"
-    )?)?;
+    self.otter_resetting(
+      &G("reset demo-in-test-bundle @examples@/test-bundle.zip")
+    )?;
 
     self.clear_reset_to_demo()?;
   }
