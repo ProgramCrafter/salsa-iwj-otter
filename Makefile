@@ -328,7 +328,7 @@ EXAMPLE_BUNDLE_INPUT_DEPS := $(shell					\
 
 examples/%.zip: $(MAKEFILE_DEP)
 	set -e; rm -f $@.tmp; cd examples/$*/; \
-	zip $(ZIPFLAGS) -DXy ../$(notdir $@).tmp $(ZIP_INPUTS)
+	zip $(ZIPFLAGS) -DX ../$(notdir $@).tmp $(ZIP_INPUTS)
 	mv -f $@.tmp $@
 
 examples/test-bundle.zip: ZIP_INPUTS=$(EXAMPLE_BUNDLE_INPUT_DEPS)
