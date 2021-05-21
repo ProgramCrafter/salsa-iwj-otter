@@ -161,8 +161,7 @@ pub trait Substitutor {
   }
 
   #[throws(AE)]
-  fn gss(&self, s: &str) -> Vec<String> 
-  where Self: Sized {
+  fn gss(&self, s: &str) -> Vec<String> {
     self.ss(&format!("-g @table@ {}", s))?
   }
 }
