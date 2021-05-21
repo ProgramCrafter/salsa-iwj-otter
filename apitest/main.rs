@@ -487,10 +487,10 @@ pub use GrabHow as GH;
 
 impl UsualCtx {
   #[throws(AE)]
-  pub fn otter<S:AsRef<str>>(&mut self, args: &[S]) -> OtterOutput {
+  pub fn otter(&mut self, args: &dyn OtterArgsSpec) -> OtterOutput {
     let args: Vec<String> =
       ["--account", "server:"].iter().cloned().map(Into::into)
-      .chain(args.iter().map(|s| s.as_ref().to_owned()))
+      .chain(args.to_args().into_iter())
       .collect();
     self.su().ds.otter_prctx(&self.prctx, &args)?
   }
@@ -502,13 +502,14 @@ impl UsualCtx {
   }
 
   #[throws(AE)]
-  pub fn otter_resetting<S:AsRef<str>>(&mut self, args: &[S]) -> OtterOutput {
+  pub fn otter_resetting(&mut self, args: &dyn OtterArgsSpec)
+                         -> OtterOutput {
     self.has_lib_markers = false;
     self.otter(args)?
   }
 
   #[throws(Explode)]
-  fn some_library_add(&mut self, command: &[String]) -> Vec<String> {
+  fn some_library_add(&mut self, command: &dyn OtterArgsSpec) -> Vec<String> {
     let mut session = if ! dbgc!(self.has_lib_markers) {
       let add_err = self.otter(command)
         .expect_err("library-add succeeded after reset!");
@@ -535,7 +536,7 @@ impl UsualCtx {
       self.connect_player(&self.alice)?
     };
 
-    self.otter(&command)
+    self.otter(command)
       .expect("library-add failed after place!");
 
     let mut added = vec![];

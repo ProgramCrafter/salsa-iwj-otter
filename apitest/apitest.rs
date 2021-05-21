@@ -741,6 +741,21 @@ impl Drop for OtterOutput {
   }
 }
 
+pub trait OtterArgsSpec {
+  fn to_args(&self) -> Vec<String>;
+}
+
+impl<S> OtterArgsSpec for [S] where for <'s> &'s S: Into<String> {
+  fn to_args(&self) -> Vec<String> {
+    self.iter().map(|s| s.into()).collect()
+  }
+}
+impl<S> OtterArgsSpec for Vec<S> where for <'s> &'s S: Into<String> {
+  fn to_args(&self) -> Vec<String> {
+    self.iter().map(|s| s.into()).collect()
+  }
+}
+
 impl DirSubst {
   pub fn specs_dir(&self) -> String {
     format!("{}/specs" , &self.src)
@@ -751,16 +766,15 @@ impl DirSubst {
   }
 
   #[throws(AE)]
-  pub fn otter<'s,S>(&self, xargs: &'s [S]) -> OtterOutput
-  where &'s S: Into<String>
+  pub fn otter(&self, xargs: &dyn OtterArgsSpec) -> OtterOutput
   {
     self.otter_prctx(&default(), xargs)?
   }
 
   #[throws(AE)]
-  pub fn otter_prctx<'s,S>(&self, prctx: &PathResolveContext, xargs: &'s [S])
-                           -> OtterOutput
-  where &'s S: Into<String>
+  pub fn otter_prctx(&self, prctx: &PathResolveContext,
+                     xargs: &dyn OtterArgsSpec)
+                     -> OtterOutput
   {
     let ds = self;
     let exe = ds.subst("@target@/debug/otter")?;
@@ -768,7 +782,7 @@ impl DirSubst {
     let mut args: Vec<String> = vec![];
     args.push("--config"  .to_owned()); args.push(prctx.resolve(&CONFIG));
     args.push("--spec-dir".to_owned()); args.push(prctx.resolve(&specs) );
-    args.extend(xargs.iter().map(|s| s.into()));
+    args.extend(xargs.to_args());
     let dbg = format!("running {} {:?}", &exe, &args);
     let mut output = NamedTempFile::new_in(
       ds.subst("@abstmp@").unwrap()
