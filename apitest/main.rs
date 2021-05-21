@@ -620,7 +620,13 @@ impl UsualCtx {
 
     with(self)?;
 
-    self.otter(&ds.gss("clear-game")?)?;
+    self.clear_reset_to_demo()?;
+  }
+  
+  #[throws(Explode)]
+  pub fn clear_reset_to_demo(&mut self) {
+    let ds = self.su().ds.clone();
+    self.reset_game(&ds.gss("clear-game")?)?;
     self.reset_game(&ds.gss("reset demo")?)?;
   }
 }
