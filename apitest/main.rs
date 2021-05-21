@@ -30,6 +30,7 @@ struct UsualCtx {
 impl UsualCtx {
   pub fn su(&self) -> std::cell::Ref<SetupCore>{ RefCell::borrow(&self.su_rc) }
   pub fn su_mut(&self) -> RefMut<SetupCore> { self.su_rc.borrow_mut() }
+  pub fn ds(&self) -> DirSubst { RefCell::borrow(&self.su_rc).ds.clone() }
 
   pub fn wanted_tests(&self) -> TrackWantedTestsGuard {
     TrackWantedTestsGuard(self.su_mut())

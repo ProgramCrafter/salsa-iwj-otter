@@ -11,7 +11,7 @@ impl Ctx {
   fn library_load(&mut self) {
     self.prepare_game()?;
 
-    let command = self.su().ds.gss(
+    let command = self.ds().gss(
       "library-list chess-yellow-?"
     )?;
     let output: String = self.otter(&command)?.into();
@@ -20,7 +20,7 @@ impl Ctx {
              .is_some(),
              "got: {}", &output);
 
-    let command = self.su().ds.gss(
+    let command = self.ds().gss(
       "library-add --lib wikimedia chess-blue-?"
     )?;
     let added = self.some_library_add(&command)?;
@@ -145,7 +145,7 @@ impl Ctx {
     assert_eq!(b_pieces[b_pawns[1]].pos,
                a_pieces[a_pawns[0]].pos);
 
-    let command = self.su().ds.gss("reset demo")?;
+    let command = self.ds().gss("reset demo")?;
     self.reset_game(&command)?;
   }
 
@@ -162,7 +162,7 @@ impl Ctx {
       }
     }
     let specs = |mid, def| {
-      let sv = self.su().ds.also(&[("mid",mid),("def",def)]);
+      let sv = self.ds().also(&[("mid",mid),("def",def)]);
       let def = sv.subst("@specs@/@def@.@mid@.toml").unwrap();
       let pat = sv.subst("@specs@/*.@mid@.toml").unwrap();
       let ents = glob::glob(&pat).unwrap()
@@ -176,7 +176,7 @@ impl Ctx {
       let (py, perm) = perms.next();
       let (gy, game) = games.next();
       if !(py || gy) { break }
-      let command = self.su().ds.also(&[("game",&game),("perm",&perm)])
+      let command = self.ds().also(&[("game",&game),("perm",&perm)])
         .gss("reset --reset-table @perm@ @game@")?;
       self.reset_game(&command).context(perm).context(game)?;
     }
