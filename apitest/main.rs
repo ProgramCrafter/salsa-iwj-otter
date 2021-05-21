@@ -502,7 +502,7 @@ impl UsualCtx {
   }
 
   #[throws(AE)]
-  pub fn reset_game<S:AsRef<str>>(&mut self, args: &[S]) -> OtterOutput {
+  pub fn otter_resetting<S:AsRef<str>>(&mut self, args: &[S]) -> OtterOutput {
     self.has_lib_markers = false;
     self.otter(args)?
   }
@@ -627,8 +627,8 @@ impl UsualCtx {
   #[throws(Explode)]
   pub fn clear_reset_to_demo(&mut self) {
     let ds = self.su().ds.clone();
-    self.reset_game(&ds.gss("clear-game")?)?;
-    self.reset_game(&ds.gss("reset demo")?)?;
+    self.otter_resetting(&ds.gss("clear-game")?)?;
+    self.otter_resetting(&ds.gss("reset demo")?)?;
   }
 }
 

@@ -146,7 +146,7 @@ impl Ctx {
                a_pieces[a_pawns[0]].pos);
 
     let command = self.ds().gss("reset demo")?;
-    self.reset_game(&command)?;
+    self.otter_resetting(&command)?;
   }
 
   #[throws(Explode)]
@@ -178,7 +178,7 @@ impl Ctx {
       if !(py || gy) { break }
       let command = self.ds().also(&[("game",&game),("perm",&perm)])
         .gss("reset --reset-table @perm@ @game@")?;
-      self.reset_game(&command).context(perm).context(game)?;
+      self.otter_resetting(&command).context(perm).context(game)?;
     }
   }
 
