@@ -1185,6 +1185,8 @@ impl InstanceBundles {
       // Prevent old, removed, players from accessing any new bundles.
       ig.asset_url_key = new_asset_key;
 
+      self.updated(ig);
+
       Ok::<_,IE>(())
     })()?;
   }
