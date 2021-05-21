@@ -747,6 +747,18 @@ impl<S> OtterArgsSpec for Vec<S> where for <'s> &'s S: Into<String> {
     self.as_slice().to_args(ds)
   }
 }
+impl OtterArgsSpec for &str {
+  fn to_args(&self, ds: &dyn Substitutor) -> Vec<String> {
+    ds.ss(self).expect(self)
+  }
+}
+impl OtterArgsSpec for G<&str> {
+  fn to_args(&self, ds: &dyn Substitutor) -> Vec<String> {
+    ds.gss(self.0).expect(self.0)
+  }
+}
+#[derive(Debug,Clone)]
+pub struct G<T>(pub T);
 
 impl DirSubst {
   pub fn specs_dir(&self) -> String {
