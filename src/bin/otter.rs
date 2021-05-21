@@ -802,10 +802,16 @@ mod reset_game {
         use EitherOrBoth::*;
         use bundles::State::*;
         match eob {
-          Left(local) => Err(format!("server is missing {}", local.file)),
-          Right(_) => Ok(()),
-          Both(_local, (id, Uploading))
-            => Err(format!("server has incomplete upload :{}", id)),
+          Right(_) => {
+            Ok(())
+          },
+          Left(local) => {
+            Err(format!("server is missing {} {} {}",
+                        local.kind, local.hash, local.file))
+          },
+          Both(_local, (id, Uploading)) => {
+            Err(format!("server has incomplete upload :{}", id))
+          },
           Both(local, (id, Loaded(remote))) => {
             if (local.size,  local.hash) !=
                (remote.size, remote.hash) {
@@ -815,11 +821,11 @@ mod reset_game {
             }
           }
         }
-      }).find_map(Result::err) {
-        None => {
+      }).find_map(Result::err).map_or_else(|| Ok(()), Err) {
+        Ok(()) => {
           eprintln!("Reusing server's existing bundles");
         },
-        Some(why) => {
+        Err(why) => {
           if ma.verbose >= 0 {
             eprintln!("Re-uploading bundles: {}", why);
           }
