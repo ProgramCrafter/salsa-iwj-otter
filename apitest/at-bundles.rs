@@ -49,6 +49,13 @@ impl Ctx {
   fn reset_with_bundles(&mut self) {
     self.clear_reset_to_demo()?;
 
+    // check that the spec is not accessible now
+    let e = self.otter(
+      &G("reset demo-in-test-bundle")
+    ).unwrap_err();
+    let e: ExitStatusError = e.downcast().unwrap();
+    assert_eq!(e.0.code(), Some(12));
+
     self.otter_resetting(
       &G("reset demo-in-test-bundle @examples@/test-bundle.zip")
     )?;
