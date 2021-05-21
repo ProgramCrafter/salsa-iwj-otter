@@ -742,16 +742,18 @@ impl Drop for OtterOutput {
 }
 
 pub trait OtterArgsSpec {
-  fn to_args(&self) -> Vec<String>;
+  fn to_args(&self, ds: &DirSubst) -> Vec<String>;
 }
 
 impl<S> OtterArgsSpec for [S] where for <'s> &'s S: Into<String> {
-  fn to_args(&self) -> Vec<String> {
+  fn to_args(&self, _: &DirSubst) -> Vec<String> {
     self.iter().map(|s| s.into()).collect()
   }
 }
 impl<S> OtterArgsSpec for Vec<S> where for <'s> &'s S: Into<String> {
-  fn to_args(&self) -> Vec<String> { self.as_slice().to_args() }
+  fn to_args(&self, ds: &DirSubst) -> Vec<String> {
+    self.as_slice().to_args(ds)
+  }
 }
 
 impl DirSubst {
@@ -780,7 +782,7 @@ impl DirSubst {
     let mut args: Vec<String> = vec![];
     args.push("--config"  .to_owned()); args.push(prctx.resolve(&CONFIG));
     args.push("--spec-dir".to_owned()); args.push(prctx.resolve(&specs) );
-    args.extend(xargs.to_args());
+    args.extend(xargs.to_args(ds));
     let dbg = format!("running {} {:?}", &exe, &args);
     let mut output = NamedTempFile::new_in(
       ds.subst("@abstmp@").unwrap()

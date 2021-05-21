@@ -490,7 +490,7 @@ impl UsualCtx {
   pub fn otter(&mut self, args: &dyn OtterArgsSpec) -> OtterOutput {
     let args: Vec<String> =
       ["--account", "server:"].iter().cloned().map(Into::into)
-      .chain(args.to_args().into_iter())
+      .chain(args.to_args(&self.su().ds).into_iter())
       .collect();
     self.su().ds.otter_prctx(&self.prctx, &args)?
   }
