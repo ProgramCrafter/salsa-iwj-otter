@@ -49,9 +49,9 @@ impl Ctx {
 
 #[throws(Explode)]
 fn tests(mut c: Ctx) {
-  test!(c, "bundles",                       c.bundles()      ?);
-  test!(c, "big",                           c.big()          ?);
-  test!(c, "builtin-spec",                  c.builtin_spec() ?);
+  test!(c, "bundles",                       c.bundles()                ?);
+  test!(c, "big",                           c.big()                    ?);
+  test!(c, "builtin-spec",                  c.builtin_spec()           ?);
 }
 
 #[throws(Explode)]
