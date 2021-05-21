@@ -45,11 +45,24 @@ impl Ctx {
       None,
     )?;
   }
+ 
+  #[throws(Explode)]
+  fn reset_with_bundles(&mut self) {
+    self.clear_reset_to_demo()?;
+
+    let cmd = self.su().ds.gss(
+      "reset demo-in-test-bundle @examples@/test-bundle.zip"
+    )?;
+    self.reset_game(&cmd)?;
+
+    self.clear_reset_to_demo()?;
+  }
 }
 
 #[throws(Explode)]
 fn tests(mut c: Ctx) {
   test!(c, "bundles",                       c.bundles()                ?);
+  test!(c, "reset-with-bundles",            c.reset_with_bundles()     ?);
   test!(c, "big",                           c.big()                    ?);
   test!(c, "builtin-spec",                  c.builtin_spec()           ?);
 }
