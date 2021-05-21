@@ -159,3 +159,48 @@ impl Drop for TermReporter {
     self.clear();
   }
 }
+
+pub struct Nest {
+  outer_n: usize,
+  outer_i: usize,
+  inner_last_phase: usize,
+  actual_reporter: Box<dyn Reporter>,
+}
+
+impl Nest {
+  /// Assumes that every inner phase is of the same length as the first
+  pub fn new(outer_count: usize, actual_reporter: Box<dyn Reporter>)
+             -> Self { Nest {
+    actual_reporter,
+    outer_n: outer_count,
+    outer_i: 0,
+    inner_last_phase: 0,
+  } }
+}
+
+impl Reporter for Nest {
+  fn report(&mut self, inner_pi: &ProgressInfo<'_>) {
+    // Autodetect new outer phase item, when inner pahse rewinds
+    if inner_pi.phase.i < self.inner_last_phase {
+      self.outer_i += 1;
+    }
+    self.inner_last_phase = inner_pi.phase.i;
+
+    let outer_phase = progress::Count {
+      i: inner_pi.phase.i + inner_pi.phase.n * self.outer_i,
+      n:                    inner_pi.phase.n * self.outer_n,
+      desc: inner_pi.phase.desc.clone(),
+    };
+
+    let outer_pi = ProgressInfo {
+      phase: outer_phase,
+      item:  inner_pi.item.clone(),
+    };
+
+    self.actual_reporter.report(&outer_pi);
+  }
+
+  fn clear(&mut self) {
+    self.actual_reporter.clear();
+  }
+}
