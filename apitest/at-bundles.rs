@@ -20,8 +20,7 @@ impl Ctx {
       "big-bundle","duped-example", "chess-purple-cannon", "a purple cannon",
       &mut |ctx|
     {
-      let cmd = ctx.ds().gss("reset modded-spec")?;
-      ctx.reset_game(&cmd)?;
+      ctx.reset_game(&ctx.ds().gss("reset modded-spec")?)?;
 
       let alice = ctx.connect_player(&ctx.alice)?;
       let pieces = alice.pieces::<PIA>()?;
@@ -50,10 +49,9 @@ impl Ctx {
   fn reset_with_bundles(&mut self) {
     self.clear_reset_to_demo()?;
 
-    let cmd = self.ds().gss(
+    self.reset_game(&self.ds().gss(
       "reset demo-in-test-bundle @examples@/test-bundle.zip"
-    )?;
-    self.reset_game(&cmd)?;
+    )?)?;
 
     self.clear_reset_to_demo()?;
   }
