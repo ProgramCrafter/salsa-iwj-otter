@@ -119,7 +119,7 @@ impl MainOpts {
     if self.verbose > 0 {
       termprogress::new()
     } else {
-      termprogress::NullReporter::new()
+      termprogress::Null::new()
     }
   }
 }
@@ -1735,7 +1735,7 @@ mod download_bundle {
       id,
     };
     chan.cmd_withbulk(&cmd, &mut io::empty(), &mut f,
-                      &mut termprogress::NullReporter)
+                      &mut termprogress::Null)
       .context("download bundle")?;
     f.flush().context("flush bundle file")?;
     if let Some((path, tmp)) = path_tmp {

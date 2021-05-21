@@ -142,7 +142,7 @@ impl MgmtChannel {
   #[throws(AE)]
   pub fn cmd(&mut self, cmd: &MgmtCommand) -> MgmtResponse {
     self.cmd_withbulk(cmd, &mut io::empty(), &mut io::sink(),
-                      &mut termprogress::NullReporter)?
+                      &mut termprogress::Null)?
   }
 
   pub fn read_inner_mut(&mut self) -> &mut TimedFdReader {

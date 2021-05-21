@@ -14,13 +14,13 @@ pub trait Reporter {
   fn clear(&mut self);
 }
 
-pub struct NullReporter;
-impl NullReporter {
-  pub fn new() -> Box<dyn Reporter> { Box::new(NullReporter) }
+pub struct Null;
+impl Null {
+  pub fn new() -> Box<dyn Reporter> { Box::new(Null) }
 }
 
 #[allow(unused_variables)]
-impl Reporter for NullReporter {
+impl Reporter for Null {
   fn report(&mut self, pi: &ProgressInfo<'_>) { }
   fn clear(&mut self) { }
 }
@@ -56,7 +56,7 @@ pub fn new() -> Box<dyn Reporter> {
       spinner: 0,
     })
   } else {
-    Box::new(NullReporter)
+    Box::new(Null)
   }
 }
 
