@@ -15,6 +15,9 @@ pub trait Reporter {
 }
 
 pub struct NullReporter;
+impl NullReporter {
+  pub fn new() -> Box<dyn Reporter> { Box::new(NullReporter) }
+}
 
 #[allow(unused_variables)]
 impl Reporter for NullReporter {

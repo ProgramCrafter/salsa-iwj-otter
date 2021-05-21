@@ -113,6 +113,15 @@ impl MainOpts {
       MgmtGameUpdateMode::Online,
     )
   }
+
+  #[throws(AE)]
+  fn progressbar(&self) -> Box<dyn termprogress::Reporter> {
+    if self.verbose > 0 {
+      termprogress::new()
+    } else {
+      termprogress::NullReporter::new()
+    }
+  }
 }
 
 #[derive(Default,Debug)]
@@ -829,7 +838,7 @@ mod reset_game {
           if ma.verbose >= 0 {
             eprintln!("Re-uploading bundles: {}", why);
           }
-          let progress = termprogress::new();
+          let progress = ma.progressbar()?;
           let mut progress = termprogress::Nest::new(local.len(), progress);
           for bundle in local {
             bundle.upload(&ma, &mut chan, &mut progress)?;
@@ -1633,7 +1642,7 @@ mod upload_bundle {
   fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ma.access_game()?;
-    let mut progress = termprogress::new();
+    let mut progress = ma.progressbar()?;
     let for_upload = BundleForUpload::prepare(args.bundle_file)?;
     let bundle = for_upload.upload(&ma, &mut chan, &mut *progress)?;
     println!("{}", bundle);
