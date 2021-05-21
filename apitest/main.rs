@@ -627,9 +627,8 @@ impl UsualCtx {
   
   #[throws(Explode)]
   pub fn clear_reset_to_demo(&mut self) {
-    let ds = self.su().ds.clone();
-    self.otter_resetting(&ds.gss("clear-game")?)?;
-    self.otter_resetting(&ds.gss("reset demo")?)?;
+    self.otter_resetting(&G("clear-game"))?;
+    self.otter_resetting(&G("reset demo"))?;
   }
 }
 

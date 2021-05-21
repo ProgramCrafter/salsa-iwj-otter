@@ -11,19 +11,17 @@ impl Ctx {
   fn library_load(&mut self) {
     self.prepare_game()?;
 
-    let command = self.ds().gss(
-      "library-list chess-yellow-?"
-    )?;
-    let output: String = self.otter(&command)?.into();
+    let output: String = self.otter(
+      &G("library-list chess-yellow-?")
+    )?.into();
     assert!( Regex::new("(?m)^wikimedia  *chess-yellow-K  *the yellow king$")?
              .find(&output)
              .is_some(),
              "got: {}", &output);
 
-    let command = self.ds().gss(
-      "library-add --lib wikimedia chess-blue-?"
+    let added = self.some_library_add(
+      &G("library-add --lib wikimedia chess-blue-?")
     )?;
-    let added = self.some_library_add(&command)?;
     assert_eq!(added.len(), 6);
   }
 
@@ -145,8 +143,7 @@ impl Ctx {
     assert_eq!(b_pieces[b_pawns[1]].pos,
                a_pieces[a_pawns[0]].pos);
 
-    let command = self.ds().gss("reset demo")?;
-    self.otter_resetting(&command)?;
+    self.otter_resetting(&G("reset demo"))?;
   }
 
   #[throws(Explode)]
