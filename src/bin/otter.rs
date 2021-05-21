@@ -1592,6 +1592,7 @@ mod alter_game_adhoc {
 
 //---------- upload-bundle ----------
 
+#[derive(Debug)]
 struct BundleForUpload {
   file: String,
   f: BufReader<File>,
