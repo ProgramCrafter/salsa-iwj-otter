@@ -1103,8 +1103,11 @@ impl InstanceBundles {
       if_let!{
         Ok(_) = File::create(&fpath);
         Err(e) => {
-          warn!("failed to truncate a bundle for {}: {}: {}",
-                instance, fpath, e);
+          if e.raw_os_error() == Some(libc::EISDIR) {
+          } else {
+            warn!("failed to truncate a bundle for {}: {}: {}",
+                  instance, fpath, e);
+          }
           continue;
         }
       }
