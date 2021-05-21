@@ -829,7 +829,11 @@ mod reset_game {
           if ma.verbose >= 0 {
             eprintln!("Re-uploading bundles: {}", why);
           }
-          todo!();
+          let progress = termprogress::new();
+          let mut progress = termprogress::Nest::new(local.len(), progress);
+          for bundle in local {
+            bundle.upload(&ma, &mut chan, &mut progress)?;
+          }
         },
       }
     }
