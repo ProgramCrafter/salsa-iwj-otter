@@ -742,16 +742,16 @@ impl Drop for OtterOutput {
 }
 
 pub trait OtterArgsSpec {
-  fn to_args(&self, ds: &DirSubst) -> Vec<String>;
+  fn to_args(&self, ds: &dyn Substitutor) -> Vec<String>;
 }
 
 impl<S> OtterArgsSpec for [S] where for <'s> &'s S: Into<String> {
-  fn to_args(&self, _: &DirSubst) -> Vec<String> {
+  fn to_args(&self, _: &dyn Substitutor) -> Vec<String> {
     self.iter().map(|s| s.into()).collect()
   }
 }
 impl<S> OtterArgsSpec for Vec<S> where for <'s> &'s S: Into<String> {
-  fn to_args(&self, ds: &DirSubst) -> Vec<String> {
+  fn to_args(&self, ds: &dyn Substitutor) -> Vec<String> {
     self.as_slice().to_args(ds)
   }
 }
