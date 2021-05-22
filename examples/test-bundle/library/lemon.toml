@@ -2,14 +2,32 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR CC-BY-SA-3.0
 # There is NO WARRANTY.
 
-[group.lemon]
+[group.svg]
 outline = "Circle"
 size = [14]
 orig_size = [533,533]
 centre = [248, 257]
+item_prefix = "example-"
 
 files = """
-example-lemon	-	a lemon
+lemon		-	a lemon
+"""
+
+[group.dried]
+outline = "Circle"
+size = [14]
+orig_size = [64, 48]
+centre = [32,24]
+item_prefix = ""
+
+files = """
 dried-lemon	-	a dried lemon
+"""
+
+[group.moebius]
+inherit = "dried"
+orig_size = [70,70]
+centre = [30,32]
+files = """
 moebius		-	a yellow moebius object
 """
