@@ -29,5 +29,5 @@ inherit = "dried"
 orig_size = [70,70]
 centre = [30,32]
 files = """
-moebius		-	a yellow moebius object
+moebius-yellow 	moebius	a yellow moebius object
 """
