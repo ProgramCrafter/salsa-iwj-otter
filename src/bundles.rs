@@ -735,8 +735,9 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
   let output = File::create(&usvg_path)
     .with_context(|| usvg_path.clone()).context("create").map_err(IE::from)?;
 
+  use PictureFormat as PF;
   match format {
-    PictureFormat::Svg => {
+    PF::Svg => {
       let got = Command::new(&config().usvg_bin).args(&["-c","-"])
         .stdin(input).stdout(output)
         .output().context("run usvg").map_err(IE::from)?;
