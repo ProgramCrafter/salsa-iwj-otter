@@ -756,10 +756,10 @@ fn image_usvg(zfname: &str, input: File, output: File,
 fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
              mut for_progress: &mut dyn progress::Originator,
              dir_inzip: &str, svg_dir: &str,
-             item: &GoodItemName, _src_name: &str) {
+             item: &GoodItemName, src_name: &str) {
   let (format, mut zf) = 'format: loop {
     for format in PictureFormat::iter() {
-      let input_basename = format!("{}/{}.{}", dir_inzip, item, format);
+      let input_basename = format!("{}/{}.{}", dir_inzip, src_name, format);
       if let Some(zf) = za.by_name_caseless(input_basename)? {
         break 'format (format, zf);
       }

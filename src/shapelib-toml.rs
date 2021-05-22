@@ -237,7 +237,9 @@ pub struct FileData {
 
   /// The core of the remote file name, for pieces which are scraped.
   ///
-  /// Not used by Otter during runtime or when loading pieces.
+  /// In bundles, is the source file name if it isn't `-`.
+  /// In builtin libs,
+  /// not used by Otter during runtime or when loading.
   ///
   /// When [`scraper.method`](LibraryTomlFile::scraper) is `"none"`,
   /// this field is not used and is conventionally set to "`-`".
