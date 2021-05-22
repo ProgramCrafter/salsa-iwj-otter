@@ -13,6 +13,7 @@ Otter - Online Table Top Environment Renderer
    README
    user
    advanced
+   bundles
    build
    install
    dev
