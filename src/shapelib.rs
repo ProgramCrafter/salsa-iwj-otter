@@ -788,7 +788,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
             throw!(LLE::OccultationColourMissing(colour.0.clone()));
           }
           let item_name = subst(item_name.as_str(), "_c", &colour.0)?;
-          let src_name  = subst(&fe.r_file_spec, "_c", &colour.0);
+          let src_name  = subst(&fe.src_file_spec, "_c", &colour.0);
           let item_name: GoodItemName = item_name.try_into()?;
           let item_name = SvgBaseName::note(
             src, Arc::new(item_name), src_name.as_ref().map(|s| s.as_str()),
@@ -847,14 +847,15 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
       };
 
       if group.d.colours.is_empty() {
-        add1(&item_name, Ok(fe.r_file_spec.as_str()), sort, &fe.desc.clone())?;
+        add1(&item_name, Ok(fe.src_file_spec.as_str()),
+             sort, &fe.desc.clone())?;
       } else {
         for (colour, recolourdata) in &group.d.colours {
           let t_sort = sort.as_ref().map(
             |s| subst(&s, "_c", colour)).transpose()?;
           let c_abbrev = &recolourdata.abbrev;
           let t_item_name = subst(item_name.as_str(), "_c", c_abbrev)?;
-          let t_src_name = subst(&fe.r_file_spec, "_c", c_abbrev);
+          let t_src_name = subst(&fe.src_file_spec, "_c", c_abbrev);
           let t_src_name = t_src_name.as_ref().map(|s| s.as_str());
           let t_desc = subst(&fe.desc, "_colour", colour)?;
           add1(&t_item_name.try_into()?, t_src_name, t_sort, &t_desc)?;
@@ -1111,12 +1112,12 @@ impl TryFrom<String> for FileList {
         Ok::<_,LLE>(l.to_owned())
       };
       let item_spec = n()?;
-      let r_file_spec = n()?;
+      let src_file_spec = n()?;
       let extra_fields = xfields.iter()
         .map(|field| Ok::<_,LLE>((field.to_owned(), n()?.to_owned())))
         .collect::<Result<_,_>>()?;
       let desc = remain.to_owned();
-      o.push(FileData{ item_spec, r_file_spec, extra_fields, desc });
+      o.push(FileData{ item_spec, src_file_spec, extra_fields, desc });
     }
     Ok(FileList(o))
   }
