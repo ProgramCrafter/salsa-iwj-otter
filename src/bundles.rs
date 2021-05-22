@@ -716,30 +716,36 @@ enum PictureFormat {
   Png,
 }
 
+#[derive(Serialize,Copy,Clone,Debug)]
+struct Base64Meta {
+  width: u32,
+  height: u32,
+  ctype: &'static str,
+}
+
 #[throws(LE)]
 fn image_usvg(zfname: &str, mut input: BufReader<File>, output: File,
               format: image::ImageFormat, ctype: &'static str) {
-  #[derive(Serialize,Copy,Clone,Debug)]
-  struct Render {
-    width: u32,
-    height: u32,
-    ctype: &'static str,
-  }
-
-  let mut output = BufWriter::new(output);
-
   let image = image::io::Reader::with_format(&mut input, format);
   let (width, height) = image.into_dimensions().map_err(
     |e| LE::BadBundle(format!("{}: image examination failed: {}",
                               zfname, e)))?;
 
-  let render = Render { width, height, ctype };
+  let render = Base64Meta { width, height, ctype };
+  base64_usvg(zfname, input, output, &render)?;
+}
+
+#[throws(LE)]
+fn base64_usvg(zfname: &str, mut input: BufReader<File>, output: File,
+               render: &Base64Meta) {
+  input.rewind().context("rewind input").map_err(IE::from)?;
+  let mut output = BufWriter::new(output);
+
   let rendered = nwtemplates::render("image-usvg.tera", &render)
     .map_err(IE::from)?;
   let (head, tail) = rendered.rsplit_once("@DATA@").ok_or_else(
     || IE::from(anyhow!("image-usvg template did not produce @DATA@")))?;
 
-  input.rewind().context("rewind input").map_err(IE::from)?;
   write!(output,"{}",head).context("write head to output").map_err(IE::from)?;
   let charset = base64::CharacterSet::Standard;
   let b64cfg = base64::Config::new(charset,true);
