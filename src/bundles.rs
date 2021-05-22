@@ -717,7 +717,7 @@ enum PictureFormat {
 }
 
 #[throws(LE)]
-fn image_usvg(zfname: &str, input: File, output: File,
+fn image_usvg(zfname: &str, mut input: BufReader<File>, output: File,
               format: image::ImageFormat, ctype: &'static str) {
   #[derive(Serialize,Copy,Clone,Debug)]
   struct Render {
@@ -726,7 +726,6 @@ fn image_usvg(zfname: &str, input: File, output: File,
     ctype: &'static str,
   }
 
-  let mut input = BufReader::new(input);
   let mut output = BufWriter::new(output);
 
   let image = image::io::Reader::with_format(&mut input, format);
@@ -850,7 +849,10 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
       let size = usvg_size(&mut BufReader::new(t_f))?;
       dbgc!(size);
     },
-    PF::Png => image_usvg(zf.name(),input,output, IF::Png, "image/png")?,
+    PF::Png => {
+      let input = BufReader::new(input);
+      image_usvg(zf.name(),input,output, IF::Png, "image/png")?;
+    },
   }
 }
 
