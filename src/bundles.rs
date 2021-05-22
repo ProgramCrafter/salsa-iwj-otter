@@ -718,8 +718,8 @@ enum PictureFormat {
 
 #[derive(Serialize,Copy,Clone,Debug)]
 struct Base64Meta {
-  width: u32,
-  height: u32,
+  width: f64,
+  height: f64,
   ctype: &'static str,
 }
 
@@ -733,7 +733,11 @@ fn image_usvg(zfname: &str, input: File, output: File,
     |e| LE::BadBundle(format!("{}: image examination failed: {}",
                               zfname, e)))?;
 
-  let render = Base64Meta { width, height, ctype };
+  let render = Base64Meta {
+    width: width.into(),
+    height: height.into(),
+    ctype,
+  };
   base64_usvg(zfname, input, output, &render)?;
 }
 
