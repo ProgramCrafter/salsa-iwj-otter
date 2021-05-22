@@ -694,14 +694,18 @@ fn process_bundle(ForProcess { mut za, mut newlibs }: ForProcess,
 
   for_progress.phase(Phase::Pieces, svg_count);
   
+  let instance_name = instance.to_string();
+  let bundle_name = id.to_string();
+
   let mut svg_count = 0;
   for ForProcessLib { need_svgs, svg_dir, dir_inzip, .. } in &mut newlibs {
 
     fs::create_dir(&svg_dir)
       .with_context(|| svg_dir.clone()).context("mkdir").map_err(IE::from)?;
-      
+
     for SvgNoted { item, src_name } in mem::take(need_svgs) {
-      make_usvg(instance, &id, &mut za, &mut svg_count, for_progress,
+      make_usvg(&instance_name, &bundle_name,
+                &mut za, &mut svg_count, for_progress,
                 dir_inzip, svg_dir, &item, &src_name)?;
     }
   }
@@ -726,8 +730,8 @@ struct Base64Meta<'r,'c:'r> {
 
 #[derive(Serialize,Copy,Clone,Debug)]
 struct Base64Context<'r> {
-  bundle: &'r Id,
-  game: &'r InstanceName,
+  bundle: &'r str,
+  game: &'r str,
   zfname: &'r str,
   item: &'r GoodItemName,
 }
@@ -820,7 +824,7 @@ fn usvg_size(f: &mut BufReader<File>) -> [f64;2] {
 }
 
 #[throws(LE)]
-fn make_usvg(instance: &InstanceName, bundle: &Id, za: &mut IndexedZip, 
+fn make_usvg(instance_name: &str, bundle_name: &str, za: &mut IndexedZip, 
              progress_count: &mut usize,
              mut for_progress: &mut dyn progress::Originator,
              dir_inzip: &str, svg_dir: &str,
@@ -858,8 +862,9 @@ fn make_usvg(instance: &InstanceName, bundle: &Id, za: &mut IndexedZip,
 
   let ctx = &Base64Context {
     zfname: zf.name(),
-    game: instance,
-    bundle, item,
+    game: instance_name,
+    bundle: bundle_name,
+    item,
   };
   match format {
     PF::Svg => {
