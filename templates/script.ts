@@ -1928,8 +1928,6 @@ function startup() {
   console.log('STARTUP');
   console.log(wasm_bindgen.setup("OK"));
 
-  // xxx make there be a function for these singleton elements that
-  // xxx spots if a loaded svg has introduced the same id
   var body = document.getElementById("main-body")!;
   zoom_btn = document.getElementById("zoom-btn") as any;
   zoom_val = document.getElementById("zoom-val") as any;

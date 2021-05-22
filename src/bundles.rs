@@ -848,8 +848,12 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
   use image::ImageFormat as IF;
   match format {
     PF::Svg => {
+      let mut usvg1 = tempfile::tempfile_in(&svg_dir)
+        .context("create temporary usvg").map_err(IE::from)?;
+
       let got = Command::new(&config().usvg_bin).args(&["-c","-"])
-        .stdin(input).stdout(output)
+        .stdin(input)
+        .stdout(usvg1.try_clone().context("dup usvg1").map_err(IE::from)?)
         .output().context("run usvg").map_err(IE::from)?;
       if ! got.status.success() {
         throw!(LE::BadBundle(format!(
@@ -857,9 +861,13 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
           zf.name(), got.status, String::from_utf8_lossy(&got.stderr)
         )));
       }
-      let t_f = File::open(&usvg_path).context("reopen").map_err(IE::from)?;
-      let size = usvg_size(&mut BufReader::new(t_f))?;
-      dbgc!(size);
+
+      usvg1.rewind().context("rewind temporary usvg").map_err(IE::from)?;
+      let mut usvg1 = BufReader::new(usvg1);
+      let [width,height] = usvg_size(&mut usvg1)?;
+
+      let render = Base64Meta { width, height, ctype: "image/svg+xml" };
+      base64_usvg(zf.name(),usvg1,output, &render)?;
     },
     PF::Png => {
       image_usvg(zf.name(),input,output, IF::Png, "image/png")?;
