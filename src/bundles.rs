@@ -701,7 +701,7 @@ fn process_bundle(ForProcess { mut za, mut newlibs }: ForProcess,
       .with_context(|| svg_dir.clone()).context("mkdir").map_err(IE::from)?;
       
     for SvgNoted { item, src_name } in mem::take(need_svgs) {
-      make_usvg(&mut za, &mut svg_count, for_progress,
+      make_usvg(instance, &id, &mut za, &mut svg_count, for_progress,
                 dir_inzip, svg_dir, &item, &src_name)?;
     }
   }
@@ -717,37 +717,45 @@ enum PictureFormat {
 }
 
 #[derive(Serialize,Copy,Clone,Debug)]
-struct Base64Meta {
+struct Base64Meta<'r,'c:'r> {
   width: f64,
   height: f64,
   ctype: &'static str,
+  #[serde(flatten)] ctx: &'r Base64Context<'c>,
+}
+
+#[derive(Serialize,Copy,Clone,Debug)]
+struct Base64Context<'r> {
+  bundle: &'r Id,
+  game: &'r InstanceName,
+  zfname: &'r str,
+  item: &'r GoodItemName,
 }
 
 #[throws(LE)]
-fn image_usvg(zfname: &str, input: File, output: File,
+fn image_usvg(ctx: &Base64Context, input: File, output: File,
               format: image::ImageFormat, ctype: &'static str) {
   let mut input = BufReader::new(input);
 
   let image = image::io::Reader::with_format(&mut input, format);
   let (width, height) = image.into_dimensions().map_err(
     |e| LE::BadBundle(format!("{}: image examination failed: {}",
-                              zfname, e)))?;
+                              ctx.zfname, e)))?;
 
   let render = Base64Meta {
     width: width.into(),
     height: height.into(),
-    ctype,
+    ctype, ctx,
   };
-  base64_usvg(zfname, input, output, &render)?;
+  base64_usvg(&render, input, output)?;
 }
 
 #[throws(LE)]
-fn base64_usvg(zfname: &str, mut input: BufReader<File>, output: File,
-               render: &Base64Meta) {
+fn base64_usvg(meta: &Base64Meta, mut input: BufReader<File>, output: File) {
   input.rewind().context("rewind input").map_err(IE::from)?;
   let mut output = BufWriter::new(output);
 
-  let rendered = nwtemplates::render("image-usvg.tera", &render)
+  let rendered = nwtemplates::render("image-usvg.tera", meta)
     .map_err(IE::from)?;
   let (head, tail) = rendered.rsplit_once("@DATA@").ok_or_else(
     || IE::from(anyhow!("image-usvg template did not produce @DATA@")))?;
@@ -757,7 +765,7 @@ fn base64_usvg(zfname: &str, mut input: BufReader<File>, output: File,
   let b64cfg = base64::Config::new(charset,true);
   let mut output = base64::write::EncoderWriter::new(output, b64cfg);
   io::copy(&mut input, &mut output).map_err(|e| LE::BadBundle(format!(
-    "{}: read and base64-encode image data: {}", zfname, e)))?;
+    "{}: read and base64-encode image data: {}", meta.ctx.zfname, e)))?;
   let mut output = output.finish().context("finish b64").map_err(IE::from)?;
   write!(output,"{}",tail).context("write tail to output").map_err(IE::from)?;
   output.flush().context("flush output?").map_err(IE::from)?;
@@ -812,7 +820,8 @@ fn usvg_size(f: &mut BufReader<File>) -> [f64;2] {
 }
 
 #[throws(LE)]
-fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
+fn make_usvg(instance: &InstanceName, bundle: &Id, za: &mut IndexedZip, 
+             progress_count: &mut usize,
              mut for_progress: &mut dyn progress::Originator,
              dir_inzip: &str, svg_dir: &str,
              item: &GoodItemName, src_name: &str) {
@@ -846,6 +855,12 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
 
   use PictureFormat as PF;
   use image::ImageFormat as IF;
+
+  let ctx = &Base64Context {
+    zfname: zf.name(),
+    game: instance,
+    bundle, item,
+  };
   match format {
     PF::Svg => {
       let mut usvg1 = tempfile::tempfile_in(&svg_dir)
@@ -866,11 +881,11 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
       let mut usvg1 = BufReader::new(usvg1);
       let [width,height] = usvg_size(&mut usvg1)?;
 
-      let render = Base64Meta { width, height, ctype: "image/svg+xml" };
-      base64_usvg(zf.name(),usvg1,output, &render)?;
+      let render = Base64Meta { width, height, ctype: "image/svg+xml", ctx };
+      base64_usvg(&render, usvg1, output)?;
     },
     PF::Png => {
-      image_usvg(zf.name(),input,output, IF::Png, "image/png")?;
+      image_usvg(ctx, input, output, IF::Png, "image/png")?;
     },
   }
 }
