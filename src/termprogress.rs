@@ -189,11 +189,17 @@ impl Reporter for Nest {
     }
     self.inner_last_phase = inner_pi.phase.i;
 
+    let desc = if self.outer_n > 1 {
+      format!("{}/{} {}", self.outer_i, self.outer_n,
+              &inner_pi.phase.desc).into()
+    } else  {
+      inner_pi.phase.desc.clone()
+    };
+
     let outer_phase = progress::Count {
       i: inner_pi.phase.i + inner_pi.phase.n * self.outer_i,
       n:                    inner_pi.phase.n * self.outer_n,
-      desc: format!("{}/{} {}", self.outer_i, self.outer_n,
-                    &inner_pi.phase.desc).into(),
+      desc,
     };
 
     let outer_pi = ProgressInfo {
