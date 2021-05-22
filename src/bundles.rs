@@ -700,7 +700,6 @@ fn process_bundle(ForProcess { mut za, mut newlibs }: ForProcess,
 enum PictureFormat {
   Svg,
   Png,
-  Jpeg,
 }
 
 #[throws(LE)]
@@ -787,7 +786,6 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
       }
     },
     PF::Png => image_usvg(zf.name(),input,output, IF::Png, "image/png")?,
-    PF::Jpeg => image_usvg(zf.name(),input,output, IF::Jpeg, "image/jpeg")?,
   }
 }
 
