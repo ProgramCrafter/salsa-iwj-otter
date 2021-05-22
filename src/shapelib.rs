@@ -106,12 +106,9 @@ pub enum LibraryLoadError {
                                         FilesListLineMissingWhitespace(usize),
   #[error("files list line {0}, field must be at start")]
                                         FilesListFieldsMustBeAtStart(usize),
-  #[error("missing or unrecognised substitution token {0}")]
-                                        MissingSubstituionToken(&'static str),
-  #[error("repeated substitution token {0}")]
-                                        RepeatedSubstituionToken(&'static str),
   #[error("piece defines multiple faces in multiple ways")]
                                         MultipleMultipleFaceDefinitions,
+  #[error("bad substitution: {0}")]     BadSubstitution(#[from] SubstError),
   #[error("{0}")] UnsupportedColourSpec(#[from] UnsupportedColourSpec),
   #[error("bad item name (invalid characters) in {0:?}")] BadItemName(String),
 }
@@ -121,6 +118,13 @@ impl LibraryLoadError {
     internal_error_bydebug(self)
   }
 }
+
+#[derive(Error,Copy,Clone,Debug)]
+pub enum SubstError {
+  #[error("missing or unrecognised token {0}")] MissingToken (&'static str),
+  #[error("repeated token {0}")]                RepeatedToken(&'static str),
+}
+
 
 const INHERIT_DEPTH_LIMIT: u8 = 20;
 
@@ -739,15 +743,13 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
       throw!(LLE::MultipleMultipleFaceDefinitions)
     }
     for fe in gdefn.files.0 {
-      #[throws(LLE)]
+      #[throws(SubstError)]
       fn subst(before: &str, needle: &'static str, replacement: &str)
                -> String {
+        use SubstError as SE;
         let mut matches = before.match_indices(needle);
-        let m1 = matches.next()
-          .ok_or(LLE::MissingSubstituionToken(needle))?;
-        if matches.next().is_some() {
-          Err(LLE::RepeatedSubstituionToken(needle))?;
-        }
+        let m1 = matches.next().ok_or(SE::MissingToken(needle))?;
+        if matches.next().is_some() { Err(SE::RepeatedToken(needle))?; }
         let mut lhs = &before[0.. m1.0];
         let mut rhs = &before[m1.0 + m1.1.len() ..];
         if replacement.is_empty() {
