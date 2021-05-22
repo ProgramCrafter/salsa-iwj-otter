@@ -724,8 +724,10 @@ struct Base64Meta {
 }
 
 #[throws(LE)]
-fn image_usvg(zfname: &str, mut input: BufReader<File>, output: File,
+fn image_usvg(zfname: &str, input: File, output: File,
               format: image::ImageFormat, ctype: &'static str) {
+  let mut input = BufReader::new(input);
+
   let image = image::io::Reader::with_format(&mut input, format);
   let (width, height) = image.into_dimensions().map_err(
     |e| LE::BadBundle(format!("{}: image examination failed: {}",
@@ -856,7 +858,6 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
       dbgc!(size);
     },
     PF::Png => {
-      let input = BufReader::new(input);
       image_usvg(zf.name(),input,output, IF::Png, "image/png")?;
     },
   }
