@@ -54,6 +54,10 @@ Note, however, that library item names, TOML config file keys, and,
 indeed everything else *except* filenames within the zipfiles, are
 case-sensitive.
 
+Library names in bundles are treated as lowercase, no matter the case
+in the zipfile.  So when piece specs refer to a bundle library, they
+must refer to it in lowercase.
+
 ``otter.toml`` bundle top-level metadata
 ----------------------------------------
 
@@ -68,7 +72,7 @@ Each game on the server can contain multiple bundles.  They are
 ordered and numbered, in order of upload.
 
 When Otter needs to look for a game spec or a piece, the bundles are
-searched in reverse order: from most recent, to leasy recent.  So a
+searched in reverse order: from most recent, to least recent.  So a
 game might contain elements from multiple bundles.
 
 Usually, the right approach is to pass all the needed bundle filenames
@@ -83,4 +87,6 @@ reset``).
 It is not possible to delete or replace individual bundles, only to
 clear out all the bundles of an empty game.  When developing a bundle,
 new versions can be uploaded to the server by hand with ``otter
-upload-bundle`` and their contents will be found first.
+upload-bundle`` and their contents will be found first.  But ``otter
+reset`` will usually be less trouble and will avoid cluttering the
+game (and the server) with previous versions.
