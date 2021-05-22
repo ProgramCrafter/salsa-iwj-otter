@@ -787,11 +787,12 @@ fn usvg_size(f: &mut BufReader<File>) -> [f64;2] {
           value.parse().context("parse width/height")?
         );
 
-        if_chain!{
-          if let Some(width)  = size[0];
-          if let Some(height) = size[1];
-          then { break [width,height] }
-        }
+        if let Ok(output) = size.iter().cloned()
+          .filter_map(|s|s)
+          .collect::<ArrayVec<_,2>>()
+          .into_inner() {
+            break output;
+          }
       },
       XT::ElementEnd {..} => throw!(anyhow!("not found")),
       _ => { }
