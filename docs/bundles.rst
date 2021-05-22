@@ -8,12 +8,12 @@ incorporated into Otter itself.
 
 These **bundles** are per-game.  They are accessible to the players
 but not made public.  The usual way to use bundles is to specify them
-on the `otter reset` command:
+on the ``otter reset`` command line:
 
 ::
 
   otter--game unix:myself:: reset stoat-fest stoaty-games.zip
-             /^^^^^^^~~~~~~      /~~~~~~~~~' `~~~~~~~~~~~~~~~\
+             /^^^^^^^^^^^^^      /^^^^^^^^^^ ^^^^^^^^^^^^^^^^\
     game (instance) name     game spec name       bundle file'
 
 The zipfile will be uploaded the server, and then Otter will look for
@@ -24,31 +24,31 @@ the zipfile, and it will refer to piece elements also found there.
 Bundle format
 -------------
 
-Bundles are zipfiles.  They contain:
+Bundles are zipfiles.  They can contain:
 
  * ``otter.toml`` at the toplevel, with some basic metadata.
-   Mandatory.
+   This file is mandatory.
 
- * ``specs/``game``.game.toml``:  Description of what a particular
+ * ``specs/GAME.game.toml``:  Description of what a particular
    game looks like: what shape and colour the table is, what pieces
    the game contains (at least initially), and where they start.
+   ``GAME`` is the game spec name (e.g., ``stoat-fest`` above.)
 
- * ``library/``lib``.toml``: Description of a piece shape library.
-   See _`Shape libraries`_.
+ * ``library/LIB.toml``: Description of a piece shape library,
+   for a library named ``LIB``.  See _`Shape libraries`.
 
-These files are all in TOML format.  TOML an INI-file-like format
-designed for human editing and flexibility.  See the
-_`TOML documentation` for information about the syntax.
+These files are all in TOML format.  TOML ia an INI-file-like format
+designed for human editing and flexibility.  See the `TOML
+documentation <https://toml.io/en/>`_ for information about the syntax.
 
-_`TOML documentation` = https://toml.io/en/
+Character set and case-sensitivity
+``````````````````````````````````
 
-Case-sensitivity
-````````````````
+Everything in Otter is UTF-8.
 
 All filenames in bundles are treated case-insensitively (according to
-Unicode).  So a bundle cannot have game specs which differ ony in the
-case of their name; nor can it have piece image files which differ
-only in the case of their name.
+Unicode).  So a bundle cannot have game specs, or piece image files,
+which differ ony in the case of their name.
 
 Note, however, that library item names, TOML config file keys, and,
 indeed everything else *except* filenames within the zipfiles, are
