@@ -118,7 +118,13 @@ struct ForProcess {
 struct ForProcessLib {
   dir_inzip: String,
   svg_dir: String,
-  need_svgs: Vec<GoodItemName>,
+  need_svgs: Vec<SvgNoted>,
+}
+
+#[derive(Debug,Clone)]
+struct SvgNoted {
+  item: GoodItemName,
+  src_name: String,
 }
 
 const BUNDLES_MAX: Index = Index(64);
@@ -622,7 +628,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName,
   struct LibraryInBundle<'l> {
     catalogue_data: String,
     svg_dir: &'l String,
-    need_svgs: Vec<GoodItemName>,
+    need_svgs: Vec<SvgNoted>,
     id: &'l Id,
   }
 
@@ -631,8 +637,14 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName,
     fn svg_dir(&self) -> String { self.svg_dir.clone() }
     #[throws(shapelib::SubstError)]
     fn note_svg(&mut self, basename: &GoodItemName,
-                _src_name: Result<&str, &shapelib::SubstError>) {
-      self.need_svgs.push(basename.clone())
+                src_name: Result<&str, &shapelib::SubstError>) {
+      let src_name = if src_name.unwrap_or_else(|e| e.input.as_str()) == "-" {
+        basename.as_str().to_string()
+      } else {
+        src_name.map_err(Clone::clone)?.to_string()
+      };
+      let item = basename.clone();
+      self.need_svgs.push(SvgNoted { item, src_name });
     }
     fn bundle(&self) -> Option<bundles::Id> { Some(*self.id) }
   }
@@ -688,9 +700,9 @@ fn process_bundle(ForProcess { mut za, mut newlibs }: ForProcess,
     fs::create_dir(&svg_dir)
       .with_context(|| svg_dir.clone()).context("mkdir").map_err(IE::from)?;
       
-    for item in mem::take(need_svgs) {
+    for SvgNoted { item, src_name } in mem::take(need_svgs) {
       make_usvg(&mut za, &mut svg_count, for_progress,
-                dir_inzip, svg_dir, &item)?;
+                dir_inzip, svg_dir, &item, &src_name)?;
     }
   }
 }
@@ -744,7 +756,7 @@ fn image_usvg(zfname: &str, input: File, output: File,
 fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
              mut for_progress: &mut dyn progress::Originator,
              dir_inzip: &str, svg_dir: &str,
-             item: &GoodItemName) {
+             item: &GoodItemName, _src_name: &str) {
   let (format, mut zf) = 'format: loop {
     for format in PictureFormat::iter() {
       let input_basename = format!("{}/{}.{}", dir_inzip, item, format);

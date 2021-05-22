@@ -128,8 +128,8 @@ pub enum SubstErrorKind {
 #[derive(Error,Clone,Debug)]
 #[error("bad substitution: {input:?} {kind}")]
 pub struct SubstError {
-  kind: SubstErrorKind,
-  input: String,
+  pub kind: SubstErrorKind,
+  pub input: String,
 }
 
 
