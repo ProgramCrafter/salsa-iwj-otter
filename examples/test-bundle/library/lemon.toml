@@ -8,8 +8,8 @@ size = [14]
 orig_size = [533,533]
 centre = [248, 257]
 
-item_prefix = "example-"
-
 files = """
-lemon	-	a lemon
+example-lemon	-	a lemon
+dried-lemon	-	a dried lemon
+moebius		-	a yellow moebius object
 """
