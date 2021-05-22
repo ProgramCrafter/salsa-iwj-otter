@@ -2384,6 +2384,7 @@ dependencies = [
  "url 2.2.2",
  "usvg",
  "vecdeque-stableix",
+ "xmlparser",
  "zip",
 ]
 

@@ -82,6 +82,7 @@ unicase="2"
 unicode-width="0.1"
 url="2"
 vecdeque-stableix="1"
+xmlparser = "0.13"
 zip="0.5"
 
 enum-map     = { version="1"    , features=["serde"       ] }

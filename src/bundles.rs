@@ -752,6 +752,53 @@ fn image_usvg(zfname: &str, input: File, output: File,
   output.flush().context("flush output?").map_err(IE::from)?;
 }
 
+#[throws(InternalError)]
+fn usvg_size(f: &mut BufReader<File>) -> [f64;2] {
+  let mut buf = [0; 1024];
+  f.read(&mut buf).context("read start of usvg to get size")?;
+
+  let s = str::from_utf8(&buf).unwrap_or_else(
+    |e| str::from_utf8(&buf[0.. e.valid_up_to()]).unwrap());
+  
+  let mut stream = xmlparser::Tokenizer::from(s);
+  let mut token = || Ok::<_,AE>(
+    stream.next().ok_or_else(||anyhow!("eof or too far"))??
+  );
+  use xmlparser::Token as XT;
+  (|| Ok::<_,AE>( loop {
+    match token()? {
+      XT::ElementStart { local,.. } => {
+        ensure_eq!( local.as_str(), "svg" );
+        break;
+      },
+      _ => { },
+    }
+  }))().context("looking for svg element")?;
+
+  let mut size: [Option<f64>; 2] = default();
+  (|| Ok::<_,AE>( loop {
+    match token()? {
+      XT::Attribute { local, value, .. } => {
+        size[match local.as_str() {
+          "width" => 0,
+          "height" => 1,
+          _ => continue,
+        }] = Some(
+          value.parse().context("parse width/height")?
+        );
+
+        if_chain!{
+          if let Some(width)  = size[0];
+          if let Some(height) = size[1];
+          then { break [width,height] }
+        }
+      },
+      XT::ElementEnd {..} => throw!(anyhow!("not found")),
+      _ => { }
+    }
+  }))().context("looking for width/height attributes")?
+}
+
 #[throws(LE)]
 fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
              mut for_progress: &mut dyn progress::Originator,
@@ -798,6 +845,9 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
           zf.name(), got.status, String::from_utf8_lossy(&got.stderr)
         )));
       }
+      let t_f = File::open(&usvg_path).context("reopen").map_err(IE::from)?;
+      let size = usvg_size(&mut BufReader::new(t_f))?;
+      dbgc!(size);
     },
     PF::Png => image_usvg(zf.name(),input,output, IF::Png, "image/png")?,
   }
