@@ -108,7 +108,7 @@ pub enum LibraryLoadError {
                                         FilesListFieldsMustBeAtStart(usize),
   #[error("piece defines multiple faces in multiple ways")]
                                         MultipleMultipleFaceDefinitions,
-  #[error("bad substitution: {0}")]     BadSubstitution(#[from] SubstError),
+  #[error("{0}")]                       BadSubstitution(#[from] SubstError),
   #[error("{0}")] UnsupportedColourSpec(#[from] UnsupportedColourSpec),
   #[error("bad item name (invalid characters) in {0:?}")] BadItemName(String),
 }
@@ -120,9 +120,16 @@ impl LibraryLoadError {
 }
 
 #[derive(Error,Copy,Clone,Debug)]
-pub enum SubstError {
+pub enum SubstErrorKind {
   #[error("missing or unrecognised token {0}")] MissingToken (&'static str),
   #[error("repeated token {0}")]                RepeatedToken(&'static str),
+}
+
+#[derive(Error,Clone,Debug)]
+#[error("bad substitution: {input:?} {kind}")]
+pub struct SubstError {
+  kind: SubstErrorKind,
+  input: String,
 }
 
 
@@ -750,10 +757,11 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
       #[throws(SubstError)]
       fn subst(before: &str, needle: &'static str, replacement: &str)
                -> String {
-        use SubstError as SE;
+        use SubstErrorKind as SEK;
+        let err = |kind| SubstError { kind, input: before.to_string() };
         let mut matches = before.match_indices(needle);
-        let m1 = matches.next().ok_or(SE::MissingToken(needle))?;
-        if matches.next().is_some() { Err(SE::RepeatedToken(needle))?; }
+        let m1 = matches.next().ok_or(err(SEK::MissingToken(needle)))?;
+        if matches.next().is_some() { Err(err(SEK::RepeatedToken(needle)))?; }
         let mut lhs = &before[0.. m1.0];
         let mut rhs = &before[m1.0 + m1.1.len() ..];
         if replacement.is_empty() {
