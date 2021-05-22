@@ -202,9 +202,10 @@ impl<T> SvgBaseName<T> where T: ?Sized {
 }
 deref_to_field!{{ T: ?Sized } SvgBaseName<T>, T, 0 }
 impl<T> SvgBaseName<T> where T: Borrow<GoodItemName> {
+  #[throws(SubstError)]
   fn note(src: &mut dyn LibrarySource, i: T,
           src_name: Result<&str, &SubstError>) -> Self {
-    src.note_svg(i.borrow(), src_name);
+    src.note_svg(i.borrow(), src_name)?;
     SvgBaseName(i)
   }
 }
@@ -694,6 +695,7 @@ fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
 pub trait LibrarySource {
   fn catalogue_data(&self) -> &str;
   fn svg_dir(&self) -> String;
+  #[throws(SubstError)]
   fn note_svg(&mut self, _basename: &GoodItemName,
               _src_name: Result<&str, &SubstError>) { }
   fn bundle(&self) -> Option<bundles::Id>;
@@ -792,7 +794,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
           let item_name: GoodItemName = item_name.try_into()?;
           let item_name = SvgBaseName::note(
             src, Arc::new(item_name), src_name.as_ref().map(|s| s.as_str()),
-          );
+          )?;
           let desc = subst(&fe.desc, "_colour", "")?.to_html();
           OccData::Internal(Arc::new(OccData_Internal {
             item_name,
@@ -831,7 +833,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
         type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
         let new_item = SvgBaseName::note(
           src, item_name.clone(), src_name.clone()
-        );
+        )?;
         match l.items.entry(new_item) {
           H::Occupied(oe) => throw!(LLE::DuplicateItem {
             item: item_name.as_str().to_owned(),

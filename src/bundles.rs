@@ -629,6 +629,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName,
   impl shapelib::LibrarySource for LibraryInBundle<'_> {
     fn catalogue_data(&self) -> &str { &self.catalogue_data }
     fn svg_dir(&self) -> String { self.svg_dir.clone() }
+    #[throws(shapelib::SubstError)]
     fn note_svg(&mut self, basename: &GoodItemName,
                 _src_name: Result<&str, &shapelib::SubstError>) {
       self.need_svgs.push(basename.clone())
