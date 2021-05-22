@@ -840,7 +840,8 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
         for (colour, recolourdata) in &group.d.colours {
           let t_sort = sort.as_ref().map(
             |s| subst(&s, "_c", colour)).transpose()?;
-          let t_item_name = subst(item_name.as_str(), "_c", &recolourdata.abbrev)?;
+          let c_abbrev = &recolourdata.abbrev;
+          let t_item_name = subst(item_name.as_str(), "_c", c_abbrev)?;
           let t_desc = subst(&fe.desc, "_colour", colour)?;
           add1(&t_item_name.try_into()?, t_sort, &t_desc)?;
         }
