@@ -752,7 +752,7 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
     }
     throw!(LE::BadBundle(format!(
       "missing image file, looked for one of {}/{}.{}", dir_inzip, item,
-      PictureFormat::iter().join(" ."),
+      PictureFormat::iter().map(|s| s.to_string().to_lowercase()).join(" ."),
     )));
   };
 
