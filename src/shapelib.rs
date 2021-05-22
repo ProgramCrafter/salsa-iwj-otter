@@ -1094,12 +1094,12 @@ impl TryFrom<String> for FileList {
         Ok::<_,LLE>(l.to_owned())
       };
       let item_spec = n()?;
-      let _r_file_spec = n()?;
+      let r_file_spec = n()?;
       let extra_fields = xfields.iter()
         .map(|field| Ok::<_,LLE>((field.to_owned(), n()?.to_owned())))
         .collect::<Result<_,_>>()?;
       let desc = remain.to_owned();
-      o.push(FileData{ item_spec, r_file_spec: (), extra_fields, desc });
+      o.push(FileData{ item_spec, r_file_spec, extra_fields, desc });
     }
     Ok(FileList(o))
   }

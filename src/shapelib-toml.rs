@@ -241,8 +241,7 @@ pub struct FileData {
   ///
   /// When [`scraper.method`](LibraryTomlFile::scraper) is `"none"`,
   /// this field is not used and is conventionally set to "`-`".
-  #[cfg(doc)] pub r_file_spec: String,
-  #[cfg(not(doc))] pub r_file_spec: (),
+  pub r_file_spec: String,
 
   /// Extra fields, normally not present.
   pub extra_fields: HashMap<String, String>,
