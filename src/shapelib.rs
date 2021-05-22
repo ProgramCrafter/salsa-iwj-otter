@@ -202,8 +202,9 @@ impl<T> SvgBaseName<T> where T: ?Sized {
 }
 deref_to_field!{{ T: ?Sized } SvgBaseName<T>, T, 0 }
 impl<T> SvgBaseName<T> where T: Borrow<GoodItemName> {
-  fn note(src: &mut dyn LibrarySource, i: T) -> Self {
-    src.note_svg(i.borrow());
+  fn note(src: &mut dyn LibrarySource, i: T,
+          src_name: Result<&str, &SubstError>) -> Self {
+    src.note_svg(i.borrow(), src_name);
     SvgBaseName(i)
   }
 }
@@ -693,7 +694,8 @@ fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
 pub trait LibrarySource {
   fn catalogue_data(&self) -> &str;
   fn svg_dir(&self) -> String;
-  fn note_svg(&mut self, _basename: &GoodItemName) { }
+  fn note_svg(&mut self, _basename: &GoodItemName,
+              _src_name: Result<&str, &SubstError>) { }
   fn bundle(&self) -> Option<bundles::Id>;
 }
 
@@ -786,8 +788,11 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
             throw!(LLE::OccultationColourMissing(colour.0.clone()));
           }
           let item_name = subst(item_name.as_str(), "_c", &colour.0)?;
+          let src_name  = subst(&fe.r_file_spec, "_c", &colour.0);
           let item_name: GoodItemName = item_name.try_into()?;
-          let item_name = SvgBaseName::note(src, Arc::new(item_name));
+          let item_name = SvgBaseName::note(
+            src, Arc::new(item_name), src_name.as_ref().map(|s| s.as_str()),
+          );
           let desc = subst(&fe.desc, "_colour", "")?.to_html();
           OccData::Internal(Arc::new(OccData_Internal {
             item_name,
@@ -805,7 +810,12 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
         },
       };
 
-      let mut add1 = |item_name: &GoodItemName, sort, desc: &str| {
+      let mut add1 = |
+        item_name: &GoodItemName,
+        src_name: Result<&str,&SubstError>,
+        sort, 
+        desc: &str
+      | {
         let desc = if let Some(desc_template) = &group.d.desc_template {
           subst(desc_template, "_desc", &desc)?.to_html()
         } else {
@@ -819,7 +829,9 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
           d: Arc::new(ItemDetails { desc }),
         };
         type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
-        let new_item = SvgBaseName::note(src, item_name.clone());
+        let new_item = SvgBaseName::note(
+          src, item_name.clone(), src_name.clone()
+        );
         match l.items.entry(new_item) {
           H::Occupied(oe) => throw!(LLE::DuplicateItem {
             item: item_name.as_str().to_owned(),
@@ -835,15 +847,17 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
       };
 
       if group.d.colours.is_empty() {
-        add1(&item_name, sort, &fe.desc.clone())?;
+        add1(&item_name, Ok(fe.r_file_spec.as_str()), sort, &fe.desc.clone())?;
       } else {
         for (colour, recolourdata) in &group.d.colours {
           let t_sort = sort.as_ref().map(
             |s| subst(&s, "_c", colour)).transpose()?;
           let c_abbrev = &recolourdata.abbrev;
           let t_item_name = subst(item_name.as_str(), "_c", c_abbrev)?;
+          let t_src_name = subst(&fe.r_file_spec, "_c", c_abbrev);
+          let t_src_name = t_src_name.as_ref().map(|s| s.as_str());
           let t_desc = subst(&fe.desc, "_colour", colour)?;
-          add1(&t_item_name.try_into()?, t_sort, &t_desc)?;
+          add1(&t_item_name.try_into()?, t_src_name, t_sort, &t_desc)?;
         }
 
       }
