@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" 
+     width="{{width}}" height="{{height}}"
+     viewBox="0 0 {{width}} {{height}}"
+     enable-background="new 0 0 {{width}} {{height}}">
+  <image x="0" y="0" width="{{width}}" height="{{height}}"
+         href="data:{{ctype}};base64,@DATA@"/>
+</svg>

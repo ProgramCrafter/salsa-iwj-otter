@@ -699,7 +699,43 @@ fn process_bundle(ForProcess { mut za, mut newlibs }: ForProcess,
 // In preference order
 enum PictureFormat {
   Svg,
-//  Png,   xxx implement this
+  Png,
+}
+
+#[throws(LE)]
+fn image_usvg(zfname: &str, input: File, output: File,
+              format: image::ImageFormat, ctype: &'static str) {
+  #[derive(Serialize,Copy,Clone,Debug)]
+  struct Render {
+    width: u32,
+    height: u32,
+    ctype: &'static str,
+  }
+
+  let mut input = BufReader::new(input);
+  let mut output = BufWriter::new(output);
+
+  let image = image::io::Reader::with_format(&mut input, format);
+  let (width, height) = image.into_dimensions().map_err(
+    |e| LE::BadBundle(format!("{}: image examination failed: {}",
+                              zfname, e)))?;
+
+  let render = Render { width, height, ctype };
+  let rendered = nwtemplates::render("image-usvg.tera", &render)
+    .map_err(IE::from)?;
+  let (head, tail) = rendered.rsplit_once("@DATA@").ok_or_else(
+    || IE::from(anyhow!("image-usvg template did not produce @DATA@")))?;
+
+  input.rewind().context("rewind input").map_err(IE::from)?;
+  write!(output,"{}",head).context("write head to output").map_err(IE::from)?;
+  let charset = base64::CharacterSet::Standard;
+  let b64cfg = base64::Config::new(charset,true);
+  let mut output = base64::write::EncoderWriter::new(output, b64cfg);
+  io::copy(&mut input, &mut output).map_err(|e| LE::BadBundle(format!(
+    "{}: read and base64-encode image data: {}", zfname, e)))?;
+  let mut output = output.finish().context("finish b64").map_err(IE::from)?;
+  write!(output,"{}",tail).context("write tail to output").map_err(IE::from)?;
+  output.flush().context("flush output?").map_err(IE::from)?;
 }
 
 #[throws(LE)]
@@ -736,6 +772,7 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
     .with_context(|| usvg_path.clone()).context("create").map_err(IE::from)?;
 
   use PictureFormat as PF;
+  use image::ImageFormat as IF;
   match format {
     PF::Svg => {
       let got = Command::new(&config().usvg_bin).args(&["-c","-"])
@@ -748,6 +785,7 @@ fn make_usvg(za: &mut IndexedZip, progress_count: &mut usize,
         )));
       }
     },
+    PF::Png => image_usvg(zf.name(),input,output, IF::Png, "image/png")?,
   }
 }
 
