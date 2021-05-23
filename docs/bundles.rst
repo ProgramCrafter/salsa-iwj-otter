@@ -112,6 +112,16 @@ There are two examples of bundles:
    shape libraries automatically massaged into Otter bundle format,
    and one massaged game spec.
 
-There are also several examples of game specs:
+There are also several game spec examples, such as:
 
-xxx
+ * `mao.game.toml <examples/mao.game.toml>`__ Mao, or many other
+   similar card games.  Three decks, 9 jokers.
+
+ * `penultima.game.toml <examples/penultima.game.toml>`__ Manipulation
+   Rummy variants with two decks.
+
+ * `vatikan.game.toml <examples/vatikan.game.toml>`__ Manipulation
+   Rummy variants with two decks.
+
+Consult the `webserver directory listing <examples/>`__ for a complete
+list.
