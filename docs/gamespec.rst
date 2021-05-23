@@ -168,7 +168,7 @@ A chess clock.  Additional parameters:
  * ``time``: Initial time for each player. [number, in seconds;
    required]
 
- * ``per_move``: Time to add per moove.  [number, in seconds]
+ * ``per_move``: Time to add per move.  [number, in seconds]
 
 (These clock settings cannot be reconfigured via the game UI.)
 
