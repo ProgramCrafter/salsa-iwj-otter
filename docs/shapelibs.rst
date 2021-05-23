@@ -25,11 +25,6 @@ the other face to the left.  Chess pieces can be occulted, but when
 they are occulted they reveal their shape but not their colour.  The
 occulted view of a chess piece is a grey version of the piece.
 
-Pieces in shape libraries cannot have "behaviours": they can't do
-anything "special" or react to being moved or clicked on.  Pieces with
-special functionality do exist, but they are built into Otter.  (See
-_`Piece specs` for all the kinds of piece.)
-
 A library has a **library name**.  This is a string.  For a library in
 a bundle, it's the ``LIB`` part of the filename
 ``libraries/LIB.toml``.
@@ -41,3 +36,59 @@ so pieces should have the same item name (only) if they are in some
 sense equivalent.  The item name is a string but may contain only
 ASCII alphanumerics, plain ASCII spaces, and the punctuation
 characters ``-._``.
+
+Pieces in shape libraries cannot have "behaviours": they can't do
+anything "special" like react to being moved or clicked on.  Pieces
+with special functionality do exist, but they are built into Otter.
+(See _`Piece specs` for all the kinds of piece.)
+
+A library consists of a **catalogue**, and a set of **image files**
+which contain the actual appearances.  When a library is in a bundle
+the catalogue is ``libraries/LIB.toml`` and the image files are in a
+directory ``libraries/LIB.toml``.  The layout of Otter's builtin
+libraries is similar.
+
+Catalogue
+---------
+
+The catalogue defines what pieces the library contains.  For each
+piece it defines each face looks like, how big it is on the screen,
+whether and how the piece can be occulted, and what source image files
+are to be used to display it.
+
+The catalogue is a TOML file.  Its main contents is a table
+``groups``, mapping each group name to a sub-table of parameters:
+
+Each catalogue is organised into named **groups**.  Each group defines
+some pieces.  It specifies various **parameters**, and also gives a
+list of indvidual image files which should be processed according to
+those parameters.
+
+For example:
+
+::
+
+  [group.dried]
+  outline = "Circle"
+  size = [14]
+  orig_size = [64, 48]
+  centre = [32,24]
+
+  files = """
+  dried-lemon	-	a dried lemon
+  """
+
+This defines a group ``dried``, with parameters such as ``size`` and
+``outline``.  The ``files`` entry defines the list of pieces.
+
+The group names are not visible when using the library, but they can
+be used within the library using the ``inherit`` feature.
+
+The builtin catalogues also have a toplevel table ``scraper``, which
+controls how the builtin shape data is processed during the build, and
+how it is to be updated.  (Downloads are never automatically run
+during the build.  If you updated the catalougue in a way that means
+files should be re-downloaded, you should re-run ``./media-scraper
+library/LIB.toml``.)
+
+Examples

@@ -2,45 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-//! This module has the documentation for the `library/*.toml`
-//! library spec files.
-//!
-//! It is in the form of Rust data structures, as will be parsed from
-//! the [TOML](https://toml.io/en/) by Rust's `serde` facility.  Each
-//! Rust `struct` corresponds to a TOML table.  A `HashMap` is also a
-//! TOML Table (ie, a `key = value` mapping).  A `Vec` is a TOML Array
-//! (ie, a list).  (There are a number of wrinkles where the parsing
-//! deviates from these conventions; these are documented explicitly.)
-//!
-//! Each `*.toml` file contains the information in
-//! [`LibraryTomlFile`], so start there.
-//!
-//! It is probably best to read this documentation in conjuncton with
-//! the provided `library/wikimedia.toml` and `library/edited.toml`,
-//! which demonstrate the use of the various features.
-
 pub use crate::prelude::*;
 
 #[doc(hidden)] pub type LLE = shapelib::LibraryLoadError;
-
-#[cfg(doc)]
-/// Each file `library/*.toml` contains this.
-///
-/// (Ignore the "Trait implementations" and everything that follows.)
-pub struct LibraryTomlFile {
-  /// A TOML table of groups.  Each group has a name, a can specify
-  /// various (inheritable) properties, and also gives a list of
-  /// indvidual SVG files which should be processed this way.
-  pub groups: HashMap<String, GroupDefn>,
-
-  /// Configuration for the scraper.
-  ///
-  /// The scraper is never automatically run during the build.  If you
-  /// updated the TOML file in a way that means files should be
-  /// re-downloaded, you should re-run `./media-scraper
-  /// library/`_lib_`.toml`
-  pub scraper: Scraper
-}
 
 /// Details for a group of pieces. See also [`GroupDetails`].
 ///

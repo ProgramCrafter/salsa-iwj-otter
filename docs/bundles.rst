@@ -90,3 +90,8 @@ new versions can be uploaded to the server by hand with ``otter
 upload-bundle`` and their contents will be found first.  But ``otter
 reset`` will usually be less trouble and will avoid cluttering the
 game (and the server) with previous versions.
+
+Examples
+--------
+
+xxx TODO
