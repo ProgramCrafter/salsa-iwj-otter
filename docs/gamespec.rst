@@ -37,140 +37,46 @@ game spec, it appears as an entry in the top-level ``pieces`` array,
 and defines the location(s) on the table to place the pieces, too.
 
 There is a mandatory key ``type``, a string.  This determines how the
-rest of the table is intesrpreted.
+rest of the table is interpreted.  It is one of the `Piece Spec
+Types`_.
 
-Umiversal parameters
+Universal parameters
 ````````````````````
 
+These apply regardless of the value of ``type``.
+
  * ``type``: Piece type or piece spec type.  One of the types listed
-   in the sections below.  [string, enum, mandatory]
+   in `Piece Spec Types`_.  [string, enum, mandatory]
 
  * ``pos``:Position, in game coordinates, of
    the centre of the piece.  The origin is at the top left.
    [2-element array, default ``[20,20]``]
 
- * `count` [number, default=1].  Place multiple copies of this piece.
+ * ``count``: Place multiple identical copies of this piece.  [number]
 
- * `posd` [2-element array].  Position delta.  When a spec
-   specifies multiple pieces, each successive piece will be shifted by
-   this amount.  Default: `[5,5]`.
+ * ``posd``: Position delta.  When a spec specifies multiple pieces,
+   each successive piece will be shifted by this amount.  [2-element
+   array, default ``[5,5]``]
 
- * `face` [number, default=0].  Initial face to show (ie, "which way
-   up" the piece starts).  The default face for most pieces is the
-   front, and this is usually a good choice.
+ * ``face``: Initial face to show (ie, "which way up" the piece
+   starts).  The default face is ``0``.  For most pieces that is the
+   front, and is usually a good choice.  [number]
 
- * `pinned` [boolean].  Whether the piece is pinned to the table.
-   (Players can pin and unpin pieces during the game; this is the
-   initial state.)
+ * ``pinned``: Whether the piece is pinned to the table.  Players can
+   pin and unpin pieces during the game; this is the initial state.
+   [boolean]
 
- * `angle` [number 0..7].  Initial rotation of the piece.  The
+ * ``angle``: Initial orientation of the piece.  The
    specified value is multiplied by 45 degrees, increasing values
-   rotating anticlockwise.
-
-
-``"Lib"``
-`````````
-
-A single shape from a piece library.
-
- * `lib` [string, mandatory]: The library name.
- 
- * `item` [string, mandatory]: The item name within that library.
-
-
-`LibList`
-`````````
-
-Multiple shapes from a piece library.  Cannot be used with the `count`
-universal parameter.
-
- * `lib` [string, mandatory]: The library name.
-
- * `items` [array of strings, mandatory]: The item names.
-
- * `prefix`, `suffix` [strings]: Prepended and appended to each
-   entry in `items`.  Useful for abbreviating.
-
-
-`ChessClock`
-````````````
-
-A chess clock.  Additional parameters:
-
- * `time` [number, in seconds; mandatory].  Initial time for each
-   player.
-
- * `per_move` [number, in seconds].  Time to add per moove.
-
-(The clock settings cannot be reconfigured via the game UI.)
-
-
-`PickupDeck`
-````````````
-
-A pickup or play deck.  This can occult the pieces (eg, cards) you put
-on it, shuffling them and hiding their identity.
-
-Requires `face` and `shape`.  Only `shape.type="Rect"` is supported.
-
-Honours `edges`, `edge_width`.
-
-Honours `label`, displaying the number of of pieces in (on) this deck.
-
-
-`Hand`
-``````
-
-A player hand.  When active, arranges for only that player to be able
-tos see the contents.  The other players see the occulted view (eg,
-the backs of cards).
-
-Requires `colour` and `shape`.  Only `shape.type="Rect"` is supported.
-
-Honours `edge`, `edge_width`.
-
-Honours `label`, displaying the player whose hand this is, when
-active.
-
-
-`PlayerLabel`
-`````````````
-
-A simple label which can display a player name.
-
-Requires `colour` and `shape`.  Only `shape.type="Rect"` is supported.
-
-Honours `edge`, `edge_width`.
-
-Honours `label`.
-
-
-`Rect`
-``````
-
-A plain rectangular piece.
-
- * `size` [array of 1 or 2 numbers]: Size and shape.
-
-Requires `faces`.
-
-Honours `itemname`, `edges` and `edge_width`.
-
-
-`Disc`
-``````
-
-A plain circular piece.
-
- * `diam` [number, mandatory].
-
-Requires `faces`.
-
-Honours `itemname`, `edges` and `edge_width`.
+   rotating anticlockwise.  So for example ``6`` would mean to rotate
+   90 degrees clockwise.  [integer 0..7]
 
 
 Common parameters
 `````````````````
+
+Depending on the ``type``, some of these parameters will be honoured.
+This is discussed in the descriptions for each piece spec type.
 
  * `colour` [string, colour].  The fill colour For a piece which
    supports only one face.
@@ -202,3 +108,164 @@ Common parameters
 
  * `itemname` [string].  Used when other parts of the game want to
    refer to this one.
+
+
+Piece Spec Types
+````````````````
+
+``"Lib"``
+`````````
+
+A single shape from a piece library.
+
+ * ``lib``: The library name.  [string, mandatory]
+ 
+ * ``item``: The item name within that library.  [string, mandatory]
+
+Example::
+
+  [[pieces]]
+  pos = [150,100]
+  type = "Lib"
+  lib = "edited"
+  item = "chess-board"
+  pinned = true
+
+
+``"LibList"``
+`````````````
+
+Multiple shapes from a piece library.  Cannot be used with the `count`
+universal parameter.
+
+ * ``lib``: The library name. [string, mandatory]
+
+ * ``items``: The item names. [array of strings, mandatory]
+
+ * ``prefix``, ``suffix``: Prepended and appended to each
+   entry in ``items``.  Useful for abbreviating.  [strings]
+
+Example::
+
+  [[pieces]]
+  pos = [150, 84]
+  type = "LibList"
+  lib = "cards-oxymoron"
+  prefix = "card-oxymoron-"
+  suffix = "-s"
+  items = [
+      "2","3","4","5","6","7","8","9","T","J","Q","K","A",
+      "2","3","4","5","6","7","8","9","T","J","Q","K","A",
+      "2","3","4","5","6","7","8","9","T","J","Q","K","A",
+  ]
+  posd = [0, 0]
+
+
+``"ChessClock"``
+````````````````
+
+A chess clock.  Additional parameters:
+
+ * ``time``: Initial time for each player. [number, in seconds;
+   mandatory]
+
+ * ``per_move``: Time to add per moove.  [number, in seconds]
+
+(These clock settings cannot be reconfigured via the game UI.)
+
+Example::
+
+  [[pieces]]
+  pos = [240, 100]
+  type = "ChessClock"
+  time = 900
+  per_move = 30
+
+
+``"PickupDeck"``
+````````````````
+
+A pickup or play deck.  This can occult the pieces (eg, cards) you put
+on it, shuffling them and hiding their identity.
+
+Requires ``face`` and ``shape``.  Only ``shape.type="Rect"`` is supported.
+
+Honours ``edges``, ``edge_width``.
+
+Honours ``label``, displaying the number of of pieces in (on) this deck.
+
+Example::
+  
+  [[pieces]]
+  pos = [136,115]
+  type = "PickupDeck"
+  faces = ["lightblue", "grey"]
+  edges = ["black", "white"]
+  label.colour = "black"
+  label.place = "BottomLeftOutside"
+  shape.type = "Rect"
+  shape.xy = [25,30]
+
+
+`Hand`
+``````
+
+A player hand.  When active, arranges for only that player to be able
+tos see the contents.  The other players see the occulted view (eg,
+the backs of cards).
+
+Requires ``colour`` and ``shape``.  Only ``shape.type="Rect"`` is
+supported.
+
+Honours ``edge``, ``edge_width``.
+
+Honours ``label``, displaying the player whose hand this is, when
+active.
+
+
+``"PlayerLabel"``
+`````````````````
+
+A simple label which can display a player name.
+
+Requires ``colour`` and ``shape``.  Only ``shape.type="Rect"`` is supported.
+
+Honours ``edge``, ``edge_width``.
+
+Honours ``label``.
+
+
+``"Rect"``
+``````````
+
+A plain rectangular piece.
+
+ * ``size``: Size and shape  [array of 1 or 2 numbers, mandatory]
+
+Requires ``faces``.
+
+Honours ``itemname``, ``edges`` and ``edge_width``.
+
+Exammple::
+
+  [[pieces]]
+  pos = [20, 85]
+  type = "Rect"
+  faces = ["yellow","#f4f"]
+  posd = [10, 0]
+  size = [7,7]
+  count = 8
+
+
+``"Disc"``
+``````````
+
+A plain circular piece.
+
+ * ``diam`` [number, mandatory].
+
+Requires ``faces``.
+
+Honours ``itemname``, ``edges`` and ``edge_width``.
+
+
