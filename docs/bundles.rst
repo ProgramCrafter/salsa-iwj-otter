@@ -103,4 +103,14 @@ game (and the server) with previous versions.
 Examples
 --------
 
-xxx TODO
+There are two examples of bundles:
+
+ * `<test-bundle.zip>`__: A small test bundle, containing three yellow
+   objects and one game spec.
+
+ * `<big-bundle.zip>`__: The Otter builtin shape libraries automatically
+   massaged into Otter bundle format, and one massaged game spec.
+
+There are also several examples of game specs:
+
+xxx
