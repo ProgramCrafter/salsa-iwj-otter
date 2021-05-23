@@ -119,7 +119,8 @@ There are also several game spec examples, such as:
 
  * `penultima.game.toml <examples/penultima.game.toml>`__ Penultima,
    with an assortment of additional pieces in addition to the basic
-   chess pieces.
+   chess pieces.  Suitable for Penultima, chess and some fairy chess
+   variants.
 
  * `vatikan.game.toml <examples/vatikan.game.toml>`__ Manipulation
    Rummy variants with two decks.
