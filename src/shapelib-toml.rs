@@ -27,21 +27,7 @@ pub struct GroupDetails {
   #[serde(default)] pub flip: bool,
   #[serde(default)] pub back: Option<Box <dyn PieceSpec>>,
   #[serde(default="num_traits::identities::One::one")] pub scale: f64,
-
-  /// If specified and non-empty, specifies that this group should be
-  /// instantiated multiple times, each time with a recolouring.
-  ///
-  /// For each entry in this table, the recolouring is applied to
-  /// every item in the [`files`](GroupDefn::files) list.
-  /// 
-  /// When recolouring is being done, every effective item name must
-  /// contain the substring `_c` exactly once, and every item
-  /// description must contain the substring `_colour` exactly once.
-  /// `_c` will be replaced with the recoluring's `abbrev`, and
-  /// `_colour` with the recolouring name (the key of the `colours`
-  /// table).
-  #[serde(default)]
-  pub colours: HashMap<String, RecolourData>,
+  #[serde(default)] pub colours: HashMap<String, RecolourData>,
 
   /// If specified, provides a template for the description.  The
   /// description previously calculated replaces `_desc` in this
@@ -77,16 +63,10 @@ pub enum OccultationMethod {
   },
 }
 
-/// An entry in the `colours` table, specifying one recolouring.
 #[derive(Debug,Deserialize)]
 pub struct RecolourData {
-  /// The replacement for `_c`.  See `colours` in [`GroupDetails`].
   pub abbrev: String,
-
-  #[cfg(doc)]
-  /// Each entry is `"from" = "to"` where both are 6-character
-  /// RGB hex strings (without the leading `#`).
-  pub map: HashMap<String, String>,
+  #[cfg(doc)] pub map: HashMap<String, String>,
 }
 
 #[doc(hidden)]

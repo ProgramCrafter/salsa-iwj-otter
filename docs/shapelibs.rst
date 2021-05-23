@@ -204,7 +204,32 @@ Parameters
    from the top left in the image's own internal units.  If not
    supplied, calculated from the size.
 
- * ``scale``: [number, default=1].  Scale the image by a factor (in
+ * ``scale`` [number, default=1].  Scale the image by a factor (in
    both x and y).  ``size`` and ``centre`` are in the image file's
    own internal coordinate system, not the Otter scaled coordinates
    which result from multiplying by by this scale factor.
+
+ * ``colorus`` [table].
+   If specified and non-empty, specifies that this group should be
+   instantiated multiple times, for different colours.
+
+   For each entry in the ``colours`` table, a separate piece is
+   generated for each item in the ``files`` list.  The keys of the
+   ``colours`` are recolouring names, and the values are sub-tables.
+
+   Every effective item name (i.e., after the prefix and suffix have
+   been added) must contain the substring ``_c`` exactly once, and
+   every item description must contain the substring ``_colour``
+   exactly once.  ``_c`` will be replaced with the value of the
+   recoluring's ``abbrev``, and ``_colour`` with the recolouring name
+   (the key of the ``colours`` table).
+
+   For libraries in bundles, a separate image file must be supplied
+   for each recolouring.  If ``SRC`` is not ``-``, it also must
+   contain ``_c`` which will be substitued with ``abbrev`` to find the
+   colour-specific image file.
+
+   For builtin libraries, the Otter build system will do the
+   recolouring automatically at build time.  Each recolouring should
+   hae a ``map`` entry which is a sub-sub-table mapping inputcolours
+   (strings in ``#rrggbb`` format) to output colours.
