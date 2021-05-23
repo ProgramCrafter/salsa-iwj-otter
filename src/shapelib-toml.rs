@@ -20,13 +20,8 @@ pub struct GroupDefn {
 
 #[derive(Debug,Deserialize)]
 pub struct GroupDetails {
-  #[cfg(doc)] // handled specially
-  inherit: String,
-
-  /// Should be either a 1- or 2- element list, x and y, or just one
-  /// number for both.
-  // scaled when put into GroupData
-  pub size: Vec<f64>,
+  #[cfg(doc)]inherit: String, // handled specially
+  pub size: Vec<f64>,  // scaled when put into GroupData
   
   #[serde(default)]
   /// If specified, the input is first scaled from `orig_size` to

@@ -159,6 +159,12 @@ Parameters
    the usual default value: the latter would override any inherited
    setting.
 
+ * ``size`` (mandatory; 1- or 2-element array of numbers: width and height).
+   The size at which the piece will show up in the game, in nominal
+   game coordinate units.  For reference: the builtin library's chess
+   pieces are 9.5 units; the builtin playing cards are 9.65,17.125.
+   NB, this value can be affected by ``scale``.
+
  * ``item_prefix``, ``item_suffix`` (strings, default ``""``).
    Prepaended and appended to ``ITEM-SPEC`` in ``files`` to
    produce the item name.
