@@ -37,17 +37,18 @@ Bundles are zipfiles.  They can contain:
  * ``library/LIB.toml``: Description of a piece shape library,
    for a library named ``LIB``.  See :doc:`shapelibs`.
 
-These files are all in TOML format.  TOML ia an INI-file-like format
-designed for human editing and flexibility.  See the `TOML
-documentation <https://toml.io/en/>`_ for information about the syntax.
+These ``.toml`` files are all in TOML format.  TOML ia an
+INI-file-like format designed for human editing and flexibility.  See
+the `TOML documentation <https://toml.io/en/>`_ for information about
+the syntax.
 
 The TOML specification has confusing terminology.  In this manual we
 use "dictionary" (or "dict") for a mapping from (string) keys to
 values (what TOML calls a "table").  "Array" is an array or list of
 (more or less similar) values.
 
-Any other files which might be present in the zipfile are ignored.
-(Future versions of Otter might define a meaning for them.)
+Any unrecognised files which might be present in the zipfile are
+ignored.  (Future versions of Otter might define a meaning for them.)
 
 Character set and case-sensitivity
 ``````````````````````````````````
