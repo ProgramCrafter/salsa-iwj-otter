@@ -6,52 +6,11 @@ pub use crate::prelude::*;
 
 #[doc(hidden)] pub type LLE = shapelib::LibraryLoadError;
 
-/// Details for a group of pieces. See also [`GroupDetails`].
-///
-/// This is separate from `GroupDetails` only to make the
-/// implementation convenient (for complicated reasons).  At the
-/// library TOML file level, there is no meaningful difference between
-/// the fields in this struct, and the ones in `GroupDetails`
-//
 // At the implementation level, each loaded item contains an
 // `Arc<GroupDetails>`, which is simply stored directly.  The
 // `GroupDefn` is processed.
 #[derive(Debug,Deserialize)]
 pub struct GroupDefn {
-  /// `files` is a multi-line string, each line of which has
-  /// (normally) three fields (the leading ones terminated by
-  /// whitespace).  The fields are those in [`FileData`].  `#`
-  /// comments are supported.
-  ///
-  /// Each non-empty non-comment line in `files` specifies a single
-  /// SVG to be made aavailable as a piece.
-  ///
-  /// The piece has am **item name** which is used within Otter to
-  /// refer to the piece (for example, with `otter library-add`).
-  /// The SVG filename is derived from the item name, as follows:
-  /// `library/`_lib_`/`_itemname_`.svg`.
-  ///
-  /// The `itemname` is the `item_spec` from each entry in `files`
-  /// (see [`FileData`] sandwiched between `item_prefix` and
-  /// `item_suffix`
-  ///
-  /// Item names are conventionally structured using a hierarchical
-  /// name with `-` between the components.  Do not put `/` or `_` in
-  /// item names.
-  ///
-  /// It is also possible to specify additional data for each item by
-  /// adding fields to each line.  This is done by adding a line at
-  /// the start starting with `:` and then additing one additional
-  /// whitespace separated value on each data line.  Unknown
-  /// `fieldname` values are ignored.  Currently the extra fields
-  /// supported are:
-  ///
-  ///  * `sort`: Specifies the sort key.  See the `sort` group
-  ///    definition property.
-  ///
-  /// The values for these extra fields come just before the
-  /// dwscription, after the other whitespace-delimited fields, in the
-  /// same order as specified in the `:` heading line.
   pub files: FileList,
 
   /// See the discussioin of the item name.

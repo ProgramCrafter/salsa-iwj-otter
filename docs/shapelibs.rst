@@ -30,12 +30,15 @@ a bundle, it's the ``LIB`` part of the filename
 ``libraries/LIB.toml``.
 
 Each piece in a library has an **item name**.  Item names are unique
-within a library.  Item names do not need to be unique within a game,
-but there are places where a piece is found *just* by the item name,
-so pieces should have the same item name (only) if they are in some
-sense equivalent.  The item name is a string but may contain only
-ASCII alphanumerics, plain ASCII spaces, and the punctuation
-characters ``-._``.
+within a library.  The item name is used within Otter to refer to the
+piece (for example, with ``otter library-add``).
+
+Item names do not need to be unique within a game, but there are
+places where a piece is found *just* by the item name, so pieces
+should have the same item name (only) if they are in some sense
+equivalent.  The item name is a string but may contain only ASCII
+alphanumerics, plain ASCII spaces, and the punctuation characters
+``-._``.
 
 Pieces in shape libraries cannot have "behaviours": they can't do
 anything "special" like react to being moved or clicked on.  Pieces
@@ -64,9 +67,7 @@ some pieces.  It specifies various **parameters**, and also gives a
 list of indvidual image files which should be processed according to
 those parameters.
 
-For example:
-
-::
+For example::
 
   [group.dried]
   outline = "Circle"
@@ -91,4 +92,55 @@ during the build.  If you updated the catalougue in a way that means
 files should be re-downloaded, you should re-run ``./media-scraper
 library/LIB.toml``.)
 
-Examples
+Files entry
+-----------
+
+Each group has a table key ``files``.  This is a string, which is
+treated as a series of lines (so it is best to use the TOML multi-line
+string syntax).
+
+Each line of which has (normally) three fields (the leading ones
+terminated by whitespace).  ``#`` comment lines are supported and
+blank lines are ignored.
+
+Each non-empty non-comment line in ``files`` specifies a single piece,
+like this::
+
+   ITEM-SPEC SRC DESCRIPTION...
+
+The **item name** of the piece will be ``ITEM-SPEC`` sandwiched
+between the ``item_prefix`` and ``item_suffix`` parameters (see
+below).
+
+The **image filename** is derived from ``SRC`` or the item name, as
+follows: ``library/LIB/SRC.svg`` or ``.png``.  (Builtin libraries
+support SVG only.)  If ``SRC`` is ``-`` then the item name is used for
+``SRC``.
+
+``DESCRIPTION`` is the **description**, a string which will be used to
+describe the piece (eg in in-game log messages).  In English, it
+should contain an article.  Eg, ``the black queen``, ``a white pawn``.
+
+It is also possible to specify additional data for each piece by
+adding fields to each line in ``files``.  This is done by adding a
+line at the start starting with ``:`` listing the extra fields, and
+then additng one additional whitespace separated value on each data
+line.  Values given for unknown field are ignored.
+
+Currently the extra fields supported are:
+
+ * ``sort``: Specifies the sort key.  See the ``sort`` group
+   definition property.
+
+The values for these extra fields come just before the
+``DWSCRIPTION``, after the other whitespace-delimited fields, in the
+same order as specified in the ``:`` heading line.
+
+Item names
+``````````
+
+Item names are conventionally structured using a hierarchical name
+with ``-`` between the components.  Do not put ``/`` in item names use
+``_`` only as a word separator within ``-``-separated parts.
+
+See the existing examples to see what item names usually look like.
