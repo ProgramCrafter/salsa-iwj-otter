@@ -122,6 +122,13 @@ impl AccountScope {
       percent_encoding::NON_ALPHANUMERIC
       .remove(b'-');
 
+    let pct = |n, f: &mut F| {
+      for frag in utf8_percent_encode(n, &ENCODE) {
+        f(frag)?;
+      }
+      Ok::<_,E>(())
+    };
+
     match &self {
       AS::Server => {
         f("server")?;
@@ -134,9 +141,7 @@ impl AccountScope {
     };
     for n in ns {
       f(":")?;
-      for frag in utf8_percent_encode(n, &ENCODE) {
-        f(frag)?;
-      }
+      pct(n, &mut f)?;
     }
   }
 
