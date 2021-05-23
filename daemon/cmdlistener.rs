@@ -47,7 +47,13 @@ struct CommandStreamData<'d> {
   euid: Result<Uid, ConnectionEuidDiscoverError>,
   desc: &'d str,
   account: Option<AccountSpecified>,
-  superuser: Option<AuthorisationSuperuser>,
+  authstate: AuthState,
+}
+
+#[derive(Debug)]
+enum AuthState {
+  None,
+  Superuser(AuthorisationSuperuser),
 }
 
 #[derive(Debug,Clone)]
@@ -132,10 +138,10 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
 
     MC::SetSuperuser(enable) => {
       if !enable {
-        cs.superuser = None;
+        cs.authstate = AuthState::None;
       } else {
         let auth = authorise_scope_direct(cs, &AccountScope::Server)?;
-        cs.superuser = Some(auth.therefore_ok());
+        cs.authstate = AuthState::Superuser(auth.therefore_ok());
       }
       Fine
     },
@@ -206,7 +212,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     MC::ListAccounts { all } => {
       let ag = AccountsGuard::lock();
       let names = if all == Some(true) {
-        let auth = cs.superuser.ok_or(ME::AuthorisationError)?;
+        let auth = cs.superuser().ok_or(ME::AuthorisationError)?;
         ag.list_accounts_all(auth.into())
       } else {
         let AccountSpecified { notional_account, auth, .. } =
@@ -317,7 +323,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       let names = Instance::list_names(
         None, Authorisation::authorise_any());
       let auth_all = if all == Some(true) {
-        let auth =cs.superuser.ok_or(ME::AuthorisationError)?.into();
+        let auth = cs.superuser().ok_or(ME::AuthorisationError)?.into();
         Some(auth)
       } else {
         None
@@ -401,7 +407,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     }
 
     MC::LoadFakeRng(ents) => {
-      let superuser = cs.superuser
+      let superuser = cs.superuser()
         .ok_or(ME::SuperuserAuthorisationRequired)?;
       config().game_rng.set_fake(ents, superuser)?;
       Fine
@@ -493,7 +499,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       f: F,
     ) -> ExecuteGameInsnResults<'igr, 'ig>
   {
-    let superuser = cs.superuser.ok_or(ME::SuperuserAuthorisationRequired)?;
+    let superuser = cs.superuser().ok_or(ME::SuperuserAuthorisationRequired)?;
     let ig = ig.by_mut(superuser.into());
     let gpl = ig.gs.players.byid(player)?;
     let resp = f(&gpl.idmap);
@@ -719,7 +725,8 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     }
 
     MGI::SynchLog => {
-      let superuser = cs.superuser.ok_or(ME::SuperuserAuthorisationRequired)?;
+      let superuser = cs.superuser()
+        .ok_or(ME::SuperuserAuthorisationRequired)?;
       let ig = ig.by_mut(superuser.into());
       let (gen, mgr) = some_synch_core(ig)?;
       let log = LogEntry { html: synch_logentry(gen) };
@@ -1478,7 +1485,7 @@ impl CommandListener {
         let d = CommandStreamData {
           account: None, desc: &desc,
           euid: euid.map(Uid::from_raw),
-          superuser: None,
+          authstate: AuthState::None,
         };
         let cs = CommandStream { chan, d };
         cs.mainloop()?;
@@ -1529,8 +1536,14 @@ impl CommandStreamData<'_> {
 }
 
 impl CommandStreamData<'_> {
+  pub fn superuser(&self) -> Option<AuthorisationSuperuser> {
+    match self.authstate {
+      AuthState::Superuser(auth) => Some(auth),
+      _ => None
+    }
+  }
   pub fn is_superuser<T:Serialize>(&self) -> Option<Authorisation<T>> {
-    self.superuser.map(Into::into)
+    self.superuser().map(Into::into)
   }
 
   #[throws(MgmtError)]
@@ -1585,7 +1598,7 @@ impl CommandStreamData<'_> {
                 p: PermSet<TablePermission>)
                 -> Authorisation<InstanceName>
     {
-      if let Some(superuser) = cs.superuser {
+      if let Some(superuser) = cs.superuser() {
         return superuser.into();
       }
 
@@ -1642,7 +1655,7 @@ impl CommandStreamData<'_> {
   fn accountrecord_from_spec(&self, spec: Option<Box<dyn PlayerAccessSpec>>)
                              -> Option<AccessRecord> {
     spec
-      .map(|spec| AccessRecord::from_spec(spec, self.superuser))
+      .map(|spec| AccessRecord::from_spec(spec, self.superuser()))
       .transpose()?
   }
 }
