@@ -235,14 +235,15 @@ stamp/cargo.deploy-build: $(call rsrcs,.)
 #---------- sphnix ----------
 
 doc-sphinx:	docs/html/index.html \
-		$(foreach f, $(EXAMPLE_BUNDLES), docs/html/$f.zip)
+		$(foreach f, $(EXAMPLE_BUNDLES), docs/html/examples/$f.zip)
 	@echo 'Documentation can now be found here:'
 	@echo '  file://$(PWD)/$<'
 
 docs/html/index.html: docs/conf.py $(wildcard docs/*.md docs/*.rst docs/*.png)
 	$(SPHINXBUILD) -M html docs docs $(SPHINXOPTS)
 
-docs/html/%.zip: examples/%.zip
+docs/html/examples/%.zip: examples/%.zip
+	mkdir -p docs/html/examples
 	rm -f $@ && ln $< $@
 
 #---------- wasm ----------
