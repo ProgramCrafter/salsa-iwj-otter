@@ -72,8 +72,8 @@ piece it defines each face looks like, how big it is on the screen,
 whether and how the piece can be occulted, and what source image files
 are to be used to display it.
 
-The catalogue is a TOML file.  Its main contents is a table
-``groups``, mapping each group name to a sub-table of parameters:
+The catalogue is a TOML file.  Its main contents is a dictionary
+``groups``, mapping each group name to a sub-dict of parameters:
 
 Each catalogue is organised into named **groups**.  Each group defines
 some pieces.  It specifies various **parameters**, and also gives a
@@ -98,7 +98,7 @@ This defines a group ``dried``, with parameters such as ``size`` and
 The group names are not visible when using the library, but they can
 be used within the library using the ``inherit`` feature.
 
-The builtin catalogues also have a toplevel table ``scraper``, which
+The builtin catalogues also have a toplevel dict ``scraper``, which
 controls how the builtin shape data is processed during the build, and
 how it is to be updated.  (Downloads are never automatically run
 during the build.  If you updated the catalougue in a way that means
@@ -108,9 +108,9 @@ library/LIB.toml``.)
 Files entry
 -----------
 
-Each group has a table key ``files``.  This is a string, which is
-treated as a series of lines (so it is best to use the TOML multi-line
-string syntax).
+Each group has an entry ``files``.  This is a string, which is treated
+as a series of lines (so it is best to use the TOML multi-line string
+syntax).
 
 Each line of which has (normally) three fields (the leading ones
 terminated by whitespace).  ``#`` comment lines are supported and
@@ -171,6 +171,9 @@ See the existing examples to see what item names usually look like.
 
 Parameters
 ----------
+
+These are the entries which can appear in each ``group.GROUP``
+dictionary:
 
 Mandatory parameters
 `````````````````````
@@ -265,11 +268,11 @@ Other group parameters
    ``_s`` is replaced by the sort extra field from the ``files`` list;
    ``_c`` is replaced by the colour, if applicable.
 
- * ``colors`` [table].
+ * ``colors`` [dictionary].
    If specified and non-empty, specifies that this group should be
    instantiated multiple times, for different colours.
 
-   For each entry in the ``colours`` table, a separate piece is
+   For each entry in the ``colours`` dict, a separate piece is
    generated for each item in the ``files`` list.  The keys of the
    ``colours`` are recolouring names, and the values are sub-tables.
 
@@ -278,7 +281,7 @@ Other group parameters
    every item description must contain the substring ``_colour``
    exactly once.  ``_c`` will be replaced with the value of the
    recoluring's ``abbrev``, and ``_colour`` with the recolouring name
-   (the key of the ``colours`` table).
+   (the key of the ``colours`` dict).
 
    For libraries in bundles, a separate image file must be supplied
    for each recolouring.  If ``SRC`` is not ``-``, it also must
@@ -287,7 +290,7 @@ Other group parameters
 
    For builtin libraries, the Otter build system will do the
    recolouring automatically at build time.  Each recolouring should
-   hae a ``map`` entry which is a sub-sub-table mapping inputcolours
+   hae a ``map`` entry which is a sub-sub-dict mapping inputcolours
    (strings in ``#rrggbb`` format) to output colours.
 
  * ``desc``: [string: template].  If specified, provides a template
@@ -297,22 +300,22 @@ Other group parameters
    according to the other rules.  (``_desc`` substitution happens
    after ``_colour`` substitution.)
 
- * ``occulted`` [table, contents depend on ``occulted.method``].  If
+ * ``occulted`` [dict, contents depend on ``occulted.method``].  If
    specified, these pieces be occulted.  For example, when a player
    has them in their hand and the hand is active and owned by them,
    only the occulted view (eg, the back of a playing card) will be
-   shown.  This a table whose other contents depend on its key
-   ``method``, which must be a string:
+   shown.  This a dict whose other contents depend on its ``method``
+   entry, which must be a string:
 
   * ``"ByColour"``: Occult by displaying a particular recolouring of
-    this piece.  The sub-key ``colour`` names a recolouring - one of
+    this piece.  The sub-entry ``colour`` names a recolouring - one of
     the keys of the ``colours`` group parameter.  When the piece is
     occulted it will show that colour, instead of its actual colour.
     In the description, ``_colour`` will be elided rather than
     substitued (along with up to one of any spaces either side of it).
 
   * ``"ByBack"``: Occult by displaying the back of this piece, as
-    specified by the ``back`` group parameter.  The ``occulted`` table
+    specified by the ``back`` group parameter.  The ``occulted`` dict
     must also contain a sub-entry ``ilk``, a string.  Pieces which
     have the same ``ilk`` display identically when occulted, even if
     the different piece definitions imply different backs.  (Whichever

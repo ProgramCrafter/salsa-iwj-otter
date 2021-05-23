@@ -41,6 +41,11 @@ These files are all in TOML format.  TOML ia an INI-file-like format
 designed for human editing and flexibility.  See the `TOML
 documentation <https://toml.io/en/>`_ for information about the syntax.
 
+The TOML specification has confusing terminology.  In this manual we
+use "dictionary" (or "dict") for a mapping from (string) keys to
+values (what TOML calls a "table").  "Array" is an array or list of
+(more or less similar) values.
+
 Any other files which might be present in the zipfile are ignored.
 (Future versions of Otter might define a meaning for them.)
 
@@ -64,7 +69,7 @@ must refer to it in lowercase.
 ``otter.toml`` bundle top-level metadata
 ----------------------------------------
 
-The top-level ``otter.toml`` contains a single key ``title``, which
+The top-level ``otter.toml`` contains a single entry ``title``, which
 should be a string.  This is useful because the zipfile's name is not
 stored in the server.
 
