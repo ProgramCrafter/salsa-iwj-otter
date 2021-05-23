@@ -36,7 +36,7 @@ A piece spec is a table defining one or more pieces.  When part of a
 game spec, it appears as an entry in the top-level ``pieces`` array,
 and defines the location(s) on the table to place the pieces, too.
 
-There is a mandatory key ``type``, a string.  This determines how the
+There is a required key ``type``, a string.  This determines how the
 rest of the table is interpreted.  It is one of the `Piece Spec
 Types`_.
 
@@ -46,7 +46,7 @@ Universal parameters
 These apply regardless of the value of ``type``.
 
  * ``type``: Piece type or piece spec type.  One of the types listed
-   in `Piece Spec Types`_.  [string, enum, mandatory]
+   in `Piece Spec Types`_.  [string, enum, required]
 
  * ``pos``:Position, in game coordinates, of
    the centre of the piece.  The origin is at the top left.
@@ -81,7 +81,7 @@ This is discussed in the descriptions for each piece spec type.
  * `colour` [string, colour].  The fill colour For a piece which
    supports only one face.
 
- * `faces` [array of string(s), colours, mandatory].  The main fill
+ * `faces` [array of string(s), colours, required].  The main fill
    colour.
 
  * `edge` [string, colour].  The edge colour to draw for a piece with
@@ -118,9 +118,9 @@ Piece Spec Types
 
 A single shape from a piece library.
 
- * ``lib``: The library name.  [string, mandatory]
+ * ``lib``: The library name.  [string, required]
  
- * ``item``: The item name within that library.  [string, mandatory]
+ * ``item``: The item name within that library.  [string, required]
 
 Example::
 
@@ -138,9 +138,9 @@ Example::
 Multiple shapes from a piece library.  Cannot be used with the `count`
 universal parameter.
 
- * ``lib``: The library name. [string, mandatory]
+ * ``lib``: The library name. [string, required]
 
- * ``items``: The item names. [array of strings, mandatory]
+ * ``items``: The item names. [array of strings, required]
 
  * ``prefix``, ``suffix``: Prepended and appended to each
    entry in ``items``.  Useful for abbreviating.  [strings]
@@ -167,7 +167,7 @@ Example::
 A chess clock.  Additional parameters:
 
  * ``time``: Initial time for each player. [number, in seconds;
-   mandatory]
+   required]
 
  * ``per_move``: Time to add per moove.  [number, in seconds]
 
@@ -240,7 +240,7 @@ Honours ``label``.
 
 A plain rectangular piece.
 
- * ``size``: Size and shape  [array of 1 or 2 numbers, mandatory]
+ * ``size``: Size and shape  [array of 1 or 2 numbers, required]
 
 Requires ``faces``.
 
@@ -262,7 +262,7 @@ Exammple::
 
 A plain circular piece.
 
- * ``diam`` [number, mandatory].
+ * ``diam`` [number, required].
 
 Requires ``faces``.
 

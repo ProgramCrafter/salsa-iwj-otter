@@ -27,7 +27,7 @@ Bundle format
 Bundles are zipfiles.  They can contain:
 
  * ``otter.toml`` at the toplevel, with some basic metadata.
-   This file is mandatory.
+   This file is required.
 
  * ``specs/GAME.game.toml``:  Description of what a particular
    game looks like: what shape and colour the table is, what pieces
