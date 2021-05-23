@@ -29,8 +29,6 @@ pub struct GroupDetails {
   #[serde(default="num_traits::identities::One::one")] pub scale: f64,
   #[serde(default)] pub colours: HashMap<String, RecolourData>,
   pub desc_template: Option<String>,
-
-  /// If specified, pieces in this group can be occulted.
   pub occulted: Option<OccultationMethod>,
 
   /// One of `"Circle"` or `"Rect"`, to define the outline shape.
@@ -41,16 +39,9 @@ pub struct GroupDetails {
   #[serde(flatten)] pub outline: Box<dyn shapelib::OutlineDefn>,
 }
 
-/// How pieces may be occulted.  Currently only one supported way.
 #[derive(Deserialize,Clone,Debug)]
 #[serde(tag="method")]
 pub enum OccultationMethod {
-  /// When occulted, display as a piece of a particular colour.
-  /// `colour` refers to one of the entries in
-  /// `GroupDetails::colours`.
-  ///
-  /// The description will be different too: `_colour` will be elided,
-  /// along with up to one of any spaces either side of it.
   ByColour {
     colour: ColourSpec,
   },

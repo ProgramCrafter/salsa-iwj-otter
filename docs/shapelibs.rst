@@ -240,3 +240,29 @@ Parameters
    exaclty once; it will be replaced with the description calculated
    according to the other rules.  (``_desc`` substitution happens
    after ``_colour`` substitution.)
+
+ * ``occulted`` [table, contents depend on ``occulted.method``].  If
+   specified, these pieces be occulted.  For example, when a player
+   has them in their hand and the hand is active and owned by them,
+   only the occulted view (eg, the back of a playing card) will be
+   shown.  This a table whose other contents depend on its key
+   ``method``, which must be a string:
+
+  * ``"ByColour"``: Occult by displaying a particular recolouring of
+    this piece.  The sub-key ``colour`` names a recolouring - one of
+    the keys of the ``colours`` group parameter.  When the piece is
+    occulted it will show that colour, instead of its actual colour.
+    In the description, ``_colour`` will be elided rather than
+    substitued (along with up to one of any spaces either side of it).
+
+  * ``"ByBack"``: Occult by displaying the back of this piece, as
+    specified by the ``back`` group parameter.  The ``occulted`` table
+    must also contain a sub-entry ``ilk``, a string.  Pieces which
+    have the same ``ilk`` display identically when occulted, even if
+    the different piece definitions imply different backs.  (Whichever
+    pieces are first loaded define what the backs of a particular ilk
+    look.)
+
+    For pieces that are like cards, the ilk should be different for
+    cards which have different backs in the game.  Generally, standard
+    playing cards should all specify ``card-back``.
