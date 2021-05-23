@@ -148,31 +148,11 @@ pub struct RecolourData {
 #[serde(try_from="String")]
 pub struct FileList(pub Vec<FileData>);
 
-/// Contents of each line in [`files`](GroupDefn::files)
-///
-/// This is not a key value list.  The leading fields are found by
-/// splitting on whitespace, and the final field is the rest of the
-/// line.
 #[derive(Deserialize,Debug)]
 pub struct FileData {
-  /// The core of the item name.  See `GroupDefn`.
   pub item_spec: String,
-
-  /// The core of the remote file name, for pieces which are scraped.
-  ///
-  /// In bundles, is the source file name if it isn't `-`.
-  /// In builtin libs,
-  /// not used by Otter during runtime or when loading.
-  ///
-  /// When [`scraper.method`](LibraryTomlFile::scraper) is `"none"`,
-  /// this field is not used and is conventionally set to "`-`".
   pub src_file_spec: String,
-
-  /// Extra fields, normally not present.
   pub extra_fields: HashMap<String, String>,
-
-  /// Desscription.  (Shown hn the game log, for example.)
-  /// Will be HTML-escaped.
   pub desc: String,
 }
 

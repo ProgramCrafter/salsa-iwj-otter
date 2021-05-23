@@ -113,13 +113,15 @@ between the ``item_prefix`` and ``item_suffix`` parameters (see
 below).
 
 The **image filename** is derived from ``SRC`` or the item name, as
-follows: ``library/LIB/SRC.svg`` or ``.png``.  (Builtin libraries
-support SVG only.)  If ``SRC`` is ``-`` then the item name is used for
-``SRC``.
+follows: ``library/LIB/SRC.svg`` or ``.png``.  If ``SRC`` is ``-``
+then the item name is used for ``SRC``.  (Builtin libraries: these
+support SVG only; and the ``SRC`` is not used at runtime, or when
+loading shapes --- rather, only when scraping or building.)
 
 ``DESCRIPTION`` is the **description**, a string which will be used to
 describe the piece (eg in in-game log messages).  In English, it
 should contain an article.  Eg, ``the black queen``, ``a white pawn``.
+It will be HTML-escaped, so it should be plain text, not HTML.
 
 It is also possible to specify additional data for each piece by
 adding fields to each line in ``files``.  This is done by adding a
