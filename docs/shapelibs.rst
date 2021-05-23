@@ -150,6 +150,27 @@ See the existing examples to see what item names usually look like.
 Parameters
 ----------
 
+Mandatory parameters
+`````````````````````
+
+ * ``size`` [mandatory; 1- or 2-element array of numbers: width and height].
+   The size at which the piece will show up in the game, in nominal
+   game coordinate units.  For reference: the builtin library's chess
+   pieces are 9.5 units; the builtin playing cards are 9.65,17.125.
+   NB, this value can be affected by ``scale``.
+
+ * ``outline`` [mandatory: string, one of ``"Circle"`` or ``"Rect"``].
+   Defines the outline shape.  This is used for drawing selection
+   highlights, etc.  The size is taken from ``size``.  If ``outline``
+   is ``Circl``, ``size`` must be a 1-element array: ellipses are not
+   supported.
+
+ * ``files``: [multi-line string].  The list of pieces to define,
+   one per line.  See _`Files entry`.
+
+Important parameters
+````````````````````
+
  * ``inherit`` [string: group name].  Causes this group to inherit
    every parameter (except ``files``) from the group named by
    ``inherit`` (recursively, if applicable).
@@ -159,31 +180,30 @@ Parameters
    the usual default value: the latter would override any inherited
    setting.
 
- * ``size`` [mandatory; 1- or 2-element array of numbers: width and height].
-   The size at which the piece will show up in the game, in nominal
-   game coordinate units.  For reference: the builtin library's chess
-   pieces are 9.5 units; the builtin playing cards are 9.65,17.125.
-   NB, this value can be affected by ``scale``.
-
  * ``item_prefix``, ``item_suffix`` [strings, default ``""``].
    Prepaended and appended to ``ITEM-SPEC`` in ``files`` to
    produce the item name.
 
- * ``sort`` [string].
-   The sort key (used for item sorting in hands).
+Geometry parameters
+```````````````````
 
-   If neither the group parameter, nor the ``files`` extra field, are
-   specified, the item name is used as the sort key.
+ * ``centre`` [2-element array].  The centre of the image, measured
+   from the top left in the image's own internal units.  If not
+   supplied, calculated from the size.
 
-   If both are specified, the group parameter is used as a template.
-   ``_s`` is replaced by the sort extra field from the ``files`` list
-   ``_c`` is replaced by the colour, if applicable.
+ * ``orig_size`` [1- or 2-element array, or (default) empty array]: If
+   non-empty, the supplied image is first scaled from ``orig_size``
+   to ``size``.  If both ``size`` and ```orig_size`` are 2 elements,
+   this can scale by different amounts in x and y, distorting the
+   image.
 
- * ``outline`` [mandatory: string, one of ``"Circle"`` or ``"Rect"``].
-   Defines the outline shape.  This is used for drawing selection
-   highlights, etc.  The size is taken from ``size``.  If ``outline``
-   is ``Circl``, ``size`` must be a 1-element array: ellipses are not
-   supported.
+ * ``scale`` [number, default=1].  Scale the image by a factor (in
+   both x and y).  ``size`` and ``centre`` are in the image file's
+   own internal coordinate system, not the Otter scaled coordinates
+   which result from multiplying by by this scale factor.
+
+Parameters for defining faces
+`````````````````````````````
 
  * ``flip`` [boolean, default: false].  Whether this piece can "flip".
    If true, the piece will have two faces, one of which is a mirror
@@ -200,20 +220,18 @@ Parameters
    to make the piece be occultable, you must also specify
    ``occulted``.  ``back`` is not compatible with ``flip``.
 
- * ``orig_size`` [1- or 2-element array, or (default) empty array]: If
-   non-empty, the supplied image is first scaled from ``orig_size``
-   to ``size``.  If both ``size`` and ```orig_size`` are 2 elements,
-   this can scale by different amounts in x and y, distorting the
-   image.
+Other group parameters
+```````````````````````
+   
+ * ``sort`` [string].
+   The sort key (used for item sorting in hands).
 
- * ``centre`` [2-element array].  The centre of the image, measured
-   from the top left in the image's own internal units.  If not
-   supplied, calculated from the size.
+   If neither the group parameter, nor the ``files`` extra field, are
+   specified, the item name is used as the sort key.
 
- * ``scale`` [number, default=1].  Scale the image by a factor (in
-   both x and y).  ``size`` and ``centre`` are in the image file's
-   own internal coordinate system, not the Otter scaled coordinates
-   which result from multiplying by by this scale factor.
+   If both are specified, the group parameter is used as a template.
+   ``_s`` is replaced by the sort extra field from the ``files`` list
+   ``_c`` is replaced by the colour, if applicable.
 
  * ``colorus`` [table].
    If specified and non-empty, specifies that this group should be
