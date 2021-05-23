@@ -19,5 +19,9 @@ level:
  * ``table_size`` [array of 2 numbers].  Size of the table playing
    area, in Otter internal units.  The default is ``[300,200]``.
 
+ * ``table_colour`` [string, colour].  Table backdrop colour.
+   (Only certain colour syntaxes are supported.)
 
- * xxx
+ * ``pcaliases```: [table, values are Piece spec table].  Piece alias
+   table.  When a piece is being loaded, an alias  xxxx grep for where
+   referred to
