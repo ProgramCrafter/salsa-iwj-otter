@@ -179,6 +179,12 @@ Parameters
    ``_s`` is replaced by the sort extra field from the ``files`` list
    ``_c`` is replaced by the colour, if applicable.
 
+ * ``outline`` [mandatory: string, one of ``"Circle"`` or ``"Rect"``].
+   Defines the outline shape.  This is used for drawing selection
+   highlights, etc.  The size is taken from ``size``.  If ``outline``
+   is ``Circl``, ``size`` must be a 1-element array: ellipses are not
+   supported.
+
  * ``flip`` [boolean, default: false].  Whether this piece can "flip".
    If true, the piece will have two faces, one of which is a mirror
    image of the other.  The default face will be un-reflected version;

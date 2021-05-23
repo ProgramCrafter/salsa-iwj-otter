@@ -30,12 +30,6 @@ pub struct GroupDetails {
   #[serde(default)] pub colours: HashMap<String, RecolourData>,
   pub desc_template: Option<String>,
   pub occulted: Option<OccultationMethod>,
-
-  /// One of `"Circle"` or `"Rect"`, to define the outline shape.
-  /// The size is taken from `size`.
-  ///
-  /// This value is a string, not some weird Rust type, despite
-  /// what you see here.
   #[serde(flatten)] pub outline: Box<dyn shapelib::OutlineDefn>,
 }
 
