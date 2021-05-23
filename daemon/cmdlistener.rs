@@ -44,7 +44,7 @@ struct CommandStream<'d> {
 }
 
 struct CommandStreamData<'d> {
-  euid: Result<Uid, ConnectionEuidDiscoverEerror>,
+  euid: Result<Uid, ConnectionEuidDiscoverError>,
   desc: &'d str,
   account: Option<AccountSpecified>,
   superuser: Option<AuthorisationSuperuser>,
@@ -1454,7 +1454,7 @@ impl CommandListener {
       match (||{
         let euid = conn.initial_peer_credentials()
           .map(|creds| creds.euid())
-          .map_err(|e| ConnectionEuidDiscoverEerror(format!("{}", e)));
+          .map_err(|e| ConnectionEuidDiscoverError(format!("{}", e)));
 
         #[derive(Error,Debug)]
         struct EuidLookupError(String);
@@ -1496,10 +1496,10 @@ impl CommandListener {
 
 #[derive(Debug,Error,Clone)]
 #[error("connection euid lookup failed (at connection initiation): {0}")]
-pub struct ConnectionEuidDiscoverEerror(String);
+pub struct ConnectionEuidDiscoverError(String);
 
-impl From<ConnectionEuidDiscoverEerror> for AuthorisationError {
-  fn from(e: ConnectionEuidDiscoverEerror) -> AuthorisationError {
+impl From<ConnectionEuidDiscoverError> for AuthorisationError {
+  fn from(e: ConnectionEuidDiscoverError) -> AuthorisationError {
     AuthorisationError(format!("{}", e))
   }
 }
