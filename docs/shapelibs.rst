@@ -195,4 +195,11 @@ Parameters
    the other face is the same image, but flipped left-to-right.  It
    doesn't make sense to enable this for pieces with a symmetrical
    appearance.  (It is a bad idea to have the game contain state which
-   is not visible to the players.)
+   is not visible to the players.)  Not compatible with ``back``.
+
+ * ``back``: [_`Piece spec`].  The back of this piece looks like some
+   other piece (typically, another library item such as a card back).
+   If specified, the piece will have two faces: the one implied by its
+   ``files`` entry, and a 2nd face looking like ``back``.  If you want
+   to make the piece be occultable, you must also specify
+   ``occulted``.  ``back`` is not compatible with ``flip``.

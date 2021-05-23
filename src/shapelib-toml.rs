@@ -25,11 +25,7 @@ pub struct GroupDetails {
   #[serde(default)] pub orig_size: Vec<f64>,
   #[serde(default)] pub centre: Option<[f64; 2]>,
   #[serde(default)] pub flip: bool,
-
-  /// The back of this is some other item.  Doesn't make sense
-  /// with `flip`.
-  #[serde(default)]
-  pub back: Option<Box <dyn PieceSpec>>,
+  #[serde(default)] pub back: Option<Box <dyn PieceSpec>>,
 
   /// `size` and `centre` are in the SVG's own internal coordinate
   /// system, not the Otter scaled coordinates which result from
