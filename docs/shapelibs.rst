@@ -150,6 +150,15 @@ See the existing examples to see what item names usually look like.
 Parameters
 ----------
 
+ * ``inherit`` (string: group name).  Causes this group to inherit
+   every parameter (except ``files``) from the group named by
+   ``inherit`` (recursively, if applicable).
+
+   When inheritance is happening, there is of course a difference
+   between leaving a value unspecified, and specifying it to have
+   the usual default value: the latter would override any inherited
+   setting.
+
  * ``item_prefix``, ``item_suffix`` (strings, default ``""``).
    Prepaended and appended to ``ITEM-SPEC`` in ``files`` to
    produce the item name.
@@ -163,4 +172,3 @@ Parameters
    If both are specified, the group parameter is used as a template.
    ``_s`` is replaced by the sort extra field from the ``files`` list
    ``_c`` is replaced by the colour, if applicable.
-

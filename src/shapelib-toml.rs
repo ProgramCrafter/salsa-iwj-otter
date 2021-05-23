@@ -18,23 +18,9 @@ pub struct GroupDefn {
   #[serde(flatten)] pub d: GroupDetails,
 }
 
-/// Details for a group of pieces. See also [`GroupDefn`].
-///
-/// This is separate from `GroupDefn` only to make the
-/// implementation convenient (for complicated reasons).  At the
-/// library TOML file level, there is no meaningful difference between
-/// the fields in this struct, and the ones in `GroupDefn`
 #[derive(Debug,Deserialize)]
 pub struct GroupDetails {
-  /// Causes this group to inherit every setting from the `GroupDefn`
-  /// and `GroupDetails` of the group named by `inherit` (recursively,
-  /// if applicable).
-  ///
-  /// When inheritance is happening, there is of course a difference
-  /// between leaving a value unspecified, and specifying it to have
-  /// the usual default value: the latter would override any inherited
-  /// setting.
-  #[cfg(doc)]
+  #[cfg(doc)] // handled specially
   inherit: String,
 
   /// Should be either a 1- or 2- element list, x and y, or just one
