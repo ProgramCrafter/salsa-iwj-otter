@@ -33,13 +33,6 @@ Each piece in a library has an **item name**.  Item names are unique
 within a library.  The item name is used within Otter to refer to the
 piece (for example, with ``otter library-add``).
 
-Item names do not need to be unique within a game, but there are
-places where a piece is found *just* by the item name, so pieces
-should have the same item name (only) if they are in some sense
-equivalent.  The item name is a string but may contain only ASCII
-alphanumerics, plain ASCII spaces, and the punctuation characters
-``-._``.
-
 Pieces in shape libraries cannot have "behaviours": they can't do
 anything "special" like react to being moved or clicked on.  Pieces
 with special functionality do exist, but they are built into Otter.
@@ -141,10 +134,18 @@ same order as specified in the ``:`` heading line.
 Item names
 ``````````
 
+Item names do not need to be unique within a game, but there are
+places where a piece is found *just* by the item name, so pieces
+should have the same item name (only) if they are in some sense
+equivalent.
+
 Item names are conventionally structured using a hierarchical name
-with ``-`` between the components.  Do not put ``/`` or ``_`` in item
-names.  ``/`` is forbidden and ``_`` can interfere with the template
-substitution system.
+with ``-`` between the components.
+
+The item name is a string but may contain only ASCII alphanumerics,
+plain ASCII spaces, and the punctuation characters ``-._``.  Do not
+put ``/`` or ``_`` in item names.  ``/`` is forbidden and ``_`` can
+interfere with the template substitution system.
 
 See the existing examples to see what item names usually look like.
 
