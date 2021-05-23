@@ -142,8 +142,9 @@ Item names
 ``````````
 
 Item names are conventionally structured using a hierarchical name
-with ``-`` between the components.  Do not put ``/`` in item names use
-``_`` only as a word separator within ``-``-separated parts.
+with ``-`` between the components.  Do not put ``/`` or ``_`` in item
+names.  ``/`` is forbidden and ``_`` can interfere with the template
+substitution system.
 
 See the existing examples to see what item names usually look like.
 
@@ -153,13 +154,15 @@ Parameters
 Mandatory parameters
 `````````````````````
 
- * ``size`` [mandatory; 1- or 2-element array of numbers: width and height].
+ * ``size`` [1- or 2-element array of numbers: width and height].
    The size at which the piece will show up in the game, in nominal
-   game coordinate units.  For reference: the builtin library's chess
-   pieces are 9.5 units; the builtin playing cards are 9.65,17.125.
+   game coordinate units.
    NB, this value can be affected by ``scale``.
 
- * ``outline`` [mandatory: string, one of ``"Circle"`` or ``"Rect"``].
+   For reference: the builtin library's chess
+   pieces are 9.5 units; the builtin playing cards are 9.65, 17.125.
+
+ * ``outline`` [string, one of ``"Circle"`` or ``"Rect"``].
    Defines the outline shape.  This is used for drawing selection
    highlights, etc.  The size is taken from ``size``.  If ``outline``
    is ``Circl``, ``size`` must be a 1-element array: ellipses are not
@@ -223,17 +226,24 @@ Parameters for defining faces
 Other group parameters
 ```````````````````````
    
- * ``sort`` [string].
-   The sort key (used for item sorting in hands).
+ * ``sort`` [string].  The sort key.  This is used for item sorting in
+   hands.  When the user asks ot sort their hand, all the items in a
+   hand are sorted according to (primarily) simply this sort key,
+   interpreted lexicographically.
 
-   If neither the group parameter, nor the ``files`` extra field, are
-   specified, the item name is used as the sort key.
+   The sort key should generally contakn all of the information in the
+   item name; if the item name contains an element referring to style
+   or aesthetic, that should appear at the end of the sort key (if at
+   all)>.
 
-   If both are specified, the group parameter is used as a template.
-   ``_s`` is replaced by the sort extra field from the ``files`` list
+   If neither the group parameter, nor the ``files`` extra field
+   ``sort``, are specified, the item name is used as the sort key.
+
+   If both are specified, the group parameter is used as a template:
+   ``_s`` is replaced by the sort extra field from the ``files`` list;
    ``_c`` is replaced by the colour, if applicable.
 
- * ``colorus`` [table].
+ * ``colors`` [table].
    If specified and non-empty, specifies that this group should be
    instantiated multiple times, for different colours.
 
@@ -260,8 +270,8 @@ Other group parameters
 
  * ``desc``: [string: template].  If specified, provides a template
    for the description, to allow formulaic descriptions of pieces in
-   thisf group.  The string specified ``desc`` must contain ``_desc``
-   exaclty once; it will be replaced with the description calculated
+   this group.  The string specified ``desc`` must contain ``_desc``
+   exaclty once; that will be replaced with the description calculated
    according to the other rules.  (``_desc`` substitution happens
    after ``_colour`` substitution.)
 
