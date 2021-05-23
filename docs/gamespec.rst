@@ -16,11 +16,11 @@ General
 A game spec is a TOML file.  It has the following entries at the top
 level:
 
- * ``table_size`` [array of 2 numbers].  Size of the table playing
-   area, in Otter internal units.  The default is ``[300,200]``.
+ * ``table_size``: Size of the table playing area, in Otter internal
+   units.  [array of 2 numbers, default ``[300,200]``]
 
- * ``table_colour`` [string: colour].  Table backdrop colour.
-   Only certain colour syntaxes are supported.  Default: ``green``.
+ * ``table_colour``: Table backdrop colour.  Only certain colour
+   syntaxes are supported.   [string, colour; default ``green``]
 
  * ``pcaliases``: [table, values are Piece spec table].  Piece alias
    table.  When a piece is being loaded, an alias  xxxx grep for where
@@ -37,7 +37,7 @@ of a game spec, it appears as an entry in the top-level ``pieces``
 array, and also defines the location(s) on the table to place the
 pieces, too.
 
-There is a required entry``type``, a string.  This determines how the
+There is a required entry ``type``, a string.  This determines how the
 rest of the table is interpreted.  It is one of the `Piece Spec
 Types`_.
 
@@ -111,7 +111,7 @@ This is discussed in the descriptions for each piece spec type.
 
 
 Piece Spec Types
-````````````````
+----------------
 
 ``"Lib"``
 `````````
@@ -207,8 +207,8 @@ Example::
   shape.xy = [25,30]
 
 
-`Hand`
-``````
+``"Hand"``
+``````````
 
 A player hand.  When active, arranges for only that player to be able
 tos see the contents.  The other players see the occulted view (eg,
@@ -221,6 +221,20 @@ Honours ``edge``, ``edge_width``.
 
 Honours ``label``, displaying the player whose hand this is, when
 active.
+
+Example::
+
+  [[pieces]]
+  pos = [53, 25]
+  colour = "brown"
+  label.place = "BottomLeftOutside"
+  label.colour = "black"
+
+  type = "Hand"
+  edge = "white"
+  edge_width = 0.75
+  shape.type = "Rect"
+  shape.xy = [93,25]
 
 
 ``"PlayerLabel"``
