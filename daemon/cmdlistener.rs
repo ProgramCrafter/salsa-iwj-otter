@@ -44,16 +44,17 @@ struct CommandStream<'d> {
 }
 
 struct CommandStreamData<'d> {
-  euid: Result<Uid, ConnectionEuidDiscoverError>,
   desc: &'d str,
   account: Option<AccountSpecified>,
   authstate: AuthState,
 }
 
+type Euid = Result<Uid, ConnectionEuidDiscoverError>;
+
 #[derive(Debug)]
 enum AuthState {
-  None,
-  Superuser(AuthorisationSuperuser),
+  None { euid: Euid },
+  Superuser { euid: Euid, auth: AuthorisationSuperuser },
 }
 
 #[derive(Debug,Clone)]
@@ -137,11 +138,16 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     MC::Noop => Fine,
 
     MC::SetSuperuser(enable) => {
+      let euid = match &cs.authstate {
+        AuthState::None      { euid, .. } => euid,
+        AuthState::Superuser { euid, .. } => euid,
+      }.clone();
       if !enable {
-        cs.authstate = AuthState::None;
+        cs.authstate = AuthState::None { euid };
       } else {
         let auth = authorise_scope_direct(cs, &AccountScope::Server)?;
-        cs.authstate = AuthState::Superuser(auth.therefore_ok());
+        let auth = auth.therefore_ok();
+        cs.authstate = AuthState::Superuser { euid, auth };
       }
       Fine
     },
@@ -1484,8 +1490,7 @@ impl CommandListener {
 
         let d = CommandStreamData {
           account: None, desc: &desc,
-          euid: euid.map(Uid::from_raw),
-          authstate: AuthState::None,
+          authstate: AuthState::None { euid: euid.map(Uid::from_raw) },
         };
         let cs = CommandStream { chan, d };
         cs.mainloop()?;
@@ -1515,7 +1520,10 @@ impl CommandStreamData<'_> {
   #[throws(AuthorisationError)]
   fn authorised_uid(&self, wanted: Option<Uid>, xinfo: Option<&str>)
                     -> Authorisation<Uid> {
-    let client_euid = *self.euid.as_ref().map_err(|e| e.clone())?;
+    let &client_euid = match &self.authstate {
+      AuthState::Superuser { euid, .. } => euid,
+      AuthState::None      { euid, .. } => euid,
+    }.as_ref().map_err(|e| e.clone())?;
     let server_uid = Uid::current();
     if client_euid.is_root() ||
        client_euid == server_uid ||
@@ -1538,7 +1546,7 @@ impl CommandStreamData<'_> {
 impl CommandStreamData<'_> {
   pub fn superuser(&self) -> Option<AuthorisationSuperuser> {
     match self.authstate {
-      AuthState::Superuser(auth) => Some(auth),
+      AuthState::Superuser { auth, .. } => Some(auth),
       _ => None
     }
   }
