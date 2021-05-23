@@ -16,7 +16,7 @@ on the ``otter reset`` command line:
               /^^^^^^^^^^^^^      /^^^^^^^^^^ ^^^^^^^^^^^^^^^^\
      game (instance) name     game spec name       bundle file'
 
-The zipfile will be uploaded the server, and then Otter will look for
+The zipfile will be uploaded to the server, and then Otter will look for
 the game spec ``stoat-fest`` amongst its builtin games and also in the
 zipfile.  Probably, ``stoat-fest`` is ``specs/stoat-fest.game.toml`` in
 the zipfile, and it will refer to piece elements also found there.
@@ -37,7 +37,7 @@ Bundles are zipfiles.  They can contain:
  * ``library/LIB.toml``: Description of a piece shape library,
    for a library named ``LIB``.  See :doc:`shapelibs`.
 
-These ``.toml`` files are all in TOML format.  TOML ia an
+These ``.toml`` files are all in TOML format.  TOML is an
 INI-file-like format designed for human editing and flexibility.  See
 the `TOML documentation <https://toml.io/en/>`_ for information about
 the syntax.
@@ -117,8 +117,9 @@ There are also several game spec examples, such as:
  * `mao.game.toml <examples/mao.game.toml>`__ Mao, or many other
    similar card games.  Three decks, 9 jokers.
 
- * `penultima.game.toml <examples/penultima.game.toml>`__ Manipulation
-   Rummy variants with two decks.
+ * `penultima.game.toml <examples/penultima.game.toml>`__ Penultima,
+   with an assortment of additional pieces in addition to the basic
+   chess pieces.
 
  * `vatikan.game.toml <examples/vatikan.game.toml>`__ Manipulation
    Rummy variants with two decks.
