@@ -1,7 +1,8 @@
 Version UNRELEASED
 ==================
 
-New features:
+New features
+------------
 
  * Support uploading bundles of game materials, so games can be played
    that are not playable with Otter's provided piece libraries.
@@ -12,21 +13,22 @@ New features:
  * New `private.table.toml` and `same-scope.table.toml` for
    less-public games.
 
-Command line usage changes, etc.:
+Command line usage changes, etc.
+--------------------------------
 
- * otter(1) now takes the game name using a --game global option
-   rather than a per-subcommand positional argument. 
+ * otter(1) now takes the game name using a `--game` (`-g`) global
+   option rather than a per-subcommand positional argument.
 
  * Library listing, piece identification, and so on, changed,
    including changes to `otter library-add` and `otter library-list`.
+   Specifically, per-game libraries mean that `library-list` now
+   needs the `--game` option.
 
- * otter(1) and otterlib(!) now honour OTTER_CLI_LOG
+ * otter(1) and otterlib(!) now honour `OTTER_CLI_LOG`
    (in Rust env_logger format).
 
  * otter(1) no longer acts on change_directory server config
    setting (but still resolves paths in config relative to that dir).
-
- * Per-game libraries; library-list now takes a game name.
 
  * Much better reporting of errors, especially from otter(1).
    Previously even straightforward errors would result in a controlled
@@ -38,7 +40,8 @@ Command line usage changes, etc.:
   * otter(1) can be used to issue adhoc management commands supplied
     on the command line in JSON or RON format.
 
-Bugfixes:
+Bugfixes
+--------
 
  * Fix a serious bug with acl handling which might allow players who
    can access a game more access than intended.
@@ -50,29 +53,43 @@ Bugfixes:
  * Test suite might previously fail with EBADF due to off-by-one error
    in fd cleanup routiine.
 
-Documentation:
+Documentation
+-------------
 
  * Document uploadable bundle format.
 
  * Document game and piece spec format.
 
- * Document shape library catalogue format (previously this was
-   done with rustdoc annotations on Rust structs used with serde,
-   which produced very hard to understand documentation.
+ * Document shape library catalogue format (previously this was done
+   with rustdoc annotations on Rust structs used with serde, which
+   produced incomplete and very hard to understand information).
  
  * De-emphasize docs for for amending the builtin shape libraries;
-   suggest making a bundles instead.
+   suggest making bundles instead.
 
  * Examples, of game specs, shape libs, buncdles.
 
-Installation and deployment changes:
+Installation and deployment changes
+-----------------------------------
 
  * usvg is now built shipped by the otter build system.
 
  * server-config.toml can specify the path to `usvg`, `libexec`,
    etc.
 
-Internal and development changes:
+Compatibility notes
+-------------------
+
+ * The otter(1) command line interface has changed and many common
+   operations need to be specified differently.
+
+ * The management API protocol has completely changed.  Old otter(1)
+   clients will not work.
+
+ * Savefiles from older versions of Otter are not loadable.
+
+Internal and development changes
+--------------------------------
 
  * Change CLI to server management wire protocol to binary-framed
    MessagePack (was newline-framed JSON).
@@ -104,19 +121,9 @@ Internal and development changes:
  * Reset game (game spec parsing and implemnetation) is now
    done in the server rather than the client.
  
- * Improvements and bugfixes to make-release and update-version
+ * Improvements and bugfixes to `make-release` and `update-version`
    scripts.  Fix anomalous (but working) `Cargo.toml` version
    dependency syntax.
-
-Compatibility notes:
-
- * The otter(1) command line interface has changed and many common
-   operations need to be specified differently.
-
- * The management API protocol has completely changed.  Old otter(1)
-   clients will not work.
-
- * Savefiles from older versions of Otter are not loadable.
 
 Version 0.5.1
 =============
