@@ -1,5 +1,5 @@
-Version UNRELEASED
-==================
+Version 0.6.0 - 2021-05-23
+==========================
 
 New features
 ------------
@@ -125,8 +125,8 @@ Internal and development changes
    scripts.  Fix anomalous (but working) `Cargo.toml` version
    dependency syntax.
 
-Version 0.5.1
-=============
+Version 0.5.1 - 2021-04-19
+==========================
 
 This was the first public release.
 
