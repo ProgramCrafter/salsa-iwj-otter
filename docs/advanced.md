@@ -21,6 +21,8 @@ The format of these files is a TOML document representing a `GameSpec`
 as found in `src/spec.rs` in the Otter source code.  Unfortunately
 this is not yet documented.
 
+xxx cross ref or delete
+
 
 Adding shapes (pieces, cards, etc.)
 -----------------------------------
@@ -55,3 +57,6 @@ Contributions should be via git branch, eg a merge request on Salsa:
 
 NB that shapes must come with a licence compatible with CC-BY-SA 4.0
 or GNU AGPLv3+.  See `LICENCE` for more information about copyright status.
+
+
+xxx cross ref or delete
