@@ -233,3 +233,10 @@ Parameters
    recolouring automatically at build time.  Each recolouring should
    hae a ``map`` entry which is a sub-sub-table mapping inputcolours
    (strings in ``#rrggbb`` format) to output colours.
+
+ * ``desc``: [string: template].  If specified, provides a template
+   for the description, to allow formulaic descriptions of pieces in
+   thisf group.  The string specified ``desc`` must contain ``_desc``
+   exaclty once; it will be replaced with the description calculated
+   according to the other rules.  (``_desc`` substitution happens
+   after ``_colour`` substitution.)
