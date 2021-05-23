@@ -145,6 +145,19 @@ trouble with your network or web browser.  The state is all on the
 server, so you can reload or reconnect whenever you like.
 
 
+Adding pieces to a game in progress
+-----------------------------------
+
+Using the `otter library-list` and `otter library-add` commands, you can
+add pieces to a game while it is in progress.
+
+Currently only shape library pieces (builtin, or from bundles) can be
+added this way.
+
+You may want to refer to the builtin shape library preview ("Shapelib"
+link in the game UI).
+
+
 Game administration
 -------------------
 
@@ -183,3 +196,14 @@ for a different game) with something like this:
 The ``otter`` command line tool has further subcommands for
 adding/removing players, for ad-hoc addition of pieces from the
 library to an existing game, and so on.
+
+
+Defining your own game
+``````````````````````
+
+If you want to use existing piece shapes that Otter already knows
+about, you can do this by providing a ``GAME.game.toml`` file,
+in :doc:`Game Spec <gamespec>` format.
+
+You can also define your own shapes by providing a :doc:`bundle
+<bundles>`.

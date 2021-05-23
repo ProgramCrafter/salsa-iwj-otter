@@ -12,9 +12,9 @@ on the ``otter reset`` command line:
 
 ::
 
-  otter--game unix:myself:: reset stoat-fest stoaty-games.zip
-             /^^^^^^^^^^^^^      /^^^^^^^^^^ ^^^^^^^^^^^^^^^^\
-    game (instance) name     game spec name       bundle file'
+  otter --game unix:myself:: reset stoat-fest stoaty-games.zip
+              /^^^^^^^^^^^^^      /^^^^^^^^^^ ^^^^^^^^^^^^^^^^\
+     game (instance) name     game spec name       bundle file'
 
 The zipfile will be uploaded the server, and then Otter will look for
 the game spec ``stoat-fest`` amongst its builtin games and also in the
