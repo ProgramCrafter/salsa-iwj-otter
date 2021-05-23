@@ -12,23 +12,9 @@ pub use crate::prelude::*;
 #[derive(Debug,Deserialize)]
 pub struct GroupDefn {
   pub files: FileList,
-
-  /// See the discussioin of the item name.
-  /// These two fields default to `""`.
   #[serde(default)] pub item_prefix: String,
   #[serde(default)] pub item_suffix: String,
-
-  /// The sort key (used for item sorting in hands).
-  ///
-  /// If neither the group property, nor the `files` extra field, are
-  /// specified, the item name is used.
-  ///
-  /// If both are specified, the group property is used as a template.
-  /// `_s` is replaced by the sort extra field from the `files` list
-  /// `_c` is replaced by the colour, if applicable.
   #[serde(default)] pub sort: String,
-
-  #[doc(hidden)]
   #[serde(flatten)] pub d: GroupDetails,
 }
 

@@ -132,7 +132,7 @@ line.  Values given for unknown field are ignored.
 Currently the extra fields supported are:
 
  * ``sort``: Specifies the sort key.  See the ``sort`` group
-   definition property.
+   parameter.
 
 The values for these extra fields come just before the
 ``DWSCRIPTION``, after the other whitespace-delimited fields, in the
@@ -146,3 +146,21 @@ with ``-`` between the components.  Do not put ``/`` in item names use
 ``_`` only as a word separator within ``-``-separated parts.
 
 See the existing examples to see what item names usually look like.
+
+Parameters
+----------
+
+ * ``item_prefix``, ``item_suffix`` (strings, default ``""``).
+   Prepaended and appended to ``ITEM-SPEC`` in ``files`` to
+   produce the item name.
+
+ * ``sort`` (string).
+   The sort key (used for item sorting in hands).
+
+   If neither the group parameter, nor the ``files`` extra field, are
+   specified, the item name is used as the sort key.
+
+   If both are specified, the group parameter is used as a template.
+   ``_s`` is replaced by the sort extra field from the ``files`` list
+   ``_c`` is replaced by the colour, if applicable.
+
