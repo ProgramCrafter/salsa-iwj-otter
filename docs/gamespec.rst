@@ -22,9 +22,8 @@ level:
  * ``table_colour``: Table backdrop colour.  Only certain colour
    syntaxes are supported.   [string, colour; default ``green``]
 
- * ``pcaliases``: [table, values are Piece spec table].  Piece alias
-   table.  When a piece is being loaded, an alias  xxxx grep for where
-   referred to
+ * ``pcaliases``: [dictionary, values are Piece Spec dicts].  Piece
+   alias definitions.  This is used by the ``"Alias"`` piece spec.
 
  * ``pieces``: Array of `Piece Specs`_.  Defines the initial pieces
    and their layout.  Each entry is a piece spec dictionary.
@@ -283,3 +282,56 @@ Requires ``faces``.
 Honours ``itemname``, ``edges`` and ``edge_width``.
 
 
+``"Alias"``
+```````````
+
+An alias (generally defined in ``pcaliases`` in the game spec).
+
+This allows a piece spec (which can be found in a shape library) to
+refer to something which depends on the game spec.
+
+ * ``target``: Alias name.
+
+Example, in ``GAME.game.toml``::
+
+  [pcaliases.card-back]
+  type = "Lib"
+  lib = "wikimedia"
+  item = "card-plain-back-maroon"
+
+And in ``library/LIB.toml``::
+
+  [group.clubs]
+  item_prefix = "card-oxymoron-"
+  outline = "Rect"
+  size = [73, 97]
+  centre = [36.5, 48.5]
+  scale = 0.25
+
+  item_suffix = "-c"
+  sort = "card-playing-c_s"
+  desc_template = "the _desc of clubs"
+
+  occulted.method = "ByBack"
+  occulted.ilk = "card-back"
+
+  files = """
+  :             sort
+  2     -       02      two
+  3     -       03      three
+  4     -       04      four
+  5     -       05      five
+  6     -       06      six
+  7     -       07      seven
+  8     -       08      eight
+  9     -       09      nine
+  T     -       10      ten
+  J     -       11      jack
+  Q     -       12      queen
+  K     -       13      king
+  A     -       14      ace
+  """
+
+  [group.clubs.back]
+  type = "Alias"
+  target = "card-back"
