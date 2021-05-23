@@ -6,7 +6,7 @@
 name="otter-base"
 description="Otter game system; WASM/hostside common code crate."
 
-version="0.5.1"
+version="0.6.0"
 license="AGPL-3.0-or-later"
 edition="2018"
 homepage="https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/"

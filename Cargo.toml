@@ -6,7 +6,7 @@
 name="otter"
 description="Otter game system; main Rust crate."
 
-version="0.5.1"
+version="0.6.0"
 license="AGPL-3.0-or-later"
 edition="2018"
 homepage="https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/"
@@ -26,7 +26,7 @@ bundle-sources="0.0.1"
 [dependencies]
 
 otter-base.path="base"
-otter-base.version="=0.5.1"
+otter-base.version="=0.6.0"
 	
 anyhow="1"
 argparse="0.2"
