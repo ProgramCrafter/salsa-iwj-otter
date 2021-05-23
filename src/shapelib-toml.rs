@@ -22,12 +22,7 @@ pub struct GroupDefn {
 pub struct GroupDetails {
   #[cfg(doc)]inherit: String, // handled specially
   pub size: Vec<f64>,  // scaled when put into GroupData
-  
-  #[serde(default)]
-  /// If specified, the input is first scaled from `orig_size` to
-  /// `size`.  If both `size` and `orig_size` are 2 elements, may
-  /// scale by different amounts in x and y.
-  pub orig_size: Vec<f64>,
+  #[serde(default)] pub orig_size: Vec<f64>,
 
   #[serde(default)]
   /// Default if not supplied is the centre according to the size.

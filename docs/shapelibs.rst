@@ -178,3 +178,9 @@ Parameters
    If both are specified, the group parameter is used as a template.
    ``_s`` is replaced by the sort extra field from the ``files`` list
    ``_c`` is replaced by the colour, if applicable.
+
+ * ``orig_size`` (1- or 2-element array, or (default) empty array): If
+   non-empty, the supplied image is first scaled from ``orig_size``
+   to ``size``.  If both ``size`` and ```orig_size`` are 2 elements,
+   this can scale by different amounts in x and y, distorting the
+   image.
