@@ -14,6 +14,7 @@ Otter - Online Table Top Environment Renderer
    user
    advanced
    bundles
+   gamespec
    shapelibs
    build
    install
