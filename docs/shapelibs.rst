@@ -179,16 +179,6 @@ Parameters
    ``_s`` is replaced by the sort extra field from the ``files`` list
    ``_c`` is replaced by the colour, if applicable.
 
- * ``orig_size`` [1- or 2-element array, or (default) empty array]: If
-   non-empty, the supplied image is first scaled from ``orig_size``
-   to ``size``.  If both ``size`` and ```orig_size`` are 2 elements,
-   this can scale by different amounts in x and y, distorting the
-   image.
-
- * ``centre`` [2-element array].  The centre of the image, measured
-   from the top left in the image's own internal units.  If not
-   supplied, calculated from the size.
-
  * ``flip`` [boolean, default: false].  Whether this piece can "flip".
    If true, the piece will have two faces, one of which is a mirror
    image of the other.  The default face will be un-reflected version;
@@ -203,3 +193,18 @@ Parameters
    ``files`` entry, and a 2nd face looking like ``back``.  If you want
    to make the piece be occultable, you must also specify
    ``occulted``.  ``back`` is not compatible with ``flip``.
+
+ * ``orig_size`` [1- or 2-element array, or (default) empty array]: If
+   non-empty, the supplied image is first scaled from ``orig_size``
+   to ``size``.  If both ``size`` and ```orig_size`` are 2 elements,
+   this can scale by different amounts in x and y, distorting the
+   image.
+
+ * ``centre`` [2-element array].  The centre of the image, measured
+   from the top left in the image's own internal units.  If not
+   supplied, calculated from the size.
+
+ * ``scale``: [number, default=1].  Scale the image by a factor (in
+   both x and y).  ``size`` and ``centre`` are in the image file's
+   own internal coordinate system, not the Otter scaled coordinates
+   which result from multiplying by by this scale factor.

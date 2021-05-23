@@ -26,13 +26,7 @@ pub struct GroupDetails {
   #[serde(default)] pub centre: Option<[f64; 2]>,
   #[serde(default)] pub flip: bool,
   #[serde(default)] pub back: Option<Box <dyn PieceSpec>>,
-
-  /// `size` and `centre` are in the SVG's own internal coordinate
-  /// system, not the Otter scaled coordinates which result from
-  /// multiplying by by this scale factor.
-  /// If not specified, default is `1.0`.
-  #[serde(default="num_traits::identities::One::one")]
-  pub scale: f64,
+  #[serde(default="num_traits::identities::One::one")] pub scale: f64,
 
   /// If specified and non-empty, specifies that this group should be
   /// instantiated multiple times, each time with a recolouring.
