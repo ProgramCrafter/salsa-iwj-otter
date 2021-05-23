@@ -44,6 +44,26 @@ the catalogue is ``libraries/LIB.toml`` and the image files are in a
 directory ``libraries/LIB.toml``.  The layout of Otter's builtin
 libraries is similar.
 
+Image files
+-----------
+
+Otter supports uploading of SVG and PNG files.  They should be in the
+directory ``library/LIB``, named after the item.  (See `Files entry`_
+for details of how to specify the file names.)
+
+Image files should be small --- ideally a handful of kilobytes, or
+less.  SVG images should be of modest complexity.
+
+Large image files don't just upload slowly; they also make the game
+perform poorly when playing.  This is because the image files are
+frequently (re)transmitted by the server to each client.
+
+It is not normally necessary to specify images in great detail: they
+take only a small space on the players' screens, so the resolution
+does not need to be awesome.  As an example, the playing cards in the
+builtin ``cards-oxymoron`` library are image files of just 73x97
+pixels.
+
 Catalogue
 ---------
 
