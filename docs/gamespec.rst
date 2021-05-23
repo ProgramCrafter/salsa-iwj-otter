@@ -28,3 +28,8 @@ level:
 
  * ``pieces``: Array of _`Piece spec`.  Defines the initial pieces
    and their layout.  Each entry is a piece spec sub-table.
+
+Piece Specs
+-----------
+
+XXX todo

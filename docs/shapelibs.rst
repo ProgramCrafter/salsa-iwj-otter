@@ -36,7 +36,7 @@ piece (for example, with ``otter library-add``).
 Pieces in shape libraries cannot have "behaviours": they can't do
 anything "special" like react to being moved or clicked on.  Pieces
 with special functionality do exist, but they are built into Otter.
-(See _`Piece specs` for all the kinds of piece.)
+(See :ref:`gamespec:Piece specs` for all the kinds of piece.)
 
 A library consists of a **catalogue**, and a set of **image files**
 which contain the actual appearances.  When a library is in a bundle
@@ -190,7 +190,7 @@ Mandatory parameters
    supported.
 
  * ``files``: [multi-line string].  The list of pieces to define,
-   one per line.  See _`Files entry`.
+   one per line.  See `Files entry`_.
 
 Important parameters
 ````````````````````
@@ -237,12 +237,13 @@ Parameters for defining faces
    appearance.  (It is a bad idea to have the game contain state which
    is not visible to the players.)  Not compatible with ``back``.
 
- * ``back``: [_`Piece spec`].  The back of this piece looks like some
-   other piece (typically, another library item such as a card back).
-   If specified, the piece will have two faces: the one implied by its
-   ``files`` entry, and a 2nd face looking like ``back``.  If you want
-   to make the piece be occultable, you must also specify
-   ``occulted``.  ``back`` is not compatible with ``flip``.
+ * ``back``: [:ref:`Piece spec <gamespec:Piece Specs>`].  The back of
+   this piece looks like some other piece (typically, another library
+   item such as a card back).  If specified, the piece will have two
+   faces: the one implied by its ``files`` entry, and a 2nd face
+   looking like ``back``.  If you want to make the piece be
+   occultable, you must also specify ``occulted``.  ``back`` is not
+   compatible with ``flip``.
 
 Other group parameters
 ```````````````````````

@@ -35,7 +35,7 @@ Bundles are zipfiles.  They can contain:
    ``GAME`` is the game spec name (e.g., ``stoat-fest`` above.)
 
  * ``library/LIB.toml``: Description of a piece shape library,
-   for a library named ``LIB``.  See _`Shape libraries`.
+   for a library named ``LIB``.  See :doc:`shapelibs`.
 
 These files are all in TOML format.  TOML ia an INI-file-like format
 designed for human editing and flexibility.  See the `TOML
