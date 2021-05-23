@@ -150,7 +150,7 @@ See the existing examples to see what item names usually look like.
 Parameters
 ----------
 
- * ``inherit`` (string: group name).  Causes this group to inherit
+ * ``inherit`` [string: group name].  Causes this group to inherit
    every parameter (except ``files``) from the group named by
    ``inherit`` (recursively, if applicable).
 
@@ -159,17 +159,17 @@ Parameters
    the usual default value: the latter would override any inherited
    setting.
 
- * ``size`` (mandatory; 1- or 2-element array of numbers: width and height).
+ * ``size`` [mandatory; 1- or 2-element array of numbers: width and height].
    The size at which the piece will show up in the game, in nominal
    game coordinate units.  For reference: the builtin library's chess
    pieces are 9.5 units; the builtin playing cards are 9.65,17.125.
    NB, this value can be affected by ``scale``.
 
- * ``item_prefix``, ``item_suffix`` (strings, default ``""``).
+ * ``item_prefix``, ``item_suffix`` [strings, default ``""``].
    Prepaended and appended to ``ITEM-SPEC`` in ``files`` to
    produce the item name.
 
- * ``sort`` (string).
+ * ``sort`` [string].
    The sort key (used for item sorting in hands).
 
    If neither the group parameter, nor the ``files`` extra field, are
@@ -179,8 +179,7 @@ Parameters
    ``_s`` is replaced by the sort extra field from the ``files`` list
    ``_c`` is replaced by the colour, if applicable.
 
- * ``orig_size`` (1- or 2-element array, or (default) empty array): If
-   non-empty, the supplied image is first scaled from ``orig_size``
-   to ``size``.  If both ``size`` and ```orig_size`` are 2 elements,
-   this can scale by different amounts in x and y, distorting the
-   image.
+ * ``orig_size`` [1- or 2-element array]: If specified, the supplied
+   image is first scaled from ``orig_size`` to ``size``.  If both
+   ``size`` and ```orig_size`` are 2 elements, this can scale by
+   different amounts in x and y, distorting the image.
