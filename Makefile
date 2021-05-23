@@ -156,8 +156,10 @@ cargo-debug cargo-release cargo-check cargo-doc \
 cargo-wasm-debug cargo-wasm-release:: \
 cargo-%: stamp/cargo.%
 
-examples: examples/test-bundle.zip
-examples: examples/big-bundle.zip
+EXAMPLE_BUNDLES = test-bundle big-bundle
+EXAMPLE_BUNDLE_FILES = $(foreach f, $(EXAMPLE_BUNDLES), examples/$f.zip)
+
+examples: $(EXAMPLE_BUNDLE_FILES)
 .PHONY: examples
 
 cargo-wasm: cargo-wasm-release
