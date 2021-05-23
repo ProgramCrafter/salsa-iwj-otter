@@ -27,16 +27,17 @@ level:
    referred to
 
  * ``pieces``: Array of `Piece Specs`_.  Defines the initial pieces
-   and their layout.  Each entry is a piece spec sub-table.
+   and their layout.  Each entry is a piece spec dictionary.
 
 Piece Specs
 -----------
 
-A piece spec is a table defining one or more pieces.  When part of a
-game spec, it appears as an entry in the top-level ``pieces`` array,
-and defines the location(s) on the table to place the pieces, too.
+A piece spec is a dictionary defining one or more pieces.  When part
+of a game spec, it appears as an entry in the top-level ``pieces``
+array, and also defines the location(s) on the table to place the
+pieces, too.
 
-There is a required key ``type``, a string.  This determines how the
+There is a required entry``type``, a string.  This determines how the
 rest of the table is interpreted.  It is one of the `Piece Spec
 Types`_.
 
@@ -78,36 +79,35 @@ Common parameters
 Depending on the ``type``, some of these parameters will be honoured.
 This is discussed in the descriptions for each piece spec type.
 
- * `colour` [string, colour].  The fill colour For a piece which
-   supports only one face.
+ * ``colour``: The fill colour.  For a piece type which supports only
+   one face.  [string, colour]
 
- * `faces` [array of string(s), colours, required].  The main fill
-   colour.
+ * ``faces``: The main fill colour(s).  [array of string(s), colours]
 
- * `edge` [string, colour].  The edge colour to draw for a piece with
-   supports only one face.  Default is not to draw edges.
+ * ``edge``: The edge colour to draw.  For a piece with supports only
+   one face.  Default is not to draw edges.  [string, colour]
 
- * `edges` [array of string(s), colours].  The colours of edges to
-   draw.  Default is not to draw edges.  Must either be a 1-element
-   array, or as long as `faces` (specifying a different edge colour
-   for each face).
+ * ``edges``: The colour of edges to draw.  Default is not to draw
+   edges.  Must either be a 1-element array, or as long as ``faces``
+   (specifying a different edge colour for each face).  [array of
+   string(s), colours]
 
- * `edge_width` [number].  Default is 0.2 if `edge` or `edges` is
-   specified.
+ * ``edge_width`` [number, default 0.2 if `edge` or `edges` is
+   specified]
 
- * `label` [table].  Displays a label with informationa about the
-   in-game state.  There are two sub-keys:
-    * `colour` [string, defaults to the edge colour].
-    * `place` [string]: One of `BottomLeft` (default), `TopLeft`,
-      `BottomLeftOutside`, `TopLeftOutside`.
+ * ``label``.  Controls display of the label with informationa about
+   the in-game state.  Dictionary with two sub-entries:
+    * ``colour`` [string, defaults to the edge colour].
+    * ``place`` [string]: One of ``"BottomLeft"`` (default),
+      ``"TopLeft"``, ``"BottomLeftOutside"``, ``"TopLeftOutside"``.
 
- * `shape` [table].  The shape of a piece.  There are two sub-keys:
-    * `type`, [string, `Circle` or `Rect` ].
-    * Either `size` [array of 1 or 2 numbers] (for a square
-      or rectangle) or `diam` [number] (for a circle).
+ * ``shape``.  The shape of a piece.  Dictionary with two sub-entries:
+    * ``type``.  ``"Circle"`` or ``"Rect"`` [required]
+    * ``size`` [array of 1 or 2 numbers]: required if ``type="Rect"``.
+    * ``diam`` [number]: required if ``type="Circle"``.
 
- * `itemname` [string].  Used when other parts of the game want to
-   refer to this one.
+ * ``itemname``: Used when other parts of the game want to refer to
+   this one.  [string]
 
 
 Piece Spec Types

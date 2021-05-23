@@ -178,65 +178,65 @@ dictionary:
 Mandatory parameters
 `````````````````````
 
- * ``size`` [1- or 2-element array of numbers: width and height].
+ * ``size``:
    The size at which the piece will show up in the game, in nominal
    game coordinate units.
    NB, this value can be affected by ``scale``.
+   [1- or 2-element array of numbers: width and height]
 
    For reference: the builtin library's chess
    pieces are 9.5 units; the builtin playing cards are 9.65, 17.125.
 
- * ``outline`` [string, one of ``"Circle"`` or ``"Rect"``].
+ * ``outline`` [``"Circle"`` or ``"Rect"`` ]:
    Defines the outline shape.  This is used for drawing selection
    highlights, etc.  The size is taken from ``size``.  If ``outline``
-   is ``Circl``, ``size`` must be a 1-element array: ellipses are not
+   is ``Circle``, ``size`` must be a 1-element array: ellipses are not
    supported.
 
- * ``files``: [multi-line string].  The list of pieces to define,
-   one per line.  See `Files entry`_.
+ * ``files``: The list of pieces to define, one per line.  See `Files
+   entry`_.  [multi-line string]
 
 Important parameters
 ````````````````````
 
- * ``inherit`` [string: group name].  Causes this group to inherit
+ * ``inherit``: Causes this group to inherit
    every parameter (except ``files``) from the group named by
-   ``inherit`` (recursively, if applicable).
+   ``inherit`` (recursively, if applicable).  [string: group name]
 
    When inheritance is happening, there is of course a difference
    between leaving a value unspecified, and specifying it to have
    the usual default value: the latter would override any inherited
    setting.
 
- * ``item_prefix``, ``item_suffix`` [strings, default ``""``].
-   Prepaended and appended to ``ITEM-SPEC`` in ``files`` to
-   produce the item name.
+ * ``item_prefix``, ``item_suffix``.  Prepended and appended to
+   ``ITEM-SPEC`` in ``files`` to produce the item name.  [strings]
 
 Geometry parameters
 ```````````````````
 
- * ``centre`` [2-element array].  The centre of the image, measured
-   from the top left in the image's own internal units.  If not
-   supplied, calculated from the size.
+ * ``centre``: The centre of the image, measured from the top left in
+   the image's own internal units.  If not supplied, calculated from
+   the size.  [2-element array]
 
- * ``orig_size`` [1- or 2-element array, or (default) empty array]: If
-   non-empty, the supplied image is first scaled from ``orig_size``
-   to ``size``.  If both ``size`` and ```orig_size`` are 2 elements,
-   this can scale by different amounts in x and y, distorting the
-   image.
+ * ``orig_size``: If non-empty, the supplied image is first scaled
+   from ``orig_size`` to ``size``.  If both ``size`` and
+   ```orig_size`` are 2 elements, this can scale by different amounts
+   in x and y, distorting the image.  [array of up to 2 elements]
 
- * ``scale`` [number, default=1].  Scale the image by a factor (in
-   both x and y).  ``size`` and ``centre`` are in the image file's
-   own internal coordinate system, not the Otter scaled coordinates
-   which result from multiplying by by this scale factor.
+ * ``scale``.  Scale the image by a factor (in both x and y).
+   ``size`` and ``centre`` are in the image file's own internal
+   coordinate system, not the Otter scaled coordinates which result
+   from multiplying by by this scale factor.  [number]
 
 Parameters for defining faces
 `````````````````````````````
 
- * ``flip`` [boolean, default: false].  Whether this piece can "flip".
-   If true, the piece will have two faces, one of which is a mirror
-   image of the other.  The default face will be un-reflected version;
-   the other face is the same image, but flipped left-to-right.  It
-   doesn't make sense to enable this for pieces with a symmetrical
+ * ``flip``: Whether this piece can "flip".  If true, the piece will
+   have two faces, one of which is a mirror image of the other.  The
+   default face will be un-reflected version; the other face is the
+   same image, but flipped left-to-right.  [boolean]
+
+   It doesn't make sense to enable this for pieces with a symmetrical
    appearance.  (It is a bad idea to have the game contain state which
    is not visible to the players.)  Not compatible with ``back``.
 
@@ -251,22 +251,22 @@ Parameters for defining faces
 Other group parameters
 ```````````````````````
    
- * ``sort`` [string].  The sort key.  This is used for item sorting in
-   hands.  When the user asks ot sort their hand, all the items in a
-   hand are sorted according to (primarily) simply this sort key,
-   interpreted lexicographically.
+ * ``sort``.  The sort key.  Used for item sorting in hands.  When the
+   user asks to sort their hand, all the items in it are sorted
+   according to (primarily) simply this sort key, interpreted
+   lexicographically.  [string]
 
-   The sort key should generally contakn all of the information in the
+   The sort key should generally contain all of the information in the
    item name; if the item name contains an element referring to style
    or aesthetic, that should appear at the end of the sort key (if at
-   all)>.
+   all).
 
    If neither the group parameter, nor the ``files`` extra field
    ``sort``, are specified, the item name is used as the sort key.
 
    If both are specified, the group parameter is used as a template:
-   ``_s`` is replaced by the sort extra field from the ``files`` list;
-   ``_c`` is replaced by the colour, if applicable.
+   ``_s`` is replaced by the ``sort`` extra field from the ``files``
+   list; ``_c`` is replaced by the colour, if applicable.
 
  * ``colors`` [dictionary].
    If specified and non-empty, specifies that this group should be
@@ -276,12 +276,12 @@ Other group parameters
    generated for each item in the ``files`` list.  The keys of the
    ``colours`` are recolouring names, and the values are sub-tables.
 
-   Every effective item name (i.e., after the prefix and suffix have
-   been added) must contain the substring ``_c`` exactly once, and
-   every item description must contain the substring ``_colour``
-   exactly once.  ``_c`` will be replaced with the value of the
-   recoluring's ``abbrev``, and ``_colour`` with the recolouring name
-   (the key of the ``colours`` dict).
+   Every effective item name (i.e., after the ``item_prefix`` and
+   ``item_suffix`` have been added) must contain the substring ``_c``
+   exactly once, and every item description must contain the substring
+   ``_colour`` exactly once.  ``_c`` will be replaced with the value
+   of the recoluring's ``abbrev``, and ``_colour`` with the
+   recolouring name (the key of the ``colours`` dict).
 
    For libraries in bundles, a separate image file must be supplied
    for each recolouring.  If ``SRC`` is not ``-``, it also must
@@ -289,14 +289,14 @@ Other group parameters
    colour-specific image file.
 
    For builtin libraries, the Otter build system will do the
-   recolouring automatically at build time.  Each recolouring should
-   hae a ``map`` entry which is a sub-sub-dict mapping inputcolours
+   recolouring automatically at build time; each recolouring should
+   have a ``map`` entry which is a sub-sub-dict mapping input colours
    (strings in ``#rrggbb`` format) to output colours.
 
- * ``desc``: [string: template].  If specified, provides a template
+ * ``desc`` [string: template]: : If specified, provides a template
    for the description, to allow formulaic descriptions of pieces in
-   this group.  The string specified ``desc`` must contain ``_desc``
-   exaclty once; that will be replaced with the description calculated
+   this group.  The string specified by ``desc`` must contain ``_desc``
+   exactly once; that will be replaced with the description calculated
    according to the other rules.  (``_desc`` substitution happens
    after ``_colour`` substitution.)
 
@@ -304,15 +304,16 @@ Other group parameters
    specified, these pieces be occulted.  For example, when a player
    has them in their hand and the hand is active and owned by them,
    only the occulted view (eg, the back of a playing card) will be
-   shown.  This a dict whose other contents depend on its ``method``
-   entry, which must be a string:
+   shown.  ``occulted`` is a dict whose other contents depend on its
+   ``method`` entry, which must be a string:
 
   * ``"ByColour"``: Occult by displaying a particular recolouring of
-    this piece.  The sub-entry ``colour`` names a recolouring - one of
-    the keys of the ``colours`` group parameter.  When the piece is
-    occulted it will show that colour, instead of its actual colour.
-    In the description, ``_colour`` will be elided rather than
-    substitued (along with up to one of any spaces either side of it).
+    this piece.  The sub-entry ``occulted.colour`` names a
+    recolouring - one of the keys of the ``colours`` group parameter.
+    When the piece is occulted it will show that colour, instead of
+    its actual colour.  In the description, ``_colour`` will be elided
+    rather than substituted (along with up to one of any spaces either
+    side of it).
 
   * ``"ByBack"``: Occult by displaying the back of this piece, as
     specified by the ``back`` group parameter.  The ``occulted`` dict
@@ -320,7 +321,7 @@ Other group parameters
     have the same ``ilk`` display identically when occulted, even if
     the different piece definitions imply different backs.  (Whichever
     pieces are first loaded define what the backs of a particular ilk
-    look.)
+    look like.)
 
     For pieces that are like cards, the ilk should be different for
     cards which have different backs in the game.  Generally, standard
