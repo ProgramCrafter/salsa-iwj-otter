@@ -184,3 +184,15 @@ Parameters
    to ``size``.  If both ``size`` and ```orig_size`` are 2 elements,
    this can scale by different amounts in x and y, distorting the
    image.
+
+ * ``centre`` [2-element array].  The centre of the image, measured
+   from the top left in the image's own internal units.  If not
+   supplied, calculated from the size.
+
+ * ``flip`` [boolean, default: false].  Whether this piece can "flip".
+   If true, the piece will have two faces, one of which is a mirror
+   image of the other.  The default face will be un-reflected version;
+   the other face is the same image, but flipped left-to-right.  It
+   doesn't make sense to enable this for pieces with a symmetrical
+   appearance.  (It is a bad idea to have the game contain state which
+   is not visible to the players.)

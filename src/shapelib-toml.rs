@@ -23,14 +23,8 @@ pub struct GroupDetails {
   #[cfg(doc)]inherit: String, // handled specially
   pub size: Vec<f64>,  // scaled when put into GroupData
   #[serde(default)] pub orig_size: Vec<f64>,
-
-  #[serde(default)]
-  /// Default if not supplied is the centre according to the size.
-  pub centre: Option<[f64; 2]>,
-
-  #[serde(default)]
-  /// Default is `false`
-  pub flip: bool,
+  #[serde(default)] pub centre: Option<[f64; 2]>,
+  #[serde(default)] pub flip: bool,
 
   /// The back of this is some other item.  Doesn't make sense
   /// with `flip`.
