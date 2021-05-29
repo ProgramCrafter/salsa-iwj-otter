@@ -197,15 +197,7 @@ impl BundleSavefile {
   }
 }
 
-#[throws(fmt::Error)]
-fn fmt_hex(f: &mut Formatter, buf: &[u8]) {
-  for v in buf { write!(f, "{:02x}", v)?; }
-}
-
-impl Debug for Hash {
-  #[throws(fmt::Error)]
-  fn fmt(&self, f: &mut Formatter) { fmt_hex(f, &self.0)? }
-}
+format_by_fmt_hex!{Debug, for Hash, .0}
 impl Display for Hash {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut Formatter) {

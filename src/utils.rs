@@ -642,3 +642,21 @@ impl<I,T> IndexVec<I,T> where I: index_vec::Idx {
     self.raw.get_or_extend_with(i.index(), f)
   }
 }
+
+
+#[throws(fmt::Error)]
+pub fn fmt_hex(f: &mut Formatter, buf: &[u8]) {
+  for v in buf { write!(f, "{:02x}", v)?; }
+}
+
+#[macro_export]
+macro_rules! format_by_fmt_hex {
+  ($trait:ty, for $self:ty, . $($memb:tt)+) => {
+    impl $trait for $self {
+      #[throws(fmt::Error)]
+      fn fmt(&self, f: &mut Formatter) {
+        fmt_hex(f, &self . $($memb)+)?
+      }
+    }
+  }
+}
