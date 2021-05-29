@@ -139,7 +139,6 @@ impl ServerConfigSpec {
         None       => leaf.to_owned(),
       }))
     };
-
     let save_dir        = defpath(save_dir,        "save"              );
     let specs_dir       = defpath(specs_dir,       "specs"             );
     let command_socket  = defpath(command_socket,  "var/command.socket");
@@ -150,8 +149,10 @@ impl ServerConfigSpec {
     let bundled_sources = defpath(bundled_sources, "bundled-sources"   );
     const DEFAULT_LIBRARY_GLOB: &str = "library/*.toml";
 
-    let usvg_bin = usvg_bin.unwrap_or_else(
-      || format!("{}/usvg", &libexec_dir));
+    let libexec = |specd: Option<String>, leaf: &str| -> String {
+      specd.unwrap_or_else(|| format!("{}/{}", &libexec_dir, leaf))
+    };
+    let usvg_bin = libexec(usvg_bin, "usvg");
 
     let shapelibs = shapelibs.unwrap_or_else(||{
       let glob = defpath(None, DEFAULT_LIBRARY_GLOB);
