@@ -1730,7 +1730,10 @@ fn authorise_scope_direct(cs: &CommandStreamData, ag: &AccountsGuard,
 fn do_authorise_scope(cs: &CommandStreamData, _ag: &AccountsGuard,
                       wanted: &AccountScope)
                       -> Authorisation<AccountScope> {
-  if let Some(y) = cs.is_superuser() { return y }
+  match &cs.authstate {
+    &AuthState::Superuser { auth, .. } => return auth.into(),
+    _ => {},
+  }
 
   match &wanted {
 
