@@ -172,12 +172,13 @@ pub struct MgmtKeyReport {
   problem: Option<KeyError>,
 }
 
-impl PerScope {
-  pub fn keys(&self, gl: &Global) -> Vec<MgmtKeyReport> {
+impl AccountsGuard {
+  pub fn keys(&mut self, ps: &PerScope) -> Vec<MgmtKeyReport> {
+    let gl = self.ssh_keys_mut();
     let dirty_error =
       if gl.authkeys_dirty { Some(KeyError::Dirty) }
       else { None };
-    self.authorised.iter().filter_map(|sk| Some({
+    ps.authorised.iter().filter_map(|sk| Some({
       let sk = sk.as_ref()?;
       let key = gl.keys.get(sk.id)?;
       let problem = if let Some(Err(ref e)) = key.fp { Some(e) }
@@ -194,11 +195,11 @@ impl PerScope {
 
   // not a good idea to speicfy a problem, but "whatever"
   #[throws(ME)]
-  pub fn add_key(&mut self, accounts: &mut AccountsGuard,
+  pub fn add_key(&mut self, ps: &mut PerScope,
                  new_akl: AuthkeysLine) -> (usize, Id) {
     let (data, comment) = new_akl.parse()?;
     let fp = data.fingerprint().map_err(KeyError::from)?;
-    let gl = &mut accounts.ssh_keys_mut();
+    let gl = self.ssh_keys_mut();
     let fp = Arc::new(fp);
     let _ = gl.fps();
     let fpe = gl.fps.as_mut().unwrap().entry(fp.clone());
@@ -221,33 +222,33 @@ impl PerScope {
     key.refcount += 1;
     let new_sk = Some(ScopeKey { id, comment });
     let index =
-      if let Some((index,_)) = self.authorised.iter()
+      if let Some((index,_)) = ps.authorised.iter()
           .find_position(|sk| sk.is_none())
       {
-        self.authorised[index] = new_sk;
+        ps.authorised[index] = new_sk;
         index
       } else {
-        let index = self.authorised.len();
-        self.authorised.push(new_sk);
+        let index = ps.authorised.len();
+        ps.authorised.push(new_sk);
         index
       };
     gl.authkeys_dirty = true;
     // UNSAVED
-    accounts.save_accounts_now()?;
+    self.save_accounts_now()?;
     // BROKEN
-    accounts.ssh_keys_mut().rewrite_authorized_keys()?;
+    self.ssh_keys_mut().rewrite_authorized_keys()?;
     // PRESENT
     (index, id)
   }
 
   #[throws(ME)]
-  pub fn remove_key(&mut self, accounts: &mut AccountsGuard,
+  pub fn remove_key(&mut self, ps: &mut PerScope,
                     index: usize, id: Id) {
-    let gl = &mut accounts.ssh_keys_mut();
+    let gl = self.ssh_keys_mut();
     if id == default() {
       throw!(ME::InvalidSshKeyId);
     }
-    match self.authorised.get(index) {
+    match ps.authorised.get(index) {
       Some(&Some(ScopeKey{id:tid,..})) if tid == id => { },
       _ => throw!(ME::SshKeyNotFound), /* [ABSEMT..GARBAGE] */
     }
@@ -257,19 +258,19 @@ impl PerScope {
     // [UNSAVED..PRESENT]
     
     key.refcount -= 1;
-    let previously = mem::take(&mut self.authorised[index]);
+    let previously = mem::take(&mut ps.authorised[index]);
     // Now **illegal**, briefly, don't leave it like this!  No-one can
     // observe the illegal state since we have the accounts lock.  If
     // we abort, the in-core version vanishes, leaving a legal state.
     let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(
-      || accounts.save_accounts_now()
+      || self.save_accounts_now()
     ));
-    let gl = &mut accounts.ssh_keys_mut();
+    let gl = self.ssh_keys_mut();
     let key = gl.keys.get_mut(id).expect("aargh!");
 
     if ! matches!(r, Ok(Ok(()))) {
       key.refcount += 1;
-      self.authorised[index] = previously;
+      ps.authorised[index] = previously;
       // [UNSAVED..PRESENT]
       match r {
         Err(payload) => std::panic::resume_unwind(payload),
