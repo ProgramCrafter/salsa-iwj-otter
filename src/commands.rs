@@ -63,6 +63,10 @@ pub enum MgmtCommand {
 
 //---------- Accounts file ----------
 
+#[derive(Debug,Clone,Hash,Eq,PartialEq)]
+#[derive(Serialize,Deserialize)]
+pub struct SshFingerprint(pub String);
+
 #[derive(Debug,Serialize,Deserialize)]
 pub struct AccountDetails {
   pub account: AccountName,
@@ -254,6 +258,9 @@ pub enum MgmtError {
   #[error("game contains invalid UTF-8")]            GameSpecInvalidData,
   #[error("idle timeout waiting for mgmt command")]  IdleTimeout,
   #[error("upload took too long (timed out)")]       UploadTimeout,
+  #[error("ssh key not found")]                      SshKeyNotFound,
+  #[error("ssh key id default, ie invalid")]         InvalidSshKeyId,
+  #[error("ssh key invalid: {0}")] InvalidSshKey(#[from] sshkeys::KeyError),
 }
 
 impl From<InternalError> for MgmtError {

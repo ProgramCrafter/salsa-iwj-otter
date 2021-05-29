@@ -38,6 +38,9 @@ pub struct ServerConfigSpec {
   pub shapelibs: Option<Vec<shapelib::Config1>>,
   pub specs_dir: Option<String>,
   pub sendmail: Option<String>,
+  pub ssh_proxy_bin: Option<String>,
+  pub authorized_keys: Option<String>,
+  pub authorized_keys_include: Option<String>,
   pub debug_js_inject_file: Option<String>,
   #[serde(default)] pub fake_rng: FakeRngSpec,
   /// Disable this for local testing only.  See LICENCE.
@@ -68,6 +71,9 @@ pub struct ServerConfig {
   pub shapelibs: Vec<shapelib::Config1>,
   pub specs_dir: String,
   pub sendmail: String,
+  pub ssh_proxy_bin: String,
+  pub authorized_keys: String,
+  pub authorized_keys_include: String,
   pub debug_js_inject: Arc<String>,
   pub check_bundled_sources: bool,
   pub game_rng: RngWrap,
@@ -120,9 +126,11 @@ impl ServerConfigSpec {
       template_dir, specs_dir, nwtemplate_dir, wasm_dir, libexec_dir, usvg_bin,
       log, bundled_sources, shapelibs, sendmail,
       debug_js_inject_file, check_bundled_sources, fake_rng,
+      ssh_proxy_bin, authorized_keys, authorized_keys_include,
     } = self;
 
     let game_rng = fake_rng.make_game_rng();
+    let home = || env::var("HOME").context("HOME");
 
     let prctx;
     if let Some(ref cd) = change_directory {
@@ -153,6 +161,16 @@ impl ServerConfigSpec {
       specd.unwrap_or_else(|| format!("{}/{}", &libexec_dir, leaf))
     };
     let usvg_bin        = in_libexec(usvg_bin,     "usvg"              );
+    let ssh_proxy_bin   = in_libexec(ssh_proxy_bin,"otter-ssh-proxy"   );
+
+    let authorized_keys = if let Some(ak) = authorized_keys { ak } else {
+      let home = home().context("for authorized_keys")?;
+      // we deliberately don't create the ~/.ssh dir
+      format!("{}/.ssh/authorized_keys", home)
+    };
+    let authorized_keys_include = authorized_keys_include.unwrap_or_else(
+      || format!("{}.static", authorized_keys)
+    );
 
     let shapelibs = shapelibs.unwrap_or_else(||{
       let glob = defpath(None, DEFAULT_LIBRARY_GLOB);
@@ -235,6 +253,7 @@ impl ServerConfigSpec {
       template_dir, specs_dir, nwtemplate_dir, wasm_dir, libexec_dir,
       bundled_sources, shapelibs, sendmail, usvg_bin,
       debug_js_inject, check_bundled_sources, game_rng, prctx,
+      ssh_proxy_bin, authorized_keys, authorized_keys_include,
     };
     trace_dbg!("config resolved", &server);
     Ok(WholeServerConfig {

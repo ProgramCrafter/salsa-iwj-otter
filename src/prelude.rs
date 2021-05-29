@@ -36,6 +36,7 @@ pub use std::num::{NonZeroUsize, TryFromIntError, Wrapping};
 pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
 pub use std::os::unix;
 pub use std::os::unix::ffi::OsStrExt;
+pub use std::os::unix::fs::OpenOptionsExt;
 pub use std::os::unix::io::{AsRawFd, IntoRawFd, RawFd};
 pub use std::os::unix::net::UnixStream;
 pub use std::os::unix::process::{CommandExt, ExitStatusExt};
@@ -161,6 +162,7 @@ pub use crate::slotmap_slot_idx::*;
 pub use crate::spec::*;
 pub use crate::spec::piece_specs::{FaceColourSpecs, SimpleCommon};
 pub use crate::sse;
+pub use crate::sshkeys;
 pub use crate::toml_de;
 pub use crate::timedfd::*;
 pub use crate::termprogress;

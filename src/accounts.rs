@@ -46,6 +46,7 @@ pub struct AccountsGuard(MutexGuard<'static, Option<Accounts>>);
 pub struct Accounts {
   names: HashMap<Arc<AccountName>, AccountId>,
   records: DenseSlotMap<AccountId, AccountRecord>,
+  #[serde(default)] ssh_keys: sshkeys::Global,
 }
 
 #[derive(Serialize,Deserialize,Debug)]
@@ -55,6 +56,14 @@ pub struct AccountRecord {
   pub timezone: String,
   pub access: AccessRecord,
   pub layout: PresentationLayout,
+  #[serde(default)] // not relevant other than in entry for scope itself
+  pub ssh_keys: sshkeys::PerScope,
+}
+
+#[derive(Serialize,Deserialize,Debug)]
+pub struct AccountSshKey {
+  pub id: sshkeys::Id,
+  pub comment: sshkeys::Comment,
 }
 
 #[derive(Clone,Debug,Hash,Ord,PartialOrd,Eq,PartialEq)]
@@ -424,6 +433,10 @@ impl AccountsGuard {
     f.sync_data()?;
     f.close()?;
     fs::rename(&tmp, &main)?;
+  }
+
+  pub fn ssh_keys_mut(&mut self) -> &mut sshkeys::Global {
+    &mut self.0.get_or_insert_with(default).ssh_keys
   }
 }
 

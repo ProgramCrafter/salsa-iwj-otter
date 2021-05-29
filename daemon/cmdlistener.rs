@@ -164,8 +164,9 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       let layout = layout.unwrap_or_default();
       let record = AccountRecord {
         account, nick, access,
-        timezone: timezone.unwrap_or_default(),
         layout,
+        timezone: timezone.unwrap_or_default(),
+        ssh_keys: default(),
       };
       ag.insert_entry(record, auth)?;
       Fine

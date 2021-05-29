@@ -35,6 +35,7 @@ pub mod pieces;
 pub mod progress;
 pub mod shapelib;
 pub mod spec;
+pub mod sshkeys;
 pub mod sse;
 pub mod termprogress;
 pub mod timedfd;
