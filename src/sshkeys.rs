@@ -191,9 +191,12 @@ macro_rules! def_pskeys_get {
 def_pskeys_get!{ RecordsExtImm, pskeys_get, get    ,     }
 def_pskeys_get!{ RecordsExtMut, pskeys_mut, get_mut, mut }
 
+type Auth = Authorisation<AccountScope>;
+
 impl AccountsGuard {
   #[throws(MgmtError)]
-  pub fn sshkeys_report(&self, acctid: AccountId) -> Vec<MgmtKeyReport> {
+  pub fn sshkeys_report(&self, acctid: AccountId, _:Auth)
+                        -> Vec<MgmtKeyReport> {
     let accounts = self.get();
     let gl = &accounts.ssh_keys;
     let ps = &accounts.records.pskeys_get(acctid)?;
@@ -218,7 +221,7 @@ impl AccountsGuard {
   // not a good idea to speicfy a problem, but "whatever"
   #[throws(ME)]
   pub fn sshkeys_add(&mut self, acctid: AccountId,
-                     new_akl: AuthkeysLine) -> (usize, Id) {
+                     new_akl: AuthkeysLine, _:Auth) -> (usize, Id) {
     let accounts = self.get_mut();
     let gl = &mut accounts.ssh_keys;
     let ps = accounts.records.pskeys_mut(acctid)?;
@@ -267,7 +270,7 @@ impl AccountsGuard {
 
   #[throws(ME)]
   pub fn remove_key(&mut self, acctid: AccountId,
-                    index: usize, id: Id) {
+                    index: usize, id: Id, _:Auth) {
     let accounts = self.get_mut();
     let gl = &mut accounts.ssh_keys;
     let ps = accounts.records.pskeys_mut(acctid)?;
