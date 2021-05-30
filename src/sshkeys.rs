@@ -154,6 +154,28 @@ impl Debug for Nonce {
   }
 }
 
+impl FromStr for KeySpec {
+  type Err = anyhow::Error;
+  #[throws(anyhow::Error)]
+  fn from_str(s: &str) -> KeySpec {
+    (||{
+      let (id, nonce) = s.split_once(':')
+        .ok_or_else(|| anyhow!("missing `:`"))?;
+      let id    = id.try_into().context("bad id")?;
+      let nonce = nonce.parse().context("bad nonce")?;
+      Ok::<_,AE>(KeySpec { id, nonce })
+    })().context("failed to parse ssh key spec")?
+  }
+}
+
+impl FromStr for Nonce {
+  type Err = anyhow::Error;
+  #[throws(anyhow::Error)]
+  fn from_str(s: &str) -> Nonce {
+    Nonce(parse_fixed_hex(s).ok_or_else(|| anyhow!("bad nonce syntax"))?)
+  }
+}
+
 impl PerScope {
   pub fn check(&self, ag: &AccountsGuard, authed_key: &KeySpec,
                auth_in: Authorisation<KeySpec>)

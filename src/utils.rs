@@ -649,6 +649,20 @@ pub fn fmt_hex(f: &mut Formatter, buf: &[u8]) {
   for v in buf { write!(f, "{:02x}", v)?; }
 }
 
+#[throws(as Option)]
+pub fn parse_fixed_hex<const N: usize>(s: &str) -> [u8; N] {
+  if s.len() != N*2 || ! s.is_ascii() { throw!() }
+  let mut buf = [0u8; N];
+  for (h, o) in izip!(
+    s.as_bytes().chunks(2),
+    buf.iter_mut(),
+  ) {
+    let h = str::from_utf8(h).ok()?;
+    *o = u8::from_str_radix(h,16).ok()?;
+  }
+  buf
+}
+
 #[macro_export]
 macro_rules! format_by_fmt_hex {
   ($trait:ty, for $self:ty, . $($memb:tt)+) => {
@@ -659,4 +673,16 @@ macro_rules! format_by_fmt_hex {
       }
     }
   }
+}
+
+#[test]
+fn test_parse_hex(){
+  assert_eq!( parse_fixed_hex(""),     Some([          ]) );
+  assert_eq!( parse_fixed_hex("41"  ), Some([b'A'      ]) );
+  assert_eq!( parse_fixed_hex("4165"), Some([b'A', b'e']) );
+  assert_eq!( parse_fixed_hex("4165"), Some([b'A', b'e']) );
+  assert_eq!( parse_fixed_hex("41"  ), None::<[_;0]>      );
+  assert_eq!( parse_fixed_hex("41"  ), None::<[_;2]>      );
+  assert_eq!( parse_fixed_hex("1"   ), None::<[_;1]>      );
+  assert_eq!( parse_fixed_hex("xy"  ), None::<[_;1]>      );
 }
