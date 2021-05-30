@@ -445,7 +445,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     MC::SshAddKey { akl } => {
       let (mut ag, acctid, auth) = start_access_ssh_keys(&cs)?;
       let (index, id) = ag.sshkeys_add(acctid, akl, auth)?;
-      MR::SshKey { index, id }
+      MR::SshKeyAdded { index, id }
     }
     MC::SshDeleteKey { index, id } => {
       let (mut ag, acctid, auth) = start_access_ssh_keys(&cs)?;

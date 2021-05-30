@@ -103,7 +103,7 @@ pub enum MgmtResponse {
   Bundles { bundles: MgmtBundleList },
   Bundle { bundle: bundles::Id },
   SshKeys(Vec<sshkeys::MgmtKeyReport>),
-  SshKey { index: usize, id: sshkeys::Id },
+  SshKeyAdded { index: usize, id: sshkeys::Id },
 }
 
 pub type MgmtBundleList = BTreeMap<bundles::Id, bundles::State>;
