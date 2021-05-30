@@ -66,6 +66,12 @@ pub struct ScopeKey {
   comment: Comment,
 }
 
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub struct KeySpec {
+  id: sshkeys::Id,
+  nonce: sshkeys::Nonce,
+}
+
 mod veneer {
   // openssh_keys's API is a little odd.  We make our own mini-API.
   use crate::prelude::*;
@@ -149,16 +155,16 @@ impl Debug for Nonce {
 }
 
 impl PerScope {
-  pub fn check(&self, ag: &AccountsGuard, id: Id, nonce: &Nonce,
-               auth_in: Authorisation<(Id, Nonce)>)
+  pub fn check(&self, ag: &AccountsGuard, authed_key: &KeySpec,
+               auth_in: Authorisation<KeySpec>)
                -> Option<Authorisation<AccountScope>> {
     let gl = &ag.get().ssh_keys;
     for sk in &self.authorised {
       if_chain!{
         if let Some(sk) = sk;
-        if sk.id == id;
-        if let Some(key) = gl.keys.get(sk.id);
-        if &key.nonce == nonce;
+        if sk.id == authed_key.id;
+        if let Some(want_key) = gl.keys.get(sk.id);
+        if &want_key.nonce == &authed_key.nonce;
         then {
           // We have checked id and nonce, against those allowed
           let auth = auth_in.therefore_ok();
