@@ -35,7 +35,7 @@ impl<T> Authorisation<T> {
   pub const fn authorised(_v: &T) -> Authorisation<T> {
     Authorisation(PhantomData)
   }
-  pub fn map<U>(self, _f: fn(&T) -> &U) -> Authorisation<U> {
+  pub fn map<U,F>(self, _f: F) -> Authorisation<U> where F: Fn(&T) -> &U {
     self.therefore_ok()
   }
   /// Minor proof obligation: in this case, authorised access to `T`
