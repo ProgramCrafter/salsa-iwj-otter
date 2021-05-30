@@ -55,6 +55,8 @@ type Euid = Result<Uid, ConnectionEuidDiscoverError>;
 enum AuthState {
   None { euid: Euid },
   Superuser { euid: Euid, auth: AuthorisationSuperuser },
+  Ssh { id: sshkeys::Id, nonce: sshkeys::Nonce,
+        auth: Authorisation<(sshkeys::Id, sshkeys::Nonce)>, },
 }
 
 #[derive(Debug,Clone)]
@@ -141,6 +143,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       let preserve_euid = match &cs.authstate {
         AuthState::None      { euid, .. } => euid,
         AuthState::Superuser { euid, .. } => euid,
+        AuthState::Ssh { .. } => throw!(ME::AuthorisationError),
       }.clone();
 
       if !enable {
@@ -151,6 +154,14 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
         let auth = auth.therefore_ok();
         cs.authstate = AuthState::Superuser { euid: preserve_euid, auth };
       }
+      Fine
+    },
+    MC::SetRestrictedSshScope { id, nonce } => {
+      let good_uid = Some(config().ssh_proxy_uid);
+      let auth = cs.authorised_uid(good_uid, Some("SetRestrictedScope"))
+        .map_err(|_| ME::AuthorisationError)?;
+      let auth = auth.therefore_ok();
+      cs.authstate = AuthState::Ssh { id, nonce, auth };
       Fine
     },
 
@@ -1527,6 +1538,8 @@ impl CommandStreamData<'_> {
     let &client_euid = match &self.authstate {
       AuthState::Superuser { euid, .. } => euid,
       AuthState::None      { euid, .. } => euid,
+      AuthState::Ssh { .. } => throw!(anyhow!(
+        "{}: cannot authorise by uid as ,now in AuthState::Ssh")),
     }.as_ref().map_err(|e| e.clone())?;
     let server_uid = Uid::current();
     if client_euid.is_root() ||
@@ -1727,11 +1740,27 @@ fn authorise_scope_direct(cs: &CommandStreamData, ag: &AccountsGuard,
 }
 
 #[throws(AuthorisationError)]
-fn do_authorise_scope(cs: &CommandStreamData, _ag: &AccountsGuard,
+fn do_authorise_scope(cs: &CommandStreamData, ag: &AccountsGuard,
                       wanted: &AccountScope)
                       -> Authorisation<AccountScope> {
   match &cs.authstate {
     &AuthState::Superuser { auth, .. } => return auth.into(),
+
+    &AuthState::Ssh { id: sshkey_id, ref nonce, auth } => {
+      let wanted_base_account = AccountName {
+        scope: wanted.clone(),
+        subaccount: default(),
+      };
+      if_chain!{
+        if let Ok::<_,AccountNotFound>
+          ((record, _acctid)) = ag.lookup(&wanted_base_account);
+        if let
+          Some(auth) = record.ssh_keys.check(ag, sshkey_id, &nonce, auth);
+        then { return Ok(auth) }
+        else { throw!(AuthorisationError("ssh key not authorised".into())); }
+      }
+    },
+
     _ => {},
   }
 
@@ -1742,6 +1771,13 @@ fn do_authorise_scope(cs: &CommandStreamData, _ag: &AccountsGuard,
         cs.authorised_uid(None,None)?
       };
       y.therefore_ok()
+    }
+
+    AccountScope::Ssh{..} => {
+      // Should have been dealt with earlier, when we checked authstate.
+      throw!(AuthorisationError(
+        "account must be accessed via ssh proxy"
+          .into()));
     }
 
     AccountScope::Unix { user: wanted } => {

@@ -22,6 +22,7 @@ slotmap::new_key_type!{
 pub enum AccountScope {
   Server,
   Unix { user: String },
+  Ssh { user: String },
 }
 
 
@@ -150,6 +151,11 @@ impl AccountScope {
         f(":")?;
         f(user)?;
       }
+      AS::Ssh { user } => {
+        f("ssh")?;
+        f(":")?;
+        pct(user, &mut f)?;
+      }
     };
     for n in ns {
       f(":")?;
@@ -204,6 +210,7 @@ impl AccountName {
     match &self.scope {
       AS::Server => "*SERVER*".into(),
       AS::Unix { user } => user.clone(),
+      AS::Ssh { user } => user.clone(),
     }
   }
 }

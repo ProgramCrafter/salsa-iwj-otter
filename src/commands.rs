@@ -8,6 +8,7 @@ use crate::prelude::*;
 pub enum MgmtCommand {
   Noop,
   SetSuperuser(bool),
+  SetRestrictedSshScope { id: sshkeys::Id, nonce: sshkeys::Nonce },
 
   CreateAccount(AccountDetails),
   UpdateAccount(AccountDetails),

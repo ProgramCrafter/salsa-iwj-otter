@@ -3,6 +3,7 @@
 // There is NO WARRANTY.
 
 use crate::prelude::*;
+use pwd::Passwd;
 
 pub const EXIT_SPACE     : i32 =  2;
 pub const EXIT_NOTFOUND  : i32 =  4;
@@ -39,6 +40,7 @@ pub struct ServerConfigSpec {
   pub specs_dir: Option<String>,
   pub sendmail: Option<String>,
   pub ssh_proxy_bin: Option<String>,
+  pub ssh_proxy_user: Option<String>,
   pub authorized_keys: Option<String>,
   pub authorized_keys_include: Option<String>,
   pub debug_js_inject_file: Option<String>,
@@ -72,6 +74,7 @@ pub struct ServerConfig {
   pub specs_dir: String,
   pub sendmail: String,
   pub ssh_proxy_bin: String,
+  pub ssh_proxy_uid: Uid,
   pub authorized_keys: String,
   pub authorized_keys_include: String,
   pub debug_js_inject: Arc<String>,
@@ -126,7 +129,7 @@ impl ServerConfigSpec {
       template_dir, specs_dir, nwtemplate_dir, wasm_dir, libexec_dir, usvg_bin,
       log, bundled_sources, shapelibs, sendmail,
       debug_js_inject_file, check_bundled_sources, fake_rng,
-      ssh_proxy_bin, authorized_keys, authorized_keys_include,
+      ssh_proxy_bin, ssh_proxy_user, authorized_keys, authorized_keys_include,
     } = self;
 
     let game_rng = fake_rng.make_game_rng();
@@ -171,6 +174,22 @@ impl ServerConfigSpec {
     let authorized_keys_include = authorized_keys_include.unwrap_or_else(
       || format!("{}.static", authorized_keys)
     );
+
+    let ssh_proxy_uid = match ssh_proxy_user {
+      None => Uid::current(),
+      Some(spec) => Uid::from_raw(if let Ok(num) = spec.parse() {
+        num
+      } else {
+        let pwent = (|| Ok::<_,AE>({
+          Passwd::from_name(&spec)
+            .map_err(|e| anyhow!("lookup failed: {}", e))?
+            .ok_or_else(|| anyhow!("does not exist"))?
+        }))()
+          .with_context(|| spec.clone())
+          .context("ssh_proxy_uidr")?;
+        pwent.uid
+      })
+    };
 
     let shapelibs = shapelibs.unwrap_or_else(||{
       let glob = defpath(None, DEFAULT_LIBRARY_GLOB);
@@ -253,7 +272,7 @@ impl ServerConfigSpec {
       template_dir, specs_dir, nwtemplate_dir, wasm_dir, libexec_dir,
       bundled_sources, shapelibs, sendmail, usvg_bin,
       debug_js_inject, check_bundled_sources, game_rng, prctx,
-      ssh_proxy_bin, authorized_keys, authorized_keys_include,
+      ssh_proxy_bin, ssh_proxy_uid, authorized_keys, authorized_keys_include,
     };
     trace_dbg!("config resolved", &server);
     Ok(WholeServerConfig {
