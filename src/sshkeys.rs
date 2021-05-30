@@ -200,10 +200,10 @@ impl PerScope {
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct MgmtKeyReport {
-  key: KeySpec,
-  data: PubData,
-  comment: Comment,
-  problem: Option<KeyError>,
+  pub key: KeySpec,
+  pub data: PubData,
+  pub comment: Comment,
+  pub problem: Option<KeyError>,
 }
 
 macro_rules! def_pskeys_get {
