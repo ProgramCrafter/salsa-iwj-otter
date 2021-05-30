@@ -68,8 +68,8 @@ pub struct ScopeKey {
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct KeySpec {
-  id: sshkeys::Id,
-  nonce: sshkeys::Nonce,
+  pub id: sshkeys::Id,
+  pub nonce: sshkeys::Nonce,
 }
 
 mod veneer {
