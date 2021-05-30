@@ -50,7 +50,7 @@ impl AssetUrlKey {
       &exp.0[..],
       &got.0[..],
     )) { throw!(BadAssetUrlToken) }
-    else { Authorisation::authorised(v) }
+    else { Authorisation::promise_for(v) }
   }
 }
 

@@ -161,7 +161,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       } else {
         let ag = AccountsGuard::lock();
         let auth = authorise_scope_direct(cs, &ag, &AccountScope::Server)?;
-        let auth = auth.therefore_ok();
+        let auth = auth.so_promise();
         cs.authstate = AuthState::Superuser { euid: preserve_euid, auth };
       }
       Fine
@@ -170,7 +170,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       let good_uid = Some(config().ssh_proxy_uid);
       let auth = cs.authorised_uid(good_uid, Some("SetRestrictedScope"))
         .map_err(|_| ME::AuthorisationError)?;
-      let auth = auth.therefore_ok();
+      let auth = auth.so_promise();
       cs.authstate = AuthState::Ssh { key, auth };
       Fine
     },
@@ -229,7 +229,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       cs.account = Some(AccountSpecified {
         cooked: wanted_account.to_string(),
         notional_account: wanted_account,
-        auth: auth.therefore_ok(),
+        auth: auth.so_promise(),
       });
       Fine
     }
@@ -278,7 +278,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       execute_for_game(cs, &mut ag, &mut ig,
                        insns, MgmtGameUpdateMode::Bulk)
         .map_err(|e|{
-          let ig = ig.by(Authorisation::authorise_any());
+          let ig = ig.by(Authorisation::promise_any());
           let name = ig.name.clone();
           let InstanceGuard { c, .. } = ig;
           Instance::destroy_game(&mut games, c, auth)
@@ -352,7 +352,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     MC::ListGames { all } => {
       let ag = AccountsGuard::lock();
       let names = Instance::list_names(
-        None, Authorisation::authorise_any());
+        None, Authorisation::promise_any());
       let auth_all = if all == Some(true) {
         let auth = cs.superuser().ok_or(ME::AuthorisationError)?.into();
         Some(auth)
@@ -722,7 +722,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let (player, update, logentry) =
         ig.player_new(gpl, ipl, arecord.account.clone(), logentry)?;
 
-      let atr = ig.player_access_reset(ag, player, auth.therefore_ok())?;
+      let atr = ig.player_access_reset(ag, player, auth.so_promise())?;
 
       (U{ pcs: vec![],
           log: vec![ logentry ],
@@ -1220,7 +1220,7 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
 
   let who = if_chain! {
     let account = &cs.current_account()?.notional_account;
-    let ig = igu.by_ref(Authorisation::authorise_any());
+    let ig = igu.by_ref(Authorisation::promise_any());
     if let Ok((_, acctid)) = ag.lookup(account);
     if let Some((player,_)) = ig.iplayers.iter()
       .filter(|(_,ipr)| ipr.ipl.acctid == acctid)
@@ -1286,7 +1286,7 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
         execute_game_insn(cs, ag, igu, insn, &who,
                           &mut to_permute)?;
       let st = uh_auth.get_or_insert_with(||{
-        let auth = Authorisation::authorised(&*ig.name);
+        let auth = Authorisation::promise_for(&*ig.name);
         let uh = UpdateHandler::from_how(how);
         St { uh, auth, have_deleted: false }
       });
@@ -1323,7 +1323,7 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
 
     })();
     (r, {
-      let ig = igu.by_mut(Authorisation::authorise_any());
+      let ig = igu.by_mut(Authorisation::promise_any());
       let g = &mut **ig;
       let gs = &mut g.gs;
       to_permute.implement(&mut gs.players,
@@ -1334,7 +1334,7 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   });
 
   if let Some(uu) = uu {
-    let mut ig = igu.by_mut(Authorisation::authorise_any());
+    let mut ig = igu.by_mut(Authorisation::promise_any());
     let mut prepub = PrepareUpdatesBuffer::new(&mut ig, None);
     uu(&mut prepub);
     prepub.finish();
@@ -1572,7 +1572,7 @@ impl CommandStreamData<'_> {
        client_euid == server_uid ||
        Some(client_euid) == wanted
     {
-      return Authorisation::authorised(&client_euid);
+      return Authorisation::promise_for(&client_euid);
     }
     throw!(anyhow!("{}: euid mismatch: client={:?} server={:?} wanted={:?}{}",
                    &self.desc, client_euid, server_uid, wanted,
@@ -1609,7 +1609,7 @@ impl CommandStreamData<'_> {
         Authorisation<InstanceName>)
   {
     let ipl_unauth = {
-      let ig = ig.by_ref(Authorisation::authorise_any());
+      let ig = ig.by_ref(Authorisation::promise_any());
       ig.iplayers.byid(player)?
     };
     let how = PCH::InstanceOrOnlyAffectedAccount(ipl_unauth.ipl.acctid);
@@ -1660,7 +1660,7 @@ impl CommandStreamData<'_> {
       let subject_is = |object_acctid: AccountId|{
         if subject_acctid == object_acctid {
           let auth: Authorisation<InstanceName>
-            = Authorisation::authorise_any();
+            = Authorisation::promise_any();
           return Some(auth);
         }
         return None;
@@ -1673,7 +1673,7 @@ impl CommandStreamData<'_> {
         PCH::InstanceOrOnlyAffectedPlayer(object_player) => {
           if_chain!{
             if let Some(object_ipr) =
-              ig.by_ref(Authorisation::authorise_any()).iplayers
+              ig.by_ref(Authorisation::promise_any()).iplayers
               .get(object_player);
             then { subject_is(object_ipr.ipl.acctid) }
             else { None }
@@ -1687,7 +1687,7 @@ impl CommandStreamData<'_> {
       let auth = {
         let subject = &current_account.cooked;
         let (acl, owner) = {
-          let ig = ig.by_ref(Authorisation::authorise_any());
+          let ig = ig.by_ref(Authorisation::promise_any());
           (&ig.acl, &ig.name.account)
         };
         let owner_account = owner.to_string();
@@ -1736,7 +1736,7 @@ fn authorise_by_account(cs: &CommandStreamData, ag: &AccountsGuard,
   ag.check(&current.notional_account)?;
 
   if let Some(y) = cs.superuser() {
-    return y.therefore_ok();
+    return y.so_promise();
   }
 
   if &current.notional_account == &wanted.account {
@@ -1796,7 +1796,7 @@ fn do_authorise_scope(cs: &CommandStreamData, ag: &AccountsGuard,
       let y: Authorisation<Uid> = {
         cs.authorised_uid(None,None)?
       };
-      y.therefore_ok()
+      y.so_promise()
     }
 
     AccountScope::Ssh{..} => {
@@ -1815,7 +1815,7 @@ fn do_authorise_scope(cs: &CommandStreamData, ag: &AccountsGuard,
 
         const SERVER_ONLY: (AuthorisedIf, Authorisation<InUserList>) = (
           AuthorisedIf { authorised_for: None },
-          Authorisation::authorised(&InUserList),
+          Authorisation::promise_for(&InUserList),
         );
 
         let pwent = Passwd::from_name(&wanted)
@@ -1828,7 +1828,7 @@ fn do_authorise_scope(cs: &CommandStreamData, ag: &AccountsGuard,
               "requested username {:?} not found", &wanted
             ))
           )?;
-        let pwent_ok = Authorisation::authorised(&pwent);
+        let pwent_ok = Authorisation::promise_for(&pwent);
 
         let ((uid, in_userlist_ok), xinfo) = (||{ <Result<_,AE>>::Ok({
           let allowed = BufReader::new(match File::open(USERLIST) {
@@ -1849,7 +1849,7 @@ fn do_authorise_scope(cs: &CommandStreamData, ag: &AccountsGuard,
                   (AuthorisedIf{ authorised_for: Some(
                     Uid::from_raw(pwent.uid)
                   )},
-                   Authorisation::authorised(&InUserList),
+                   Authorisation::promise_for(&InUserList),
                   ),
                   None
                 ))
@@ -1872,7 +1872,7 @@ fn do_authorise_scope(cs: &CommandStreamData, ag: &AccountsGuard,
       
         (pwent_ok, uid_ok, in_userlist_ok).combine()
       };
-      y.therefore_ok()
+      y.so_promise()
     },
 
   }

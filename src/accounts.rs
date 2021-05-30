@@ -559,7 +559,7 @@ pub mod loaded_acl {
         } { continue }
         if needed & deny != 0 { break }
         if allow != 0 { needed &= !(allow | test_existence) }
-        if needed == 0 { return Authorisation::authorise_any() }
+        if needed == 0 { return Authorisation::promise_any() }
       }
       Err(if needed & test_existence != 0 {
         P::NOT_FOUND

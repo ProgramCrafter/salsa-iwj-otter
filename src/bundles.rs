@@ -265,7 +265,7 @@ impl Id {
 
   pub fn path(&self, instance: &Unauthorised<InstanceGuard<'_>, InstanceName>,
           auth: Authorisation<Id>) -> String {
-    self.path_(&instance.by_ref(auth.therefore_ok()).name)
+    self.path_(&instance.by_ref(auth.so_promise()).name)
   }
 
   #[throws(IE)]
@@ -284,7 +284,7 @@ impl Id {
   #[throws(IE)]
   pub fn open(&self, instance: &Instance) -> Option<fs::File> {
     let name = &*instance.name;
-    let auth = Authorisation::authorised(name).bundles();
+    let auth = Authorisation::promise_for(name).bundles();
     self.open_by_name(name, auth)?
   }
 
@@ -296,7 +296,7 @@ impl Id {
 //---------- displaing/presenting/authorising ----------
 
 impl Authorisation<InstanceName> {
-  pub fn bundles(self) -> Authorisation<Id> { self.therefore_ok() }
+  pub fn bundles(self) -> Authorisation<Id> { self.so_promise() }
 }
 
 impl Display for State {

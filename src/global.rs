@@ -313,12 +313,12 @@ impl InstanceWeakRef {
 impl<A> Unauthorised<InstanceRef, A> {
   #[throws(GameBeingDestroyed)]
   pub fn lock<'r>(&'r self) -> Unauthorised<InstanceGuard<'r>, A> {
-    let must_not_escape = self.by_ref(Authorisation::authorise_any());
+    let must_not_escape = self.by_ref(Authorisation::promise_any());
     Unauthorised::of(must_not_escape.lock()?)
   }
 
   pub fn lock_even_destroying<'r>(&'r self) -> Unauthorised<InstanceGuard<'r>, A> {
-    let must_not_escape = self.by_ref(Authorisation::authorise_any());
+    let must_not_escape = self.by_ref(Authorisation::promise_any());
     Unauthorised::of(InstanceGuard {
       c: must_not_escape.lock_even_destroying(),
       gref: must_not_escape.clone(),
@@ -326,7 +326,7 @@ impl<A> Unauthorised<InstanceRef, A> {
   }
 
   pub fn lock_bundles<'r>(&'r self) -> Unauthorised<BundlesGuard<'_>, A> {
-    let must_not_escape = self.by_ref(Authorisation::authorise_any());
+    let must_not_escape = self.by_ref(Authorisation::promise_any());
     Unauthorised::of(must_not_escape.lock_bundles())
   }
 }

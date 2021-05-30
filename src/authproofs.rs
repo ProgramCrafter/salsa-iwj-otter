@@ -35,22 +35,22 @@ pub type AuthorisationSuperuser = Authorisation<Global>;
 impl<T> Authorisation<T> {
   /// Proof obligation: access to this `T` has been authorised.
   #[inline]
-  pub const fn authorised(_v: &T) -> Authorisation<T> {
+  pub const fn promise_for(_v: &T) -> Authorisation<T> {
     Authorisation(PhantomData)
   }
   #[inline]
   pub fn map<U,F>(self, _f: F) -> Authorisation<U> where F: Fn(&T) -> &U {
-    self.therefore_ok()
+    self.so_promise()
   }
   /// Minor proof obligation: in this case, authorised access to `T`
   /// implies authorised access to `U`.
   #[inline]
-  pub fn therefore_ok<U>(self) -> Authorisation<U> {
+  pub fn so_promise<U>(self) -> Authorisation<U> {
     Authorisation(PhantomData)
   }
   /// Proof obligation: access to `T` has been authorised.
   #[inline]
-  pub const fn authorise_any() -> Authorisation<T> {
+  pub const fn promise_any() -> Authorisation<T> {
     Authorisation(PhantomData)
   }
 }
@@ -59,7 +59,7 @@ impl<T:Serialize> From<Authorisation<Global>> for Authorisation<T> {
   // ^ we need a bound not met by Global or we conflict with From<T> for T
   #[inline]
   fn from(global: Authorisation<Global>) -> Self {
-    global.therefore_ok()
+    global.so_promise()
   }
 }
 

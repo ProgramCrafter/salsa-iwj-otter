@@ -167,7 +167,7 @@ impl PerScope {
         if &want_key.nonce == &authed_key.nonce;
         then {
           // We have checked id and nonce, against those allowed
-          let auth = auth_in.therefore_ok();
+          let auth = auth_in.so_promise();
           return Some(auth);
         }
       }

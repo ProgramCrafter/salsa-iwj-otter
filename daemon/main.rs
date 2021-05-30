@@ -251,7 +251,7 @@ fn bundle<'r>(instance: Parse<InstanceName>,
     .map_err(|_| BadAssetUrlToken)?;
   let ig = gref.lock().map_err(|_| BadAssetUrlToken)?;
   let auth = {
-    let ig = ig.by_ref(Authorisation::authorise_any());
+    let ig = ig.by_ref(Authorisation::promise_any());
     ig.asset_url_key.check("bundle", &(instance, id), &token)?
   }.map(|(_,id)| id);
   let path = id.path(&ig, auth);
