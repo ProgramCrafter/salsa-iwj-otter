@@ -203,6 +203,12 @@ impl<R:Read> FrameReader<R> {
   }
 
   #[throws(io::Error)]
+  pub fn into_stream(mut self) -> BufReader<Fuse<R>> {
+    self.finish_reading_frame()?;
+    self.inner
+  }
+
+  #[throws(io::Error)]
   fn finish_reading_frame(&mut self) {
     while matches_doesnot!(
       self.state,
@@ -355,6 +361,12 @@ impl<'r, R:Read> Read for ReadFrame<'r, R> {
 impl<W:Write> FrameWriter<W> {
   pub fn new(w: W) -> FrameWriter<W> {
     FrameWriter { inner: Fuse::new(w), in_frame: None }
+  }
+
+  #[throws(io::Error)]
+  pub fn into_stream(mut self) -> Fuse<W> {
+    self.tidy()?;
+    self.inner
   }
 
   #[throws(io::Error)]
