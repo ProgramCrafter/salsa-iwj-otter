@@ -172,9 +172,31 @@ pub struct MgmtKeyReport {
   problem: Option<KeyError>,
 }
 
+macro_rules! def_pskeys_get {
+  ($trait:ident, $f:ident, $get:ident, $($mut:tt)?) => {
+    #[ext(name=$trait)]
+    impl DenseSlotMap<AccountId, AccountRecord> {
+      #[throws(MgmtError)]
+      fn $f(& $($mut)? self, acctid: AccountId) -> & $($mut)? PerScope {
+        let record = self.$get(acctid).ok_or(AccountNotFound)?;
+        if ! record.account.subaccount.is_empty() {
+          throw!(ME::NoSshKeysForSubaccount)
+        }
+        & $($mut)? record.ssh_keys
+      }
+    }
+  }
+}
+
+def_pskeys_get!{ RecordsExtImm, pskeys_get, get    ,     }
+def_pskeys_get!{ RecordsExtMut, pskeys_mut, get_mut, mut }
+
 impl AccountsGuard {
-  pub fn keys(&mut self, ps: &PerScope) -> Vec<MgmtKeyReport> {
-    let gl = self.ssh_keys_mut();
+  #[throws(MgmtError)]
+  pub fn sshkeys_report(&self, acctid: AccountId) -> Vec<MgmtKeyReport> {
+    let accounts = self.get();
+    let gl = &accounts.ssh_keys;
+    let ps = &accounts.records.pskeys_get(acctid)?;
     let dirty_error =
       if gl.authkeys_dirty { Some(KeyError::Dirty) }
       else { None };
@@ -195,11 +217,13 @@ impl AccountsGuard {
 
   // not a good idea to speicfy a problem, but "whatever"
   #[throws(ME)]
-  pub fn add_key(&mut self, ps: &mut PerScope,
-                 new_akl: AuthkeysLine) -> (usize, Id) {
+  pub fn sshkeys_add(&mut self, acctid: AccountId,
+                     new_akl: AuthkeysLine) -> (usize, Id) {
+    let accounts = self.get_mut();
+    let gl = &mut accounts.ssh_keys;
+    let ps = accounts.records.pskeys_mut(acctid)?;
     let (data, comment) = new_akl.parse()?;
     let fp = data.fingerprint().map_err(KeyError::from)?;
-    let gl = self.ssh_keys_mut();
     let fp = Arc::new(fp);
     let _ = gl.fps();
     let fpe = gl.fps.as_mut().unwrap().entry(fp.clone());
@@ -236,15 +260,17 @@ impl AccountsGuard {
     // UNSAVED
     self.save_accounts_now()?;
     // BROKEN
-    self.ssh_keys_mut().rewrite_authorized_keys()?;
+    self.get_mut().ssh_keys.rewrite_authorized_keys()?;
     // PRESENT
     (index, id)
   }
 
   #[throws(ME)]
-  pub fn remove_key(&mut self, ps: &mut PerScope,
+  pub fn remove_key(&mut self, acctid: AccountId,
                     index: usize, id: Id) {
-    let gl = self.ssh_keys_mut();
+    let accounts = self.get_mut();
+    let gl = &mut accounts.ssh_keys;
+    let ps = accounts.records.pskeys_mut(acctid)?;
     if id == default() {
       throw!(ME::InvalidSshKeyId);
     }
@@ -265,7 +291,12 @@ impl AccountsGuard {
     let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(
       || self.save_accounts_now()
     ));
-    let gl = self.ssh_keys_mut();
+
+    // Must re-borrow everything since save_accounts_now needed a
+    // reference to all of it.
+    let accounts = self.get_mut();
+    let gl = &mut accounts.ssh_keys;
+    let ps = accounts.records.pskeys_mut(acctid).expect("aargh!");
     let key = gl.keys.get_mut(id).expect("aargh!");
 
     if ! matches!(r, Ok(Ok(()))) {

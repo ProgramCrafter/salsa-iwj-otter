@@ -438,8 +438,11 @@ impl AccountsGuard {
     fs::rename(&tmp, &main)?;
   }
 
-  pub fn ssh_keys_mut(&mut self) -> &mut sshkeys::Global {
-    &mut self.0.get_or_insert_with(default).ssh_keys
+  pub fn get(&self) -> &Accounts {
+    self.0.as_ref().expect("loaded")
+  }
+  pub fn get_mut(&mut self) -> &mut Accounts {
+    self.0.as_mut().expect("loaded")
   }
 }
 
