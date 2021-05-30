@@ -273,8 +273,8 @@ impl AccountsGuard {
   }
 
   #[throws(ME)]
-  pub fn remove_key(&mut self, acctid: AccountId,
-                    index: usize, id: Id, _:Auth) {
+  pub fn sshkeys_remove(&mut self, acctid: AccountId,
+                        index: usize, id: Id, _:Auth) {
     let accounts = self.get_mut();
     let gl = &mut accounts.ssh_keys;
     let ps = accounts.records.pskeys_mut(acctid)?;
