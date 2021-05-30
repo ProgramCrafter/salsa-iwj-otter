@@ -62,6 +62,7 @@ pub enum MgmtCommand {
   SshListKeys,
   SshAddKey { akl: sshkeys::AuthkeysLine },
   SshDeleteKey { index: usize, id: sshkeys::Id },
+  ThisConnAuthBy, // -> Fine or SshKeySpec
 
   LoadFakeRng(Vec<String>),
 }
@@ -104,9 +105,16 @@ pub enum MgmtResponse {
   Bundle { bundle: bundles::Id },
   SshKeys(Vec<sshkeys::MgmtKeyReport>),
   SshKeyAdded { index: usize, id: sshkeys::Id },
+  ThisConnAuthBy(MgmtThisConnAuthBy),
 }
 
 pub type MgmtBundleList = BTreeMap<bundles::Id, bundles::State>;
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+pub enum MgmtThisConnAuthBy {
+  Local,
+  Ssh { key: sshkeys::KeySpec },
+}
 
 #[derive(Debug,Serialize,Deserialize)]
 pub enum MgmtGameInstruction {

@@ -114,7 +114,7 @@ impl MgmtChannel {
       Progress(_) => panic!(),
       Fine | AccountsList{..} | GamesList{..} |
       Libraries(_) | LibraryItems(_) | Bundles{..} | Bundle{..} => { },
-      SshKeys(..) | SshKeyAdded{..} => { },
+      SshKeys(..) | SshKeyAdded{..} | ThisConnAuthBy{..} => { },
       AlterGame { error: None, .. } => { },
       Error { error } => {
         Err(error.clone()).context(

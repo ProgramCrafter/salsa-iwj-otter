@@ -166,6 +166,14 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       }
       Fine
     },
+    MC::ThisConnAuthBy => {
+      use MgmtThisConnAuthBy as MTCAB;
+      MR::ThisConnAuthBy(match &cs.authstate {
+        AuthState::None      { .. } => MTCAB::Local,
+        AuthState::Superuser { .. } => MTCAB::Local,
+        AuthState::Ssh  { key, .. } => MTCAB::Ssh { key: key.clone() },
+      })
+    }
     MC::SetRestrictedSshScope { key } => {
       let good_uid = Some(config().ssh_proxy_uid);
       let auth = cs.authorised_uid(good_uid, Some("SetRestrictedScope"))
