@@ -162,7 +162,6 @@ pub use crate::slotmap_slot_idx::*;
 pub use crate::spec::*;
 pub use crate::spec::piece_specs::{FaceColourSpecs, SimpleCommon};
 pub use crate::sse;
-pub use crate::sshkeys;
 pub use crate::toml_de;
 pub use crate::timedfd::*;
 pub use crate::termprogress;

@@ -8,6 +8,9 @@ use parking_lot::{Mutex, const_mutex, MutexGuard};
 
 use authproofs::*;
 
+#[path="sshkeys.rs"]
+pub mod sshkeys;
+
 //---------- simple types ----------
 
 slotmap::new_key_type!{
