@@ -1871,3 +1871,164 @@ mod mgmtchannel_proxy {
     call,
   )}
 }
+
+//---------- set-ssh-keys ----------
+
+mod set_ssh_keys {
+  use super::*;
+
+  #[derive(Default,Debug)]
+  struct Args {
+    add: bool,
+    remove_current: bool,
+    keys: String,
+  }
+
+  fn subargs(sa: &mut Args) -> ArgumentParser {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+    ap.refer(&mut sa.add)
+      .add_option(&["--add"],StoreTrue,
+                  "add keys, only (ie, leave all existing keys)");
+    ap.refer(&mut sa.remove_current)
+      .add_option(&["--allow-remove-current"],StoreTrue,
+                  "allow removing the key currently being used for access");
+    ap.refer(&mut sa.keys).required()
+      .add_argument("KEYS-FILE", Store,
+                  "file of keys, in authorized_keys formaat \
+                   (`-` means stdin)");
+    ap
+  }
+
+  #[throws(AE)]
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
+    let mut conn = connect(&ma)?;
+
+    use sshkeys::*;
+
+    #[derive(Debug)]
+    struct Currently {
+      index: usize,
+      mkr: MgmtKeyReport,
+      thisconn_retain: bool,
+    }
+
+    #[derive(Debug,Default)]
+    struct St {
+      wanted: Option<(usize, AuthkeysLine)>,
+      currently: Vec<Currently>,
+    }
+    type PubDataString = String;
+    let mut states: HashMap<PubDataString, St> = default();
+
+    // read wanted set
+
+    let akf: Box<dyn Read> = if args.keys == "-" { Box::new(io::stdin()) }
+    else {
+      Box::new(File::open(&args.keys)
+        .with_context(|| args.keys.clone())
+        .context("KEYS-FILE")?)
+    };
+    let akf = BufReader::new(akf);
+
+    for (lno, l) in akf.lines().enumerate() {
+      let l = l.context("read KEYS-FILE")?;
+      let l = l.trim();
+      if l.starts_with("#") || l == "" { continue }
+      let l = AuthkeysLine(l.to_owned());
+      let (pubdata, _comment) = l.parse()
+        .with_context(|| format!("parse KEYS-FILE line {}", lno))?;
+      let st = states.entry(pubdata.to_string()).or_insert_with(default);
+      if let Some((lno0,_)) = st.wanted { throw!(
+        anyhow!("KEYS-FILE has duplicate key, lines {} {}", lno0, lno)
+      )}
+      st.wanted = Some((lno, l));
+    }
+
+    // find the one we're using now
+
+    let using = if args.remove_current { None } else {
+      use MgmtResponse::ThisConnAuthBy as TCAB;
+      use MgmtThisConnAuthBy as MTCAB;
+      match conn.cmd(&MC::ThisConnAuthBy).context("find current auth")? {
+        TCAB(MTCAB::Ssh { key }) => Some(key),
+        TCAB(MTCAB::Local) => None,
+        #[allow(unreachable_patterns)] TCAB(q) => throw!(anyhow!(
+          "unexpected ThisConnAuthBy {:?}, \
+           cannot check if we are removing the current authentication, \
+           (and --allow-remove-current not specified)", q)),
+        _ => throw!(anyhow!("unexpected response to ThisConnAuthBy")),
+      }
+    };
+
+    // obtain current set
+
+    for (index, mkr) in match conn.cmd(&MC::SshListKeys)
+      .context("list existing keys")?
+    {
+      MR::SshKeys(report) => report,
+      _ => throw!(anyhow!("unexpected response to SshListKeys")),
+    }
+      .into_iter().enumerate()
+    {
+      let pubdata_s = mkr.data.to_string();
+      let st = states.entry(pubdata_s).or_insert_with(default);
+      let thisconn_retain = Some(&mkr.key) == using.as_ref();
+      st.currently.push(Currently { index, mkr, thisconn_retain });
+    }
+
+    // check we don't want to bail
+
+    for st in states.values() {
+      if st.wanted.is_none() {
+        for c in &st.currently {
+          if c.thisconn_retain {
+            throw!(anyhow!(
+              "refusing to remove currently-being-used key #{} {:?} {:?}",
+              c.index, &c.mkr.data, &c.mkr.comment));
+          }
+        }
+      }
+    }
+
+    // delete any with problems
+    // doing this even for wanted keys prevents constant buildup
+    // of problem keys
+
+    for st in states.values() {
+      for c in &st.currently {
+        if c.mkr.problem.is_some() {
+          conn.cmd(&MC::SshDeleteKey { index: c.index, id: c.mkr.key.id })
+            .with_context(|| format!("delete broken key #{}", c.index))?;
+        }
+      }
+    }
+
+    // add new keys
+
+    for st in states.values() {
+      if_let!{ Some((lno, akl)) = &st.wanted; else continue };
+      if st.currently.iter().any(|c| c.mkr.problem.is_none()) { continue }
+      conn.cmd(&MC::SshAddKey { akl: akl.clone() })
+        .with_context(|| format!("add key from KEYS-FILE line {}", lno))?;
+    }
+
+    // delete old keys
+
+    for st in states.values() {
+      if st.wanted.is_some() { continue }
+      for c in &st.currently {
+        if c.mkr.problem.is_some() { continue /* we deleted it already */ }
+        conn.cmd(&MC::SshDeleteKey { index: c.index, id: c.mkr.key.id })
+          .with_context(|| format!("delete old key #{}", c.index))?;
+      }
+    }
+  }
+
+  inventory::submit!{Subcommand(
+    "set-ssh-keys",
+    "set SSH keys for remote management access authentication",
+    call,
+  )}
+}
