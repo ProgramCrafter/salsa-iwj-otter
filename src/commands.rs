@@ -59,6 +59,10 @@ pub enum MgmtCommand {
     pat: String,
   },
 
+  SshListKeys,
+  SshAddKey { akl: sshkeys::AuthkeysLine },
+  SshDeleteKey { index: usize, id: sshkeys::Id },
+
   LoadFakeRng(Vec<String>),
 }
 
@@ -98,6 +102,8 @@ pub enum MgmtResponse {
   LibraryItems(Vec<ItemEnquiryData>),
   Bundles { bundles: MgmtBundleList },
   Bundle { bundle: bundles::Id },
+  SshKeys(Vec<sshkeys::MgmtKeyReport>),
+  SshKey { index: usize, id: sshkeys::Id },
 }
 
 pub type MgmtBundleList = BTreeMap<bundles::Id, bundles::State>;

@@ -136,6 +136,17 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     (r, auth)
   }
 
+  #[throws(MgmtError)]
+  fn start_access_ssh_keys(cs: &CommandStreamData)
+      -> (AccountsGuard, AccountId, Authorisation<AccountScope>)
+  {
+    let ag = AccountsGuard::lock();
+    let wanted = &cs.current_account()?.notional_account;
+    let acctid = ag.check(wanted)?;
+    let auth = authorise_scope_direct(cs, &ag, &wanted.scope)?;
+    (ag, acctid, auth)
+  }
+
   let resp = (|| Ok::<_,MgmtError>(match cmd {
     MC::Noop => Fine,
 
@@ -425,6 +436,22 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
             Ok(results)
           })?;
       MR::LibraryItems(results)
+    }
+
+    MC::SshListKeys => {
+      let (ag, acctid, auth) = start_access_ssh_keys(&cs)?;
+      let list = ag.sshkeys_report(acctid, auth)?;
+      MR::SshKeys(list)
+    }
+    MC::SshAddKey { akl } => {
+      let (mut ag, acctid, auth) = start_access_ssh_keys(&cs)?;
+      let (index, id) = ag.sshkeys_add(acctid, akl, auth)?;
+      MR::SshKey { index, id }
+    }
+    MC::SshDeleteKey { index, id } => {
+      let (mut ag, acctid, auth) = start_access_ssh_keys(&cs)?;
+      ag.sshkeys_remove(acctid, index, id, auth)?;
+      MR::Fine
     }
 
     MC::LoadFakeRng(ents) => {
