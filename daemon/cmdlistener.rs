@@ -61,7 +61,7 @@ enum AuthState {
 struct AccountSpecified {
   notional_account: AccountName, // might not exist
   cooked: String, // account.to_string()
-  auth: Authorisation<AccountName>,
+  auth: Authorisation<AccountName>, // but we did check permissions
 }
 
 enum PermissionCheckHow {
@@ -1691,10 +1691,28 @@ fn authorise_for_account(
 fn authorise_by_account(cs: &CommandStreamData, ag: &AccountsGuard,
                         wanted: &InstanceName)
                         -> Authorisation<InstanceName> {
-  let account = &wanted.account;
-  ag.check(account)?;
-  authorise_for_account(cs, ag, account)?
-    .therefore_ok()
+  let current = cs.current_account()?;
+  ag.check(&current.notional_account)?;
+
+  if let Some(y) = cs.superuser() {
+    return y.therefore_ok();
+  }
+
+  if &current.notional_account == &wanted.account {
+    current.auth.map(
+      // Not executed, exists as a proof.
+      // we need this Box::leak because map wants us to return a ref
+      // borrowing from the incoming subject, which would imply narrowing
+      // of scope and of course we are widening scope here.  We're
+      // saying that the account can access all its games.
+      |account: &AccountName| Box::leak(Box::new(InstanceName {
+        account: account.clone(),
+        game: wanted.game.clone(),
+      }))
+    )
+  } else {
+    throw!(ME::AuthorisationError);
+  }    
 }
 
 #[throws(MgmtError)]
