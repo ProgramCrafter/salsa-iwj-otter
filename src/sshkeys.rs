@@ -149,15 +149,21 @@ impl Debug for Nonce {
 }
 
 impl PerScope {
-  pub fn check(&self, gl: &Global, id: Id, nonce: Nonce)
+  pub fn check(&self, ag: &AccountsGuard, id: Id, nonce: &Nonce,
+               auth_in: Authorisation<(Id, Nonce)>)
                -> Option<Authorisation<AccountScope>> {
+    let gl = &ag.get().ssh_keys;
     for sk in &self.authorised {
       if_chain!{
         if let Some(sk) = sk;
         if sk.id == id;
         if let Some(key) = gl.keys.get(sk.id);
-        if key.nonce == nonce;
-        then { return Some(Authorisation::authorise_any()) }
+        if &key.nonce == nonce;
+        then {
+          // We have checked id and nonce, against those allowed
+          let auth = auth_in.therefore_ok();
+          return Some(auth);
+        }
       }
     }
     None
