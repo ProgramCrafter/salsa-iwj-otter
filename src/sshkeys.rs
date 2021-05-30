@@ -182,6 +182,10 @@ macro_rules! def_pskeys_get {
         if ! record.account.subaccount.is_empty() {
           throw!(ME::NoSshKeysForSubaccount)
         }
+        // We do *not* check that the account is of scope kind Ssh.
+        // Installing ssh keys for other scopes is fine.
+        // otter(1) will check this.
+
         & $($mut)? record.ssh_keys
       }
     }

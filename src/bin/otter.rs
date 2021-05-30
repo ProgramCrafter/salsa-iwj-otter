@@ -4,6 +4,8 @@
 
 #![allow(unused_imports)]
 
+// xxx ssh keys: need a force option to set key for non ssh: account
+
 use otter::imports::*;
 
 use std::cell::Cell;
