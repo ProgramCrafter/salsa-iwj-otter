@@ -138,16 +138,17 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     MC::Noop => Fine,
 
     MC::SetSuperuser(enable) => {
-      let euid = match &cs.authstate {
+      let preserve_euid = match &cs.authstate {
         AuthState::None      { euid, .. } => euid,
         AuthState::Superuser { euid, .. } => euid,
       }.clone();
+
       if !enable {
-        cs.authstate = AuthState::None { euid };
+        cs.authstate = AuthState::None { euid: preserve_euid };
       } else {
         let auth = authorise_scope_direct(cs, &AccountScope::Server)?;
         let auth = auth.therefore_ok();
-        cs.authstate = AuthState::Superuser { euid, auth };
+        cs.authstate = AuthState::Superuser { euid: preserve_euid, auth };
       }
       Fine
     },
