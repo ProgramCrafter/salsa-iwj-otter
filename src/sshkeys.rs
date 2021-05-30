@@ -13,7 +13,8 @@ static RESTRICTIONS: &str =
 static MAGIC_BANNER: &str = 
   "# WARNING - AUTOMATICALLY GENERAED FILE - DO NOT EDIT\n";
 
-#[derive(Copy,Clone,Serialize,Deserialize,Eq,PartialEq)]
+#[derive(Copy,Clone,Serialize,Deserialize)]
+#[derive(Eq,PartialEq,Hash,Ord,PartialOrd)]
 #[serde(transparent)]
 // This will detecte if the slotmap in Accounts gets rewound, without
 // updating the authorzed keys.  That might reuse Id values but it
@@ -67,6 +68,7 @@ pub struct ScopeKey {
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
+#[derive(Eq,PartialEq,Hash,Ord,PartialOrd)]
 pub struct KeySpec {
   pub id: sshkeys::Id,
   pub nonce: sshkeys::Nonce,
