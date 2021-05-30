@@ -650,9 +650,13 @@ pub fn fmt_hex(f: &mut Formatter, buf: &[u8]) {
 }
 
 #[throws(as Option)]
-pub fn parse_fixed_hex<const N: usize>(s: &str) -> [u8; N] {
-  if s.len() != N*2 || ! s.is_ascii() { throw!() }
-  let mut buf = [0u8; N];
+#[must_use]
+pub fn parse_slice_hex(s: &str, buf: &mut [u8]) -> usize {
+  let l = s.len();
+  if l % 1 != 0 { throw!() }
+  let l = l/2;
+  if l > buf.len() { throw!() }
+
   for (h, o) in izip!(
     s.as_bytes().chunks(2),
     buf.iter_mut(),
@@ -660,6 +664,15 @@ pub fn parse_fixed_hex<const N: usize>(s: &str) -> [u8; N] {
     let h = str::from_utf8(h).ok()?;
     *o = u8::from_str_radix(h,16).ok()?;
   }
+
+  l
+}
+
+#[throws(as Option)]
+pub fn parse_fixed_hex<const N: usize>(s: &str) -> [u8; N] {
+  let mut buf = [0u8; N];
+  let l = parse_slice_hex(s, &mut buf)?;
+  if l != N { throw!() }
   buf
 }
 
