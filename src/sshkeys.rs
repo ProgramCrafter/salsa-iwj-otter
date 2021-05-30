@@ -178,7 +178,7 @@ impl PerScope {
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct MgmtKeyReport {
-  id: Id,
+  key: KeySpec,
   data: PubData,
   comment: Comment,
   problem: Option<KeyError>,
@@ -225,7 +225,10 @@ impl AccountsGuard {
       let problem = if let Some(Err(ref e)) = key.fp { Some(e) }
                     else { dirty_error.as_ref() };
       MgmtKeyReport {
+        key: KeySpec {
         id:      sk.id,
+        nonce:   key.nonce.clone(),
+        },
         data:    key.data.clone(),
         comment: sk.comment.clone(),
         problem: problem.cloned(),
