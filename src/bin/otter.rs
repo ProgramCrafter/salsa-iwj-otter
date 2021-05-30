@@ -490,30 +490,7 @@ fn main() {
                             env::args().next().unwrap(),
                             &subcommand));
 
-  call(sc, mo, subargs).unwrap_or_else(|e|{
-    #[derive(Default,Debug)] struct Sol { any: bool }
-    impl Sol {
-      fn nl(&mut self) {
-        if self.any { eprintln!("") };
-        self.any = false;
-      }
-      fn head(&mut self) {
-        if ! self.any { eprint!("otter: error"); }
-        self.any = true
-      }
-    }
-    let mut sol: Sol = default();
-    for e in e.chain() {
-      let s = e.to_string();
-      let long = s.len() > 80;
-      if long && sol.any { sol.nl() }
-      sol.head();
-      eprint!(": {}", s);
-      if long { sol.nl() }
-    }
-    sol.nl();
-    exit(12);
-  })
+  call(sc, mo, subargs).unwrap_or_else(|e| e.end_process(12));
 }
 
 struct Conn {

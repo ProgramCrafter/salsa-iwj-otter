@@ -644,6 +644,35 @@ impl<I,T> IndexVec<I,T> where I: index_vec::Idx {
 }
 
 
+#[ext(pub)]
+impl anyhow::Error {
+  fn end_process(self, estatus: u8) -> ! {
+    #[derive(Default,Debug)] struct Sol { any: bool }
+    impl Sol {
+      fn nl(&mut self) {
+        if self.any { eprintln!("") };
+        self.any = false;
+      }
+      fn head(&mut self) {
+        if ! self.any { eprint!("otter: error"); }
+        self.any = true
+      }
+    }
+    let mut sol: Sol = default();
+    for e in self.chain() {
+      let s = e.to_string();
+      let long = s.len() > 80;
+      if long && sol.any { sol.nl() }
+      sol.head();
+      eprint!(": {}", s);
+      if long { sol.nl() }
+    }
+    sol.nl();
+    assert!(estatus > 0);
+    exit(estatus.into());
+  }
+}
+
 #[throws(fmt::Error)]
 pub fn fmt_hex(f: &mut Formatter, buf: &[u8]) {
   for v in buf { write!(f, "{:02x}", v)?; }
