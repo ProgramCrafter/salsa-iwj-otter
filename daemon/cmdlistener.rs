@@ -146,7 +146,8 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       if !enable {
         cs.authstate = AuthState::None { euid: preserve_euid };
       } else {
-        let auth = authorise_scope_direct(cs, &AccountScope::Server)?;
+        let ag = AccountsGuard::lock();
+        let auth = authorise_scope_direct(cs, &ag, &AccountScope::Server)?;
         let auth = auth.therefore_ok();
         cs.authstate = AuthState::Superuser { euid: preserve_euid, auth };
       }
@@ -202,7 +203,8 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     }
 
     MC::SelectAccount(wanted_account) => {
-      let auth = authorise_scope_direct(cs, &wanted_account.scope)?;
+      let ag = AccountsGuard::lock();
+      let auth = authorise_scope_direct(cs, &ag, &wanted_account.scope)?;
       cs.account = Some(AccountSpecified {
         cooked: wanted_account.to_string(),
         notional_account: wanted_account,
@@ -1716,16 +1718,18 @@ fn authorise_by_account(cs: &CommandStreamData, ag: &AccountsGuard,
 }
 
 #[throws(MgmtError)]
-fn authorise_scope_direct(cs: &CommandStreamData, wanted: &AccountScope)
+fn authorise_scope_direct(cs: &CommandStreamData, ag: &AccountsGuard,
+                          wanted: &AccountScope)
                           -> Authorisation<AccountScope> {
   // Usually, use authorise_by_account
-  do_authorise_scope(cs, wanted)
+  do_authorise_scope(cs, ag, wanted)
     .map_err(|e| cs.map_auth_err(e))?
 }
 
 #[throws(AuthorisationError)]
-fn do_authorise_scope(cs: &CommandStreamData, wanted: &AccountScope)
-                   -> Authorisation<AccountScope> {
+fn do_authorise_scope(cs: &CommandStreamData, _ag: &AccountsGuard,
+                      wanted: &AccountScope)
+                      -> Authorisation<AccountScope> {
   if let Some(y) = cs.is_superuser() { return y }
 
   match &wanted {
