@@ -136,7 +136,7 @@ fn t_false() {
     run_pair(c, "cat".into()).unwrap()
   };
 
-  let one = | f: &dyn Fn(&mut ChildIo<_>, &mut dyn Read) -> io::Result<()> |{
+  let one = | f: &dyn Fn(&mut Stdin, &mut Stdout) -> io::Result<()> |{
     let (mut w, mut r) = setup();
 
     let r = f(&mut w, &mut r);
