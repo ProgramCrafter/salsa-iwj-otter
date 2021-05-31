@@ -64,14 +64,18 @@ impl MgmtChannel<TimedFdReader,TimedFdWriter> {
   {
     let read = conn.try_clone().context("dup the command stream")?;
     let read = TimedFdReader::new(read).context("set up timed reader")?;
-    let read = FrameReader::new(read);
     let write = TimedFdWriter::new(conn).context("set up timed writerr")?;
-    let write = FrameWriter::new(write);
-    MgmtChannel { read, write }
+    MgmtChannel::new(read, write)
   }
 }
 
 impl<R,W> MgmtChannel<R,W> where R: Read, W: Write + Send {
+  pub fn new(read: R, write: W) -> Self  {
+    let read = FrameReader::new(read);
+    let write = FrameWriter::new(write);
+    MgmtChannel { read, write }
+  }
+
   pub fn read_inner_mut(&mut self) -> &mut R {
     self.read.inner_mut()
   }
