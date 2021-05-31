@@ -64,6 +64,7 @@ impl<'x, T, F: FnMut(&str) -> Result<T,String>>
 #[derive(Debug)]
 enum ServerLocation {
   Socket(String),
+  Ssh(String),
 }
 use ServerLocation as SL;
 
@@ -79,6 +80,12 @@ struct MainOpts {
   superuser: bool,
   spec_dir: String,
   game: Option<String>,
+  ssh_command: String,
+  ssh_proxy_command: String,
+}
+
+fn default_ssh_proxy_command() -> String {
+  format!("{} {}", DEFAULT_SSH_PROXY_CMD, SSH_PROXY_SUBCMD)
 }
 
 impl MainOpts {
@@ -314,6 +321,8 @@ fn main() {
     subargs: Vec<String>,
     spec_dir: Option<String>,
     game: Option<String>,
+    ssh_command: Option<String>,
+    ssh_proxy_command: Option<String>,
   }
   let (subcommand, subargs, mo) = parse_args::<RawMainArgs,_>(
     env::args().collect(),
@@ -384,11 +393,19 @@ fn main() {
 
     let mut server = ap.refer(&mut rma.server);
     server
+      .metavar("S") // one matavar for all the options, bah
       .add_option(&["--socket"],
                   MapStore(|path| Ok(Some(
                     SL::Socket(path.to_string())
                   ))),
-                  "connect to server via this socket socket path");
+                  "connect to server via this socket path S");
+    server
+      .add_option(&["--ssh"],
+                  MapStore(|userhost| Ok(Some(
+                    SL::Ssh(userhost.to_string())
+                  ))),
+                  "connect to server via ssh, S is [USER@]HOST");
+
     ap.refer(&mut rma.config_filename)
       .add_option(&["-C","--config"], StoreOption,
                   "specify server config file (used for finding socket)");
@@ -402,6 +419,20 @@ fn main() {
       .add_option(&["--super"], StoreTrue,
                   "enable game server superuser access");
 
+    ap.refer(&mut rma.ssh_command)
+      .metavar("SSH")
+      .add_option(&["--ssh-command"], StoreOption,
+                  "command to run instead of `ssh` for remote Otter \
+                   (shell syntax, followex `exec`, \
+                   interporeted by the local shell)");
+    ap.refer(&mut rma.ssh_proxy_command)
+      .metavar("OTTER-PROXY-COMMAND")
+      .add_option(&["--ssh-remote-proxy-command"], StoreOption,
+                  Box::leak(Box::new(/* bug in argparse */ format!(
+                    "command to run instead of `{}` for remote Otter \
+                    (shell syntax, interpreted by the remote shell)",
+                    default_ssh_proxy_command()))));
+
     ap.refer(&mut rma.spec_dir)
       .add_option(&["--spec-dir"], StoreOption,
                   "directory for table and game specs");
@@ -411,6 +442,7 @@ fn main() {
     account, nick, timezone,
     access, server, verbose, config_filename, superuser,
     subcommand, subargs, spec_dir, layout, game,
+    ssh_command, ssh_proxy_command
   }|{
     env_logger::Builder::new()
       .filter_level(log::LevelFilter::Info)
@@ -435,6 +467,11 @@ fn main() {
           format!("failed to find/load config: {}", &e)
         ))
       });
+
+    let ssh_proxy_command = ssh_proxy_command.unwrap_or_else(
+      default_ssh_proxy_command
+    );
+    let ssh_command = ssh_command.unwrap_or_else(|| "ssh".to_owned());
 
     let spec_dir = spec_dir.map(Ok::<_,APE>).unwrap_or_else(||{
       let cfgf = config.clone().map(|(_c,f)| f).map_err(Into::into);
@@ -474,6 +511,8 @@ fn main() {
       superuser,
       spec_dir,
       game,
+      ssh_command,
+      ssh_proxy_command,
     }))
   }, Some(&|w|{
     writeln!(w, "\nSubcommands:")?;
@@ -561,8 +600,40 @@ impl Conn {
 #[throws(E)]
 fn connect(ma: &MainOpts) -> Conn {
   let chan = match &ma.server {
-    SL::Socket(socket) => MgmtChannel::connect(socket)?,
+
+    SL::Socket(socket) => {
+      MgmtChannel::connect(socket)?
+    },
+
+    SL::Ssh(user_host) => {
+      
+      let user_host = {
+        let (user,host) =
+          user_host.split_once('@')
+          .unwrap_or_else(|| ("Otter", user_host));
+        format!("{}@{}", user, host)
+      };
+      
+      let mut cmd = Command::new("sh");
+      cmd.arg(if ma.verbose > 2 { "-xec" } else { "-ec" });
+      cmd.arg(format!(r#"exec {} "$@""#, &ma.ssh_command));
+      cmd.arg("x");
+      let args = [
+        &user_host,
+        &ma.ssh_proxy_command,
+      ];
+      cmd.args(args);
+
+      let desc = (&ma.ssh_command, &args).to_debug();
+
+      let (w,r) = childio::run_pair(cmd, desc.clone())
+        .with_context(|| desc.clone())
+        .context("run remote command")?;
+      MgmtChannel::new_boxed(r,w)
+    },
+
   };
+
   let mut chan = Conn { chan };
   if ma.superuser {
     chan.cmd(&MC::SetSuperuser(true))?;
