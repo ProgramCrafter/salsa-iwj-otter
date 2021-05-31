@@ -80,7 +80,11 @@ impl Drop for ChildWrapper {
             .map_err(|_| anyhow!("pid {:?} out of range!", pid))?;
           let pid = Pid::from_raw(pid);
           signal::kill(pid, SIGTERM).context("kill")?;
-          self.child.wait().context("wait after kill")?
+          let mut es = self.child.wait().context("wait after kill")?;
+          if es.signal() == Some(SIGTERM as _) {
+            es = process::ExitStatus::from_raw(0);
+          }
+          es
         },
       };
       if ! self.reported && ! es.success()
