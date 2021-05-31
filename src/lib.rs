@@ -13,6 +13,7 @@ pub mod accounts;
 pub mod asseturl;
 pub mod authproofs;
 pub mod bundles;
+pub mod childio;
 pub mod clock;
 pub mod commands;
 pub mod config;
