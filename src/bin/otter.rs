@@ -63,7 +63,7 @@ impl<'x, T, F: FnMut(&str) -> Result<T,String>>
 
 #[derive(Debug)]
 enum ServerLocation {
-  LocalSocketPath(String),
+  Socket(String),
 }
 use ServerLocation as SL;
 
@@ -386,7 +386,7 @@ fn main() {
     server
       .add_option(&["--socket"],
                   MapStore(|path| Ok(Some(
-                    SL::LocalSocketPath(path.to_string())
+                    SL::Socket(path.to_string())
                   ))),
                   "connect to server via this socket socket path");
     ap.refer(&mut rma.config_filename)
@@ -458,7 +458,7 @@ fn main() {
     })?;
 
     let server = server.map(Ok::<_,APE>).unwrap_or_else(||{
-      Ok(SL::LocalSocketPath(
+      Ok(SL::Socket(
         config.clone()?.0
           .command_socket.clone()
       ))
@@ -561,7 +561,7 @@ impl Conn {
 #[throws(E)]
 fn connect(ma: &MainOpts) -> Conn {
   let chan = match &ma.server {
-    SL::LocalSocketPath(socket) => MgmtChannel::connect(socket)?,
+    SL::Socket(socket) => MgmtChannel::connect(socket)?,
   };
   let mut chan = Conn { chan };
   if ma.superuser {
