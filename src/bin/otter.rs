@@ -62,13 +62,19 @@ impl<'x, T, F: FnMut(&str) -> Result<T,String>>
 }
 
 #[derive(Debug)]
+enum ServerLocation {
+  LocalSocketPath(String),
+}
+use ServerLocation as SL;
+
+#[derive(Debug)]
 struct MainOpts {
   account: AccountName,
   nick: Option<String>,
   timezone: Option<String>,
   layout: Option<PresentationLayout>,
   access: Option<AccessOpt>,
-  socket_path: String,
+  server: ServerLocation,
   verbose: i32,
   superuser: bool,
   spec_dir: String,
@@ -296,7 +302,7 @@ fn main() {
   #[derive(Default,Debug)]
   struct RawMainArgs {
     account: Option<AccountName>,
-    socket_path: Option<String>,
+    server: Option<ServerLocation>,
     nick: Option<String>,
     timezone: Option<String>,
     layout: Option<PresentationLayout>,
@@ -376,9 +382,13 @@ fn main() {
                       StoreConst(Some(PlayerAccessUnset.into())),
                       "do not show game access info (for testing only)");
 
-    ap.refer(&mut rma.socket_path)
-      .add_option(&["--socket"], StoreOption,
-                  "specify server socket path");
+    let mut server = ap.refer(&mut rma.server);
+    server
+      .add_option(&["--socket"],
+                  MapStore(|path| Ok(Some(
+                    SL::LocalSocketPath(path.to_string())
+                  ))),
+                  "connect to server via this socket socket path");
     ap.refer(&mut rma.config_filename)
       .add_option(&["-C","--config"], StoreOption,
                   "specify server config file (used for finding socket)");
@@ -399,7 +409,7 @@ fn main() {
     ap
   }, &|RawMainArgs {
     account, nick, timezone,
-    access, socket_path, verbose, config_filename, superuser,
+    access, server, verbose, config_filename, superuser,
     subcommand, subargs, spec_dir, layout, game,
   }|{
     env_logger::Builder::new()
@@ -447,11 +457,11 @@ fn main() {
       })
     })?;
 
-    let socket_path = socket_path.map(Ok::<_,APE>).unwrap_or_else(||{
-      Ok(
+    let server = server.map(Ok::<_,APE>).unwrap_or_else(||{
+      Ok(SL::LocalSocketPath(
         config.clone()?.0
           .command_socket.clone()
-      )
+      ))
     })?;
     Ok((subcommand, subargs, MainOpts {
       account,
@@ -459,7 +469,7 @@ fn main() {
       nick,
       timezone,
       layout,
-      socket_path,
+      server,
       verbose,
       superuser,
       spec_dir,
@@ -550,7 +560,9 @@ impl Conn {
 
 #[throws(E)]
 fn connect(ma: &MainOpts) -> Conn {
-  let chan = MgmtChannel::connect(&ma.socket_path)?;
+  let chan = match &ma.server {
+    SL::LocalSocketPath(socket) => MgmtChannel::connect(socket)?,
+  };
   let mut chan = Conn { chan };
   if ma.superuser {
     chan.cmd(&MC::SetSuperuser(true))?;
