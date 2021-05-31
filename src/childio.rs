@@ -120,13 +120,19 @@ use super::*;
 
 #[test]
 fn t_cat() {
-  let c = Command::new("cat");
-  let (mut w, mut r) = run_pair(c, "cat".into()).unwrap();
-  assert_eq!( write!(w, "hi").unwrap(), () );
-  assert_eq!( w.flush()      .unwrap(), () );
-  let mut buf = [0;10];
-  assert_eq!( r.read(&mut buf).unwrap(), 2 );
-  assert_eq!(&buf[0..2], b"hi");
+  let setup = ||{
+    let c = Command::new("cat");
+    run_pair(c, "cat".into()).unwrap()
+  };
+
+  {
+    let (mut w, mut r) = setup();
+    assert_eq!( write!(w, "hi").unwrap(), () );
+    assert_eq!( w.flush()      .unwrap(), () );
+    let mut buf = [0;10];
+    assert_eq!( r.read(&mut buf).unwrap(), 2 );
+    assert_eq!(&buf[0..2], b"hi");
+  }
 }
 
 #[test]
@@ -151,9 +157,13 @@ fn t_false() {
     r.read(&mut buf).map(|_|())
   });
 
-  one(&|w, _r|{
-    // make sure we lose the race and get EPIPE
+  let lose_race = |w: &mut Stdin| {
     w.child.lock().child.wait().unwrap();
+  };
+
+  one(&|w, _r|{
+    // make sure we will get EPIPE
+    lose_race(w);
     write!(w, "hi")
   });
 }
