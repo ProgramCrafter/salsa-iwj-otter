@@ -4,6 +4,13 @@
 
 use crate::prelude::*;
 
+pub trait Timed {
+  fn set_deadline(&mut self, deadline: Option<Instant>);
+  fn set_timeout(&mut self, timeout: Option<Duration>);
+}
+pub trait TimedRead : Timed + Read  { }
+pub trait TimedWrite: Timed + Write { }
+
 use io::ErrorKind as EK;
 
 use nix::fcntl::{fcntl, OFlag, FcntlArg};
@@ -86,16 +93,20 @@ impl<RW> TimedFd<RW> where RW: TimedFdReadWrite {
     let events = mio::event::Events::with_capacity(1);
     TimedFd { fd, poll, events, deadline: None, rw: PhantomData }
   }
+}
 
-  pub fn set_deadline(&mut self, deadline: Option<Instant>) {
+impl<RW> Timed for TimedFd<RW> where RW: TimedFdReadWrite {
+  fn set_deadline(&mut self, deadline: Option<Instant>) {
     self.deadline = deadline;
   }
-  pub fn set_timeout(&mut self, timeout: Option<Duration>) {
+  fn set_timeout(&mut self, timeout: Option<Duration>) {
     self.set_deadline(timeout.map(|timeout|{
       Instant::now() + timeout
     }));
   }
+}
 
+impl<RW> TimedFd<RW> where RW: TimedFdReadWrite {
   #[throws(io::Error)]
   fn rw<F,O>(&mut self, mut f: F) -> O
   where F: FnMut(i32) -> Result<O, nix::Error>
