@@ -195,12 +195,12 @@ pub mod test {
     assert_eq!( &w, &[] as &[String] );
   }
 
-  static ENDING: &str = "exit status: 1";
+  static STATUS_1: &str = "exit status: 1";
 
   fn assert_is_status_1(e: &io::Error) {
     assert_eq!( e.kind(), ErrorKind::Other );
     let es = e.to_string();
-    assert!( es.ends_with(ENDING), "actually {:?}", es );
+    assert!( es.ends_with(STATUS_1), "actually {:?}", es );
   }
 
   #[test]
@@ -239,7 +239,7 @@ pub mod test {
     });
     dbgc!(&w);
     assert_eq!( w.len(), 1 );
-    assert!( w[0].ends_with(ENDING) );
+    assert!( w[0].ends_with(STATUS_1) );
   }
 
 
