@@ -242,4 +242,14 @@ pub mod test {
     assert!( w[0].ends_with(ENDING) );
   }
 
+
+  #[test]
+  fn t_like_linux_wtf() {
+    let mut c = Command::new("sh");
+    c.args(&["-ec", "exec >/dev/null; sleep 0.1; exit 1"]);
+    let (_w, mut r) = run_pair(c, "sh".to_owned()).unwrap();
+    let mut buf = [0;10];
+    let e = r.read(&mut buf).unwrap_err();
+    assert_is_status_1(&e);
+  }
 }
