@@ -131,9 +131,13 @@ fn t_cat() {
 
 #[test]
 fn t_false() {
-  let one = | f: &dyn Fn(&mut ChildIo<_>, &mut dyn Read) -> io::Result<()> |{
+  let setup = ||{
     let c = Command::new("false");
-    let (mut w, mut r) = run_pair(c, "cat".into()).unwrap();
+    run_pair(c, "cat".into()).unwrap()
+  };
+
+  let one = | f: &dyn Fn(&mut ChildIo<_>, &mut dyn Read) -> io::Result<()> |{
+    let (mut w, mut r) = setup();
 
     let r = f(&mut w, &mut r);
     let e = r.unwrap_err();
