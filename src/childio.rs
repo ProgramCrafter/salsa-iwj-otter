@@ -4,13 +4,17 @@
 
 use crate::prelude::*;
 
-use std::process::{self, ChildStdin, ChildStdout};
+use std::process;
 
 #[derive(Debug)]
 pub struct ChildIo<RW> {
   rw: RW,
   child: Arc<Mutex<ChildWrapper>>,
 }
+
+pub type Stdin  = ChildIo<process::ChildStdin >;
+pub type Stdout = ChildIo<process::ChildStdout>;
+pub type Pair   = (Stdin /*w*/, Stdout /*r*/);
 
 #[derive(Debug)]
 struct ChildWrapper {
@@ -43,8 +47,7 @@ impl<RW> ChildIo<RW> {
   }
 }
 
-pub fn new_pair(mut input: process::Child, desc: String)
-                -> (ChildIo<ChildStdin>, ChildIo<ChildStdout>) {
+pub fn new_pair(mut input: process::Child, desc: String) -> Pair {
   let stdin  = input.stdin .take().expect("ChildIo::pair, no stdin¬");
   let stdout = input.stdout.take().expect("ChildIo::pair, no stdout¬");
   let wrapper = Arc::new(Mutex::new(ChildWrapper {
@@ -57,8 +60,7 @@ pub fn new_pair(mut input: process::Child, desc: String)
 }
 
 #[throws(io::Error)]
-pub fn run_pair(mut cmd: process::Command, desc: String)
-                -> (ChildIo<ChildStdin>, ChildIo<ChildStdout>) {
+pub fn run_pair(mut cmd: process::Command, desc: String) -> Pair {
   cmd.stdin (Stdio::piped());
   cmd.stdout(Stdio::piped());
   new_pair(cmd.spawn()?, desc)
