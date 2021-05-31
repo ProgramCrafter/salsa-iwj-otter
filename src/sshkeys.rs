@@ -110,6 +110,10 @@ mod veneer {
     fn from(e: OpenSSHKeyError) -> Self { KeyError::BadData(e.to_string()) }
   }
 
+  impl Display for Comment {
+    #[throws(fmt::Error)]
+    fn fmt(&self, f: &mut fmt::Formatter) { write!(f, "{}", &self.0)? }
+  }
   impl Display for PubData {
     #[throws(fmt::Error)]
     fn fmt(&self, f: &mut fmt::Formatter) { write!(f, "{}", &self.0)? }
@@ -206,6 +210,23 @@ pub struct MgmtKeyReport {
   pub data: PubData,
   pub comment: Comment,
   pub problem: Option<KeyError>,
+}
+
+impl Display for KeySpec {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut fmt::Formatter) {
+    write!(f, "{}:{}", self.id, &self.nonce)?;
+  }
+}
+
+impl Display for MgmtKeyReport {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut fmt::Formatter) {
+    if let Some(problem) = &self.problem {
+      write!(f, "# PROBLEM {} # ", &problem)?;
+    }
+    write!(f, "{} {} # {}", &self.data, &self.comment, &self.key)?;
+  }
 }
 
 macro_rules! def_pskeys_get {

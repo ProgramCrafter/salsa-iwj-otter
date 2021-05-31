@@ -2032,3 +2032,65 @@ mod set_ssh_keys {
     call,
   )}
 }
+
+//---------- list-ssh-keys ----------
+
+mod list_ssh_keys {
+  use super::*;
+
+  type Args = NoArgs;
+
+  #[throws(AE)]
+  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+    let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
+    let mut conn = connect(&ma)?;
+
+    use sshkeys::*;
+
+    let mut out = BufWriter::new(io::stdout());
+
+    // find the one we're using now
+
+    let using = {
+      use MgmtResponse::ThisConnAuthBy as TCAB;
+      use MgmtThisConnAuthBy as MTCAB;
+      match conn.cmd(&MC::ThisConnAuthBy).context("find current auth")? {
+        TCAB(MTCAB::Ssh { key }) => Some(key),
+        TCAB(_) => None,
+        _ => throw!(anyhow!("unexpected response to ThisConnAuthBy")),
+      }
+    };
+
+    // obtain current set
+
+    for (_index, mkr) in match conn.cmd(&MC::SshListKeys)
+      .context("list existing keys")?
+    {
+      MR::SshKeys(report) => report,
+      _ => throw!(anyhow!("unexpected response to SshListKeys")),
+    }
+      .into_iter().enumerate()
+    {
+      let s = mkr.to_string();
+      use unicode_width::UnicodeWidthChar;
+      if s.chars().any(|c| c.width() == None /* control char */) {
+        write!(&mut out, "# FUNKY! # {:?}", &s)?;
+      } else {
+        write!(&mut out, "{}", &s)?;
+      }
+
+      if Some(&mkr.key) == using.as_ref() {
+        write!(&mut out, "# <- this connection!")?;
+      }
+      writeln!(&mut out, "")?;
+    }
+
+    out.flush()?;
+  }
+
+  inventory::submit!{Subcommand(
+    "list-ssh-keys",
+    "set SSH keys for remote management access authentication",
+    call,
+  )}
+}
