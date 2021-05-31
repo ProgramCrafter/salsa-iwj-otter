@@ -114,9 +114,49 @@ impl<W> Write for ChildIo<W> where W: Write {
 
 #[cfg(test)]
 #[cfg(not(miri))]
-mod test {
+use crate::capture_warns_warn as warn;
+
+#[cfg(test)]
+#[cfg(not(miri))]
+pub mod test {
 use crate::prelude::*;
 use super::*;
+
+pub mod capture_warns {
+  use crate::prelude::*;
+  use std::cell::RefCell;
+
+  thread_local! {
+    pub static WARNINGS: RefCell<Option<Vec<String>>> = RefCell::new(None)
+  }
+
+  #[macro_export]
+  macro_rules! capture_warns_warn {
+    { $fmt:literal $($rhs:tt)* } => {
+      $crate::childio::test::capture_warns::WARNINGS.with(|w| {
+        let mut w = w.borrow_mut();
+        if let Some(ref mut msgs) = *w {
+          let s = format!($fmt $($rhs)*);
+          msgs.push(s);
+        } else {
+          crate::prelude::warn!($fmt $($rhs)*);
+        }
+      });
+    }
+  }
+
+  pub fn run(f: &dyn Fn()) -> Vec<String> {
+    WARNINGS.with(|w| {
+      let mut w =w.borrow_mut();
+      *w = Some(vec![]);
+    });
+    f();
+    WARNINGS.with(|w| {
+      let mut w =w.borrow_mut();
+      mem::take(&mut *w).unwrap()
+    })
+  }
+}
 
 #[test]
 fn t_cat() {
