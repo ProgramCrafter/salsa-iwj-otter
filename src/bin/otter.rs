@@ -1878,7 +1878,7 @@ mod mgmtchannel_proxy {
   }
 
   inventory::submit!{Subcommand(
-    "mgmtchannel-proxy",
+    SSH_PROXY_SUBCMD,
     "connect to management channel and copy raw message data back and forth",
     call,
   )}

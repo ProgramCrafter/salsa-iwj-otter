@@ -14,6 +14,8 @@ pub const EXIT_DISASTER  : i32 = 16;
 pub const DEFAULT_CONFIG_DIR       : &str = "/etc/otter";
 pub const DEFAULT_CONFIG_LEAFNAME  : &str = "server.toml";
 pub const DEFAULT_SENDMAIL_PROGRAM : &str = "/usr/sbin/sendmail";
+pub const DEFAULT_SSH_PROXY_CMD    : &str = "otter-ssh-proxy";
+pub const SSH_PROXY_SUBCMD         : &str = "mgmtchannel-proxy";
 
 pub const DAEMON_STARTUP_REPORT: &str = "otter-daemon started";
 pub const LOG_ENV_VAR: &str = "OTTER_LOG";
@@ -164,7 +166,7 @@ impl ServerConfigSpec {
       specd.unwrap_or_else(|| format!("{}/{}", &libexec_dir, leaf))
     };
     let usvg_bin        = in_libexec(usvg_bin,     "usvg"              );
-    let ssh_proxy_bin   = in_libexec(ssh_proxy_bin,"otter-ssh-proxy"   );
+    let ssh_proxy_bin   = in_libexec(ssh_proxy_bin, DEFAULT_SSH_PROXY_CMD );
 
     let authorized_keys = if let Some(ak) = authorized_keys { ak } else {
       let home = home().context("for authorized_keys")?;
