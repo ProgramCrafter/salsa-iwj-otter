@@ -220,7 +220,7 @@ pub mod test {
 
     one(&|_w, r|{
       let mut buf = [0;10];
-      r.read(&mut buf).map(|_|())
+      dbgc!( r.read(&mut buf).map(|_|()) )
     });
 
     let lose_race = |w: &mut Stdin| {
@@ -230,7 +230,7 @@ pub mod test {
     one(&|w, _r|{
       // make sure we will get EPIPE
       lose_race(w);
-      write!(w, "hi")
+      dbgc!( write!(w, "hi") )
     });
 
     let w = capture_warns::run(&||{
@@ -249,7 +249,7 @@ pub mod test {
     c.args(&["-ec", "exec >/dev/null; sleep 0.1; exit 1"]);
     let (_w, mut r) = run_pair(c, "sh".to_owned()).unwrap();
     let mut buf = [0;10];
-    let e = r.read(&mut buf).unwrap_err();
+    let e = dbgc!( r.read(&mut buf) ).unwrap_err();
     assert_is_status_1(&e);
   }
 }
