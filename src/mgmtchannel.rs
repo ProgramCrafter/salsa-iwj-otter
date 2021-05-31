@@ -47,7 +47,7 @@ impl<R,W> Debug for MgmtChannel<R,W> where R: Read, W: Write {
 }
 
 pub type ClientMgmtChannel = MgmtChannel<
-    Box<dyn Read         + 'static>,
+    Box<dyn Read  + Send + 'static>,
     Box<dyn Write + Send + 'static>,
   >;
 
@@ -63,7 +63,7 @@ impl ClientMgmtChannel {
   }
 
   pub fn new_boxed<R,W>(read: R, write: W) -> Self
-  where R: Read  +        'static,
+  where R: Read  + Send + 'static,
         W: Write + Send + 'static {
     MgmtChannel::new_raw(Box::new(read), Box::new(write))
   }
