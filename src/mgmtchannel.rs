@@ -46,18 +46,30 @@ impl<R,W> Debug for MgmtChannel<R,W> where R: Read, W: Write {
   }
 }
 
-pub type ClientMgmtChannel = MgmtChannel<TimedFdReader,TimedFdWriter>;
+pub type ClientMgmtChannel = MgmtChannel<
+    Box<dyn Read         + 'static>,
+    Box<dyn Write + Send + 'static>,
+  >;
 
-impl MgmtChannel<TimedFdReader,TimedFdWriter> {
+impl ClientMgmtChannel {
   #[throws(AE)]
   pub fn connect(socket_path: &str) -> Self {
     let unix = UnixStream::connect(socket_path)
       .with_context(||socket_path.to_owned())
       .context("connect to server")?; 
-    let chan = MgmtChannel::new_timed(unix)?;
-    chan
+    let read = unix.try_clone().context("dup the client connection")?;
+    let write = unix;
+    MgmtChannel::new_boxed(read, write)
   }
 
+  pub fn new_boxed<R,W>(read: R, write: W) -> Self
+  where R: Read  +        'static,
+        W: Write + Send + 'static {
+    MgmtChannel::new_raw(Box::new(read), Box::new(write))
+  }
+}
+
+impl MgmtChannel<TimedFdReader,TimedFdWriter> {
   #[throws(AE)]
   pub fn new_timed<U>(conn: U) -> Self
   where U: IoTryClone + Read + Write + IntoRawFd + Send + 'static,
@@ -65,12 +77,12 @@ impl MgmtChannel<TimedFdReader,TimedFdWriter> {
     let read = conn.try_clone().context("dup the command stream")?;
     let read = TimedFdReader::new(read).context("set up timed reader")?;
     let write = TimedFdWriter::new(conn).context("set up timed writerr")?;
-    MgmtChannel::new(read, write)
+    MgmtChannel::new_raw(read, write)
   }
 }
 
 impl<R,W> MgmtChannel<R,W> where R: Read, W: Write + Send {
-  pub fn new(read: R, write: W) -> Self  {
+  pub fn new_raw(read: R, write: W) -> Self  {
     let read = FrameReader::new(read);
     let write = FrameWriter::new(write);
     MgmtChannel { read, write }
