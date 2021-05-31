@@ -109,3 +109,33 @@ impl<W> Write for ChildIo<W> where W: Write {
     self.rw_result(r.map(|()|0)).map(|_|())
   }
 }
+
+#[cfg(test)]
+#[cfg(not(miri))]
+mod test {
+use crate::prelude::*;
+use super::*;
+
+#[test]
+fn t_cat() {
+  let c = Command::new("cat");
+  let (mut w, mut r) = run_pair(c, "cat".into()).unwrap();
+  assert_eq!( write!(w, "hi").unwrap(), () );
+  assert_eq!( w.flush()      .unwrap(), () );
+  let mut buf = [0;10];
+  assert_eq!( r.read(&mut buf).unwrap(), 2 );
+  assert_eq!(&buf[0..2], b"hi");
+}
+
+#[test]
+fn t_false() {
+  let c = Command::new("false");
+  let (_w, mut r) = run_pair(c, "cat".into()).unwrap();
+  let mut buf = [0;10];
+  let e = r.read(&mut buf).unwrap_err();
+  assert_eq!( e.kind(), ErrorKind::Other );
+  let es = e.to_string();
+  assert!( es.ends_with("exit status: 1"), "actually {:?}", es );
+}
+
+}
