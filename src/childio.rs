@@ -123,108 +123,109 @@ use crate::capture_warns_warn as warn;
 #[cfg(test)]
 #[cfg(not(miri))]
 pub mod test {
-use crate::prelude::*;
-use super::*;
 
-pub mod capture_warns {
   use crate::prelude::*;
-  use std::cell::RefCell;
+  use super::*;
 
-  thread_local! {
-    pub static WARNINGS: RefCell<Option<Vec<String>>> = RefCell::new(None)
-  }
+  pub mod capture_warns {
+    use crate::prelude::*;
+    use std::cell::RefCell;
 
-  #[macro_export]
-  macro_rules! capture_warns_warn {
-    { $fmt:literal $($rhs:tt)* } => {
-      $crate::childio::test::capture_warns::WARNINGS.with(|w| {
-        let mut w = w.borrow_mut();
-        if let Some(ref mut msgs) = *w {
-          let s = format!($fmt $($rhs)*);
-          msgs.push(s);
-        } else {
-          crate::prelude::warn!($fmt $($rhs)*);
-        }
+    thread_local! {
+      pub static WARNINGS: RefCell<Option<Vec<String>>> = RefCell::new(None)
+    }
+
+    #[macro_export]
+    macro_rules! capture_warns_warn {
+      { $fmt:literal $($rhs:tt)* } => {
+        $crate::childio::test::capture_warns::WARNINGS.with(|w| {
+          let mut w = w.borrow_mut();
+          if let Some(ref mut msgs) = *w {
+            let s = format!($fmt $($rhs)*);
+            msgs.push(s);
+          } else {
+            crate::prelude::warn!($fmt $($rhs)*);
+          }
+        });
+      }
+    }
+
+    pub fn run(f: &dyn Fn()) -> Vec<String> {
+      WARNINGS.with(|w| {
+        let mut w =w.borrow_mut();
+        *w = Some(vec![]);
       });
+      f();
+      WARNINGS.with(|w| {
+        let mut w =w.borrow_mut();
+        mem::take(&mut *w).unwrap()
+      })
     }
   }
 
-  pub fn run(f: &dyn Fn()) -> Vec<String> {
-    WARNINGS.with(|w| {
-      let mut w =w.borrow_mut();
-      *w = Some(vec![]);
+  #[test]
+  fn t_cat() {
+    let setup = ||{
+      let c = Command::new("cat");
+      run_pair(c, "cat".into()).unwrap()
+    };
+
+    {
+      let (mut w, mut r) = setup();
+      assert_eq!( write!(w, "hi").unwrap(), () );
+      assert_eq!( w.flush()      .unwrap(), () );
+      let mut buf = [0;10];
+      assert_eq!( r.read(&mut buf).unwrap(), 2 );
+      assert_eq!(&buf[0..2], b"hi");
+    }
+
+    let w = capture_warns::run(&||{
+      let (_w, _r) = setup();
     });
-    f();
-    WARNINGS.with(|w| {
-      let mut w =w.borrow_mut();
-      mem::take(&mut *w).unwrap()
-    })
-  }
-}
-
-#[test]
-fn t_cat() {
-  let setup = ||{
-    let c = Command::new("cat");
-    run_pair(c, "cat".into()).unwrap()
-  };
-
-  {
-    let (mut w, mut r) = setup();
-    assert_eq!( write!(w, "hi").unwrap(), () );
-    assert_eq!( w.flush()      .unwrap(), () );
-    let mut buf = [0;10];
-    assert_eq!( r.read(&mut buf).unwrap(), 2 );
-    assert_eq!(&buf[0..2], b"hi");
+    assert_eq!( &w, &[] as &[String] );
   }
 
-  let w = capture_warns::run(&||{
-    let (_w, _r) = setup();
-  });
-  assert_eq!( &w, &[] as &[String] );
-}
+  #[test]
+  fn t_false() {
+    static ENDING: &str = "exit status: 1";
 
-#[test]
-fn t_false() {
-  static ENDING: &str = "exit status: 1";
+    let setup = ||{
+      let c = Command::new("false");
+      run_pair(c, "cat".into()).unwrap()
+    };
 
-  let setup = ||{
-    let c = Command::new("false");
-    run_pair(c, "cat".into()).unwrap()
-  };
+    let one = | f: &dyn Fn(&mut Stdin, &mut Stdout) -> io::Result<()> |{
+      let (mut w, mut r) = setup();
 
-  let one = | f: &dyn Fn(&mut Stdin, &mut Stdout) -> io::Result<()> |{
-    let (mut w, mut r) = setup();
+      let r = f(&mut w, &mut r);
+      let e = r.unwrap_err();
+      assert_eq!( e.kind(), ErrorKind::Other );
+      let es = e.to_string();
+      assert!( es.ends_with(ENDING), "actually {:?}", es );
+    };
 
-    let r = f(&mut w, &mut r);
-    let e = r.unwrap_err();
-    assert_eq!( e.kind(), ErrorKind::Other );
-    let es = e.to_string();
-    assert!( es.ends_with(ENDING), "actually {:?}", es );
-  };
+    one(&|_w, r|{
+      let mut buf = [0;10];
+      r.read(&mut buf).map(|_|())
+    });
 
-  one(&|_w, r|{
-    let mut buf = [0;10];
-    r.read(&mut buf).map(|_|())
-  });
+    let lose_race = |w: &mut Stdin| {
+      w.child.lock().child.wait().unwrap();
+    };
 
-  let lose_race = |w: &mut Stdin| {
-    w.child.lock().child.wait().unwrap();
-  };
+    one(&|w, _r|{
+      // make sure we will get EPIPE
+      lose_race(w);
+      write!(w, "hi")
+    });
 
-  one(&|w, _r|{
-    // make sure we will get EPIPE
-    lose_race(w);
-    write!(w, "hi")
-  });
-
-  let w = capture_warns::run(&||{
-    let (mut w, _r) = setup();
-    lose_race(&mut w);
-  });
-  dbgc!(&w);
-  assert_eq!( w.len(), 1 );
-  assert!( w[0].ends_with(ENDING) );
-}
+    let w = capture_warns::run(&||{
+      let (mut w, _r) = setup();
+      lose_race(&mut w);
+    });
+    dbgc!(&w);
+    assert_eq!( w.len(), 1 );
+    assert!( w[0].ends_with(ENDING) );
+  }
 
 }
