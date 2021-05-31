@@ -208,6 +208,14 @@ fn t_false() {
     lose_race(w);
     write!(w, "hi")
   });
+
+  let w = capture_warns::run(&||{
+    let (mut w, _r) = setup();
+    lose_race(&mut w);
+  });
+  dbgc!(&w);
+  assert_eq!( w.len(), 1 );
+  assert!( w[0].ends_with(ENDING) );
 }
 
 }
