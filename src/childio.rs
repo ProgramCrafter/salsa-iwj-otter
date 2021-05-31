@@ -177,6 +177,8 @@ fn t_cat() {
 
 #[test]
 fn t_false() {
+  static ENDING: &str = "exit status: 1";
+
   let setup = ||{
     let c = Command::new("false");
     run_pair(c, "cat".into()).unwrap()
@@ -189,7 +191,7 @@ fn t_false() {
     let e = r.unwrap_err();
     assert_eq!( e.kind(), ErrorKind::Other );
     let es = e.to_string();
-    assert!( es.ends_with("exit status: 1"), "actually {:?}", es );
+    assert!( es.ends_with(ENDING), "actually {:?}", es );
   };
 
   one(&|_w, r|{
