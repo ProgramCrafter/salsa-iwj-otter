@@ -31,9 +31,19 @@ impl Display for ChildWrapper {
 }
 
 impl<RW> ChildIo<RW> {
-  fn rw_result(&self, r: io::Result<usize>) -> io::Result<usize> {
-    if r.is_ok() && *r.as_ref().unwrap() > 0 { return r }
-    let status = self.child.lock().child.try_wait()?;
+  fn rw_result(&self, eofblock: bool, r: io::Result<usize>)
+               -> io::Result<usize>
+  {
+    let block = match &r {
+      &Ok(v) if v == 0 => eofblock,
+      &Ok(_)           => return r,
+      Err(_)           => false,
+    };
+    let status = {
+      let mut child = self.child.lock();
+      let child = &mut child.child;
+      if block { Some(child.wait()?) } else { child.try_wait()? }
+    };
     match status {
       None => r,
       Some(es) if es.success() => r,
@@ -101,18 +111,18 @@ impl Drop for ChildWrapper {
 impl<R> Read for ChildIo<R> where R: Read {
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
     let r = self.rw.read(buf);
-    self.rw_result(r)
+    self.rw_result(true,r)
   }
 }
 
 impl<W> Write for ChildIo<W> where W: Write {
   fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
     let r = self.rw.write(buf);
-    self.rw_result(r)
+    self.rw_result(false,r)
   }
   fn flush(&mut self) -> io::Result<()> {
     let r = self.rw.flush();
-    self.rw_result(r.map(|()|0)).map(|_|())
+    self.rw_result(false, r.map(|()|0) ).map(|_|())
   }
 }
 
