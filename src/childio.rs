@@ -129,7 +129,7 @@ fn t_cat() {
 
 #[test]
 fn t_false() {
-  let one = | f: &dyn Fn(&mut dyn Write, &mut dyn Read) -> io::Result<()> |{
+  let one = | f: &dyn Fn(&mut ChildIo<_>, &mut dyn Read) -> io::Result<()> |{
     let c = Command::new("false");
     let (mut w, mut r) = run_pair(c, "cat".into()).unwrap();
 
@@ -143,6 +143,12 @@ fn t_false() {
   one(&|_w, r|{
     let mut buf = [0;10];
     r.read(&mut buf).map(|_|())
+  });
+
+  one(&|w, _r|{
+    // make sure we lose the race and get EPIPE
+    w.child.lock().child.wait().unwrap();
+    write!(w, "hi")
   });
 }
 
