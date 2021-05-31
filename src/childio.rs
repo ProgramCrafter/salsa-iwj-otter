@@ -177,6 +177,11 @@ fn t_cat() {
     assert_eq!( r.read(&mut buf).unwrap(), 2 );
     assert_eq!(&buf[0..2], b"hi");
   }
+
+  let w = capture_warns::run(&||{
+    let (_w, _r) = setup();
+  });
+  assert_eq!( &w, &[] as &[String] );
 }
 
 #[test]
