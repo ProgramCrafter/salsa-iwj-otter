@@ -21,6 +21,8 @@ pub use serde_json::json;
 pub use structopt::StructOpt;
 pub use reqwest;
 
+pub type MgmtChannel = ClientMgmtChannel;
+
 pub type JsV = serde_json::Value;
 pub type MC = MgmtCommand;
 

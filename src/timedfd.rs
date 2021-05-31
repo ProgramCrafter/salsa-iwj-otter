@@ -165,3 +165,4 @@ impl Drop for Fd {
     if fd >= 2 { let _ = nix::unistd::close(fd); }
   }
 }
+

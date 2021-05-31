@@ -39,7 +39,7 @@ pub struct CommandListener {
 }
 
 struct CommandStream<'d> {
-  chan: MgmtChannel,
+  chan: MgmtChannel<TimedFdReader, TimedFdWriter>,
   d: CommandStreamData<'d>,
 }
 
@@ -1535,7 +1535,7 @@ impl CommandListener {
         })().unwrap_or_else(|e| format!("<error: {}>", e));
         write!(&mut desc, " user={}", user_desc)?;
 
-        let chan = MgmtChannel::new(conn)?;
+        let chan = MgmtChannel::new_timed(conn)?;
 
         let d = CommandStreamData {
           account: None, desc: &desc,

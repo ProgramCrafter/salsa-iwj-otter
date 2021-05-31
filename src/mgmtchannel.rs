@@ -34,32 +34,32 @@ impl From<rmp_serde::encode::Error> for MgmtChannelWriteError {
   }
 }
 
-pub struct MgmtChannel {
-  pub read:  FrameReader<TimedFdReader>,
-  pub write: FrameWriter<TimedFdWriter>,
+pub struct MgmtChannel<R:Read, W:Write> {
+  pub read:  FrameReader<R>,
+  pub write: FrameWriter<W>,
 }
 
-impl Debug for MgmtChannel{ 
+impl<R,W> Debug for MgmtChannel<R,W> where R: Read, W: Write {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut fmt::Formatter) {
     f.write_str("MgmtChannel{...}")?
   }
 }
 
-impl MgmtChannel {
-  pub const PROGRESS: ProgressUpdateMode = PUM::Duplex;
+pub type ClientMgmtChannel = MgmtChannel<TimedFdReader,TimedFdWriter>;
 
+impl MgmtChannel<TimedFdReader,TimedFdWriter> {
   #[throws(AE)]
-  pub fn connect(socket_path: &str) -> MgmtChannel {
+  pub fn connect(socket_path: &str) -> Self {
     let unix = UnixStream::connect(socket_path)
       .with_context(||socket_path.to_owned())
       .context("connect to server")?; 
-    let chan = MgmtChannel::new(unix)?;
+    let chan = MgmtChannel::new_timed(unix)?;
     chan
   }
 
   #[throws(AE)]
-  pub fn new<U>(conn: U) -> MgmtChannel
+  pub fn new_timed<U>(conn: U) -> Self
   where U: IoTryClone + Read + Write + IntoRawFd + Send + 'static,
   {
     let read = conn.try_clone().context("dup the command stream")?;
@@ -69,6 +69,16 @@ impl MgmtChannel {
     let write = FrameWriter::new(write);
     MgmtChannel { read, write }
   }
+}
+
+impl<R,W> MgmtChannel<R,W> where R: Read, W: Write + Send {
+  pub fn read_inner_mut(&mut self) -> &mut R {
+    self.read.inner_mut()
+  }
+}
+
+impl ClientMgmtChannel {
+  pub const PROGRESS: ProgressUpdateMode = PUM::Duplex;
 
   #[throws(AE)]
   pub fn cmd_withbulk<U,D>(&mut self, cmd: &MgmtCommand,
@@ -146,10 +156,6 @@ impl MgmtChannel {
                       &mut termprogress::Null)?
   }
 
-  pub fn read_inner_mut(&mut self) -> &mut TimedFdReader {
-    self.read.inner_mut()
-  }
-
   pub fn for_game(self, game: InstanceName, how: MgmtGameUpdateMode)
                   -> MgmtChannelForGame {
     MgmtChannelForGame {
@@ -170,11 +176,11 @@ impl IoTryClone for UnixStream {
 
 #[derive(Debug)]
 pub struct MgmtChannelForGame {
-  pub chan: MgmtChannel,
+  pub chan: ClientMgmtChannel,
   pub game: InstanceName,
   pub how: MgmtGameUpdateMode,
 }
-deref_to_field_mut!{MgmtChannelForGame, MgmtChannel, chan}
+deref_to_field_mut!{MgmtChannelForGame, ClientMgmtChannel, chan}
 
 impl MgmtChannelForGame {
   #[throws(AE)]

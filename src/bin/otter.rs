@@ -4,6 +4,8 @@
 
 #![allow(unused_imports)]
 
+pub type MgmtChannel = ClientMgmtChannel;
+
 // xxx ssh keys: need a force option to set key for non ssh: account
 
 use otter::imports::*;
@@ -515,7 +517,7 @@ fn main() {
 }
 
 struct Conn {
-  chan: MgmtChannel,
+  chan: ClientMgmtChannel,
 }
 
 deref_to_field_mut!{Conn, MgmtChannel, chan}
