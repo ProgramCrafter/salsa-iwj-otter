@@ -185,10 +185,16 @@ pub mod test {
     assert_eq!( &w, &[] as &[String] );
   }
 
+  static ENDING: &str = "exit status: 1";
+
+  fn assert_is_status_1(e: &io::Error) {
+    assert_eq!( e.kind(), ErrorKind::Other );
+    let es = e.to_string();
+    assert!( es.ends_with(ENDING), "actually {:?}", es );
+  }
+
   #[test]
   fn t_false() {
-    static ENDING: &str = "exit status: 1";
-
     let setup = ||{
       let c = Command::new("false");
       run_pair(c, "cat".into()).unwrap()
@@ -199,9 +205,7 @@ pub mod test {
 
       let r = f(&mut w, &mut r);
       let e = r.unwrap_err();
-      assert_eq!( e.kind(), ErrorKind::Other );
-      let es = e.to_string();
-      assert!( es.ends_with(ENDING), "actually {:?}", es );
+      assert_is_status_1(&e);
     };
 
     one(&|_w, r|{
