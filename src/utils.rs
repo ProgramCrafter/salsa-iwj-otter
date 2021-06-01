@@ -694,6 +694,43 @@ where R: Read, W: Write {
   }
 }
 
+pub struct SigPipeWriter<W>(pub W);
+
+impl<W:Write> SigPipeWriter<W> {
+  fn handle_err(e: io::Error) -> io::Error {
+    if e.kind() != ErrorKind::BrokenPipe { return e }
+
+    match (||{
+      use nix::sys::signal::*;
+      use Signal::SIGPIPE;
+      unsafe {
+        sigaction(SIGPIPE, &SigAction::new(
+          SigHandler::SigDfl, SaFlags::empty(), SigSet::empty()))
+          .context("sigaction")?;
+      };
+      raise(SIGPIPE).context("raise")?;
+      Err::<Void,_>(anyhow!("continued after raise"))
+    })() {
+      Err(ae) => ae
+        .context("attempt to die with SIGPIPE failed")
+        .end_process(127),
+      Ok(v) => match v { },
+    }
+  }
+}
+
+impl<W:Write> Write for SigPipeWriter<W> {
+  fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+    self.0.write(buf).map_err(Self::handle_err)
+  }
+  fn flush(&mut self)             -> io::Result<()>    {
+    self.0.flush()   .map_err(Self::handle_err)
+  }
+}
+
+pub type RawStdout = SigPipeWriter<io::Stdout>;
+impl RawStdout { pub fn new() -> Self { SigPipeWriter(io::stdout()) } }
+
 #[throws(fmt::Error)]
 pub fn fmt_hex(f: &mut Formatter, buf: &[u8]) {
   for v in buf { write!(f, "{:02x}", v)?; }
