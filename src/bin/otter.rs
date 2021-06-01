@@ -175,7 +175,7 @@ fn parse_args<T:Default,U>(
   let ap = apmaker(&mut parsed);
   let us = args.get(0).expect("argv[0] must be provided!").clone();
 
-  let mut stdout = io::stdout();
+  let mut stdout = CookedStdout::new();
   let mut stderr = io::stderr();
 
   let r = ap.parse(args, &mut stdout, &mut stderr);
@@ -783,8 +783,9 @@ mod list_games {
       x => throw!(anyhow!("unexpected response to ListGames: {:?}", &x)),
     };
     games.sort();
+    let mut out = CookedStdout::new();
     for g in games {
-      println!("{}", &g);
+      writeln!(out, "{}", &g)?;
     }
     Ok(())
   }
