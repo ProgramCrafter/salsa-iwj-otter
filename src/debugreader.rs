@@ -5,9 +5,9 @@
 use crate::prelude::*;
 
 #[derive(Debug)]
-pub struct DebugReader<T:Read>(pub T, pub ClientId);
+pub struct DebugReader<T:Read, D:Display>(pub T, pub D);
 
-impl<T: Read> Read for DebugReader<T> {
+impl<T:Read, D:Display> Read for DebugReader<T,D> {
   fn read(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
     let l = buf.len();
     trace!("{} read({})...", &self.1, l);
