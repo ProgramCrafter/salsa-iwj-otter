@@ -1799,7 +1799,7 @@ mod download_bundle {
   }
 
   #[throws(AE)]
-  fn call(SCCA{ ma, args,.. }:SCCA) {
+  fn call(SCCA{ out, ma, args,.. }:SCCA) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ma.access_game()?;
     let kind = bundles::Kind::only();
@@ -1809,6 +1809,7 @@ mod download_bundle {
     let (f, path_tmp): (Box<dyn Write>, _) =
       if path.as_os_str().as_bytes() == b"-"
     {
+      drop(out);
       (Box::new(RawStdout::new()), None)
     } else {
       let tmp = {
