@@ -644,8 +644,8 @@ impl<I,T> IndexVec<I,T> where I: index_vec::Idx {
 }
 
 #[derive(Debug)]
-pub struct AnyhowFormat<'a>(pub &'a anyhow::Error);
-impl Display for AnyhowFormat<'_> {
+pub struct AnyhowDisplay<'a>(pub &'a anyhow::Error);
+impl Display for AnyhowDisplay<'_> {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut fmt::Formatter) {
     let mut delim = "";
@@ -669,6 +669,8 @@ impl anyhow::Error {
     }
     Ok(())
   }
+
+  fn d(&self) -> AnyhowDisplay<'_> { AnyhowDisplay(self) }
 
   fn end_process(self, estatus: u8) -> ! {
     #[derive(Default,Debug)] struct Sol { any: bool }
