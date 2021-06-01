@@ -1955,6 +1955,8 @@ mod mgmtchannel_proxy {
         })
         .context("copy responses")
         .unwrap_or_else(|e| e.end_process(8));
+
+      exit(0);
     });
     tcmds.join().expect("collect commands copy"); 
     tresps.join().expect("collect responses copy");
