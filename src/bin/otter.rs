@@ -2144,7 +2144,7 @@ mod list_ssh_keys {
 
     use sshkeys::*;
 
-    let mut out = BufWriter::new(io::stdout());
+    let mut out = CookedStdout::new();
 
     // find the one we're using now
 
