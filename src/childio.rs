@@ -50,7 +50,7 @@ impl<RW> ChildIo<RW> {
       Some(es) => {
         let mut child = self.child.lock();
         child.reported = true;
-        let ae = anyhow!("{} failed: {}", &child, es);
+        let ae = anyhow!("{}: failed: {}", &child, es);
         Err(io::Error::new(ErrorKind::Other, ae))
       },
     }

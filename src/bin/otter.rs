@@ -624,7 +624,7 @@ fn connect(ma: &MainOpts) -> Conn {
       ];
       cmd.args(args);
 
-      let desc = (&ma.ssh_command, &args).to_debug();
+      let desc = format!("ssh: {:?} {:?}", &ma.ssh_command, &args);
 
       let (w,r) = childio::run_pair(cmd, desc.clone())
         .with_context(|| desc.clone())
