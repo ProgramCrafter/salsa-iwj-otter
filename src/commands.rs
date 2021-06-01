@@ -282,7 +282,7 @@ pub enum MgmtError {
 
 impl From<InternalError> for MgmtError {
   fn from(e: InternalError) -> MgmtError {
-    MgmtError::ServerFailure(format!("internal error: {}\n", &e))
+    MgmtError::ServerFailure(format!("internal error: {}", &e))
   }
 }
 
