@@ -1940,12 +1940,19 @@ mod mgmtchannel_proxy {
     let mut write = write.into_stream()?;
 
     let tcmds = thread::spawn(move || {
-      io::copy(&mut io::stdin(), &mut write)
-        .context("copy commands")
+      io_copy_interactive(&mut BufReader::new(io::stdin()), &mut write)
+        .map_err(|e| match e {
+          Left(re)  => AE::from(re).context("read cmds from stdin"),
+          Right(we) => AE::from(we).context("forward cmds to servvr"),
+        })
         .unwrap_or_else(|e| e.end_process(8));
     });
     let tresps = thread::spawn(move || {
-      io::copy(&mut read, &mut io::stdout())
+      io_copy_interactive(&mut read, &mut io::stdout())
+        .map_err(|e| match e {
+          Left(re)  => AE::from(re).context("read resps from server"),
+          Right(we) => AE::from(we).context("forward cmds to stdout"),
+        })
         .context("copy responses")
         .unwrap_or_else(|e| e.end_process(8));
     });
