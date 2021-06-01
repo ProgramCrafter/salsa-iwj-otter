@@ -7,11 +7,10 @@ use crate::commands::*;
 
 #[derive(Debug,Error)]
 pub enum MgmtChannelReadError {
-  EOF,
-  Parse(String),
-  IO(#[from] io::Error),
+  #[error("unexpected EOF")]         EOF,
+  #[error("parse MessagePack: {0}")] Parse(String),
+  #[error("{0}")]                    IO(#[from] io::Error),
 }
-display_as_debug!{MgmtChannelReadError}
 
 #[derive(Debug,Error)]
 pub enum MgmtChannelWriteError {
