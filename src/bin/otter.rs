@@ -977,6 +977,8 @@ mod set_link {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ma.access_game()?;
 
+    let mut out = CookedStdout::new();
+
     match args.url {
       None => {
         let MgmtGameResponseGameInfo { links, .. } = chan.info()?;
@@ -984,11 +986,11 @@ mod set_link {
           let v: Url = (&v).try_into().context("reparse sererr's UrlSpec")?;
           match args.kind {
             None => {
-              println!("{:<10} {}", tk, &v);
+              writeln!(out, "{:<10} {}", tk, &v)?;
             }
             Some(wk) => {
               if wk == tk {
-                println!("{}", &v);
+                writeln!(out, "{}", &v)?;
               }
             }
           }
