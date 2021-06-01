@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+echo >&2 "$0: user@host=$1"; shift
+export USER=no-such-user
+eval "set -x; $*"

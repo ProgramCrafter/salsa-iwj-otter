@@ -194,6 +194,23 @@ impl Ctx {
     let pieces = alice.pieces::<PIA>()?;
     dbgc!(pieces);
   }
+
+  #[throws(Explode)]
+  fn ssh_remote(&mut self) {
+    let ds = self.ds().also(&[
+      ("config", PathResolveContext::default().resolve(&CONFIG)),
+    ]);
+    let mut command = ds.gss(
+      "--ssh-command=@src@/apitest/mock-ssh \
+       --ssh nowhere \
+       list-accounts"
+    )?;
+    command.insert(0, ds.subst(
+      "--ssh-proxy-command=@target@/debug/otter-ssh-proxy \
+           --config @config@ mgmtchannel-proxy"
+    )?);
+    self.otter(&command)?;
+  }
 }
 
 #[throws(Explode)]
@@ -203,6 +220,7 @@ fn tests(mut c: Ctx) {
   test!(c, "specs",        c.chdir_root(|c| c.specs()        ));
   test!(c, "put-back",                      c.put_back()     ?);
   test!(c, "save-load",                     c.save_load()    ?);
+  test!(c, "ssh-remote",                    c.ssh_remote()   ?);
 }
 
 #[throws(Explode)]
