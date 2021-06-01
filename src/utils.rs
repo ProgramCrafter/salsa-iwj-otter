@@ -735,7 +735,7 @@ pub struct CookedStdout(pub BufWriter<SigPipeWriter<io::Stdout>>);
 impl CookedStdout {
   pub fn new() -> Self { Self(BufWriter::new(RawStdout::new())) }
   fn handle_err(e: io::Error) -> ! {
-    AE::from(e).context("write stdout").end_process(12);
+    AE::from(e).context("write stdout").end_process(EXIT_DISASTER as _);
   }
   fn must_flush(&mut self) {
     self.0.flush().unwrap_or_else(|e| Self::handle_err(e))

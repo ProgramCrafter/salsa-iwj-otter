@@ -191,10 +191,7 @@ fn parse_args<T:Default,U>(
     exit(match rc {
       0 => {
         if let Some(eh) = extra_help {
-          eh(&mut stdout).unwrap_or_else(|e|{
-            eprintln!("write help to stdout: {:?}", &e);
-            exit(EXIT_DISASTER);
-          });
+          eh(&mut stdout).unwrap();
         }
         0
       },
@@ -202,6 +199,7 @@ fn parse_args<T:Default,U>(
       _ => panic!("unexpected error rc {} from ArgumentParser::parse", rc),
     });
   }
+  mem::drop(stdout);
   mem::drop(ap);
   let completed  = completer(parsed)
     .unwrap_or_else(|e:ArgumentParseError| {
