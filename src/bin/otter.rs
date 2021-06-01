@@ -1932,7 +1932,7 @@ mod mgmtchannel_proxy {
   }
 
   #[throws(AE)]
-  fn call(SCCA{ ma, args,.. }:SCCA) {
+  fn call(SCCA{ out, ma, args,.. }:SCCA) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = connect_chan(&ma)?;
 
@@ -1944,6 +1944,8 @@ mod mgmtchannel_proxy {
     let MgmtChannel { read, write } = chan;
     let mut read = read.into_stream()?;
     let mut write = write.into_stream()?;
+
+    drop(out); // do our own stdout
 
     let tcmds = thread::spawn(move || {
       io_copy_interactive(&mut BufReader::new(io::stdin()), &mut write)
