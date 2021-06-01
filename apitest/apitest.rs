@@ -582,6 +582,7 @@ pub fn prepare_tmpdir<'x>(opts: &'x Opts, mut current_exe: &'x str) -> DirSubst 
 
   env::set_var("HOME", &abstmp);
   env::set_var("TMPDIR", &abstmp);
+  env::set_var("OTTER_APITEST_START_DIR", &start_dir);
   for v in "http_proxy https_proxy XAUTHORITY CDPATH \
             SSH_AGENT_PID SSH_AUTH_SOCK WINDOWID WWW_HOME".split(' ')
   {
