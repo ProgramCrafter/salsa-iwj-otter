@@ -449,8 +449,8 @@ impl Global {
     for (id, key) in &self.keys {
       let fp = match key.fp { Some(Ok(ref fp)) => fp, _ => continue };
       if key.refcount == 0 { continue }
-      writeln!(w, r#"{},command="{} mgmtchannel-proxy --restrict-ssh {}:{}" \
-                     {} {}:{}"#, 
+      writeln!(w,
+ r#"{},command="{} mgmtchannel-proxy --restrict-ssh {}:{}" {} {}:{}"#, 
                RESTRICTIONS,
                &config().ssh_proxy_bin, id, key.nonce,
                &key.data,
