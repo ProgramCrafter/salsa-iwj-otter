@@ -41,7 +41,8 @@ pub struct ServerConfigSpec {
   pub shapelibs: Option<Vec<shapelib::Config1>>,
   pub specs_dir: Option<String>,
   pub sendmail: Option<String>,
-  pub ssh_proxy_bin: Option<String>,
+  /// for auth keys, split on spaces
+  pub ssh_proxy_command: Option<String>,
   pub ssh_proxy_user: Option<String>,
   pub authorized_keys: Option<String>,
   pub authorized_keys_include: Option<String>,
@@ -131,7 +132,8 @@ impl ServerConfigSpec {
       template_dir, specs_dir, nwtemplate_dir, wasm_dir, libexec_dir, usvg_bin,
       log, bundled_sources, shapelibs, sendmail,
       debug_js_inject_file, check_bundled_sources, fake_rng,
-      ssh_proxy_bin, ssh_proxy_user, authorized_keys, authorized_keys_include,
+      ssh_proxy_command, ssh_proxy_user, authorized_keys,
+      authorized_keys_include,
     } = self;
 
     let game_rng = fake_rng.make_game_rng();
@@ -166,7 +168,7 @@ impl ServerConfigSpec {
       specd.unwrap_or_else(|| format!("{}/{}", &libexec_dir, leaf))
     };
     let usvg_bin        = in_libexec(usvg_bin,     "usvg"              );
-    let ssh_proxy_bin   = in_libexec(ssh_proxy_bin, DEFAULT_SSH_PROXY_CMD );
+    let ssh_proxy_bin = in_libexec(ssh_proxy_command, DEFAULT_SSH_PROXY_CMD );
 
     let authorized_keys = if let Some(ak) = authorized_keys { ak } else {
       let home = home().context("for authorized_keys")?;
