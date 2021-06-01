@@ -46,9 +46,14 @@ impl<R,W> Debug for MgmtChannel<R,W> where R: Read, W: Write {
 }
 
 pub type ClientMgmtChannel = MgmtChannel<
-    Box<dyn Read  + Send + 'static>,
-    Box<dyn Write + Send + 'static>,
+    Box<dyn ReadDebug  + Send + 'static>,
+    Box<dyn WriteDebug + Send + 'static>,
   >;
+
+pub trait ReadDebug: Read + Debug { }
+pub trait WriteDebug: Write + Debug { }
+impl<T> ReadDebug for T where T: Read + Debug { }
+impl<T> WriteDebug for T where T: Write + Debug { }
 
 impl ClientMgmtChannel {
   #[throws(AE)]
@@ -62,8 +67,8 @@ impl ClientMgmtChannel {
   }
 
   pub fn new_boxed<R,W>(read: R, write: W) -> Self
-  where R: Read  + Send + 'static,
-        W: Write + Send + 'static {
+  where R: ReadDebug  + Send + 'static,
+        W: WriteDebug + Send + 'static {
     MgmtChannel::new_raw(Box::new(read), Box::new(write))
   }
 }
