@@ -433,7 +433,7 @@ fn main() {
                    interporeted by the local shell)");
     ap.refer(&mut rma.ssh_proxy_command)
       .metavar("OTTER-PROXY-COMMAND")
-      .add_option(&["--ssh-remote-proxy-command"], StoreOption,
+      .add_option(&["--ssh-proxy-command"], StoreOption,
                   Box::leak(Box::new(/* bug in argparse */ format!(
                     "command to run instead of `{}` for remote Otter \
                     (shell syntax, interpreted by the remote shell)",
