@@ -731,6 +731,30 @@ impl<W:Write> Write for SigPipeWriter<W> {
 pub type RawStdout = SigPipeWriter<io::Stdout>;
 impl RawStdout { pub fn new() -> Self { SigPipeWriter(io::stdout()) } }
 
+pub struct CookedStdout(pub BufWriter<SigPipeWriter<io::Stdout>>);
+impl CookedStdout {
+  pub fn new() -> Self { Self(BufWriter::new(RawStdout::new())) }
+  fn handle_err(e: io::Error) -> ! {
+    AE::from(e).context("write stdout").end_process(12);
+  }
+  fn must_flush(&mut self) {
+    self.0.flush().unwrap_or_else(|e| Self::handle_err(e))
+  }
+}
+impl Write for CookedStdout {
+  #[throws(io::Error)]
+  fn write(&mut self, buf: &[u8]) -> usize {
+    let r = self.0.write(buf).unwrap_or_else(|e| Self::handle_err(e));
+    if buf.contains(&b'\n') { self.flush()? }
+    r
+  }
+  #[throws(io::Error)]
+  fn flush(&mut self) { self.must_flush() }
+}
+impl Drop for CookedStdout {
+  fn drop(&mut self) { self.must_flush() }
+}
+
 #[throws(fmt::Error)]
 pub fn fmt_hex(f: &mut Formatter, buf: &[u8]) {
   for v in buf { write!(f, "{:02x}", v)?; }
