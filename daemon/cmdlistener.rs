@@ -1449,7 +1449,7 @@ impl UpdateHandler {
 
 impl CommandStream<'_> {
   #[throws(CSE)]
-  pub fn mainloop(mut self) {
+  pub fn mainloop(&mut self) {
     loop {
       use MgmtChannelReadError::*;
       match {
@@ -1522,7 +1522,7 @@ impl CommandListener {
     let mut desc = format!("{:>5}", conn.as_raw_fd());
     info!("command connection {}: accepted", &desc);
     thread::spawn(move||{
-      match (||{
+      let (chan, authstate) = (||{
         let euid = conn.initial_peer_credentials()
           .map(|creds| creds.euid())
           .map_err(|e| ConnectionEuidDiscoverError(format!("{}", e)));
@@ -1545,19 +1545,28 @@ impl CommandListener {
         write!(&mut desc, " user={}", user_desc)?;
 
         let chan = MgmtChannel::new_timed(conn)?;
+        let authstate = AuthState::None { euid: euid.map(Uid::from_raw) };
 
-        let d = CommandStreamData {
-          account: None, conn_desc: &desc,
-          authstate: AuthState::None { euid: euid.map(Uid::from_raw) },
-        };
-        let cs = CommandStream { chan, d };
-        cs.mainloop()?;
-        
-        <Result<_,StartupError>>::Ok(())
-      })() {
-        Ok(()) => info!("command connection {}: disconnected", &desc),
-        Err(e) => warn!("command connection {}: error: {:?}", &desc, e),
+        Ok::<_,StartupError>((chan, authstate))
+      })().map_err(|e|{
+        warn!("command connection {}: setup failed: {:?}", &desc, e);
+        ()
+      })?;
+
+      let d = CommandStreamData {
+        account: None,
+        conn_desc: &desc,
+        authstate,
+      };
+      let mut cs = CommandStream { chan, d };
+
+      match {
+        cs.mainloop()
+      } {
+        Ok(()) => info!("{}: disconnected", &cs.d),
+        Err(e) => warn!("{}: unrecoverable error: {:?}", &cs.d, e),
       }
+      Ok::<_,()>(())
     });
   }
 }
