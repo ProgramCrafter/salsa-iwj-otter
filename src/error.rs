@@ -14,9 +14,9 @@ pub enum OnlineError {
   NoPlayer(#[from] PlayerNotFound),
   #[error("invalid Z coordinate")]
   InvalidZCoord,
-  #[error("Server operational problems - consult administrator: {0:?}")]
+  #[error("Server operational problems - consult administrator: {0}")]
   ServerFailure(#[from] InternalError),
-  #[error("JSON deserialisation error: {0:?}")]
+  #[error("JSON deserialisation error: {0}")]
   BadJSON(serde_json::Error),
   #[error("referenced piece is gone (maybe race)")]
   PieceHeld,
