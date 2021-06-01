@@ -1955,6 +1955,7 @@ mod mgmtchannel_proxy {
           Right(we) => AE::from(we).context("forward cmds to servvr"),
         })
         .unwrap_or_else(|e| e.end_process(8));
+      exit(0);
     });
     let tresps = thread::spawn(move || {
       io_copy_interactive(&mut read, &mut RawStdout::new())
@@ -1964,7 +1965,6 @@ mod mgmtchannel_proxy {
         })
         .context("copy responses")
         .unwrap_or_else(|e| e.end_process(8));
-
       exit(0);
     });
     tcmds.join().expect("collect commands copy"); 
