@@ -74,6 +74,22 @@ pub struct KeySpec {
   pub nonce: sshkeys::Nonce,
 }
 
+#[derive(Error,Copy,Clone,Debug,Hash,Serialize,Deserialize)]
+#[error("ssh authorized_keys manipulation failed")]
+pub struct AuthKeysManipError { }
+impl From<anyhow::Error> for AuthKeysManipError {
+  fn from(ae: anyhow::Error) -> AuthKeysManipError {
+    error!("authorized_keys manipulation error: {}: {:?}",
+           &config().authorized_keys, ae);
+    AuthKeysManipError { }
+  }
+}
+impl From<AuthKeysManipError> for MgmtError {
+  fn from(akme: AuthKeysManipError) -> MgmtError {
+    IE::from(akme).into()
+  }
+}
+
 mod veneer {
   // openssh_keys's API is a little odd.  We make our own mini-API.
   use crate::prelude::*;
@@ -428,7 +444,7 @@ impl Global {
     })
   }
 
-  #[throws(InternalError)]
+  #[throws(AuthKeysManipError)]
   fn write_keys(&self, w: &mut BufWriter<File>) {
     for (id, key) in &self.keys {
       let fp = match key.fp { Some(Ok(ref fp)) => fp, _ => continue };
@@ -445,7 +461,7 @@ impl Global {
 
   // Caller should make sure accounts are saved first, to avoid
   // getting the authkeys_dirty bit wrong.
-  #[throws(InternalError)]
+  #[throws(AuthKeysManipError)]
   fn rewrite_authorized_keys(&mut self) {
     let config = config();
     let path = &config.authorized_keys;

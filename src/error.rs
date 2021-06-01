@@ -64,6 +64,8 @@ pub enum InternalError {
   ZCoordinateOverflow(#[from] zcoord::Overflow),
   #[error("Multiple errors occurred where only one could be reported")]
   Aggregated,
+  #[error("{0}")]
+  SshKeysManipError(#[from] sshkeys::AuthKeysManipError),
 }
 
 #[derive(Error,Copy,Clone,Debug,Serialize,Deserialize)]
