@@ -277,6 +277,7 @@ pub enum MgmtError {
   #[error("ssh key not found")]                      SshKeyNotFound,
   #[error("ssh key id default, ie invalid")]         InvalidSshKeyId,
   #[error("ssh key invalid: {0}")] InvalidSshKey(#[from] sshkeys::KeyError),
+  #[error("command forbides account specified")]     AccountSpecified,
 }
 
 impl From<InternalError> for MgmtError {

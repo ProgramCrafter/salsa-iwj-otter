@@ -175,6 +175,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       })
     }
     MC::SetRestrictedSshScope { key } => {
+      if cs.account.is_some() { throw!(ME::AccountSpecified) }
       let good_uid = Some(config().ssh_proxy_uid);
       let auth = cs.authorised_uid(good_uid, Some("SetRestrictedScope"))
         .map_err(|_| ME::AuthorisationError)?;
