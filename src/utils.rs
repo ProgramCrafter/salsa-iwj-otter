@@ -659,13 +659,16 @@ impl anyhow::Error {
       }
     }
     let mut sol: Sol = default();
+    let mut printed = String::new();
     for e in self.chain() {
       let s = e.to_string();
+      if printed.contains(&s) { continue }
       let long = s.len() > 80;
       if long && sol.any { sol.nl() }
       sol.head();
-      eprint!(": {}", s);
+      eprint!(": {}", &s);
       if long { sol.nl() }
+      printed = s;
     }
     sol.nl();
     assert!(estatus > 0);
