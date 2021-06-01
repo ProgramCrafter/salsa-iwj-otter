@@ -643,9 +643,19 @@ impl<I,T> IndexVec<I,T> where I: index_vec::Idx {
   }
 }
 
-
 #[ext(pub)]
 impl anyhow::Error {
+  fn for_each(&self, f: &mut dyn FnMut(&str) -> fmt::Result) -> fmt::Result {
+    let mut done = String::new();
+    for e in self.chain() {
+      let s = e.to_string();
+      if done.contains(&s) { continue }
+      f(&s)?;
+      done = s;
+    }
+    Ok(())
+  }
+
   fn end_process(self, estatus: u8) -> ! {
     #[derive(Default,Debug)] struct Sol { any: bool }
     impl Sol {
@@ -659,17 +669,14 @@ impl anyhow::Error {
       }
     }
     let mut sol: Sol = default();
-    let mut printed = String::new();
-    for e in self.chain() {
-      let s = e.to_string();
-      if printed.contains(&s) { continue }
+    self.for_each(&mut |s|{
       let long = s.len() > 80;
       if long && sol.any { sol.nl() }
       sol.head();
       eprint!(": {}", &s);
       if long { sol.nl() }
-      printed = s;
-    }
+      Ok::<_,fmt::Error>(())
+    }).unwrap();
     sol.nl();
     assert!(estatus > 0);
     exit(estatus.into());
