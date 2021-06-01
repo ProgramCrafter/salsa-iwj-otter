@@ -1802,7 +1802,7 @@ mod download_bundle {
     let (f, path_tmp): (Box<dyn Write>, _) =
       if path.as_os_str().as_bytes() == b"-"
     {
-      (Box::new(io::stdout()), None)
+      (Box::new(RawStdout::new()), None)
     } else {
       let tmp = {
         let mut w = path.as_os_str().to_owned();
