@@ -482,14 +482,13 @@ impl Global {
       }
       Ok::<_,AE>(())
     })()
-      .with_context(|| path.clone())
       .context("check authorized_keys magic/banner")?;
 
     let mut f = fs::OpenOptions::new()
       .write(true).truncate(true).create(true)
       .mode(0o644)
       .open(&tmp)
-      .with_context(|| tmp.clone()).context("open new auth keys file")?;
+      .context("open new auth keys file (.tmp)")?;
 
     let include = &config.authorized_keys_include;
 
@@ -500,7 +499,7 @@ impl Global {
                include)?;
       f.flush()?;
       Ok::<_,io::Error>(())
-    })().with_context(|| tmp.clone()).context("write header")?;
+    })().context("write header (to .tmp)")?;
 
     if let Some(mut sf) = match File::open(include) {
       Ok(y) => Some(y),
