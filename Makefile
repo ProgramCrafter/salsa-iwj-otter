@@ -189,6 +189,8 @@ CARGOES=$(foreach t, wasm-,$(addprefix $t,check $(DR)))
 $(addprefix stamp/cargo.,$(DR)):: \
 stamp/cargo.%: $(call rsrcs,. ! -path './wasm/*')
 	$(CARGO) build --workspace $(call cr,$*) -p otter -p otter-daemon
+	$(NAILING_CARGO_JUST_RUN) \
+	ln -sf otter $(abspath $(TARGET_DIR))/$*/otter-ssh-proxy
 	$(stamp)
 
 $(TARGET_DIR)/debug/%: $(call rsrcs, ! -path './wasm/*')
@@ -230,6 +232,8 @@ stamp/cargo.wasm-%: $(call rsrcs, base wasm Cargo.*)
 
 stamp/cargo.deploy-build: $(call rsrcs,.)
 	$(CARGO) build --target $(DEPLOY_ARCH) $(call cr,$(DEPLOY_RELEASE)) -p otter -p otter-daemon
+	$(NAILING_CARGO_JUST_RUN) \
+	ln -sf otter $(abspath $(TARGET_DIR)/$(DEPLOY_ARCH))/$(DEPLOY_RELEASE)/otter-ssh-proxy
 	$(stamp)
 
 #---------- sphnix ----------
