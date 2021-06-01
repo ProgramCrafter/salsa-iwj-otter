@@ -148,9 +148,17 @@ fn noargs(_sa: &mut NoArgs) -> ArgumentParser { ArgumentParser::new() }
 struct Subcommand (
   &'static str, // command
   &'static str, // desc
-  fn(&'static Subcommand, CookedStdout, MainOpts, Vec<String>) -> Result<(),E>,
+  fn(SubCommandCallArgs) -> Result<(),E>,
 );
 inventory::collect!(Subcommand);
+
+pub struct SubCommandCallArgs {
+  sc:   &'static Subcommand,
+  out:  CookedStdout,
+  ma:   MainOpts,
+  args: Vec<String>
+}
+pub type SCCA = SubCommandCallArgs;
 
 #[derive(Error,Debug,Clone,Display)]
 struct ArgumentParseError(String);
@@ -540,7 +548,8 @@ fn main() {
                             env::args().next().unwrap(),
                             &subcommand));
 
-  call(sc, stdout, mo, subargs).unwrap_or_else(|e| e.end_process(12));
+  call(SubCommandCallArgs { sc, ma: mo, out: stdout, args: subargs })
+    .unwrap_or_else(|e| e.end_process(12));
 }
 
 struct Conn {
@@ -776,7 +785,7 @@ mod list_games {
     ap
   }
 
-  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+  fn call(SCCA{ mut out, ma, args,.. }:SCCA) -> Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut conn = connect(&ma)?;
     let mut games = match conn.cmd(&MC::ListGames { all: Some(args.all) })? {
@@ -838,7 +847,7 @@ mod reset_game {
     ap
   }
 
-  fn call(_sc: &Subcommand, mut _out: CookedStdout, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+  fn call(SCCA{ ma, args,.. }:SCCA) -> Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let instance_name = ma.instance();
     let mut chan = ma.access_game()?;
@@ -973,7 +982,7 @@ mod set_link {
   }
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) {
+  fn call(SCCA{ mut out, ma, args,.. }:SCCA) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ma.access_game()?;
 
@@ -1034,7 +1043,7 @@ mod join_game {
     ap
   }
 
-  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+  fn call(SCCA{ mut out, ma, args,.. }:SCCA) -> Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ma.access_game()?;
 
@@ -1110,7 +1119,7 @@ mod leave_game {
 
   type Args = NoArgs;
 
-  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+  fn call(SCCA{ mut out, ma, args,.. }:SCCA) -> Result<(),AE> {
     let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
     let mut chan = ma.access_game()?;
 
@@ -1141,7 +1150,7 @@ mod delete_game {
 
   type Args = NoArgs;
 
-  fn call(_sc: &Subcommand, mut _out: CookedStdout, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+  fn call(SCCA{ ma, args,.. }:SCCA) -> Result<(),AE> {
     let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
     let mut chan = ma.access_game()?;
     let game = chan.game.clone();
@@ -1199,7 +1208,7 @@ mod library_list {
   }
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) {
+  fn call(SCCA{ mut out, ma, args,.. }:SCCA) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ma.access_game()?;
 
@@ -1261,7 +1270,7 @@ mod library_add {
     ap
   }
 
-  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+  fn call(SCCA{ mut out, ma, args,.. }:SCCA) -> Result<(),AE> {
     const MAGIC: &str = "mgmt-library-load-marker";
 
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
@@ -1491,7 +1500,7 @@ mod list_pieces {
   type Args = NoArgs;
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) {
+  fn call(SCCA{ mut out, ma, args,.. }:SCCA) {
     let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
     let mut chan = ma.access_game()?;
     let (pieces, pcaliases) = chan.list_pieces()?;
@@ -1580,7 +1589,7 @@ mod command_adhoc {
   }
 
   #[throws(AE)]
-  fn call(sc: &'static Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) {
+  fn call(SCCA{ sc, mut out, ma, args,.. }:SCCA) {
     let ahf = sc.into();
 
     let subargs: ApMaker<_> = &|sa| subargs(sa,ahf);
@@ -1630,8 +1639,7 @@ mod alter_game_adhoc {
     ap
   }
 
-  fn call(sc: &'static Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>)
-          -> Result<(),AE> {
+  fn call(SCCA{ sc, mut out, ma, args,.. }:SCCA) -> Result<(),AE> {
     let ahf = sc.into();
 
     let subargs: ApMaker<_> = &|sa| subargs(sa,ahf);
@@ -1726,7 +1734,7 @@ mod upload_bundle {
   }
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) {
+  fn call(SCCA{ mut out, ma, args,.. }:SCCA) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ma.access_game()?;
     let mut progress = ma.progressbar()?;
@@ -1750,7 +1758,7 @@ mod list_bundles {
   type Args = NoArgs;
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) {
+  fn call(SCCA{ mut out, ma, args,.. }:SCCA) {
     let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
     let mut chan = ma.access_game()?;
     let resp = chan.cmd(&MC::ListBundles {
@@ -1793,7 +1801,7 @@ mod download_bundle {
   }
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, mut _out: CookedStdout, ma: MainOpts, args: Vec<String>) {
+  fn call(SCCA{ ma, args,.. }:SCCA) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ma.access_game()?;
     let kind = bundles::Kind::only();
@@ -1852,7 +1860,7 @@ mod clear_game {
   type Args = NoArgs;
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, mut _out: CookedStdout, ma: MainOpts, args: Vec<String>) {
+  fn call(SCCA{ ma, args,.. }:SCCA) {
     let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
     let mut chan = ma.access_game()?;
     clear_game(&ma, &mut chan)?;
@@ -1885,7 +1893,7 @@ mod list_accounts {
   }
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) {
+  fn call(SCCA{ mut out, ma, args,.. }:SCCA) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut conn = connect(&ma)?;
     let all = Some(args.all);
@@ -1926,7 +1934,7 @@ mod mgmtchannel_proxy {
   }
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, mut _out: CookedStdout, ma: MainOpts, args: Vec<String>) {
+  fn call(SCCA{ ma, args,.. }:SCCA) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = connect_chan(&ma)?;
 
@@ -1998,7 +2006,7 @@ mod set_ssh_keys {
   }
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, mut _out: CookedStdout, ma: MainOpts, args: Vec<String>) {
+  fn call(SCCA{ ma, args,.. }:SCCA) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut conn = connect(&ma)?;
 
@@ -2138,7 +2146,7 @@ mod list_ssh_keys {
   type Args = NoArgs;
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) {
+  fn call(SCCA{ mut out, ma, args,.. }:SCCA) {
     let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
     let mut conn = connect(&ma)?;
 
