@@ -44,9 +44,19 @@ struct CommandStream<'d> {
 }
 
 struct CommandStreamData<'d> {
-  desc: &'d str,
+  conn_desc: &'d str,
   account: Option<AccountSpecified>,
   authstate: AuthState,
+}
+
+impl Display for CommandStreamData<'_> {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) {
+    write!(f, "command conn {}", self.conn_desc)?;
+    if let Some(account) = &self.account {
+      write!(f, " {} ", &account.cooked)?;
+    }
+  }
 }
 
 type Euid = Result<Uid, ConnectionEuidDiscoverError>;
@@ -472,13 +482,11 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
 
   let resp = match resp {
     Ok(resp) => {
-      info!("command connection {}: executed {}",
-            &cs.desc, cmd_s);
+      info!("{}: executed {}", &cs, cmd_s);
       resp
     }
     Err(error) => {
-      info!("command connection {}: error {:?} from {}",
-            &cs.desc, &error, cmd_s);
+      info!("{}: error {:?} from {}", &cs, &error, cmd_s);
       MgmtResponse::Error { error }
     }
   };
@@ -1455,7 +1463,7 @@ impl CommandStream<'_> {
         },
         Err(EOF) => break,
         Err(IO(e)) if e.kind() == ErrorKind::TimedOut => {
-          info!("{}: idle timeout reading command stream", &self.d.desc);
+          info!("{}: idle timeout reading command stream", &self.d);
           self.write_error(ME::IdleTimeout)?;
           break;
         }
@@ -1539,7 +1547,7 @@ impl CommandListener {
         let chan = MgmtChannel::new_timed(conn)?;
 
         let d = CommandStreamData {
-          account: None, desc: &desc,
+          account: None, conn_desc: &desc,
           authstate: AuthState::None { euid: euid.map(Uid::from_raw) },
         };
         let cs = CommandStream { chan, d };
@@ -1584,13 +1592,13 @@ impl CommandStreamData<'_> {
       return Authorisation::promise_for(&client_euid);
     }
     throw!(anyhow!("{}: euid mismatch: client={:?} server={:?} wanted={:?}{}",
-                   &self.desc, client_euid, server_uid, wanted,
+                   &self, client_euid, server_uid, wanted,
                    xinfo.unwrap_or("")));
   }
 
   fn map_auth_err(&self, ae: AuthorisationError) -> MgmtError {
-    warn!("command connection {}: authorisation error: {}",
-          self.desc, ae.0);
+    warn!("{}: authorisation error: {}",
+          self, ae.0);
     MgmtError::AuthorisationError
   }
 }
