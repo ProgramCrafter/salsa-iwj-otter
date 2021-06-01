@@ -79,8 +79,8 @@ pub struct KeySpec {
 pub struct AuthKeysManipError { }
 impl From<anyhow::Error> for AuthKeysManipError {
   fn from(ae: anyhow::Error) -> AuthKeysManipError {
-    error!("authorized_keys manipulation error: {}: {:?}",
-           &config().authorized_keys, ae);
+    error!("authorized_keys manipulation error: {}: {}",
+           &config().authorized_keys, AnyhowFormat(&ae));
     AuthKeysManipError { }
   }
 }

@@ -52,7 +52,7 @@ pub enum InternalError {
   StringFormatting(#[from] fmt::Error),
   #[error("JSON deserialisation error: {0:?}")]
   JSONEncode(serde_json::Error),
-  #[error("Server error: {0:?}")]
+  #[error("Server error: {}", AnyhowFormat(&.0))]
   Anyhow(#[from] anyhow::Error),
   #[error("Game contains only partial data for player, or account missing")]
   PartialPlayerData,

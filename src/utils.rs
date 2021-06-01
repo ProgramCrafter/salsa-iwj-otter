@@ -643,6 +643,20 @@ impl<I,T> IndexVec<I,T> where I: index_vec::Idx {
   }
 }
 
+#[derive(Debug)]
+pub struct AnyhowFormat<'a>(pub &'a anyhow::Error);
+impl Display for AnyhowFormat<'_> {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut fmt::Formatter) {
+    let mut delim = "";
+    self.0.for_each(&mut |s|{
+      write!(f, "{}{}", delim, s)?;
+      delim = ": ";
+      Ok(())
+    })?;
+  }
+}
+
 #[ext(pub)]
 impl anyhow::Error {
   fn for_each(&self, f: &mut dyn FnMut(&str) -> fmt::Result) -> fmt::Result {
