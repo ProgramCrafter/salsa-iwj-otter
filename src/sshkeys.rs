@@ -468,7 +468,10 @@ impl Global {
     let tmp = format!("{}.tmp", &path);
 
     (||{
-      let f = File::open(path).context("open")?;
+      let f = match File::open(path) {
+        Err(e) if e.kind() == ErrorKind::NotFound => return Ok(()),
+        x => x,
+      }.context("open")?;
       let l = BufReader::new(f).lines().next()
         .ok_or_else(|| anyhow!("no first line!"))?
         .context("read first line")?;
