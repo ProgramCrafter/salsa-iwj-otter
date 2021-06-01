@@ -624,6 +624,9 @@ shapelibs = [ "@src@/library/*.toml" ]
 libexec_dir = "@target@/debug"
 usvg_bin = "@target@/release/usvg"
 
+authorized_keys = "@abstmp@/authorized_keys"
+ssh_proxy_command = "@target@/debug/otter-ssh-proxy --config @abstmp@/server-config.toml"
+
 debug_js_inject_file = "@src@/templates/log-save.js"
 check_bundled_sources = false # For testing only! see LICENCE!
 

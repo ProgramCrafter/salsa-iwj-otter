@@ -1,0 +1,32 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+our $ak = shift @ARGV // die;
+our $pk = shift @ARGV // die;
+our $uh = shift @ARGV // die;
+print STDERR "$0: ak=$ak pk=$pk user\@host=$uh\n";
+
+$ENV{'USER'} = 'no-such-user';
+
+my $command = "@ARGV";
+
+open AK, "<", "$ak" or die "$ak $!";
+while (<AK>) {
+  next if m{^\#};
+  next unless m{\S};
+  if(s{^(?:\S+,)?command="([^"\\]+)"(?:,\S+)?\s+}{}) {
+    $command = $1;
+  }
+  if (!m{^ssh-\w+ \S+}) {
+    warn "$_ ?";
+    next;
+  }
+  my $tk = $&;
+  next unless $tk eq $pk;
+  print STDERR "+ $command\n";
+  exec "$command";
+  die $!;
+}
+
+die "not authorised";

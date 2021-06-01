@@ -210,6 +210,14 @@ impl Ctx {
            --config @config@ mgmtchannel-proxy"
     )?);
     self.otter(&command)?;
+
+    let dummy_key_path = ds.subst("@src@/apitest/dummy.pub")?;
+    let ds = ds.also(&[("dummy_key_path", &dummy_key_path)]);
+
+    self.otter(&ds.gss(
+      "--super --account ssh:test: set-ssh-keys \
+       @dummy_key_path@"
+    )?)?;
   }
 }
 
