@@ -598,8 +598,8 @@ impl Conn {
 }
 
 #[throws(E)]
-fn connect(ma: &MainOpts) -> Conn {
-  let chan = match &ma.server {
+fn connect_chan(ma: &MainOpts) -> MgmtChannel {
+  match &ma.server {
 
     SL::Socket(socket) => {
       MgmtChannel::connect(socket)?
@@ -632,8 +632,12 @@ fn connect(ma: &MainOpts) -> Conn {
       MgmtChannel::new_boxed(r,w)
     },
 
-  };
+  }
+}
 
+#[throws(E)]
+fn connect(ma: &MainOpts) -> Conn {
+  let chan = connect_chan(ma)?;
   let mut chan = Conn { chan };
   if ma.superuser {
     chan.cmd(&MC::SetSuperuser(true))?;
