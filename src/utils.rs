@@ -676,6 +676,24 @@ impl anyhow::Error {
   }
 }
 
+#[throws(Either<io::Error, io::Error>)]
+pub fn io_copy_interactive<R,W>(read: &mut BufReader<R>, write: &mut W)
+where R: Read, W: Write {
+  loop {
+    let buf = read.fill_buf().map_err(Either::Left)?;
+    if buf.len() == 0 { break }
+
+    let did = (||{
+      let did = write.write(buf)?;
+      if did == 0 { throw!(ErrorKind::WriteZero) }
+      Ok::<_,io::Error>(did)
+    })().map_err(Either::Right)?;
+        
+    read.consume(did);
+    write.flush().map_err(Either::Right)?;
+  }
+}
+
 #[throws(fmt::Error)]
 pub fn fmt_hex(f: &mut Formatter, buf: &[u8]) {
   for v in buf { write!(f, "{:02x}", v)?; }
