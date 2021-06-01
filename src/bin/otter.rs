@@ -1948,7 +1948,7 @@ mod mgmtchannel_proxy {
         .unwrap_or_else(|e| e.end_process(8));
     });
     let tresps = thread::spawn(move || {
-      io_copy_interactive(&mut read, &mut io::stdout())
+      io_copy_interactive(&mut read, &mut RawStdout::new())
         .map_err(|e| match e {
           Left(re)  => AE::from(re).context("read resps from server"),
           Right(we) => AE::from(we).context("forward cmds to stdout"),
