@@ -148,7 +148,7 @@ fn noargs(_sa: &mut NoArgs) -> ArgumentParser { ArgumentParser::new() }
 struct Subcommand (
   &'static str, // command
   &'static str, // desc
-  fn(&'static Subcommand, MainOpts, Vec<String>) -> Result<(),E>,
+  fn(&'static Subcommand, CookedStdout, MainOpts, Vec<String>) -> Result<(),E>,
 );
 inventory::collect!(Subcommand);
 
@@ -534,12 +534,13 @@ fn main() {
     });
   let Subcommand(_,_,call) = sc;
 
+  let stdout = CookedStdout::new();
   let mut subargs = subargs;
   subargs.insert(0, format!("{} {}",
                             env::args().next().unwrap(),
                             &subcommand));
 
-  call(sc, mo, subargs).unwrap_or_else(|e| e.end_process(12));
+  call(sc, stdout, mo, subargs).unwrap_or_else(|e| e.end_process(12));
 }
 
 struct Conn {
@@ -775,7 +776,7 @@ mod list_games {
     ap
   }
 
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut conn = connect(&ma)?;
     let mut games = match conn.cmd(&MC::ListGames { all: Some(args.all) })? {
@@ -783,7 +784,6 @@ mod list_games {
       x => throw!(anyhow!("unexpected response to ListGames: {:?}", &x)),
     };
     games.sort();
-    let mut out = CookedStdout::new();
     for g in games {
       writeln!(out, "{}", &g)?;
     }
@@ -838,7 +838,7 @@ mod reset_game {
     ap
   }
 
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+  fn call(_sc: &Subcommand, mut _out: CookedStdout, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let instance_name = ma.instance();
     let mut chan = ma.access_game()?;
@@ -973,11 +973,9 @@ mod set_link {
   }
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ma.access_game()?;
-
-    let mut out = CookedStdout::new();
 
     match args.url {
       None => {
@@ -1036,7 +1034,7 @@ mod join_game {
     ap
   }
 
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ma.access_game()?;
 
@@ -1049,46 +1047,46 @@ mod join_game {
         insns.push(MGI::JoinGame { details });
       }
       Some((player, mpi)) => {
-        println!("already in game, as player #{} {:?}",
-                 player.0.get_idx_version().0, &mpi.nick);
+        writeln!(out, "already in game, as player #{} {:?}",
+                 player.0.get_idx_version().0, &mpi.nick)?;
         let MgmtPlayerInfo { nick, account:_ } = mpi;
         if let Some(new_nick) = &ma.nick {
           if &nick != new_nick {
-            println!("changing nick to {:?}", &new_nick);
+            writeln!(out, "changing nick to {:?}", &new_nick)?;
             let details = MgmtPlayerDetails { nick: ma.nick.clone() };
             insns.push(MGI::UpdatePlayer { player, details });
           }
         }
         if args.reset_access {
-          println!("resetting access token (invalidating other URLs)");
+          writeln!(out, "resetting access token (invalidating other URLs)")?;
           insns.push(MGI::ResetPlayerAccess(player));
         } else {
-          println!("redelivering existing access token");
+          writeln!(out, "redelivering existing access token")?;
           insns.push(MGI::RedeliverPlayerAccess(player));
         }
       }
     };
 
-    fn deliver(token: &AccessTokenReport) {
+    fn deliver(out: &mut CookedStdout, token: &AccessTokenReport) {
       for l in &token.lines {
         if l.contains(char::is_control) {
-          println!("Server token info contains control chars! {:?}", &l);
+          writeln!(out, "Server token info contains control chars! {:?}", &l)
         } else {
-          println!(" {}", &l);
-        }
+          writeln!(out, " {}", &l)
+        }.unwrap()
       }
     }
 
     for resp in chan.alter_game(insns, None)? {
       match resp {
         MGR::JoinGame { nick, player, token } => {
-          println!("joined game as player #{} {:?}",
+          writeln!(out, "joined game as player #{} {:?}",
                    player.0.get_idx_version().0,
-                   &nick);
-          deliver(&token);
+                   &nick)?;
+          deliver(&mut out, &token);
         }
         MGR::PlayerAccessToken(token) => {
-          deliver(&token);
+          deliver(&mut out, &token);
         }
         MGR::Fine => {}
         _ => throw!(anyhow!("unexpected response to instruction(s)")),
@@ -1112,13 +1110,13 @@ mod leave_game {
 
   type Args = NoArgs;
 
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
     let mut chan = ma.access_game()?;
 
     let player = match chan.has_player(&ma.account)? {
       None => {
-        println!("this account is not a player in that game");
+        writeln!(out, "this account is not a player in that game")?;
         exit(EXIT_NOTFOUND);
       }
       Some((player, _)) => player,
@@ -1143,7 +1141,7 @@ mod delete_game {
 
   type Args = NoArgs;
 
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+  fn call(_sc: &Subcommand, mut _out: CookedStdout, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
     let mut chan = ma.access_game()?;
     let game = chan.game.clone();
@@ -1201,7 +1199,7 @@ mod library_list {
   }
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ma.access_game()?;
 
@@ -1213,14 +1211,14 @@ mod library_list {
           "unexpected response to LibrarylistLibraries: {:?}", &x)),
       };
       for lib in libs {
-        println!("{}", lib);
+        writeln!(out, "{}", lib)?;
       }
       return;
     }
 
     let items = chan.list_items(args.lib.clone(), args.pat())?;
     for it in &items {
-      println!("{}", it);
+      writeln!(out, "{}", it)?;
     }
   }
 
@@ -1263,7 +1261,7 @@ mod library_add {
     ap
   }
 
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
+  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) ->Result<(),AE> {
     const MAGIC: &str = "mgmt-library-load-marker";
 
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
@@ -1454,7 +1452,7 @@ mod library_add {
                           &ix, &it.itemname);
           exitcode = EXIT_SPACE;
           if args.incremental {
-            println!("stopping: {}", &m);
+            writeln!(out, "stopping: {}", &m)?;
             break;
           } else {
             eprintln!("error: {}", &m);
@@ -1474,7 +1472,7 @@ mod library_add {
 
     let count = insns.len();
     chan.alter_game(insns, None)?;
-    println!("added {} pieces", count);
+    writeln!(out, "added {} pieces", count)?;
     exit(exitcode);
   }
 
@@ -1493,15 +1491,15 @@ mod list_pieces {
   type Args = NoArgs;
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) {
     let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
     let mut chan = ma.access_game()?;
     let (pieces, pcaliases) = chan.list_pieces()?;
     for p in pieces {
-      println!("{:?}", p);
+      writeln!(out, "{:?}", p)?;
     }
     for a in pcaliases {
-      println!("{:?}", a);
+      writeln!(out, "{:?}", a)?;
     }
   }
 
@@ -1545,15 +1543,15 @@ impl AdhocFormat {
   }
 
   #[throws(AE)]
-  pub fn report<T>(&self, resp: T)
+  pub fn report<T>(&self, out: &mut CookedStdout, resp: T)
   where T: Serialize
   {
-    println!("{}", match self.0 {
+    writeln!(out, "{}", match self.0 {
       "json" => serde_json::to_string(&resp).map_err(AE::from),
       "ron"  => ron::ser::  to_string(&resp).map_err(AE::from),
       _ => panic!(),
     }
-        .context("re-format response")?);
+        .context("re-format response")?)?;
   }
 }
 
@@ -1582,7 +1580,7 @@ mod command_adhoc {
   }
 
   #[throws(AE)]
-  fn call(sc: &'static Subcommand, ma: MainOpts, args: Vec<String>) {
+  fn call(sc: &'static Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) {
     let ahf = sc.into();
 
     let subargs: ApMaker<_> = &|sa| subargs(sa,ahf);
@@ -1592,7 +1590,7 @@ mod command_adhoc {
     let cmds: Vec<MgmtCommand> = ahf.parse(args.cmds, "cmd")?;
     for (i, cmd) in cmds.into_iter().enumerate() {
       let resp = conn.cmd(&cmd).with_context(|| format!("cmd #{}", i))?;
-      ahf.report(resp)?;
+      ahf.report(&mut out, resp)?;
     }
   }
 
@@ -1632,7 +1630,7 @@ mod alter_game_adhoc {
     ap
   }
 
-  fn call(sc: &'static Subcommand, ma: MainOpts, args: Vec<String>)
+  fn call(sc: &'static Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>)
           -> Result<(),AE> {
     let ahf = sc.into();
 
@@ -1643,7 +1641,7 @@ mod alter_game_adhoc {
     let insns: Vec<MgmtGameInstruction> = ahf.parse(args.insns, "insn")?;
     let resps = chan.alter_game(insns,None)?;
     for resp in resps {
-      ahf.report(resp)?;
+      ahf.report(&mut out, resp)?;
     }
 
     Ok(())
@@ -1728,13 +1726,13 @@ mod upload_bundle {
   }
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ma.access_game()?;
     let mut progress = ma.progressbar()?;
     let for_upload = BundleForUpload::prepare(args.bundle_file)?;
     let bundle = for_upload.upload(&ma, &mut chan, &mut *progress)?;
-    println!("{}", bundle);
+    writeln!(out, "{}", bundle)?;
   }
 
   inventory::submit!{Subcommand(
@@ -1752,7 +1750,7 @@ mod list_bundles {
   type Args = NoArgs;
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) {
     let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
     let mut chan = ma.access_game()?;
     let resp = chan.cmd(&MC::ListBundles {
@@ -1761,7 +1759,7 @@ mod list_bundles {
     if_let!{ MR::Bundles { bundles } = resp;
              else throw!(anyhow!("unexpected {:?}", &resp)) };
     for (id, state) in bundles {
-      println!("{} {}", id, &state);
+      writeln!(out, "{} {}", id, &state)?;
     }
   }
 
@@ -1795,7 +1793,7 @@ mod download_bundle {
   }
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+  fn call(_sc: &Subcommand, mut _out: CookedStdout, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ma.access_game()?;
     let kind = bundles::Kind::only();
@@ -1854,7 +1852,7 @@ mod clear_game {
   type Args = NoArgs;
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+  fn call(_sc: &Subcommand, mut _out: CookedStdout, ma: MainOpts, args: Vec<String>) {
     let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
     let mut chan = ma.access_game()?;
     clear_game(&ma, &mut chan)?;
@@ -1887,7 +1885,7 @@ mod list_accounts {
   }
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut conn = connect(&ma)?;
     let all = Some(args.all);
@@ -1896,7 +1894,7 @@ mod list_accounts {
       x => throw!(anyhow!("unexpected response to ListAccounts: {:?}", &x)),
     };
     for a in accounts {
-      println!("{}", a);
+      writeln!(out, "{}", a)?;
     }
   }
 
@@ -1928,7 +1926,7 @@ mod mgmtchannel_proxy {
   }
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+  fn call(_sc: &Subcommand, mut _out: CookedStdout, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = connect_chan(&ma)?;
 
@@ -2000,7 +1998,7 @@ mod set_ssh_keys {
   }
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+  fn call(_sc: &Subcommand, mut _out: CookedStdout, ma: MainOpts, args: Vec<String>) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut conn = connect(&ma)?;
 
@@ -2140,13 +2138,11 @@ mod list_ssh_keys {
   type Args = NoArgs;
 
   #[throws(AE)]
-  fn call(_sc: &Subcommand, ma: MainOpts, args: Vec<String>) {
+  fn call(_sc: &Subcommand, mut out: CookedStdout, ma: MainOpts, args: Vec<String>) {
     let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
     let mut conn = connect(&ma)?;
 
     use sshkeys::*;
-
-    let mut out = CookedStdout::new();
 
     // find the one we're using now
 
