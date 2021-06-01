@@ -117,7 +117,7 @@ impl ClientMgmtChannel {
 
       let (mut resp, mut rbulk) =
         read.read_withbulk()
-        .context("read response")?;
+        .context("failed to read response")?;
 
       while let MR::Progress(pi) = resp {
         resp = (&mut rbulk).read_rmp()?;
