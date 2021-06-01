@@ -119,6 +119,7 @@ mod veneer {
   #[derive(Error,Debug,Clone,Serialize,Deserialize)]
   pub enum KeyError {
     #[error("bad key data: {0}")]                        BadData(String),
+    #[error("whitespace in public key data!")]           Whitespace,
     #[error("failed to save key data, possibly broken")] Dirty,
   }
 
@@ -146,7 +147,11 @@ mod veneer {
         options: None,
         comment: None,
       };
-      (PubData(data.to_string()), Comment(comment.unwrap_or_default()))
+      let data = PubData(data.to_string());
+      if data.0.chars().any(|c| c !=' ' && c.is_whitespace()) {
+        throw!(KeyError::Whitespace);
+      }
+      (data, Comment(comment.unwrap_or_default()))
     }
   }
 
