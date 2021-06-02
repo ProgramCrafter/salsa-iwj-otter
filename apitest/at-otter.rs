@@ -259,6 +259,8 @@ impl Ctx {
       Ok::<_,Explode>(command)
     };
 
+    self.otter(&mk_restricted("ssh:test:sub")?)?;
+    self.otter(&mk_restricted("ssh:other:")?).expect_err("unath");
     self.otter(&mk_restricted("ssh:test:")?)?;
   }
 }
