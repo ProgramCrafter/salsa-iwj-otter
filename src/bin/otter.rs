@@ -7,6 +7,8 @@
 pub type MgmtChannel = ClientMgmtChannel;
 
 // xxx ssh keys: need a force option to set key for non ssh: account
+// xxx make default account be ssh:<user>: rather than unix:<user>: if we are passed --ssh
+// xxx make remote otter have a different error message prefix
 
 use otter::imports::*;
 
