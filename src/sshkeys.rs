@@ -513,6 +513,7 @@ impl Global {
                        .context("open static auth keys")),
     } {
       io::copy(&mut sf, &mut f).context("copy data into new auth keys")?;
+      writeln!(sf).context("write newline into new auth keys")?;
     }
 
     let mut f = BufWriter::new(f);
