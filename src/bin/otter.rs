@@ -145,12 +145,17 @@ impl MainOpts {
 struct NoArgs { }
 fn noargs(_sa: &mut NoArgs) -> ArgumentParser { ArgumentParser::new() }
 
-struct Subcommand {
-  verb: &'static str,
-  help: &'static str,
-  call: fn(SubCommandCallArgs) -> Result<(),E>,
+pub struct Subcommand {
+  pub verb: &'static str,
+  pub help: &'static str,
+  pub call: fn(SubCommandCallArgs) -> Result<(),E>,
+  pub props: SubcommandProperties,
 }
 inventory::collect!(Subcommand);
+
+#[derive(Default)]
+pub struct SubcommandProperties {
+}
 
 pub struct SubCommandCallArgs {
   sc:   &'static Subcommand,
@@ -768,6 +773,7 @@ macro_rules! ordinary_subcmd {
       verb: $verb,
       help: $help,
       call,
+      props: default(),
     }}
   }
 }
