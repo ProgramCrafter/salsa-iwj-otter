@@ -2059,7 +2059,7 @@ mod set_ssh_keys {
     };
     let akf = BufReader::new(akf);
 
-    for (lno, l) in akf.lines().enumerate() {
+    for (l, lno) in akf.lines().zip(1..) {
       let l = l.context("read KEYS-FILE")?;
       let l = l.trim();
       if l.starts_with("#") || l == "" { continue }
