@@ -266,6 +266,13 @@ impl Ctx {
     self.otter(&mk_restricted("ssh:other:", "list-accounts")?)
       .expect_err("unath");
     self.otter(&mk_restricted("ssh:test:", "list-accounts")?)?;
+
+    self.otter(&mk_restricted(
+      "ssh:test:", "set-ssh-keys /dev/null")?).expect_err("saw own branch");
+    self.otter(&mk_restricted(
+      "ssh:test:", "set-ssh-keys --allow-remove-current /dev/null")?)?;
+    self.otter(&mk_restricted("ssh:test:sub", "list-accounts")?)
+      .expect_err("sawn off");
   }
 }
 
