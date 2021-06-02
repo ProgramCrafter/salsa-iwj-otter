@@ -211,13 +211,27 @@ impl Ctx {
     )?);
     self.otter(&command)?;
 
-    let dummy_key_path = ds.subst("@src@/apitest/dummy.pub")?;
-    let ds = ds.also(&[("dummy_key_path", &dummy_key_path)]);
+    let ds = ds.also(&[
+      ("dummy_key_path", ds.subst("@src@/apitest/dummy.pub")?),
+      ("authkeys", ds.subst("@abstmp@/authorized_keys")?),
+    ]);
 
-    self.otter(&ds.gss(
+    static STATIC_TEST: &str = "# example static data -- for test\n";
+
+    File::create(ds.subst("@authkeys@")?)?
+      .write(STATIC_TEST.as_bytes())?;
+
+    let set_keys = ds.gss(
       "--super --account ssh:test: set-ssh-keys \
        @dummy_key_path@"
-    )?)?;
+    )?;
+
+    self.otter(&set_keys).expect_err("auth keys has static");
+
+    fs::rename(ds.subst("@authkeys@")?,
+               ds.subst("@authkeys@.static")?)?;
+
+    self.otter(&set_keys)?;
   }
 }
 
