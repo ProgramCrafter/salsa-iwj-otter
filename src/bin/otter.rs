@@ -145,11 +145,11 @@ impl MainOpts {
 struct NoArgs { }
 fn noargs(_sa: &mut NoArgs) -> ArgumentParser { ArgumentParser::new() }
 
-struct Subcommand (
-  &'static str, // command
-  &'static str, // desc
-  fn(SubCommandCallArgs) -> Result<(),E>,
-);
+struct Subcommand {
+  verb: &'static str,
+  help: &'static str,
+  call: fn(SubCommandCallArgs) -> Result<(),E>,
+}
 inventory::collect!(Subcommand);
 
 pub struct SubCommandCallArgs {
@@ -523,30 +523,28 @@ fn main() {
   }, Some(&|w|{
     writeln!(w, "\nSubcommands:")?;
     let maxlen = inventory::iter::<Subcommand>.into_iter()
-      .map(|Subcommand(verb,_,_)| verb.len())
+      .map(|Subcommand{verb,..}| verb.len())
       .max().unwrap_or(0);
-    for Subcommand(verb,desc,_) in inventory::iter::<Subcommand> {
-      writeln!(w, "  {:width$}  {}", verb, desc, width=maxlen)?;
+    for Subcommand{verb,help,..} in inventory::iter::<Subcommand> {
+      writeln!(w, "  {:width$}  {}", verb, help, width=maxlen)?;
     }
     Ok(())
   }));
 
   let sc = inventory::iter::<Subcommand>.into_iter()
-    .filter(|Subcommand(found,_,_)| found == &subcommand)
+    .filter(|Subcommand{verb:found,..}| found == &subcommand)
     .next()
     .unwrap_or_else(||{
       eprintln!("subcommand `{}' not recognised", &subcommand);
       exit(EXIT_USAGE);
     });
-  let Subcommand(_,_,call) = sc;
-
   let stdout = CookedStdout::new();
   let mut subargs = subargs;
   subargs.insert(0, format!("{} {}",
                             env::args().next().unwrap(),
                             &subcommand));
 
-  call(SubCommandCallArgs { sc, ma: mo, out: stdout, args: subargs })
+  (sc.call)(SubCommandCallArgs { sc, ma: mo, out: stdout, args: subargs })
     .unwrap_or_else(|e| e.end_process(12));
 }
 
@@ -765,12 +763,12 @@ fn read_spec_from_path<P:SpecParse>(filename: String, _: P) -> P::T
 }
 
 macro_rules! ordinary_subcmd {
-  {$arg:expr, $help:expr $(,)?} => {
-    inventory::submit!{Subcommand(
-      $arg,
-      $help,
+  {$verb:expr, $help:expr $(,)?} => {
+    inventory::submit!{Subcommand {
+      verb: $verb,
+      help: $help,
       call,
-    )}
+    }}
   }
 }
 
@@ -1525,7 +1523,7 @@ struct AdhocFormat(&'static str);
 
 impl From<&'static Subcommand> for AdhocFormat {
   fn from(sc: &'static Subcommand) -> Self { AdhocFormat(
-    sc.0.rsplitn(2,'-').next().unwrap()
+    sc.verb.rsplitn(2,'-').next().unwrap()
   )}
 }
 
