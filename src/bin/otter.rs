@@ -6,7 +6,6 @@
 
 pub type MgmtChannel = ClientMgmtChannel;
 
-// xxx ssh keys: need a force option to set key for non ssh: account
 // xxx make default account be ssh:<user>: rather than unix:<user>: if we are passed --ssh
 
 use otter::imports::*;
@@ -2004,6 +2003,7 @@ mod set_ssh_keys {
   #[derive(Default,Debug)]
   struct Args {
     add: bool,
+    allow_non_ssh: bool,
     remove_current: bool,
     keys: String,
   }
@@ -2014,6 +2014,9 @@ mod set_ssh_keys {
     ap.refer(&mut sa.add)
       .add_option(&["--add"],StoreTrue,
                   "add keys, only (ie, leave all existing keys)");
+    ap.refer(&mut sa.allow_non_ssh)
+      .add_option(&["--allow-non-ssh-account"],StoreTrue,
+                  "allow settings ssh key access for a non-ssh: account");
     ap.refer(&mut sa.remove_current)
       .add_option(&["--allow-remove-current"],StoreTrue,
                   "allow removing the key currently being used for access");
@@ -2031,6 +2034,11 @@ mod set_ssh_keys {
 
     if ! ma.account.subaccount.is_empty() {
       throw!(ME::NoSshKeysForSubaccount);
+    }
+    let is_ssh_account = matches!(ma.account.scope, AS::Ssh{..});
+    if ! (args.allow_non_ssh || is_ssh_account) {
+      throw!(anyhow!("not setting ssh keys for non-ssh: account; \
+                      use --allow-non-ssh-account to override"));
     }
 
     conn.prep_access_account(&ma, false)?;
