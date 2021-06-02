@@ -2102,8 +2102,8 @@ mod set_ssh_keys {
         for c in &st.currently {
           if c.thisconn_retain {
             throw!(anyhow!(
-              "refusing to remove currently-being-used key #{} {:?} {:?}",
-              c.index, &c.mkr.data, &c.mkr.comment));
+              "refusing to remove currently-being-used key #{} {}",
+              c.index, &c.mkr));
           }
         }
       }
