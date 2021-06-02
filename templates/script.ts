@@ -2017,13 +2017,20 @@ function startup() {
     string_report_error('connection to server interrupted too long');
   });
   es.onerror = function(e) {
-    console.log('FOO',e,es);
-    json_report_error({
+    let info = {
       updates_error : e,
       updates_event_source : es,
       updates_event_source_ready : es.readyState,
       update_oe : (e as any).className,
-    })
+    };
+    if (es.readyState == 2) {
+      json_report_error({
+	reason: "TOTAL SSE FAILURE",
+	info: info,
+      })
+    } else {
+      console.log('SSE error event', info);
+    }
   }
   recompute_keybindings();
   space.addEventListener('mousedown', some_mousedown);
