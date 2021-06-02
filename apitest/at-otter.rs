@@ -246,11 +246,14 @@ impl Ctx {
                 .lines().nth(2).unwrap().unwrap(),
                 STATIC_TEST.strip_suffix("\n").unwrap() );
 
-    let mk_restricted = |account|{
-      let mut command = ds.also(&[("account",account)]).gss(
+    let mk_restricted = |account, rhs|{
+      let mut command = ds.also(&[
+        ("account",account),
+        ("rhs",    rhs),
+      ]).gss(
         "--account @account@ \
          --ssh nowhere \
-         list-accounts"
+         @rhs@"
       )?;
       command.insert(0, ds.subst(
         "--ssh-command=@src@/apitest/mock-ssh-restricted \
@@ -259,9 +262,10 @@ impl Ctx {
       Ok::<_,Explode>(command)
     };
 
-    self.otter(&mk_restricted("ssh:test:sub")?)?;
-    self.otter(&mk_restricted("ssh:other:")?).expect_err("unath");
-    self.otter(&mk_restricted("ssh:test:")?)?;
+    self.otter(&mk_restricted("ssh:test:sub", "list-accounts")?)?;
+    self.otter(&mk_restricted("ssh:other:", "list-accounts")?)
+      .expect_err("unath");
+    self.otter(&mk_restricted("ssh:test:", "list-accounts")?)?;
   }
 }
 
