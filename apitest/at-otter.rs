@@ -232,6 +232,10 @@ impl Ctx {
                ds.subst("@authkeys@.static")?)?;
 
     self.otter(&set_keys)?;
+
+    assert_eq!( BufReader::new(File::open(ds.subst("@authkeys@")?)?)
+                .lines().nth(2).unwrap().unwrap(),
+                STATIC_TEST.strip_suffix("\n").unwrap() );
   }
 }
 
