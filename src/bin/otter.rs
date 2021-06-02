@@ -764,6 +764,16 @@ fn read_spec_from_path<P:SpecParse>(filename: String, _: P) -> P::T
   })().with_context(|| format!("read {} {:?}", P::S::WHAT, &filename))?
 }
 
+macro_rules! ordinary_subcmd {
+  {$arg:expr, $help:expr $(,)?} => {
+    inventory::submit!{Subcommand(
+      $arg,
+      $help,
+      call,
+    )}
+  }
+}
+
 //---------- list-games ----------
 
 mod list_games {
@@ -797,11 +807,10 @@ mod list_games {
     Ok(())
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "list-games",
     "List games",
-    call,
-  )}
+  }
 }
 
 // todo: list-players
@@ -950,11 +959,10 @@ mod reset_game {
     Ok(())
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "reset",
     "Reset the state of the game table",
-    call,
-  )}
+  }
 }
 
 //---------- set-link ----------
@@ -1015,11 +1023,10 @@ mod set_link {
     }
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "set-link",
     "Set one of the info links visible from within the game",
-    call,
-  )}
+  }
 }
 
 //---------- join-game ----------
@@ -1103,11 +1110,10 @@ mod join_game {
     Ok(())
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "join-game",
     "Join a game or reset access token (creating or updating account)",
-    call,
-  )}
+  }
 }
 
 //---------- leave-game ----------
@@ -1134,11 +1140,10 @@ mod leave_game {
     Ok(())
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "leave-game",
     "Leave a game",
-    call,
-  )}
+  }
 }
 
 //---------- delete-game ----------
@@ -1156,11 +1161,10 @@ mod delete_game {
     Ok(())
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "delete-game",
     "Delete a game (throwing all the players out of it)",
-    call,
-  )}
+  }
 }
 
 //---------- library-list ----------
@@ -1229,11 +1233,10 @@ mod library_list {
     }
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "library-list",
     "List pieces in the shape libraries",
-    call,
-  )}
+  }
 }
 
 //---------- library-sdd ----------
@@ -1483,11 +1486,10 @@ mod library_add {
     exit(exitcode);
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "library-add",
     "Add pieces from the shape libraries",
-    call,
-  )}
+  }
 }
 
 //---------- list-pieces ----------
@@ -1510,11 +1512,10 @@ mod list_pieces {
     }
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "list-pieces",
     "List pieces in the game",
-    call,
-  )}
+  }
 }
 
 //---------- adhoc json/ron etc. ----------
@@ -1601,16 +1602,14 @@ mod command_adhoc {
     }
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "command-json",
     "run ad-hoc management command(s) (JSON)",
-    call,
-  )}
-  inventory::submit!{Subcommand(
+  }
+  ordinary_subcmd!{
     "command-ron",
     "run ad-hoc management command(s) (Rusty Object Notation)",
-    call,
-  )}
+  }
 }
 
 //---------- alter game ----------
@@ -1653,16 +1652,14 @@ mod alter_game_adhoc {
     Ok(())
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "alter-game-json",
     "run an ad-hoc AlterGame command (JSON)",
-    call,
-  )}
-  inventory::submit!{Subcommand(
+  }
+  ordinary_subcmd!{
     "alter-game-ron",
     "run an ad-hoc AlterGame command (Rusty Object Notation)",
-    call,
-  )}
+  }
 }
 
 //---------- upload-bundle ----------
@@ -1741,11 +1738,10 @@ mod upload_bundle {
     writeln!(out, "{}", bundle)?;
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "upload-bundle",
     "Upload a bundle",
-    call,
-  )}
+  }
 }
 
 //---------- list-bundles ----------
@@ -1769,11 +1765,10 @@ mod list_bundles {
     }
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "list-bundles",
     "List bundles",
-    call,
-  )}
+  }
 }
 
 //---------- download-bundle ----------
@@ -1836,11 +1831,10 @@ mod download_bundle {
     }
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "download-bundle",
     "download bundle",
-    call,
-  )}
+  }
 }
 
 //---------- clear game ----------
@@ -1865,11 +1859,10 @@ mod clear_game {
     clear_game(&ma, &mut chan)?;
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "clear-game",
     "clear the table and clear out all bundles",
-    call,
-  )}
+  }
 }
 
 //---------- list-accounts ----------
@@ -1905,11 +1898,10 @@ mod list_accounts {
     }
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "list-accounts",
     "List accounts in your account scope",
-    call,
-  )}
+  }
 }
 
 //---------- mgmtchannel-proxy ----------
@@ -1971,11 +1963,10 @@ mod mgmtchannel_proxy {
     tresps.join().expect("collect responses copy");
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     SSH_PROXY_SUBCMD,
     "connect to management channel and copy raw message data back and forth",
-    call,
-  )}
+  }
 }
 
 //---------- set-ssh-keys ----------
@@ -2132,11 +2123,10 @@ mod set_ssh_keys {
     }
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "set-ssh-keys",
     "set SSH keys for remote management access authentication",
-    call,
-  )}
+  }
 }
 
 //---------- list-ssh-keys ----------
@@ -2192,9 +2182,8 @@ mod list_ssh_keys {
     out.flush()?;
   }
 
-  inventory::submit!{Subcommand(
+  ordinary_subcmd!{
     "list-ssh-keys",
     "set SSH keys for remote management access authentication",
-    call,
-  )}
+  }
 }
