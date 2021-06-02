@@ -779,7 +779,15 @@ macro_rules! ordinary_subcmd {
       call,
       props: default(),
     }}
-  }
+  };
+  {$verb:expr, $help:expr, $($prop:tt)+} => {
+    inventory::submit!{Subcommand {
+      verb: $verb,
+      help: $help,
+      call,
+      props: SubcommandProperties { $($prop)* ..default() },
+    }}
+  };
 }
 
 //---------- list-games ----------
