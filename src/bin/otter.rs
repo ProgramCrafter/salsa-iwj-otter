@@ -2025,6 +2025,7 @@ mod set_ssh_keys {
   fn call(SCCA{ ma, args,.. }:SCCA) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut conn = connect(&ma)?;
+    conn.prep_access_account(&ma, false)?;
 
     use sshkeys::*;
 
@@ -2164,6 +2165,7 @@ mod list_ssh_keys {
   fn call(SCCA{ mut out, ma, args,.. }:SCCA) {
     let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
     let mut conn = connect(&ma)?;
+    conn.prep_access_account(&ma, false)?;
 
     use sshkeys::*;
 
