@@ -5,47 +5,7 @@
 use super::*;
 use super::usebundles::*;
 
-//---------- list-games ----------
-
-mod list_games {
-  use super::*;
-
-  #[derive(Default,Debug)]
-  struct Args {
-    all: bool,
-  }
-
-  fn subargs(sa: &mut Args) -> ArgumentParser {
-    use argparse::*;
-    let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.all)
-      .add_option(&["--all"],StoreTrue,
-                  "user superuser access to list *all* games");
-    ap
-  }
-
-  fn call(SCCA{ mut out, ma, args,.. }:SCCA) -> Result<(),AE> {
-    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
-    let mut conn = connect(&ma)?;
-    let mut games = match conn.cmd(&MC::ListGames { all: Some(args.all) })? {
-      MR::GamesList(g) => g,
-      x => throw!(anyhow!("unexpected response to ListGames: {:?}", &x)),
-    };
-    games.sort();
-    for g in games {
-      writeln!(out, "{}", &g)?;
-    }
-    Ok(())
-  }
-
-  inventory_subcmd!{
-    "list-games",
-    "List games",
-  }
-}
-
 // todo: list-players
-// todo: delete-account
 
 //---------- reset-game ----------
 
