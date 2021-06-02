@@ -377,6 +377,34 @@ mod leave_game {
   }
 }
 
+//---------- clear game ----------
+
+#[throws(AE)]
+fn clear_game(ma: &MainOpts, chan: &mut MgmtChannelForGame) {
+  chan.alter_game(vec![MGI::ClearGame{ }], None)
+    .context("clear table")?;
+  chan.cmd(&MC::ClearBundles { game: ma.instance() })
+    .context("clear bundles")?;
+}
+
+mod clear_game {
+  use super::*;
+
+  type Args = NoArgs;
+
+  #[throws(AE)]
+  fn call(SCCA{ ma, args,.. }:SCCA) {
+    let _args = parse_args::<Args,_>(args, &noargs, &ok_id, None);
+    let mut chan = ma.access_game()?;
+    clear_game(&ma, &mut chan)?;
+  }
+
+  inventory_subcmd!{
+    "clear-game",
+    "clear the table and clear out all bundles",
+  }
+}
+
 //---------- delete-game ----------
 
 mod delete_game {
