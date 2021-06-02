@@ -157,6 +157,7 @@ inventory::collect!(Subcommand);
 
 #[derive(Default,Debug)]
 pub struct SubcommandProperties {
+  suppress_selectaccount: bool,
 }
 
 pub struct SubCommandCallArgs {
@@ -657,7 +658,9 @@ fn connect(ma: &MainOpts) -> Conn {
   if ma.superuser {
     chan.cmd(&MC::SetSuperuser(true))?;
   }
-  chan.cmd(&MC::SelectAccount(ma.account.clone()))?;
+  if ! ma.sc.props.suppress_selectaccount {
+    chan.cmd(&MC::SelectAccount(ma.account.clone()))?;
+  }
   chan
 }
 
@@ -1982,6 +1985,7 @@ mod mgmtchannel_proxy {
   ordinary_subcmd!{
     SSH_PROXY_SUBCMD,
     "connect to management channel and copy raw message data back and forth",
+    suppress_selectaccount: true,
   }
 }
 
