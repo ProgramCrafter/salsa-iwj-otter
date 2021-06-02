@@ -213,8 +213,14 @@ impl Ctx {
 
     let ds = {
       let dummy_key_path = ds.subst("@src@/apitest/dummy.pub")?;
+
+      let dummy_key_data = fs::read_to_string(&dummy_key_path)?;
+      let second_space = dummy_key_data.match_indices(' ').nth(1).unwrap().0;
+      let dummy_key_data = dummy_key_data.split_at(second_space).0.to_owned();
+
       ds.also(&[
         ("dummy_key_path", dummy_key_path),
+        ("dummy_key_data", dummy_key_data),
         ("authkeys", ds.subst("@abstmp@/authorized_keys")?),
       ])
     };
@@ -239,6 +245,17 @@ impl Ctx {
     assert_eq!( BufReader::new(File::open(ds.subst("@authkeys@")?)?)
                 .lines().nth(2).unwrap().unwrap(),
                 STATIC_TEST.strip_suffix("\n").unwrap() );
+
+    let mut command = ds.gss(
+      "--account ssh:test: \
+       --ssh nowhere \
+       list-accounts"
+    )?;
+    command.insert(0, ds.subst(
+      "--ssh-command=@src@/apitest/mock-ssh-restricted \
+                     @authkeys@ '@dummy_key_data@'"
+    )?);
+    self.otter(&command)?;
   }
 }
 
