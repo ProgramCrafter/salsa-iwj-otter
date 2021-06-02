@@ -211,10 +211,13 @@ impl Ctx {
     )?);
     self.otter(&command)?;
 
-    let ds = ds.also(&[
-      ("dummy_key_path", ds.subst("@src@/apitest/dummy.pub")?),
-      ("authkeys", ds.subst("@abstmp@/authorized_keys")?),
-    ]);
+    let ds = {
+      let dummy_key_path = ds.subst("@src@/apitest/dummy.pub")?;
+      ds.also(&[
+        ("dummy_key_path", dummy_key_path),
+        ("authkeys", ds.subst("@abstmp@/authorized_keys")?),
+      ])
+    };
 
     static STATIC_TEST: &str = "# example static data -- for test\n";
 
