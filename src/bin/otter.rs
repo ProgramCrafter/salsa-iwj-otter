@@ -6,8 +6,6 @@
 
 pub type MgmtChannel = ClientMgmtChannel;
 
-// xxx make default account be ssh:<user>: rather than unix:<user>: if we are passed --ssh
-
 use otter::imports::*;
 
 use std::cell::Cell;
@@ -354,7 +352,7 @@ fn main() {
     account.metavar("ACCOUNT")
       .add_option(&["--account"],
                   StoreOption,
-                  "use account ACCOUNT (default: unix:<current user>:)");
+                  "use account ACCOUNT (default: unix/ssh:<current user>:)");
     ap.refer(&mut rma.nick).metavar("NICK")
       .add_option(&["--nick"],
                   StoreOption,
@@ -508,8 +506,12 @@ fn main() {
       let user = env::var("USER").map_err(|e| ArgumentParseError(
         format!("default account needs USER env var: {}", &e)
       ))?;
+      let scope = match &server {
+        SL::Socket(..) => AS::Unix { user },
+        SL::Ssh   (..) => AS::Ssh  { user },
+      };
       Ok(AccountName {
-        scope: AS::Unix { user },
+        scope,
         subaccount: "".into(),
       })
     })?;
