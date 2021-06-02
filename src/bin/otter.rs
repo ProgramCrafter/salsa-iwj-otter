@@ -82,6 +82,7 @@ struct MainOpts {
   game: Option<String>,
   ssh_command: String,
   ssh_proxy_command: String,
+  sc: &'static Subcommand,
 }
 
 fn default_ssh_proxy_command() -> String {
@@ -159,7 +160,6 @@ pub struct SubcommandProperties {
 }
 
 pub struct SubCommandCallArgs {
-  sc:   &'static Subcommand,
   out:  CookedStdout,
   ma:   MainOpts,
   args: Vec<String>
@@ -512,6 +512,15 @@ fn main() {
           .command_socket.clone()
       ))
     })?;
+
+    let sc = inventory::iter::<Subcommand>.into_iter()
+      .filter(|Subcommand{verb:found,..}| found == &subcommand)
+      .next()
+      .unwrap_or_else(||{
+        eprintln!("subcommand `{}' not recognised", &subcommand);
+        exit(EXIT_USAGE);
+      });
+
     Ok((subcommand, subargs, MainOpts {
       account,
       access,
@@ -525,6 +534,7 @@ fn main() {
       game,
       ssh_command,
       ssh_proxy_command,
+      sc,
     }))
   }, Some(&|w|{
     writeln!(w, "\nSubcommands:")?;
@@ -537,20 +547,13 @@ fn main() {
     Ok(())
   }));
 
-  let sc = inventory::iter::<Subcommand>.into_iter()
-    .filter(|Subcommand{verb:found,..}| found == &subcommand)
-    .next()
-    .unwrap_or_else(||{
-      eprintln!("subcommand `{}' not recognised", &subcommand);
-      exit(EXIT_USAGE);
-    });
   let stdout = CookedStdout::new();
   let mut subargs = subargs;
   subargs.insert(0, format!("{} {}",
                             env::args().next().unwrap(),
                             &subcommand));
 
-  (sc.call)(SubCommandCallArgs { sc, ma: mo, out: stdout, args: subargs })
+  (mo.sc.call)(SubCommandCallArgs { ma: mo, out: stdout, args: subargs })
     .unwrap_or_else(|e| e.end_process(12));
 }
 
@@ -1593,8 +1596,8 @@ mod command_adhoc {
   }
 
   #[throws(AE)]
-  fn call(SCCA{ sc, mut out, ma, args,.. }:SCCA) {
-    let ahf = sc.into();
+  fn call(SCCA{ mut out, ma, args,.. }:SCCA) {
+    let ahf = ma.sc.into();
 
     let subargs: ApMaker<_> = &|sa| subargs(sa,ahf);
     let args = parse_args::<Args,_>(args, subargs, &ok_id, None);
@@ -1641,8 +1644,8 @@ mod alter_game_adhoc {
     ap
   }
 
-  fn call(SCCA{ sc, mut out, ma, args,.. }:SCCA) -> Result<(),AE> {
-    let ahf = sc.into();
+  fn call(SCCA{ mut out, ma, args,.. }:SCCA) -> Result<(),AE> {
+    let ahf = ma.sc.into();
 
     let subargs: ApMaker<_> = &|sa| subargs(sa,ahf);
     let args = parse_args::<Args,_>(args, subargs, &ok_id, None);
