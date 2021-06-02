@@ -181,6 +181,10 @@ impl AccountScope {
           let user = next()?.to_owned();
           AccountScope::Unix { user }
         }
+        "ssh" => {
+          let user = next()?.to_owned();
+          AccountScope::Ssh { user }
+        }
         _ => {
           throw!(InvalidScopedName::UnknownScopeKind)
         }
