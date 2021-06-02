@@ -774,7 +774,7 @@ fn read_spec_from_path<P:SpecParse>(filename: String, _: P) -> P::T
   })().with_context(|| format!("read {} {:?}", P::S::WHAT, &filename))?
 }
 
-macro_rules! ordinary_subcmd {
+macro_rules! inventory_subcmd {
   {$verb:expr, $help:expr $(,)?} => {
     inventory::submit!{Subcommand {
       verb: $verb,
@@ -826,7 +826,7 @@ mod list_games {
     Ok(())
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "list-games",
     "List games",
   }
@@ -978,7 +978,7 @@ mod reset_game {
     Ok(())
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "reset",
     "Reset the state of the game table",
   }
@@ -1042,7 +1042,7 @@ mod set_link {
     }
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "set-link",
     "Set one of the info links visible from within the game",
   }
@@ -1129,7 +1129,7 @@ mod join_game {
     Ok(())
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "join-game",
     "Join a game or reset access token (creating or updating account)",
   }
@@ -1159,7 +1159,7 @@ mod leave_game {
     Ok(())
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "leave-game",
     "Leave a game",
   }
@@ -1180,7 +1180,7 @@ mod delete_game {
     Ok(())
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "delete-game",
     "Delete a game (throwing all the players out of it)",
   }
@@ -1252,7 +1252,7 @@ mod library_list {
     }
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "library-list",
     "List pieces in the shape libraries",
   }
@@ -1505,7 +1505,7 @@ mod library_add {
     exit(exitcode);
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "library-add",
     "Add pieces from the shape libraries",
   }
@@ -1531,7 +1531,7 @@ mod list_pieces {
     }
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "list-pieces",
     "List pieces in the game",
   }
@@ -1621,11 +1621,11 @@ mod command_adhoc {
     }
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "command-json",
     "run ad-hoc management command(s) (JSON)",
   }
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "command-ron",
     "run ad-hoc management command(s) (Rusty Object Notation)",
   }
@@ -1671,11 +1671,11 @@ mod alter_game_adhoc {
     Ok(())
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "alter-game-json",
     "run an ad-hoc AlterGame command (JSON)",
   }
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "alter-game-ron",
     "run an ad-hoc AlterGame command (Rusty Object Notation)",
   }
@@ -1757,7 +1757,7 @@ mod upload_bundle {
     writeln!(out, "{}", bundle)?;
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "upload-bundle",
     "Upload a bundle",
   }
@@ -1784,7 +1784,7 @@ mod list_bundles {
     }
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "list-bundles",
     "List bundles",
   }
@@ -1850,7 +1850,7 @@ mod download_bundle {
     }
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "download-bundle",
     "download bundle",
   }
@@ -1878,7 +1878,7 @@ mod clear_game {
     clear_game(&ma, &mut chan)?;
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "clear-game",
     "clear the table and clear out all bundles",
   }
@@ -1917,7 +1917,7 @@ mod list_accounts {
     }
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "list-accounts",
     "List accounts in your account scope",
   }
@@ -1982,7 +1982,7 @@ mod mgmtchannel_proxy {
     tresps.join().expect("collect responses copy");
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     SSH_PROXY_SUBCMD,
     "connect to management channel and copy raw message data back and forth",
     suppress_selectaccount: true,
@@ -2143,7 +2143,7 @@ mod set_ssh_keys {
     }
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "set-ssh-keys",
     "set SSH keys for remote management access authentication",
   }
@@ -2202,7 +2202,7 @@ mod list_ssh_keys {
     out.flush()?;
   }
 
-  ordinary_subcmd!{
+  inventory_subcmd!{
     "list-ssh-keys",
     "set SSH keys for remote management access authentication",
   }
