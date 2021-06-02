@@ -1564,7 +1564,7 @@ impl CommandListener {
         cs.mainloop()
       } {
         Ok(()) => info!("{}: disconnected", &cs.d),
-        Err(e) => warn!("{}: unrecoverable error: {:?}", &cs.d, e),
+        Err(e) => info!("{}: unrecoverable error: {}", &cs.d, e.d()),
       }
       Ok::<_,()>(())
     });
