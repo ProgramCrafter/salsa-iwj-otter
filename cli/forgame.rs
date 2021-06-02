@@ -3,6 +3,7 @@
 // There is NO WARRANTY.
 
 use super::*;
+use super::usebundles::*;
 
 //---------- list-games ----------
 
