@@ -2344,7 +2344,6 @@ name = "otter"
 version = "0.6.0"
 dependencies = [
  "anyhow",
- "argparse",
  "backtrace",
  "base64 0.13.0",
  "boolinator",
@@ -2391,7 +2390,6 @@ dependencies = [
  "regex",
  "rmp",
  "rmp-serde",
- "ron",
  "serde",
  "serde_with",
  "sha2",
@@ -2447,6 +2445,21 @@ dependencies = [
  "serde_with",
  "thiserror",
  "void",
+]
+
+[[package]]
+name = "otter-cli"
+version = "0.6.0"
+dependencies = [
+ "argparse",
+ "fehler",
+ "num-traits",
+ "otter",
+ "otter-base",
+ "ron",
+ "serde",
+ "serde_with",
+ "strum",
 ]
 
 [[package]]

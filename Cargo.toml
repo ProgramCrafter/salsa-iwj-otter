@@ -4,7 +4,7 @@
 
 [package]
 name="otter"
-description="Otter game system; main Rust crate."
+description="Otter game system; common infrastructure Rust crate."
 
 version="0.6.0"
 license="AGPL-3.0-or-later"
@@ -16,7 +16,7 @@ authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>",
          "and the contributors to Otter"]
 
 [workspace]
-members=["wasm", "daemon", "wdriver", "apitest"]
+members=["cli", "wasm", "daemon", "wdriver", "apitest"]
 
 [build-dependencies]
 usvg="0.13"
@@ -29,7 +29,6 @@ otter-base.path="base"
 otter-base.version="=0.6.0"
 	
 anyhow="1"
-argparse="0.2"
 backtrace="0.3"
 base64="0.13"
 boolinator="2"
@@ -67,7 +66,6 @@ percent-encoding="2"
 pwd="1"
 rand="0.8"
 regex="1"
-ron="0.6"
 rmp="0.8"
 rmp-serde="0.15"
 serde_with="1"

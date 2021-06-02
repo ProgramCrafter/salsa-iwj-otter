@@ -65,7 +65,7 @@ if [ "x$tag_exists" != x ]; then trouble "tag $tag already exists"; fi
 head -1 CHANGELOG.md | grep "^Version $version" \
 || trouble "CHANGELOG.md not updated"
 
-cargo_order='base . daemon wasm apitest wdriver'
+cargo_order='base . cli daemon wasm apitest wdriver'
 missing=(git ls-files :\*/Cargo.toml :Cargo.toml)
 for x in $cargo_order; do missing+=(:!$x/Cargo.toml); done
 missing=$( "${missing[@]}" )

@@ -1,0 +1,39 @@
+# Copyright 2020-2021 Ian Jackson and contributors to Otter
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# There is NO WARRANTY.
+
+[package]
+name="otter-cli"
+description="Otter game system; command line game management client."
+
+version="0.6.0"
+license="AGPL-3.0-or-later"
+edition="2018"
+homepage="https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/"
+repository="https://salsa.debian.org/iwj/otter"
+keywords=["games"]
+authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>",
+         "and the contributors to Otter"]
+
+[[bin]]
+name="otter"
+path="otter.rs"
+
+[dependencies]
+
+otter.path=".."
+otter.version="=0.6.0"
+otter-base.path="../base"
+otter-base.version="=0.6.0"
+
+argparse="0.2"
+ron="0.6"
+
+fehler="1"
+num-traits="0.2"
+serde_with="1"
+
+serde        = { version="1"    , features=["derive", "rc"] }
+strum        = { version="0.20" , features=["derive"      ] }
+
+#fin.
