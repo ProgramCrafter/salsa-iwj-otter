@@ -53,67 +53,6 @@ pub struct MainOpts {
   sc: &'static Subcommand,
 }
 
-fn default_ssh_proxy_command() -> String {
-  format!("{} {}", DEFAULT_SSH_PROXY_CMD, SSH_PROXY_SUBCMD)
-}
-
-impl MainOpts {
-  pub fn game(&self) -> &str {
-    self.game.as_ref().map(|s| s.as_str()).unwrap_or_else(||{
-      eprintln!(
-        "game (table) name not specified; pass --game option");
-      exit(EXIT_USAGE);
-    })
-  }
-
-  pub fn instance(&self) -> InstanceName {
-    match self.game().strip_prefix(":") {
-      Some(rest) => {
-        InstanceName {
-          account: self.account.clone(),
-          game: rest.into(),
-        }
-      }
-      None => {
-        self.game().parse().unwrap_or_else(|e|{
-          eprintln!(
-            "game (table) name must start with : or be valid full name: {}",
-            &e);
-          exit(EXIT_USAGE);
-        })
-      }
-    }
-  }
-
-  #[throws(AE)]
-  fn access_account(&self) -> Conn {
-    let mut conn = connect(self)?;
-    conn.prep_access_account(self, true)?;
-    conn
-  }
-
-  #[throws(AE)]
-  fn access_game(&self) -> MgmtChannelForGame {
-    self.access_account()?.chan.for_game(
-      self.instance(),
-      MgmtGameUpdateMode::Online,
-    )
-  }
-
-  #[throws(AE)]
-  fn progressbar(&self) -> Box<dyn termprogress::Reporter> {
-    if self.verbose >= 0 {
-      termprogress::new()
-    } else {
-      termprogress::Null::new()
-    }
-  }
-}
-
-#[derive(Default,Debug)]
-struct NoArgs { }
-fn noargs(_sa: &mut NoArgs) -> ArgumentParser { ArgumentParser::new() }
-
 #[derive(Debug)]
 pub struct Subcommand {
   pub verb: &'static str,
