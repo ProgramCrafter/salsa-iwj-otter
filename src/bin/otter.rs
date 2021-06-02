@@ -120,7 +120,7 @@ impl MainOpts {
   #[throws(AE)]
   fn access_account(&self) -> Conn {
     let mut conn = connect(self)?;
-    conn.prep_access_account(self)?;
+    conn.prep_access_account(self, true)?;
     conn
   }
 
@@ -566,7 +566,8 @@ deref_to_field_mut!{Conn, MgmtChannel, chan}
 
 impl Conn {
   #[throws(AE)]
-  fn prep_access_account(&mut self, ma: &MainOpts) {
+  fn prep_access_account(&mut self, ma: &MainOpts,
+                         maybe_update_account: bool) {
     #[derive(Debug)]
     struct Wantup(bool);
     impl Wantup {
@@ -576,12 +577,15 @@ impl Conn {
       }
     }
     let mut wantup = Wantup(false);
-    let mut ad = AccountDetails {
+
+    let mut ad = if maybe_update_account { AccountDetails {
       account:  ma.account.clone(),
       nick:     wantup.u(&ma.nick),
       timezone: wantup.u(&ma.timezone),
       layout:   wantup.u(&ma.layout),
       access:   wantup.u(&ma.access).map(Into::into),
+    } } else {
+      AccountDetails::default(ma.account.clone())
     };
 
     fn is_no_account<T>(r: &Result<T, anyhow::Error>) -> bool {

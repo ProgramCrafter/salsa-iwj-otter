@@ -280,6 +280,13 @@ pub enum MgmtError {
   #[error("command forbides account specified")]     AccountSpecified,
 }
 
+impl AccountDetails {
+  pub fn default(account: AccountName) -> AccountDetails { AccountDetails {
+    account,
+    nick: None, timezone: None, layout: None, access: None,
+  } }
+}
+
 impl From<InternalError> for MgmtError {
   fn from(e: InternalError) -> MgmtError {
     MgmtError::ServerFailure(format!("internal error: {}", &e))
