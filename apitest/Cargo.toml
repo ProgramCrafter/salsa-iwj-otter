@@ -21,7 +21,7 @@ path="apitest.rs"
 
 [[bin]]
 name="apitest"
-path="main.rs"
+path="atmain.rs"
 
 
 [dependencies]
