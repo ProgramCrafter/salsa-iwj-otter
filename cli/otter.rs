@@ -29,7 +29,7 @@ pub use argparse::action::ParseResult::Parsed;
 pub mod clisupport;
 use clisupport::*;
 
-mod manipgame;
+mod forgame;
 
 #[derive(Debug)]
 enum ServerLocation {
