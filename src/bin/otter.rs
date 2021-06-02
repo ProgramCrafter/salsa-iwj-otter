@@ -145,6 +145,7 @@ impl MainOpts {
 struct NoArgs { }
 fn noargs(_sa: &mut NoArgs) -> ArgumentParser { ArgumentParser::new() }
 
+#[derive(Debug)]
 pub struct Subcommand {
   pub verb: &'static str,
   pub help: &'static str,
@@ -153,7 +154,7 @@ pub struct Subcommand {
 }
 inventory::collect!(Subcommand);
 
-#[derive(Default)]
+#[derive(Default,Debug)]
 pub struct SubcommandProperties {
 }
 
