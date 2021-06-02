@@ -99,6 +99,8 @@ pub enum PathResolveContext {
 }
 impl Default for PathResolveContext { fn default() -> Self { Self::Noop } }
 
+static PROGRAM_NAME: RwLock<String> = parking_lot::const_rwlock(String::new());
+
 impl PathResolveMethod {
   #[throws(io::Error)]
   fn chdir(self, cd: &str) -> PathResolveContext {
@@ -341,4 +343,27 @@ impl Default for WholeServerConfig {
       .expect("parse dummy config as ServerConfigSpec");
     spec.resolve(default()).expect("empty spec into config")
   }
+}
+
+pub fn set_program_name(s: String) {
+  *PROGRAM_NAME.write() = s;
+}
+
+pub fn program_name() -> String {
+  {
+    let set = PROGRAM_NAME.read();
+    if set.len() > 0 { return set.clone() }
+  }
+
+  let mut w = PROGRAM_NAME.write();
+  if w.len() > 0 { return w.clone() }
+
+  let new = env::args().next().expect("expected at least 0 arguments");
+  let new = match new.rsplit_once('/') {
+    Some((_path,leaf)) => leaf.to_owned(),
+    None => new,
+  };
+  let new = if new.len() > 0 { new } else { "otter".to_owned() };
+  *w = new.clone();
+  new
 }

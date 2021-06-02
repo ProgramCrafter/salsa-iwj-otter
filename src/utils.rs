@@ -673,18 +673,18 @@ impl anyhow::Error {
   fn d(&self) -> AnyhowDisplay<'_> { AnyhowDisplay(self) }
 
   fn end_process(self, estatus: u8) -> ! {
-    #[derive(Default,Debug)] struct Sol { any: bool }
+    #[derive(Default,Debug)] struct Sol { any: bool, progname: String }
     impl Sol {
       fn nl(&mut self) {
         if self.any { eprintln!("") };
         self.any = false;
       }
       fn head(&mut self) {
-        if ! self.any { eprint!("otter: error"); }
+        if ! self.any { eprint!("{}: error", &self.progname); }
         self.any = true
       }
     }
-    let mut sol: Sol = default();
+    let mut sol: Sol = Sol { any: false, progname: program_name() };
     self.for_each(&mut |s|{
       let long = s.len() > 80;
       if long && sol.any { sol.nl() }

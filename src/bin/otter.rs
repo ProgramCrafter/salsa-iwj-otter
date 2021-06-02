@@ -8,7 +8,6 @@ pub type MgmtChannel = ClientMgmtChannel;
 
 // xxx ssh keys: need a force option to set key for non ssh: account
 // xxx make default account be ssh:<user>: rather than unix:<user>: if we are passed --ssh
-// xxx make remote otter have a different error message prefix
 
 use otter::imports::*;
 
@@ -1951,6 +1950,8 @@ mod mgmtchannel_proxy {
 
   #[throws(AE)]
   fn call(SCCA{ out, ma, args,.. }:SCCA) {
+    set_program_name("otter (remote)".into());
+
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = connect_chan(&ma)?;
 
