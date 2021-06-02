@@ -497,6 +497,13 @@ fn main() {
       Ok(spec_dir)
     })?;
 
+    let server = server.map(Ok::<_,APE>).unwrap_or_else(||{
+      Ok(SL::Socket(
+        config.clone()?.0
+          .command_socket.clone()
+      ))
+    })?;
+
     let account: AccountName = account.map(Ok::<_,APE>).unwrap_or_else(||{
       let user = env::var("USER").map_err(|e| ArgumentParseError(
         format!("default account needs USER env var: {}", &e)
@@ -505,13 +512,6 @@ fn main() {
         scope: AS::Unix { user },
         subaccount: "".into(),
       })
-    })?;
-
-    let server = server.map(Ok::<_,APE>).unwrap_or_else(||{
-      Ok(SL::Socket(
-        config.clone()?.0
-          .command_socket.clone()
-      ))
     })?;
 
     let sc = inventory::iter::<Subcommand>.into_iter()
