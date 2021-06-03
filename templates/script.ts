@@ -1196,6 +1196,7 @@ function drag_mousemove(e: MouseEvent) {
       if (need_redisplay_ancillaries) redisplay_ancillaries(tpiece, tp);
     }
     if (!(dragging & DRAGGING.RAISED)) {
+      sort_drag_pieces();
       for (let dp of drag_pieces) {
 	let piece = dp.piece;
 	let p = pieces[piece]!;
@@ -1216,6 +1217,13 @@ function drag_mousemove(e: MouseEvent) {
   }
   return ddr2;
 }
+function sort_drag_pieces() {
+  function sort_with(a: DragInfo, b: DragInfo): number {
+    return pieceid_z_cmp(a.piece,
+			 b.piece);
+  }
+  drag_pieces.sort(sort_with);
+}
 
 function drag_mouseup(e: MouseEvent) {
   console.log('mouseup', dragging);
@@ -1226,6 +1234,7 @@ function drag_mouseup(e: MouseEvent) {
 function drag_end() {
   if (dragging == DRAGGING.MAYBE_UNGRAB ||
       (dragging & ~DRAGGING.RAISED) == (DRAGGING.MAYBE_GRAB | DRAGGING.YES)) {
+    sort_drag_pieces();
     for (let dp of drag_pieces) {
       let piece = dp.piece;
       let p = pieces[piece]!;
