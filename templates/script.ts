@@ -1803,12 +1803,22 @@ function piece_note_moved(piece: PieceId, p: PieceInfo) {
   movements.push({ piece: piece, p: p, this_motion: now });
 }
 
+function piece_z_cmp(a: PieceInfo, b: PieceInfo) {
+  if (a.z  < b.z ) return -1;
+  if (a.z  > b.z ) return +1;
+  if (a.zg < b.zg) return -1;
+  if (a.zg > b.zg) return +1;
+  return 0;
+}
+
 function piece_z_before(a: PieceInfo, b: PieceInfo) {
-  if (a.z  < b.z ) return true;
-  if (a.z  > b.z ) return false;
-  if (a.zg < b.zg) return true;
-  if (a.zg > b.zg) return false;
-  return false;
+  return piece_z_cmp(a,
+		     b) < 0;
+}
+
+function pieceid_z_cmp(a: PieceId, b: PieceId) {
+  return piece_z_cmp(pieces[a]!,
+		     pieces[b]!);
 }
 
 pieceops.Move = <PieceHandler>function
