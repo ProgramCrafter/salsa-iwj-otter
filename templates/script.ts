@@ -877,10 +877,12 @@ function grab_clicked(clicked: PieceId[]) {
   }
 }
 function ungrab_clicked(clicked: PieceId[]) {
+  let todo: [PieceId, PieceInfo][] = [];
   for (let tpiece of clicked) {
     let tp = pieces[tpiece]!;
-    do_ungrab(tpiece,tp);
+    todo.push([tpiece, tp]);
   }
+  do_ungrab_n(todo);
 }
 
 function mouse_clicked_one(piece: PieceId): MouseFindClicked {
@@ -1061,14 +1063,26 @@ function p_bbox_contains(p: PieceInfo, test: Pos) {
   return true;
 }
 
+function do_ungrab_n(todo: [PieceId, PieceInfo][]) {
+  function sort_with(a: [PieceId, PieceInfo],
+		     b: [PieceId, PieceInfo]): number {
+    return piece_z_cmp(a[1], b[1]);
+  }
+  todo.sort(sort_with);
+  for (let [tpiece, tp] of todo) {
+    do_ungrab_1(tpiece, tp);
+  }
+}
 function ungrab_all_except(dont: PieceSet | null) {
+  let todo: [PieceId, PieceInfo][] =  [];
   for (let tpiece of Object.keys(pieces)) {
     if (dont && dont[tpiece]) continue;
     let tp = pieces[tpiece]!;
     if (tp.held == us) {
-      do_ungrab(tpiece,tp);
+      todo.push([tpiece, tp]);
     }
   }
+  do_ungrab_n(todo);
 }
 function ungrab_all() {
   ungrab_all_except(null);
@@ -1081,7 +1095,7 @@ function set_grab_us(piece: PieceId, p: PieceInfo) {
   redisplay_ancillaries(piece,p);
   recompute_keybindings();
 }
-function do_ungrab(piece: PieceId, p: PieceInfo) {
+function do_ungrab_1(piece: PieceId, p: PieceInfo) {
   let autoraise = p.held_us_raising;
   p.held = null;
   p.held_us_raising = false;
@@ -1238,7 +1252,7 @@ function drag_end() {
     for (let dp of drag_pieces) {
       let piece = dp.piece;
       let p = pieces[piece]!;
-      do_ungrab(piece,p);
+      do_ungrab_1(piece,p);
     }
   }
   drag_cancel();
