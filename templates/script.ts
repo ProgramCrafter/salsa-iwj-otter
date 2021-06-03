@@ -296,6 +296,7 @@ function recompute_keybindings() {
       currently.targets!.push(piece);
     }
   }
+  all_targets.sort(pieceid_z_cmp);
   let add_uo = function(targets: PieceId[] | null, uo: UoDescription) {
     uo_map[uo.def_key] = {
       targets: targets,
