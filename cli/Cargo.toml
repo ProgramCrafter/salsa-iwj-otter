@@ -27,6 +27,7 @@ otter-base.path="../base"
 otter-base.version="=0.6.0"
 
 argparse="0.2"
+directories="3"
 ron="0.6"
 
 fehler="1"
