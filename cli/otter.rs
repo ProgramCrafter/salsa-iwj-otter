@@ -318,12 +318,13 @@ fn main() {
     Ok(())
   };
 
-  let (subcommand, subargs, mo) = parse_args::<RawMainArgs,_>(
-    env::args().collect(),
-    &apmaker,
-    &ap_completer,
-    Some(&extra_help),
-  );
+  let mut parsed: RawMainArgs = default();
+  let args: Vec<String> = env::args().collect();
+
+  let us = run_argparse(&mut parsed, apmaker, args.clone(), Some(extra_help));
+
+  let completed = run_ap_completer(parsed, us, apmaker, &ap_completer);
+  let (subcommand, subargs, mo) = completed;
 
   let stdout = CookedStdout::new();
   let mut subargs = subargs;
