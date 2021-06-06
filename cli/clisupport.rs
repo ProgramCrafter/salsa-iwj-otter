@@ -47,6 +47,16 @@ impl From<&anyhow::Error> for ArgumentParseError {
   }
 }
 
+impl ArgumentParseError {
+  fn report<T:Default>(self, us: &str, apmaker: ApMaker<T>) -> ! {
+    let mut stderr = io::stderr();
+    let mut def = default();
+    let ap = apmaker(&mut def);
+    ap.error(us, &self.0, &mut stderr);
+    exit(EXIT_USAGE);
+  }
+}
+
 pub fn default_ssh_proxy_command() -> String {
   format!("{} {}", DEFAULT_SSH_PROXY_CMD, SSH_PROXY_SUBCMD)
 }
@@ -149,15 +159,7 @@ pub fn run_ap_completer<T,U>(parsed: T, us: String, apmaker: ApMaker<T>,
                              completer: ApCompleter<T,U>)
   -> U where T: Default
 {
-  let mut stderr = io::stderr();
-
-  completer(parsed)
-    .unwrap_or_else(|e:ArgumentParseError| {
-      let mut def = default();
-      let ap = apmaker(&mut def);
-      ap.error(&us, &e.0, &mut stderr);
-      exit(EXIT_USAGE);
-    })
+  completer(parsed).unwrap_or_else(|e| e.report(&us,apmaker))
 }
 
 pub fn parse_args<T:Default,U>(
