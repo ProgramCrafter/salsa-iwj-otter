@@ -321,8 +321,9 @@ fn main() {
   let mut parsed: RawMainArgs = default();
   let args: Vec<String> = env::args().collect();
 
-  let us = run_argparse(&mut parsed, apmaker, args.clone(),
-                        Some(extra_help), None);
+  let mut rapc = RawArgParserContext::new(&args, &mut parsed, apmaker);
+  rapc.run(args.clone(), Some(extra_help), None);
+  let us = rapc.done();
 
   let completed = argparse_more(us, apmaker, || ap_completer(parsed));
   let (subcommand, subargs, mo) = completed;
@@ -330,7 +331,7 @@ fn main() {
   let stdout = CookedStdout::new();
   let mut subargs = subargs;
   subargs.insert(0, format!("{} {}",
-                            env::args().next().unwrap(),
+                            &args[0],
                             &subcommand));
 
   (mo.sc.call)(SubCommandCallArgs { ma: mo, out: stdout, args: subargs })

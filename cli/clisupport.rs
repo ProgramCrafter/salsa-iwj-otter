@@ -127,39 +127,52 @@ pub type ExtraMessage<'exh> =
 pub type ApCompleter<'apc,T,U> =
   &'apc dyn Fn(T) -> Result<U, ArgumentParseError>;
 
-pub fn run_argparse<T>(parsed: &mut T, apmaker: ApMaker<T>,
-                       args: Vec<String>,
-                       extra_help: Option<ExtraMessage>,
-                       extra_error: Option<ExtraMessage>)
-                       -> String /* us */{
-  let ap = apmaker(parsed);
-  let us = args.get(0).expect("argv[0] must be provided!").clone();
+pub struct RawArgParserContext<'a> {
+  pub ap: ArgumentParser<'a>,
+  pub us: String,
+  pub stdout: CookedStdout,
+  pub stderr: io::Stderr,
+}
 
-  let mut stdout = CookedStdout::new();
-  let mut stderr = io::stderr();
-
-  let em_call = |em: Option<ExtraMessage>, f| {
-    if let Some(em) = em { em(f).unwrap() };
-  };
-
-  let r = ap.parse(args, &mut stdout, &mut stderr);
-  if let Err(rc) = r {
-    exit(match rc {
-      0 => {
-        em_call(extra_help, &mut stdout);
-        0
-      },
-      2 => {
-        em_call(extra_error, &mut stderr);
-        EXIT_USAGE
-      },
-      _ => panic!("unexpected error rc {} from ArgumentParser::parse", rc),
-    });
+impl<'a> RawArgParserContext<'a> {
+  pub fn new<T>(args0: &[String], parsed: &'a mut T, apmaker: ApMaker<T>)
+                -> Self
+  {
+    RawArgParserContext {
+      ap: apmaker(parsed),
+      us: args0.get(0).expect("argv[0] must be provided!").clone(),
+      stdout: CookedStdout::new(),
+      stderr: io::stderr(),
+    }
   }
-  mem::drop(stdout);
-  mem::drop(ap);
 
-  us
+  pub fn run(&mut self,
+             args: Vec<String>,
+             extra_help: Option<ExtraMessage>,
+             extra_error: Option<ExtraMessage>) {
+    let em_call = |em: Option<ExtraMessage>, f| {
+      if let Some(em) = em { em(f).unwrap() };
+    };
+
+    let r = self.ap.parse(args, &mut self.stdout, &mut self.stderr);
+    if let Err(rc) = r {
+      exit(match rc {
+        0 => {
+          em_call(extra_help, &mut self.stdout);
+          0
+        },
+        2 => {
+          em_call(extra_error, &mut self.stderr);
+          EXIT_USAGE
+        },
+        _ => panic!("unexpected error rc {} from ArgumentParser::parse", rc),
+      });
+    }
+  }
+
+  pub fn done(self) -> String /* us */ {
+    self.us
+  }
 }
 
 pub fn argparse_more<T,U,F>(us: String, apmaker: ApMaker<T>, f: F) -> U
@@ -176,7 +189,9 @@ pub fn parse_args<T:Default,U>(
   extra_help: Option<ExtraMessage>,
 ) -> U {
   let mut parsed = default();
-  let us = run_argparse(&mut parsed, apmaker, args, extra_help, None);
+  let mut rapc = RawArgParserContext::new(&args, &mut parsed, apmaker);
+  rapc.run(args, extra_help, None);
+  let us = rapc.done();
   let completed = argparse_more(us, apmaker, || completer(parsed));
   completed
 }
