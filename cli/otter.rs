@@ -36,7 +36,13 @@ mod forgame;
 mod usebundles;
 mod uselibs;
 
-#[derive(Debug)]
+#[derive(Debug,Deserialize)]
+struct Prefs {
+  #[serde(default)] options: toml::value::Table,
+}
+
+#[derive(Debug,Deserialize)]
+#[serde(rename_all="snake_case")]
 enum ServerLocation {
   Socket(String),
   Ssh(String),
@@ -84,6 +90,7 @@ pub type SCCA = SubCommandCallArgs;
 fn main() {
   #[derive(Default,Debug)]
   struct RawMainArgs {
+    prefs_path: Option<String>,
     account: Option<AccountName>,
     server: Option<ServerLocation>,
     nick: Option<String>,
@@ -208,6 +215,10 @@ fn main() {
                     (shell syntax, interpreted by the remote shell)",
                     default_ssh_proxy_command()))));
 
+    ap.refer(&mut rma.prefs_path)
+      .add_option(&["--prefs"], StoreOption,
+                  "preferences file (usually ~/.config/otter/prefs.toml)");
+
     ap.refer(&mut rma.spec_dir)
       .add_option(&["--spec-dir"], StoreOption,
                   "directory for table and game specs");
@@ -219,7 +230,7 @@ fn main() {
     account, nick, timezone,
     access, server, verbose, config_filename, superuser,
     subcommand, subargs, spec_dir, layout, game,
-    ssh_command, ssh_proxy_command
+    ssh_command, ssh_proxy_command, prefs_path:_
   }|{
     env_logger::Builder::new()
       .filter_level(log::LevelFilter::Info)
@@ -325,7 +336,73 @@ fn main() {
   rapc.run(args.clone(), Some(extra_help), None);
   let us = rapc.done();
 
+  argparse_more(us.clone(), apmaker, || (||{
+    let prefs_path: PathBuf = parsed.prefs_path.as_ref()
+      .map(|s| Ok(s.into()))
+      .unwrap_or_else(|| -> Result<PathBuf,AE> {
+        static VAR: &str = "OTTER_PREFS";
+        if let Some(ev) = env::var_os(VAR) {
+          return ev.try_into().context(VAR);
+        }
+        let dir =
+          directories::ProjectDirs::from("uk.org","greenend","Otter")
+          .ok_or_else(||anyhow!("failed to find home directory"))?
+          .config_dir()
+          .to_owned();
+        Ok::<_,AE>(dir.join("prefs.toml"))
+      })
+      .context("locate preferences file (prefs.toml)")?;
+
+    let data: Option<Prefs> = (||{
+      let data = match fs::read_to_string(&prefs_path) {
+        Err(e) if e.kind() == ErrorKind::NotFound => return Ok(None),
+        Err(e) => throw!(AE::from(e).context("open and read")),
+        Ok(data) => data,
+      };
+      let data = data.parse().context("parse as toml")?;
+      let data = toml_de::from_value(&data).context("parse as preferences")?;
+      Ok::<_,AE>(Some(data))
+    })().context(prefs_path.display().to_string()).context("prefs file")?;
+    if_let!{ Some(data) = data; else return Ok(()); }
+
+    let mut redo: RawMainArgs = default();
+    let mut rapc = RawArgParserContext::new(&args, &mut redo, apmaker);
+
+    for (k, v) in &data.options {
+      let context = || format!(
+        "prefs file {} option.{}",
+        prefs_path.display(), k,
+      );
+      use toml::value::Value as TV;
+      let synth_arg = match v {
+        TV::Boolean(true)  => format!("--{}",    k),
+        TV::Boolean(false) => format!("--no-{}", k),
+        TV::String(x)      => format!("--{}={}", k, x),
+        TV::Integer(x)     => format!("--{}={}", k, x),
+        _ => throw!(
+          anyhow!("cannot handle this toml value type ({})", v.type_str())
+            .context(context())
+        ),
+      };
+      let synth_args = vec![synth_arg.clone()];
+
+      rapc.run(synth_args, None, Some(&|stderr: &mut dyn Write|{
+        writeln!(stderr, "Error processing {}\n\
+                          Prefs option interpreted as {}",
+                 context(), &synth_arg)
+      }));
+    }
+
+    rapc.run(args.clone(), Some(extra_help), None);
+    rapc.done();
+    parsed = redo;
+    Ok(())
+  })()
+                .map_err(|ae| ArgumentParseError::from(&ae))
+  );
+
   let completed = argparse_more(us, apmaker, || ap_completer(parsed));
+
   let (subcommand, subargs, mo) = completed;
 
   let stdout = CookedStdout::new();
