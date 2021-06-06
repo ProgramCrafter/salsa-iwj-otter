@@ -246,18 +246,23 @@ impl Ctx {
                 .lines().nth(2).unwrap().unwrap(),
                 STATIC_TEST.strip_suffix("\n").unwrap() );
 
+    let ssh_command = ds.subst(
+      "@src@/apitest/mock-ssh-restricted @authkeys@ '@dummy_key_data@'"
+    )?;
+
     let mk_restricted = |account, rhs|{
-      let mut command = ds.also(&[
-        ("account",account),
-        ("rhs",    rhs),
-      ]).gss(
+      let ds = ds.also(&[
+        ("account",      account),
+        ("rhs",          rhs),
+        ("ssh_command", ssh_command.as_str()),
+      ]);
+      let mut command = ds.gss(
         "--account @account@ \
          --ssh nowhere \
          @rhs@"
       )?;
       command.insert(0, ds.subst(
-        "--ssh-command=@src@/apitest/mock-ssh-restricted \
-         @authkeys@ '@dummy_key_data@'"
+        "--ssh-command=@ssh_command@"
       )?);
       Ok::<_,Explode>(command)
     };
