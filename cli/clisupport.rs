@@ -111,14 +111,13 @@ pub fn noargs(_sa: &mut NoArgs) -> ArgumentParser { ArgumentParser::new() }
 pub type ApMaker<'apm, T> =
   &'apm dyn for <'a> Fn(&'a mut T) -> ArgumentParser<'a>;
 
-pub fn parse_args<T:Default,U>(
-  args: Vec<String>,
-  apmaker: ApMaker<T>,
-  completer: &dyn Fn(T) -> Result<U, ArgumentParseError>,
-  extra_help: Option<&dyn Fn(&mut dyn Write) -> Result<(), io::Error>>,
-) -> U {
-  let mut parsed = default();
-  let ap = apmaker(&mut parsed);
+pub type ExtraHelp<'exh> =
+  &'exh dyn Fn(&mut dyn Write) -> Result<(), io::Error>;
+
+pub fn run_argparse<T>(parsed: &mut T, apmaker: ApMaker<T>,
+                       args: Vec<String>, extra_help: Option<ExtraHelp>)
+                       -> String /* us */{
+  let ap = apmaker(parsed);
   let us = args.get(0).expect("argv[0] must be provided!").clone();
 
   let mut stdout = CookedStdout::new();
@@ -139,6 +138,20 @@ pub fn parse_args<T:Default,U>(
   }
   mem::drop(stdout);
   mem::drop(ap);
+
+  us
+}
+
+pub fn parse_args<T:Default,U>(
+  args: Vec<String>,
+  apmaker: ApMaker<T>,
+  completer: &dyn Fn(T) -> Result<U, ArgumentParseError>,
+  extra_help: Option<ExtraHelp>,
+) -> U {
+  let mut stderr = io::stderr();
+
+  let mut parsed = default();
+  let us = run_argparse(&mut parsed, apmaker, args, extra_help);
   let completed  = completer(parsed)
     .unwrap_or_else(|e:ArgumentParseError| {
       let mut def = default();
