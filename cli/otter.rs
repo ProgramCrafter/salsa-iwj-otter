@@ -323,7 +323,7 @@ fn main() {
 
   let us = run_argparse(&mut parsed, apmaker, args.clone(), Some(extra_help));
 
-  let completed = run_ap_completer(parsed, us, apmaker, &ap_completer);
+  let completed = argparse_more(us, apmaker, || ap_completer(parsed));
   let (subcommand, subargs, mo) = completed;
 
   let stdout = CookedStdout::new();

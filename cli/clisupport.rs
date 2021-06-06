@@ -155,11 +155,11 @@ pub fn run_argparse<T>(parsed: &mut T, apmaker: ApMaker<T>,
   us
 }
 
-pub fn run_ap_completer<T,U>(parsed: T, us: String, apmaker: ApMaker<T>,
-                             completer: ApCompleter<T,U>)
-  -> U where T: Default
+pub fn argparse_more<T,U,F>(us: String, apmaker: ApMaker<T>, f: F) -> U
+  where T: Default,
+        F: FnOnce() -> Result<U, ArgumentParseError>
 {
-  completer(parsed).unwrap_or_else(|e| e.report(&us,apmaker))
+  f().unwrap_or_else(|e| e.report(&us,apmaker))
 }
 
 pub fn parse_args<T:Default,U>(
@@ -170,7 +170,7 @@ pub fn parse_args<T:Default,U>(
 ) -> U {
   let mut parsed = default();
   let us = run_argparse(&mut parsed, apmaker, args, extra_help);
-  let completed = run_ap_completer(parsed, us, apmaker, completer);
+  let completed = argparse_more(us, apmaker, || completer(parsed));
   completed
 }
 
