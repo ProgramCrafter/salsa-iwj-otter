@@ -114,6 +114,9 @@ pub type ApMaker<'apm, T> =
 pub type ExtraHelp<'exh> =
   &'exh dyn Fn(&mut dyn Write) -> Result<(), io::Error>;
 
+pub type ApCompleter<'apc,T,U> =
+  &'apc dyn Fn(T) -> Result<U, ArgumentParseError>;
+
 pub fn run_argparse<T>(parsed: &mut T, apmaker: ApMaker<T>,
                        args: Vec<String>, extra_help: Option<ExtraHelp>)
                        -> String /* us */{
@@ -142,23 +145,30 @@ pub fn run_argparse<T>(parsed: &mut T, apmaker: ApMaker<T>,
   us
 }
 
-pub fn parse_args<T:Default,U>(
-  args: Vec<String>,
-  apmaker: ApMaker<T>,
-  completer: &dyn Fn(T) -> Result<U, ArgumentParseError>,
-  extra_help: Option<ExtraHelp>,
-) -> U {
+pub fn run_ap_completer<T,U>(parsed: T, us: String, apmaker: ApMaker<T>,
+                             completer: ApCompleter<T,U>)
+  -> U where T: Default
+{
   let mut stderr = io::stderr();
 
-  let mut parsed = default();
-  let us = run_argparse(&mut parsed, apmaker, args, extra_help);
-  let completed  = completer(parsed)
+  completer(parsed)
     .unwrap_or_else(|e:ArgumentParseError| {
       let mut def = default();
       let ap = apmaker(&mut def);
       ap.error(&us, &e.0, &mut stderr);
       exit(EXIT_USAGE);
-    });
+    })
+}
+
+pub fn parse_args<T:Default,U>(
+  args: Vec<String>,
+  apmaker: ApMaker<T>,
+  completer: ApCompleter<T,U>,
+  extra_help: Option<ExtraHelp>,
+) -> U {
+  let mut parsed = default();
+  let us = run_argparse(&mut parsed, apmaker, args, extra_help);
+  let completed = run_ap_completer(parsed, us, apmaker, completer);
   completed
 }
 
