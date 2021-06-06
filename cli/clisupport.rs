@@ -121,14 +121,16 @@ pub fn noargs(_sa: &mut NoArgs) -> ArgumentParser { ArgumentParser::new() }
 pub type ApMaker<'apm, T> =
   &'apm dyn for <'a> Fn(&'a mut T) -> ArgumentParser<'a>;
 
-pub type ExtraHelp<'exh> =
+pub type ExtraMessage<'exh> =
   &'exh dyn Fn(&mut dyn Write) -> Result<(), io::Error>;
 
 pub type ApCompleter<'apc,T,U> =
   &'apc dyn Fn(T) -> Result<U, ArgumentParseError>;
 
 pub fn run_argparse<T>(parsed: &mut T, apmaker: ApMaker<T>,
-                       args: Vec<String>, extra_help: Option<ExtraHelp>)
+                       args: Vec<String>,
+                       extra_help: Option<ExtraMessage>,
+                       extra_error: Option<ExtraMessage>)
                        -> String /* us */{
   let ap = apmaker(parsed);
   let us = args.get(0).expect("argv[0] must be provided!").clone();
@@ -136,16 +138,21 @@ pub fn run_argparse<T>(parsed: &mut T, apmaker: ApMaker<T>,
   let mut stdout = CookedStdout::new();
   let mut stderr = io::stderr();
 
+  let em_call = |em: Option<ExtraMessage>, f| {
+    if let Some(em) = em { em(f).unwrap() };
+  };
+
   let r = ap.parse(args, &mut stdout, &mut stderr);
   if let Err(rc) = r {
     exit(match rc {
       0 => {
-        if let Some(eh) = extra_help {
-          eh(&mut stdout).unwrap();
-        }
+        em_call(extra_help, &mut stdout);
         0
       },
-      2 => EXIT_USAGE,
+      2 => {
+        em_call(extra_error, &mut stderr);
+        EXIT_USAGE
+      },
       _ => panic!("unexpected error rc {} from ArgumentParser::parse", rc),
     });
   }
@@ -166,10 +173,10 @@ pub fn parse_args<T:Default,U>(
   args: Vec<String>,
   apmaker: ApMaker<T>,
   completer: ApCompleter<T,U>,
-  extra_help: Option<ExtraHelp>,
+  extra_help: Option<ExtraMessage>,
 ) -> U {
   let mut parsed = default();
-  let us = run_argparse(&mut parsed, apmaker, args, extra_help);
+  let us = run_argparse(&mut parsed, apmaker, args, extra_help, None);
   let completed = argparse_more(us, apmaker, || completer(parsed));
   completed
 }

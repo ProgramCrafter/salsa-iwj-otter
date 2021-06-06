@@ -307,7 +307,7 @@ fn main() {
     }))
   };
 
-  let extra_help: ExtraHelp = &|w|{
+  let extra_help: ExtraMessage = &|w|{
     writeln!(w, "\nSubcommands:")?;
     let maxlen = inventory::iter::<Subcommand>.into_iter()
       .map(|Subcommand{verb,..}| verb.len())
@@ -321,7 +321,8 @@ fn main() {
   let mut parsed: RawMainArgs = default();
   let args: Vec<String> = env::args().collect();
 
-  let us = run_argparse(&mut parsed, apmaker, args.clone(), Some(extra_help));
+  let us = run_argparse(&mut parsed, apmaker, args.clone(),
+                        Some(extra_help), None);
 
   let completed = argparse_more(us, apmaker, || ap_completer(parsed));
   let (subcommand, subargs, mo) = completed;
