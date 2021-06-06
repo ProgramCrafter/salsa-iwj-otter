@@ -100,9 +100,8 @@ fn main() {
     ssh_command: Option<String>,
     ssh_proxy_command: Option<String>,
   }
-  let (subcommand, subargs, mo) = parse_args::<RawMainArgs,_>(
-    env::args().collect(),
-  &|rma|{
+
+  let apmaker: ApMaker<RawMainArgs> = &|rma|{
     use argparse::*;
     let mut ap = ArgumentParser::new();
     ap.stop_on_first_argument(true);
@@ -214,7 +213,9 @@ fn main() {
                   "directory for table and game specs");
 
     ap
-  }, &|RawMainArgs {
+  };
+
+  let ap_completer = |RawMainArgs {
     account, nick, timezone,
     access, server, verbose, config_filename, superuser,
     subcommand, subargs, spec_dir, layout, game,
@@ -304,7 +305,9 @@ fn main() {
       ssh_proxy_command,
       sc,
     }))
-  }, Some(&|w|{
+  };
+
+  let extra_help: ExtraHelp = &|w|{
     writeln!(w, "\nSubcommands:")?;
     let maxlen = inventory::iter::<Subcommand>.into_iter()
       .map(|Subcommand{verb,..}| verb.len())
@@ -313,7 +316,14 @@ fn main() {
       writeln!(w, "  {:width$}  {}", verb, help, width=maxlen)?;
     }
     Ok(())
-  }));
+  };
+
+  let (subcommand, subargs, mo) = parse_args::<RawMainArgs,_>(
+    env::args().collect(),
+    &apmaker,
+    &ap_completer,
+    Some(&extra_help),
+  );
 
   let stdout = CookedStdout::new();
   let mut subargs = subargs;
