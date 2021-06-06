@@ -332,9 +332,11 @@ fn main() {
   let mut parsed: RawMainArgs = default();
   let args: Vec<String> = env::args().collect();
 
-  let mut rapc = RawArgParserContext::new(&args, &mut parsed, apmaker);
-  rapc.run(args.clone(), Some(extra_help), None);
+  let mut rapc = RawArgParserContext::new(&args);
+  let mut ap = apmaker(&mut parsed);
+  rapc.run(&mut ap, args.clone(), Some(extra_help), None);
   let us = rapc.done();
+  drop(ap);
 
   argparse_more(us.clone(), apmaker, || (||{
     let prefs_path: PathBuf = parsed.prefs_path.as_ref()
@@ -372,7 +374,8 @@ fn main() {
     if_let!{ Some(data) = data; else return Ok(()); }
 
     let mut redo: RawMainArgs = default();
-    let mut rapc = RawArgParserContext::new(&args, &mut redo, apmaker);
+    let mut rapc = RawArgParserContext::new(&args);
+    let mut ap = apmaker(&mut redo);
 
     for (k, v) in &data.options {
       let context = || format!(
@@ -392,15 +395,15 @@ fn main() {
       };
       let synth_args = vec![synth_arg.clone()];
 
-      rapc.run(synth_args, None, Some(&|stderr: &mut dyn Write|{
+      rapc.run(&mut ap, synth_args, None, Some(&|stderr: &mut dyn Write|{
         writeln!(stderr, "Error processing {}\n\
                           Prefs option interpreted as {}",
                  context(), &synth_arg)
       }));
     }
 
-    rapc.run(args.clone(), Some(extra_help), None);
-    rapc.done();
+    rapc.run(&mut ap, args.clone(), Some(extra_help), None);
+    drop(ap);
     parsed = redo;
     Ok(())
   })()

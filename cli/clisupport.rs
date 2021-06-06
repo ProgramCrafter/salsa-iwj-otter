@@ -127,19 +127,15 @@ pub type ExtraMessage<'exh> =
 pub type ApCompleter<'apc,T,U> =
   &'apc dyn Fn(T) -> Result<U, ArgumentParseError>;
 
-pub struct RawArgParserContext<'a> {
-  pub ap: ArgumentParser<'a>,
+pub struct RawArgParserContext {
   pub us: String,
   pub stdout: CookedStdout,
   pub stderr: io::Stderr,
 }
 
-impl<'a> RawArgParserContext<'a> {
-  pub fn new<T>(args0: &[String], parsed: &'a mut T, apmaker: ApMaker<T>)
-                -> Self
-  {
+impl RawArgParserContext {
+  pub fn new(args0: &[String]) -> Self {
     RawArgParserContext {
-      ap: apmaker(parsed),
       us: args0.get(0).expect("argv[0] must be provided!").clone(),
       stdout: CookedStdout::new(),
       stderr: io::stderr(),
@@ -147,6 +143,7 @@ impl<'a> RawArgParserContext<'a> {
   }
 
   pub fn run(&mut self,
+             ap: &mut ArgumentParser<'_>,
              args: Vec<String>,
              extra_help: Option<ExtraMessage>,
              extra_error: Option<ExtraMessage>) {
@@ -154,7 +151,7 @@ impl<'a> RawArgParserContext<'a> {
       if let Some(em) = em { em(f).unwrap() };
     };
 
-    let r = self.ap.parse(args, &mut self.stdout, &mut self.stderr);
+    let r = ap.parse(args, &mut self.stdout, &mut self.stderr);
     if let Err(rc) = r {
       exit(match rc {
         0 => {
@@ -189,9 +186,11 @@ pub fn parse_args<T:Default,U>(
   extra_help: Option<ExtraMessage>,
 ) -> U {
   let mut parsed = default();
-  let mut rapc = RawArgParserContext::new(&args, &mut parsed, apmaker);
-  rapc.run(args, extra_help, None);
+  let mut rapc = RawArgParserContext::new(&args);
+  let mut ap = apmaker(&mut parsed);
+  rapc.run(&mut ap, args, extra_help, None);
   let us = rapc.done();
+  drop(ap);
   let completed = argparse_more(us, apmaker, || completer(parsed));
   completed
 }
