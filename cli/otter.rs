@@ -355,7 +355,13 @@ fn main() {
 
     let data: Option<Prefs> = (||{
       let data = match fs::read_to_string(&prefs_path) {
-        Err(e) if e.kind() == ErrorKind::NotFound => return Ok(None),
+        Err(e) if e.kind() == ErrorKind::NotFound => {
+          if parsed.verbose >= 2 {
+            eprintln!("prefs file {:?} does not exist, skipping",
+                      &prefs_path);
+          }
+          return Ok(None)
+        },
         Err(e) => throw!(AE::from(e).context("open and read")),
         Ok(data) => data,
       };
