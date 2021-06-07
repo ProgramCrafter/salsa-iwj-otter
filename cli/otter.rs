@@ -372,8 +372,7 @@ fn main() {
         Err(e) => throw!(AE::from(e).context("open and read")),
         Ok(data) => data,
       };
-      let data = data.parse().context("parse as toml")?;
-      let data = toml_de::from_value(&data).context("parse as preferences")?;
+      let data = toml_de::from_str(&data).context("parse as preferences")?;
       Ok::<_,AE>(Some(data))
     })().context(prefs_path.display().to_string()).context("prefs file")?;
     if_let!{ Some(data) = data; else return Ok(()); }
