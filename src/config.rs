@@ -180,6 +180,13 @@ impl ServerConfigSpec {
     let authorized_keys_include = authorized_keys_include.unwrap_or_else(
       || format!("{}.static", authorized_keys)
     );
+    if authorized_keys == authorized_keys_include {
+      throw!(anyhow!(
+        "ssh authorized_keys and authorized_keys_include are equal {:?} \
+         which would imply including a file in itself",
+        &authorized_keys
+      ));
+    }
 
     let ssh_proxy_uid = match ssh_proxy_user {
       None => Uid::current(),
