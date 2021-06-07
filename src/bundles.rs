@@ -906,18 +906,21 @@ pub fn load_spec_to_read(ig: &Instance, spec_name: &str) -> String {
   let spec_leaf = format!("{}.game.toml", spec_name);
 
   if let Some((id, index)) = ig.bundle_specs.get(&UniCase::from(spec_name)) {
-    let fpath = id.path_(&ig.name);
-    let f = File::open(&fpath)
-      .with_context(|| fpath.clone()).context("reopen bundle")
-      .map_err(IE::from)?;
     match id.kind {
       Kind::Zip => {
+
+        let fpath = id.path_(&ig.name);
+        let f = File::open(&fpath)
+          .with_context(|| fpath.clone()).context("reopen bundle")
+          .map_err(IE::from)?;
+
         let mut za = ZipArchive::new(BufReader::new(f)).map_err(
           |e| LE::BadBundle(format!("re-examine zipfile: {}", e)))?;
         let mut f = za.i(*index).map_err(
           |e| LE::BadBundle(format!("re-find zipfile member: {}", e)))?;
         return read_from_read(&mut f, &mut |e|{
           LE::BadBundle(format!("read zipfile member: {}", e))}.into())?;
+
       }
     }
   }
