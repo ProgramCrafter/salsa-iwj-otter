@@ -500,7 +500,8 @@ impl Global {
            }
       }
       Err(anyhow!(
-          "first line is not as expected (manually written/edited?)"
+          "first line is not as expected (manually written/edited?) \
+           (before first run, make static include be a hardlink to real file)"
       ))
     })()
       .context("check authorized_keys magic/banner")?;
