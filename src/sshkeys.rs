@@ -496,6 +496,7 @@ impl Global {
         let devino = |f: &File| f.metadata().map(|m| (m.dev(), m.ino()));
         if devino(staticf).context("fstat static auth keys")? ==
            devino(&f).context("fstat existing auth keys")? {
+             info!("auth keys files hardlinked, doing first install");
              return Ok(());
            }
       }
