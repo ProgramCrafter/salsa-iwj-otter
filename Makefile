@@ -218,6 +218,7 @@ stamp/cargo-wdt.debug: $(call rsrcs,.)
 	$(stamp)
 
 stamp/cargo.doc: $(call rsrcs,.)
+	set -o pipefail -e; \
 	$(CARGO) doc $(CARGO_DOC_OPTS) --workspace 2>&1 |egrep -vf .cargo-doc-suppress-errors
 	$(stamp)
 
