@@ -889,6 +889,34 @@ fn make_usvg(instance_name: &str, bundle_name: &str, za: &mut IndexedZip,
 
 //---------- specs ----------
 
+#[throws(anyhow::Error)]
+pub fn spec_macroexpand(input: String) -> String {
+  if ! input.starts_with("{#") { return input }
+
+  let templates: Vec<(&str, Cow<str>)> = match input.rfind("\n{% endmacro") {
+    None => vec![ ("spec", input.into()) ],
+    Some(endm_base) => {
+      let endm_sol = endm_base + 1;
+      let endm_end = endm_sol + 1 +
+        input[endm_sol..].find('\n')
+        .ok_or_else(|| anyhow!("endmacro line not terminated"))?;
+      let mac_data = &input[0..endm_end];
+      let spec_data = 
+        r#"{% import "m" as m %}"#.to_string()
+        + &"\n".repeat(mac_data.matches('\n').count())
+        + &input[endm_end..];
+      vec![ ("m",    mac_data .into()),
+            ("spec", spec_data.into()) ]
+    },
+  };
+  let mut tera = tera_standalone::Tera::default();
+  tera.add_raw_templates(templates).context("load")?;
+  let mut out: Vec<u8> = vec![];
+  tera.render_to("spec", &default(), &mut out).context("render")?;
+  let out = String::from_utf8(out).context("reparse as utf-8")?;
+  out
+}
+
 #[throws(MgmtError)]
 pub fn load_spec_to_read(ig: &Instance, spec_name: &str) -> String {
   #[throws(MgmtError)]
@@ -901,32 +929,7 @@ pub fn load_spec_to_read(ig: &Instance, spec_name: &str) -> String {
       _ => e_f(e),
     })?;
 
-    if ! buf.starts_with("{#") { return buf }
-
-    (||{
-      let templates: Vec<(&str, Cow<str>)> = match buf.rfind("\n{% endmacro") {
-        None => vec![ ("spec", buf.into()) ],
-        Some(endm_base) => {
-          let endm_sol = endm_base + 1;
-          let endm_end = endm_sol + 1 +
-            buf[endm_sol..].find('\n')
-            .ok_or_else(|| anyhow!("endmacro line not terminated"))?;
-          let mac_data = &buf[0..endm_end];
-          let spec_data = 
-            r#"{% import "m" as m %}"#.to_string()
-            + &"\n".repeat(mac_data.matches('\n').count())
-            + &buf[endm_end..];
-          vec![ ("m",    mac_data .into()),
-                ("spec", spec_data.into()) ]
-        },
-      };
-      let mut tera = tera_standalone::Tera::default();
-      tera.add_raw_templates(templates).context("load")?;
-      let mut out: Vec<u8> = vec![];
-      tera.render_to("spec", &default(), &mut out).context("render")?;
-      let out = String::from_utf8(out).context("reparse as utf-8")?;
-      Ok::<_,AE>(out)
-    })()
+    spec_macroexpand(buf)
       .map_err(|ae| ME::BadBundle(
         format!("process spec as Tera template: {}", ae.d())
       ))?
