@@ -398,7 +398,7 @@ fn main() {
             .context(context())
         ),
       };
-      let synth_args = vec![synth_arg.clone()];
+      let synth_args = vec![args[0].clone(), synth_arg.clone()];
 
       rapc.run(&mut ap, synth_args, None, Some(&|stderr: &mut dyn Write|{
         writeln!(stderr, "Error processing {}\n\
