@@ -269,10 +269,28 @@ impl Ctx {
       Ok::<_,Explode>(command)
     };
 
+    let prefs_path = ds.subst("@abstmp@/prefs.toml")?;
+    write!(File::create(&prefs_path)?, "{}", ds.subst(r#"
+      [options]
+      ssh="prefs.example.org"
+      ssh-command="@ssh_command@"
+    "#)?)?;
+
+    let mk_withprefs = |account, rhs|{
+      let ds = ds.also(&[
+        ("account",      account),
+        ("rhs",          rhs),
+        ("prefs",        prefs_path.as_str()),
+      ]);
+      let command = ds.gss("--prefs @prefs@ --account @account@ @rhs@")?;
+      Ok::<_,Explode>(command)
+    };
+
     self.otter(&mk_restricted("ssh:test:sub", "list-accounts")?)?;
     self.otter(&mk_restricted("ssh:other:", "list-accounts")?)
       .expect_err("unath");
-    self.otter(&mk_restricted("ssh:test:", "list-accounts")?)?;
+
+    self.otter(&mk_withprefs("ssh:test:", "list-accounts")?)?;
 
     self.otter(&mk_restricted(
       "ssh:test:", "set-ssh-keys /dev/null")?).expect_err("saw own branch");
