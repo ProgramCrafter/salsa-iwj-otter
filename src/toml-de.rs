@@ -24,7 +24,7 @@ use serde::de::{
 pub enum Error {
   #[error("deserialize failed (improper TOML structure?): {0}")]
   Custom(Box<str>),
-  #[error("config file has invalid TOML syntax: {0}")]
+  #[error("file has invalid TOML syntax: {0}")]
   TomlSyntax(toml::de::Error),
 }
 
