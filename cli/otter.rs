@@ -324,6 +324,11 @@ fn main() {
   };
 
   let extra_help: ExtraMessage = &|w|{
+    write!(w, r#"
+PREFS is a TOML file containing a table [options].  The entries in options
+are named after long command line options.   The values are the corresponding
+option values; or`true` and `false` for just --option or --no-option.
+"#)?;
     writeln!(w, "\nSubcommands:")?;
     let maxlen = inventory::iter::<Subcommand>.into_iter()
       .map(|Subcommand{verb,..}| verb.len())
