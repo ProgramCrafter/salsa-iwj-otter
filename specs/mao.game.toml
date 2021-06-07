@@ -1,6 +1,23 @@
-# Copyright 2020-2021 Ian Jackson and contributors to Otter
-# SPDX-License-Identifier: AGPL-3.0-or-later
-# There is NO WARRANTY.
+{# Copyright 2020-2021 Ian Jackson and contributors to Otter
+   SPDX-License-Identifier: AGPL-3.0-or-later
+   There is NO WARRANTY. #}
+
+{% macro hand(pos, colour, lplace, edge="white", edge_width="0.75") %}
+
+[[pieces]]
+pos = {{pos}}
+colour = "{{colour}}"
+label.place = "{{lplace}}"
+label.colour = "black"
+
+type = "Hand"
+edge = "{{edge}}"
+edge_width = {{edge_width}}
+shape.type = "Rect"
+shape.xy = [93,25]
+
+{% endmacro hand %}
+
 
 table_size = [300, 200]
 table_colour = "#bbd"
@@ -9,7 +26,6 @@ table_colour = "#bbd"
 type = "Lib"
 lib = "wikimedia"
 item = "card-plain-back-maroon"
-
 
 [[pieces]]
 pos = [136,115]
@@ -41,128 +57,18 @@ label.colour = "black"
 shape.type = "Rect"
 shape.xy = [25,30]
 
-
-[[pieces]]
-pos = [53, 25]
-colour = "brown"
-label.place = "BottomLeftOutside"
-label.colour = "black"
-
-type = "Hand"
-edge = "white"
-edge_width = 0.75
-shape.type = "Rect"
-shape.xy = [93,25]
-
-[[pieces]]
-pos = [150, 23]
-colour = "red"
-label.place = "BottomLeftOutside"
-label.colour = "black"
-
-type = "Hand"
-edge = "white"
-edge_width = 0.75
-shape.type = "Rect"
-shape.xy = [93,25]
-
-[[pieces]]
-pos = [247, 25]
-colour = "orange"
-label.place = "BottomLeftOutside"
-label.colour = "black"
-
-type = "Hand"
-edge = "white"
-edge_width = 0.75
-shape.type = "Rect"
-shape.xy = [93,25]
-
-[[pieces]]
-pos = [247, 70]
-colour = "yellow"
-label.place = "BottomLeftOutside"
-label.colour = "black"
-
-type = "Hand"
-edge = "darkgrey"
-edge_width = 1.0
-shape.type = "Rect"
-shape.xy = [93,25]
-
-[[pieces]]
-pos = [247, 130]
-colour = "green"
-label.place = "TopLeftOutside"
-label.colour = "black"
-
-type = "Hand"
-edge = "white"
-edge_width = 0.75
-shape.type = "Rect"
-shape.xy = [93,25]
-
-[[pieces]]
-pos = [247, 175]
-colour = "blue"
-label.place = "TopLeftOutside"
-label.colour = "black"
-
-type = "Hand"
-edge = "white"
-edge_width = 0.75
-shape.type = "Rect"
-shape.xy = [93,25]
-
-[[pieces]]
-pos = [150, 177]
-colour = "purple"
-label.place = "TopLeftOutside"
-label.colour = "black"
-
-type = "Hand"
-edge = "white"
-edge_width = 0.75
-shape.type = "Rect"
-shape.xy = [93,25]
-
-[[pieces]]
-pos = [53, 175]
-colour = "grey"
-label.place = "TopLeftOutside"
-label.colour = "black"
-
-type = "Hand"
-edge = "white"
-edge_width = 0.75
-shape.type = "Rect"
-shape.xy = [93,25]
-
-[[pieces]]
-pos = [53, 70]
-colour = "black"
-label.place = "BottomLeftOutside"
-label.colour = "black"
-
-type = "Hand"
-edge = "white"
-edge_width = 0.75
-shape.type = "Rect"
-shape.xy = [93,25]
-
-[[pieces]]
-pos = [53, 130]
-colour = "white"
-label.place = "TopLeftOutside"
-label.colour = "black"
-
-type = "Hand"
-edge = "darkgrey"
-edge_width = 1.0
-shape.type = "Rect"
-shape.xy = [93,25]
-
-
+{{ m::hand(pos="[ 53,  25]", colour="brown" , lplace="BottomLeftOutside" )}}
+{{ m::hand(pos="[150,  23]", colour="red"   , lplace="BottomLeftOutside" )}}
+{{ m::hand(pos="[247,  25]", colour="orange", lplace="BottomLeftOutside" )}}
+{{ m::hand(pos="[247,  70]", colour="yellow", lplace="BottomLeftOutside",
+   edge="darkgrey", edge_width="1.0" )}}
+{{ m::hand(pos="[247, 130]", colour="green" , lplace="TopLeftOutside"    )}}
+{{ m::hand(pos="[247, 175]", colour="blue"  , lplace="TopLeftOutside"    )}}
+{{ m::hand(pos="[150, 177]", colour="purple", lplace="TopLeftOutside"    )}}
+{{ m::hand(pos="[ 53, 175]", colour="grey"  , lplace="TopLeftOutside"    )}}
+{{ m::hand(pos="[ 53,  70]", colour="black" , lplace="BottomLeftOutside" )}}
+{{ m::hand(pos="[ 53, 130]", colour="white" , lplace="TopLeftOutside"    ,
+   edge="darkgrey", edge_width="1.0" )}}
 
 [[pieces]]
 pos = [150, 84]
