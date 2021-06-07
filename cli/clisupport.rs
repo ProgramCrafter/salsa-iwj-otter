@@ -42,7 +42,7 @@ pub struct ArgumentParseError(pub String);
 
 impl From<&anyhow::Error> for ArgumentParseError {
   fn from(ae: &anyhow::Error) -> ArgumentParseError {
-    eprintln!("otter: error during argument parsing/startup: {}\n", ae.d());
+    eprintln!("otter: error during argument parsing/startup: {}", ae.d());
     exit(EXIT_USAGE);
   }
 }
