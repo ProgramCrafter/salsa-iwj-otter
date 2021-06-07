@@ -33,10 +33,10 @@ pub use std::iter;
 pub use std::iter::repeat_with;
 pub use std::marker::PhantomData;
 pub use std::num::{NonZeroUsize, TryFromIntError, Wrapping};
-pub use std::os::linux::fs::MetadataExt; // todo why linux for st_mode??
+pub use std::os::linux::fs::MetadataExt as _; // todo why linux for st_mode??
 pub use std::os::unix;
 pub use std::os::unix::ffi::OsStrExt;
-pub use std::os::unix::fs::OpenOptionsExt;
+pub use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
 pub use std::os::unix::io::{AsRawFd, IntoRawFd, RawFd};
 pub use std::os::unix::net::UnixStream;
 pub use std::os::unix::process::{CommandExt, ExitStatusExt};
