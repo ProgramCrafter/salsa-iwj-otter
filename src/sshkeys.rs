@@ -471,21 +471,30 @@ impl Global {
     let config = config();
     let path = &config.authorized_keys;
     let tmp = format!("{}.tmp", &path);
+    let include = &config.authorized_keys_include;
+
+    let staticf = match File::open(include) {
+      Ok(y) => Some(y),
+      Err(e) if e.kind() == ErrorKind::NotFound => None,
+      Err(e) => throw!(AE::from(e).context(include.clone())
+                       .context("open static auth keys")),
+    };
 
     (||{
       let f = match File::open(path) {
         Err(e) if e.kind() == ErrorKind::NotFound => return Ok(()),
         x => x,
       }.context("open")?;
+
       let l = BufReader::new(f).lines().next()
         .ok_or_else(|| anyhow!("no first line!"))?
         .context("read first line")?;
-      if l != MAGIC_BANNER {
-        throw!(anyhow!(
-          "first line is not as expected (manually written/edited?)"
-        ));
+      if l == MAGIC_BANNER {
+        return Ok(());
       }
-      Ok::<_,AE>(())
+      Err(anyhow!(
+          "first line is not as expected (manually written/edited?)"
+      ))
     })()
       .context("check authorized_keys magic/banner")?;
 
@@ -494,8 +503,6 @@ impl Global {
       .mode(0o644)
       .open(&tmp)
       .context("open new auth keys file (.tmp)")?;
-
-    let include = &config.authorized_keys_include;
 
     (||{
       let mut f = BufWriter::new(&mut f);
@@ -506,12 +513,7 @@ impl Global {
       Ok::<_,io::Error>(())
     })().context("write header (to .tmp)")?;
 
-    if let Some(mut sf) = match File::open(include) {
-      Ok(y) => Some(y),
-      Err(e) if e.kind() == ErrorKind::NotFound => None,
-      Err(e) => throw!(AE::from(e).context(include.clone())
-                       .context("open static auth keys")),
-    } {
+    if let Some(mut sf) = staticf {
       io::copy(&mut sf, &mut f).context("copy data into new auth keys")?;
       writeln!(f).context("write newline into new auth keys")?;
     }
