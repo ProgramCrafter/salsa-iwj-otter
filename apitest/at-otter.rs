@@ -237,8 +237,9 @@ impl Ctx {
 
     self.otter(&set_keys).expect_err("auth keys has static");
 
-    fs::rename(ds.subst("@authkeys@")?,
-               ds.subst("@authkeys@.static")?)?;
+    nix::unistd::linkat(None, &PathBuf::from( ds.subst("@authkeys@")?        ),
+                        None, &PathBuf::from( ds.subst("@authkeys@.static")? ),
+                        nix::unistd::LinkatFlags::SymlinkFollow)?;
 
     self.otter(&set_keys)?;
 
