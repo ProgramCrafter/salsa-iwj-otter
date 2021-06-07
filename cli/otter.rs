@@ -108,16 +108,19 @@ fn main() {
     ssh_proxy_command: Option<String>,
   }
 
-  let apmaker: ApMaker<RawMainArgs> = &|rma|{
+  fn apmaker_gen<'a>(rma: &'a mut RawMainArgs, want_args: bool)
+                     -> ArgumentParser<'a> {
     use argparse::*;
     let mut ap = ArgumentParser::new();
     ap.stop_on_first_argument(true);
     ap.silence_double_dash(true);
 
-    ap.refer(&mut rma.subcommand).required()
-      .add_argument("SUBCOMMAND", Store, "subcommand");
-    ap.refer(&mut rma.subargs)
-      .add_argument("...", Collect, "subcommand options/arguments");
+    if want_args {
+      ap.refer(&mut rma.subcommand).required()
+        .add_argument("SUBCOMMAND", Store, "subcommand");
+      ap.refer(&mut rma.subargs)
+        .add_argument("...", Collect, "subcommand options/arguments");
+    }
 
     let mut account = ap.refer(&mut rma.account);
     account.metavar("ACCOUNT")
@@ -224,7 +227,9 @@ fn main() {
                   "directory for table and game specs");
 
     ap
-  };
+  }
+
+  let apmaker: ApMaker<RawMainArgs> = &|a| apmaker_gen(a, true);
 
   let ap_completer = |RawMainArgs {
     account, nick, timezone,
@@ -375,7 +380,7 @@ fn main() {
 
     let mut redo: RawMainArgs = default();
     let mut rapc = RawArgParserContext::new(&args);
-    let mut ap = apmaker(&mut redo);
+    let mut ap = apmaker_gen(&mut redo, false);
 
     for (k, v) in &data.options {
       let context = || format!(
@@ -402,8 +407,12 @@ fn main() {
       }));
     }
 
+    drop(ap);
+    let mut ap = apmaker_gen(&mut redo, true);
+
     rapc.run(&mut ap, args.clone(), Some(extra_help), None);
     drop(ap);
+
     parsed = redo;
     Ok(())
   })()
