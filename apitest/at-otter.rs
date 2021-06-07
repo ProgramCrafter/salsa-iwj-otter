@@ -249,12 +249,14 @@ impl Ctx {
     let ssh_command = ds.subst(
       "@src@/apitest/mock-ssh-restricted @authkeys@ '@dummy_key_data@'"
     )?;
+    let ds = ds.also(&[
+      ("ssh_command", &ssh_command),
+    ]);
 
     let mk_restricted = |account, rhs|{
       let ds = ds.also(&[
         ("account",      account),
         ("rhs",          rhs),
-        ("ssh_command", ssh_command.as_str()),
       ]);
       let mut command = ds.gss(
         "--account @account@ \
