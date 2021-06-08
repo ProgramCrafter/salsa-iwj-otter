@@ -28,7 +28,8 @@ shape.xy = [25,30]
 {% endmacro deck %}
 
 {% macro deck52() %}
-{% for suffix in ["c","d","h","s"] %}
+{% set suits = "c d h s" | split(pat=" ") %}
+{% for suffix in suits %}
 [[pieces]]
 pos = [150, 84]
 type = "LibList"
