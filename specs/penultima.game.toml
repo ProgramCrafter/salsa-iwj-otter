@@ -11,8 +11,15 @@
  "ship","giraffe","cannon"]
 {% endmacro fairy_pieces -%}
 
+
+# -------------------- actual game spec --------------------
+
+# board
+
 table_size = [300, 200]
 table_colour = "#bbd"
+
+# board and standard pieces, in starting places
 
 [[pieces]]
 pos = [150,100]
@@ -54,6 +61,8 @@ posd = [10, 0]
 count = 8
 
 
+# geometric shapes
+
 [[pieces]]
 pos = [20, 75]
 type = "Disc"
@@ -94,6 +103,9 @@ posd = [5, 0]
 size = [1,9]
 count = 16
 
+
+# spare vanilla pieces
+
 [[pieces]]
 pos = [20,  125]
 type = "LibList"
@@ -126,6 +138,9 @@ item = "chess-b-P"
 posd = [10, 0]
 count = 4
 
+
+# exciting colours
+
 [[pieces]]
 pos = [210, 55]
 type = "LibList"
@@ -157,6 +172,9 @@ lib = "wikimedia"
 prefix = "chess-purple-"
 items = ["K","Q","R","R","B","B","N","N"]
 posd = [10, 0]
+
+
+# fairy pieces
 
 [[pieces]]
 pos = [205, 125]
