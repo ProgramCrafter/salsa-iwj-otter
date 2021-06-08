@@ -12,13 +12,14 @@
 {% endmacro fairy_pieces -%}
 
 {% macro one_colour(x, y, colour) %}
+{% set colour_items = "K Q R R B B N" |split(pat=" ") %}
+{% for item in colour_items %}
 [[pieces]]
-pos = [{{ x }}, {{ y }}]
-type = "LibList"
+pos = [{{ x + 10 * loop.index0 }}, {{ y }}]
+type = "Lib"
 lib = "wikimedia"
-prefix = "chess-{{colour}}-"
-items = ["K","Q","R","R","B","B","N","N"]
-posd = [10, 0]
+item = "chess-{{colour}}-{{item}}"
+{% endfor %}
 {% endmacro one_colour %}
 
 
