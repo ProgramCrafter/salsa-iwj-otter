@@ -54,9 +54,11 @@ macros are automatically imported and can be called with ``{[
 m::MACRO...}}``.  And enough blank lines are added to make the input
 line numbers match up with the lines in the notional ``spec`` file.
 
+Note that line numbers reported during TOML parsing
+refer to lines in the template-expanded output.
 To help diagnose your templates, ``otter -vv reset ...`` will expand
 the templates itself and print out the results of the file splitting,
-and then of the expansion.
+and then of the expansion, before sending the file to the server.
 
 For details of the template syntax, see `the Tera documentation`_.
 For examples, see the built-in game specs.
