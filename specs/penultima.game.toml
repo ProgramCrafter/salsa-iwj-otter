@@ -199,10 +199,10 @@ shape.type = "Rect"
 shape.xy = [20,10]
 
 
+{% for pos in ["[50, 58]", "[60, 57]"] %}
 [[pieces]]
-# 1..5
+pos = {{ pos }}
 shape.xy = [20,6]
-pos = [50, 58]
 posd = [1,1]
 count = 5
 type = "PlayerLabel"
@@ -211,19 +211,7 @@ edge = "white"
 shape.type = "Rect"
 label.place = "BottomLeft"
 label.colour = "black"
-
-[[pieces]]
-# 6..10
-shape.xy = [20,6]
-pos = [60, 57]
-posd = [1,1]
-count = 5
-type = "PlayerLabel"
-colour = "lightgrey"
-edge = "white"
-shape.type = "Rect"
-label.place = "BottomLeft"
-label.colour = "black"
+{% endfor %}
 
 
 [[pieces]]
