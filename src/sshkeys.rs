@@ -403,6 +403,16 @@ impl AccountsGuard {
     }
     // ABSENT
   }
+
+  #[throws(ME)]
+  pub fn sshkeys_rewrite_authorized_keys(
+    &mut self,
+    _:Authorisation<authproofs::Global>
+  ) {
+    let accounts = self.get_mut();
+    let gl = &mut accounts.ssh_keys;
+    gl.rewrite_authorized_keys()?;
+  }
 }
 
 impl Global {

@@ -471,6 +471,13 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       ag.sshkeys_remove(acctid, index, id, auth)?;
       MR::Fine
     }
+    MC::SshReinstallKeys => {
+      let superuser = cs.superuser()
+        .ok_or(ME::SuperuserAuthorisationRequired)?;
+      let mut ag = AccountsGuard::lock();
+      ag.sshkeys_rewrite_authorized_keys(superuser)?;
+      MR::Fine
+    }
 
     MC::LoadFakeRng(ents) => {
       let superuser = cs.superuser()

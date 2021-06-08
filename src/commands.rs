@@ -63,6 +63,7 @@ pub enum MgmtCommand {
   SshAddKey { akl: sshkeys::AuthkeysLine },
   SshDeleteKey { index: usize, id: sshkeys::Id },
   ThisConnAuthBy, // -> Fine or SshKeySpec
+  SshReinstallKeys, // managment only
 
   LoadFakeRng(Vec<String>),
 }
