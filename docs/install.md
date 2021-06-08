@@ -31,6 +31,8 @@ base_dir = "/volatile/Otter"
 save_dir = "/home/Otter/save"
 command_socket = "/volatile/Otter/var/command.socket"
 
+ssh_proxy_command = "/volatile/Otter/bin/otter"
+
 [log]
 global_level = 'debug'
 
