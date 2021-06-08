@@ -890,7 +890,10 @@ fn make_usvg(instance_name: &str, bundle_name: &str, za: &mut IndexedZip,
 //---------- specs ----------
 
 #[throws(anyhow::Error)]
-pub fn spec_macroexpand(input: String) -> String {
+pub fn spec_macroexpand(
+  input: String,
+  report: &mut dyn FnMut(&'static str, &str) -> Result<(),AE>,
+) -> String {
   if ! input.starts_with("{#") { return input }
 
   let templates: Vec<(&str, Cow<str>)> = match input.rfind("\n{% endmacro") {
@@ -909,11 +912,17 @@ pub fn spec_macroexpand(input: String) -> String {
             ("spec", spec_data.into()) ]
     },
   };
+
+  for (nomfile, data) in &templates { report(nomfile, data)?; }
+
   let mut tera = tera_standalone::Tera::default();
   tera.add_raw_templates(templates).context("load")?;
   let mut out: Vec<u8> = vec![];
   tera.render_to("spec", &default(), &mut out).context("render")?;
   let out = String::from_utf8(out).context("reparse as utf-8")?;
+
+  report("out", &out)?;
+
   out
 }
 
@@ -929,7 +938,7 @@ pub fn load_spec_to_read(ig: &Instance, spec_name: &str) -> String {
       _ => e_f(e),
     })?;
 
-    spec_macroexpand(buf)
+    spec_macroexpand(buf, &mut |_,_|Ok(()))
       .map_err(|ae| ME::BadBundle(
         format!("process spec as Tera template: {}", ae.d())
       ))?
