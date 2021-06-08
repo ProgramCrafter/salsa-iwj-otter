@@ -44,6 +44,7 @@ pub struct ServerConfigSpec {
   /// for auth keys, split on spaces
   pub ssh_proxy_command: Option<String>,
   pub ssh_proxy_user: Option<String>,
+  pub ssh_restrictions: Option<String>,
   pub authorized_keys: Option<String>,
   pub authorized_keys_include: Option<String>,
   pub debug_js_inject_file: Option<String>,
@@ -78,6 +79,7 @@ pub struct ServerConfig {
   pub sendmail: String,
   pub ssh_proxy_bin: String,
   pub ssh_proxy_uid: Uid,
+  pub ssh_restrictions: String,
   pub authorized_keys: String,
   pub authorized_keys_include: String,
   pub debug_js_inject: Arc<String>,
@@ -134,7 +136,7 @@ impl ServerConfigSpec {
       template_dir, specs_dir, nwtemplate_dir, wasm_dir, libexec_dir, usvg_bin,
       log, bundled_sources, shapelibs, sendmail,
       debug_js_inject_file, check_bundled_sources, fake_rng,
-      ssh_proxy_command, ssh_proxy_user, authorized_keys,
+      ssh_proxy_command, ssh_proxy_user, ssh_restrictions, authorized_keys,
       authorized_keys_include,
     } = self;
 
@@ -171,6 +173,10 @@ impl ServerConfigSpec {
     };
     let usvg_bin        = in_libexec(usvg_bin,     "usvg"              );
     let ssh_proxy_bin = in_libexec(ssh_proxy_command, DEFAULT_SSH_PROXY_CMD );
+
+    let ssh_restrictions = ssh_restrictions.unwrap_or_else(
+      || concat!("restrict,no-agent-forwarding,no-port-forwarding,",
+                 "no-pty,no-user-rc,no-X11-forwarding").into());
 
     let authorized_keys = if let Some(ak) = authorized_keys { ak } else {
       let home = home().context("for authorized_keys")?;
@@ -285,7 +291,8 @@ impl ServerConfigSpec {
       template_dir, specs_dir, nwtemplate_dir, wasm_dir, libexec_dir,
       bundled_sources, shapelibs, sendmail, usvg_bin,
       debug_js_inject, check_bundled_sources, game_rng, prctx,
-      ssh_proxy_bin, ssh_proxy_uid, authorized_keys, authorized_keys_include,
+      ssh_proxy_bin, ssh_proxy_uid, ssh_restrictions,
+      authorized_keys, authorized_keys_include,
     };
     trace_dbg!("config resolved", &server);
     Ok(WholeServerConfig {
