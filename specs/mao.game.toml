@@ -70,11 +70,11 @@ item = "card-plain-back-maroon"
 {{ m::hand(pos="[ 53, 130]", colour="white" , lplace="TopLeftOutside"    ,
    edge="darkgrey", edge_width="1.0" )}}
 
+{% set decks = [1,2,3] %}
 
+{% for deck in decks %}
 {{ m::deck52() }}
-{{ m::deck52() }}
-{{ m::deck52() }}
-
+{% endfor %}
 
 [[pieces]]
 pos = [150, 84]
