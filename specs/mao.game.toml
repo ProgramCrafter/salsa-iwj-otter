@@ -27,6 +27,21 @@ shape.type = "Rect"
 shape.xy = [25,30]
 {% endmacro deck %}
 
+{% macro deck52() %}
+{% for suffix in ["c","d","h","s"] %}
+[[pieces]]
+pos = [150, 84]
+type = "LibList"
+lib = "cards-oxymoron"
+prefix = "card-oxymoron-"
+suffix = "-{{suffix}}"
+items = [
+    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
+]
+posd = [0, 0]
+{% endfor %}
+{% endmacro suit %}
+
 
 table_size = [300, 200]
 table_colour = "#bbd"
@@ -54,57 +69,11 @@ item = "card-plain-back-maroon"
 {{ m::hand(pos="[ 53, 130]", colour="white" , lplace="TopLeftOutside"    ,
    edge="darkgrey", edge_width="1.0" )}}
 
-[[pieces]]
-pos = [150, 84]
-type = "LibList"
-lib = "cards-oxymoron"
-prefix = "card-oxymoron-"
-suffix = "-c"
-items = [
-    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
-    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
-    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
-]
-posd = [0, 0]
 
-[[pieces]]
-pos = [150, 84]
-type = "LibList"
-lib = "cards-oxymoron"
-prefix = "card-oxymoron-"
-suffix = "-d"
-items = [
-    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
-    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
-    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
-]
-posd = [0, 0]
+{{ m::deck52() }}
+{{ m::deck52() }}
+{{ m::deck52() }}
 
-[[pieces]]
-pos = [150, 84]
-type = "LibList"
-lib = "cards-oxymoron"
-prefix = "card-oxymoron-"
-suffix = "-h"
-items = [
-    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
-    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
-    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
-]
-posd = [0, 0]
-
-[[pieces]]
-pos = [150, 84]
-type = "LibList"
-lib = "cards-oxymoron"
-prefix = "card-oxymoron-"
-suffix = "-s"
-items = [
-    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
-    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
-    "2","3","4","5","6","7","8","9","T","J","Q","K","A",
-]
-posd = [0, 0]
 
 [[pieces]]
 pos = [150, 84]
