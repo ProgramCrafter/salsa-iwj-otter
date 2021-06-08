@@ -129,7 +129,7 @@ This is discussed in the descriptions for each piece spec type.
  * ``edge_width`` [number, default 0.2 if `edge` or `edges` is
    specified]
 
- * ``label``.  Controls display of the label with informationa about
+ * ``label``.  Controls display of the label with information about
    the in-game state.  Dictionary with two sub-entries:
     * ``colour`` [string, defaults to the edge colour].
     * ``place`` [string]: One of ``"BottomLeft"`` (default),
