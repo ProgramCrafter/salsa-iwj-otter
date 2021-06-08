@@ -127,16 +127,16 @@ pos = [20, 145]
 type = "Lib"
 lib = "wikimedia"
 item = "chess-w-P"
-posd = [10, 0]
-count = 4
+posd = [5, 0]
+count = 8
 
 [[pieces]]
 pos = [60, 145]
 type = "Lib"
 lib = "wikimedia"
 item = "chess-b-P"
-posd = [10, 0]
-count = 4
+posd = [5, 0]
+count = 8
 
 
 # exciting colours
