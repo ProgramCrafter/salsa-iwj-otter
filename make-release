@@ -5,6 +5,17 @@
 # eg
 #    ./make-release --dry-run main
 
+
+# Overall release steps:
+#
+#  - ensure pretest == tested == main
+#  - edit CHANGELOG.md
+#  - update versions
+#  - make deploy and test that chiark still works
+#  - make-release
+#  - release announcement to mailing list
+#  - blog post
+
 #---------- argument parsing and options ----------
 
 set -e
