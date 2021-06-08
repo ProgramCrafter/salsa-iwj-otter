@@ -15,6 +15,18 @@ shape.type = "Rect"
 shape.xy = [93,25]
 {% endmacro hand %}
 
+{% macro deck(pos, lplace) %}
+[[pieces]]
+pos = {{pos}}
+type = "PickupDeck"
+faces = ["lightblue", "grey"]
+edges = ["black", "white"]
+label.colour = "black"
+label.place = "{{lplace}}"
+shape.type = "Rect"
+shape.xy = [25,30]
+{% endmacro deck %}
+
 
 table_size = [300, 200]
 table_colour = "#bbd"
@@ -24,35 +36,10 @@ type = "Lib"
 lib = "wikimedia"
 item = "card-plain-back-maroon"
 
-[[pieces]]
-pos = [136,115]
-type = "PickupDeck"
-faces = ["lightblue", "grey"]
-edges = ["black", "white"]
-label.colour = "black"
-label.place = "BottomLeftOutside"
-shape.type = "Rect"
-shape.xy = [25,30]
 
-[[pieces]]
-pos = [162,115]
-type = "PickupDeck"
-faces = ["lightblue", "grey"]
-edges = ["black", "white"]
-label.colour = "black"
-label.place = "BottomLeftOutside"
-shape.type = "Rect"
-shape.xy = [25,30]
-
-[[pieces]]
-pos = [150,84]
-type = "PickupDeck"
-faces = ["lightblue", "grey"]
-edges = ["black", "white"]
-label.place = "TopLeftOutside"
-label.colour = "black"
-shape.type = "Rect"
-shape.xy = [25,30]
+{{ m::deck(pos=[136,115], lplace="BottomLeftOutside" )}}
+{{ m::deck(pos=[162,115], lplace="BottomLeftOutside" )}}
+{{ m::deck(pos=[150, 84], lplace="TopLeftOutside"    )}}
 
 {{ m::hand(pos="[ 53,  25]", colour="brown" , lplace="BottomLeftOutside" )}}
 {{ m::hand(pos="[150,  23]", colour="red"   , lplace="BottomLeftOutside" )}}
