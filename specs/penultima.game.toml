@@ -11,6 +11,16 @@
  "ship","giraffe","cannon"]
 {% endmacro fairy_pieces -%}
 
+{% macro one_colour(x, y, colour) %}
+[[pieces]]
+pos = [{{ x }}, {{ y }}]
+type = "LibList"
+lib = "wikimedia"
+prefix = "chess-{{colour}}-"
+items = ["K","Q","R","R","B","B","N","N"]
+posd = [10, 0]
+{% endmacro one_colour %}
+
 
 # -------------------- actual game spec --------------------
 
@@ -141,37 +151,10 @@ count = 8
 
 # exciting colours
 
-[[pieces]]
-pos = [210, 55]
-type = "LibList"
-lib = "wikimedia"
-prefix = "chess-blue-"
-items = ["K","Q","R","R","B","B","N","N"]
-posd = [10, 0]
-
-[[pieces]]
-pos = [210, 65]
-type = "LibList"
-lib = "wikimedia"
-prefix = "chess-yellow-"
-items = ["K","Q","R","R","B","B","N","N"]
-posd = [10, 0]
-
-[[pieces]]
-pos = [210, 75]
-type = "LibList"
-lib = "wikimedia"
-prefix = "chess-red-"
-items = ["K","Q","R","R","B","B","N","N"]
-posd = [10, 0]
-
-[[pieces]]
-pos = [210, 45]
-type = "LibList"
-lib = "wikimedia"
-prefix = "chess-purple-"
-items = ["K","Q","R","R","B","B","N","N"]
-posd = [10, 0]
+{{ m::one_colour(x=210, y=55, colour="blue"   )}}
+{{ m::one_colour(x=210, y=65, colour="yellow" )}}
+{{ m::one_colour(x=210, y=75, colour="red"    )}}
+{{ m::one_colour(x=210, y=45, colour="purple" )}}
 
 
 # fairy pieces
