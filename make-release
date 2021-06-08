@@ -23,6 +23,9 @@ esac
 
 keyid=0x559AE46C2D6B6D3265E7CBA1E3E3392348B50D39
 
+cratesio_raw_url=\
+https://raw.githubusercontent.com/rust-lang/crates.io-index/master
+
 branch="$2"
 
 dryrun () { echo "WOULD  $*"; }
@@ -93,6 +96,24 @@ $dryrun git tag -s -u "$keyid" -m "Otter v$version" $tag
 $dryrun git push chiark $tag
 $dryrun git push origin $tag
 
+#---------- oh woe cargo ----------
+
+# https://github.com/rust-lang/cargo/issues/9507
+wait_for_crates_io () {
+    local p=$1
+    local delay=1
+    local url="$cratesio_raw_url/${p:0:2}/${p:2:2}/$p"
+    printf >&2 "waiting for upload of %s to take effect" "$p"
+    while sleep $delay; do
+	printf >&2 .
+	local got=$(
+	    curl -sS "$url" | jq '.vers | select(. == "'"$version"'")'
+	)
+	if [ "x$got" != x ]; then break; fi
+	delay=$(( $delay * 11 / 10 + 1 ))
+    done
+    echo >&2 'done\n'
+}
 
 for cargo_dir in $cargo_order; do
     $dryrun_no_more_cargo \
@@ -102,6 +123,14 @@ for cargo_dir in $cargo_order; do
               | xargs -0r rm --
           cd $cargo_dir; cargo publish $cargo_dryrun
         "
+
+    cargo_package=$(
+	sed -n '/^name *=/ { s/^name *= *"\(.*\)" *$/\1/; p; q }' \
+	    <$cargo_dir/Cargo.toml
+    )
+
+    wait_for_crates_io "$cargo_package"
+
     dryrun_no_more_cargo=$dryrun
 
 done
