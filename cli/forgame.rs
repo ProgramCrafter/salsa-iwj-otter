@@ -45,7 +45,7 @@ mod reset_game {
     ap
   }
 
-  fn call(SCCA{ ma, args,.. }:SCCA) -> Result<(),AE> {
+  fn call(SCCA{ ma, args, mut out,.. }:SCCA) -> Result<(),AE> {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let instance_name = ma.instance();
     let mut chan = ma.access_game()?;
@@ -58,7 +58,7 @@ mod reset_game {
         let spec_toml = bundles::spec_macroexpand(spec_toml, &mut |what,data|{
           if ma.verbose >= 2 {
             for (lno,l) in data.split('\n').enumerate() {
-              eprintln!("spec {} {} {}", what, lno+1, l);
+              writeln!(out, "spec {} {} {}", what, lno+1, l)?;
             }
           }
           Ok(())
