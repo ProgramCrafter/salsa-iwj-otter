@@ -123,7 +123,7 @@ wait_for_crates_io () {
 	if [ "x$got" != x ]; then break; fi
 	delay=$(( $delay * 11 / 10 + 1 ))
     done
-    echo >&2 'done\n'
+    echo >&2 'done'
 }
 
 for cargo_dir in $cargo_order; do
