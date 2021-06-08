@@ -8,6 +8,7 @@
 #---------- argument parsing and options ----------
 
 set -e
+set -o pipefail
 
 fail () { echo >&2 "${0##*/}: error: $*"; exit 12; }
 
