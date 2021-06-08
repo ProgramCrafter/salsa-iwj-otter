@@ -84,7 +84,7 @@ item = "card-plain-back-maroon"
 lib = "wikimedia"
 prefix = "card-"
 items = [
+{% for deck in decks %}
  "bellot-joker-black", "rainbow", "bellot-joker-black",
- "bellot-joker-black", "rainbow", "bellot-joker-black",
- "bellot-joker-black", "rainbow", "bellot-joker-black",
+{% endfor %}
 ]
