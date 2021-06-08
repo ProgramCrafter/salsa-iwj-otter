@@ -47,6 +47,7 @@ items = [
 {% endfor %}
 {% endmacro suit %}
 
+# -------------------- actual game spec -------------------- #
 
 table_size = [300, 200]
 table_colour = "#bbd"
@@ -56,10 +57,13 @@ type = "Lib"
 lib = "wikimedia"
 item = "card-plain-back-maroon"
 
+# pickup/play decks
 
 {{ m::deckplace(pos=[136,115], lplace="BottomLeftOutside" )}}
 {{ m::deckplace(pos=[162,115], lplace="BottomLeftOutside" )}}
 {{ m::deckplace(pos=[150, 84], lplace="TopLeftOutside"    )}}
+
+# hands
 
 {{ m::hand(pos="[ 53,  25]", colour="brown" , lplace="BottomLeftOutside" )}}
 {{ m::hand(pos="[150,  23]", colour="red"   , lplace="BottomLeftOutside" )}}
@@ -74,11 +78,15 @@ item = "card-plain-back-maroon"
 {{ m::hand(pos="[ 53, 130]", colour="white" , lplace="TopLeftOutside"    ,
    edge="darkgrey", edge_width="1.0" )}}
 
+# decks of 52
+
 {% set decks = [1,2,3] %}
 
 {% for deck in decks %}
 {{ m::deck52() }}
 {% endfor %}
+
+# jokers, on top
 
 {{ m::some_cards() }}
 lib = "wikimedia"
