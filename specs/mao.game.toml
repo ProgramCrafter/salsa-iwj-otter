@@ -15,7 +15,7 @@ shape.type = "Rect"
 shape.xy = [93,25]
 {% endmacro hand %}
 
-{% macro deck(pos, lplace) %}
+{% macro deckplace(pos, lplace) %}
 [[pieces]]
 pos = {{pos}}
 type = "PickupDeck"
@@ -37,9 +37,9 @@ lib = "wikimedia"
 item = "card-plain-back-maroon"
 
 
-{{ m::deck(pos=[136,115], lplace="BottomLeftOutside" )}}
-{{ m::deck(pos=[162,115], lplace="BottomLeftOutside" )}}
-{{ m::deck(pos=[150, 84], lplace="TopLeftOutside"    )}}
+{{ m::deckplace(pos=[136,115], lplace="BottomLeftOutside" )}}
+{{ m::deckplace(pos=[162,115], lplace="BottomLeftOutside" )}}
+{{ m::deckplace(pos=[150, 84], lplace="TopLeftOutside"    )}}
 
 {{ m::hand(pos="[ 53,  25]", colour="brown" , lplace="BottomLeftOutside" )}}
 {{ m::hand(pos="[150,  23]", colour="red"   , lplace="BottomLeftOutside" )}}
