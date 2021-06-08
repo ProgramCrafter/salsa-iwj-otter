@@ -213,53 +213,11 @@ label.place = "BottomLeft"
 label.colour = "black"
 
 [[pieces]]
-# 6
+# 6..10
 shape.xy = [20,6]
 pos = [60, 57]
-type = "PlayerLabel"
-colour = "lightgrey"
-edge = "white"
-shape.type = "Rect"
-label.place = "BottomLeft"
-label.colour = "black"
-
-[[pieces]]
-# 7
-shape.xy = [20,6]
-pos = [61, 58]
-type = "PlayerLabel"
-colour = "lightgrey"
-edge = "white"
-shape.type = "Rect"
-label.place = "BottomLeft"
-label.colour = "black"
-
-[[pieces]]
-# 8
-shape.xy = [20,6]
-pos = [62, 59]
-type = "PlayerLabel"
-colour = "lightgrey"
-edge = "white"
-shape.type = "Rect"
-label.place = "BottomLeft"
-label.colour = "black"
-
-[[pieces]]
-# 9
-shape.xy = [20,6]
-pos = [63, 60]
-type = "PlayerLabel"
-colour = "lightgrey"
-edge = "white"
-shape.type = "Rect"
-label.place = "BottomLeft"
-label.colour = "black"
-
-[[pieces]]
-# 10
-shape.xy = [20,6]
-pos = [64, 61]
+posd = [1,1]
+count = 5
 type = "PlayerLabel"
 colour = "lightgrey"
 edge = "white"
