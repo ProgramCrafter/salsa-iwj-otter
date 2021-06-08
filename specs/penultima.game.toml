@@ -1,6 +1,15 @@
-# Copyright 2020-2021 Ian Jackson and contributors to Otter
-# SPDX-License-Identifier: AGPL-3.0-or-later
-# There is NO WARRANTY.
+{# Copyright 2020-2021 Ian Jackson and contributors to Otter
+   SPDX-License-Identifier: AGPL-3.0-or-later
+   There is NO WARRANTY. #}
+
+{% macro vanilla_officers() -%}
+["R","N","B","Q","K","B","N","R"]
+{% endmacro vanilla_officers %}
+
+{% macro fairy_pieces() -%}
+["commoner","elephant","knight-king","mann","zebra",
+ "ship","giraffe","cannon"]
+{% endmacro fairy_pieces -%}
 
 table_size = [300, 200]
 table_colour = "#bbd"
@@ -17,7 +26,7 @@ pos = [115,  135]
 type = "LibList"
 lib = "wikimedia"
 prefix = "chess-w-"
-items = ["R","N","B","Q","K","B","N","R"]
+items = {{ m::vanilla_officers() }}
 posd = [10, 0]
 
 [[pieces]]
@@ -25,7 +34,7 @@ pos = [115,  65]
 type = "LibList"
 lib = "wikimedia"
 prefix = "chess-b-"
-items = ["R","N","B","Q","K","B","N","R"]
+items = {{ m::vanilla_officers() }}
 posd = [10, 0]
 
 [[pieces]]
@@ -90,7 +99,7 @@ pos = [20,  125]
 type = "LibList"
 lib = "wikimedia"
 prefix = "chess-w-"
-items = ["R","N","B","Q","K","B","N","R"]
+items = {{ m::vanilla_officers() }}
 posd = [10, 0]
 
 [[pieces]]
@@ -98,7 +107,7 @@ pos = [20,  135]
 type = "LibList"
 lib = "wikimedia"
 prefix = "chess-b-"
-items = ["R","N","B","Q","K","B","N","R"]
+items = {{ m::vanilla_officers() }}
 posd = [10, 0]
 
 [[pieces]]
@@ -154,8 +163,7 @@ pos = [205, 125]
 type = "LibList"
 lib = "wikimedia"
 prefix = "chess-w-"
-items = ["commoner","elephant","knight-king","mann","zebra",
-	 "ship","giraffe","cannon"]
+items = {{ m::fairy_pieces() }}
 posd = [10, 0]
 
 [[pieces]]
@@ -163,8 +171,7 @@ pos = [205, 135]
 type = "LibList"
 lib = "wikimedia"
 prefix = "chess-w-"
-items = ["commoner","elephant","knight-king","mann","zebra",
-	 "ship","giraffe","cannon"]
+items = {{ m::fairy_pieces() }}
 posd = [10, 0]
 
 [[pieces]]
@@ -172,8 +179,7 @@ pos = [205, 145]
 type = "LibList"
 lib = "wikimedia"
 prefix = "chess-b-"
-items = ["commoner","elephant","knight-king","mann","zebra",
-	"ship","giraffe","cannon"]
+items = {{ m::fairy_pieces() }}
 posd = [10, 0]
 
 [[pieces]]
@@ -181,8 +187,7 @@ pos = [205, 155]
 type = "LibList"
 lib = "wikimedia"
 prefix = "chess-b-"
-items = ["commoner","elephant","knight-king","mann","zebra",
-	 "ship","giraffe","cannon"]
+items = {{ m::fairy_pieces() }}
 posd = [10, 0]
 
 [[pieces]]
