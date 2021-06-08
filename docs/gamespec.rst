@@ -28,6 +28,41 @@ level:
  * ``pieces``: Array of `Piece Specs`_.  Defines the initial pieces
    and their layout.  Each entry is a piece spec dictionary.
 
+Templating
+``````````
+
+Before being parsed as TOML, the spec can be processed as a one-off
+Tera template.  This is useful because game setups can be rather
+repetitive.
+
+Template expansion is done if the file starts, precisely, with the
+characters ``{#`` (which are the Tera comment introducer).
+
+Tera does not natively support within-same-file macros.  To allow use
+of macros in Otter's single-file game specs, Otter can automatically
+split a game spec file into two pieces and feed them to Tera as two
+files.
+
+Splitting is done if the file contains a line starting with precisely
+``{% endmacro`` (the usual form of the Tera macro end sequence).
+
+Everything up to and including the `last` such line is fed to Tera as
+if it were a file called ``m``.  Everything else is fed to Tera as if
+it were a second file called ``spec``.  Additionally, a line ``{%
+import "m" as m %}`` is added to the top of ``spec``, so that the
+macros are automatically imported and can be called with ``{[
+m::MACRO...}}``.  And enough blank lines are added to make the input
+line numbers match up with the lines in the notional ``spec`` file.
+
+To help diagnose your templates, ``otter -vv reset ...`` will expand
+the templates itself and print out the results of the file splitting,
+and then of the expansion.
+
+For details of the template syntax, see `the Tera documentation`_.
+For examples, see the built-in game specs.
+
+.. _the Tera documentation: https://tera.netlify.app/docs/#templates
+
 Piece Specs
 -----------
 
