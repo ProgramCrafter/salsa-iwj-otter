@@ -164,21 +164,37 @@ count = 8
 
 # fairy pieces
 
-{% set all_colours = "w b blue yellow red purple" | split(pat=" ") %}
-{% for d in [0,1] %}
-{% for colour in all_colours %}
-
 [[pieces]]
-pos = [{{ 205 + d }}, {{ 125 + loop.index0 * 10 + d }}]
+pos = [205, 125]
 type = "LibList"
 lib = "wikimedia"
-prefix = "chess-{{colour}}-"
+prefix = "chess-w-"
 items = {{ m::fairy_pieces() }}
 posd = [10, 0]
 
-{% endfor %}
-{% endfor %}
+[[pieces]]
+pos = [205, 135]
+type = "LibList"
+lib = "wikimedia"
+prefix = "chess-w-"
+items = {{ m::fairy_pieces() }}
+posd = [10, 0]
 
+[[pieces]]
+pos = [205, 145]
+type = "LibList"
+lib = "wikimedia"
+prefix = "chess-b-"
+items = {{ m::fairy_pieces() }}
+posd = [10, 0]
+
+[[pieces]]
+pos = [205, 155]
+type = "LibList"
+lib = "wikimedia"
+prefix = "chess-b-"
+items = {{ m::fairy_pieces() }}
+posd = [10, 0]
 
 [[pieces]]
 pos = [20, 60]
