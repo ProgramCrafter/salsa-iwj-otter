@@ -1,5 +1,76 @@
-UNRELEASED
-==========
+Version 0.7.0 - 2021-06-08
+==========================
+
+New features
+------------
+
+ * Game spec files can now be processed with Tera for templating.
+
+ * ssh-based access for `otter` cli, including appropriately-
+   restricted access via authorized_keys in the server role account,
+   and a mechanism for self-service public key management.
+
+ * `otter` cli can now read a preferences file
+   (`~/.config/otter/prefs.toml` by default) to allow pre-configuring
+   commonly-required command line options like `--game` and `--ssh`.
+   See `otter --help` for documentation.
+
+ * Mao and Penultima slightly updated (and, those game specs now
+   use the new templating feature).
+
+Bugfixes
+--------
+
+ * UI: When multiple pieces are selected and are to be raised (whether
+   by explicit request, or because of drag distance), their relative
+   ordering is preserved.  So dragging a group of pieces no longer
+   scrambles their z order.
+
+ * UI: When the SSE connection auto-reconnects, do not declare it an
+   error and suggest to the user that reloading might help.  Instead,
+   simply hope that it is going to be OK (since it generally is).  If
+   the SSE connection declares failure (state 2), report a scarier
+   message.
+
+ * Docs: Fixes to some documentation errors (including a fix
+   contributed by Simon Tatham).
+
+ * CLI etc.: Improve a number of error messages; in particular,
+   replace several "debug prints" of error messages with proper
+   formatting, and print a better program kname.
+
+ * CLI: Much better handling of stdout write errors.
+
+Installation and deployment changes
+-----------------------------------
+
+ * The `otter` command line utility is now in its own Rust package
+   `otter-cli`.
+
+ * Better logging by server of events on command connections.
+
+Internal and development changes
+--------------------------------
+
+ * make-release now polls crates.io's github view to work around
+   cargo/crates.io bug https://github.com/rust-lang/cargo/issues/9507
+   and has a release checklist in it.
+
+ * Some internal renamings for clarity, especially regarding
+   Authorisation proof tokens.
+
+ * Reworked the types involved in management command channels, to
+   use a different stacking of read/write adapters.  In particular,
+   a new `childio` facility for handling conversations with a child
+   process (in support of using `ssh` as a command conn transport).
+
+ * `otter` cli no longer uses println!.  Instead we have a special
+   wrapper for stdout which handles the errors and buffering for us.
+
+ * `otter` cli subcommand dispatch made nicer and the program's code
+   broken out into multiple files.
+
+ * Internal apitest case code restructured somewhat.
 
 
 Version 0.6.0 - 2021-05-23
