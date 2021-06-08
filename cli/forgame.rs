@@ -54,6 +54,10 @@ mod reset_game {
       if let Some(filename) = spec_arg_is_path(&args.game_spec) {
         let spec_toml = read_spec_from_path(
           filename, SpecRaw::<GameSpec>::new())?;
+
+        let spec_toml = bundles::spec_macroexpand(spec_toml, &mut |_,_|Ok(()))
+          .context("failed to template expand game spec")?;
+
         MGI::ResetFromGameSpec { spec_toml }
       } else {
         MGI::ResetFromNamedSpec { spec: args.game_spec.clone() }
