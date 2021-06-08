@@ -3,19 +3,16 @@
    There is NO WARRANTY. #}
 
 {% macro hand(pos, colour, lplace, edge="white", edge_width="0.75") %}
-
 [[pieces]]
 pos = {{pos}}
 colour = "{{colour}}"
 label.place = "{{lplace}}"
 label.colour = "black"
-
 type = "Hand"
 edge = "{{edge}}"
 edge_width = {{edge_width}}
 shape.type = "Rect"
 shape.xy = [93,25]
-
 {% endmacro hand %}
 
 
