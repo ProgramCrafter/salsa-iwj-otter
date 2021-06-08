@@ -55,7 +55,14 @@ mod reset_game {
         let spec_toml = read_spec_from_path(
           filename, SpecRaw::<GameSpec>::new())?;
 
-        let spec_toml = bundles::spec_macroexpand(spec_toml, &mut |_,_|Ok(()))
+        let spec_toml = bundles::spec_macroexpand(spec_toml, &mut |what,data|{
+          if ma.verbose >= 2 {
+            for (lno,l) in data.split('\n').enumerate() {
+              eprintln!("spec {} {} {}", what, lno+1, l);
+            }
+          }
+          Ok(())
+        })
           .context("failed to template expand game spec")?;
 
         MGI::ResetFromGameSpec { spec_toml }
