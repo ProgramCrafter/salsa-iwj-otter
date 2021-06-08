@@ -12,7 +12,8 @@
 {% endmacro fairy_pieces -%}
 
 {% macro one_colour(x, y, colour) %}
-{% set colour_items = "K,1 Q,1 R,2 B,2 N,2" |split(pat=" ") %}
+{% set colour_items = "K,1 Q,1 R,2 B,2 N,2 P,4" |split(pat=" ") %}
+
 {% for itemspec in colour_items %}
 {% set it  = itemspec | split(pat=",") %}
 [[pieces]]
