@@ -218,9 +218,13 @@ fn main() {
                     (shell syntax, interpreted by the remote shell)",
                     default_ssh_proxy_command()))));
 
-    ap.refer(&mut rma.prefs_path)
+    let mut prefs_path = ap.refer(&mut rma.prefs_path);
+    prefs_path
       .add_option(&["--prefs"], StoreOption,
                   "preferences file (usually ~/.config/otter/prefs.toml)");
+    prefs_path
+      .add_option(&["--no-prefs"], StoreConst(Some("/dev/null".to_owned())),
+                  "do not read any preferences file");
 
     ap.refer(&mut rma.spec_dir)
       .add_option(&["--spec-dir"], StoreOption,
@@ -364,6 +368,9 @@ option values; or`true` and `false` for just --option or --no-option.
         Ok::<_,AE>(dir.join("prefs.toml"))
       })
       .context("locate preferences file (prefs.toml)")?;
+
+    // shortcut this mostly for portability
+    if prefs_path == PathBuf::from(&"/dev/null") { return Ok(()) }
 
     let data: Option<Prefs> = (||{
       let data = match fs::read_to_string(&prefs_path) {
