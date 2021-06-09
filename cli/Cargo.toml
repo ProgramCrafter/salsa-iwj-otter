@@ -18,6 +18,7 @@ authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>",
 [[bin]]
 name="otter"
 path="otter.rs"
+doc=false
 
 [dependencies]
 
