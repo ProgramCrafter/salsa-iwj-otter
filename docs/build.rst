@@ -47,10 +47,10 @@ Setup
 
    Unfortunately, it is possible that the Rust Nightly you find when
    you run this is missing some pieces, or is not compatible with the
-   version of Otter you have.  The following is known to work (with
-   otter from the time of writing)::
+   version of Otter you have.  The following is known to work with
+   Otter 0.7.1::
 
-     rustup default nightly-2021-04-13
+     rustup default nightly-2021-06-07
 
    **If you just want to run the otter cli client over ssh to an existing server, or edit and preview the shape libraries (ie the piece shapes) you can stop here.**
 
