@@ -1,3 +1,37 @@
+Version 0.7.1 - 2021-06-09
+==========================
+
+Bugfixes
+--------
+
+ * `make shapelib` builds, and reports a URL for, the actual
+   documentation for shape library layout and spec syntax, not to an
+   obsolete location.
+
+Installation and deployment changes
+-----------------------------------
+
+ * Better documentation of how to install just the command line
+   game management client (eg for use via ssh).
+
+ * Update Rocket dependency in Cargo.lock to one which builds with
+   recent Nightly Rust.
+
+ * Update usvg dependency in Cargo.toml to a version with revised
+   less-insane command line parsing, and adjust all calls to it.
+
+ * Updated other dependencies.
+
+ * Work around a cargo bug which breaks the docs build:
+    https://github.com/rust-lang/cargo/issues/9564
+
+Installation and deployment changes
+-----------------------------------
+
+ * Improvements to release checklist and release script.  Notably,
+   add a checklist item for checking the build on recent Nightly.
+
+
 Version 0.7.0 - 2021-06-08
 ==========================
 
