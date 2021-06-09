@@ -52,7 +52,7 @@ Setup
 
      rustup default nightly-2021-04-13
 
-   **If you just want to edit and preview the shape libraries (ie the piece shapes) you can stop here.**
+   **If you just want to run the otter cli client over ssh to an existing server, or edit and preview the shape libraries (ie the piece shapes) you can stop here.**
 
 4. For the tests, install the webdriver binary from Mozilla.  Visit
 
