@@ -6,7 +6,7 @@
 name="otter-wasm"
 description="Otter game system; Rust WASM crate."
 
-version="0.7.0"
+version="0.7.1"
 license="AGPL-3.0-or-later"
 edition="2018"
 homepage="https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/"
@@ -27,7 +27,7 @@ wasm-bindgen-cli="0.2"
 [dependencies]
 
 otter-base.path="../base"
-otter-base.version="=0.7.0"
+otter-base.version="=0.7.1"
 
 console_error_panic_hook="0.1"
 fehler="1"

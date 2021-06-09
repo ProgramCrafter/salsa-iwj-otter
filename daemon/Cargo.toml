@@ -6,7 +6,7 @@
 name="otter-daemon"
 description="Otter game system; server executable crate."
 
-version="0.7.0"
+version="0.7.1"
 license="AGPL-3.0-or-later"
 edition="2018"
 homepage="https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/"
@@ -23,9 +23,9 @@ path="main.rs"
 [dependencies]
 
 otter.path=".."
-otter.version="=0.7.0"
+otter.version="=0.7.1"
 otter-base.path="../base"
-otter-base.version="=0.7.0"
+otter-base.version="=0.7.1"
 
 fehler="1"
 num-traits="0.2"
