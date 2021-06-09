@@ -61,8 +61,8 @@ Setup
    and just dump the resulting ``geckodriver`` binary on your ``PATH``.
 
 
-Build
------
+Full build
+----------
 
 ::
 
@@ -72,6 +72,20 @@ Build
 
 Expect to see ``it worked`` at the end.  If you don't see that, it
 failed, and the error message is buried in the scrollback.
+
+Build just the command line game management client `otter`
+..........................................................
+
+::
+     cargo build -p otter-cli
+
+and then copy ``target/debug/otter`` onto your path.
+
+Alternatively, you can let ``cargo`` directly install and download the
+latest released version:
+
+::
+     cargo install otter-cli
 
 Build just the shape library preview
 ....................................
