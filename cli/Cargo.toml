@@ -36,6 +36,6 @@ num-traits="0.2"
 serde_with="1"
 
 serde        = { version="1"    , features=["derive", "rc"] }
-strum        = { version="0.20" , features=["derive"      ] }
+strum        = { version="0.21" , features=["derive"      ] }
 
 #fin.

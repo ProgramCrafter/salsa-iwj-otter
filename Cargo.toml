@@ -90,7 +90,7 @@ image = { version = "0.23", default-features=false, features=["jpeg","png"] }
 index_vec    = { version="0.1.1", features=["serde"       ] }
 mio          = { version="0.7",   features=["os-ext", "os-poll" ] }
 serde        = { version="1"    , features=["derive", "rc"] }
-strum        = { version="0.20" , features=["derive"      ] }
+strum        = { version="0.21" , features=["derive"      ] }
 
 tera_standalone = { version="1.10", package="tera" }
 
