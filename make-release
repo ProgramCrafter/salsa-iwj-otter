@@ -8,9 +8,11 @@
 
 # Overall release steps:
 #
-#  - ensure pretest == tested == main
+#  - update dependencies (cargo update, cargo upgrades)
+#  - update our Nightly rust and do a test build, note in build.rst
 #  - edit CHANGELOG.md
 #  - update versions
+#  - ensure pretest == tested == main
 #  - make deploy and test that chiark still works
 #  - make-release
 #  - release announcement to mailing list
