@@ -15,10 +15,9 @@ full-check: all check cargo-syntaxcheck-release shapelib doc-sphinx
 full-check: for-deploy release
 everything: debug doc release check bundled-sources
 
-shapelib: templates/shapelib.html stamp/cargo.doc-otter-only
+shapelib: templates/shapelib.html docs/html/index.html
 	@echo 'Shape library preview and docs can now be found here:'
-	@echo '  file://$(PWD)/$<'
-	@echo '  file://$(abspath $(TARGET_DIR)/doc/otter/shapelib_toml/index.html)'
+	@for f in $^; do echo '  file://$(PWD)/'$$f; done
 
 MAKEFILE_DEP ?= Makefile
 MAKEFILE_FIND_X ?=
@@ -220,10 +219,6 @@ stamp/cargo-wdt.debug: $(call rsrcs,.)
 stamp/cargo.doc: $(call rsrcs,.)
 	set -o pipefail -e; \
 	$(CARGO) doc $(CARGO_DOC_OPTS) --workspace 2>&1 |egrep -vf .cargo-doc-suppress-errors
-	$(stamp)
-
-stamp/cargo.doc-otter-only: $(call rsrcs,.)
-	$(CARGO) doc $(CARGO_DOC_OPTS) --workspace -p otter --no-deps
 	$(stamp)
 
 $(addprefix stamp/cargo.wasm-,$(DR)):: \
