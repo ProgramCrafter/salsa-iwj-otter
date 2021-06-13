@@ -2478,7 +2478,6 @@ dependencies = [
  "strum",
  "subtle",
  "tempfile",
- "tera 0.11.20",
  "tera 1.10.0",
  "toml 0.5.8",
  "typetag",
