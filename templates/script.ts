@@ -752,6 +752,7 @@ function lower_pieces(targets_todo: LowerTodoList):
 		pe, z_bot, z_top, pe.content.length, zrange.debug());
     for (const e of pe.content) {
       let p = e.p;
+      p.held_us_raising = "Lowered";
       piece_set_zlevel(e.piece, p, (oldtop_piece) => {
 	let z = zrange.next();
 	p.z = z;
