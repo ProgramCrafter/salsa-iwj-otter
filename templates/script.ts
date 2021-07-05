@@ -45,6 +45,7 @@ type ClientSeq = number;
 type Generation = number;
 type UoKind = 'Client' | "Global"| "Piece" | "ClientExtra" | "GlobalExtra";
 type WhatResponseToClientOp = "Predictable" | "Unpredictable" | "UpdateSvg";
+type HeldUsRaising = "NotYet" | "Lowered" | "Raised"
 type Timestamp = number; // unix time_t, will break in 285My
 type Layout = 'Portrait' | 'Landscape';
 type PieceMoveable = "No" | "IfWresting" | "Yes";
@@ -82,7 +83,7 @@ type PieceInfo = {
   queued_moves : number,
   last_seen_moved : DOMHighResTimeStamp | null, // non-0 means halo'd
   held_us_inoccult: boolean,
-  held_us_raising: boolean,
+  held_us_raising: HeldUsRaising,
   bbox: Rect,
   drag_delta: number,
 }
@@ -1099,15 +1100,15 @@ function ungrab_all() {
 
 function set_grab_us(piece: PieceId, p: PieceInfo) {
   p.held = us;
-  p.held_us_raising = false;
+  p.held_us_raising = "NotYet";
   p.drag_delta = 0;
   redisplay_ancillaries(piece,p);
   recompute_keybindings();
 }
 function do_ungrab_1(piece: PieceId, p: PieceInfo) {
-  let autoraise = p.held_us_raising;
+  let autoraise = p.held_us_raising == "Raised";
   p.held = null;
-  p.held_us_raising = false;
+  p.held_us_raising = "NotYet";
   p.drag_delta = 0;
   redisplay_ancillaries(piece,p);
   recompute_keybindings();
@@ -1223,11 +1224,12 @@ function drag_mousemove(e: MouseEvent) {
       for (let dp of drag_pieces) {
 	let piece = dp.piece;
 	let p = pieces[piece]!;
+	if (p.held_us_raising == "Lowered") continue;
 	let dragraise = +p.pelem.dataset.dragraise!;
 	if (dragraise > 0 && ddr2 >= dragraise*dragraise) {
 	  dragging |= DRAGGING.RAISED;
 	  console.log('CHECK RAISE ', dragraise, dragraise*dragraise, ddr2);
-	  p.held_us_raising = true;
+	  p.held_us_raising = "Raised";
 	  piece_set_zlevel(piece,p, (oldtop_piece) => {
 	    let oldtop_p = pieces[oldtop_piece]!;
 	    let z = wasm_bindgen.increment(oldtop_p.z);
@@ -1735,7 +1737,7 @@ function piece_modify_core(piece: PieceId, p: PieceInfo,
   p.uelem.setAttributeNS(null, "x", info.pos[0]+"");
   p.uelem.setAttributeNS(null, "y", info.pos[1]+"");
   p.held = info.held;
-  p.held_us_raising = false;
+  p.held_us_raising = "NotYet";
   p.pinned = info.pinned;
   p.moveable = info.moveable;
   p.rotateable = info.rotateable;
