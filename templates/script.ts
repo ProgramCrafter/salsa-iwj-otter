@@ -802,11 +802,11 @@ type DragInfo = {
 }
 
 enum DRAGGING { // bitmask
-  NO           = 0,
-  MAYBE_GRAB   = 1,
-  MAYBE_UNGRAB = 2,
-  YES          = 4,
-  RAISED       = 8,
+  NO           = 0x00,
+  MAYBE_GRAB   = 0x01,
+  MAYBE_UNGRAB = 0x02,
+  YES          = 0x04,
+  RAISED       = 0x08,
 };
 
 var drag_pieces : DragInfo[] = [];
