@@ -155,25 +155,34 @@ impl PieceTrait for Hand {
                gs: &GameState, _vpid: VisiblePieceId) {
     let owned = if_chain!{
       if let Some(xdata) = gpc.xdata.get::<HandState>()?;
+      if let count = gpc.occult.active_total_ppieces(&gs.occults)?;
       if let Some(owned) = &xdata.owner;
-      then { Some(owned) }
+      then { Some((owned, count)) }
       else { None }
     };
     self.shape.svg_piece_raw(f, gpc.face, &mut |f: &mut Html| {
-      if let Some(owned) = owned {
+      if let Some((owned,_)) = owned {
         hwrite!(f, r##" stroke-dasharray="{}" "##, &owned.dasharray)?;
       }
       Ok(())
     })?;
     if_chain! {
-      if let Some(owned) = owned;
+      if let Some((owned, count)) = owned;
       if let Some(gpl) = gs.players.get(owned.player);
       if let Some(label) = &self.label;
       then {
         label.svg(f,
                   &self.shape.outline,
-                  self.shape.edges.get(0), 
-                  &gpl.nick.to_html())?
+                  self.shape.edges.get(0),
+                  &if let Some(count) = count {
+                    hformat!(r#"<tspan {}>{}</tspan> {}"#,
+                             monospace_font(5),
+                             count,
+                             &gpl.nick)
+                  } else {
+                    hformat!("??? {}",
+                             &gpl.nick)
+                  })?
       }
     }
   }
@@ -329,5 +338,9 @@ impl PieceTrait for Hand {
       wrc, log,
       ops: PUOs::Simple(PUO::Modify(())),
     }, xupdates.into_unprepared(None))
+  }
+
+  fn occultation_notify_hook(&self, piece: PieceId) -> UnpreparedUpdates {
+    occultation_notify_update_image(piece)
   }
 }
