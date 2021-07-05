@@ -741,6 +741,11 @@ function lower_pieces(targets_todo: LowerTodoList):
   for (const pe of plan) {
     if (pe.z_top != null) z_top = pe.z_top;
     let z_bot = pe.z_bot;
+    if (pe.content.length != 0 && z_bot == null) {
+      let first_z = pe.content[0].p.z;
+      if (z_top >= first_z)
+	z_top = first_z;
+    }
     let zrange = wasm_bindgen.range(z_bot, z_top, pe.content.length);
     console.log('LOQER PLAN PE',
 		pe, z_bot, z_top, pe.content.length, zrange.debug());
