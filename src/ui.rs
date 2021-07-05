@@ -42,6 +42,16 @@ pub fn player_dasharray(gplayers: &GPlayers, player: PlayerId) -> Html {
   player_num_dasharray(n)
 }
 
+pub fn occultation_notify_update_image(piece: PieceId)
+                                       -> UnpreparedUpdates {
+  Some(Box::new(
+    move |updates: &mut PrepareUpdatesBuffer| {
+      updates.piece_update_image(piece, &None)
+        .unwrap_or_else(|e| error!("unable to send update! {:?}", e))
+    }
+  ))
+}
+
 impl PresentationLayout {
   pub fn template(self) -> &'static str {
     match self {
