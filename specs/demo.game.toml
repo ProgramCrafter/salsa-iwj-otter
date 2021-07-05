@@ -45,7 +45,8 @@ pos = [40, 40]
 type = "Hand"
 edge = "white"
 colour = "grey"
-shape.type = "Rect"
+label.place = "TopLeftOutside"
+	shape.type = "Rect"
 shape.xy = [70,20]
 
 [[pieces]]
