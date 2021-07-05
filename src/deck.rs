@@ -106,8 +106,9 @@ impl PieceTrait for Deck {
       then {
         label.svg(f,
                   &self.shape.outline,
-                  self.shape.edges.get(0), 
-                  &count.to_html())?;
+                  self.shape.edges.get(0),
+                  &hformat!(r#"<tspan {}>{}</tspan>"#,
+                            monospace_font(5), count))?;
       }
     }
   }
