@@ -450,7 +450,9 @@ api_route!{
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,piece, .. } = a;
     let gpc = gs.pieces.byid_mut(piece).unwrap();
-    if gpc.occult.is_active() { throw!(OE::Occultation) }
+    if gpc.occult.is_active() {
+      if self.z >= gpc.zlevel.z { throw!(OE::Occultation) }
+    }
     gpc.zlevel = ZLevel { z: self.z.clone(), zg: gs.gen };
     let update = PieceUpdateOp::SetZLevel(());
     (WhatResponseToClientOp::Predictable,
