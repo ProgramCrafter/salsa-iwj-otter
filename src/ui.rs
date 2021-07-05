@@ -6,6 +6,13 @@ use crate::prelude::*;
 
 pub const HELD_SURROUND_COLOUR: &str = "black";
 
+const MONOSPACE: HtmlLit = Html::lit(
+  r#"font-family="Latin Modern Mono, monospace" font-weight="700""#);
+
+pub fn monospace_font(size: u32) -> Html {
+  hformat!(r##"{} font-size="{}""##, MONOSPACE, size)
+}
+
 #[derive(Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize,EnumString)]
 pub enum PresentationLayout {
   Portrait,

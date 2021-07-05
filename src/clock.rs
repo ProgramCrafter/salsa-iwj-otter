@@ -499,9 +499,7 @@ impl PieceTrait for Clock {
       let pointer = Html::lit(r##"
   pointer-events="none"
              "##);
-      let font = Html::lit(r##"
-  font-family="Latin Modern Mono, monospace" font-size="6" font-weight="700"
-             "##);
+      let font = monospace_font(6);
       hwrite!(f, r##"
   <text x="1" y="{}" {} {} fill="{}" >{}{}{}</text>"##,
              y, font, pointer, Html::lit(show.text),
