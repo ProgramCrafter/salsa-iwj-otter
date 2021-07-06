@@ -564,16 +564,16 @@ type LowerTodoList = { [piece: string]: LowerTodoItem };
 
 keyops_local['lower'] = function (uo: UoRecord) { lower_targets(uo); }
 
-function lower_targets(uo: UoRecord): boolean {
-   function target_treat_pinned(p: PieceInfo): boolean {
-    return wresting || p.pinned;;
-  }
+function lower_treat_pinned(p: PieceInfo): boolean {
+  return wresting || p.pinned;;
+}
 
+function lower_targets(uo: UoRecord): boolean {
   let targets_todo : LowerTodoList = Object.create(null);
 
   for (let piece of uo.targets!) {
     let p = pieces[piece]!;
-    let pinned = target_treat_pinned(p);
+    let pinned = lower_treat_pinned(p);
     targets_todo[piece] = { p, piece, pinned, };
   }
   let problem = lower_pieces(targets_todo);
