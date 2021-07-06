@@ -269,6 +269,10 @@ function piece_element(base: string, piece: PieceId): SVGGraphicsElement | null
   return svg_element(base+piece);
 }
 
+function piece_moveable(p: PieceInfo) {
+  return p.moveable == 'Yes' || p.moveable == 'IfWresting' && wresting;
+}
+
 // ----- key handling -----
 
 function recompute_keybindings() {
@@ -937,8 +941,7 @@ function mouse_find_predicate(
     let p = pieces[piece];
     if (p.pinned && !wresting) continue;
     if (p.held && p.held != us && !wresting) continue;
-    if (i > 0
-	&& !(p.moveable == 'Yes' || p.moveable == 'IfWresting' && wresting))
+    if (i > 0 && !piece_moveable(p))
       continue;
     if (!predicate(p)) {
       continue;
