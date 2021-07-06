@@ -565,7 +565,7 @@ type LowerTodoList = { [piece: string]: LowerTodoItem };
 keyops_local['lower'] = function (uo: UoRecord) { lower_targets(uo); }
 
 function lower_treat_bottom(p: PieceInfo): boolean {
-  return wresting || p.pinned;;
+  return wresting || p.pinned;
 }
 
 function lower_targets(uo: UoRecord): boolean {
