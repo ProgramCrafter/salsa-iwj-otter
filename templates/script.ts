@@ -557,14 +557,14 @@ function rotate_targets(uo: UoRecord, dangle: number): boolean {
 type LowerTodoItem = {
   piece: PieceId,
   p: PieceInfo,
-  pinned: boolean,
+  bottom: boolean,
 };
 
 type LowerTodoList = { [piece: string]: LowerTodoItem };
 
 keyops_local['lower'] = function (uo: UoRecord) { lower_targets(uo); }
 
-function lower_treat_pinned(p: PieceInfo): boolean {
+function lower_treat_bottom(p: PieceInfo): boolean {
   return wresting || p.pinned;;
 }
 
@@ -573,8 +573,8 @@ function lower_targets(uo: UoRecord): boolean {
 
   for (let piece of uo.targets!) {
     let p = pieces[piece]!;
-    let pinned = lower_treat_pinned(p);
-    targets_todo[piece] = { p, piece, pinned, };
+    let bottom = lower_treat_bottom(p);
+    targets_todo[piece] = { p, piece, bottom, };
   }
   let problem = lower_pieces(targets_todo);
   if (problem !== null) {
@@ -587,65 +587,65 @@ function lower_targets(uo: UoRecord): boolean {
 function lower_pieces(targets_todo: LowerTodoList):
  string | null
 {
-  // This is a bit subtle.  We don't want to lower below pinned pieces
-  // (unless we are pinned too, or the user is wresting).  But maybe
-  // the pinned pieces aren't already at the bottom.  For now we will
-  // declare that all pinned pieces "should" be below all non-pinned
+  // This is a bit subtle.  We don't want to lower below bottom pieces
+  // (unless we are bottom too, or the user is wresting).  But maybe
+  // the bottom pieces aren't already at the bottom.  For now we will
+  // declare that all bottom pieces "should" be below all non-bottom
   // ones.  Not as an invariant, but as a thing we will do here to try
   // to make a sensible result.  We implement this as follows: if we
-  // find pinned pieces above non-pinned pieces, we move those pinned
+  // find bottom pieces above non-bottom pieces, we move those bottom
   // pieces to the bottom too, just below us, preserving their
   // relative order.
   //
-  // Disregarding pinned targets:
+  // Disregarding bottom targets:
   //
-  // Z     <some stuff not including any unpinned targets>
+  // Z     <some stuff not including any unbottom targets>
   // Z
-  //       topmost unpinned target         *
+  //       topmost unbottom target         *
   // B (
-  // B     unpinned non-target
-  // B |   unpinned target                 *
-  // B |   pinned non-target, mis-stacked  *
+  // B     unbottom non-target
+  // B |   unbottom target                 *
+  // B |   bottom non-target, mis-stacked  *
   // B )*
   // B
-  //       bottommost unpinned non-target
-  //        if that is below topmost unpinned target
-  //            <- tomove_unpinned: insert targets from * here        Q ->
+  //       bottommost unbottom non-target
+  //        if that is below topmost unbottom target
+  //            <- tomove_unbottom: insert targets from * here        Q ->
   //            <- tomove_misstacked: insert non-targets from * here  Q->
   // A
-  // A     pinned things (nomove_pinned)
-  //            <- tomove_pinned: insert all pinned targets here      P ->
+  // A     bottom things (nomove_bottom)
+  //            <- tomove_bottom: insert all bottom targets here      P ->
   //
-  // When wresting, treat all targets as pinned.
+  // When wresting, treat all targets as bottom.
 
   type Entry = {
     piece: PieceId,
     p: PieceInfo,
   };
   // bottom of the stack order first
-  let tomove_unpinned     : Entry[] = [];
+  let tomove_unbottom     : Entry[] = [];
   let tomove_misstacked   : Entry[] = [];
-  let nomove_pinned       : Entry[] = [];
-  let tomove_pinned       : Entry[] = [];
-  let bottommost_unpinned : Entry | null = null;
+  let nomove_bottom       : Entry[] = [];
+  let tomove_bottom       : Entry[] = [];
+  let bottommost_unbottom : Entry | null = null;
 
-  let n_targets_todo_unpinned = 0;
+  let n_targets_todo_unbottom = 0;
   for (const piece of Object.keys(targets_todo)) {
     let p = targets_todo[piece];
-    if (!p.pinned) n_targets_todo_unpinned++;
+    if (!p.bottom) n_targets_todo_unbottom++;
   }
 
   let walk = pieces_marker;
   for (;;) { // starting at the bottom of the stack order
-    if (n_targets_todo_unpinned == 0
-	&& bottommost_unpinned !== null) {
-      // no unpinned targets left, state Z, we can stop now
+    if (n_targets_todo_unbottom == 0
+	&& bottommost_unbottom !== null) {
+      // no unbottom targets left, state Z, we can stop now
       console.log('LOWER STATE Z FINISHED');
       break;
     }
     if (Object.keys(targets_todo).length == 0 &&
-       bottommost_unpinned !== null) {
-      console.log('LOWER NO TARGETS BUT UNPINNED!', n_targets_todo_unpinned);
+       bottommost_unbottom !== null) {
+      console.log('LOWER NO TARGETS BUT UNBOTTOM!', n_targets_todo_unbottom);
       break;
     }
 
@@ -663,28 +663,28 @@ function lower_pieces(targets_todo: LowerTodoList):
 
     let todo = targets_todo[piece];
     if (todo) {
-      console.log('LOWER WALK', piece, 'TODO', todo.pinned);
+      console.log('LOWER WALK', piece, 'TODO', todo.bottom);
       delete targets_todo[piece];
-      if (!todo.pinned) n_targets_todo_unpinned--;
-      (todo.pinned ? tomove_pinned : tomove_unpinned).push(todo);
+      if (!todo.bottom) n_targets_todo_unbottom--;
+      (todo.bottom ? tomove_bottom : tomove_unbottom).push(todo);
       continue;
     }
 
     let p = pieces[piece]!;
-    let p_pinned = lower_treat_pinned(p);
-    if (bottommost_unpinned === null) { // state A
-      if (!p_pinned) {
+    let p_bottom = lower_treat_bottom(p);
+    if (bottommost_unbottom === null) { // state A
+      if (!p_bottom) {
 	console.log('LOWER WALK', piece, 'STATE A -> Z');
-	bottommost_unpinned = { p, piece };
+	bottommost_unbottom = { p, piece };
       } else {
 	console.log('LOWER WALK', piece, 'STATE A');
-	nomove_pinned.push({ p, piece });
+	nomove_bottom.push({ p, piece });
       }
       continue;
     }
 
     // state B
-    if (p_pinned) {
+    if (p_bottom) {
       console.log('LOWER WALK', piece, 'STATE B MIS-STACKED');
       tomove_misstacked.push({ p, piece });
     } else {
@@ -693,7 +693,7 @@ function lower_pieces(targets_todo: LowerTodoList):
   }
 
   let z_top =
-      bottommost_unpinned ? bottommost_unpinned.p.z :
+      bottommost_unbottom ? bottommost_unbottom.p.z :
       walk.dataset.piece != null ? pieces[walk.dataset.piece!].z :
       // rather a lack of things we are not adjusting!
       wasm_bindgen.def_zcoord();
@@ -706,10 +706,10 @@ function lower_pieces(targets_todo: LowerTodoList):
 
   let plan : PlanEntry[] = [];
 
-  let partQ = tomove_unpinned.concat(tomove_misstacked);
-  let partP = tomove_pinned;
+  let partQ = tomove_unbottom.concat(tomove_misstacked);
+  let partP = tomove_bottom;
 
-  if (nomove_pinned.length == 0) {
+  if (nomove_bottom.length == 0) {
     plan.push({
       content: partQ.concat(partP),
       z_top,
@@ -719,10 +719,10 @@ function lower_pieces(targets_todo: LowerTodoList):
     plan.push({
       content: partQ,
       z_top,
-      z_bot: nomove_pinned[nomove_pinned.length-1].p.z,
+      z_bot: nomove_bottom[nomove_bottom.length-1].p.z,
     }, {
       content: partP,
-      z_top: nomove_pinned[0].p.z,
+      z_top: nomove_bottom[0].p.z,
       z_bot: null,
     });
   }
