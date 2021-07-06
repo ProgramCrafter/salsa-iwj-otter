@@ -337,6 +337,13 @@ function recompute_keybindings() {
       opname: "lower",
       desc: "send to bottom (below other pieces)",
     });
+    add_uo(all_targets, {
+      def_key: 't',
+      kind: 'Client',
+      wrc: 'Predictable',
+      opname: "raise",
+      desc: "raise to top",
+    });
   }
   if (all_targets.length) {
     let got = 0;
@@ -802,6 +809,16 @@ function pin_unpin(uo: UoRecord, newpin: boolean) {
 }
 
 // ----- raising -----
+
+keyops_local['raise'] = function (uo: UoRecord) { raise_targets(uo); }
+
+function raise_targets(uo: UoRecord) {
+  for (let piece of uo.targets!) {
+    let p = pieces[piece]!;
+    if (p.pinned || !piece_moveable(p)) continue;
+    piece_raise(piece, p, "NotYet");
+  }
+}
 
 function piece_raise(piece: PieceId, p: PieceInfo,
 		     new_held_us_raising: HeldUsRaising) {
