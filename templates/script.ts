@@ -671,8 +671,9 @@ function lower_pieces(targets_todo: LowerTodoList):
     }
 
     let p = pieces[piece]!;
+    let p_pinned = lower_treat_pinned(p);
     if (bottommost_unpinned === null) { // state A
-      if (!p.pinned) {
+      if (!p_pinned) {
 	console.log('LOWER WALK', piece, 'STATE A -> Z');
 	bottommost_unpinned = { p, piece };
       } else {
@@ -683,7 +684,7 @@ function lower_pieces(targets_todo: LowerTodoList):
     }
 
     // state B
-    if (p.pinned) {
+    if (p_pinned) {
       console.log('LOWER WALK', piece, 'STATE B MIS-STACKED');
       tomove_misstacked.push({ p, piece });
     } else {
