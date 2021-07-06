@@ -801,6 +801,19 @@ function pin_unpin(uo: UoRecord, newpin: boolean) {
   recompute_keybindings();
 }
 
+// ----- raising -----
+
+function piece_raise(piece: PieceId, p: PieceInfo,
+		     new_held_us_raising: HeldUsRaising) {
+  p.held_us_raising = new_held_us_raising;
+  piece_set_zlevel(piece,p, (oldtop_piece) => {
+    let oldtop_p = pieces[oldtop_piece]!;
+    let z = wasm_bindgen.increment(oldtop_p.z);
+    p.z = z;
+    api_piece("setz", piece,p, { z: z });
+  });
+}
+
 // ----- clicking/dragging pieces -----
 
 type DragInfo = {
@@ -1235,13 +1248,7 @@ function drag_mousemove(e: MouseEvent) {
 	if (dragraise > 0 && ddr2 >= dragraise*dragraise) {
 	  dragging |= DRAGGING.RAISED;
 	  console.log('CHECK RAISE ', dragraise, dragraise*dragraise, ddr2);
-	  p.held_us_raising = "Raised";
-	  piece_set_zlevel(piece,p, (oldtop_piece) => {
-	    let oldtop_p = pieces[oldtop_piece]!;
-	    let z = wasm_bindgen.increment(oldtop_p.z);
-	    p.z = z;
-	    api_piece("setz", piece,p, { z: z });
-	  });
+	  piece_raise(piece,p,"Raised");
 	}
       }
     }
