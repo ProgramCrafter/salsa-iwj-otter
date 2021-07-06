@@ -555,6 +555,8 @@ function rotate_targets(uo: UoRecord, dangle: number): boolean {
   return true;
 }
 
+// ----- lower -----
+
 type LowerTodoItem = {
   piece: PieceId,
   p: PieceInfo,
