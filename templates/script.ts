@@ -813,10 +813,15 @@ function pin_unpin(uo: UoRecord, newpin: boolean) {
 keyops_local['raise'] = function (uo: UoRecord) { raise_targets(uo); }
 
 function raise_targets(uo: UoRecord) {
+  let any = false;
   for (let piece of uo.targets!) {
     let p = pieces[piece]!;
     if (p.pinned || !piece_moveable(p)) continue;
+    any = true;
     piece_raise(piece, p, "NotYet");
+  }
+  if (!any) { 
+    add_log_message('No pieces could be raised.');
   }
 }
 
