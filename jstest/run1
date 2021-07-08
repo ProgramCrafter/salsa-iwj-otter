@@ -18,13 +18,17 @@ ln -s ../../target/jstest/otter_wasm{.js,_bg.wasm} .
 export NODE_PATH=.
 ln -sf "$@" .
 
-sed -n <$1 '
-	/^\/\/ @@expect/,/^\/\/ @@end/ {
-		s/^\/\/ //;
-		/^@@/d;
-		p;
-	}
-' >expect
+if grep '^\/\/ @expect' $1; then
+	sed -n <$1 '
+		/^\/\/ @@expect/,/^\/\/ @@end/ {
+			s/^\/\/ //;
+			/^@@/d;
+			p;
+		}
+	' >expect
+else
+	rm -f expect
+fi
 
 exec 3>run.js
 sed >&3 <script.js '/^\/\/@@notest/,/^\/\/@@/d'
@@ -40,5 +44,8 @@ if [ $rc != 0 ]; then
 	egrep '' /dev/null output ||:
 fi
 
-diff -u expect output
+if test -f expect; then
+	diff -u expect output
+fi
+
 exit $rc

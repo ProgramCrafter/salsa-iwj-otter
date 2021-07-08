@@ -1,7 +1,4 @@
 // -*- JavaScript -*-
-//
-// @@expect
-// @@end
 
 const fs = require('fs');
 let wasm_bindgen = require('otter_wasm.js');
