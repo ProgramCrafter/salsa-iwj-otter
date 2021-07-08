@@ -256,7 +256,8 @@ docs/html/examples/%.toml: specs/%.toml
 .PHONY: jstest
 jstest: stamp/jstest
 
-stamp/jstest: jstest/run jstest/wasmtest.nodejs stamp/wasm-bindgen-jstest
+stamp/jstest: jstest/run jstest/wasmtest.nodejs templates/script.js \
+		stamp/wasm-bindgen-jstest
 	$(NAILING_CARGO_JUST_RUN) $(abspath $(filter-out stamp/%,$^))
 	$(stamp)
 

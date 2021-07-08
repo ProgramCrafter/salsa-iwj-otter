@@ -9,4 +9,9 @@ cd target/jstest
 export NODE_PATH=.
 ln -sf "$@" .
 
-nodejs wasmtest.nodejs
+exec 3>run.js
+sed >&3 <script.js '/^\/\/@@notest/,/^\/\/@@/d'
+cat >&3 wasmtest.nodejs
+exec 3>&-
+
+nodejs run.js

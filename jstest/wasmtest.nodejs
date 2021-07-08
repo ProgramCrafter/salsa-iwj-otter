@@ -6,7 +6,5 @@
 const fs = require('fs');
 let wasm_bindgen = require('otter_wasm.js');
 
-//eval(fs.readFileSync('./otter_wasm.js')+'');
-
 let dc = wasm_bindgen.def_zcoord();
 console.log(dc);

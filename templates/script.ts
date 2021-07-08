@@ -2151,4 +2151,5 @@ function loaded(xhr: XMLHttpRequest){
 // todo scroll of log messages to bottom did not always work somehow
 //    think I have fixed this with approximation
 
+//@@notest
 doload();
