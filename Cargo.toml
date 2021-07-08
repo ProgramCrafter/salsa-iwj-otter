@@ -16,7 +16,7 @@ authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>",
          "and the contributors to Otter"]
 
 [workspace]
-members=["cli", "wasm", "daemon", "wdriver", "apitest"]
+members=["cli", "wasm", "daemon", "wdriver", "apitest", "jstest"]
 
 [build-dependencies]
 usvg="0.14"

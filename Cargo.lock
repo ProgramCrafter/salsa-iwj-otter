@@ -2561,6 +2561,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "otter-nodejs-tests"
+version = "0.7.1"
+dependencies = [
+ "fehler",
+ "otter",
+ "structopt",
+]
+
+[[package]]
 name = "otter-wasm"
 version = "0.7.1"
 dependencies = [

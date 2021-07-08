@@ -1,0 +1,39 @@
+# Copyright 2020-2021 Ian Jackson and contributors to Otter
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# There is NO WARRANTY.
+
+[package]
+name="otter-nodejs-tests"
+description="Otter game system; JavaScript out-of-browser test support."
+
+version="0.7.1"
+license="AGPL-3.0-or-later"
+edition="2018"
+homepage="https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/"
+repository="https://salsa.debian.org/iwj/otter"
+keywords=["games"]
+authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>",
+         "and the contributors to Otter"]
+
+[lib]
+name="otter_nodejs_tests"
+path="jstest.rs"
+
+[[bin]]
+name="jst-lower"
+path="jst-lower.rs"
+
+
+[dependencies]
+
+otter.path=".."
+otter.version="=0.7.1"
+
+fehler="1"
+structopt="0.3"
+
+#serde        = { version="1"    , features=["derive", "rc"] }
+#strum        = { version="0.21" , features=["derive"      ] }
+
+
+#fin.

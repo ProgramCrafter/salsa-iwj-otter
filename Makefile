@@ -217,6 +217,10 @@ stamp/cargo-wdt.debug: $(call rsrcs,.)
 	$(CARGO) build --workspace $(call cr,$*) -p otter-webdriver-tests
 	$(stamp)
 
+stamp/cargo-jstest.debug: $(call rsrcs,.)
+	$(CARGO) build --workspace $(call cr,$*) -p otter-nodejs-tests
+	$(stamp)
+
 stamp/cargo.doc: $(call rsrcs,.)
 	set -o pipefail -e; \
 	$(CARGO) doc $(CARGO_DOC_OPTS) --workspace 2>&1 |egrep -vf .cargo-doc-suppress-errors
@@ -260,7 +264,7 @@ JSTESTS= basic lower
 jstest jstests: $(foreach t,$(JSTESTS),stamp/$t.jstest)
 
 stamp/%.jstest: jstest/run1 jstest/%.nodejs templates/script.js \
-		stamp/wasm-bindgen-jstest
+		stamp/wasm-bindgen-jstest stamp/cargo-jstest.debug
 	$(NAILING_CARGO_JUST_RUN) $(abspath $(filter-out stamp/%,$^))
 	$(stamp)
 
