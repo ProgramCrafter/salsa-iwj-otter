@@ -3,4 +3,50 @@
 const fs = require('fs');
 let wasm_bindgen = require('otter_wasm.js');
 
-//lower_targets({ });
+
+let jstest_did;
+
+function piece_set_zlevel(piece, p, f) { f(null); }
+function api_piece(op, piece, p, args) {
+  let s = op + ' ' + piece + ' ' + args.z + '\n';
+  fs.writeSync(jstest_did, s);
+}
+
+
+jstest_did = fs.openSync("simple.did", 'w');
+
+pieces = {
+  "1.1": {
+    pinned: false,
+    moveable: 'Yes',
+    z: 'g000000000'
+  },
+  "2.1": {
+    pinned: false,
+    moveable: 'Yes',
+    z: 'g000100000'
+  },
+}
+
+let fake_dom = [
+  { special: "pieces_marker", dataset: { } },
+  { dataset: { piece: "1.1" } },
+  { dataset: { piece: "2.1" } },
+  { special: "defs_marker", dataset: { } },
+];
+
+pieces_marker = fake_dom[0];
+defs_marker   = fake_dom[3];
+
+fake_dom[0].nextElementSibling = fake_dom[1];
+fake_dom[1].nextElementSibling = fake_dom[2];
+fake_dom[2].nextElementSibling = fake_dom[3];
+
+let uorecord = {
+  targets: ["2.1"],
+};
+
+lower_targets(uorecord);
+
+fs.closeSync(jstest_did);
+jstest_did = -1;
