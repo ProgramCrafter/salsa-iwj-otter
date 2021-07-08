@@ -45,7 +45,7 @@ USVG_OPTIONS = "--sans-serif-family=DejaVu Sans"
 WASM_BINDGEN = $(TARGET_DIR)/debug/wasm-bindgen
 WASM_BINDGEN_OPTIONS =						\
 	--remove-name-section --remove-producers-section	\
-	--typescript --no-modules				\
+	--typescript
 
 BUNDLE_SOURCES ?= bundle-rust-sources
 
@@ -256,7 +256,8 @@ docs/html/examples/%.toml: specs/%.toml
 $(addprefix $(WASM_PACKED)/,$(WASM_ASSETS) $(WASM_OUTPUTS)): stamp/wasm-bindgen
 stamp/wasm-bindgen: stamp/cargo.wasm-bindgen stamp/cargo.wasm-release
 	$(NAILING_CARGO_JUST_RUN) $(abspath $(WASM_BINDGEN)) \
-		$(WASM_BINDGEN_OPTIONS)	--out-dir target/packed-wasm \
+		$(WASM_BINDGEN_OPTIONS) --no-modules \
+		--out-dir target/packed-wasm \
 		target/$(WASM)/release/otter_wasm.wasm
 	$(stamp)
 
