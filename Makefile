@@ -253,10 +253,12 @@ docs/html/examples/%.toml: specs/%.toml
 
 #---------- jstest ----------
 
-.PHONY: jstest
-jstest: stamp/jstest
+JSTESTS= wasmtest
 
-stamp/jstest: jstest/run jstest/wasmtest.nodejs templates/script.js \
+.PHONY: jstest
+jstest jstests: $(foreach t,$(JSTESTS),stamp/$t.jstest)
+
+stamp/%.jstest: jstest/run1 jstest/%.nodejs templates/script.js \
 		stamp/wasm-bindgen-jstest
 	$(NAILING_CARGO_JUST_RUN) $(abspath $(filter-out stamp/%,$^))
 	$(stamp)
