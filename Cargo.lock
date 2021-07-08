@@ -2565,6 +2565,7 @@ name = "otter-nodejs-tests"
 version = "0.7.1"
 dependencies = [
  "fehler",
+ "indexmap",
  "otter",
  "structopt",
 ]

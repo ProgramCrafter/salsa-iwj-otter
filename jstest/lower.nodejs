@@ -19,7 +19,7 @@ function api_piece(op, piece, p, args) {
 }
 
 
-jstest_did = fs.openSync("simple.did", 'w');
+jstest_did = fs.openSync("byhand.did", 'w');
 
 pieces = {
   "1.1": {

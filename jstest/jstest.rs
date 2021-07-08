@@ -4,4 +4,5 @@
 
 pub use otter::prelude::*;
 
+pub use indexmap::IndexMap;
 pub use structopt::StructOpt;

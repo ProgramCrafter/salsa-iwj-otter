@@ -29,6 +29,8 @@ path="jst-lower.rs"
 otter.path=".."
 otter.version="=0.7.1"
 
+indexmap = "1.6"
+
 fehler="1"
 structopt="0.3"
 
