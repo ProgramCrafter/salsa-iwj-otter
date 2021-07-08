@@ -31,6 +31,14 @@ sed >&3 <script.js '/^\/\/@@notest/,/^\/\/@@/d'
 cat >&3 $t.nodejs
 exec 3>&-
 
+set +e
 nodejs run.js >output
+rc=$?
+set -e
+
+if [ $rc != 0 ]; then
+	egrep '' /dev/null output ||:
+fi
 
 diff -u expect output
+exit $rc
