@@ -253,7 +253,7 @@ docs/html/examples/%.toml: specs/%.toml
 
 #---------- jstest ----------
 
-JSTESTS= wasm-load
+JSTESTS= basic
 
 .PHONY: jstest
 jstest jstests: $(foreach t,$(JSTESTS),stamp/$t.jstest)
