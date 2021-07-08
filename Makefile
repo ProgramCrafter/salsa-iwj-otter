@@ -136,7 +136,7 @@ WASM := wasm32-unknown-unknown
 
 #---------- toplevel aggregate targets ----------
 
-check: stamp/cargo.debug-check at wdt
+check: stamp/cargo.debug-check at wdt jstest
 	@echo 'Tests passed.'
 
 full-check: stamp/cargo.release-check
@@ -252,6 +252,9 @@ docs/html/examples/%.toml: specs/%.toml
 	rm -f $@ && ln $< $@
 
 #---------- jstest ----------
+
+.PHONY: jstest
+jstest: stamp/jstest
 
 stamp/jstest: jstest/run jstest/wasmtest.nodejs stamp/wasm-bindgen-jstest
 	$(NAILING_CARGO_JUST_RUN) $(abspath $(filter-out stamp/%,$^))
