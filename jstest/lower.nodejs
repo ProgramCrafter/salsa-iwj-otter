@@ -11,6 +11,8 @@ let wasm_bindgen = require('otter_wasm.js');
 
 
 let jstest_did;
+let fake_dom;
+let uorecord;
 
 function piece_set_zlevel(piece, p, f) { f(null); }
 function api_piece(op, piece, p, args) {
@@ -34,7 +36,7 @@ pieces = {
   },
 }
 
-let fake_dom = [
+fake_dom = [
   { special: "pieces_marker", dataset: { } },
   { dataset: { piece: "1.1" } },
   { dataset: { piece: "2.1" } },
@@ -48,7 +50,7 @@ fake_dom[0].nextElementSibling = fake_dom[1];
 fake_dom[1].nextElementSibling = fake_dom[2];
 fake_dom[2].nextElementSibling = fake_dom[3];
 
-let uorecord = {
+uorecord = {
   targets: ["2.1"],
 };
 

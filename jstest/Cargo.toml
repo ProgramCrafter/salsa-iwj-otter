@@ -29,12 +29,15 @@ path="jst-lower.rs"
 otter.path=".."
 otter.version="=0.7.1"
 
+otter-api-tests.path="../apitest"
+otter-api-tests.version="=0.7.1"
+
 indexmap = "1.6"
 
 fehler="1"
 structopt="0.3"
 
-#serde        = { version="1"    , features=["derive", "rc"] }
+serde        = { version="1"    , features=["derive", "rc"] }
 #strum        = { version="0.21" , features=["derive"      ] }
 
 

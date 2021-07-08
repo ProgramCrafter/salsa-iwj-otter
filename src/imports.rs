@@ -34,6 +34,7 @@ pub use regex;
 pub use rmp_serde;
 pub use sha2;
 pub use slotmap;
+pub use tera_standalone;
 pub use toml;
 pub use uds;
 pub use unicode_width;
