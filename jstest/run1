@@ -18,9 +18,19 @@ ln -s ../../target/jstest/otter_wasm{.js,_bg.wasm} .
 export NODE_PATH=.
 ln -sf "$@" .
 
+sed -n <$1 '
+	/^\/\/ @@expect/,/^\/\/ @@end/ {
+		s/^\/\/ //;
+		/^@@/d;
+		p;
+	}
+' >expect
+
 exec 3>run.js
 sed >&3 <script.js '/^\/\/@@notest/,/^\/\/@@/d'
 cat >&3 wasmtest.nodejs
 exec 3>&-
 
-nodejs run.js
+nodejs run.js >output
+
+diff -u expect output
