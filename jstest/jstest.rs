@@ -3,3 +3,5 @@
 // There is NO WARRANTY.
 
 pub use otter::prelude::*;
+
+pub use structopt::StructOpt;

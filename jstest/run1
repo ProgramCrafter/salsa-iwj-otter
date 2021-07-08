@@ -29,6 +29,13 @@ if grep '^\/\/ @expect' $1; then
 else
 	rm -f expect
 fi
+wrap=$(sed -n 's/^\/\/ @@wrap //p' $1)
+
+case "$wrap" in
+'')	;;
+*/*)	fail "uh $wrap" ;;
+*)	wrap=../../target/debug/$wrap
+esac
 
 exec 3>run.js
 sed >&3 <script.js '/^\/\/@@notest/,/^\/\/@@/d'
@@ -36,7 +43,7 @@ cat >&3 $t.nodejs
 exec 3>&-
 
 set +e
-nodejs run.js >output
+$wrap nodejs run.js >output
 rc=$?
 set -e
 
