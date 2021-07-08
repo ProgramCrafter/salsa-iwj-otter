@@ -1,3 +1,4 @@
+// -*- JavaScript -*-
 //
 // nailing-cargo --just-run -q --- /home/ian/Rustup/Game/Build/server/target/debug/wasm-bindgen --remove-name-section --remove-producers-section --typescript --nodejs      --out-dir target/packed-wasm target/wasm32-unknown-unknown/release/otter_wasm.wasm
 
