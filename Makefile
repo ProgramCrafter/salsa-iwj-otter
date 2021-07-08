@@ -254,7 +254,7 @@ docs/html/examples/%.toml: specs/%.toml
 
 #---------- jstest ----------
 
-JSTESTS= basic
+JSTESTS= basic lower
 
 .PHONY: jstest
 jstest jstests: $(foreach t,$(JSTESTS),stamp/$t.jstest)
