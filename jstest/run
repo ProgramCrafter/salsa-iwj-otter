@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+self=jstest/run
+src="${0%/$self}"
+fail () { echo >&2 "$self: error: $*"; exit 1; }
+[ "x$src/$self" = "x$0" ] || fail "mismatch $src/$self $0"
+
+cd target/jstest
+export NODE_PATH=.
+ln -sf "$@" .
+
+nodejs wasmtest.nodejs

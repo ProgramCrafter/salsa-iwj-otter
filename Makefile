@@ -251,6 +251,12 @@ docs/html/examples/%.toml: specs/%.toml
 	mkdir -p docs/html/examples
 	rm -f $@ && ln $< $@
 
+#---------- jstest ----------
+
+stamp/jstest: jstest/run jstest/wasmtest.nodejs stamp/wasm-bindgen-jstest
+	$(NAILING_CARGO_JUST_RUN) $(abspath $(filter-out stamp/%,$^))
+	$(stamp)
+
 #---------- wasm ----------
 
 $(addprefix $(WASM_PACKED)/,$(WASM_ASSETS) $(WASM_OUTPUTS)): stamp/wasm-bindgen
@@ -258,6 +264,13 @@ stamp/wasm-bindgen: stamp/cargo.wasm-bindgen stamp/cargo.wasm-release
 	$(NAILING_CARGO_JUST_RUN) $(abspath $(WASM_BINDGEN)) \
 		$(WASM_BINDGEN_OPTIONS) --no-modules \
 		--out-dir target/packed-wasm \
+		target/$(WASM)/release/otter_wasm.wasm
+	$(stamp)
+
+stamp/wasm-bindgen-jstest: stamp/cargo.wasm-bindgen stamp/cargo.wasm-release
+	$(NAILING_CARGO_JUST_RUN) $(abspath $(WASM_BINDGEN)) \
+		$(WASM_BINDGEN_OPTIONS) --nodejs \
+		--out-dir target/jstest \
 		target/$(WASM)/release/otter_wasm.wasm
 	$(stamp)
 
