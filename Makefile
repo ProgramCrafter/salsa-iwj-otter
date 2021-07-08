@@ -194,6 +194,7 @@ stamp/cargo.%: $(call rsrcs,. ! -path './wasm/*')
 
 $(TARGET_DIR)/debug/%: $(call rsrcs, ! -path './wasm/*')
 	$(CARGO) build --workspace -p otter-cli
+	$(NAILING_CARGO_JUST_RUN) touch $(abspath $@)
 
 stamp/cargo.wasm-bindgen: $(call rsrcs, ! -name \*.rs)
 	$(CARGO) $(WASM_BINDGEN_CLI_CARGO_OPTS) build --target-dir=target \
