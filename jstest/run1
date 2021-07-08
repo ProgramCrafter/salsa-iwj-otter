@@ -28,7 +28,7 @@ sed -n <$1 '
 
 exec 3>run.js
 sed >&3 <script.js '/^\/\/@@notest/,/^\/\/@@/d'
-cat >&3 wasmtest.nodejs
+cat >&3 $t.nodejs
 exec 3>&-
 
 nodejs run.js >output
