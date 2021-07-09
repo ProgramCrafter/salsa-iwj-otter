@@ -71,8 +71,9 @@ impl Test {
       assert!(was.is_none(), "{:?}", id);
     }
 
-    // targets' new z coords are in increasing z coord
+    // non-bottom targets are in same stacking order as before
     // no bottom are newly above non-bottom
+    // no non-bottom non-targets moved
     // z coords in updates all decrease
     // all targets now below all non-bottom non-targets
     // xxx ^ unimplemented checks
