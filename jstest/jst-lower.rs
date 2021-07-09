@@ -82,51 +82,6 @@ impl Test {
   }
 }
 
-static TEMPLATE: &'static str = r#"
-//-------------------- {{ name }} --------------------
-
-jstest_did = fs.openSync('{{ name }}.did', 'w');
-
-pieces = {
-{% for p in pieces -%}
-  '{{ p.0 }}': {
-    pinned: {{ p.1.pinned }},
-    moveable: '{{ p.1.moveable }}',
-    z: '{{ p.1.z }}',
-  },
-{% endfor -%}
-}
-
-fake_dom = [
-  { special: "pieces_marker", dataset: { } },
-{% for p in pieces -%}
-  { dataset: { piece: "{{ p.0 }}" } },
-{% endfor -%}
-  { special: "defs_marker", dataset: { } },
-];
-
-pieces_marker = fake_dom[0];
-defs_marker   = fake_dom[{{ pieces | length + 1 }}];
-
-{% for p in pieces -%}
-fake_dom[{{ loop.index0 }}].nextElementSibling = fake_dom[{{ loop.index }}];
-{% endfor %}
-fake_dom[{{ pieces | length }}].nextElementSibling = fake_dom[{{ pieces | length + 1 }}];
-
-{% for t in targets -%}
-uorecord = {
-  targets: ['{{ t }}'],
-};
-{%- endfor %}
-
-lower_targets(uorecord);
-
-fs.closeSync(jstest_did);
-jstest_did = -1;
-
-"#;
-
-
 impl TestsAccumulator {
   #[throws(Explode)]
   pub fn new(opts: &Opts) -> Self {
@@ -207,3 +162,47 @@ fn main() {
     test.check()?;
   }
 }
+
+static TEMPLATE: &'static str = r#"
+//-------------------- {{ name }} --------------------
+
+jstest_did = fs.openSync('{{ name }}.did', 'w');
+
+pieces = {
+{% for p in pieces -%}
+  '{{ p.0 }}': {
+    pinned: {{ p.1.pinned }},
+    moveable: '{{ p.1.moveable }}',
+    z: '{{ p.1.z }}',
+  },
+{% endfor -%}
+}
+
+fake_dom = [
+  { special: "pieces_marker", dataset: { } },
+{% for p in pieces -%}
+  { dataset: { piece: "{{ p.0 }}" } },
+{% endfor -%}
+  { special: "defs_marker", dataset: { } },
+];
+
+pieces_marker = fake_dom[0];
+defs_marker   = fake_dom[{{ pieces | length + 1 }}];
+
+{% for p in pieces -%}
+fake_dom[{{ loop.index0 }}].nextElementSibling = fake_dom[{{ loop.index }}];
+{% endfor %}
+fake_dom[{{ pieces | length }}].nextElementSibling = fake_dom[{{ pieces | length + 1 }}];
+
+{% for t in targets -%}
+uorecord = {
+  targets: ['{{ t }}'],
+};
+{%- endfor %}
+
+lower_targets(uorecord);
+
+fs.closeSync(jstest_did);
+jstest_did = -1;
+
+"#;
