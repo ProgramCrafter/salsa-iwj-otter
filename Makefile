@@ -421,7 +421,7 @@ AT_DEPS =	$(filter-out templates/script.js, $(RUNTEST_DEPS)) \
 		examples/big-bundle.zip \
 		stamp/cargo-at.debug
 
-WDT_DEPS =	$(RUNTEST_DEPS) \
+WDT_DEPS =	$(RUNTEST_DEPS) wdriver/firefox-wrapper \
 		stamp/cargo-wdt.debug
 
 AT_WDT_RUN = $(NAILING_CARGO_JUST_RUN) $(abspath $<)

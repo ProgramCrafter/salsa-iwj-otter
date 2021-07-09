@@ -118,9 +118,11 @@ fn prepare_xserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
 }
 
 #[throws(AE)]
-fn prepare_geckodriver(opts: &Opts, cln: &cleanup_notify::Handle) {
+fn prepare_geckodriver(opts: &Opts, ds: &DirSubst,
+                       cln: &cleanup_notify::Handle) {
   const EXPECTED: &str = "Listening on 127.0.0.1:4444";
   let mut cmd = Command::new("geckodriver");
+  cmd.args(&["--binary", &ds.subst("@src@/wdriver/firefox-wrapper")?]);
   if opts.geckodriver_args != "" {
     cmd.args(opts.geckodriver_args.split(' '));
   }
@@ -825,7 +827,7 @@ pub fn setup(exe_module_path: &str) -> (Setup, Instance) {
 
   let final_hook = FinalInfoCollection;
 
-  prepare_geckodriver(&opts, &core.cln).did("setup webdriver server")?;
+  prepare_geckodriver(&opts, &core.ds, &core.cln).did("setup webdriverr")?;
   let (driver, screenshot_count, windows_squirreled) =
     prepare_thirtyfour(&core.ds).did("prepare web session")?;
 
