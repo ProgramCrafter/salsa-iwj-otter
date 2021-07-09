@@ -61,36 +61,36 @@ static TEMPLATE: &'static str = r#"
 jstest_did = fs.openSync('{{ name }}.did', 'w');
 
 pieces = {
-{% for p in pieces %}
+{% for p in pieces -%}
   '{{ p.id }}': {
     pinned: {{ p.pinned }},
     moveable: '{{ p.moveable }}',
     z: '{{ p.z }}',
   },
-{% endfor %}
+{% endfor -%}
 }
 
 fake_dom = [
   { special: "pieces_marker", dataset: { } },
-{% for p in pieces %}
+{% for p in pieces -%}
   { dataset: { piece: "{{ p.id }}" } },
-{% endfor %}
+{% endfor -%}
   { special: "defs_marker", dataset: { } },
 ];
 
 pieces_marker = fake_dom[0];
 defs_marker   = fake_dom[{{ pieces | length + 1 }}];
 
-{% for p in pieces %}
+{% for p in pieces -%}
 fake_dom[{{ loop.index0 }}].nextElementSibling = fake_dom[{{ loop.index }}];
 {% endfor %}
 fake_dom[{{ pieces | length }}].nextElementSibling = fake_dom[{{ pieces | length + 1 }}];
 
-{% for t in targets %}
+{% for t in targets -%}
 uorecord = {
   targets: ['{{ t }}'],
 };
-{% endfor %}
+{%- endfor %}
 
 lower_targets(uorecord);
 
@@ -167,7 +167,7 @@ fn main() {
   ])?;
 
   let tests = ta.finalise()?;
-  eprintln!("TESTS={:?}", &tests);
+eprintln!("TESTS={:?}", &tests);
 
   let mut cmd = Command::new(opts.nodejs);
   cmd.arg(opts.script);
