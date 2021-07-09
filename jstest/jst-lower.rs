@@ -4,6 +4,8 @@
 
 use otter_nodejs_tests::*;
 
+pub type Vpid = VisiblePieceId;
+
 #[derive(StructOpt,Debug,Clone)]
 pub struct Opts {
   pub nodejs: String,
@@ -44,8 +46,8 @@ pub struct Tests {
 pub struct Test {
   name: String,
   #[serde(with = "indexmap::serde_seq")]
-  pieces: IndexMap<VisiblePieceId, StartPiece>,
-  targets: Vec<VisiblePieceId>,
+  pieces: IndexMap<Vpid, StartPiece>,
+  targets: Vec<Vpid>,
 }
 
 #[derive(Debug)]
@@ -77,7 +79,7 @@ impl Test {
       struct Nbt<'o,'n> {
         old_z: &'o ZCoord,
         new_z: &'n ZCoord,
-        id: VisiblePieceId,
+        id: Vpid,
       }
       let mut nbts = self.targets.iter()
         .filter_map(|&id| {
