@@ -55,6 +55,25 @@ pub struct TestsAccumulator {
   tera: tera::Tera,
 }
 
+impl Test {
+  #[throws(Explode)]
+  pub fn check(&self) {
+    let mut updated: HashMap<VisiblePieceId, ZCoord> = default();
+    for l in BufReader::new(
+      fs::File::open(format!("{}.did",self.name))?
+    ).lines() {
+      let l = l?;
+      let (op, id, z) = l.splitn(3,' ').collect_tuple().unwrap();
+      assert_eq!(op, "setz");
+      let id = id.try_into()?;
+      let z = z.parse()?;
+      let was = updated.insert(id, z);
+      assert!(was.is_none(), "{:?}", id);
+    }
+    dbg!(updated);
+  }
+}
+
 static TEMPLATE: &'static str = r#"
 //-------------------- {{ name }} --------------------
 
@@ -167,10 +186,14 @@ fn main() {
   ])?;
 
   let tests = ta.finalise()?;
-eprintln!("TESTS={:?}", &tests);
 
   let mut cmd = Command::new(opts.nodejs);
   cmd.arg(opts.script);
   let status = cmd.status()?;
   assert!(status.success(), "{}", status);
+
+  for test in tests.tests.values() {
+    println!("checking results for {:?}", &test.name);
+    test.check()?;
+  }
 }
