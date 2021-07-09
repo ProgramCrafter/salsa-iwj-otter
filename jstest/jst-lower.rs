@@ -152,6 +152,14 @@ impl Test {
     }
 
     // no non-bottom non-targets moved
+    {
+      for n in &new {
+        if n.target { continue }
+        if n.bottom { continue }
+        assert!( ! n.updated, "{:?}", n );
+      }
+    }
+
     // z coords (at least of bottom) in updates all decrease
     // all targets now below all non-bottom non-targets
     // xxx ^ unimplemented checks
