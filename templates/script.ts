@@ -98,6 +98,8 @@ type PieceErrorHandler = (piece: PieceId, p: PieceInfo, m: PieceOpError)
   => boolean;
 interface DispatchTable<H> { [key: string]: H };
 
+var otter_debug: boolean;
+
 // from header
 var movehist_len_i: number;
 var movehist_len_max: number;

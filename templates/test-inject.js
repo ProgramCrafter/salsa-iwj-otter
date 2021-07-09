@@ -19,4 +19,5 @@
       return new_console;
     })();
     console.log('wdriver.rs console log starts');
+    var otter_debug = true;
 </script>
