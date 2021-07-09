@@ -164,8 +164,8 @@ fn main() {
 }
 
 static TEMPLATE: &'static str = r#"
-//-------------------- {{ name }} --------------------
 
+console.log('-------------------- {{ name }} --------------------')
 jstest_did = fs.openSync('{{ name }}.did', 'w');
 
 pieces = {
@@ -180,18 +180,18 @@ pieces = {
 
 fake_dom = [
   { special: "pieces_marker", dataset: { } },
-{% for p in pieces -%}
+{%- for p in pieces %}
   { dataset: { piece: "{{ p.0 }}" } },
-{% endfor -%}
+{%- endfor -%}
   { special: "defs_marker", dataset: { } },
 ];
 
 pieces_marker = fake_dom[0];
 defs_marker   = fake_dom[{{ pieces | length + 1 }}];
 
-{% for p in pieces -%}
+{%- for p in pieces %}
 fake_dom[{{ loop.index0 }}].nextElementSibling = fake_dom[{{ loop.index }}];
-{% endfor %}
+{%- endfor %}
 fake_dom[{{ pieces | length }}].nextElementSibling = fake_dom[{{ pieces | length + 1 }}];
 
 {% for t in targets -%}
