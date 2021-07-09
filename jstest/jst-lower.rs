@@ -47,7 +47,7 @@ pub struct Test {
   name: String,
   #[serde(with = "indexmap::serde_seq")]
   pieces: IndexMap<Vpid, StartPiece>,
-  targets: Vec<Vpid>,
+  targets: IndexSet<Vpid>,
 }
 
 #[derive(Debug)]
@@ -196,7 +196,7 @@ impl TestsAccumulator {
 
     let targets = targets.into_iter().map(
       |s| s.try_into().unwrap()
-    ).collect_vec();
+    ).collect();
 
     let test = Test {
       name: name.into(),

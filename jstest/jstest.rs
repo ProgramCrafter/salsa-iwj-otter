@@ -8,4 +8,5 @@ pub use otter_api_tests::Explode;
 pub use otter::imports::tera_standalone as tera;
 
 pub use indexmap::IndexMap;
+pub use indexmap::IndexSet;
 pub use structopt::StructOpt;
