@@ -45,7 +45,7 @@ pub struct Tests {
 pub struct Test {
   name: String,
   pieces: Vec<StartPiece>,
-  targets: Vec<String>,
+  targets: Vec<VisiblePieceId>,
 }
 
 #[derive(Debug)]
@@ -158,7 +158,9 @@ impl TestsAccumulator {
       }
     ).collect_vec();
 
-    let targets = targets.into_iter().map(|s| s.to_owned()).collect_vec();
+    let targets = targets.into_iter().map(
+      |s| s.try_into().unwrap()
+    ).collect_vec();
 
     let test = Test {
       name: name.into(),
