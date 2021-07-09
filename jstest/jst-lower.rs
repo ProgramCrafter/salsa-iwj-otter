@@ -44,7 +44,8 @@ pub struct Tests {
 #[derive(Serialize)]
 pub struct Test {
   name: String,
-  pieces: Vec<StartPiece>,
+  #[serde(with = "indexmap::serde_seq")]
+  pieces: IndexMap<VisiblePieceId, StartPiece>,
   targets: Vec<VisiblePieceId>,
 }
 
@@ -88,10 +89,10 @@ jstest_did = fs.openSync('{{ name }}.did', 'w');
 
 pieces = {
 {% for p in pieces -%}
-  '{{ p.id }}': {
-    pinned: {{ p.pinned }},
-    moveable: '{{ p.moveable }}',
-    z: '{{ p.z }}',
+  '{{ p.0 }}': {
+    pinned: {{ p.1.pinned }},
+    moveable: '{{ p.1.moveable }}',
+    z: '{{ p.1.z }}',
   },
 {% endfor -%}
 }
@@ -99,7 +100,7 @@ pieces = {
 fake_dom = [
   { special: "pieces_marker", dataset: { } },
 {% for p in pieces -%}
-  { dataset: { piece: "{{ p.id }}" } },
+  { dataset: { piece: "{{ p.0 }}" } },
 {% endfor -%}
   { special: "defs_marker", dataset: { } },
 ];
@@ -161,9 +162,9 @@ impl TestsAccumulator {
       |StartPieceSpec { id, pinned, moveable }| {
         let id = id.try_into().unwrap();
         let z = zm.increment().unwrap();
-        StartPiece { id, pinned, moveable, z }
+        (id, StartPiece { id, pinned, moveable, z })
       }
-    ).collect_vec();
+    ).collect();
 
     let targets = targets.into_iter().map(
       |s| s.try_into().unwrap()

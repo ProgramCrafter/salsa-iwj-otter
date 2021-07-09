@@ -32,7 +32,7 @@ otter.version="=0.7.1"
 otter-api-tests.path="../apitest"
 otter-api-tests.version="=0.7.1"
 
-indexmap = "1.6"
+indexmap = { version = "1.6", features=["serde"] }
 
 fehler="1"
 structopt="0.3"
