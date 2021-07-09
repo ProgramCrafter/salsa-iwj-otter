@@ -154,9 +154,9 @@ impl Test {
     // no non-bottom non-targets moved
     {
       for n in &new {
-        if n.target { continue }
-        if n.bottom { continue }
-        assert!( ! n.updated, "{:?}", n );
+        if ! n.bottom && ! n.target {
+          assert!( ! n.updated, "{:?}", n );
+        }
       }
     }
 
