@@ -1853,6 +1853,24 @@ function piece_set_zlevel(piece: PieceId, p: PieceInfo,
   }
   if (ins_before != p.uelem)
     space.insertBefore(p.uelem, ins_before);
+
+  check_z_order();
+}
+
+function check_z_order() {
+  if (!otter_debug) return;
+  let s = pieces_marker;
+  let last_z = "";
+  for (;;) {
+    s = s.nextElementSibling as SVGGraphicsElement;
+    if (s == defs_marker) break;
+    let piece = s.dataset.piece!;
+    let z = pieces[piece].z;
+    if (z < last_z) {
+      json_report_error(['Z ORDER INCONSISTENCY!', piece, z, last_z]);
+    }
+    last_z = z;
+  }
 }
 
 function piece_note_moved(piece: PieceId, p: PieceInfo) {
@@ -2121,6 +2139,7 @@ function startup() {
     e.stopPropagation();
   }, true);
   document.addEventListener('keydown',   some_keydown);
+  check_z_order();
 }
 
 declare var wasm_input : any;
