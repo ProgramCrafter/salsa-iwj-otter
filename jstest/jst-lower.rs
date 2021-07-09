@@ -161,6 +161,14 @@ impl Test {
     }
 
     // z coords (at least of bottom) in updates all decrease
+    {
+      for n in &new {
+        if n.bottom && n.updated {
+          assert!( n.new_z < n.old_z, "{:?}", &n );
+        }
+      }
+    }
+
     // all targets now below all non-bottom non-targets
     // xxx ^ unimplemented checks
   }
