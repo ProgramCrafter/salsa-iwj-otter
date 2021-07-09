@@ -1,5 +1,11 @@
 #!/usr/bin/perl -w
 
+# 1. in JS console in browser
+#      json_report_error(pieces)
+# 2. c&p resulting error into a file, strip off front
+# 3. run this
+# 4. paste into jst-lower.rs
+
 use strict;
 use JSON;
 use Data::Dumper;
@@ -14,10 +20,12 @@ my @pieces = map {
   [
    $p->{z},
    $p->{zg},
-   (sprintf "    sp!(\"%s\", %s, %s),\n",
+   (sprintf "    sp!(\"%s\", %s, %s),%s\n",
     $id,
     $p->{pinned} ? 'true' : 'false',
-    $p->{moveable} eq 'IfWresting' ? 'No' : $p->{moveable})
+    $p->{moveable} eq 'IfWresting' ? 'No' : $p->{moveable},
+    $p->{held} ? " // HELD $p->{held}" : '',
+   )
   ]
 } keys %$data;
 
