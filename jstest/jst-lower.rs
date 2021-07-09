@@ -81,6 +81,7 @@ impl Test {
       id: Vpid,
       old_z: &'o ZCoord,
       new_z: &'n ZCoord,
+      target: bool,
       bottom: bool,
       updated: bool,
     }
@@ -93,19 +94,18 @@ impl Test {
       PieceCollated {
         id, new_z, old_z, updated,
         bottom: start.bottom(),
+        target: self.targets.contains(&id),
       }
     }).collect_vec();
-    let sorted = | kf:
-    &dyn for <'r> Fn(&'r PieceCollated<'r,'r>) -> &'r ZCoord
-      |
-//    for<'i,'r,'o,'n> fn(&'i PieceCollated<'o,'n>) -> &'r ZCoord |
-    {
+
+    let sorted = | kf: &dyn for <'r> Fn(&'r PieceCollated<'r,'r>) -> &'r _ | {
       let mut v = coll.iter().collect_vec();
       v.sort_by_key(|p| kf(p));
       v
     };
     let before = sorted(&|p: &PieceCollated| p.old_z);
     let after  = sorted(&|p: &PieceCollated| p.new_z);
+    dbgc!(before, after);
 
     // non-bottom targets are in same stacking order as before
     {
