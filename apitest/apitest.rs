@@ -627,7 +627,7 @@ usvg_bin = "@target@/release/usvg"
 authorized_keys = "@abstmp@/authorized_keys"
 ssh_proxy_command = "@target@/debug/otter-ssh-proxy --config @abstmp@/server-config.toml"
 
-debug_js_inject_file = "@src@/templates/log-save.js"
+debug_js_inject_file = "@src@/templates/test-inject.js"
 check_bundled_sources = false # For testing only! see LICENCE!
 
 fake_rng = []
