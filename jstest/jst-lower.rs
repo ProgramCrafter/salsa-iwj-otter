@@ -182,6 +182,20 @@ impl Test {
         }
       }
     }
+
+    // all bottom targets now below all non-targets
+    {
+      let mut had_nontarget = None;
+      for n in &new {
+        if ! n.target {
+          had_nontarget = Some(n);
+        }
+        if n.bottom && n.target {
+          assert!( had_nontarget.is_none(),
+                   "{:?} {:?}", &n, had_nontarget);
+        }
+      }
+    }
   }
 }
 
