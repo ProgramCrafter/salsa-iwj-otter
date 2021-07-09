@@ -29,7 +29,6 @@ macro_rules! sp {
 #[derive(Eq,PartialEq,Ord,PartialOrd)]
 #[derive(Serialize)]
 pub struct StartPiece {
-  id: VisiblePieceId,
   pinned: bool,
   moveable: PieceMoveable,
   z: ZCoord,
@@ -162,7 +161,7 @@ impl TestsAccumulator {
       |StartPieceSpec { id, pinned, moveable }| {
         let id = id.try_into().unwrap();
         let z = zm.increment().unwrap();
-        (id, StartPiece { id, pinned, moveable, z })
+        (id, StartPiece { pinned, moveable, z })
       }
     ).collect();
 
