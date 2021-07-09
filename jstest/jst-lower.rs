@@ -291,6 +291,20 @@ fn main() {
     "2.1",
   ])?;
 
+  ta.add_test("found-2021-07-07-raises", vec![
+    sp!( "87.7", false, No),
+    sp!( "81.7", false, Yes),
+    sp!("110.7", false, Yes), // HELD 1#1
+    sp!( "64.7", false, No),
+    sp!( "59.7", false, No), // HELD 2#1
+    sp!( "62.7", false, Yes),
+    sp!( "73.7", false, Yes),
+    sp!( "46.7", false, No),
+    sp!(  "7.7", false, Yes),
+  ], vec![
+    "73.7",
+  ])?;
+  
   let tests = ta.finalise()?;
 
   let mut cmd = Command::new(opts.nodejs);
