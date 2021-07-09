@@ -97,7 +97,7 @@ impl Test {
 
     // no bottom are newly above non-bottom
     // no non-bottom non-targets moved
-    // z coords in updates all decrease
+    // z coords (at least of bottom) in updates all decrease
     // all targets now below all non-bottom non-targets
     // xxx ^ unimplemented checks
 
