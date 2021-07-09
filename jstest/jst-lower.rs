@@ -60,7 +60,10 @@ pub struct TestsAccumulator {
 impl Test {
   #[throws(Explode)]
   pub fn check(&self) {
-    let mut updated: HashMap<VisiblePieceId, ZCoord> = default();
+
+    let mut updated: HashMap<Vpid, ZCoord>
+      = default();
+
     for l in BufReader::new(
       fs::File::open(format!("{}.did",self.name))?
     ).lines() {
@@ -72,6 +75,37 @@ impl Test {
       let was = updated.insert(id, z);
       assert!(was.is_none(), "{:?}", id);
     }
+
+    #[derive(Debug)]
+    struct PieceCollated<'o,'n> {
+      id: Vpid,
+      old_z: &'o ZCoord,
+      new_z: &'n ZCoord,
+      bottom: bool,
+      updated: bool,
+    }
+
+    let coll = self.pieces.iter().map(|(&id, start)| {
+      let old_z = &start.z;
+      let new_z = updated.get(&id);
+      let updated = new_z.is_some();
+      let new_z = new_z.unwrap_or(&start.z);
+      PieceCollated {
+        id, new_z, old_z, updated,
+        bottom: start.bottom(),
+      }
+    }).collect_vec();
+    let sorted = | kf:
+    &dyn for <'r> Fn(&'r PieceCollated<'r,'r>) -> &'r ZCoord
+      |
+//    for<'i,'r,'o,'n> fn(&'i PieceCollated<'o,'n>) -> &'r ZCoord |
+    {
+      let mut v = coll.iter().collect_vec();
+      v.sort_by_key(|p| kf(p));
+      v
+    };
+    let before = sorted(&|p: &PieceCollated| p.old_z);
+    let after  = sorted(&|p: &PieceCollated| p.new_z);
 
     // non-bottom targets are in same stacking order as before
     {
