@@ -121,12 +121,15 @@ impl Test {
     }
 
     // non-bottom targets are in same stacking order as before
+    // bottom targets are in same stacking order as before
     {
-      for (o, n) in izip!(
-        old.iter().filter(|p| p.target && ! p.bottom),
-        new.iter().filter(|p| p.target && ! p.bottom),
-      ) {
-        assert_eq!(o.id, n.id);
+      for &want_bottom in &[false, true] {
+        for (o, n) in izip!(
+          old.iter().filter(|p| p.target && p.bottom == want_bottom),
+          new.iter().filter(|p| p.target && p.bottom == want_bottom),
+        ) {
+          assert_eq!(o.id, n.id);
+        }
       }
     }
 
