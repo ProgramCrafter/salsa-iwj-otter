@@ -29,7 +29,7 @@ macro_rules! sp {
 #[derive(Eq,PartialEq,Ord,PartialOrd)]
 #[derive(Serialize)]
 pub struct StartPiece {
-  id: String,
+  id: VisiblePieceId,
   pinned: bool,
   moveable: PieceMoveable,
   z: ZCoord,
@@ -133,7 +133,7 @@ impl TestsAccumulator {
     let mut zm = ZCoord::default().clone_mut();
     let pieces = pieces.into_iter().map(
       |StartPieceSpec { id, pinned, moveable }| {
-        let id = id.into();
+        let id = id.try_into().unwrap();
         let z = zm.increment().unwrap();
         StartPiece { id, pinned, moveable, z }
       }
