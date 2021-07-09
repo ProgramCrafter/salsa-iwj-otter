@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
+// (function(){ let s = pieces_marker; let last_z=""; for (;;) { s = s.nextElementSibling; if (s == defs_marker) break; let piece = s.dataset.piece; let z = pieces[piece].z; console.log(piece, z, z >= last_z); last_z = z;} })();
+
 use otter_nodejs_tests::*;
 
 pub type Vpid = VisiblePieceId;
