@@ -80,10 +80,12 @@ impl Test {
         id: VisiblePieceId,
       }
       let mut nbts = self.targets.iter()
-        .map(|&id| {
-          let old_z = &self.pieces[&id].z;
+        .filter_map(|&id| {
+          let p = &self.pieces[&id];
+          if p.bottom() { return None }
+          let old_z = &p.z;
           let new_z = updated.get(&id).unwrap_or(old_z);
-          Nbt { new_z, old_z, id }
+          Some(Nbt { new_z, old_z, id })
         })
         .collect_vec();
       nbts.sort();
