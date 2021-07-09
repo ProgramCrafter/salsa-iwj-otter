@@ -82,7 +82,8 @@ fn prepare_xserver(cln: &cleanup_notify::Handle, ds: &DirSubst) {
 
   let mut xcmd = Command::new("Xvfb");
   xcmd
-    .args("-nolisten unix \
+    .args("-screen 0 2000x2000x24 \
+           -nolisten unix \
            -nolisten local \
            -listen inet \
            -listen inet6 \
