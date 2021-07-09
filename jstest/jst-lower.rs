@@ -194,11 +194,13 @@ fake_dom[{{ loop.index0 }}].nextElementSibling = fake_dom[{{ loop.index }}];
 {%- endfor %}
 fake_dom[{{ pieces | length }}].nextElementSibling = fake_dom[{{ pieces | length + 1 }}];
 
-{% for t in targets -%}
 uorecord = {
-  targets: ['{{ t }}'],
-};
+  targets: [
+{%- for t in targets %}
+      '{{ t }}',
 {%- endfor %}
+  ],
+};
 
 lower_targets(uorecord);
 
