@@ -7,6 +7,7 @@ use crate::*;
 struct Ctx {
   su: Setup,
   alice: Window,
+  bob: Window,
 }
 usual_wanted_tests!{Ctx, su}
 
@@ -18,8 +19,8 @@ impl Ctx {
 }
 
 #[throws(Explode)]
-fn tests(UsualSetup { su, alice, ..}: UsualSetup) {
-  let mut c = Ctx { su, alice };
+fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
+  let mut c = Ctx { su, alice, bob };
 
   test!(c, "bundle", {
     let test_bundle = c.su.ds.example_bundle();
@@ -95,6 +96,13 @@ fn tests(UsualSetup { su, alice, ..}: UsualSetup) {
         .perform()
         .did("draw")?;
       alice.synch()?;
+    }
+
+    {
+      let mut bob = c.su.w(&c.bob)?;
+      bob.synch()?;
+      bob.get(bob.current_url()?)?;
+      bob.synch()?;
     }
   });
 
