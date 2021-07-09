@@ -60,6 +60,7 @@ pub struct TestsAccumulator {
 impl Test {
   #[throws(Explode)]
   pub fn check(&self) {
+    eprintln!("-------------------- {} --------------------", &self.name);
 
     let mut updated: HashMap<Vpid, ZCoord>
       = default();
@@ -99,13 +100,25 @@ impl Test {
     }).collect_vec();
 
     let sorted = | kf: &dyn for <'r> Fn(&'r PieceCollated<'r,'r>) -> &'r _ | {
-      let mut v = coll.iter().collect_vec();
+      let mut v: Vec<&PieceCollated> = coll.iter().collect_vec();
       v.sort_by_key(|p| kf(p));
       v
     };
-    let before = sorted(&|p: &PieceCollated| p.old_z);
-    let after  = sorted(&|p: &PieceCollated| p.new_z);
-    dbgc!(before, after);
+    let old = sorted(&|p: &PieceCollated| p.old_z);
+    let new = sorted(&|p: &PieceCollated| p.new_z);
+    for (o, n) in izip!(&old, &new).rev() {
+      let pr = |p: &PieceCollated| {
+        eprint!("    {} {}{}{} ",
+                p.id,
+                if p.target  { "T" } else { "_" },
+                if p.bottom  { "B" } else { "_" },
+                if p.updated { "U" } else { "_" });
+      };
+      pr(o);
+      eprint!("{:<20}    ", o.old_z.as_str());
+      pr(n);
+      eprintln!("{}"        , n.new_z.as_str());
+    }
 
     // non-bottom targets are in same stacking order as before
     {
@@ -138,8 +151,6 @@ impl Test {
     // z coords (at least of bottom) in updates all decrease
     // all targets now below all non-bottom non-targets
     // xxx ^ unimplemented checks
-
-    dbg!(updated);
   }
 }
 
