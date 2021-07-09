@@ -9,6 +9,7 @@ pub use thirtyfour_sync as t4;
 
 pub use t4::WebDriverCommands;
 pub use t4::By;
+pub use t4::Keys;
 
 pub type T4d = t4::WebDriver;
 pub type WDE = t4::error::WebDriverError;

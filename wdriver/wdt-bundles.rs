@@ -57,6 +57,47 @@ fn tests(UsualSetup { su, alice, ..}: UsualSetup) {
 
   });
 
+  test!(c, "hidden", {
+    let game_spec = &c.su.ds.subst("@specs@/vatikan.game.toml")?;
+    c.otter(&["reset"],&[&game_spec])?;
+
+    {
+      let mut alice = c.su.w(&c.alice)?;
+      alice.synch()?;
+
+      let deckp = alice.posg2posw(Pos::new(150,184))?;
+      let handp = alice.posg2posw(Pos::new(68, 175))?;
+      alice.action_chain()
+        .move_pos(handp)?
+        .click()
+        .release()
+        .key_down(Keys::Shift)
+        .send_keys('C')
+        .key_up(Keys::Shift)
+        .key_down('0')
+        .key_up('0')
+        .move_pos(deckp)?
+        .click()
+        .release()
+        .key_down(Keys::Shift)
+        .send_keys('A')
+        .key_up(Keys::Shift)
+        .perform()
+        .did("activate")?;
+      alice.synch()?;
+
+      alice.action_chain()
+        .move_pos(deckp)?
+        .send_keys("5")
+        .click_and_hold()
+        .move_pos(handp)?
+        .release()
+        .perform()
+        .did("draw")?;
+      alice.synch()?;
+    }
+  });
+
   debug!("finishing");
 }
 
