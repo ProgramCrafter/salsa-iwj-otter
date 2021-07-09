@@ -131,6 +131,26 @@ impl Test {
     }
 
     // no bottom are newly above non-bottom
+    {
+      let misbottom = |on: &[&PieceCollated]| {
+        let mut misbottom = HashSet::new();
+        for i in 0..on.len() {
+          for j in i+1..on.len() {
+            // j is above i
+            if on[j].bottom && ! on[i].bottom {
+              // bottom above non-bottom
+              misbottom.insert((on[j].id, on[i].id));
+            }
+          }
+        }
+        misbottom
+      };
+      let old = misbottom(&old);
+      let new = misbottom(&new);
+      let newly = new.difference(&old).collect_vec();
+      assert!( newly.is_empty(), "{:?}", &newly );
+    }
+
     // no non-bottom non-targets moved
     // z coords (at least of bottom) in updates all decrease
     // all targets now below all non-bottom non-targets
