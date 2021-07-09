@@ -72,6 +72,29 @@ impl Test {
     }
 
     // non-bottom targets are in same stacking order as before
+    {
+      #[derive(Debug,Ord,PartialOrd,Eq,PartialEq)]
+      struct Nbt<'o,'n> {
+        old_z: &'o ZCoord,
+        new_z: &'n ZCoord,
+        id: VisiblePieceId,
+      }
+      let mut nbts = self.targets.iter()
+        .map(|&id| {
+          let old_z = &self.pieces[&id].z;
+          let new_z = updated.get(&id).unwrap_or(old_z);
+          Nbt { new_z, old_z, id }
+        })
+        .collect_vec();
+      nbts.sort();
+      nbts.iter().fold1( |nbt0, nbt1| {
+        assert!( nbt0.new_z < nbt1.new_z,
+                 "{:?} {:?} {:?} {:#?}", &self.name, nbt0, nbt1,
+                 &nbts);
+        nbt1
+      });
+    }
+
     // no bottom are newly above non-bottom
     // no non-bottom non-targets moved
     // z coords in updates all decrease
@@ -79,6 +102,18 @@ impl Test {
     // xxx ^ unimplemented checks
 
     dbg!(updated);
+  }
+}
+
+impl StartPiece {
+  pub fn bottom(&self) -> bool {
+    use PieceMoveable::*;
+    match (self.pinned, self.moveable) {
+      (true , _  ) => true,
+      (false, Yes) => false,
+      (false, No ) => true,
+      (_, IfWresting) => panic!(),
+    }
   }
 }
 
