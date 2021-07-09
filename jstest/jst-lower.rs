@@ -170,6 +170,19 @@ impl Test {
     }
 
     // all targets now below all non-bottom non-targets
+    {
+      let mut had_nonbottom_nontarget = None;
+      for n in &new {
+        if ! n.bottom && ! n.target {
+          had_nonbottom_nontarget = Some(n);
+        }
+        if n.target {
+          assert!( had_nonbottom_nontarget.is_none(),
+                   "{:?} {:?}", &n, had_nonbottom_nontarget);
+        }
+      }
+    }
+
     // xxx ^ unimplemented checks
   }
 }
