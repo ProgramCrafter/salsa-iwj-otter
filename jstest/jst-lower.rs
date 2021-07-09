@@ -185,6 +185,15 @@ fn main() {
     "2.1",
   ])?;
 
+  ta.add_test("pair", vec![
+    sp!("1.1", false, Yes),
+    sp!("2.1", false, Yes),
+    sp!("3.1", false, Yes),
+  ], vec![
+    "3.1",
+    "2.1",
+  ])?;
+
   let tests = ta.finalise()?;
 
   let mut cmd = Command::new(opts.nodejs);
