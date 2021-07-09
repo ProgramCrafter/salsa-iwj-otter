@@ -70,6 +70,13 @@ impl Test {
       let was = updated.insert(id, z);
       assert!(was.is_none(), "{:?}", id);
     }
+
+    // targets' new z coords are in increasing z coord
+    // no bottom are newly above non-bottom
+    // z coords in updates all decrease
+    // all targets now below all non-bottom non-targets
+    // xxx ^ unimplemented checks
+
     dbg!(updated);
   }
 }
