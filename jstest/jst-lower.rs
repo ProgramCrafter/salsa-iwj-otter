@@ -182,8 +182,6 @@ impl Test {
         }
       }
     }
-
-    // xxx ^ unimplemented checks
   }
 }
 
