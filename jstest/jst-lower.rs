@@ -122,28 +122,12 @@ impl Test {
 
     // non-bottom targets are in same stacking order as before
     {
-      #[derive(Debug,Ord,PartialOrd,Eq,PartialEq)]
-      struct Nbt<'o,'n> {
-        old_z: &'o ZCoord,
-        new_z: &'n ZCoord,
-        id: Vpid,
+      for (o, n) in izip!(
+        old.iter().filter(|p| p.target && ! p.bottom),
+        new.iter().filter(|p| p.target && ! p.bottom),
+      ) {
+        assert_eq!(o.id, n.id);
       }
-      let mut nbts = self.targets.iter()
-        .filter_map(|&id| {
-          let p = &self.pieces[&id];
-          if p.bottom() { return None }
-          let old_z = &p.z;
-          let new_z = updated.get(&id).unwrap_or(old_z);
-          Some(Nbt { new_z, old_z, id })
-        })
-        .collect_vec();
-      nbts.sort();
-      nbts.iter().fold1( |nbt0, nbt1| {
-        assert!( nbt0.new_z < nbt1.new_z,
-                 "{:?} {:?} {:?} {:#?}", &self.name, nbt0, nbt1,
-                 &nbts);
-        nbt1
-      });
     }
 
     // no bottom are newly above non-bottom
