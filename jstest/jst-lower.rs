@@ -177,7 +177,7 @@ impl TestsAccumulator {
     self.tera.render_to("js", &context, &mut self.script)?;
 
     let already = self.tests.tests.insert(name.to_owned(), test);
-    assert!(already.is_none(), "{:?}", &name);
+    assert!(already.is_none(), "duplicate test {:?}", &name);
   }
 }
 
