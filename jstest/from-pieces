@@ -1,0 +1,28 @@
+#!/usr/bin/perl -w
+
+use strict;
+use JSON;
+use Data::Dumper;
+
+my $jtext = do { undef $/; <STDIN>; };
+my $data = decode_json($jtext);
+#print STDERR Dumper($data);
+
+my @pieces = map {
+  my $id = $_;
+  my $p = $data->{$_};
+  [
+   $p->{z},
+   $p->{zg},
+   (sprintf "    sp!(\"%s\", %s, %s),\n",
+    $id,
+    $p->{pinned} ? 'true' : 'false',
+    $p->{moveable} eq 'IfWresting' ? 'No' : $p->{moveable})
+  ]
+} keys %$data;
+
+my @sorted = sort { $a->[0] cmp $b->[0] || $a->[1] <=> $b->[1] } @pieces;
+
+foreach my $p (@sorted) {
+  print $p->[2] or die $!;
+}
