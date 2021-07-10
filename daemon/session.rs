@@ -33,8 +33,9 @@ struct SessionFormattedLogEntry {
   logent: Arc<CommittedLogEntry>,
 }
 
-#[derive(Serialize,Debug)]
+#[derive(Serialize,Debug,Eq,PartialEq,Ord,PartialOrd)]
 struct SessionPieceContext {
+  z: ZLevel,
   id: VisiblePieceId,
   pos: Pos,
   info: String, // SessionPieceLoadJson as JSON
@@ -125,11 +126,9 @@ fn session_inner(form: Json<SessionForm>,
       gpl.layout = layout;
     }
     let layout = gpl.layout;
-    let mut pieces: Vec<_> = ig.gs.pieces.iter().collect();
+    let pieces: Vec<_> = ig.gs.pieces.iter().collect();
     let nick = gpl.nick.clone();
     let movehist = gpl.movehist.clone();
-
-    pieces.sort_by_key(|(_,pr)| &pr.zlevel);
 
     for (piece, gpc) in pieces {
       let ipc = if let Some(pto) = ig.ipieces.get(piece) { pto }
@@ -166,6 +165,7 @@ fn session_inner(form: Json<SessionForm>,
       };
 
       let for_piece = SessionPieceContext {
+        z: zlevel.clone(),
         id: pri.vpid,
         pos: pos,
         info: serde_json::to_string(&for_info)
@@ -173,6 +173,8 @@ fn session_inner(form: Json<SessionForm>,
       };
       uses.push(for_piece);
     }
+
+    uses.sort();
 
     let mut timestamp_abbrev: Option<String> = None;
 
