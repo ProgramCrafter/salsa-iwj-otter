@@ -21,6 +21,9 @@ function api_piece(op, piece, p, args) {
 }
 
 
+/*
+console.log('-------------------- byhand --------------------');
+
 jstest_did = fs.openSync("byhand.did", 'w');
 
 pieces = {
@@ -58,3 +61,4 @@ lower_targets(uorecord);
 
 fs.closeSync(jstest_did);
 jstest_did = -1;
+*/
