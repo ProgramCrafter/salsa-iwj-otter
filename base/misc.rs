@@ -129,21 +129,21 @@ macro_rules! dbgc {
     // `$val` expression could be a block (`{ .. }`), in which case the `eprintln!`
     // will be malformed.
     () => {
-      dbgc_helper(std::file!(), std::line!(), &[])
+      $crate::misc::dbgc_helper(std::file!(), std::line!(), &[])
     };
     ($val:expr $(,)?) => {
         // Use of `match` here is intentional because it affects the lifetimes
         // of temporaries - https://stackoverflow.com/a/48732525/1063961
         match $val {
             tmp => {
-                dbgc_helper(std::file!(), std::line!(),
-                            &[(std::stringify!($val), &tmp)]);
+                $crate::misc::dbgc_helper(std::file!(), std::line!(),
+                                          &[(std::stringify!($val), &tmp)]);
                 tmp
             }
         }
     };
     ($($val:expr),+ $(,)?) => {
-      dbgc_helper(std::file!(), std::line!(),
-                  &[$((std::stringify!($val), &$val)),+])
+      $crate::misc::dbgc_helper(std::file!(), std::line!(),
+                                &[$((std::stringify!($val), &$val)),+])
     };
 }

@@ -29,7 +29,7 @@ pub use void::{self, Void};
 pub use crate::html::*;
 
 pub use crate::geometry::{CoordinateOverflow, PosC, PosPromote};
-pub use crate::{hformat, hformat_as_display, hwrite};
+pub use crate::{dbgc, hformat, hformat_as_display, hwrite};
 pub use crate::misc::default;
 pub use crate::misc::display_as_debug;
 
