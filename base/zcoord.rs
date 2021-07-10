@@ -386,6 +386,8 @@ impl Mutable {
 	// Oh actually these numbers are equal!
 	throw!(RangeImpossible::Empty);
       }
+      //dbgc!(&a, &b, &count, i, &current, borrowing);
+
       current.extend_to_limb(i);
 
       let la = a.limb_val_lookup(i);
