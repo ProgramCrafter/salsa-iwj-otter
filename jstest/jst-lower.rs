@@ -61,7 +61,7 @@ pub struct TestsAccumulator {
 impl Test {
   #[throws(Explode)]
   pub fn check(&self) {
-    eprintln!("-------------------- {} --------------------", &self.name);
+    println!("-------------------- {} --------------------", &self.name);
 
     let mut updated: HashMap<Vpid, ZCoord>
       = default();
@@ -109,16 +109,16 @@ impl Test {
     let new = sorted(&|p: &PieceCollated| p.new_z);
     for (o, n) in izip!(&old, &new).rev() {
       let pr = |p: &PieceCollated| {
-        eprint!("    {:5} {}{}{} ",
+        print!("    {:5} {}{}{} ",
                 p.id.to_string(),
                 if p.target  { "T" } else { "_" },
                 if p.bottom  { "B" } else { "_" },
                 if p.updated { "U" } else { "_" });
       };
       pr(o);
-      eprint!("{:<20}    ", o.old_z.as_str());
+      print!("{:<20}    ", o.old_z.as_str());
       pr(n);
-      eprintln!("{}"        , n.new_z.as_str());
+      println!("{}"        , n.new_z.as_str());
     }
 
     // non-bottom targets are in same stacking order as before
@@ -266,9 +266,9 @@ impl TestsAccumulator {
       |s| s.try_into().map_err(|_|s).unwrap()
     ).collect();
 
-    eprintln!("-------------------- {} --------------------", name);
+    println!("-------------------- {} --------------------", name);
     for (id,p) in pieces.iter() {
-      eprintln!("    {:5} {}{}  {}",
+      println!("    {:5} {}{}  {}",
                 id.to_string(),
                 if targets.contains(id) { "T" } else { "_" },
                 if p.bottom()           { "B" } else { "_" },
@@ -303,7 +303,7 @@ impl Tests {
 fn main() {
   let opts = Opts::from_args();
 
-  eprintln!("==================== building ====================");
+  println!("==================== building ====================");
 
   let mut ta = TestsAccumulator::new(&opts)?;
 
@@ -339,14 +339,14 @@ fn main() {
   
   let tests = ta.finalise()?;
 
-  eprintln!("==================== running ====================");
+  println!("==================== running ====================");
 
   let mut cmd = Command::new(opts.nodejs);
   cmd.arg(opts.script);
   let status = cmd.status()?;
   assert!(status.success(), "{}", status);
 
-  eprintln!("==================== checking ====================");
+  println!("==================== checking ====================");
 
   for test in tests.tests.values() {
     test.check()?;
