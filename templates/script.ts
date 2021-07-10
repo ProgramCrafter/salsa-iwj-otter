@@ -725,6 +725,9 @@ function lower_pieces(targets_todo: LowerTodoList):
 
   let plan : PlanEntry[] = [];
 
+  console.log('LOWER PARTQ X', tomove_misstacked);
+  console.log('LOWER PARTQ L', tomove_light);
+  console.log('LOWER PARTP H', tomove_heavy);
   let partQ = tomove_misstacked.concat(tomove_light);
   let partP = tomove_heavy;
 
