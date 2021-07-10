@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
+// OTTER_JST_LOWER_ONLY=exhaustive-05
+
 use otter_nodejs_tests::*;
 
 pub type Vpid = VisiblePieceId;

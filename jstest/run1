@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# OTTER_JST_VERBOSE=1
+
 set -e
 self=jstest/run1
 src="${0%/$self}"
