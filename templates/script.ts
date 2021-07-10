@@ -690,7 +690,7 @@ function lower_pieces(targets_todo: LowerTodoList):
 	q_z_top = p.z;
 	xst = 'STATE -> B';
       }
-      console.log('LOWER WALK', piece, 'TODO', todo.heavy ? "B" : "_", xst);
+      console.log('LOWER WALK', piece, 'TODO', todo.heavy ? "H" : "_", xst);
       delete targets_todo[piece];
       if (!todo.heavy) n_targets_todo_light--;
       (todo.heavy ? tomove_heavy : tomove_light).push(todo);
