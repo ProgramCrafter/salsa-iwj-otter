@@ -104,8 +104,10 @@ pub struct ZCoord(innards::Innards);
 pub struct ParseError;
 
 #[derive(Error,Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize)]
-#[error("Z coordinate range has end before start, cannot iterate")]
-pub struct RangeBackwards;
+pub enum RangeImpossible {
+  #[error("Z coordinate range has end before start, cannot iterate")]
+  Backwards,
+}
 
 #[derive(Error,Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize)]
 #[error("Z coordinate range has neither end, cannot iterate")]
@@ -118,7 +120,7 @@ pub struct Overflow;
 #[derive(Error,Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize)]
 pub enum LogicError {
   #[error("{0}")] RangeTotallyUnbounded(#[from] TotallyUnboundedRange),
-  #[error("{0}")] RangeBackwards       (#[from] RangeBackwards       ),
+  #[error("{0}")] RangeImpossible      (#[from] RangeImpossible      ),
 }
 
 //---------- LimbVal ----------
@@ -370,7 +372,7 @@ impl Mutable {
     }
   }
 
-  #[throws(RangeBackwards)]
+  #[throws(RangeImpossible)]
   fn range_core(a: &Mutable, b: &Mutable, count: RangeCount)
                 -> (Mutable, AddSubRangeDelta) {
     type ASRD = AddSubRangeDelta;
@@ -391,7 +393,7 @@ impl Mutable {
       let wantgaps = count+1;
       let avail = (lb.primitive() as i64) - (la.primitive() as i64)
         + if borrowing { RAW_LIMB_MODULUS as i64 } else { 0};
-      if avail < 0 { throw!(RangeBackwards) }
+      if avail < 0 { throw!(RangeImpossible::Backwards) }
       let avail = avail as u64;
 
       if avail < 2 {
@@ -426,7 +428,7 @@ impl Mutable {
     (current, aso)
   }
 
-  #[throws(RangeBackwards)]
+  #[throws(RangeImpossible)]
   /// Iterator producing a half-open range `[self, other>`
   ///
   /// Produces precisely `count` items.
