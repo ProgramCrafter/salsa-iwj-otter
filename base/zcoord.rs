@@ -369,7 +369,7 @@ impl Mutable {
     *self.limbs.get(i).unwrap_or(&ZERO)
   }
   fn extend_to_limb(&mut self, i: usize) {
-    if self.limbs.len() < i {
+    if self.limbs.len() <= i {
       self.limbs.resize(i+1, ZERO);
     }
   }
