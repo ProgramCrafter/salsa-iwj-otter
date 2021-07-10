@@ -86,7 +86,7 @@ impl Test {
       old_z: &'o ZCoord,
       new_z: &'n ZCoord,
       target: bool,
-      bottom: bool,
+      heavy: bool,
       updated: bool,
     }
 
@@ -97,7 +97,7 @@ impl Test {
       let new_z = new_z.unwrap_or(&start.z);
       PieceCollated {
         id, new_z, old_z, updated,
-        bottom: start.bottom(),
+        heavy: start.heavy(),
         target: self.targets.contains(&id),
       }
     }).collect_vec();
@@ -114,7 +114,7 @@ impl Test {
         print!("    {:5} {}{}{} ",
                 p.id.to_string(),
                 if p.target  { "T" } else { "_" },
-                if p.bottom  { "B" } else { "_" },
+                if p.heavy   { "H" } else { "_" },
                 if p.updated { "U" } else { "_" });
       };
       pr(o);
@@ -123,80 +123,80 @@ impl Test {
       println!("{}"        , n.new_z.as_str());
     }
 
-    // non-bottom targets are in same stacking order as before
-    // bottom targets are in same stacking order as before
+    // light targets are in same stacking order as before
+    // heavy targets are in same stacking order as before
     {
-      for &want_bottom in &[false, true] {
+      for &want_heavy in &[false, true] {
         for (o, n) in izip!(
-          old.iter().filter(|p| p.target && p.bottom == want_bottom),
-          new.iter().filter(|p| p.target && p.bottom == want_bottom),
+          old.iter().filter(|p| p.target && p.heavy == want_heavy),
+          new.iter().filter(|p| p.target && p.heavy == want_heavy),
         ) {
           assert_eq!(o.id, n.id);
         }
       }
     }
 
-    // no bottom are newly above non-bottom
+    // no heavy are newly above light
     {
-      let misbottom = |on: &[&PieceCollated]| {
-        let mut misbottom = HashSet::new();
+      let misheavy = |on: &[&PieceCollated]| {
+        let mut misheavy = HashSet::new();
         for i in 0..on.len() {
           for j in i+1..on.len() {
             // j is above i
-            if on[j].bottom && ! on[i].bottom {
-              // bottom above non-bottom
-              misbottom.insert((on[j].id, on[i].id));
+            if on[j].heavy && ! on[i].heavy {
+              // heavy above light
+              misheavy.insert((on[j].id, on[i].id));
             }
           }
         }
-        misbottom
+        misheavy
       };
-      let old = misbottom(&old);
-      let new = misbottom(&new);
+      let old = misheavy(&old);
+      let new = misheavy(&new);
       let newly = new.difference(&old).collect_vec();
       assert!( newly.is_empty(), "{:?}", &newly );
     }
 
-    // no non-bottom non-targets moved
+    // no light non-targets moved
     {
       for n in &new {
-        if ! n.bottom && ! n.target {
+        if ! n.heavy && ! n.target {
           assert!( ! n.updated, "{:?}", n );
         }
       }
     }
 
-    // z coords (at least of bottom) in updates all decrease
+    // z coords (at least of heavy) in updates all decrease
     {
       for n in &new {
-        if n.bottom && n.updated {
+        if n.heavy && n.updated {
           assert!( n.new_z < n.old_z, "{:?}", &n );
         }
       }
     }
 
-    // all targets now below all non-bottom non-targets
+    // all targets now below all light non-targets
     {
-      let mut had_nonbottom_nontarget = None;
+      let mut had_light_nontarget = None;
       for n in &new {
-        if ! n.bottom && ! n.target {
-          had_nonbottom_nontarget = Some(n);
+        if ! n.heavy && ! n.target {
+          had_light_nontarget = Some(n);
         }
         if n.target {
-          assert!( had_nonbottom_nontarget.is_none(),
-                   "{:?} {:?}", &n, had_nonbottom_nontarget);
+          assert!( had_light_nontarget.is_none(),
+                   "{:?} {:?}", &n, had_light_nontarget);
         }
       }
     }
 
-    // all bottom targets now below all non-targets
+    // all heavy targets now below all non-targets
     {
       let mut had_nontarget = None;
       for n in &new {
         if ! n.target {
           had_nontarget = Some(n);
         }
-        if n.bottom && n.target {
+        if n.heavy && n.target {
           assert!( had_nontarget.is_none(),
                    "{:?} {:?}", &n, had_nontarget);
         }
@@ -214,7 +214,7 @@ impl Test {
 }
 
 impl StartPiece {
-  pub fn bottom(&self) -> bool {
+  pub fn heavy(&self) -> bool {
     use PieceMoveable::*;
     match (self.pinned, self.moveable) {
       (true , _  ) => true,
@@ -281,7 +281,7 @@ impl TestsAccumulator {
       println!("    {:5} {}{}  {}",
                 id.to_string(),
                 if targets.contains(id) { "T" } else { "_" },
-                if p.bottom()           { "B" } else { "_" },
+                if p.heavy()            { "H" } else { "_" },
                 p.z.as_str());
     }
 
