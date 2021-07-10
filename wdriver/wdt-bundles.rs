@@ -110,7 +110,6 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
 
     {
       let mut alice = c.su.w(&c.alice)?;
-
       let cardsg = Pos::new(80,100);
 
       alice.action_chain()
@@ -126,6 +125,19 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
         .did("play")?;
 
       alice.synch()?;
+      drop(alice);
+      let mut alice = c.su.w(&c.alice)?;
+
+      alice.action_chain()
+        .move_w(&alice, cardsg)?
+        .click().release()
+        .move_w(&alice, deckg)?
+        .move_w(&alice, cardsg)?
+        .click().release()
+        .perform()
+        .did("select played")?;
+      alice.synch()?;
+
     }
 
   });
