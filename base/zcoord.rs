@@ -107,6 +107,8 @@ pub struct ParseError;
 pub enum RangeImpossible {
   #[error("Z coordinate range has end before start, cannot iterate")]
   Backwards,
+  #[error("Z coordinate range has end equal to start, cannot iterate")]
+  Empty,
 }
 
 #[derive(Error,Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize)]
@@ -382,7 +384,7 @@ impl Mutable {
     let aso = 'ok: loop { for i in 0.. {
       if i >= a.limbs.len() && i >= b.limbs.len() {
 	// Oh actually these numbers are equal!
-	break 'ok ASRD { i: 0, step: ZERO };
+	throw!(RangeImpossible::Empty);
       }
       current.extend_to_limb(i);
 
