@@ -768,9 +768,8 @@ mod test {
   use std::collections::hash_map::DefaultHasher;
   use std::mem;
 
-  fn bf(s: &str) -> ZCoord {
-    ZCoord::from_str(s).unwrap()
-  }
+  fn bf(s: &str) -> ZCoord { ZCoord::from_str(s).unwrap() }
+  fn mk(s: &str) -> super::Mutable { bf(s).clone_mut() }
 
   #[test]
   fn bfparse() {
@@ -828,7 +827,6 @@ mod test {
 
   #[test]
   fn incdec() {
-    fn mk(s: &str) -> super::Mutable { bf(s).clone_mut() }
     use core::cmp::Ordering::{Greater,Less};
     impl Mutable {
       fn tincdec<ASO:AddSubOffset>(mut self, exp: &str, aso: ASO,
@@ -882,6 +880,11 @@ mod test {
     mk("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234")
       .tinc("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234_0000000000_0001000000")
       ;
+  }
+
+  #[test]
+  fn iter() {
+    
   }
 
   #[test]
