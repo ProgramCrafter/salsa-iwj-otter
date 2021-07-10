@@ -134,6 +134,7 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
         .move_w(&alice, deckg)?
         .move_w(&alice, cardsg)?
         .click().release()
+        .send_keys('b')
         .perform()
         .did("select played")?;
       alice.synch()?;
