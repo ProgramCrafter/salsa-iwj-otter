@@ -303,6 +303,7 @@ impl Tests {
     match self.only {
       None => { },
       Some(only) => {
+        println!("^^^^^^^^^^^^^^^^^^^^ success ^^^^^^^^^^^^^^^^^^^^");
         throw!(anyhow!("tests limited to {}, treating as failure", &only))
       }
     }
