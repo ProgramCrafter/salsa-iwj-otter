@@ -884,7 +884,13 @@ mod test {
 
   #[test]
   fn iter() {
-    
+    let mut m = mk("000000000a").iter(Increment);
+    assert_eq!( m.next(), Some(bf("000100000a")) );
+    assert_eq!( m.next(), Some(bf("000200000a")) );
+
+    let mut m = mk("000000000a").iter(Decrement);
+    assert_eq!( m.next(), Some(bf("0000000009_vvvvvvvvvv_vvvuvvvvvv")) );
+    assert_eq!( m.next(), Some(bf("0000000009_vvvvvvvvvv_vvvtvvvvvv")) );
   }
 
   #[test]
