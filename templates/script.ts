@@ -658,15 +658,10 @@ function lower_pieces(targets_todo: LowerTodoList):
 
   let walk = pieces_marker;
   for (;;) { // starting at the bottom of the stack order
-    if (n_targets_todo_light == 0
-	&& q_z_top !== null) {
-      // no light targets left, state Z, we can stop now
-      console.log('LOWER STATE Z FINISHED');
-      break;
-    }
     if (Object.keys(targets_todo).length == 0 &&
        q_z_top !== null) {
-      console.log('LOWER NO TARGETS BUT LIGHT!', n_targets_todo_light);
+      // no targets left, state Z, we can stop now
+      console.log('LOWER STATE Z FINISHED');
       break;
     }
 
