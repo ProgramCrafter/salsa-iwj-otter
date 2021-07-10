@@ -682,7 +682,7 @@ function lower_pieces(targets_todo: LowerTodoList):
 
     let todo = targets_todo[piece];
     if (todo) {
-      console.log('LOWER WALK', piece, 'TODO', todo.bottom);
+      console.log('LOWER WALK', piece, 'TODO', todo.bottom ? "B" : "_");
       delete targets_todo[piece];
       if (!todo.bottom) n_targets_todo_unbottom--;
       (todo.bottom ? tomove_bottom : tomove_unbottom).push(todo);
