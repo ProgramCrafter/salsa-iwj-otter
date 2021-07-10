@@ -643,9 +643,11 @@ function lower_pieces(targets_todo: LowerTodoList):
   let tomove_misstacked  : Entry[] = [];
   let nomove_heavy       : Entry[] = [];
   let tomove_heavy       : Entry[] = [];
-  let bottommost_light   : Entry | null = null;
 
-  let n_targets_todo_light = 0;
+                                                    //  A      B      Z
+  let q_z_top : ZCoord | null = null;               //  null   some   some
+  let n_targets_todo_light = 0;                     //                0
+
   let any_targets = false;
   for (const piece of Object.keys(targets_todo)) {
     any_targets = true;
@@ -657,13 +659,13 @@ function lower_pieces(targets_todo: LowerTodoList):
   let walk = pieces_marker;
   for (;;) { // starting at the bottom of the stack order
     if (n_targets_todo_light == 0
-	&& bottommost_light !== null) {
+	&& q_z_top !== null) {
       // no light targets left, state Z, we can stop now
       console.log('LOWER STATE Z FINISHED');
       break;
     }
     if (Object.keys(targets_todo).length == 0 &&
-       bottommost_light !== null) {
+       q_z_top !== null) {
       console.log('LOWER NO TARGETS BUT LIGHT!', n_targets_todo_light);
       break;
     }
@@ -680,21 +682,26 @@ function lower_pieces(targets_todo: LowerTodoList):
       break;
     }
 
+    let p = pieces[piece]!;
     let todo = targets_todo[piece];
     if (todo) {
-      console.log('LOWER WALK', piece, 'TODO', todo.heavy ? "B" : "_");
+      let xst = '';
+      if (q_z_top === null) {
+	q_z_top = p.z;
+	xst = 'STATE -> B';
+      }
+      console.log('LOWER WALK', piece, 'TODO', todo.heavy ? "B" : "_", xst);
       delete targets_todo[piece];
       if (!todo.heavy) n_targets_todo_light--;
       (todo.heavy ? tomove_heavy : tomove_light).push(todo);
       continue;
     }
 
-    let p = pieces[piece]!;
     let p_heavy = lower_heavy(p);
-    if (bottommost_light === null) { // state A
+    if (q_z_top === null) { // state A
       if (!p_heavy) {
 	console.log('LOWER WALK', piece, 'STATE A -> Z');
-	bottommost_light = { p, piece };
+	q_z_top = p.z;
       } else {
 	console.log('LOWER WALK', piece, 'STATE A');
 	nomove_heavy.push({ p, piece });
@@ -711,15 +718,15 @@ function lower_pieces(targets_todo: LowerTodoList):
     }
   }
 
-  let z_top =
-      bottommost_light ? bottommost_light.p.z :
-      walk.dataset.piece != null ? pieces[walk.dataset.piece!].z :
-      // rather a lack of things we are not adjusting!
-      wasm_bindgen.def_zcoord();
+  if (q_z_top === null) {
+    // Somehow we didn't find the top of Q, so we didn't meet any
+    // targets.  (In the walk loop, we always set q_z_top if todo.)
+    return 'Internal error! Lower with no targets!';
+  }
 
   type PlanEntry = {
     content: Entry[], // bottom to top
-    z_top: ZCoord | null,
+    z_top: ZCoord,
     z_bot: ZCoord | null,
   };
 
@@ -734,13 +741,13 @@ function lower_pieces(targets_todo: LowerTodoList):
   if (nomove_heavy.length == 0) {
     plan.push({
       content: partQ.concat(partP),
-      z_top,
+      z_top: q_z_top,
       z_bot : null,
     });
   } else {
     plan.push({
       content: partQ,
-      z_top,
+      z_top: q_z_top,
       z_bot: nomove_heavy[nomove_heavy.length-1].p.z,
     }, {
       content: partP,
@@ -759,9 +766,8 @@ function lower_pieces(targets_todo: LowerTodoList):
     }
   }
 
-  z_top = null;
   for (const pe of plan) {
-    if (pe.z_top != null) z_top = pe.z_top;
+    let z_top = pe.z_top;
     let z_bot = pe.z_bot;
     if (pe.content.length != 0 && z_bot == null) {
       let first_z = pe.content[0].p.z;
