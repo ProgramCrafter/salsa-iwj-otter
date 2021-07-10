@@ -20,7 +20,7 @@ pub struct GroupDefn {
 
 #[derive(Debug,Deserialize)]
 pub struct GroupDetails {
-  #[cfg(doc)]inherit: String, // handled specially
+  #[cfg(doc)] inherit: String, // handled specially
   pub size: Vec<f64>,  // scaled when put into GroupData
   #[serde(default)] pub orig_size: Vec<f64>,
   #[serde(default)] pub centre: Option<[f64; 2]>,
@@ -67,18 +67,18 @@ pub struct FileData {
 /// `scraper`, specifying where and how to get updated piece SVGs.
 pub struct Scraper {
   /// Determines which scraper is run and the rest of the table
-  /// [`scraper`](LibraryTomlFile::scraper) is interpreted.
+  /// `scraper` is interpreted.
   ///
   /// There are two methods available:
   ///
   ///  * `"none"`: Do not scrape anything.  The SVGs in the Otter
   ///  source tree are hand-edited.  The 2nd field in each
   ///  [`files`](GroupDefn::files) line
-  ///  ([`r_file_spec`](FileData::r_file_spec)) is ignored.
+  ///  ([`src_file_spec`](FileData::src_file_spec)) is ignored.
   ///
   ///  * `"wikimedia"`: Scrape a site that uses Mediawiki the way that
   ///  Wikimedia does.  In this case
-  ///  [`scraper`](LibraryTomlFile::scraper) is a table containing the
+  ///  `scraper` is a table containing the
   ///  fields of [`WikimediaScraper`], not just `method`.
   ///
   ///  * `"cards-oxymoron`": Special for that subdirectory.
