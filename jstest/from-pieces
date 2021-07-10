@@ -20,8 +20,8 @@ my @pieces = map {
   [
    $p->{z},
    $p->{zg},
-   (sprintf "    sp!(\"%s\", %s, %s),%s\n",
-    $id,
+   (sprintf "    sp!(%7s, %s, %s),%s\n",
+    "\"$id\"",
     $p->{pinned} ? 'true' : 'false',
     $p->{moveable} eq 'IfWresting' ? 'No' : $p->{moveable},
     $p->{held} ? " // HELD $p->{held}" : '',

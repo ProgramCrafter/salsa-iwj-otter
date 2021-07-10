@@ -108,8 +108,8 @@ impl Test {
     let new = sorted(&|p: &PieceCollated| p.new_z);
     for (o, n) in izip!(&old, &new).rev() {
       let pr = |p: &PieceCollated| {
-        eprint!("    {} {}{}{} ",
-                p.id,
+        eprint!("    {:5} {}{}{} ",
+                p.id.to_string(),
                 if p.target  { "T" } else { "_" },
                 if p.bottom  { "B" } else { "_" },
                 if p.updated { "U" } else { "_" });
