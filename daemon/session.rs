@@ -126,11 +126,10 @@ fn session_inner(form: Json<SessionForm>,
       gpl.layout = layout;
     }
     let layout = gpl.layout;
-    let pieces: Vec<_> = ig.gs.pieces.iter().collect();
     let nick = gpl.nick.clone();
     let movehist = gpl.movehist.clone();
 
-    for (piece, gpc) in pieces {
+    for (piece, gpc) in ig.gs.pieces.iter() {
       let ipc = if let Some(pto) = ig.ipieces.get(piece) { pto }
       else { continue /* was deleted */ };
 
