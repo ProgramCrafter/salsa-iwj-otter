@@ -245,7 +245,7 @@ impl TestsAccumulator {
                      pieces: Vec<StartPieceSpec>,
                      targets: Vec<T>) where T: TryInto<Vpid> + Copy + Debug {
     let mut zm = ZCoord::default().clone_mut();
-    let pieces = pieces.into_iter().map(
+    let pieces: IndexMap<Vpid,StartPiece> = pieces.into_iter().map(
       |StartPieceSpec { id, pinned, moveable }| {
         let id = id.try_into().unwrap();
         let z = zm.increment().unwrap();
@@ -253,9 +253,18 @@ impl TestsAccumulator {
       }
     ).collect();
 
-    let targets = targets.into_iter().map(
+    let targets: IndexSet<_> = targets.into_iter().map(
       |s| s.try_into().map_err(|_|s).unwrap()
     ).collect();
+
+    eprintln!("-------------------- {} --------------------", name);
+    for (id,p) in pieces.iter() {
+      eprintln!("    {:5} {}{}- {}",
+                id.to_string(),
+                if targets.contains(id) { "T" } else { "_" },
+                if p.bottom()           { "B" } else { "_" },
+                p.z.as_str());
+    }
 
     let test = Test {
       name: name.into(),
@@ -272,6 +281,8 @@ impl TestsAccumulator {
 #[throws(Explode)]
 fn main() {
   let opts = Opts::from_args();
+
+  eprintln!("==================== building ====================");
 
   let mut ta = TestsAccumulator::new(&opts)?;
 
@@ -307,13 +318,16 @@ fn main() {
   
   let tests = ta.finalise()?;
 
+  eprintln!("==================== running ====================");
+
   let mut cmd = Command::new(opts.nodejs);
   cmd.arg(opts.script);
   let status = cmd.status()?;
   assert!(status.success(), "{}", status);
 
+  eprintln!("==================== checking ====================");
+
   for test in tests.tests.values() {
-    println!("checking results for {:?}", &test.name);
     test.check()?;
   }
 }
