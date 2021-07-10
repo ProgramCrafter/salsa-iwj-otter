@@ -277,7 +277,7 @@ impl TestsAccumulator {
     ).collect();
 
     println!("-------------------- {} --------------------", name);
-    for (id,p) in pieces.iter() {
+    for (id,p) in pieces.iter().rev() {
       println!("    {:5} {}{}  {}",
                 id.to_string(),
                 if targets.contains(id) { "T" } else { "_" },
