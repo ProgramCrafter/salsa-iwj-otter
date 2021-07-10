@@ -39,6 +39,7 @@ pub struct StartPiece {
 #[derive(Debug,Clone,Default)]
 pub struct Tests {
   tests: IndexMap<String, Test>,
+  only: Option<String>,
 }
 
 #[derive(Debug,Clone,Default)]
@@ -228,9 +229,13 @@ impl TestsAccumulator {
       .open(&opts.script)?;
     let script = BufWriter::new(script);
 
+    let mut tests: Tests = default();
+    if let Some(only) = env::var_os("OTTER_JST_LOWER_ONLY") {
+      tests.only = Some(only.into_string().unwrap())
+    }
+
     TestsAccumulator {
-      tests: default(),
-      script, tera,
+      tests, script, tera,
     }
   }
 
@@ -244,6 +249,10 @@ impl TestsAccumulator {
   pub fn add_test<T>(&mut self, name: &str,
                      pieces: Vec<StartPieceSpec>,
                      targets: Vec<T>) where T: TryInto<Vpid> + Copy + Debug {
+    if let Some(only) = &self.tests.only {
+      if name != only { return; }
+    }
+
     let mut zm = ZCoord::default().clone_mut();
     let pieces: IndexMap<Vpid,StartPiece> = pieces.into_iter().map(
       |StartPieceSpec { id, pinned, moveable }| {
@@ -275,6 +284,18 @@ impl TestsAccumulator {
 
     let already = self.tests.tests.insert(name.to_owned(), test);
     assert!(already.is_none(), "duplicate test {:?}", &name);
+  }
+}
+
+impl Tests {
+  #[throws(AE)]
+  fn finish(self) {
+    match self.only {
+      None => { },
+      Some(only) => {
+        throw!(anyhow!("tests limited to {}, treating as failure", &only))
+      }
+    }
   }
 }
 
@@ -330,6 +351,8 @@ fn main() {
   for test in tests.tests.values() {
     test.check()?;
   }
+
+  tests.finish()?;
 }
 
 static TEMPLATE: &'static str = r#"
