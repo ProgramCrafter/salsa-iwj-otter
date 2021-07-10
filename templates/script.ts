@@ -615,9 +615,9 @@ function lower_pieces(targets_todo: LowerTodoList):
   //
   // Disregarding heavy targets:
   //
-  // Z     <some stuff not including any unheavy targets>
+  // Z     <some stuff not including any light targets>
   // Z
-  //       topmost unheavy target         *
+  //       topmost light target           *
   // B (
   // B     light non-target
   // B |   light target                   *
