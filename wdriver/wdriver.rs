@@ -199,12 +199,20 @@ impl JsLogfileImp {
   /// current window must be this one, named `name` as we passed to open
   #[throws(AE)]
   pub fn fetch(&mut self, driver: &T4d) {
+    self.fetchx(driver, false)?;
+  }
+
+  /// current window must be this one, named `name` as we passed to open
+  #[throws(AE)]
+  pub fn fetchx(&mut self, driver: &T4d, tolerate_errors: bool) {
     self.counter += 1;
     let head = format!(
  "-------------------- JS {} {} --------------------",
       &self.name, self.counter
     );
     writeln!(&mut self.fh, "{}", &head)?;
+
+    let mut intolerable = vec![];
 
     (||{
       let got = driver.execute_script(r#"
@@ -230,11 +238,21 @@ impl JsLogfileImp {
           .context("parse log entry")?;
 
         writeln!(&mut self.fh, "{:?}", &ent)?;
+
+        if ! tolerate_errors {
+          match ent.0.as_str() {
+            "log" => { },
+            _ => intolerable.push(ent)
+          }
+        }
       }
       Ok::<_,AE>(())
     })()
       .with_context(|| self.name.clone())
       .context("fetch JS log messages")?;
+
+    assert!{ intolerable.is_empty(),
+             "Intolerable JS error(s) {:#?}", intolerable };
 
     info!("{}", head);
   }
