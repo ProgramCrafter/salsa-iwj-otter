@@ -735,7 +735,7 @@ function lower_pieces(targets_todo: LowerTodoList):
 
   if (nomove_heavy.length == 0) {
     plan.push({
-      content: partQ.concat(partP),
+      content: partP.concat(partQ),
       z_top: q_z_top,
       z_bot : null,
     });
