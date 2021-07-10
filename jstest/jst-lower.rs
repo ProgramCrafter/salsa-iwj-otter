@@ -14,7 +14,7 @@ pub struct Opts {
 
 #[derive(Debug,Clone)]
 pub struct StartPieceSpec {
-  id: &'static str,
+  id: Vpid,
   pinned: bool,
   moveable: PieceMoveable,
 }
@@ -22,7 +22,7 @@ pub struct StartPieceSpec {
 #[macro_export]
 macro_rules! sp {
   { $id:expr, $pinned:expr, $moveable:ident } => {
-    StartPieceSpec { id: $id, pinned: $pinned,
+    StartPieceSpec { id: $id.try_into().unwrap(), pinned: $pinned,
                      moveable: PieceMoveable::$moveable }
   };
 }
@@ -241,9 +241,9 @@ impl TestsAccumulator {
   }
     
   #[throws(Explode)]
-  pub fn add_test(&mut self, name: &'static str,
-                  pieces: Vec<StartPieceSpec>,
-                  targets: Vec<&'_ str>) {
+  pub fn add_test<T>(&mut self, name: &'static str,
+                     pieces: Vec<StartPieceSpec>,
+                     targets: Vec<T>) where T: TryInto<Vpid> + Copy + Debug {
     let mut zm = ZCoord::default().clone_mut();
     let pieces = pieces.into_iter().map(
       |StartPieceSpec { id, pinned, moveable }| {
@@ -254,7 +254,7 @@ impl TestsAccumulator {
     ).collect();
 
     let targets = targets.into_iter().map(
-      |s| s.try_into().unwrap()
+      |s| s.try_into().map_err(|_|s).unwrap()
     ).collect();
 
     let test = Test {
