@@ -722,7 +722,7 @@ function lower_pieces(targets_todo: LowerTodoList):
 
   let plan : PlanEntry[] = [];
 
-  let partQ = tomove_unbottom.concat(tomove_misstacked);
+  let partQ = tomove_misstacked.concat(tomove_unbottom);
   let partP = tomove_bottom;
 
   if (nomove_bottom.length == 0) {
