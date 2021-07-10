@@ -115,9 +115,9 @@ pub use otter_base::geometry::{self,Coord,Pos,PosC,Rect,RectC};
 pub use otter_base::geometry::{CoordinateOverflow,Region};
 pub use otter_base::zcoord::{self, ZCoord};
 pub use otter_base::misc as base_misc;
+pub use otter_base::dbgc;
 pub use base_misc::*;
 
-pub use crate::dbgc;
 pub use crate::{deref_to_field, deref_to_field_mut};
 pub use crate::ensure_eq;
 pub use crate::format_by_fmt_hex;

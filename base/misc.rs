@@ -105,3 +105,45 @@ macro_rules! if_let {
 impl<T:Debug> T {
   fn to_debug(&self) -> String { format!("{:?}", self) }
 }
+
+pub fn dbgc_helper(file: &'static str, line: u32,
+                   values: &[(&'static str, &dyn Debug)]) {
+  let buf = (||{
+    let mut buf = String::new();
+    write!(buf, "[{}:{}]", file, line)?;
+    for (s, v) in values.iter() {
+      write!(buf, " {}={:?}", s, v)?;
+    }
+    write!(buf, "\n")?;
+    Ok::<_,fmt::Error>(buf)
+  })();
+  let buf = buf.unwrap_or_else(
+    |e| format!("error formatting for dbgc! {}\n", e));
+  eprint!("{}", buf);
+}
+
+#[macro_export]
+macro_rules! dbgc {
+    // NOTE: We cannot use `concat!` to make a static string as a format argument
+    // of `eprintln!` because `file!` could contain a `{` or
+    // `$val` expression could be a block (`{ .. }`), in which case the `eprintln!`
+    // will be malformed.
+    () => {
+      dbgc_helper(std::file!(), std::line!(), &[])
+    };
+    ($val:expr $(,)?) => {
+        // Use of `match` here is intentional because it affects the lifetimes
+        // of temporaries - https://stackoverflow.com/a/48732525/1063961
+        match $val {
+            tmp => {
+                dbgc_helper(std::file!(), std::line!(),
+                            &[(std::stringify!($val), &tmp)]);
+                tmp
+            }
+        }
+    };
+    ($($val:expr),+ $(,)?) => {
+      dbgc_helper(std::file!(), std::line!(),
+                  &[$((std::stringify!($val), &$val)),+])
+    };
+}
