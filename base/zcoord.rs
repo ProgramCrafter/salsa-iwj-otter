@@ -889,6 +889,16 @@ mod test {
     mk("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234")
       .tinc("vvvvvvvvvv_vvvvvvvvvv_vvvvv01234_0000000000_0001000000")
       ;
+
+    assert_eq!( Mutable::some_range(Some(&mk("0200000000")),
+                                    Some(&mk("0100000000")),
+                                    1).unwrap_err(),
+                LogicError::from(RangeImpossible::Backwards) );
+
+    assert_eq!( Mutable::some_range(Some(&mk("0200000000")),
+                                    Some(&mk("0200000000")),
+                                    1).unwrap_err(),
+                LogicError::from(RangeImpossible::Empty) );
   }
 
   #[test]
