@@ -295,6 +295,36 @@ impl TestsAccumulator {
     let already = self.tests.tests.insert(name.to_owned(), test);
     assert!(already.is_none(), "duplicate test {:?}", &name);
   }
+
+  #[throws(Explode)]
+  pub fn add_exhaustive(&mut self, n: usize) {
+    let ids: Vec<Vpid> = (0..n).map(
+      |i| format!("{}.{}", i, n).try_into().unwrap()
+    ).collect_vec();
+
+    let pieces_configs = ids.iter().cloned().map(|id| {
+      [false,true].iter().cloned().map( move |bottom| {
+        StartPieceSpec {
+          id,
+          pinned: bottom,
+          moveable: PieceMoveable::Yes,
+        }
+      })
+    })
+      .multi_cartesian_product();
+
+    let target_configs = ids.iter().cloned()
+      .powerset();
+
+    for (ti, (pieces, targets)) in itertools::iproduct!(
+      pieces_configs,
+      target_configs
+    ).enumerate() {
+      if targets.is_empty() { continue }
+      let name = format!("exhaustive-{:02x}", ti);
+      self.add_test(&name,pieces, targets)?;
+    }
+  }
 }
 
 impl Tests {
@@ -347,6 +377,8 @@ fn main() {
   ], vec![
     "73.7",
   ])?;
+
+  ta.add_exhaustive(2)?;
   
   let tests = ta.finalise()?;
 
