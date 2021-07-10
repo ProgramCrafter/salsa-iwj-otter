@@ -62,12 +62,15 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
     let game_spec = &c.su.ds.subst("@specs@/vatikan.game.toml")?;
     c.otter(&["reset"],&[&game_spec])?;
 
+    let deckg = Pos::new(150,184);
+    let handg = Pos::new(68, 175);
+
     {
       let mut alice = c.su.w(&c.alice)?;
       alice.synch()?;
 
-      let deckp = alice.posg2posw(Pos::new(150,184))?;
-      let handp = alice.posg2posw(Pos::new(68, 175))?;
+      let deckp = alice.posg2posw(deckg)?;
+      let handp = alice.posg2posw(handg)?;
       alice.action_chain()
         .move_pos(handp)?
         .click()
@@ -104,6 +107,27 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
       bob.get(bob.current_url()?)?;
       bob.synch()?;
     }
+
+    {
+      let mut alice = c.su.w(&c.alice)?;
+
+      let cardsg = Pos::new(80,100);
+
+      alice.action_chain()
+        .move_w(&alice, (handg + Pos::new(   2, -15 ))?)?
+        .click_and_hold()
+        .move_w(&alice, (handg + Pos::new( -20,   5 ))?)?
+        .release()
+        .move_w(&alice, (handg + Pos::new(  -7,  -0 ))?)?
+        .click_and_hold()
+        .move_w(&alice, cardsg)?
+        .release()
+        .perform()
+        .did("play")?;
+
+      alice.synch()?;
+    }
+
   });
 
   debug!("finishing");
