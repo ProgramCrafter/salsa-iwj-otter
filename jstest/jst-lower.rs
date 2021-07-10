@@ -259,7 +259,7 @@ impl TestsAccumulator {
 
     eprintln!("-------------------- {} --------------------", name);
     for (id,p) in pieces.iter() {
-      eprintln!("    {:5} {}{}- {}",
+      eprintln!("    {:5} {}{}  {}",
                 id.to_string(),
                 if targets.contains(id) { "T" } else { "_" },
                 if p.bottom()           { "B" } else { "_" },
