@@ -427,6 +427,9 @@ impl Mutable {
   }
 
   #[throws(RangeBackwards)]
+  /// Iterator producing a half-open range `[self, other>`
+  ///
+  /// Produces precisely `count` items.
   pub fn range_upto(&self, other: &Mutable, count: RangeCount)
                     -> RangeIterator {
     let (current, aso) = Mutable::range_core(self, other, count)?;
@@ -918,6 +921,15 @@ mod test {
     it.nxt("3333333334_0000000010");
     it.nxt("3333333334_0000000020");
     it.nxt("3333333334_0000000030");
+    assert_eq!(it.i.next(), None);
+
+    let x = bf("1000000000").clone_mut();
+    let y = bf("2000000000").clone_mut();
+    let i = x.range_upto(&y, 3).unwrap();
+    let mut it = It { i, last: x.repack().unwrap() };
+    it.nxt("1800000000");
+    it.nxt("1g00000000");
+    it.nxt("1o00000000");
     assert_eq!(it.i.next(), None);
   }
 
