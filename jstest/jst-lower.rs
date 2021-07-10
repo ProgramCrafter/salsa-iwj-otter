@@ -241,7 +241,7 @@ impl TestsAccumulator {
   }
     
   #[throws(Explode)]
-  pub fn add_test<T>(&mut self, name: &'static str,
+  pub fn add_test<T>(&mut self, name: &str,
                      pieces: Vec<StartPieceSpec>,
                      targets: Vec<T>) where T: TryInto<Vpid> + Copy + Debug {
     let mut zm = ZCoord::default().clone_mut();
