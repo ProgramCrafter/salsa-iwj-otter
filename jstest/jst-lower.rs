@@ -299,7 +299,7 @@ impl TestsAccumulator {
   #[throws(Explode)]
   pub fn add_exhaustive(&mut self, n: usize) {
     let ids: Vec<Vpid> = (0..n).map(
-      |i| format!("{}.{}", i+1, n).try_into().unwrap()
+      |i| format!("{}.{}", i+1, 1).try_into().unwrap()
     ).collect_vec();
 
     let pieces_configs = ids.iter().cloned().map(|id| {
