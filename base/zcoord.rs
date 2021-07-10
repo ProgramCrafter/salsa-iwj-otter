@@ -1001,6 +1001,15 @@ mod test {
     it.nxt(None);
     let mut it = mkr(None,Some("fvvq000000"),0).unwrap();
     it.nxt(None);
+
+    let mut it = mkr(Some("g0h8000000"),
+                     Some("g0h8000000_0000004000"), 2) .unwrap();
+    it.nxt(Some("g0h8000000_0000001ala"));
+    it.nxt(Some("g0h8000000_0000002lak"));
+    it.nxt(None);
+    
+    let mut it = mkr(None, Some("g0h8000000"), 0).unwrap();
+    it.nxt(None);    
   }
 
   #[test]
