@@ -451,12 +451,14 @@ pub type BoxedIterator = Box<dyn BoxedIteratorTrait>;
 impl<T> BoxedIteratorTrait for T where T: Iterator<Item = ZCoord> + Debug {}
 
 impl Mutable {
+  /// Iterator producing `<self, ..>`
   pub fn iter<ASO:AddSubOffset>(self, aso: ASO)
                                 -> IteratorCore<ASO, impl MutateReturn + Debug>
   {
     IteratorCore { current: self, aso, mr: MutateFirst }
   }
   #[throws(LogicError)]
+  /// Iterator producing a half-open range, `[a, b)`
   pub fn some_range(a: Option<&Mutable>, b: Option<&Mutable>,
                     count: RangeCount) -> BoxedIterator {
     fn mk<T:'static + Debug + Iterator<Item=ZCoord>>(x: T) -> BoxedIterator
