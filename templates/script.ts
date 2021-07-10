@@ -646,10 +646,13 @@ function lower_pieces(targets_todo: LowerTodoList):
   let bottommost_unbottom : Entry | null = null;
 
   let n_targets_todo_unbottom = 0;
+  let any_targets = false;
   for (const piece of Object.keys(targets_todo)) {
+    any_targets = true;
     let p = targets_todo[piece];
     if (!p.bottom) n_targets_todo_unbottom++;
   }
+  if (!any_targets) return 'Nothing to lower!';
 
   let walk = pieces_marker;
   for (;;) { // starting at the bottom of the stack order
