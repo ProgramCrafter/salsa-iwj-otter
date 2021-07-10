@@ -200,6 +200,14 @@ impl Test {
         }
       }
     }
+
+    // all the z coordinates are still distinct
+    {
+      for (n0,n1) in new.iter().tuple_windows() {
+        assert!( n1.new_z > n0.new_z,
+                 "{:?} {:?}", &n0, &n1 );
+      }
+    }
   }
 }
 
@@ -385,6 +393,7 @@ defs_marker   = fake_dom[{{ pieces | length + 1 }}];
 fake_dom[{{ loop.index0 }}].nextElementSibling = fake_dom[{{ loop.index }}];
 {%- endfor %}
 fake_dom[{{ pieces | length }}].nextElementSibling = fake_dom[{{ pieces | length + 1 }}];
+defs_marker.previousElementSibling = fake_dom[{{ pieces | length }}];
 
 uorecord = {
   targets: [
