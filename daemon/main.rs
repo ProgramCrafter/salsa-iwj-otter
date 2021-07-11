@@ -11,6 +11,7 @@ pub mod imports;
 pub mod api;
 pub mod cmdlistener;
 pub mod session;
+pub mod sse;
 
 pub use rocket::http::Status;
 pub use rocket::http::{ContentType, RawStr};

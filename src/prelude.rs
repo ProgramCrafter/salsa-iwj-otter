@@ -104,6 +104,7 @@ pub use thiserror::Error;
 pub use unicase::UniCase;
 pub use url::Url;
 pub use vecdeque_stableix::Deque as StableIndexVecDeque;
+pub use vecdeque_stableix::Offset as StableIndexOffset;
 pub use void::{unreachable, Void, ResultVoidExt, ResultVoidErrExt};
 pub use crate::imports::zipfile::{self, read::ZipFile, result::ZipError};
 
@@ -162,7 +163,6 @@ pub use crate::shapelib::{LibraryLoadError};
 pub use crate::slotmap_slot_idx::*;
 pub use crate::spec::*;
 pub use crate::spec::piece_specs::{FaceColourSpecs, SimpleCommon};
-pub use crate::sse;
 pub use crate::toml_de;
 pub use crate::timedfd::*;
 pub use crate::termprogress;

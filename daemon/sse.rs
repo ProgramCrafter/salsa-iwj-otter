@@ -5,17 +5,9 @@
 #![allow(clippy::while_let_loop)]
 #![allow(clippy::blocks_in_if_conditions)]
 
-use crate::prelude::*;
-
-use vecdeque_stableix::Offset as StableIndexOffset;
-use std::ops::Neg;
+use otter::prelude::*;
 
 // ---------- basic definitions ----------
-
-#[derive(Copy,Clone,Debug,Eq,PartialEq,Ord,PartialOrd)]
-#[derive(Serialize,Deserialize)]
-#[serde(transparent)]
-pub struct UpdateId(i64);
 
 const UPDATE_READER_SIZE: usize = 1024*32;
 const UPDATE_MAX_FRAMING_SIZE: usize = 200;
@@ -222,36 +214,6 @@ impl Read for UpdateReader {
       write!(buf,": keepalive\n\n")?; */
     }
   }
-}
-
-// ---------- support implementation ----------
-
-impl Neg for UpdateId {
-  type Output = Self;
-  fn neg(self) -> Self { UpdateId(-self.0) }
-}
-
-impl Display for UpdateId {
-  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-    Display::fmt(&self.0, f)
-  }
-}
-
-impl Bounded for UpdateId {
-  fn max_value() -> Self { UpdateId(Bounded::max_value()) }
-  fn min_value() -> Self { UpdateId(Bounded::min_value()) }
-}
-
-impl StableIndexOffset for UpdateId {
-  fn try_increment(&mut self) -> Option<()> { self.0.try_increment() }
-  fn try_decrement(&mut self) -> Option<()> { self.0.try_decrement() }
-  fn index_input(&self, input: Self) -> Option<usize> {
-    self.0.index_input(input.0)
-  }
-  fn index_output(&self, inner: usize) -> Option<Self> {
-    self.0.index_output(inner).map(UpdateId)
-  }
-  fn zero() -> Self { UpdateId(0) }
 }
 
 // ---------- entrypoint for dribbling the http response ----------

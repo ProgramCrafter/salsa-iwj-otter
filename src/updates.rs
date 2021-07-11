@@ -6,6 +6,8 @@
 
 use crate::prelude::*;
 
+use std::ops::Neg;
+
 #[path="movehist.rs"] pub mod movehist;
 
 #[allow(non_camel_case_types)] type TUE_P<'u> = TransmitUpdateEntry_Piece<'u>;
@@ -13,6 +15,11 @@ use crate::prelude::*;
 #[allow(non_camel_case_types)] type TUE_I<'u> = TransmitUpdateEntry_Image<'u>;
 
 // ---------- newtypes, type aliases, basic definitions ----------
+
+#[derive(Copy,Clone,Debug,Eq,PartialEq,Ord,PartialOrd)]
+#[derive(Serialize,Deserialize)]
+#[serde(transparent)]
+pub struct UpdateId(i64);
 
 pub type RawClientSequence = u64;
 
@@ -37,7 +44,7 @@ pub struct ExecuteGameChangeUpdates {
 // ---------- prepared updates, queued in memory ----------
 
 pub type PlayerUpdatesLog =
-  StableIndexVecDeque<Arc<PreparedUpdate>,sse::UpdateId>;
+  StableIndexVecDeque<Arc<PreparedUpdate>,UpdateId>;
 
 #[derive(Debug)]
 pub struct PlayerUpdates {
@@ -335,6 +342,36 @@ pub fn log_did_to_piece(ioccults: &IOccults, goccults: &GameOccults,
                         gpc: &GPiece, ipc: &IPiece, did: &str)
                         -> Vec<LogEntry> {
   log_did_to_piece_whoby(ioccults,goccults,by_gpl,gpc,ipc,did)?.0
+}
+
+// ---------- support implementation ----------
+
+impl Neg for UpdateId {
+  type Output = Self;
+  fn neg(self) -> Self { UpdateId(-self.0) }
+}
+
+impl Display for UpdateId {
+  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    Display::fmt(&self.0, f)
+  }
+}
+
+impl Bounded for UpdateId {
+  fn max_value() -> Self { UpdateId(Bounded::max_value()) }
+  fn min_value() -> Self { UpdateId(Bounded::min_value()) }
+}
+
+impl StableIndexOffset for UpdateId {
+  fn try_increment(&mut self) -> Option<()> { self.0.try_increment() }
+  fn try_decrement(&mut self) -> Option<()> { self.0.try_decrement() }
+  fn index_input(&self, input: Self) -> Option<usize> {
+    self.0.index_input(input.0)
+  }
+  fn index_output(&self, inner: usize) -> Option<Self> {
+    self.0.index_output(inner).map(UpdateId)
+  }
+  fn zero() -> Self { UpdateId(0) }
 }
 
 // ---------- prepared updates, queued in memory ----------
