@@ -210,6 +210,8 @@ impl Read for UpdateReader {
                    data: online {} {} G{}\n\n",
              self.player, self.client, ig.gs.gen)?;
       self.keepalives += Wrapping(1);
+      self.need_flush = true;
+      return Ok(buf.generated());
 /*
       write!(buf,": keepalive\n\n")?; */
     }
