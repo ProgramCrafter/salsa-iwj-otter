@@ -184,37 +184,33 @@ impl Read for UpdateReader {
 
     let cv = pu.get_cv();
 
-    loop {
-      let generated = buf.generated();
-      if generated > 0 {
-        self.need_flush = true;
-        return Ok(generated)
-      }
-
-      if self.need_flush {
-        self.need_flush = false;
-        return Err(io::Error::new(io::ErrorKind::WouldBlock,
-                                  FlushWouldBlockError{}));
-      }
-
-      if (||{
-        (*ig).gs.players.get(self.player)?;
-        let client = ig.clients.get_mut(self.client)?;
-        client.lastseen = Instant::now();
-        Some(())
-      })() == None { return Ok(0) }
-
-      cv.wait_for(&mut ig.c, UPDATE_KEEPALIVE);
-
-      write!(buf, "event: commsworking\n\
-                   data: online {} {} G{}\n\n",
-             self.player, self.client, ig.gs.gen)?;
-      self.keepalives += Wrapping(1);
+    let generated = buf.generated();
+    if generated > 0 {
       self.need_flush = true;
-      return Ok(buf.generated());
-/*
-      write!(buf,": keepalive\n\n")?; */
+      return Ok(generated)
     }
+
+    if self.need_flush {
+      self.need_flush = false;
+      return Err(io::Error::new(io::ErrorKind::WouldBlock,
+                                FlushWouldBlockError{}));
+    }
+
+    if (||{
+      (*ig).gs.players.get(self.player)?;
+      let client = ig.clients.get_mut(self.client)?;
+      client.lastseen = Instant::now();
+      Some(())
+    })() == None { return Ok(0) }
+
+    cv.wait_for(&mut ig.c, UPDATE_KEEPALIVE);
+
+    write!(buf, "event: commsworking\n\
+                 data: online {} {} G{}\n\n",
+           self.player, self.client, ig.gs.gen)?;
+    self.keepalives += Wrapping(1);
+    self.need_flush = true;
+    return Ok(buf.generated());
   }
 }
 
