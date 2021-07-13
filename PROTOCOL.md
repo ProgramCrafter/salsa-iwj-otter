@@ -300,3 +300,6 @@ _impossible_ rather than _bogus_.  So we err on the side of treating
 client mistakes as due to synchronisation and incomplete modelling:
 ie, we only treat a client update as _bogus_ if it is patently
 obviously wrong (for example, it is syntactically invalid).
+
+Fatal errors which the client could not have predicted, but which are
+not recoverable, can also be treated as bogus.
