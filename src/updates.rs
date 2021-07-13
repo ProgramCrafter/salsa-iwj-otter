@@ -263,6 +263,7 @@ type TransmitUpdateLogEntry<'u> = (&'u Timezone, &'u CommittedLogEntry);
 #[allow(non_camel_case_types)]
 #[derive(Debug,Serialize)]
 struct ErrorTransmitUpdateEntry_Piece<'u> {
+  cseq: Option<ClientSequence>,
   #[serde(flatten)]
   tue: TransmitUpdateEntry_Piece<'u>,
 }
@@ -982,7 +983,8 @@ impl PreparedUpdate {
             ESVU::TokenRevoked  => TUE::Error(ESVU::TokenRevoked),
             ESVU::PieceOpError { error, partially,
                                  ref error_msg, ref state } => {
-              let c = state.by_client.as_ref().map(|(_,c,_)| *c);
+              let c    = state.by_client.as_ref().map(|(_,c,_   )| *c);
+              let cseq = state.by_client.as_ref().map(|(_,_,cseq)| *cseq);
               if c == None || c == Some(dest) {
                 let tue = match pue_piece_to_tue_p(state, player) {
                   Some(tue) => tue,
@@ -993,6 +995,7 @@ impl PreparedUpdate {
                     error, error_msg, partially,
                     state: { ETUE_P {
                       tue,
+                      cseq,
                     } },
                   }
                 )

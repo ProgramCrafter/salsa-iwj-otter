@@ -1677,6 +1677,9 @@ type TransmitUpdateEntry_Piece = {
   piece: PieceId,
   op: Object,
 };
+type ErrorTransmitUpdateEntry_Piece = TransmitUpdateEntry_Piece & {
+  cseq: ClientSeq | null,
+};
 
 function handle_piece_update(j: TransmitUpdateEntry_Piece) {
   console.log('PIECE UPDATE ',j)
@@ -1996,12 +1999,14 @@ messages.Error = <MessageHandler>function
 
 type PieceOpError = {
   error: string,
-  state: TransmitUpdateEntry_Piece,
+  error_msg: string,
+  state: ErrorTransmitUpdateEntry_Piece,
 };
 
 update_error_handlers.PieceOpError = <MessageHandler>function
 (m: PieceOpError) {
   let piece = m.state.piece;
+  let cseq = m.state.cseq;
   let p = pieces[piece];
   console.log('ERROR UPDATE PIECE ', m, p);
   if (p == null) return;
