@@ -24,8 +24,6 @@ pub enum Fatal { // Includes _bogus_ client updates, see PROTOCOL.md
   BadOperation, // xxx should be _inapplicable_
   #[error("overlapping occultation")]
   OverlappingOccultation, // xxx should be _inapplicable_
-  #[error("piece is occulting, or occulted")]
-  Occultation, // xxx should be _inapplicable_
 }
 
 #[derive(Error,Debug)]

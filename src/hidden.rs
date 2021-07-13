@@ -455,9 +455,9 @@ impl GPiece {
     self.occult.active.is_some()
   }
 
-  #[throws(OE)]
+  #[throws(Ia)]
   pub fn forbid_involved_in_occultation(&self) {
-    if self.involved_in_occultation() { throw!(OE::Occultation) }
+    if self.involved_in_occultation() { throw!(Ia::Occultation) }
   }
 }
 

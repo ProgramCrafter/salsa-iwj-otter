@@ -77,7 +77,7 @@ impl From<&FatalErrorResponse> for rocket::http::Status {
       NoClient | NoPlayer(_) | GameBeingDestroyed(_)
         => Status::NotFound,
       OE::PieceHeld | OE::PieceImmoveable |
-      OE::OverlappingOccultation | OE::Occultation |
+      OE::OverlappingOccultation |
       BadOperation | BadJSON(_)
         => Status::BadRequest,
     }
@@ -448,7 +448,7 @@ api_route!{
     let ApiPieceOpArgs { gs,piece, .. } = a;
     let gpc = gs.pieces.byid_mut(piece).unwrap();
     if gpc.occult.is_active() {
-      if self.z >= gpc.zlevel.z { throw!(OE::Occultation) }
+      if self.z >= gpc.zlevel.z { throw!(Ia::Occultation) }
     }
     gpc.zlevel = ZLevel { z: self.z.clone(), zg: gs.gen };
     let update = PieceUpdateOp::SetZLevel(());
