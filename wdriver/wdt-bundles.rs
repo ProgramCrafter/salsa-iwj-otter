@@ -158,6 +158,11 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
   });
 
   test!(c, "impossible", {
+    // We want to test that the client can cope with an unpredictable
+    // _impossible_ error, reported via an update.  A way to generate
+    // such a thing is to try to make overlapping occultations, which
+    // the client does not try to prevent.
+
     c.vatikan_with_deck()?;
 
     {
@@ -177,6 +182,14 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
         .send_keys("W")
         .perform()
         .did("move to overlap")?;
+      alice.synch()?;
+
+      alice.action_chain()
+        .move_pos(newpos)?
+        .click().release()
+        .send_keys("C")
+        .perform()
+        .did("try to claim when overlapping")?;
       alice.synch()?;
     }
 
