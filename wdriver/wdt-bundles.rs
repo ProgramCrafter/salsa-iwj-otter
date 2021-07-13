@@ -18,6 +18,9 @@ impl Ctx {
   }
 }
 
+const VATIKAN_DECK: Pos = Pos::new(150,184);
+const VATIKAN_HAND: Pos = Pos::new(68, 175);
+
 #[throws(Explode)]
 fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
   let mut c = Ctx { su, alice, bob };
@@ -62,8 +65,8 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
     let game_spec = &c.su.ds.subst("@specs@/vatikan.game.toml")?;
     c.otter(&["reset"],&[&game_spec])?;
 
-    let deckg = Pos::new(150,184);
-    let handg = Pos::new(68, 175);
+    let deckg = VATIKAN_DECK;
+    let handg = VATIKAN_HAND;
 
     {
       let mut alice = c.su.w(&c.alice)?;
