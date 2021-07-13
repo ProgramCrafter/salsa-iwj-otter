@@ -80,7 +80,7 @@ impl From<&OnlineErrorResponse> for rocket::http::Status {
       OE::OverlappingOccultation | OE::Occultation |
       OE::BadPieceStateForOperation
         => Status::Conflict,
-      InvalidZCoord | BadOperation | BadJSON(_)
+      BadOperation | BadJSON(_)
         => Status::BadRequest,
     }
   }
