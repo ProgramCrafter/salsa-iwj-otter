@@ -222,18 +222,18 @@ Update messages from the client to the server also contain a client
 sequence number (monotonically but not strictly increasing).  When the
 client sends an update, it makes a note of the sequence number.  This
 is the "outstanding Client updates sequence number note", or the
-"oustanding note".
+**oustanding note**.
 
 When the server processes a message from the client and Records it, it
 puts the client sequence number in the update stream (as a non-update
 message).  (This is skipped if it's the same as the last client
 sequence number for that client.)
 
-If the echoed sequence number is equal to the client's oustanding
-note, the client knows the server is up to date, and deletes the note.
+If the echoed sequence number is equal to the client's _oustanding
+note_, the client knows the server is up to date, and deletes the note.
 
-If the client sees a Server update message, and the client has a note,
-it knows that there was a conflict.
+If the client sees a Server update message, and the client has a
+_note_, it knows that there was a conflict.
 
 
 LEVEL (Z ORDER)
