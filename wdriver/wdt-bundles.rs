@@ -16,6 +16,29 @@ impl Ctx {
   fn otter(&mut self, verb: &[&str], args: &[&str]) {
     self.su.w(&self.alice)?.otter(verb, args)?
   }
+
+  #[throws(Explode)]
+  fn vatikan_with_deck(&mut self) {
+    let game_spec = &self.su.ds.subst("@specs@/vatikan.game.toml")?;
+    self.otter(&["reset"],&[&game_spec])?;
+
+    {
+      let mut alice = self.su.w(&self.alice)?;
+
+      alice.action_chain()
+        .key_down('0')
+        .key_up('0')
+        .move_w(&alice, VATIKAN_DECK)?
+        .click()
+        .release()
+        .key_down(Keys::Shift)
+        .send_keys('A')
+        .key_up(Keys::Shift)
+        .perform()
+        .did("activate")?;
+      alice.synch()?;
+    }
+  }
 }
 
 const VATIKAN_DECK: Pos = Pos::new(150,184);
@@ -62,8 +85,7 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
   });
 
   test!(c, "hidden", {
-    let game_spec = &c.su.ds.subst("@specs@/vatikan.game.toml")?;
-    c.otter(&["reset"],&[&game_spec])?;
+    c.vatikan_with_deck()?;
 
     let deckg = VATIKAN_DECK;
     let handg = VATIKAN_HAND;
@@ -81,16 +103,8 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
         .key_down(Keys::Shift)
         .send_keys('C')
         .key_up(Keys::Shift)
-        .key_down('0')
-        .key_up('0')
-        .move_pos(deckp)?
-        .click()
-        .release()
-        .key_down(Keys::Shift)
-        .send_keys('A')
-        .key_up(Keys::Shift)
         .perform()
-        .did("activate")?;
+        .did("claim")?;
       alice.synch()?;
 
       alice.action_chain()
