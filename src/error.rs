@@ -18,8 +18,6 @@ pub enum Fatal { // Includes _bogus_ client updates, see PROTOCOL.md
   BadJSON(serde_json::Error),
   #[error("referenced piece is gone (maybe race)")]
   PieceHeld, // xxx should be _inapplicable_
-  #[error("improper UI operation")]
-  PieceImmoveable, // xxx should be _inapplicable_
 }
 
 #[derive(Error,Debug)]
