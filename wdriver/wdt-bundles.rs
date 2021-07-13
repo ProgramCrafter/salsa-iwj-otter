@@ -182,7 +182,7 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
         .send_keys("W")
         .perform()
         .did("move to overlap")?;
-      alice.synch()?;
+      let gen_before = alice.synch()?;
 
       alice.action_chain()
         .move_pos(newpos)?
@@ -191,6 +191,12 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
         .perform()
         .did("try to claim when overlapping")?;
       alice.synch()?;
+
+      let log = alice.retrieve_log(gen_before)?;
+      dbg!(&log);
+      assert_eq!( 1, log.iter().filter(|s| s.contains(
+        "Problem manipulating piece: overlapping occultation(s)"
+      )).count());
     }
 
   });
