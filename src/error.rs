@@ -20,8 +20,6 @@ pub enum Fatal { // Includes _bogus_ client updates, see PROTOCOL.md
   PieceHeld, // xxx should be _inapplicable_
   #[error("improper UI operation")]
   PieceImmoveable, // xxx should be _inapplicable_
-  #[error("improper UI operation")]
-  BadOperation, // xxx should be _inapplicable_
 }
 
 #[derive(Error,Debug)]
@@ -180,6 +178,7 @@ pub enum Inapplicable {
   #[error("occulter already rotated")]      OcculterAlreadyRotated,
   #[error("overfull, cannot organise")]     OrganisedPlacementOverfull,
   #[error("overlapping occultation(s)")]    OverlappingOccultation,
+  #[error("UI operation not recognised")]   BadUiOperation,
   #[error("UI operation not valid in the curret piece state")]
                                             BadPieceStateForOperation,
 }

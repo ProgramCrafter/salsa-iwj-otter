@@ -77,7 +77,7 @@ impl From<&FatalErrorResponse> for rocket::http::Status {
       NoClient | NoPlayer(_) | GameBeingDestroyed(_)
         => Status::NotFound,
       OE::PieceHeld | OE::PieceImmoveable |
-      BadOperation | BadJSON(_)
+      BadJSON(_)
         => Status::BadRequest,
     }
   }

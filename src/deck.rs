@@ -186,7 +186,7 @@ impl PieceTrait for Deck {
       "activate"   => (Enabled,  hformat!("enabled {}",         CORE_DESC)),
       "counting"   => (Counting, hformat!("set {} to counting", CORE_DESC)),
       "deactivate" => (Disabled, hformat!("disabled {}",        CORE_DESC)),
-      _ => throw!(OE::BadOperation),
+      _ => throw!(Ia::BadUiOperation),
     };
   
     let new_view = match new_state {

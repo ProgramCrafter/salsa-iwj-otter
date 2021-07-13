@@ -316,7 +316,7 @@ impl PieceTrait for Hand {
         throw!(OE::PieceHeld);
       }
       _ => {
-        throw!(OE::BadOperation);
+        throw!(Ia::BadUiOperation);
       }
     };
 

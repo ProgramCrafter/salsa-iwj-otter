@@ -185,7 +185,7 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
   fn ui_operation(&self, _: ShowUnocculted, _a: ApiPieceOpArgs<'_>,
                   _opname: &str, _wrc: WhatResponseToClientOp)
                   -> Result<UpdateFromOpComplex, ApiPieceOpError> {
-    throw!(OE::BadOperation)
+    throw!(Ia::BadUiOperation)
   }
 
   // #[throws] doesn't work here - fehler #todo
