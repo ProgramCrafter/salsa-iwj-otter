@@ -31,7 +31,7 @@ pub use crate::api::InstanceAccess;
 pub use crate::api::{FatalErrorResponse};
 pub use crate::cmdlistener::*;
 
-pub type OER = FatalErrorResponse; // xxx rename this alias
+pub type FER = FatalErrorResponse;
 
 use rocket::fairing;
 use rocket::response::Content;
@@ -100,12 +100,12 @@ struct LoadingRenderContext<'r> {
   movehist_len_max: usize,
 }
 #[get("/")]
-#[throws(OER)]
+#[throws(FER)]
 fn loading_p(ia: PlayerQueryString) -> Template {
   loading(None, ia)?
 }
 #[get("/<layout>")]
-#[throws(OER)]
+#[throws(FER)]
 fn loading_l(layout: Parse<AbbrevPresentationLayout>, ia: PlayerQueryString)
              -> Template {
   loading(Some((layout.0).0), ia)?
@@ -184,7 +184,7 @@ impl<'r> FromFormValue<'r> for BundleToken {
 }
 
 #[get("/_/updates?<ctoken>&<gen>")]
-#[throws(OER)]
+#[throws(FER)]
 fn updates<'r>(ctoken: InstanceAccess<ClientId>, gen: u64,
                cors: rocket_cors::Guard<'r>)
                -> impl response::Responder<'r> {

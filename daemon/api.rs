@@ -17,8 +17,8 @@ pub struct InstanceAccess<'i, Id> {
 impl<'r, Id> FromFormValue<'r> for InstanceAccess<'r, Id>
   where Id: AccessId, Fatal: From<Id::Error>
 {
-  type Error = OER;
-  #[throws(OER)]
+  type Error = FER;
+  #[throws(FER)]
   fn from_form_value(param: &'r RawStr) -> Self {
     let token = RawTokenVal::from_str(param.as_str());
     let i = InstanceAccessDetails::from_token(token)?;
@@ -225,7 +225,7 @@ macro_rules! api_route_core {
     $formdef
 
     #[post($path, format="json", data="<form>")]
-    #[throws(OER)]
+    #[throws(FER)]
     fn $fn(form: Json<ApiPiece<$form>>)
            -> impl response::Responder<'static> {
       api_piece_op(form)?

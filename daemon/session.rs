@@ -69,7 +69,7 @@ struct SessionForm {
   ptoken: RawToken,
 }
 #[post("/_/session/<layout>", format="json", data="<form>")]
-#[throws(OER)]
+#[throws(FER)]
 fn session(form: Json<SessionForm>,
            layout: Option<Parse<PresentationLayout>>)
            -> Template {
