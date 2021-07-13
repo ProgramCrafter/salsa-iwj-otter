@@ -168,7 +168,7 @@ pub enum Inapplicable {
   #[error("position off table")]            PosOffTable,
   #[error("piece gone")]                    PieceGone,
   #[error("piece held by another player")]  PieceHeld,
-  #[error("piece not held by your")]        PieceNotHeld,
+  #[error("piece not held by you")]         PieceNotHeld,
   #[error("prevented by occultation")]      Occultation,
   #[error("piece may not be rotated")]      PieceUnrotateable,
   #[error("piece may not be moved")]        PieceImmoveable,
