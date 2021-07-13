@@ -141,7 +141,7 @@ impl From<InternalError> for ApiPieceOpError {
   }
 }
 
-#[derive(Error,Debug,Serialize,Clone)]
+#[derive(Debug,Serialize,Clone)]
 pub enum ErrorSignaledViaUpdate<POEPU: Debug> {
   InternalError,
   PlayerRemoved, // appears only in streams for applicable player
@@ -152,7 +152,7 @@ pub enum ErrorSignaledViaUpdate<POEPU: Debug> {
     state: POEPU,
   },
 }
-display_as_debug!{ErrorSignaledViaUpdate<T>, <T:Debug>}
+//display_as_debug!{ErrorSignaledViaUpdate<T>, <T:Debug>}
 
 #[derive(Error,Debug,Serialize,Copy,Clone,Eq,PartialEq)]
 pub enum PieceOpErrorPartiallyProcessed {
