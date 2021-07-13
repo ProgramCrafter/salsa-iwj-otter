@@ -881,7 +881,7 @@ impl OccultationViewDef for OwnerOccultationView {
   } }
 }
 
-#[throws(Fatal)]
+#[throws(APOE)]
 pub fn create_occultation(
   gen: &mut UniqueGenGen,
   max_z: &mut ZLevel,
@@ -925,7 +925,7 @@ pub fn create_occultation(
   }
 
   for occ in goccults.occults.values() {
-    if occ.region.overlaps(&region) { throw!(OE::OverlappingOccultation) }
+    if occ.region.overlaps(&region) { throw!(Ia::OverlappingOccultation) }
   }
 
   let mut recalc = vec![];
