@@ -253,3 +253,50 @@ update to the generation will turn up, and with a higher value.
 The Z generation is used to disambiguate the Z order for pieces with
 identical Z level.  Higher values are closer to the user (ie, occlude
 lower values).
+
+
+ERRORS
+======
+
+Most of the time, the client will be able to predict what the server's
+response to an update will be.  So usually, a `Client` `Upbound`
+update will become `Recorded`, unless there was a conflict.
+
+However, sometimes this is not the case: a piece can have behaviours
+which are too complicated to model in the client.  In such cases, the
+server will be processing a `Client` `Upbound` update, and find that
+it cannot be applied and made `Recorded`.  (Call that an
+**impossible** update.)
+
+When the server receives an update it deems _impossible_, it will
+generate a `Server` update and process that before the incoming
+`Client` update.  The `Server` update will inform the client of the
+problem, and, by its existence cause the `Client` _impossible_ update
+to become `Discarded`.  When the client receives the `Server` update,
+it can describe the problem to its user, and also note that the
+`Client` update has become `Superseded`.
+
+Additionally, of course, the client might have bugs (or be malicious).
+So there can also be `Client` updates which the client ought to know
+are **bogus**.  This includes syntactically malformed updates, but it
+could also include updates with semantic errors.
+
+_Bogus_ updates might not fit into the update synchronisation
+protocool.  Since they arrive by HTTP, the server can reject them with
+an HTTP error code.  A non-malicious client can deal with that by
+reporting the problem immediately to its user (although
+synchronisation will be lost).
+
+In theory the server might be able to predict precisely what the
+client can know, and precisely distinguish between `Client` updates
+which are unprocessable because of something only known by the server,
+and ones which are unprocessable because of misbehaviour (eg, bugs) at
+the client.  However, getting this right is very fiddly and complex.
+
+In the absence of buggy or malicious clients, there will be no _bogus_
+updates.  And since even _impossible_ updates are rejected by the
+server, there is no harm to anyone else of treating an update as
+_impossible_ rather than _bogus_.  So we err on the side of treating
+client mistakes as due to synchronisation and incomplete modelling:
+ie, we only treat a client update as _bogus_ if it is patently
+obviously wrong (for example, it is syntactically invalid).
