@@ -238,8 +238,9 @@ it knows that there was a conflict.
 LEVEL (Z ORDER)
 ===============
 
-Each piece has a Z level which is a finite f64, set by the client
-which manipulates the piece, according to the protocol above.
+Each piece has a Z level (an arbitrary-precision value in <0,1>), set
+by the client which manipulates the piece, according to the protocol
+above.
 
 Each piece *also* has a Z level generation.  This is set by the
 server.  The server guarantees to set it to the server generation, and
