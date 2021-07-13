@@ -111,7 +111,7 @@ fn loading_l(layout: Parse<AbbrevPresentationLayout>, ia: PlayerQueryString)
   loading(Some((layout.0).0), ia)?
 }
 
-#[throws(OE)]
+#[throws(Fatal)]
 fn loading(layout: Option<PresentationLayout>, ia: PlayerQueryString)
            -> Template
 {

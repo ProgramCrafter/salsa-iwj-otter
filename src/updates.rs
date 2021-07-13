@@ -284,7 +284,7 @@ struct FormattedLogEntry<'u> {
 
 // ---------- helpful utilities ----------
 
-#[throws(OE)]
+#[throws(Fatal)]
 pub fn log_did_to_piece_whoby(ioccults: &IOccults, goccults: &GameOccults,
                               by_gpl: &GPlayer,
                               gpc: &GPiece, ipc: &IPiece, did: &str)
@@ -311,7 +311,7 @@ pub fn log_did_to_piece_whoby(ioccults: &IOccults, goccults: &GameOccults,
   (log, Some(who_by))
 }
 
-#[throws(OE)]
+#[throws(Fatal)]
 pub fn log_did_to_piece(ioccults: &IOccults, goccults: &GameOccults,
                         by_gpl: &GPlayer,
                         gpc: &GPiece, ipc: &IPiece, did: &str)
@@ -615,7 +615,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
                             logents: Vec<LogEntry>,
                             partially: PieceOpErrorPartiallyProcessed,
                             client: ClientId, cseq: ClientSequence)
-                            -> Result<(),OE> {
+                            -> Result<(),Fatal> {
     let by_client = (WRC::Unpredictable, client, cseq);
     let mut buf = PrepareUpdatesBuffer::new(ig, None);
     let ops = PUOs::Simple(PieceUpdateOp::Modify(()));

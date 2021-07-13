@@ -15,7 +15,7 @@ pub struct InstanceAccess<'i, Id> {
 }
 
 impl<'r, Id> FromFormValue<'r> for InstanceAccess<'r, Id>
-  where Id: AccessId, OE: From<Id::Error>
+  where Id: AccessId, Fatal: From<Id::Error>
 {
   type Error = OER;
   #[throws(OER)]
@@ -93,7 +93,7 @@ impl<'r> Responder<'r> for FatalErrorResponse {
   }
 }
 
-#[throws(OE)]
+#[throws(Fatal)]
 fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
                    -> impl response::Responder<'static> {
 //  thread::sleep(Duration::from_millis(2000));
@@ -194,7 +194,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
     prepub.finish();
   }
 
-      Ok::<(),OE>(())
+      Ok::<(),Fatal>(())
     })();
 
     let g = &mut *ig;

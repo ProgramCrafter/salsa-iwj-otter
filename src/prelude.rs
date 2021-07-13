@@ -196,7 +196,6 @@ pub type PUM = ProgressUpdateMode;
 pub type APOE = ApiPieceOpError;
 pub type ESVU<POEPU> = ErrorSignaledViaUpdate<POEPU>;
 pub type IE = InternalError;
-pub type OE = Fatal; // xxx get rid of this alyas when we've cleaned up Fatal
 pub type Ia = Inapplicable;
 pub type POEPP = PieceOpErrorPartiallyProcessed;
 pub type SvgE = SVGProcessingError;

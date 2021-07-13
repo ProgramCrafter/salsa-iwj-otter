@@ -598,9 +598,9 @@ impl From<&LinksTable> for Html {
 // ---------- Player and token functionality ----------
 
 impl<Id> InstanceAccessDetails<Id>
-  where Id: AccessId, OE: From<Id::Error>
+  where Id: AccessId, Fatal: From<Id::Error>
 {
-  #[throws(OE)]
+  #[throws(Fatal)]
   pub fn from_token(token: &RawTokenVal) -> InstanceAccessDetails<Id> {
     let g = Id::global_tokens(PRIVATE_Y).read();
     let i = g.get(token).ok_or(Id::ERROR)?;
@@ -1350,7 +1350,7 @@ pub fn lookup_token<Id:AccessId>(s: &RawTokenVal)
     .ok_or(Id::ERROR)
 }
 
-#[throws(OE)]
+#[throws(Fatal)]
 pub fn record_token<Id:AccessId> (
   ig: &mut InstanceGuard,
   iad: InstanceAccessDetails<Id>

@@ -219,7 +219,7 @@ impl StableIndexOffset for UpdateId {
 
 // ---------- entrypoint for dribbling the http response ----------
 
-#[throws(OE)]
+#[throws(Fatal)]
 pub fn content(iad: InstanceAccessDetails<ClientId>, gen: Generation)
   -> impl Read {
   let client = iad.ident;
