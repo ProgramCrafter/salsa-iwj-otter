@@ -210,6 +210,7 @@ If S is `Recorded` `Superseded`, at some point it was `Displayed`.  D is now
 when it was `Displayed` it became `Upbound`, tagged with a generation of
 at least S's; i.e. D's generation >= S's.  _|_
 
+
 SERVER ACKS
 ===========
 
