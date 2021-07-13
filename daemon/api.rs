@@ -285,7 +285,7 @@ api_route!{
         "grasped"
       )?;
 
-      if gpc.held.is_some() { throw!(Fatal::PieceHeld) }
+      if gpc.held.is_some() { throw!(Ia::PieceHeld) }
       gpc.held = Some(player);
     
       let update = PieceUpdateOp::ModifyQuiet(());
@@ -399,7 +399,7 @@ api_route!{
     )?;
     let who_by = who_by.ok_or(Ia::PieceGone)?;
 
-    if gpc.held != Some(player) { throw!(Fatal::PieceHeld) }
+    if gpc.held != Some(player) { throw!(Ia::PieceNotHeld) }
     gpc.held = None;
 
     let wrc = if let Some(zlevel) = new_z {
