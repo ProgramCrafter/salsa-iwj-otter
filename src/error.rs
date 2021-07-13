@@ -5,7 +5,7 @@
 use crate::prelude::*;
 
 #[derive(Error,Debug)]
-pub enum OnlineError {
+pub enum Fatal { // Includes _bogus_ client updates, see PROTOCOL.md
   #[error("Game in process of being destroyed")]
   GameBeingDestroyed(#[from] GameBeingDestroyed),
   #[error("client session not recognised (terminated by server?)")]
@@ -17,17 +17,17 @@ pub enum OnlineError {
   #[error("JSON deserialisation error: {0}")]
   BadJSON(serde_json::Error),
   #[error("referenced piece is gone (maybe race)")]
-  PieceHeld,
+  PieceHeld, // xxx should be _inapplicable_
   #[error("improper UI operation")]
-  PieceImmoveable,
+  PieceImmoveable, // xxx should be _inapplicable_
   #[error("improper UI operation")]
-  BadOperation,
+  BadOperation, // xxx should be _inapplicable_
   #[error("overlapping occultation")]
-  OverlappingOccultation,
+  OverlappingOccultation, // xxx should be _inapplicable_
   #[error("piece is occulting, or occulted")]
-  Occultation,
+  Occultation, // xxx should be _inapplicable_
   #[error("UI operation not valid in the curret piece state")]
-  BadPieceStateForOperation,
+  BadPieceStateForOperation, // xxx should be _inapplicable_
 }
 
 #[derive(Error,Debug)]
@@ -130,26 +130,26 @@ impl From<InternalError> for SpecError {
 
 #[derive(Error,Debug)]
 pub enum ApiPieceOpError {
-  ReportViaResponse(#[from] OnlineError),
-  ReportViaUpdate(#[from] PieceOpError),
+  Fatal(#[from] Fatal),
+  Inapplicable(#[from] Inapplicable),
 
   /// This error is always generated in the context of a piece
   /// operation by a particular client.  It corresponds roughly to a
   /// PieceUpdateFromOp for other clients of (Unpredicable,
   /// PieceUpdateOp::Modify, ..).
   /// For this client it is that but also an error report.
-  PartiallyProcessed(PieceOpError, Vec<LogEntry>),
+  PartiallyProcessed(Inapplicable, Vec<LogEntry>),
 }
 display_as_debug!(ApiPieceOpError);
 
 impl From<PlayerNotFound> for ApiPieceOpError {
   fn from(x: PlayerNotFound) -> ApiPieceOpError {
-    ApiPieceOpError::ReportViaResponse(x.into())
+    ApiPieceOpError::Fatal(x.into())
   }
 }
 impl From<InternalError> for ApiPieceOpError {
   fn from(x: InternalError) -> ApiPieceOpError {
-    ApiPieceOpError::ReportViaResponse(x.into())
+    ApiPieceOpError::Fatal(x.into())
   }
 }
 
@@ -159,7 +159,7 @@ pub enum ErrorSignaledViaUpdate<POEPU: Debug> {
   PlayerRemoved, // appears only in streams for applicable player
   TokenRevoked, // appears only in streams for applicable player
   PieceOpError {
-    error: PieceOpError,
+    error: Inapplicable,
     partially: PieceOpErrorPartiallyProcessed,
     state: POEPU,
   },
@@ -174,7 +174,7 @@ pub enum PieceOpErrorPartiallyProcessed {
 display_as_debug!{PieceOpErrorPartiallyProcessed}
 
 #[derive(Error,Debug,Serialize,Copy,Clone)]
-pub enum PieceOpError {
+pub enum Inapplicable {
   Conflict,
   PosOffTable,
   PieceGone,
@@ -183,11 +183,11 @@ pub enum PieceOpError {
   OcculterAlreadyRotated,
   OrganisedPlacementOverfull,
 }
-display_as_debug!{PieceOpError}
+display_as_debug!{Inapplicable}
 
 pub type StartupError = anyhow::Error;
 
-pub use OnlineError::{NoClient,NoPlayer};
+pub use Fatal::{NoClient,NoPlayer};
 
 pub enum AggregatedIE {
   Ok,

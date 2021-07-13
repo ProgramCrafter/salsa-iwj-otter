@@ -28,10 +28,10 @@ pub use rocket_contrib::templates::Engines;
 pub use rocket_contrib::templates::Template;
 
 pub use crate::api::InstanceAccess;
-pub use crate::api::{OnlineErrorResponse};
+pub use crate::api::{FatalErrorResponse};
 pub use crate::cmdlistener::*;
 
-pub type OER = OnlineErrorResponse;
+pub type OER = FatalErrorResponse; // xxx rename this alias
 
 use rocket::fairing;
 use rocket::response::Content;

@@ -106,7 +106,7 @@ type Primary<'pe> = IndexVec<InHand, PrimaryEnt<'pe>>;
 type ZLevels = IndexVec<InHand, ZLevel>;
 type OrderTable = IndexVec<InHand, InHand>;
 
-#[throws(PieceOpError)]
+#[throws(Inapplicable)]
 fn recover_order(region: &Rect, pieces: &Primary, zlevels: &ZLevels)
                 -> OrderTable
 {
@@ -290,11 +290,11 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, _: OcculterRotationChecked,
   for &pos in &layout {
     // Some sanity checks
     pos.clamped(gs.table_size).map_err(
-      |_| APOE::ReportViaUpdate(POE::PosOffTable))?;
+      |_| APOE::Inapplicable(POE::PosOffTable))?;
     match gs.occults.pos_occulter(&gs.occults, pos)? {
       None => {},
       Some(occulter) if occulter == apiece => {},
-      Some(_) => throw!(APOE::ReportViaUpdate(POE::Occultation)),
+      Some(_) => throw!(APOE::Inapplicable(POE::Occultation)),
     };
   }
 

@@ -428,7 +428,7 @@ impl GPiece {
   }
 
   pub fn occulter_check_unrotated(&self, _:ShowUnocculted)
-      -> Result<OcculterRotationChecked, PieceOpError> {
+      -> Result<OcculterRotationChecked, Inapplicable> {
     if self.angle.is_rotated() { Err(POE::OcculterAlreadyRotated) }
     else { Ok(OcculterRotationChecked(())) }
   }
@@ -881,7 +881,7 @@ impl OccultationViewDef for OwnerOccultationView {
   } }
 }
 
-#[throws(OnlineError)]
+#[throws(Fatal)]
 pub fn create_occultation(
   gen: &mut UniqueGenGen,
   max_z: &mut ZLevel,

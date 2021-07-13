@@ -1296,7 +1296,7 @@ pub fn load_games(accounts: &mut AccountsGuard,
 pub type TokenTable<Id> = HashMap<RawToken, InstanceAccessDetails<Id>>;
 
 pub trait AccessId: Copy + Clone + 'static {
-  type Error: Into<OnlineError>;
+  type Error: Into<Fatal>;
   const ERROR: Self::Error;
   fn global_tokens(_:PrivateCaller) -> &'static RwLock<TokenTable<Self>>;
   fn tokens_registry(ig: &mut Instance, _:PrivateCaller)
@@ -1321,8 +1321,8 @@ impl AccessId for PlayerId {
   }
 }
 impl AccessId for ClientId {
-  type Error = OnlineError;
-  const ERROR: OnlineError = NoClient;
+  type Error = Fatal;
+  const ERROR: Fatal = NoClient;
   fn global_tokens(_: PrivateCaller) -> &'static RwLock<TokenTable<Self>> {
     &GLOBAL.clients
   }
@@ -1416,7 +1416,7 @@ impl GPieces {
 impl ById for GPieces {
   type Id = PieceId;
   type Entry = GPiece;
-  type Error = PieceOpError;
+  type Error = Inapplicable;
   #[throws(POE)]
   fn byid(&self, piece: PieceId) -> &GPiece {
     self.get(piece).ok_or(POE::PieceGone)?

@@ -611,7 +611,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   }
 
   pub fn piece_report_error(ig: &mut Instance,
-                            error: PieceOpError, piece: PieceId,
+                            error: Inapplicable, piece: PieceId,
                             logents: Vec<LogEntry>,
                             partially: PieceOpErrorPartiallyProcessed,
                             client: ClientId, cseq: ClientSequence)

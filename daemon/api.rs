@@ -39,10 +39,10 @@ mod op {
   use super::*;
 
   pub trait Core: Debug { 
-    #[throws(OnlineError)]
+    #[throws(Fatal)]
     fn check_held(&self, pc: &GPiece, player: PlayerId) {
       if pc.held != None && pc.held != Some(player) {
-        throw!(OnlineError::PieceHeld)
+        throw!(Fatal::PieceHeld)
       }
     }
   }
@@ -67,11 +67,11 @@ mod op {
 
 #[derive(Error,Debug)]
 #[error("{0}")]
-pub struct OnlineErrorResponse(#[from] OnlineError);
+pub struct FatalErrorResponse(#[from] Fatal);
 
-impl From<&OnlineErrorResponse> for rocket::http::Status {
-  fn from(oe: &OnlineErrorResponse) -> rocket::http::Status {
-    use OnlineError::*;
+impl From<&FatalErrorResponse> for rocket::http::Status {
+  fn from(oe: &FatalErrorResponse) -> rocket::http::Status {
+    use Fatal::*;
     match oe.0 {
       ServerFailure(_) => Status::InternalServerError,
       NoClient | NoPlayer(_) | GameBeingDestroyed(_)
@@ -86,7 +86,7 @@ impl From<&OnlineErrorResponse> for rocket::http::Status {
   }
 }
 
-impl<'r> Responder<'r> for OnlineErrorResponse {
+impl<'r> Responder<'r> for FatalErrorResponse {
   #[throws(Status)]
   fn respond_to(self, req: &Request) -> Response<'r> {
     let msg = format!("Online-layer error\n{:?}\n{}\n", self, self);
@@ -123,7 +123,6 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
   let piece = vpiece_decode(gs, player, gpl, form.piece);
   if_let!{ Some(piece) = piece; else return Ok(()) }
   let was_held = gs.pieces.get(piece).as_ref().map(|gpc| gpc.held);
-  use ApiPieceOpError::*;
 
   match (||{
     let ipc = ipieces.get(piece).ok_or(POE::PieceGone)?;
@@ -136,7 +135,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
 
     debug!("client={:?} pc.lastclient={:?} pc.gen_before={:?} pc.gen={:?} q_gen={:?} u_gen={:?}", &client, &gpc.lastclient, &gpc.gen_before_lastclient, &gpc.gen, &q_gen, &u_gen);
 
-    if u_gen > q_gen { throw!(PieceOpError::Conflict) }
+    if u_gen > q_gen { throw!(Inapplicable::Conflict) }
     trace_dbg!("form.op", player, piece, &form.op, &gpc);
     form.op.check_held(gpc,player)?;
     let update =
@@ -148,21 +147,21 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
       })?;
     Ok::<_,ApiPieceOpError>(update)
   })() {
-    Err(ReportViaUpdate(poe)) => {
+    Err(APOE::Inapplicable(poe)) => {
       PrepareUpdatesBuffer::piece_report_error(
         &mut ig, poe,
         piece, vec![], POEPP::Unprocessed, client, form.cseq,
       )?;
       debug!("api_piece_op Err(RVU): {:?}", &form);
     },
-    Err(PartiallyProcessed(poe, logents)) => {
+    Err(APOE::PartiallyProcessed(poe, logents)) => {
       PrepareUpdatesBuffer::piece_report_error(
         &mut ig, poe,
         piece, logents, POEPP::Partially, client, form.cseq,
       )?;
       debug!("api_piece_op Err(PP): {:?}", &form);
     },
-    Err(ReportViaResponse(err)) => {
+    Err(APOE::Fatal(err)) => {
       warn!("api_piece_op ERROR {:?}: {:?}", &form, &err);
       Err(err)?;
     },
@@ -289,7 +288,7 @@ api_route!{
         "grasped"
       )?;
 
-      if gpc.held.is_some() { throw!(OnlineError::PieceHeld) }
+      if gpc.held.is_some() { throw!(Fatal::PieceHeld) }
       gpc.held = Some(player);
     
       let update = PieceUpdateOp::ModifyQuiet(());
@@ -306,7 +305,7 @@ api_route!{
   }
 
   impl op::Core as {
-    #[throws(OnlineError)]
+    #[throws(Fatal)]
     fn check_held(&self, _pc: &GPiece, _player: PlayerId) { }
   }
 
@@ -388,7 +387,7 @@ api_route!{
 
       then {
         let z = gs.max_z.z.clone_mut().increment().map_err(
-          |e| APOE::ReportViaResponse(IE::from(e).into()))?;
+          |e| APOE::Fatal(IE::from(e).into()))?;
         Some(ZLevel { z, zg: gs.gen })
       }
       else { None }
@@ -403,7 +402,7 @@ api_route!{
     )?;
     let who_by = who_by.ok_or(POE::PieceGone)?;
 
-    if gpc.held != Some(player) { throw!(OnlineError::PieceHeld) }
+    if gpc.held != Some(player) { throw!(Fatal::PieceHeld) }
     gpc.held = None;
 
     let wrc = if let Some(zlevel) = new_z {
@@ -433,7 +432,7 @@ api_route!{
         to_recalculate,
         piece,
         vanilla,
-      ).map_err(|e| OnlineError::from(e))?;
+      ).map_err(|e| Fatal::from(e))?;
 
     update
   }
@@ -465,12 +464,12 @@ api_route!{
   struct ApiPieceMove(Pos);
 
   impl op::Core as {
-    #[throws(OnlineError)]
+    #[throws(Fatal)]
     fn check_held(&self, gpc: &GPiece, player: PlayerId) {
       // This will ensure that occultations are (in general) properly
       // updated, because the player will (have to) release the thing
       // again
-      if gpc.held != Some(player) { throw!(OnlineError::PieceHeld) }
+      if gpc.held != Some(player) { throw!(Fatal::PieceHeld) }
       if gpc.occult.is_active() { throw!(OE::Occultation) }
       if matches_doesnot!(
         gpc.moveable(),
@@ -491,7 +490,7 @@ api_route!{
         Err(pote) => {
           gpc.pos = pote.clamped;
           throw!(ApiPieceOpError::PartiallyProcessed(
-            PieceOpError::PosOffTable,
+            Inapplicable::PosOffTable,
             logents,
           ));
         }
