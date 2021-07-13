@@ -173,6 +173,7 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
         .release()
         .click_and_hold()
         .move_pos(newpos)?
+        .release()
         .send_keys("W")
         .perform()
         .did("move to overlap")?;
