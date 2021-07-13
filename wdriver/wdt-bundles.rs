@@ -157,6 +157,30 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
 
   });
 
+  test!(c, "impossible", {
+    c.vatikan_with_deck()?;
+
+    {
+      let mut alice = c.su.w(&c.alice)?;
+
+      let handp  = alice.posg2posw(VATIKAN_HAND)?;
+      let newpos = alice.posg2posw((VATIKAN_HAND + Pos::new(50, 0))?)?;
+
+      alice.action_chain()
+        .send_keys("W")
+        .move_pos(handp)?
+        .click()
+        .release()
+        .click_and_hold()
+        .move_pos(newpos)?
+        .send_keys("W")
+        .perform()
+        .did("move to overlap")?;
+      alice.synch()?;
+    }
+
+  });
+
   debug!("finishing");
 }
 
