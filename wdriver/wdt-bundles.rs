@@ -32,9 +32,7 @@ impl Ctx {
         .move_w(&alice, VATIKAN_DECK)?
         .click()
         .release()
-        .key_down(Keys::Shift)
         .send_keys('A')
-        .key_up(Keys::Shift)
         .perform()
         .did("activate")?;
       alice.synch()?;
@@ -101,9 +99,7 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
         .move_pos(handp)?
         .click()
         .release()
-        .key_down(Keys::Shift)
         .send_keys('C')
-        .key_up(Keys::Shift)
         .perform()
         .did("claim")?;
       alice.synch()?;
