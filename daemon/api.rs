@@ -569,7 +569,7 @@ api_route!{
         use PriOG::*;
         match pri.occulted {
           Visible(y) => y,
-          Occulted | Displaced(..) => throw!(OE::BadOperation),
+          Occulted | Displaced(..) => throw!(Ia::Occultation),
         }
       };
 
