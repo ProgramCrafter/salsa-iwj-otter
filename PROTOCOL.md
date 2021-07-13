@@ -303,3 +303,40 @@ obviously wrong (for example, it is syntactically invalid).
 
 Fatal errors which the client could not have predicted, but which are
 not recoverable, can also be treated as bogus.
+
+
+REGRAB
+======
+
+Additionally, there is one special kind of operation, which allows a
+limited degree of desynchronisation between client and server.
+
+We want that player who has just released a piece, may immediately
+regrasp it, even if concurrently there is a `Server` update in flight
+which is the result of the release.  This is because drawing a card
+from a pickup deck does not reveal the card until the player releases
+it, but the player will often want to immediately play the card.
+
+The server will only honour a regrab update if it comes from the same
+client as the last client to ungrab the piece.
+
+Formally this introduces a new flag on `Client` updates: whether they
+are, **`Loose`**.  The client which generates an update decides
+whether it is `Loose`.
+
+When the server receives a `Loose` update which seems to be out of
+date it will decide (using its own algorithms) whether it should still
+be processed, and if so, what that means.  If it likes the update, it
+will generate a `Server` update implementing its decision.
+
+The client's _outstanding note_ records whether the outstanding branch
+is precisely a `Loose` update.  If so, `Server` updates do not clear
+the note until a `Server` message is received acknowledging that
+client sequence.
+
+After `Display`ing a server update, when there is an outstanding
+`Loose` `Client` update, the client may, but is not required to,
+"replay" the effect of the `Loose` update, to show its user what the
+predicted effect will be.  Likewise it may discard the note of the
+outstanding `Loose` update if it thinks it will inevitably generate a
+conflict.
