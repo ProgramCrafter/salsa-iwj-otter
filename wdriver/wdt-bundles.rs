@@ -24,6 +24,7 @@ impl Ctx {
 
     {
       let mut alice = self.su.w(&self.alice)?;
+      alice.synch()?;
 
       alice.action_chain()
         .key_down('0')
