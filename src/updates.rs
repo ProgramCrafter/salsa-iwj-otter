@@ -255,10 +255,19 @@ enum TransmitUpdateEntry<'u> {
   SetLinks(Html),
   #[serde(serialize_with="serialize_logentry")]
   Log(TransmitUpdateLogEntry<'u>),
-  Error(ErrorSignaledViaUpdate<TUE_P<'u>, &'u str>),
+  Error(ErrorSignaledViaUpdate<ETUE_P<'u>, &'u str>),
 }
 
 type TransmitUpdateLogEntry<'u> = (&'u Timezone, &'u CommittedLogEntry);
+
+#[allow(non_camel_case_types)]
+#[derive(Debug,Serialize)]
+struct ErrorTransmitUpdateEntry_Piece<'u> {
+  #[serde(flatten)]
+  tue: TransmitUpdateEntry_Piece<'u>,
+}
+#[allow(non_camel_case_types)]
+type ETUE_P<'u> = ErrorTransmitUpdateEntry_Piece<'u>;
 
 #[allow(non_camel_case_types)]
 #[derive(Debug,Serialize)]
@@ -975,12 +984,17 @@ impl PreparedUpdate {
                                  ref error_msg, ref state } => {
               let c = state.by_client.as_ref().map(|(_,c,_)| *c);
               if c == None || c == Some(dest) {
-                let state = match pue_piece_to_tue_p(state, player) {
+                let tue = match pue_piece_to_tue_p(state, player) {
                   Some(tue) => tue,
                   None => continue,
                 };
                 TUE::Error(
-                  ESVU::PieceOpError { error, error_msg, partially, state }
+                  ESVU::PieceOpError {
+                    error, error_msg, partially,
+                    state: { ETUE_P {
+                      tue,
+                    } },
+                  }
                 )
               } else {
                 match partially {
