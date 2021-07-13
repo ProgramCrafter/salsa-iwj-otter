@@ -16,8 +16,6 @@ pub enum Fatal { // Includes _bogus_ client updates, see PROTOCOL.md
   ServerFailure(#[from] InternalError),
   #[error("JSON deserialisation error: {0}")]
   BadJSON(serde_json::Error),
-  #[error("referenced piece is gone (maybe race)")]
-  PieceHeld, // xxx should be _inapplicable_
 }
 
 #[derive(Error,Debug)]
