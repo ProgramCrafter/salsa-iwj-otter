@@ -26,8 +26,6 @@ pub enum Fatal { // Includes _bogus_ client updates, see PROTOCOL.md
   OverlappingOccultation, // xxx should be _inapplicable_
   #[error("piece is occulting, or occulted")]
   Occultation, // xxx should be _inapplicable_
-  #[error("UI operation not valid in the curret piece state")]
-  BadPieceStateForOperation, // xxx should be _inapplicable_
 }
 
 #[derive(Error,Debug)]
@@ -185,6 +183,8 @@ pub enum Inapplicable {
   #[error("piece may not be moved")]        PieceImmoveable,
   #[error("occulter already rotated")]      OcculterAlreadyRotated,
   #[error("overfull, cannot organise")]     OrganisedPlacementOverfull,
+  #[error("UI operation not valid in the curret piece state")]
+                                            BadPieceStateForOperation,
 }
 
 pub type StartupError = anyhow::Error;

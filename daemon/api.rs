@@ -78,8 +78,6 @@ impl From<&FatalErrorResponse> for rocket::http::Status {
         => Status::NotFound,
       OE::PieceHeld | OE::PieceImmoveable |
       OE::OverlappingOccultation | OE::Occultation |
-      OE::BadPieceStateForOperation
-        => Status::Conflict,
       BadOperation | BadJSON(_)
         => Status::BadRequest,
     }

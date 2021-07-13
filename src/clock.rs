@@ -638,7 +638,7 @@ impl PieceTrait for Clock {
       },
       "reset" => {
         if state.current.is_some() {
-          throw!(OE::BadPieceStateForOperation);
+          throw!(Ia::BadPieceStateForOperation);
         }
         state.reset(&self.spec);
         (Unpredictable, format!("reset"))
@@ -646,7 +646,7 @@ impl PieceTrait for Clock {
       "claim-x" | "claim-y" => {
         let user = get_user();
         if let Some(_gpl) = gs.players.get(state.users[user].player) {
-          throw!(OE::BadPieceStateForOperation);
+          throw!(Ia::BadPieceStateForOperation);
         }
         state.users[user].player = player;
         if state.users[! user].player == player {
@@ -661,7 +661,7 @@ impl PieceTrait for Clock {
         (Unpredictable, format!("cleared player {} at the", user))
       },
       _ => {
-        throw!(OE::BadPieceStateForOperation);
+        throw!(Ia::BadPieceStateForOperation);
       }
     };
 
