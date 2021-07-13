@@ -39,10 +39,10 @@ mod op {
   use super::*;
 
   pub trait Core: Debug { 
-    #[throws(Fatal)]
+    #[throws(Inapplicable)]
     fn check_held(&self, pc: &GPiece, player: PlayerId) {
       if pc.held != None && pc.held != Some(player) {
-        throw!(Fatal::PieceHeld)
+        throw!(Ia::PieceHeld)
       }
     }
   }
@@ -305,7 +305,7 @@ api_route!{
   }
 
   impl op::Core as {
-    #[throws(Fatal)]
+    #[throws(Ia)]
     fn check_held(&self, _pc: &GPiece, _player: PlayerId) { }
   }
 
@@ -464,18 +464,18 @@ api_route!{
   struct ApiPieceMove(Pos);
 
   impl op::Core as {
-    #[throws(Fatal)]
+    #[throws(Ia)]
     fn check_held(&self, gpc: &GPiece, player: PlayerId) {
       // This will ensure that occultations are (in general) properly
       // updated, because the player will (have to) release the thing
       // again
-      if gpc.held != Some(player) { throw!(Fatal::PieceHeld) }
-      if gpc.occult.is_active() { throw!(OE::Occultation) }
+      if gpc.held != Some(player) { throw!(Ia::PieceNotHeld) }
+      if gpc.occult.is_active() { throw!(Ia::Occultation) }
       if matches_doesnot!(
         gpc.moveable(),
         = PieceMoveable::No,
         ! PieceMoveable::Yes | PieceMoveable::IfWresting,
-      ) { throw!(OE::PieceImmoveable) }
+      ) { throw!(Ia::PieceImmoveable) }
     }
   }
 

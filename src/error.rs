@@ -175,13 +175,16 @@ display_as_debug!{PieceOpErrorPartiallyProcessed}
 
 #[derive(Error,Debug,Serialize,Copy,Clone)]
 pub enum Inapplicable {
-  #[error("simultaneous update")]         Conflict,
-  #[error("position off table")]          PosOffTable,
-  #[error("piece gone")]                  PieceGone,
-  #[error("prevented by occultation")]    Occultation,
-  #[error("piece may not be rotated")]    PieceUnrotateable,
-  #[error("occulter already rotated")]    OcculterAlreadyRotated,
-  #[error("overfull, cannot organise")]   OrganisedPlacementOverfull,
+  #[error("simultaneous update")]           Conflict,
+  #[error("position off table")]            PosOffTable,
+  #[error("piece gone")]                    PieceGone,
+  #[error("piece held by another player")]  PieceHeld,
+  #[error("piece not held by your")]        PieceNotHeld,
+  #[error("prevented by occultation")]      Occultation,
+  #[error("piece may not be rotated")]      PieceUnrotateable,
+  #[error("piece may not be moved")]        PieceImmoveable,
+  #[error("occulter already rotated")]      OcculterAlreadyRotated,
+  #[error("overfull, cannot organise")]     OrganisedPlacementOverfull,
 }
 
 pub type StartupError = anyhow::Error;
