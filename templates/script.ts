@@ -2008,7 +2008,7 @@ update_error_handlers.PieceOpError = <MessageHandler>function
   let piece = m.state.piece;
   let cseq = m.state.cseq;
   let p = pieces[piece];
-  console.log('ERROR UPDATE PIECE ', m, p);
+  console.log('ERROR UPDATE PIECE ', piece, cseq, m, m.error_msg, p);
   if (p == null) return;
   let conflict_expected = piece_error_handlers[m.error](piece, p, m);
   handle_piece_update(m.state);
