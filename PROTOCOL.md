@@ -266,12 +266,12 @@ However, sometimes this is not the case: a piece can have behaviours
 which are too complicated to model in the client.  In such cases, the
 server will be processing a `Client` `Upbound` update, and find that
 it cannot be applied and made `Recorded`.  (Call that an
-**impossible** update.)
+**inapplicable** update.)
 
-When the server receives an update it deems _impossible_, it will
+When the server receives an update it deems _inapplicable_, it will
 generate a `Server` update and process that before the incoming
 `Client` update.  The `Server` update will inform the client of the
-problem, and, by its existence cause the `Client` _impossible_ update
+problem, and, by its existence cause the `Client` _inapplicable_ update
 to become `Discarded`.  When the client receives the `Server` update,
 it can describe the problem to its user, and also note that the
 `Client` update has become `Superseded`.
@@ -294,9 +294,9 @@ and ones which are unprocessable because of misbehaviour (eg, bugs) at
 the client.  However, getting this right is very fiddly and complex.
 
 In the absence of buggy or malicious clients, there will be no _bogus_
-updates.  And since even _impossible_ updates are rejected by the
+updates.  And since even _inapplicable_ updates are rejected by the
 server, there is no harm to anyone else of treating an update as
-_impossible_ rather than _bogus_.  So we err on the side of treating
+_inapplicable_ rather than _bogus_.  So we err on the side of treating
 client mistakes as due to synchronisation and incomplete modelling:
 ie, we only treat a client update as _bogus_ if it is patently
 obviously wrong (for example, it is syntactically invalid).
