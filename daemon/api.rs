@@ -125,7 +125,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
   let was_held = gs.pieces.get(piece).as_ref().map(|gpc| gpc.held);
 
   match (||{
-    let ipc = ipieces.get(piece).ok_or(POE::PieceGone)?;
+    let ipc = ipieces.get(piece).ok_or(Ia::PieceGone)?;
     let gpc = gs.pieces.byid_mut(piece)?;
 
     let q_gen = form.gen;
@@ -321,7 +321,7 @@ api_route!{
 
       let gpl = players.byid_mut(player)?;
       let pri = piece_pri(ioccults, &gs.occults, player, gpl, piece, gpc, ipc)
-        .ok_or(POE::PieceGone)?;
+        .ok_or(Ia::PieceGone)?;
 
       let pcs = pri.describe(ioccults,&gs.occults, gpc, ipc);
 
@@ -400,7 +400,7 @@ api_route!{
       ioccults,&gs.occults,gpl,gpc,ipc,
       "released"
     )?;
-    let who_by = who_by.ok_or(POE::PieceGone)?;
+    let who_by = who_by.ok_or(Ia::PieceGone)?;
 
     if gpc.held != Some(player) { throw!(Fatal::PieceHeld) }
     gpc.held = None;
@@ -512,7 +512,7 @@ api_route!{
     let ApiPieceOpArgs { gs,ioccults,player,piece,ipc, .. } = a;
     let gpc = gs.pieces.byid_mut(piece).unwrap();
     if ! gpc.rotateable() || gpc.occult.is_active() {
-      throw!(POE::PieceUnrotateable)
+      throw!(Ia::PieceUnrotateable)
     }
     let gpl = gs.players.byid_mut(player).unwrap();
     let logents = log_did_to_piece(
@@ -567,7 +567,7 @@ api_route!{
                           player, gs.players.byid_mut(player)?,
                           piece, gs.pieces.byid(piece)?,
                           ipc)
-        .ok_or(POE::PieceGone)?;
+        .ok_or(Ia::PieceGone)?;
       let y = {
         use PriOG::*;
         match pri.occulted {

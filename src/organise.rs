@@ -128,7 +128,7 @@ fn recover_order(region: &Rect, pieces: &Primary, zlevels: &ZLevels)
 
   // This algorithm is quadratic.  320^2 = 102K
   let len = pieces.len();
-  if len > 320 { throw!(POE::OrganisedPlacementOverfull) }
+  if len > 320 { throw!(Ia::OrganisedPlacementOverfull) }
 
   let mut remain: Vec<InHand> = (0..len).map(Into::into).collect();
   let mut out = index_vec![];
@@ -290,11 +290,11 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, _: OcculterRotationChecked,
   for &pos in &layout {
     // Some sanity checks
     pos.clamped(gs.table_size).map_err(
-      |_| APOE::Inapplicable(POE::PosOffTable))?;
+      |_| APOE::Inapplicable(Ia::PosOffTable))?;
     match gs.occults.pos_occulter(&gs.occults, pos)? {
       None => {},
       Some(occulter) if occulter == apiece => {},
-      Some(_) => throw!(APOE::Inapplicable(POE::Occultation)),
+      Some(_) => throw!(APOE::Inapplicable(Ia::Occultation)),
     };
   }
 

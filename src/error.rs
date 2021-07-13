@@ -267,8 +267,8 @@ impl<T> IdForById for T where T: AccessId {
 }
 
 impl IdForById for PieceId {
-  type Error = POE;
-  const ERROR: POE = POE::PieceGone;
+  type Error = Ia;
+  const ERROR: Ia = Ia::PieceGone;
 }
 
 #[macro_export]

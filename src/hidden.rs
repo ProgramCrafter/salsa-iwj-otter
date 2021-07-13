@@ -429,7 +429,7 @@ impl GPiece {
 
   pub fn occulter_check_unrotated(&self, _:ShowUnocculted)
       -> Result<OcculterRotationChecked, Inapplicable> {
-    if self.angle.is_rotated() { Err(POE::OcculterAlreadyRotated) }
+    if self.angle.is_rotated() { Err(Ia::OcculterAlreadyRotated) }
     else { Ok(OcculterRotationChecked(())) }
   }
 

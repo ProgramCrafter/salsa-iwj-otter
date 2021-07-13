@@ -1417,13 +1417,13 @@ impl ById for GPieces {
   type Id = PieceId;
   type Entry = GPiece;
   type Error = Inapplicable;
-  #[throws(POE)]
+  #[throws(Ia)]
   fn byid(&self, piece: PieceId) -> &GPiece {
-    self.get(piece).ok_or(POE::PieceGone)?
+    self.get(piece).ok_or(Ia::PieceGone)?
   }
-  #[throws(POE)]
+  #[throws(Ia)]
   fn byid_mut(&mut self, piece: PieceId) -> &mut GPiece {
-    self.get_mut(piece).ok_or(POE::PieceGone)?
+    self.get_mut(piece).ok_or(Ia::PieceGone)?
   }
 }
 
