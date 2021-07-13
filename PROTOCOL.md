@@ -109,7 +109,7 @@ Client may invent and transmit an update at any time; it must have the
 `Displayed` update as its parent.  That update becomes `Superseded`.
 The new update is `Displayed`+`Upbound`.
 
-_linear_ and _record_ are not affected.  _forwardxs_ is honoured
+_linear_ and _record_ are not affected.  _forwards_ is honoured
 because of _display_.  _display_ is preserved.
 
 Server message reception
