@@ -194,7 +194,7 @@ pub type PUM = ProgressUpdateMode;
 
 // error.rs
 pub type APOE = ApiPieceOpError;
-pub type ESVU<POEPU> = ErrorSignaledViaUpdate<POEPU>;
+pub type ESVU<POEPU,EM> = ErrorSignaledViaUpdate<POEPU,EM>;
 pub type IE = InternalError;
 pub type Ia = Inapplicable;
 pub type POEPP = PieceOpErrorPartiallyProcessed;

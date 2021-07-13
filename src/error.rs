@@ -142,12 +142,13 @@ impl From<InternalError> for ApiPieceOpError {
 }
 
 #[derive(Debug,Serialize,Clone)]
-pub enum ErrorSignaledViaUpdate<POEPU: Debug> {
+pub enum ErrorSignaledViaUpdate<POEPU: Debug, EM: Debug> {
   InternalError,
   PlayerRemoved, // appears only in streams for applicable player
   TokenRevoked, // appears only in streams for applicable player
   PieceOpError {
     error: Inapplicable,
+    error_msg: EM,
     partially: PieceOpErrorPartiallyProcessed,
     state: POEPU,
   },

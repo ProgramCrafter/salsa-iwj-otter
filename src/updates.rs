@@ -74,7 +74,7 @@ pub enum PreparedUpdateEntry {
     new_info_pane: Arc<Html>,
   },
   Log(Arc<CommittedLogEntry>),
-  Error(ErrorSignaledViaUpdate<PUE_P>),
+  Error(ErrorSignaledViaUpdate<PUE_P, String>),
 }
 
 #[allow(non_camel_case_types)]
@@ -255,7 +255,7 @@ enum TransmitUpdateEntry<'u> {
   SetLinks(Html),
   #[serde(serialize_with="serialize_logentry")]
   Log(TransmitUpdateLogEntry<'u>),
-  Error(ErrorSignaledViaUpdate<TUE_P<'u>>),
+  Error(ErrorSignaledViaUpdate<TUE_P<'u>, &'u str>),
 }
 
 type TransmitUpdateLogEntry<'u> = (&'u Timezone, &'u CommittedLogEntry);
@@ -628,7 +628,8 @@ impl<'r> PrepareUpdatesBuffer<'r> {
       }
     )?;
     let update = PUE::Error(ESVU::PieceOpError {
-      error, state, partially
+      error, state, partially,
+      error_msg: error.to_string(),
     });
     buf.us.push(update);
     buf.log_updates(logents);
@@ -870,7 +871,7 @@ impl PreparedUpdate {
   pub fn for_transmit<'u>(&'u self, tz: &'u Timezone,
                           player: PlayerId, dest: ClientId)
                           -> TransmitUpdate<'u> {
-    type ESVU<T> = ErrorSignaledViaUpdate<T>;
+    type ESVU<T,EM> = ErrorSignaledViaUpdate<T,EM>;
     type PUE = PreparedUpdateEntry;
     type TUE<'u> = TransmitUpdateEntry<'u>;
     let mut ents = vec![];
@@ -970,7 +971,8 @@ impl PreparedUpdate {
             ESVU::InternalError => TUE::Error(ESVU::InternalError),
             ESVU::PlayerRemoved => TUE::Error(ESVU::PlayerRemoved),
             ESVU::TokenRevoked  => TUE::Error(ESVU::TokenRevoked),
-            ESVU::PieceOpError { error, partially, ref state } => {
+            ESVU::PieceOpError { error, partially,
+                                 ref error_msg, ref state } => {
               let c = state.by_client.as_ref().map(|(_,c,_)| *c);
               if c == None || c == Some(dest) {
                 let state = match pue_piece_to_tue_p(state, player) {
@@ -978,7 +980,7 @@ impl PreparedUpdate {
                   None => continue,
                 };
                 TUE::Error(
-                  ESVU::PieceOpError { error, partially, state }
+                  ESVU::PieceOpError { error, error_msg, partially, state }
                 )
               } else {
                 match partially {

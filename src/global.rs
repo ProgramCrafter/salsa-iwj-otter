@@ -660,7 +660,7 @@ impl<'ig> InstanceGuard<'ig> {
 
   pub fn remove_clients(&mut self,
                         players: &HashSet<PlayerId>,
-                        signal: ErrorSignaledViaUpdate<PUE_P>) {
+                        signal: ErrorSignaledViaUpdate<PUE_P, String>) {
     let mut clients_to_remove = HashSet::new();
     self.clients.retain(|k,v| {
       let remove = players.contains(&v.player);
