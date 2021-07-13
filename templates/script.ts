@@ -2009,8 +2009,13 @@ update_error_handlers.PieceOpError = <MessageHandler>function
   let cseq = m.state.cseq;
   let p = pieces[piece];
   console.log('ERROR UPDATE PIECE ', piece, cseq, m, m.error_msg, p);
-  if (p == null) return;
-  let conflict_expected = piece_error_handlers[m.error](piece, p, m);
+  if (p == null) return; // who can say!
+  if (m.error != 'Conflict') {
+    // Our gen was high enough we we sent this, that it ought to have
+    // worked.  Report it as a problem, then.
+    add_log_message('Problem manipulating piece: ' + m.error_msg);
+    p.cseq = null; // Well, we don't have anything outstanding now
+  }
   handle_piece_update(m.state);
 }
 
