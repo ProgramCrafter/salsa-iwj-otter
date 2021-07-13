@@ -313,7 +313,7 @@ impl PieceTrait for Hand {
       }
       ("claim", true) |
       ("deactivate", false) => {
-        throw!(OE::PieceHeld);
+        throw!(Ia::BadUiOperation);
       }
       _ => {
         throw!(Ia::BadUiOperation);

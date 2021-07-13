@@ -208,7 +208,7 @@ impl PieceTrait for Deck {
     let mut xupdates = vec![];
 
     if new_state == old_state {
-        throw!(OE::PieceHeld);
+      throw!(Ia::BadUiOperation);
     }      
 
     if old_state != Disabled {
