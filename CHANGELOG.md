@@ -1,3 +1,78 @@
+Version 0.8.0 - UNRELEASED
+==========================
+
+Bugfixes
+--------
+
+ * Complete overhaul of Z coordinate (stacking order) handling.
+    - Reworked Z lowering algorithm.
+    - Occulters (hands and decks) more uniformly try to be low down.
+    - e.g. you will no longer accidentally put a card under your hand.
+    - Do not re-raise things during drag if the user explicitly
+      lowered them with `l`.
+    - When the user asks to raise but nothing can be raised, log
+      a message.
+    - Fix a Rust panicn in Z coordinate handling which might occur in
+      some attempts to lower pieces.
+    - Fix ordering of lowered pieces.
+    - Now we no longer ever raise a piece when you ask to lower it (!)
+
+ * Overhaul of handling of errors detected when processing client API
+   requests.  It should no longer be possible for the user to cause JS
+   exceptions or other lossage merely by asking to do things which it
+   happens that the server (unbeknownst to user or client script.ts)
+   won't permit.  Report these errors in the user-facing client log
+   window, instead.
+
+ * Fix JS exception if you had selected multiple pieces which used the
+   same key for different purposes.  (Even transiently, for example by
+   selecting multiple hand repositories and claiming them all - you'd
+   briefly have `C` for claim for some, and `C` for unclaim for
+   others.)
+
+New features
+------------
+
+ * Player hands now show the count of contained pieces.
+
+ * New general `t` keystroke to bring a piece to the top of the
+   stackingorder.
+
+ * New loosely synchroninised approach to "regrab", to enable a player
+   to release a piece (eg, a card they have just drawn) and
+   immediately, asynchronously, regrab it, while the server is sending
+   an update (eg resulting from an occultation status change).  I.e.,
+   you can now draw a card into your hand in Mao and immediately
+   regrab it,
+
+Cosmetic changes
+----------------
+
+ * Deck card count uses a monospaced font.
+
+Internal and development changes
+--------------------------------
+
+ * Demo game: Add a label to the test hand.
+ * Dependencies on tera templating engine slightly rationalised.
+ * New jstest facility for running for-browser JS in a nodejs
+   environment with some cheesy mockups.
+ * Test Z lowering algorithm with new test facility.
+ * Maekfile: avoid rebuilding the otter cli over and over again,
+   by touching it when we rebuild it.
+ * Webdriver tests: pass window size arguments to firefox so we
+   get a window big enough for the provided game specs.
+ * Test handling of UI actions which server decides (unpredictably
+   from client POV) cannot be performed.
+ * Fix some bogus links in internal docs.
+ * Add some internal documentation for zcoord module.
+ * Improve defensive programming and testing in zcoord module.
+ * Tidy up some leftover comments etc.
+ * Webdriver tests: check that there were no JS exceptions.
+ * Improved debug output.
+ * `PROTOCOL.md` discussion of impossbile-api-op etc. error handling.
+ * Testing of impossible-api-op error handling.
+
 Version 0.7.1 - 2021-06-09
 ==========================
 
@@ -167,7 +242,7 @@ Documentation
 
  * Document uploadable bundle format.
 
- * Document game and piece spec format.
+n * Document game and piece spec format.
 
  * Document shape library catalogue format (previously this was done
    with rustdoc annotations on Rust structs used with serde, which
