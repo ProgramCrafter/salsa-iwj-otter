@@ -32,8 +32,12 @@ struct ApiPiece<O:op::Complex> {
   piece: VisiblePieceId,
   gen: Generation,
   cseq: ClientSequence,
+  #[serde(default)] loose: bool,
   op: O,
 }
+
+#[derive(Debug)]
+pub struct ContinueDespiteConflict;
 
 mod op {
   use super::*;
@@ -44,6 +48,11 @@ mod op {
       if pc.held != None && pc.held != Some(player) {
         throw!(Ia::PieceHeld)
       }
+    }
+
+    fn conflict_loose_check(&self, _gpc: &GPiece)
+        -> Result<ContinueDespiteConflict, ApiPieceOpError> {
+      throw!(Fatal::BadLoose)
     }
   }
 
@@ -76,7 +85,7 @@ impl From<&FatalErrorResponse> for rocket::http::Status {
       ServerFailure(_) => Status::InternalServerError,
       NoClient | NoPlayer(_) | GameBeingDestroyed(_)
         => Status::NotFound,
-      BadJSON(_)
+      BadJSON(_) | BadLoose
         => Status::BadRequest,
     }
   }
@@ -131,7 +140,10 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
 
     debug!("client={:?} pc.lastclient={:?} pc.gen_before={:?} pc.gen={:?} q_gen={:?} u_gen={:?}", &client, &gpc.lastclient, &gpc.gen_before_lastclient, &gpc.gen, &q_gen, &u_gen);
 
-    if u_gen > q_gen { throw!(Inapplicable::Conflict) }
+    if u_gen > q_gen {
+      if ! form.loose { throw!(Inapplicable::Conflict); }
+      let ContinueDespiteConflict = form.op.conflict_loose_check(&gpc)?;
+    }
     trace_dbg!("form.op", player, piece, &form.op, &gpc);
     form.op.check_held(gpc,player)?;
     let update =

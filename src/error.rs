@@ -16,6 +16,8 @@ pub enum Fatal { // Includes _bogus_ client updates, see PROTOCOL.md
   ServerFailure(#[from] InternalError),
   #[error("JSON deserialisation error: {0}")]
   BadJSON(serde_json::Error),
+  #[error("Malformed command - loose not allowed for this op")]
+  BadLoose,
 }
 
 #[derive(Error,Debug)]
