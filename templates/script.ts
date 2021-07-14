@@ -261,7 +261,7 @@ function api_piece_x(f: (meth: string, payload: Object) => void,
 function api_piece(meth: string,
 		   piece: PieceId, p: PieceInfo,
 		   op: Object) {
-  api_piece_x(api_immediate, false, meth, piece, p, op);
+  api_piece_x(api_immediate, false,meth, piece, p, op);
 }
 
 function svg_element(id: string): SVGGraphicsElement | null {
@@ -933,7 +933,8 @@ function grab_clicked(clicked: PieceId[]) {
   for (let piece of clicked) {
     let p = pieces[piece]!;
     set_grab_us(piece,p);
-    api_piece(wresting ? 'wrest' : 'grab', piece,p, { });
+    api_piece_x(api_immediate, false,
+		wresting ? 'wrest' : 'grab', piece,p, { });
   }
 }
 function ungrab_clicked(clicked: PieceId[]) {
