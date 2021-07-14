@@ -410,8 +410,12 @@ function recompute_keybindings() {
   });
   var uo_keys = Object.keys(uo_map);
   uo_keys.sort(function (ak,bk) {
-    let a = uo_map[ak]!;
-    let b = uo_map[bk]!;
+    let a = uo_map[ak];
+    let b = uo_map[bk];
+    if (a==null || b==null) return (
+      ( (!!a) as any ) -
+      ( (!!b) as any )
+    );
     return uo_kind_prec[a.kind] - uo_kind_prec[b.kind]
       || ak.localeCompare(bk);
   });
@@ -426,7 +430,8 @@ function recompute_keybindings() {
     else celem.remove();
   }
   for (var kk of uo_keys) {
-    let uo = uo_map[kk]!;
+    let uo = uo_map[kk];
+    if (!uo) continue;
     let prec = uo_kind_prec[uo.kind];
     let ent = document.createElement('div');
     ent.innerHTML = '<b>' + kk + '</b> ' + uo.desc;
