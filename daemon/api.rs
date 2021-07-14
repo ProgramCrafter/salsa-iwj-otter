@@ -283,6 +283,14 @@ api_route!{
   }
 
   impl op::Core as {
+    #[throws(ApiPieceOpError)]
+    fn conflict_loose_check(&self, gpc: &GPiece, client: ClientId)
+                            -> ContinueDespiteConflict {
+      if gpc.occult.is_active()             { throw!(Ia::Occultation    ) }
+      if gpc.moveable != PieceMoveable::Yes { throw!(Ia::PieceImmoveable) }
+      if gpc.last_released != client        { throw!(Ia::PieceHeld      ) }
+      ContinueDespiteConflict
+    }
   }
 
   impl op::Simple as {
