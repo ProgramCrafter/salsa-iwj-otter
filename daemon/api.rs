@@ -50,7 +50,7 @@ mod op {
       }
     }
 
-    fn conflict_loose_check(&self, _gpc: &GPiece)
+    fn conflict_loose_check(&self, _gpc: &GPiece, _client: ClientId)
         -> Result<ContinueDespiteConflict, ApiPieceOpError> {
       throw!(Fatal::BadLoose)
     }
@@ -142,7 +142,8 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
 
     if u_gen > q_gen {
       if ! form.loose { throw!(Inapplicable::Conflict); }
-      let ContinueDespiteConflict = form.op.conflict_loose_check(&gpc)?;
+      let ContinueDespiteConflict = form.
+        op.conflict_loose_check(&gpc, client)?;
     }
     trace_dbg!("form.op", player, piece, &form.op, &gpc);
     form.op.check_held(gpc,player)?;
