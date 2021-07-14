@@ -929,11 +929,11 @@ type MouseFindClicked = null | {
 
 type PieceSet = { [piece: string]: true };
 
-function grab_clicked(clicked: PieceId[]) {
+function grab_clicked(clicked: PieceId[], loose: boolean) {
   for (let piece of clicked) {
     let p = pieces[piece]!;
     set_grab_us(piece,p);
-    api_piece_x(api_immediate, false,
+    api_piece_x(api_immediate, loose,
 		wresting ? 'wrest' : 'grab', piece,p, { });
   }
 }
@@ -1094,7 +1094,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       add_log_message('That piece is pinned to the table.');
       return;
     }
-    grab_clicked(clicked);
+    grab_clicked(clicked, false);
     drag_start_prepare(DRAGGING.MAYBE_GRAB);
   } else {
     add_log_message('That piece is held by another player.');
@@ -1418,7 +1418,7 @@ function rectsel_mouseup(e: MouseEvent) {
     if (!rectsel_shifted) {
       ungrab_all_except(note_already);
     }
-    grab_clicked(c.clicked);
+    grab_clicked(c.clicked, false);
   }
 }
 
