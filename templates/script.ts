@@ -242,9 +242,9 @@ function api_posted() {
 }
 
 function api_piece_x(f: (meth: string, payload: Object) => void,
-		   meth: string,
-		   piece: PieceId, p: PieceInfo,
-		   op: Object) {
+		     meth: string,
+		     piece: PieceId, p: PieceInfo,
+		     op: Object) {
   clear_halo(piece,p);
   cseq += 1;
   p.cseq = cseq;
