@@ -7,8 +7,9 @@ Bugfixes
  * Complete overhaul of Z coordinate (stacking order) handling, including
    reworked Z lowering algorithm (`b` key function).  Changes and
    consequences include:
+
     - On page load, use player's view of the Z coordinate for sort order (Z
-      display order) of occulted pieces, not actual Z (!)  resulting in
+      display order) of occulted pieces, not actual Z (!)  avoiding
       incoherent client state and arbitrary behaviours eg:
     - Now we no longer ever raise a piece when user asks to lower (!!)
     - Occulters (hands and decks) more uniformly try to be low down.
@@ -20,6 +21,7 @@ Bugfixes
 
  * Substantial overhaul of error handling for problems detected when
    processing client API requests:
+
     - It should no longer be possible for the user to cause JS exceptions or
       other lossage merely by asking to do things which it happens that the
       server (unbeknownst to user or client script.ts) won't permit.  Report
@@ -31,7 +33,7 @@ Bugfixes
        generally what to put in the user-facing message log.
 
  * Do not re-raise things during drag if the user explicitly lowered
-   them with `l` (since the user grasped them).
+   them with `b` (since the user grasped them).
 
  * Fix JS exception if user selected multiple pieces which used the same key
    for different purposes.  (Even transiently, for example by selecting
@@ -42,7 +44,7 @@ New features
 ------------
 
  * New general `t` keystroke to bring a piece to the top of the
-   stackin gorder.
+   stacking order.
 
  * Player hands now show the count of contained pieces.
 
