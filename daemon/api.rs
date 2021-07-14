@@ -140,11 +140,10 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
 
     debug!("client={:?} pc.lastclient={:?} pc.gen_before={:?} pc.gen={:?} q_gen={:?} u_gen={:?}", &client, &gpc.lastclient, &gpc.gen_before_lastclient, &gpc.gen, &q_gen, &u_gen);
 
-    if u_gen > q_gen {
+    let loose_conflict = if u_gen <= q_gen { None } else {
       if ! form.loose { throw!(Inapplicable::Conflict); }
-      let ContinueDespiteConflict = form.
-        op.conflict_loose_check(&gpc, client)?;
-    }
+      Some(form.op.conflict_loose_check(&gpc, client)?)
+    };
     trace_dbg!("form.op", player, piece, &form.op, &gpc);
     form.op.check_held(gpc,player)?;
     let update =
@@ -154,7 +153,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
         ig: &iad.gref,
         to_recalculate: &mut to_recalculate,
       })?;
-    Ok::<_,ApiPieceOpError>(update)
+    Ok::<_,ApiPieceOpError>((update, loose_conflict))
   })() {
     Err(APOE::Inapplicable(poe)) => {
       PrepareUpdatesBuffer::piece_report_error(
@@ -174,8 +173,13 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
       warn!("api_piece_op ERROR {:?}: {:?}", &form, &err);
       Err(err)?;
     },
-    Ok((PieceUpdate { wrc, log, ops }, unprepared)) => {
-      let by_client = Some((wrc, client, form.cseq));
+    Ok(((PieceUpdate { wrc, log, ops }, unprepared), loose_conflict)) => {
+      let by_client =
+        if let Some(ContinueDespiteConflict) = loose_conflict {
+          None
+        } else {
+          Some((wrc, client, form.cseq))
+        };
       let mut buf = PrepareUpdatesBuffer::new(g,
                                               Some(1 + log.len()));
 
