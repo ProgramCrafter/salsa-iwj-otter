@@ -68,7 +68,8 @@ type ZCoord = string;
 
 type PieceInfo = {
   held : PlayerId | null,
-  cseq : number | null,
+  cseq_main : number | null,
+  cseq_loose: number | null,
   cseq_updatesvg : number | null,
   z : ZCoord,
   zg : Generation,
@@ -248,7 +249,12 @@ function api_piece_x(f: (meth: string, payload: Object) => void,
 		     op: Object) {
   clear_halo(piece,p);
   cseq += 1;
-  p.cseq = cseq;
+  if (loose) {
+    p.cseq_loose = cseq;
+  } else {
+    p.cseq_main = cseq;
+    p.cseq_loose = null;
+  }
   f(meth, {
     ctoken : ctoken,
     piece : piece,
@@ -490,7 +496,8 @@ function some_keydown(e: KeyboardEvent) {
     let p = pieces[piece]!;
     api_piece('k', piece, p, { opname: uo.opname, wrc: uo.wrc });
     if (uo.wrc == 'UpdateSvg') {
-      p.cseq_updatesvg = p.cseq;
+      // No UpdateSvg is loose, so no need to check p.cseq_loose
+      p.cseq_updatesvg = p.cseq_main;
       redisplay_ancillaries(piece,p);
     }
   }
@@ -1978,9 +1985,8 @@ messages.Recorded = <MessageHandler>function
 }
 
 function piece_recorded_cseq(p: PieceInfo, j: { cseq: ClientSeq }) {
-  if (p.cseq != null && j.cseq >= p.cseq) {
-    p.cseq = null;
-  }
+  if (p.cseq_main  != null && j.cseq >= p.cseq_main ) { p.cseq_main  = null; }
+  if (p.cseq_loose != null && j.cseq >= p.cseq_loose) { p.cseq_loose = null; }
 }
 
 messages.RecordedUnpredictable = <MessageHandler>function
@@ -2015,20 +2021,46 @@ update_error_handlers.PieceOpError = <MessageHandler>function
     // Our gen was high enough we we sent this, that it ought to have
     // worked.  Report it as a problem, then.
     add_log_message('Problem manipulating piece: ' + m.error_msg);
-    p.cseq = null; // Well, we don't have anything outstanding now
+    p.cseq_main = null; // Well, we don't have anything outstanding now
+    p.cseq_loose = null;
   }
   handle_piece_update(m.state);
 }
 
 function piece_checkconflict_nrda(piece: PieceId, p: PieceInfo): boolean {
-  if (p.cseq != null) {
-    p.cseq = null;
+  // Our state machine for cseq:
+  //
+  // When we send an update (api_piece_x) we always set cseq.  If the
+  // update is loose we also set cseq_beforeloose.  Whenever we
+  // clear cseq we clear cseq_beforeloose too.
+  //
+  // The result is that if cseq_beforeloose is non-null precisely if
+  // the last op we sent was loose.
+  //
+  // We track separately the last loose, and the last non-loose,
+  // outstanding API request.  (We discard our idea of the last
+  // loose request if we follow it with a non-loose one.)
+  //
+  // So
+  //     cseq_main > cseq_loose         one loose request then some non-loose
+  //     cseq_main, no cseq_loose       just non-loose requests
+  //     no cseq_main, but cseq_loose   just one loose request
+  //     neither                        no outstanding requests
+  //
+  // If our only outstanding update is loose, we ignore a detected
+  // conflict.  We expect the server to send us a proper
+  // (non-Conflict) error later.
+  if (p.cseq_main != null || p.cseq_loose != null) {
     if (drag_pieces.some(function(dp) { return dp.piece == piece; })) {
       console.log('drag end due to conflict');
       drag_end();
     }
+  }
+  if (p.cseq_main != null) {
     add_log_message('Conflict! - simultaneous update');
   }
+  p.cseq_main = null;
+  p.cseq_loose = null;
   return false;
 }
 
