@@ -251,6 +251,7 @@ impl Ctx {
         .release()
 
         .click()
+        .release()
 
         .perform()
         .did("alice, drag out, and re-select")?;
