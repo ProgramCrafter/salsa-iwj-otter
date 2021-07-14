@@ -335,6 +335,7 @@ api_route!{
       let pcs = pri.describe(ioccults,&gs.occults, gpc, ipc);
 
       gpc.held = Some(player);
+      gpc.last_released = default();
 
       let update = PieceUpdateOp::Modify(());
 
@@ -413,6 +414,7 @@ api_route!{
 
     if gpc.held != Some(player) { throw!(Ia::PieceNotHeld) }
     gpc.held = None;
+    gpc.last_released = a.client;
 
     let wrc = if let Some(zlevel) = new_z {
       gpc.zlevel = zlevel;

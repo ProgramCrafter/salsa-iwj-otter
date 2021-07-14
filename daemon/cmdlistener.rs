@@ -1107,6 +1107,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           pos, face,
           xdata: None,
           moveable: default(),
+          last_released: default(),
           rotateable: true,
         };
         let PieceSpecLoaded { p, loaded_via_alias, occultable } =
