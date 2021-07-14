@@ -26,10 +26,12 @@ Bugfixes
       these errors in the user-facing client log window, instead.
     - New discussion of inapplicable-api-op etc. error handling in
       `PROTOCOL.md`, and implementation of the new scheme.
-    - Principled client decisions about what to show the user.
+    - Principled client decisions about what to show the user - which
+      things are errors, which things are to be rported as conflicts, and
+       generally what to put in the user-facing message log.
 
  * Do not re-raise things during drag if the user explicitly lowered
-   them with `l`.
+   them with `l` (since the user grasped them).
 
  * Fix JS exception if user selected multiple pieces which used the same key
    for different purposes.  (Even transiently, for example by selecting
@@ -40,7 +42,7 @@ New features
 ------------
 
  * New general `t` keystroke to bring a piece to the top of the
-   stackingorder.
+   stackin gorder.
 
  * Player hands now show the count of contained pieces.
 
@@ -56,7 +58,7 @@ New features
 Other user-facing changes
 -------------------------
 
- * `vatikan` game spec: Make the two hands at the bottom bigger.
+ * `vatikan` game spec: Make the two hand repositoriess at the bottom bigger.
  * Deck card count uses a monospaced font.
 
 Internal and development/test changes
@@ -76,19 +78,19 @@ Internal and development/test changes
  * Test handling of UI actions which server decides (unpredictably
    from client POV) cannot be performed.
  * Fix some bogus links in internal docs.
- * Add some internal documentation for zcoord module.
- * Improve defensive programming and testing in zcoord module.
- * Add more tests of zcoord module.
+ * Add some internal documentation for the zcoord module.
+ * Improve defensive programming in the zcoord module.
+ * Add more tests of the zcoord module.
  * Tidy up some leftover comments etc.
  * Webdriver tests: check that there were no JS exceptions.
  * Improved debug output in various places (when enabled or in tests).
- * Testing of inapplicable-api-op error handling.
+ * Add in-browser testing of inapplicable-api-op error handling.
  * Typo and formatting fixes in `PROTOCOL.md`.
  * Abolish the incoherent `OnlineError` error type and replace it
    with `Inapplicable` and `Fatal`.
  * New "loose" update (api op) concept to support new regrab feature.
  * Test new regrab feature, and adjust tests to cope with regrab
-   feature's somewhat different reporting of simultaneous-drag-attempt.
+   feature's somewhat different reporting of simultaneous-drag-attempts.
  * Promote some debugging support to otter-base.
  * Fixes to `cargo doc` build.
  * Abolish old incoherent and ununused `conflict_expected` in client JS.
