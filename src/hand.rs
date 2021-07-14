@@ -180,7 +180,7 @@ impl PieceTrait for Hand {
                              count,
                              &gpl.nick)
                   } else {
-                    hformat!("??? {}",
+                    hformat!("{}",
                              &gpl.nick)
                   })?
       }
