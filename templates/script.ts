@@ -1101,7 +1101,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       add_log_message('That piece is pinned to the table.');
       return;
     }
-    grab_clicked(clicked, false);
+    grab_clicked(clicked, !wresting);
     drag_start_prepare(DRAGGING.MAYBE_GRAB);
   } else {
     add_log_message('That piece is held by another player.');
