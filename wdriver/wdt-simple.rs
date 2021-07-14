@@ -250,9 +250,20 @@ impl Ctx {
 
       for got in &gots {
         let conflicts = got.log.find_conflicts();
-        assert_eq!(conflicts.len(),
-                   if got.yes { 0 } else { 1},
-                   "wrong # conflicts {:?}", &conflicts);
+        let helderrs = got.log.iter()
+          .filter(|m| m.contains("piece held by another player"))
+          .cloned().collect_vec();
+
+        dbg!( &conflicts, &helderrs );
+        assert!( conflicts.len() <= 1 );
+        assert!( helderrs .len() <= 1 );
+        if got.yes {
+          assert_eq!( conflicts.len(), 0 );
+          assert_eq!( helderrs .len(), 0 );
+        } else {
+          assert!( conflicts.len() == 1 ||
+                   helderrs .len() == 1 );
+        }
       }
 
       let mut yw = su.w(&y.window)?;
