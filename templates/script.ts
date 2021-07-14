@@ -242,6 +242,7 @@ function api_posted() {
 }
 
 function api_piece_x(f: (meth: string, payload: Object) => void,
+		     loose: boolean,
 		     meth: string,
 		     piece: PieceId, p: PieceInfo,
 		     op: Object) {
@@ -254,12 +255,13 @@ function api_piece_x(f: (meth: string, payload: Object) => void,
     gen : gen,
     cseq : cseq,
     op : op,
+    loose: loose,
   })
 }
 function api_piece(meth: string,
 		   piece: PieceId, p: PieceInfo,
 		   op: Object) {
-  api_piece_x(api_immediate, meth, piece, p, op);
+  api_piece_x(api_immediate, false, meth, piece, p, op);
 }
 
 function svg_element(id: string): SVGGraphicsElement | null {
@@ -1266,7 +1268,7 @@ function drag_mousemove(e: MouseEvent) {
       );
       piece_set_pos_core(tp, x, y);
       tp.queued_moves++;
-      api_piece_x(api_delay, 'm', tpiece,tp, [x, y] );
+      api_piece_x(api_delay, false, 'm', tpiece,tp, [x, y] );
       if (need_redisplay_ancillaries) redisplay_ancillaries(tpiece, tp);
     }
     if (!(dragging & DRAGGING.RAISED)) {
