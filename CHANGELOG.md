@@ -16,13 +16,18 @@ Bugfixes
       some attempts to lower pieces.
     - Fix ordering of lowered pieces.
     - Now we no longer ever raise a piece when you ask to lower it (!)
+    - On page load, use player's view of the Z coordinate for sort
+      order (Z display order) of occulted pieces, not actual Z (!!)
 
  * Overhaul of handling of errors detected when processing client API
-   requests.  It should no longer be possible for the user to cause JS
-   exceptions or other lossage merely by asking to do things which it
-   happens that the server (unbeknownst to user or client script.ts)
-   won't permit.  Report these errors in the user-facing client log
-   window, instead.
+   requests:
+     - It should no longer be possible for the user to cause JS
+       exceptions or other lossage merely by asking to do things which
+       it happens that the server (unbeknownst to user or client
+       script.ts) won't permit.  Report these errors in the
+       user-facing client log window, instead.
+     - New discussion of inapplicable-api-op etc. error handling in
+       `PROTOCOL.md`, and implementation of the new scheme.
 
  * Fix JS exception if you had selected multiple pieces which used the
    same key for different purposes.  (Even transiently, for example by
@@ -45,9 +50,10 @@ New features
    you can now draw a card into your hand in Mao and immediately
    regrab it,
 
-Cosmetic changes
-----------------
+Other user-facing changes
+-------------------------
 
+ * `vatikan` game spec: Make the two hands at the bottom bigger.
  * Deck card count uses a monospaced font.
 
 Internal and development changes
@@ -56,22 +62,35 @@ Internal and development changes
  * Demo game: Add a label to the test hand.
  * Dependencies on tera templating engine slightly rationalised.
  * New jstest facility for running for-browser JS in a nodejs
-   environment with some cheesy mockups.
+   environment with some cheesy mockups.  (New `otter-nodejs-tests`
+   crate; involves running `wasm-bindgen` twice.)
  * Test Z lowering algorithm with new test facility.
  * Maekfile: avoid rebuilding the otter cli over and over again,
    by touching it when we rebuild it.
  * Webdriver tests: pass window size arguments to firefox so we
-   get a window big enough for the provided game specs.
+   get a window big enough for the provided game specs.  Involves
+   wrapper script for `firefox`.  Also Xvfb server screen size.
  * Test handling of UI actions which server decides (unpredictably
    from client POV) cannot be performed.
  * Fix some bogus links in internal docs.
  * Add some internal documentation for zcoord module.
  * Improve defensive programming and testing in zcoord module.
+ * Add more tests of zcoord module.
  * Tidy up some leftover comments etc.
  * Webdriver tests: check that there were no JS exceptions.
  * Improved debug output.
- * `PROTOCOL.md` discussion of impossbile-api-op etc. error handling.
- * Testing of impossible-api-op error handling.
+ * Testing of inapplicable-api-op error handling.
+ * Typo and formatting fixes in `PROTOCOL.md`.
+ * Abolish the incoherent `OnlineError` error type and replace it
+   with `Inapplicable` and `Fatal`.
+ * New "loose" update (api op) concept to support new regrab feature.
+ * Test new regrab feature, and adjust tests to cope with regrab
+   feature's somewhat different reporting of simultaneous-drag-attempt.
+ * Promote some debugging support to otter-base.
+ * Fixes to `cargo doc` build.
+ * Abolish old incoherent and ununused `conflict_expected` in client JS.
+ * Tests do a consistency check of the Z coordinates vs the in-SVG
+   subelement stacking order.
 
 Version 0.7.1 - 2021-06-09
 ==========================
