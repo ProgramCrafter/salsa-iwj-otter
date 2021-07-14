@@ -212,7 +212,7 @@ impl Ctx {
     const MIDHAND: Pos = PosC::new(40, 40);
     const OUTHAND: Pos = PosC::new(20, 20);
 
-    {
+    let bob_gen = {
       let mut w = su.w(&self.bob)?;
 
       w.action_chain()
@@ -232,15 +232,16 @@ impl Ctx {
         .perform()
         .did("bob, setup")?;
 
-      w.synch()?;
-    }
+      w.synch()?
+    };
 
-    {
+    let alice_gen = {
       let pauseable = su.otter_pauseable();
       
       let mut w = su.w(&self.alice)?;
       w.synch()?;
-      let start = w.find_piece(PAWN)?.posw()?;
+      let pawn = w.find_piece(PAWN)?;
+      let start = pawn.posw()?;
 
       let paused = pauseable.pause()?;
 
@@ -258,11 +259,17 @@ impl Ctx {
 
       paused.resume()?;
 
-      let gen = w.synch()?;
-
-      let log = w.retrieve_log(gen)?;
-      assert_eq!( log.find_conflicts(), Vec::<String>::default() );
+      w.synch()?
     };
+
+    for (who, gen) in &[(&self.alice, alice_gen),
+                        (&self.bob,   bob_gen  )] {
+      dbgc!(&who.name);
+      let w = su.w(who)?;
+
+      let log = w.retrieve_log(*gen)?;
+      assert_eq!( log.find_conflicts(), Vec::<String>::new() );
+    }
   }
 }
 
