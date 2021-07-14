@@ -1713,14 +1713,14 @@ type PreparedPieceState = {
 pieceops.ModifyQuiet = <PieceHandler>function
 (piece: PieceId, p: PieceInfo, info: PreparedPieceState) {
   console.log('PIECE UPDATE MODIFY QUIET ',piece,info)
-  piece_modify(piece, p, info, false);
+  piece_modify(piece, p, info);
 }
 
 pieceops.Modify = <PieceHandler>function
 (piece: PieceId, p: PieceInfo, info: PreparedPieceState) {
   console.log('PIECE UPDATE MODIFY LOuD ',piece,info)
   piece_note_moved(piece,p);
-  piece_modify(piece, p, info, false);
+  piece_modify(piece, p, info);
 }
 
 pieceops.Insert = <PieceHandler>function
@@ -1743,7 +1743,7 @@ pieceops.Insert = <PieceHandler>function
   pieces[piece] = p;
   p.uos = info.uos;
   p.queued_moves = 0;
-  piece_modify_core(piece, p, info, false);
+  piece_modify_core(piece, p, info);
 }
 
 pieceops.Delete = <PieceHandler>function
@@ -1770,10 +1770,9 @@ function piece_modify_image(piece: PieceId, p: PieceInfo,
   p.bbox = info.bbox;
 }
 
-function piece_modify(piece: PieceId, p: PieceInfo, info: PreparedPieceState,
-		      conflict_expected: boolean) {
+function piece_modify(piece: PieceId, p: PieceInfo, info: PreparedPieceState) {
   piece_modify_image(piece, p, info);
-  piece_modify_core(piece, p, info, conflict_expected);
+  piece_modify_core(piece, p, info);
 }
 		       
 function piece_set_pos_core(p: PieceInfo, x: number, y: number) {
@@ -1782,8 +1781,7 @@ function piece_set_pos_core(p: PieceInfo, x: number, y: number) {
 }
 
 function piece_modify_core(piece: PieceId, p: PieceInfo,
-			   info: PreparedPieceState,
-			   conflict_expected: boolean) {
+			   info: PreparedPieceState) {
   p.uelem.setAttributeNS(null, "x", info.pos[0]+"");
   p.uelem.setAttributeNS(null, "y", info.pos[1]+"");
   p.held = info.held;
@@ -1795,7 +1793,7 @@ function piece_modify_core(piece: PieceId, p: PieceInfo,
   p.bbox = info.bbox;
   piece_set_zlevel_from(piece,p,info);
   let occregions_changed = occregion_update(piece, p, info);
-  piece_checkconflict_nrda(piece,p,conflict_expected);
+  piece_checkconflict_nrda(piece,p);
   redisplay_ancillaries(piece,p);
   if (occregions_changed) redisplay_held_ancillaries();
   recompute_keybindings();
@@ -1926,14 +1924,14 @@ function pieceid_z_cmp(a: PieceId, b: PieceId) {
 
 pieceops.Move = <PieceHandler>function
 (piece,p, info: Pos ) {
-  piece_checkconflict_nrda(piece,p,false);
+  piece_checkconflict_nrda(piece,p);
   piece_note_moved(piece, p);
   piece_set_pos_core(p, info[0], info[1]);
 }
 
 pieceops.MoveQuiet = <PieceHandler>function
 (piece,p, info: Pos ) {
-  piece_checkconflict_nrda(piece,p,false);
+  piece_checkconflict_nrda(piece,p);
   piece_set_pos_core(p, info[0], info[1]);
 }
 
@@ -1990,7 +1988,7 @@ messages.RecordedUnpredictable = <MessageHandler>function
   let piece = j.piece;
   let p = pieces[piece]!;
   piece_recorded_cseq(p, j);
-  piece_modify(piece, p, j.ns, false);
+  piece_modify(piece, p, j.ns);
 }
 
 messages.Error = <MessageHandler>function
@@ -2022,17 +2020,14 @@ update_error_handlers.PieceOpError = <MessageHandler>function
   handle_piece_update(m.state);
 }
 
-function piece_checkconflict_nrda(piece: PieceId, p: PieceInfo,
-				  conflict_expected: boolean): boolean {
+function piece_checkconflict_nrda(piece: PieceId, p: PieceInfo): boolean {
   if (p.cseq != null) {
     p.cseq = null;
     if (drag_pieces.some(function(dp) { return dp.piece == piece; })) {
       console.log('drag end due to conflict');
       drag_end();
     }
-    if (!conflict_expected) {
-      add_log_message('Conflict! - simultaneous update');
-    }
+    add_log_message('Conflict! - simultaneous update');
   }
   return false;
 }
