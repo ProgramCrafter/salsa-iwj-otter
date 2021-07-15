@@ -84,7 +84,7 @@ xmlparser = "0.13"
 zip="0.5"
 
 enum-map     = { version="1"    , features=["serde"       ] }
-flexi_logger = { version="0.17" , features=["specfile"    ] }
+flexi_logger = { version="0.18" , features=["specfile"    ] }
 image = { version = "0.23", default-features=false, features=["jpeg","png"] }
 index_vec    = { version="0.1.1", features=["serde"       ] }
 mio          = { version="0.7",   features=["os-ext", "os-poll" ] }
