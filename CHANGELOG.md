@@ -110,6 +110,7 @@ Internal docs improvements:
 Build system and dependencies:
 
  * Update many dependencies to new versions.
+ * Tested build with Rust nightly-2021-07-15.
  * Dependencies on tera templating engine slightly rationalised.
  * Maekfile: avoid rebuilding the otter cli over and over again,
    by touching it when we rebuild it.
