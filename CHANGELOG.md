@@ -1,4 +1,4 @@
-Version 0.8.0 - UNRELEASED
+Version 0.7.2 - UNRELEASED
 ==========================
 
 Bugfixes
@@ -67,7 +67,8 @@ Other user-facing changes
 Internal and development/test changes
 -------------------------------------
 
- New tests (and new checks in existing tests):
+New tests (and new checks in existing tests):
+
  * Test Z lowering algorithm with new test facility.
  * Test handling of UI actions which server decides (unpredictably
    from client POV) cannot be performed.
@@ -79,7 +80,8 @@ Internal and development/test changes
  * Tests do a consistency check of the Z coordinates vs the in-SVG
    subelement stacking order.
 
- Testing, supporting changes:
+Testing, supporting changes:
+
  * New jstest facility for running for-browser JS in a nodejs
    environment with some cheesy mockups.  (New `otter-nodejs-tests`
    crate; involves a separate invocation of `wasm-bindgen`.)
@@ -87,7 +89,8 @@ Internal and development/test changes
    get a window big enough for the provided game specs.  Involves
    wrapper script for `firefox`.  Also Xvfb server screen size.
 
- Internal and protocol improvements:
+Internal and protocol improvements:
+
  * New "loose" update (api op) concept to support new regrab feature.
  * Improve defensive programming in the zcoord module.
  * Abolish the incoherent `OnlineError` error type and replace it
@@ -96,14 +99,16 @@ Internal and development/test changes
  * Improved debug output in various places (when enabled or in tests).
  * Promote some debugging support to otter-base.
 
- Internal docs improvements:
+Internal docs improvements:
+
  * Fix some bogus links in internal docs.
  * Add some more internal documentation to the zcoord module.
  * Tidy up some leftover comments etc.
  * Typo and formatting fixes in `PROTOCOL.md`.
  * Fixes to `cargo doc` build.
 
- Build system and dependencies:
+Build system and dependencies:
+
  * Update many dependencies to new versions.
  * Dependencies on tera templating engine slightly rationalised.
  * Maekfile: avoid rebuilding the otter cli over and over again,
