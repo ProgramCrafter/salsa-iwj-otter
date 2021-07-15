@@ -62,42 +62,52 @@ Other user-facing changes
 
  * `vatikan` game spec: Make the two hand repositoriess at the bottom bigger.
  * Deck card count uses a monospaced font.
+ * Demo game: Add a label to the test hand.
 
 Internal and development/test changes
---------------------------------
+-------------------------------------
 
- * Demo game: Add a label to the test hand.
- * Dependencies on tera templating engine slightly rationalised.
+ New tests (and new checks in existing tests):
+ * Test Z lowering algorithm with new test facility.
+ * Test handling of UI actions which server decides (unpredictably
+   from client POV) cannot be performed.
+ * Add more tests of the zcoord module.
+ * Webdriver tests: check that there were no JS exceptions.
+ * Add in-browser testing of inapplicable-api-op error handling.
+ * Test new regrab feature, and adjust tests to cope with regrab
+   feature's somewhat different reporting of simultaneous-drag-attempts.
+ * Tests do a consistency check of the Z coordinates vs the in-SVG
+   subelement stacking order.
+
+ Testing, supporting changes:
  * New jstest facility for running for-browser JS in a nodejs
    environment with some cheesy mockups.  (New `otter-nodejs-tests`
-   crate; involves running `wasm-bindgen` twice.)
- * Test Z lowering algorithm with new test facility.
- * Maekfile: avoid rebuilding the otter cli over and over again,
-   by touching it when we rebuild it.
+   crate; involves a separate invocation of `wasm-bindgen`.)
  * Webdriver tests: pass window size arguments to firefox so we
    get a window big enough for the provided game specs.  Involves
    wrapper script for `firefox`.  Also Xvfb server screen size.
- * Test handling of UI actions which server decides (unpredictably
-   from client POV) cannot be performed.
- * Fix some bogus links in internal docs.
- * Add some internal documentation for the zcoord module.
+
+ Internal and protocol improvements:
+ * New "loose" update (api op) concept to support new regrab feature.
  * Improve defensive programming in the zcoord module.
- * Add more tests of the zcoord module.
- * Tidy up some leftover comments etc.
- * Webdriver tests: check that there were no JS exceptions.
- * Improved debug output in various places (when enabled or in tests).
- * Add in-browser testing of inapplicable-api-op error handling.
- * Typo and formatting fixes in `PROTOCOL.md`.
  * Abolish the incoherent `OnlineError` error type and replace it
    with `Inapplicable` and `Fatal`.
- * New "loose" update (api op) concept to support new regrab feature.
- * Test new regrab feature, and adjust tests to cope with regrab
-   feature's somewhat different reporting of simultaneous-drag-attempts.
- * Promote some debugging support to otter-base.
- * Fixes to `cargo doc` build.
  * Abolish old incoherent and ununused `conflict_expected` in client JS.
- * Tests do a consistency check of the Z coordinates vs the in-SVG
-   subelement stacking order.
+ * Improved debug output in various places (when enabled or in tests).
+ * Promote some debugging support to otter-base.
+
+ Internal docs improvements:
+ * Fix some bogus links in internal docs.
+ * Add some more internal documentation to the zcoord module.
+ * Tidy up some leftover comments etc.
+ * Typo and formatting fixes in `PROTOCOL.md`.
+ * Fixes to `cargo doc` build.
+
+ Build system and dependencies:
+ * Dependencies on tera templating engine slightly rationalised.
+ * Maekfile: avoid rebuilding the otter cli over and over again,
+   by touching it when we rebuild it.
+
 
 Version 0.7.1 - 2021-06-09
 ==========================
