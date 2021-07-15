@@ -104,6 +104,7 @@ Internal and development/test changes
  * Fixes to `cargo doc` build.
 
  Build system and dependencies:
+ * Update many dependencies to new versions.
  * Dependencies on tera templating engine slightly rationalised.
  * Maekfile: avoid rebuilding the otter cli over and over again,
    by touching it when we rebuild it.
