@@ -11,11 +11,8 @@ pub trait Timed {
 pub trait TimedRead : Timed + Read  { }
 pub trait TimedWrite: Timed + Write { }
 
-use io::ErrorKind as EK;
-
 use nix::fcntl::{fcntl, OFlag, FcntlArg};
 use nix::Error as NE;
-use nix::errno::Errno;
 
 use mio::Token;
 
@@ -55,18 +52,6 @@ impl AsRawFd for Fd {
   fn as_raw_fd(&self) -> RawFd { self.0 }
 }
 
-#[ext(pub)]
-impl nix::Error {
-  fn as_ioe(self) -> io::Error {
-    match self {
-      NE::Sys(e) => return io::Error::from_raw_os_error(e as i32),
-      NE::UnsupportedOperation => EK::Unsupported,
-      NE::InvalidPath          => EK::InvalidData,
-      NE::InvalidUtf8          => EK::InvalidData,
-    }.into()
-  }
-}
-
 impl<RW> TimedFd<RW> where RW: TimedFdReadWrite {
   /// Takes ownership of the fd
   ///
@@ -82,7 +67,7 @@ impl<RW> TimedFd<RW> where RW: TimedFdReadWrite {
   #[throws(io::Error)]
   fn from_fd(fd: Fd) -> Self {
     fcntl(fd.as_raw_fd(), FcntlArg::F_SETFL(OFlag::O_NONBLOCK))
-      .map_err(|e| e.as_ioe())?;
+      .map_err(|e| io::Error::from(e))?;
 
     let poll = mio::Poll::new()?;
     poll.registry().register(
@@ -116,9 +101,9 @@ impl<RW> TimedFd<RW> where RW: TimedFdReadWrite {
         if event.token() == Token(0) {
           match f(self.fd.as_raw_fd()) {
             Ok(got) => { break 'again got },
-            Err(NE::Sys(Errno::EINTR)) => continue 'again,
-            Err(NE::Sys(Errno::EAGAIN)) => break,
-            Err(ne) => throw!(ne.as_ioe()),
+            Err(NE::EINTR) => continue 'again,
+            Err(NE::EAGAIN) => break,
+            Err(ne) => throw!(ne),
           }
         }
       }

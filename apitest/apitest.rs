@@ -328,10 +328,9 @@ pub mod cleanup_notify {
   use anyhow::Context;
   use fehler::{throw, throws};
   use libc::_exit;
-  use nix::errno::Errno::*;
   use nix::{unistd::*, fcntl::OFlag};
   use nix::sys::signal::*;
-  use nix::Error::Sys;
+  use nix::Error as NE;
   use void::Void;
   use std::io;
   use std::os::unix::io::RawFd;
@@ -353,7 +352,7 @@ pub mod cleanup_notify {
       match nix::unistd::read(fd, &mut buf) {
         Ok(0) => break,
         Ok(_) => throw!(io::Error::from_raw_os_error(libc::EINVAL)),
-        Err(Sys(EINTR)) => continue,
+        Err(NE::EINTR) => continue,
         _ => throw!(io::Error::last_os_error()),
       }
     }
@@ -398,7 +397,7 @@ pub mod cleanup_notify {
               for fd in 2.. {
                 if fd == notify_writing_end { continue }
                 let r = close(fd);
-                if fd > writing_end && matches!(r, Err(Sys(EBADF))) {
+                if fd > writing_end && matches!(r, Err(NE::EBADF)) {
                   break;
                 }                  
               }
