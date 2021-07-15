@@ -6,7 +6,7 @@
 name="otter-nodejs-tests"
 description="Otter game system; JavaScript out-of-browser test support."
 
-version="0.7.1"
+version="0.7.2"
 license="AGPL-3.0-or-later"
 edition="2018"
 homepage="https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/"
@@ -27,10 +27,10 @@ path="jst-lower.rs"
 [dependencies]
 
 otter.path=".."
-otter.version="=0.7.1"
+otter.version="=0.7.2"
 
 otter-api-tests.path="../apitest"
-otter-api-tests.version="=0.7.1"
+otter-api-tests.version="=0.7.2"
 
 indexmap = { version = "1.6", features=["serde"] }
 
