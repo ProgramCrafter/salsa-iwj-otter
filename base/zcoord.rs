@@ -939,6 +939,16 @@ mod test {
     it.nxt("3333333334_0000000030");
     assert_eq!(it.i.next(), None);
 
+    let x = bf("3333333333_vvvvvvvvo0").clone_mut();
+    let y = bf("3333333334_0000000030").clone_mut();
+    let i = x.range_upto(&y, 4).unwrap();
+    let mut it = It { i, last: x.repack().unwrap() };
+    it.nxt("3333333333_vvvvvvvvq6");
+    it.nxt("3333333333_vvvvvvvvsc");
+    it.nxt("3333333333_vvvvvvvvui");
+    it.nxt("3333333334_000000000o");
+    assert_eq!(it.i.next(), None);
+
     let x = bf("1000000000").clone_mut();
     let y = bf("2000000000").clone_mut();
     let i = x.range_upto(&y, 3).unwrap();
