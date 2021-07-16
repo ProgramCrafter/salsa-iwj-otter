@@ -925,7 +925,7 @@ mod test {
         let got = self.i.next().unwrap();
         assert_eq!(got.to_string(), exp);
         assert_eq!(got, bf(exp));
-        assert!(got > self.last);
+        assert!(got > self.last, "{:?} <= {:?} !", &got, &self.last);
         self.last = got.clone();
       }
     }
