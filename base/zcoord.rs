@@ -927,6 +927,12 @@ mod test {
       last: ZCoord,
     }
     impl It {
+      fn new(x: &str, y: &str, count: u32) -> Self {
+        let x = mk(x);
+        let y = mk(y);
+        let i = x.range_upto(&y, count).unwrap();
+        It { i, last: x.repack().unwrap() }
+      }
       fn nxt(&mut self, exp: &str) {
         let got = self.i.next().unwrap();
         assert_eq!(got.to_string(), exp);
@@ -935,38 +941,30 @@ mod test {
         self.last = got.clone();
       }
     }
-    let x = mk("3333333333_vvvvvvvvv0");
-    let y = mk("3333333334_0000000040");
-    let i = x.range_upto(&y, 4).unwrap();
-    let mut it = It { i, last: x.repack().unwrap() };
+    let mut it = It::new("3333333333_vvvvvvvvv0",
+                         "3333333334_0000000040", 4);
     it.nxt("3333333334");
     it.nxt("3333333334_0000000010");
     it.nxt("3333333334_0000000020");
     it.nxt("3333333334_0000000030");
     assert_eq!(it.i.next(), None);
 
-    let x = mk("3333333333_vvvvvvvvo0");
-    let y = mk("3333333334_0000000030");
-    let i = x.range_upto(&y, 4).unwrap();
-    let mut it = It { i, last: x.repack().unwrap() };
+    let mut it = It::new("3333333333_vvvvvvvvo0",
+                         "3333333334_0000000030", 4);
     it.nxt("3333333333_vvvvvvvvq6");
     it.nxt("3333333333_vvvvvvvvsc");
     it.nxt("3333333333_vvvvvvvvui");
     it.nxt("3333333334_000000000o");
     assert_eq!(it.i.next(), None);
 
-    let x = mk("aaaaaaaaaa_vvvvvvvvvv");
-    let y = mk("aaaaaaaaab"           );
-    let i = x.range_upto(&y, 2).unwrap();
-    let mut it = It { i, last: x.repack().unwrap() };
+    let mut it = It::new("aaaaaaaaaa_vvvvvvvvvv",
+                         "aaaaaaaaab"           , 2);
     it.nxt("aaaaaaaaaa_vvvvvvvvvv_alalalalal");
     it.nxt("aaaaaaaaaa_vvvvvvvvvv_lalalalala");
     assert_eq!(it.i.next(), None);
 
-    let x = mk("1000000000");
-    let y = mk("2000000000");
-    let i = x.range_upto(&y, 3).unwrap();
-    let mut it = It { i, last: x.repack().unwrap() };
+    let mut it = It::new("1000000000",
+                         "2000000000", 3);
     it.nxt("1800000000");
     it.nxt("1g00000000");
     it.nxt("1o00000000");
