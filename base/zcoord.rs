@@ -935,8 +935,8 @@ mod test {
         self.last = got.clone();
       }
     }
-    let x = zc("3333333333_vvvvvvvvv0").clone_mut();
-    let y = zc("3333333334_0000000040").clone_mut();
+    let x = mk("3333333333_vvvvvvvvv0");
+    let y = mk("3333333334_0000000040");
     let i = x.range_upto(&y, 4).unwrap();
     let mut it = It { i, last: x.repack().unwrap() };
     it.nxt("3333333334");
@@ -945,8 +945,8 @@ mod test {
     it.nxt("3333333334_0000000030");
     assert_eq!(it.i.next(), None);
 
-    let x = zc("3333333333_vvvvvvvvo0").clone_mut();
-    let y = zc("3333333334_0000000030").clone_mut();
+    let x = mk("3333333333_vvvvvvvvo0");
+    let y = mk("3333333334_0000000030");
     let i = x.range_upto(&y, 4).unwrap();
     let mut it = It { i, last: x.repack().unwrap() };
     it.nxt("3333333333_vvvvvvvvq6");
@@ -955,16 +955,16 @@ mod test {
     it.nxt("3333333334_000000000o");
     assert_eq!(it.i.next(), None);
 
-    let x = zc("aaaaaaaaaa_vvvvvvvvvv").clone_mut();
-    let y = zc("aaaaaaaaab"           ).clone_mut();
+    let x = mk("aaaaaaaaaa_vvvvvvvvvv");
+    let y = mk("aaaaaaaaab"           );
     let i = x.range_upto(&y, 2).unwrap();
     let mut it = It { i, last: x.repack().unwrap() };
     it.nxt("aaaaaaaaaa_vvvvvvvvvv_alalalalal");
     it.nxt("aaaaaaaaaa_vvvvvvvvvv_lalalalala");
     assert_eq!(it.i.next(), None);
 
-    let x = zc("1000000000").clone_mut();
-    let y = zc("2000000000").clone_mut();
+    let x = mk("1000000000");
+    let y = mk("2000000000");
     let i = x.range_upto(&y, 3).unwrap();
     let mut it = It { i, last: x.repack().unwrap() };
     it.nxt("1800000000");
