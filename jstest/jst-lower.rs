@@ -60,6 +60,18 @@ pub struct TestsAccumulator {
   tera: tera::Tera,
 }
 
+pub trait ZUpdateSpec: Debug + Clone {
+  fn next(&self, last: &mut zcoord::Mutable) -> ZCoord;
+}
+
+#[derive(Debug,Copy,Clone)]
+pub struct ZUpdateAuto;
+impl ZUpdateSpec for ZUpdateAuto {
+  fn next(&self, last: &mut zcoord::Mutable) -> ZCoord {
+    last.increment().unwrap()
+  }
+}
+
 impl Test {
   #[throws(Explode)]
   pub fn check(&self) {
@@ -256,18 +268,21 @@ impl TestsAccumulator {
   }
     
   #[throws(Explode)]
-  pub fn add_test<T>(&mut self, name: &str,
-                     pieces: Vec<StartPieceSpec>,
-                     targets: Vec<T>) where T: TryInto<Vpid> + Copy + Debug {
+  pub fn add_test<T, Z>(&mut self, name: &str, zupd: Z,
+                        pieces: Vec<StartPieceSpec>,
+                        targets: Vec<T>)
+  where T: TryInto<Vpid> + Copy + Debug,
+        Z: ZUpdateSpec,
+  {
     if let Some(only) = &self.tests.only {
       if name != only { return; }
     }
+    let mut zlast = ZCoord::default().clone_mut();
 
-    let mut zm = ZCoord::default().clone_mut();
     let pieces: IndexMap<Vpid,StartPiece> = pieces.into_iter().map(
       |StartPieceSpec { id, pinned, moveable }| {
         let id = id.try_into().unwrap();
-        let z = zm.increment().unwrap();
+        let z = zupd.next(&mut zlast);
         (id, StartPiece { pinned, moveable, z })
       }
     ).collect();
@@ -322,7 +337,7 @@ impl TestsAccumulator {
     ).enumerate() {
       if targets.is_empty() { continue }
       let name = format!("exhaustive-{:02x}", ti);
-      self.add_test(&name,pieces, targets)?;
+      self.add_test(&name, ZUpdateAuto, pieces, targets)?;
     }
   }
 }
@@ -348,14 +363,14 @@ fn main() {
 
   let mut ta = TestsAccumulator::new(&opts)?;
 
-  ta.add_test("simple", vec![
+  ta.add_test("simple", ZUpdateAuto, vec![
     sp!("1.1", false, Yes),
     sp!("2.1", false, Yes),
   ], vec![
     "2.1",
   ])?;
 
-  ta.add_test("pair", vec![
+  ta.add_test("pair", ZUpdateAuto, vec![
     sp!("1.1", false, Yes),
     sp!("2.1", false, Yes),
     sp!("3.1", false, Yes),
@@ -364,7 +379,7 @@ fn main() {
     "2.1",
   ])?;
 
-  ta.add_test("found-2021-07-07-raises", vec![
+  ta.add_test("found-2021-07-07-raises", ZUpdateAuto, vec![
     sp!( "87.7", false, No),
     sp!( "81.7", false, Yes),
     sp!("110.7", false, Yes), // HELD 1#1
