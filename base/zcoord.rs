@@ -473,7 +473,7 @@ impl Mutable {
     IteratorCore { current: self, aso, mr: MutateFirst }
   }
   #[throws(LogicError)]
-  /// Iterator producing a half-open range, `[a, b)`
+  /// Iterator producing an open range, `<a, b>`
   pub fn some_range(a: Option<&Mutable>, b: Option<&Mutable>,
                     count: RangeCount) -> BoxedIterator {
     fn mk<T:'static + Debug + Iterator<Item=ZCoord>>(x: T) -> BoxedIterator
