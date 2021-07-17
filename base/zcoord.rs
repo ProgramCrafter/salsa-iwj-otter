@@ -955,6 +955,14 @@ mod test {
     it.nxt("3333333334_000000000o");
     assert_eq!(it.i.next(), None);
 
+    let x = bf("aaaaaaaaaa_vvvvvvvvvv").clone_mut();
+    let y = bf("aaaaaaaaab"           ).clone_mut();
+    let i = x.range_upto(&y, 2).unwrap();
+    let mut it = It { i, last: x.repack().unwrap() };
+    it.nxt("aaaaaaaaaa_vvvvvvvvvv_alalalalal");
+    it.nxt("aaaaaaaaaa_vvvvvvvvvv_lalalalala");
+    assert_eq!(it.i.next(), None);
+
     let x = bf("1000000000").clone_mut();
     let y = bf("2000000000").clone_mut();
     let i = x.range_upto(&y, 3).unwrap();
