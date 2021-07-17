@@ -382,8 +382,10 @@ impl Mutable {
     let mut current = a.clone();
     let mut borrowing = false;
     let aso = 'ok: loop { for i in 0.. {
-      if i >= a.limbs.len() && i >= b.limbs.len() {
+      if i > a.limbs.len() && i > b.limbs.len() {
 	// Oh actually these numbers are equal!
+        // (We have to tolerate one limb eyond each number, because possibly
+        // we had to borrow and add a limb to the longer number.)
 	throw!(RangeImpossible::Empty);
       }
       //dbgc!(&a, &b, &count, i, &current, borrowing);
@@ -392,7 +394,11 @@ impl Mutable {
 
       let la = a.limb_val_lookup(i);
       let lb = b.limb_val_lookup(i);
-      if la == lb { continue }
+      if la == lb && ! borrowing {
+        // We have not yet found any difference between these numbers
+        // (If we had but it wasn't enough, `borrowing` would be `true`.
+        continue
+      }
 
       let wantgaps = count+1;
       let avail = (lb.primitive() as i64) - (la.primitive() as i64)
