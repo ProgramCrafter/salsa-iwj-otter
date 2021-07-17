@@ -402,7 +402,7 @@ impl Mutable {
 
       if avail < 2 {
         // Only 1 difference in this limb and the next.  We are
-        // goint to have to borrow, and, later, add with carry.
+        // going to have to borrow, and, later, add with carry.
         borrowing = true;
         continue;
       }
