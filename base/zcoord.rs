@@ -969,7 +969,22 @@ mod test {
     it.nxt("1g00000000");
     it.nxt("1o00000000");
     assert_eq!(it.i.next(), None);
-  }
+
+    assert_eq!(mk             ("aaaaaaaaaa_vvvvvvvvvv")
+               .range_upto(&mk("aaaaaaaaaa_vvvvvvvvvv"), 4)
+               .unwrap_err(),
+               RangeImpossible::Empty);
+ 
+    assert_eq!(mk             ("0000000001")
+               .range_upto(&mk("0000000001"), 4)
+               .unwrap_err(),
+               RangeImpossible::Empty);
+
+    assert_eq!(mk             ("0000000002")
+               .range_upto(&mk("0000000001"), 4)
+               .unwrap_err(),
+               RangeImpossible::Backwards);
+ }
 
   #[test]
   fn some_range() {
