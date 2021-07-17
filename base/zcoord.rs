@@ -785,8 +785,8 @@ mod test {
   use std::collections::hash_map::DefaultHasher;
   use std::mem;
 
-  fn bf(s: &str) -> ZCoord { ZCoord::from_str(s).unwrap() }
-  fn mk(s: &str) -> super::Mutable { bf(s).clone_mut() }
+  fn zc(s: &str) -> ZCoord { ZCoord::from_str(s).unwrap() }
+  fn mk(s: &str) -> super::Mutable { zc(s).clone_mut() }
 
   #[test]
   fn bfparse() {
@@ -835,11 +835,11 @@ mod test {
 
   #[test]
   fn inequality() {
-    assert!( bf("gg0123abcd_0123456789") <
-             bf("gg0123abcd_012345678a") );
+    assert!( zc("gg0123abcd_0123456789") <
+             zc("gg0123abcd_012345678a") );
     
-    assert!( bf("gg0123abcd") <
-             bf("gg0123abcd_012345678a") );
+    assert!( zc("gg0123abcd") <
+             zc("gg0123abcd_012345678a") );
   }
 
   #[test]
@@ -912,12 +912,12 @@ mod test {
   #[test]
   fn iter() {
     let mut m = mk("000000000a").iter(Increment);
-    assert_eq!( m.next(), Some(bf("000100000a")) );
-    assert_eq!( m.next(), Some(bf("000200000a")) );
+    assert_eq!( m.next(), Some(zc("000100000a")) );
+    assert_eq!( m.next(), Some(zc("000200000a")) );
 
     let mut m = mk("000000000a").iter(Decrement);
-    assert_eq!( m.next(), Some(bf("0000000009_vvvvvvvvvv_vvvuvvvvvv")) );
-    assert_eq!( m.next(), Some(bf("0000000009_vvvvvvvvvv_vvvtvvvvvv")) );
+    assert_eq!( m.next(), Some(zc("0000000009_vvvvvvvvvv_vvvuvvvvvv")) );
+    assert_eq!( m.next(), Some(zc("0000000009_vvvvvvvvvv_vvvtvvvvvv")) );
   }
 
   #[test]
@@ -930,13 +930,13 @@ mod test {
       fn nxt(&mut self, exp: &str) {
         let got = self.i.next().unwrap();
         assert_eq!(got.to_string(), exp);
-        assert_eq!(got, bf(exp));
+        assert_eq!(got, zc(exp));
         assert!(got > self.last, "{:?} <= {:?} !", &got, &self.last);
         self.last = got.clone();
       }
     }
-    let x = bf("3333333333_vvvvvvvvv0").clone_mut();
-    let y = bf("3333333334_0000000040").clone_mut();
+    let x = zc("3333333333_vvvvvvvvv0").clone_mut();
+    let y = zc("3333333334_0000000040").clone_mut();
     let i = x.range_upto(&y, 4).unwrap();
     let mut it = It { i, last: x.repack().unwrap() };
     it.nxt("3333333334");
@@ -945,8 +945,8 @@ mod test {
     it.nxt("3333333334_0000000030");
     assert_eq!(it.i.next(), None);
 
-    let x = bf("3333333333_vvvvvvvvo0").clone_mut();
-    let y = bf("3333333334_0000000030").clone_mut();
+    let x = zc("3333333333_vvvvvvvvo0").clone_mut();
+    let y = zc("3333333334_0000000030").clone_mut();
     let i = x.range_upto(&y, 4).unwrap();
     let mut it = It { i, last: x.repack().unwrap() };
     it.nxt("3333333333_vvvvvvvvq6");
@@ -955,16 +955,16 @@ mod test {
     it.nxt("3333333334_000000000o");
     assert_eq!(it.i.next(), None);
 
-    let x = bf("aaaaaaaaaa_vvvvvvvvvv").clone_mut();
-    let y = bf("aaaaaaaaab"           ).clone_mut();
+    let x = zc("aaaaaaaaaa_vvvvvvvvvv").clone_mut();
+    let y = zc("aaaaaaaaab"           ).clone_mut();
     let i = x.range_upto(&y, 2).unwrap();
     let mut it = It { i, last: x.repack().unwrap() };
     it.nxt("aaaaaaaaaa_vvvvvvvvvv_alalalalal");
     it.nxt("aaaaaaaaaa_vvvvvvvvvv_lalalalala");
     assert_eq!(it.i.next(), None);
 
-    let x = bf("1000000000").clone_mut();
-    let y = bf("2000000000").clone_mut();
+    let x = zc("1000000000").clone_mut();
+    let y = zc("2000000000").clone_mut();
     let i = x.range_upto(&y, 3).unwrap();
     let mut it = It { i, last: x.repack().unwrap() };
     it.nxt("1800000000");
@@ -994,7 +994,7 @@ mod test {
         let got_s = got_s.as_ref().map(|s| s.as_str());
         assert_eq!(got_s, exp);
         if let (Some(got), Some(exp)) = (&got, &exp) {
-          assert_eq!(got, &bf(exp));
+          assert_eq!(got, &zc(exp));
           if let Some(last) = &self.last { assert!(got > last); }
         }
         self.last = got.clone();
