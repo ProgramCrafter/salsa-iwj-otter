@@ -353,7 +353,9 @@ impl TestsAccumulator {
     ).collect_vec();
 
     let pieces_configs = ids.iter().cloned().map(|id| {
-      [false,true].iter().cloned().map( move |bottom| {
+      iproduct!(
+        [false,true].iter().cloned()
+      ).map( move |bottom| {
         StartPieceSpec {
           id,
           pinned: bottom,
