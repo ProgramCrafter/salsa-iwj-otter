@@ -77,6 +77,18 @@ impl ZUpdateSpec {
   }
 }
 
+pub struct ZLevelShow<'z>(pub &'z ZLevel);
+impl Display for ZLevelShow<'_> {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut Formatter) {
+    write!(f, "{:<20} {:6}", self.0.z.as_str(), self.0.zg)?;
+  }
+}
+#[ext(pub)]
+impl ZLevel {
+  fn show(&self) -> ZLevelShow<'_> { ZLevelShow(self) }
+}
+
 impl Test {
   #[throws(Explode)]
   pub fn check(&self) {
@@ -129,17 +141,16 @@ impl Test {
     let old = sorted(&|p: &PieceCollated| p.old_z);
     let new = sorted(&|p: &PieceCollated| p.new_z);
     for (o, n) in izip!(&old, &new).rev() {
-      let pr = |p: &PieceCollated| {
-        print!("    {:5} {}{}{} ",
+      let pr = |p: &PieceCollated, zl: &ZLevel| {
+        print!("    {:5} {}{}{} {}",
                 p.id.to_string(),
                 if p.target  { "T" } else { "_" },
                 if p.heavy   { "H" } else { "_" },
-                if p.updated { "U" } else { "_" });
+                if p.updated { "U" } else { "_" },
+                zl.show());
       };
-      pr(o);
-      print!("{:<20} {:6}    ", o.old_z.z.as_str(), o.old_z.zg);
-      pr(n);
-      println!("{:<20} {:6}"        , n.new_z.z.as_str(), n.new_z.zg);
+      pr(o, &o.old_z); print!("    ");
+      pr(n, &n.new_z); println!("");
     }
 
     // light targets are in same stacking order as before
@@ -299,11 +310,11 @@ impl TestsAccumulator {
 
     println!("-------------------- {} --------------------", name);
     for (id,p) in pieces.iter().rev() {
-      println!("    {:5} {}{}  {:<20} {:6}",
+      println!("    {:5} {}{}  {}",
                 id.to_string(),
                 if targets.contains(id) { "T" } else { "_" },
                 if p.heavy()            { "H" } else { "_" },
-                p.zlevel.z.as_str(), p.zlevel.zg);
+                p.zlevel.show());
     }
 
     let test = Test {
