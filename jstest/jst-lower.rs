@@ -35,7 +35,7 @@ macro_rules! sp {
 pub struct StartPiece {
   pinned: bool,
   moveable: PieceMoveable,
-  z: ZCoord,
+  zlevel: ZLevel,
 }
 
 #[derive(Debug,Clone,Default)]
@@ -61,14 +61,14 @@ pub struct TestsAccumulator {
 }
 
 pub trait ZUpdateSpec: Debug + Clone {
-  fn next(&self, last: &mut zcoord::Mutable) -> ZCoord;
+  fn next(&self, last: &mut zcoord::Mutable) -> ZLevel;
 }
 
 #[derive(Debug,Copy,Clone)]
 pub struct ZUpdateAuto;
 impl ZUpdateSpec for ZUpdateAuto {
-  fn next(&self, last: &mut zcoord::Mutable) -> ZCoord {
-    last.increment().unwrap()
+  fn next(&self, last: &mut zcoord::Mutable) -> ZLevel {
+    ZLevel { z: last.increment().unwrap(), zg: Generation(1000) }
   }
 }
 
@@ -77,8 +77,8 @@ impl Test {
   pub fn check(&self) {
     println!("-------------------- {} --------------------", &self.name);
 
-    let mut updated: HashMap<Vpid, ZCoord>
-      = default();
+    let mut updated: HashMap<Vpid, ZLevel> = default();
+    let mut zg = Generation(100_000);
 
     for l in BufReader::new(
       fs::File::open(format!("{}.did",self.name))?
@@ -88,25 +88,27 @@ impl Test {
       assert_eq!(op, "setz");
       let id = id.try_into()?;
       let z = z.parse()?;
-      let was = updated.insert(id, z);
+      let zlevel = ZLevel { z, zg };
+      zg.increment();
+      let was = updated.insert(id, zlevel);
       assert!(was.is_none(), "{:?}", id);
     }
 
     #[derive(Debug)]
     struct PieceCollated<'o,'n> {
       id: Vpid,
-      old_z: &'o ZCoord,
-      new_z: &'n ZCoord,
+      old_z: &'o ZLevel,
+      new_z: &'n ZLevel,
       target: bool,
       heavy: bool,
       updated: bool,
     }
 
     let coll = self.pieces.iter().map(|(&id, start)| {
-      let old_z = &start.z;
+      let old_z = &start.zlevel;
       let new_z = updated.get(&id);
       let updated = new_z.is_some();
-      let new_z = new_z.unwrap_or(&start.z);
+      let new_z = new_z.unwrap_or(&start.zlevel);
       PieceCollated {
         id, new_z, old_z, updated,
         heavy: start.heavy(),
@@ -130,9 +132,9 @@ impl Test {
                 if p.updated { "U" } else { "_" });
       };
       pr(o);
-      print!("{:<20}    ", o.old_z.as_str());
+      print!("{:<20} {:6}    ", o.old_z.z.as_str(), o.old_z.zg);
       pr(n);
-      println!("{}"        , n.new_z.as_str());
+      println!("{:<20} {:6}"        , n.new_z.z.as_str(), n.new_z.zg);
     }
 
     // light targets are in same stacking order as before
@@ -282,8 +284,8 @@ impl TestsAccumulator {
     let pieces: IndexMap<Vpid,StartPiece> = pieces.into_iter().map(
       |StartPieceSpec { id, pinned, moveable }| {
         let id = id.try_into().unwrap();
-        let z = zupd.next(&mut zlast);
-        (id, StartPiece { pinned, moveable, z })
+        let zlevel = zupd.next(&mut zlast);
+        (id, StartPiece { pinned, moveable, zlevel })
       }
     ).collect();
 
@@ -293,11 +295,11 @@ impl TestsAccumulator {
 
     println!("-------------------- {} --------------------", name);
     for (id,p) in pieces.iter().rev() {
-      println!("    {:5} {}{}  {}",
+      println!("    {:5} {}{}  {:<20} {:6}",
                 id.to_string(),
                 if targets.contains(id) { "T" } else { "_" },
                 if p.heavy()            { "H" } else { "_" },
-                p.z.as_str());
+                p.zlevel.z.as_str(), p.zlevel.zg);
     }
 
     let test = Test {
@@ -423,7 +425,8 @@ pieces = {
   '{{ p.0 }}': {
     pinned: {{ p.1.pinned }},
     moveable: '{{ p.1.moveable }}',
-    z: '{{ p.1.z }}',
+    z: '{{ p.1.zlevel.z }}',
+    zg: '{{ p.1.zlevel.zg }}',
   },
 {% endfor -%}
 }
