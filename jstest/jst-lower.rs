@@ -98,7 +98,7 @@ pub struct ZLevelShow<'z>(pub &'z ZLevel);
 impl Display for ZLevelShow<'_> {
   #[throws(fmt::Error)]
   fn fmt(&self, f: &mut Formatter) {
-    write!(f, "{:<20} {:6}", self.0.z.as_str(), self.0.zg)?;
+    write!(f, "{:<21} {:6}", self.0.z.as_str(), self.0.zg)?;
   }
 }
 #[ext(pub)]
@@ -159,7 +159,7 @@ impl Test {
     let new = sorted(&|p: &PieceCollated| p.new_z);
     for (o, n) in izip!(&old, &new).rev() {
       let pr = |p: &PieceCollated, zl: &ZLevel| {
-        print!("    {:5} {}{}{} {}",
+        print!("    {:6} {}{}{} {}",
                 p.id.to_string(),
                 if p.target  { "T" } else { "_" },
                 if p.heavy   { "H" } else { "_" },
@@ -328,7 +328,7 @@ impl TestsAccumulator {
 
     println!("-------------------- {} --------------------", name);
     for (id,p) in pieces.iter().rev() {
-      println!("    {:5} {}{}  {}",
+      println!("    {:6} {}{}  {}",
                 id.to_string(),
                 if targets.contains(id) { "T" } else { "_" },
                 if p.heavy()            { "H" } else { "_" },
