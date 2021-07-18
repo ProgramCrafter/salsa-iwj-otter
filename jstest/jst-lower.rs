@@ -60,15 +60,20 @@ pub struct TestsAccumulator {
   tera: tera::Tera,
 }
 
-pub trait ZUpdateSpec: Debug + Clone {
-  fn next(&self, last: &mut zcoord::Mutable) -> ZLevel;
+#[derive(Debug,Clone)]
+pub enum ZUpdateSpec {
+  Auto,
 }
+use ZUpdateSpec as ZUS;
 
-#[derive(Debug,Copy,Clone)]
-pub struct ZUpdateAuto;
-impl ZUpdateSpec for ZUpdateAuto {
-  fn next(&self, last: &mut zcoord::Mutable) -> ZLevel {
-    ZLevel { z: last.increment().unwrap(), zg: Generation(1000) }
+impl ZUpdateSpec {
+  pub fn next(&self, last: &mut zcoord::Mutable) -> ZLevel {
+    match self {
+      ZUS::Auto => ZLevel {
+        z: last.increment().unwrap(),
+        zg: Generation(1000),
+      },
+    }
   }
 }
 
@@ -270,11 +275,10 @@ impl TestsAccumulator {
   }
     
   #[throws(Explode)]
-  pub fn add_test<T, Z>(&mut self, name: &str, zupd: Z,
-                        pieces: Vec<StartPieceSpec>,
-                        targets: Vec<T>)
+  pub fn add_test<T>(&mut self, name: &str, zupd: ZUpdateSpec,
+                     pieces: Vec<StartPieceSpec>,
+                     targets: Vec<T>)
   where T: TryInto<Vpid> + Copy + Debug,
-        Z: ZUpdateSpec,
   {
     if let Some(only) = &self.tests.only {
       if name != only { return; }
@@ -339,7 +343,7 @@ impl TestsAccumulator {
     ).enumerate() {
       if targets.is_empty() { continue }
       let name = format!("exhaustive-{:02x}", ti);
-      self.add_test(&name, ZUpdateAuto, pieces, targets)?;
+      self.add_test(&name, ZUS::Auto, pieces, targets)?;
     }
   }
 }
@@ -365,14 +369,14 @@ fn main() {
 
   let mut ta = TestsAccumulator::new(&opts)?;
 
-  ta.add_test("simple", ZUpdateAuto, vec![
+  ta.add_test("simple", ZUS::Auto, vec![
     sp!("1.1", false, Yes),
     sp!("2.1", false, Yes),
   ], vec![
     "2.1",
   ])?;
 
-  ta.add_test("pair", ZUpdateAuto, vec![
+  ta.add_test("pair", ZUS::Auto, vec![
     sp!("1.1", false, Yes),
     sp!("2.1", false, Yes),
     sp!("3.1", false, Yes),
@@ -381,7 +385,7 @@ fn main() {
     "2.1",
   ])?;
 
-  ta.add_test("found-2021-07-07-raises", ZUpdateAuto, vec![
+  ta.add_test("found-2021-07-07-raises", ZUS::Auto, vec![
     sp!( "87.7", false, No),
     sp!( "81.7", false, Yes),
     sp!("110.7", false, Yes), // HELD 1#1
