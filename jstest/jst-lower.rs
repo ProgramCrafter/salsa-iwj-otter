@@ -19,12 +19,14 @@ pub struct StartPieceSpec {
   id: Vpid,
   pinned: bool,
   moveable: PieceMoveable,
+  zupd: ZUpdateSpec,
 }
 
 #[macro_export]
 macro_rules! sp {
   { $id:expr, $pinned:expr, $moveable:ident } => {
     StartPieceSpec { id: $id.try_into().unwrap(), pinned: $pinned,
+                     zupd: ZUS::Auto,
                      moveable: PieceMoveable::$moveable }
   };
 }
@@ -287,7 +289,7 @@ impl TestsAccumulator {
   }
     
   #[throws(Explode)]
-  pub fn add_test<T>(&mut self, name: &str, zupd: ZUpdateSpec,
+  pub fn add_test<T>(&mut self, name: &str,
                      pieces: Vec<StartPieceSpec>,
                      targets: Vec<T>)
   where T: TryInto<Vpid> + Copy + Debug,
@@ -299,7 +301,7 @@ impl TestsAccumulator {
     let mut zlastg = Generation(1000);
 
     let pieces: IndexMap<Vpid,StartPiece> = pieces.into_iter().map(
-      |StartPieceSpec { id, pinned, moveable }| {
+      |StartPieceSpec { id, pinned, moveable, zupd }| {
         let id = id.try_into().unwrap();
         let zlevel = zupd.next(&mut zlast, &mut zlastg);
         (id, StartPiece { pinned, moveable, zlevel })
@@ -342,6 +344,7 @@ impl TestsAccumulator {
           id,
           pinned: bottom,
           moveable: PieceMoveable::Yes,
+          zupd: ZUS::Auto,
         }
       })
     })
@@ -356,7 +359,7 @@ impl TestsAccumulator {
     ).enumerate() {
       if targets.is_empty() { continue }
       let name = format!("exhaustive-{:02x}", ti);
-      self.add_test(&name, ZUS::Auto, pieces, targets)?;
+      self.add_test(&name, pieces, targets)?;
     }
   }
 }
@@ -382,14 +385,14 @@ fn main() {
 
   let mut ta = TestsAccumulator::new(&opts)?;
 
-  ta.add_test("simple", ZUS::Auto, vec![
+  ta.add_test("simple", vec![
     sp!("1.1", false, Yes),
     sp!("2.1", false, Yes),
   ], vec![
     "2.1",
   ])?;
 
-  ta.add_test("pair", ZUS::Auto, vec![
+  ta.add_test("pair", vec![
     sp!("1.1", false, Yes),
     sp!("2.1", false, Yes),
     sp!("3.1", false, Yes),
@@ -398,7 +401,7 @@ fn main() {
     "2.1",
   ])?;
 
-  ta.add_test("found-2021-07-07-raises", ZUS::Auto, vec![
+  ta.add_test("found-2021-07-07-raises", vec![
     sp!( "87.7", false, No),
     sp!( "81.7", false, Yes),
     sp!("110.7", false, Yes), // HELD 1#1
