@@ -20,12 +20,12 @@ my @pieces = map {
   [
    $p->{z},
    $p->{zg},
-   (sprintf "    sp!(%8s, %s, %3s), // %s %s%s\n",
+   (sprintf "    sp!(%8s, %s, %-3s,  %-23s, %6d ), %s\n",
     "\"$id\"",
     $p->{pinned} ? 'true' : 'false',
     $p->{moveable} eq 'IfWresting' ? 'No' : $p->{moveable},
-    $p->{z}, $p->{zg},
-    $p->{held} ? " HELD $p->{held}" : '',
+    "\"$p->{z}\"", $p->{zg},
+    $p->{held} ? "// HELD $p->{held}" : '',
    )
   ]
 } keys %$data;

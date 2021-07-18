@@ -29,6 +29,14 @@ macro_rules! sp {
                      zupd: ZUS::Auto,
                      moveable: PieceMoveable::$moveable }
   };
+  { $id:expr, $pinned:expr, $moveable:ident, $z:expr, $zg:expr } => {
+    StartPieceSpec { id: $id.try_into().unwrap(), pinned: $pinned,
+                     zupd: ZUS::Spec(ZLevel {
+                       z: $z.try_into().unwrap(),
+                       zg: Generation($zg),
+                     }),
+                     moveable: PieceMoveable::$moveable }
+  };
 }
 
 #[derive(Debug,Clone)]
@@ -65,16 +73,22 @@ pub struct TestsAccumulator {
 #[derive(Debug,Clone)]
 pub enum ZUpdateSpec {
   Auto,
+  Spec(ZLevel),
 }
 use ZUpdateSpec as ZUS;
 
 impl ZUpdateSpec {
-  pub fn next(&self, last: &mut zcoord::Mutable, lastg: &mut Generation)
+  pub fn next(self, last: &mut zcoord::Mutable, lastg: &mut Generation)
               -> ZLevel {
     match self {
       ZUS::Auto => ZLevel {
         z: last.increment().unwrap(),
         zg: { lastg.increment(); *lastg },
+      },
+      ZUS::Spec(zl) => {
+        *last = zl.z.clone_mut();
+        *lastg = zl.zg;
+        zl
       },
     }
   }
