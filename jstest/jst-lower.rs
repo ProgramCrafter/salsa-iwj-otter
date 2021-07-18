@@ -67,11 +67,12 @@ pub enum ZUpdateSpec {
 use ZUpdateSpec as ZUS;
 
 impl ZUpdateSpec {
-  pub fn next(&self, last: &mut zcoord::Mutable) -> ZLevel {
+  pub fn next(&self, last: &mut zcoord::Mutable, lastg: &mut Generation)
+              -> ZLevel {
     match self {
       ZUS::Auto => ZLevel {
         z: last.increment().unwrap(),
-        zg: Generation(1000),
+        zg: { lastg.increment(); *lastg },
       },
     }
   }
@@ -295,11 +296,12 @@ impl TestsAccumulator {
       if name != only { return; }
     }
     let mut zlast = ZCoord::default().clone_mut();
+    let mut zlastg = Generation(1000);
 
     let pieces: IndexMap<Vpid,StartPiece> = pieces.into_iter().map(
       |StartPieceSpec { id, pinned, moveable }| {
         let id = id.try_into().unwrap();
-        let zlevel = zupd.next(&mut zlast);
+        let zlevel = zupd.next(&mut zlast, &mut zlastg);
         (id, StartPiece { pinned, moveable, zlevel })
       }
     ).collect();
