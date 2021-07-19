@@ -235,7 +235,7 @@ impl Test {
       }
     }
 
-    // z coords (at least of heavy) in updates all decrease
+    // z levels (at least of heavy) in updates all decrease
     {
       for n in &new {
         if n.heavy && n.updated {
@@ -272,7 +272,7 @@ impl Test {
       }
     }
 
-    // all the z coordinates are still distinct
+    // all the z levels are still distinct and ordered
     {
       for (n0,n1) in new.iter().tuple_windows() {
         assert!( n1.new_z > n0.new_z,
