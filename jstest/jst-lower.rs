@@ -371,7 +371,9 @@ impl TestsAccumulator {
   }
 
   #[throws(Explode)]
-  pub fn add_exhaustive(&mut self, zclashes: bool, n: usize) {
+  pub fn add_exhaustive(&mut self, nameprefix: &str, zupds: &[ZUpdateSpec]) {
+    let n: usize = match zupds.len() { 1 => 5, 2 => 4, _ => panic!() };
+
     let ids: Vec<Vpid> = (0..n).map(
       |i| format!("{}.{}", i+1, 1).try_into().unwrap()
     ).collect_vec();
@@ -379,8 +381,7 @@ impl TestsAccumulator {
     let pieces_configs = ids.iter().cloned().map(|id| {
       iproduct!(
         [false,true].iter().cloned(),
-        [ZUS::Auto, ZUS::GOnly].iter().cloned()
-          .take(if zclashes { 2 } else { 1})
+        zupds.iter().cloned()
       ).map( move |(bottom,zupd)| {
         StartPieceSpec {
           id,
@@ -401,8 +402,7 @@ impl TestsAccumulator {
     ).enumerate() {
       if targets.is_empty() { continue }
       let name = format!("exhaustive-{}-{:02x}",
-                         if zclashes { "z" } else { "g" },
-                         ti);
+                         nameprefix, ti);
       self.add_test(&name, pieces, targets)?;
     }
   }
@@ -476,8 +476,8 @@ fn main() {
     "77.11",
   ])?;
 
-  ta.add_exhaustive(false, 5)?;
-  ta.add_exhaustive(true , 4)?;
+  ta.add_exhaustive("z", &[ZUS::Auto            ])?;
+  ta.add_exhaustive("m", &[ZUS::Auto, ZUS::GOnly])?;
   
   let tests = ta.finalise()?;
 
