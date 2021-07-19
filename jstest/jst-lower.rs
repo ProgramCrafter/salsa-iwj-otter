@@ -371,7 +371,7 @@ impl TestsAccumulator {
   }
 
   #[throws(Explode)]
-  pub fn add_exhaustive(&mut self, n: usize) {
+  pub fn add_exhaustive(&mut self, zclashes: bool, n: usize) {
     let ids: Vec<Vpid> = (0..n).map(
       |i| format!("{}.{}", i+1, 1).try_into().unwrap()
     ).collect_vec();
@@ -380,6 +380,7 @@ impl TestsAccumulator {
       iproduct!(
         [false,true].iter().cloned(),
         [ZUS::Auto, ZUS::GOnly].iter().cloned()
+          .take(if zclashes { 2 } else { 1})
       ).map( move |(bottom,zupd)| {
         StartPieceSpec {
           id,
@@ -399,7 +400,9 @@ impl TestsAccumulator {
       target_configs
     ).enumerate() {
       if targets.is_empty() { continue }
-      let name = format!("exhaustive-{:02x}", ti);
+      let name = format!("exhaustive-{}-{:02x}",
+                         if zclashes { "z" } else { "g" },
+                         ti);
       self.add_test(&name, pieces, targets)?;
     }
   }
@@ -473,7 +476,8 @@ fn main() {
     "77.11",
   ])?;
 
-  ta.add_exhaustive(4)?;
+  ta.add_exhaustive(false, 5)?;
+  ta.add_exhaustive(true , 4)?;
   
   let tests = ta.finalise()?;
 
