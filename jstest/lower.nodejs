@@ -19,7 +19,10 @@ function api_piece(op, piece, p, args) {
   let s = op + ' ' + piece + ' ' + args.z + '\n';
   fs.writeSync(jstest_did, s);
 }
-
+function add_log_message(m) {
+  console.log('PLAYER LOG - ', m);
+  fs.writeSync(jstest_did, 'add_log_message ' + m);
+}
 
 /*
 console.log('-------------------- byhand --------------------');
