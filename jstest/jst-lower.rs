@@ -46,6 +46,7 @@ pub struct StartPiece {
   pinned: bool,
   moveable: PieceMoveable,
   zlevel: ZLevel,
+  zupd: ZUSD,
 }
 
 #[derive(Debug,Clone,Default)]
@@ -70,13 +71,26 @@ pub struct TestsAccumulator {
   tera: tera::Tera,
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug,Clone,EnumDiscriminants)]
+#[strum_discriminants(derive(Ord,PartialOrd,Serialize))]
 pub enum ZUpdateSpec {
   Auto,
   Spec(ZLevel),
   GOnly,
 }
 use ZUpdateSpec as ZUS;
+use ZUpdateSpecDiscriminants as ZUSD;
+
+#[ext(pub)]
+impl ZUSD {
+  fn show(&self) -> char {
+    match self {
+      ZUSD::Auto  => ' ',
+      ZUSD::Spec  => '!',
+      ZUSD::GOnly => 'g',
+    }
+  }
+}
 
 impl ZUpdateSpec {
   pub fn next(self, last: &mut zcoord::Mutable, lastg: &mut Generation)
@@ -141,6 +155,7 @@ impl Test {
       target: bool,
       heavy: bool,
       updated: bool,
+      zupd: ZUSD,
     }
 
     let coll = self.pieces.iter().map(|(&id, start)| {
@@ -152,6 +167,7 @@ impl Test {
         id, new_z, old_z, updated,
         heavy: start.heavy(),
         target: self.targets.contains(&id),
+        zupd: start.zupd.into(),
       }
     }).collect_vec();
 
@@ -164,11 +180,12 @@ impl Test {
     let new = sorted(&|p: &PieceCollated| p.new_z);
     for (o, n) in izip!(&old, &new).rev() {
       let pr = |p: &PieceCollated, zl: &ZLevel| {
-        print!("    {:6} {}{}{} {}",
+        print!("    {:6} {}{}{} {} {}",
                 p.id.to_string(),
                 if p.target  { "T" } else { "_" },
                 if p.heavy   { "H" } else { "_" },
                 if p.updated { "U" } else { "_" },
+                p.zupd.show(),
                 zl.show());
       };
       pr(o, &o.old_z); print!("    ");
@@ -321,9 +338,10 @@ impl TestsAccumulator {
 
     let pieces: IndexMap<Vpid,StartPiece> = pieces.into_iter().map(
       |StartPieceSpec { id, pinned, moveable, zupd }| {
+        let zupd_d = (&zupd).into();
         let id = id.try_into().unwrap();
         let zlevel = zupd.next(&mut zlast, &mut zlastg);
-        (id, StartPiece { pinned, moveable, zlevel })
+        (id, StartPiece { pinned, moveable, zlevel, zupd: zupd_d })
       }
     ).collect();
 
@@ -333,10 +351,11 @@ impl TestsAccumulator {
 
     println!("-------------------- {} --------------------", name);
     for (id,p) in pieces.iter().rev() {
-      println!("    {:6} {}{}  {}",
+      println!("    {:6} {}{} {}  {}",
                 id.to_string(),
                 if targets.contains(id) { "T" } else { "_" },
                 if p.heavy()            { "H" } else { "_" },
+                p.zupd.show(),
                 p.zlevel.show());
     }
 

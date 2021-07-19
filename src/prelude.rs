@@ -95,7 +95,7 @@ pub use serde_with::DeserializeFromStr;
 pub use serde_with::SerializeDisplay;
 pub use sha2::{Sha512, Sha512Trunc256};
 pub use slotmap::{dense::DenseSlotMap, SparseSecondaryMap, Key as _};
-pub use strum::{EnumCount};
+pub use strum::{EnumCount, EnumDiscriminants};
 pub use strum::{EnumString, EnumIter, EnumMessage, EnumProperty};
 pub use strum::{IntoEnumIterator, IntoStaticStr};
 pub use subtle::ConstantTimeEq;
