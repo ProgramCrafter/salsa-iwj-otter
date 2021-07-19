@@ -738,6 +738,7 @@ function lower_pieces(targets_todo: LowerTodoList):
   }
 
   while (nomove_heavy.length &&
+	 (tomove_light.length || tomove_misstacked.length) &&
 	 nomove_heavy[nomove_heavy.length-1].p.z == q_z_top) {
     // Yowzer.  We have to reset the Z coordinates on these heavy
     // pieces, whose Z coordinate is the same as the stuff we are not
