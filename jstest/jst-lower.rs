@@ -74,6 +74,7 @@ pub struct TestsAccumulator {
 pub enum ZUpdateSpec {
   Auto,
   Spec(ZLevel),
+  GOnly,
 }
 use ZUpdateSpec as ZUS;
 
@@ -83,6 +84,10 @@ impl ZUpdateSpec {
     match self {
       ZUS::Auto => ZLevel {
         z: last.increment().unwrap(),
+        zg: { lastg.increment(); *lastg },
+      },
+      ZUS::GOnly => ZLevel {
+        z: last.repack().unwrap(),
         zg: { lastg.increment(); *lastg },
       },
       ZUS::Spec(zl) => {
