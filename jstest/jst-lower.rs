@@ -473,7 +473,7 @@ fn main() {
     "77.11",
   ])?;
 
-  ta.add_exhaustive(5)?;
+  ta.add_exhaustive(4)?;
   
   let tests = ta.finalise()?;
 
