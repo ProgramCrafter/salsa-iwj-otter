@@ -478,6 +478,7 @@ fn main() {
 
   ta.add_exhaustive("z", &[ZUS::Auto            ])?;
   ta.add_exhaustive("m", &[ZUS::Auto, ZUS::GOnly])?;
+  ta.add_exhaustive("g", &[           ZUS::GOnly])?;
   
   let tests = ta.finalise()?;
 
