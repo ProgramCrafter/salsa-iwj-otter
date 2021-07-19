@@ -206,7 +206,7 @@ impl Test {
     }
 
     // no heavy are newly above light
-    {
+    let old_misstacked = {
       let misheavy = |on: &[&PieceCollated]| {
         let mut misheavy = HashSet::new();
         for i in 0..on.len() {
@@ -224,7 +224,8 @@ impl Test {
       let new = misheavy(&new);
       let newly = new.difference(&old).collect_vec();
       assert!( newly.is_empty(), "{:?}", &newly );
-    }
+      old
+    };
 
     // no light non-targets moved
     {
@@ -277,6 +278,25 @@ impl Test {
       for (n0,n1) in new.iter().tuple_windows() {
         assert!( n1.new_z > n0.new_z,
                  "{:?} {:?}", &n0, &n1 );
+      }
+    }
+
+    // non-targets are moved only if they things are funky
+    {
+      // funky could be one of:
+      //  - misstacked heavy
+      //  - heavy with same Z Coord (but obvs not Gen) as some light
+      if old_misstacked.is_empty() &&
+         ! old.iter().tuple_windows().any(|(o0,o1)| {
+           o0.heavy && ! o1.heavy &&
+           o1.old_z.z == o0.old_z.z
+         })
+      {
+        for n in &new {
+          if n.updated {
+            assert!( n.target, "{:?}", n );
+          }
+        }
       }
     }
   }
