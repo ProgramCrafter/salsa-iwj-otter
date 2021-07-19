@@ -798,7 +798,8 @@ function lower_pieces(targets_todo: LowerTodoList):
   for (const pe of plan) {
     let z_top = pe.z_top;
     let z_bot = pe.z_bot;
-    if (pe.content.length != 0 && z_bot == null) {
+    if (! pe.content.length) continue;
+    if (z_bot == null) {
       let first_z = pe.content[0].p.z;
       if (z_top >= first_z)
 	z_top = first_z;
