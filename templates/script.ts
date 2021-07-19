@@ -642,6 +642,7 @@ function lower_pieces(targets_todo: LowerTodoList):
   //        if that is below topmost light target
   //            <- tomove_light: insert targets from * here           Q ->
   //            <- tomove_misstacked: insert non-targets from * here  Q ->
+  //            <- heavy non-targets with clashing Z Coords           X ->
   // A
   // A     heavy non-targets (nomove_heavy)
   //            <- tomove_heavy: insert all heavy targets here        P ->
@@ -731,6 +732,22 @@ function lower_pieces(targets_todo: LowerTodoList):
     // Somehow we didn't find the top of Q, so we didn't meet any
     // targets.  (In the walk loop, we always set q_z_top if todo.)
     return 'Internal error! Lower with no targets!';
+  }
+
+  while (nomove_heavy.length &&
+	 nomove_heavy[nomove_heavy.length-1].p.z == q_z_top) {
+    // Yowzer.  We have to reset the Z coordinates on these heavy
+    // pieces, whose Z coordinate is the same as the stuff we are not
+    // touching, because otherwise there is no gap.
+    //
+    // Treating them as misstacked instead is sufficient, provided
+    // we put them at the front (bottom end) of the misstacked list.
+    //
+    // This is X in the chart.
+    //
+    let restack = nomove_heavy.pop()!;
+    console.log('LOWER CLASHING Z - RESTACKING', restack);
+    tomove_misstacked.unshift(restack);
   }
 
   type PlanEntry = {
