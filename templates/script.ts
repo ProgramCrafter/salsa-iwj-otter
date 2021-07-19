@@ -696,7 +696,7 @@ function lower_pieces(targets_todo: LowerTodoList):
     let todo = targets_todo[piece];
     if (todo) {
       let xst = '';
-      if (q_z_top === null) {
+      if (q_z_top === null && !todo.heavy) {
 	q_z_top = p.z;
 	xst = 'STATE -> B';
       }
@@ -731,7 +731,10 @@ function lower_pieces(targets_todo: LowerTodoList):
   if (q_z_top === null) {
     // Somehow we didn't find the top of Q, so we didn't meet any
     // targets.  (In the walk loop, we always set q_z_top if todo.)
-    return 'Internal error! Lower with no targets!';
+    q_z_top =
+      tomove_misstacked.length ? tomove_misstacked[0].p.z :
+      tomove_light     .length ? tomove_light     [0].p.z :
+                                 tomove_heavy     [0].p.z;
   }
 
   while (nomove_heavy.length &&
