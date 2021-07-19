@@ -378,13 +378,14 @@ impl TestsAccumulator {
 
     let pieces_configs = ids.iter().cloned().map(|id| {
       iproduct!(
-        [false,true].iter().cloned()
-      ).map( move |bottom| {
+        [false,true].iter().cloned(),
+        [ZUS::Auto, ZUS::GOnly].iter().cloned()
+      ).map( move |(bottom,zupd)| {
         StartPieceSpec {
           id,
           pinned: bottom,
           moveable: PieceMoveable::Yes,
-          zupd: ZUS::Auto,
+          zupd,
         }
       })
     })
