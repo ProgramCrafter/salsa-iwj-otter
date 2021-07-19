@@ -643,7 +643,7 @@ function lower_pieces(targets_todo: LowerTodoList):
   //            <- tomove_light: insert targets from * here           Q ->
   //            <- tomove_misstacked: insert non-targets from * here  Q ->
   // A
-  // A     heavy things (nomove_heavy)
+  // A     heavy non-targets (nomove_heavy)
   //            <- tomove_heavy: insert all heavy targets here        P ->
   //
   // When wresting, treat all targets as heavy.
