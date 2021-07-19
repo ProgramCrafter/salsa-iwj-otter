@@ -351,7 +351,7 @@ impl TestsAccumulator {
 
     println!("-------------------- {} --------------------", name);
     for (id,p) in pieces.iter().rev() {
-      println!("    {:6} {}{} {}  {}",
+      println!("    {:6} {}{}  {} {}",
                 id.to_string(),
                 if targets.contains(id) { "T" } else { "_" },
                 if p.heavy()            { "H" } else { "_" },
