@@ -501,7 +501,7 @@ impl ZLevel {
   pub fn zero() -> Self { ZLevel { z: default(), zg: Generation(0) } }
 }
 
-// ---------- log expiry ==========
+// ---------- log expiry ----------
 
 impl GameState {
   pub fn want_expire_some_logs(&self, cutoff: Timestamp) -> bool {
