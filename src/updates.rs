@@ -213,6 +213,14 @@ impl From<PieceUpdateFromOpSimple> for PieceUpdate {
   }
 }
 
+
+#[allow(non_camel_case_types)]
+#[derive(Copy,Clone,Debug)]
+pub struct PUOs_Simple_Modify;
+impl From<PUOs_Simple_Modify> for PieceUpdateOps {
+  fn from(_: PUOs_Simple_Modify) -> Self { PUOs::Simple(PUO::Modify(())) }
+}
+
 // ---------- for traansmission ----------
 
 #[derive(Debug,Serialize)]

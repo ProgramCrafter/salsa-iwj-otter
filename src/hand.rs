@@ -257,6 +257,8 @@ impl PieceTrait for Hand {
 
     dbgc!("ui op k entry", &opname, &xdata);
 
+    let puos = PUOs_Simple_Modify;
+
     let (new_owner, xupdates, did) =
       match (opname, xdata.owner.is_some())
     {
@@ -293,7 +295,7 @@ impl PieceTrait for Hand {
                                  gplayers, gpieces, goccults,
                                  ipieces, ioccults,
                                  to_recalculate, rot_checked,
-                                 region, piece, views)?;
+                                 region, piece, views, &puos)?;
             xupdates
           }
         };
@@ -336,7 +338,7 @@ impl PieceTrait for Hand {
 
     (PieceUpdate {
       wrc, log,
-      ops: PUOs::Simple(PUO::Modify(())),
+      ops: puos.into(),
     }, xupdates.into_unprepared(None))
   }
 

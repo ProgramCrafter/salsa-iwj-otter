@@ -895,6 +895,9 @@ pub fn create_occultation(
   region: Region,
   occulter: PieceId,
   views: OccultationViews,
+  // Caller must promise not to fail if we succeed, so that this
+  // update actually happens!
+  _puos_will_return: &PUOs_Simple_Modify,
 ) -> Vec<(PieceId, PieceUpdateOps)> {
   {
     let ogpc = gpieces.get(occulter).ok_or_else(

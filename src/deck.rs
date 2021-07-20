@@ -219,13 +219,15 @@ impl PieceTrait for Deck {
       );
     }
 
+    let puos = PUOs_Simple_Modify;
+
     if let Some((region, views)) = region_views {
       dbgc!("creating occ");
       xupdates.extend(
         create_occultation(&mut gen.unique_gen(), &mut gs.max_z,
                            gplayers, gpieces, goccults, ipieces, ioccults,
                            to_recalculate, rot_checked,
-                           region, piece, views)?
+                           region, piece, views, &puos)?
       );
       dbgc!("creating occ done", &xupdates);
     }
@@ -236,9 +238,8 @@ impl PieceTrait for Deck {
     
     (PieceUpdate {
       wrc, log,
-      ops: PUOs::Simple(PUO::Modify(())),
-    },
-     xupdates.into_unprepared(None))
+      ops: puos.into(),
+    }, xupdates.into_unprepared(None))
   }
 
   fn occultation_notify_hook(&self, piece: PieceId) -> UnpreparedUpdates {
