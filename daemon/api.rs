@@ -558,6 +558,7 @@ api_route!{
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,ioccults,player,piece,ipc, .. } = a;
     let ops = PUOs_Simple_Modify;
+    let new_z = piece_make_heavy(&gs.pieces, piece)?;
     let gpc = gs.pieces.byid_mut(piece).unwrap();
     let gpl = gs.players.byid_mut(player).unwrap();
     let log = log_did_to_piece(
@@ -566,6 +567,7 @@ api_route!{
     )?;
     gpc.forbid_involved_in_occultation()?;
     gpc.pinned = self.0;
+    gpc.zlevel.z = new_z;
     PieceUpdate {
       wrc: WhatResponseToClientOp::Predictable,
       ops: ops.into(),
