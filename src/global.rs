@@ -1411,6 +1411,8 @@ impl GPieces {
   pub fn as_mut(&mut self, _: ModifyingPieces) -> &mut ActualGPieces {
     &mut self.0
   }
+  #[cfg(test)]
+  pub fn as_mut_t(&mut self) -> &mut ActualGPieces { &mut self.0 }
 }
 
 impl ById for GPieces {
