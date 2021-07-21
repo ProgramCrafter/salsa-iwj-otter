@@ -665,10 +665,11 @@ impl<'g> WindowGuard<'g> {
             ("wanted", &gen.to_string())
           ]).subst(r#"
             var done = arguments[0];
-            if (gen >= @wanted@) { done(gen); return; }
+            function no_queue() { return !api_queue.length && !api_posting; }
+            if (gen >= @wanted@ && no_queue()) { done(gen); return; }
             window.test_update_hook = function() {
               window.test_update_hook = function() { };
-              done(gen);
+              done(no_queue() ? gen : 0);
             };
           "#)?
         )
