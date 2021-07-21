@@ -53,13 +53,24 @@ impl Ctx {
       w.synch()?;
 
       let hand = w.find_piece(HAND)?;
+      let hand_pieceid = hand.pieceid.to_string();
+
       let hand_posg = hand.posg()?;
       w.action_chain()
         .move_pos(&hand)?
+        .send_keys("W")
+        .click()
+        .send_keys("tW")
         .click()
         .perform()
         .did("select hand")?;
       w.synch()?;
+
+      let top = w.execute_script(&format!(r##"
+          return defs_marker.previousElementSibling.dataset.piece;
+      "##))?;
+      assert_eq!( top.value().as_str().unwrap(),
+                  hand_pieceid );
 
       w.action_chain()
         .send_keys('C')
