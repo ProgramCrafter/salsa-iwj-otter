@@ -67,7 +67,6 @@ impl Ctx {
       w.action_chain()
         .move_pos(&p)?
         .click()
-        .release()
         .send_keys('l')
         .perform()
         .did("rotate")?;
@@ -142,7 +141,6 @@ impl Ctx {
       w.action_chain()
         .move_w(&w, PosC::new(10,10))?
         .click()
-        .release()
         .perform()
         .did("unselect by clicking elsewhere")?;
 
@@ -285,7 +283,6 @@ impl Ctx {
 
         .move_w(&w, side.start)?
         .click()
-        .release()
 
         .click_and_hold()
         .move_w(&w, side.try_end)?
@@ -306,7 +303,6 @@ impl Ctx {
 
         .move_w(&w, pos_now)?
         .click()
-        .release()
 
         .perform()
         .did("conflicting grasp")?;

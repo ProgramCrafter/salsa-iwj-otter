@@ -147,7 +147,6 @@ impl Ctx {
       w.action_chain()
         .move_pc(&w, P_ALICE)?
         .click()
-        .release()
 
         .click_and_hold()
         .move_w(&w, DEST)?
@@ -177,7 +176,6 @@ impl Ctx {
       w.action_chain()
         .move_pc(&w, P_ALICE)?
         .click()
-        .release()
         .perform()
         .did("alice, drop pawn on target")?;
       w.synch()?;
@@ -222,7 +220,6 @@ impl Ctx {
 
         .move_w(&w, MIDHAND)?
         .click()
-        .release()
 
         .send_keys('C')
 
@@ -249,7 +246,6 @@ impl Ctx {
         .release()
 
         .click()
-        .release()
 
         .perform()
         .did("alice, drag out, and re-select")?;

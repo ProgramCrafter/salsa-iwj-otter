@@ -97,7 +97,6 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
       alice.action_chain()
         .move_pos(handp)?
         .click()
-        .release()
         .send_keys('C')
         .perform()
         .did("claim")?;
@@ -174,7 +173,6 @@ fn tests(UsualSetup { su, alice, bob, ..}: UsualSetup) {
         .send_keys("W")
         .move_pos(handp)?
         .click()
-        .release()
         .click_and_hold()
         .move_pos(newpos)?
         .release()
