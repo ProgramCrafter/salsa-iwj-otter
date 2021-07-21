@@ -62,8 +62,7 @@ impl Ctx {
       w.synch()?;
 
       w.action_chain()
-        .key_down('C')
-        .key_up('C')
+        .send_keys('C')
         .perform()
         .did("claim hand")?;
       w.synch()?;
@@ -117,8 +116,7 @@ impl Ctx {
       w.synch()?;
 
       w.action_chain()
-        .key_down('C')
-        .key_up('C')
+        .send_keys('C')
         .perform()
         .did("unclaim hand")?;
 
@@ -226,8 +224,7 @@ impl Ctx {
         .click()
         .release()
 
-        .key_down('C')
-        .key_up('C')
+        .send_keys('C')
 
         .perform()
         .did("bob, setup")?;

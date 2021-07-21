@@ -27,8 +27,7 @@ impl Ctx {
       alice.synch()?;
 
       alice.action_chain()
-        .key_down('0')
-        .key_up('0')
+        .send_keys('0')
         .move_w(&alice, VATIKAN_DECK)?
         .click()
         .release()

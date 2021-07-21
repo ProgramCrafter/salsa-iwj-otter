@@ -68,8 +68,7 @@ impl Ctx {
         .move_pos(&p)?
         .click()
         .release()
-        .key_down('l')
-        .key_up('l')
+        .send_keys('l')
         .perform()
         .did("rotate")?;
 
