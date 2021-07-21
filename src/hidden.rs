@@ -899,6 +899,9 @@ pub fn create_occultation(
   // update actually happens!
   _puos_will_return: &PUOs_Simple_Modify,
 ) -> Vec<(PieceId, PieceUpdateOps)> {
+  // We mustn't actually store this in gpieces until we commit.
+  let ogpc_z_new = piece_make_heavy(gpieces, occulter)?;
+
   {
     let ogpc = gpieces.get(occulter).ok_or_else(
       ||internal_logic_error("create occultation with non-piece"))?;
@@ -920,7 +923,7 @@ pub fn create_occultation(
       // the displ_z, but in case it isn't, we must look at both.
       let max_z = &mut max_z.z;
       (||{
-        max_z.update_max(&ogpc.zlevel.z.clone_mut().increment()?);
+        max_z.update_max(&ogpc_z_new.clone_mut().increment()?);
         max_z.update_max(&displ_z.plus_offset(! 0)?);
         Ok::<_,IE>(())
       })()?;
@@ -961,6 +964,7 @@ pub fn create_occultation(
       let ogpc = gpieces.get_mut(occulter).ok_or_else(
         ||internal_logic_error("occulter vanished"))?;
       ogpc.occult.active = Some(occid);
+      ogpc.zlevel.z = ogpc_z_new;
 
       for &ppiece in &recalc {
         recalculate_occultation_ofmany(gen,
