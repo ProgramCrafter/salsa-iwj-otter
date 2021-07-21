@@ -78,6 +78,12 @@ impl Ctx {
         .did("claim hand")?;
       w.synch()?;
 
+      let top = w.execute_script(&format!(r##"
+          return pieces_marker.nextElementSibling.dataset.piece;
+      "##))?;
+      assert_eq!( top.value().as_str().unwrap(),
+                  hand_pieceid );
+
       w.action_chain()
         .click()
         .perform()
