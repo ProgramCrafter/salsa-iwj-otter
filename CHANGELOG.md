@@ -15,9 +15,13 @@ Bugfixes
     - Occulters (hands and decks) more uniformly try to be low down.
     - e.g. user will no longer accidentally put card under their hand (!!)
     - Do not derange relative ordering of multiple lowered pieces.
-    - Fix a Rust panic in Z coordinate handling which might occur in some
-      attempts to lower pieces.
+    - Fix a logic errors and panics in Z coordinate handling which
+      might prevent some attmepts to lower (or, mayby, raise) pieces.
     - When the user asks to raise but nothing can be raised, log a message.
+    - Automatically lower occulting pieces when they are enabled, and
+      pieces which are being pinned (insofar as reasonable); this
+      significantly reduces the probability of mysterious trouble
+      lowering a piece ("would disturb a piece held by another player").
 
  * Substantial overhaul of error handling for problems detected when
    processing client API requests:
@@ -92,11 +96,13 @@ Testing, supporting changes:
 Internal and protocol improvements:
 
  * New "loose" update (api op) concept to support new regrab feature.
+ * Fix a wdriver synch race which could lead to spurious tests failures.
  * Improve defensive programming in the zcoord module.
  * Abolish the incoherent `OnlineError` error type and replace it
    with `Inapplicable` and `Fatal`.
  * Abolish old incoherent and ununused `conflict_expected` in client JS.
  * Improved debug output in various places (when enabled or in tests).
+ * Cleaned up a few flabby idioms in some tests.
  * Promote some debugging support to otter-base.
 
 Internal docs improvements:
