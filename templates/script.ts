@@ -224,7 +224,7 @@ function api_delay(meth: string, data: Object) {
 }
 function api_check() {
   if (api_posting) { return; }
-  if (!api_queue.length) { return; }
+  if (!api_queue.length) { test_update_hook(); return; }
   do {
     var [meth, data] = api_queue.shift()!;
     if (meth != 'm') break;
