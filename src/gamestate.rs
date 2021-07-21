@@ -572,7 +572,7 @@ pub fn piece_make_heavy(gpieces: &GPieces, piece: PieceId) -> ZCoord {
 
 #[cfg(test)]
 mod test {
-  use super::*;
+  #[allow(unused_imports)] use super::*;
 
   #[test]
   #[cfg(not(miri))]
