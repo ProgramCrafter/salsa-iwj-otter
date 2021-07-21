@@ -34,7 +34,7 @@ Bugfixes
       `PROTOCOL.md`, and implementation of the new scheme.
     - Principled client decisions about what to show the user - which
       things are errors, which things are to be rported as conflicts, and
-       generally what to put in the user-facing message log.
+      generally what to put in the user-facing message log.
 
  * Do not re-raise things during drag if the user explicitly lowered
    them with `b` (since the user grasped them).
@@ -42,7 +42,7 @@ Bugfixes
  * Fix JS exception if user selected multiple pieces which used the same key
    for different purposes.  (Even transiently, for example by selecting
    multiple hand repositories and claiming them all - you'd briefly have `C`
-   for claim for some, and `C` for unclaim for others.)
+   for claim for some, and `C` for unclaim for others, triggering the bug.)
 
 New features
 ------------
