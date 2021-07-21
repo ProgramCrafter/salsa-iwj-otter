@@ -396,6 +396,11 @@ impl GPiece {
     if self.occult.is_active() { PieceMoveable::No }
     else { self.moveable }
   }
+  pub fn heavy(&self) -> bool {
+    self.pinned ||
+    self.occult.is_active() ||
+    self.moveable == PieceMoveable::No
+  }
   pub fn rotateable(&self) -> bool {
     if self.occult.is_active() { false }
     else { self.rotateable }
@@ -499,6 +504,180 @@ impl GameState {
 
 impl ZLevel {
   pub fn zero() -> Self { ZLevel { z: default(), zg: Generation(0) } }
+}
+
+// ---------- automatic lowering ----------
+
+#[throws(IE)]
+pub fn piece_make_heavy(gpieces: &GPieces, piece: PieceId) -> ZCoord {
+  // constraints:
+  //  - we would like to lower this piece below all non-heavy pieces
+  //  - we don't want to lower it past any heavy piece because maybe
+  //    someone is doing weird stacking deliberately
+  //
+  // so we make a possible range for us, which is
+  //  - strictly above the highhest heavy piece below this one
+  //  - strictly below the lowest non-heavy piece above that and below us
+  //  - strictly below where we are now
+  //
+  // Hopefully the two z coordinates are different and the range is in
+  // the right order. ; if not, we just return this piece's existing Z
+  // coordinate.  (We don't get into messing with generations.)
+
+  let tgpc = gpieces.get(piece)
+    .ok_or_else(|| internal_error_bydebug(&piece))?;
+
+  let find_some = |want_heavy: bool| {
+    gpieces.iter()
+      .filter(|(p,_)| *p != piece)
+      .filter(move |(_,gpc)| gpc.heavy() == want_heavy)
+      .map(|(_,gpc)| &gpc.zlevel)
+  };
+
+  let highest_heavy_below: Option<&ZLevel> =
+    find_some(true)
+    .filter(|z| z < &&tgpc.zlevel)
+    .max();
+
+  let lowest_nonheavy_above: Option<&ZLevel> =
+    find_some(false)
+    .filter(|z| {
+      z < &&tgpc.zlevel &&
+      if let Some(ref lim) = highest_heavy_below {
+        z > lim
+      } else {
+        true
+      }
+    })
+    .min();
+
+  let maximum: &ZLevel =
+    lowest_nonheavy_above.into_iter()
+    .chain(iter::once( &tgpc.zlevel ))
+    .min().unwrap();
+
+  // dbgc!( &highest_heavy_below, &lowest_nonheavy_above, &maximum, );
+           
+
+  if let Ok(mut zrange) = zcoord::Mutable::some_range(
+          highest_heavy_below.map(|z| z.z.clone_mut()).as_ref()  ,
+   Some(& maximum                      .z.clone_mut()           ),
+          1024)
+  {
+    zrange.next().unwrap()
+  } else {
+    tgpc.zlevel.z.clone()
+  }
+}
+
+#[cfg(test)]
+mod test {
+  use super::*;
+
+  #[test]
+  #[cfg(not(miri))]
+  fn make_heavy() {
+    const N: usize = 5;
+
+    let bools = [false,true].iter().cloned();
+
+    for (targeti, for_pieces) in iproduct!(
+      0..N,
+      iter::repeat(
+        iproduct!( bools.clone(), bools.clone() ),
+      ).take(N).multi_cartesian_product()
+    ) {
+      let desc = (targeti, &for_pieces);
+
+      let mut gpieces: GPieces = default();
+      let mut z = ZCoord::default().clone_mut();
+      let mut piece = None;
+      let mut pieceids = vec![];
+      for (i, &(heavy, zchange)) in for_pieces.iter().enumerate() {
+        let mut gpc = GPiece::dummy();
+        gpc.zlevel.zg = Generation(i.try_into().unwrap());
+        gpc.pinned = heavy;
+        gpc.zlevel.z = if zchange {
+          z.increment().unwrap()
+        } else {
+          z.repack().unwrap()
+        };
+        let p = gpieces.as_mut_t().insert(gpc);
+        if i == targeti { piece = Some(p); }
+        pieceids.push(p);
+      }
+
+      eprint!("make_heavy {}", targeti);
+      for &(heavy, zchange) in &for_pieces {
+        eprint!(" {}{}",
+                if heavy   { "H" } else { "l" },
+                if zchange { "z" } else { "E" });
+      }
+      let targetp = piece.unwrap();
+      let new_z = piece_make_heavy(&gpieces, targetp).unwrap();
+      let tgpc = &gpieces[targetp];
+
+      eprintln!(" {:?} {}", piece, &new_z);
+
+      for (i, p, &(heavy, zchange)) in izip!(
+        0..N,
+        &pieceids,
+        &for_pieces,
+      ).rev() {
+        let gpc = &gpieces[*p];
+        eprintln!(" {}{} {:?}  {}{}  {:<20} {:6}  {:?}",
+                  if i == targeti { "*" } else { " " },
+                  i, p,
+                  if heavy   { "H" } else { "l" },
+                  if zchange { "z" } else { "E" },
+                  &gpc.zlevel.z,
+                  &gpc.zlevel.zg,
+                  Ord::cmp(&gpc.zlevel.z, &new_z));
+      }
+
+      // not moved up
+      assert!( new_z <= tgpc.zlevel.z );
+
+      // if changed, distinct from every z
+      if new_z != tgpc.zlevel.z {
+        for (p,gpc) in &*gpieces {
+          if p == targetp { continue }
+          assert!( &new_z != &gpc.zlevel.z );
+        }
+
+        // not moved past any heavy
+        for (p,gpc) in &*gpieces {
+          if ! gpc.pinned { continue }
+          if gpc.zlevel >= tgpc.zlevel { continue } // was higher
+          if gpc.zlevel.z < new_z { continue } // still lower
+          panic!("{:?} {:?}", &desc, p);
+        }
+      }
+
+      if for_pieces.iter().all(|(_,zchange)| *zchange) {
+        // any light below new postion is also below some other heavy
+        // (ie, we have an excuse for not putting ourselves below it)
+        // (or there were clashing ZCoords)
+
+        let max_heavy = gpieces.values()
+          .filter(|gpc| gpc.pinned)
+          .map(|gpc| &gpc.zlevel)
+          .max();
+
+        for (p,gpc) in &*gpieces {
+          if p == targetp { continue }
+          if gpc.pinned { continue }
+
+          if (&gpc.zlevel.z, & gpc.zlevel.zg) <
+             (&new_z,        &tgpc.zlevel.zg)
+          {
+            assert!( &gpc.zlevel < max_heavy.as_ref().unwrap(),
+                     "{:?}, {:?}", &p, &max_heavy );
+          }
+        }
+      }
+    }
+  }
 }
 
 // ---------- log expiry ----------
