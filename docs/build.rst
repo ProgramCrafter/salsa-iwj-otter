@@ -44,6 +44,7 @@ Setup
 
      rustup default nightly
      rustup target add wasm32-unknown-unknown
+     rustup component add miri # for the tests
 
    Unfortunately, it is possible that the Rust Nightly you find when
    you run this is missing some pieces, or is not compatible with the
