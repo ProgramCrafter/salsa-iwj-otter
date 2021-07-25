@@ -1,4 +1,4 @@
-Version 0.7.2 - UNRELEASED
+Version 0.7.2 - 2021-07-25
 ==========================
 
 Bugfixes
