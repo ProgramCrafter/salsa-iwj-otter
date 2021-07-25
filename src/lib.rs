@@ -3,7 +3,6 @@
 // There is NO WARRANTY.
 
 #![feature(min_type_alias_impl_trait)]
-#![feature(io_into_inner_error_parts)]
 #![allow(clippy::redundant_closure_call)]
 
 pub mod imports;
