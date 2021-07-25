@@ -1,3 +1,12 @@
+Version 0.7.3 - 2021-07-25
+==========================
+
+Build system bugfixes
+---------------------
+
+ * `cargo` publication in `make-release` uses better pre-clean
+   approach.  (Removes some junk from caago packages.)
+
 Version 0.7.2 - 2021-07-25
 ==========================
 
