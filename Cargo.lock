@@ -3712,6 +3712,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "stringmatch"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2cf1c4412e20448da2b38171f4c08a50119239cdde74012506a49833918f84fd"
+dependencies = [
+ "regex",
+]
+
+[[package]]
 name = "strsim"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3953,9 +3962,9 @@ checksum = "8eaa81235c7058867fa8c0e7314f33dcce9c215f535d1913822a2b3f5e289f3c"
 
 [[package]]
 name = "thirtyfour"
-version = "0.24.2"
+version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05dbca14d90c9b21e3478ec909e66939d083822be9ac278c8c26c456027f7c6a"
+checksum = "e4429572f5e3ca656ffcd80765c09603e060c7d336ab359e58a0665e4a270698"
 dependencies = [
  "async-trait",
  "base64 0.13.0",
@@ -3967,6 +3976,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_repr",
+ "stringmatch",
  "thiserror",
  "tokio",
  "urlparse",
@@ -3974,15 +3984,16 @@ dependencies = [
 
 [[package]]
 name = "thirtyfour_sync"
-version = "0.24.1"
+version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d251f1b2fe963ca84e32843fd8df6522e65f24e32a5bf6f8a21bb179dae0e901"
+checksum = "25555de032e6895bb7c47fa4047eab1a7e0d22dc9ca6cd1bdb4eae3060cfafcb"
 dependencies = [
  "base64 0.13.0",
  "log 0.4.14",
  "reqwest",
  "serde",
  "serde_json",
+ "stringmatch",
  "thirtyfour",
 ]
 
