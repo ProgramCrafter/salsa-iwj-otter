@@ -130,10 +130,8 @@ wait_for_crates_io () {
 
 for cargo_dir in $cargo_order; do
     $dryrun_no_more_cargo \
-    nailing-cargo --no-nail --linkfarm=git --- \
+    nailing-cargo --no-nail --preclean-build=src --linkfarm=git --- \
         sh -xec "
-          find . ! -type l ! -type d ! -path './target/*' -print0 \
-              | xargs -0r rm --
           cd $cargo_dir; cargo publish $cargo_dryrun
         "
 
