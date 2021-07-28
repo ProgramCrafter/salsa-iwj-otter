@@ -615,6 +615,7 @@ api_route!{
               ioccults,&gs.occults,gpl,gpc,ipc,
               "flipped"
             )?;
+            // todo: name the most visible aspect in the log
             gpc.face = ((RawFaceId::from(gpc.face) + 1) % nfaces).into();
             return ((
               wrc,

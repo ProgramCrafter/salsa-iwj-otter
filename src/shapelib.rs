@@ -347,10 +347,15 @@ impl Item {
 
   #[throws(IE)]
   fn describe_face(&self, face: FaceId) -> Html {
-    // When we are not occulted, we can show are true identity
-    // even if we have a back.
-    let face = self.faces.get(face).unwrap_or(&self.faces[0]);
-    self.descs[ face.desc ].clone()
+    self.descs[
+      if let Some(face) = self.faces.get(face) {
+        face.desc
+      } else if let Some(back) = &self.back {
+        return back.describe_html()?;
+      } else {
+        self.faces[0].desc
+      }
+    ].clone()
   }
 }
 
