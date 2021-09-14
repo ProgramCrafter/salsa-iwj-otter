@@ -417,7 +417,7 @@ macro_rules! want {
         want_failed_internal!{ $variant(_)=$input, x, $($d),* }
         None
       },
-    };
+    }
   );
   { $variant:ident = $input:expr } => {
     want!( $variant = $input,
