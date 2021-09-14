@@ -49,7 +49,7 @@ WASM_BINDGEN_OPTIONS =						\
 
 BUNDLE_SOURCES ?= bundle-rust-sources
 
-SPHINXBUILD   = sphinx-build
+SPHINXBUILD   ?= sphinx-build
 
 ifndef INKSCAPE_EXTENSIONS
 INKSCAPE ?= inkscape
@@ -70,7 +70,7 @@ PUBLISHED_BRANCH=published
 
 ifneq (,$(wildcard ../Cargo.nail))
 
-NAILING_CARGO = nailing-cargo
+NAILING_CARGO ?= nailing-cargo
 CARGO = $(NAILING_CARGO)
 BUILD_SUBDIR ?= ../Build
 TARGET_DIR = $(BUILD_SUBDIR)/$(notdir $(PWD))/target
