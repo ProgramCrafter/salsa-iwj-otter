@@ -210,7 +210,7 @@ impl Ctx {
       now: Pos,
       log: Vec<String>,
       held: Option<String>,
-      client: String,
+      #[allow(dead_code)] /* just for Debug */ client: String,
     }
     impl<'s> Deref for Got<'s> {
       type Target = Side<'s>;
