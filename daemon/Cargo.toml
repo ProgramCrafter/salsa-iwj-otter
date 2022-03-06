@@ -19,6 +19,10 @@ authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>",
 name="daemon-otter"
 path="main.rs"
 
+[[bin]]
+name="actix-test"
+path="actix-test.rs"
+
 
 [dependencies]
 
