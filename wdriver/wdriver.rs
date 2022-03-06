@@ -50,7 +50,7 @@ pub struct Setup {
   driver: T4d,
   current_window: WindowState,
   screenshot_count: ScreenShotCount,
-  final_hook: FinalInfoCollection,
+  #[allow(dead_code)] /* here for Drop impl */ final_hook: FinalInfoCollection,
   windows_squirreled: Vec<JsLogfile>, // see Drop impl
 }
 deref_to_field_mut!{Setup, SetupCore, core}
