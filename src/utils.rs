@@ -75,7 +75,7 @@ impl<T> OldNew<T> {
   }
 
   pub fn into_iter(self) -> impl Iterator<Item=T> {
-    std::array::IntoIter::new(self.0)
+    IntoIterator::into_iter(self.0)
   }
 }
 
