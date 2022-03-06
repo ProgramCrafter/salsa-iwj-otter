@@ -28,8 +28,8 @@ otter-base.path="../base"
 otter-base.version="=0.7.3"
 
 argparse="0.2"
-directories="3"
-ron="0.6"
+directories="4"
+ron="0.7"
 
 fehler="1"
 num-traits="0.2"

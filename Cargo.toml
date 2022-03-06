@@ -35,7 +35,7 @@ boolinator="2"
 byteorder="1.3"
 cast_trait_object="0.1"
 chrono="0.4"
-chrono-tz="0.5"
+chrono-tz="0.6"
 console="0.15"
 crossbeam-utils="0.8"
 delegate="0.6"
@@ -61,7 +61,7 @@ num-traits="0.2"
 once_cell="1"
 openssh-keys="0.5"
 ordered-float="2"
-parking_lot="0.11"
+parking_lot="0.12"
 percent-encoding="2"
 pwd="1"
 rand="0.8"
@@ -87,7 +87,7 @@ enum-map     = { version="1"    , features=["serde"       ] }
 flexi_logger = { version="0.22" , features=["specfile"    ] }
 image = { version = "0.24", default-features=false, features=["jpeg","png"] }
 index_vec    = { version="0.1.1", features=["serde"       ] }
-mio          = { version="0.7",   features=["os-ext", "os-poll" ] }
+mio          = { version="0.8",   features=["os-ext", "os-poll" ] }
 serde        = { version="1"    , features=["derive", "rc"] }
 strum        = { version="0.24" , features=["derive"      ] }
 
