@@ -39,7 +39,7 @@ chrono-tz="0.6"
 console="0.15"
 crossbeam-utils="0.8"
 delegate="0.6"
-derive-into-owned="0.1"
+derive-into-owned="0.2"
 digest="0.10"
 downcast-rs="1"
 either="1"
@@ -67,7 +67,7 @@ pwd="1"
 rand="0.8"
 regex="1"
 rmp="0.8"
-rmp-serde="0.15"
+rmp-serde="1"
 serde_with="1"
 structopt="0.3"
 sha2="0.10"
@@ -83,7 +83,7 @@ vecdeque-stableix="1"
 xmlparser = "0.13"
 zip="0.5"
 
-enum-map     = { version="1"    , features=["serde"       ] }
+enum-map     = { version="2"    , features=["serde"       ] }
 flexi_logger = { version="0.22" , features=["specfile"    ] }
 image = { version = "0.24", default-features=false, features=["jpeg","png"] }
 index_vec    = { version="0.1.1", features=["serde"       ] }
