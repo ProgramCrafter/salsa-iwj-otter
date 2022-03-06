@@ -1599,7 +1599,7 @@ impl CommandStreamData<'_> {
       AuthState::Superuser { euid, .. } => euid,
       AuthState::None      { euid, .. } => euid,
       AuthState::Ssh { .. } => throw!(anyhow!(
-        "{}: cannot authorise by uid as ,now in AuthState::Ssh")),
+        "{}: cannot authorise by uid as now in AuthState::Ssh", &self)),
     }.as_ref().map_err(|e| e.clone())?;
     let server_uid = Uid::current();
     if client_euid.is_root() ||
