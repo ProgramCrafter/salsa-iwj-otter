@@ -6,7 +6,7 @@ use crate::prelude::*;
 
 //---------- public types ----------
 
-pub use crate::prelude::Sha512Trunc256 as Digester;
+pub use crate::prelude::Sha512_256 as Digester;
 pub type DigestWrite<W> = crate::utils::DigestWrite<Digester, W>;
 
 #[derive(Copy,Clone,Hash,Eq,PartialEq,Serialize,Deserialize)]

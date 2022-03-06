@@ -517,9 +517,9 @@ impl<D: Digest, R: Read> Read for DigestRead<D, R> {
 #[test]
 fn test_digest_read() {
   let ibuffer = b"abc";
-  let exp = Sha512Trunc256::digest(&ibuffer[..]);
+  let exp = Sha512_256::digest(&ibuffer[..]);
   let inner = &ibuffer[..];
-  let mut dr = DigestRead::<Sha512Trunc256,_>::new(inner);
+  let mut dr = DigestRead::<Sha512_256,_>::new(inner);
   let mut obuffer = [0;4];
   assert_eq!( dr.read(&mut obuffer).unwrap(), 3 );
   assert_eq!( &obuffer, b"abc\0" );
@@ -565,7 +565,7 @@ impl<D: Digest, W: Write> Write for DigestWrite<D, W> {
 #[test]
 fn test_digest_write() {
   let ibuffer = b"xyz";
-  let exp = Sha512Trunc256::digest(&ibuffer[..]);
+  let exp = Sha512_256::digest(&ibuffer[..]);
   let mut obuffer = [0;4];
   let inner = &mut obuffer[..];
   let mut dw = bundles::DigestWrite::new(inner);

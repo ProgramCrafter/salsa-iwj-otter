@@ -93,7 +93,7 @@ pub use serde::{de::DeserializeOwned, Deserialize, Serialize};
 pub use serde::{Deserializer, Serializer};
 pub use serde_with::DeserializeFromStr;
 pub use serde_with::SerializeDisplay;
-pub use sha2::{Sha512, Sha512Trunc256};
+pub use sha2::{Sha512, Sha512_256};
 pub use slotmap::{dense::DenseSlotMap, SparseSecondaryMap, Key as _};
 pub use strum::{EnumCount, EnumDiscriminants};
 pub use strum::{EnumString, EnumIter, EnumMessage, EnumProperty};
