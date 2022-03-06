@@ -28,10 +28,13 @@ otter-base.path="../base"
 otter-base.version="=0.7.3"
 
 fehler="1"
+futures="0.3"
 num-traits="0.2"
 rocket_cors="0.5"
 serde_with="1"
 structopt="0.3"
+
+actix-web = "4"
 
 rocket = { version="^0.4.6", features=["sse"] }
 rocket_contrib = { version="0.4", default-features=false, features=["tera_templates", "helmet", "json", "serve"] }
