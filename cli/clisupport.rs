@@ -522,7 +522,7 @@ macro_rules! inventory_subcmd {
       verb: $verb,
       help: $help,
       call,
-      props: default(),
+      props: $crate::SubcommandProperties::DEFAULT,
     }}
   };
   {$verb:expr, $help:expr, $($prop:tt)+} => {
@@ -530,7 +530,10 @@ macro_rules! inventory_subcmd {
       verb: $verb,
       help: $help,
       call,
-      props: SubcommandProperties { $($prop)* ..default() },
+      props: SubcommandProperties {
+        $($prop)*
+        ..$crate::SubcommandProperties::DEFAULT
+      },
     }}
   };
 }

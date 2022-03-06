@@ -35,6 +35,7 @@ fehler="1"
 num-traits="0.2"
 serde_with="1"
 
+const-default = { version="1",    features=["derive"      ] }
 serde        = { version="1"    , features=["derive", "rc"] }
 strum        = { version="0.24" , features=["derive"      ] }
 

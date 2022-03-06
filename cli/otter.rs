@@ -14,6 +14,7 @@ pub use std::rc::Rc;
 
 pub use argparse::{self,ArgumentParser,action::{TypedAction,ParseResult}};
 pub use argparse::action::{Action,IFlagAction,IArgAction};
+pub use const_default::ConstDefault;
 pub use derive_more::Display;
 
 pub use otter::prelude::*;
@@ -75,7 +76,7 @@ pub struct Subcommand {
 }
 inventory::collect!(Subcommand);
 
-#[derive(Default,Debug)]
+#[derive(ConstDefault,Debug)]
 pub struct SubcommandProperties {
   suppress_selectaccount: bool,
 }
