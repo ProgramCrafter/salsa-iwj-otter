@@ -19,7 +19,7 @@ authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>",
 members=["cli", "wasm", "daemon", "wdriver", "apitest", "jstest"]
 
 [build-dependencies]
-usvg="0.15"
+usvg="0.22"
 bundle-sources="0.0.1"
 
 
