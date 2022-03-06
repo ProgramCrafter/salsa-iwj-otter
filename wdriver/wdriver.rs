@@ -175,7 +175,6 @@ pub type JsLogfile = Rc<RefCell<JsLogfileImp>>;
 #[derive(Debug)]
 pub struct JsLogfileImp {
   name: String,
-  path: String,
   fh: File,
   counter: usize,
 }
@@ -189,7 +188,7 @@ impl JsLogfileImp {
     let name = name.to_owned();
     let fh = File::create(&path).with_context(|| path.clone())?;
     let counter = 0;
-    JsLogfileImp { name, path, fh, counter }
+    JsLogfileImp { name, fh, counter }
   }
 
   pub fn name(&self) -> String {
