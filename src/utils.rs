@@ -515,6 +515,7 @@ impl<D: Digest, R: Read> Read for DigestRead<D, R> {
 }
 
 #[test]
+#[cfg(not(miri))]
 fn test_digest_read() {
   let ibuffer = b"abc";
   let exp = Sha512_256::digest(&ibuffer[..]);
@@ -563,6 +564,7 @@ impl<D: Digest, W: Write> Write for DigestWrite<D, W> {
 }
 
 #[test]
+#[cfg(not(miri))]
 fn test_digest_write() {
   let ibuffer = b"xyz";
   let exp = Sha512_256::digest(&ibuffer[..]);
