@@ -36,7 +36,7 @@ byteorder="1.3"
 cast_trait_object="0.1"
 chrono="0.4"
 chrono-tz="0.5"
-console="0.14"
+console="0.15"
 crossbeam-utils="0.8"
 delegate="0.6"
 derive-into-owned="0.1"
@@ -54,7 +54,7 @@ lazy-init="0.5"
 lazy_static="1"
 libc="0.2"
 log="0.4"
-nix="0.22"
+nix="0.23"
 num="0.4"
 num-derive="0.3"
 num-traits="0.2"
@@ -84,8 +84,8 @@ xmlparser = "0.13"
 zip="0.5"
 
 enum-map     = { version="1"    , features=["serde"       ] }
-flexi_logger = { version="0.18" , features=["specfile"    ] }
-image = { version = "0.23", default-features=false, features=["jpeg","png"] }
+flexi_logger = { version="0.22" , features=["specfile"    ] }
+image = { version = "0.24", default-features=false, features=["jpeg","png"] }
 index_vec    = { version="0.1.1", features=["serde"       ] }
 mio          = { version="0.7",   features=["os-ext", "os-poll" ] }
 serde        = { version="1"    , features=["derive", "rc"] }
