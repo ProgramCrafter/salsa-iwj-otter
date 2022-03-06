@@ -37,6 +37,6 @@ rocket = { version="^0.4.6", features=["sse"] }
 rocket_contrib = { version="0.4", default-features=false, features=["tera_templates", "helmet", "json", "serve"] }
 
 serde        = { version="1"    , features=["derive", "rc"] }
-strum        = { version="0.21" , features=["derive"      ] }
+strum        = { version="0.24" , features=["derive"      ] }
 
 #fin.

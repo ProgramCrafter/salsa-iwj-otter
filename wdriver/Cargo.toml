@@ -33,6 +33,6 @@ thirtyfour_sync="0.25"
 x11rb="0.8"
 
 serde        = { version="1"    , features=["derive", "rc"] }
-strum        = { version="0.21" , features=["derive"      ] }
+strum        = { version="0.24" , features=["derive"      ] }
 
 #fin.
