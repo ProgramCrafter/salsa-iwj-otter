@@ -278,8 +278,8 @@ impl Debug for WindowGuard<'_> {
 
 #[derive(Deserialize,Clone,Debug)]
 pub struct WPiece {
-  piece: Vpid,
-  p: JsV,
+  pub piece: Vpid,
+  pub p: JsV,
 }
 
 pub trait LogIgnoreBefore {
