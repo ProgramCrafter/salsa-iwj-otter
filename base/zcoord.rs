@@ -303,35 +303,36 @@ pub type RangeIterator = std::iter::Take<
     IteratorCore<AddSubRangeDelta, MutateFirst>
     >;
 
-pub trait MutateReturn {
+pub trait MutateReturn: Copy {
   fn op<T, U,
         M: FnOnce(&mut T),
         O: FnOnce(&T) -> U>
-    (x: &mut T,
+    (self,
+     x: &mut T,
      m: M,
      o: O) -> U;
 }
 
-#[derive(Debug)]
+#[derive(Debug,Copy,Clone)]
 pub struct MutateFirst;
 impl MutateReturn for MutateFirst {
   fn op<T, U,
         M: FnOnce(&mut T),
         O: FnOnce(&T) -> U>
-    (x: &mut T, m: M, o: O) -> U
+    (self, x: &mut T, m: M, o: O) -> U
   {
     m(x);
     o(x)
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug,Copy,Clone)]
 pub struct MutateLast;
 impl MutateReturn for MutateLast {
   fn op<T, U,
         M: FnOnce(&mut T),
         O: FnOnce(&T) -> U>
-    (x: &mut T, m: M, o: O) -> U
+    (self, x: &mut T, m: M, o: O) -> U
   {
     let u = o(x);
     m(x);
@@ -453,7 +454,7 @@ impl<ASO:AddSubOffset, MR:MutateReturn> Iterator for IteratorCore<ASO, MR> {
   type Item = ZCoord;
   fn next(&mut self) -> Option<ZCoord> {
     let aso = &self.aso;
-    Some(MR::op(
+    Some(self.mr.op(
       &mut self.current,
       |current| { current.addsub(aso).unwrap(); },
       |current| { current.repack().unwrap() },
