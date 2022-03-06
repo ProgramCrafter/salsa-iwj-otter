@@ -32,7 +32,6 @@ otter-base.version="=0.7.3"
 console_error_panic_hook="0.1"
 fehler="1"
 js-sys="0.3"
-wee_alloc="0.4"
 
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 

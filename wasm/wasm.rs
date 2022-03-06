@@ -216,6 +216,11 @@ pub fn setup(s: &str) -> JsString {
   format!("WASM {}", s).into()
 }
 
-//#[cfg(feature = "wee_alloc")]
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+// wee-alloc has a null pointer deref here
+//   846 |         assert_local_cell_invariants(&(*current_free).header);
+// this is apparently known about
+//   https://githubplus.com/saethlin/miri-tools
+// and wee-alloc has not been updated in over a year.
+// This was saving us 7k in the output wasm file, out of 140k.
+//#[global_allocator]
+//static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
