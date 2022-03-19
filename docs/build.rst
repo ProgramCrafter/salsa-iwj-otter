@@ -51,7 +51,7 @@ Setup
    version of Otter you have.  The following is known to work with
    Otter 0.7.1::
 
-     rustup default nightly-2021-07-25 # downloads d9aa28767 2021-07-24
+     rustup default nightly-2022-03-19 # downloads 1bfe40d11 2022-03-18
 
    **If you just want to run the otter cli client over ssh to an existing server, or edit and preview the shape libraries (ie the piece shapes) you can stop here.**
 
