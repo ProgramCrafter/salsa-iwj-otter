@@ -7,6 +7,7 @@ use actix_web::HttpRequest;
 use actix_web::http::Method;
 use actix_web::HttpResponse;
 use actix_web::dev::Payload;
+use actix_web::middleware;
 
 use std::convert::Infallible;
 
@@ -68,6 +69,12 @@ async fn main() -> std::io::Result<()> {
                   .service(index)
                   .service(foo)
                   .default_service(web::to(not_found_handler))
+                  .wrap(
+middleware::DefaultHeaders::new().add((
+  actix_web::http::header::X_CONTENT_TYPE_OPTIONS,
+  "nosniff"
+))
+                  )
   )
     .bind(("127.0.0.1", 8080))?
     .run()
