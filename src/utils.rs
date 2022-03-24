@@ -738,6 +738,21 @@ impl Drop for CookedStdout {
   fn drop(&mut self) { self.must_flush() }
 }
 
+pub trait IpAddress {
+  fn with_port(&self, port: u16) -> SocketAddr;
+}
+
+impl<A> IpAddress for A where A: Into<IpAddr> + Debug + Clone {
+  fn with_port(&self, port: u16) -> SocketAddr {
+    match (self.clone().into(), port)
+      .to_socket_addrs()
+      .map(|i| i.at_most_one()) {
+        Ok(Ok(Some(addr))) => addr,
+        x => panic!("{:?},{} gave {:?}", self, port, x),
+      }
+  }
+}
+
 #[throws(fmt::Error)]
 pub fn fmt_hex(f: &mut Formatter, buf: &[u8]) {
   for v in buf { write!(f, "{:02x}", v)?; }

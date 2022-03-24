@@ -40,6 +40,7 @@ pub use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
 pub use std::os::unix::io::{AsRawFd, IntoRawFd, RawFd};
 pub use std::os::unix::net::UnixStream;
 pub use std::os::unix::process::{CommandExt, ExitStatusExt};
+pub use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
 pub use std::path::PathBuf;
 pub use std::process::{exit, Child, Command, Stdio};
 pub use std::str;
