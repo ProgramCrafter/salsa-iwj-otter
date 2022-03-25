@@ -91,6 +91,7 @@ pub use rand::prelude::SliceRandom;
 pub use regex::Regex;
 pub use serde::ser::SerializeTuple;
 pub use serde::{de::DeserializeOwned, Deserialize, Serialize};
+pub use serde::de::Error as _;
 pub use serde::{Deserializer, Serializer};
 pub use serde_with::DeserializeFromStr;
 pub use serde_with::SerializeDisplay;
