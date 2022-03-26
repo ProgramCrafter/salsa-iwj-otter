@@ -576,8 +576,6 @@ api_route!{
   }
 }
 
-const DEFKEY_FLIP: UoKey = 'f';
-
 api_route!{
   api_uo, "/_/api/k",
   struct ApiPieceUo {

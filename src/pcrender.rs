@@ -11,6 +11,8 @@ pub type VisiblePieceAngle = PieceAngle;
 #[serde(transparent)]
 pub struct VisibleAngleTransform(Html);
 
+const DEFKEY_FLIP: UoKey = 'f';
+
 #[derive(Debug,Clone)]
 pub struct PieceRenderInstructions {
   pub vpid: VisiblePieceId,
@@ -236,7 +238,7 @@ impl PieceRenderInstructions {
       out.push(UoDescription {
         wrc: WRC::UpdateSvg,
         kind: UoKind::Global,
-        def_key: 'f'.into(),
+        def_key: DEFKEY_FLIP.into(),
         opname: "flip".to_string(),
         desc: Html::lit("flip").into(),
       })
