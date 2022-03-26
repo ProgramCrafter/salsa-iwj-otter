@@ -8,6 +8,7 @@ use actix_web::http::Method;
 use actix_web::HttpResponse;
 use actix_web::dev::Payload;
 use actix_web::middleware;
+use actix_cors::Cors;
 
 use std::convert::Infallible;
 
@@ -44,8 +45,15 @@ async fn wombat(remain: Remain) -> impl Responder {
     format!("Hello {:?}", remain)
 }
 
+fn update_cors() -> Cors {
+  Cors::default()
+      .allowed_methods([Method::GET])
+
+}
+
 //#[route("/wombat", method="GET", method="HEAD")]
-#[route("/foo", method="GET", method="HEAD")]
+#[route("/foo", method="GET", method="HEAD",
+        wrap = "update_cors()")]
 //#[get("/foo")]
 async fn foo() -> impl Responder {
   "foo\r\n"

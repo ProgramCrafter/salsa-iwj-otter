@@ -44,6 +44,7 @@ structopt="0.3"
 
 actix-web = "4"
 actix-files = "0.6"
+actix-cors = "0.6"
 
 rocket = { version="^0.4.6", features=["sse"] }
 rocket_contrib = { version="0.4", default-features=false, features=["tera_templates", "helmet", "json", "serve"] }
