@@ -317,6 +317,10 @@ impl ResponseError for BundleDownloadError {
       BDE::IE(_)               => StatusCode::INTERNAL_SERVER_ERROR,
     }
   }
+
+  fn error_response(&self) -> HttpResponse<BoxBody> {
+    error_response(self)
+  }
 }
 
 #[route("/_/bundle/{instance}/{id}", method="GET", method="HEAD")]
@@ -405,6 +409,18 @@ async fn not_found_handler(method: Method) -> impl Responder {
     _  =>
       StatusCode::METHOD_NOT_ALLOWED.respond_text(&"Unsupported HTTP method"),
   }
+}
+
+fn error_response<E>(self_: &E) -> HttpResponse<BoxBody>
+where E: ResponseError + Debug + Display
+{
+  let status = self_.status_code();
+  if status == StatusCode::INTERNAL_SERVER_ERROR {
+    error!("responding with internal error -- {} -- {:?}", self_, self_);
+  }
+  self_.status_code().respond_text(
+    &format_args!("{}\n{:?}\n", self_, self_)
+  )
 }
 
 #[actix_web::main] // not compatible with fehler

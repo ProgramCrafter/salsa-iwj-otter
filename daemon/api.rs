@@ -90,9 +90,7 @@ impl ResponseError for FatalErrorResponse {
   }
 
   fn error_response(&self) -> HttpResponse<BoxBody> {
-    self.status_code().respond_text(
-      &format_args!("Online-layer error\n{:?}\n{}\n", self, self)
-    )
+    error_response(self)
   }
 }
 
