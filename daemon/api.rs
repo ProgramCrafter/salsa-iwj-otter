@@ -6,8 +6,6 @@ use crate::imports::*;
 
 pub use super::*;
 
-type PL = PresentationLayout;
-
 #[derive(Clone,Debug)]
 pub struct InstanceAccess<'i, Id> {
   pub raw_token: &'i RawTokenVal,
