@@ -74,14 +74,18 @@ impl Default for PresentationLayout {
 #[derive(Debug)]
 pub struct AbbrevPresentationLayout(pub PresentationLayout);
 
+#[derive(Error,Debug,Clone,Copy)]
+#[error("Invalid presentation layout character")]
+pub struct InvalidAbbrevPresentationLayout;
+
 impl FromStr for AbbrevPresentationLayout {
-  type Err = ();
+  type Err = InvalidAbbrevPresentationLayout;
   #[throws(Self::Err)]
   fn from_str(s: &str) -> Self {
     AbbrevPresentationLayout(match s {
       "p" => PL::Portrait,
       "l" => PL::Landscape,
-      _ => throw!(())
+      _ => throw!(InvalidAbbrevPresentationLayout)
     })
   }
 }
