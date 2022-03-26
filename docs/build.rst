@@ -141,21 +141,16 @@ Apologia
 Rust Nightly
 ````````````
 
-This is needed almost solely because Rocket needs it.  Rocket is
-the web framework I am using.  The next version of Rocket (0.5.x),
-which is in development, will not need Nightly, but it will also be
-a serious compatibility break.  The existing Rocket (0.4.x) will
-almost certainly never be ported to Stable Rust.  When Rocket 0.5.x
-is out, porting Otter to it will go on my list - but it won't be
-trivial.  Sorry.
+This was needed almost solely because Rocket needs it.
+Hopefully we will compile on stable shortly.
 
 The many dependencies of Otter
 ``````````````````````````````
 
-These are partly because Rocket is a large piece of software with
+These are partly because actix is a large piece of software with
 much functionality.  But also because I favoured my own programming
 convenience and in some cases was experimenting with different
-approaches.  In practice, it seems to me that once I'm using Rocket
+approaches.  In practice, it seems to me that once I'm using Actix
 and WASM and resvg and so on, there is not that much to be gained
 by trying to prune the dependencies of the otter package itself.
 

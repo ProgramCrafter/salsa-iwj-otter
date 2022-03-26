@@ -126,7 +126,8 @@ Navigating the otter source code
   The Otter server.  This is a simple binary crate.  Much
   functionality belonging primarily, or only, to the server is in
   `src/`, simply because it was easier not to disentangle it.
-  Anything that needs Rocket (the web framework) is in `daemon/`.
+  Anything that needs Actix (the web framework) is in `daemon/`.
+  Generally, we try to keep async confined to there too.
 
 * `base/`
 
@@ -161,9 +162,9 @@ Navigating the otter source code
 
   "Non-web templates".  Tera templates for things other than web
   pages.  Currently this includes the server's outgoing emails.  These
-  have to be in a separate directory because Tera (invoked by Rocket)
-  likes to load everything applicable it finds in its own `templates/`
-  directory.  These are used via `src/nwtemplates.rs`.
+  are in a separate directory to distinguish them from the templates
+  for the actix webserver's Tera instance, which loads everything
+  in `templates/*.tera`.
 
 * `apitest/`
 

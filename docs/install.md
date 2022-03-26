@@ -18,8 +18,7 @@ in `target/doc/otter/config/struct.ServerConfigSpec.html`.
 
 Here is a copy of the config file from chiark.  As you can see I am
 running Otter as an "application server".  My usual Apache
-configuration handles the TLS.  (Rocket's TLS is not advertised as
-being suitable for production use.)
+configuration handles the TLS.
 
 ```
 http_port = 1323
@@ -44,9 +43,7 @@ global_level = 'debug'
 The `*.sse` wildcard domain is to work around a bug in the web
 facility "server-sent events".  You will probably want one of those
 too.  The SSE bug is documented on MDN
-<https://developer.mozilla.org/en-US/docs/Web/API/EventSource>
-(as referenced by the docs for `rocket::response::Stream::chunked`
-which is the underlying facility used by Otter).
+<https://developer.mozilla.org/en-US/docs/Web/API/EventSource>.
 
 
 Final weirdness
