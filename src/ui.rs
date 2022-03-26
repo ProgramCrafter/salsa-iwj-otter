@@ -71,6 +71,7 @@ impl Default for PresentationLayout {
   fn default() -> Self { PL::Portrait }
 }
 
+#[derive(Debug)]
 pub struct AbbrevPresentationLayout(pub PresentationLayout);
 
 impl FromStr for AbbrevPresentationLayout {

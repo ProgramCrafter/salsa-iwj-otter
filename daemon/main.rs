@@ -161,6 +161,7 @@ impl<'a,'r,T> FromRequest<'a,'r> for WholeQueryString<T>
   }
 }
 
+#[derive(Debug)]
 pub struct Parse<T: FromStr>(pub T);
 
 impl<'r, T> FromParam<'r> for Parse<T>
