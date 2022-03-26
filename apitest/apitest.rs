@@ -635,9 +635,6 @@ fake_rng = []
 global_level = 'debug'
 
 [log.modules]
-rocket = 'error'
-_ = "error" # rocket
-# ^ comment these two out to see Tera errors, *sigh*
 
 'hyper::server' = 'info'
 "game::debugreader" = 'info'
