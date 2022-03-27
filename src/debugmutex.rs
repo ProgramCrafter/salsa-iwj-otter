@@ -13,7 +13,10 @@ impl<T> Mutex<T> where T: DebugIdentify {
     Mutex(parking_lot::Mutex::new(t))
   }
   pub fn lock(&self) -> MutexGuard<T> {
-    MutexGuard(self.0.lock())
+    dbg!(dtype::<T>());
+    let r = MutexGuard(self.0.lock());
+    dbg!(dident(&*r));
+    r
   }
 }
 
@@ -23,6 +26,19 @@ impl<'g,T> Deref for MutexGuard<'g,T> where T: DebugIdentify {
 }
 impl<'g,T> DerefMut for MutexGuard<'g,T> where T: DebugIdentify {
   fn deref_mut(&mut self) -> &mut T { &mut *self.0 }
+}
+
+impl<'g,T> Drop for MutexGuard<'g,T> where T: DebugIdentify {
+  fn drop(&mut self) {
+    dbg!(dident(&**self));
+  }
+}
+
+pub fn dtype<T: DebugIdentify>() -> impl Debug {
+  DebugFormatter(T::debug_identify_type)
+}
+pub fn dident<'t, T: DebugIdentify>(t: &'t T) -> impl Debug + 't {
+  DebugFormatter(move |f: &'_ mut fmt::Formatter<'_>| t.debug_identify(f))
 }
 
 pub struct DebugFormatter<C>(C);
