@@ -3,6 +3,7 @@
 // There is NO WARRANTY.
 
 use crate::prelude::*;
+use tera_standalone as tera;
 
 #[derive(Error,Debug)]
 pub enum Fatal { // Includes _bogus_ client updates, see PROTOCOL.md
@@ -54,6 +55,8 @@ pub enum InternalError {
   Aggregated,
   #[error("{0}")]
   SshKeysManipError(#[from] sshkeys::AuthKeysManipError),
+  #[error("Template rendering error")]
+  TemplateRenderingError(#[from] tera::Error),
 }
 
 #[derive(Error,Copy,Clone,Debug,Serialize,Deserialize)]
