@@ -113,8 +113,8 @@ pub use crate::imports::zipfile::{self, read::ZipFile, result::ZipError};
 pub use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 // Swap this over for debugging
-//pub use parking_lot::{Mutex, MutexGuard};
-pub use crate::debugmutex::{Mutex, MutexGuard};
+pub use parking_lot::{Mutex, MutexGuard};
+//pub use crate::debugmutex::{Mutex, MutexGuard};
 
 use nix::time::ClockId;
 pub const CLOCK_REALTIME : ClockId = ClockId::CLOCK_REALTIME ;
