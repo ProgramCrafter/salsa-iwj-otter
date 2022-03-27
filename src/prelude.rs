@@ -80,8 +80,6 @@ pub use nix::time::clock_gettime;
 pub use num_derive::{ToPrimitive, FromPrimitive};
 pub use num_traits::{Bounded, FromPrimitive, ToPrimitive};
 pub use ordered_float::OrderedFloat;
-pub use parking_lot::{Mutex, MutexGuard};
-pub use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 pub use percent_encoding::percent_decode_str;
 pub use percent_encoding::utf8_percent_encode;
 pub use percent_encoding::NON_ALPHANUMERIC;
@@ -110,6 +108,13 @@ pub use vecdeque_stableix::Deque as StableIndexVecDeque;
 pub use vecdeque_stableix::Offset as StableIndexOffset;
 pub use void::{unreachable, Void, ResultVoidExt, ResultVoidErrExt};
 pub use crate::imports::zipfile::{self, read::ZipFile, result::ZipError};
+
+// No debug version of this
+pub use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+
+// Swap this over for debugging
+pub use parking_lot::{Mutex, MutexGuard};
+//pub use crate::debugmutex::{Mutex, MutexGuard};
 
 use nix::time::ClockId;
 pub const CLOCK_REALTIME : ClockId = ClockId::CLOCK_REALTIME ;
