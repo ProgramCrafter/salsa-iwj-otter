@@ -222,8 +222,8 @@ where T: FromStr,
 pub struct Parse<T: FromStr>(pub T);
 
 impl<'de,T> Deserialize<'de> for Parse<T>
-where T: FromStr,
-      T::Err: std::error::Error,
+where T: FromStr + Debug,
+      T::Err: std::error::Error + Debug,
 {
   #[throws(D::Error)]
   fn deserialize<D: Deserializer<'de>>(d: D) -> Self {
