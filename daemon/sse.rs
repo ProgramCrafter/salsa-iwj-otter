@@ -7,6 +7,8 @@
 
 use otter::prelude::*;
 
+use super::*;
+
 // ---------- basic definitions ----------
 
 const UPDATE_READER_SIZE: usize = 1024*32;
@@ -96,8 +98,8 @@ trait InfallibleBufRead: BufRead { }
 impl<T> InfallibleBufRead for io::Cursor<T> where io::Cursor<T>: BufRead { }
 impl<T> InfallibleBufRead for &mut T where T: InfallibleBufRead { }
 
-impl Read for UpdateReader {
-  fn read(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
+impl UpdateReader {
+  async fn read(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
     let mut buf = BufForRead{ csr: io::Cursor::new(buf) };
     if buf.remaining() == 0 { return Ok(0) }
 
@@ -203,11 +205,19 @@ impl Read for UpdateReader {
       Some(())
     })() == None { return Ok(0) }
 
-    cv.wait_for(&mut ig.c, UPDATE_KEEPALIVE);
+    let was_gen = ig.gs.gen;
+
+    match tokio::time::timeout(
+      UPDATE_KEEPALIVE,
+      cv.wait_no_relock(ig.c)
+    ).await {
+      Err(_elapsed) => { },
+      Ok(baton) => baton.dispose(),
+    };
 
     write!(buf, "event: commsworking\n\
                  data: online {} {} G{}\n\n",
-           self.player, self.client, ig.gs.gen)?;
+           self.player, self.client, was_gen)?;
     self.keepalives += Wrapping(1);
     self.need_flush = true;
     return Ok(buf.generated());
@@ -218,10 +228,12 @@ impl Read for UpdateReader {
 
 #[throws(Fatal)]
 pub fn content(iad: InstanceAccessDetails<ClientId>, gen: Generation)
-  -> impl Read {
+               -> Pin<Box<dyn futures::Stream<
+                   Item=Result<Bytes, io::Error>
+               >>> {
   let client = iad.ident;
 
-  let content = {
+  let update_reader = {
     let mut g = iad.gref.lock()?;
     let _g = &mut g.gs;
     let cl = g.clients.byid(client)?;
@@ -250,7 +262,32 @@ pub fn content(iad: InstanceAccessDetails<ClientId>, gen: Generation)
       },
     }
   };
-  let content = BufReader::with_capacity(UPDATE_READER_SIZE, content);
-  //DebugReader(content)
-  content
+
+  Box::pin(futures::stream::try_unfold(update_reader,
+                                       |mut update_reader| async {
+    // TODO change error type here to not be io::Error
+    // TODO get rid of io::ErrorKind::WouldBlock kludge
+    // TODO what is the point now of BufForRead?  Combine this with that?
+    // TODO adaptive buffer length
+    let mut buffer = vec![ 0u8; UPDATE_READER_SIZE ];
+    let mut used = 0;
+    loop {
+      if used == buffer.len() { break }
+
+      let got = match update_reader.read(&mut buffer[used..]).await {
+        Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+          if used > 0 { break } else { continue }
+        },
+        x => x,
+      }?;
+
+      used += got;
+    }
+    Ok(if used > 0 {
+      buffer.truncate(used);
+      Some((Bytes::from(buffer), update_reader))
+    } else {
+      None
+    })
+  })) as _
 }

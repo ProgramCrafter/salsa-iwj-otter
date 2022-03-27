@@ -1,1 +1,10 @@
 remove test programs
+request logging
+template render failure logging
+template don't do */* thing, and strip .tera
+TODOs in diff
+content-type for download bundles
+http2 HEAD requests
+fix listen
+fix that /_/updates vs /_/<leaf> involves ordering
+one tera version

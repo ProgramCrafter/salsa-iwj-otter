@@ -66,15 +66,16 @@ struct DataLoad {
 }
 
 #[derive(Deserialize)]
-struct SessionForm {
+pub struct SessionForm {
   ptoken: RawToken,
 }
-#[post("/_/session/<layout>", format="json", data="<form>")]
+#[post("/_/session/{layout}")]
 #[throws(FER)]
-fn session(form: Json<SessionForm>,
-           layout: Parse<PresentationLayout>)
+pub async fn session(form: Json<SessionForm>,
+                 templates: Data<Templates>,
+               layout: Path<Parse<PresentationLayout>>)
            -> Template {
-  session_inner(form, layout.0)?
+  session_inner(form, templates, layout.into_inner().0)?
 }
 
 #[ext]
@@ -89,6 +90,7 @@ impl SvgAttrs {
 } 
 
 fn session_inner(form: Json<SessionForm>,
+                 templates: Data<Templates>,
                  layout: PresentationLayout)
                  -> Result<Template,Fatal> {
   // make session in this game, log a message to other players
@@ -255,11 +257,11 @@ fn session_inner(form: Json<SessionForm>,
         &player, client, &c.nick, &c.ctoken,
         iad.gref.lock().ok().as_ref().map(|ig| &**ig));
 
-  Ok(Template::render(layout.template(),&c))
+  Ok(templates.render(layout.template(),&c)?)
 }
 
-pub fn mount(rocket_instance: Rocket) -> Rocket {
-  rocket_instance.mount("/", routes![
+pub fn routes() -> impl HttpServiceFactory {
+  services![
     session,
-  ])
+  ]
 }

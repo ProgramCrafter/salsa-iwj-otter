@@ -738,7 +738,7 @@ impl Drop for CookedStdout {
   fn drop(&mut self) { self.must_flush() }
 }
 
-pub trait IpAddress {
+pub trait IpAddress: Debug {
   fn with_port(&self, port: u16) -> SocketAddr;
 }
 

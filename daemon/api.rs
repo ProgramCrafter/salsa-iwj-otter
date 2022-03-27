@@ -7,20 +7,20 @@ use crate::imports::*;
 pub use super::*;
 
 #[derive(Clone,Debug)]
-pub struct InstanceAccess<'i, Id> {
-  pub raw_token: &'i RawTokenVal,
+pub struct InstanceAccess<Id> {
+  pub raw_token: RawToken,
   pub i: InstanceAccessDetails<Id>,
 }
 
-impl<'r, Id> FromFormValue<'r> for InstanceAccess<'r, Id>
+impl<Id> FromStr for InstanceAccess<Id>
   where Id: AccessId, Fatal: From<Id::Error>
 {
-  type Error = FER;
+  type Err = FER;
   #[throws(FER)]
-  fn from_form_value(param: &'r RawStr) -> Self {
-    let token = RawTokenVal::from_str(param.as_str());
-    let i = InstanceAccessDetails::from_token(token)?;
-    InstanceAccess { raw_token: token, i }
+  fn from_str(s: &str) -> Self {
+    let raw_token = RawToken(s.to_owned());
+    let i = InstanceAccessDetails::from_token(raw_token.borrow())?;
+    InstanceAccess { raw_token, i }
   }
 }
 
@@ -76,33 +76,29 @@ mod op {
 #[error("{0}")]
 pub struct FatalErrorResponse(#[from] Fatal);
 
-impl From<&FatalErrorResponse> for rocket::http::Status {
-  fn from(oe: &FatalErrorResponse) -> rocket::http::Status {
+impl ResponseError for FatalErrorResponse {
+  fn status_code(&self) -> StatusCode {
     use Fatal::*;
-    match oe.0 {
-      ServerFailure(_) => Status::InternalServerError,
+    match self.0 {
+      ServerFailure(_)
+        => StatusCode::INTERNAL_SERVER_ERROR,
       NoClient | NoPlayer(_) | GameBeingDestroyed(_)
-        => Status::NotFound,
+        => StatusCode::NOT_FOUND,
       BadJSON(_) | BadLoose
-        => Status::BadRequest,
+        => StatusCode::BAD_REQUEST,
     }
   }
-}
 
-impl<'r> Responder<'r> for FatalErrorResponse {
-  #[throws(Status)]
-  fn respond_to(self, req: &Request) -> Response<'r> {
-    let msg = format!("Online-layer error\n{:?}\n{}\n", self, self);
-    let status = (&self).into();
-    let mut resp = Responder::respond_to(msg,req).unwrap();
-    resp.set_status(status);
-    resp
+  fn error_response(&self) -> HttpResponse<BoxBody> {
+    self.status_code().respond_text(
+      &format_args!("Online-layer error\n{:?}\n{}\n", self, self)
+    )
   }
 }
 
 #[throws(Fatal)]
 fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
-                   -> impl response::Responder<'static> {
+                   -> impl Responder {
 //  thread::sleep(Duration::from_millis(2000));
   let iad = lookup_token(form.ctoken.borrow())?;
   let client = iad.ident;
@@ -239,10 +235,10 @@ macro_rules! api_route_core {
     #[derive(Debug,Serialize,Deserialize)]
     $formdef
 
-    #[post($path, format="json", data="<form>")]
+    #[post($path)]
     #[throws(FER)]
-    fn $fn(form: Json<ApiPiece<$form>>)
-           -> impl response::Responder<'static> {
+    async fn $fn(form: Json<ApiPiece<$form>>)
+           -> impl Responder {
       api_piece_op(form)?
     }
 
@@ -636,8 +632,8 @@ api_route!{
   }
 }
 
-pub fn mount(rocket_instance: Rocket) -> Rocket {
-  rocket_instance.mount("/", routes![
+pub fn routes() -> impl HttpServiceFactory {
+  services![
     api_grab,
     api_ungrab,
     api_setz,
@@ -646,5 +642,5 @@ pub fn mount(rocket_instance: Rocket) -> Rocket {
     api_wrest,
     api_pin,
     api_uo,
-  ])
+  ]
 }
