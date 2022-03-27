@@ -1,4 +1,3 @@
-template render failure logging
 template don't do */* thing, and strip .tera
 TODOs in diff
 content-type for download bundles
