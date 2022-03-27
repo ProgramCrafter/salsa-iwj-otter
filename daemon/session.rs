@@ -72,9 +72,9 @@ struct SessionForm {
 #[post("/_/session/<layout>", format="json", data="<form>")]
 #[throws(FER)]
 fn session(form: Json<SessionForm>,
-           layout: Option<Parse<PresentationLayout>>)
+           layout: Parse<PresentationLayout>)
            -> Template {
-  session_inner(form, layout.map(|pl| pl.0))?
+  session_inner(form, layout.0)?
 }
 
 #[ext]
@@ -89,7 +89,7 @@ impl SvgAttrs {
 } 
 
 fn session_inner(form: Json<SessionForm>,
-                 layout: Option<PresentationLayout>)
+                 layout: PresentationLayout)
                  -> Result<Template,Fatal> {
   // make session in this game, log a message to other players
   let iad = lookup_token(form.ptoken.borrow())?;
@@ -123,9 +123,7 @@ fn session_inner(form: Json<SessionForm>,
     let gpl = ig.gs.players.byid_mut(player)?;
     let pr = ig.iplayers.byid(player)?;
     let tz = &pr.ipl.tz;
-    if let Some(layout) = layout {
-      gpl.layout = layout;
-    }
+    gpl.layout = layout;
     let layout = gpl.layout;
     let nick = gpl.nick.clone();
     let movehist = gpl.movehist.clone();
