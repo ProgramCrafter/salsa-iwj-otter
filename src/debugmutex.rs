@@ -25,14 +25,14 @@ impl<'g,T> DerefMut for MutexGuard<'g,T> where T: DebugIdentify {
   fn deref_mut(&mut self) -> &mut T { &mut *self.0 }
 }
 
-pub struct DisplayFormatter<F>(F);
-impl<F> Display for DisplayFormatter<F>
-where F: Fn(&mut fmt::Formatter) -> fmt::Result {
+pub struct DebugFormatter<C>(C);
+impl<C> Debug for DebugFormatter<C>
+where C: for<'f,'ff> Fn(&'f mut fmt::Formatter<'ff>) -> fmt::Result {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.0(f) }
 }
 
-pub struct DisplayDebugIdentify<'t,T>(&'t T) where T: DebugIdentify;
-impl<T> Display for DisplayDebugIdentify<'_,T> where T: DebugIdentify {
+pub struct DebugDebugIdentify<'t,T>(&'t T) where T: DebugIdentify;
+impl<T> Debug for DebugDebugIdentify<'_,T> where T: DebugIdentify {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     self.0.debug_identify(f)
   }
@@ -50,13 +50,13 @@ pub trait DebugIdentify {
 impl<T> DebugIdentify for Option<T> where T: DebugIdentify {
   #[throws(fmt::Error)]
   fn debug_identify_type(f: &mut fmt::Formatter) {
-    write!(f, "Option<{}>", DisplayFormatter(T::debug_identify_type))?;
+    write!(f, "Option<{:?}>", DebugFormatter(T::debug_identify_type))?;
   }
 
   #[throws(fmt::Error)]
   fn debug_identify(&self, f: &mut fmt::Formatter) {
     match self {
-      None => write!(f, "None<{}>", DisplayFormatter(T::debug_identify_type))?,
+      None => write!(f, "None<{:?}>", DebugFormatter(T::debug_identify_type))?,
       Some(t) => t.debug_identify(f)?,
     }
   }
@@ -65,7 +65,7 @@ impl<T> DebugIdentify for Option<T> where T: DebugIdentify {
 impl<T> DebugIdentify for VecDeque<T> where T: DebugIdentify {
   #[throws(fmt::Error)]
   fn debug_identify_type(f: &mut fmt::Formatter) {
-    write!(f, "VecDeque<{}>", DisplayFormatter(T::debug_identify_type))?;
+    write!(f, "VecDeque<{:?}>", DebugFormatter(T::debug_identify_type))?;
   }
 }
 
