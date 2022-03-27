@@ -312,6 +312,13 @@ impl Display for State {
   }
 }
 
+impl DebugIdentify for InstanceBundles {
+  #[throws(fmt::Error)]
+  fn debug_identify_type(f: &mut fmt::Formatter) {
+    write!(f, "InstanceBundles")?;
+  }
+}
+
 #[ext(pub)]
 impl MgmtBundleList {
   #[throws(IE)]

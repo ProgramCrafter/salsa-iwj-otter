@@ -30,6 +30,17 @@ impl Display for ChildWrapper {
   }
 }
 
+impl DebugIdentify for ChildWrapper {
+  #[throws(fmt::Error)]
+  fn debug_identify(&self, f: &mut fmt::Formatter) {
+    write!(f, "ChildWrapper([{}] {})", self.child.id(), &self.desc)?;
+  }
+  #[throws(fmt::Error)]
+  fn debug_identify_type(f: &mut fmt::Formatter) {
+    write!(f, "ChildWrapper")?;
+  }
+}
+
 impl<RW> ChildIo<RW> {
   fn rw_result(&self, eofblock: bool, r: io::Result<usize>)
                -> io::Result<usize>

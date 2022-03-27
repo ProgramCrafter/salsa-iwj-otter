@@ -147,6 +147,7 @@ pub use crate::commands::{MgmtGameInstruction, MgmtGameResponse};
 pub use crate::commands::{MgmtBundleList, MgmtGameUpdateMode};
 pub use crate::commands::{ProgressUpdateMode};
 pub use crate::config::*;
+pub use crate::debugmutex::DebugIdentify;
 pub use crate::debugreader::DebugReader;
 pub use crate::error::*;
 pub use crate::fake_rng::*;

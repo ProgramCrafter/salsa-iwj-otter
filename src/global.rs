@@ -566,6 +566,24 @@ impl Display for InstanceName {
 }
 hformat_as_display!{InstanceName}
 
+impl DebugIdentify for InstanceContainer {
+  #[throws(fmt::Error)]
+  fn debug_identify(&self, f: &mut fmt::Formatter) {
+    write!(f, "InstanceContainer({})", &self.g.name)?;
+  }
+  #[throws(fmt::Error)]
+  fn debug_identify_type(f: &mut fmt::Formatter) {
+    write!(f, "InstanceContainer")?;
+  }
+}
+
+impl DebugIdentify for InstanceRef {
+  #[throws(fmt::Error)]
+  fn debug_identify_type(f: &mut fmt::Formatter) {
+    write!(f, "InstanceRef")?;
+  }
+}
+
 fn link_a_href(k: &HtmlStr, v: &str) -> Html {
   hformat!("<a href={}>{}</a>", v, k)
 }
