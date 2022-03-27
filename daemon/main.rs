@@ -485,6 +485,7 @@ async fn main() -> Result<(),StartupError> {
             .add((header::X_FRAME_OPTIONS, "DENY"))
             .add((header::REFERRER_POLICY, "no-referrer"))
       )
+      .wrap(middleware::Logger::default())
       ;
 
     app

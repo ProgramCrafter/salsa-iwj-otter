@@ -1,5 +1,4 @@
 remove test programs
-request logging
 template render failure logging
 template don't do */* thing, and strip .tera
 TODOs in diff
