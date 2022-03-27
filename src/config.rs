@@ -32,7 +32,6 @@ pub struct ServerConfigSpec {
   pub http_port: Option<u16>,
   pub public_url: String,
   pub sse_wildcard_url: Option<String>,
-  pub rocket_workers: Option<u16>,
   pub template_dir: Option<String>,
   pub nwtemplate_dir: Option<String>,
   pub wasm_dir: Option<String>,
@@ -67,7 +66,6 @@ pub struct ServerConfig {
   pub http_port: Option<u16>,
   pub public_url: String,
   pub sse_wildcard_url: Option<(String, String)>,
-  pub rocket_workers: u16,
   pub template_dir: String,
   pub nwtemplate_dir: String,
   pub wasm_dir: String,
@@ -132,7 +130,7 @@ impl ServerConfigSpec {
                  -> Result<WholeServerConfig,AE> {
     let ServerConfigSpec {
       change_directory, base_dir, save_dir, command_socket, debug,
-      http_port, public_url, sse_wildcard_url, rocket_workers,
+      http_port, public_url, sse_wildcard_url,
       template_dir, specs_dir, nwtemplate_dir, wasm_dir, libexec_dir, usvg_bin,
       log, bundled_sources, shapelibs, sendmail,
       debug_js_inject_file, check_bundled_sources, fake_rng,
@@ -234,8 +232,6 @@ impl ServerConfigSpec {
     }).transpose()?;
 
     let debug = debug.unwrap_or(cfg!(debug_assertions));
-    let rocket_workers = rocket_workers.unwrap_or(
-      if debug { 20 } else { 1000 });
 
     let log = {
       use toml::Value::Table;
@@ -287,7 +283,7 @@ impl ServerConfigSpec {
 
     let server = ServerConfig {
       save_dir, command_socket, debug,
-      http_port, public_url, sse_wildcard_url, rocket_workers,
+      http_port, public_url, sse_wildcard_url,
       template_dir, specs_dir, nwtemplate_dir, wasm_dir, libexec_dir,
       bundled_sources, shapelibs, sendmail, usvg_bin,
       debug_js_inject, check_bundled_sources, game_rng, prctx,
