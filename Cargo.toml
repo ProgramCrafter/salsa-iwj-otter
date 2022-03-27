@@ -73,6 +73,7 @@ structopt="0.3"
 sha2="0.10"
 subtle="2.4"
 tempfile="3"
+tera="1.10"
 toml="0.5"
 typetag="0.1.6"
 uds="0.2"
@@ -91,8 +92,6 @@ index_vec    = { version="0.1.1", features=["serde"       ] }
 mio          = { version="0.8",   features=["os-ext", "os-poll" ] }
 serde        = { version="1"    , features=["derive", "rc"] }
 strum        = { version="0.24" , features=["derive"      ] }
-
-tera_standalone = { version="1.10", package="tera" }
 
 slotmap = { package="slotmap-fork-otter", version="1", git="https://github.com/ijackson/slotmap", branch="slotmap-fork-otter", features=["serde"] }
 

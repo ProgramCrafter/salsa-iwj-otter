@@ -101,6 +101,7 @@ pub use strum::{EnumString, EnumIter, EnumMessage, EnumProperty};
 pub use strum::{IntoEnumIterator, IntoStaticStr};
 pub use subtle::ConstantTimeEq;
 pub use tempfile::{self, NamedTempFile};
+pub use tera::Tera;
 pub use thiserror::Error;
 pub use unicase::UniCase;
 pub use url::Url;

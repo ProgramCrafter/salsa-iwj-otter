@@ -922,7 +922,7 @@ pub fn spec_macroexpand(
 
   for (nomfile, data) in &templates { report(nomfile, data)?; }
 
-  let mut tera = tera_standalone::Tera::default();
+  let mut tera = Tera::default();
   tera.add_raw_templates(templates).context("load")?;
   let mut out: Vec<u8> = vec![];
   tera.render_to("spec", &default(), &mut out).context("render")?;

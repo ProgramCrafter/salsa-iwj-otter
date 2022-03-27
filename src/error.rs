@@ -3,7 +3,6 @@
 // There is NO WARRANTY.
 
 use crate::prelude::*;
-use tera_standalone as tera;
 
 #[derive(Error,Debug)]
 pub enum Fatal { // Includes _bogus_ client updates, see PROTOCOL.md

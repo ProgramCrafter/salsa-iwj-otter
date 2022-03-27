@@ -5,7 +5,7 @@
 #![feature(lint_reasons)]
 #![feature(proc_macro_hygiene, decl_macro)]
 
-use otter::imports::thiserror;
+use otter::imports::*;
 
 pub mod imports;
 
@@ -37,8 +37,6 @@ use actix_files::NamedFile;
 use actix_cors::Cors;
 
 use otter::prelude::*;
-use otter::imports::tera_standalone as tera;
-use tera::Tera;
 
 const CT_JAVASCRIPT: mime::Mime = mime::APPLICATION_JAVASCRIPT_UTF_8;
 const CT_TEXT:      mime::Mime = mime::TEXT_PLAIN_UTF_8;
@@ -65,7 +63,7 @@ struct FrontPageRenderContext {
 pub type Template = HttpResponse;
 
 pub struct Templates {
-  tera: tera::Tera,
+  tera: Tera,
 }
 
 impl Templates {

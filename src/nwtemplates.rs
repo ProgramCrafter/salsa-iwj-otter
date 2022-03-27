@@ -10,7 +10,7 @@ use parking_lot::{const_rwlock, RwLock, RwLockReadGuard};
 static STATE: RwLock<Option<State>> = const_rwlock(None);
 
 struct State {
-  tera: tera_standalone::Tera,
+  tera: Tera,
 }
 
 #[throws(StartupError)]
@@ -20,7 +20,7 @@ pub fn init() {
   let config = config();
   let nwtemplate_dir = &config.nwtemplate_dir;
   let glob = format!("{}/*.tera", nwtemplate_dir);
-  let tera = tera_standalone::Tera::new(&glob)
+  let tera = Tera::new(&glob)
     .map_err(|e| anyhow!("{}", e))
     .context("load tamplates")
     .with_context(|| nwtemplate_dir.to_string())?;
@@ -34,11 +34,11 @@ pub fn init() {
 pub fn render<D>(template_name: &str, data: &D) -> String
 where D: Serialize + Debug
 {
-  fn get_tera() -> MappedRwLockReadGuard<'static, tera_standalone::Tera> {
+  fn get_tera() -> MappedRwLockReadGuard<'static, Tera> {
     let g = STATE.read();
     RwLockReadGuard::map(g, |g| &g.as_ref().unwrap().tera)
   }
-  let context = tera_standalone::Context::from_serialize(data)
+  let context = tera::Context::from_serialize(data)
     .with_context(
       || format!("failed make context from serializable {:?}", data)
     )
