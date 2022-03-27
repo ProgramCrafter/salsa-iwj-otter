@@ -23,6 +23,10 @@ path="main.rs"
 name="actix-test"
 path="actix-test.rs"
 
+[[bin]]
+name="actix-files-example"
+path="actix-files-example.rs"
+
 
 [dependencies]
 
@@ -39,6 +43,7 @@ serde_with="1"
 structopt="0.3"
 
 actix-web = "4"
+actix-files = "0.6"
 
 rocket = { version="^0.4.6", features=["sse"] }
 rocket_contrib = { version="0.4", default-features=false, features=["tera_templates", "helmet", "json", "serve"] }
