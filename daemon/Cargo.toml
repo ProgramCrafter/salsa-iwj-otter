@@ -42,9 +42,12 @@ rocket_cors="0.5"
 serde_with="1"
 structopt="0.3"
 
+mime = "0.3"
 actix-web = "4"
 actix-files = "0.6"
 actix-cors = "0.6"
+
+tokio        = { version="1",     features=["full","parking_lot"] }
 
 rocket = { version="^0.4.6", features=["sse"] }
 rocket_contrib = { version="0.4", default-features=false, features=["tera_templates", "helmet", "json", "serve"] }

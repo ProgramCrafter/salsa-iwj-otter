@@ -6,6 +6,7 @@ pub use otter_base;
 pub use otter_base::imports::*;
 
 pub use anyhow;
+pub use async_condvar_fair;
 pub use base64;
 pub use boolinator;
 pub use cast_trait_object;

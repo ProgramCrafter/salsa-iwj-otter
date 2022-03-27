@@ -375,6 +375,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "619743e34b5ba4e9703bba34deac3427c72507c7159f5fd030aea8cac0cfe341"
 
 [[package]]
+name = "async-condvar-fair"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ea38fc7218cdf1d5620a4a1af6ccad4d793cd7d0e1204d20eb33e29d1c49e92"
+dependencies = [
+ "dlv-list",
+ "parking_lot 0.12.0",
+ "pin-project-lite",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1174,6 +1185,15 @@ dependencies = [
  "proc-macro2 1.0.36",
  "quote 1.0.17",
  "syn 1.0.89",
+]
+
+[[package]]
+name = "dlv-list"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68df3f2b690c1b86e65ef7830956aededf3cb0a16f898f79b9a6f421a7b6211b"
+dependencies = [
+ "rand 0.8.5",
 ]
 
 [[package]]
@@ -2783,6 +2803,7 @@ name = "otter"
 version = "0.7.3"
 dependencies = [
  "anyhow",
+ "async-condvar-fair",
  "backtrace",
  "base64 0.13.0",
  "boolinator",
@@ -2912,6 +2933,7 @@ dependencies = [
  "actix-web",
  "fehler",
  "futures",
+ "mime 0.3.16",
  "num-traits",
  "otter",
  "otter-base",
@@ -2922,6 +2944,7 @@ dependencies = [
  "serde_with",
  "structopt",
  "strum",
+ "tokio",
 ]
 
 [[package]]
