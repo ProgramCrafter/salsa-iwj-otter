@@ -476,15 +476,16 @@ async fn main() -> Result<(),StartupError> {
         session::routes(),
         api::routes(),
       ])
+      .app_data(json_config)
+      .app_data(templates.clone())
+      .service(src_service)
+      .default_service(web::to(not_found_handler))
       .wrap(middleware::DefaultHeaders::new()
             .add((header::X_CONTENT_TYPE_OPTIONS, "nosniff"))
             .add((header::X_FRAME_OPTIONS, "DENY"))
             .add((header::REFERRER_POLICY, "no-referrer"))
       )
-      .app_data(json_config)
-      .app_data(templates.clone())
-      .service(src_service)
-      .default_service(web::to(not_found_handler));
+      ;
 
     app
 
