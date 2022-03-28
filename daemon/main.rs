@@ -296,6 +296,15 @@ async fn updates_route(query: Query<UpdatesParams>) -> impl Responder {
     .streaming(content)
 }
 
+// Actix dispatches to the first matching URL pattern in the list of
+// routes, and does not try another one even if this route says 404.
+// This pattern is quite general, so it has to come last.
+//
+// An alternative would be to use a Guard.  But the guard doesn't get
+// to give information directly to the route function.  We would have
+// to use the GuardContext to thread the CheckedResource through the
+// Extension type map.  It's easier just to make sure this URL pattern
+// is last in the list.
 #[route("/_/{leaf}", method="GET", method="HEAD")]
 #[throws(io::Error)]
 async fn resource(leaf: Path<Parse<CheckedResourceLeaf>>) -> impl Responder {
@@ -496,9 +505,9 @@ async fn main() -> Result<(),StartupError> {
         loading_p,
         bundle_route,
         updates_route,
-        resource,
         session::routes(),
         api::routes(),
+        resource, // Must come after more specific URL paths
       ])
       .app_data(json_config)
       .app_data(templates.clone())
