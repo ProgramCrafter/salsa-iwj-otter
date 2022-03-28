@@ -75,8 +75,8 @@ impl Templates {
         fs::read_dir(template_dir).context("open directory")?
         .filter_map_ok(|entry| {
           let leaf = entry.file_name().into_string().ok()?;
-          leaf.ends_with(".tera").then(||())?;
-          Some((entry.path(), Some(leaf)))
+          let leaf = leaf.strip_suffix(".tera")?;
+          Some((entry.path(), Some(leaf.to_owned())))
         })
         .try_collect().context("read directory")?;
       tera.add_template_files(files).context("process templates")?;
@@ -90,7 +90,7 @@ impl Templates {
     #[throws(InternalError)]
     fn inner(tmpls: &Templates, template: &str, c: tera::Result<tera::Context>)
              -> Template {
-      let s = tmpls.tera.render(&format!("{}.tera", template), &c?)?;
+      let s = tmpls.tera.render(template, &c?)?;
       HttpResponseBuilder::new(StatusCode::OK)
         .content_type(CT_HTML)
         .body(s)
