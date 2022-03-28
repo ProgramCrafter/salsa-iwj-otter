@@ -327,9 +327,7 @@ impl ResponseError for BundleDownloadError {
     }
   }
 
-  fn error_response(&self) -> HttpResponse<BoxBody> {
-    error_response(self)
-  }
+  fn error_response(&self) -> HttpResponse<BoxBody> { error_response(self) }
 }
 
 #[route("/_/bundle/{instance}/{id}", method="GET", method="HEAD")]

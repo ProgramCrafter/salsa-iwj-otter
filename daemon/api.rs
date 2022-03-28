@@ -87,9 +87,7 @@ impl ResponseError for FatalErrorResponse {
     }
   }
 
-  fn error_response(&self) -> HttpResponse<BoxBody> {
-    error_response(self)
-  }
+  fn error_response(&self) -> HttpResponse<BoxBody> { error_response(self) }
 }
 
 #[throws(Fatal)]
