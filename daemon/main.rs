@@ -127,7 +127,7 @@ struct CheckedResourceLeaf {
 
 #[derive(Error,Debug)]
 #[error("not a valid resource path")]
-struct UnknownResource{}
+struct UnknownResource;
 
 impl FromStr for CheckedResourceLeaf {
   type Err = UnknownResource;
