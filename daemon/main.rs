@@ -69,8 +69,19 @@ pub struct Templates {
 impl Templates {
   #[throws(StartupError)]
   pub fn new(template_dir: &str) -> Self {
-    let tera = Tera::new(&format!("{}/*.tera", template_dir))
-    .context("initialise templates")?;
+    let mut tera = Tera::default();
+    (||{
+      let files: Vec<_> = 
+        fs::read_dir(template_dir).context("open directory")?
+        .filter_map_ok(|entry| {
+          let leaf = entry.file_name().into_string().ok()?;
+          leaf.ends_with(".tera").then(||())?;
+          Some((entry.path(), Some(leaf)))
+        })
+        .try_collect().context("read directory")?;
+      tera.add_template_files(files).context("process templates")?;
+      Ok::<_,StartupError>(())
+    })().with_context(|| format!("{:?}", template_dir))?;
     Templates { tera }
   }
 
