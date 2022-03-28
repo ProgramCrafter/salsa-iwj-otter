@@ -71,7 +71,7 @@ pub struct SessionForm {
 }
 #[post("/_/session/{layout}")]
 #[throws(FER)]
-pub async fn session(form: Json<SessionForm>,
+pub async fn r_session(form: Json<SessionForm>,
                  templates: Data<Templates>,
                layout: Path<Parse<PresentationLayout>>)
            -> Template {
@@ -262,6 +262,6 @@ fn session_inner(form: Json<SessionForm>,
 
 pub fn routes() -> impl HttpServiceFactory {
   services![
-    session,
+    r_session,
   ]
 }

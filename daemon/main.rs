@@ -162,13 +162,13 @@ struct LoadingRenderContext<'r> {
 }
 #[route("/", method="GET", method="HEAD")]
 #[throws(FER)]
-async fn loading_p(ia: PlayerQueryString,
+async fn r_loading_p(ia: PlayerQueryString,
                    templates: Data<Templates>) -> Template {
   loading(None, ia, templates)?
 }
 #[route("/{layout}", method="GET", method="HEAD")]
 #[throws(FER)]
-async fn loading_l(layout: Path<Parse<AbbrevPresentationLayout>>,
+async fn r_loading_l(layout: Path<Parse<AbbrevPresentationLayout>>,
                    ia: PlayerQueryString,
                    templates: Data<Templates>)
              -> Template {
@@ -285,7 +285,7 @@ struct UpdatesParams {
 
 #[route("/_/updates", method="GET", wrap="updates_cors()")]
 #[throws(FER)]
-async fn updates_route(query: Query<UpdatesParams>) -> impl Responder {
+async fn r_updates(query: Query<UpdatesParams>) -> impl Responder {
   let UpdatesParams { ctoken, gen } = query.into_inner();
   let gen = Generation(gen);
   let iad = ctoken.0.i;
@@ -307,7 +307,7 @@ async fn updates_route(query: Query<UpdatesParams>) -> impl Responder {
 // is last in the list.
 #[route("/_/{leaf}", method="GET", method="HEAD")]
 #[throws(io::Error)]
-async fn resource(leaf: Path<Parse<CheckedResourceLeaf>>) -> impl Responder {
+async fn r_resource(leaf: Path<Parse<CheckedResourceLeaf>>) -> impl Responder {
   let leaf = leaf.into_inner().0;
   let path = match leaf.locn {
     RL::Main => format!("{}/{}", config().template_dir, leaf.safe_leaf),
@@ -342,7 +342,7 @@ impl ResponseError for BundleDownloadError {
 
 #[route("/_/bundle/{instance}/{id}", method="GET", method="HEAD")]
 #[throws(BundleDownloadError)]
-async fn bundle_route(path: Path<(
+async fn r_bundle(path: Path<(
   Parse<InstanceName>,
   Parse<bundles::Id>,
 )>, token: WholeQueryString<AssetUrlToken, BundleDownloadError>
@@ -501,13 +501,17 @@ async fn main() -> Result<(),StartupError> {
 
     let app = actix_web::App::new()
       .service(services![
-        loading_l,
-        loading_p,
-        bundle_route,
-        updates_route,
+        // We name these r_* because actix's #[route] macro defines
+        // them as unit structs, not functions or data values.  The
+        // result is that they are *type names* which makes them
+        // impossible to locally rebind.
+        r_loading_l,
+        r_loading_p,
+        r_bundle,
+        r_updates,
         session::routes(),
         api::routes(),
-        resource, // Must come after more specific URL paths
+        r_resource, // Must come after more specific URL paths
       ])
       .app_data(json_config)
       .app_data(templates.clone())
