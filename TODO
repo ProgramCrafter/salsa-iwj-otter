@@ -1,4 +1,4 @@
-TODOs in diff
+TODOs in daemon/sse.rs::content
 content-type for download bundles
 http2 HEAD requests
 Build on stable
