@@ -30,6 +30,7 @@ pub struct ServerConfigSpec {
   pub command_socket: Option<String>,
   pub debug: Option<bool>,
   pub http_port: Option<u16>,
+  #[serde(default)] pub listen: Vec<SocketAddr>,
   pub public_url: String,
   pub sse_wildcard_url: Option<String>,
   pub template_dir: Option<String>,
@@ -130,7 +131,7 @@ impl ServerConfigSpec {
                  -> Result<WholeServerConfig,AE> {
     let ServerConfigSpec {
       change_directory, base_dir, save_dir, command_socket, debug,
-      http_port, public_url, sse_wildcard_url,
+      http_port, listen, public_url, sse_wildcard_url,
       template_dir, specs_dir, nwtemplate_dir, wasm_dir, libexec_dir, usvg_bin,
       log, bundled_sources, shapelibs, sendmail,
       debug_js_inject_file, check_bundled_sources, fake_rng,
@@ -281,14 +282,22 @@ impl ServerConfigSpec {
 
     let check_bundled_sources = check_bundled_sources.unwrap_or(true); 
 
-    let http_port = http_port.unwrap_or(8000);
-    let addrs: &[&dyn IpAddress] = &[
-      &Ipv6Addr::LOCALHOST,
-      &Ipv4Addr::LOCALHOST,
-    ];
-    let listen = addrs.iter()
-      .map(|addr| addr.with_port(http_port))
-      .collect();
+    let listen = (! listen.is_empty()).then(|| listen);
+    let listen = match (listen, http_port) {
+      (Some(addrs), None) => addrs,
+      (Some(_), Some(_)) => throw!(anyhow!(
+        "both http_port and listen specified")),
+      (None, http_port) => {
+        let http_port = http_port.unwrap_or(8000);
+        let addrs: &[&dyn IpAddress] = &[
+          &Ipv6Addr::LOCALHOST,
+          &Ipv4Addr::LOCALHOST,
+        ];
+        addrs.iter()
+          .map(|addr| addr.with_port(http_port))
+          .collect()
+      },
+    };
 
     let server = ServerConfig {
       save_dir, command_socket, debug,
