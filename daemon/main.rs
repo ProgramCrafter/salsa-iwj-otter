@@ -129,23 +129,6 @@ struct CheckedResourceLeaf {
 #[error("not a valid resource path")]
 struct UnknownResource;
 
-impl ResponseError for UnknownResource {
-  fn status_code(&self) -> StatusCode { StatusCode::NOT_FOUND }
-  fn error_response(&self) -> HttpResponse<BoxBody> { error_response(self) }
-}  
-
-// Magically looks for "{leaf}"
-impl FromRequest for CheckedResourceLeaf {
-  type Error = UnknownResource;
-  type Future = future::Ready<Result<CheckedResourceLeaf, UnknownResource>>;
-  fn from_request(req: &HttpRequest, _: &mut actix_web::dev::Payload)
-                  -> Self::Future {
-    future::ready(
-      req.match_info().query("leaf").parse()
-    )
-  }
-}
-
 impl FromStr for CheckedResourceLeaf {
   type Err = UnknownResource;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -315,7 +298,8 @@ async fn updates_route(query: Query<UpdatesParams>) -> impl Responder {
 
 #[route("/_/{leaf}", method="GET", method="HEAD")]
 #[throws(io::Error)]
-async fn resource(leaf: CheckedResourceLeaf) -> impl Responder {
+async fn resource(leaf: Path<Parse<CheckedResourceLeaf>>) -> impl Responder {
+  let leaf = leaf.into_inner().0;
   let path = match leaf.locn {
     RL::Main => format!("{}/{}", config().template_dir, leaf.safe_leaf),
     RL::Wasm(s) => format!("{}/{}", config().wasm_dir, s),
