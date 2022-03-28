@@ -532,11 +532,10 @@ async fn main() -> Result<(),StartupError> {
   let mut http = http
     .disable_signals();
 
-  let addrs: &[&dyn IpAddress] = if c.debug {
-    &[&Ipv6Addr::LOCALHOST,   &Ipv4Addr::LOCALHOST  ]
-  } else {
-    &[&Ipv6Addr::UNSPECIFIED, &Ipv4Addr::UNSPECIFIED]
-  };
+  let addrs: &[&dyn IpAddress] = &[
+    &Ipv6Addr::LOCALHOST,
+    &Ipv4Addr::LOCALHOST,
+  ];
   let port = c.http_port.unwrap_or(8000);
 
   for addr in addrs {
