@@ -15,6 +15,7 @@ pub mod session;
 pub mod sse;
 
 pub use std::pin::Pin;
+pub use futures::future;
 
 pub use crate::api::InstanceAccess;
 pub use crate::api::{FatalErrorResponse};
@@ -213,11 +214,11 @@ where T: FromStr,
       T::Err: Into<E>
 //      T::Error: Debug,
 {
-  type Future = futures::future::Ready<Result<WholeQueryString<T,E>, E>>;
+  type Future = future::Ready<Result<WholeQueryString<T,E>, E>>;
   type Error = E;
   fn from_request(req: &HttpRequest, _: &mut actix_web::dev::Payload)
                   -> Self::Future {
-    futures::future::ready(
+    future::ready(
       req.uri().query()
         .map(|s| s.parse())
         .transpose()
