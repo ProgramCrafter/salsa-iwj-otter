@@ -63,7 +63,7 @@ pub struct ServerConfig {
   save_dir: String,
   pub command_socket: String,
   pub debug: bool,
-  pub http_port: Option<u16>,
+  pub listen: Vec<SocketAddr>,
   pub public_url: String,
   pub sse_wildcard_url: Option<(String, String)>,
   pub template_dir: String,
@@ -281,9 +281,18 @@ impl ServerConfigSpec {
 
     let check_bundled_sources = check_bundled_sources.unwrap_or(true); 
 
+    let http_port = http_port.unwrap_or(8000);
+    let addrs: &[&dyn IpAddress] = &[
+      &Ipv6Addr::LOCALHOST,
+      &Ipv4Addr::LOCALHOST,
+    ];
+    let listen = addrs.iter()
+      .map(|addr| addr.with_port(http_port))
+      .collect();
+
     let server = ServerConfig {
       save_dir, command_socket, debug,
-      http_port, public_url, sse_wildcard_url,
+      listen, public_url, sse_wildcard_url,
       template_dir, specs_dir, nwtemplate_dir, wasm_dir, libexec_dir,
       bundled_sources, shapelibs, sendmail, usvg_bin,
       debug_js_inject, check_bundled_sources, game_rng, prctx,

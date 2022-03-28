@@ -532,14 +532,7 @@ async fn main() -> Result<(),StartupError> {
   let mut http = http
     .disable_signals();
 
-  let addrs: &[&dyn IpAddress] = &[
-    &Ipv6Addr::LOCALHOST,
-    &Ipv4Addr::LOCALHOST,
-  ];
-  let port = c.http_port.unwrap_or(8000);
-
-  for addr in addrs {
-    let addr = addr.with_port(port);
+  for addr in &c.listen {
     http = http.bind(addr)
       .with_context(|| format!("bind {:?}", addr))?;
   }
