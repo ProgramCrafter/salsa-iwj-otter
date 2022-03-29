@@ -148,25 +148,6 @@ pub struct DataLoadPlayer {
   nick: Html,
 }
 
-pub trait JsonLen {
-  fn json_len(&self) -> usize;
-}
-
-#[ext]
-impl<T:JsonLen> SecondarySlotMap<PlayerId, T> {
-  fn json_len(&self, player: PlayerId) -> usize {
-    if let Some(t) = self.get(player) {
-      50 + t.json_len()
-    } else {
-      50
-    }
-  }
-}
-
-impl JsonLen for Html {
-  fn json_len(&self) -> usize { self.as_html_str().as_bytes().len() }
-}
-
 // ---------- piece updates ----------
 
 #[derive(Debug,Clone,Copy,Serialize)]
@@ -420,105 +401,6 @@ impl PlayerUpdates {
 
       trace!("update expiring #{}", self.log.front_index());
       self.log.pop_front();
-    }
-  }
-}
-
-impl PreparedUpdate {
-  pub fn json_len(&self, player: PlayerId) -> usize {
-    self.us.iter().map(|u| 20 + u.json_len(player)).sum()
-  }
-}
-
-impl PreparedUpdateEntry_Piece {
-  pub fn json_len(&self, player: PlayerId) -> usize {
-    50 + self.ops.json_len(player)
-  }
-}
-
-impl<U:JsonLen> JsonLen for PreparedPieceUpdateGeneral<U> {
-  fn json_len(&self) -> usize { self.op.json_len() }
-}
-
-impl<NS:JsonLen, ZL> JsonLen for PieceUpdateOp<NS, ZL> {
-  fn json_len(&self) -> usize {
-    self.new_state().map(|x| x.json_len()).unwrap_or(0)
-  }
-}
-
-impl PreparedUpdateEntry_Image {
-  fn json_len(&self, player: PlayerId) -> usize {
-    self.ims.json_len(player)
-  }
-}
-
-impl JsonLen for PreparedPieceState {
-  fn json_len(&self) -> usize {
-    300 + self.svg.json_len() + self.uos.json_len()
-  }
-}
-
-impl JsonLen for PreparedPieceImage {
-  fn json_len(&self) -> usize {
-    100 + self.svg.json_len() + self.uos.json_len()
-  }
-}
-impl<T:JsonLen> JsonLen for Vec<T> {
-  fn json_len(&self) -> usize { self.iter().map(|x| x.json_len() + 10).sum() }
-}
-impl JsonLen for UoDescription {
-  fn json_len(&self) -> usize { self.desc.json_len() + 50 }
-}
-
-impl PreparedUpdateEntry {
-  pub fn json_len(&self, player: PlayerId) -> usize {
-    use PreparedUpdateEntry::*;
-    match self {
-      Piece(op) => {
-        op.json_len(player)
-      }
-      Image(ims) => {
-        ims.json_len(player)
-      }
-      MoveHistEnt(ents) => {
-        match ents.get(player) { None => 0, Some(_) => 100 }
-      }
-      Log(logent) => {
-        logent.logent.html.json_len() * 28
-      }
-      MoveHistClear => 50,
-      AddPlayer {
-        player:_,
-        data: DataLoadPlayer { dasharray, nick, },
-        new_info_pane,
-      } => {
-        dasharray.json_len() +
-        nick     .json_len() + 100
-          + new_info_pane.json_len()
-      }
-      RemovePlayer { player:_, new_info_pane } => {
-        new_info_pane.json_len() + 100
-      }
-      UpdateBundles { new_info_pane } => {
-        new_info_pane.json_len() + 100
-      }
-      SetTableColour(colour) => {
-        colour.json_len() + 50
-      }
-      SetLinks(links) => {
-        links.iter().filter_map(
-          |(_k,v)| Some(50 + v.as_ref()?.len())
-        ).sum::<usize>() + 50
-      }
-      Error(ESVU::PieceOpError { state, .. }) => {
-        100 + state.json_len(player)
-      }
-      Error(ESVU::InternalError) |
-      Error(ESVU::PlayerRemoved) |
-      Error(ESVU::TokenRevoked) |
-      SetTableSize(_) => {
-        100
-      }
     }
   }
 }
