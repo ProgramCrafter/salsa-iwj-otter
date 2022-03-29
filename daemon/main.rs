@@ -16,6 +16,7 @@ pub mod sse;
 
 pub use std::pin::Pin;
 pub use futures::future;
+pub use futures::FutureExt as _;
 
 pub use crate::api::InstanceAccess;
 pub use crate::api::{FatalErrorResponse};
