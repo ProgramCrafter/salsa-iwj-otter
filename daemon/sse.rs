@@ -92,8 +92,15 @@ trait InfallibleBufRead: BufRead { }
 impl<T> InfallibleBufRead for io::Cursor<T> where io::Cursor<T>: BufRead { }
 impl<T> InfallibleBufRead for &mut T where T: InfallibleBufRead { }
 
+#[derive(Error,Debug)]
+pub enum SSEUpdateGenerationError {
+  ImpossibleIoWriteError(#[from] io::Error), // write of Vec<u8> failed
+  GameBeingDestroyed(#[from] GameBeingDestroyed),
+}
+display_as_debug!{SSEUpdateGenerationError}
+
 impl UpdateReader {
-  #[throws(io::Error)]
+  #[throws(SSEUpdateGenerationError)]
   async fn read(&mut self) -> BufForSend {
     let mut buf = BufForRead::default();
 
@@ -101,8 +108,7 @@ impl UpdateReader {
       return buf.just_copy_from(ending);
     }
 
-    let mut ig = self.gref.lock()
-      .map_err(|e| self.trouble("game corrupted", &e))?;
+    let mut ig = self.gref.lock()?;
 
     if self.init_confirmation_send.next().is_some() {
       write!(buf, "event: commsworking\n\
@@ -114,6 +120,8 @@ impl UpdateReader {
     let iplayer = &mut match g.iplayers.get_mut(self.player) {
       Some(x) => x,
       None => {
+        // Ideally this would be handled by us throwing, and
+        // the content unfold handling the error.
         let data = format!("event: player-gone\n\
                             data: No longer in the game\n\n")
           .into_bytes().into_boxed_slice();
@@ -198,7 +206,7 @@ impl UpdateReader {
 
 #[throws(Fatal)]
 pub fn content(iad: InstanceAccessDetails<ClientId>, gen: Generation)
-               -> Pin<Box<dyn futures::Stream<Item=Result<Bytes, io::Error>>>>
+ -> Pin<Box<dyn futures::Stream<Item=Result<Bytes, SSEUpdateGenerationError>>>>
 {
   let client = iad.ident;
 
