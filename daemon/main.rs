@@ -399,7 +399,7 @@ fn src_ct_fixup(mut resp: ServiceResponse) -> ServiceResponse {
 
   // We match on match_pattern() rather than path(), because
   // empirically, path() seems to be sometimes partially URL-encoded.
-  if dbg!(resp.request().match_pattern().as_deref()) != Some(FILES_PATH) {
+  if resp.request().match_pattern().as_deref() != Some(FILES_PATH) {
     return resp
   }
 
