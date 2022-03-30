@@ -423,9 +423,11 @@ impl ZipArchive {
 
 impl<'z> IntoIterator for &'z IndexedZip {
   type Item = (&'z UniCase<String>, ZipIndex);
-  type IntoIter = impl Iterator<Item=Self::Item>;
+  type IntoIter = Box<dyn Iterator<Item=Self::Item> + 'z>;
   fn into_iter(self) -> Self::IntoIter {
-    self.members.iter().map(|(name,&index)| (name, ZipIndex(index)))
+    Box::new(
+      self.members.iter().map(|(name,&index)| (name, ZipIndex(index)))
+    ) as _
   }
 }
 
