@@ -1,0 +1,3 @@
+--
+-A clippy::redundant_closure_call
+-A clippy::writeln_empty_string

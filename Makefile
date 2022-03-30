@@ -66,6 +66,10 @@ DEPLOY_TARGET_DIR=$(TARGET_DIR)/$(addsuffix /,$(DEPLOY_ARCH))$(DEPLOY_RELEASE)
 DEPLOYED_BRANCH=deployed
 PUBLISHED_BRANCH=published
 
+RUST_CLIPPY_OPTIONS ?= $(shell perl -pe 's/\#.*//; s/\n/ /' clippy-options)
+RUST_CLIPPY ?= clippy
+RUST_CLIPPY_CMD := clippy $(RUST_CLIPPY_OPTIONS)
+
 #---------- nailing-cargo ----------
 
 ifneq (,$(wildcard ../Cargo.nail))
@@ -179,6 +183,12 @@ cargo-syntaxcheck-wasm:
 	$(CARGO) check --target $(WASM) -p otter-wasm --release
 cargo-syntaxcheck-release:
 	$(CARGO) check --workspace --release
+
+cargo-clippy: cargo-clippy-host cargo-clippy-wasm
+cargo-clippy-host: clippy-options
+	$(CARGO) $(RUST_CLIPPY) --workspace $(RUST_CLIPPY_OPTIONS)
+cargo-clippy-wasm: clippy-options
+	$(CARGO) $(RUST_CLIPPY) --target $(WASM) -p otter-wasm $(RUST_CLIPPY_OPTIONS)
 
 #---------- cargo ----------
 
