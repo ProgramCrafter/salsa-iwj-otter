@@ -508,10 +508,6 @@ impl ZCoord {
     let tail = self.tail();
     str::from_utf8(tail).unwrap()
   }
-
-  pub fn to_string(&self) -> String {
-    self.as_str().to_string()
-  }
 }
 
 impl Display for ZCoord {
