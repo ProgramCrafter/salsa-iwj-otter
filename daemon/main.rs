@@ -29,7 +29,7 @@ use actix_web::{route, post, HttpServer, Responder};
 use actix_web::{HttpResponse, HttpResponseBuilder, ResponseError};
 use actix_web::{HttpRequest, FromRequest};
 use actix_web::services;
-use actix_web::dev::HttpServiceFactory;
+use actix_web::dev::{HttpServiceFactory, Service as _, ServiceResponse};
 use actix_web::web::{self, Bytes, Data, Json, Path, Query};
 use actix_web::body::BoxBody;
 use actix_web::http::header;
@@ -374,6 +374,11 @@ async fn r_bundle(path: Path<(
     .set_content_type(ctype.into_mime())
 }
 
+#[throws(actix_web::Error)]
+fn src_ct_fixup(resp: ServiceResponse) -> ServiceResponse {
+  resp
+}
+
 /*
 #[derive(Debug,Copy,Clone)]
 struct ContentTypeFixup;
@@ -523,6 +528,9 @@ async fn main() -> Result<(),StartupError> {
             .add((header::X_FRAME_OPTIONS, "DENY"))
             .add((header::REFERRER_POLICY, "no-referrer"))
       )
+      .wrap_fn(|req, svc| {
+        svc.call(req).map(|resp| resp.and_then(src_ct_fixup))
+      })
       .wrap(middleware::Logger::default())
       ;
 
