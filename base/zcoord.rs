@@ -493,9 +493,12 @@ impl Mutable {
       }),
     }
   }
+}
 
+impl FromStr for Mutable {
+  type Err = ParseError;
   #[throws(ParseError)]
-  pub fn from_str(s: &str) -> Mutable {
+  fn from_str(s: &str) -> Mutable {
     let tail = ZCoord::checked(s)?;
     Mutable::from_u8_unchecked(tail)
   }

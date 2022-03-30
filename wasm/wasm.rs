@@ -8,6 +8,7 @@ use otter_base::imports::*;
 
 use std::fmt::Display;
 use std::collections::hash_map::HashMap;
+use std::str::FromStr;
 
 use extend::ext;
 use fehler::throws;
