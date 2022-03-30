@@ -2,6 +2,8 @@
 -A clippy::redundant_closure_call
 -A clippy::writeln_empty_string
 -A clippy::write_with_newline
+-A clippy::println_empty_string
+-A clippy::print_with_newline
 -A clippy::let_and_return
 -A clippy::needless_lifetimes
 -A clippy::upper_case_acronyms
