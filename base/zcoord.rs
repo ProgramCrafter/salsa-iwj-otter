@@ -554,7 +554,10 @@ impl TryFrom<&str> for ZCoord {
 impl FromStr for ZCoord {
   type Err = ParseError;
   #[throws(ParseError)]
-  fn from_str(s: &str) -> ZCoord { ZCoord::from_str(s)? }
+  fn from_str(s: &str) -> ZCoord {
+    let tail = ZCoord::checked(s)?;
+    ZCoord::alloc_copy(tail).unwrap()
+  }
 }
 
 //---------- construction of ZCoord contents ---------
@@ -597,12 +600,6 @@ impl ZCoord {
   #[throws(ParseError)]
   pub fn check_str(s: &str) {
     Self::checked(s)?;
-  }
-
-  #[throws(ParseError)]
-  pub fn from_str(s: &str) -> Self {
-    let tail = ZCoord::checked(s)?;
-    ZCoord::alloc_copy(tail).unwrap()
   }
 }
 
