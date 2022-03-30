@@ -374,7 +374,17 @@ async fn r_bundle(path: Path<(
     .set_content_type(ctype.into_mime())
 }
 
-#[throws(actix_web::Error)]
+#[derive(Error)]
+#[error("actix Files produced improper response: {0}")]
+#[derive(Debug, Clone, From)]
+pub struct FilesImproperResponse(String);
+
+impl ResponseError for FilesImproperResponse {
+  fn status_code(&self) -> StatusCode { StatusCode::INTERNAL_SERVER_ERROR }
+  fn error_response(&self) -> HttpResponse<BoxBody> { error_response(self) }
+}
+
+#[throws(FilesImproperResponse)]
 fn src_ct_fixup(resp: ServiceResponse) -> ServiceResponse {
   resp
 }
@@ -529,7 +539,7 @@ async fn main() -> Result<(),StartupError> {
             .add((header::REFERRER_POLICY, "no-referrer"))
       )
       .wrap_fn(|req, svc| {
-        svc.call(req).map(|resp| resp.and_then(src_ct_fixup))
+        svc.call(req).map(|resp| Ok(src_ct_fixup(resp?)?))
       })
       .wrap(middleware::Logger::default())
       ;
