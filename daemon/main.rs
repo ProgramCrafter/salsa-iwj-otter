@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-#![feature(lint_reasons)]
-#![feature(proc_macro_hygiene, decl_macro)]
-
 use otter::imports::*;
 
 pub mod imports;
