@@ -584,8 +584,8 @@ impl ZCoord {
     for lt in s.chunks(TEXT_PER_LIMB) {
       if !lt[0..DIGITS_PER_LIMB].iter().all(
         |c: &u8| {
-          (b'0'..=b'9').contains(&c) ||
-          (b'a'..=b'v').contains(&c)
+          (b'0'..=b'9').contains(c) ||
+          (b'a'..=b'v').contains(c)
         }) { throw!(ParseError) }
       match lt[DIGITS_PER_LIMB..] {
         [] | [b'_'] => (),

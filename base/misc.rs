@@ -50,7 +50,7 @@ pub use crate::display_as_debug;
 pub type SvgAttrs = Vec<(HtmlLit,Html)>;
 
 pub fn space_table_attrs(table_size: PosC<f64>) -> SvgAttrs {
-  let PosC { coords: [x, y] } = table_size.into();
+  let PosC { coords: [x, y] } = table_size;
   vec![
     (Html::lit("viewBox"), hformat!("0 0 {} {}", x, y) ),
     (Html::lit("width"  ), (SVG_SCALE * x).to_html()  ),

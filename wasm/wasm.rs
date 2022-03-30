@@ -98,6 +98,8 @@ pub fn range(a: &JsValue, b: &JsValue, count: zcoord::RangeCount)
 
 #[wasm_bindgen]
 impl ZCoordIterator {
+  #[allow(clippy::should_implement_trait)]
+  // ^ Yes, but WASM can't call the trait method
   pub fn next(&mut self) -> JsValue {
     let packed = match self.0.next() {
       None => return JsValue::NULL,
