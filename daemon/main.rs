@@ -161,6 +161,16 @@ struct LoadingRenderContext<'r> {
   movehist_len_i: usize,
   movehist_len_max: usize,
 }
+
+// This business with method="GET", method="HEAD" is necessary because
+// actix_web 4's #[get] macro does not serve HEAD requests.
+// Apparently, this is because they are broken in its HTTP/2
+// implementation.  But, also, the HTTP/2 implementation is not
+// exposed unless you have actix do TLS (which is where the version
+// negotiation ends up).  So this is fine?
+//
+// Upstream issue:
+//  https://github.com/actix/actix-web/issues/2702
 #[route("/", method="GET", method="HEAD")]
 #[throws(FER)]
 async fn r_loading_p(ia: PlayerQueryString,
