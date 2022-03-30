@@ -4,7 +4,7 @@
 
 use crate::prelude::*;
 
-#[derive(Clone,Serialize,Deserialize,Hash,Eq,Ord,PartialEq,PartialOrd)]
+#[derive(Clone,Serialize,Default,Deserialize,Hash,Eq,Ord,PartialEq,PartialOrd)]
 #[serde(transparent)]
 pub struct Html(String);
 
@@ -83,7 +83,7 @@ impl<'e, T:Display+'e> HtmlFormat<'e> for IsHtmlFormatted<T> {
 }
 
 impl Html {
-  pub fn new() -> Self { Html(String::new()) }
+  pub fn new() -> Self { default() }
   pub fn from_txt(s: &str) -> Self {
     Html(htmlescape::encode_minimal(&s))
   }
