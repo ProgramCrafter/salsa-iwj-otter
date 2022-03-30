@@ -374,6 +374,8 @@ async fn r_bundle(path: Path<(
     .set_content_type(ctype.into_mime())
 }
 
+const FILES_PATH: &'static str = "/_/src";
+
 #[derive(Error)]
 #[error("actix Files produced improper response: {0}")]
 #[derive(Debug, Clone, From)]
@@ -509,7 +511,7 @@ async fn main() -> Result<(),StartupError> {
       .content_type(|ctype| ctype == mime::APPLICATION_JSON)
       .content_type_required(true);
 
-    let src_service = actix_files::Files::new("/_/src", &c.bundled_sources)
+    let src_service = actix_files::Files::new(FILES_PATH, &c.bundled_sources)
       .show_files_listing()
       .redirect_to_slash_directory()
       .index_file("index.html")
