@@ -266,60 +266,10 @@ macro_rules! deref_to_field_mut {
   }
 }
 
-#[derive(Debug)]
-pub enum Loop<E> {
-  Continue,
-  Break,
-  Error(E),
-}
-impl<E> From<E> for Loop<E> {
-  fn from(e: E) -> Loop<E> { Loop::Error(e) }
-}
-impl Loop<Infallible> {
-  pub fn ok<T>(t: T) -> Result<T,Loop<Infallible>> { Ok(t) }
-}
-
-pub trait IteratorExt<U,E,F>: Iterator
-  where F: FnMut(Self::Item) -> Result<U,Loop<E>>,
-{
-  type Return: Iterator<Item=U>;
-  fn map_loop(self, f: F) -> Self::Return where E: EmptyType;
-
-  type TryReturn: Iterator<Item=Result<U,E>>;
-  fn try_map_loop(self, f: F) -> Self::TryReturn;
-}
-
 pub trait EmptyType { fn diverge<T>(self) -> T; }
 
 impl EmptyType for Infallible {
   fn diverge<T>(self) -> T { match self { } }
-}
-
-impl<T,U,E,F> IteratorExt<U,E,F> for T where
-  T: Iterator,
-  F: FnMut(Self::Item) -> Result<U,Loop<E>>,
-{
-  type Return = impl Iterator<Item=U>;
-  fn map_loop(self, f: F) -> Self::Return where E: EmptyType {
-    self
-      .map(f)
-      .filter(|i| !matches!(i, Err(Loop::Continue)))
-      .take_while(|i| !matches!(i, Err(Loop::Break)))
-      .map(|i| i.ok().unwrap())
-  }
-
-  type TryReturn = impl Iterator<Item=Result<U,E>>;
-  fn try_map_loop(self, f: F) -> Self::TryReturn {
-    self
-      .map(f)
-      .filter(|i| matches!(i, Err(Loop::Continue)))
-      .take_while(|i| matches!(i, Err(Loop::Break)))
-      .map(|i| match i {
-        Ok(y) => Ok(y),
-        Err(Loop::Error(e)) => Err(e),
-        _ => panic!(),
-      })
-  }
 }
 
 #[macro_export] // <- otherwise bogus warning `unused_macros`

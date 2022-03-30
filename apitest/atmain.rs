@@ -235,13 +235,15 @@ pub struct PieceInfo<I> {
 impl Session {
   #[throws(Explode)]
   fn pieces<PI:Idx>(&self) -> Pieces<PI> {
-    let pieces = self.dom
-      .element("#pieces_marker")
-      .unwrap().next_siblings()
-      .map_loop(|puse: ego_tree::NodeRef<scraper::Node>| {
+    let pieces = {
+      let mut pieces: Pieces<PI> = default();
+      for puse in self.dom
+        .element("#pieces_marker")
+        .unwrap().next_siblings()
+      {
         let puse = puse.value();
-        let puse = puse.as_element().ok_or(Loop::Continue)?;
-        let attr = puse.attr("data-info").ok_or(Loop::Break)?;
+        if_let!{ Some(puse) = puse.as_element(); else continue; };
+        if_let!{ Some(attr) = puse.attr("data-info"); else break; };
         let pos = Pos::from_iter(["x","y"].iter().map(|attr|{
           puse
             .attr(attr).unwrap()
@@ -250,9 +252,10 @@ impl Session {
         let id = puse.id.as_ref().unwrap();
         let id = id.strip_prefix("use").unwrap().to_string();
         let info = serde_json::from_str(attr).unwrap();
-        Loop::ok(PieceInfo { id, pos, info })
-      })
-      .collect();
+        pieces.push(PieceInfo { id, pos, info });
+      }
+      pieces
+    };
     let nick = self.nick;
     dbgc!(nick, &pieces);
     pieces
