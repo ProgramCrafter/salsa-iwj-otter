@@ -32,7 +32,7 @@ use actix_web::services;
 use actix_web::dev::{HttpServiceFactory, Service as _, ServiceResponse};
 use actix_web::web::{self, Bytes, Data, Json, Path, Query};
 use actix_web::body::BoxBody;
-use actix_web::http::header;
+use actix_web::http::header::{self, HeaderValue};
 use actix_web::http::{Method, StatusCode};
 use actix_web::middleware;
 use actix_files::NamedFile;
@@ -44,6 +44,7 @@ const CT_JAVASCRIPT: mime::Mime = mime::APPLICATION_JAVASCRIPT_UTF_8;
 const CT_TEXT:      mime::Mime = mime::TEXT_PLAIN_UTF_8;
 const CT_HTML:      mime::Mime = mime::TEXT_HTML_UTF_8;
 const CT_ZIP: &'static str = "application/zip";
+const CT_GZIP: &'static str = "application/gzip";
 const CT_WASM: &'static str = "application/wasm";
 
 trait IntoMime: Debug {
@@ -387,39 +388,42 @@ impl ResponseError for FilesImproperResponse {
 }
 
 #[throws(FilesImproperResponse)]
-fn src_ct_fixup(resp: ServiceResponse) -> ServiceResponse {
+fn src_ct_fixup(mut resp: ServiceResponse) -> ServiceResponse {
+  use header as h;
+
+  // We match on match_pattern() rather than path(), because
+  // empirically, path() seems to be sometimes partially URL-encoded.
+  if dbg!(resp.request().match_pattern().as_deref()) != Some(FILES_PATH) {
+    return resp
+  }
+
+  fn from<T: AsRef<str> + ?Sized>(value: &'static T) -> HeaderValue {
+    HeaderValue::from_static(value.as_ref())
+  }
+
+  let hdrs = resp.headers_mut();
+  let ct = hdrs.get_mut(h::CONTENT_TYPE)
+    .ok_or_else(|| format!("missing CT"))?;
+
+  if ct == mime::APPLICATION_OCTET_STREAM.as_ref() ||
+     ct == "text/markdown" 
+  {
+    *ct = from(&CT_TEXT);
+  } else if ct == CT_GZIP {
+    // The only thing we serve with a .gz extension are the
+    // compressed source code tarballs.
+    // There is no official type for .tar.gz, and much driiel online.
+    // This is from
+    //  https://en.wikipedia.org/wiki/List_of_archive_formats
+    //  (retrieved 2022-03-30 22:15 UTC)
+    // (Previously, when using Rocket, we would use Transfer-Encoding
+    //  to indicate the compression, but we don't want people to end up
+    //  saveing uncompressed tarballs as *.tar.gz, which that causes.)
+    *ct = from("application/x-gtar");
+  } 
+                            
   resp
 }
-
-/*
-#[derive(Debug,Copy,Clone)]
-struct ContentTypeFixup;
-impl fairing::Fairing for ContentTypeFixup {
-  fn info(&self) -> fairing::Info {
-    fairing::Info {
-      name: "ContentTypeFixup",
-      kind: fairing::Kind::Response,
-    }
-  }
-  fn on_response(&self, _: &Request<'_>, response: &mut Response<'_>) {
-    match response.content_type() {
-      None => {
-        response.set_header(ContentType::Plain);
-      }
-      Some(ct) if ct == ContentType::GZIP => {
-        // the only thing we serve with a .gz extension are the
-        // compressed source code tarballs
-        use rocket::http::hyper::header;
-        response.set_header(header::TransferEncoding(vec![
-          header::Encoding::Gzip,
-        ]));
-        response.set_header(ContentType::TAR);
-      }
-      _ => { /* hopefully OK */ }
-    }
-  }
-}
-*/
 
 fn on_launch() {
   println!("{}", DAEMON_STARTUP_REPORT);
