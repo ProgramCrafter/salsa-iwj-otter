@@ -127,6 +127,7 @@ impl<T> PosC<T> where T: Copy {
   pub fn y(self) -> T { self.coords[1] }
 }
 
+#[allow(clippy::should_implement_trait)] // this one is fallible, which is a bit odd
 impl<T> PosC<T> {
   #[throws(PosCFromIteratorError)]
   pub fn from_iter<I: Iterator<Item=T>>(i: I) -> Self { PosC{ coords:

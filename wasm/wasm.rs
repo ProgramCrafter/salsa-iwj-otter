@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
+#![allow(clippy::unused_unit)] // #[wasm_bindgen] produces these?
+
 use otter_base::imports::*;
 
 use std::fmt::Display;

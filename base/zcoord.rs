@@ -138,7 +138,7 @@ impl LimbVal {
   /// return value is the top bits, shifted
   pub fn to_str_buf(self, out: &mut [Tail1; DIGITS_PER_LIMB]) -> LimbVal {
     let mut l = self;
-    for p in out.into_iter().rev() {
+    for p in out.iter_mut().rev() {
       let v = (l & DIGIT_MASK).primitive() as u8;
       *p = if v < 10 { b'0' + v } else { (b'a' - 10) + v };
       l >>= BITS_PER_DIGIT;
@@ -484,11 +484,11 @@ impl Mutable {
     match (a, b) {
       (None,    None   ) => throw!(TotallyUnboundedRange),
       (Some(a), None   ) => mk( a.clone().iter(Increment).take(c) ),
-      (Some(a), Some(b)) => mk( Mutable::range_upto(&a,&b,count)? ),
+      (Some(a), Some(b)) => mk( Mutable::range_upto(a,b,count)? ),
       (None,    Some(b)) => mk({
         let mut first = b.clone();
         first.addsub(&Decrement).unwrap();
-        let (current, aso) = Mutable::range_core(&first, &b, count-1)?;
+        let (current, aso) = Mutable::range_core(&first, b, count-1)?;
         IteratorCore { current, aso, mr: MutateLast }.take(c)
       }),
     }
