@@ -3,6 +3,8 @@
 // There is NO WARRANTY.
 
 #![allow(clippy::redundant_closure_call)]
+#![allow(clippy::writeln_empty_string)]
+
 pub mod imports;
 pub mod prelude;
 
