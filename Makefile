@@ -37,7 +37,7 @@ BUNDLED_SOURCES += $(BUNDLED_SOURCES_FILES)
 
 #---------- programs and config variables ----------
 
-CARGO ?= cargo
+CARGO ?= cargo $(RUST_VERSION)
 TARGET_DIR ?= target
 
 USVG_OPTIONS = "--sans-serif-family=DejaVu Sans"
@@ -75,7 +75,7 @@ RUST_CLIPPY_CMD := clippy $(RUST_CLIPPY_OPTIONS)
 ifneq (,$(wildcard ../Cargo.nail))
 
 NAILING_CARGO ?= nailing-cargo
-CARGO = $(NAILING_CARGO)
+CARGO = $(NAILING_CARGO) $(RUST_VERSION)
 BUILD_SUBDIR ?= ../Build
 TARGET_DIR = $(BUILD_SUBDIR)/$(notdir $(PWD))/target
 
