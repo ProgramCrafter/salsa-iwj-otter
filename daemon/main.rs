@@ -494,11 +494,11 @@ async fn main() -> Result<(),StartupError> {
       .content_type(|ctype| ctype == mime::APPLICATION_JSON)
       .content_type_required(true);
 
-     let src_service = actix_files::Files::new("/_/src", &c.bundled_sources)
-       .show_files_listing()
-       .redirect_to_slash_directory()
-       .index_file("index.html")
-       .disable_content_disposition();
+    let src_service = actix_files::Files::new("/_/src", &c.bundled_sources)
+      .show_files_listing()
+      .redirect_to_slash_directory()
+      .index_file("index.html")
+      .disable_content_disposition();
 
     let app = actix_web::App::new()
       .service(services![
