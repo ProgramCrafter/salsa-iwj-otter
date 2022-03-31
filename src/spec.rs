@@ -523,7 +523,7 @@ pub mod imp {
             unix_user: user,
             common,
           };
-          command.args(&["-f", &user]);
+          command.args(&["-f", user]);
           nwtemplates::render("token-unix.tera", &data)
         }
         _ => {

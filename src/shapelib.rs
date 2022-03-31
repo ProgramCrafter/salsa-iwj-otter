@@ -969,7 +969,7 @@ impl Config1 {
 }
 
 #[throws(LibraryLoadError)]
-pub fn load_global_libs(libs: &Vec<Config1>) {
+pub fn load_global_libs(libs: &[Config1]) {
   for l in libs {
     let libs = l.resolve()?;
     let n = libs.len();
@@ -1107,7 +1107,7 @@ impl TryFrom<String> for FileList {
     let mut xfields = Vec::new();
     for (lno,l) in s.lines().enumerate() {
       let l = l.trim();
-      if l=="" || l.starts_with("#") { continue }
+      if l=="" || l.starts_with('#') { continue }
       if let Some(xfields_spec) = l.strip_prefix(':') {
         if ! (o.is_empty() && xfields.is_empty()) {
           throw!(LLE::FilesListFieldsMustBeAtStart(lno));
@@ -1129,7 +1129,7 @@ impl TryFrom<String> for FileList {
       let item_spec = n()?;
       let src_file_spec = n()?;
       let extra_fields = xfields.iter()
-        .map(|field| Ok::<_,LLE>((field.to_owned(), n()?.to_owned())))
+        .map(|field| Ok::<_,LLE>((field.to_owned(), n()?)))
         .collect::<Result<_,_>>()?;
       let desc = remain.to_owned();
       o.push(FileData{ item_spec, src_file_spec, extra_fields, desc });
