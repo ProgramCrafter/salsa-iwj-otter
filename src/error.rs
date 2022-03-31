@@ -194,8 +194,12 @@ pub enum AggregatedIE {
   Many,
 }
 
+impl Default for AggregatedIE {
+  fn default() -> Self { Self::Ok }
+}
+
 impl AggregatedIE {
-  pub fn new() -> Self { Self::Ok }
+  pub fn new() -> Self { default() }
 
   pub fn handle<T>(&mut self, r: Result<T, InternalError>) -> Option<T> {
     match r {

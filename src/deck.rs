@@ -74,7 +74,7 @@ impl PieceSpec for piece_specs::Deck {
 impl Deck {
   #[throws(IE)]
   fn state(&self, gpc: &GPiece, goccults: &GameOccults) -> State {
-    match gpc.occult.active_views(&goccults)? {
+    match gpc.occult.active_views(goccults)? {
       None                                                       => Disabled,
       Some(OccultationViews { defview: OccK::Visible,..       }) => Counting,
       Some(OccultationViews { defview: OccK::Scrambled /*old*/,.. }) |
@@ -85,10 +85,10 @@ impl Deck {
 
   #[throws(IE)]
   fn current_face(&self, gpc: &GPiece, goccults: &GameOccults) -> FaceId {
-    RawFaceId::from(match self.state(gpc, goccults)? {
+    RawFaceId::into(match self.state(gpc, goccults)? {
       Disabled | Counting => 0,
       Enabled             => 1,
-    }).into()
+    })
   }
 }
 
@@ -180,7 +180,7 @@ impl PieceTrait for Deck {
     dbgc!("ui op k entry", &opname);
 
     let rot_checked = gpc.occulter_check_unrotated(vis)?;
-    let old_state = self.state(gpc, &goccults)?;
+    let old_state = self.state(gpc, goccults)?;
   
     let (new_state, did) = match opname {
       "activate"   => (Enabled,  hformat!("enabled {}",         CORE_DESC)),
