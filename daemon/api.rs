@@ -130,7 +130,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
 
     let loose_conflict = if u_gen <= q_gen { None } else {
       if ! form.loose { throw!(Inapplicable::Conflict); }
-      Some(form.op.conflict_loose_check(&gpc, client)?)
+      Some(form.op.conflict_loose_check(gpc, client)?)
     };
     trace_dbg!("form.op", player, piece, &form.op, &gpc);
     form.op.check_held(gpc,player)?;
@@ -380,7 +380,7 @@ api_route!{
         else { None }
       };
 
-      if gs.pieces.iter().find(|&(opiece, ogpc)| {
+      if gs.pieces.iter().any(|(opiece, ogpc)| {
 
         if ogpc.zlevel < tgpc.zlevel { return false }
 
@@ -392,8 +392,8 @@ api_route!{
           else { false }
         };
         return ! cannot_overlap;
-      })
-        .is_some();
+
+      });
 
       then {
         let z = gs.max_z.z.clone_mut().increment().map_err(

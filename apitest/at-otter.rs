@@ -245,7 +245,7 @@ impl Ctx {
 
     assert_eq!( BufReader::new(File::open(ds.subst("@authkeys@")?)?)
                 .lines().nth(2).unwrap().unwrap(),
-                STATIC_TEST.strip_suffix("\n").unwrap() );
+                STATIC_TEST.strip_suffix('\n').unwrap() );
 
     let ssh_command = ds.subst(
       "@src@/apitest/mock-ssh-restricted @authkeys@ '@dummy_key_data@'"
