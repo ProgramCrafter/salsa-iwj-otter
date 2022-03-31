@@ -673,7 +673,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
             None => return Ok(None),
           }
         };
-        let u = Self::piece_update_player(ioccults,gs,gpc,ipc,ops,&pri)?;
+        let u = Self::piece_update_player(ioccults,gs,gpc,ipc,ops,pri)?;
         Ok::<_,IE>(u)
       },
 
@@ -855,7 +855,7 @@ impl PreparedUpdate {
           let zg = op.new_z_generation();
           TUE::Recorded { piece, cseq, zg, svg: ns.map(|ns| &ns.svg) }
         },
-        FTG::Piece => TUE::Piece(pue_piece_to_tue_p(&pue_p, player)?),
+        FTG::Piece => TUE::Piece(pue_piece_to_tue_p(pue_p, player)?),
         FTG::Exactly(x) => x,
       };
       Some(tue)
@@ -886,7 +886,7 @@ impl PreparedUpdate {
           TUE::MoveHistClear{}
         }
         PUE::Log(logent) => {
-          TUE::Log((&tz, &logent))
+          TUE::Log((tz, logent))
         }
         &PUE::SetTableSize(size) => {
           TUE::SetTableSize(size)
@@ -930,7 +930,7 @@ impl PreparedUpdate {
                 match partially {
                   POEPP::Unprocessed => continue,
                   POEPP::Partially => {
-                    match pue_piece_to_tue(&state, player, dest) {
+                    match pue_piece_to_tue(state, player, dest) {
                       Some(tue) => tue,
                       None => continue,
                     }
