@@ -716,7 +716,7 @@ pub fn fmt_hex(f: &mut Formatter, buf: &[u8]) {
 #[must_use]
 pub fn parse_slice_hex(s: &str, buf: &mut [u8]) -> usize {
   let l = s.len();
-  if l % 1 != 0 { throw!() }
+  if l % 2 != 0 { throw!() }
   let l = l/2;
   if l > buf.len() { throw!() }
 
