@@ -36,7 +36,7 @@ impl AssetUrlKey {
     };
     let mut dw = DigestWrite::sink();
     write!(dw, "{}\0", what).unwrap();
-    dw.write(&k[..]).unwrap();
+    dw.write_all(&k[..]).unwrap();
     rmp_serde::encode::write(&mut dw, &v).expect("serialize failed!");
     AssetUrlToken(dw.finish().0)
   }
