@@ -22,3 +22,4 @@
 -A clippy::useless_format
 -A clippy::len_zero
 -A clippy::len_without_is_empty # I prefer comparing .len() to 0, apparently
+-A clippy::blocks_in_if_conditions

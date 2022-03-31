@@ -399,7 +399,6 @@ impl Instance {
         .get(name)
         .ok_or(ME::GameNotFound)?
         .clone()
-        .into()
     )
   }
 
@@ -934,10 +933,10 @@ impl<'ig> InstanceGuard<'ig> {
     let gpl = self.c.g.gs.players.byid(player)?;
 
     let url = format!("{}/?{}",
-                      &config().public_url.trim_end_matches("/"),
+                      &config().public_url.trim_end_matches('/'),
                       token.0);
     let info = AccessTokenInfo { url };
-    let report = access.deliver(accounts, &self.c.g, &gpl, &ipl, info)?;
+    let report = access.deliver(accounts, &self.c.g, gpl, ipl, info)?;
     report
   }
 
@@ -1026,7 +1025,7 @@ enum SavefilenameParseResult {
 
 pub fn savefilename(name: &InstanceName, prefix: &str, suffix: &str)
                     -> String {
-  [ config().save_dir().as_str(), &"/", prefix ]
+  [ config().save_dir().as_str(), "/", prefix ]
     .iter().map(Deref::deref)
     .chain(iter::once( name.to_string().as_str() ))
     .chain([ suffix ].iter().map(Deref::deref))
@@ -1048,7 +1047,7 @@ fn savefilename_parse(leaf: &[u8]) -> SavefilenameParseResult {
   let rcomp = rhs.rsplitn(2, ':').next().unwrap();
   if rcomp.find('.').is_some() { return TempToDelete }
 
-  let name = InstanceName::from_str(&rhs)?;
+  let name = InstanceName::from_str(rhs)?;
 
   let aux_leaves = [ b"a-", b"b-" ].iter().map(|prefix| {
     let mut s: Vec<_> = (prefix[..]).into(); s.extend(after_ftype_prefix); s
@@ -1102,10 +1101,9 @@ impl InstanceGuard<'_> {
         let global_players = GLOBAL.players.read();
         s.c.g.tokens_players.tr
           .iter()
-          .map(|token|
+          .filter_map(|token|
                global_players.get(token)
                .map(|player| (token.0.as_str(), player.ident)))
-          .flatten()
           .collect()
       };
       let aplayers = s.c.g.iplayers.iter().map(
