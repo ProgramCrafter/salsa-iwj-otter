@@ -490,7 +490,7 @@ impl ItemSpec {
     let (lib, (item, idata)) = libs.iter().rev().find_map(
       |lib| Some((lib, lib.items.get_key_value(self.item.as_str())?))
     )
-      .ok_or(SpE::LibraryItemNotFound(self.clone()))?;
+      .ok_or_else(|| SpE::LibraryItemNotFound(self.clone()))?;
     lib.load1(idata, &self.lib, item.unnest::<str>(), ig, depth)?
   }
 
@@ -741,7 +741,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
     .as_table().ok_or_else(|| LLE::ExpectedTable(format!("group")))?;
   for (groupname, gdefn) in groups {
     let gdefn = resolve_inherit(INHERIT_DEPTH_LIMIT,
-                                &groups, groupname, gdefn)?;
+                                groups, groupname, gdefn)?;
     let gdefn: GroupDefn = TV::Table(gdefn.into_owned()).try_into()?;
     let d = GroupDetails {
       size: gdefn.d.size.iter().map(|s| s * gdefn.d.scale).collect(),
@@ -765,7 +765,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
         use SubstErrorKind as SEK;
         let err = |kind| SubstError { kind, input: before.to_string() };
         let mut matches = before.match_indices(needle);
-        let m1 = matches.next().ok_or(err(SEK::MissingToken(needle)))?;
+        let m1 = matches.next().ok_or_else(|| err(SEK::MissingToken(needle)))?;
         if matches.next().is_some() { Err(err(SEK::RepeatedToken(needle)))?; }
         let mut lhs = &before[0.. m1.0];
         let mut rhs = &before[m1.0 + m1.1.len() ..];
@@ -832,7 +832,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
         desc: &str
       | {
         let desc = if let Some(desc_template) = &group.d.desc_template {
-          subst(desc_template, "_desc", &desc)?.to_html()
+          subst(desc_template, "_desc", desc)?.to_html()
         } else {
           desc.to_html()
         };
@@ -867,7 +867,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
       } else {
         for (colour, recolourdata) in &group.d.colours {
           let t_sort = sort.as_ref().map(
-            |s| subst(&s, "_c", colour)).transpose()?;
+            |s| subst(s, "_c", colour)).transpose()?;
           let c_abbrev = &recolourdata.abbrev;
           let t_item_name = subst(item_name.as_str(), "_c", c_abbrev)?;
           let t_src_name = subst(&fe.src_file_spec, "_c", c_abbrev);

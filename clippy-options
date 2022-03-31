@@ -31,3 +31,4 @@
 -A clippy::redundant_pattern_matching
 -A clippy::unnecessary_lazy_evaluations
 -A clippy::map_flatten
+-A clippy::manual_split_once
