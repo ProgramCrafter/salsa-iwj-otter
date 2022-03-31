@@ -143,7 +143,7 @@ fn session_inner(form: Json<SessionForm>,
 
       let (defs, bbox) = pri.make_defs(ioccults, &ig.gs, gpc, ipc)?;
       alldefs.push((pri.vpid, defs));
-      let desc = pri.describe(ioccults,&ig.gs.occults, &gpc, ipc);
+      let desc = pri.describe(ioccults,&ig.gs.occults, gpc, ipc);
 
       let vangle = pri.angle(gpc).to_compass();
       let (pos, zlevel) = pri.pos_zlevel(gpc);

@@ -40,3 +40,4 @@
 -A clippy::match_single_binding
 -A clippy::needless_update
 -A clippy::comparison_chain
+-A clippy::bool_comparison

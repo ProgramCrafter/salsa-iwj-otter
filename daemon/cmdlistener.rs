@@ -203,7 +203,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       let access = cs.accountrecord_from_spec(access)?
         .unwrap_or_else(|| AccessRecord::new_unset());
       let nick = nick.unwrap_or_else(|| account.to_string());
-      let account = account.to_owned().into();
+      let account = account.into();
       let layout = layout.unwrap_or_default();
       let record = AccountRecord {
         account, nick, access,
@@ -353,7 +353,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       access_bundles(
         cs,&ag,&gref,TP_ACCESS_BUNDLES,
         &mut |ig,_|{
-          let f = id.open(&ig)?.ok_or_else(|| ME::BundleNotFound)?;
+          let f = id.open(ig)?.ok_or_else(|| ME::BundleNotFound)?;
           bulk_download = Some(Box::new(f));
           Ok(())
         })?;
@@ -468,7 +468,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       MR::SshKeyAdded { index, id }
     }
     MC::SshDeleteKey { index, id } => {
-      let (mut ag, acctid, auth) = start_access_ssh_keys(&cs)?;
+      let (mut ag, acctid, auth) = start_access_ssh_keys(cs)?;
       ag.sshkeys_remove(acctid, index, id, auth)?;
       MR::Fine
     }
@@ -762,7 +762,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       no_updates(ig, MGR::Fine)
     },
     MGI::DefinePieceAlias { alias, target } => {
-      let ig = cs.check_acl(&ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
+      let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
       ig.pcaliases.insert(alias, target);
       no_updates(ig, MGR::Fine)
     },
@@ -786,7 +786,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     }
 
     MGI::InsnMark(token) => {
-      let (ig, _) = cs.check_acl(&ag,ig,PCH::Instance, &[TP::TestExistence])?;
+      let (ig, _) = cs.check_acl(ag,ig,PCH::Instance, &[TP::TestExistence])?;
       no_updates(ig, MGR::InsnMark(token))
     }
 
@@ -1111,7 +1111,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           rotateable: true,
         };
         let PieceSpecLoaded { p, loaded_via_alias, occultable } =
-          info.load(piece_i as usize, &mut gpc, &ig, SpecDepth::zero())?;
+          info.load(piece_i as usize, &mut gpc, ig, SpecDepth::zero())?;
         if p.nfaces() <= face.into() {
           throw!(SpecError::FaceNotFound);
         }
@@ -1219,7 +1219,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         updates
       }
 
-      let updates = remove_old_players(&ag, ig, who, &mut log)?;
+      let updates = remove_old_players(ag, ig, who, &mut log)?;
 
       (U{ pcs: vec![ ],
           log,
@@ -1248,8 +1248,7 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
     let ig = igu.by_ref(Authorisation::promise_any());
     if let Ok((_, acctid)) = ag.lookup(account);
     if let Some((player,_)) = ig.iplayers.iter()
-      .filter(|(_,ipr)| ipr.ipl.acctid == acctid)
-      .next();
+      .find(|(_,ipr)| ipr.ipl.acctid == acctid);
     if let Some(gpl) = ig.gs.players.get(player);
     then { hformat!("{} [{}]",
                         gpl.nick,
@@ -1275,7 +1274,7 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
         &mut self.uh,
         UpdateHandler::from_how(how),
       )
-        .complete(ig, &who)?;
+        .complete(ig, who)?;
     }
     #[throws(ME)]
     fn flushu<'igr, 'ig>(&mut self,
@@ -1852,7 +1851,7 @@ fn do_authorise_scope(cs: &CommandStreamData, ag: &AccountsGuard,
           Authorisation::promise_for(&InUserList),
         );
 
-        let pwent = Passwd::from_name(&wanted)
+        let pwent = Passwd::from_name(wanted)
           .map_err(
             |e| anyhow!("looking up requested username {:?}: {:?}",
                         &wanted, &e)
