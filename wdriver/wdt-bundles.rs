@@ -20,7 +20,7 @@ impl Ctx {
   #[throws(Explode)]
   fn vatikan_with_deck(&mut self) {
     let game_spec = &self.su.ds.subst("@specs@/vatikan.game.toml")?;
-    self.otter(&["reset"],&[&game_spec])?;
+    self.otter(&["reset"],&[game_spec])?;
 
     {
       let mut alice = self.su.w(&self.alice)?;

@@ -4,6 +4,7 @@
 
 #![allow(clippy::or_fun_call)]
 #![allow(clippy::unnecessary_operation)] // trips on #[throws(Explode)]
+#![allow(clippy::no_effect)] // trips on #[throws(Explode)]
 
 pub use otter_api_tests::*;
 pub use otter_api_tests as apitest;

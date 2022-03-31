@@ -214,7 +214,7 @@ impl Ctx {
     }
     impl<'s> Deref for Got<'s> {
       type Target = Side<'s>;
-      fn deref<'t>(&'t self) -> &'t Side<'s> { &self.side }
+      fn deref<'t>(&'t self) -> &'t Side<'s> { self.side }
     }
 
     let check = |su: &mut Setup, before_gen, check_end_pos|{
@@ -226,7 +226,7 @@ impl Ctx {
         let now = p.posg()?;
 
         let log = w.retrieve_log(before_gen)?;
-        let held = w.piece_held(&pc)?;
+        let held = w.piece_held(pc)?;
         let client = w.client()?;
         let yes = held.as_ref() == Some(&client);
 
@@ -235,8 +235,8 @@ impl Ctx {
 
       dbg!(&gots);
 
-      let y = gots.iter().filter(|got|  got.yes).next().expect("y");
-      let n = gots.iter().filter(|got| !got.yes).next().expect("n");
+      let y = gots.iter().find(|got|  got.yes).expect("y");
+      let n = gots.iter().find(|got| !got.yes).expect("n");
 
       if check_end_pos {
         assert_eq!(y.now, y.try_end);
@@ -263,7 +263,7 @@ impl Ctx {
         }
       }
 
-      let mut yw = su.w(&y.window)?;
+      let mut yw = su.w(y.window)?;
       yw.action_chain()
         .move_w(&yw, y.now)?
         .click()
