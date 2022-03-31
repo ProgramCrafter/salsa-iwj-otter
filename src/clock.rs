@@ -412,7 +412,7 @@ impl PieceSpec for Spec {
       spec: self.clone(),
     };
 
-    gpc.xdata_mut(|| State::new(&self) )?;
+    gpc.xdata_mut(|| State::new(self) )?;
 
     PieceSpecLoaded {
       p: Box::new(clock),
@@ -442,7 +442,7 @@ impl PieceTrait for Clock {
                vpid: VisiblePieceId) {
     let state = gpc.xdata()?
       .ok_or_else(|| internal_logic_error("missing/wrong xdata"))?;
-    let urenders = self.urender(&state, gpc.held, &gs.players);
+    let urenders = self.urender(state, gpc.held, &gs.players);
 
     // player missing, nick is red and pink
 
@@ -491,10 +491,7 @@ impl PieceTrait for Clock {
       let mins = u.remaining.tv_sec() / 60;
       let secs = u.remaining.tv_sec() % 60;
       let mins = mins.to_string();
-      let mins_pad = Html::from_html_string(
-        iter::repeat("&nbsp;").take(3 - mins.len())
-          .collect()
-      );
+      let mins_pad = Html::from_html_string("&nbsp;".repeat(3 - mins.len()));
 
       let pointer = Html::lit(r##"
   pointer-events="none"

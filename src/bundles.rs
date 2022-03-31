@@ -1060,7 +1060,7 @@ impl InstanceBundles {
       IE
       >>
   {
-    let bd = b_dir(&instance);
+    let bd = b_dir(instance);
     let mo = glob::MatchOptions {
       require_literal_leading_dot: true,
       ..default()

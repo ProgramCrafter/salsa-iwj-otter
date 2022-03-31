@@ -16,3 +16,6 @@
 -A clippy::single_match
 -A clippy::too_many_arguments # yes, I know
 -A clippy::never_loop # control flow bodge
+-A clippy::needless_splitn
+-A clippy::type_complexity
+-A clippy::redundant_closure
