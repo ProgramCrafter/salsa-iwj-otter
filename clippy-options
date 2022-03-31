@@ -13,3 +13,6 @@
 -A clippy::comparison_to_empty
 -A clippy::try_err
 -A clippy::unit_arg # does badly with if_chain, at least
+-A clippy::single_match
+-A clippy::too_many_arguments # yes, I know
+-A clippy::never_loop # control flow bodge

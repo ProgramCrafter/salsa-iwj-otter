@@ -651,7 +651,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName,
 
   for LibScanned { libname, dir_inzip, inzip } in libs {
     eh.besteffort(|| Ok::<_,LE>({
-      let svg_dir = format!("{}/lib{:06}", id.path_dir(&instance), &inzip);
+      let svg_dir = format!("{}/lib{:06}", id.path_dir(instance), &inzip);
 
       let mut zf = za.i(inzip)?;
       let mut catalogue_data = String::new();
@@ -811,7 +811,7 @@ fn usvg_size(f: &mut BufReader<File>) -> [f64;2] {
         );
 
         if let Ok(output) = size.iter().cloned()
-          .filter_map(|s|s)
+          .flatten()
           .collect::<ArrayVec<_,2>>()
           .into_inner() {
             break output;
