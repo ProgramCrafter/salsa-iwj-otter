@@ -439,7 +439,7 @@ impl<'w,W:Write> Write for WriteFrameRaw<'w,W> {
   fn write(&mut self, buf: &[u8]) -> usize {
     let now = min(buf.len(), CHUNK_MAX.into());
     self.fw.inner.write_u16::<BO>(now.try_into().unwrap())?;
-    self.fw.inner.write(&buf[0..now])?;
+    self.fw.inner.write_all(&buf[0..now])?;
     now
   }
 
