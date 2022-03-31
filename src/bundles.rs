@@ -29,7 +29,7 @@ pub struct Index(u16);
 #[derive(Serialize,Deserialize)]
 pub struct Id { pub index: Index, pub kind: Kind, }
 
-#[derive(Debug,Clone)]
+#[derive(Debug,Clone,Default)]
 pub struct InstanceBundles {
   bundles: Vec<Option<Note>>,
 }
@@ -1026,11 +1026,7 @@ fn incorporate_bundle(ib: &mut InstanceBundles, ig: &mut Instance,
 }
 
 impl InstanceBundles {
-  pub fn new() -> Self {
-    InstanceBundles{
-      bundles: default(),
-    }
-  }
+  pub fn new() -> Self { default() }
 
   fn iter(&self) -> impl Iterator<Item=(Id, &State)> {
     self.bundles.iter().enumerate().filter_map(|(index, slot)| {
