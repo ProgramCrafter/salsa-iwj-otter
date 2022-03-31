@@ -34,3 +34,5 @@
 -A clippy::manual_split_once
 -A clippy::expect_fun_call
 -A clippy::manual_map
+-A clippy::vec_init_then_push
+-A clippy::collapsible_if

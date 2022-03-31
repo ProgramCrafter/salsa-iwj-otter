@@ -39,9 +39,9 @@ use otter::prelude::*;
 const CT_JAVASCRIPT: mime::Mime = mime::APPLICATION_JAVASCRIPT_UTF_8;
 const CT_TEXT:      mime::Mime = mime::TEXT_PLAIN_UTF_8;
 const CT_HTML:      mime::Mime = mime::TEXT_HTML_UTF_8;
-const CT_ZIP: &'static str = "application/zip";
-const CT_GZIP: &'static str = "application/gzip";
-const CT_WASM: &'static str = "application/wasm";
+const CT_ZIP: &str = "application/zip";
+const CT_GZIP: &str = "application/gzip";
+const CT_WASM: &str = "application/wasm";
 
 trait IntoMime: Debug {
   fn into_mime(&self) -> mime::Mime;
@@ -104,7 +104,7 @@ impl Templates {
 enum ResourceLocation { Main, Wasm(&'static str), }
 type RL = ResourceLocation;
 
-const RESOURCES: &[(&'static str, ResourceLocation, ConstContentType)] = &[
+const RESOURCES: &[(&str, ResourceLocation, ConstContentType)] = &[
   ("script.js",    RL::Main,                       &CT_JAVASCRIPT),
   ("LICENCE",      RL::Main,                       &CT_TEXT),
   ("libre",        RL::Main,                       &CT_HTML),
@@ -381,7 +381,7 @@ async fn r_bundle(path: Path<(
     .set_content_type(ctype.into_mime())
 }
 
-const FILES_PATH: &'static str = "/_/src";
+const FILES_PATH: &str = "/_/src";
 
 #[derive(Error)]
 #[error("actix Files produced improper response: {0}")]

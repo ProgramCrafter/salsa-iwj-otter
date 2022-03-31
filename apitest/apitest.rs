@@ -484,14 +484,14 @@ pub fn reinvoke_via_bwrap(_opts: &Opts, current_exe: &str,
     .args("--unshare-net \
            --dev-bind / / \
            --tmpfs /tmp \
-           --die-with-parent".split(" "))
+           --die-with-parent".split(' '))
     .arg(current_exe);
 
   let (early, late) = {
     let mut still_early = true;
     env::args_os().skip(1)
       .partition::<Vec<_>,_>(|s| {
-        still_early &= early(&s);
+        still_early &= early(s);
         still_early
       })
   };
@@ -590,7 +590,7 @@ pub fn prepare_tmpdir<'x>(opts: &'x Opts, mut current_exe: &'x str) -> DirSubst 
 
   let manifest_var = "CARGO_MANIFEST_DIR";
   let src: String = (|| Ok::<_,AE>(match env::var(manifest_var) {
-    Ok(dir) => dir.into(),
+    Ok(dir) => dir,
     Err(env::VarError::NotPresent) => start_dir.clone(),
     e@ Err(_) => throw!(e.context(manifest_var).err().unwrap()),
   }))()
@@ -786,7 +786,7 @@ impl DirSubst {
     let exe = ds.subst("@target@/debug/otter")?;
     let specs = self.subst("@src@/specs")?;
     let mut args: Vec<String> = vec![];
-    args.push("--config"  .to_owned()); args.push(prctx.resolve(&CONFIG));
+    args.push("--config"  .to_owned()); args.push(prctx.resolve(CONFIG));
     args.push("--spec-dir".to_owned()); args.push(prctx.resolve(&specs) );
     args.extend(xargs.to_args(ds));
     let dbg = format!("running {} {:?}", &exe, &args);
@@ -1033,7 +1033,7 @@ pub fn setup_core<O>(module_paths: &[&str]) ->
 
   if !opts.no_bwrap {
     reinvoke_via_bwrap(
-      &opts, &current_exe,
+      opts, &current_exe,
       &mut |s: &OsStr| s.to_str().unwrap().starts_with("--test=")
     )
       .context("reinvoke via bwrap")?;
@@ -1043,7 +1043,7 @@ pub fn setup_core<O>(module_paths: &[&str]) ->
   sleep(opts.pause.into());
 
   let cln = cleanup_notify::Handle::new()?;
-  let ds = prepare_tmpdir(&opts, &current_exe)?;
+  let ds = prepare_tmpdir(opts, &current_exe)?;
 
   let (mgmt_conn, server_child) =
     prepare_gameserver(&cln, &ds).did("setup game server")?;

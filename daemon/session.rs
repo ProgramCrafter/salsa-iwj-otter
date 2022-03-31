@@ -166,9 +166,9 @@ fn session_inner(form: Json<SessionForm>,
       };
 
       let for_piece = SessionPieceContext {
+        pos,
         z: zlevel.clone(),
         id: pri.vpid,
-        pos: pos,
         info: serde_json::to_string(&for_info)
           .map_err(|e| InternalError::JSONEncode(e))?,
       };
