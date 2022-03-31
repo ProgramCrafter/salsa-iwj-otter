@@ -63,7 +63,7 @@ pub fn default_ssh_proxy_command() -> String {
 
 impl MainOpts {
   pub fn game(&self) -> &str {
-    self.game.as_ref().map(|s| s.as_str()).unwrap_or_else(||{
+    self.game.as_deref().unwrap_or_else(||{
       eprintln!(
         "game (table) name not specified; pass --game option");
       exit(EXIT_USAGE);
@@ -71,7 +71,7 @@ impl MainOpts {
   }
 
   pub fn instance(&self) -> InstanceName {
-    match self.game().strip_prefix(":") {
+    match self.game().strip_prefix(':') {
       Some(rest) => {
         InstanceName {
           account: self.account.clone(),
@@ -422,7 +422,7 @@ pub fn setup_table(_ma: &MainOpts, instance_name: &InstanceName, spec: &TableSpe
                -> Vec<MGI> {
   let TableSpec { players, player_perms, acl, links } = spec;
   let mut player_perms = player_perms.clone()
-    .unwrap_or(PLAYER_DEFAULT_PERMS.iter().cloned().collect());
+    .unwrap_or_else(|| PLAYER_DEFAULT_PERMS.iter().cloned().collect());
   player_perms.extend(PLAYER_ALWAYS_PERMS.iter());
 
   let acl: RawAcl<_> =

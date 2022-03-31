@@ -4,6 +4,9 @@
 
 // OTTER_JST_LOWER_ONLY=exhaustive-05
 
+#![allow(clippy::or_fun_call)]
+#![allow(clippy::unnecessary_operation)] // trips on #[throws(Explode)]
+
 use otter_nodejs_tests::*;
 
 pub type Vpid = VisiblePieceId;
@@ -167,7 +170,7 @@ impl Test {
         id, new_z, old_z, updated,
         heavy: start.heavy(),
         target: self.targets.contains(&id),
-        zupd: start.zupd.into(),
+        zupd: start.zupd,
       }
     }).collect_vec();
 
@@ -188,8 +191,8 @@ impl Test {
                 p.zupd.show(),
                 zl.show());
       };
-      pr(o, &o.old_z); print!("    ");
-      pr(n, &n.new_z); println!("");
+      pr(o, o.old_z); print!("    ");
+      pr(n, n.new_z); println!("");
     }
 
     // light targets are in same stacking order as before
@@ -518,7 +521,7 @@ fn main() {
   tests.finish()?;
 }
 
-static TEMPLATE: &'static str = r#"
+static TEMPLATE: &str = r#"
 
 console.log('-------------------- {{ name }} --------------------')
 jstest_did = fs.openSync('{{ name }}.did', 'w');

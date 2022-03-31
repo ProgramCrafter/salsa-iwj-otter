@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
+#![allow(clippy::or_fun_call)]
+#![allow(clippy::unnecessary_operation)] // trips on #[throws(Explode)]
+
 pub use otter_api_tests::*;
 pub use otter_api_tests as apitest;
 
@@ -149,16 +152,16 @@ fn prepare_thirtyfour(ds: &DirSubst)
   ].iter().cloned().collect();
   caps.add("prefs", prefs)?;
   caps.add("stdio", "inherit")?;
-  let mut driver = t4::WebDriver::new("http://localhost:4444", &caps)
+  let driver = t4::WebDriver::new("http://localhost:4444", &caps)
     .context("create 34 WebDriver")?;
 
   const FRONT: &str = "front";
-  let mut js_logfile = JsLogfileImp::open(&ds, FRONT)?;
+  let mut js_logfile = JsLogfileImp::open(ds, FRONT)?;
 
   driver.set_window_name(FRONT).context("set initial window name")?;
-  screenshot(&mut driver, &mut count, "startup", log::Level::Trace)?;
+  screenshot(&driver, &mut count, "startup", log::Level::Trace)?;
   driver.get(URL).context("navigate to front page")?;
-  screenshot(&mut driver, &mut count, "front", log::Level::Trace)?;
+  screenshot(&driver, &mut count, "front", log::Level::Trace)?;
 
   js_logfile.fetch(&driver)?;
   let js_logs = vec![Rc::new(RefCell::new(js_logfile))];
@@ -346,8 +349,7 @@ impl<'g> WindowGuard<'g> {
     let elemid = format!("use{}", &pieceid);
     let elem = self.su.driver.find_element(By::Id(&elemid))?;
     PieceElement {
-      elem,
-      pieceid: pieceid.clone(),
+      elem, pieceid,
       w: self,
     }
   }
@@ -458,7 +460,7 @@ impl<'g> WindowGuard<'g> {
       dbg!(log)
     }
 
-    inner(&self, &mut move |s| ignore_before.matches(s))?
+    inner(self, &mut move |s| ignore_before.matches(s))?
   }
 
   #[throws(AE)]
