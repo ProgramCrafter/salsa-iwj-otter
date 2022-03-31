@@ -258,15 +258,15 @@ const PRIVATE_Y: PrivateCaller = PrivateCaller(());
 
 // ========== implementations ==========
 
-impl RawTokenVal {
+impl<'s> From<&'s str> for &'s RawTokenVal {
   // str is [u8] with a funny hat on, so &str is pointer + byte count.
   // nomicon says &SomeStruct([T]) is pointer plus number of elements.
   // So &str and &SomeStruct(str) have the same layout
-  pub fn from_str(s: &str) -> &RawTokenVal { unsafe { mem::transmute(s) } }
+  fn from(s: &str) -> &RawTokenVal { unsafe { mem::transmute(s) } }
 }
 
 impl Borrow<RawTokenVal> for RawToken {
-  fn borrow(&self) -> &RawTokenVal { RawTokenVal::from_str(&self.0) }
+  fn borrow(&self) -> &RawTokenVal { (&*self.0).into() }
 }
 
 impl Debug for RawTokenVal {
