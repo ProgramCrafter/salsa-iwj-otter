@@ -1532,7 +1532,7 @@ fn client_expire_old_clients() {
         Some(())
       }
     }
-    if let (_, Some(())) = Any.iter(&gref, max_age) {
+    if let (_, Some(())) = Any.iter(gref, max_age) {
       expire.push(gref.clone());
     }
   }
