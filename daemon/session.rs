@@ -255,7 +255,7 @@ fn session_inner(form: Json<SessionForm>,
   };
   info!("rendering /_/session for {:?} {:?} {:?} {:?} {:?}",
         &player, client, &c.nick, &c.ctoken,
-        iad.gref.lock().ok().as_ref().map(|ig| &**ig));
+        iad.gref.lock().ok().as_deref());
 
   Ok(templates.render(layout.template(),&c)?)
 }

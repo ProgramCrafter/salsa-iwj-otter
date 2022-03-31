@@ -162,7 +162,7 @@ impl UpdateReader {
         }
       };
 
-      self.wn.write_next(&mut buf, &iplayer.ipl.tz, &next)
+      self.wn.write_next(&mut buf, &iplayer.ipl.tz, next)
         .map_err(|e| self.wn.trouble("UpdateReader.write_next",&e))?;
 
       if buf.len() >= UPDATE_READER_SIZE { return buf.finish() }

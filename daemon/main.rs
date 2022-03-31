@@ -44,6 +44,7 @@ const CT_GZIP: &str = "application/gzip";
 const CT_WASM: &str = "application/wasm";
 
 trait IntoMime: Debug {
+  #[allow(clippy::wrong_self_convention)]
   fn into_mime(&self) -> mime::Mime;
 }
 impl IntoMime for &str {
@@ -130,11 +131,10 @@ struct UnknownResource;
 impl FromStr for CheckedResourceLeaf {
   type Err = UnknownResource;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    for &(safe_leaf, locn, ref ctype) in RESOURCES {
+    for &(safe_leaf, locn, ctype) in RESOURCES {
       if safe_leaf == s {
         return Ok(CheckedResourceLeaf {
-          safe_leaf, locn,
-          ctype: ctype.clone(),
+          safe_leaf, locn, ctype,
         });
       }
     }
@@ -481,19 +481,19 @@ async fn main() -> Result<(),StartupError> {
 
   let opts = Opts::from_args();
 
-  ServerConfig::read(opts.config_filename.as_ref().map(String::as_str),
+  ServerConfig::read(opts.config_filename.as_deref(),
                      PathResolveMethod::Chdir)?;
 
   let c = config();
 
-  flexi_logger::Logger::with(log_config().clone()).start()?;
+  flexi_logger::Logger::with(log_config()).start()?;
 
   debug!("resolved config: {:#?}", c);
 
   if c.check_bundled_sources {
     let check = format!("{}/otter/index.html", &c.bundled_sources);
     fs::metadata(&check)
-      .context(check.clone())
+      .context(check)
       .context("check bundled-sources directory")?;
   }
 
