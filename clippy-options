@@ -33,3 +33,4 @@
 -A clippy::map_flatten
 -A clippy::manual_split_once
 -A clippy::expect_fun_call
+-A clippy::manual_map

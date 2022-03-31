@@ -113,12 +113,12 @@ impl<'de> VariantAccess<'de> for TomlDe<'de> {
 
   #[throws(Error)]
   fn tuple_variant<V: Visitor<'de>>(self, _: usize, v: V) -> V::Value {
-    visit(v, &self.0)?
+    visit(v, self.0)?
   }
 
   #[throws(Error)]
   fn struct_variant<V: Visitor<'de>>(self, _:&[&str], v: V) -> V::Value {
-    visit(v, &self.0)?
+    visit(v, self.0)?
   }
 }
 
@@ -140,7 +140,7 @@ impl<'de> Deserializer<'de> for TomlDe<'de> {
   type Error = Error;
   #[throws(Error)]
   fn deserialize_any<V: Visitor<'de>>(self, visitor: V) -> V::Value {
-    visit(visitor, &self.0)?
+    visit(visitor, self.0)?
   }
   #[throws(Error)]
   fn deserialize_option<V: Visitor<'de>>(self, visitor: V) -> V::Value {
@@ -166,7 +166,7 @@ impl<'de> Deserializer<'de> for TomlDe<'de> {
       _ => {}
     }
     // hopefully the format will figure it out, or produce an error
-    visit(vi, &self.0)?
+    visit(vi, self.0)?
   }
   forward_to_deserialize_any! {
     bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
