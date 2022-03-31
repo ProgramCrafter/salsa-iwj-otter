@@ -28,7 +28,7 @@ impl LibGlobArgs {
     self.lib.clone()
   }
   fn pat(&self) -> String {
-    self.pat.as_ref().map(Deref::deref)
+    self.pat.as_deref()
       .unwrap_or("*")
       .into()
   }
@@ -204,7 +204,7 @@ mod library_add {
       /// If returns None, has already maybe tried to take some space
       #[throws(AE)]
       fn place(&mut self, bbox: &Rect,
-               pieces: &Vec<MgmtGamePieceInfo>, ma: &MainOpts)
+               pieces: &[MgmtGamePieceInfo], ma: &MainOpts)
                -> Option<Pos> {
         let PosC{ coords: [w,h] } = (bbox.br() - bbox.tl())?;
 

@@ -360,7 +360,7 @@ impl Session {
       |_session, gen      | (gen == exp).as_option(),
       | session, gen, k, v| {
         if let Some(pieces) = pieces.as_mut() {
-          update_update_pieces(&session.nick, pieces, k, v);
+          update_update_pieces(session.nick, pieces, k, v);
         }
         f(session,gen,k,v);
         None

@@ -59,7 +59,7 @@ mod command_adhoc {
     cmds: Vec<String>,
   }
 
-  fn subargs<'ap,'a:'ap,'m:'ap>(
+  fn subargs<'ap,'a:'ap>(
     sa: &'a mut Args,
     ahf: AdhocFormat,
   ) -> ArgumentParser<'ap> {
@@ -108,7 +108,7 @@ mod alter_game_adhoc {
     insns: Vec<String>,
   }
 
-  fn subargs<'ap,'a:'ap,'m:'ap>(
+  fn subargs<'ap,'a:'ap>(
     sa: &'a mut Args,
     ahf: AdhocFormat,
   ) -> ArgumentParser<'ap> {

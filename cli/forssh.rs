@@ -150,7 +150,7 @@ mod set_ssh_keys {
     for (l, lno) in akf.lines().zip(1..) {
       let l = l.context("read KEYS-FILE")?;
       let l = l.trim();
-      if l.starts_with("#") || l == "" { continue }
+      if l.starts_with('#') || l == "" { continue }
       let l = AuthkeysLine(l.to_owned());
       let (pubdata, _comment) = l.parse()
         .with_context(|| format!("parse KEYS-FILE line {}", lno))?;

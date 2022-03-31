@@ -37,3 +37,5 @@
 -A clippy::vec_init_then_push
 -A clippy::collapsible_if
 -A clippy::iter_nth_zero
+-A clippy::match_single_binding
+-A clippy::needless_update

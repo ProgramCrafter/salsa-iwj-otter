@@ -304,8 +304,7 @@ fn main() {
     })?;
 
     let sc = inventory::iter::<Subcommand>.into_iter()
-      .filter(|Subcommand{verb:found,..}| found == &subcommand)
-      .next()
+      .find(|Subcommand{verb:found,..}| found == &subcommand)
       .unwrap_or_else(||{
         eprintln!("subcommand `{}' not recognised", &subcommand);
         exit(EXIT_USAGE);

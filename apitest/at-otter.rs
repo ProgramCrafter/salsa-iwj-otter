@@ -198,7 +198,7 @@ impl Ctx {
   #[throws(Explode)]
   fn ssh_remote(&mut self) {
     let ds = self.ds().also(&[
-      ("config", PathResolveContext::default().resolve(&CONFIG)),
+      ("config", PathResolveContext::default().resolve(CONFIG)),
     ]);
     let mut command = ds.gss(
       "--ssh-command=@src@/apitest/mock-ssh \

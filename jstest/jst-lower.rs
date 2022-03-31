@@ -362,7 +362,6 @@ impl TestsAccumulator {
     let pieces: IndexMap<Vpid,StartPiece> = pieces.into_iter().map(
       |StartPieceSpec { id, pinned, moveable, zupd }| {
         let zupd_d = (&zupd).into();
-        let id = id.try_into().unwrap();
         let zlevel = zupd.next(&mut zlast, &mut zlastg);
         (id, StartPiece { pinned, moveable, zlevel, zupd: zupd_d })
       }
