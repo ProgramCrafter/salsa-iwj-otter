@@ -123,10 +123,8 @@ impl PieceRenderInstructions {
       .map(|r| JsonString(r.clone()));
     let (svg, bbox) = pri.make_defs(ioccults, gs, gpc, ipc)?;
     let r = PreparedPieceState {
-      pos        : pos,
+      pos, svg, occregion, bbox,
       held       : gpc.held,
-      svg        : svg,
-      bbox       : bbox,
       z          : zlevel.z.clone(),
       zg         : zlevel.zg,
       angle      : pri.angle(gpc).to_compass(),
@@ -135,7 +133,6 @@ impl PieceRenderInstructions {
       uos        : pri.ui_operations(gs, gpc, ipc)?,
       moveable   : gpc.moveable(),
       facehint   : pri.facehint(gpc),
-      occregion,
     };
     dbgc!(pri, ipc, gpc, r);
     r
@@ -148,9 +145,8 @@ impl PieceRenderInstructions {
     let pri = self;
     let (svg, bbox) = pri.make_defs(ioccults, gs, gpc, ipc)?;
     let r = PreparedPieceImage {
-      svg        : svg,
-      bbox       : bbox,
-      uos        : pri.ui_operations(gs, gpc, ipc)?,
+      svg, bbox,
+      uos: pri.ui_operations(gs, gpc, ipc)?,
     };
     dbgc!(pri, ipc, gpc, r);
     r

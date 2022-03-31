@@ -123,7 +123,7 @@ pub fn peek_prep_update(gs: &mut GameState, peek: &PreparedUpdateEntry)
       }
 
       if let Some(held) = ns.held {
-        ent.insert(PlHistLast { held: held, posx: new_posx });
+        ent.insert(PlHistLast { held, posx: new_posx });
       } else {
         ent.remove();
       }

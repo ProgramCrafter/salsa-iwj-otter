@@ -4,7 +4,7 @@
 
 use crate::prelude::*;
 
-pub const UNCLAIMED_HAND_DESC: &'static str = "a hand repository";
+pub const UNCLAIMED_HAND_DESC: &str = "a hand repository";
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 struct MagicOwner {

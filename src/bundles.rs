@@ -659,7 +659,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName,
       zf.read_to_string(&mut catalogue_data)
         .map_err(|e| LE::badlib(&libname, &e))?;
       let mut src = LibraryInBundle {
-        catalogue_data: catalogue_data,
+        catalogue_data,
         svg_dir: &svg_dir,
         need_svgs: Vec::new(),
         id: &id,

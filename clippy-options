@@ -7,3 +7,4 @@
 -A clippy::let_and_return
 -A clippy::needless_lifetimes
 -A clippy::upper_case_acronyms
+-A clippy::unused_unit
