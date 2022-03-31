@@ -234,7 +234,7 @@ impl PieceRenderInstructions {
       out.push(UoDescription {
         wrc: WRC::UpdateSvg,
         kind: UoKind::Global,
-        def_key: DEFKEY_FLIP.into(),
+        def_key: DEFKEY_FLIP,
         opname: "flip".to_string(),
         desc: Html::lit("flip").into(),
       })
