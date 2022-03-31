@@ -100,7 +100,6 @@ impl HtmlStr {
     let s = unsafe { mem::transmute::<&'s str, &'s HtmlStr>(s) };
     s
   }
-  #[allow(clippy::len_without_is_empty)]
   pub fn len(&self) -> usize { self.0.len() }
   pub fn as_html_str(&self) -> &str { &self.0 }
 }
