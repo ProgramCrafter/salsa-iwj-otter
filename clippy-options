@@ -19,3 +19,4 @@
 -A clippy::needless_splitn
 -A clippy::type_complexity
 -A clippy::redundant_closure
+-A clippy::useless_format

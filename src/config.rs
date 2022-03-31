@@ -142,13 +142,12 @@ impl ServerConfigSpec {
     let game_rng = fake_rng.make_game_rng();
     let home = || env::var("HOME").context("HOME");
 
-    let prctx;
-    if let Some(ref cd) = change_directory {
-      prctx = prmeth.chdir(cd)
+    let prctx = if let Some(ref cd) = change_directory {
+      prmeth.chdir(cd)
         .with_context(|| cd.clone())
-        .context("config change_directory")?;
+        .context("config change_directory")?
     } else {
-      prctx = PathResolveContext::Noop;
+      PathResolveContext::Noop
     };
 
     let defpath = |specd: Option<String>, leaf: &str| -> String {
@@ -251,7 +250,7 @@ impl ServerConfigSpec {
       // to toml and merging it with the stuff from the file.
       (||{
         if let Some(v) = env::var_os(LOG_ENV_VAR) {
-          let v = v.to_str().ok_or(anyhow!("UTF-8 conversion"))?;
+          let v = v.to_str().ok_or_else(|| anyhow!("UTF-8 conversion"))?;
           let v = LogSpecification::parse(v).context("parse")?;
           let mut buf: Vec<u8> = default();
           v.to_toml(&mut buf).context("convert to toml")?;
