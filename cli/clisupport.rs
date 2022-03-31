@@ -464,7 +464,8 @@ pub trait SpecParse {
   type S: SomeSpec;
   fn parse(s: String) -> Result<Self::T,AE>;
 }
-#[derive(Debug,Copy,Clone)]
+#[derive(Debug,Copy,Clone,Educe)]
+#[educe(Default)]
 pub struct SpecParseToml<T>(pub PhantomData<T>);
 impl<T:DeserializeOwned+SomeSpec> SpecParse for SpecParseToml<T> {
   type T = T;
@@ -476,7 +477,9 @@ impl<T:DeserializeOwned+SomeSpec> SpecParse for SpecParseToml<T> {
     spec
   }
 }
-impl<T> SpecParseToml<T> { pub fn new() -> Self { Self(default()) } }
+impl<T> SpecParseToml<T> { pub fn new() -> Self { default() } }
+#[derive(Educe)]
+#[educe(Default)]
 pub struct SpecRaw<T>(pub PhantomData<T>);
 impl<T:SomeSpec> SpecParse for SpecRaw<T> {
   type T = String;
@@ -484,7 +487,7 @@ impl<T:SomeSpec> SpecParse for SpecRaw<T> {
   #[throws(AE)]
   fn parse(buf: String) -> String { buf }
 }
-impl<T> SpecRaw<T> { pub fn new() -> Self { Self(default()) } }
+impl<T> SpecRaw<T> { pub fn new() -> Self { default() } }
 
 pub fn spec_arg_is_path(specname: &str) -> Option<String> {
   if specname.contains('/') {

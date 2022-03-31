@@ -62,6 +62,7 @@ pub use derive_into_owned::IntoOwned;
 pub use derive_more::*;
 pub use digest::Digest;
 pub use downcast_rs::{impl_downcast, Downcast};
+pub use educe::Educe;
 pub use either::{Either, Left, Right};
 pub use enum_dispatch::enum_dispatch;
 pub use enum_map::{Enum, EnumMap};
