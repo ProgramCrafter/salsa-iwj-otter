@@ -187,8 +187,8 @@ fn try_layout(region: &Rect,
     let PrimaryEnt { piece, bbox, .. } = &pieces[ih];
     let place = 'placed: loop {
       for xi in 0..3 {
-        let place = (cur - att.tl(&bbox)?)?;
-        let br_real = (place + att.br_real(&bbox)?)?;
+        let place = (cur - att.tl(bbox)?)?;
+        let br_real = (place + att.br_real(bbox)?)?;
         let tr = |w| {
           trace_dbg!("attempt inner",
                      region, att, piece, bbox, xi, cur, n_y,
@@ -217,7 +217,7 @@ fn try_layout(region: &Rect,
       }
       throw!(IE::OrganisedPlacementFailure);
     };
-    let br_tile = ((place + att.tl(&bbox)?)? + att.stride(&bbox)?)?;
+    let br_tile = ((place + att.tl(bbox)?)? + att.stride(bbox)?)?;
     cur.coords[0] = br_tile.x();
     n_y = max(n_y, br_tile.y());
     out.push(place);
@@ -238,7 +238,8 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, _: OcculterRotationChecked,
   let ApiPieceOpArgs { ref mut gs, player,ipieces,ioccults,.. } = *a;
   let apiece = a.piece;
   let agpc = gs.pieces.byid(apiece)?;
-  let aipc = ipieces.get(apiece).ok_or(internal_error_bydebug(&apiece))?;
+  let aipc = ipieces.get(apiece)
+    .ok_or_else(|| internal_error_bydebug(&apiece))?;
   let gpl = gs.players.byid(player)?;
   let log = log_did_to_piece(ioccults, &gs.occults, gpl,agpc,aipc,
                              "organised")?;
@@ -255,7 +256,7 @@ pub fn ui_operation(a: &mut ApiPieceOpArgs<'_>, _: OcculterRotationChecked,
     let ipc = ipc.show(vis);
     if let Some(bbox) = want!( Ok = ipc.bbox_approx(), ?piece );
     let sortkey = if do_sort {
-      Some(ipc.sortkey().unwrap_or(ipc.itemname()))
+      Some(ipc.sortkey().unwrap_or_else(|| ipc.itemname()))
     } else {
       None
     };

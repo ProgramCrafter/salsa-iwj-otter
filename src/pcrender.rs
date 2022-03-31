@@ -170,13 +170,13 @@ impl PieceRenderInstructions {
     use PriOcculted as PO;
     match &self.occulted {
       PO::Visible(_) | PO::Occulted => (gpc.pos, &gpc.zlevel),
-      PO::Displaced(pos, zlevel) => (*pos, &zlevel),
+      PO::Displaced(pos, zlevel) => (*pos, zlevel),
     }
   }
 
   #[throws(IE)]
-  pub fn make_defs<'p>(&self, ioccults: &IOccults, gs: &GameState,
-                         gpc: &GPiece, ipc: &IPiece) -> (Html, Rect)
+  pub fn make_defs(&self, ioccults: &IOccults, gs: &GameState,
+                   gpc: &GPiece, ipc: &IPiece) -> (Html, Rect)
   {
     let pri = self;
     let instead = pri.instead(ioccults, ipc)?;

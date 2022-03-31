@@ -387,14 +387,14 @@ impl PieceRenderInstructions {
 impl IPieceTraitObj {
   pub fn new(p: Box<dyn PieceTrait>) -> Self { Self(p) }
 
-  pub fn show(&self, _: ShowUnocculted) -> &Box<dyn PieceTrait> {
-    &self.0
+  pub fn show(&self, _: ShowUnocculted) -> &dyn PieceTrait {
+    &*self.0
   }
 
   pub fn into_inner(self) -> Box<dyn PieceTrait> { self.0 }
 
-  pub fn direct_trait_access(&self) -> &Box<dyn PieceTrait> {
-    &self.0
+  pub fn direct_trait_access(&self) -> &dyn PieceTrait {
+    &*self.0
   }
 }
 
@@ -636,7 +636,7 @@ fn recalculate_occultation_general<
     dbgc!(most_obscure);
 
     let describe_occulter = |oni| Ok::<_,IE>(if_chain! {
-      if let Some(ref h) = occulteds.as_refs().main()[oni];
+      if let Some(h) = occulteds.as_refs().main()[oni];
       let opiece = h.occ.occulter;
       let bad = || internal_error_bydebug(&("missing", opiece, h.occid));
       let oipc = ipieces.get(opiece).ok_or_else(bad)?;

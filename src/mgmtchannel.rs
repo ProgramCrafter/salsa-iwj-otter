@@ -247,9 +247,9 @@ impl MgmtChannelForGame {
       players
     };
 
-    players.into_iter().filter(
+    players.into_iter().find(
       |(_,mpi)| &mpi.account == account
-    ).next()
+    )
   }
 
   #[throws(AE)]

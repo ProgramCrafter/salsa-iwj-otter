@@ -26,3 +26,7 @@
 -A clippy::needless_collect # rust-clippy/issues/8046, since Nov 2021 at least
 -A clippy::match_ref_pats
 -A clippy::needless_question_mark
+-A clippy::needless_return
+-A clippy::if_same_then_else # rust-clippy/issues/6285 etc.
+-A clippy::redundant_pattern_matching
+-A clippy::unnecessary_lazy_evaluations
