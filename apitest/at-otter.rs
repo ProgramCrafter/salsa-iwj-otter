@@ -228,7 +228,7 @@ impl Ctx {
     static STATIC_TEST: &str = "# example static data -- for test\n";
 
     File::create(ds.subst("@authkeys@")?)?
-      .write(STATIC_TEST.as_bytes())?;
+      .write_all(STATIC_TEST.as_bytes())?;
 
     let set_keys = ds.gss(
       "--super --account ssh:test: set-ssh-keys \
