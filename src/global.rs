@@ -639,7 +639,7 @@ impl<'ig> InstanceGuard<'ig> {
       Err(ME::AlreadyExists)?;
     }
     let player = self.c.g.gs.players.insert(gnew);
-    let u = PlayerUpdates::new_begin(&self.c.g.gs).new();
+    let u = PlayerUpdates::start(&self.c.g.gs).for_player();
     let record = PlayerRecord { u, account, ipl: inew, };
 
     self.c.g.iplayers.insert(player, record);
@@ -1169,13 +1169,13 @@ impl InstanceGuard<'_> {
     discard_mismatches(&mut gs.players,  &mut aplayers);
     discard_mismatches(&mut gs.pieces.0, &mut ipieces);
   
-    let pu_bc = PlayerUpdates::new_begin(&gs);
+    let pu_bc = PlayerUpdates::start(&gs);
 
     let iplayers: SecondarySlotMap<PlayerId, PlayerRecord> = {
       let a = aplayers;
       a.into_iter()
     }.filter_map(|(player, ipl)| {
-      let u = pu_bc.new();
+      let u = pu_bc.for_player();
       let account = accounts.lookup(ipl.acctid).ok()?.0.account.clone();
       Some((player, PlayerRecord { u, ipl, account }))
     }).collect();

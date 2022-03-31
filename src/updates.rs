@@ -357,12 +357,12 @@ impl StableIndexOffset for UpdateId {
 
 // ---------- prepared updates, queued in memory ----------
 
-pub struct PlayerUpdatesBuildContext {
+pub struct PlayerUpdatesStartContext {
   pub(self) u1: Arc<PreparedUpdate>,
 }
 
-impl PlayerUpdatesBuildContext {
-  pub fn new(&self) -> PlayerUpdates {
+impl PlayerUpdatesStartContext {
+  pub fn for_player(&self) -> PlayerUpdates {
     let mut log = StableIndexVecDeque::with_capacity(50);
     log.push_back(self.u1.clone());
     let cv = default();
@@ -371,13 +371,13 @@ impl PlayerUpdatesBuildContext {
 }
 
 impl PlayerUpdates {
-  pub fn new_begin(gs: &GameState) -> PlayerUpdatesBuildContext {
+  pub fn start(gs: &GameState) -> PlayerUpdatesStartContext {
     let u1 = Arc::new(PreparedUpdate {
       gen: gs.gen,
       when: Instant::now(),
       us: vec![],
     });
-    PlayerUpdatesBuildContext { u1 }
+    PlayerUpdatesStartContext { u1 }
   }
 
   pub fn push<U: Into<Arc<PreparedUpdate>>>(&mut self, update: U) {
