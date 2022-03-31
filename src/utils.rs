@@ -48,6 +48,7 @@ pub struct OldNew<T>([T; 2]);
 #[derive(Hash,Eq,PartialEq)]
 pub enum OldNewIndex { Old, New }
 
+#[allow(clippy::new_ret_no_self)]
 impl<T> OldNew<T> {
   pub fn old(&self) -> &T { &self.0[0] }
   pub fn new(&self) -> &T { &self.0[1] }
@@ -74,6 +75,7 @@ impl<T> OldNew<T> {
     self.0.iter()
   }
 
+  #[allow(clippy::should_implement_trait)] // yes, but, TAIT
   pub fn into_iter(self) -> impl Iterator<Item=T> {
     IntoIterator::into_iter(self.0)
   }
@@ -187,13 +189,13 @@ pub mod timespec_serde {
 
   #[throws(S::Error)]
   pub fn serialize<S:Serializer>(v: &TimeSpec, s: S) -> S::Ok {
-    let v = Timespec(v.tv_sec().into(), v.tv_nsec().try_into().unwrap());
+    let v = Timespec(v.tv_sec(), v.tv_nsec().try_into().unwrap());
     Serialize::serialize(&v, s)?
   }
   #[throws(D::Error)]
   pub fn deserialize<'de, D:Deserializer<'de>>(d: D) -> TimeSpec {
     let Timespec(sec, nsec) = Deserialize::deserialize(d)?;
-    libc::timespec { tv_sec: sec.into(), tv_nsec: nsec.into() }.into()
+    libc::timespec { tv_sec: sec, tv_nsec: nsec.into() }.into()
   }
 }
 
@@ -662,9 +664,11 @@ impl<W:Write> Write for SigPipeWriter<W> {
 }
 
 pub type RawStdout = SigPipeWriter<io::Stdout>;
+#[allow(clippy::new_without_default)] // Don't want these made willy-nilly
 impl RawStdout { pub fn new() -> Self { SigPipeWriter(io::stdout()) } }
 
 pub struct CookedStdout(pub BufWriter<SigPipeWriter<io::Stdout>>);
+#[allow(clippy::new_without_default)] // Don't want these made willy-nilly
 impl CookedStdout {
   pub fn new() -> Self { Self(BufWriter::new(RawStdout::new())) }
   fn handle_err(e: io::Error) -> ! {

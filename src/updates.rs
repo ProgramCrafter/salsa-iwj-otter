@@ -634,7 +634,6 @@ impl<'r> PrepareUpdatesBuffer<'r> {
         (Some(gpc), Some(ipc)) => {
           let pri = piece_pri(ioccults, &gs.occults, player,
                               gpl, piece, gpc, ipc);
-          drop(gpl);
           with_max_z(&mut gs.max_z, gpc);
           mk_update(ioccults,gs,gpc,ipc,player,&pri)?
         },
@@ -961,10 +960,10 @@ impl Vec<(PieceId, PieceUpdateOps)> {
   }
 }
 
-impl<'u> Into<FormattedLogEntry<'u>> for TransmitUpdateLogEntry<'u> {
-  fn into(self) -> FormattedLogEntry<'u> {
-    let (tz, logent) = self;
-    let when = logent.when.render(&tz);
+impl<'u> From<TransmitUpdateLogEntry<'u>> for FormattedLogEntry<'u> {
+  fn from(tule: TransmitUpdateLogEntry<'u>) -> FormattedLogEntry<'u> {
+    let (tz, logent) = tule;
+    let when = logent.when.render(tz);
     FormattedLogEntry { when, logent: &logent.logent }
   }
 }
