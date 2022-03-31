@@ -31,8 +31,8 @@ impl Ctx {
         .collect();
       assert_eq!(relevant.len(), url.iter().len());
       if let Some(url) = url {
-        assert_eq!(relevant[0].0.get_attribute("href")?
-                   .as_ref().map(|s| s.as_str()), Some(url));
+        assert_eq!(relevant[0].0.get_attribute("href")?.as_deref(),
+                   Some(url));
       }
       Ok::<_,AE>(())
     })()
@@ -79,7 +79,7 @@ fn tests(UsualSetup { su, alice, ..}: UsualSetup) {
   test!(c, "reset", {
     let game_spec = &c.su.ds.subst("@specs@/penultima.game.toml")?;
     let mut alice = c.su.w(&c.alice)?;
-    alice.otter(&["reset"],&[&game_spec])?;
+    alice.otter(&["reset"],&[game_spec])?;
     alice.synch()?;
     let url = alice.current_url()?;
     alice.get(url)?;
@@ -90,7 +90,7 @@ fn tests(UsualSetup { su, alice, ..}: UsualSetup) {
     let pauseable = c.su.otter_pauseable();
     let game_spec = &c.su.ds.subst("@specs@/mao.game.toml")?;
     let mut alice = c.su.w(&c.alice)?;
-    alice.otter(&["reset"],&[&game_spec])?;
+    alice.otter(&["reset"],&[game_spec])?;
     alice.synch()?;
 
     let p1 = Pos::new(150,84);

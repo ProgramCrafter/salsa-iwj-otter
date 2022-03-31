@@ -39,3 +39,4 @@
 -A clippy::iter_nth_zero
 -A clippy::match_single_binding
 -A clippy::needless_update
+-A clippy::comparison_chain

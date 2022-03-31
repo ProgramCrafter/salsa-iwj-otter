@@ -565,7 +565,7 @@ impl Setup {
       ))
         .context("execute script to create window")?;
 
-      let js_logfile = JsLogfileImp::open(&self.core.ds, &name)?;
+      let js_logfile = JsLogfileImp::open(&self.core.ds, name)?;
       let js_logfile = Rc::new(RefCell::new(js_logfile));
       self.windows_squirreled.push(js_logfile.clone());
 

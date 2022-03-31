@@ -142,7 +142,7 @@ fn updates_parser<R:Read>(input: R, out: &mut mpsc::Sender<Update>) {
 
 impl UsualCtx {
   #[throws(Explode)]
-  fn connect_player<'su>(&self, player: &Player) -> Session {
+  fn connect_player(&self, player: &Player) -> Session {
     let client = reqwest::blocking::Client::new();
     let loading = client.get(&player.url).send_parse_html()?;
     let ptoken = loading.e_attr("#loading_token", "data-ptoken").unwrap();

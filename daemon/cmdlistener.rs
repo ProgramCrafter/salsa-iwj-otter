@@ -75,6 +75,7 @@ struct AccountSpecified {
   auth: Authorisation<AccountName>, // but we did check permissions
 }
 
+#[allow(clippy::enum_variant_names)]
 enum PermissionCheckHow {
   Instance,
   InstanceOrOnlyAffectedAccount(AccountId),
@@ -120,7 +121,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
   {
     (
       AccountsGuard::lock(),
-      Instance::lookup_by_name_unauth(&game)?,
+      Instance::lookup_by_name_unauth(game)?,
     )
   }
 
@@ -139,9 +140,9 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
   {
     let bundles = gref.lock_bundles();
     let mut igu = gref.lock()?;
-    let (mut ig, auth) = cs.check_acl(&ag, &mut igu, PCH::Instance, perms)?;
+    let (ig, auth) = cs.check_acl(ag, &mut igu, PCH::Instance, perms)?;
     let bundles = bundles.by(auth);
-    let r = f(&mut ig, bundles)?;
+    let r = f(ig, bundles)?;
     (r, auth)
   }
 
@@ -263,7 +264,7 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       let ag = AccountsGuard::lock();
       let names = if all == Some(true) {
         let auth = cs.superuser().ok_or(ME::AuthorisationError)?;
-        ag.list_accounts_all(auth.into())
+        ag.list_accounts_all(auth)
       } else {
         let AccountSpecified { notional_account, auth, .. } =
           cs.account.as_ref().ok_or(ME::SpecifyAccount)?;
@@ -316,8 +317,8 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
         let (ag, gref) = start_access_game(&game)?;
         access_bundles(
           cs,&ag,&gref, &[TP::UploadBundles],
-          &mut |mut ig, mut bundles: BundlesGuard<'_>| {
-            bundles.start_upload(&mut ig, kind)
+          &mut |ig, mut bundles: BundlesGuard<'_>| {
+            bundles.start_upload(ig, kind)
           }
         )?
       };
@@ -362,8 +363,8 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       let (ag, gref) = start_access_game(&game)?;
       access_bundles(
         cs,&ag,&gref, &[TP::ClearBundles],
-        &mut |mut ig, mut bundles: BundlesGuard<'_>| {
-          bundles.clear(&mut ig)
+        &mut |ig, mut bundles: BundlesGuard<'_>| {
+          bundles.clear(ig)
         })?;
       Fine
     }
@@ -405,9 +406,9 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     }
 
     MC::DestroyGame { game } => {
-      let mut ag = AccountsGuard::lock();
+      let ag = AccountsGuard::lock();
       let mut games = games_lock();
-      let auth = authorise_by_account(cs, &mut ag, &game)?;
+      let auth = authorise_by_account(cs, &ag, &game)?;
       let gref = Instance::lookup_by_name_locked(&games, &game, auth)?;
       let ig = gref.lock_even_destroying();
       Instance::destroy_game(&mut games, ig, auth)?;
@@ -457,12 +458,12 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
     }
 
     MC::SshListKeys => {
-      let (ag, acctid, auth) = start_access_ssh_keys(&cs)?;
+      let (ag, acctid, auth) = start_access_ssh_keys(cs)?;
       let list = ag.sshkeys_report(acctid, auth)?;
       MR::SshKeys(list)
     }
     MC::SshAddKey { akl } => {
-      let (mut ag, acctid, auth) = start_access_ssh_keys(&cs)?;
+      let (mut ag, acctid, auth) = start_access_ssh_keys(cs)?;
       let (index, id) = ag.sshkeys_add(acctid, akl, auth)?;
       MR::SshKeyAdded { index, id }
     }
@@ -615,7 +616,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
                       -> Result<LogEntry, MgmtError> + '_>
   ) -> ExecuteGameInsnResults<'igr, 'ig>
   {
-    let ig = cs.check_acl(&ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
+    let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
 
     // Clear out old stuff
     let mut insns = vec![];
@@ -730,7 +731,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         html: hformat!("{} [{}] joined the game", nick, account),
       };
       let timezone = &arecord.timezone;
-      let tz = tz_from_str(&timezone);
+      let tz = tz_from_str(timezone);
       let gpl = GPlayer {
         nick: nick.to_string(),
         layout: arecord.layout,
@@ -756,7 +757,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     },
 
     MGI::DeletePieceAlias(alias) => {
-      let ig = cs.check_acl(&ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
+      let ig = cs.check_acl(ag, ig, PCH::Instance, &[TP::ChangePieces])?.0;
       ig.pcaliases.remove(&alias);
       no_updates(ig, MGR::Fine)
     },
@@ -790,7 +791,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     }
 
     MGI::Synch => {
-      let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Play])?;
+      let (ig, _) = cs.check_acl(ag, ig, PCH::Instance, &[TP::Play])?;
       let (_gen, mgr) = some_synch_core(ig)?;
       no_updates(ig, mgr)
     }
@@ -919,7 +920,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           new_links[k] = Some(url.into());
         }
         let new_links = Arc::new(new_links);
-        *ig_links = new_links.clone();
+        *ig_links = new_links;
         Ok(
           hformat!("{} set the links to off-server game resources",
                    who)
@@ -934,7 +935,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         let show: Html = (kind, url.as_str()).to_html();
         new_links[kind] = Some(url.into());
         let new_links = Arc::new(new_links);
-        *ig_links = new_links.clone();
+        *ig_links = new_links;
         Ok(
           hformat!("{} set the link {}",
                   who, show)
@@ -947,7 +948,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         let mut new_links: LinksTable = (**ig_links).clone();
         new_links[kind] = None;
         let new_links = Arc::new(new_links);
-        *ig_links = new_links.clone();
+        *ig_links = new_links;
         Ok(
           hformat!("{} removed the link {}",
                   who, &kind)
@@ -985,13 +986,13 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         hformat!("{} [{}] left the game [{}]"
                 ,
                 (|| Some(gpl?.nick))()
-                .unwrap_or("<partial data!>".into())
+                .unwrap_or_else(|| "<partial data!>".into())
                 ,
                 (||{
                   let (record, _) = ag.lookup(ipl?.acctid).ok()?;
                   Some(record.account.to_string())
                 })()
-                .unwrap_or("<account deleted>".into())
+                .unwrap_or_else(|| "<account deleted>".into())
                 ,
                 &account
                 )
@@ -1014,7 +1015,6 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       if let Some(gpc) = gpc {
         gpc.occult.passive_delete_hook(&mut gs.occults, piece);
         if gpc.occult.is_active() {
-          drop(gpc);
           xupdates.append(
             &mut
               remove_occultation(
@@ -1022,8 +1022,8 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
                 &mut gs.players,
                 &mut gs.pieces,
                 &mut gs.occults,
-                &mut ig.ipieces,
-                &mut ig.ioccults,
+                &ig.ipieces,
+                &ig.ioccults,
                 to_permute,
                 piece)?
           );
@@ -1142,7 +1142,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     },
 
     MGI::ClearLog => {
-      let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Super])?;
+      let (ig, _) = cs.check_acl(ag, ig, PCH::Instance, &[TP::Super])?;
       for gpl in ig.gs.players.values_mut() {
         gpl.movehist.clear();
       }
@@ -1167,7 +1167,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
     },
 
     MGI::SetACL { acl } => {
-      let (ig, _) = cs.check_acl(&ag, ig, PCH::Instance, &[TP::Super])?;
+      let (ig, _) = cs.check_acl(ag, ig, PCH::Instance, &[TP::Super])?;
       ig.acl = acl.into();
       let mut log = vec![ LogEntry {
         html: hformat!("{} set the table access control list",
@@ -1359,8 +1359,8 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
   });
 
   if let Some(uu) = uu {
-    let mut ig = igu.by_mut(Authorisation::promise_any());
-    let mut prepub = PrepareUpdatesBuffer::new(&mut ig, None);
+    let ig = igu.by_mut(Authorisation::promise_any());
+    let mut prepub = PrepareUpdatesBuffer::new(ig, None);
     uu(&mut prepub);
     prepub.finish();
   }
@@ -1773,7 +1773,7 @@ fn authorise_by_account(cs: &CommandStreamData, ag: &AccountsGuard,
     return y.so_promise();
   }
 
-  if &current.notional_account == &wanted.account {
+  if current.notional_account == wanted.account {
     current.auth.map(
       // Not executed, exists as a proof.
       // we need this Box::leak because map wants us to return a ref
@@ -1815,7 +1815,7 @@ fn do_authorise_scope(cs: &CommandStreamData, ag: &AccountsGuard,
         if let Ok::<_,AccountNotFound>
           ((record, _acctid)) = ag.lookup(&wanted_base_account);
         if let
-          Some(auth) = record.ssh_keys.check(ag, &key, auth);
+          Some(auth) = record.ssh_keys.check(ag, key, auth);
         then { return Ok(auth) }
         else { throw!(AuthorisationError("ssh key not authorised".into())); }
       }
