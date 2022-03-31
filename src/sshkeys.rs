@@ -209,7 +209,7 @@ impl PerScope {
         if let Some(sk) = sk;
         if sk.id == authed_key.id;
         if let Some(want_key) = gl.keys.get(sk.id);
-        if &want_key.nonce == &authed_key.nonce;
+        if want_key.nonce == authed_key.nonce;
         then {
           // We have checked id and nonce, against those allowed
           let auth = auth_in.so_promise();

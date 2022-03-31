@@ -390,7 +390,6 @@ impl IndexedZip where {
       let sname = entry.name().to_owned();
       let uname = UniCase::new(sname.to_owned());
       if let Some(previously) = members.insert(uname, i) {
-        let sname = sname.to_owned();
         drop(entry);
         let previously = za.by_index_raw(previously)?;
         let previously = previously.name();

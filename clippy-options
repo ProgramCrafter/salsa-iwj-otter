@@ -8,3 +8,8 @@
 -A clippy::needless_lifetimes
 -A clippy::upper_case_acronyms
 -A clippy::unused_unit
+-A clippy::manual_flatten
+-A clippy::clone_on_copy
+-A clippy::comparison_to_empty
+-A clippy::try_err
+-A clippy::unit_arg # does badly with if_chain, at least
