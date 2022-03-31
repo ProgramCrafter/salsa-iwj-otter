@@ -32,3 +32,4 @@
 -A clippy::unnecessary_lazy_evaluations
 -A clippy::map_flatten
 -A clippy::manual_split_once
+-A clippy::expect_fun_call

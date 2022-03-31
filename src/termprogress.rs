@@ -32,7 +32,7 @@ pub fn reporter() -> Box<dyn Reporter> {
   let mut recheck_width = true;
   let width = if let Ok(val) = env::var(FORCE_VAR) {
     let mut val = &val[..];
-    if let Some(rhs) = val.strip_prefix("+") {
+    if let Some(rhs) = val.strip_prefix('+') {
         val = rhs;
         newlines = true;
     }
