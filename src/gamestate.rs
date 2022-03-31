@@ -298,6 +298,7 @@ pub struct UniqueGenGen<'g> {
 }
 
 impl UniqueGenGen<'_> {
+  #[allow(clippy::should_implement_trait)] // we don't return Option
   pub fn next(&mut self) -> Generation {
     if self.none_yet.next().is_some() { self.gen.increment() }
     let r = *self.gen;
@@ -340,10 +341,11 @@ pub trait ClampTable: Sized+Debug {
 }
 
 impl ClampTable for Coord {
-  fn clamped(self, range: Coord) -> Result<Coord, PosOffTableError<Coord>> {
-    if self < 0     { return Err(PosOffTableError{ clamped: 0,    }) }
-    if self > range { return Err(PosOffTableError{ clamped: range }) }
-    return Ok(self)
+  #[throws(PosOffTableError<Coord>)]
+  fn clamped(self, range: Coord) -> Coord {
+    if self < 0     { throw!(PosOffTableError{ clamped: 0,    }) }
+    if self > range { throw!(PosOffTableError{ clamped: range }) }
+    self
   }
 }
 
