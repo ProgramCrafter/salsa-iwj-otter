@@ -23,3 +23,4 @@
 -A clippy::len_zero
 -A clippy::len_without_is_empty # I prefer comparing .len() to 0, apparently
 -A clippy::blocks_in_if_conditions
+-A clippy::needless_collect # rust-clippy/issues/8046, since Nov 2021 at least
