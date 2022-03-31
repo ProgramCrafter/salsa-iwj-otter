@@ -16,7 +16,7 @@ pub trait Reporter {
 
 pub struct Null;
 impl Null {
-  pub fn new() -> Box<dyn Reporter> { Box::new(Null) }
+  pub fn reporter() -> Box<dyn Reporter> { Box::new(Null) }
 }
 
 #[allow(unused_variables)]
@@ -25,7 +25,7 @@ impl Reporter for Null {
   fn clear(&mut self) { }
 }
 
-pub fn new() -> Box<dyn Reporter> {
+pub fn reporter() -> Box<dyn Reporter> {
   let term = console::Term::buffered_stderr();
 
   let mut newlines = false;

@@ -107,9 +107,9 @@ impl MainOpts {
   #[throws(AE)]
   pub fn progressbar(&self) -> Box<dyn termprogress::Reporter> {
     if self.verbose >= 0 {
-      termprogress::new()
+      termprogress::reporter()
     } else {
-      termprogress::Null::new()
+      termprogress::Null::reporter()
     }
   }
 }
