@@ -85,7 +85,7 @@ These apply regardless of the value of ``type``.
  * ``type``: Piece type or piece spec type.  One of the types listed
    in `Piece Spec Types`_.  [string, enum, required]
 
- * ``pos``:Position, in game coordinates, of
+ * ``pos``: Position, in game coordinates, of
    the centre of the piece.  The origin is at the top left.
    [2-element array, default ``[20,20]``]
 

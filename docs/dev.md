@@ -72,7 +72,7 @@ files.
 Adding shapes (pieces, cards, etc.) to the builtin library
 ----------------------------------------------------------
 
-(Consider defining an uploadable game bundle instead.)
+(Consider making an uploadable game bundle instead.)
 
 Otter's builtin shape libraries use SVGs.  The sources for the SVGs
 are all in the otter source tree, in the `library/` directory.
@@ -82,6 +82,7 @@ Each shape is listed in one of the ``library/*.toml`` files, in a
 documented in the Rustdoc documentation for the module
 `otter::shapelib_toml`.  If you run `make -j8 shapelib` it will print
 out a `file://` url for these docs.
+XXX
 
 You can preview the shapes, including any changes you make, without a
 whole game server, by running `make -j8 shapelib`, and looking at
@@ -133,10 +134,10 @@ Navigating the otter source code
 
   Code shared by the host and the WebAssembly.  Notably, the Z
   coordinate handling, but also a a few other minor functions needed
-  by both client and server.  To avoid duplicating they are written
+  by both client and server.  To avoid duplication they are written
   once in Rust and compiled twice - once for the host and once for
   WebAssembly for use in the client.  This crate is kept fairly small
-  to keeep the WebAssembly binary small (currently, ~100kby).
+  to keeep the WebAssembly binary small (currently, ~140kby).
 
 * `wasm/`
 
@@ -188,6 +189,11 @@ Navigating the otter source code
 
   The tests produce a single portmanteau binary to reduce compile
   times.  You run it with `target/debug/wdriver --test=wdt-something`.
+
+* `jstest/`
+
+  Node.js--based unit-end tests.
+  XXX explain
 
 * `specs/`.  The table and game specs, as used directly by `otter`.
 

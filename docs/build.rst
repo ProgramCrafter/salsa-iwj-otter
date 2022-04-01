@@ -39,19 +39,15 @@ Setup
 
 .. _rustup: https://rustup.rs
 
-3. Switch your Rust install to use Rust Nightly and add the WASM
-   target::
+   Otter is known to work with Rust 1.59.  Probably, many earlier
+   versions well work.  Current versions of the dependencies quoted in
+   ``Cargo.toml`` will work, but the minimum versions may be
+   optimistic - newer versions may be needed than are declared.
 
-     rustup default nightly
+3. Add the WASM Rust target::
+
      rustup target add wasm32-unknown-unknown
      rustup component add miri # for the tests
-
-   Unfortunately, it is possible that the Rust Nightly you find when
-   you run this is missing some pieces, or is not compatible with the
-   version of Otter you have.  The following is known to work with
-   Otter 0.7.1::
-
-     rustup default nightly-2022-03-19 # downloads 1bfe40d11 2022-03-18
 
    **If you just want to run the otter cli client over ssh to an existing server, or edit and preview the shape libraries (ie the piece shapes) you can stop here.**
 
@@ -137,12 +133,6 @@ lesser account, you don't need to bother with that.)
 
 Apologia
 ........
-
-Rust Nightly
-````````````
-
-This was needed almost solely because Rocket needs it.
-Hopefully we will compile on stable shortly.
 
 The many dependencies of Otter
 ``````````````````````````````

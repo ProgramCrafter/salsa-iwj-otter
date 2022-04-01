@@ -92,12 +92,6 @@ systems could be made to work, but don't work well right now.
 Otter does not currently have even a built-in text chat facility.  It
 does have a way to share a URL for a voice chat.
 
-Right now Otter is in a beta state.  There are significant
-as-yet-unimplemented improvements that would make it work better for
-more people and more games.  I don't currently promise savefile
-compatibility, or upgradeability, from one Otter version to the next.
-And there are still bugs.
-
 
 Free software, and user freedom
 -------------------------------
