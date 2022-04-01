@@ -86,7 +86,7 @@ unicode-width="0.1"
 url="2"
 vecdeque-stableix="1"
 xmlparser = "0.13"
-zip="0.5"
+zip="0.6"
 
 async-condvar-fair = { version="0.2", features=["parking_lot_0_12"] }
 enum-map     = { version="2"    , features=["serde"       ] }
