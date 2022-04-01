@@ -37,7 +37,6 @@ BUNDLED_SOURCES += $(BUNDLED_SOURCES_FILES)
 
 #---------- programs and config variables ----------
 
-CARGO ?= cargo $(RUST_VERSION)
 TARGET_DIR ?= target
 
 USVG_OPTIONS = "--sans-serif-family=DejaVu Sans"
@@ -75,7 +74,7 @@ RUST_CLIPPY_CMD := clippy $(RUST_CLIPPY_OPTIONS)
 ifneq (,$(wildcard ../Cargo.nail))
 
 NAILING_CARGO ?= nailing-cargo
-CARGO = $(NAILING_CARGO) $(RUST_VERSION)
+CARGO_CMD ?= $(NAILING_CARGO)
 BUILD_SUBDIR ?= ../Build
 TARGET_DIR = $(BUILD_SUBDIR)/$(notdir $(PWD))/target
 
@@ -90,6 +89,7 @@ clean-nailing:
 		$(abspath $(BUILD_SUBDIR)/$(notdir $(PWD)))
 
 else
+CARGO_CMD ?= cargo
 clean-nailing:
 endif # Cargo.nail
 
@@ -137,6 +137,8 @@ WASM := wasm32-unknown-unknown
 #     https://github.com/rust-lang/rust/pull/79998
 # ?  But maybe it doesn't matter since we're very conservative and
 # only pass JsValue and a few strings across the WASM ABI.
+
+CARGO = $(CARGO_CMD) $(RUST_VERSION)
 
 #---------- toplevel aggregate targets ----------
 
@@ -207,7 +209,8 @@ $(TARGET_DIR)/debug/%: $(call rsrcs, ! -path './wasm/*')
 	$(NAILING_CARGO_JUST_RUN) touch $(abspath $@)
 
 stamp/cargo.wasm-bindgen: $(call rsrcs, ! -name \*.rs)
-	$(CARGO) $(WASM_BINDGEN_CLI_CARGO_OPTS) build --target-dir=target \
+	$(CARGO_CMD) $(WASM_BINDGEN_CLI_CARGO_OPTS) $(CARGO_VERSION) \
+		build --target-dir=target \
 		--manifest-path=$(abspath wasm/Cargo.toml) -p wasm-bindgen-cli
 	$(stamp)
 
