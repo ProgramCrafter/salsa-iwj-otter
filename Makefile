@@ -209,7 +209,7 @@ $(TARGET_DIR)/debug/%: $(call rsrcs, ! -path './wasm/*')
 	$(NAILING_CARGO_JUST_RUN) touch $(abspath $@)
 
 stamp/cargo.wasm-bindgen: $(call rsrcs, ! -name \*.rs)
-	$(CARGO_CMD) $(WASM_BINDGEN_CLI_CARGO_OPTS) $(CARGO_VERSION) \
+	$(CARGO_CMD) $(WASM_BINDGEN_CLI_CARGO_OPTS) $(RUST_VERSION) \
 		build --target-dir=target \
 		--manifest-path=$(abspath wasm/Cargo.toml) -p wasm-bindgen-cli
 	$(stamp)
