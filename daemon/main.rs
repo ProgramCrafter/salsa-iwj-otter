@@ -280,9 +280,10 @@ impl<'r> FromFormValue<'r> for BundleToken {
 */
 
 fn updates_cors() -> Cors {
-
   Cors::default()
-      .allowed_methods([Method::GET])
+    .allow_any_origin()
+    .allowed_methods([Method::GET, Method::OPTIONS, Method::HEAD])
+    .disable_vary_header()
 }
 
 #[derive(Debug, Deserialize)]
