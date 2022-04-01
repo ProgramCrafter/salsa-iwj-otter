@@ -60,7 +60,7 @@ endif
 RECOLOUR_SVG ?= ./run-inkscape-extension $(INKSCAPE_EXTENSIONS)/color_replace.py
 
 DEPLOY_ARCH=x86_64-unknown-linux-musl
-DEPLOY_RELEASE=debug
+DEPLOY_RELEASE=release
 DEPLOY_TARGET_DIR=$(TARGET_DIR)/$(addsuffix /,$(DEPLOY_ARCH))$(DEPLOY_RELEASE)
 DEPLOYED_BRANCH=deployed
 PUBLISHED_BRANCH=published
