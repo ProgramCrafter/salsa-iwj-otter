@@ -1,3 +1,45 @@
+UNRELEASED
+==========
+
+Significant changes
+-------------------
+
+ * Compile on stable Rust.
+ * Uses actix-web rather than Rocket (should be similar in overall
+   functionality but there may well be behavioural changes).
+ * Always listen on localhost:8000 by default regardless of `debug` config.
+   But, support explicit configuration of listening addresses.
+ * Do not sometimes leak (in game log) piece identity of face-down cards.
+
+Minor improvements
+------------------
+
+ * Add short crate-level docs with reference to website etc.
+ * Fix inconsequential misacceptance of some odd-length hex byte strings.
+ * Fix some almost-incosequential short write bugs (might manifest as races).
+ * Typo fix in one error message.
+
+Build system
+------------
+
+ * Turn on integer overflow checks for release builds.
+ * Don't override environment's SPHINXBUILD or NAILING_CARGO.
+ * Update dependency versions.
+ * Skip some unnecessaary miri runs of certain tests.
+ * Support for controlling the Rust version via RUST_VERSION.
+ * `make deploy` MUSL build is in release mode by default.
+ * Document that build now requires 6G rather than 10G.
+
+Internal improvements
+---------------------
+
+ * Drop wee-alloc as allocator from WASM.
+ * Many internal code style improvements prompted by rust-clippy.
+ * Remove some unused internal bits and bobs.
+ * Require layout parameter in session URL loads.
+ * Miscellanous Other cleanups.
+
+
 Version 0.7.3 - 2021-07-25
 ==========================
 
@@ -6,6 +48,8 @@ Build system bugfixes
 
  * `cargo` publication in `make-release` uses better pre-clean
    approach.  (Removes some junk from caago packages.)
+
+drop our own directory from cargo.nail
 
 Version 0.7.2 - 2021-07-25
 ==========================
