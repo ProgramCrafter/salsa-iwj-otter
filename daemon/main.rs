@@ -534,13 +534,13 @@ async fn main() -> Result<(),StartupError> {
         // them as unit structs, not functions or data values.  The
         // result is that they are *type names* which makes them
         // impossible to locally rebind.
+        api::routes(),
+        session::routes(),
+        r_updates,
         r_loading_l,
         r_loading_p,
-        r_bundle,
-        r_updates,
-        session::routes(),
-        api::routes(),
         resource_routes(),
+        r_bundle,
       ])
       .app_data(json_config)
       .app_data(templates.clone())
