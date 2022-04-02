@@ -2648,7 +2648,6 @@ dependencies = [
  "enum-map",
  "enum_dispatch",
  "env_logger 0.9.0",
- "failure",
  "fehler",
  "flexi_logger",
  "fs2",

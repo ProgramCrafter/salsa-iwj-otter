@@ -17,7 +17,6 @@ pub use digest;
 pub use educe;
 pub use either;
 pub use env_logger;
-pub use failure;
 pub use flexi_logger;
 pub use fs2;
 pub use glob;
