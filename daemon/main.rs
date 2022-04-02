@@ -124,29 +124,11 @@ const RESOURCES: &[(&str, ResourceLocation, ConstContentType)] = &[
   ("wasm.js",      RL::Wasm("otter_wasm.js"),      &CT_JAVASCRIPT),
 ];
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 struct CheckedResourceLeaf {
   safe_leaf: &'static str,
-  locn: ResourceLocation,
-  ctype: ConstContentType,
-}
-
-#[derive(Error,Debug)]
-#[error("not a valid resource path")]
-struct UnknownResource;
-
-impl FromStr for CheckedResourceLeaf {
-  type Err = UnknownResource;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    for &(safe_leaf, locn, ctype) in RESOURCES {
-      if safe_leaf == s {
-        return Ok(CheckedResourceLeaf {
-          safe_leaf, locn, ctype,
-        });
-      }
-    }
-    Err(UnknownResource{})
-  }
+  locn: &'static ResourceLocation,
+  ctype: &'static ConstContentType,
 }
 
 type PlayerQueryString = WholeQueryString<
@@ -312,19 +294,19 @@ async fn r_updates(query: Query<UpdatesParams>) -> impl Responder {
     .streaming(content)
 }
 
+// Previously, we used /{leaf} as a path for #[route].  But:
+//
 // Actix dispatches to the first matching URL pattern in the list of
 // routes, and does not try another one even if this route says 404.
-// This pattern is quite general, so it has to come last.
 //
 // An alternative would be to use a Guard.  But the guard doesn't get
 // to give information directly to the route function.  We would have
 // to use the GuardContext to thread the CheckedResource through the
-// Extension type map.  It's easier just to make sure this URL pattern
-// is last in the list.
-#[route("/_/{leaf}", method="GET", method="HEAD")]
+// Extension type map.
+//
+// Instead, register each of these separately.
 #[throws(io::Error)]
-async fn r_resource(leaf: Path<Parse<CheckedResourceLeaf>>) -> impl Responder {
-  let leaf = leaf.into_inner().0;
+async fn r_resource(leaf: CheckedResourceLeaf) -> impl Responder {
   let path = match leaf.locn {
     RL::Main => format!("{}/{}", config().template_dir, leaf.safe_leaf),
     RL::Wasm(s) => format!("{}/{}", config().wasm_dir, s),
@@ -333,6 +315,17 @@ async fn r_resource(leaf: Path<Parse<CheckedResourceLeaf>>) -> impl Responder {
     .disable_content_disposition()
     .prefer_utf8(true)
     .set_content_type(leaf.ctype.into_mime())
+}
+
+fn resource_routes() -> impl HttpServiceFactory {
+  RESOURCES.iter().map(|(safe_leaf, locn, ctype)| {
+    let leaf = CheckedResourceLeaf { safe_leaf, locn, ctype };
+    let mut wresource = web::resource(format!("/_/{}", safe_leaf));
+    for method in [web::get(), web::head()] {
+      wresource = wresource.route(method.to(move || r_resource(leaf)));
+    }
+    wresource
+  }).collect::<Vec<_>>()
 }
 
 #[derive(Error,Debug)]
@@ -547,7 +540,7 @@ async fn main() -> Result<(),StartupError> {
         r_updates,
         session::routes(),
         api::routes(),
-        r_resource, // Must come after more specific URL paths
+        resource_routes(),
       ])
       .app_data(json_config)
       .app_data(templates.clone())
