@@ -541,10 +541,10 @@ async fn main() -> Result<(),StartupError> {
         r_loading_p,
         resource_routes(),
         r_bundle,
+        src_service,
       ])
       .app_data(json_config)
       .app_data(templates.clone())
-      .service(src_service)
       .default_service(web::to(not_found_handler))
       .wrap_fn(|req, svc| {
         svc.call(req).map(|resp| Ok(src_ct_fixup(resp?)?))
