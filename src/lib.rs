@@ -2,6 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
+//! Otter game system; common infrastructure Rust crate.
+//!
+//! Otter, the Online Table Top Environment Renderer,
+//! is an online game system.
+//!
+//! <https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/README.html>
+//!
+//! This crate is intended for use only by other parts of Otter.
+//!
+//! The command line client for joining and managing games is
+//! available via
+//! [`cargo install otter-cli`](https://lib.rs/crates/otter-cli)
+//!
+//! To run an Otter server, you will need to read the
+//! [build instructions](https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/build.html).
+
 pub mod imports;
 pub mod prelude;
 

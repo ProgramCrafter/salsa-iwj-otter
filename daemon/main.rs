@@ -2,6 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
+//! Otter game system - main server daemon
+//!
+//! <https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/README.html>
+//!
+//! This program requires many additional runtime resources, which you are
+//! expected to build, along with the daemon, using the Otter `Makefile`.
+
 use otter::imports::*;
 
 pub mod imports;

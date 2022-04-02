@@ -2,6 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
+//! Otter game system - command line client
+//!
+//! For use with an Otter server.  You can `cargo install otter-cli`.
+//!
+//! See the
+//! [Otter web pages](https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/README.html)
+//! for more information about Otter.
+
 #![allow(unused_imports)]
 
 pub type MgmtChannel = ClientMgmtChannel;
