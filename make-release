@@ -9,7 +9,6 @@
 # Overall release steps:
 #
 #  - update dependencies (cargo update, cargo upgrades)
-#  - update our Nightly rust and do a test build, note in build.rst
 #  - edit CHANGELOG.md
 #  - update versions
 #  - ensure pretest == tested == main
