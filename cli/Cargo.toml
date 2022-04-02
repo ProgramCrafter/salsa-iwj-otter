@@ -6,7 +6,7 @@
 name="otter-cli"
 description="Otter game system; command line game management client."
 
-version="0.7.3"
+version="1.0.0"
 license="AGPL-3.0-or-later"
 edition="2018"
 homepage="https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/"
@@ -23,9 +23,9 @@ doc=false
 [dependencies]
 
 otter.path=".."
-otter.version="=0.7.3"
+otter.version="=1.0.0"
 otter-base.path="../base"
-otter-base.version="=0.7.3"
+otter-base.version="=1.0.0"
 
 argparse="0.2"
 directories="4"

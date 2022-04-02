@@ -6,7 +6,7 @@
 name="otter-api-tests"
 description="Otter game system; API tests crates."
 
-version="0.7.3"
+version="1.0.0"
 license="AGPL-3.0-or-later"
 edition="2018"
 homepage="https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/"
@@ -27,7 +27,7 @@ path="atmain.rs"
 [dependencies]
 
 otter.path=".."
-otter.version="=0.7.3"
+otter.version="=1.0.0"
 
 ego-tree="0.6"
 fehler="1"
