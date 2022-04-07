@@ -89,7 +89,7 @@
     <path
        style="fill:none;stroke:#747474;stroke-width:11.339;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="path17851"
-       d="M -0.15018234,-79.999859 A 80,80 0 0 1 78.064064,-17.492911 80,80 0 0 1 34.003313,72.413913 80,80 0 0 1 -63.318245,48.895807 80,80 0 0 1 -61.461796,-51.20984"
+       d="M -0.15018234,-79.999859 A 80,80 0 1 1 -61.461796,-51.20984"
        inkscape:label="timegrey" />
   </g>
 </svg>
