@@ -66,9 +66,8 @@ impl PieceSpec for Alias {
   #[throws(SpecError)]
   fn load(&self, i: usize, gpc: &mut GPiece, ig: &Instance, depth: SpecDepth)
           -> PieceSpecLoaded {
-    let mut r = self.resolve(&ig.pcaliases)?
+    let r = self.resolve(&ig.pcaliases)?
       .load(i, gpc, ig, self.new_depth(depth)?)?;
-    r.loaded_via_alias = Some(self.target.clone());
     r
   }
   #[throws(SpecError)]

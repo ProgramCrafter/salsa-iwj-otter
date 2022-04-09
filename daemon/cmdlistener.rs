@@ -1110,7 +1110,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           last_released: default(),
           rotateable: true,
         };
-        let PieceSpecLoaded { p, loaded_via_alias, occultable } =
+        let PieceSpecLoaded { p, occultable } =
           info.load(piece_i as usize, &mut gpc, ig, SpecDepth::zero())?;
         if p.nfaces() <= face.into() {
           throw!(SpecError::FaceNotFound);
@@ -1126,7 +1126,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
             ilks.create(ilkname, OccultIlkData { p_occ })
           });
           ig.ipieces.as_mut(modperm).insert(piece, IPiece {
-            p, occilk, loaded_via_alias,
+            p, occilk,
           });
           updates.push((piece, PieceUpdateOp::Insert(())));
         })(); // <- no ?, infallible (to avoid leaking ilk)

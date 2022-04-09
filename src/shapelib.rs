@@ -477,7 +477,6 @@ impl From<ItemSpecLoaded> for PieceSpecLoaded {
     PieceSpecLoaded {
       p,
       occultable,
-      loaded_via_alias: None,
     }
   }
 }

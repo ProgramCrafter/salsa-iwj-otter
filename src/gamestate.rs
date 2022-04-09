@@ -258,7 +258,6 @@ pub struct ApiPieceOpArgs<'a> {
 #[derive(Debug)]
 pub struct PieceSpecLoaded {
   pub p: Box<dyn PieceTrait>,
-  pub loaded_via_alias: Option<String>,
   pub occultable: PieceSpecLoadedOccultable,
 }
 pub type PieceSpecLoadedOccultable =

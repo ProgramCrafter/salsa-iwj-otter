@@ -302,7 +302,6 @@ pub trait SimplePieceSpec: Debug {
   fn load(&self) -> PieceSpecLoaded {
     PieceSpecLoaded {
       p: Box::new(self.load_raw()?.0),
-      loaded_via_alias: None,
       occultable: None,
     }
   }

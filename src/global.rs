@@ -79,7 +79,6 @@ pub struct IPlayer { // usual variable: ipl
 #[derive(Debug,Serialize,Deserialize)]
 pub struct IPiece {
   pub p: IPieceTraitObj,
-  #[serde(default)] pub loaded_via_alias: Option<String>,
   pub occilk: Option<OccultIlkOwningId>,
 }
 deref_to_field!{IPiece, IPieceTraitObj, p}

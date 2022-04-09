@@ -110,7 +110,6 @@ impl piece_specs::OwnedCommon {
     }) as Box<dyn PieceTrait>;
     PieceSpecLoaded {
       p,
-      loaded_via_alias: None,
       occultable: None,
     }
   }
