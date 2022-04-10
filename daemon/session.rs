@@ -141,7 +141,7 @@ fn session_inner(form: Json<SessionForm>,
                           piece, gpc, ipc);
       let pri = if let Some(pri) = pri { pri } else { continue /*invisible*/};
 
-      let (defs, bbox) = pri.make_defs(ioccults, &ig.gs, gpc, ipc)?;
+      let (defs, bbox) = pri.make_svg_defs(ioccults, &ig.gs, gpc, ipc)?;
       alldefs.push((pri.vpid, defs));
       let desc = pri.describe(ioccults,&ig.gs.occults, gpc, ipc);
 

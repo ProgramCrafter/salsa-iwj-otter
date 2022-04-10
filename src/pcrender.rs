@@ -121,7 +121,7 @@ impl PieceRenderInstructions {
     let (pos, zlevel) = pri.pos_zlevel(gpc);
     let occregion = gpc.occult.active_region(&gs.occults)?
       .map(|r| JsonString(r.clone()));
-    let (svg, bbox) = pri.make_defs(ioccults, gs, gpc, ipc)?;
+    let (svg, bbox) = pri.make_svg_defs(ioccults, gs, gpc, ipc)?;
     let r = PreparedPieceState {
       pos, svg, occregion, bbox,
       held       : gpc.held,
@@ -143,7 +143,7 @@ impl PieceRenderInstructions {
                          gpc: &GPiece, ipc: &IPiece)
                          -> PreparedPieceImage {
     let pri = self;
-    let (svg, bbox) = pri.make_defs(ioccults, gs, gpc, ipc)?;
+    let (svg, bbox) = pri.make_svg_defs(ioccults, gs, gpc, ipc)?;
     let r = PreparedPieceImage {
       svg, bbox,
       uos: pri.ui_operations(gs, gpc, ipc)?,
@@ -175,8 +175,8 @@ impl PieceRenderInstructions {
   }
 
   #[throws(IE)]
-  pub fn make_defs(&self, ioccults: &IOccults, gs: &GameState,
-                   gpc: &GPiece, ipc: &IPiece) -> (Html, Rect)
+  pub fn make_svg_defs(&self, ioccults: &IOccults, gs: &GameState,
+                       gpc: &GPiece, ipc: &IPiece) -> (Html, Rect)
   {
     let pri = self;
     let instead = pri.instead(ioccults, ipc)?;
