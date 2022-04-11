@@ -22,7 +22,7 @@ Setup
                       pkg-config libssl-dev                    \
                       node-typescript inkscape                 \
                       netpbm imagemagick libtoml-parser-perl   \
-                      potrace                                  \
+                      potrace libxml-libxml-perl               \
                       python3-sphinx python3-recommonmark
 
    And for running the tests (``make check``) you will need::

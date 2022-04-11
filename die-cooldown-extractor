@@ -1,0 +1,63 @@
+#!/usr/bin/perl -w
+use strict;
+
+use strict;
+
+use XML::LibXML;
+use XML::LibXML::XPathContext;
+
+use Data::Dumper;
+
+my $dom = XML::LibXML->load_xml(IO => \*STDIN) or die;
+#print STDERR Dumper($dom);
+
+my $xpc = XML::LibXML::XPathContext->new($dom) or die;
+
+our ($label, $node);
+
+sub process_node ($$) {
+  my $fn;
+  ($label, $fn) = @_;
+  my $nodes = $xpc->findnodes('//*[@inkscape:label="'.$label.'"]');
+  die "$label ?" unless @$nodes == 1;
+  $node = $nodes->[0];
+  $fn->($node);
+  print $node->toString, "\n" or die $!;
+}
+
+our $nom_radius;
+
+sub filter_element ($@) {
+  my $exp_el = shift @_;
+  my %keep_attr = map { $_ => 1 } (@_, qw(style));
+  my $got_el = $node->nodeName; $got_el eq $exp_el or die "$label $got_el ?";
+  my @attrs = $node->attributes();
+  foreach my $attr (@attrs) {
+    my $name = $attr->nodeName;
+    next if $keep_attr{$name};
+    $node->removeAttribute($name);
+  }
+}
+sub filter_circle () {
+  my @xy = qw(cx cy);
+  foreach my $xy (@xy) {
+    my $v = $node->getAttribute($xy);
+    $v == '0' or die "$label $xy $v ?";
+  }
+  filter_element('circle', @xy);
+  $node->setAttribute('r', "{{radius}}");
+}
+
+process_node('timeblack', sub {
+  $nom_radius = $node->getAttribute('r');
+  filter_circle();
+});
+process_node('timewhite', \&filter_circle);
+process_node('timegrey', sub {
+  filter_element('path');
+  $node->setAttribute('d', "{{path_d}}");
+  $node->setAttribute('id', "{{cd_elid}}");
+  foreach my $d (qw(remprop total)) {
+    $node->setAttribute("data-$d", "{{$d}}");
+  }
+});
