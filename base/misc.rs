@@ -33,7 +33,7 @@ pub fn raw_angle_transform(compass: u8) -> String {
 }
 
 #[throws(fmt::Error)]
-pub fn die_cooldown_path<W: fmt::Write>(mut w: W, r: f64, remaining: f64) {
+pub fn die_cooldown_path<W: fmt::Write>(mut w: W, r: f64, remprop: f64) {
   write!(w, "M 0,-{r} A")?;
 
   let mut arcto = move |proportion: f64| {
@@ -50,18 +50,18 @@ pub fn die_cooldown_path<W: fmt::Write>(mut w: W, r: f64, remaining: f64) {
   // If we did so there could be rounding errors that would mean we might
   // disagree with the SVG renderer about whether the angle is <=> 180.
   for split in [0.49, 0.98] {
-    if split >= remaining { break }
+    if split >= remprop { break }
     arcto(split)?;
   }
-  arcto(remaining)?;
+  arcto(remprop)?;
 }
 
 #[test]
 fn die_cooldown_path_test() {
-  let t80 = |remaining, exp: &str| {
+  let t80 = |remprop, exp: &str| {
     let mut got = String::new();
-    die_cooldown_path(&mut got, 80., remaining).unwrap();
-    assert_eq!(&got, exp, "\nfor {remaining} {exp}");
+    die_cooldown_path(&mut got, 80., remprop).unwrap();
+    assert_eq!(&got, exp, "\nfor {remprop} {exp}");
   };
   t80(1./3., "M 0,-80 A 80,80 0 0 1 69.2820323027551,39.999999999999986");
   t80(1.   , "M 0,-80 A 80,80 0 0 1 5.023241562345087,79.84213827426173 80,80 0 0 1 -10.026658685144373,-79.36917610515822 80,80 0 0 1 -0.000000000000019594348786357652,-80");
