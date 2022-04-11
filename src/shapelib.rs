@@ -71,7 +71,7 @@ struct OccData_Internal {
   outline: Outline,
   desc: Html,
   xform: FaceTransform,
-  svgd: parking_lot::Mutex<Option<Arc<Html>>>,
+  svgd: lazy_init::Lazy<Result<Arc<Html>,SpecError>>,
 }
 
 #[derive(Error,Debug)]
@@ -574,23 +574,13 @@ impl Contents {
       },
       OccData::Internal(occ) => {
         let occ_name = occ.item_name.clone();
-        let svgd = {
-          let mut svgd = occ.svgd.lock();
-          let svgd = &mut *svgd;
-          let svgd = match svgd {
-            Some(svgd) => svgd.clone(),
-            None => {
-              let occ_data = self.load_svg(
-                occ.item_name.unnest::<GoodItemName>().unnest(),
-                /* original: */ lib_name, name.as_str()
-              )?;
-              let occ_data = Arc::new(occ_data);
-              *svgd = Some(occ_data.clone());
-              occ_data
-            },
-          };
-          svgd
-        };
+        let svgd = occ.svgd.get_or_create(||{
+          let occ_data = self.load_svg(
+            occ.item_name.unnest::<GoodItemName>().unnest(),
+            /* original: */ lib_name, name.as_str()
+          )?;
+          Ok(Arc::new(occ_data))
+        }).clone()?;
         let it = Arc::new(ItemOccultable {
           svgd,
           xform: occ.xform.clone(),
