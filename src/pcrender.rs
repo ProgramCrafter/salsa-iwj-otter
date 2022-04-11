@@ -199,8 +199,10 @@ impl PieceRenderInstructions {
 
     let mut defs = Html::new();
     hwrite!(&mut defs,
-           r##"<g id="piece{}" transform="{}" data-dragraise="{}">"##,
+           r##"<g id="piece{}" transform="{}" data-dragraise="{}""##,
            pri.vpid, &transform.0, dragraise)?;
+    hwrite!(&mut defs,
+           r##">"##)?;
 
     match instead {
       Left(y) => {
