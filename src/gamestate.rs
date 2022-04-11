@@ -179,6 +179,8 @@ pub trait PieceBaseTrait: OutlineTrait + Send + Debug + 'static {
   fn nfaces(&self) -> RawFaceId;
 
   fn itemname(&self) -> &str;
+
+  fn special(&self) -> Result<Option<SpecialClientRendering>,IE> { Ok(None) }
 }
 
 #[typetag::serde] // usual variable: p

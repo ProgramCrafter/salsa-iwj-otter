@@ -23,6 +23,7 @@
 //   pelem
 //   #piece{}
 //         .dragraise   dragged more than this ?  raise to top!
+//         .special     enum RenderSpecial
 //      <g id="piece{}" >
 //      currently-displayed version of the piece
 //      to allow addition/removal of selected indication

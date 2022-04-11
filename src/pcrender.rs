@@ -13,6 +13,10 @@ pub struct VisibleAngleTransform(Html);
 
 const DEFKEY_FLIP: UoKey = 'f';
 
+#[derive(Serialize,Debug)]
+pub enum SpecialClientRendering {
+}
+
 #[derive(Debug,Clone)]
 pub struct PieceRenderInstructions {
   pub vpid: VisiblePieceId,
@@ -181,13 +185,14 @@ impl PieceRenderInstructions {
     let pri = self;
     let instead = pri.instead(ioccults, ipc)?;
 
-    let o: &dyn OutlineTrait = match instead {
+    let o: &dyn PieceBaseTrait = match instead {
       Left(y) => Borrow::<dyn PieceTrait>::borrow(ipc.show(y)).dyn_upcast(),
       Right(i) => i.dyn_upcast(),
     };
 
     let angle = pri.angle(gpc);
     let bbox = o.bbox_approx()?;
+    let special = o.special()?;
 
     let dragraise = match o.thresh_dragraise()? {
       Some(n) if n < 0 => throw!(SvgE::NegativeDragraise),
@@ -201,6 +206,12 @@ impl PieceRenderInstructions {
     hwrite!(&mut defs,
            r##"<g id="piece{}" transform="{}" data-dragraise="{}""##,
            pri.vpid, &transform.0, dragraise)?;
+    if let Some(special) = &special {
+      let special = serde_json::to_string(&special).map_err(IE::JSONEncode)?;
+      hwrite!(&mut defs,
+              r##" data-special={}"##,
+              Html::from_txt(&special))?;
+    }
     hwrite!(&mut defs,
            r##">"##)?;
 
