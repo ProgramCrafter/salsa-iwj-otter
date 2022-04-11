@@ -38,7 +38,7 @@ pub enum InternalError {
   SVGProcessingFailed(#[from] SVGProcessingError),
   #[error("String formatting error {0}")]
   StringFormatting(#[from] fmt::Error),
-  #[error("JSON deserialisation error: {0:?}")]
+  #[error("JSON serialisation error: {0:?}")]
   JSONEncode(serde_json::Error),
   #[error("Server error: {}", .0.d())]
   Anyhow(#[from] anyhow::Error),
