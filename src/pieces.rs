@@ -133,19 +133,15 @@ impl PieceTrait for SimpleShape {
                _gs: &GameState, _vpid: VisiblePieceId) {
     self.svg_piece_raw(f, gpc.face, &mut |_|Ok(()))?;
   }
-//  #[throws(IE)]
-  fn describe_html(&self, gpc: &GPiece, _goccults: &GameOccults)
-//                   -> Html
--> Result<Html, IE>
-  {
-Ok::<_,IE>(
-    if_chain! {
+  #[throws(IE)]
+  fn describe_html(&self, gpc: &GPiece, _goccults: &GameOccults) -> Html {
+    let r = if_chain! {
       if let face = gpc.face;
       if let Some(colour) = self.colours.get(face);
       then { hformat!("a {} {}", colour, self.desc) }
       else { hformat!("a {}", self.desc) }
-    }
-)
+    };
+    r
   }
   fn nfaces(&self) -> RawFaceId {
     self.count_faces().try_into().unwrap()
