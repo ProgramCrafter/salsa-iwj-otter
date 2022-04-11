@@ -61,7 +61,7 @@ fn die_cooldown_path_test() {
   let t80 = |remaining, exp: &str| {
     let mut got = String::new();
     die_cooldown_path(&mut got, 80., remaining).unwrap();
-    assert_eq!(&got, exp);
+    assert_eq!(&got, exp, "\nfor {remaining} {exp}");
   };
   t80(1./3., "M 0,-80 A 80,80 0 0 1 69.2820323027551,39.999999999999986");
   t80(1.   , "M 0,-80 A 80,80 0 0 1 5.023241562345087,79.84213827426173 80,80 0 0 1 -10.026658685144373,-79.36917610515822 80,80 0 0 1 -0.000000000000019594348786357652,-80");
