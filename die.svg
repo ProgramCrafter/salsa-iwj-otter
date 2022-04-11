@@ -81,10 +81,12 @@
        cy="0"
        r="80"
        inkscape:label="timeblack" />
-    <path
+    <circle
        id="path15199"
        style="fill:none;stroke:#fefefe;stroke-width:11.3386;stroke-linecap:square;stroke-opacity:1"
-       d="M 80,0 A 80,80 0 0 1 0,80 80,80 0 0 1 -80,0 80,80 0 0 1 0,-80 80,80 0 0 1 80,0 Z"
+       cx="0"
+       cy="0"
+       r="80"
        inkscape:label="timewhite" />
     <path
        style="fill:none;stroke:#747474;stroke-width:11.339;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
