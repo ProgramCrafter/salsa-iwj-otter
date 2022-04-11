@@ -71,9 +71,9 @@ impl PieceSpec for Alias {
     r
   }
   #[throws(SpecError)]
-  fn load_occult(&self, ig: &Instance, depth: SpecDepth)
-                 -> Box<dyn OccultedPieceTrait> {
-    self.resolve(&ig.pcaliases)?.load_occult(ig, self.new_depth(depth)?)?
+  fn load_inert(&self, ig: &Instance, depth: SpecDepth)
+                 -> Box<dyn InertPieceTrait> {
+    self.resolve(&ig.pcaliases)?.load_inert(ig, self.new_depth(depth)?)?
   }
 }
 

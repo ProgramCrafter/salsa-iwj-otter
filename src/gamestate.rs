@@ -236,7 +236,7 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
 }
 
 #[typetag::serde]
-pub trait OccultedPieceTrait: OutlineTrait {
+pub trait InertPieceTrait: OutlineTrait {
   fn svg(&self, f: &mut Html, id: VisiblePieceId) -> Result<(),IE>;
   fn describe_html(&self) -> Result<Html,IE>;
 }
@@ -261,7 +261,7 @@ pub struct PieceSpecLoaded {
   pub occultable: PieceSpecLoadedOccultable,
 }
 pub type PieceSpecLoadedOccultable =
-  Option<(OccultIlkName, Arc<dyn OccultedPieceTrait>)>;
+  Option<(OccultIlkName, Arc<dyn InertPieceTrait>)>;
 
 #[typetag::serde(tag="type")]
 pub trait PieceSpec: Debug + Sync + Send + 'static {
@@ -269,9 +269,10 @@ pub trait PieceSpec: Debug + Sync + Send + 'static {
   fn count(&self, _pcaliases: &PieceAliases) -> usize { 1 }
   fn load(&self, i: usize, gpc: &mut GPiece, ig: &Instance, depth: SpecDepth)
           -> Result<PieceSpecLoaded, SpecError>;
-  fn load_occult(&self, _ig: &Instance, _:SpecDepth)
-                 -> Result<Box<dyn OccultedPieceTrait>, SpecError> {
-    throw!(SpE::ComplexPieceWhereSimpleRequired)
+  /// Used when a piece wants to use another for its occulted form
+  fn load_inert(&self, _ig: &Instance, _:SpecDepth)
+                -> Result<Box<dyn InertPieceTrait>, SpecError> {
+    throw!(SpE::ComplexPieceWhereInertRequired)
   }
 }
 

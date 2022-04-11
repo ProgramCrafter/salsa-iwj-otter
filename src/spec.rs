@@ -78,7 +78,7 @@ pub enum SpecError {
   #[error("specified with of edges, but no edges")] SpecifiedWidthOfNoEdges,
   #[error("shape not supported")]            UnsupportedShape,
   #[error("negative timeout")]               NegativeTimeout,
-  #[error("complex piece where simple needed")] ComplexPieceWhereSimpleRequired,
+  #[error("complex piece where inert needed")] ComplexPieceWhereInertRequired,
   #[error("piece alias not found")]          AliasNotFound,
   #[error("piece alias target is multi spec")] AliasTargetMultiSpec,
   #[error("piece alias loop")]               AliasLoop(String),

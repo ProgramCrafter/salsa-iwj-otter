@@ -173,11 +173,11 @@ pub struct Item {
   descs: IndexVec<DescId, Html>,
   outline: Outline,
   #[serde(default)]
-  back: Option<Arc<dyn OccultedPieceTrait>>,
+  back: Option<Arc<dyn InertPieceTrait>>,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
-struct ItemOccultable {
+struct ItemInertForOcculted {
   desc: Html,
   svgd: Arc<Html>,
   xform: FaceTransform,
@@ -218,13 +218,13 @@ impl<T> SvgBaseName<T> where T: Borrow<GoodItemName> {
 }
 
 #[dyn_upcast]
-impl OutlineTrait for ItemOccultable { delegate! { to self.outline {
+impl OutlineTrait for ItemInertForOcculted { delegate! { to self.outline {
   fn outline_path(&self, scale: f64) -> Result<Html, IE>;
   fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
   fn bbox_approx(&self) -> Result<Rect, IE>;
 }}}
 #[typetag::serde(name="Lib")]
-impl OccultedPieceTrait for ItemOccultable {
+impl InertPieceTrait for ItemInertForOcculted {
   #[throws(IE)]
   fn svg(&self, f: &mut Html, _: VisiblePieceId) {
     self.xform.write_svgd(f, &self.svgd)?;
@@ -382,7 +382,7 @@ impl PieceTrait for Item {
 }
 
 #[typetag::serde(name="LibItem")]
-impl OccultedPieceTrait for Item {
+impl InertPieceTrait for Item {
   #[throws(IE)]
   fn svg(&self, f: &mut Html, id: VisiblePieceId) {
     self.svg_face(f, default(), id)?;
@@ -546,12 +546,12 @@ impl Contents {
       .map_err(|e| SpE::InternalError(format!("reckoning transform: {}",&e)))?;
     let mut face = ItemFace { svg, desc, xform };
     let mut faces = index_vec![ face ];
-    let mut back = None::<Arc<dyn OccultedPieceTrait>>;
+    let mut back = None::<Arc<dyn InertPieceTrait>>;
     if idata.group.d.flip {
       face.xform.scale[0] *= -1.;
       faces.push(face);
     } else if let Some(back_spec) = &idata.group.d.back {
-      match back_spec.load_occult(ig, depth) {
+      match back_spec.load_inert(ig, depth) {
         Err(SpecError::AliasNotFound) => { },
         Err(e) => throw!(e),
         Ok(p) => {
@@ -581,12 +581,12 @@ impl Contents {
           )?;
           Ok(Arc::new(occ_data))
         }).clone()?;
-        let it = Arc::new(ItemOccultable {
+        let it = Arc::new(ItemInertForOcculted {
           svgd,
           xform: occ.xform.clone(),
           desc: occ.desc.clone(),
           outline: occ.outline.clone(),
-        }) as Arc<dyn OccultedPieceTrait>;
+        }) as Arc<dyn InertPieceTrait>;
         Some((OccultIlkName(occ_name.into_inner()), it))
       },
     };
@@ -641,9 +641,9 @@ impl PieceSpec for ItemSpec {
     self.find_load(ig,depth)?.into()
   }
   #[throws(SpecError)]
-  fn load_occult(&self, ig: &Instance, depth: SpecDepth)
-                 -> Box<dyn OccultedPieceTrait> {
-    self.find_load(ig,depth)?.0 as Box<dyn OccultedPieceTrait>
+  fn load_inert(&self, ig: &Instance, depth: SpecDepth)
+                 -> Box<dyn InertPieceTrait> {
+    self.find_load(ig,depth)?.0 as Box<dyn InertPieceTrait>
   }
 }
 

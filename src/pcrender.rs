@@ -47,7 +47,7 @@ impl VisiblePieceAngle {
 impl<P,Z> PriOccultedGeneral<P,Z> {
   #[throws(IE)]
   pub fn instead<'p>(&self, ioccults: &'p IOccults, p: &'p IPiece)
-                 -> Either<ShowUnocculted, &'p dyn OccultedPieceTrait>
+                 -> Either<ShowUnocculted, /*occulted*/ &'p dyn InertPieceTrait>
   {
     p.show_or_instead(ioccults, self.fully_visible())?
   }

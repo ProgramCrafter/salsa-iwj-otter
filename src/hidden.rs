@@ -402,7 +402,7 @@ impl IPiece {
   #[throws(IE)]
   pub fn show_or_instead<'p>(&self, ioccults: &'p IOccults,
                          y: Option<ShowUnocculted>)
-          -> Either<ShowUnocculted, &'p dyn OccultedPieceTrait> {
+          -> Either<ShowUnocculted, /*occulted*/ &'p dyn InertPieceTrait> {
     match y {
       Some(y) => Left(y),
       None => Right({
