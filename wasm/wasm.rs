@@ -217,6 +217,16 @@ pub fn space_rect_attrs(x: Number, y: Number) -> JsValue {
     .to_jsvalue()
 }
 
+// ---------- die cooldown ----------
+
+#[wasm_bindgen]
+pub fn die_cooldown_path(radius: f64, remaining: f64) -> JsString {
+  let mut s = String::new();
+  base_misc::die_cooldown_path(&mut s, radius, remaining)
+    .expect("format to string failed!");
+  s.into()
+}
+
 // ---------- setup ----------
 
 #[wasm_bindgen]

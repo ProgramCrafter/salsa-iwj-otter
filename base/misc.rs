@@ -32,6 +32,30 @@ pub fn raw_angle_transform(compass: u8) -> String {
   else { format!("rotate({})", -45 * (compass as i16)) }
 }
 
+#[throws(fmt::Error)]
+pub fn die_cooldown_path<W: fmt::Write>(mut w: W, r: f64, remaining: f64) {
+  write!(w, "M 0,-{r} A")?;
+
+  let mut arcto = move |proportion: f64| {
+    let angle = proportion * std::f64::consts::TAU;
+    let x = r * angle.cos();
+    let y = -r * angle.sin();
+    write!(w, " {r},{r} 0 0 1 {x},{y}")
+    //                            | | `sweep-flag (1 = clockwise)
+    //                            | `large-arc-flag (see below)
+    //                            `"angle" (ellipse skew angle)
+  };
+  
+  // This avoids ever trying to draw an arc segment that is around 180 degrees.
+  // If we did so there could be rounding errors that would mean we might
+  // disagree with the SVG renderer about whether the angle is <=> 180.
+  for split in [0.33, 0.67] {
+    if split >= remaining { break }
+    arcto(split)?;
+  }
+  arcto(remaining)?;
+}
+
 pub fn default<T:Default>() -> T { Default::default() }
 
 #[macro_export]
