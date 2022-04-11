@@ -5,6 +5,7 @@
 pub use std::borrow::Borrow;
 pub use std::cmp::{max, Ordering};
 pub use std::convert::{TryFrom, TryInto};
+pub use std::f64::consts::TAU;
 pub use std::fmt::{self, Debug, Display, Formatter, Write as _};
 pub use std::hash::{Hash, Hasher};
 pub use std::iter;
