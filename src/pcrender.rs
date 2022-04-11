@@ -207,7 +207,7 @@ impl PieceRenderInstructions {
         ipc.show(y).svg_piece(&mut defs, gpc, gs, pri.vpid)?;
       },
       Right(i) => {
-        i.svg(&mut defs, pri.vpid)?;
+        i.svg(&mut defs, pri.vpid, default())?;
       },
     };
 

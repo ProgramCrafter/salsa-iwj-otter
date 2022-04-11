@@ -237,7 +237,12 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
 
 #[typetag::serde]
 pub trait InertPieceTrait: OutlineTrait {
-  fn svg(&self, f: &mut Html, id: VisiblePieceId) -> Result<(),IE>;
+  fn nfaces(&self) -> RawFaceId;
+
+  /// When used for occultated version of another object,
+  /// face used is always default, regardless of nfaces.
+  fn svg(&self, f: &mut Html, id: VisiblePieceId, face: FaceId)
+         -> Result<(),IE>;
   fn describe_html(&self) -> Result<Html,IE>;
 }
 

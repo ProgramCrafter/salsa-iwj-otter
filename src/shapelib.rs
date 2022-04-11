@@ -225,8 +225,13 @@ impl OutlineTrait for ItemInertForOcculted { delegate! { to self.outline {
 }}}
 #[typetag::serde(name="Lib")]
 impl InertPieceTrait for ItemInertForOcculted {
+  fn nfaces(&self) -> RawFaceId { 1 }
+
   #[throws(IE)]
-  fn svg(&self, f: &mut Html, _: VisiblePieceId) {
+  fn svg(&self, f: &mut Html, _: VisiblePieceId, face: FaceId) {
+    if face != FaceId::default() {
+      throw!(internal_logic_error("ItemInertForOcculted non-default face"))
+    }
     self.xform.write_svgd(f, &self.svgd)?;
   }
   #[throws(IE)]
@@ -339,7 +344,7 @@ impl Item {
       let svgd = &self.svgs[face.svg];
       face.xform.write_svgd(f, svgd)?;
     } else if let Some(back) = &self.back {
-      back.svg(f, vpid)?;
+      back.svg(f, vpid, default())?;
     } else {
       throw!(internal_error_bydebug(&(self, face)))
     }
@@ -383,9 +388,11 @@ impl PieceTrait for Item {
 
 #[typetag::serde(name="LibItem")]
 impl InertPieceTrait for Item {
+  fn nfaces(&self) -> RawFaceId { <Item as PieceTrait>::nfaces(self) }
+
   #[throws(IE)]
-  fn svg(&self, f: &mut Html, id: VisiblePieceId) {
-    self.svg_face(f, default(), id)?;
+  fn svg(&self, f: &mut Html, id: VisiblePieceId, face: FaceId) {
+    self.svg_face(f, face, id)?;
   }
   #[throws(IE)]
   fn describe_html(&self) -> Html {
