@@ -150,6 +150,21 @@ impl PieceTrait for SimpleShape {
   fn itemname(&self) -> &str { self.itemname() }
 }
 
+#[typetag::serde]
+impl InertPieceTrait for SimpleShape {
+  fn nfaces(&self) -> RawFaceId { PieceTrait::nfaces(self) }
+
+  #[throws(IE)]
+  fn svg(&self, f: &mut Html, _vpid: VisiblePieceId, face: FaceId) {
+    self.svg_piece_raw(f, face, &mut |_|Ok(()))?; 
+  }
+
+  #[throws(IE)]
+  fn describe_html(&self) -> Html {
+    hformat!("a {}", self.desc)
+  }
+}
+
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct PieceLabelLoaded {
   #[serde(default)] pub place: piece_specs::PieceLabelPlace,
