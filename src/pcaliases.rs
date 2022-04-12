@@ -72,7 +72,7 @@ impl PieceSpec for Alias {
   }
   #[throws(SpecError)]
   fn load_inert(&self, ig: &Instance, depth: SpecDepth)
-                 -> Box<dyn InertPieceTrait> {
+                 -> SpecLoaded<dyn InertPieceTrait> {
     self.resolve(&ig.pcaliases)?.load_inert(ig, self.new_depth(depth)?)?
   }
 }

@@ -562,7 +562,7 @@ impl Contents {
         Err(SpecError::AliasNotFound) => { },
         Err(e) => throw!(e),
         Ok(p) => {
-          let p = p.into();
+          let p = p.p.into();
           back = Some(p);
         }
       }
@@ -649,8 +649,9 @@ impl PieceSpec for ItemSpec {
   }
   #[throws(SpecError)]
   fn load_inert(&self, ig: &Instance, depth: SpecDepth)
-                 -> Box<dyn InertPieceTrait> {
-    self.find_load(ig,depth)?.0 as Box<dyn InertPieceTrait>
+                -> SpecLoaded<dyn InertPieceTrait> {
+    let (p, occultable) = self.find_load(ig,depth)?;
+    SpecLoaded { p: p as _, occultable }
   }
 }
 

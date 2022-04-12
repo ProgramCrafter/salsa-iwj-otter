@@ -277,7 +277,7 @@ pub trait PieceSpec: Debug + Sync + Send + 'static {
           -> Result<PieceSpecLoaded, SpecError>;
   /// Used when a piece wants to use another for its occulted form
   fn load_inert(&self, _ig: &Instance, _:SpecDepth)
-                -> Result<Box<dyn InertPieceTrait>, SpecError> {
+                -> Result<SpecLoaded<dyn InertPieceTrait>, SpecError> {
     throw!(SpE::ComplexPieceWhereInertRequired)
   }
 }
