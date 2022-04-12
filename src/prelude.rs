@@ -47,6 +47,7 @@ pub use std::str;
 pub use std::str::FromStr;
 pub use std::string::ParseError;
 pub use std::sync::Arc;
+pub use std::sync::atomic::AtomicBool;
 pub use std::sync::mpsc;
 pub use std::thread::{self, sleep};
 pub use std::time::{self, Duration, Instant};

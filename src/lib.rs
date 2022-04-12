@@ -30,6 +30,7 @@ pub mod clock;
 pub mod commands;
 pub mod config;
 pub mod deck;
+pub mod dice;
 pub mod debugmutex;
 pub mod debugreader;
 pub mod error;

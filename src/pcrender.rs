@@ -15,6 +15,7 @@ const DEFKEY_FLIP: UoKey = 'f';
 
 #[derive(Serialize,Debug)]
 pub enum SpecialClientRendering {
+  DieCooldown
 }
 
 #[derive(Debug,Clone)]

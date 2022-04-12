@@ -11,7 +11,7 @@ use nix::sys::time::TimeValLike as TVL;
 
 const N: usize = 2;
 
-type Time = i32;
+type Time = i32; // make humantime serde
 
 // ==================== state ====================
 

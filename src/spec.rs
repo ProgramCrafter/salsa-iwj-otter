@@ -12,6 +12,7 @@ use std::collections::hash_set::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::convert::TryFrom;
+use std::time::Duration;
 
 use enum_map::Enum;
 use fehler::{throw,throws};
@@ -21,7 +22,7 @@ use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter, EnumString};
 use thiserror::Error;
 
-use otter_base::geometry::{Coord,Pos};
+use otter_base::geometry::{Coord,Pos,CoordinateOverflow};
 use otter_base::hformat_as_display;
 
 use crate::accounts::AccountName;
@@ -81,7 +82,19 @@ pub enum SpecError {
   #[error("complex piece where inert needed")] ComplexPieceWhereInertRequired,
   #[error("piece alias not found")]          AliasNotFound,
   #[error("piece alias target is multi spec")] AliasTargetMultiSpec,
+  #[error("invalid range ({0} to {1})")]     InvalidRange(usize,usize),
   #[error("piece alias loop")]               AliasLoop(String),
+  #[error("invalid size scale")]             InvalidSizeScale,
+  #[error("multiple faces required")]        MultipleFacesRequired,
+  #[error("occult label supplied but not occultable")] UnusedOccultLabel,
+  #[error("far too many faces ({0})")]       FarTooManyFaces(usize),
+  #[error("coordinate overflow")]
+  CoordinateOverflow(#[from] CoordinateOverflow),
+  #[error("timeout too large ({got:?} > {max:?})")]
+  TimeoutTooLarge {
+    got: Duration,
+    max: Duration,
+  },
   #[error("wrong number of faces {got_why}={got} != {exp_why}={exp}")]
   WrongNumberOfFaces {
     got: RawFaceId,

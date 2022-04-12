@@ -171,8 +171,8 @@ impl<'e> HtmlFormat<'e> for String {
   }
 }
 
-hformat_as_display!{ usize u32 u64
-                     isize i32 i64
+hformat_as_display!{ usize u8 u16 u32 u64
+                     isize i8 i16 i32 i64
                      f32 f64 }
 
 #[macro_export]

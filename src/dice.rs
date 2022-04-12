@@ -1,0 +1,329 @@
+// Copyright 2020-2021 Ian Jackson and contributors to Otter
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// There is NO WARRANTY.
+
+//! Dice
+//!
+//! A "Die" piece
+//!  - has image(s), which is another piece which it displays
+//!  - can display a text string on top of that shape, per face
+//!  - manages flipping
+//!  - has a roll function to select a random face
+//!  - displays and manages a countdown timer
+
+use crate::prelude::*;
+
+const MAX_COOLDOWN: Duration = Duration::from_secs(100);
+const DEFAULT_COOLDOWN: Duration = Duration::from_millis(4000);
+fn default_cooldown() -> Duration { DEFAULT_COOLDOWN }
+
+#[derive(Debug,Serialize,Deserialize)]
+pub struct Spec {
+  // must be >1 faces on image, or >1 texts, and if both, same number
+  image: Box<dyn PieceSpec>,
+  #[serde(default)] labels: SpecLabels,
+  #[serde(default)] occult_label: String,
+  // 1.0 means base circle size on most distant corner of bounding box
+  // minimum is 0.5; maximum is 1.5
+  circle_scale: f64,
+  #[serde(default="default_cooldown")]
+  #[serde(with="humantime_serde")] cooldown: Duration,
+  itemname: Option<String>,
+}
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+#[serde(untagged)]
+pub enum SpecLabels {
+  Texts(IndexVec<FaceId, String>),
+  OneTo(u8),
+  RangeInclusive([u8; 2]),
+}
+use SpecLabels as SL;
+impl Default for SpecLabels {
+  fn default() -> Self { Self::Texts(default()) }
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+struct Die {
+  /// When occulted, the number of faces of the un-occulted version,
+  ///
+  /// Even though when occulted we only ever show one face, face 0.
+  nfaces: RawFaceId,
+  itemname: String,
+  labels: IndexVec<FaceId, String>, // if .len()==1, always use [0]
+  image: Arc<dyn InertPieceTrait>, // if image.nfaces()==1, always use face 0
+  radius: f64,
+  cooldown_time: Duration,
+}
+
+#[derive(Debug,Serialize,Deserialize)]
+struct State {
+  cooldown_expires: Option<FutureInstant>,
+}
+
+#[typetag::serde(name="Die")]
+impl PieceXData for State {
+  fn dummy() -> Self { State { cooldown_expires: None } }
+}
+
+#[derive(Serialize, Debug)]
+struct CooldownTemplateContext<'c> {
+  radius: f64,
+  remprop: f64,
+  path_d: &'c str,
+  cd_elid: &'c str,
+  total_ms: f64,
+}
+
+#[typetag::serde(name="Die")]
+impl PieceSpec for Spec {
+  #[throws(SpecError)]
+  fn load(&self, _: usize, gpc: &mut GPiece, ig: &Instance, depth: SpecDepth)
+          -> PieceSpecLoaded {
+    gpc.moveable = PieceMoveable::IfWresting;
+    gpc.rotateable = false;
+
+    let SpecLoaded { p: image, occultable: img_occultable } =
+      self.image.load_inert(ig, depth)?;
+
+    let mut nfaces: Option<(RawFaceId, &'static str)> = None;
+    let mut set_nfaces = |n, why: &'static str| {
+      if let Some((already, already_why)) = nfaces {
+        if already != n {
+          throw!(SpecError::WrongNumberOfFaces {
+            got: n,
+            got_why: why.into(),
+            exp: already,
+            exp_why: already_why.into(),
+          })
+        }
+      }
+      nfaces = Some((n, why));
+      Ok::<_,SpecError>(())
+    };
+
+    match image.nfaces() {
+      0 => throw!(SpecError::ZeroFaces),
+      1 => { },
+      n => set_nfaces(n, "image")?,
+    }
+
+    let range_labels = |a: RawFaceId, b: RawFaceId| {
+      if a >= b { throw!(SpecError::InvalidRange(a.into(), b.into())) }
+      let l = (a..=b).map(|i| i.to_string()).collect();
+      Ok::<IndexVec<FaceId,String>,SpecError>(l)
+    };
+
+    let labels = match self.labels {
+      SL::Texts(ref l) => l.clone(),
+      SL::OneTo(n) => range_labels(1,n)?,
+      SL::RangeInclusive([a,b]) => range_labels(a,b)?,
+    };
+
+    let labels = if labels.len() > 0 {
+      let n = labels.len();
+      let n = n.try_into().map_err(|_| SpecError::FarTooManyFaces(n))?;
+      set_nfaces(n, "labels")?;
+      labels.into()
+    } else {
+      index_vec!["".into()]
+    };
+
+    if_let!{ Some((nfaces,_)) = nfaces;
+             else throw!(SpecError::MultipleFacesRequired) };
+
+    let radius = if (0.5 .. 1.5).contains(&self.circle_scale) {
+      image.bbox_approx()?.size()?.len()? * self.circle_scale
+    } else {
+      throw!(SpecError::InvalidSizeScale)
+    };
+
+    let cooldown_time = {
+      let t = self.cooldown;
+      if t <= MAX_COOLDOWN { t }
+      else { throw!(SpecError::TimeoutTooLarge { got: t, max: MAX_COOLDOWN }) }
+    };
+
+    let itemname = self.itemname.clone().unwrap_or_else(
+      || format!("die.{}.{}", nfaces, image.itemname()));
+
+    let _state: &mut State = gpc.xdata_mut(|| State::dummy())?;
+
+    let occultable = match (img_occultable, &self.occult_label) {
+      (None, l) => if l == "" {
+        None
+      } else {
+        throw!(SpecError::UnusedOccultLabel)
+      },
+      (Some((image_occ_ilk, image_occ_image)), occ_label) => {
+        let occ_label = if occ_label == "" && labels.iter().any(|l| l != "") {
+          "?"
+        } else {
+          occ_label
+        };
+
+        let our_ilk =
+          // We need to invent an ilk to allow coalescing of similar
+          // objects.  Here "similar" includes dice with the same
+          // occulted image, but possibly different sets of faces
+          // (ie, different labels).
+          //
+          // We also disregard the cooldown timer parameters, so
+          // similar-looking dice with different cooldowns can be
+          // mixed.  Such things are pathological anyway.
+          //
+          // But we don't want to get mixed up with some other things
+          // that aren't dice.  That would be mad even if they look a
+          // bit like us.
+          format!("die.{}.{}", nfaces, &image_occ_ilk);
+        let our_ilk = GoodItemName::try_from(our_ilk)
+          .map_err(|e| internal_error_bydebug(&e))?
+          .into();
+
+        let our_occ_image = Arc::new(Die {
+          nfaces, cooldown_time, radius,
+          itemname: itemname.clone(),
+          image: image_occ_image,
+          labels: index_vec![occ_label.into()],
+        }) as _;
+
+        Some((our_ilk, our_occ_image))
+      },
+    };
+
+    let die = Die {
+      nfaces, cooldown_time, radius,
+      itemname, labels,
+      image: image.into()
+    };
+
+    PieceSpecLoaded {
+      p: Box::new(die) as _,
+      occultable,
+    }
+  }
+}
+
+macro_rules! def_cooldown_remprop { { $name:ident $($mut:tt)? } => {
+  #[allow(dead_code)]
+  #[throws(IE)]
+  pub fn $name(&self, state: &$($mut)? State) -> f64 {
+    let expires = &$($mut)? state.cooldown_expires;
+    if_let!{ Some(FutureInstant(then)) = *expires; else return Ok(0.) };
+    let now = Instant::now();
+    if now > then {
+      {$(
+        #[allow(unused_mut)] let $mut _x = (); // repetition count
+        *expires = None;
+      )?}
+      return 0.
+    }
+    let remaining = then - now;
+    if remaining > self.cooldown_time {
+      throw!(internal_logic_error(format!(
+        "die {:?}: cooldown time remaining {:?} > total {:?}!, resetting",
+        &self.itemname, 
+        remaining, self.cooldown_time
+      )))
+    }
+    remaining.as_secs_f64() / self.cooldown_time.as_secs_f64()
+  }
+} }
+
+impl Die {
+  def_cooldown_remprop!{ cooldown_remprop         }
+  def_cooldown_remprop!{ cooldown_remprop_mut mut }
+}
+
+#[dyn_upcast]
+impl OutlineTrait for Die {
+  delegate! {
+    to self.image {
+      fn outline_path(&self, scale: f64) -> Result<Html, IE>;
+      fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
+      fn bbox_approx(&self) -> Result<Rect, IE>;
+    }
+  }
+}
+
+#[dyn_upcast]
+impl PieceBaseTrait for Die {
+  fn nfaces(&self) -> RawFaceId { self.nfaces }
+
+  fn itemname(&self) -> &str { &self.itemname }
+
+  #[throws(IE)]
+  fn special(&self) -> Option<SpecialClientRendering> {
+    Some(SpecialClientRendering::DieCooldown)
+  }
+}
+
+#[typetag::serde(name="Die")]
+impl PieceTrait for Die {
+  #[throws(IE)]
+  fn describe_html(&self, gpc: &GPiece, _: &GameOccults) -> Html {
+    let nfaces = self.nfaces();
+    let label = &self.labels[gpc.face];
+    let idesc = || self.image.describe_html(gpc.face);
+    let ldesc = || Html::from_txt(label);
+    if label == "" {
+      hformat!("d{} (now showing {})", nfaces, idesc()?)
+    } else if self.labels.iter().filter(|&l| l == label).count() == 1 {
+      hformat!("d{} (now showing {})", nfaces, ldesc())
+    } else {
+      hformat!("d{} (now showing {}, {})", nfaces, idesc()?, ldesc())
+    }
+  }
+
+  #[throws(IE)]
+  fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _: &GameState,
+               vpid: VisiblePieceId) {
+    self.svg(f, vpid, gpc.face, &gpc.xdata)?
+  }
+}
+
+#[typetag::serde(name="Die")]
+impl InertPieceTrait for Die {
+  #[throws(IE)]
+  fn svg(&self, f: &mut Html, vpid: VisiblePieceId, face: FaceId,
+         xdata: &PieceXDataState /* use with care! */) {
+    let state = xdata.get_exp::<State>()?;
+
+    // This is called by PieceTrait::svg_piece, so face may be non-0
+    // despite the promise about face in InertPieceTrait.
+    let face = if self.image.nfaces() == 1 { default() } else { face };
+    self.image.svg(f, vpid, face, xdata)?;
+
+    let remprop = self.cooldown_remprop(state)?;
+    if remprop != 0. {
+
+      let mut path_d = String::new();
+      die_cooldown_path(&mut path_d, self.radius, remprop)?;
+      let cd_elid = format!("def.{}.die.cd", vpid);
+
+      let tc = CooldownTemplateContext {
+        radius: self.radius,
+        path_d: &path_d,
+        cd_elid: &cd_elid,
+        total_ms: self.cooldown_time.as_secs_f64() * 1000.,
+        remprop,
+      };
+
+      write!(f.as_html_string_mut(), "{}",
+             nwtemplates::render("die-cooldown.tera", &tc)?)?;
+    }
+  }
+
+  // add throw operation
+  #[throws(IE)]
+  fn describe_html(&self, face: FaceId) -> Html {
+    let label = &self.labels[face];
+    let idesc = || self.image.describe_html(face);
+    let ldesc = || Html::from_txt(label);
+    if label == "" {
+      hformat!("d{} ({})", self.nfaces, idesc()?)
+    } else {
+      hformat!("d{} ({}, {})", self.nfaces, idesc()?, ldesc())
+    }
+  }
+}
