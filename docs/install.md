@@ -59,3 +59,37 @@ produce a completely statically linked binary.  I have this in my
 rustflags = ["-C", "target-feature=+crt-static"]
 # ^ from https://stackoverflow.com/questions/31770604/how-to-generate-statically-linked-executables
 ```
+
+
+Stability and semver
+--------------------
+
+The following interfaces are covered by semantic versioning:
+
+ * Save game compatibility (new servers loading old games)
+ * Command line (new client invoked in old ways)
+ * Game and table specifications (new software, old specs)
+ * Library bundles (new servers, old bundles)
+ * Server-client game management protocol (new servers, old clients)
+
+Additionally,
+we will try to support old library bundles indefinitely
+(and to break them as little as possible).
+
+Of course when a new server is handling a game that uses new features,
+old software (eg old management clients) may not cope.
+
+The following are **NOT** covered by semantic versioning:
+
+ * All Rust library APIs.
+ * The web templates, AJAX protocol between frontend and backend,
+   and JavaScript internals.
+ * Any situation where an error is returned by the server
+   to a management client (eg to the `otter` client);
+   in this case the error deserialisation might fail,
+   so that the client cannot identify the error
+   (and may not be able to recover).
+
+This means that the Otter crates do not offer a public stable API.
+You may of course use them outside of the Otter project,
+but we have no compuction about breaking such use.
