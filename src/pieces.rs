@@ -144,7 +144,7 @@ impl PieceTrait for SimpleShape {
     r
   }
   fn nfaces(&self) -> RawFaceId {
-    self.count_faces().try_into().unwrap()
+    self.count_faces()
   }
 
   fn itemname(&self) -> &str { self.itemname() }
@@ -228,8 +228,8 @@ impl<Desc, Outl:'static> GenericSimpleShape<Desc, Outl>
     where Desc: Debug + Send + Sync + 'static,
           Outl: OutlineTrait,
 {
-  pub fn count_faces(&self) -> usize {
-    max(self.colours.len(), self.edges.len())
+  pub fn count_faces(&self) -> RawFaceId {
+    max(self.colours.len(), self.edges.len()).try_into().unwrap()
   }
   pub fn itemname(&self) -> &str { &self.itemname }
 
@@ -265,7 +265,7 @@ impl<Desc, Outl:'static> GenericSimpleShape<Desc, Outl>
 
     let check = |colours: &ColourMap| {
       let x = colours.len();
-      if x == 0 || x == count { Ok(()) }
+      if x == 0 || x == usize::from(count) { Ok(()) }
       else { Err(SpecError::InconsistentFacesEdgecoloursCount) }
     };
     check(&shape.colours)?;
