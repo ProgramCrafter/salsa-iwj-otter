@@ -6,6 +6,7 @@
 
 use crate::imports::*;
 
+use std::borrow::Cow;
 use std::collections::hash_map::HashMap;
 use std::collections::hash_set::HashSet;
 use std::fmt::Debug;
@@ -74,7 +75,6 @@ pub enum SpecError {
   #[error("compass angle invalid")]          CompassAngleInvalid,
   #[error("piece has zero faces")]           ZeroFaces,
   #[error("inconsistent face/edge colours")] InconsistentFacesEdgecoloursCount,
-  #[error("wrong number of faces")]          WrongNumberOfFaces,
   #[error("specified with of edges, but no edges")] SpecifiedWidthOfNoEdges,
   #[error("shape not supported")]            UnsupportedShape,
   #[error("negative timeout")]               NegativeTimeout,
@@ -82,6 +82,13 @@ pub enum SpecError {
   #[error("piece alias not found")]          AliasNotFound,
   #[error("piece alias target is multi spec")] AliasTargetMultiSpec,
   #[error("piece alias loop")]               AliasLoop(String),
+  #[error("wrong number of faces {got_why}={got} != {exp_why}={exp}")]
+  WrongNumberOfFaces {
+    got: RawFaceId,
+    exp: RawFaceId,
+    got_why: Cow<'static, str>,
+    exp_why: Cow<'static, str>,
+  }
 }
 
 //---------- Bundle "otter.toml" file ----------

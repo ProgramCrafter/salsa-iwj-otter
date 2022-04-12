@@ -55,7 +55,12 @@ impl PieceSpec for piece_specs::Deck {
       "magic-pickupdeck",
       &common)?;
     if shape.count_faces() != 2 {
-      throw!(SpE::WrongNumberOfFaces);
+      throw!(SpE::WrongNumberOfFaces {
+        got: shape.count_faces(),
+        got_why: "shape".into(),
+        exp: 2,
+        exp_why: "required".into(),
+      });
     }
     gpc.moveable = PieceMoveable::IfWresting;
     gpc.rotateable = false;
