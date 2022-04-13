@@ -20,7 +20,7 @@ pub use env_logger;
 pub use flexi_logger;
 pub use fs2;
 pub use glob;
-pub use humantime;
+pub use humantime_serde::{self, re::humantime};
 pub use index_vec;
 pub use lazy_init;
 pub use lazy_static;
