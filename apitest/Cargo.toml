@@ -31,7 +31,6 @@ otter.version="=1.0.0"
 
 ego-tree="0.6"
 fehler="1"
-humantime="2"
 num-traits="0.2"
 scraper="0.12"
 structopt="0.3"

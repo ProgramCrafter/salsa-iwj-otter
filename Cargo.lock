@@ -2652,6 +2652,7 @@ dependencies = [
  "flexi_logger",
  "fs2",
  "glob",
+ "humantime",
  "image",
  "index_vec",
  "inventory",
@@ -2702,7 +2703,6 @@ version = "1.0.0"
 dependencies = [
  "ego-tree",
  "fehler",
- "humantime",
  "num-traits",
  "otter",
  "reqwest",
