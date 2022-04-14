@@ -88,7 +88,7 @@ pub enum SpecError {
     exp: RawFaceId,
     got_why: Cow<'static, str>,
     exp_why: Cow<'static, str>,
-  }
+  },
 }
 
 //---------- Bundle "otter.toml" file ----------
