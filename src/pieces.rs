@@ -154,7 +154,8 @@ impl PieceTrait for SimpleShape {
 #[typetag::serde]
 impl InertPieceTrait for SimpleShape {
   #[throws(IE)]
-  fn svg(&self, f: &mut Html, _vpid: VisiblePieceId, face: FaceId) {
+  fn svg(&self, f: &mut Html, _vpid: VisiblePieceId, face: FaceId,
+         _: &PieceXDataState) {
     self.svg_piece_raw(f, face, &mut |_|Ok(()))?; 
   }
 

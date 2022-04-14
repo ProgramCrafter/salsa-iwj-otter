@@ -231,7 +231,8 @@ impl PieceBaseTrait for ItemInertForOcculted {
 #[typetag::serde(name="Lib")]
 impl InertPieceTrait for ItemInertForOcculted {
   #[throws(IE)]
-  fn svg(&self, f: &mut Html, _: VisiblePieceId, face: FaceId) {
+  fn svg(&self, f: &mut Html, _: VisiblePieceId, face: FaceId,
+         _: &PieceXDataState) {
     if face != FaceId::default() {
       throw!(internal_logic_error("ItemInertForOcculted non-default face"))
     }
@@ -342,12 +343,13 @@ impl FaceTransform {
 
 impl Item {
   #[throws(IE)]
-  fn svg_face(&self, f: &mut Html, face: FaceId, vpid: VisiblePieceId) {
+  fn svg_face(&self, f: &mut Html, face: FaceId, vpid: VisiblePieceId,
+              xdata: &PieceXDataState) {
     if let Some(face) = self.faces.get(face) {
       let svgd = &self.svgs[face.svg];
       face.xform.write_svgd(f, svgd)?;
     } else if let Some(back) = &self.back {
-      back.svg(f, vpid, default())?;
+      back.svg(f, vpid, default(), &xdata)?;
     } else {
       throw!(internal_error_bydebug(&(self, face)))
     }
@@ -382,7 +384,7 @@ impl PieceTrait for Item {
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
                _gs: &GameState, vpid: VisiblePieceId) {
-    self.svg_face(f, gpc.face, vpid)?;
+    self.svg_face(f, gpc.face, vpid, &gpc.xdata)?;
   }
   #[throws(IE)]
   fn describe_html(&self, gpc: &GPiece, _goccults: &GameOccults) -> Html {
@@ -395,8 +397,9 @@ impl PieceTrait for Item {
 #[typetag::serde(name="LibItem")]
 impl InertPieceTrait for Item {
   #[throws(IE)]
-  fn svg(&self, f: &mut Html, id: VisiblePieceId, face: FaceId) {
-    self.svg_face(f, face, id)?;
+  fn svg(&self, f: &mut Html, id: VisiblePieceId, face: FaceId,
+         xdata: &PieceXDataState) {
+    self.svg_face(f, face, id, xdata)?;
   }
   #[throws(IE)]
   fn describe_html(&self) -> Html {
