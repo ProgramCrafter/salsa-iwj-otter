@@ -223,10 +223,11 @@ impl OutlineTrait for ItemInertForOcculted { delegate! { to self.outline {
   fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
   fn bbox_approx(&self) -> Result<Rect, IE>;
 }}}
+impl PieceBaseTrait for ItemInertForOcculted {
+  fn nfaces(&self) -> RawFaceId { 1 }
+}
 #[typetag::serde(name="Lib")]
 impl InertPieceTrait for ItemInertForOcculted {
-  fn nfaces(&self) -> RawFaceId { 1 }
-
   #[throws(IE)]
   fn svg(&self, f: &mut Html, _: VisiblePieceId, face: FaceId) {
     if face != FaceId::default() {
@@ -364,14 +365,16 @@ impl Item {
   }
 }
 
-#[typetag::serde(name="Lib")]
-impl PieceTrait for Item {
+impl PieceBaseTrait for Item {
   fn nfaces(&self) -> RawFaceId {
     (self.faces.len()
      + self.back.iter().count())
       .try_into().unwrap()
   }
+}
 
+#[typetag::serde(name="Lib")]
+impl PieceTrait for Item {
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
                _gs: &GameState, vpid: VisiblePieceId) {
@@ -388,8 +391,6 @@ impl PieceTrait for Item {
 
 #[typetag::serde(name="LibItem")]
 impl InertPieceTrait for Item {
-  fn nfaces(&self) -> RawFaceId { <Item as PieceTrait>::nfaces(self) }
-
   #[throws(IE)]
   fn svg(&self, f: &mut Html, id: VisiblePieceId, face: FaceId) {
     self.svg_face(f, face, id)?;

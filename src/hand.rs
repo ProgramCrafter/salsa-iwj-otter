@@ -146,9 +146,12 @@ impl Behaviour {
   }
 }
 
+impl PieceBaseTrait for Hand {
+  fn nfaces(&self) -> RawFaceId { 1 }
+}
+
 #[typetag::serde]
 impl PieceTrait for Hand {
-  fn nfaces(&self) -> RawFaceId { 1 }
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
                gs: &GameState, _vpid: VisiblePieceId) {

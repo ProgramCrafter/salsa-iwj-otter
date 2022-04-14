@@ -126,6 +126,10 @@ impl<Desc, Outl:'static> OutlineTrait for GenericSimpleShape<Desc, Outl>
 }
 //    let edge_attrs = format!(r##"stroke-width="" stroke"##
 
+impl PieceBaseTrait for SimpleShape {
+  fn nfaces(&self) -> RawFaceId { self.count_faces() }
+}
+
 #[typetag::serde]
 impl PieceTrait for SimpleShape {
   #[throws(IE)]
@@ -143,17 +147,12 @@ impl PieceTrait for SimpleShape {
     };
     r
   }
-  fn nfaces(&self) -> RawFaceId {
-    self.count_faces()
-  }
 
   fn itemname(&self) -> &str { self.itemname() }
 }
 
 #[typetag::serde]
 impl InertPieceTrait for SimpleShape {
-  fn nfaces(&self) -> RawFaceId { PieceTrait::nfaces(self) }
-
   #[throws(IE)]
   fn svg(&self, f: &mut Html, _vpid: VisiblePieceId, face: FaceId) {
     self.svg_piece_raw(f, face, &mut |_|Ok(()))?; 

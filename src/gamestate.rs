@@ -173,11 +173,13 @@ pub struct UoDescription {
   pub wrc: WhatResponseToClientOp,
 }
 
-#[typetag::serde] // usual variable: p
-pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
-  /// by convention, occult face is nfaces-1
+pub trait PieceBaseTrait: OutlineTrait + Send + Debug + 'static {
+  /// By convention, occult face is nfaces-1
   fn nfaces(&self) -> RawFaceId;
+}
 
+#[typetag::serde] // usual variable: p
+pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
   #[throws(InternalError)]
   fn add_ui_operations(&self, _: ShowUnocculted,
                        _upd: &mut Vec<UoDescription>,
@@ -236,9 +238,7 @@ pub trait PieceTrait: OutlineTrait + Send + Debug + 'static {
 }
 
 #[typetag::serde]
-pub trait InertPieceTrait: OutlineTrait {
-  fn nfaces(&self) -> RawFaceId;
-
+pub trait InertPieceTrait: PieceBaseTrait {
   /// When used for occultated version of another object,
   /// face used is always default, regardless of nfaces.
   fn svg(&self, f: &mut Html, id: VisiblePieceId, face: FaceId)

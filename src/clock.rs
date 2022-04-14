@@ -432,10 +432,12 @@ impl OutlineTrait for Clock {
   }
 }
 
+impl PieceBaseTrait for Clock {
+  fn nfaces(&self) -> RawFaceId { 1 }
+}
+
 #[typetag::serde(name="ChessClock")]
 impl PieceTrait for Clock {
-  fn nfaces(&self) -> RawFaceId { 1 }
-
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece, gs: &GameState,
                vpid: VisiblePieceId) {

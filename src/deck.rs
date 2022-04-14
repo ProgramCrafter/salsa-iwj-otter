@@ -96,9 +96,12 @@ impl Deck {
   }
 }
 
+impl PieceBaseTrait for Deck {
+  fn nfaces(&self) -> RawFaceId { 1 }
+}
+
 #[typetag::serde]
 impl PieceTrait for Deck {
-  fn nfaces(&self) -> RawFaceId { 1 }
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece,
                gs: &GameState, _vpid: VisiblePieceId) {
