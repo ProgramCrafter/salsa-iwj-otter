@@ -176,6 +176,8 @@ pub struct UoDescription {
 pub trait PieceBaseTrait: OutlineTrait + Send + Debug + 'static {
   /// By convention, occult face is nfaces-1
   fn nfaces(&self) -> RawFaceId;
+
+  fn itemname(&self) -> &str;
 }
 
 #[typetag::serde] // usual variable: p
@@ -220,7 +222,6 @@ pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
     ExecuteGameChangeUpdates{ pcs: vec![], log: vec![], raw: None }
   }
 
-  fn itemname(&self) -> &str;
   fn sortkey(&self) -> Option<&str> { None }
 
   fn occultation_notify_hook(&self, _piece: PieceId) -> UnpreparedUpdates {

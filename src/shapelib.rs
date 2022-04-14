@@ -178,6 +178,7 @@ pub struct Item {
 
 #[derive(Debug,Serialize,Deserialize)]
 struct ItemInertForOcculted {
+  itemname: Arc<GoodItemName>,
   desc: Html,
   svgd: Arc<Html>,
   xform: FaceTransform,
@@ -225,6 +226,7 @@ impl OutlineTrait for ItemInertForOcculted { delegate! { to self.outline {
 }}}
 impl PieceBaseTrait for ItemInertForOcculted {
   fn nfaces(&self) -> RawFaceId { 1 }
+  fn itemname(&self) -> &str { &self.itemname.as_str() }
 }
 #[typetag::serde(name="Lib")]
 impl InertPieceTrait for ItemInertForOcculted {
@@ -371,6 +373,8 @@ impl PieceBaseTrait for Item {
      + self.back.iter().count())
       .try_into().unwrap()
   }
+
+  fn itemname(&self) -> &str { &self.itemname }
 }
 
 #[typetag::serde(name="Lib")]
@@ -385,7 +389,6 @@ impl PieceTrait for Item {
     self.describe_face(gpc.face)?
   }
 
-  fn itemname(&self) -> &str { &self.itemname }
   fn sortkey(&self) -> Option<&str> { self.sort.as_ref().map(AsRef::as_ref) }
 }
 
@@ -591,6 +594,7 @@ impl Contents {
         }).clone()?;
         let it = Arc::new(ItemInertForOcculted {
           svgd,
+          itemname: occ_name.clone().into_inner(),
           xform: occ.xform.clone(),
           desc: occ.desc.clone(),
           outline: occ.outline.clone(),

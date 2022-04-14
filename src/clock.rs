@@ -434,6 +434,8 @@ impl OutlineTrait for Clock {
 
 impl PieceBaseTrait for Clock {
   fn nfaces(&self) -> RawFaceId { 1 }
+
+  fn itemname(&self) -> &str { "chess-clock" }
 }
 
 #[typetag::serde(name="ChessClock")]
@@ -747,6 +749,4 @@ impl PieceTrait for Clock {
     let state = gpc.xdata_mut(|| State::new(&self.spec))?;
     state.do_start_or_stop(piece, None, None, held, &self.spec, ig)?;
   }
-
-  fn itemname(&self) -> &str { "chess-clock" }
 }

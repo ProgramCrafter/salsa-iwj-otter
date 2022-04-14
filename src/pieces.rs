@@ -128,6 +128,8 @@ impl<Desc, Outl:'static> OutlineTrait for GenericSimpleShape<Desc, Outl>
 
 impl PieceBaseTrait for SimpleShape {
   fn nfaces(&self) -> RawFaceId { self.count_faces() }
+
+  fn itemname(&self) -> &str { self.itemname() }
 }
 
 #[typetag::serde]
@@ -147,8 +149,6 @@ impl PieceTrait for SimpleShape {
     };
     r
   }
-
-  fn itemname(&self) -> &str { self.itemname() }
 }
 
 #[typetag::serde]

@@ -98,6 +98,12 @@ impl Deck {
 
 impl PieceBaseTrait for Deck {
   fn nfaces(&self) -> RawFaceId { 1 }
+
+  delegate!{
+    to self.shape {
+      fn itemname(&self) -> &str;
+    }
+  }
 }
 
 #[typetag::serde]
@@ -127,12 +133,6 @@ impl PieceTrait for Deck {
       Counting => COUNTING_DESC,
       Enabled => ENABLED_DESC,
     }.into()
-  }
-
-  delegate!{
-    to self.shape {
-      fn itemname(&self) -> &str;
-    }
   }
 
   #[throws(InternalError)]

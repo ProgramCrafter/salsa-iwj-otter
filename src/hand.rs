@@ -148,6 +148,12 @@ impl Behaviour {
 
 impl PieceBaseTrait for Hand {
   fn nfaces(&self) -> RawFaceId { 1 }
+
+  delegate!{
+    to self.shape {
+      fn itemname(&self) -> &str;
+    }
+  }
 }
 
 #[typetag::serde]
@@ -193,12 +199,6 @@ impl PieceTrait for Hand {
   fn describe_html(&self, gpc: &GPiece, _goccults: &GameOccults) -> Html {
     let xdata = gpc.xdata.get()?;
     self.behaviour.describe_html_inner(xdata)
-  }
-
-  delegate!{
-    to self.shape {
-      fn itemname(&self) -> &str;
-    }
   }
 
   #[throws(InternalError)]
