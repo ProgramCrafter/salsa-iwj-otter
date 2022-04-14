@@ -96,6 +96,7 @@ impl Deck {
   }
 }
 
+#[dyn_upcast]
 impl PieceBaseTrait for Deck {
   fn nfaces(&self) -> RawFaceId { 1 }
 

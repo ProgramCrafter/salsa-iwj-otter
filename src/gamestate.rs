@@ -173,6 +173,7 @@ pub struct UoDescription {
   pub wrc: WhatResponseToClientOp,
 }
 
+#[dyn_upcast]
 pub trait PieceBaseTrait: OutlineTrait + Send + Debug + 'static {
   /// By convention, occult face is nfaces-1
   fn nfaces(&self) -> RawFaceId;

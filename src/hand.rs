@@ -146,6 +146,7 @@ impl Behaviour {
   }
 }
 
+#[dyn_upcast]
 impl PieceBaseTrait for Hand {
   fn nfaces(&self) -> RawFaceId { 1 }
 

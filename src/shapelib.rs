@@ -224,6 +224,7 @@ impl OutlineTrait for ItemInertForOcculted { delegate! { to self.outline {
   fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
   fn bbox_approx(&self) -> Result<Rect, IE>;
 }}}
+#[dyn_upcast]
 impl PieceBaseTrait for ItemInertForOcculted {
   fn nfaces(&self) -> RawFaceId { 1 }
   fn itemname(&self) -> &str { &self.itemname.as_str() }
@@ -369,6 +370,7 @@ impl Item {
   }
 }
 
+#[dyn_upcast]
 impl PieceBaseTrait for Item {
   fn nfaces(&self) -> RawFaceId {
     (self.faces.len()

@@ -432,6 +432,7 @@ impl OutlineTrait for Clock {
   }
 }
 
+#[dyn_upcast]
 impl PieceBaseTrait for Clock {
   fn nfaces(&self) -> RawFaceId { 1 }
 

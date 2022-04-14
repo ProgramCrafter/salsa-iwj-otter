@@ -126,6 +126,7 @@ impl<Desc, Outl:'static> OutlineTrait for GenericSimpleShape<Desc, Outl>
 }
 //    let edge_attrs = format!(r##"stroke-width="" stroke"##
 
+#[dyn_upcast]
 impl PieceBaseTrait for SimpleShape {
   fn nfaces(&self) -> RawFaceId { self.count_faces() }
 
