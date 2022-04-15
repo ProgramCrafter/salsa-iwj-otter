@@ -15,6 +15,8 @@ my $xpc = XML::LibXML::XPathContext->new($dom) or die;
 
 our ($label, $node);
 
+print "<!--made by dice/cooldown-template-extractor-->\n" or die $!;
+
 sub process_node ($$) {
   my $fn;
   ($label, $fn) = @_;
