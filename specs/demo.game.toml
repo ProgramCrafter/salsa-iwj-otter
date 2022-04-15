@@ -64,6 +64,7 @@ item = "chess-b-P"
 [[pieces]]
 pos = [140, 30]
 type = "Die"
+labels = ["A", "B"]
 image.type = "Rect"
 image.size = [10]
 image.edges = ["black","black"]
