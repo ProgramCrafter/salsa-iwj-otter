@@ -332,15 +332,6 @@ impl SimplePieceSpec for piece_specs::Disc {
   }
 }
 
-#[typetag::serde]
-impl PieceSpec for piece_specs::Disc {
-  #[throws(SpecError)]
-  fn load(&self, _: usize, _: &mut GPiece, _ig: &Instance, _:SpecDepth)
-          -> PieceSpecLoaded {
-    SimplePieceSpec::load(self)?
-  }
-}
-
 impl piece_specs::Rect {
   #[throws(SpecError)]
   fn xy(&self) -> Pos {
@@ -370,11 +361,16 @@ impl SimplePieceSpec for piece_specs::Rect {
   }
 }
 
-#[typetag::serde]
-impl PieceSpec for piece_specs::Rect {
-  #[throws(SpecError)]
-  fn load(&self, _: usize, _: &mut GPiece, _ig: &Instance, _:SpecDepth)
-          -> PieceSpecLoaded {
-    SimplePieceSpec::load(self)?
+macro_rules! impl_PieceSpec_for_SimplePieceSpec { { $ty:ty } => {
+  #[typetag::serde]
+  impl PieceSpec for $ty {
+    #[throws(SpecError)]
+    fn load(&self, _: usize, _: &mut GPiece, _ig: &Instance, _:SpecDepth)
+            -> PieceSpecLoaded {
+      SimplePieceSpec::load(self)?
+    }
   }
-}
+} }
+
+impl_PieceSpec_for_SimplePieceSpec!{piece_specs::Disc}
+impl_PieceSpec_for_SimplePieceSpec!{piece_specs::Rect}
