@@ -597,12 +597,12 @@ api_route!{
 
           ("flip", wrc@ WRC::UpdateSvg) => {
             let nfaces = ipc.show(y).nfaces();
+            gpc.face = ((RawFaceId::from(gpc.face) + 1) % nfaces).into();
+            // todo: name the most visible aspect in the log ?
             let logents = log_did_to_piece(
               ioccults,&gs.occults,gpl,gpc,ipc,
               "flipped"
             )?;
-            // todo: name the most visible aspect in the log
-            gpc.face = ((RawFaceId::from(gpc.face) + 1) % nfaces).into();
             return ((
               wrc,
               PieceUpdateOp::Modify(()),
