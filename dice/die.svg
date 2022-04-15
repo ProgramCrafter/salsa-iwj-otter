@@ -80,7 +80,11 @@
        cx="0"
        cy="0"
        r="8"
-       inkscape:label="timeblack" />
+       inkscape:label="timeblack">
+      <desc
+         id="desc829">OUTER BLACK LINE FOR COOLDOWN TIMER
+NOTE - CHANGING STROKE WITH - EDIT src/dice.rs COOLDOWN_STROKE_WIDTH</desc>
+    </circle>
     <circle
        id="path15199"
        style="fill:none;stroke:#ffffff;stroke-width:1.134;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"

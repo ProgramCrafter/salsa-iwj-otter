@@ -17,6 +17,9 @@ const MAX_COOLDOWN: Duration = Duration::from_secs(100);
 fn default_cooldown() -> Duration { Duration::from_millis(4000) }
 fn default_circle_scale() -> f64 { 1. }
 
+// Copy of the value from die.svg's "timeblack"'s stroke-width
+const COOLDOWN_STROKE_WIDTH: f64 = 1.512;
+
 const COOLDOWN_EXTRA_RADIUS: f64 = DEFAULT_EDGE_WIDTH * 2. + 0.2;
 
 #[derive(Debug,Serialize,Deserialize)]

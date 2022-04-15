@@ -39,6 +39,9 @@ sub filter_element ($@) {
     next if $keep_attr{$name};
     $node->removeAttribute($name);
   }
+  foreach my $desc_node ($node->getChildrenByTagName('desc')) {
+    $node->removeChild($desc_node);
+  }
 }
 sub filter_circle () {
   my @xy = qw(cx cy);
