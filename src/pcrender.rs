@@ -209,7 +209,7 @@ impl PieceRenderInstructions {
     if let Some(special) = &special {
       let special = serde_json::to_string(&special).map_err(IE::JSONEncode)?;
       hwrite!(&mut defs,
-              r##" data-special={}"##,
+              r##" data-special="{}""##,
               Html::from_txt(&special))?;
     }
     hwrite!(&mut defs,
