@@ -34,6 +34,10 @@ pub fn raw_angle_transform(compass: u8) -> String {
 
 #[throws(fmt::Error)]
 pub fn die_cooldown_path<W: fmt::Write>(mut w: W, r: f64, remprop: f64) {
+  // This is somewhat entangled with die.svg and
+  // dice/cooldown-template-extractor.
+  //
+  // Editing these might need to be done together.
   write!(w, "M 0,-{r} A")?;
 
   let mut arcto = move |proportion: f64| {
