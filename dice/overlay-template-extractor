@@ -15,7 +15,9 @@ my $xpc = XML::LibXML::XPathContext->new($dom) or die;
 
 our ($label, $node);
 
-print "<!--made by dice/cooldown-template-extractor-->\n" or die $!;
+sub p { print @_ or die $!; }
+
+p "<!--made by dice/cooldown-template-extractor-->\n";
 
 sub process_node ($$) {
   my $fn;
@@ -24,10 +26,7 @@ sub process_node ($$) {
   die "$label ?" unless @$nodes == 1;
   $node = $nodes->[0];
   $fn->($node);
-  print
-    "{% if cooldown_active %}",
-    $node->toString,
-    "{% endif %}\n" or die $!;
+  p $node->toString, "\n";
 }
 
 our $nom_radius;
@@ -56,6 +55,7 @@ sub filter_circle () {
   $node->setAttribute('r', "{{radius}}");
 }
 
+p "{% if cooldown_active %}\n";
 process_node('timeblack', sub {
   $nom_radius = $node->getAttribute('r');
   filter_circle();
@@ -69,3 +69,4 @@ process_node('timegrey', sub {
     $node->setAttribute("data-$d", "{{$d}}");
   }
 });
+p "{% endif %}\n";
