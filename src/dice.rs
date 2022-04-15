@@ -299,11 +299,11 @@ impl PieceTrait for Die {
     let idesc = || self.image.describe_html(gpc.face);
     let ldesc = || Html::from_txt(label);
     if label == "" {
-      hformat!("d{} (now showing {})", nfaces, idesc()?)
+      hformat!("a d{} (now showing {})", nfaces, idesc()?)
     } else if self.labels.iter().filter(|&l| l == label).count() == 1 {
-      hformat!("d{} (now showing {})", nfaces, ldesc())
+      hformat!("a d{} (now showing {})", nfaces, ldesc())
     } else {
-      hformat!("d{} (now showing {}, {})", nfaces, idesc()?, ldesc())
+      hformat!("a d{} (now showing {}, {})", nfaces, idesc()?, ldesc())
     }
   }
 
@@ -374,9 +374,9 @@ impl InertPieceTrait for Die {
     let idesc = || self.image.describe_html(face);
     let ldesc = || Html::from_txt(label);
     if label == "" {
-      hformat!("d{} ({})", self.nfaces, idesc()?)
+      hformat!("a d{} ({})", self.nfaces, idesc()?)
     } else {
-      hformat!("d{} ({}, {})", self.nfaces, idesc()?, ldesc())
+      hformat!("a d{} ({}, {})", self.nfaces, idesc()?, ldesc())
     }
   }
 }
