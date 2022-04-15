@@ -365,6 +365,15 @@ macro_rules! impl_PieceSpec_for_SimplePieceSpec { { $ty:ty } => {
         occultable: None,
       }
     }
+
+    #[throws(SpecError)]
+    fn load_inert(&self, _ig: &Instance, _:SpecDepth)
+                  -> SpecLoaded<dyn InertPieceTrait> {
+      SpecLoaded {
+        p: Box::new(self.load_raw()?.0) as _,
+        occultable: None
+      }
+    }
   }
 } }
 
