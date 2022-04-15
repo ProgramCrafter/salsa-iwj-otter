@@ -602,7 +602,7 @@ impl Contents {
           desc: occ.desc.clone(),
           outline: occ.outline.clone(),
         }) as Arc<dyn InertPieceTrait>;
-        Some((OccultIlkName(occ_name.into_inner()), it))
+        Some((occ_name.into_inner(), it))
       },
     };
 

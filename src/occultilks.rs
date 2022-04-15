@@ -11,10 +11,7 @@ slotmap::new_key_type!{ pub struct OccultIlkId; }
 #[serde(transparent)]
 pub struct OccultIlkOwningId(Id);
 
-#[derive(Debug,Clone,Eq,PartialEq,Ord,PartialOrd,Hash)]
-#[derive(Serialize,Deserialize)]
-#[serde(transparent)]
-pub struct OccultIlkName(pub Arc<GoodItemName>);
+pub type OccultIlkName = Arc<GoodItemName>;
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct OccultIlkData {
