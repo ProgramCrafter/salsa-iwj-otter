@@ -180,6 +180,10 @@ pub trait PieceBaseTrait: OutlineTrait + Send + Debug + 'static {
 
   fn itemname(&self) -> &str;
 
+  // Don't add an xdata argument to this.  Implementors must not make
+  // this depend on the piece state, because the piece state might change
+  // between svg() (which sets up information in the DOM) and special()
+  // (which arranges to use that information).
   fn special(&self) -> Result<Option<SpecialClientRendering>,IE> { Ok(None) }
 }
 
