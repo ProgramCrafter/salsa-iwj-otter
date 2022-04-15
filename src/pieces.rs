@@ -309,13 +309,6 @@ impl<Desc, Outl:'static> GenericSimpleShape<Desc, Outl>
 #[typetag::serde(tag="type")]
 pub trait SimplePieceSpec: Debug {
   fn load_raw(&self) -> Result<(SimpleShape, &SimpleCommon), SpecError>;
-  #[throws(SpecError)]
-  fn load(&self) -> PieceSpecLoaded {
-    PieceSpecLoaded {
-      p: Box::new(self.load_raw()?.0),
-      occultable: None,
-    }
-  }
 }
 
 #[typetag::serde]
@@ -367,7 +360,10 @@ macro_rules! impl_PieceSpec_for_SimplePieceSpec { { $ty:ty } => {
     #[throws(SpecError)]
     fn load(&self, _: usize, _: &mut GPiece, _ig: &Instance, _:SpecDepth)
             -> PieceSpecLoaded {
-      SimplePieceSpec::load(self)?
+      PieceSpecLoaded {
+        p: Box::new(self.load_raw()?.0),
+        occultable: None,
+      }
     }
   }
 } }
