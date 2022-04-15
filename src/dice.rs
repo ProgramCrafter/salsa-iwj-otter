@@ -14,8 +14,8 @@
 use crate::prelude::*;
 
 const MAX_COOLDOWN: Duration = Duration::from_secs(100);
-const DEFAULT_COOLDOWN: Duration = Duration::from_millis(4000);
-fn default_cooldown() -> Duration { DEFAULT_COOLDOWN }
+fn default_cooldown() -> Duration { Duration::from_millis(4000) }
+fn default_circle_scale() -> f64 { 1. }
 
 const COOLDOWN_EXTRA_RADIUS: f64 = DEFAULT_EDGE_WIDTH * 2. + 0.2;
 
@@ -25,9 +25,9 @@ pub struct Spec {
   image: Box<dyn PieceSpec>,
   #[serde(default)] labels: SpecLabels,
   #[serde(default)] occult_label: String,
-  // 1.0 means base circle size on most distant corner of bounding box
+  // 1.0 means base outline circle size on most distant corner of bounding box
   // minimum is 0.5; maximum is 1.5
-  circle_scale: f64,
+  #[serde(default="default_circle_scale")] circle_scale: f64,
   #[serde(default="default_cooldown")]
   #[serde(with="humantime_serde")] cooldown: Duration,
   itemname: Option<String>,
