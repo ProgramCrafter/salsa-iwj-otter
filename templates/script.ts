@@ -1242,6 +1242,7 @@ function redisplay_ancillaries(piece: PieceId, p: PieceInfo) {
   if (halo_colour != null) {
     let nelem = ancillary_node(piece, halo_colour);
     if (p.held != null) {
+      // value 2ps is also in src/pieces.rs SELECT_STROKE_WIDTH
       nelem.setAttributeNS(null,'stroke-width','2px');
     }
     p.pelem.prepend(nelem);

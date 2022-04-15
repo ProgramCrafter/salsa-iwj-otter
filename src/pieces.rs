@@ -24,6 +24,10 @@ pub type SimpleShape = GenericSimpleShape<Html, Outline>;
 
 pub const SELECT_SCALE: f64 = 1.1;
 
+// also in script.ts:redisplay_ancillaries ("halo")
+//   nelem.setAttributeNS(null,'stroke-width','2px');
+pub const SELECT_STROKE_WIDTH: f64 = 2.0;
+
 pub const DEFAULT_EDGE_WIDTH: f64 = 0.2;
 pub const INVISIBLE_EDGE_SENSITIVE: f64 = 2.;
 
