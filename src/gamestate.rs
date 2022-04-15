@@ -200,9 +200,9 @@ pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
   fn describe_html(&self, gpc: &GPiece, _goccults: &GameOccults)
                    -> Result<Html,IE>;
 
-  #[throws(IE)]
   /// Piece is responsible for dealing with the possibility that they
   /// may be occulted!
+  #[throws(IE)]
   fn held_change_hook(&self,
                       _ig: &InstanceRef,
                       _gpieces: &mut GPieces,
