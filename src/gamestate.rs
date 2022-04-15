@@ -151,7 +151,11 @@ impl_downcast!(PieceXData);
 #[enum_dispatch]
 #[dyn_upcast]
 pub trait OutlineTrait: Debug + Sync + Send + 'static {
+  // This is used:
+  //  1. To generate the path for SimpleShape's renderings
+  //  2. This call here in the default impl of surround_path
   fn outline_path(&self, scale: f64) -> Result<Html, IE>;
+  // Used for the piece selection outline
   fn surround_path(&self) -> Result<Html, IE> {
     self.outline_path(SELECT_SCALE)
   }
