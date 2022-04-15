@@ -443,6 +443,33 @@ entry_define_insert_remove!{
   key
 }
 
+#[derive(Debug,Copy,Clone,Eq,PartialEq,Ord,PartialOrd)]
+#[derive(From,Into)]
+#[derive(Serialize, Deserialize)]
+#[serde(into="Duration", try_from="Duration")]
+pub struct FutureInstant(pub Instant);
+
+impl Into<Duration> for FutureInstant {
+  fn into(self) -> Duration {
+    let now = Instant::now();
+    Instant::from(self).checked_duration_since(now).unwrap_or_default()
+  }
+}
+
+#[derive(Error,Debug)]
+#[error("Duration (eg during load) implies out-of-range FutureInstant")]
+pub struct FutureInstantOutOfRange;
+
+impl TryFrom<Duration> for FutureInstant {
+  type Error = FutureInstantOutOfRange;
+  #[throws(FutureInstantOutOfRange)]
+  fn try_from(duration: Duration) -> FutureInstant {
+    let now = Instant::now();
+    now.checked_add(duration).ok_or(FutureInstantOutOfRange)?.into()
+  }
+}      
+
+
 #[derive(Debug,Copy,Clone)]
 pub struct DigestRead<D: Digest, R: Read> {
   d: D,
