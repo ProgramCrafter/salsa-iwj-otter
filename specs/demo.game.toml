@@ -60,3 +60,11 @@ pos = [160,30]
 type = "Lib"
 lib = "wikimedia"
 item = "chess-b-P"
+
+[[pieces]]
+pos = [140, 30]
+type = "Die"
+image.type = "Rect"
+image.size = [10]
+image.edges = ["black","black"]
+image.faces = ["#ccccff", "#ccffcc"]
