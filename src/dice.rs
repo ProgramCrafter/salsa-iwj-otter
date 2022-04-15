@@ -24,6 +24,8 @@ const COOLDOWN_EXTRA_RADIUS: f64 =
   0.5 * (SELECT_STROKE_WIDTH + COOLDOWN_STROKE_WIDTH) +
   DEFAULT_EDGE_WIDTH;
 
+const DEFAULT_LABEL_FONT_SIZE: f64 = 8.;
+
 #[derive(Debug,Serialize,Deserialize)]
 pub struct Spec {
   // must be >1 faces on image, or >1 texts, and if both, same number
@@ -76,6 +78,9 @@ impl PieceXData for State {
 
 #[derive(Serialize, Debug)]
 struct OverlayTemplateContext<'c> {
+  label_text: &'c str,
+  label_font_size: f64,
+
   cooldown_active: bool,
   radius: f64,
   remprop: f64,
@@ -342,6 +347,9 @@ impl InertPieceTrait for Die {
     let iface = if self.image.nfaces() == 1 { default() } else { face };
     self.image.svg(f, vpid, iface, xdata)?;
 
+    let label = self.labels.get(face).map(|s| &**s).unwrap_or_else(
+        || self.labels.get(0).map(|s| &**s) .unwrap_or_default());
+
     let remprop = self.cooldown_remprop(state)?;
 
     let cooldown_active = remprop != 0.;
@@ -355,6 +363,9 @@ impl InertPieceTrait for Die {
     };
 
     let tc = OverlayTemplateContext {
+      label_text: &label,
+      label_font_size: DEFAULT_LABEL_FONT_SIZE,
+
       cooldown_active,
       radius: self.cooldown_radius,
       path_d: &path_d,
