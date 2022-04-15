@@ -74,18 +74,14 @@
        ry="2" />
     <text
        xml:space="preserve"
-       style="font-size:4px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle"
-       x="0.078125"
-       y="1.4560547"
-       id="text3995"><tspan
-         sodipodi:role="line"
-         id="tspan3993"
-         x="0.078125"
-         y="1.4560547">3</tspan><tspan
-         sodipodi:role="line"
-         x="0.078125"
-         y="6.4560547"
-         id="tspan3997" /></text>
+       font-size="4px"
+       font-family="sans-serif"
+       text-align="center"
+       text-anchor="middle"
+       x="0"
+       y="1.4"
+       id="text3995"
+       inkscape:label="textlabel">3</text>
     <circle
        style="fill:none;stroke:#000000;stroke-width:1.512;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none"
        id="path15165"
