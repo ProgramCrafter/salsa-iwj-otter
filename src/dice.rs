@@ -17,6 +17,8 @@ const MAX_COOLDOWN: Duration = Duration::from_secs(100);
 const DEFAULT_COOLDOWN: Duration = Duration::from_millis(4000);
 fn default_cooldown() -> Duration { DEFAULT_COOLDOWN }
 
+const COOLDOWN_EXTRA_RADIUS: f64 = DEFAULT_EDGE_WIDTH * 2. + 0.2;
+
 #[derive(Debug,Serialize,Deserialize)]
 pub struct Spec {
   // must be >1 faces on image, or >1 texts, and if both, same number
@@ -52,7 +54,8 @@ struct Die {
   itemname: String,
   labels: IndexVec<FaceId, String>, // if .len()==1, always use [0]
   image: Arc<dyn InertPieceTrait>, // if image.nfaces()==1, always use face 0
-  radius: f64,
+  outline: CircleShape,
+  cooldown_radius: f64,
   cooldown_time: Duration,
 }
 
@@ -137,6 +140,8 @@ impl PieceSpec for Spec {
     } else {
       throw!(SpecError::InvalidSizeScale)
     };
+    let outline = CircleShape { diam: radius * 2. };
+    let cooldown_radius = radius + COOLDOWN_EXTRA_RADIUS;
 
     let cooldown_time = {
       let t = self.cooldown;
@@ -181,7 +186,7 @@ impl PieceSpec for Spec {
           .into();
 
         let our_occ_image = Arc::new(Die {
-          nfaces, cooldown_time, radius,
+          nfaces, cooldown_time, cooldown_radius, outline,
           itemname: itemname.clone(),
           image: image_occ_image,
           labels: index_vec![occ_label.into()],
@@ -192,7 +197,7 @@ impl PieceSpec for Spec {
     };
 
     let die = Die {
-      nfaces, cooldown_time, radius,
+      nfaces, cooldown_time, cooldown_radius, outline,
       itemname, labels,
       image: image.into()
     };
@@ -249,7 +254,7 @@ impl Die {
 #[dyn_upcast]
 impl OutlineTrait for Die {
   delegate! {
-    to self.image {
+    to self.outline {
       fn outline_path(&self, scale: f64) -> Result<Html, IE>;
       fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
       fn bbox_approx(&self) -> Result<Rect, IE>;
@@ -325,11 +330,11 @@ impl InertPieceTrait for Die {
     if remprop != 0. {
 
       let mut path_d = String::new();
-      die_cooldown_path(&mut path_d, self.radius, remprop)?;
+      die_cooldown_path(&mut path_d, self.cooldown_radius, remprop)?;
       let cd_elid = format!("def.{}.die.cd", vpid);
 
       let tc = CooldownTemplateContext {
-        radius: self.radius,
+        radius: self.cooldown_radius,
         path_d: &path_d,
         cd_elid: &cd_elid,
         total_ms: self.cooldown_time.as_secs_f64() * 1000.,
