@@ -54,7 +54,7 @@ struct Die {
   itemname: String,
   labels: IndexVec<FaceId, String>, // if .len()==1, always use [0]
   image: Arc<dyn InertPieceTrait>, // if image.nfaces()==1, always use face 0
-  outline: CircleShape,
+  surround_outline: CircleShape,
   cooldown_radius: f64,
   cooldown_time: Duration,
 }
@@ -139,7 +139,7 @@ impl PieceSpec for Spec {
     } else {
       throw!(SpecError::InvalidSizeScale)
     };
-    let outline = CircleShape { diam: radius * 2. };
+    let surround_outline = CircleShape { diam: radius * 2. };
     let cooldown_radius = radius + COOLDOWN_EXTRA_RADIUS;
 
     let cooldown_time = {
@@ -188,7 +188,7 @@ impl PieceSpec for Spec {
           .into();
 
         let our_occ_image = Arc::new(Die {
-          nfaces, cooldown_time, cooldown_radius, outline,
+          nfaces, cooldown_time, cooldown_radius, surround_outline,
           itemname: itemname.clone(),
           image: image_occ_image,
           labels: index_vec![occ_label.into()],
@@ -199,7 +199,7 @@ impl PieceSpec for Spec {
     };
 
     let die = Die {
-      nfaces, cooldown_time, cooldown_radius, outline,
+      nfaces, cooldown_time, cooldown_radius, surround_outline,
       itemname, labels,
       image: image.into()
     };
@@ -255,8 +255,16 @@ impl Die {
 
 #[dyn_upcast]
 impl OutlineTrait for Die {
+  // We have done our own adjustable radius adjustment, so we
+  // apply that to surround_outline's outline_path, rather than its
+  // surround_path.
+  #[throws(IE)]
+  fn surround_path(&self) -> Html { self.surround_outline.outline_path(1.0)? }
+
   delegate! {
-    to self.outline {
+    to self.image {
+      // `outline_path` won't be called at all,
+      // since we provide `surround_path`
       fn outline_path(&self, scale: f64) -> Result<Html, IE>;
       fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
       fn bbox_approx(&self) -> Result<Rect, IE>;
