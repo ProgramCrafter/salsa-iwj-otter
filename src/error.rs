@@ -181,6 +181,7 @@ pub enum Inapplicable {
   #[error("occulter already rotated")]      OcculterAlreadyRotated,
   #[error("overfull, cannot organise")]     OrganisedPlacementOverfull,
   #[error("overlapping occultation(s)")]    OverlappingOccultation,
+  #[error("die was recently rolled, cannot flip or roll")] DieCooldown,
   #[error("UI operation not recognised")]   BadUiOperation,
   #[error("UI operation not valid in the curret piece state")]
                                             BadPieceStateForOperation,

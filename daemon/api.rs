@@ -595,7 +595,10 @@ api_route!{
         let gpl = gs.players.byid_mut(player)?;
         let _: Void = match (self.opname.as_str(), self.wrc) {
 
-          ("flip", wrc@ WRC::UpdateSvg) => {
+          ("flip", wrc@ WRC::UpdateSvg)
+            if ipc.show(y).ui_permit_flip(gpc)?
+            =>
+          {
             let nfaces = ipc.show(y).nfaces();
             gpc.face = ((RawFaceId::from(gpc.face) + 1) % nfaces).into();
             // todo: name the most visible aspect in the log ?

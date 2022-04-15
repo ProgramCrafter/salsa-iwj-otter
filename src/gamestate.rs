@@ -205,6 +205,12 @@ pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
     throw!(Ia::BadUiOperation)
   }
 
+  /// Can return `false` to mean "I will handle it in ui_operation"
+  #[throws(ApiPieceOpError)]
+  fn ui_permit_flip(&self, _gpc: &GPiece) -> bool {
+    true
+  }
+
   // #[throws] doesn't work here - fehler #todo
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece, gs: &GameState,
                id: VisiblePieceId) -> Result<(),IE>;

@@ -247,10 +247,15 @@ impl Die {
     self.cooldown_time             .as_secs_f64()
   }
 
+  #[throws(IE)]
+  pub fn cooldown_running(&self, state: &State) -> bool {
+    self.cooldown_remaining(state)? != Duration::default()
+  }
+
   /// Possible stores None, saving us calling Instant::now in the future
   #[throws(IE)]
   pub fn cooldown_cleanup(&self, state: &mut State) {
-    if self.cooldown_remaining(state)? == Duration::default() {
+    if ! self.cooldown_running(state)? {
       state.cooldown_expires = None;
     }
   }
@@ -310,6 +315,16 @@ impl PieceTrait for Die {
     } else {
       hformat!("a d{} (now showing {}, {})", nfaces, idesc()?, ldesc())
     }
+  }
+
+  #[throws(ApiPieceOpError)]
+  fn ui_permit_flip(&self, gpc: &GPiece) -> bool {
+    let state: &State = gpc.xdata.get_exp()?;
+    if self.cooldown_running(state)? {
+      throw!(Inapplicable::DieCooldown)
+    } else {
+      true
+    }        
   }
 
   #[throws(IE)]
