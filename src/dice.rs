@@ -20,7 +20,9 @@ fn default_circle_scale() -> f64 { 1. }
 // Copy of the value from die.svg's "timeblack"'s stroke-width
 const COOLDOWN_STROKE_WIDTH: f64 = 1.512;
 
-const COOLDOWN_EXTRA_RADIUS: f64 = DEFAULT_EDGE_WIDTH * 2. + 0.2;
+const COOLDOWN_EXTRA_RADIUS: f64 =
+  0.5 * (SELECT_STROKE_WIDTH + COOLDOWN_STROKE_WIDTH) +
+  DEFAULT_EDGE_WIDTH;
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct Spec {
