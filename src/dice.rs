@@ -83,7 +83,6 @@ impl PieceSpec for Spec {
   #[throws(SpecError)]
   fn load(&self, _: usize, gpc: &mut GPiece, ig: &Instance, depth: SpecDepth)
           -> PieceSpecLoaded {
-    gpc.moveable = PieceMoveable::IfWresting;
     gpc.rotateable = false;
 
     let SpecLoaded { p: image, occultable: img_occultable } =
