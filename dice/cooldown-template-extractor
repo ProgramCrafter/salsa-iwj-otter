@@ -57,7 +57,7 @@ process_node('timegrey', sub {
   filter_element('path');
   $node->setAttribute('d', "{{path_d}}");
   $node->setAttribute('id', "{{cd_elid}}");
-  foreach my $d (qw(remprop total)) {
+  foreach my $d (qw(remprop total_ms)) {
     $node->setAttribute("data-$d", "{{$d}}");
   }
 });
