@@ -76,7 +76,7 @@ impl<P,Z> PriOccultedGeneral<P,Z> {
                            gpc: &GPiece, ipc: &IPiece) -> Html {
     match self.instead(ioccults, ipc)? {
       Left(y) => ipc.show(y).describe_html(gpc, goccults)?,
-      Right(i) => i.describe_html()?,
+      Right(i) => i.describe_html(default())?,
     }
   }
 }

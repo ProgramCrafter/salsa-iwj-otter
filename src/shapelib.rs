@@ -239,7 +239,7 @@ impl InertPieceTrait for ItemInertForOcculted {
     self.xform.write_svgd(f, &self.svgd)?;
   }
   #[throws(IE)]
-  fn describe_html(&self) -> Html { self.desc.clone() }
+  fn describe_html(&self, _: FaceId) -> Html { self.desc.clone() }
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
@@ -361,7 +361,7 @@ impl Item {
       if let Some(face) = self.faces.get(face) {
         face.desc
       } else if let Some(back) = &self.back {
-        return back.describe_html()?;
+        return back.describe_html(default())?;
       } else {
         self.faces[0].desc
       }
@@ -402,7 +402,7 @@ impl InertPieceTrait for Item {
     self.svg_face(f, face, id, xdata)?;
   }
   #[throws(IE)]
-  fn describe_html(&self) -> Html {
+  fn describe_html(&self, _: FaceId) -> Html {
     self.describe_face(default())?
   }
 }

@@ -244,7 +244,7 @@ pub trait InertPieceTrait: PieceBaseTrait {
   /// face used is always default, regardless of nfaces.
   fn svg(&self, f: &mut Html, id: VisiblePieceId, face: FaceId,
          xdata: &PieceXDataState /* use with care! */) -> Result<(),IE>;
-  fn describe_html(&self) -> Result<Html,IE>;
+  fn describe_html(&self, face: FaceId) -> Result<Html,IE>;
 }
 
 #[derive(Debug)]

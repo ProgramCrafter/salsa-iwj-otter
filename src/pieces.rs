@@ -160,7 +160,7 @@ impl InertPieceTrait for SimpleShape {
   }
 
   #[throws(IE)]
-  fn describe_html(&self) -> Html {
+  fn describe_html(&self, _: FaceId) -> Html {
     hformat!("a {}", self.desc)
   }
 }

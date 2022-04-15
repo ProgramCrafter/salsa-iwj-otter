@@ -301,7 +301,7 @@ pub fn log_did_to_piece_whoby(ioccults: &IOccults, goccults: &GameOccults,
   let desc = (||{
     Ok::<_,IE>(match ipc.show_or_instead(ioccults, y)? {
       Left(y) => ipc.show(y).describe_html(gpc, goccults)?,
-      Right(instead) => instead.describe_html()?,
+      Right(instead) => instead.describe_html(default())?,
     })
   })().unwrap_or_else(|e|{
     error!("failed to format during logging: {:?}", e);
