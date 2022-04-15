@@ -148,11 +148,14 @@ impl PieceSpec for Spec {
       if t <= MAX_COOLDOWN { t }
       else { throw!(SpecError::TimeoutTooLarge { got: t, max: MAX_COOLDOWN }) }
     };
-
     let itemname = self.itemname.clone().unwrap_or_else(
       || format!("die.{}.{}", nfaces, image.itemname()));
 
-    let _state: &mut State = gpc.xdata_mut(|| State::dummy())?;
+    let initial_state = {
+      let t = cooldown_time.try_into().map_err(IE::from)?;
+      State { cooldown_expires: Some(t) }
+    };
+    let _state: &mut State = gpc.xdata_mut(|| initial_state)?;
 
     let occultable = match (img_occultable, &self.occult_label) {
       (None, l) => if l == "" {
