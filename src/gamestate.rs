@@ -242,6 +242,9 @@ pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
 pub trait InertPieceTrait: PieceBaseTrait {
   /// When used for occultated version of another object,
   /// face used is always default, regardless of nfaces.
+  /// This is always the case for a piece whose `PieceSpec::load`
+  /// returns `Some` for occultation, but which does not provide
+  /// a nontrivial `PieceSpec::load_inert`.
   fn svg(&self, f: &mut Html, id: VisiblePieceId, face: FaceId,
          xdata: &PieceXDataState /* use with care! */) -> Result<(),IE>;
   fn describe_html(&self, face: FaceId) -> Result<Html,IE>;
