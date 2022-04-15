@@ -75,7 +75,8 @@ impl PieceXData for State {
 }
 
 #[derive(Serialize, Debug)]
-struct CooldownTemplateContext<'c> {
+struct OverlayTemplateContext<'c> {
+  cooldown_active: bool,
   radius: f64,
   remprop: f64,
   path_d: &'c str,
@@ -342,23 +343,28 @@ impl InertPieceTrait for Die {
     self.image.svg(f, vpid, face, xdata)?;
 
     let remprop = self.cooldown_remprop(state)?;
-    if remprop != 0. {
 
+    let cooldown_active = remprop != 0.;
+
+    let (path_d, cd_elid) = if cooldown_active {
       let mut path_d = String::new();
       die_cooldown_path(&mut path_d, self.cooldown_radius, remprop)?;
-      let cd_elid = format!("def.{}.die.cd", vpid);
+      (path_d, format!("def.{}.die.cd", vpid))
+    } else {
+      default()
+    };
 
-      let tc = CooldownTemplateContext {
-        radius: self.cooldown_radius,
-        path_d: &path_d,
-        cd_elid: &cd_elid,
-        total_ms: self.cooldown_time.as_secs_f64() * 1000.,
-        remprop,
-      };
+    let tc = OverlayTemplateContext {
+      cooldown_active,
+      radius: self.cooldown_radius,
+      path_d: &path_d,
+      cd_elid: &cd_elid,
+      total_ms: self.cooldown_time.as_secs_f64() * 1000.,
+      remprop,
+    };
 
-      write!(f.as_html_string_mut(), "{}",
-             nwtemplates::render("die-cooldown.tera", &tc)?)?;
-    }
+    write!(f.as_html_string_mut(), "{}",
+           nwtemplates::render("die-overlay.tera", &tc)?)?;
   }
 
   // add throw operation

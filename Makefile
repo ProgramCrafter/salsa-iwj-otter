@@ -130,7 +130,7 @@ TXTFILES= CC-BY-SA-3.0 CC-BY-SA-4.0
 FILEASSETS = $(addprefix templates/, libre shapelib.html script.js \
 			$(LITFILES) $(TXTFILES)) \
 		$(wildcard templates/*.tera) \
-		nwtemplates/die-cooldown.tera
+		nwtemplates/die-overlay.tera
 
 WASM := wasm32-unknown-unknown
 # ^ todo: Is this still right after
@@ -371,7 +371,7 @@ templates/shapelib.html: $(TARGET_DIR)/debug/otterlib $(LIBRARY_FILES)
 	--libs '$(addprefix $(PWD)/, $(addsuffix .toml, $(LIBRARIES)))' \
 		preview >$@.tmp && mv -f $@.tmp $@
 
-nwtemplates/die-cooldown.tera: dice/cooldown-template-extractor dice/die.svg
+nwtemplates/die-overlay.tera: dice/overlay-template-extractor dice/die.svg
 	./$< <dice/die.svg >$@.tmp && mv -f $@.tmp $@
 
 #---------- examples ----------

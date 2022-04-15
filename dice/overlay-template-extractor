@@ -24,7 +24,10 @@ sub process_node ($$) {
   die "$label ?" unless @$nodes == 1;
   $node = $nodes->[0];
   $fn->($node);
-  print $node->toString, "\n" or die $!;
+  print
+    "{% if cooldown_active %}",
+    $node->toString,
+    "{% endif %}\n" or die $!;
 }
 
 our $nom_radius;
