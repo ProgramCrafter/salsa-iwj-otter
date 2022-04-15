@@ -339,8 +339,8 @@ impl InertPieceTrait for Die {
 
     // This is called by PieceTrait::svg_piece, so face may be non-0
     // despite the promise about face in InertPieceTrait.
-    let face = if self.image.nfaces() == 1 { default() } else { face };
-    self.image.svg(f, vpid, face, xdata)?;
+    let iface = if self.image.nfaces() == 1 { default() } else { face };
+    self.image.svg(f, vpid, iface, xdata)?;
 
     let remprop = self.cooldown_remprop(state)?;
 
