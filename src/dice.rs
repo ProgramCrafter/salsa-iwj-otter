@@ -228,6 +228,22 @@ impl Die {
       /
     self.cooldown_time             .as_secs_f64()
   }
+
+  /// Possible stores None, saving us calling Instant::now in the future
+  #[throws(IE)]
+  pub fn cooldown_cleanup(&self, state: &mut State) {
+    if self.cooldown_remaining(state)? == Duration::default() {
+      state.cooldown_expires = None;
+    }
+  }
+
+  #[throws(IE)]
+  pub fn cooldown_cleanup_hook(&self, gpieces: &mut GPieces, piece: PieceId) {
+    let state = gpieces
+      .byid_mut(piece).context("load hook")?
+      .xdata.get_mut_exp()?;
+    self.cooldown_cleanup(state)?;
+  }
 }
 
 #[dyn_upcast]
@@ -274,6 +290,22 @@ impl PieceTrait for Die {
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _: &GameState,
                vpid: VisiblePieceId) {
     self.svg(f, vpid, gpc.face, &gpc.xdata)?
+  }
+
+  #[throws(IE)]
+  fn held_change_hook(&self,
+                      _: &InstanceRef,
+                      gpieces: &mut GPieces,
+                      piece: PieceId,
+                      _was_held: Option<PlayerId>)
+                      -> UnpreparedUpdates {
+    self.cooldown_cleanup_hook(gpieces, piece)?;
+    None
+  }
+
+  #[throws(IE)]
+  fn loaded_hook(&self, piece: PieceId, gs: &mut GameState, _: &InstanceRef) {
+    self.cooldown_cleanup_hook(&mut gs.pieces, piece)?;
   }
 }
 
