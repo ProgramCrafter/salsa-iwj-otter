@@ -56,6 +56,8 @@ pub enum InternalError {
   SshKeysManipError(#[from] sshkeys::AuthKeysManipError),
   #[error("Template rendering error")]
   TemplateRenderingError(#[from] tera::Error),
+  #[error("{0}")]
+  FutureInstantOutOfRange(#[from] FutureInstantOutOfRange),
 }
 
 #[derive(Error,Copy,Clone,Debug,Serialize,Deserialize)]
