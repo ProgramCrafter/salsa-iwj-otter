@@ -204,20 +204,13 @@ impl PieceSpec for Spec {
   }
 }
 
-macro_rules! def_cooldown_remprop { { $name:ident $($mut:tt)? } => {
-  #[allow(dead_code)]
+impl Die {
   #[throws(IE)]
-  pub fn $name(&self, state: &$($mut)? State) -> f64 {
-    let expires = &$($mut)? state.cooldown_expires;
-    if_let!{ Some(FutureInstant(then)) = *expires; else return Ok(0.) };
+  pub fn cooldown_remaining(&self, state: &State) -> Duration {
+    let expires = &state.cooldown_expires;
+    if_let!{ Some(FutureInstant(then)) = *expires; else return Ok(default()) };
     let now = Instant::now();
-    if now > then {
-      {$(
-        #[allow(unused_mut)] let $mut _x = (); // repetition count
-        *expires = None;
-      )?}
-      return 0.
-    }
+    if now > then { return default() }
     let remaining = then - now;
     if remaining > self.cooldown_time {
       throw!(internal_logic_error(format!(
@@ -226,13 +219,15 @@ macro_rules! def_cooldown_remprop { { $name:ident $($mut:tt)? } => {
         remaining, self.cooldown_time
       )))
     }
-    remaining.as_secs_f64() / self.cooldown_time.as_secs_f64()
+    remaining
   }
-} }
 
-impl Die {
-  def_cooldown_remprop!{ cooldown_remprop         }
-  def_cooldown_remprop!{ cooldown_remprop_mut mut }
+  #[throws(IE)]
+  pub fn cooldown_remprop(&self, state: &State) -> f64 {
+    self.cooldown_remaining(state)?.as_secs_f64()
+      /
+    self.cooldown_time             .as_secs_f64()
+  }
 }
 
 #[dyn_upcast]
@@ -287,7 +282,7 @@ impl InertPieceTrait for Die {
   #[throws(IE)]
   fn svg(&self, f: &mut Html, vpid: VisiblePieceId, face: FaceId,
          xdata: &PieceXDataState /* use with care! */) {
-    let state = xdata.get_exp::<State>()?;
+    let state: &State = xdata.get_exp()?;
 
     // This is called by PieceTrait::svg_piece, so face may be non-0
     // despite the promise about face in InertPieceTrait.
