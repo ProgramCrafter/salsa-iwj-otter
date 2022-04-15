@@ -135,7 +135,7 @@ impl PieceSpec for Spec {
              else throw!(SpecError::MultipleFacesRequired) };
 
     let radius = if (0.5 .. 1.5).contains(&self.circle_scale) {
-      image.bbox_approx()?.size()?.len()? * self.circle_scale
+      image.bbox_approx()?.size()?.len()? * 0.5 * self.circle_scale
     } else {
       throw!(SpecError::InvalidSizeScale)
     };
