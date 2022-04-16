@@ -17,7 +17,7 @@ our ($label, $node);
 
 sub p { print @_ or die $!; }
 
-p "<!--made by dice/cooldown-template-extractor-->\n";
+p "<!--made by dice/overlay-template-extractor-->\n";
 
 sub process_node ($$) {
   my $fn;
