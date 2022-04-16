@@ -2293,7 +2293,22 @@ function die_request_animation(piece: PieceId, p: PieceInfo,
 function die_render_frame(piece: PieceId, p: PieceInfo,
 			  s: DieSpecialRendering, ts: DOMHighResTimeStamp) {
   s.anim_id = null;
-  console.log('DIE RENDER', piece, s);
+  let remprop = s.loaded_remprop - (ts - s.loaded_ts) / s.total_ms;
+  console.log('DIE RENDER', piece, s, remprop);
+  if (remprop <= 0) {
+    let to_remove: Element = s.cd_path;
+    for (;;) {
+      let previous = to_remove.previousElementSibling!;
+      // see dice/overlya-template-extractor
+      if (to_remove.tagName == 'text') break;
+      to_remove.remove();
+      to_remove = previous;
+    }
+  } else {
+    let path_d = wasm_bindgen.die_cooldown_path(s.radius, remprop);
+    s.cd_path.setAttributeNS(null, "d", path_d);
+    die_request_animation(piece, p, s);
+  }
 }
 function die_rendering_stop(piece: PieceId, p: PieceInfo,
 			    s: DieSpecialRendering) {
