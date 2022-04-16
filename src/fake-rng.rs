@@ -5,6 +5,7 @@
 use crate::prelude::*;
 
 use parking_lot::Mutex;
+use rand::distributions::uniform::SampleUniform;
 
 #[derive(Deserialize,Debug,Clone,Default)]
 #[serde(transparent)]
@@ -63,4 +64,19 @@ impl RngWrap {
       slice[l-n..].copy_from_slice(&front);
     },
   } }
+
+  pub fn range<T>(&self, range: std::ops::Range<T>) -> T
+  where T: SampleUniform + FromStr + Ord + Default
+  {
+    match self.next_fake() {
+      None => {
+        let mut rng = thread_rng();
+        rng.gen_range(range)
+      },
+      Some(s) => (||{
+        let n: T = s.parse().ok()?;
+        range.contains(&n).then(|| n)
+      })().unwrap_or_default(),
+    }
+  }
 } 
