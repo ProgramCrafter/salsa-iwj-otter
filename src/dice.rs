@@ -257,6 +257,15 @@ impl Die {
     self.cooldown_remaining(state)? != Duration::default()
   }
 
+  #[throws(ApiPieceOpError)]
+  pub fn check_permit_flip_roll(&self, state: &State) {
+    if self.cooldown_running(state)? {
+      throw!(Inapplicable::DieCooldown)
+    } else {
+      ()
+    }        
+  }
+
   /// Possible stores None, saving us calling Instant::now in the future
   #[throws(IE)]
   pub fn cooldown_cleanup(&self, state: &mut State) {
@@ -325,11 +334,8 @@ impl PieceTrait for Die {
   #[throws(ApiPieceOpError)]
   fn ui_permit_flip(&self, gpc: &GPiece) -> bool {
     let state: &State = gpc.xdata.get_exp()?;
-    if self.cooldown_running(state)? {
-      throw!(Inapplicable::DieCooldown)
-    } else {
-      true
-    }        
+    let () = self.check_permit_flip_roll(state)?;
+    true
   }
 
   #[throws(IE)]
