@@ -2263,10 +2263,22 @@ function startup() {
 }
 
 type DieSpecialRendering = SpecialRendering & {
+  cd_path: SVGPathElement,
+  loaded_ts: DOMHighResTimeStamp,
+  loaded_remprop: number,
+  total_ms: number,
   anim_id: number | null,
 };
 special_renderings['Die'] = function(piece: PieceId, p: PieceInfo,
 				     s: DieSpecialRendering) {
+  let cd_path = document.getElementById('def.'+piece+'.die.cd');
+  if (!cd_path) return;
+
+  s.cd_path = cd_path as any as SVGPathElement;
+  s.loaded_ts = performance.now();
+  s.loaded_remprop = parseFloat(cd_path.dataset.remprop!)!;
+  s.total_ms       = parseFloat(cd_path.dataset.total_ms!)!;
+
   s.stop = die_rendering_stop as any;
   die_request_animation(piece, p, s);
 } as any;
@@ -2279,7 +2291,7 @@ function die_request_animation(piece: PieceId, p: PieceInfo,
 function die_render_frame(piece: PieceId, p: PieceInfo,
 			  s: DieSpecialRendering, ts: DOMHighResTimeStamp) {
   s.anim_id = null;
-  console.log('DIE RENDER', piece, ts);
+  console.log('DIE RENDER', piece, s);
 }
 function die_rendering_stop(piece: PieceId, p: PieceInfo,
 			    s: DieSpecialRendering) {
