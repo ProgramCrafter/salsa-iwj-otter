@@ -2263,7 +2263,7 @@ function startup() {
 }
 
 type DieSpecialRendering = SpecialRendering & {
-  anim_id: number,
+  anim_id: number | null,
 };
 special_renderings['Die'] = function(piece: PieceId, p: PieceInfo,
 				     s: DieSpecialRendering) {
@@ -2274,11 +2274,15 @@ special_renderings['Die'] = function(piece: PieceId, p: PieceInfo,
 } as any;
 function die_render_frame(piece: PieceId, p: PieceInfo,
 			  s: DieSpecialRendering, ts: DOMHighResTimeStamp) {
+  s.anim_id = null;
   console.log('DIE RENDER', piece, ts);
 }
 function die_rendering_stop(piece: PieceId, p: PieceInfo,
 			    s: DieSpecialRendering) {
-  window.cancelAnimationFrame(s.anim_id);
+  let anim_id = s.anim_id;
+  if (anim_id == null) return;
+  s.anim_id = null;
+  window.cancelAnimationFrame(anim_id);
 }    
 
 declare var wasm_input : any;
