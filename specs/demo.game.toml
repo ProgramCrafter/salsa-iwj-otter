@@ -69,3 +69,14 @@ image.type = "Rect"
 image.size = [10]
 image.edges = ["black","black"]
 image.faces = ["#ccccff", "#ccffcc"]
+
+[[pieces]]
+pos = [155, 15]
+type = "Die"
+labels = 6
+occ.ilk = "d6-pink"
+occ.label = "?"
+image.type = "Rect"
+image.size = [10]
+image.edges = ["black"]
+image.faces = ["#ff8888"]
