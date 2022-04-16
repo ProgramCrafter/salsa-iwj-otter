@@ -31,13 +31,18 @@ pub struct Spec {
   // must be >1 faces on image, or >1 texts, and if both, same number
   image: Box<dyn PieceSpec>,
   #[serde(default)] labels: SpecLabels,
-  #[serde(default)] occult_label: String,
+  occult: Option<OccultSpec>,
   // 1.0 means base outline circle size on most distant corner of bounding box
   // minimum is 0.5; maximum is 1.5
   #[serde(default="default_circle_scale")] circle_scale: f64,
   #[serde(default="default_cooldown")]
   #[serde(with="humantime_serde")] cooldown: Duration,
   itemname: Option<String>,
+}
+
+#[derive(Debug,Default,Clone,Serialize,Deserialize)]
+pub struct OccultSpec {
+  #[serde(default)] label: String,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
@@ -166,17 +171,17 @@ impl PieceSpec for Spec {
     };
     let _state: &mut State = gpc.xdata_mut(|| initial_state)?;
 
-    let occultable = match (img_occultable, &self.occult_label) {
-      (None, l) => if l == "" {
-        None
-      } else {
+    let occultable = match (img_occultable, &self.occult) {
+      (None, None) => None,
+      (None, Some(_occ)) => {
         throw!(SpecError::UnusedOccultLabel)
       },
-      (Some((image_occ_ilk, image_occ_image)), occ_label) => {
-        let occ_label = if occ_label == "" && labels.iter().any(|l| l != "") {
-          "?"
+      (Some((image_occ_ilk, image_occ_image)), occ) => {
+        let occ = occ.clone().unwrap_or_default();
+        let occ_label = if occ.label == "" && labels.iter().any(|l| l != "") {
+          "?".into()
         } else {
-          occ_label
+          occ.label
         };
 
         let our_ilk =
@@ -201,7 +206,7 @@ impl PieceSpec for Spec {
           nfaces, cooldown_time, cooldown_radius, surround_outline,
           itemname: itemname.clone(),
           image: image_occ_image,
-          labels: index_vec![occ_label.into()],
+          labels: index_vec![occ_label],
         }) as _;
 
         Some((our_ilk, our_occ_image))
