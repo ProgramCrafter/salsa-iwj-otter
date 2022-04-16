@@ -198,20 +198,23 @@ impl PieceSpec for Spec {
           // that aren't dice.  That would be mad even if they look a
           // bit like us.
           format!("die.{}.{}", nfaces, &image_occ_ilk);
-        let our_ilk = GoodItemName::try_from(our_ilk)
-          .map_err(|e| internal_error_bydebug(&e))?
-          .into();
 
-        let our_occ_image = Arc::new(Die {
-          nfaces, cooldown_time, cooldown_radius, surround_outline,
-          itemname: itemname.clone(),
-          image: image_occ_image,
-          labels: index_vec![occ_label],
-        }) as _;
-
-        Some((our_ilk, our_occ_image))
+        Some((image_occ_image, our_ilk, occ_label))
       },
-    };
+    }.map(|(occ_image, occ_ilk, occ_label)| {
+      let occ_ilk = GoodItemName::try_from(occ_ilk)
+        .map_err(|e| internal_error_bydebug(&e))?
+        .into();
+
+      let our_occ_image = Arc::new(Die {
+        nfaces, cooldown_time, cooldown_radius, surround_outline,
+        itemname: itemname.clone(),
+        image: occ_image,
+        labels: index_vec![occ_label],
+      }) as _;
+
+      Ok::<_,SpecError>((occ_ilk, our_occ_image))
+    }).transpose()?;
 
     let die = Die {
       nfaces, cooldown_time, cooldown_radius, surround_outline,
