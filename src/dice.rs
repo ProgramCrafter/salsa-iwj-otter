@@ -310,7 +310,7 @@ impl PieceBaseTrait for Die {
 
   #[throws(IE)]
   fn special(&self) -> Option<SpecialClientRendering> {
-    Some(SpecialClientRendering::DieCooldown)
+    Some(SpecialClientRendering::Die{})
   }
 }
 

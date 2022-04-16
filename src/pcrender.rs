@@ -14,8 +14,9 @@ pub struct VisibleAngleTransform(Html);
 const DEFKEY_FLIP: UoKey = 'f';
 
 #[derive(Serialize,Debug)]
+#[serde(tag="kind")]
 pub enum SpecialClientRendering {
-  DieCooldown
+  Die { },
 }
 
 #[derive(Debug,Clone)]
