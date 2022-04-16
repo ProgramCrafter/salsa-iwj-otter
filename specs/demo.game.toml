@@ -62,7 +62,7 @@ lib = "wikimedia"
 item = "chess-b-P"
 
 [[pieces]]
-pos = [140, 15]
+pos = [155, 15]
 type = "Die"
 labels = ["A", "B"]
 image.type = "Rect"
@@ -71,12 +71,23 @@ image.edges = ["black","black"]
 image.faces = ["#ccccff", "#ccffcc"]
 
 [[pieces]]
-pos = [155, 15]
+pos = [140, 15]
 type = "Die"
 labels = 6
-occ.ilk = "d6-pink"
-occ.label = "?"
+occult.ilk = "d6-pink"
+occult.label = "?"
 image.type = "Rect"
 image.size = [10]
 image.edges = ["black"]
 image.faces = ["#ff8888"]
+
+[[pieces]]
+pos = [125, 15]
+type = "Die"
+labels = 6
+occult.ilk = "d6-red"
+occult.label = "?"
+image.type = "Rect"
+image.size = [10]
+image.edges = ["white"]
+image.faces = ["#ff0000"]
