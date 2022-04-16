@@ -2268,10 +2268,14 @@ type DieSpecialRendering = SpecialRendering & {
 special_renderings['Die'] = function(piece: PieceId, p: PieceInfo,
 				     s: DieSpecialRendering) {
   s.stop = die_rendering_stop as any;
+  die_request_animation(piece, p, s);
+} as any;
+function die_request_animation(piece: PieceId, p: PieceInfo,
+			       s: DieSpecialRendering) {
   s.anim_id = window.requestAnimationFrame(
     function(ts) { die_render_frame(piece, p, s, ts) }
   );
-} as any;
+}
 function die_render_frame(piece: PieceId, p: PieceInfo,
 			  s: DieSpecialRendering, ts: DOMHighResTimeStamp) {
   s.anim_id = null;
