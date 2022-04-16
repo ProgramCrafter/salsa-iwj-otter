@@ -2267,6 +2267,7 @@ type DieSpecialRendering = SpecialRendering & {
   loaded_ts: DOMHighResTimeStamp,
   loaded_remprop: number,
   total_ms: number,
+  radius: number,
   anim_id: number | null,
 };
 special_renderings['Die'] = function(piece: PieceId, p: PieceInfo,
@@ -2278,6 +2279,7 @@ special_renderings['Die'] = function(piece: PieceId, p: PieceInfo,
   s.loaded_ts = performance.now();
   s.loaded_remprop = parseFloat(cd_path.dataset.remprop!)!;
   s.total_ms       = parseFloat(cd_path.dataset.total_ms!)!;
+  s.radius         = parseFloat(cd_path.dataset.radius!)!;
 
   s.stop = die_rendering_stop as any;
   die_request_animation(piece, p, s);
