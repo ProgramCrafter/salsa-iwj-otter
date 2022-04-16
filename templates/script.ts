@@ -2294,8 +2294,9 @@ function die_render_frame(piece: PieceId, p: PieceInfo,
 			  s: DieSpecialRendering, ts: DOMHighResTimeStamp) {
   s.anim_id = null;
   let remprop = s.loaded_remprop - (ts - s.loaded_ts) / s.total_ms;
-  console.log('DIE RENDER', piece, s, remprop);
+  //console.log('DIE RENDER', piece, s, remprop);
   if (remprop <= 0) {
+    console.log('DIE COMPLETE', piece, s, remprop);
     let to_remove: Element = s.cd_path;
     for (;;) {
       let previous = to_remove.previousElementSibling!;
