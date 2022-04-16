@@ -209,8 +209,11 @@ function json_report_error(error_for_json: Object) {
 }
 
 function string_report_error(error_message: String) {
+  string_report_error_raw('Error (reloading may help?): ' + error_message)
+}
+function string_report_error_raw(error_message: String) {
   let errornode = document.getElementById('error')!;
-  errornode.textContent += '\nError (reloading may help?):' + error_message;
+  errornode.textContent += '\n' + error_message;
   console.error("ERROR reported via log", error_message);
   // todo want to fix this for at least basic game reconfigs, auto-reload?
 }
@@ -2241,7 +2244,12 @@ function loaded(xhr: XMLHttpRequest){
   wasm_promise.then((got_wasm) => {
     wasm = got_wasm;
     body.outerHTML = xhr.response;
-    startup();
+    try {
+      startup();
+    } catch (exc) {
+      let s = exc.toString();
+      string_report_error_raw('Exception on load, unrecoverable: ' + s);
+    }
   });
 }
 
