@@ -171,18 +171,23 @@ impl PieceSpec for Spec {
     };
     let _state: &mut State = gpc.xdata_mut(|| initial_state)?;
 
+    let occ_label = |occ: &OccultSpec| -> String {
+      if occ.label == "" && labels.iter().any(|l| l != "") {
+        "?".into()
+      } else {
+        occ.label.clone()
+      }
+    };
+
     let occultable = match (img_occultable, &self.occult) {
       (None, None) => None,
       (None, Some(_occ)) => {
         throw!(SpecError::UnusedOccultLabel)
       },
       (Some((image_occ_ilk, image_occ_image)), occ) => {
-        let occ = occ.clone().unwrap_or_default();
-        let occ_label = if occ.label == "" && labels.iter().any(|l| l != "") {
-          "?".into()
-        } else {
-          occ.label
-        };
+        let default_occ = default();
+        let occ = occ.as_ref().unwrap_or(&default_occ);
+        let occ_label = occ_label(occ);
 
         let our_ilk =
           // We need to invent an ilk to allow coalescing of similar
