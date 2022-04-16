@@ -62,9 +62,9 @@ sub filter_text () {
   $node->removeChildNodes();
   $node->appendText('{{ label_text }}');
 }
-p "{% if label_text != \"\" %}\n";
+# This <text> node also acts as the sentinel for when the JS
+# wants to remove the cooldown timer.
 process_node('textlabel', \&filter_text);
-p "{% endif %}\n";
 
 p "{% if cooldown_active %}\n";
 process_node('timeblack', sub {
