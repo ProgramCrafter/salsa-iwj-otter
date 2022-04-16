@@ -88,6 +88,12 @@ type PieceInfo = {
   held_us_raising: HeldUsRaising,
   bbox: Rect,
   drag_delta: number,
+  special: SpecialRendering | null,
+}
+
+type SpecialRendering = {
+  kind: string,
+  stop: SpecialRenderingCallback,
 }
 
 let wasm : InitOutput;
@@ -98,6 +104,8 @@ type MessageHandler = (op: Object) => void;
 type PieceHandler = (piece: PieceId, p: PieceInfo, info: Object) => void;
 type PieceErrorHandler = (piece: PieceId, p: PieceInfo, m: PieceOpError)
   => boolean;
+type SpecialRenderingCallback =
+  (piece: PieceId, p: PieceInfo, s: SpecialRendering) => void;
 interface DispatchTable<H> { [key: string]: H };
 
 var otter_debug: boolean;
@@ -114,6 +122,7 @@ var layout: Layout;
 var held_surround_colour: string;
 var general_timeout : number = 10000;
 var messages : DispatchTable<MessageHandler> = Object();
+var special_renderings : DispatchTable<SpecialRenderingCallback> = Object();
 var pieceops : DispatchTable<PieceHandler> = Object();
 var update_error_handlers : DispatchTable<MessageHandler> = Object();
 var piece_error_handlers : DispatchTable<PieceErrorHandler> = Object();
@@ -1782,12 +1791,14 @@ pieceops.Insert = <PieceHandler>function
   pieces[piece] = p;
   p.uos = info.uos;
   p.queued_moves = 0;
+  piece_resolve_special(piece, p);
   piece_modify_core(piece, p, info);
 }
 
 pieceops.Delete = <PieceHandler>function
 (piece: PieceId, p: PieceInfo, info: {}) {
   console.log('PIECE UPDATE DELETE ', piece)
+  piece_stop_special(piece, p);
   p.uelem.remove();
   p.delem.remove();
   delete pieces[piece];
@@ -1807,6 +1818,34 @@ function piece_modify_image(piece: PieceId, p: PieceInfo,
   p.pelem= piece_element('piece',piece)!;
   p.uos = info.uos;
   p.bbox = info.bbox;
+  piece_resolve_special(piece, p);
+}
+
+function piece_resolve_special(piece: PieceId, p: PieceInfo) {
+  let new_special =
+      p.pelem.dataset.special ?
+      JSON.parse(p.pelem.dataset.special) : null;
+  let new_special_kind = new_special ? new_special.kind : '';
+  let old_special_kind = p  .special ? p  .special.kind : '';
+
+  if (new_special_kind != old_special_kind) {
+    piece_stop_special(piece, p);
+  }
+  if (new_special) {
+    console.log('SPECIAL START', new_special);
+    new_special.stop = function() { };
+    p.special = new_special;
+    special_renderings[new_special_kind](piece, p, new_special);
+  }
+}
+
+function piece_stop_special(piece: PieceId, p: PieceInfo) {
+  let s = p.special;
+  p.special = null;
+  if (s) {
+    console.log('SPECIAL STOP', s);
+    s.stop(piece, p, s);
+  }
 }
 
 function piece_modify(piece: PieceId, p: PieceInfo, info: PreparedPieceState) {
@@ -2006,6 +2045,7 @@ messages.Recorded = <MessageHandler>function
   if (j.svg != null) {
     p.delem.innerHTML = j.svg;
     p.pelem= piece_element('piece',piece)!;
+    piece_resolve_special(piece, p);
     redisplay_ancillaries(piece,p);
   }
   if (j.zg != null) {
@@ -2146,6 +2186,7 @@ function startup() {
     occregion_update(piece, p, p); delete p.occregion;
     delete uelem.dataset.info;
     pieces[piece] = p;
+    piece_resolve_special(piece,p);
     redisplay_ancillaries(piece,p);
   }
 
@@ -2219,6 +2260,10 @@ function startup() {
   }, true);
   document.addEventListener('keydown',   some_keydown);
   check_z_order();
+}
+
+special_renderings['Die'] = function(piece: PieceId, p: PieceInfo,
+				     s: SpecialRendering) {
 }
 
 declare var wasm_input : any;
