@@ -338,6 +338,49 @@ impl PieceTrait for Die {
     true
   }
 
+  #[throws(InternalError)]
+  fn add_ui_operations(&self, _: ShowUnocculted, upd: &mut Vec<UoDescription>,
+                       _gs: &GameState, _gpc: &GPiece) {
+    upd.push(UoDescription {
+      kind: UoKind::Piece,
+      def_key: 'r',
+      opname: "roll".to_string(),
+      desc: Html::lit("Roll").into(),
+      wrc: WRC::UpdateSvg,
+    });
+  }
+
+  #[throws(ApiPieceOpError)]
+  fn ui_operation(&self, _: ShowUnocculted, args: ApiPieceOpArgs<'_>,
+                  opname: &str, wrc: WhatResponseToClientOp)
+                  -> UpdateFromOpComplex {
+    let ApiPieceOpArgs { gs,piece,player,ioccults,ipc,.. } = args;
+    let gpc = gs.pieces.byid_mut(piece)?;
+    let gpl = gs.players.byid(player)?;
+    let state = gpc.xdata.get_mut_exp()?;
+
+    match (opname, wrc) {
+      ("roll", wrc@ WRC::UpdateSvg) => {
+
+        let () = self.check_permit_flip_roll(state)?;
+        state.cooldown_expires = cooldown_start_value(self.cooldown_time)?;
+        gpc.face = config().game_rng.range(0 .. self.nfaces).into();
+
+        let logents = log_did_to_piece(
+          ioccults,&gs.occults,gpl,gpc,ipc,
+          "rolled"
+        )?;
+        ((
+          wrc,
+          PieceUpdateOp::Modify(()),
+          logents,
+        ).into(), None)
+
+      },
+      _ => throw!(Ia::BadUiOperation)
+    }
+  }
+
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _: &GameState,
                vpid: VisiblePieceId) {
