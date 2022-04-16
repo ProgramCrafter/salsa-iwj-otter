@@ -62,7 +62,7 @@ lib = "wikimedia"
 item = "chess-b-P"
 
 [[pieces]]
-pos = [140, 30]
+pos = [140, 15]
 type = "Die"
 labels = ["A", "B"]
 image.type = "Rect"
