@@ -2262,9 +2262,24 @@ function startup() {
   check_z_order();
 }
 
+type DieSpecialRendering = SpecialRendering & {
+  anim_id: number,
+};
 special_renderings['Die'] = function(piece: PieceId, p: PieceInfo,
-				     s: SpecialRendering) {
+				     s: DieSpecialRendering) {
+  s.stop = die_rendering_stop as any;
+  s.anim_id = window.requestAnimationFrame(
+    function(ts) { die_render_frame(piece, p, s, ts) }
+  );
+} as any;
+function die_render_frame(piece: PieceId, p: PieceInfo,
+			  s: DieSpecialRendering, ts: DOMHighResTimeStamp) {
+  console.log('DIE RENDER', piece, ts);
 }
+function die_rendering_stop(piece: PieceId, p: PieceInfo,
+			    s: DieSpecialRendering) {
+  window.cancelAnimationFrame(s.anim_id);
+}    
 
 declare var wasm_input : any;
 var wasm_promise : Promise<any>;;
