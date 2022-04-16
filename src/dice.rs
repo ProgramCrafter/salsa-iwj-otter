@@ -162,8 +162,7 @@ impl PieceSpec for Spec {
       || format!("die.{}.{}", nfaces, image.itemname()));
 
     let initial_state = {
-      let t = cooldown_time.try_into().map_err(IE::from)?;
-      State { cooldown_expires: Some(t) }
+      State { cooldown_expires: cooldown_start_value(cooldown_time)? }
     };
     let _state: &mut State = gpc.xdata_mut(|| initial_state)?;
 
@@ -220,6 +219,12 @@ impl PieceSpec for Spec {
       occultable,
     }
   }
+}
+
+#[throws(IE)]
+pub fn cooldown_start_value(cooldown_time: Duration) -> Option<FutureInstant> {
+  let t = cooldown_time.try_into().map_err(IE::from)?;
+  Some(t)
 }
 
 impl Die {
