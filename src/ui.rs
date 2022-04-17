@@ -23,11 +23,13 @@ pub const INVISIBLE_EDGE_SENSITIVE: f64 = 2.;
 
 pub const LABEL_FONT_SIZE: f64 = 4.0;
 
-// When trying to centre text, we use text-align and/or text-anchor
-// to do the horizontal positioning, but vertical positioning is
-// troublesome.  We bodge it.  Multiple the font size (in pixels)
-// by this, and add it to the SVG y coordinate (ie, shufting the text
-// down).
+/// Fudge factor
+///
+/// When trying to centre text, we use text-align and/or text-anchor
+/// to do the horizontal positioning, but vertical positioning is
+/// troublesome.  We bodge it.  Multiple the font size (in pixels)
+/// by this, and add it to the SVG y coordinate (ie, shufting the text
+/// down).
 pub const SVG_FONT_Y_ADJUST_OF_FONT_SIZE: f64 = 0.35;
 
 pub fn default_edge_width() -> f64 { DEFAULT_EDGE_WIDTH }
