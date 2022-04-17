@@ -181,8 +181,20 @@ impl PieceSpec for Spec {
 
     let occultable = match (img_occultable, &self.occult) {
       (None, None) => None,
-      (None, Some(_occ)) => {
-        throw!(SpecError::UnusedOccultLabel)
+      (None, Some(occ)) => {
+        let SpecLoaded { p: image, occultable: image_occ_reload } =
+          self.image.load_inert(ig, depth)?;
+
+        if image_occ_reload.is_some() {
+          throw!(internal_logic_error(
+            format!("reloading image {:?} occ varies", &self)
+          ));
+        }
+        if image.nfaces() != 1 {
+          throw!(SpecError::UnoccultableButRichImageForOccultation)
+        }
+        let occ_label = occ_label(occ);
+        Some((image.into(), "bad-ilk-mixing-todo".into(), occ_label))
       },
       (Some((image_occ_ilk, image_occ_image)), occ) => {
         let default_occ = default();

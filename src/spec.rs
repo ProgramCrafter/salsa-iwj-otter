@@ -86,10 +86,12 @@ pub enum SpecError {
   #[error("piece alias loop")]               AliasLoop(String),
   #[error("invalid size scale")]             InvalidSizeScale,
   #[error("multiple faces required")]        MultipleFacesRequired,
-  #[error("occult label supplied but not occultable")] UnusedOccultLabel,
   #[error("far too many faces ({0})")]       FarTooManyFaces(usize),
   #[error("coordinate overflow")]
   CoordinateOverflow(#[from] CoordinateOverflow),
+  #[error("image for supposedly-occultable piece \
+           is not itself occultable but has multiple faces")]
+  UnoccultableButRichImageForOccultation,
   #[error("timeout too large ({got:?} > {max:?})")]
   TimeoutTooLarge {
     got: Duration,
