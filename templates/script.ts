@@ -1568,7 +1568,7 @@ function movehist_record(ent: MoveHistEnt) {
 	refX="${sz}" refY="${sz/2}"
 	markerWidth="${sz + 2}" markerHeight="${sz}"
 	stroke="yellow" fill="none"
-	orient="auto-start-reverse" stroke-linejoin="mitre">
+	orient="auto-start-reverse" stroke-linejoin="miter">
 	<path d="M 0 0 L ${sz} ${sz/2} L 0 ${sz}" />
       </marker>
       <line x1="${ends[0][0].toString()}"
