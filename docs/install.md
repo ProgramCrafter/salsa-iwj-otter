@@ -70,7 +70,6 @@ The following interfaces are covered by semantic versioning:
  * Command line (new client invoked in old ways)
  * Game and table specifications (new software, old specs)
  * Library bundles (new servers, old bundles)
- * Server-client game management protocol (new servers, old clients)
 
 Additionally,
 we will try to support old library bundles indefinitely
@@ -84,11 +83,8 @@ The following are **NOT** covered by semantic versioning:
  * All Rust library APIs.
  * The web templates, AJAX protocol between frontend and backend,
    and JavaScript internals.
- * Any situation where an error is returned by the server
-   to a management client (eg to the `otter` client);
-   in this case the error deserialisation might fail,
-   so that the client cannot identify the error
-   (and may not be able to recover).
+ * Server-client game management protocol (you may need to run the
+   same version of otter on the client as the server is running)
 
 This means that the Otter crates do not offer a public stable API.
 You may of course use them outside of the Otter project,
