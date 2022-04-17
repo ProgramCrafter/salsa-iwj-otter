@@ -294,14 +294,14 @@ pub fn permute(occid: OccId,
 
     for (notch, nr) in occ.notches.table.iter_enumerated() {
       let piece = if let Some(p) = nr.piece() { p } else { continue };
-      let gpc = if let Some(gpc) = gpieces.get(piece) { gpc }else{ continue };
+      if_let!{ Some(gpc) = gpieces.get(piece); else continue }
       if gpc.held.is_some() { continue }
       let occilk = (|| Some(ipieces.get(piece)?.occilk.as_ref()?))();
-      let occilk = if let Some(o) = occilk { *o.borrow() } else {
+      if_let!{ Some(occilk) = occilk; else {
         error!("{}", internal_error_bydebug(&(occid, &occ, &nr, piece)));
         continue;
-      };
-      let (notches, pieces) = ilks.entry(occilk).or_default();
+      }}
+      let (notches, pieces) = ilks.entry(*occilk.borrow()).or_default();
       notches.push(notch);
       pieces.push(piece);
     }
