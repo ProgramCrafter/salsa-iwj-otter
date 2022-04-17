@@ -105,6 +105,15 @@ impl OccultIlks {
     &self.table.get(*id.borrow())?.v
   }
 
+  /// Load from an LOccultIlk (as obtained from PieceTrait::load
+  pub fn load_lilk(&mut self, lilk: LOccultIlk, data: OccultIlkData)
+                   -> IOccultIlk {
+    match lilk {
+      LOI::Distinct => IOI::Distinct(data),
+      LOI::Mix(ilkname) => IOI::Mix(self.create_coalesce(ilkname, data)),
+    }
+  }
+
   #[throws(as Option)]
   pub fn from_iilk<'r>(&'r self, iilk: &'r IOccultIlk) -> &'r V { match iilk {
     IOI::Distinct(data) => data,
@@ -115,7 +124,8 @@ impl OccultIlks {
     IOI::Mix(id) => self.dispose(id),
   } }
 
-  pub fn create(&mut self, k: K, v: V) -> OId {
+  /// Ensure there's an entry for `K`, perhaps creating from `V`
+  pub fn create_coalesce(&mut self, k: K, v: V) -> OId {
     let OccultIlks { lookup, table } = self;
     let id = *lookup
       .entry(k)
