@@ -85,6 +85,7 @@ impl PieceXData for State {
 struct OverlayTemplateContext<'c> {
   label_text: &'c str,
   label_font_size: f64,
+  label_y_adjust: f64,
 
   cooldown_active: bool,
   radius: f64,
@@ -437,9 +438,13 @@ impl InertPieceTrait for Die {
       default()
     };
 
+    let label_font_size = DEFAULT_LABEL_FONT_SIZE;
+    
+
     let tc = OverlayTemplateContext {
       label_text: &label,
-      label_font_size: DEFAULT_LABEL_FONT_SIZE,
+      label_font_size,
+      label_y_adjust: label_font_size * SVG_FONT_Y_ADJUST_OF_FONT_SIZE,
 
       cooldown_active,
       radius: self.cooldown_radius,
