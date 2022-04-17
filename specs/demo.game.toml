@@ -91,3 +91,14 @@ image.type = "Rect"
 image.size = [10]
 image.edges = ["white"]
 image.faces = ["#ff0000"]
+
+[[pieces]]
+pos = [125, 45]
+type = "Currency"
+qty = 400
+min_unit = 5
+currency = "ƒ"
+image.type = "Rect"
+image.size = [20,7]
+image.edges = ["#00ff00"]
+image.faces = ["#008800"]
