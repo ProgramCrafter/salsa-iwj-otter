@@ -79,7 +79,7 @@ impl State {
   }
 
   fn any_expired(&self) -> bool {
-    dbg!(self.users.iter().any(|ust| ust.remaining < TVL::zero()))
+    self.users.iter().any(|ust| ust.remaining < TVL::zero())
   }
 
   fn implies_running(&self, held: Option<PlayerId>) -> Option<User> {
