@@ -285,12 +285,13 @@ pub fn piece_pri(
   piece: PieceId, gpc: &GPiece, _ipc: &IPiece,
 ) -> Option<PieceRenderInstructions>
 {
-  let occk = if_chain! {
+  let mut occk_dbg = None;
+  let occulted = if_chain! {
     if let Some(Passive { occid, notch }) = gpc.occult.passive;
     if let Some(occ) = occults.occults.get(occid);
     if let Some(zg) = occ.notch_zg(notch);
     then {
-      occ.views.get_kind(player)
+      let occk = occ.views.get_kind(player)
         .map_displaced(|(displace, z)| {
           let notch: NotchNumber = notch.into();
           let pos = displace.place(occ.ppiece_use_size, notch);
@@ -301,19 +302,19 @@ pub fn piece_pri(
               z.clone()
             });
           (pos, ZLevel { z, zg })
-        })
+        });
+
+      occk_dbg = Some(occk.clone());
+      match occk.pri_occulted() {
+        Some(o) => o,
+        None => {
+          trace_dbg!("piece_pri", player, piece, occk_dbg, gpc);
+          return None;
+        }
+      }
     }
     else {
-      OccKG::Visible
-    }
-  };
-
-  let occk_dbg = occk.clone();
-  let occulted = match occk.pri_occulted() {
-    Some(o) => o,
-    None => {
-      trace_dbg!("piece_pri", player, piece, occk_dbg, gpc);
-      return None;
+      PriOG::Visible(ShowUnocculted(()))
     }
   };
 
