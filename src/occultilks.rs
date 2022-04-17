@@ -18,6 +18,59 @@ pub struct OccultIlkData {
   pub p_occ: Arc<dyn InertPieceTrait>,
 }
 
+#[derive(Debug,Clone)]
+pub enum LOccultIlk {
+  /// Pieces does not participate in ilk-based mixing.
+  ///
+  /// Such a piece remains distinguishable from all other pieces, and
+  /// trackable, by all players, even when occulted (unless made
+  /// totally invisible, in which case it will still be trackable
+  /// when it returns).
+  Distinct,
+
+  /// Ilk-based mixing
+  ///
+  /// Pieces with the same OccultIlkName will be mixed together when
+  /// occulted, so that players who see the occulted view cannot track
+  /// the individual piece identities.  This supports deck-shuffling
+  /// for pickup decks (and for hands etc. hides what the player is
+  /// doing with their own cards, from the other players).
+  Mix(OccultIlkName),
+}
+
+macro_rules! serde_with_compat { {
+  [ #[ $($attrs:meta)* ] ] [ $vis:vis ] [ $($intro:tt)* ]
+    $main:ident=$main_s:literal $new:ident $compat_s:literal
+  [ $($body:tt)* ]
+} => {
+  $(#[ $attrs ])* 
+  #[serde(try_from=$compat_s)]
+  $vis $($intro)* $main $($body)*
+
+  #[allow(non_camel_case_types)]
+  $(#[ $attrs ])* 
+  #[serde(remote=$main_s)]
+  $($intro)* $new $($body)*
+} }
+
+serde_with_compat!{
+  [ #[derive(Debug,Serialize,Deserialize)] ]
+  [ pub ][ enum ] IOccultIlk="IOccultIlk" IOccultIlk_New "IOccultIlk_Compat" [
+    {
+      Distinct(OccultIlkData),
+      Mix(OccultIlkOwningId),
+    }
+  ]
+}
+
+#[derive(Debug,Deserialize)]
+#[serde(untagged)]
+#[allow(non_camel_case_types)]
+enum IOccultIlk_Compat {
+  V1(OccultIlkOwningId), // Otter 1.0.0
+  V2(#[serde(with="IOccultIlk_New")] IOccultIlk),
+}
+  
 type Id = OccultIlkId;
 type OId = OccultIlkOwningId;
 type K = OccultIlkName;
@@ -37,11 +90,30 @@ pub struct Data {
   refcount: Refcount,
 }
 
+impl TryFrom<IOccultIlk_Compat> for IOccultIlk {
+  type Error = Infallible;
+  #[throws(Infallible)]
+  fn try_from(compat: IOccultIlk_Compat) -> IOccultIlk { match compat {
+    IOccultIlk_Compat::V1(oioi) => IOI::Mix(oioi),
+    IOccultIlk_Compat::V2(ioi) => ioi,
+  } }
+}
+
 impl OccultIlks {
   #[throws(as Option)]
   pub fn get<I: Borrow<Id>>(&self, id: &I) -> &V {
     &self.table.get(*id.borrow())?.v
   }
+
+  #[throws(as Option)]
+  pub fn from_iilk<'r>(&'r self, iilk: &'r IOccultIlk) -> &'r V { match iilk {
+    IOI::Distinct(data) => data,
+    IOI::Mix(id) => self.get(id)?,
+  } }
+  pub fn dispose_iilk(&mut self, iilk: IOccultIlk) { match iilk {
+    IOI::Distinct(_data) => { },
+    IOI::Mix(id) => self.dispose(id),
+  } }
 
   pub fn create(&mut self, k: K, v: V) -> OId {
     let OccultIlks { lookup, table } = self;

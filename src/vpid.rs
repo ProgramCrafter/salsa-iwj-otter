@@ -301,6 +301,7 @@ pub fn permute(occid: OccId,
         error!("{}", internal_error_bydebug(&(occid, &occ, &nr, piece)));
         continue;
       }}
+      if_let!{ IOI::Mix(occilk) = occilk; else continue; }
       let (notches, pieces) = ilks.entry(*occilk.borrow()).or_default();
       notches.push(notch);
       pieces.push(piece);
@@ -327,8 +328,8 @@ pub fn permute(occid: OccId,
         new_notches[notch] = NR::Piece(new_piece);
         gpieces.get_mut(new_piece).unwrap()
           .occult.passive.as_mut().unwrap()
-          .notch
-          = notch;
+          .permute_notch
+          = Some(notch);
       }
     }
 
@@ -400,9 +401,11 @@ pub fn consistency_check(
       assert_eq!(&gpc.occult.passive, &None);
     }
 
-    if let Some(Passive { occid, notch }) = gpc.occult.passive {
+    if let Some(Passive { occid, permute_notch }) = gpc.occult.passive {
       let occ = goccults.occults.get(occid).unwrap();
-      assert_eq!(occ.notches.table[notch], NR::Piece(piece));
+      if let Some(notch) = permute_notch {
+        assert_eq!(occ.notches.table[notch], NR::Piece(piece));
+      }
     }
   }
 
@@ -416,7 +419,7 @@ pub fn consistency_check(
       let pgpc = gpieces.get(ppiece).unwrap();
       let passive = pgpc.occult.passive.as_ref().unwrap();
       assert_eq!(passive.occid, occid);
-      assert_eq!(passive.notch, notch);
+      assert_eq!(passive.permute_notch.unwrap(), notch);
     }
 
     let nfree1 = occ.notches.table.iter()

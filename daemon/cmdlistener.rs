@@ -1042,7 +1042,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         ipc.p.into_inner().delete_hook(&gpc, gs);
       }
       if let Some(occilk) = ipc.occilk {
-        ig.ioccults.ilks.dispose(occilk);
+        ig.ioccults.ilks.dispose_iilk(occilk);
       }
       (U{ pcs: vec![(piece, PieceUpdateOp::Delete())],
           log: vec![ LogEntry {
@@ -1122,8 +1122,12 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         let p = IPieceTraitObj::new(p);
         (||{
           let ilks = &mut ig.ioccults.ilks;
-          let occilk = occultable.map(|(ilkname, p_occ)| {
-            ilks.create(ilkname, OccultIlkData { p_occ })
+          let occilk = occultable.map(|(lilk, p_occ)| {
+            let data = OccultIlkData { p_occ };
+            match lilk {
+              LOI::Distinct => IOI::Distinct(data),
+              LOI::Mix(ilkname) => IOI::Mix(ilks.create(ilkname, data)),
+            }
           });
           ig.ipieces.as_mut(modperm).insert(piece, IPiece {
             p, occilk,

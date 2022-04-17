@@ -194,35 +194,16 @@ impl PieceSpec for Spec {
           throw!(SpecError::UnoccultableButRichImageForOccultation)
         }
         let occ_label = occ_label(occ);
-        Some((image.into(), "bad-ilk-mixing-todo".into(), occ_label))
+        Some((image.into(), occ_label))
       },
-      (Some((image_occ_ilk, image_occ_image)), occ) => {
+      (Some((_, image_occ_image)), occ) => {
         let default_occ = default();
         let occ = occ.as_ref().unwrap_or(&default_occ);
         let occ_label = occ_label(occ);
-
-        let our_ilk =
-          // We need to invent an ilk to allow coalescing of similar
-          // objects.  Here "similar" includes dice with the same
-          // occulted image, but possibly different sets of faces
-          // (ie, different labels).
-          //
-          // We also disregard the cooldown timer parameters, so
-          // similar-looking dice with different cooldowns can be
-          // mixed.  Such things are pathological anyway.
-          //
-          // But we don't want to get mixed up with some other things
-          // that aren't dice.  That would be mad even if they look a
-          // bit like us.
-          format!("die.{}.{}", nfaces, &image_occ_ilk);
-
-        Some((image_occ_image, our_ilk, occ_label))
+        Some((image_occ_image, occ_label))
       },
-    }.map(|(occ_image, occ_ilk, occ_label)| {
-      let occ_ilk = GoodItemName::try_from(occ_ilk)
-        .map_err(|e| internal_error_bydebug(&e))?
-        .into();
-
+    }.map(|(occ_image, occ_label)| {
+      let occ_ilk = LOI::Distinct;
       let our_occ_image = Arc::new(Die {
         nfaces, cooldown_time, cooldown_radius, surround_outline,
         itemname: itemname.clone(),

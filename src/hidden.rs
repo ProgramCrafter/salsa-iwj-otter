@@ -44,7 +44,8 @@ pub struct PieceOccult {
 #[derive(Clone,Copy,Debug,Serialize,Deserialize,Eq,PartialEq)]
 struct Passive {
   occid: OccId,
-  notch: Notch,
+  // If None, this piece does not participate in mixing (IOI::Distinct)
+  permute_notch: Option<Notch>,
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
@@ -151,7 +152,8 @@ impl PieceOccult {
   pub fn passive_delete_hook(&self, goccults: &mut GameOccults,
                              piece: PieceId) {
     if_chain! {
-      if let Some(Passive { occid, notch }) = self.passive;
+      if let Some(Passive { occid, permute_notch }) = self.passive;
+      if let Some(notch) = permute_notch;
       if let Some(occ) = goccults.occults.get_mut(occid);
       then {
         occ.notches.remove(piece, notch)
@@ -287,32 +289,46 @@ pub fn piece_pri(
 {
   let mut occk_dbg = None;
   let occulted = if_chain! {
-    if let Some(Passive { occid, notch }) = gpc.occult.passive;
+    if let Some(Passive { occid, permute_notch }) = gpc.occult.passive;
     if let Some(occ) = occults.occults.get(occid);
-    if let Some(zg) = occ.notch_zg(notch);
-    then {
-      let occk = occ.views.get_kind(player)
-        .map_displaced(|(displace, z)| {
-          let notch: NotchNumber = notch.into();
-          let pos = displace.place(occ.ppiece_use_size, notch);
-          let z = z.plus_offset(notch)
-            .unwrap_or_else(|e| { // eek!
-              error!("z coordinate overflow ({:?}), bodging! {:?} {:?}",
-                     e, piece, &z);
-              z.clone()
-            });
-          (pos, ZLevel { z, zg })
-        });
+    then { if_chain!{
+      if let Some(notch) = permute_notch;
+      if let Some(zg) = occ.notch_zg(notch);
+      then {
+        let occk = occ.views.get_kind(player)
+          .map_displaced(|(displace, z)| {
+            let notch: NotchNumber = notch.into();
+            let pos = displace.place(occ.ppiece_use_size, notch);
+            let z = z.plus_offset(notch)
+              .unwrap_or_else(|e| { // eek!
+                error!("z coordinate overflow ({:?}), bodging! {:?} {:?}",
+                       e, piece, &z);
+                z.clone()
+              });
+            (pos, ZLevel { z, zg })
+          });
 
-      occk_dbg = Some(occk.clone());
-      match occk.pri_occulted() {
-        Some(o) => o,
-        None => {
-          trace_dbg!("piece_pri", player, piece, occk_dbg, gpc);
-          return None;
+        occk_dbg = Some(occk.clone());
+        match occk.pri_occulted() {
+          Some(o) => o,
+          None => {
+            trace_dbg!("piece_pri", player, piece, occk_dbg, gpc);
+            return None;
+          }
         }
       }
-    }
+      else { // No notch, not mixing (so not displacing)
+        match occ.views.get_kind(player) {
+          OccKG::Invisible          => {
+            trace_dbg!("piece_pri", player, piece, gpc);
+            return None;
+          }
+          OccKG::Visible      => PriOG::Visible(ShowUnocculted(())),
+          OccKG::Scrambled    => PriOG::Occulted,
+          OccKG::Displaced(_) => PriOG::Occulted,
+        }
+      }
+    } }
     else {
       PriOG::Visible(ShowUnocculted(()))
     }
@@ -401,7 +417,7 @@ impl IPieceTraitObj {
 
 impl IPiece {
   #[throws(IE)]
-  pub fn show_or_instead<'p>(&self, ioccults: &'p IOccults,
+  pub fn show_or_instead<'p>(&'p self, ioccults: &'p IOccults,
                          y: Option<ShowUnocculted>)
           -> Either<ShowUnocculted, /*occulted*/ &'p dyn InertPieceTrait> {
     match y {
@@ -410,7 +426,7 @@ impl IPiece {
         let occilk = self.occilk.as_ref()
           .ok_or_else(|| internal_logic_error(format!(
             "occulted non-occultable {:?}", self)))?;
-        let occ_data = ioccults.ilks.get(occilk)
+        let occ_data = ioccults.ilks.from_iilk(occilk)
           .ok_or_else(|| internal_logic_error(format!(
             "occulted ilk vanished {:?} {:?}", self, occilk)))?;
         occ_data.p_occ.as_ref()
@@ -471,7 +487,7 @@ pub fn vpiece_decode(
   let piece: Option<PieceId> = if_chain! {
     if let Some(p) = piece;
     if let Some(gpc) = gs.pieces.get(p);
-    if let Some(Passive { occid, notch:_ }) = gpc.occult.passive;
+    if let Some(Passive { occid, permute_notch:_ }) = gpc.occult.passive;
     if let Some(occ) = gs.occults.occults.get(occid);
     let kind = occ.views.get_kind(player);
     if ! kind.at_all_visible();
@@ -508,7 +524,7 @@ fn recalculate_occultation_general<
 {
   #[derive(Debug,Copy,Clone)]
   struct OldNewOcculteds<O> {
-    old: Option<(O, Notch)>,
+    old: Option<(O, Option<Notch>)>,
     new: Option<O>,
   }
   impl<O> OldNewOcculteds<O> {
@@ -541,13 +557,13 @@ fn recalculate_occultation_general<
 
     let occulteds = OldNewOcculteds {
       old:
-        gpc.occult.passive.map(|Passive { occid, notch }| Ok::<_,IE>((
+        gpc.occult.passive.map(|Passive { occid, permute_notch }| Ok::<_,IE>((
           Occulted {
             occid,
             occ: goccults.occults.get(occid).ok_or_else(
               || internal_logic_error("uccultation vanished"))?,
           },
-          notch,
+          permute_notch,
         ))).transpose()?,
 
       new:
@@ -686,7 +702,7 @@ fn recalculate_occultation_general<
       to_recalculate.mark_dirty(occid);
       goccults.occults.get_mut(occid).unwrap()
     };
-    if let Some((occid, old_notch)) = occulteds.old {
+    if let Some((occid, Some(old_notch))) = occulteds.old {
       occultation(goccults, occid)
         .notches
         .remove(piece, old_notch)
@@ -698,15 +714,22 @@ fn recalculate_occultation_general<
       let occ = occultation(goccults, occid);
       if let Some(ilk) = wants!( ipc.occilk.as_ref() );
       then {
-        if_chain!{
-          if occ.notches.is_empty();
-          if let Some(ilk) = wants!( ioccults.ilks.get(ilk) );
-          if let Some(bbox) = want!( Ok = ilk.p_occ.bbox_approx() );
-          if let Some(size) = want!( Ok = bbox.br() - bbox.tl(), ?(bbox) );
-          then { occ.ppiece_use_size = size; }
+        let permute_notch = match ilk {
+          IOI::Distinct(_) => None,
+          IOI::Mix(ilk) => {
+            if_chain!{
+              if occ.notches.is_empty();
+              if let Some(ilk) = wants!( ioccults.ilks.get(ilk) );
+              if let Some(bbox) = want!( Ok = ilk.p_occ.bbox_approx() );
+              if let Some(size) = want!( Ok = bbox.br() - bbox.tl(), ?(bbox) );
+              then { occ.ppiece_use_size = size; }
+            };
+
+            let notch = occ.notches.insert(zg, piece);
+            Some(notch)
+          }
         };
-        let notch = occ.notches.insert(zg, piece);
-        Some(Passive { occid, notch })
+        Some(Passive { occid, permute_notch })
       }
       else {
         None

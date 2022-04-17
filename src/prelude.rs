@@ -218,6 +218,10 @@ pub type OccK = OccultationKind;
 pub use OccultationKindGeneral as OccKG;
 pub use OccultationKindAlwaysOk as OccKA;
 
+// occultilks.rs
+pub type LOI = LOccultIlk;
+pub type IOI = IOccultIlk;
+
 // pcrender.rs
 pub use PriOccultedGeneral as PriOG;
 

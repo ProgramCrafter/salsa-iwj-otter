@@ -289,7 +289,7 @@ pub struct SpecLoaded<PT: ?Sized> {
 }
 pub type PieceSpecLoaded = SpecLoaded<dyn PieceTrait>;
 pub type PieceSpecLoadedOccultable =
-  Option<(OccultIlkName, Arc<dyn InertPieceTrait>)>;
+  Option<(LOccultIlk, Arc<dyn InertPieceTrait>)>;
 
 #[typetag::serde(tag="type")]
 pub trait PieceSpec: Debug + Sync + Send + 'static {

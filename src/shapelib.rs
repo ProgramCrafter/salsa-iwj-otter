@@ -583,7 +583,7 @@ impl Contents {
       OccData::Back(ilk) => {
         if let Some(back) = &back {
           let back = back.clone();
-          Some((ilk.clone(), back))
+          Some((LOI::Mix(ilk.clone()), back))
         } else {
           None // We got AliasNotFound, ah well
         }
@@ -604,7 +604,7 @@ impl Contents {
           desc: occ.desc.clone(),
           outline: occ.outline.clone(),
         }) as Arc<dyn InertPieceTrait>;
-        Some((occ_name.into_inner(), it))
+        Some((LOI::Mix(occ_name.into_inner()), it))
       },
     };
 
