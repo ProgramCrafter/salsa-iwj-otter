@@ -9,6 +9,27 @@ pub const HELD_SURROUND_COLOUR: &str = "black";
 const MONOSPACE: HtmlLit = Html::lit(
   r#"font-family="Latin Modern Mono, monospace" font-weight="700""#);
 
+pub const DEFAULT_TABLE_SIZE: Pos = PosC::new( 300, 200 );
+pub const DEFAULT_TABLE_COLOUR: &str = "green";
+
+pub const SELECT_SCALE: f64 = 1.1;
+
+// also in script.ts:redisplay_ancillaries ("halo")
+//   nelem.setAttributeNS(null,'stroke-width','2px');
+pub const SELECT_STROKE_WIDTH: f64 = 2.0;
+
+pub const DEFAULT_EDGE_WIDTH: f64 = 0.2;
+pub const INVISIBLE_EDGE_SENSITIVE: f64 = 2.;
+
+// When trying to centre text, we use text-align and/or text-anchor
+// to do the horizontal positioning, but vertical positioning is
+// troublesome.  We bodge it.  Multiple the font size (in pixels)
+// by this, and add it to the SVG y coordinate (ie, shufting the text
+// down).
+pub const SVG_FONT_Y_ADJUST_OF_FONT_SIZE: f64 = 0.35;
+
+pub fn default_edge_width() -> f64 { DEFAULT_EDGE_WIDTH }
+
 pub fn monospace_font(size: u32) -> Html {
   hformat!(r##"{} font-size="{}""##, MONOSPACE, size)
 }
