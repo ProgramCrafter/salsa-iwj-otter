@@ -21,6 +21,8 @@ pub const SELECT_STROKE_WIDTH: f64 = 2.0;
 pub const DEFAULT_EDGE_WIDTH: f64 = 0.2;
 pub const INVISIBLE_EDGE_SENSITIVE: f64 = 2.;
 
+pub const LABEL_FONT_SIZE: f64 = 4.0;
+
 // When trying to centre text, we use text-align and/or text-anchor
 // to do the horizontal positioning, but vertical positioning is
 // troublesome.  We bodge it.  Multiple the font size (in pixels)

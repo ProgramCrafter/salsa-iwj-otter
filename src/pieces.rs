@@ -193,7 +193,7 @@ impl PieceLabelLoaded {
       else if let Some(c) = def_colour { c.borrow() }
       else { Html::lit("black").into() }
     };
-    let fontsz = 4.;
+    let fontsz = LABEL_FONT_SIZE;
     let PosC{ coords: [x,y] } = {
       use piece_specs::PieceLabelPlace::*;
       let inout = match self.place {
