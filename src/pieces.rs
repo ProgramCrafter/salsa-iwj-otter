@@ -273,7 +273,9 @@ impl<Desc, Outl:'static> GenericSimpleShape<Desc, Outl>
     &self, f: &mut Html, face: FaceId,
     stroke_attrs_hook: &mut dyn FnMut(&mut Html) -> Result<(),IE>,
   ) {
-    let ef = |f: &mut Html, cmap: &ColourMap, attrname: &str, otherwise| {
+    let ef = |f: &mut Html,
+              cmap: &ColourMap, attrname: &str,
+              otherwise: &HtmlStr| {
       if let Some(colour) = cmap.get(face) {
         hwrite!(f, r##" {}="{}""##, attrname, colour)
       } else {
@@ -289,12 +291,12 @@ impl<Desc, Outl:'static> GenericSimpleShape<Desc, Outl>
              &path)?;
     }
     hwrite!(f, r##"<path"##)?;
-    ef(f, &self.colours, "fill", r##" fill="none""##)?;
+    ef(f, &self.colours, "fill", &Html::lit(r##" fill="none""##))?;
     if self.edges.len() != 0 {
       hwrite!(f, r##" stroke-width="{}""##, &self.edge_width)?;
     }
     stroke_attrs_hook(f)?;
-    ef(f, &self.edges, "stroke", "")?;
+    ef(f, &self.edges, "stroke", default())?;
     hwrite!(f, r##" d="{}"/>"##, &path)?;
   }
 }
