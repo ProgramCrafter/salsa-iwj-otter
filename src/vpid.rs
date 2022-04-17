@@ -410,6 +410,15 @@ pub fn consistency_check(
     let ogpc = gpieces.get(occ.occulter).unwrap();
     assert_eq!(ogpc.occult.active, Some(occid));
     assert_eq!(occ.notches.table.len(), occ.notches.zg.len());
+
+    for (notch, nr) in occ.notches.table.iter_enumerated() {
+      if_let!{ Some(ppiece) = nr.piece(); else continue };
+      let pgpc = gpieces.get(ppiece).unwrap();
+      let passive = pgpc.occult.passive.as_ref().unwrap();
+      assert_eq!(passive.occid, occid);
+      assert_eq!(passive.notch, notch);
+    }
+
     let nfree1 = occ.notches.table.iter()
       .filter(|nr| nr.piece().is_none()).count();
     let mut walk = occ.notches.freelist;
