@@ -692,22 +692,26 @@ fn recalculate_occultation_general<
         .remove(piece, old_notch)
         .unwrap()
     };
-    let passive = if let Some(occid) = occulteds.new {
+    let passive = if_chain!{
+      if let Some(occid) = occulteds.new;
       let zg = gen.next();
       let occ = occultation(goccults, occid);
-      if_chain!{
-        if occ.notches.is_empty();
-        if let Some(ilk) = wants!( ipc.occilk.as_ref() );
-        if let Some(ilk) = wants!( ioccults.ilks.get(ilk) );
-        if let Some(bbox) = want!( Ok = ilk.p_occ.bbox_approx() );
-        if let Some(size) = want!( Ok = bbox.br() - bbox.tl(), ?(bbox) );
-        then { occ.ppiece_use_size = size; }
-      };
-      let notch = occ.notches
-        .insert(zg, piece);
-      Some(Passive { occid, notch })
-    } else {
-      None
+      then {
+        if_chain!{
+          if occ.notches.is_empty();
+          if let Some(ilk) = wants!( ipc.occilk.as_ref() );
+          if let Some(ilk) = wants!( ioccults.ilks.get(ilk) );
+          if let Some(bbox) = want!( Ok = ilk.p_occ.bbox_approx() );
+          if let Some(size) = want!( Ok = bbox.br() - bbox.tl(), ?(bbox) );
+          then { occ.ppiece_use_size = size; }
+        };
+        let notch = occ.notches
+          .insert(zg, piece);
+        Some(Passive { occid, notch })
+      }
+      else {
+        None
+      }
     };
     gpieces.byid_mut(piece).unwrap().occult.passive = passive;
   })(); // <- no ?, infallible commitment
