@@ -284,8 +284,7 @@ impl<Desc, Outl:'static> GenericSimpleShape<Desc, Outl>
 
     if self.colours.len() == 0 {
       hwrite!(f,
-             r##"<path fill="none" \
-                  stroke-width="{}" stroke="transparent" d="{}"/>"##,
+ r##"<path fill="none" stroke-width="{}" stroke="transparent" d="{}"/>"##,
              INVISIBLE_EDGE_SENSITIVE,
              &path)?;
     }
