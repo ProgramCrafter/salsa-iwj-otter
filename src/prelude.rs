@@ -136,6 +136,7 @@ pub use crate::format_by_fmt_hex;
 pub use crate::matches_doesnot;
 pub use crate::trace_dbg;
 pub use crate::{want, wantok, wants, want_let, want_failed_internal};
+pub use crate::serde_with_compat;
 
 pub use crate::accounts::loaded_acl::{self, EffectiveACL, LoadedAcl, PermSet};
 pub use crate::accounts::*;
