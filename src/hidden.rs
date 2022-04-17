@@ -408,8 +408,7 @@ impl IPiece {
       None => Right({
         let occilk = self.occilk.as_ref()
           .ok_or_else(|| internal_logic_error(format!(
-            "occulted non-occultable {:?}", self)))?
-          .borrow();
+            "occulted non-occultable {:?}", self)))?;
         let occ_data = ioccults.ilks.get(occilk)
           .ok_or_else(|| internal_logic_error(format!(
             "occulted ilk vanished {:?} {:?}", self, occilk)))?;
@@ -698,7 +697,6 @@ fn recalculate_occultation_general<
       if_chain!{
         if occ.notches.is_empty();
         if let Some(ilk) = wants!( ipc.occilk.as_ref() );
-        let ilk = ilk.borrow();
         if let Some(ilk) = wants!( ioccults.ilks.get(ilk) );
         if let Some(bbox) = want!( Ok = ilk.p_occ.bbox_approx() );
         if let Some(size) = want!( Ok = bbox.br() - bbox.tl(), ?(bbox) );

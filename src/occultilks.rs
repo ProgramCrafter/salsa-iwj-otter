@@ -39,7 +39,7 @@ pub struct Data {
 
 impl OccultIlks {
   #[throws(as Option)]
-  pub fn get<I: Borrow<Id>>(&self, id: I) -> &V {
+  pub fn get<I: Borrow<Id>>(&self, id: &I) -> &V {
     &self.table.get(*id.borrow())?.v
   }
 
