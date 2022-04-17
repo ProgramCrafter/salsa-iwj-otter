@@ -83,6 +83,9 @@ BUNDLE_SOURCES_CMD ?= $(NAILING_CARGO) --- $(BUNDLE_SOURCES)
 USVG_CMD ?= $(NAILING_CARGO_JUST_RUN) $(USVG)
 WASM_BINDGEN_CLI_CARGO_OPTS ?= --subcommand-props=!manifest-path
 
+CARGO_DOCUMENT_PRIVATE_ITEMS ?= --document-private-items
+CARGO_DOC_OPTS += $(CARGO_DOCUMENT_PRIVATE_ITEMS)
+
 clean-nailing:
 	$(NAILING_CARGO_JUST_RUN) \
  sh -c 'cd "$1"; find -mindepth 1 -maxdepth 1 -print0 | xargs -0r rm -rf --' \
@@ -237,7 +240,8 @@ stamp/cargo-jstest.debug: $(call rsrcs,.)
 
 stamp/cargo.doc: $(call rsrcs,.)
 	set -o pipefail -e; \
-	$(CARGO) doc $(CARGO_DOC_OPTS) --workspace 2>&1 |egrep -vf .cargo-doc-suppress-errors
+	$(CARGO) doc $(CARGO_DOC_OPTS) --workspace 2>&1 \
+		|egrep -vf .cargo-doc-suppress-errors
 	$(stamp)
 
 $(addprefix stamp/cargo.wasm-,$(DR)):: \
