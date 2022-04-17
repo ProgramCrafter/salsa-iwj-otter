@@ -705,8 +705,7 @@ fn recalculate_occultation_general<
           if let Some(size) = want!( Ok = bbox.br() - bbox.tl(), ?(bbox) );
           then { occ.ppiece_use_size = size; }
         };
-        let notch = occ.notches
-          .insert(zg, piece);
+        let notch = occ.notches.insert(zg, piece);
         Some(Passive { occid, notch })
       }
       else {
