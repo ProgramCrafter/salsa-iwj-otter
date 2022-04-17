@@ -406,6 +406,32 @@ macro_rules! want_let {
   };
 }
 
+/// Allows the use of serde for a compat struct
+///
+/// Ideally we would have
+/// ```rust ignore
+/// #[derive(Deserialize)]
+/// #[serde(try_from=Compat)]
+/// struct Main { /* new definition */ }
+///
+/// #[derive(Deserialize)]
+/// #[serde(untagged)]
+/// enum Compat { V1(Main), V2(Old) }
+///
+/// #[derive(Deserialize)]
+/// struct Old { /* old version we still want to read */ }
+///
+/// impl TryFrom<Compat> for Main { /* ... */ }
+/// ```
+///
+/// But the impl for `Compat` ends up honouring the `try_from` on `Main`
+/// so is recursive.  We solve that abusing serde's remote feature.
+///
+/// For an example, see `IOccultIlk`.
+///
+/// The name of the main structure must be passed twice, once as an
+/// identifier and once as a literal, because `stringify!` doesn't work
+/// in the serde attribute.
 #[macro_export]
 macro_rules! serde_with_compat { {
   [ #[ $($attrs:meta)* ] ] [ $vis:vis ] [ $($intro:tt)* ]
