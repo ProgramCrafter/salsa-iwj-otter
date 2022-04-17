@@ -600,7 +600,7 @@ fn recalculate_occultation_general<
         .push(player);
     }
 
-    dbgc!(&situations);
+    trace_dbg!("situations", &situations);
 
     let mut puos = SecondarySlotMap::new();
     let mut most_obscure = None;
@@ -622,7 +622,7 @@ fn recalculate_occultation_general<
         (true,  false) => Some(PUO::Delete()),
         (true,  true ) => Some(PUO::Modify(())),
       };
-      dbgc!(&kinds, &players, &most_obscure, &puo);
+      trace_dbg!("situation", &kinds, &players, &most_obscure, &puo);
 
       if let Some(puo) = puo {
         for player in players {
@@ -633,7 +633,7 @@ fn recalculate_occultation_general<
     // this calculation does not seem to work?
     // to repro: bob moves a card out of bob's hand
     // alice sees "a card with a red-striped back"
-    dbgc!(most_obscure);
+    trace_dbg!("most_obscure", most_obscure);
 
     let describe_occulter = |oni| Ok::<_,IE>(if_chain! {
       if let Some(h) = occulteds.as_refs().main()[oni];
@@ -675,7 +675,7 @@ fn recalculate_occultation_general<
   };
   
 
-  dbgc!(&puos, &log, &occulteds);
+  trace_dbg!("committing", &puos, &log, &occulteds);
 
   (||{
     let occultation:
@@ -951,7 +951,7 @@ pub fn create_occultation(
     notches: default(),
   };
   debug!("creating occultation {:?}", &occultation);
-  dbgc!(&recalc);
+  trace_dbg!("recalc", &recalc);
 
   // Everything from here on must be undone if we get an error
   // but we hope not to get one...
@@ -987,7 +987,7 @@ pub fn create_occultation(
     })
   ))()?;
 
-  dbgc!(&updates);
+  trace_dbg!("created", &updates);
   updates
 }
 
