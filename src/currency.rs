@@ -94,9 +94,9 @@ impl PieceBaseTrait for Banknote {
 impl PieceTrait for Banknote {
   #[throws(IE)]
   fn describe_html(&self, gpc: &GPiece, _: &GameOccults) -> Html {
-    hformat!("{}, {} {}",
+    hformat!("{}, {}{}",
              self.image.describe_html(gpc.face)?,
-             self.qty, Html::from_txt(&self.currency))
+             self.qty, &self.currency)
   }
 
   #[throws(IE)]
@@ -108,7 +108,7 @@ impl PieceTrait for Banknote {
     let label_y_adj = label_font_size * SVG_FONT_Y_ADJUST_OF_FONT_SIZE;
 
     hwrite!(f,
-            r##"<text text-align="center" text-anchor="middle" x="0" y="{}" font-size="{}">{} {}</text>"##,
+            r##"<text text-align="center" text-anchor="middle" x="0" y="{}" font-size="{}">{}{}</text>"##,
             label_y_adj, label_font_size,
             self.qty, &self.currency)?;
   }
