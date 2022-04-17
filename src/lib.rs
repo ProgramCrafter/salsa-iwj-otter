@@ -29,6 +29,7 @@ pub mod childio;
 pub mod clock;
 pub mod commands;
 pub mod config;
+pub mod currency;
 pub mod deck;
 pub mod dice;
 pub mod debugmutex;

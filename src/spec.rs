@@ -87,6 +87,8 @@ pub enum SpecError {
   #[error("invalid size scale")]             InvalidSizeScale,
   #[error("multiple faces required")]        MultipleFacesRequired,
   #[error("far too many faces ({0})")]       FarTooManyFaces(usize),
+  #[error("currency quantity not multiple of minimum unit")]
+  CurrencyQtyNotMultipleOfUnit,
   #[error("coordinate overflow")]
   CoordinateOverflow(#[from] CoordinateOverflow),
   #[error("image for supposedly-occultable piece \
