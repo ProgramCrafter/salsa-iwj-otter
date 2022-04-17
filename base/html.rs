@@ -52,6 +52,10 @@ pub struct HtmlStr(str);
 #[serde(transparent)]
 pub struct HtmlLit(&'static str);
 
+impl Default for &'static HtmlStr {
+  fn default() -> Self { HtmlStr::from_html_str("") }
+}
+
 impl From<HtmlLit> for &'static HtmlStr {
   fn from(l: HtmlLit) -> &'static HtmlStr { HtmlStr::from_html_str(l.0) }
 }
