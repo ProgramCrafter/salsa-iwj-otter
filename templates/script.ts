@@ -973,16 +973,23 @@ type MouseFindClicked = null | {
   clicked: PieceId[],
   held: PlayerId | null,
   pinned: boolean,
+  multigrab?: number,
 };
 
 type PieceSet = { [piece: string]: true };
 
-function grab_clicked(clicked: PieceId[], loose: boolean) {
+function grab_clicked(clicked: PieceId[], loose: boolean,
+		      multigrab: number | undefined) {
   for (let piece of clicked) {
     let p = pieces[piece]!;
     set_grab_us(piece,p);
-    api_piece_x(api_immediate, loose,
-		wresting ? 'wrest' : 'grab', piece,p, { });
+    if (multigrab !== undefined) {
+      api_piece_x(api_immediate, loose, 'multigrab',
+		  piece,p, { n: multigrab });
+    } else {
+      api_piece_x(api_immediate, loose,
+		  wresting ? 'wrest' : 'grab', piece,p, { });
+    }
   }
 }
 function ungrab_clicked(clicked: PieceId[]) {
@@ -1095,11 +1102,17 @@ function mouse_find_clicked(e: MouseEvent,
   } else if (special_count == 0) {
     return mouse_find_lowest(e);
   } else { // special_count > 0
-    let clickpos = mouseevent_pos(e);
-    return mouse_find_predicate(
-      special_count, count_allow_for_deselect, note_already,
-      function(p) { return p_bbox_contains(p, clickpos); }
-    )
+    if (p.multigrab && !wresting) {
+      let clicked = mouse_clicked_one(piece, p);
+      if (clicked) clicked.multigrab = special_count;
+      return clicked;
+    } else {
+      let clickpos = mouseevent_pos(e);
+      return mouse_find_predicate(
+	special_count, count_allow_for_deselect, note_already,
+	function(p) { return p_bbox_contains(p, clickpos); }
+      )
+    }
   }
 }
 
@@ -1122,6 +1135,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   let clicked = c.clicked;
   let held = c.held;
   let pinned = c.pinned;
+  let multigrab = c.multigrab;
 
   special_count = null;
   special_count_reupdate();
@@ -1142,7 +1156,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       add_log_message('That piece is pinned to the table.');
       return;
     }
-    grab_clicked(clicked, !wresting);
+    grab_clicked(clicked, !wresting, multigrab);
     drag_start_prepare(DRAGGING.MAYBE_GRAB);
   } else {
     add_log_message('That piece is held by another player.');
@@ -1467,7 +1481,7 @@ function rectsel_mouseup(e: MouseEvent) {
     if (!rectsel_shifted) {
       ungrab_all_except(note_already);
     }
-    grab_clicked(c.clicked, false);
+    grab_clicked(c.clicked, false, undefined);
   }
 }
 
