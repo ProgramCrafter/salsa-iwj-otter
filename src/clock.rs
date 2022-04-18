@@ -497,35 +497,36 @@ impl PieceTrait for Clock {
       let mins = mins.to_string();
       let mins_pad = Html::from_html_string("&nbsp;".repeat(3 - mins.len()));
 
-      let pointer = Html::lit(r##"
-  pointer-events="none"
-             "##);
       let font = monospace_font(6);
       hwrite!(f, r##"
-  <text x="1" y="{}" {} {} fill="{}" >{}{}{}</text>"##,
-             y, font, pointer, Html::lit(show.text),
+  <{} x="1" y="{}" {} fill="{}" >{}{}{}</text>"##,
+             HTML_TEXT_LABEL_ELEM_START,
+             y, font, Html::lit(show.text),
              mins_pad, HtmlStr::from_html_str(&mins), Html::lit(show.sigil)
       )?;
       hwrite!(f, r##"
-  <text x="14" y="{}" {} {} fill="{}" >{:02}</text>"##,
-             y, font, pointer, Html::lit(show.text),
+  <{} x="14" y="{}" {} fill="{}" >{:02}</text>"##,
+             HTML_TEXT_LABEL_ELEM_START,
+             y, font, Html::lit(show.text),
              secs
       )?;
       let nick_y = y - 0.5;
       if let Some(nick) = u.nick {
         hwrite!(f, r##"
-  <text x="21" y="{}" fill="{}" {} clip-path="url(#def.{}.cl)" 
+  <{} x="21" y="{}" fill="{}" clip-path="url(#def.{}.cl)" 
    font-size="4">{}</text>
               "##,
-               nick_y, show.text, pointer,
+               HTML_TEXT_LABEL_ELEM_START,
+               nick_y, show.text,
                vpid,
                nick,
         )?;
       } else {
         hwrite!(f, r##"
-  <text x="27" y="{}" fill="pink" stroke="red" {}
+  <{} x="27" y="{}" fill="pink" stroke="red"
    stroke-width="0.1" font-size="4">({})</text>"##,
-               nick_y, pointer, user,
+               HTML_TEXT_LABEL_ELEM_START,
+               nick_y, user,
         )?;
       }
     }

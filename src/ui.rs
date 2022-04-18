@@ -23,6 +23,9 @@ pub const INVISIBLE_EDGE_SENSITIVE: f64 = 2.;
 
 pub const LABEL_FONT_SIZE: f64 = 4.0;
 
+pub const HTML_TEXT_LABEL_ELEM_START: HtmlLit =
+  Html::lit(r##"text pointer-events="none""##);
+
 /// Fudge factor
 ///
 /// When trying to centre text, we use text-align and/or text-anchor
