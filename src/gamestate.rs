@@ -71,6 +71,7 @@ pub struct GPiece {  // usual variable: gpc
   #[serde(default, skip_serializing_if="is_default")]
   pub pinned: bool,
   pub occult: PieceOccult,
+  #[serde(default, skip_serializing_if="PieceAngle::is_default")]
   pub angle: PieceAngle,
   pub gen: Generation,
   pub lastclient: ClientId,

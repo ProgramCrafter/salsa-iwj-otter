@@ -220,6 +220,12 @@ pub struct PiecesSpec {
 pub enum PieceAngle {
   Compass(CompassAngle),
 }
+impl PieceAngle {
+  pub fn is_default(&self) -> bool { match self {
+    PieceAngle::Compass(a) => *a == CompassAngle::default(),
+    #[allow(unreachable_patterns)] _ => false,
+  } }
+}
 
 #[derive(Debug,Copy,Clone,Eq,PartialEq)]
 #[derive(Default,Serialize,Deserialize)]
