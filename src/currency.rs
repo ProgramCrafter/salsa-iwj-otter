@@ -26,7 +26,7 @@ pub struct Spec {
   currency: String,
 }
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct Banknote {
   itemname: String,
   image: Arc<dyn InertPieceTrait>,
@@ -121,4 +121,43 @@ impl PieceTrait for Banknote {
             label_y_adj, label_font_size,
             value.qty, &self.currency)?;
   }
+
+  #[throws(ApiPieceOpError)]
+  fn op_multigrab(&self, _: ApiPieceOpArgs, _: PieceRenderInstructions,
+                  take: MultigrabQty, new_z: &ZCoord) -> OpOutcomeThunk {
+    let currency = self.currency.clone();
+    let new_z = new_z.clone();
+    OpOutcomeThunk::Reborrow(Box::new(
+      move |ig: &mut InstanceGuard, player: PlayerId, tpiece: PieceId|
+  {
+    ig.fastsplit_split(player, tpiece, new_z,
+      move |ioccults: &IOccults, goccults: &GameOccults, gpl: &GPlayer,
+            tgpc: &mut GPiece, tipc: &IPiece,
+            ngpc: &mut GPiece|
+  {
+    let value: &mut Value = tgpc.xdata.get_mut_exp()?;
+    let remaining = value.qty.checked_sub(take)
+      .ok_or(Ia::CurrencyShortfall)?;
+
+    tgpc.held = Some(player);
+    ngpc.xdata_init(Value { qty: take })?;
+    tgpc.pinned = false;
+    ngpc.held = None;
+
+    let logents = log_did_to_piece(
+      ioccults, goccults, gpl, tgpc, tipc,
+      &format!("took {}{}, leaving {}{}",
+               take, &currency,
+               remaining, &currency)
+    )?;
+
+    let update = PieceUpdateOp::ModifyQuiet(());
+
+    Ok((
+      (WhatResponseToClientOp::Predictable,
+       update,
+       logents).into(),
+      default()
+    ))
+  })}))}
 }

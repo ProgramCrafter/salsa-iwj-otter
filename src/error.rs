@@ -182,6 +182,7 @@ pub enum Inapplicable {
   #[error("overfull, cannot organise")]     OrganisedPlacementOverfull,
   #[error("overlapping occultation(s)")]    OverlappingOccultation,
   #[error("die was recently rolled, cannot flip or roll")] DieCooldown,
+  #[error("insufficient resources or currency")] CurrencyShortfall,
   #[error("UI operation not recognised")]   BadUiOperation,
   #[error("UI operation not valid in the curret piece state")]
                                             BadPieceStateForOperation,
