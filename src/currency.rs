@@ -69,8 +69,11 @@ impl PieceSpec for Spec {
       itemname, qty, min_unit,
     };
 
-    SpecLoaded { p: Box::new(bnote) as _, occultable: None,
-                 special: default() }
+    let special = PieceSpecialProperties {
+      multigrab: true,
+      ..default()
+    };
+    SpecLoaded { p: Box::new(bnote) as _, occultable: None, special }
   }
 }
 
