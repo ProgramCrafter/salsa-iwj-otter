@@ -582,13 +582,7 @@ api_route!{
                           piece, gs.pieces.byid(piece)?,
                           ipc)
         .ok_or(Ia::PieceGone)?;
-      let y = {
-        use PriOG::*;
-        match pri.occulted {
-          Visible(y) => y,
-          Occulted | Displaced(..) => throw!(Ia::Occultation),
-        }
-      };
+      let y = pri.fully_visible().ok_or(Ia::Occultation)?;
 
       '_normal_global_ops__not_loop: loop {
         let gpc = gs.pieces.byid_mut(piece)?;
