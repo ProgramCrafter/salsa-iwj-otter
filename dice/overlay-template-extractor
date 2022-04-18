@@ -59,6 +59,7 @@ sub filter_text () {
   filter_element('text', qw(x y font-family text-align text-anchor));
   $node->setAttribute('font-size', "{{ label_font_size }}px");
   $node->setAttribute('y', "{{ label_y_adjust }}");
+  $node->setAttribute('pointer-events', 'none');
   $node->removeChildNodes();
   $node->appendText('{{ label_text }}');
 }

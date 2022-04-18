@@ -108,7 +108,8 @@ impl PieceTrait for Banknote {
     let label_y_adj = label_font_size * SVG_FONT_Y_ADJUST_OF_FONT_SIZE;
 
     hwrite!(f,
-            r##"<text text-align="center" text-anchor="middle" x="0" y="{}" font-size="{}">{}{}</text>"##,
+            r##"<{} text-align="center" text-anchor="middle" x="0" y="{}" font-size="{}">{}{}</text>"##,
+            HTML_TEXT_LABEL_ELEM_START,
             label_y_adj, label_font_size,
             self.qty, &self.currency)?;
   }
