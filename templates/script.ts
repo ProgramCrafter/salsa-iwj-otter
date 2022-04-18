@@ -1747,7 +1747,7 @@ messages.Piece = <MessageHandler>handle_piece_update;
 type PreparedPieceState = {
   pos: Pos,
   svg: string,
-  held: PlayerId,
+  held: PlayerId | null,
   z: ZCoord,
   zg: Generation,
   pinned: boolean,
