@@ -58,6 +58,7 @@ pub use arrayvec::ArrayVec;
 pub use boolinator::Boolinator as _;
 pub use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
 pub use cast_trait_object::{dyn_upcast, DynCastExt};
+pub use const_default::ConstDefault;
 pub use delegate::delegate;
 pub use derive_into_owned::IntoOwned;
 pub use derive_more::*;

@@ -89,6 +89,7 @@ xmlparser = "0.13"
 zip="0.6"
 
 async-condvar-fair = { version="0.2", features=["parking_lot_0_12"] }
+const-default = { version="1",    features=["derive"      ] }
 enum-map     = { version="2"    , features=["serde"       ] }
 flexi_logger = { version="0.22" , features=["specfile"    ] }
 image = { version = "0.24", default-features=false, features=["jpeg","png"] }

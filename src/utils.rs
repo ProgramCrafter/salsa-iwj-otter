@@ -622,6 +622,8 @@ impl<I,T> IndexVec<I,T> where I: index_vec::Idx {
   }
 }
 
+pub fn is_default<T: ConstDefault + Eq>(t: &T) -> bool { t == &T::DEFAULT }
+
 #[derive(Debug)]
 pub struct AnyhowDisplay<'a>(pub &'a anyhow::Error);
 impl Display for AnyhowDisplay<'_> {
