@@ -14,6 +14,7 @@ use std::hash::Hash;
 use std::convert::TryFrom;
 use std::time::Duration;
 
+use const_default::ConstDefault;
 use enum_map::Enum;
 use fehler::{throw,throws};
 use index_vec::{define_index_type, IndexVec};
@@ -42,7 +43,7 @@ pub struct RawToken(pub String);
 
 pub type RawFaceId = u8;
 define_index_type! {
-  #[derive(Default)]
+  #[derive(Default,ConstDefault)]
   pub struct FaceId = RawFaceId;
   IMPL_RAW_CONVERSIONS = true;
 }

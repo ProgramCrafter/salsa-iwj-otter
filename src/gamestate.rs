@@ -63,9 +63,12 @@ pub struct GPlayer { // usual variable: gpl
 #[derive(Debug,Serialize,Deserialize)]
 pub struct GPiece {  // usual variable: gpc
   pub pos: Pos,
+  #[serde(default, skip_serializing_if="is_default")]
   pub face: FaceId,
+  #[serde(default, skip_serializing_if="is_default")]
   pub held: Option<PlayerId>,
   pub zlevel: ZLevel,
+  #[serde(default, skip_serializing_if="is_default")]
   pub pinned: bool,
   pub occult: PieceOccult,
   pub angle: PieceAngle,
@@ -73,6 +76,7 @@ pub struct GPiece {  // usual variable: gpc
   pub lastclient: ClientId,
   #[serde(default)] pub last_released: ClientId,
   pub gen_before_lastclient: Generation,
+  #[serde(default, skip_serializing_if="Option::is_none")]
   pub xdata: PieceXDataState,
   pub moveable: PieceMoveable,
   #[serde(default)] pub rotateable: bool,
@@ -292,9 +296,12 @@ pub type PieceSpecLoadedOccultable =
 ///
 /// These remain constant after the piece has been loaded,
 /// so they are mostly "can/do we do this thing".
-#[derive(Debug,Clone,Default,Serialize,Deserialize)]
+#[derive(Debug,Clone,ConstDefault,Default,Serialize,Deserialize)]
 pub struct PieceSpecialProperties {
+  #[serde(default, skip_serializing_if="Option::is_none")]
   pub rendering: Option<SpecialClientRendering>,
+
+  #[serde(default, skip_serializing_if="is_default")]
   pub multigrab: bool,
 }
 
