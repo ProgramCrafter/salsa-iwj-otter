@@ -24,10 +24,7 @@ pub struct Spec {
   image: Box<dyn PieceSpec>,
   qty: Qty,
   currency: String,
-  #[serde(default="default_min_unit")] min_unit: Qty,
 }
-
-fn default_min_unit() -> Qty { 1 }
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct Banknote {
@@ -35,7 +32,6 @@ pub struct Banknote {
   image: Arc<dyn InertPieceTrait>,
   qty: Qty,
   currency: String,
-  min_unit: Qty,
 }
 
 #[typetag::serde(name="Currency")]
@@ -45,7 +41,7 @@ impl PieceSpec for Spec {
           -> SpecLoaded {
     gpc.rotateable = false;
 
-    let Spec { ref image, ref currency, qty, min_unit } = *self;
+    let Spec { ref image, ref currency, qty } = *self;
 
     let SpecLoadedInert { p: image, occultable:_ } =
       image.load_inert(ig, depth)?;
@@ -59,14 +55,10 @@ impl PieceSpec for Spec {
       });
     }
         
-    if (qty % min_unit) != 0 {
-      throw!(SpecError::CurrencyQtyNotMultipleOfUnit)
-    }
-
     let bnote = Banknote {
       image: image.into(),
       currency: currency.clone(),
-      itemname, qty, min_unit,
+      itemname, qty,
     };
 
     let special = PieceSpecialProperties {
