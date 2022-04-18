@@ -121,6 +121,7 @@ pub struct PreparedPieceState {
   pub pinned: bool,
   pub moveable: PieceMoveable,
   pub rotateable: bool,
+  pub multigrab: bool,
   pub uos: Vec<UoDescription>,
   pub occregion: Option<JsonString<Region>>,
   pub bbox: Rect,

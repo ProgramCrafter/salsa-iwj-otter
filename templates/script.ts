@@ -78,6 +78,7 @@ type PieceInfo = {
   pinned: boolean,
   moveable: PieceMoveable,
   rotateable: boolean,
+  multigrab: boolean,
   uos : UoDescription[],
   uelem : SVGGraphicsElement,
   delem : SVGGraphicsElement,
@@ -1754,6 +1755,7 @@ type PreparedPieceState = {
   uos: UoDescription[],
   moveable: PieceMoveable,
   rotateable: boolean,
+  multigrab: boolean,
   occregion: string | null,
   bbox: Rect,
 }
@@ -1867,6 +1869,7 @@ function piece_modify_core(piece: PieceId, p: PieceInfo,
   p.pinned = info.pinned;
   p.moveable = info.moveable;
   p.rotateable = info.rotateable;
+  p.multigrab = info.multigrab;
   p.angle = info.angle;
   p.bbox = info.bbox;
   piece_set_zlevel_from(piece,p,info);

@@ -295,6 +295,7 @@ pub type PieceSpecLoadedOccultable =
 #[derive(Debug,Clone,Default,Serialize,Deserialize)]
 pub struct PieceSpecialProperties {
   pub rendering: Option<SpecialClientRendering>,
+  pub multigrab: bool,
 }
 
 #[typetag::serde(tag="type")]
@@ -453,6 +454,10 @@ impl GPiece {
   pub fn rotateable(&self) -> bool {
     if self.occult.is_active() { false }
     else { self.rotateable }
+  }
+  pub fn multigrab(&self, ipc: &IPiece) -> bool {
+    if self.occult.is_active() { false }
+    else { ipc.special.multigrab }
   }
 
   pub fn dummy() -> Self {
