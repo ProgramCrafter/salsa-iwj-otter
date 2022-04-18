@@ -993,8 +993,7 @@ function ungrab_clicked(clicked: PieceId[]) {
   do_ungrab_n(todo);
 }
 
-function mouse_clicked_one(piece: PieceId): MouseFindClicked {
-  let p = pieces[piece]!;
+function mouse_clicked_one(piece: PieceId, p: PieceInfo): MouseFindClicked {
   let held = p.held;
   let pinned = p.pinned;
   return { clicked: [piece], held, pinned };
@@ -1077,7 +1076,7 @@ function mouse_find_lowest(e: MouseEvent) {
     let piece = uelem.dataset.piece!;
     let p = pieces[piece]!;
     if (p_bbox_contains(p, clickpos)) {
-      return mouse_clicked_one(piece);
+      return mouse_clicked_one(piece, p);
     }
   }
   return null;
@@ -1089,8 +1088,9 @@ function mouse_find_clicked(e: MouseEvent,
 			    note_already: PieceSet | null,
 			    ): MouseFindClicked
 {
+  let p = pieces[piece]!;
   if (special_count == null) {
-    return mouse_clicked_one(piece);
+    return mouse_clicked_one(piece, p);
   } else if (special_count == 0) {
     return mouse_find_lowest(e);
   } else { // special_count > 0
