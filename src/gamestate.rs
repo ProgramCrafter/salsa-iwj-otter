@@ -396,6 +396,19 @@ impl<T:Debug> From<PosOffTableError<T>> for MgmtError {
   fn from(pote: PosOffTableError<T>) -> MgmtError { ME::BadSpec(pote.into()) }
 }
 
+// ---------- ApiPieceOpArgs ----------
+
+impl ApiPieceOpArgs<'_> {
+  #[throws(ApiPieceOpError)]
+  pub fn pri(&mut self) -> PieceRenderInstructions {
+    let ApiPieceOpArgs { gs,ioccults,player,piece,ipc, .. } = self;
+    let gpc = gs.pieces.byid(*piece)?;
+    let gpl = gs.players.byid_mut(*player)?;
+    piece_pri(ioccults, &gs.occults, *player, gpl, *piece, gpc, ipc)
+      .ok_or(Ia::PieceGone)?
+  }
+}
+
 // ---------- game state - rendering etc. ----------
 
 impl GPiece {

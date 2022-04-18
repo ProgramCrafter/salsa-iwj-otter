@@ -320,7 +320,8 @@ api_route!{
 
   impl op::Simple as {
     #[throws(ApiPieceOpError)]
-    fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
+    fn op(&self, mut a: ApiPieceOpArgs) -> PieceUpdate {
+      let pri = a.pri()?;
       let ApiPieceOpArgs { gs,ioccults,player,piece,ipc, .. } = a;
       let gpc = gs.pieces.byid_mut(piece)?;
       let players = &mut gs.players;
@@ -329,8 +330,6 @@ api_route!{
       let was = was.map(|was| htmlescape::encode_minimal(&was.nick));
 
       let gpl = players.byid_mut(player)?;
-      let pri = piece_pri(ioccults, &gs.occults, player, gpl, piece, gpc, ipc)
-        .ok_or(Ia::PieceGone)?;
 
       let pcs = pri.describe(ioccults,&gs.occults, gpc, ipc);
 
@@ -575,13 +574,9 @@ api_route!{
   impl op::Complex as {
     #[throws(ApiPieceOpError)]
     fn op_complex(&self, mut a: ApiPieceOpArgs) -> UpdateFromOpComplex {
+      let pri = a.pri()?;
       let ApiPieceOpArgs { ioccults,player,piece,ipc, .. } = a;
       let gs = &mut a.gs;
-      let pri = piece_pri(ioccults, &gs.occults,
-                          player, gs.players.byid_mut(player)?,
-                          piece, gs.pieces.byid(piece)?,
-                          ipc)
-        .ok_or(Ia::PieceGone)?;
       let y = pri.fully_visible().ok_or(Ia::Occultation)?;
 
       '_normal_global_ops__not_loop: loop {
