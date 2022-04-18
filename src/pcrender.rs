@@ -136,7 +136,7 @@ impl PieceRenderInstructions {
       angle      : pri.angle(gpc).to_compass(),
       pinned     : gpc.pinned,
       rotateable : gpc.rotateable(),
-      multigrab  : gpc.multigrab(ipc),
+      multigrab  : ipc.special.multigrab,
       uos        : pri.ui_operations(gs, gpc, ipc)?,
       moveable   : gpc.moveable(),
       facehint   : pri.facehint(gpc),

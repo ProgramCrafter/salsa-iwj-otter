@@ -470,10 +470,6 @@ impl GPiece {
     if self.occult.is_active() { false }
     else { self.rotateable }
   }
-  pub fn multigrab(&self, ipc: &IPiece) -> bool {
-    if self.occult.is_active() { false }
-    else { ipc.special.multigrab }
-  }
 
   pub fn dummy() -> Self {
     let gen_dummy = Generation(1);
