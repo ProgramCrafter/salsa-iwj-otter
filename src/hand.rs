@@ -88,7 +88,7 @@ impl OutlineTrait for Hand {
 
 impl piece_specs::OwnedCommon {
   #[throws(SpecError)]
-  fn load(&self, behaviour: Behaviour) -> PieceSpecLoaded {
+  fn load(&self, behaviour: Behaviour) -> SpecLoaded {
     let common = SimpleCommon {
       itemname: None,
       faces: index_vec![self.colour.clone()],
@@ -108,7 +108,7 @@ impl piece_specs::OwnedCommon {
       shape, behaviour,
       label: self.label.load()?,
     }) as Box<dyn PieceTrait>;
-    PieceSpecLoaded {
+    SpecLoaded {
       p,
       occultable: None,
     }
@@ -119,7 +119,7 @@ impl piece_specs::OwnedCommon {
 impl PieceSpec for piece_specs::Hand {
   #[throws(SpecError)]
   fn load(&self, _: usize, gpc: &mut GPiece, _ig: &Instance, _:SpecDepth)
-          -> PieceSpecLoaded {
+          -> SpecLoaded {
     gpc.moveable = PieceMoveable::IfWresting;
     gpc.rotateable = false;
     self.c.load(Behaviour::Hand)?
@@ -130,7 +130,7 @@ impl PieceSpec for piece_specs::Hand {
 impl PieceSpec for piece_specs::PlayerLabel {
   #[throws(SpecError)]
   fn load(&self, _: usize, _: &mut GPiece, _ig: &Instance, _:SpecDepth)
-          -> PieceSpecLoaded {
+          -> SpecLoaded {
     self.c.load(Behaviour::PlayerLabel)?
   }
 }

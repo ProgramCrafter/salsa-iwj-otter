@@ -354,17 +354,16 @@ macro_rules! impl_PieceSpec_for_SimplePieceSpec { { $ty:ty } => {
   impl PieceSpec for $ty {
     #[throws(SpecError)]
     fn load(&self, _: usize, _: &mut GPiece, _ig: &Instance, _:SpecDepth)
-            -> PieceSpecLoaded {
-      PieceSpecLoaded {
+            -> SpecLoaded {
+      SpecLoaded {
         p: Box::new(self.load_raw()?.0),
         occultable: None,
       }
     }
 
     #[throws(SpecError)]
-    fn load_inert(&self, _ig: &Instance, _:SpecDepth)
-                  -> SpecLoaded<dyn InertPieceTrait> {
-      SpecLoaded {
+    fn load_inert(&self, _ig: &Instance, _:SpecDepth) -> SpecLoadedInert {
+      SpecLoadedInert {
         p: Box::new(self.load_raw()?.0) as _,
         occultable: None
       }

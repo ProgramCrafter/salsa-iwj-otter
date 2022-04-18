@@ -65,14 +65,13 @@ impl PieceSpec for Alias {
   }
   #[throws(SpecError)]
   fn load(&self, i: usize, gpc: &mut GPiece, ig: &Instance, depth: SpecDepth)
-          -> PieceSpecLoaded {
+          -> SpecLoaded {
     let r = self.resolve(&ig.pcaliases)?
       .load(i, gpc, ig, self.new_depth(depth)?)?;
     r
   }
   #[throws(SpecError)]
-  fn load_inert(&self, ig: &Instance, depth: SpecDepth)
-                 -> SpecLoaded<dyn InertPieceTrait> {
+  fn load_inert(&self, ig: &Instance, depth: SpecDepth) -> SpecLoadedInert {
     self.resolve(&ig.pcaliases)?.load_inert(ig, self.new_depth(depth)?)?
   }
 }

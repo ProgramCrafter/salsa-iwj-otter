@@ -1110,7 +1110,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           last_released: default(),
           rotateable: true,
         };
-        let PieceSpecLoaded { p, occultable } =
+        let SpecLoaded { p, occultable } =
           info.load(piece_i as usize, &mut gpc, ig, SpecDepth::zero())?;
         if p.nfaces() <= face.into() {
           throw!(SpecError::FaceNotFound);

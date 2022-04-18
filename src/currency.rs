@@ -42,12 +42,12 @@ pub struct Banknote {
 impl PieceSpec for Spec {
   #[throws(SpecError)]
   fn load(&self, _: usize, gpc: &mut GPiece, ig: &Instance, depth: SpecDepth)
-          -> PieceSpecLoaded {
+          -> SpecLoaded {
     gpc.rotateable = false;
 
     let Spec { ref image, ref currency, qty, min_unit } = *self;
 
-    let SpecLoaded { p: image, occultable:_ } =
+    let SpecLoadedInert { p: image, occultable:_ } =
       image.load_inert(ig, depth)?;
 
     let itemname = format!("currency-{}", image.itemname());

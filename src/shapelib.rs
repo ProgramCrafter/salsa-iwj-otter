@@ -488,9 +488,9 @@ impl<'ig> AllRegistries<'ig> {
 
 pub type ItemSpecLoaded = (Box<Item>, PieceSpecLoadedOccultable);
 
-impl From<ItemSpecLoaded> for PieceSpecLoaded {
-  fn from((p, occultable):  ItemSpecLoaded) -> PieceSpecLoaded {
-    PieceSpecLoaded {
+impl From<ItemSpecLoaded> for SpecLoaded {
+  fn from((p, occultable):  ItemSpecLoaded) -> SpecLoaded {
+    SpecLoaded {
       p,
       occultable,
     }
@@ -654,14 +654,13 @@ impl Contents {
 impl PieceSpec for ItemSpec {
   #[throws(SpecError)]
   fn load(&self, _: usize, _: &mut GPiece, ig: &Instance, depth: SpecDepth)
-          -> PieceSpecLoaded {
+          -> SpecLoaded {
     self.find_load(ig,depth)?.into()
   }
   #[throws(SpecError)]
-  fn load_inert(&self, ig: &Instance, depth: SpecDepth)
-                -> SpecLoaded<dyn InertPieceTrait> {
+  fn load_inert(&self, ig: &Instance, depth: SpecDepth) -> SpecLoadedInert {
     let (p, occultable) = self.find_load(ig,depth)?;
-    SpecLoaded { p: p as _, occultable }
+    SpecLoadedInert { p: p as _, occultable }
   }
 }
 
@@ -672,7 +671,7 @@ impl PieceSpec for MultiSpec {
 
   #[throws(SpecError)]
   fn load(&self, i: usize, _: &mut GPiece, ig: &Instance, depth:SpecDepth)
-          -> PieceSpecLoaded
+          -> SpecLoaded
   {
     let item = self.items.get(i).ok_or_else(
       || SpE::InternalError(format!("item {:?} from {:?}", i, &self))

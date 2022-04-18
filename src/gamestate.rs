@@ -280,11 +280,16 @@ pub struct ApiPieceOpArgs<'a> {
 }
 
 #[derive(Debug)]
-pub struct SpecLoaded<PT: ?Sized> {
-  pub p: Box<PT>,
+pub struct SpecLoaded {
+  pub p: Box<dyn PieceTrait>,
   pub occultable: PieceSpecLoadedOccultable,
 }
-pub type PieceSpecLoaded = SpecLoaded<dyn PieceTrait>;
+#[derive(Debug)]
+pub struct SpecLoadedInert {
+  pub p: Box<dyn InertPieceTrait>,
+  pub occultable: PieceSpecLoadedOccultable,
+}
+
 pub type PieceSpecLoadedOccultable =
   Option<(LOccultIlk, Arc<dyn InertPieceTrait>)>;
 
@@ -293,10 +298,10 @@ pub trait PieceSpec: Debug + Sync + Send + 'static {
   #[throws(SpecError)]
   fn count(&self, _pcaliases: &PieceAliases) -> usize { 1 }
   fn load(&self, i: usize, gpc: &mut GPiece, ig: &Instance, depth: SpecDepth)
-          -> Result<PieceSpecLoaded, SpecError>;
+          -> Result<SpecLoaded, SpecError>;
   /// Used when a piece wants to use another for its occulted form
   fn load_inert(&self, _ig: &Instance, _:SpecDepth)
-                -> Result<SpecLoaded<dyn InertPieceTrait>, SpecError> {
+                -> Result<SpecLoadedInert, SpecError> {
     throw!(SpE::ComplexPieceWhereInertRequired)
   }
 }

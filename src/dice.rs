@@ -99,10 +99,10 @@ struct OverlayTemplateContext<'c> {
 impl PieceSpec for Spec {
   #[throws(SpecError)]
   fn load(&self, _: usize, gpc: &mut GPiece, ig: &Instance, depth: SpecDepth)
-          -> PieceSpecLoaded {
+          -> SpecLoaded {
     gpc.rotateable = false;
 
-    let SpecLoaded { p: image, occultable: img_occultable } =
+    let SpecLoadedInert { p: image, occultable: img_occultable } =
       self.image.load_inert(ig, depth)?;
 
     let mut nfaces: Option<(RawFaceId, &'static str)> = None;
@@ -183,7 +183,7 @@ impl PieceSpec for Spec {
     let occultable = match (img_occultable, &self.occult) {
       (None, None) => None,
       (None, Some(occ)) => {
-        let SpecLoaded { p: image, occultable: image_occ_reload } =
+        let SpecLoadedInert { p: image, occultable: image_occ_reload } =
           self.image.load_inert(ig, depth)?;
 
         if image_occ_reload.is_some() {
@@ -221,7 +221,7 @@ impl PieceSpec for Spec {
       image: image.into()
     };
 
-    PieceSpecLoaded {
+    SpecLoaded {
       p: Box::new(die) as _,
       occultable,
     }

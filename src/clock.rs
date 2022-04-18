@@ -405,7 +405,7 @@ fn unprepared_update(piece: PieceId) -> UnpreparedUpdates {
 impl PieceSpec for Spec {
   #[throws(SpecError)]
   fn load(&self, _: usize, gpc: &mut GPiece, _ig: &Instance, _:SpecDepth)
-          -> PieceSpecLoaded {
+          -> SpecLoaded {
     if self.time <= 0 { throw!(SpecError::NegativeTimeout) }
 
     let clock = Clock {
@@ -414,7 +414,7 @@ impl PieceSpec for Spec {
 
     gpc.xdata_mut(|| State::new(self) )?;
 
-    PieceSpecLoaded {
+    SpecLoaded {
       p: Box::new(clock),
       occultable: None,
     }

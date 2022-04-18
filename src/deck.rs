@@ -38,7 +38,7 @@ impl OutlineTrait for Deck {
 impl PieceSpec for piece_specs::Deck {
   #[throws(SpecError)]
   fn load(&self, _: usize, gpc: &mut GPiece, _ig: &Instance, _:SpecDepth)
-          -> PieceSpecLoaded {
+          -> SpecLoaded {
     let common = SimpleCommon {
       itemname: None,
       faces: self.faces.clone(),
@@ -68,7 +68,7 @@ impl PieceSpec for piece_specs::Deck {
       shape,
       label: self.label.load()?,
     }) as Box<dyn PieceTrait>;
-    PieceSpecLoaded {
+    SpecLoaded {
       p,
       occultable: None,
     }
