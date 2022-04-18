@@ -67,6 +67,8 @@ type UoRecord = UoDescription & {
 
 type ZCoord = string;
 
+// On load, starts from SessionPieceLoadJson (Rust-only)
+// On update, updated field-by-field from PreparedPieceState (Rust&JS)
 type PieceInfo = {
   held : PlayerId | null,
   cseq_main : number | null,
