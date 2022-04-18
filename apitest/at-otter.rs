@@ -33,7 +33,7 @@ impl Ctx {
     self.su_mut().mgmt_conn().fakerng_load(&[&"1",&"0"])?;
 
     let mut a_pieces = alice.pieces::<PIA>()?;
-    let mut b_pieces = alice.pieces::<PIB>()?;
+    let mut b_pieces = bob.pieces::<PIB>()?;
 
     // ----- alice: claim alices' hand -----
 
