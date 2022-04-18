@@ -30,9 +30,16 @@ pub struct Spec {
 pub struct Banknote {
   itemname: String,
   image: Arc<dyn InertPieceTrait>,
-  qty: Qty,
   currency: String,
 }
+
+#[derive(Debug,Serialize,Deserialize)]
+pub struct Value {
+  qty: Qty,
+}
+
+#[typetag::serde(name="Currency")]
+impl PieceXData for Value { fn dummy() -> Self { Value { qty: 0 } } }
 
 #[typetag::serde(name="Currency")]
 impl PieceSpec for Spec {
@@ -54,11 +61,13 @@ impl PieceSpec for Spec {
         exp: 1,              exp_why: "needed".into(),
       });
     }
+
+    let _value: &mut Value = gpc.xdata_mut(|| Value { qty })?;
         
     let bnote = Banknote {
       image: image.into(),
       currency: currency.clone(),
-      itemname, qty,
+      itemname,
     };
 
     let special = PieceSpecialProperties {
@@ -90,9 +99,10 @@ impl PieceBaseTrait for Banknote {
 impl PieceTrait for Banknote {
   #[throws(IE)]
   fn describe_html(&self, gpc: &GPiece, _: &GameOccults) -> Html {
+    let value: &Value = gpc.xdata.get_exp()?;
     hformat!("{}, {}{}",
              self.image.describe_html(gpc.face)?,
-             self.qty, &self.currency)
+             value.qty, &self.currency)
   }
 
   #[throws(IE)]
@@ -100,6 +110,7 @@ impl PieceTrait for Banknote {
                vpid: VisiblePieceId) {
     self.image.svg(f, vpid, gpc.face, &gpc.xdata)?;
     
+    let value: &Value = gpc.xdata.get_exp()?;
     let label_font_size = QTY_FONT_SIZE;
     let label_y_adj = label_font_size * SVG_FONT_Y_ADJUST_OF_FONT_SIZE;
 
@@ -107,6 +118,6 @@ impl PieceTrait for Banknote {
             r##"<{} text-align="center" text-anchor="middle" x="0" y="{}" font-size="{}">{}{}</text>"##,
             HTML_TEXT_LABEL_ELEM_START,
             label_y_adj, label_font_size,
-            self.qty, &self.currency)?;
+            value.qty, &self.currency)?;
   }
 }
