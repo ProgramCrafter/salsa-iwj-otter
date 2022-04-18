@@ -35,6 +35,8 @@ pub struct ZLevel {
   pub zg: Generation,
 }
 
+pub type MultigrabQty = u32;
+
 // ---------- game state ----------
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -240,6 +242,11 @@ pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
 
   fn occultation_notify_hook(&self, _piece: PieceId) -> UnpreparedUpdates {
     None
+  }
+
+  fn op_multigrab(&self, _: ApiPieceOpArgs, _: PieceRenderInstructions,
+                  _: MultigrabQty) -> Result<PieceUpdate,ApiPieceOpError> {
+    Err(Ia::BadPieceStateForOperation)?
   }
 
   #[throws(IE)]

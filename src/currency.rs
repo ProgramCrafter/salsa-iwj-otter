@@ -17,7 +17,7 @@ use crate::prelude::*;
 
 const QTY_FONT_SIZE: f64 = 6.;
 
-type Qty = u32;
+type Qty = MultigrabQty;
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct Spec {

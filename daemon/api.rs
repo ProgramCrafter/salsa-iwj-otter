@@ -564,6 +564,22 @@ api_route!{
 }
 
 api_route!{
+  api_multigrab, "/_/api/multigrab",
+  struct ApiPieceMultigrab {
+    n: MultigrabQty,
+  }
+
+  as:
+  #[throws(ApiPieceOpError)]
+  fn op(&self, mut a: ApiPieceOpArgs) -> PieceUpdate {
+    if ! a.ipc.special.multigrab { throw!(Ia::BadPieceStateForOperation) }
+    let pri = a.pri()?;
+    let y = pri.fully_visible().ok_or(Ia::Occultation)?;
+    a.ipc.show(y).op_multigrab(a, pri, self.n)?
+  }
+}
+
+api_route!{
   api_uo, "/_/api/k",
   struct ApiPieceUo {
     opname: String,
@@ -628,5 +644,6 @@ pub fn routes() -> impl HttpServiceFactory {
     api_wrest,
     api_pin,
     api_uo,
+    api_multigrab,
   ]
 }
