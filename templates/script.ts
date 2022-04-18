@@ -971,7 +971,7 @@ function some_mousedown(e : MouseEvent) {
 type MouseFindClicked = null | {
   clicked: PieceId[],
   held: PlayerId | null,
-  pinned: boolean
+  pinned: boolean,
 };
 
 type PieceSet = { [piece: string]: true };
