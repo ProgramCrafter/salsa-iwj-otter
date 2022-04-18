@@ -687,6 +687,7 @@ impl UsualCtx {
 portmanteau_has!("at-otter.rs",   at_otter);
 portmanteau_has!("at-bundles.rs", at_bundles);
 portmanteau_has!("at-hidden.rs",  at_hidden);
+portmanteau_has!("at-currency.rs", at_currency);
 
 #[throws(AE)]
 fn main() { portmanteau_main("at")? }
