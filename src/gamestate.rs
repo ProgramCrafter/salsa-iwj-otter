@@ -181,12 +181,6 @@ pub trait PieceBaseTrait: OutlineTrait + Send + Debug + 'static {
   fn nfaces(&self) -> RawFaceId;
 
   fn itemname(&self) -> &str;
-
-  // Don't add an xdata argument to this.  Implementors must not make
-  // this depend on the piece state, because the piece state might change
-  // between svg() (which sets up information in the DOM) and special()
-  // (which arranges to use that information).
-  fn special(&self) -> Result<Option<SpecialClientRendering>,IE> { Ok(None) }
 }
 
 #[typetag::serde] // usual variable: p
@@ -300,6 +294,7 @@ pub type PieceSpecLoadedOccultable =
 /// so they are mostly "can/do we do this thing".
 #[derive(Debug,Clone,Default,Serialize,Deserialize)]
 pub struct PieceSpecialProperties {
+  pub rendering: Option<SpecialClientRendering>,
 }
 
 #[typetag::serde(tag="type")]

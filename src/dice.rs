@@ -221,10 +221,14 @@ impl PieceSpec for Spec {
       image: image.into()
     };
 
+    let special = PieceSpecialProperties {
+      rendering: Some(SpecialClientRendering::Die{}),
+      ..default()
+    };
     SpecLoaded {
       p: Box::new(die) as _,
       occultable,
-      special: default(),
+      special,
     }
   }
 }
@@ -315,11 +319,6 @@ impl PieceBaseTrait for Die {
   fn nfaces(&self) -> RawFaceId { self.nfaces }
 
   fn itemname(&self) -> &str { &self.itemname }
-
-  #[throws(IE)]
-  fn special(&self) -> Option<SpecialClientRendering> {
-    Some(SpecialClientRendering::Die{})
-  }
 }
 
 #[typetag::serde(name="Die")]
