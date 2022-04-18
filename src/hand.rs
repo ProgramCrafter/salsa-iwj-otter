@@ -111,6 +111,7 @@ impl piece_specs::OwnedCommon {
     SpecLoaded {
       p,
       occultable: None,
+      special: default(),
     }
   }
 }

@@ -417,6 +417,7 @@ impl PieceSpec for Spec {
     SpecLoaded {
       p: Box::new(clock),
       occultable: None,
+      special: default(),
     }
   }
 }

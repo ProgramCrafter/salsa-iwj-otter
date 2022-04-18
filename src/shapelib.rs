@@ -493,6 +493,7 @@ impl From<ItemSpecLoaded> for SpecLoaded {
     SpecLoaded {
       p,
       occultable,
+      special: default(),
     }
   }
 }

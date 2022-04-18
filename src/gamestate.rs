@@ -283,6 +283,7 @@ pub struct ApiPieceOpArgs<'a> {
 pub struct SpecLoaded {
   pub p: Box<dyn PieceTrait>,
   pub occultable: PieceSpecLoadedOccultable,
+  pub special: PieceSpecialProperties,
 }
 #[derive(Debug)]
 pub struct SpecLoadedInert {
@@ -292,6 +293,14 @@ pub struct SpecLoadedInert {
 
 pub type PieceSpecLoadedOccultable =
   Option<(LOccultIlk, Arc<dyn InertPieceTrait>)>;
+
+/// Special handling instructions for this piece
+///
+/// These remain constant after the piece has been loaded,
+/// so they are mostly "can/do we do this thing".
+#[derive(Debug,Clone,Default,Serialize,Deserialize)]
+pub struct PieceSpecialProperties {
+}
 
 #[typetag::serde(tag="type")]
 pub trait PieceSpec: Debug + Sync + Send + 'static {

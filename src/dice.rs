@@ -224,6 +224,7 @@ impl PieceSpec for Spec {
     SpecLoaded {
       p: Box::new(die) as _,
       occultable,
+      special: default(),
     }
   }
 }

@@ -71,6 +71,7 @@ impl PieceSpec for piece_specs::Deck {
     SpecLoaded {
       p,
       occultable: None,
+      special: default(),
     }
   }
 }

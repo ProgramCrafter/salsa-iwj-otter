@@ -358,6 +358,7 @@ macro_rules! impl_PieceSpec_for_SimplePieceSpec { { $ty:ty } => {
       SpecLoaded {
         p: Box::new(self.load_raw()?.0),
         occultable: None,
+        special: default(),
       }
     }
 

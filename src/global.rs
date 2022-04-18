@@ -80,6 +80,7 @@ pub struct IPlayer { // usual variable: ipl
 pub struct IPiece {
   pub p: IPieceTraitObj,
   pub occilk: Option<IOccultIlk>,
+  #[serde(default)] pub special: PieceSpecialProperties,
 }
 deref_to_field!{IPiece, IPieceTraitObj, p}
 
