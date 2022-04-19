@@ -611,7 +611,7 @@ impl PieceTrait for Clock {
   #[throws(ApiPieceOpError)]
   fn ui_operation(&self, _: ShowUnocculted, args: ApiPieceOpArgs<'_>,
                   opname: &str, _wrc: WhatResponseToClientOp)
-                  -> UpdateFromOpComplex {
+                  -> OpOutcomeThunk {
     let ApiPieceOpArgs { gs,piece,player,ioccults,ipc,ig,.. } = args;
     let gpc = gs.pieces.byid_mut(piece)?;
     let held = gpc.held;
@@ -708,7 +708,7 @@ impl PieceTrait for Clock {
         );
         r
       }
-    }
+    }.into()
   }
 
   #[throws(IE)]

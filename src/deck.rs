@@ -173,7 +173,7 @@ impl PieceTrait for Deck {
   fn ui_operation(&self, vis: ShowUnocculted,
                   a: ApiPieceOpArgs<'_>,
                   opname: &str, wrc: WhatResponseToClientOp)
-                  -> UpdateFromOpComplex {
+                  -> OpOutcomeThunk {
     let ApiPieceOpArgs { gs,player,piece,ipieces,ioccults,to_recalculate,.. } = a;
     let gen = &mut gs.gen;
     let gplayers = &mut gs.players;
@@ -247,7 +247,7 @@ impl PieceTrait for Deck {
     (PieceUpdate {
       wrc, log,
       ops: puos.into(),
-    }, xupdates.into_unprepared(None))
+    }, xupdates.into_unprepared(None)).into()
   }
 
   fn occultation_notify_hook(&self, piece: PieceId) -> UnpreparedUpdates {

@@ -371,7 +371,7 @@ impl PieceTrait for Die {
   #[throws(ApiPieceOpError)]
   fn ui_operation(&self, _: ShowUnocculted, args: ApiPieceOpArgs<'_>,
                   opname: &str, wrc: WhatResponseToClientOp)
-                  -> UpdateFromOpComplex {
+                  -> OpOutcomeThunk {
     let ApiPieceOpArgs { gs,piece,player,ioccults,ipc,.. } = args;
     let gpc = gs.pieces.byid_mut(piece)?;
     let gpl = gs.players.byid(player)?;
@@ -392,7 +392,7 @@ impl PieceTrait for Die {
           wrc,
           PieceUpdateOp::Modify(()),
           logents,
-        ).into(), None)
+        ).into(), None).into()
 
       },
       _ => throw!(Ia::BadUiOperation)

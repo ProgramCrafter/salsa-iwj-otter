@@ -165,6 +165,41 @@ pub enum PieceUpdateOp<NS,ZL> {
   SetZLevelQuiet(ZL),
 }
 
+#[derive(From)]
+pub enum OpOutcomeThunk {
+  Immediate(UpdateFromOpComplex),
+  /// Allows a UI operation full mutable access to the whole Instance.
+  ///
+  /// Use with care!  Eg, you might have to call save_game_and_aux_late.r
+  ///
+  /// Rules for adding and removing pieces:
+  ///
+  ///  * Adding a piece: add it to both ipieces and pieces.
+  ///    Call `save_game_and_aux_later`.
+  ///    Aux is always saved first, so if the piece is in pieces,
+  ///    it will be in ipieces on any reload.
+  ///
+  ///  * Deleting a piece: if the deletion as not the result of
+  ///    some kind of merge, and it doesn't matter if only the
+  ///    deletion happens, and not other recent events: just delete it.
+  ///    Call `save_game_and_aux_later`.
+  ///
+  ///  * Deleting a piece, in some kind of more complicated situation
+  ///    where the deletion must be atomic with other operations.
+  ///    Delete the piece *only* from pieces.  Leave it in ipieces.
+  ///    A reload will always restore a `GameState` snapshot.
+  ///    TODO: we should garbage-collect the slot in ipieces.
+  ///
+  /// TODO: Provide `&mut InstanceGuard` to the closure,
+  ///       not `&umut Instance`, since the latter is not sufficient.
+  ///
+  /// TODO: Provide cooked methods for this (taking `ModifyingPieces`)
+  ///
+  /// TODO: Provide a `ModifyingPieces` to the closure.
+  Reborrow(Box<dyn FnOnce(&mut Instance, PlayerId, PieceId)
+                   -> Result<UpdateFromOpComplex, ApiPieceOpError>>),
+}
+
 pub type UpdateFromOpComplex = (
   PieceUpdate,
   UnpreparedUpdates,

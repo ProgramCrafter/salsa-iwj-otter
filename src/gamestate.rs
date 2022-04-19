@@ -199,7 +199,7 @@ pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
 
   fn ui_operation(&self, _: ShowUnocculted, _a: ApiPieceOpArgs<'_>,
                   _opname: &str, _wrc: WhatResponseToClientOp)
-                  -> Result<UpdateFromOpComplex, ApiPieceOpError> {
+                  -> Result<OpOutcomeThunk, ApiPieceOpError> {
     throw!(Ia::BadUiOperation)
   }
 
@@ -244,8 +244,9 @@ pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
     None
   }
 
+  #[throws(ApiPieceOpError)]
   fn op_multigrab(&self, _: ApiPieceOpArgs, _: PieceRenderInstructions,
-                  _: MultigrabQty) -> Result<PieceUpdate,ApiPieceOpError> {
+                  _: MultigrabQty) -> OpOutcomeThunk {
     Err(Ia::BadPieceStateForOperation)?
   }
 

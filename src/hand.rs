@@ -229,7 +229,7 @@ impl PieceTrait for Hand {
   #[throws(ApiPieceOpError)]
   fn ui_operation(&self, vis: ShowUnocculted, mut a: ApiPieceOpArgs<'_>,
                   opname: &str, wrc: WhatResponseToClientOp)
-                  -> UpdateFromOpComplex {
+                  -> OpOutcomeThunk {
     if let Some(r) = {
       let gpc = a.gs.pieces.byid_mut(a.piece)?;
       let rot_checked = gpc.occulter_check_unrotated(vis)?;
@@ -238,7 +238,7 @@ impl PieceTrait for Hand {
                  internal_error_bydebug(&(&gpc.pos, &self.shape)))?;
       organise::ui_operation(&mut a, rot_checked, opname, wrc, &rect)?                             
     } {
-      return r;
+      return r.into();
     }
 
     let ApiPieceOpArgs { gs,player,piece,ipieces,ioccults,to_recalculate,.. } = a;
@@ -342,6 +342,7 @@ impl PieceTrait for Hand {
       wrc, log,
       ops: puos.into(),
     }, xupdates.into_unprepared(None))
+      .into()
   }
 
   fn occultation_notify_hook(&self, piece: PieceId) -> UnpreparedUpdates {

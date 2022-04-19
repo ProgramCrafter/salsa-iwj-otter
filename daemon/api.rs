@@ -59,13 +59,13 @@ mod op {
  
   pub trait Complex: Core + Debug { 
     #[throws(ApiPieceOpError)]
-    fn op_complex(&self, a: ApiPieceOpArgs) -> UpdateFromOpComplex;
+    fn op_complex(&self, a: ApiPieceOpArgs) -> OpOutcomeThunk;
   }
 
   impl<T> Complex for T where T: Core + Simple {
     #[throws(ApiPieceOpError)]
-    fn op_complex(&self, a: ApiPieceOpArgs) -> UpdateFromOpComplex {
-      (self.op(a)?, None)
+    fn op_complex(&self, a: ApiPieceOpArgs) -> OpOutcomeThunk {
+      (self.op(a)?, None).into()
     }
   }
 }
@@ -142,7 +142,12 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
         to_recalculate: &mut to_recalculate,
       })?;
     Ok::<_,ApiPieceOpError>((update, loose_conflict))
-  })() {
+  })().and_then(|(thunk, loose_conflict)| Ok((
+    match thunk {
+      OpOutcomeThunk::Immediate(r) => r,
+      OpOutcomeThunk::Reborrow(f) => f(g, player, piece)?,
+    }, loose_conflict
+  ))) {
     Err(APOE::Inapplicable(poe)) => {
       PrepareUpdatesBuffer::piece_report_error(
         &mut ig, poe,
@@ -569,13 +574,15 @@ api_route!{
     n: MultigrabQty,
   }
 
-  as:
-  #[throws(ApiPieceOpError)]
-  fn op(&self, mut a: ApiPieceOpArgs) -> PieceUpdate {
-    if ! a.ipc.special.multigrab { throw!(Ia::BadPieceStateForOperation) }
-    let pri = a.pri()?;
-    let y = pri.fully_visible().ok_or(Ia::Occultation)?;
-    a.ipc.show(y).op_multigrab(a, pri, self.n)?
+  impl op::Core as { }
+  impl op::Complex as {
+    #[throws(ApiPieceOpError)]
+    fn op_complex(&self, mut a: ApiPieceOpArgs) -> OpOutcomeThunk {
+      if ! a.ipc.special.multigrab { throw!(Ia::BadPieceStateForOperation) }
+      let pri = a.pri()?;
+      let y = pri.fully_visible().ok_or(Ia::Occultation)?;
+      a.ipc.show(y).op_multigrab(a, pri, self.n)?
+    }
   }
 }
 
@@ -589,7 +596,7 @@ api_route!{
   impl op::Core as { }
   impl op::Complex as {
     #[throws(ApiPieceOpError)]
-    fn op_complex(&self, mut a: ApiPieceOpArgs) -> UpdateFromOpComplex {
+    fn op_complex(&self, mut a: ApiPieceOpArgs) -> OpOutcomeThunk {
       let pri = a.pri()?;
       let ApiPieceOpArgs { ioccults,player,piece,ipc, .. } = a;
       let gs = &mut a.gs;
@@ -615,7 +622,7 @@ api_route!{
               wrc,
               PieceUpdateOp::Modify(()),
               logents,
-            ).into(), None)
+            ).into(), None).into()
           },
 
           _ => break,
