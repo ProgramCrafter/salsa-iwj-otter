@@ -84,6 +84,8 @@ pub struct GPiece {  // usual variable: gpc
   pub xdata: PieceXDataState,
   pub moveable: PieceMoveable,
   #[serde(default)] pub rotateable: bool,
+  #[serde(default, skip_serializing_if="Option::is_none")]
+  pub fastsplit: Option<FastSplitId>,
 }
 
 pub type PieceXDataState = Option<Box<dyn PieceXData>>;
@@ -526,6 +528,7 @@ impl GPiece {
       xdata: None,
       moveable: default(),
       rotateable: true,
+      fastsplit: default(),
     }
   }
 }

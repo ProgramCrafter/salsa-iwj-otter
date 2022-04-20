@@ -1116,6 +1116,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           moveable: default(),
           last_released: default(),
           rotateable: true,
+          fastsplit: None,
         };
         let SpecLoaded { p, occultable, special } =
           info.load(PLA {
@@ -1131,6 +1132,8 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         gpc.pos.clamped(gs.table_size)?;
         if gpc.zlevel > gs.max_z { gs.max_z = gpc.zlevel.clone() }
         let piece = gs.pieces.as_mut(modperm).insert(gpc);
+        let gpc = gs.pieces.get_mut(piece).ok_or_else(
+          || internal_logic_error("just inserted but now missing!"))?;
         let p = IPieceTraitObj::new(p);
         (||{
           let ilks = &mut ig.ioccults.ilks;
@@ -1138,9 +1141,11 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
             let data = OccultIlkData { p_occ };
             ilks.load_lilk(lilk, data)
           });
-          ig.ipieces.as_mut(modperm).insert(piece, IPiece {
-            p, occilk, special,
-          });
+          let mut ipc = IPiece { p, occilk, special };
+          if let Some(fsid) = &mut gpc.fastsplit {
+            (ipc, *fsid) = ig.ifastsplits.new_original(ilks, ipc);
+          }
+        ig.ipieces.as_mut(modperm).insert(piece, ipc);
           updates.push((piece, PieceUpdateOp::InsertQuiet(())));
         })(); // <- no ?, infallible (to avoid leaking ilk)
         pos = (pos + posd)?;

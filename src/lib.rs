@@ -35,6 +35,7 @@ pub mod dice;
 pub mod debugmutex;
 pub mod debugreader;
 pub mod error;
+pub mod fastsplit;
 pub mod gamestate;
 pub mod global;
 pub mod hand;

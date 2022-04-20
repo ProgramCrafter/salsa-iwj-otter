@@ -61,6 +61,7 @@ pub struct Instance {
   pub bundle_hashes: bundles::HashCache,
   pub asset_url_key: AssetUrlKey,
   pub local_libs: shapelib::Registry,
+  pub ifastsplits: IFastSplits,
 }
 
 pub struct PlayerRecord {
@@ -244,7 +245,7 @@ pub struct InstanceContainer {
 
 #[derive(Debug,Default,Serialize,Deserialize)]
 struct InstanceSaveAuxiliary<RawTokenStr, PiecesLoadedRef, OccultIlksRef,
-                             PieceAliasesRef> {
+                             PieceAliasesRef, IFastSplitsRef> {
   ipieces: PiecesLoadedRef,
   ioccults: OccultIlksRef,
   pcaliases: PieceAliasesRef,
@@ -254,6 +255,7 @@ struct InstanceSaveAuxiliary<RawTokenStr, PiecesLoadedRef, OccultIlksRef,
   pub links: Arc<LinksTable>,
   asset_url_key: AssetUrlKey,
   #[serde(default)] pub bundle_hashes: bundles::HashCache,
+  ifastsplits: IFastSplitsRef,
 }
 
 pub struct PrivateCaller(());
@@ -368,6 +370,7 @@ impl Instance {
       bundle_hashes: default(),
       asset_url_key: AssetUrlKey::new_random()?,
       local_libs: default(),
+      ifastsplits: default(),
     };
 
     let c = InstanceContainer {
@@ -529,6 +532,7 @@ impl Instance {
       asset_url_key: AssetUrlKey::Dummy,
       local_libs: default(),
       iplayers: default(),
+      ifastsplits: default(),
     }
   }
 
@@ -1114,6 +1118,7 @@ impl InstanceGuard<'_> {
       let ipieces = &s.c.g.ipieces;
       let ioccults = &s.c.g.ioccults;
       let pcaliases = &s.c.g.pcaliases;
+      let ifastsplits = &s.c.g.ifastsplits;
       let tokens_players: Vec<(&str, PlayerId)> = {
         let global_players = GLOBAL.players.read();
         s.c.g.tokens_players.tr
@@ -1133,7 +1138,7 @@ impl InstanceGuard<'_> {
       let bundle_hashes = s.c.g.bundle_hashes.clone();
       let isa = InstanceSaveAuxiliary {
         ipieces, ioccults, tokens_players, aplayers, acl, links,
-        pcaliases, asset_url_key, bundle_hashes,
+        pcaliases, asset_url_key, bundle_hashes, ifastsplits,
       };
       rmp_serde::encode::write_named(w, &isa)
     })?;
@@ -1156,9 +1161,10 @@ impl InstanceGuard<'_> {
   fn load_game(accounts: &AccountsGuard,
                games: &mut GamesGuard,
                name: InstanceName) -> Option<InstanceRef> {
-    let InstanceSaveAuxiliary::<String,ActualIPieces,IOccults,PieceAliases> {
-      tokens_players, mut ipieces, ioccults, mut aplayers, acl, links,
-      pcaliases, asset_url_key, bundle_hashes,
+    let InstanceSaveAuxiliary::
+    <String,ActualIPieces,IOccults,PieceAliases,IFastSplits> {
+      tokens_players, mut ipieces, mut ioccults, mut aplayers, acl, links,
+      pcaliases, asset_url_key, bundle_hashes, mut ifastsplits,
     } = match Self::load_something(&name, "a-") {
       Ok(data) => data,
       Err(e) => if (||{
@@ -1182,6 +1188,26 @@ impl InstanceGuard<'_> {
       primary.retain(|k,_v| secondary.contains_key(k));
       secondary.retain(|k,_v| primary.contains_key(k));
     }
+
+    for (piece, gpc) in &mut gs.pieces.0 {
+      if_chain!{
+        if let Some(fsid) = gpc.fastsplit;
+        if let Some(ipc) = ipieces.get_mut(piece); /* ought to be good! */
+        let ilks = &mut ioccults.ilks;
+        then {
+          if let Some(old_iilk) = ipc.occilk.take() {
+            ilks.dispose_iilk(old_iilk);
+          }
+          if let Some(got) = ifastsplits.recover_ipc(ilks, fsid) {
+            *ipc = got;
+          } else {
+            ipieces.remove(piece);
+            // This will get rid of it from gpieces, too, below
+          }
+        }
+      }
+    }
+    ifastsplits.cleanup(&mut ioccults.ilks);
 
     discard_mismatches(&mut gs.players,  &mut aplayers);
     discard_mismatches(&mut gs.pieces.0, &mut ipieces);
@@ -1233,6 +1259,7 @@ impl InstanceGuard<'_> {
       bundle_specs: default(), // set by load_game_bundles
       asset_url_key,
       bundle_hashes,
+      ifastsplits,
     };
 
     let b = InstanceBundles::reload_game_bundles(&mut g)?;
