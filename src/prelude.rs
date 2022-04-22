@@ -216,6 +216,9 @@ pub type POEPP = PieceOpErrorPartiallyProcessed;
 pub type SvgE = SVGProcessingError;
 pub type SpE = SpecError;
 
+// gamestate.rs
+pub use PieceLoadArgs as PLA;
+
 // hidden.rs
 pub type OccK = OccultationKind;
 pub use OccultationKindGeneral as OccKG;

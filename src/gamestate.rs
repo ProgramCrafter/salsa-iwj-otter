@@ -313,12 +313,18 @@ pub struct PieceSpecialProperties {
   pub multigrab: bool,
 }
 
+pub struct PieceLoadArgs<'a> {
+  pub i: usize,
+  pub gpc: &'a mut GPiece,
+  pub ig: &'a Instance,
+  pub depth: SpecDepth,
+}
+
 #[typetag::serde(tag="type")]
 pub trait PieceSpec: Debug + Sync + Send + 'static {
   #[throws(SpecError)]
   fn count(&self, _pcaliases: &PieceAliases) -> usize { 1 }
-  fn load(&self, i: usize, gpc: &mut GPiece, ig: &Instance, depth: SpecDepth)
-          -> Result<SpecLoaded, SpecError>;
+  fn load(&self, pla: PieceLoadArgs<'_>) -> Result<SpecLoaded, SpecError>;
   /// Used when a piece wants to use another for its occulted form
   fn load_inert(&self, _ig: &Instance, _:SpecDepth)
                 -> Result<SpecLoadedInert, SpecError> {

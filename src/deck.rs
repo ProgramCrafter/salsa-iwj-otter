@@ -37,8 +37,7 @@ impl OutlineTrait for Deck {
 #[typetag::serde(name="PickupDeck")]
 impl PieceSpec for piece_specs::Deck {
   #[throws(SpecError)]
-  fn load(&self, _: usize, gpc: &mut GPiece, _ig: &Instance, _:SpecDepth)
-          -> SpecLoaded {
+  fn load(&self, PLA { gpc,.. }: PLA) -> SpecLoaded {
     let common = SimpleCommon {
       itemname: None,
       faces: self.faces.clone(),

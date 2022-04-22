@@ -64,10 +64,9 @@ impl PieceSpec for Alias {
     self.resolve(pcaliases)?.count(&default())?
   }
   #[throws(SpecError)]
-  fn load(&self, i: usize, gpc: &mut GPiece, ig: &Instance, depth: SpecDepth)
-          -> SpecLoaded {
+  fn load(&self, PLA { i,gpc,ig,depth,.. }: PLA) -> SpecLoaded {
     let r = self.resolve(&ig.pcaliases)?
-      .load(i, gpc, ig, self.new_depth(depth)?)?;
+      .load(PLA { i, gpc, ig, depth: self.new_depth(depth)? })?;
     r
   }
   #[throws(SpecError)]

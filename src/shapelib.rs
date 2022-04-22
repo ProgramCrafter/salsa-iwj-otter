@@ -654,8 +654,7 @@ impl Contents {
 #[typetag::serde(name="Lib")]
 impl PieceSpec for ItemSpec {
   #[throws(SpecError)]
-  fn load(&self, _: usize, _: &mut GPiece, ig: &Instance, depth: SpecDepth)
-          -> SpecLoaded {
+  fn load(&self, PLA { ig,depth,.. }: PLA) -> SpecLoaded {
     self.find_load(ig,depth)?.into()
   }
   #[throws(SpecError)]
@@ -671,8 +670,7 @@ impl PieceSpec for MultiSpec {
   fn count(&self, _pcaliases: &PieceAliases) -> usize { self.items.len() }
 
   #[throws(SpecError)]
-  fn load(&self, i: usize, _: &mut GPiece, ig: &Instance, depth:SpecDepth)
-          -> SpecLoaded
+  fn load(&self, PLA { i,ig,depth,.. }: PLA) -> SpecLoaded
   {
     let item = self.items.get(i).ok_or_else(
       || SpE::InternalError(format!("item {:?} from {:?}", i, &self))

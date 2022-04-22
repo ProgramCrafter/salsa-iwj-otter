@@ -44,8 +44,7 @@ impl PieceXData for Value { fn dummy() -> Self { Value { qty: 0 } } }
 #[typetag::serde(name="Currency")]
 impl PieceSpec for Spec {
   #[throws(SpecError)]
-  fn load(&self, _: usize, gpc: &mut GPiece, ig: &Instance, depth: SpecDepth)
-          -> SpecLoaded {
+  fn load(&self, PLA { gpc,ig,depth,.. }: PLA) -> SpecLoaded {
     gpc.rotateable = false;
 
     let Spec { ref image, ref currency, qty } = *self;

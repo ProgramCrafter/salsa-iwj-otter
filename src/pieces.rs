@@ -353,8 +353,7 @@ macro_rules! impl_PieceSpec_for_SimplePieceSpec { { $ty:ty } => {
   #[typetag::serde]
   impl PieceSpec for $ty {
     #[throws(SpecError)]
-    fn load(&self, _: usize, _: &mut GPiece, _ig: &Instance, _:SpecDepth)
-            -> SpecLoaded {
+    fn load(&self, PLA { .. }: PLA) -> SpecLoaded {
       SpecLoaded {
         p: Box::new(self.load_raw()?.0),
         occultable: None,

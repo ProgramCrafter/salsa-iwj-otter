@@ -100,8 +100,7 @@ struct OverlayTemplateContext<'c> {
 #[typetag::serde(name="Die")]
 impl PieceSpec for Spec {
   #[throws(SpecError)]
-  fn load(&self, _: usize, gpc: &mut GPiece, ig: &Instance, depth: SpecDepth)
-          -> SpecLoaded {
+  fn load(&self, PLA { gpc,ig,depth,.. }: PLA) -> SpecLoaded {
     gpc.rotateable = false;
 
     let SpecLoadedInert { p: image, occultable: img_occultable } =
