@@ -192,21 +192,21 @@ pub trait PieceBaseTrait: OutlineTrait + Send + Debug + 'static {
 
 #[typetag::serde] // usual variable: p
 pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
-  #[throws(InternalError)]
-  fn add_ui_operations(&self, _: ShowUnocculted,
+  fn add_ui_operations(&self, _y: ShowUnocculted,
                        _upd: &mut Vec<UoDescription>,
-                       _gs: &GameState, _gpc: &GPiece) { }
+                       _gs: &GameState, _gpc: &GPiece) -> Result<(),IE> {
+    Ok(())
+  }
 
-  fn ui_operation(&self, _: ShowUnocculted, _a: ApiPieceOpArgs<'_>,
+  fn ui_operation(&self, _y: ShowUnocculted, _a: ApiPieceOpArgs<'_>,
                   _opname: &str, _wrc: WhatResponseToClientOp)
                   -> Result<OpOutcomeThunk, ApiPieceOpError> {
     throw!(Ia::BadUiOperation)
   }
 
   /// Can return `false` to mean "I will handle it in ui_operation"
-  #[throws(ApiPieceOpError)]
-  fn ui_permit_flip(&self, _gpc: &GPiece) -> bool {
-    true
+  fn ui_permit_flip(&self, _gpc: &GPiece) -> Result<bool,ApiPieceOpError>  {
+    Ok(true)
   }
 
   // #[throws] doesn't work here - fehler #todo
@@ -218,17 +218,17 @@ pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
 
   /// Piece is responsible for dealing with the possibility that they
   /// may be occulted!
-  #[throws(IE)]
   fn held_change_hook(&self,
                       _ig: &InstanceRef,
                       _gpieces: &mut GPieces,
                       _piece: PieceId,
                       _was_held: Option<PlayerId>)
-                      -> UnpreparedUpdates { None }
+                      -> Result<UnpreparedUpdates,IE> { Ok(None) }
 
-  #[throws(IE)]
   fn loaded_hook(&self, _piece: PieceId,
-                 _gs: &mut GameState, _ig: &InstanceRef) { }
+                 _gs: &mut GameState, _ig: &InstanceRef) -> Result<(),IE> {
+    Ok(())
+  }
 
   /// Not called if the whole game is destroyed.
   /// You can use Drop of course but it's not usually much use since
@@ -244,19 +244,18 @@ pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
     None
   }
 
-  #[throws(ApiPieceOpError)]
-  fn op_multigrab(&self, _: ApiPieceOpArgs, _: PieceRenderInstructions,
-                  _: MultigrabQty) -> OpOutcomeThunk {
+  fn op_multigrab(&self, _a: ApiPieceOpArgs, _pri: PieceRenderInstructions,
+                  _qty: MultigrabQty)
+                  -> Result<OpOutcomeThunk,ApiPieceOpError>  {
     Err(Ia::BadPieceStateForOperation)?
   }
 
-  #[throws(IE)]
-  fn abs_bbox(&self, p: &GPiece) -> Rect {
-    Rect { corners: self.bbox_approx()?.corners.iter().map(
+  fn abs_bbox(&self, p: &GPiece) -> Result<Rect, IE> {
+    Ok(Rect { corners: self.bbox_approx()?.corners.iter().map(
       |c| *c + p.pos
     )
-           .collect::<Result<ArrayVec<_,2>,_>>()?
-           .into_inner().unwrap() }
+              .collect::<Result<ArrayVec<_,2>,_>>()?
+              .into_inner().unwrap() })
   }
 }
 
