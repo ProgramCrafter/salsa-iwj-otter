@@ -7,6 +7,13 @@ use crate::prelude::*;
 slotmap::new_key_type!{ pub struct OccultIlkId; }
 
 /// Does *not* `impl Drop`.  Don't just drop it.
+///
+/// Must be serialized *only* in aux (ig, Instance) *not* GameState!
+/// Otherwise refcount could be inconsistent.
+///
+/// Barring such errors, the refcount in an Instance's IOccultIlks
+/// will be the count of OccultIlkOwningIds elsewhere in the Instance,
+/// and the same will go for the saved aux file.
 #[derive(Debug,Serialize,Deserialize)]
 #[serde(transparent)]
 pub struct OccultIlkOwningId(Id);
@@ -39,7 +46,10 @@ pub enum LOccultIlk {
 }
 
 serde_with_compat!{
-  [ #[derive(Debug,Serialize,Deserialize)] ]
+  [ 
+    /// Strange ownership and serialisation rules, like `OccultIlkOwningId`
+    #[derive(Debug,Serialize,Deserialize)]
+  ]
   [ pub ][ enum ] IOccultIlk="IOccultIlk" IOccultIlk_New "IOccultIlk_Compat" [
     {
       Distinct(OccultIlkData),

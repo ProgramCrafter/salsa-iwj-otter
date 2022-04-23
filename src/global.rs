@@ -77,6 +77,7 @@ pub struct IPlayer { // usual variable: ipl
 }
 
 #[derive(Debug,Serialize,Deserialize)]
+/// Strange ownership and serialisation rules, like `OccultIlkOwningId`
 pub struct IPiece {
   pub p: IPieceTraitObj,
   pub occilk: Option<IOccultIlk>,
