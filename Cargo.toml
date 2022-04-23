@@ -89,6 +89,8 @@ vecdeque-stableix="1"
 xmlparser = "0.13"
 zip="0.6"
 
+ambassador = { version = "0.3", git = "https://github.com/ijackson/ambassador", rev="e4775f906a7987b294e87c05ab1e923de0cf6a3a" }
+
 async-condvar-fair = { version="0.2", features=["parking_lot_0_12"] }
 const-default = { version="1",    features=["derive"      ] }
 enum-map     = { version="2"    , features=["serde"       ] }

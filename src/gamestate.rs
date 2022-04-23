@@ -153,6 +153,7 @@ pub trait PieceXData: Downcast + Debug + Send + 'static {
 }
 impl_downcast!(PieceXData);
 
+#[ambassador::delegatable_trait]
 #[enum_dispatch]
 #[dyn_upcast]
 pub trait OutlineTrait: Debug + Sync + Send + 'static {
@@ -183,6 +184,7 @@ pub struct UoDescription {
   pub wrc: WhatResponseToClientOp,
 }
 
+#[ambassador::delegatable_trait]
 #[dyn_upcast]
 pub trait PieceBaseTrait: OutlineTrait + Send + Debug + 'static {
   /// By convention, occult face is nfaces-1
@@ -191,6 +193,7 @@ pub trait PieceBaseTrait: OutlineTrait + Send + Debug + 'static {
   fn itemname(&self) -> &str;
 }
 
+#[ambassador::delegatable_trait]
 #[typetag::serde] // usual variable: p
 pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
   fn add_ui_operations(&self, _y: ShowUnocculted,
