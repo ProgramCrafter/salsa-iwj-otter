@@ -20,7 +20,7 @@ pub struct OccultIlkOwningId(Id);
 
 pub type OccultIlkName = Arc<GoodItemName>;
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct OccultIlkData {
   pub p_occ: Arc<dyn InertPieceTrait>,
 }
@@ -118,6 +118,10 @@ impl OccultIlks {
     IOI::Distinct(_data) => { },
     IOI::Mix(id) => self.dispose(id),
   } }
+  pub fn clone_iilk(&mut self, iilk: &IOccultIlk) -> IOccultIlk { match iilk {
+    IOI::Distinct(data) => IOI::Distinct(data.clone()),
+    IOI::Mix(id)        => IOI::Mix(self.clone_id(id)),
+  } }
 
   /// Ensure there's an entry for `K`, perhaps creating from `V`
   pub fn create_coalesce(&mut self, k: K, v: V) -> OId {
@@ -136,6 +140,12 @@ impl OccultIlks {
     OccultIlkOwningId(id)
   }
 
+  pub fn clone_id(&mut self, id: &OId) -> OId {
+    let id: Id = id.0;
+    let data = &mut self.table[id];
+    data.refcount = data.refcount.checked_add(1).unwrap();
+    OccultIlkOwningId(id)
+  }
   pub fn dispose(&mut self, id: OId) {
     let id: Id = id.0;
     let data = &mut self.table[id];
