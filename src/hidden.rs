@@ -243,6 +243,10 @@ impl Occultation {
   pub fn in_region(&self, pos: Pos) -> bool {
     self.region.contains(pos)
   }
+
+  pub fn pieces(&self) -> impl Iterator<Item=PieceId> + '_ {
+    self.notches.iter()
+  }
 }
 
 impl GameOccults {
@@ -1057,7 +1061,8 @@ pub fn remove_occultation(
     // relevant pieces.  Only then can we get rid of the occultation.
     occ.region = Region::empty();
 
-    let pieces: Vec<_> = occ.notches.iter().collect();
+    let pieces: Vec<_> = occ.pieces().collect();
+      
     for &ppiece in pieces.iter() {
       recalculate_occultation_ofmany(gen,
                                      gplayers, gpieces, goccults,
@@ -1076,7 +1081,7 @@ pub fn remove_occultation(
     let occ = goccults.occults.remove(occid).ok_or_else(
       || internal_logic_error("occultation vanished in recalc!"))?;
     
-    unbreak_pieces.extend(occ.notches.iter());
+    unbreak_pieces.extend(occ.pieces());
 
     Ok::<_,IE>(())
   })() {
