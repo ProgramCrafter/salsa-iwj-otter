@@ -38,7 +38,7 @@ pub struct Spec {
   #[serde(default="default_cooldown")]
   #[serde(with="humantime_serde")] cooldown: Duration,
   itemname: Option<String>,
-  desc: Option<String>,
+  #[serde(default)] desc: Option<String>,
 }
 
 #[derive(Debug,Default,Clone,Serialize,Deserialize)]
