@@ -37,14 +37,7 @@ impl Ctx {
 
     // ----- alice: claim alices' hand -----
 
-    let [hand] = a_pieces.iter_enumerated()
-      .filter(|(_i,p)| {
-        p.info["desc"] == otter::hand::UNCLAIMED_HAND_DESC
-      })
-      .map(|(i,_)| i)
-      .collect::<ArrayVec<_,1>>()
-      .into_inner().unwrap();
-    dbgc!(&hand);
+    let hand = a_pieces.find_by_desc_glob(otter::hand::UNCLAIMED_HAND_DESC);
 
     alice.api_piece(GH::With, PuSynch((&mut a_pieces, hand)), ("k", json!({
       "opname": "claim",
@@ -54,11 +47,9 @@ impl Ctx {
     // ----- find the pawns -----
 
     fn find_pawns<PI:Idx>(pieces: &PiecesSlice<PI>) -> [PI; 2] {
-      let mut pawns = pieces.iter_enumerated()
-        .filter(|(_i,p)| p.info["desc"].as_str().unwrap().ends_with(" pawn"))
-        .map(|(i,_)| i)
-        .take(2)
-        .collect::<ArrayVec<_,2>>()
+      let mut pawns = pieces
+        .filter_by_desc_glob("* pawn")
+        .take(2).collect::<ArrayVec<_,2>>()
         .into_inner().unwrap();
 
       pawns.sort_by_key(|&p| -pieces[p].pos.x());

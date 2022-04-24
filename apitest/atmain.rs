@@ -380,6 +380,24 @@ impl Session {
   }
 }
 
+#[ext(pub)]
+impl<PI> IndexVec<PI, PieceInfo<JsV>> {
+  fn filter_by_desc_glob(&self, desc_glob: &str)
+                       -> impl Iterator<Item=<(PT, PieceInfo<JsV>)>> {
+    let glob = glob::Pattern::new(desc_glob).unwrap();
+    self.iter_enumerated()
+      .filter(|(_i,p)| glob.matches(p.info["desc"].as_str()))
+  }
+  fn find_by_desc_glob(&self, desc_glob: &str) -> PI {
+    let [pc] = self.list_by_desc_glob(desc_glob)
+      .map(|(i,_p)| i)
+      .collect::<ArrayVec<_,1>>()
+      .into_inner().expect("multiple pieces matched, unexpectedly");
+    dbgc!(desc_glob, pc);
+    pc
+  }
+}
+
 pub fn update_update_pieces<PI:Idx>(
   nick: &str,
   pieces: &mut Pieces<PI>,
@@ -521,10 +539,10 @@ impl UsualCtx {
 
       let mut session = self.connect_player(&self.alice)?;
       let pieces = session.pieces::<PIA>()?;
-      let llm = pieces.into_iter()
-        .filter(|pi| pi.info["desc"] == "a library load area marker")
-        .collect::<ArrayVec<_,2>>();
-      let llm: [_;2] = llm.into_inner().unwrap();
+      let llm: [_;2] = pieces
+        .filter_by_desc_glob("a library load area marker")
+        .collect::<ArrayVec<_,2>>()
+        .into_inner().unwrap();
       dbgc!(&llm);
 
       for (llm, &pos) in izip!(&llm, [PosC::new(5,5), PosC::new(50,25)].iter())
