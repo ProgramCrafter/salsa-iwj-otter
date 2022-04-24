@@ -26,9 +26,7 @@ impl Ctx {
       let pieces = alice.pieces::<PIA>()?;
       dbgc!(&pieces);
       for expect in &["a purple knight", "a yellow bishop"] {
-        pieces.iter().find(
-          |p| p.info["desc"].as_str() == Some(expect)
-        ).expect(expect);
+        let _: PIA = pieces.find_by_desc_glob(expect);
       }
 
       Ok(())
