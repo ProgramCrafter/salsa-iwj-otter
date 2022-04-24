@@ -636,6 +636,7 @@ debug_js_inject_file = "@src@/templates/test-inject.js"
 check_bundled_sources = false # For testing only! see LICENCE!
 
 fake_rng = []
+fake_time = []
 
 [log]
 global_level = 'debug'
