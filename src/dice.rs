@@ -38,6 +38,7 @@ pub struct Spec {
   #[serde(default="default_cooldown")]
   #[serde(with="humantime_serde")] cooldown: Duration,
   itemname: Option<String>,
+  desc: Option<String>,
 }
 
 #[derive(Debug,Default,Clone,Serialize,Deserialize)]
@@ -63,6 +64,7 @@ struct Die {
   ///
   /// Even though when occulted we only ever show one face, face 0.
   nfaces: RawFaceId,
+  desc: String,
   itemname: String,
   labels: IndexVec<FaceId, String>, // if .len()==1, always use [0]
   image: Arc<dyn InertPieceTrait>, // if image.nfaces()==1, always use face 0
@@ -167,6 +169,8 @@ impl PieceSpec for Spec {
     let itemname = self.itemname.clone().unwrap_or_else(
       || format!("die.{}.{}", nfaces, image.itemname()));
 
+    let desc = self.desc.clone().unwrap_or_default();
+
     let initial_state = {
       State { cooldown_expires: cooldown_start_value(cooldown_time)? }
     };
@@ -208,6 +212,7 @@ impl PieceSpec for Spec {
       let our_occ_image = Arc::new(Die {
         nfaces, cooldown_time, cooldown_radius, surround_outline,
         itemname: itemname.clone(),
+        desc: desc.clone(),
         image: occ_image,
         labels: index_vec![occ_label],
       }) as _;
@@ -217,7 +222,7 @@ impl PieceSpec for Spec {
 
     let die = Die {
       nfaces, cooldown_time, cooldown_radius, surround_outline,
-      itemname, labels,
+      itemname, labels, desc,
       image: image.into()
     };
 
@@ -338,7 +343,11 @@ impl PieceTrait for Die {
         hformat!("now showing {}, {}", idesc()?, ldesc())
       }
     };
-    hformat!("a d{} ({})", nfaces, showing)
+    if self.desc == "" {
+      hformat!("a d{} ({})", nfaces, showing)
+    } else {
+      hformat!("{} (d{}; {})", self.desc, nfaces, showing)
+    }
   }
 
   #[throws(ApiPieceOpError)]
