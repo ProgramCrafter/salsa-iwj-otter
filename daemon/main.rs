@@ -487,12 +487,7 @@ async fn main() -> Result<(),StartupError> {
                      PathResolveMethod::Chdir)?;
 
   let c = config();
-
-  flexi_logger::Logger::with(log_config())
-    .format(logging::BASIC_FORMAT)
-    .adaptive_format_for_stderr(logging::ADAPTIVE_FORMAT)
-    .adaptive_format_for_stdout(logging::ADAPTIVE_FORMAT)
-    .start()?;
+  logging::setup().context("initialise logging")?;
 
   debug!("resolved config: {:#?}", c);
 

@@ -37,3 +37,12 @@ pub const BASIC_FORMAT: FormatFunction = basic_format;
 pub const ADAPTIVE_FORMAT: AdaptiveFormat = AdaptiveFormat::Custom(
   basic_format, coloured_format
 );
+
+#[throws(StartupError)]
+pub fn setup() {
+  flexi_logger::Logger::with(log_config())
+    .format(BASIC_FORMAT)
+    .adaptive_format_for_stderr(ADAPTIVE_FORMAT)
+    .adaptive_format_for_stdout(ADAPTIVE_FORMAT)
+    .start()?;
+}
