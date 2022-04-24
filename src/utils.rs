@@ -332,6 +332,7 @@ fn matches_doesnot_test() {
 macro_rules! trace_dbg {
   ($msg:expr $(,$val:expr)*) => {
     if log_enabled!(log::Level::Trace) {
+      #[allow(unused_mut)]
       let mut buf = format!("{}", &$msg);
       $( write!(&mut buf, " {}={:?}", stringify!($val), &$val).unwrap(); )*
       trace!("{}", buf);
