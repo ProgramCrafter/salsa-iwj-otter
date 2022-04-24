@@ -644,7 +644,8 @@ global_level = 'debug'
 
 'hyper::server' = 'info'
 "game::debugreader" = 'info'
-"game::updates" = 'trace'
+"otter::updates" = 'trace'
+"otter::hidden" = 'trace'
 "##)?;
 
   fs::write(CONFIG, &config)
