@@ -156,6 +156,7 @@ pub use crate::debugmutex::DebugIdentify;
 pub use crate::debugreader::DebugReader;
 pub use crate::error::*;
 pub use crate::fake_rng::*;
+pub use crate::fake_time::*;
 pub use crate::gamestate::*;
 pub use crate::global::*;
 pub use crate::hidden::*;

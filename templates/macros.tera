@@ -51,6 +51,7 @@ Hi {{nick | escape}}
 
 {% macro status() %}
 {%- if fake_rng %}<strong>FAKING RANDOMNESS!</strong>{% endif %}
+{%- if fake_time %}<strong>FAKING TIME!</strong>{% endif %}
 <span id="status">nothing</span>
 {% endmacro status %}
 

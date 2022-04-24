@@ -66,6 +66,7 @@ pub enum MgmtCommand {
   SshReinstallKeys, // managment only
 
   LoadFakeRng(Vec<String>),
+  SetFakeTime(FakeTimeSpec),
 }
 
 //---------- Accounts file ----------
@@ -264,6 +265,7 @@ pub enum MgmtError {
   #[error("TOML syntax error: {0}")]                 TomlSyntaxError(String),
   #[error("TOML structure error: {0}")]              TomlStructureError(String),
   #[error("RNG is real, command not supported")]     RngIsReal,
+  #[error("Time is real, command not supported")]    TimeIsReal,
   #[error("upload truncated")]                       UploadTruncated,
   #[error("upload corrupted")]                       UploadCorrupted,
   #[error("too many bundles")]                       TooManyBundles,

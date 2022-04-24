@@ -486,6 +486,13 @@ fn execute_and_respond<W>(cs: &mut CommandStreamData, cmd: MgmtCommand,
       config().game_rng.set_fake(ents, superuser)?;
       Fine
     }
+
+    MC::SetFakeTime(fspec) => {
+      let superuser = cs.superuser()
+        .ok_or(ME::SuperuserAuthorisationRequired)?;
+      config().global_clock.set_fake(fspec, superuser)?;
+      Fine
+    }
   }))();
 
   let resp = match resp {

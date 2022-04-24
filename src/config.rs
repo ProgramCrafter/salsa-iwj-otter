@@ -49,6 +49,7 @@ pub struct ServerConfigSpec {
   pub authorized_keys_include: Option<String>,
   pub debug_js_inject_file: Option<String>,
   #[serde(default)] pub fake_rng: FakeRngSpec,
+  #[serde(default)] pub fake_time: FakeTimeConfig,
   /// Disable this for local testing only.  See LICENCE.
   pub check_bundled_sources: Option<bool>,
 }
@@ -84,6 +85,7 @@ pub struct ServerConfig {
   pub debug_js_inject: Arc<String>,
   pub check_bundled_sources: bool,
   pub game_rng: RngWrap,
+  pub global_clock: GlobalClock,
   pub prctx: PathResolveContext,
 }
 
@@ -134,12 +136,13 @@ impl ServerConfigSpec {
       http_port, listen, public_url, sse_wildcard_url,
       template_dir, specs_dir, nwtemplate_dir, wasm_dir, libexec_dir, usvg_bin,
       log, bundled_sources, shapelibs, sendmail,
-      debug_js_inject_file, check_bundled_sources, fake_rng,
+      debug_js_inject_file, check_bundled_sources, fake_rng, fake_time,
       ssh_proxy_command, ssh_proxy_user, ssh_restrictions, authorized_keys,
       authorized_keys_include,
     } = self;
 
     let game_rng = fake_rng.make_game_rng();
+    let global_clock = fake_time.make_global_clock();
     let home = || env::var("HOME").context("HOME");
 
     let prctx = if let Some(ref cd) = change_directory {
@@ -303,7 +306,7 @@ impl ServerConfigSpec {
       listen, public_url, sse_wildcard_url,
       template_dir, specs_dir, nwtemplate_dir, wasm_dir, libexec_dir,
       bundled_sources, shapelibs, sendmail, usvg_bin,
-      debug_js_inject, check_bundled_sources, game_rng, prctx,
+      debug_js_inject, check_bundled_sources, game_rng, global_clock, prctx,
       ssh_proxy_bin, ssh_proxy_uid, ssh_restrictions,
       authorized_keys, authorized_keys_include,
     };

@@ -25,6 +25,7 @@ struct SessionRenderContext {
   player_info_pane: Html,
   bundles_info_pane: Html,
   fake_rng: bool,
+  fake_time: bool,
 }
 
 #[derive(Debug,Serialize)]
@@ -245,6 +246,7 @@ fn session_inner(form: Json<SessionForm>,
       ptoken: form.ptoken.clone(),
       links: (&*ig.links).into(),
       fake_rng: config().game_rng.is_fake(),
+      fake_time: config().global_clock.is_fake(),
       load: serde_json::to_string(&DataLoad {
         movehist,
         players: load_players,
