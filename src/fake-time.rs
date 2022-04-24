@@ -14,8 +14,30 @@ type Micros = u64;
 pub struct FakeTimeConfig(Option<FakeTimeSpec>);
 
 #[derive(Deserialize,Serialize,Debug,Clone,Default)]
-#[serde(transparent)]
+#[serde(into="Vec<Millis>", try_from="Vec<Millis>")]
 pub struct FakeTimeSpec(Option<Millis>);
+
+#[derive(Error,Debug)]
+#[error("invalid fake time: must be list of 0 or 1 numbers (ms)")]
+pub struct InvalidFakeTime;
+
+impl TryFrom<Vec<Millis>> for FakeTimeSpec {
+  type Error = InvalidFakeTime;
+  #[throws(InvalidFakeTime)]
+  fn try_from(l: Vec<Millis>) -> FakeTimeSpec {
+    FakeTimeSpec(match &*l {
+      [] => None,
+      &[ms] => Some(ms),
+      _ => throw!(InvalidFakeTime),
+    })
+  }
+}
+
+impl Into<Vec<Millis>> for FakeTimeSpec {
+  fn into(self) -> Vec<Millis> {
+    self.0.into_iter().collect()
+  }
+}
 
 #[derive(Debug)]
 pub struct GlobalClock {
