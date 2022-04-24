@@ -75,6 +75,7 @@ image.faces = ["#ccccff", "#ccffcc"]
 pos = [140, 15]
 type = "Die"
 labels = 6
+desc = "a pink die"
 occult.ilk = "d6-pink"
 occult.label = "?"
 image.type = "Rect"
@@ -85,6 +86,7 @@ image.faces = ["#ff8888"]
 [[pieces]]
 pos = [125, 15]
 type = "Die"
+desc = "a red die"
 labels = 6
 occult.ilk = "d6-red"
 occult.label = "?"
