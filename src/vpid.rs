@@ -364,7 +364,7 @@ pub fn permute(occid: OccId,
 
   }
   occ.notches.table = new_notches;
-  dbgc!(&occ);
+  trace_dbg!("permuted", &occ);
 }
 
 #[cfg(not(debug_assertions))]

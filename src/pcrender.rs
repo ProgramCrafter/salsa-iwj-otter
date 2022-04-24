@@ -141,7 +141,7 @@ impl PieceRenderInstructions {
       moveable   : gpc.moveable(),
       facehint   : pri.facehint(gpc),
     };
-    dbgc!(pri, ipc, gpc, r);
+    trace_dbg!("prep_piecestate", pri, ipc, gpc, r);
     r
   }
 
@@ -155,7 +155,7 @@ impl PieceRenderInstructions {
       svg, bbox,
       uos: pri.ui_operations(gs, gpc, ipc)?,
     };
-    dbgc!(pri, ipc, gpc, r);
+    trace_dbg!("prep_pieceimage", pri, ipc, gpc, r);
     r
   }
 

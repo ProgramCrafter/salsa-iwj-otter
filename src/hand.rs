@@ -259,7 +259,7 @@ impl PieceTrait for Hand {
     let gpl = gplayers.byid_mut(player)?;
     let nick = gpl.nick.to_html();
 
-    dbgc!("ui op k entry", &opname, &xdata);
+    trace_dbg!("ui op k entry", &opname, &xdata);
 
     let puos = PUOs_Simple_Modify;
 
@@ -267,7 +267,7 @@ impl PieceTrait for Hand {
       match (opname, xdata.owner.is_some())
     {
       ("claim", false) => {
-        dbgc!("claiming");
+        trace_dbg!("claiming");
         let new_desc = self.behaviour.owned_desc(&nick);
         let new_owner = Some(MagicOwner {
           player,
@@ -279,7 +279,7 @@ impl PieceTrait for Hand {
           Some((mk_owner, mk_defview)) => {
             let rot_checked = rot_checked?;
             let (region, views) = (||{
-              dbgc!("claiming region");
+              trace_dbg!("claiming region");
               let rect   = self.shape.outline.rect  (gpc.pos)?;
               let region = self.shape.outline.region(gpc.pos)?;
               let displace = OccDisplacement::Rect { rect };
@@ -288,12 +288,12 @@ impl PieceTrait for Hand {
                 owner_view: mk_owner(&displace, &gpc.zlevel.z),
                 defview: mk_defview(&displace, &gpc.zlevel.z),
               }.views()?;
-              dbgc!("claiming got region", &region, &views);
+              trace_dbg!("claiming got region", &region, &views);
               Ok::<_,IE>((region, views))
             })()?;
             
             // actually do things:
-            dbgc!("creating occ");
+            trace_dbg!("creating occ");
             let xupdates =
               create_occultation(&mut gen.unique_gen(), &mut gs.max_z,
                                  gplayers, gpieces, goccults,
@@ -304,7 +304,7 @@ impl PieceTrait for Hand {
           }
         };
           
-        dbgc!("creating occ done", &new_owner, &xupdates);
+        trace_dbg!("creating occ done", &new_owner, &xupdates);
         (new_owner, xupdates, hformat!("claimed {}", &old_desc))
       }
       ("deactivate", true) => {
@@ -328,7 +328,7 @@ impl PieceTrait for Hand {
 
     let log = vec![ LogEntry { html: hformat!("{} {}", nick, did) }];
 
-    dbgc!("ui op k did main");
+    trace_dbg!("ui op k did main");
     
     // We need to reaquire mut references because create_occultation etc.
     // need mut access to gpieces.
@@ -337,7 +337,7 @@ impl PieceTrait for Hand {
       .expect("xdata disappeared!");
     assert_eq!(xdata.player(), old_player);
 
-    dbgc!("thinging done", &xdata, &new_owner);
+    trace_dbg!("thinging done", &xdata, &new_owner);
     xdata.owner = new_owner;
 
     (PieceUpdate {

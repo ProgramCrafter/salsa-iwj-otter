@@ -186,7 +186,7 @@ impl PieceTrait for Deck {
     let gpl = gplayers.byid_mut(player)?;
     let nick = gpl.nick.to_html();
 
-    dbgc!("ui op k entry", &opname);
+    trace_dbg!("ui op k entry", &opname);
 
     let rot_checked = gpc.occulter_check_unrotated(vis)?;
     let old_state = self.state(gpc, goccults)?;
@@ -231,19 +231,19 @@ impl PieceTrait for Deck {
     let puos = PUOs_Simple_Modify;
 
     if let Some((region, views)) = region_views {
-      dbgc!("creating occ");
+      trace_dbg!("creating occ");
       xupdates.extend(
         create_occultation(&mut gen.unique_gen(), &mut gs.max_z,
                            gplayers, gpieces, goccults, ipieces, ioccults,
                            to_recalculate, rot_checked,
                            region, piece, views, &puos)?
       );
-      dbgc!("creating occ done", &xupdates);
+      trace_dbg!("creating occ done", &xupdates);
     }
 
     let log = vec![ LogEntry { html: hformat!("{} {}", nick, did) }];
 
-    dbgc!("ui op k did main");
+    trace_dbg!("ui op k did main");
     
     (PieceUpdate {
       wrc, log,
