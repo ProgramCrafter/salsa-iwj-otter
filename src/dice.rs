@@ -249,7 +249,7 @@ impl Die {
   pub fn cooldown_remaining(&self, state: &State) -> Duration {
     let expires = &state.cooldown_expires;
     if_let!{ Some(FutureInstant(then)) = *expires; else return Ok(default()) };
-    let now = Instant::now();
+    let now = config().global_clock.now();
     if now > then { return default() }
     let remaining = then - now;
     if remaining > self.cooldown_time {

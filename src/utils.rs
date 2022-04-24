@@ -492,7 +492,7 @@ pub struct FutureInstant(pub Instant);
 
 impl Into<Duration> for FutureInstant {
   fn into(self) -> Duration {
-    let now = Instant::now();
+    let now = config().global_clock.now();
     Instant::from(self).checked_duration_since(now).unwrap_or_default()
   }
 }
@@ -505,7 +505,7 @@ impl TryFrom<Duration> for FutureInstant {
   type Error = FutureInstantOutOfRange;
   #[throws(FutureInstantOutOfRange)]
   fn try_from(duration: Duration) -> FutureInstant {
-    let now = Instant::now();
+    let now = config().global_clock.now();
     now.checked_add(duration).ok_or(FutureInstantOutOfRange)?.into()
   }
 }      
