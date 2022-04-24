@@ -65,8 +65,9 @@ item = "chess-b-P"
 pos = [155, 15]
 type = "Die"
 labels = ["A", "B"]
-image.type = "Rect"
-image.size = [10]
+image.type = "Disc"
+image.diam = 12
+circle_scale = 0.833
 image.edges = ["black","black"]
 image.faces = ["#ccccff", "#ccffcc"]
 
