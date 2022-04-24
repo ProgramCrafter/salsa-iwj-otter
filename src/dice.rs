@@ -326,16 +326,19 @@ impl PieceTrait for Die {
   #[throws(IE)]
   fn describe_html(&self, gpc: &GPiece, _: &GameOccults) -> Html {
     let nfaces = self.nfaces();
-    let label = &self.labels[gpc.face];
-    let idesc = || self.image.describe_html(gpc.face);
-    let ldesc = || Html::from_txt(label);
-    if label == "" {
-      hformat!("a d{} (now showing {})", nfaces, idesc()?)
-    } else if self.labels.iter().filter(|&l| l == label).count() == 1 {
-      hformat!("a d{} (now showing {})", nfaces, ldesc())
-    } else {
-      hformat!("a d{} (now showing {}, {})", nfaces, idesc()?, ldesc())
-    }
+    let showing = {
+      let label = &self.labels[gpc.face];
+      let idesc = || self.image.describe_html(gpc.face);
+      let ldesc = || Html::from_txt(label);
+      if label == "" {
+        hformat!("now showing {}", idesc()?)
+      } else if self.labels.iter().filter(|&l| l == label).count() == 1 {
+        hformat!("now showing {}", ldesc())
+      } else {
+        hformat!("now showing {}, {}", idesc()?, ldesc())
+      }
+    };
+    hformat!("a d{} ({})", nfaces, showing)
   }
 
   #[throws(ApiPieceOpError)]
