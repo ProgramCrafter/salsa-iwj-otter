@@ -14,16 +14,16 @@ pub struct FakeRngSpec(Option<Vec<String>>);
 impl FakeRngSpec {
   pub fn make_game_rng(self) -> RngWrap { RngWrap( match self.0 {
     None => None,
-    Some(ents) => Some(Arc::new(Mutex::new(FakeRng {
+    Some(ents) => Some(Mutex::new(FakeRng {
       i: 0,
       ents,
-    }))) }
+    })) }
   )}
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug)]
 pub struct RngWrap (
-  Option<Arc<Mutex<FakeRng>>>
+  Option<Mutex<FakeRng>>
 );
 
 #[derive(Debug)]
