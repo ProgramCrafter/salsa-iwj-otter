@@ -11,11 +11,11 @@ type Micros = u64;
 
 #[derive(Deserialize,Debug,Clone,Default)]
 #[serde(transparent)]
-pub struct FakeTimeConfig(Option<FakeTimeSpec>);
+pub struct FakeTimeConfig(pub Option<FakeTimeSpec>);
 
 #[derive(Deserialize,Serialize,Debug,Clone,Default)]
 #[serde(into="Vec<Millis>", try_from="Vec<Millis>")]
-pub struct FakeTimeSpec(Option<Millis>);
+pub struct FakeTimeSpec(pub Option<Millis>);
 
 #[derive(Error,Debug)]
 #[error("invalid fake time: must be list of 0 or 1 numbers (ms)")]
