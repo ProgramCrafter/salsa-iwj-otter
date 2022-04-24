@@ -154,11 +154,12 @@ impl PieceOccult {
                              piece: PieceId) {
     if_chain! {
       if let Some(Passive { occid, permute_notch }) = self.passive;
-      if let Some(notch) = permute_notch;
       if let Some(occ) = goccults.occults.get_mut(occid);
       then {
-        occ.notches.remove(piece, notch)
-          .unwrap_or_else(|e| error!("removing occulted piece {:?}", e));
+        if let Some(notch) = permute_notch {
+          occ.notches.remove(piece, notch)
+            .unwrap_or_else(|e| error!("removing occulted piece {:?}", e));
+        }
       }
     }
   }
@@ -707,11 +708,14 @@ fn recalculate_occultation_general<
       to_recalculate.mark_dirty(occid);
       goccults.occults.get_mut(occid).unwrap()
     };
-    if let Some((occid, Some(old_notch))) = occulteds.old {
-      occultation(goccults, occid)
-        .notches
-        .remove(piece, old_notch)
-        .unwrap()
+    if let Some((occid, old_notch)) = occulteds.old {
+      let occ = occultation(goccults, occid);
+      if let Some(old_notch) = old_notch {
+        occ
+          .notches
+          .remove(piece, old_notch)
+          .unwrap();
+      }
     };
     let passive = if_chain!{
       if let Some(occid) = occulteds.new;
