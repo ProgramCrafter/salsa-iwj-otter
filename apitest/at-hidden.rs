@@ -23,7 +23,7 @@ impl Ctx {
     let hand = a_pieces.find_by_desc_glob(otter::hand::UNCLAIMED_HAND_DESC);
     let hand_pos = a_pieces[hand].pos;
     let die_a = a_pieces.find_by_desc_glob("a d2 *");
-    let die_red = a_pieces.find_by_desc_glob("a d2 *");
+    let die_red = a_pieces.find_by_desc_glob("a red die *");
 
     let move_into_hand = |alice: &mut Session, a_pieces: &'_ mut _, p, x_off| {
       let pos = (hand_pos + PosC::new(x_off,0))?;
@@ -35,9 +35,17 @@ impl Ctx {
     alice.api_piece(GH::With, PuSynch(&mut (&mut a_pieces, hand)),
                     ("k", json!({ "opname": "claim",
                                    "wrc": WRC::Unpredictable })))?;
-    move_into_hand(&mut alice, &mut a_pieces, die_a, 10)?;
+    move_into_hand(&mut alice, &mut a_pieces, die_red, 10)?;
 
-    // TODO rest of this test
+    self.su().mgmt_conn().cmd(&MC::SetFakeTime(FakeTimeSpec(Some(6000))))?;
+    alice.synch()?;
+    alice.api_piece(GH::With, PuSynch(&mut (&mut a_pieces, die_red)),
+                    ("k", json!({ "opname": "roll",
+                                   "wrc": WRC::UpdateSvg })))?;
+
+    alice.api_piece(GH::With, PuSynch(&mut (&mut a_pieces, hand)),
+                    ("k", json!({ "opname": "deactivate",
+                                   "wrc": WRC::Unpredictable })))?;
   }
 }
 
