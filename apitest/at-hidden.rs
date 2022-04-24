@@ -13,6 +13,7 @@ type Ctx = UsualCtx;
 impl Ctx {
   #[throws(Explode)]
   fn dice(&mut self) {
+    self.su().mgmt_conn().cmd(&MC::SetFakeTime(FakeTimeSpec(Some(0))))?;
     self.otter_resetting(&G("reset demo"))?;
     
     let mut alice = self.connect_player(&self.alice)?;
