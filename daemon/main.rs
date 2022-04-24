@@ -15,6 +15,7 @@ pub mod imports;
 
 pub mod api;
 pub mod cmdlistener;
+pub mod logging;
 pub mod session;
 pub mod sse;
 
@@ -487,7 +488,11 @@ async fn main() -> Result<(),StartupError> {
 
   let c = config();
 
-  flexi_logger::Logger::with(log_config()).start()?;
+  flexi_logger::Logger::with(log_config())
+    .format(logging::BASIC_FORMAT)
+    .adaptive_format_for_stderr(logging::ADAPTIVE_FORMAT)
+    .adaptive_format_for_stdout(logging::ADAPTIVE_FORMAT)
+    .start()?;
 
   debug!("resolved config: {:#?}", c);
 

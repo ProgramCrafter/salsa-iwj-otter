@@ -2767,6 +2767,7 @@ dependencies = [
  "actix-cors",
  "actix-files",
  "actix-web",
+ "ansi_term",
  "fehler",
  "futures",
  "mime",
