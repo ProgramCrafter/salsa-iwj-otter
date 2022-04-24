@@ -59,7 +59,7 @@ pub struct WholeServerConfig {
   log: LogSpecification,
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug)]
 pub struct ServerConfig {
   save_dir: String,
   pub command_socket: String,
