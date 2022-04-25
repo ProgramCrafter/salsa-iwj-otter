@@ -24,7 +24,7 @@ There is:
   * possibly branch(es) of history made by the client;
     this can rewind and be discarded
 
-There is a diagraph of updates.  Each update specifies the complete
+There is a digraph of updates.  Each update specifies the complete
 state of the piece.  The server maintains an authoritative history;
 the client only maintains the state of the piece.
 
