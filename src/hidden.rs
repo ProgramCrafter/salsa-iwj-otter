@@ -142,10 +142,11 @@ impl PieceOccult {
 
   #[throws(IE)]
   pub fn active_total_ppieces(&self, goccults: &GameOccults)
-                              -> Option<NotchNumber> {
-    self.active_occ(goccults)?.map(
-      |occ| occ.notches.len()
-    )
+                              -> Option<usize> {
+    self.active_occ(goccults)?.map(|occ| {
+      let notches_len = usize::try_from(occ.notches.len()).unwrap();
+      notches_len
+    })
   }
 
   pub fn passive_occid(&self) -> Option<OccId> { Some(self.passive?.occid) }
