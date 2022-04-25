@@ -53,6 +53,7 @@ pub struct Occultation {
   region: Region, // automatically affect pieces here
   occulter: PieceId, // kept in synch with PieceOccult::active
   notches: Notches, // kept in synch with PieceOccult::passive
+  unnotched: HashSet<PieceId>, // kept in synch with PieceOccult::passive
   ppiece_use_size: Pos, // taken from first piece
   #[serde(flatten)] views: OccultationViews,
 }
@@ -145,7 +146,7 @@ impl PieceOccult {
                               -> Option<usize> {
     self.active_occ(goccults)?.map(|occ| {
       let notches_len = usize::try_from(occ.notches.len()).unwrap();
-      notches_len
+      notches_len + occ.unnotched.len()
     })
   }
 
@@ -159,6 +160,8 @@ impl PieceOccult {
         if let Some(notch) = permute_notch {
           occ.notches.remove(piece, notch)
             .unwrap_or_else(|e| error!("removing occulted piece {:?}", e));
+        } else {
+          occ.unnotched.remove(&piece);
         }
       }
     }
@@ -247,7 +250,10 @@ impl Occultation {
   }
 
   pub fn pieces(&self) -> impl Iterator<Item=PieceId> + '_ {
-    self.notches.iter()
+    chain!(
+      self.notches.iter(),
+      self.unnotched.iter().cloned(),
+    )
   }
 }
 
@@ -715,6 +721,10 @@ fn recalculate_occultation_general<
           .notches
           .remove(piece, old_notch)
           .unwrap();
+      } else {
+        occ
+          .unnotched
+          .remove(&piece);
       }
     };
     let passive = if_chain!{
@@ -724,7 +734,10 @@ fn recalculate_occultation_general<
       if let Some(ilk) = wants!( ipc.occilk.as_ref() );
       then {
         let permute_notch = match ilk {
-          IOI::Distinct(_) => None,
+          IOI::Distinct(_) => {
+            occ.unnotched.insert(piece);
+            None
+          },
           IOI::Mix(ilk) => {
             if_chain!{
               if occ.notches.is_empty();
@@ -983,6 +996,7 @@ pub fn create_occultation(
     views,
     ppiece_use_size: PosC::zero(),
     notches: default(),
+    unnotched: default(),
   };
   debug!("creating occultation {:?}", &occultation);
   trace_dbg!("recalc", &recalc);
