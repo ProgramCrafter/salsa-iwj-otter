@@ -405,6 +405,8 @@ pub fn consistency_check(
       let occ = goccults.occults.get(occid).unwrap();
       if let Some(notch) = permute_notch {
         assert_eq!(occ.notches.table[notch], NR::Piece(piece));
+      } else {
+        assert!(occ.unnotched.contains(&piece));
       }
     }
   }
@@ -438,6 +440,11 @@ pub fn consistency_check(
       walk = next;
     }
     assert_eq!(nfree1,  nfree2);
+
+    for &ppiece in &occ.unnotched {
+      assert_eq!(gpieces.get(ppiece).unwrap().occult.passive,
+                 Some(Passive { occid, permute_notch: None }));
+    }
   }
 }
 
