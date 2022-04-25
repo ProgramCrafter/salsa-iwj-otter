@@ -435,16 +435,16 @@ macro_rules! want_let {
 /// in the serde attribute.
 #[macro_export]
 macro_rules! serde_with_compat { {
-  [ #[ $($attrs:meta)* ] ] [ $vis:vis ] [ $($intro:tt)* ]
+  [ $( #[ $($attrs:meta)* ] )* ] [ $vis:vis ] [ $($intro:tt)* ]
     $main:ident=$main_s:literal $new:ident $compat_s:literal
   [ $($body:tt)* ]
 } => {
-  $(#[ $attrs ])* 
+  $(#[ $($attrs)* ])* 
   #[serde(try_from=$compat_s)]
   $vis $($intro)* $main $($body)*
 
   #[allow(non_camel_case_types)]
-  $(#[ $attrs ])* 
+  $(#[ $($attrs)* ])* 
   #[serde(remote=$main_s)]
   $($intro)* $new $($body)*
 } }
