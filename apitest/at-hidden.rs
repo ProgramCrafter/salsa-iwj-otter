@@ -2,10 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-#![allow(dead_code)]
-#![allow(unused_mut)]
-#![allow(unused_variables)]
-
 use crate::*;
 
 type Ctx = UsualCtx;
@@ -39,6 +35,7 @@ impl Ctx {
 
     self.su().mgmt_conn().cmd(&MC::SetFakeTime(FakeTimeSpec(Some(6000))))?;
     alice.synch()?;
+    bob.synch()?;
     alice.api_piece(GH::With, PuSynch(&mut (&mut a_pieces, die_red)),
                     ("k", json!({ "opname": "roll",
                                    "wrc": WRC::UpdateSvg })))?;
@@ -46,6 +43,8 @@ impl Ctx {
     alice.api_piece(GH::With, PuSynch(&mut (&mut a_pieces, hand)),
                     ("k", json!({ "opname": "deactivate",
                                    "wrc": WRC::Unpredictable })))?;
+    alice.synch()?;
+    bob.synch()?;
   }
 }
 
