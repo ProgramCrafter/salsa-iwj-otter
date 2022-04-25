@@ -69,6 +69,8 @@ impl PieceSpec for Spec {
       itemname,
     };
 
+    gpc.fastsplit = FastSplitId::new_placeholder();
+
     let special = PieceSpecialProperties {
       multigrab: true,
       ..default()
