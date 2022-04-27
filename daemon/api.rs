@@ -457,14 +457,19 @@ api_route!{
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,piece, .. } = a;
     let gpc = gs.pieces.byid_mut(piece)?;
-    if gpc.occult.is_active() {
-      if self.z >= gpc.zlevel.z { throw!(Ia::Occultation) }
-    }
-    gpc.zlevel = ZLevel { z: self.z.clone(), zg: gs.gen };
+    op_do_set_z(gpc, gs.gen, &self.z)?;
     let update = PieceUpdateOp::SetZLevel(());
     (WhatResponseToClientOp::Predictable,
      update, vec![]).into()
   }
+}
+
+#[throws(ApiPieceOpError)]
+fn op_do_set_z(gpc: &mut GPiece, gen: Generation, z: &ZCoord) {
+    if gpc.occult.is_active() {
+      if z >= &gpc.zlevel.z { throw!(Ia::Occultation) }
+    }
+    gpc.zlevel = ZLevel { z: z.clone(), zg: gen };
 }
 
 api_route!{
