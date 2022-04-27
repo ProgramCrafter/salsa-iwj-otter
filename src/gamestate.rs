@@ -28,6 +28,7 @@ pub struct SpecDepth(u16);
 
 // ---------- general data types ----------
 
+/// Pieces on top have higher values than ones 
 #[derive(Debug,Clone,Eq,PartialEq,Ord,PartialOrd)]
 #[derive(Serialize,Deserialize)]
 pub struct ZLevel {
