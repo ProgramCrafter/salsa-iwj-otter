@@ -152,6 +152,7 @@ pub struct DataLoadPlayer {
 // ---------- piece updates ----------
 
 #[derive(Debug,Clone,Copy,Serialize)]
+// Quiet means not to produce the yellow halo (see `movements` in script.ts)
 pub enum PieceUpdateOp<NS,ZL> {
   Delete(),
   Insert(NS),
