@@ -990,12 +990,12 @@ function grab_clicked(clicked: PieceId[], loose: boolean,
   for (let piece of clicked) {
     let p = pieces[piece]!;
     set_grab_us(piece,p);
-    if (multigrab !== undefined) {
-      api_piece_x(api_immediate, loose, 'multigrab',
-		  piece,p, { n: multigrab });
-    } else {
+    if (multigrab === undefined) {
       api_piece_x(api_immediate, loose,
 		  wresting ? 'wrest' : 'grab', piece,p, { });
+    } else {
+      api_piece_x(api_immediate, loose, 'multigrab',
+		  piece,p, { n: multigrab });
     }
   }
 }
