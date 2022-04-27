@@ -456,7 +456,7 @@ api_route!{
   #[throws(ApiPieceOpError)]
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,piece, .. } = a;
-    let gpc = gs.pieces.byid_mut(piece).unwrap();
+    let gpc = gs.pieces.byid_mut(piece)?;
     if gpc.occult.is_active() {
       if self.z >= gpc.zlevel.z { throw!(Ia::Occultation) }
     }
