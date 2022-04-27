@@ -284,12 +284,12 @@ macro_rules! matches_doesnot_yn2bool {
 macro_rules! matches_doesnot {
   ($v:expr,
    $(
-     $yn:tt $($p:pat)|*
+     $yn:tt $p:pat
    ),* $(,)?
   ) => {
     match $v {
       $(
-        $($p)|* => $crate::matches_doesnot_yn2bool!($yn),
+        $p => $crate::matches_doesnot_yn2bool!($yn),
       )*
     }
   }

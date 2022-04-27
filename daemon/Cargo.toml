@@ -8,7 +8,8 @@ description="Otter game system; server executable crate."
 
 version="1.0.0"
 license="AGPL-3.0-or-later"
-edition="2018"
+edition="2021"
+resolver="1" # new resolver crashes!
 homepage="https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/"
 repository="https://salsa.debian.org/iwj/otter"
 keywords=["games"]
