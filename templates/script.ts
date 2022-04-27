@@ -887,13 +887,18 @@ function raise_targets(uo: UoRecord) {
 }
 
 function piece_raise(piece: PieceId, p: PieceInfo,
-		     new_held_us_raising: HeldUsRaising) {
+		     new_held_us_raising: HeldUsRaising,
+  implement: (piece: PieceId, p: PieceInfo, z: ZCoord) => void
+  = function(piece: PieceId, p: PieceInfo, z: ZCoord) {
+    api_piece("setz", piece,p, { z: z });
+  })
+{
   p.held_us_raising = new_held_us_raising;
   piece_set_zlevel(piece,p, (oldtop_piece) => {
     let oldtop_p = pieces[oldtop_piece]!;
     let z = wasm_bindgen.increment(oldtop_p.z);
     p.z = z;
-    api_piece("setz", piece,p, { z: z });
+    implement(piece,p,z);
   });
 }
 
