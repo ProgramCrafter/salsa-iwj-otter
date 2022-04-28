@@ -1408,8 +1408,13 @@ impl UpdateHandler {
           use PieceUpdateOp::*;
           let oe = bulk.pieces.get(&upiece);
           let ne = match (oe, uuop) {
+            // We preserve Quietness rather than coalescing.  This avoids
+            // many more cases here, and this code is used for mgmt
+            // updates, which are generally Quiet anyway.
             ( None                    , e        ) => Some( e               ),
+            ( Some( Insert     (()) ) , Delete() ) => None,
             ( Some( InsertQuiet(()) ) , Delete() ) => None,
+            ( Some( Insert     (()) ) , _        ) => Some( Insert     (()) ),
             ( Some( InsertQuiet(()) ) , _        ) => Some( InsertQuiet(()) ),
             ( Some( Delete     (  ) ) , _        ) => Some( Modify     (()) ),
             ( _                       , _        ) => Some( Modify     (()) ),

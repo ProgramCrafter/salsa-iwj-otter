@@ -1790,6 +1790,11 @@ pieceops.Modify = <PieceHandler>function
 }
 
 pieceops.InsertQuiet = <PieceHandler>(insert_piece as any);
+pieceops.Insert = <PieceHandler>function
+(piece: PieceId, xp: any, info: PreparedPieceState) {
+  let p = insert_piece(piece,xp,info);
+  piece_note_moved(piece,p);
+}
 
 function insert_piece(piece: PieceId, xp: any,
 		      info: PreparedPieceState): PieceInfo
