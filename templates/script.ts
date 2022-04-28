@@ -1789,8 +1789,11 @@ pieceops.Modify = <PieceHandler>function
   piece_modify(piece, p, info);
 }
 
-pieceops.InsertQuiet = <PieceHandler>function
-(piece: PieceId, xp: any, info: PreparedPieceState) {
+pieceops.InsertQuiet = <PieceHandler>(insert_piece as any);
+
+function insert_piece(piece: PieceId, xp: any,
+		      info: PreparedPieceState): PieceInfo
+{
   console.log('PIECE UPDATE INSERT ',piece,info)
   let delem = document.createElementNS(svg_ns,'defs');
   delem.setAttributeNS(null,'id','defs'+piece);
@@ -1811,6 +1814,7 @@ pieceops.InsertQuiet = <PieceHandler>function
   p.queued_moves = 0;
   piece_resolve_special(piece, p);
   piece_modify_core(piece, p, info);
+  return p;
 }
 
 pieceops.Delete = <PieceHandler>function
