@@ -574,7 +574,7 @@ impl UsualCtx {
         if k == "Piece";
         let piece = v["piece"].as_str().unwrap().to_string();
         let op = v["op"].as_object().unwrap();
-        if let Some(_) = op.get("Insert");
+        if let Some(_) = op.get("InsertQuiet");
         then { added.push(piece); }
       }
     )?;

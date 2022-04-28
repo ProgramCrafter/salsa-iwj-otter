@@ -155,7 +155,7 @@ pub struct DataLoadPlayer {
 // Quiet means not to produce the yellow halo (see `movements` in script.ts)
 pub enum PieceUpdateOp<NS,ZL> {
   Delete(),
-  Insert(NS),
+  InsertQuiet(NS),
   Modify(NS),
   ModifyQuiet(NS),
   Move(Pos),
@@ -428,7 +428,7 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
     use PieceUpdateOp::*;
     match self {
       Delete() => None,
-      Insert(ns) => Some(ns),
+      InsertQuiet(ns) => Some(ns),
       Modify(ns) => Some(ns),
       ModifyQuiet(ns) => Some(ns),
       Move(_) => None,
@@ -445,7 +445,7 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
     use PieceUpdateOp::*;
     Ok(match self {
       Delete() => Delete(),
-      Insert(ns) => Insert(f(ns)?),
+      InsertQuiet(ns) => InsertQuiet(f(ns)?),
       Modify(ns) => Modify(f(ns)?),
       ModifyQuiet(ns) => ModifyQuiet(f(ns)?),
       Move(pos) => Move(pos),
@@ -458,7 +458,7 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
     use PieceUpdateOp::*;
     match self {
       Delete() => Delete(),
-      Insert(ns) => Insert(ns),
+      InsertQuiet(ns) => InsertQuiet(ns),
       Modify(ns) => Modify(ns),
       ModifyQuiet(ns) => ModifyQuiet(ns),
       Move(pos) => Move(*pos),
@@ -483,7 +483,7 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
     use PieceUpdateOp::*;
     match self {
       Delete() => None,
-      Insert(_) => None,
+      InsertQuiet(_) => None,
       Modify(_) => None,
       ModifyQuiet(_) => None,
       Move(_) => None,

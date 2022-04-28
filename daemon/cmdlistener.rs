@@ -1136,7 +1136,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           ig.ipieces.as_mut(modperm).insert(piece, IPiece {
             p, occilk, special,
           });
-          updates.push((piece, PieceUpdateOp::Insert(())));
+          updates.push((piece, PieceUpdateOp::InsertQuiet(())));
         })(); // <- no ?, infallible (to avoid leaking ilk)
         pos = (pos + posd)?;
       }
@@ -1408,11 +1408,11 @@ impl UpdateHandler {
           use PieceUpdateOp::*;
           let oe = bulk.pieces.get(&upiece);
           let ne = match (oe, uuop) {
-            ( None               , e        ) => Some( e          ),
-            ( Some( Insert(()) ) , Delete() ) => None,
-            ( Some( Insert(()) ) , _        ) => Some( Insert(()) ),
-            ( Some( Delete(  ) ) , _        ) => Some( Modify(()) ),
-            ( _                  , _        ) => Some( Modify(()) ),
+            ( None                    , e        ) => Some( e               ),
+            ( Some( InsertQuiet(()) ) , Delete() ) => None,
+            ( Some( InsertQuiet(()) ) , _        ) => Some( InsertQuiet(()) ),
+            ( Some( Delete     (  ) ) , _        ) => Some( Modify     (()) ),
+            ( _                       , _        ) => Some( Modify     (()) ),
           };
           trace_dbg!("accumulate", upiece, oe, uuop, ne);
           match ne {

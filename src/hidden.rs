@@ -646,7 +646,7 @@ fn recalculate_occultation_general<
         kinds.new().at_all_visible(),
       ) {
         (false, false) => None,
-        (false, true ) => Some(PUO::Insert(())),
+        (false, true ) => Some(PUO::InsertQuiet(())),
         (true,  false) => Some(PUO::Delete()),
         (true,  true ) => Some(PUO::Modify(())),
       };

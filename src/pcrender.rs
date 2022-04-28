@@ -99,7 +99,7 @@ impl PieceRenderInstructions {
     if matches_doesnot!(
       op,
       = Move(_) | MoveQuiet(_) | SetZLevel(_) | SetZLevelQuiet(_),
-      ! Delete() | Insert(_) | Modify(_) | ModifyQuiet(_),
+      ! Delete() | InsertQuiet(_) | Modify(_) | ModifyQuiet(_),
     ) {
       match self.occulted {
         Visible(_) | Occulted => (),

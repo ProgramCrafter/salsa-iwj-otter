@@ -1789,7 +1789,7 @@ pieceops.Modify = <PieceHandler>function
   piece_modify(piece, p, info);
 }
 
-pieceops.Insert = <PieceHandler>function
+pieceops.InsertQuiet = <PieceHandler>function
 (piece: PieceId, xp: any, info: PreparedPieceState) {
   console.log('PIECE UPDATE INSERT ',piece,info)
   let delem = document.createElementNS(svg_ns,'defs');
