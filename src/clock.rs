@@ -412,7 +412,7 @@ impl PieceSpec for Spec {
       spec: self.clone(),
     };
 
-    gpc.xdata_mut(|| State::new(self) )?;
+    gpc.xdata_init(State::new(self))?;
 
     SpecLoaded {
       p: Box::new(clock),

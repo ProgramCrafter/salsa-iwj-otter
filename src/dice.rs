@@ -174,7 +174,7 @@ impl PieceSpec for Spec {
     let initial_state = {
       State { cooldown_expires: cooldown_start_value(cooldown_time)? }
     };
-    let _state: &mut State = gpc.xdata_mut(|| initial_state)?;
+    gpc.xdata_init(initial_state)?;
 
     let occ_label = |occ: &OccultSpec| -> String {
       if occ.label == "" && labels.iter().any(|l| l != "") {

@@ -457,6 +457,11 @@ impl GPiece {
     self.xdata.get_mut_exp()?
   }
 
+  #[throws(IE)]
+  pub fn xdata_init<T:PieceXData>(&mut self, val: T) -> &mut T {
+    self.xdata.init(val)?
+  }
+
   pub fn moveable(&self) -> PieceMoveable {
     if self.occult.is_active() { PieceMoveable::No }
     else { self.moveable }
@@ -500,6 +505,13 @@ fn xdata_unexpected<T:PieceXData>(got: &dyn PieceXData) -> InternalError {
     &got, T::dummy(),
   ))
 }
+fn xdata_unexpectedly_present(got: &dyn PieceXData) -> InternalError {
+  internal_logic_error(format!(
+    "\n\
+     piece xdata unexpectedly present: {:?}\n",
+    &got,
+  ))
+}
 fn xdata_missing<T:PieceXData>() -> InternalError {
   internal_logic_error(format!(
     "\n\
@@ -533,6 +545,16 @@ impl PieceXDataState {
   #[throws(IE)]
   fn get_mut_exp<T:PieceXData>(&mut self) -> &mut T {
     let xdata = self.as_mut().ok_or_else(|| xdata_missing::<T>())?;
+    xdata_get_mut_inner(xdata)?
+  }
+
+  #[throws(IE)]
+  fn init<T:PieceXData>(&mut self, val: T) -> &mut T {
+    if let Some(xdata) = self.as_ref() {
+      let xdata: &dyn PieceXData = &**xdata;
+      throw!(xdata_unexpectedly_present(xdata));
+    }
+    let xdata = self.insert(Box::new(val) as _);
     xdata_get_mut_inner(xdata)?
   }
 }
