@@ -154,14 +154,14 @@ pub struct DataLoadPlayer {
 #[derive(Debug,Clone,Copy,Serialize)]
 // Quiet means not to produce the yellow halo (see `movements` in script.ts)
 pub enum PieceUpdateOp<NS,ZL> {
-  Delete(),
-  Insert(NS),
-  InsertQuiet(NS),
-  Modify(NS),
-  ModifyQuiet(NS),
-  Move(Pos),
-  MoveQuiet(Pos),
-  SetZLevel(ZL),
+  Delete        (),
+  Insert        (NS),
+  InsertQuiet   (NS),
+  Modify        (NS),
+  ModifyQuiet   (NS),
+  Move          (Pos),
+  MoveQuiet     (Pos),
+  SetZLevel     (ZL),
   SetZLevelQuiet(ZL),
 }
 
@@ -428,15 +428,15 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
   pub fn new_state(&self) -> Option<&NS> {
     use PieceUpdateOp::*;
     match self {
-      Delete() => None,
-      Insert(ns) => Some(ns),
-      InsertQuiet(ns) => Some(ns),
-      Modify(ns) => Some(ns),
-      ModifyQuiet(ns) => Some(ns),
-      Move(_) => None,
-      MoveQuiet(_) => None,
-      SetZLevel(_) => None,
-      SetZLevelQuiet(_) => None,
+      Delete        ()   => None,
+      Insert        (ns) => Some(ns),
+      InsertQuiet   (ns) => Some(ns),
+      Modify        (ns) => Some(ns),
+      ModifyQuiet   (ns) => Some(ns),
+      Move          (_)  => None,
+      MoveQuiet     (_)  => None,
+      SetZLevel     (_)  => None,
+      SetZLevelQuiet(_)  => None,
     }
   }
   pub fn try_map<NS2, ZC2, E:Error,
@@ -446,29 +446,29 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
   {
     use PieceUpdateOp::*;
     Ok(match self {
-      Delete() => Delete(),
-      Insert(ns) => Insert(f(ns)?),
-      InsertQuiet(ns) => InsertQuiet(f(ns)?),
-      Modify(ns) => Modify(f(ns)?),
-      ModifyQuiet(ns) => ModifyQuiet(f(ns)?),
-      Move(pos) => Move(pos),
-      MoveQuiet(pos) => MoveQuiet(pos),
-      SetZLevel(zl) => SetZLevel(g(zl)?),
-      SetZLevelQuiet(zl) => SetZLevelQuiet(g(zl)?),
+      Delete        ()    => Delete        (),
+      Insert        (ns)  => Insert        (f(ns)?),
+      InsertQuiet   (ns)  => InsertQuiet   (f(ns)?),
+      Modify        (ns)  => Modify        (f(ns)?),
+      ModifyQuiet   (ns)  => ModifyQuiet   (f(ns)?),
+      Move          (pos) => Move          (pos),
+      MoveQuiet     (pos) => MoveQuiet     (pos),
+      SetZLevel     (zl)  => SetZLevel     (g(zl)?),
+      SetZLevelQuiet(zl)  => SetZLevelQuiet(g(zl)?),
     })
   }
   pub fn map_ref(&self) -> PieceUpdateOp<&NS,&ZC> {
     use PieceUpdateOp::*;
     match self {
-      Delete() => Delete(),
-      Insert(ns) => Insert(ns),
-      InsertQuiet(ns) => InsertQuiet(ns),
-      Modify(ns) => Modify(ns),
-      ModifyQuiet(ns) => ModifyQuiet(ns),
-      Move(pos) => Move(*pos),
-      MoveQuiet(pos) => MoveQuiet(*pos),
-      SetZLevel(zl) => SetZLevel(zl),
-      SetZLevelQuiet(zl) => SetZLevelQuiet(zl),
+      Delete        ()    => Delete        (),
+      Insert        (ns)  => Insert        (ns),
+      InsertQuiet   (ns)  => InsertQuiet   (ns),
+      Modify        (ns)  => Modify        (ns),
+      ModifyQuiet   (ns)  => ModifyQuiet   (ns),
+      Move          (pos) => Move          (*pos),
+      MoveQuiet     (pos) => MoveQuiet     (*pos),
+      SetZLevel     (zl)  => SetZLevel     (zl),
+      SetZLevelQuiet(zl)  => SetZLevelQuiet(zl),
     }
   }
   pub fn map<NS2,ZC2,
@@ -486,14 +486,14 @@ impl<NS,ZC> PieceUpdateOp<NS,ZC> {
   {
     use PieceUpdateOp::*;
     match self {
-      Delete() => None,
-      Insert(_) => None,
-      InsertQuiet(_) => None,
-      Modify(_) => None,
-      ModifyQuiet(_) => None,
-      Move(_) => None,
-      MoveQuiet(_) => None,
-      SetZLevel(l) => Some(l.borrow().zg),
+      Delete        ()  => None,
+      Insert        (_) => None,
+      InsertQuiet   (_) => None,
+      Modify        (_) => None,
+      ModifyQuiet   (_) => None,
+      Move          (_) => None,
+      MoveQuiet     (_) => None,
+      SetZLevel     (l) => Some(l.borrow().zg),
       SetZLevelQuiet(l) => Some(l.borrow().zg),
     }
   }
