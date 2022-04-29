@@ -65,7 +65,7 @@ mod op {
   impl<T> Complex for T where T: Core + Simple {
     #[throws(ApiPieceOpError)]
     fn op_complex(&self, a: ApiPieceOpArgs) -> OpOutcomeThunk {
-      (self.op(a)?, None).into()
+      (self.op(a)?, default()).into()
     }
   }
 }
@@ -622,7 +622,7 @@ api_route!{
               wrc,
               PieceUpdateOp::Modify(()),
               logents,
-            ).into(), None).into()
+            ).into(), default()).into()
           },
 
           _ => break,

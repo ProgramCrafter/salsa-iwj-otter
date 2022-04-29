@@ -223,7 +223,7 @@ pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
                       _gpieces: &mut GPieces,
                       _piece: PieceId,
                       _was_held: Option<PlayerId>)
-                      -> Result<UnpreparedUpdates,IE> { Ok(None) }
+                      -> Result<UnpreparedUpdates,IE> { Ok(default()) }
 
   fn loaded_hook(&self, _piece: PieceId,
                  _gs: &mut GameState, _ig: &InstanceRef) -> Result<(),IE> {
@@ -241,7 +241,7 @@ pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
   fn sortkey(&self) -> Option<&str> { None }
 
   fn occultation_notify_hook(&self, _piece: PieceId) -> UnpreparedUpdates {
-    None
+    default()
   }
 
   fn op_multigrab(&self, _a: ApiPieceOpArgs, _pri: PieceRenderInstructions,

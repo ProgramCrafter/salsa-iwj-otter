@@ -695,7 +695,7 @@ impl PieceTrait for Clock {
           WhatResponseToClientOp::Unpredictable,
           PieceUpdateOp::Modify(()),
           log);
-        (r.into(), None)
+        (r.into(), default())
       }
       UniversalImage => {
         let r: UpdateFromOpComplex = (
@@ -719,7 +719,7 @@ impl PieceTrait for Clock {
                       was_held: Option<PlayerId>)
                       -> UnpreparedUpdates {
     let gpc = gpieces.get_mut(piece);
-    let gpc = if let Some(gpc) = gpc { gpc } else { return None };
+    let gpc = if let Some(gpc) = gpc { gpc } else { return default() };
     let now_held = gpc.held;
     let state: &mut State = gpc.xdata_mut_exp()?;
     let was_current = state.current;

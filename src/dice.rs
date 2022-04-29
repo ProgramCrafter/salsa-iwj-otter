@@ -392,7 +392,7 @@ impl PieceTrait for Die {
           wrc,
           PieceUpdateOp::Modify(()),
           logents,
-        ).into(), None).into()
+        ).into(), default()).into()
 
       },
       _ => throw!(Ia::BadUiOperation)
@@ -413,7 +413,7 @@ impl PieceTrait for Die {
                       _was_held: Option<PlayerId>)
                       -> UnpreparedUpdates {
     self.cooldown_cleanup_hook(gpieces, piece)?;
-    None
+    default()
   }
 
   #[throws(IE)]
