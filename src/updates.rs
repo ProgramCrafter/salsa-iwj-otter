@@ -819,6 +819,20 @@ impl<'r> PrepareUpdatesBuffer<'r> {
     }
   }
 
+  pub fn add_unprepared(&mut self, unprepared: UnpreparedUpdates) {
+    if let Some(unprepared) = unprepared {
+      unprepared(self);
+    }
+  }
+
+  pub fn only_unprepared(ig: &'r mut Instance, unprepared: UnpreparedUpdates) {
+    if let Some(unprepared) = unprepared {
+      let mut prepub = PrepareUpdatesBuffer::new(ig, None);
+      unprepared(&mut prepub);
+      prepub.finish();
+    }
+  }
+
   pub fn finish(self) { }
 }
 

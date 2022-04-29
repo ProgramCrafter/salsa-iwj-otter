@@ -184,7 +184,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
     }
   };
 
-  if let Some(unprepared) = if_chain! {
+  if_chain! {
     let g = &mut *ig;
     if let Some(was_held) = was_held;
     if let Some(gpc) = g.gs.pieces.get_mut(piece);
@@ -196,12 +196,9 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
       piece,
       was_held,
     ).map_err(|e| error!("internal error on change hook: {:?}", e));
-    then { unprepared }
-    else { None }
-  } {
-    let mut prepub = PrepareUpdatesBuffer::new(&mut ig, None);
-    unprepared(&mut prepub);
-    prepub.finish();
+    then {
+      PrepareUpdatesBuffer::only_unprepared(&mut ig, unprepared);
+    }
   }
 
       Ok::<(),Fatal>(())
@@ -216,11 +213,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
                              &g.ipieces))
   });
 
-  if let Some(unprepared) = unprepared_outer {
-    let mut prepub = PrepareUpdatesBuffer::new(&mut ig, None);
-    unprepared(&mut prepub);
-    prepub.finish();
-  }
+  PrepareUpdatesBuffer::only_unprepared(&mut ig, unprepared_outer);
 
   ok?;
   ""
