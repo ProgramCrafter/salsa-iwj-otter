@@ -1337,12 +1337,10 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
         assert!(expand.is_empty())
       }
       responses.push(resp);
-      if let Some(unprepared) = unprepared {
+      PrepareUpdatesBuffer::only_unprepared_with(unprepared, ||{
         st.flush(ig,how,&who)?;
-        let mut prepub = PrepareUpdatesBuffer::new(ig, None);
-        unprepared(&mut prepub);
-        prepub.finish();
-      }
+        Ok::<_,ME>(ig)
+      })?;
     }
     if let Some(ref mut st) = uh_auth {
       flush_uh(st,igu)?;
@@ -1370,12 +1368,9 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
     })
   });
 
-  if let Some(uu) = uu {
-    let ig = igu.by_mut(Authorisation::promise_any());
-    let mut prepub = PrepareUpdatesBuffer::new(ig, None);
-    uu(&mut prepub);
-    prepub.finish();
-  }
+  PrepareUpdatesBuffer::only_unprepared_with(uu, ||Ok::<_,Void>(
+    igu.by_mut(Authorisation::promise_any())
+  )).void_unwrap();
 
   ok?
 }

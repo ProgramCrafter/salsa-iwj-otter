@@ -826,9 +826,18 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   }
 
   pub fn only_unprepared(ig: &'r mut Instance, unprepared: UnpreparedUpdates) {
-    if let Some(unprepared) = unprepared {
+    Self::only_unprepared_with(unprepared, ||Ok::<_,Void>(ig))
+      .void_unwrap();
+  }
+
+  #[throws(E)]
+  pub fn only_unprepared_with<'i,F,E>(unprepared: UnpreparedUpdates, igf: F)
+  where F: FnOnce() -> Result<&'i mut Instance, E>
+  {
+    if unprepared.is_some() {
+      let ig = igf()?;
       let mut prepub = PrepareUpdatesBuffer::new(ig, None);
-      unprepared(&mut prepub);
+      prepub.add_unprepared(unprepared);
       prepub.finish();
     }
   }
