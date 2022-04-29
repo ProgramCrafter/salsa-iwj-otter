@@ -89,6 +89,10 @@ deref_to_field!{IPiece, IPieceTraitObj, p}
 #[serde(transparent)]
 pub struct IPieces(ActualIPieces);
 pub type ActualIPieces = SecondarySlotMap<PieceId, IPiece>;
+
+/// Proof token that it is OK to modify the array
+///
+/// This exists to prevent bugs where we forget to save aux
 #[derive(Copy,Clone,Debug)]
 pub struct ModifyingPieces(());
 
@@ -279,6 +283,12 @@ impl Debug for RawTokenVal {
 impl Debug for Instance {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     write!(f, "Instance {{ name: {:?}, .. }}", &self.name)
+  }
+}
+
+impl ModifyingPieces {
+  pub fn allow_without_necessarily_saving() -> ModifyingPieces {
+    ModifyingPieces(())
   }
 }
 
@@ -967,6 +977,12 @@ impl<'ig> InstanceGuard<'ig> {
     // from the caller's pov is troublesome beczuse ultimately the
     // caller will need to manipulate various fields of Instance (so
     // we mustn't have a borrow of it).
+    ModifyingPieces(())
+  }
+
+  pub fn modify_pieces_not_necessarily_saving_aux(&mut self)
+                                                  -> ModifyingPieces {
+    self.save_game_later();
     ModifyingPieces(())
   }
 
