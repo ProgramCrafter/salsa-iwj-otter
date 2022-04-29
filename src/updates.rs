@@ -27,7 +27,7 @@ pub type RawClientSequence = u64;
 #[serde(transparent)]
 pub struct ClientSequence(RawClientSequence);
 
-pub type UnpreparedUpdates = Option<SomeUnpreparedUpdates>;
+pub type UnpreparedUpdates = Vec<SomeUnpreparedUpdates>;
 pub type SomeUnpreparedUpdates = Box<
     dyn for<'r> FnOnce(&'r mut PrepareUpdatesBuffer)
     >;
@@ -820,9 +820,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   }
 
   pub fn add_unprepared(&mut self, unprepared: UnpreparedUpdates) {
-    if let Some(unprepared) = unprepared {
-      unprepared(self);
-    }
+    for suu in unprepared { suu(self); }
   }
 
   pub fn only_unprepared(ig: &'r mut Instance, unprepared: UnpreparedUpdates) {
@@ -834,7 +832,7 @@ impl<'r> PrepareUpdatesBuffer<'r> {
   pub fn only_unprepared_with<'i,F,E>(unprepared: UnpreparedUpdates, igf: F)
   where F: FnOnce() -> Result<&'i mut Instance, E>
   {
-    if unprepared.is_some() {
+    if unprepared.len() != 0 {
       let ig = igf()?;
       let mut prepub = PrepareUpdatesBuffer::new(ig, None);
       prepub.add_unprepared(unprepared);
@@ -1018,10 +1016,10 @@ impl PreparedUpdate {
 impl Vec<(PieceId, PieceUpdateOps)> {
   fn into_unprepared(self, by_client: IsResponseToClientOp)
                      -> UnpreparedUpdates {
-    Some(Box::new(
+    vec![Box::new(
       move |buf: &mut PrepareUpdatesBuffer| {
         buf.piece_updates(self, &by_client)
-      }))
+      })]
   }
 }
 

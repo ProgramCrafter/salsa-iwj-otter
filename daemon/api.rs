@@ -178,7 +178,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
 
       buf.piece_update(piece, &by_client, ops);
       buf.log_updates(log);
-      if let Some(unprepared) = unprepared { unprepared(&mut buf); }
+      buf.add_unprepared(unprepared);
 
       debug!("api_piece_op OK: {:?}", &form);
     }

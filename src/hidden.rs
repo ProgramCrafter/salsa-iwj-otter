@@ -837,8 +837,7 @@ mod recompute {
   impl Debug for Implemented {
     #[throws(fmt::Error)]
     fn fmt(&self, f: &mut Formatter) {
-      write!(f, "Implemented({})",
-             if self.0.is_some() { "Some(..)" } else { "None" })?;
+      write!(f, "Implemented({})", self.0.len())?;
     }
   }
 
@@ -862,29 +861,15 @@ mod recompute {
         if let Some(occ) = goccults.occults.get_mut(occid) {
           vpid::permute(occid, occ, gplayers, gpieces, ipieces);
           if let Some(ipc) = ipieces.get(occ.occulter) {
-            if let Some(uu) = {
-              ipc
+            let uu = ipc
                 .direct_trait_access()
-                .occultation_notify_hook(occ.occulter)
-            } {
-              unprepared.push(uu)
-            }
+                .occultation_notify_hook(occ.occulter);
+            unprepared.extend(uu);
           }
         }
       }
 
       consistency_check(gplayers, gpieces, goccults);
-
-      let unprepared = if unprepared.is_empty() {
-        None
-      } else {
-        Some(Box::new(
-          move |updates: &mut PrepareUpdatesBuffer| {
-            for p in unprepared.into_iter() { p(updates) }
-          }
-        ) as SomeUnpreparedUpdates
-        )
-      };
 
       Implemented(unprepared)
     }

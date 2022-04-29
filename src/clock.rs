@@ -395,10 +395,10 @@ const OUTLINE: RectShape = RectShape { xy: PosC::new(W as f64, H as f64) };
 // ==================== piece management, loading, etc. ====================
 
 fn unprepared_update(piece: PieceId) -> UnpreparedUpdates {
-  Some(Box::new(move |buf: &mut PrepareUpdatesBuffer| {
+  vec![Box::new(move |buf: &mut PrepareUpdatesBuffer| {
     buf.piece_update_image(piece, &None)
       .unwrap_or_else(|e| error!("failed to prep clock: {:?}", e));
-  }))
+  })]
 }
 
 #[typetag::serde(name="ChessClock")]
