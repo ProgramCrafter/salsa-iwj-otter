@@ -145,7 +145,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
   })().and_then(|(thunk, loose_conflict)| Ok((
     match thunk {
       OpOutcomeThunk::Immediate(r) => r,
-      OpOutcomeThunk::Reborrow(f) => f(g, player, piece)?,
+      OpOutcomeThunk::Reborrow(f) => f(&mut ig, player, piece)?,
     }, loose_conflict
   ))) {
     Err(APOE::Inapplicable(poe)) => {
@@ -173,7 +173,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
         } else {
           Some((wrc, client, form.cseq))
         };
-      let mut buf = PrepareUpdatesBuffer::new(g,
+      let mut buf = PrepareUpdatesBuffer::new(&mut ig,
                                               Some(1 + log.len()));
 
       buf.piece_update(piece, &by_client, ops);

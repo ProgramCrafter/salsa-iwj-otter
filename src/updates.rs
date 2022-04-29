@@ -196,7 +196,7 @@ pub enum OpOutcomeThunk {
   /// TODO: Provide cooked methods for this (taking `ModifyingPieces`)
   ///
   /// TODO: Provide a `ModifyingPieces` to the closure.
-  Reborrow(Box<dyn FnOnce(&mut Instance, PlayerId, PieceId)
+  Reborrow(Box<dyn FnOnce(&mut InstanceGuard, PlayerId, PieceId)
                    -> Result<UpdateFromOpComplex, ApiPieceOpError>>),
 }
 
