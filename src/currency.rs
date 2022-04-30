@@ -139,11 +139,12 @@ impl PieceTrait for Banknote {
     let remaining = tgpc_value.qty.checked_sub(take)
       .ok_or(Ia::CurrencyShortfall)?;
 
-    ngpc.xdata_init(Value { qty: take })?;
+    tgpc_value.qty = take;
+    ngpc.xdata_init(Value { qty: remaining })?;
 
     tgpc.held = Some(player);
     ngpc.held = None;
-
+    
     tgpc.pinned = false;
 
     let logents = log_did_to_piece(
@@ -156,7 +157,7 @@ impl PieceTrait for Banknote {
     let update = PieceUpdateOp::ModifyQuiet(());
 
     Ok((
-      (WhatResponseToClientOp::Predictable,
+      (WhatResponseToClientOp::UpdateSvg,
        update,
        logents).into(),
       default()
