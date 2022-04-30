@@ -804,6 +804,16 @@ mod test {
   }
 }
 
+// ---------- 2-phase Z level setting ----------
+
+#[throws(ApiPieceOpError)]
+pub fn op_do_set_z(gpc: &mut GPiece, gen: Generation, z: &ZCoord) {
+    if gpc.occult.is_active() {
+      if z >= &gpc.zlevel.z { throw!(Ia::Occultation) }
+    }
+    gpc.zlevel = ZLevel { z: z.clone(), zg: gen };
+}
+
 // ---------- log expiry ----------
 
 impl GameState {
