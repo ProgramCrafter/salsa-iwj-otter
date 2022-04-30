@@ -489,7 +489,7 @@ function some_keydown(e: KeyboardEvent) {
     if (special_count == null) special_count = 0;
     special_count *= 10;
     special_count += special_count_key;
-    special_count %= 100;
+    special_count %= 100000;
     special_count_reupdate();
     return;
   }
@@ -550,15 +550,18 @@ function special_count_reupdate() {
     let xy;
     if (special_count != 0) {
       let path = 'stroke-linecap="square" d="M -10 -10 10 10 M 10 -10 -10 10"';
+      let text_len = special_count.toString().length;
+      let text_x = text_len <= 3 ? 0 : -15;
+      let text_size = text_len <= 3 ? 50 : 45 * (4/text_len);
       xy = '15 50';
       svg = 
 `<svg xmlns="http://www.w3.org/2000/svg"
-     viewBox="-15 0 85 65" width="85" height="65">
+     viewBox="-15 0 120 65" width="120" height="65">
   <g transform="translate(0 50)">
     <path stroke-width="8" stroke="#fcf" ${path}/>
     <path stroke-width="4" stroke="purple" ${path}/>
-    <text x="0" y="0" fill="purple" stroke="#fcf" stroke-width="2"
-       font-family="sans-serif" font-size="50">${special_count}</text>
+    <text x="${text_x}" y="0" fill="purple" stroke="#fcf" stroke-width="2"
+       font-family="sans-serif" font-size="${text_size}">${special_count}</text>
   </g></svg>`;
     } else {
       let path = 'stroke-linecap="square" d="M -10 -10 0 0 10 -10 M 0 0 0 -20"';
@@ -1116,6 +1119,11 @@ function mouse_find_clicked(e: MouseEvent,
       if (clicked) clicked.multigrab = special_count;
       return clicked;
     } else {
+      if (special_count > 99) {
+	add_log_message(
+	  `Refusing to try to select ${special_count} pieces (max is 99)`);
+	return null;
+      }
       let clickpos = mouseevent_pos(e);
       return mouse_find_predicate(
 	special_count, count_allow_for_deselect, note_already,
