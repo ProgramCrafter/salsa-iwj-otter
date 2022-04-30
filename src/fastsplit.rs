@@ -91,6 +91,9 @@ impl InstanceGuard<'_> {
                   &mut GPiece)
                   -> Result<UpdateFromOpComplex, ApiPieceOpError>
   {
+    // All this complicated machinery exists precisely to let us make
+    // pieces without having to save aux.
+    //
     // The "save later" part of this ought to be unnecessarily, because
     // we'll be running in piece API context which already does that.
     // But it is clearer to call the appropriate function.
@@ -138,9 +141,6 @@ impl InstanceGuard<'_> {
     )?;
 
     (||{
-      // All this complicated machinery exists precisely to let us make
-      // pieces without having to save aux.
-
       let nipc = IFastSplits::make_ipc(&mut ig.ioccults.ilks,
                                        fs_record.ipc.clone());
       let npiece = ig.gs.pieces.as_mut(modperm).insert(ngpc);
