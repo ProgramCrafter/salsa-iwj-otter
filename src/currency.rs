@@ -131,10 +131,10 @@ impl PieceTrait for Banknote {
   {
     ig.fastsplit_split(player, tpiece, show, new_z,
       move |_: &IOccults, _: &GameOccults, gpl: &GPlayer,
-            tgpc: &mut GPiece, _tipc: &IPiece, tipc_p: &dyn PieceTrait,
+            tgpc: &mut GPiece, tipc: &IPiece,
             ngpc: &mut GPiece|
   {
-    let self_: &Banknote = tipc_p.downcast_piece()?;
+    let self_: &Banknote = tipc.p.show(show).downcast_piece_fastsplit()?;
 
     let tgpc_value: &mut Value = tgpc.xdata.get_mut_exp()?;
     let remaining = tgpc_value.qty.checked_sub(take)

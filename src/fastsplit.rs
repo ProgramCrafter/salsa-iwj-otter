@@ -83,11 +83,11 @@ impl InstanceGuard<'_> {
   #[throws(ApiPieceOpError)]
   pub fn fastsplit_split<I>(
     &mut self, player: PlayerId,
-    tpiece: PieceId, show: ShowUnocculted, tpc_new_z: ShouldSetZLevel,
+    tpiece: PieceId, _: ShowUnocculted, tpc_new_z: ShouldSetZLevel,
     implementation: I
   ) -> UpdateFromOpComplex
   where I: FnOnce(&IOccults, &GameOccults, &GPlayer,
-                  &mut GPiece, &IPiece, &dyn PieceTrait,
+                  &mut GPiece, &IPiece,
                   &mut GPiece)
                   -> Result<UpdateFromOpComplex, ApiPieceOpError>
   {
@@ -136,14 +136,9 @@ impl InstanceGuard<'_> {
       fastsplit:     tgpc.fastsplit,
     };
 
-    let tipc_p = tipc.p
-      .show(show).downcast_piece::<Piece>()?
-      .ipc.as_ref().ok_or_else(|| internal_error_bydebug(tipc))?
-      .p.show(show);
-
     let (t_pu, t_unprepared) = implementation(
       &ig.ioccults, &ig.gs.occults, gpl,
-      tgpc, tipc, tipc_p,
+      tgpc, tipc,
       &mut ngpc
     )?;
 
@@ -224,5 +219,17 @@ impl IFastSplits {
       if let Some(i) = ipc.occilk { ilks.dispose_iilk(i); }
       false
     })
+  }
+}
+
+#[ext(pub)]
+impl<'r> &'r dyn PieceTrait {
+  #[throws(IE)]
+  fn downcast_piece_fastsplit<P: PieceTrait>(self) -> &'r P {
+    self.downcast_piece::<Piece>()?
+      .ipc.as_ref().ok_or_else(|| internal_logic_error(
+        format!("downcast_piece_fastsplit not fastsplit {:?}", self)))?
+      .p.direct_trait_access() // we're just digging down, this is fine
+      .downcast_piece::<P>()?
   }
 }

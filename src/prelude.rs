@@ -187,6 +187,9 @@ pub use crate::updates::*;
 pub use crate::utils::*;
 pub use crate::ui::*;
 
+pub use crate::gamestate::RefTraitObjectPieceTraitExt as _;
+pub use crate::fastsplit::RefTraitObjectPieceTraitExt as _;
+
 pub type SecondarySlotMap<K,V> = slotmap::secondary::SecondaryMap<K,V>;
 pub type SvgData = Vec<u8>;
 pub type Colour = Html;
