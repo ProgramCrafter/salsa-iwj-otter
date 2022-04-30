@@ -351,7 +351,7 @@ pub struct PieceLoadArgs<'a> {
 pub trait PieceSpec: Debug + Sync + Send + 'static {
   #[throws(SpecError)]
   fn count(&self, _pcaliases: &PieceAliases) -> usize { 1 }
-  fn load(&self, pla: PieceLoadArgs<'_>) -> Result<SpecLoaded, SpecError>;
+  fn load(&self, pla: PieceLoadArgs) -> Result<SpecLoaded, SpecError>;
   /// Used when a piece wants to use another for its occulted form
   fn load_inert(&self, _ig: &Instance, _:SpecDepth)
                 -> Result<SpecLoadedInert, SpecError> {
