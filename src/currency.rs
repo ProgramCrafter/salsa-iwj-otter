@@ -135,8 +135,8 @@ impl PieceTrait for Banknote {
             tgpc: &mut GPiece, tipc: &IPiece,
             ngpc: &mut GPiece|
   {
-    let value: &mut Value = tgpc.xdata.get_mut_exp()?;
-    let remaining = value.qty.checked_sub(take)
+    let tgpc_value: &mut Value = tgpc.xdata.get_mut_exp()?;
+    let remaining = tgpc_value.qty.checked_sub(take)
       .ok_or(Ia::CurrencyShortfall)?;
 
     tgpc.held = Some(player);
