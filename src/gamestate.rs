@@ -421,6 +421,15 @@ impl Timestamp {
   }
 }
 
+#[ext(pub)]
+impl<'r> &'r dyn PieceTrait {
+  #[throws(IE)]
+  fn downcast_piece<P: PieceTrait>(self) -> &'r P {
+    self.downcast_ref::<P>().ok_or_else(|| internal_logic_error(format!(
+      "downcaste_piece failure! got: {:?}", &self)))?
+  }
+}
+
 // ---------- positions and ClampTable ----------
 
 #[derive(Error,Debug,Copy,Clone)]

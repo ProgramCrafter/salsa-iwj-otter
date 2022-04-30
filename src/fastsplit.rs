@@ -136,12 +136,10 @@ impl InstanceGuard<'_> {
       fastsplit:     tgpc.fastsplit,
     };
 
-    let tipc_p = (||{
-      let p = tipc.p.show(show);
-      let p: &Piece = p.downcast_ref::<Piece>()?;
-      let p = p.ipc.as_ref()?.p.show(show);
-      Some(p)
-    })().ok_or_else(|| internal_error_bydebug(tipc))?;
+    let tipc_p = tipc.p
+      .show(show).downcast_piece::<Piece>()?
+      .ipc.as_ref().ok_or_else(|| internal_error_bydebug(tipc))?
+      .p.show(show);
 
     let (t_pu, t_unprepared) = implementation(
       &ig.ioccults, &ig.gs.occults, gpl,
