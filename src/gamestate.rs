@@ -197,7 +197,7 @@ pub trait PieceBaseTrait: OutlineTrait + Send + Debug + 'static {
 
 #[ambassador::delegatable_trait]
 #[typetag::serde] // usual variable: p
-pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
+pub trait PieceTrait: PieceBaseTrait + Downcast + Send + Debug + 'static {
   fn add_ui_operations(&self, _y: ShowUnocculted,
                        _upd: &mut Vec<UoDescription>,
                        _gs: &GameState, _gpc: &GPiece) -> Result<(),IE> {
@@ -287,6 +287,7 @@ pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
               .into_inner().unwrap() })
   }
 }
+impl_downcast!(PieceTrait);
 
 #[typetag::serde]
 pub trait InertPieceTrait: PieceBaseTrait {
