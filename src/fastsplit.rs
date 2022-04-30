@@ -83,7 +83,7 @@ impl InstanceGuard<'_> {
   #[throws(ApiPieceOpError)]
   pub fn fastsplit_split<I>(
     &mut self, player: PlayerId,
-    tpiece: PieceId, show: ShowUnocculted, new_z: ShouldSetZLevel,
+    tpiece: PieceId, show: ShowUnocculted, tpc_new_z: ShouldSetZLevel,
     implementation: I
   ) -> UpdateFromOpComplex
   where I: FnOnce(&IOccults, &GameOccults, &GPlayer,
@@ -113,13 +113,16 @@ impl InstanceGuard<'_> {
     // old piece's Z (but we need to give it a new generation so that
     // we don't risk having two pieces with the precise same Z).  The
     // old piece becomes the amount taken and gets the specified Z.
-    let n_zlevel = ZLevel { z: tgpc.zlevel.z.clone(), zg: ig.gs.gen };
+    let npc_z = ZLevel { z: tgpc.zlevel.z.clone(), zg: ig.gs.gen };
+    if ! (tpc_new_z.inspect() > &npc_z) {
+      throw!(Ia::BadPieceStateForOperation);
+    }
 
     let mut ngpc = GPiece {
       pos:           tgpc.pos,
       face:          tgpc.face,
       held:          None,
-      zlevel:        n_zlevel,
+      zlevel:        npc_z,
       pinned:        tgpc.pinned,
       occult:        default(),
       angle:         tgpc.angle,
@@ -150,7 +153,7 @@ impl InstanceGuard<'_> {
 
     // This is outside the infallible closure because borrowck
     // can't see that we drop tgpc before doing stuff with ig.
-    new_z.implement(tgpc);
+    tpc_new_z.implement(tgpc);
     (||{
       let nipc = IFastSplits::make_ipc(&mut ig.ioccults.ilks,
                                        fs_record.ipc.clone());

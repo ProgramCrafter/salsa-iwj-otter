@@ -272,7 +272,10 @@ pub trait PieceTrait: PieceBaseTrait + Downcast + Send + Debug + 'static {
   // And the client can easily select a suitable ZCoord: the top
   // one will do.
   //
-  // So the multigrab operation specifies a ZCoord.
+  // So the multigrab operation specifies a ZCoord.  The client
+  // selects the top, but this is not checked centrally.  Implementations
+  // of op_multigrab that have particular requirements, like the fastsplit
+  // banknotes, must do whatever check is needed.
   fn op_multigrab(&self, _a: ApiPieceOpArgs, _show: ShowUnocculted,
                   _qty: MultigrabQty, _new_z: ShouldSetZLevel)
                   -> Result<OpOutcomeThunk,ApiPieceOpError>  {

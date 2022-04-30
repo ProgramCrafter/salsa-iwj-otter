@@ -574,7 +574,6 @@ api_route!{
       let y = pri.fully_visible().ok_or(Ia::Occultation)?;
       let gpc = a.gs.pieces.byid_mut(a.piece)?;
       if gpc.held != None { throw!(Ia::PieceHeld) }
-      if ! (self.z > gpc.zlevel.z) { throw!(Ia::BadPieceStateForOperation); }
       let new_z = api_op_set_z(gpc, a.gs.gen, &self.z)?;
       a.ipc.show(y).op_multigrab(a, y, self.n, new_z)?
     }
