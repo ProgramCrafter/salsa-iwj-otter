@@ -2134,7 +2134,7 @@ update_error_handlers.PieceOpError = <MessageHandler>function
   handle_piece_update(m.state);
 }
 
-function piece_checkconflict_nrda(piece: PieceId, p: PieceInfo): boolean {
+function piece_checkconflict_nrda(piece: PieceId, p: PieceInfo) {
   // Our state machine for cseq:
   //
   // When we send an update (api_piece_x) we always set cseq.  If the
@@ -2168,7 +2168,6 @@ function piece_checkconflict_nrda(piece: PieceId, p: PieceInfo): boolean {
   }
   p.cseq_main = null;
   p.cseq_loose = null;
-  return false;
 }
 
 function test_swap_stack() {
