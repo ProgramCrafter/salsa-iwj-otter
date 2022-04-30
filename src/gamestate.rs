@@ -421,13 +421,30 @@ impl Timestamp {
   }
 }
 
+#[derive(Error, Debug)]
+#[error("{self:?}")]
+pub struct PieceTraitDowncastFailed<'p> {
+  pub p: &'p dyn PieceTrait,
+  pub why: &'static str,
+}
+
 #[ext(pub)]
 impl<'r> &'r dyn PieceTrait {
-  #[throws(IE)]
+  #[throws(PieceTraitDowncastFailed<'r>)]
   fn downcast_piece<P: PieceTrait>(self) -> &'r P {
-    self.downcast_ref::<P>().ok_or_else(|| internal_logic_error(format!(
-      "downcaste_piece failure! got: {:?}", &self)))?
+    self.downcast_ref::<P>().ok_or_else(
+      || PieceTraitDowncastFailed { p: self, why: "piece" })?
   }
+}
+
+impl<'p> From<PieceTraitDowncastFailed<'p>> for InternalError {
+  fn from(e: PieceTraitDowncastFailed<'p>) -> InternalError {
+    internal_logic_error(format!(
+      "downcaste_piece failure {}! got: {:?}", &e.why, &e.p))
+  }
+}
+impl<'p> From<PieceTraitDowncastFailed<'p>> for ApiPieceOpError {
+  fn from(e: PieceTraitDowncastFailed<'p>) -> ApiPieceOpError { e.into() }
 }
 
 // ---------- positions and ClampTable ----------

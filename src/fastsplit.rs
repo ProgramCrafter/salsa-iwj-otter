@@ -224,11 +224,11 @@ impl IFastSplits {
 
 #[ext(pub)]
 impl<'r> &'r dyn PieceTrait {
-  #[throws(IE)]
+  #[throws(PieceTraitDowncastFailed<'r>)]
   fn downcast_piece_fastsplit<P: PieceTrait>(self) -> &'r P {
     self.downcast_piece::<Piece>()?
-      .ipc.as_ref().ok_or_else(|| internal_logic_error(
-        format!("downcast_piece_fastsplit not fastsplit {:?}", self)))?
+      .ipc.as_ref().ok_or_else(
+        || PieceTraitDowncastFailed { p: self, why: "unresolved fastsplit"})?
       .p.direct_trait_access() // we're just digging down, this is fine
       .downcast_piece::<P>()?
   }
