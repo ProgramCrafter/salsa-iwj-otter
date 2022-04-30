@@ -574,6 +574,8 @@ api_route!{
       if ! a.ipc.special.multigrab { throw!(Ia::BadPieceStateForOperation) }
       let pri = a.pri()?;
       let y = pri.fully_visible().ok_or(Ia::Occultation)?;
+      let gpc = a.gs.pieces.byid_mut(a.piece)?;
+      if gpc.held != None { throw!(Ia::PieceHeld) }
       a.ipc.show(y).op_multigrab(a, pri, self.n)?
     }
   }
