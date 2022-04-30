@@ -274,7 +274,7 @@ pub trait PieceTrait: PieceBaseTrait + Downcast + Send + Debug + 'static {
   //
   // So the multigrab operation specifies a ZCoord.
   fn op_multigrab(&self, _a: ApiPieceOpArgs, _show: ShowUnocculted,
-                  _qty: MultigrabQty, _new_z: &ZCoord)
+                  _qty: MultigrabQty, _new_z: ShouldSetZLevel)
                   -> Result<OpOutcomeThunk,ApiPieceOpError>  {
     Err(Ia::BadPieceStateForOperation)?
   }
@@ -806,12 +806,35 @@ mod test {
 
 // ---------- 2-phase Z level setting ----------
 
+/// Drop this only on errors; don't just forget it
+#[derive(Debug, Clone)]
+pub struct ShouldSetZLevel(ZLevel);
+
+/// Prepare to set the z level of gpc to z
+///
+/// If this is a good idea, returns a ShouldSetZLevel.
+/// That should be [`implement`](ShouldSetZLevel::implement)ed
+/// along with the the rest of the operation, when committing.
+///
+/// This allows us to do all of an operation's checks and preparation,
+/// including Z level setting, first, and then only set the Z level
+/// infallibly at the end.
 #[throws(ApiPieceOpError)]
-pub fn op_do_set_z(gpc: &mut GPiece, gen: Generation, z: &ZCoord) {
-    if gpc.occult.is_active() {
-      if z >= &gpc.zlevel.z { throw!(Ia::Occultation) }
-    }
-    gpc.zlevel = ZLevel { z: z.clone(), zg: gen };
+pub fn api_op_set_z(gpc: &mut GPiece, gen: Generation, z: &ZCoord)
+                    -> ShouldSetZLevel
+{
+  if gpc.occult.is_active() {
+    if z >= &gpc.zlevel.z { throw!(Ia::Occultation) }
+  }
+  ShouldSetZLevel(ZLevel { z: z.clone(), zg: gen })
+}
+
+impl ShouldSetZLevel {
+  pub fn implement(self, gpc: &mut GPiece) {
+    gpc.zlevel = self.0;
+  }
+
+  pub fn inspect(&self) -> &ZLevel { &self.0 }
 }
 
 // ---------- log expiry ----------

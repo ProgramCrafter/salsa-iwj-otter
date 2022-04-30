@@ -83,7 +83,7 @@ impl InstanceGuard<'_> {
   #[throws(ApiPieceOpError)]
   pub fn fastsplit_split<I>(
     &mut self, player: PlayerId,
-    tpiece: PieceId, show: ShowUnocculted, new_z: ZCoord,
+    tpiece: PieceId, show: ShowUnocculted, new_z: ShouldSetZLevel,
     implementation: I
   ) -> UpdateFromOpComplex
   where I: FnOnce(&IOccults, &GameOccults, &GPlayer,
@@ -113,7 +113,7 @@ impl InstanceGuard<'_> {
       pos:           tgpc.pos,
       face:          tgpc.face,
       held:          None,
-      zlevel:        ZLevel { z: new_z, zg: ig.gs.gen },
+      zlevel:        tgpc.zlevel.clone() /* placeholder, overwritten below */,
       pinned:        tgpc.pinned,
       occult:        default(),
       angle:         tgpc.angle,
@@ -126,6 +126,7 @@ impl InstanceGuard<'_> {
       rotateable:    tgpc.rotateable,
       fastsplit:     tgpc.fastsplit,
     };
+    new_z.implement(&mut ngpc);
 
     let tipc_p = (||{
       let p = tipc.p.show(show);

@@ -457,7 +457,7 @@ api_route!{
   fn op(&self, a: ApiPieceOpArgs) -> PieceUpdate {
     let ApiPieceOpArgs { gs,piece, .. } = a;
     let gpc = gs.pieces.byid_mut(piece)?;
-    op_do_set_z(gpc, gs.gen, &self.z)?;
+    api_op_set_z(gpc, gs.gen, &self.z)?.implement(gpc);
     let update = PieceUpdateOp::SetZLevel(());
     (WhatResponseToClientOp::Predictable,
      update, vec![]).into()
@@ -575,14 +575,8 @@ api_route!{
       let gpc = a.gs.pieces.byid_mut(a.piece)?;
       if gpc.held != None { throw!(Ia::PieceHeld) }
       if ! (self.z > gpc.zlevel.z) { throw!(Ia::BadPieceStateForOperation); }
-      op_do_set_z(gpc, a.gs.gen, &self.z)?;
-      a.ipc.show(y).op_multigrab(a, y, self.n, &self.z).map_err(|e| match e {
-        // TODO: The error handling is wrong, here.  If op_multigrab
-        // returns a deferred thunk, the APOE::PartiallyProcessed will
-        // not be applked.
-        APOE::Inapplicable(ia) => APOE::PartiallyProcessed(ia, vec![]),
-        other => other,
-      })?
+      let new_z = api_op_set_z(gpc, a.gs.gen, &self.z)?;
+      a.ipc.show(y).op_multigrab(a, y, self.n, new_z)?
     }
   }
 }

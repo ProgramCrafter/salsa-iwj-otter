@@ -124,9 +124,8 @@ impl PieceTrait for Banknote {
 
   #[throws(ApiPieceOpError)]
   fn op_multigrab(&self, _: ApiPieceOpArgs, show: ShowUnocculted,
-                  take: MultigrabQty, new_z: &ZCoord) -> OpOutcomeThunk {
+                  take: MultigrabQty, new_z: ShouldSetZLevel) -> OpOutcomeThunk {
     let currency = self.currency.clone();
-    let new_z = new_z.clone();
     OpOutcomeThunk::Reborrow(Box::new(
       move |ig: &mut InstanceGuard, player: PlayerId, tpiece: PieceId|
   {
