@@ -78,6 +78,81 @@ impl Record {
   }
 }
 
+impl InstanceGuard<'_> {
+  /// The new piece will be below the old one
+  #[throws(ApiPieceOpError)]
+  pub fn fastsplit_split<I>(
+    &mut self, player: PlayerId,
+    tpiece: PieceId, new_z: ZCoord,
+    implementation: I
+  ) -> UpdateFromOpComplex
+  where I: FnOnce(&IOccults, &GameOccults, &GPlayer,
+                  &mut GPiece, &IPiece, &mut GPiece)
+                  -> Result<UpdateFromOpComplex, ApiPieceOpError>
+  {
+    // The "save later" part of this ought to be unnecessarily, because
+    // we'll be running in piece API context which already does that.
+    // But it is clearer to call the appropriate function.
+    let modperm = self.modify_pieces_not_necessarily_saving_aux();
+
+    let ig = &mut **self;
+    let gpl = ig.gs.players.byid(player)?;
+    let tgpc = ig.gs.pieces.byid_mut(tpiece)?;
+    let tipc = ig.ipieces.get(tpiece).ok_or(Ia::PieceGone)?;
+
+    let fs_record = (||{
+      let fsid = tgpc.fastsplit?;
+      ig.ifastsplits.table.get(fsid)
+    })().ok_or_else(|| internal_logic_error("fastsplit on non-fastsplit"))?;
+
+    let mut ngpc = GPiece {
+      pos:           tgpc.pos,
+      face:          tgpc.face,
+      held:          None,
+      zlevel:        ZLevel { z: new_z, zg: ig.gs.gen },
+      pinned:        tgpc.pinned,
+      occult:        default(),
+      angle:         tgpc.angle,
+      gen:           ig.gs.gen,
+      lastclient:    default(),
+      last_released: default(),
+      gen_before_lastclient: Generation(0),
+      xdata:         default(),
+      moveable:      tgpc.moveable,
+      rotateable:    tgpc.rotateable,
+      fastsplit:     tgpc.fastsplit,
+    };
+
+    let (t_pu, t_unprepared) = implementation(
+      &ig.ioccults, &ig.gs.occults, gpl,
+      tgpc, tipc,
+      &mut ngpc
+    )?;
+
+    (||{
+      // All this complicated machinery exists precisely to let us make
+      // pieces without having to save aux.
+
+      let nipc = IFastSplits::make_ipc(&mut ig.ioccults.ilks,
+                                       fs_record.ipc.clone());
+      let npiece = ig.gs.pieces.as_mut(modperm).insert(ngpc);
+      ig.ipieces.as_mut(modperm).insert(npiece, nipc);
+
+      let n_unprepared = vec![(
+        npiece,
+        PUOs::Simple(PUO::Insert(())),
+      )].into_unprepared(None);
+
+      let unprepared = chain!(
+        n_unprepared,
+        t_unprepared,
+      ).collect();
+
+      (t_pu, unprepared)
+    })()// <- no ?, infallible (to avoid having not completed implementation
+  }
+}
+
 impl IFastSplits {
   /// During piece addition: make this into a new fastsplit piece family
   ///
