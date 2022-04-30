@@ -994,8 +994,10 @@ function grab_clicked(clicked: PieceId[], loose: boolean,
       api_piece_x(api_immediate, loose,
 		  wresting ? 'wrest' : 'grab', piece,p, { });
     } else {
-      api_piece_x(api_immediate, loose, 'multigrab',
-		  piece,p, { n: multigrab });
+      piece_raise(piece,p, 'Raised', function(piece,p,z) {
+	api_piece_x(api_immediate, loose, 'multigrab',
+		    piece,p, { n: multigrab, z: z });
+      })
     }
   }
 }

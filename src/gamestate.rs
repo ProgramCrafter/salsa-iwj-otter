@@ -245,8 +245,31 @@ pub trait PieceTrait: PieceBaseTrait + Send + Debug + 'static {
     default()
   }
 
+  // This is going to have to set the Z coordinate.  This is because
+  // when we split a banknote, the note the user grabbed must end up
+  // above the "change", the "new" note which remains.  So we need to
+  // select Z coordinates.
+  //
+  // We *could* solve this by simply giving the two pieces different Z
+  // generations, but the same ZCoord, but this is quite undesirable
+  // because it can lead to the client having to do piece restacking.
+  //
+  // We can't readily find a suitable Z ZCoord for the change (ie, the
+  // lower coordinate), because that's piece lowering which is very
+  // complicated, because it may have to restack due to clashing
+  // ZCoords.  (We have that in JS in the client.)
+  //
+  // So we want to set the ZCoord of the piece the client has just
+  // grasped.  We don't want to disrupt the client's drag operation,
+  // so we don't want to change anything server-side that's subject to
+  // the update concurrency protocool.  Or to put it another way,
+  // the ZCoord must be predictable (and predicted) by the client.
+  // And the client can easily select a suitable ZCoord: the top
+  // one will do.
+  //
+  // So the multigrab operation specifies a ZCoord.
   fn op_multigrab(&self, _a: ApiPieceOpArgs, _pri: PieceRenderInstructions,
-                  _qty: MultigrabQty)
+                  _qty: MultigrabQty, _new_z: &ZCoord)
                   -> Result<OpOutcomeThunk,ApiPieceOpError>  {
     Err(Ia::BadPieceStateForOperation)?
   }
