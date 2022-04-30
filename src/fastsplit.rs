@@ -80,6 +80,8 @@ impl Record {
 
 impl IFastSplits {
   /// During piece addition: make this into a new fastsplit piece family
+  ///
+  /// Do not just drop the result, because it contains an OwningOccultIlkId
   pub fn new_original(&mut self, ilks: &mut OccultIlks, ipc: IPiece)
                       -> (IPiece, FastSplitId) {
     let ipc = Arc::new(ipc);
@@ -89,6 +91,9 @@ impl IFastSplits {
   }
 
   /// During game load: recover a proper IPiece for a fastsplit piece
+  ///
+  /// Just dropping the result on error is ok, despite it containing
+  /// an OwningOccultIlkId, because in that case the whole game is toast.
   #[throws(as Option)]
   pub fn recover_ipc(&self, ilks: &mut OccultIlks, fsid: FastSplitId)
                      -> IPiece {
@@ -96,6 +101,7 @@ impl IFastSplits {
     Self::make_ipc(ilks, record.ipc.clone())
   }
 
+  /// Do not just drop the result, because it contains an OwningOccultIlkId
   fn make_ipc(ilks: &mut OccultIlks, ipc: Arc<IPiece>) -> IPiece {
     let occilk = ipc.occilk.as_ref().map(|i| ilks.clone_iilk(i));
     let special = ipc.special.clone();
