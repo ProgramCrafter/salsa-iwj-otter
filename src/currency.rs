@@ -131,10 +131,13 @@ impl PieceTrait for Banknote {
       move |ig: &mut InstanceGuard, player: PlayerId, tpiece: PieceId|
   {
     ig.fastsplit_split(player, tpiece, show, new_z,
-      move |ioccults: &IOccults, goccults: &GameOccults, gpl: &GPlayer,
-            tgpc: &mut GPiece, tipc: &IPiece, _tipc_p: &dyn PieceTrait,
+      move |_: &IOccults, _: &GameOccults, gpl: &GPlayer,
+            tgpc: &mut GPiece, tipc: &IPiece, tipc_p: &dyn PieceTrait,
             ngpc: &mut GPiece|
   {
+    let self_: &Banknote = tipc_p.downcast_ref::<Banknote>()
+      .ok_or_else(|| internal_error_bydebug(tipc))?;
+
     let tgpc_value: &mut Value = tgpc.xdata.get_mut_exp()?;
     let remaining = tgpc_value.qty.checked_sub(take)
       .ok_or(Ia::CurrencyShortfall)?;
@@ -147,12 +150,12 @@ impl PieceTrait for Banknote {
     
     tgpc.pinned = false;
 
-    let logents = log_did_to_piece(
-      ioccults, goccults, gpl, tgpc, tipc,
-      &format!("took {}{}, leaving {}{}",
-               take, &currency,
-               remaining, &currency)
-    )?;
+    let logents = vec![ LogEntry { html: hformat!(
+      "{} took {} {}{}, leaving {}{}",
+      gpl.nick.to_html(), self_.image.describe_html(tgpc.face)?,
+      take, &currency,
+      remaining, &currency,
+    )}];
 
     let update = PieceUpdateOp::ModifyQuiet(());
 
