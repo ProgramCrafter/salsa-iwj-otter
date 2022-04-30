@@ -109,11 +109,17 @@ impl InstanceGuard<'_> {
       ig.ifastsplits.table.get(fsid)
     })().ok_or_else(|| internal_logic_error("fastsplit on non-fastsplit"))?;
 
+    // The new piece (the change, which stays in place) inherits the
+    // old piece's Z (but we need to give it a new generation so that
+    // we don't risk having two pieces with the precise same Z).  The
+    // old piece becomes the amount taken and gets the specified Z.
+    let n_zlevel = ZLevel { z: tgpc.zlevel.z.clone(), zg: ig.gs.gen };
+
     let mut ngpc = GPiece {
       pos:           tgpc.pos,
       face:          tgpc.face,
       held:          None,
-      zlevel:        tgpc.zlevel.clone() /* placeholder, overwritten below */,
+      zlevel:        n_zlevel,
       pinned:        tgpc.pinned,
       occult:        default(),
       angle:         tgpc.angle,
@@ -126,7 +132,6 @@ impl InstanceGuard<'_> {
       rotateable:    tgpc.rotateable,
       fastsplit:     tgpc.fastsplit,
     };
-    new_z.implement(&mut ngpc);
 
     let tipc_p = (||{
       let p = tipc.p.show(show);
@@ -141,6 +146,11 @@ impl InstanceGuard<'_> {
       &mut ngpc
     )?;
 
+    // Committing.
+
+    // This is outside the infallible closure because borrowck
+    // can't see that we drop tgpc before doing stuff with ig.
+    new_z.implement(tgpc);
     (||{
       let nipc = IFastSplits::make_ipc(&mut ig.ioccults.ilks,
                                        fs_record.ipc.clone());
