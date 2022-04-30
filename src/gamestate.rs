@@ -421,6 +421,8 @@ impl Timestamp {
   }
 }
 
+// ---------- positions and ClampTable ----------
+
 #[derive(Error,Debug,Copy,Clone)]
 #[error("position off table")]
 pub struct PosOffTableError<T:Debug> { pub clamped: T }
