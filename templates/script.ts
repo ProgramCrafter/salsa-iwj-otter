@@ -2128,13 +2128,14 @@ update_error_handlers.PieceOpError = <MessageHandler>function
     // Our gen was high enough we we sent this, that it ought to have
     // worked.  Report it as a problem, then.
     add_log_message('Problem manipulating piece: ' + m.error_msg);
-    p.cseq_main = null; // Well, we don't have anything outstanding now
-    p.cseq_loose = null;
+    // Mark aus as having no outstanding requests, and cancel any drag.
+    piece_checkconflict_nrda(piece, p, true);
   }
   handle_piece_update(m.state);
 }
 
-function piece_checkconflict_nrda(piece: PieceId, p: PieceInfo) {
+function piece_checkconflict_nrda(piece: PieceId, p: PieceInfo,
+				  already_logged: boolean = false) {
   // Our state machine for cseq:
   //
   // When we send an update (api_piece_x) we always set cseq.  If the
@@ -2164,7 +2165,8 @@ function piece_checkconflict_nrda(piece: PieceId, p: PieceInfo) {
     }
   }
   if (p.cseq_main != null) {
-    add_log_message('Conflict! - simultaneous update');
+    if (!already_logged)
+      add_log_message('Conflict! - simultaneous update');
   }
   p.cseq_main = null;
   p.cseq_loose = null;
