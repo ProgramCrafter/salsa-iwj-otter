@@ -1190,20 +1190,26 @@ impl InstanceGuard<'_> {
     }
 
     for (piece, gpc) in &mut gs.pieces.0 {
+      if_let!{ Some(fsid) = gpc.fastsplit; else continue; }
+
+      // We must recover the ipc via the fastsplit table, or delete
       if_chain!{
-        if let Some(fsid) = gpc.fastsplit;
-        if let Some(ipc) = ipieces.get_mut(piece); /* ought to be good! */
         let ilks = &mut ioccults.ilks;
+        if let Some(recovered_ipc) = ifastsplits.recover_ipc(ilks, fsid);
         then {
-          if let Some(old_iilk) = ipc.occilk.take() {
-            ilks.dispose_iilk(old_iilk);
+          if_chain!{
+            if let Some(old_ipc) = ipieces.get_mut(piece);
+            // We're about to overwrite this ipc, maybe owns some occilk.
+            // If in fact we're the same kind, we've already acquired
+            // another refcount from recover_ipc, above.
+            if let Some(old_iilk) = old_ipc.occilk.take();
+            then { ilks.dispose_iilk(old_iilk); }
           }
-          if let Some(got) = ifastsplits.recover_ipc(ilks, fsid) {
-            *ipc = got;
-          } else {
-            ipieces.remove(piece);
-            // This will get rid of it from gpieces, too, below
-          }
+          ipieces.insert(piece, recovered_ipc);
+        } else {
+          // Not available in ipieces, fastsplit family must just have
+          // been added.  This will get rid of it from gpieces, too, below.
+          ipieces.remove(piece);
         }
       }
     }
