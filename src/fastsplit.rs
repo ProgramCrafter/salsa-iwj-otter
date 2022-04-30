@@ -83,11 +83,12 @@ impl InstanceGuard<'_> {
   #[throws(ApiPieceOpError)]
   pub fn fastsplit_split<I>(
     &mut self, player: PlayerId,
-    tpiece: PieceId, new_z: ZCoord,
+    tpiece: PieceId, show: ShowUnocculted, new_z: ZCoord,
     implementation: I
   ) -> UpdateFromOpComplex
   where I: FnOnce(&IOccults, &GameOccults, &GPlayer,
-                  &mut GPiece, &IPiece, &mut GPiece)
+                  &mut GPiece, &IPiece, &dyn PieceTrait,
+                  &mut GPiece)
                   -> Result<UpdateFromOpComplex, ApiPieceOpError>
   {
     // The "save later" part of this ought to be unnecessarily, because
@@ -123,9 +124,16 @@ impl InstanceGuard<'_> {
       fastsplit:     tgpc.fastsplit,
     };
 
+    let tipc_p = (||{
+      let p = tipc.p.show(show);
+      let p: &Piece = p.downcast_ref::<Piece>()?;
+      let p = p.ipc.as_ref()?.p.show(show);
+      Some(p)
+    })().ok_or_else(|| internal_error_bydebug(tipc))?;
+
     let (t_pu, t_unprepared) = implementation(
       &ig.ioccults, &ig.gs.occults, gpl,
-      tgpc, tipc,
+      tgpc, tipc, tipc_p,
       &mut ngpc
     )?;
 

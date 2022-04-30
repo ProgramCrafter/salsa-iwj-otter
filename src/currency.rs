@@ -123,16 +123,16 @@ impl PieceTrait for Banknote {
   }
 
   #[throws(ApiPieceOpError)]
-  fn op_multigrab(&self, _: ApiPieceOpArgs, _: PieceRenderInstructions,
+  fn op_multigrab(&self, _: ApiPieceOpArgs, show: ShowUnocculted,
                   take: MultigrabQty, new_z: &ZCoord) -> OpOutcomeThunk {
     let currency = self.currency.clone();
     let new_z = new_z.clone();
     OpOutcomeThunk::Reborrow(Box::new(
       move |ig: &mut InstanceGuard, player: PlayerId, tpiece: PieceId|
   {
-    ig.fastsplit_split(player, tpiece, new_z,
+    ig.fastsplit_split(player, tpiece, show, new_z,
       move |ioccults: &IOccults, goccults: &GameOccults, gpl: &GPlayer,
-            tgpc: &mut GPiece, tipc: &IPiece,
+            tgpc: &mut GPiece, tipc: &IPiece, _tipc_p: &dyn PieceTrait,
             ngpc: &mut GPiece|
   {
     let tgpc_value: &mut Value = tgpc.xdata.get_mut_exp()?;

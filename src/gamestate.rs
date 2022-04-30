@@ -273,7 +273,7 @@ pub trait PieceTrait: PieceBaseTrait + Downcast + Send + Debug + 'static {
   // one will do.
   //
   // So the multigrab operation specifies a ZCoord.
-  fn op_multigrab(&self, _a: ApiPieceOpArgs, _pri: PieceRenderInstructions,
+  fn op_multigrab(&self, _a: ApiPieceOpArgs, _show: ShowUnocculted,
                   _qty: MultigrabQty, _new_z: &ZCoord)
                   -> Result<OpOutcomeThunk,ApiPieceOpError>  {
     Err(Ia::BadPieceStateForOperation)?

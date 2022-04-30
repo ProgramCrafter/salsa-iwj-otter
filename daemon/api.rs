@@ -584,7 +584,7 @@ api_route!{
       if gpc.held != None { throw!(Ia::PieceHeld) }
       if ! (self.z > gpc.zlevel.z) { throw!(Ia::BadPieceStateForOperation); }
       op_do_set_z(gpc, a.gs.gen, &self.z)?;
-      a.ipc.show(y).op_multigrab(a, pri, self.n, &self.z).map_err(|e| match e {
+      a.ipc.show(y).op_multigrab(a, y, self.n, &self.z).map_err(|e| match e {
         // TODO: The error handling is wrong, here.  If op_multigrab
         // returns a deferred thunk, the APOE::PartiallyProcessed will
         // not be applked.
