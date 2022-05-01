@@ -227,7 +227,7 @@ impl OutlineTrait for ItemInertForOcculted { delegate! { to self.outline {
 #[dyn_upcast]
 impl PieceBaseTrait for ItemInertForOcculted {
   fn nfaces(&self) -> RawFaceId { 1 }
-  fn itemname(&self) -> &str { &self.itemname.as_str() }
+  fn itemname(&self) -> &str { self.itemname.as_str() }
 }
 #[typetag::serde(name="Lib")]
 impl InertPieceTrait for ItemInertForOcculted {
@@ -350,7 +350,7 @@ impl Item {
       let svgd = &self.svgs[face.svg];
       face.xform.write_svgd(f, svgd)?;
     } else if let Some(back) = &self.back {
-      back.svg(f, vpid, default(), &xdata)?;
+      back.svg(f, vpid, default(), xdata)?;
     } else {
       throw!(internal_error_bydebug(&(self, face)))
     }

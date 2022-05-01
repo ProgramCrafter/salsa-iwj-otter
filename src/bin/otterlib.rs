@@ -176,8 +176,7 @@ fn preview(items: Vec<ItemForOutput>) {
       if face < (p.nfaces() as usize) {
         let viewport =
           [bbox[0].clone(), size.clone()]
-          .iter().cloned()
-          .flatten()
+          .iter().flatten().cloned()
           .map(|c| c.to_string())
           .join(" ");
         let wh = size.iter().map(|&s| s * SVG_SCALE)

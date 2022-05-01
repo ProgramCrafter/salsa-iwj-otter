@@ -144,7 +144,7 @@ impl PieceSpec for Spec {
       let n = labels.len();
       let n = n.try_into().map_err(|_| SpecError::FarTooManyFaces(n))?;
       set_nfaces(n, "labels")?;
-      labels.into()
+      labels
     } else {
       index_vec!["".into()]
     };
@@ -453,7 +453,7 @@ impl InertPieceTrait for Die {
     
 
     let tc = OverlayTemplateContext {
-      label_text: &label,
+      label_text: label,
       label_font_size,
       label_y_adjust: label_font_size * SVG_FONT_Y_ADJUST_OF_FONT_SIZE,
 

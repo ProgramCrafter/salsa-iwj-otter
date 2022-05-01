@@ -46,6 +46,7 @@ macro_rules! checked_inherent { {$n:ident($($formal:tt)*) $($actual:tt)*} => {
   }
 } }
 
+#[allow(clippy::only_used_in_recursion)] // FP nightly (1bfe40d11 2022-03-18
 impl CheckedArith for i32 {
   checked_inherent!{checked_add(, rhs: Self) rhs}
   checked_inherent!{checked_sub(, rhs: Self) rhs}
