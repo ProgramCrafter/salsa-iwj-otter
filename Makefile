@@ -380,6 +380,9 @@ templates/shapelib.html: $(TARGET_DIR)/debug/otterlib $(LIBRARY_FILES)
 nwtemplates/die-overlay.tera: dice/overlay-template-extractor dice/die.svg
 	./$< <dice/die.svg >$@.tmp && mv -f $@.tmp $@
 
+library/edited/dice-d6-blue.svg: dice/extract-image-only dice/die.svg
+	./$< <dice/die.svg >$@.tmp && mv -f $@.tmp $@
+
 #---------- examples ----------
 
 EXAMPLE_BUNDLE_INPUT_DEPS := $(shell					\

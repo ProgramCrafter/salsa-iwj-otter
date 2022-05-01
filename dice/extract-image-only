@@ -1,0 +1,23 @@
+#!/usr/bin/perl -w
+use strict;
+
+use strict;
+
+use XML::LibXML;
+use XML::LibXML::XPathContext;
+
+use Data::Dumper;
+
+my $dom = XML::LibXML->load_xml(IO => \*STDIN) or die;
+
+print "<!--made by dice/extract-image-only-->\n" or die $!;
+
+my $nodes = $dom->findnodes('//*[@inkscape:label]');
+foreach my $node (@$nodes) {
+  my $l = $node->getAttribute('inkscape:label');
+  next unless $l =~ m/^time|^text/;
+  my $parent = $node->parentNode;
+  $parent->removeChild($node);
+}
+
+print $dom->toString or die $!;
