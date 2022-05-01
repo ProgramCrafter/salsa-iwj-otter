@@ -1058,13 +1058,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           }],
           raw: None },
        Fine,
-       if xupdates.len() != 0 {
-         vec![
-           Box::new(move |prepub: &mut PrepareUpdatesBuffer|
-                    prepub.piece_updates(xupdates, &None))
-             as SomeUnpreparedUpdates
-         ]
-       } else { default() },
+       xupdates.into_unprepared(None),
        vec![],
        ig_g)
     },
