@@ -228,6 +228,13 @@ pub struct PieceInfo<I> {
   info: I,
 }
 
+impl PieceInfo<JsV> {
+  fn assert_desc_contains(&self, needle: &str) {
+    let desc = self.info["desc"].as_str().unwrap();
+    assert!(desc.contains(needle), "desc={desc:?}");
+  }
+}
+
 impl Session {
   #[throws(Explode)]
   fn pieces<PI:Idx>(&self) -> Pieces<PI> {
