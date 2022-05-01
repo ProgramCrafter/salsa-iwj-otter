@@ -20,13 +20,16 @@ impl Ctx {
       .collect::<ArrayVec<_,1>>()
       .into_inner().unwrap();
 
-    let other_pile = [40,20];
+    let other_pile = PosC::new(40,20);
+
     alice.api_piece_op_single(PuSynch((&mut a_pieces, bn)).id(), (
       "multigrab", json!({ "n": 50, 'z': "q000000000" })
     ))?;
     alice.synch()?;
 
-    let _ = other_pile;
+    alice.api_piece(GH::Ungrab, PuSynch((&mut a_pieces, bn)), other_pile)?;
+    alice.synch()?;
+
   }
 }
 
