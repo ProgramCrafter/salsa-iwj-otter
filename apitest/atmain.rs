@@ -218,7 +218,7 @@ mod pi {
 }
 pub use pi::*;
 
-type Pieces<PI> = IndexVec<PI, PieceInfo<JsV>>;
+type Pieces<PI> = IndexVec<PI, PieceInfo<JsV /*~PreparedPieceState*/>>;
 type PiecesSlice<PI> = IndexSlice<PI,[PieceInfo<JsV>]>;
 
 #[derive(Debug,Clone)]
