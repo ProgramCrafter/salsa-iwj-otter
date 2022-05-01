@@ -443,7 +443,7 @@ pub fn update_update_pieces<PI:Idx>(
           info: d.clone(),
         });
       },
-      "Move" => {
+      "Move" | "MoveQuiet" => {
         p.unwrap().pos = coord(d);
       },
       "Modify" | "ModifyQuiet" => {
