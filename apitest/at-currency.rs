@@ -25,10 +25,10 @@ impl Ctx {
     alice.api_piece_op_single(PuSynch((&mut a_pieces, bn)).id(), (
       "multigrab", json!({ "n": 50, 'z': "q000000000" })
     ))?;
-    alice.synch()?;
+    alice.synchu(&mut a_pieces)?;
 
     alice.api_piece(GH::Ungrab, PuSynch((&mut a_pieces, bn)), other_pile)?;
-    alice.synch()?;
+    alice.synchu(&mut a_pieces)?;
 
   }
 }
