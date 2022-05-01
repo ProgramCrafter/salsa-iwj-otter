@@ -424,6 +424,19 @@ Parameters:
  * ``currency``: The currency, which defines which other
    banknotes this one can interchange with.
 
+Exammple::
+
+  [[pieces]]
+  pos = [125, 45]
+  type = "Currency"
+  qty = 400
+  min_unit = 5
+  currency = "ƒ"
+  image.type = "Rect"
+  image.size = [20,7]
+  image.edges = ["#00ff00"]
+  image.faces = ["#008800"]
+
 
 ``"Rect"``
 ``````````
