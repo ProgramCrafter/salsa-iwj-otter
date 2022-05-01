@@ -789,6 +789,7 @@ impl<'ig> InstanceGuard<'ig> {
 
     self.save_game_now().map_err(|e|{
       // oof
+      #[allow(clippy::iter_with_drain)] // don't eat undo, so we can drop it
       for u in undo.drain(..).rev() {
         u(self);
       }
@@ -1237,7 +1238,7 @@ impl InstanceGuard<'_> {
     }
 
     let name = Arc::new(name);
-    let (mut tokens_players, acctids_players) = {
+    let (tokens_players, acctids_players) = {
       let mut tokens = Vec::with_capacity(tokens_players.len());
       let mut acctids = Vec::with_capacity(tokens_players.len());
       for (token, player) in tokens_players { if_chain! {
@@ -1291,7 +1292,7 @@ impl InstanceGuard<'_> {
     }
     let mut global = GLOBAL.players.write();
     for ((token, player), acctid) in
-      tokens_players.drain(0..)
+      tokens_players.into_iter()
       .zip(acctids_players)
     { if_chain!{
       if let Some(acctid) = acctid;
@@ -1586,7 +1587,7 @@ fn client_expire_old_clients() {
       expire.push(gref.clone());
     }
   }
-  for gref in expire.drain(..) {
+  for gref in expire.into_iter() {
     #[derive(Debug)]
     struct Now(HashSet<ClientId>);
     impl ClientIterator for Now {
@@ -1628,7 +1629,7 @@ fn global_expire_old_logs() {
   }
   drop(read);
 
-  for gref in want_expire.drain(..) {
+  for gref in want_expire.into_iter() {
     let mut g = gref.lock_even_destroying();
     info!("expiring old log entries in {:?}", &g.g.name);
     g.g.gs.do_expire_old_logs(cutoff);
