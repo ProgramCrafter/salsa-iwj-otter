@@ -285,6 +285,92 @@ Honours ``edge``, ``edge_width``.
 Honours ``label``.
 
 
+``"Die"``
+`````````
+
+A die (or coin), which can choose randomly
+from a fixed set of aspects.
+Can be "rolled" to have the server show a randomly-chosen face.
+
+You must either specify an ``image`` with multiple faces,
+and/or ``labels``,
+so that the faces can be distinguished.
+If the ``image`` has multiple faces *and* you specify ``labels``,
+the number of faces implied by each must be the same.
+
+The die will display a circular "cooldown timer",
+after it has been rolled.
+This makes rolling the die visually noticeable for all the players.
+After the die has been rolled,
+it cannot be flipped to a different face, or re-rolled,
+until the timer expires.
+Apart from that, you can see all the faces in sequence,
+or make the die show a particular face,
+with the standard flip operation ("f").
+
+Dice can (possibly) be occulted.
+An occultable die will, if placed in a player's active hand,
+obscure its face (but, generally, not existence, nor cooldown time),
+from other players.
+Dice aren't "shuffled" with other piece, the way (say) cards are.
+A die is occultable if its image is occultable,
+or if ``occult`` is explicitly specified.
+
+
+Parameters:
+
+ * ``desc``: Descriptive string,
+   used in log messages reporting player actions.
+   The actual description shown to users will also report
+   the description provided by the image,
+   for the particular face showing,
+   and the number of faces.
+   [string; optional]
+
+ * ``image``: Specifies what this die should look like.
+   [inner piece spec, as dictionary; required].
+
+ * ``labels``: Text strings to superimpose on the image.
+   [list of strings; optional]
+
+ * ``cooldown``: Duration of the cooldown time.
+   [duration - number(s) with units; default "4s"]
+
+ * ``circle_scale``: Adjusts the size of the cooldown timer circle.
+   The default is an estimate of the best size,
+   calculated from the image's bounding box.
+   [floating point number; default is 1.0, representing the estimated size]
+
+ * ``occult``: If supplied,
+   specifies that the die should be occultable.
+   In this case either the specified ``image``
+   must itself be occultable,
+   or it must have only one face
+   (since otherwise we wouldn't know what to display when occulted).
+   [dictionary; optional;
+   presence of even an empty dictionary is meaningful;
+   default if absent is to occult if the specified image is occultable]
+
+ * ``occult.label``: The text string to display when the die is occulted.
+   [string; if not specified in ``occult``,
+   defaults to ``"?"`` if any nonempty ``labels`` were specified,
+   or the empty string otherwise.]
+   
+The common parameter ``itemname`` is also supported.
+
+Example::
+  
+  [[pieces]]
+  pos = [155, 15]
+  type = "Die"
+  labels = ["A", "B"]
+  image.type = "Disc"
+  image.diam = 12
+  circle_scale = 0.833
+  image.edges = ["black","black"]
+  image.faces = ["#ccccff", "#ccffcc"]
+
+
 ``"Rect"``
 ``````````
 
