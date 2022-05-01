@@ -1013,10 +1013,14 @@ impl PreparedUpdate {
 impl Vec<(PieceId, PieceUpdateOps)> {
   fn into_unprepared(self, by_client: IsResponseToClientOp)
                      -> UnpreparedUpdates {
-    vec![Box::new(
-      move |buf: &mut PrepareUpdatesBuffer| {
-        buf.piece_updates(self, &by_client)
-      })]
+    if self.len() != 0 {
+      vec![Box::new(
+        move |buf: &mut PrepareUpdatesBuffer| {
+          buf.piece_updates(self, &by_client)
+        })]
+    } else {
+      default()
+    }
   }
 }
 
