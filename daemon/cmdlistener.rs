@@ -1333,13 +1333,7 @@ fn execute_for_game<'cs, 'igr, 'ig: 'igr>(
 
     })();
     (r, {
-      let ig = igu.by_mut(Authorisation::promise_any());
-      let g = &mut **ig;
-      let gs = &mut g.gs;
-      to_permute.implement(&mut gs.players,
-                           &mut gs.pieces,
-                           &mut gs.occults,
-                           &g.ipieces)
+      to_permute.implement_auth(&mut *igu)
     })
   });
 

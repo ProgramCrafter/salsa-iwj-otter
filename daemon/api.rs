@@ -205,13 +205,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
       Ok::<(),Fatal>(())
     })();
 
-    let g = &mut *ig;
-    let gs = &mut g.gs;
-
-    (r, to_recalculate.implement(&mut gs.players,
-                             &mut gs.pieces,
-                             &mut gs.occults,
-                             &g.ipieces))
+    (r, to_recalculate.implement(&mut ig))
   });
 
   PrepareUpdatesBuffer::only_unprepared(&mut ig, unprepared_outer);

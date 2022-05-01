@@ -850,7 +850,20 @@ mod recompute {
       (r, uu)
     }
     pub fn mark_dirty(&mut self, occid: OccId) { self.outdated.insert(occid); }
-    pub fn implement(self,
+
+    pub fn implement_auth<A>(self, igu: &mut Unauthorised<InstanceGuard,A>)
+                             -> Implemented {
+      // Caller must have had some kind of authorisation to do whatever
+      // it was they did.  It doesn't amke sense to demand any more.
+      self.implement(igu.by_mut(Authorisation::promise_any()))
+    }
+    pub fn implement(self, ig: &mut Instance) -> Implemented {
+      self.implement_inner(&mut ig.gs.players,
+                           &mut ig.gs.pieces,
+                           &mut ig.gs.occults,
+                           &ig.ipieces)
+    }
+    fn implement_inner(self,
                      gplayers: &mut GPlayers,
                      gpieces: &mut GPieces,
                      goccults: &mut GOccults,
