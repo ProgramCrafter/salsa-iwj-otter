@@ -133,6 +133,15 @@ impl JsV {
   fn set<K: Into<String>>(&mut self, k: K, v: &JsV) {
     self.as_object_mut().unwrap().insert(k.into(), v.clone());
   }
+
+  fn extend<I,K,V>(&mut self, i: I)
+  where I: IntoIterator<Item=(K, V)>,
+        K: Into<String>,
+        V: Borrow<JsV>,
+  {
+    let i = i.into_iter().map(|(k,v)| (k.into(), v.borrow().clone()));
+    self.as_object_mut().unwrap().extend(i);
+  }
 }
 
 // -------------------- Substition --------------------

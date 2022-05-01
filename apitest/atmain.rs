@@ -441,9 +441,7 @@ pub fn update_update_pieces<PI:Idx>(
       "Modify" | "ModifyQuiet" => {
         let d = d.as_object().unwrap();
         p.pos = coord(&d["pos"]);
-        for (k,v) in d {
-          p.info.set(k, &v);
-        }
+        p.info.extend(d);
       },
       _ => {
         panic!("unknown op {:?} {:?}", &op, &d);
