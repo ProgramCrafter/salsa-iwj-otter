@@ -170,7 +170,7 @@ pub enum OpOutcomeThunk {
   Immediate(UpdateFromOpComplex),
   /// Allows a UI operation full mutable access to the whole Instance.
   ///
-  /// Use with care!  Eg, you might have to call save_game_and_aux_late.r
+  /// Use with care!  Eg, you might have to call save_game_and_aux_later.
   ///
   /// Adding and removing pieces during play (rather than management)
   /// is complicated, because we want to avoid having to rewrite the aux.
