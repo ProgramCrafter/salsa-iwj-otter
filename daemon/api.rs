@@ -543,7 +543,7 @@ api_route!{
     let gpl = gs.players.byid_mut(player).unwrap();
     let log = log_did_to_piece(
       ioccults,&gs.occults,gpl,gpc,ipc,
-      if gpc.pinned { "pinned" } else { "unpinned" },
+      if self.0 { "pinned" } else { "unpinned" },
     )?;
     gpc.forbid_involved_in_occultation()?;
     gpc.pinned = self.0;
