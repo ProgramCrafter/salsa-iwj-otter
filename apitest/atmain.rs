@@ -448,6 +448,10 @@ pub fn update_update_pieces<PI:Idx>(
       },
     };
     dbgc!(nick, k,v,p);
+  } else if k == "Image" {
+    let p = p.unwrap();
+    let im = v.get("im").unwrap();
+    p.info.extend(im.as_object().unwrap());
   }
 }
 
