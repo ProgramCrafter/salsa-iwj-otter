@@ -180,6 +180,23 @@ pub enum OpOutcomeThunk {
                    -> Result<UpdateFromOpComplex, ApiPieceOpError>>),
 }
 
+#[derive(From,Educe)]
+#[educe(Default)]
+pub enum OpHookThunk {
+  #[educe(Default)]
+  Immediate(UnpreparedUpdates),
+  /// Allows a UI operation full mutable access to the whole Instance.
+  ///
+  /// Use with care!  Eg, you might have to call save_game_and_aux_late.r
+  ///
+  /// Adding and removing pieces during play (rather than management)
+  /// is complicated, because we want to avoid having to rewrite the aux.
+  /// file during routine game saves.  `fastsplit.rs` has machinery that
+  /// can achieve this.
+  Reborrow(Box<dyn FnOnce(&mut InstanceGuard, PlayerId)
+                   -> Result<UnpreparedUpdates, InternalError>>),
+}
+
 pub type UpdateFromOpComplex = (
   PieceUpdate,
   UnpreparedUpdates,

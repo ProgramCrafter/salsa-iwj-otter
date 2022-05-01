@@ -411,7 +411,7 @@ impl PieceTrait for Die {
                       gpieces: &mut GPieces,
                       piece: PieceId,
                       _was_held: Option<PlayerId>)
-                      -> UnpreparedUpdates {
+                      -> OpHookThunk {
     self.cooldown_cleanup_hook(gpieces, piece)?;
     default()
   }

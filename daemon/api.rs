@@ -190,12 +190,19 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
     if let Some(gpc) = g.gs.pieces.get_mut(piece);
     if gpc.held != was_held;
     if let Some(ipc) = &g.ipieces.get(piece);
-    if let Ok(unprepared) = ipc.direct_trait_access().held_change_hook(
+    let thunk = ipc.direct_trait_access().held_change_hook(
       &iad.gref,
       &mut g.gs.pieces,
       piece,
       was_held,
-    ).map_err(|e| error!("internal error on change hook: {:?}", e));
+    );
+    let unprepared = match thunk {
+      Err(e) => Err(e),
+      Ok(OpHookThunk::Immediate(uu)) => Ok(uu),
+      Ok(OpHookThunk::Reborrow(f)) => f(&mut ig, player),
+    };
+    if let Ok(unprepared) = unprepared.map_err(
+      |e| error!("internal error on change hook: {:?}", e));
     then {
       PrepareUpdatesBuffer::only_unprepared(&mut ig, unprepared);
     }

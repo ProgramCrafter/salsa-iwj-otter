@@ -717,7 +717,7 @@ impl PieceTrait for Clock {
                       gpieces: &mut GPieces,
                       piece: PieceId,
                       was_held: Option<PlayerId>)
-                      -> UnpreparedUpdates {
+                      -> OpHookThunk {
     let gpc = gpieces.get_mut(piece);
     let gpc = if let Some(gpc) = gpc { gpc } else { return default() };
     let now_held = gpc.held;
@@ -736,7 +736,7 @@ impl PieceTrait for Clock {
 
     state.do_start_or_stop(piece, was_current, was_running,
                            now_held, &self.spec, ig)?;
-    unprepared_update(piece)
+    unprepared_update(piece).into()
   }
 
   #[throws(IE)]
