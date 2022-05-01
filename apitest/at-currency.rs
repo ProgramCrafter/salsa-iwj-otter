@@ -38,6 +38,12 @@ impl Ctx {
     let bank = a_pieces.find_by_desc_glob("* 337ƒ*");
     a_pieces[moved].assert_desc_contains(" 13ƒ");
 
+    alice.api_piece(GH::With, PuSynch((&mut a_pieces, moved)), pile_pos)?;
+    alice.synchu(&mut a_pieces)?;
+    assert!(a_pieces[moved].info.is_null());
+    a_pieces[pile].assert_desc_contains(" 63ƒ");
+
+    // This saves us some complaints
     let _ = moved;
     let _ = bank;
     let _ = pile;
