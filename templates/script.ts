@@ -1171,7 +1171,8 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       ungrab_all_except(note_already);
     }
     if (pinned && !wresting) {
-      add_log_message('That piece is pinned to the table.');
+      let p = pieces[c.clicked[0]!]!;
+      add_log_message('That piece ('+p.desc+') is pinned to the table.');
       return;
     }
     grab_clicked(clicked, !wresting, multigrab);
