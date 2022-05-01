@@ -404,7 +404,7 @@ impl<PI> IndexSlice<PI, [PieceInfo<JsV>]> where PI: index_vec::Idx {
 }
 
 pub fn update_update_pieces<PI:Idx>(
-  nick: &str,
+  _nick: &str,
   pieces: &mut Pieces<PI>,
   k: &str, v: &JsV
 ) {
@@ -447,7 +447,6 @@ pub fn update_update_pieces<PI:Idx>(
         panic!("unknown op {:?} {:?}", &op, &d);
       },
     };
-    dbgc!(nick, k,v,p);
   } else if k == "Image" {
     let p = p.unwrap();
     let im = v.get("im").unwrap();
