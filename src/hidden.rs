@@ -842,8 +842,9 @@ mod recompute {
   }
 
   impl ToRecalculate {
-    pub fn with<R, F: FnOnce(Self) -> (R, Implemented)>
-      (f: F) -> (R, UnpreparedUpdates)
+    /// F returning `Implemented` proves that it called `implement`
+    pub fn with<R, F>(f: F) -> (R, UnpreparedUpdates)
+    where F: FnOnce(Self) -> (R, Implemented)
     {
       let to_recalculate = ToRecalculate { outdated: default() };
       let (r, Implemented(uu)) = f(to_recalculate);
