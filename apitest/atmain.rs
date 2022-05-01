@@ -457,6 +457,7 @@ pub fn update_update_pieces<PI:Idx>(
     let p = p.unwrap();
     let ns = v.get("ns").unwrap();
     p.info.extend(ns.as_object().unwrap());
+  } else if k.starts_with("SetTable") {
   }
 }
 
