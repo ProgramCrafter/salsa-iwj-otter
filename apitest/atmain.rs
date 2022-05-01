@@ -458,6 +458,8 @@ pub fn update_update_pieces<PI:Idx>(
     let ns = v.get("ns").unwrap();
     p.info.extend(ns.as_object().unwrap());
   } else if k.starts_with("SetTable") {
+  } else if k == "AddPlayer" || k == "RemovePlayer" {
+  } else if k == "UpdateBundles" || k == "SetLinks" {
   }
 }
 
