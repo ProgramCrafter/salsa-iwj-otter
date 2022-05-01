@@ -242,13 +242,12 @@ impl PieceTrait for Banknote {
     }
 
     let logents = vec![ LogEntry { html: hformat!(
-      "{} deposited {} {}{}, giving {}{}",
+      "{} deposited {}, giving {}{}",
       match gpl {
         Some(gpl) => gpl.nick.to_html(),
         None => Html::lit("Departing player").into(),
       },
       tipc.p.show(show).describe_html(tgpc, goccults)?,
-      tqty, currency,
       new_qty, currency,
     )}];
 
