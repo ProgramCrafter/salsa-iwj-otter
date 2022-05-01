@@ -143,10 +143,8 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
       })?;
     Ok::<_,ApiPieceOpError>((update, loose_conflict))
   })().and_then(|(thunk, loose_conflict)| Ok((
-    match thunk {
-      OpOutcomeThunk::Immediate(r) => r,
-      OpOutcomeThunk::Reborrow(f) => f(&mut ig, (player, piece))?,
-    }, loose_conflict
+    thunk.resolve(&mut ig, (player, piece))?,
+    loose_conflict,
   ))) {
     Err(APOE::Inapplicable(poe)) => {
       PrepareUpdatesBuffer::piece_report_error(
