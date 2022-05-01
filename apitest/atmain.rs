@@ -461,6 +461,8 @@ pub fn update_update_pieces<PI:Idx>(
   } else if k == "AddPlayer" || k == "RemovePlayer" {
   } else if k == "UpdateBundles" || k == "SetLinks" {
   } else if k == "Log" {
+  } else {
+    panic!("Unknown update: {k} {v:?}");
   }
 }
 
