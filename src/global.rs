@@ -641,12 +641,17 @@ impl<Id> InstanceAccessDetails<Id>
 }
 
 impl<'ig> InstanceGuard<'ig> {
-  /// Idempotent.
+  /// Core of piece deletion
+  ///
+  /// Caller is completely responsible for the necessary log entries.
+  ///
+  /// Idempotent (so does not detect if the piece didn't exist,
+  /// other than by passing `None`s to the callback.
   #[throws(IE)]
   pub fn delete_piece<H,T>(&mut self, modperm: ModifyingPieces,
                              to_permute: &mut ToRecalculate,
                              piece: PieceId, hook: H)
-                             -> (T, UnpreparedUpdates)
+                             -> (T, PieceUpdateOp<(),()>, UnpreparedUpdates)
   where H: FnOnce(&IOccults, &GOccults,
                   Option<&IPiece>, Option<&GPiece>) -> T
   {
@@ -687,7 +692,7 @@ impl<'ig> InstanceGuard<'ig> {
       }
     }
 
-    (hook_r, xupdates.into_unprepared(None))
+    (hook_r, PieceUpdateOp::Delete(), xupdates.into_unprepared(None))
   }
 
   /// caller is responsible for logging; threading it through

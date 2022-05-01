@@ -1016,7 +1016,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
       let _ipc = ig.ipieces.as_mut(modperm)
         .get(piece).ok_or(ME::PieceNotFound)?;
 
-      let (desc_html, xupdates) =
+      let (desc_html, puo, xupdates) =
         ig.delete_piece(modperm, to_permute, piece,
                         |ioccults, goccults, ipc, gpc| {
           if let (Some(ipc), Some(gpc)) = (ipc, gpc) {
@@ -1027,7 +1027,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
           }
         })?;
 
-      (U{ pcs: vec![(piece, PieceUpdateOp::Delete())],
+      (U{ pcs: vec![(piece, puo)],
           log: vec![ LogEntry {
             html: hformat!("A piece {} was removed from the game",
                           desc_html),
