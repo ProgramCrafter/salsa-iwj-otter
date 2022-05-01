@@ -641,6 +641,55 @@ impl<Id> InstanceAccessDetails<Id>
 }
 
 impl<'ig> InstanceGuard<'ig> {
+  /// Idempotent.
+  #[throws(IE)]
+  pub fn delete_piece<H,T>(&mut self, modperm: ModifyingPieces,
+                             to_permute: &mut ToRecalculate,
+                             piece: PieceId, hook: H)
+                             -> (T, UnpreparedUpdates)
+  where H: FnOnce(&IOccults, &GOccults,
+                  Option<&IPiece>, Option<&GPiece>) -> T
+  {
+    let ig = &mut **self;
+    let gs = &mut ig.gs;
+    let gpc = gs.pieces.as_mut(modperm).get_mut(piece);
+    let mut xupdates = vec![];
+    if let Some(gpc) = gpc {
+      gpc.occult.passive_delete_hook(&mut gs.occults, piece);
+      if gpc.occult.is_active() {
+        xupdates.append(
+          &mut
+            remove_occultation(
+              &mut gs.gen.unique_gen(),
+              &mut gs.players,
+              &mut gs.pieces,
+              &mut gs.occults,
+              &ig.ipieces,
+              &ig.ioccults,
+              to_permute,
+              piece)?
+        );
+      }
+    }
+    let ioccults = &ig.ioccults;
+    let gpc = gs.pieces.as_mut(modperm).remove(piece);
+    let ipc = ig.ipieces.as_mut(modperm).remove(piece);
+
+    let hook_r = hook(ioccults, &gs.occults,
+                      ipc.as_ref(), gpc.as_ref());
+
+    if let Some(ipc) = ipc {
+      if let Some(gpc) = gpc {
+        ipc.p.into_inner().delete_hook(&gpc, gs);
+      }
+      if let Some(occilk) = ipc.occilk {
+        ig.ioccults.ilks.dispose_iilk(occilk);
+      }
+    }
+
+    (hook_r, xupdates.into_unprepared(None))
+  }
+
   /// caller is responsible for logging; threading it through
   /// proves the caller has a log entry.
   #[throws(MgmtError)]
