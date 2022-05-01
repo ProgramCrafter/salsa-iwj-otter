@@ -21,6 +21,10 @@ impl Ctx {
     ))?;
     alice.synchu(&mut a_pieces)?;
 
+    let bn_desc = a_pieces[bn].info["desc"].as_str().unwrap();
+    assert!( bn_desc.contains("50ƒ"), "{bn_desc}" );
+    let _change = a_pieces.find_by_desc_glob("*350ƒ*");
+
     alice.api_piece(GH::Ungrab, PuSynch((&mut a_pieces, bn)), other_pile)?;
     alice.synchu(&mut a_pieces)?;
 
