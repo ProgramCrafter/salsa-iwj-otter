@@ -422,7 +422,12 @@ pub fn update_update_pieces<PI:Idx>(
 
   let v = v.as_object().unwrap();
 
-  if k == "Piece" {
+  if k == "Recorded" {
+    let p = findp(pieces, v["piece"].as_str().unwrap());
+    for k in ["zg", "svg"] {
+      p.info.set(k, &v[k]);
+    }
+  } else if k == "Piece" {
     let p = findp(pieces, v["piece"].as_str().unwrap());
     let (op, d) = v["op"].as_object().unwrap().iter().next().unwrap();
 
