@@ -128,8 +128,9 @@ impl PieceRenderInstructions {
     let occregion = gpc.occult.active_region(&gs.occults)?
       .map(|r| JsonString(r.clone()));
     let (svg, bbox) = pri.make_svg_defs(ioccults, gs, gpc, ipc)?;
+    let desc = pri.describe(ioccults,&gs.occults, gpc, ipc);
     let r = PreparedPieceState {
-      pos, svg, occregion, bbox,
+      pos, svg, desc, occregion, bbox,
       held       : gpc.held,
       z          : zlevel.z.clone(),
       zg         : zlevel.zg,
@@ -151,8 +152,9 @@ impl PieceRenderInstructions {
                          -> PreparedPieceImage {
     let pri = self;
     let (svg, bbox) = pri.make_svg_defs(ioccults, gs, gpc, ipc)?;
+    let desc = pri.describe(ioccults, &gs.occults, gpc, ipc);
     let r = PreparedPieceImage {
-      svg, bbox,
+      svg, desc, bbox,
       uos: pri.ui_operations(gs, gpc, ipc)?,
     };
     trace_dbg!("prep_pieceimage", pri, ipc, gpc, r);

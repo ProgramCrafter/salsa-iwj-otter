@@ -81,6 +81,7 @@ type PieceInfo = {
   moveable: PieceMoveable,
   rotateable: boolean,
   multigrab: boolean,
+  desc: string,
   uos : UoDescription[],
   uelem : SVGGraphicsElement,
   delem : SVGGraphicsElement,
@@ -1778,6 +1779,7 @@ messages.Piece = <MessageHandler>handle_piece_update;
 type PreparedPieceState = {
   pos: Pos,
   svg: string,
+  desc: string,
   held: PlayerId | null,
   z: ZCoord,
   zg: Generation,
@@ -1860,6 +1862,7 @@ function piece_modify_image(piece: PieceId, p: PieceInfo,
   p.pelem= piece_element('piece',piece)!;
   p.uos = info.uos;
   p.bbox = info.bbox;
+  p.desc = info.desc;
   piece_resolve_special(piece, p);
 }
 
@@ -1939,6 +1942,7 @@ function redisplay_held_ancillaries() {
 
 type PreparedPieceImage = {
   svg: string,
+  desc: string,
   uos: UoDescription[],
   bbox: Rect,
 }

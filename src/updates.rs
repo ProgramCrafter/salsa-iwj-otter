@@ -113,6 +113,7 @@ pub struct PreparedPieceUpdateGeneral<U> {
 pub struct PreparedPieceState {
   pub pos: Pos,
   pub svg: Html,
+  pub desc: Html,
   pub facehint: Option<FaceId>,
   pub held: Option<PlayerId>,
   pub z: ZCoord,
@@ -139,6 +140,7 @@ impl Default for PieceMoveable { fn default() -> Self { PieceMoveable::Yes } }
 #[derive(Debug,Clone,Serialize)]
 pub struct PreparedPieceImage {
   pub svg: Html,
+  pub desc: Html,
   pub bbox: Rect,
   pub uos: Vec<UoDescription>,
 }
