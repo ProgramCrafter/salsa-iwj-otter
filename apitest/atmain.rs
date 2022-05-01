@@ -430,9 +430,7 @@ pub fn update_update_pieces<PI:Idx>(
         let d = d.as_object().unwrap();
         p.pos = coord(&d["pos"]);
         for (k,v) in d {
-          p.info
-            .as_object_mut().unwrap()
-            .insert(k.to_string(), v.clone());
+          p.info.set(k, &v);
         }
       },
       _ => {

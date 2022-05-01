@@ -128,6 +128,13 @@ impl<E:Error> From<Explode> for E {
   fn from(e: Explode) -> E { match e { } }
 }*/
 
+#[ext(pub)]
+impl JsV {
+  fn set<K: Into<String>>(&mut self, k: K, v: &JsV) {
+    self.as_object_mut().unwrap().insert(k.into(), v.clone());
+  }
+}
+
 // -------------------- Substition --------------------
 
 pub trait Substitutor {
