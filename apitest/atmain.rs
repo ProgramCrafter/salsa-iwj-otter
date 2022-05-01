@@ -453,6 +453,10 @@ pub fn update_update_pieces<PI:Idx>(
     let im = v.get("im").unwrap();
     p.info.extend(im.as_object().unwrap());
   } else if k.starts_with("MoveHist") {
+  } else if k == "RecordedUnpredictable" {
+    let p = p.unwrap();
+    let ns = v.get("ns").unwrap();
+    p.info.extend(ns.as_object().unwrap());
   }
 }
 
