@@ -427,7 +427,7 @@ pub fn update_update_pieces<PI:Idx>(
 
   if k == "Recorded" {
     let p = p.unwrap();
-    for k in ["zg", "svg"] {
+    for k in ["zg", "svg", "desc"] {
       p.info.set(k, &v[k]);
     }
   } else if k == "Piece" {

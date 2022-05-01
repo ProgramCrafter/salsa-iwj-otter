@@ -251,6 +251,7 @@ enum TransmitUpdateEntry<'u> {
     cseq: ClientSequence,
     zg: Option<Generation>,
     svg: Option<&'u Html>, // IsResponseToClientOp::UpdateSvg
+    desc: Option<&'u Html>,
   },
   Piece(TransmitUpdateEntry_Piece<'u>),
   Image(TransmitUpdateEntry_Image<'u>),
@@ -913,7 +914,11 @@ impl PreparedUpdate {
       let tue = match ftg {
         FTG::Recorded(cseq, ns) => {
           let zg = op.new_z_generation();
-          TUE::Recorded { piece, cseq, zg, svg: ns.map(|ns| &ns.svg) }
+          TUE::Recorded {
+            piece, cseq, zg,
+            svg: ns.map(|ns| &ns.svg),
+            desc: ns.map(|ns| &ns.desc),
+          }
         },
         FTG::Piece => TUE::Piece(pue_piece_to_tue_p(pue_p, player)?),
         FTG::Exactly(x) => x,

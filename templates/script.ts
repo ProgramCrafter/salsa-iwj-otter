@@ -2082,7 +2082,7 @@ function piece_set_zlevel_from(piece: PieceId, p: PieceInfo,
 
 messages.Recorded = <MessageHandler>function
 (j: { piece: PieceId, cseq: ClientSeq,
-      zg: Generation|null, svg: string | null } ) {
+      zg: Generation|null, svg: string | null, desc: string | null } ) {
   let piece = j.piece;
   let p = pieces[piece]!;
   piece_recorded_cseq(p, j);
@@ -2101,6 +2101,9 @@ messages.Recorded = <MessageHandler>function
     piece_set_zlevel(piece,p, (oldtop_piece: PieceId)=>{
       p.zg = zg_new;
     });
+  }
+  if (j.desc != null) {
+    p.desc = j.desc;
   }
 }
 
