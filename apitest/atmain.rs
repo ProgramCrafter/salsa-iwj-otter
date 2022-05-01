@@ -408,13 +408,6 @@ pub fn update_update_pieces<PI:Idx>(
   pieces: &mut Pieces<PI>,
   k: &str, v: &JsV
 ) {
-  if k != "Piece" { return }
-  let v = v.as_object().unwrap();
-  let piece = v["piece"].as_str().unwrap();
-  let p = pieces.iter_mut().find(|p| p.id == piece);
-  if_let!{ Some(p) = p; else return }
-  let (op, d) = v["op"].as_object().unwrap().iter().next().unwrap();
-
   fn coord(j: &JsV) -> Pos {
     PosC::from_iter_2(
       j.as_array().unwrap().iter()
@@ -422,24 +415,32 @@ pub fn update_update_pieces<PI:Idx>(
     )
   }
 
-  match op.as_str() {
-    "Move" => {
-      p.pos = coord(d);
-    },
-    "Modify" | "ModifyQuiet" => {
-      let d = d.as_object().unwrap();
-      p.pos = coord(&d["pos"]);
-      for (k,v) in d {
-        p.info
-          .as_object_mut().unwrap()
-          .insert(k.to_string(), v.clone());
-      }
-    },
-    _ => {
-      panic!("unknown op {:?} {:?}", &op, &d);
-    },
-  };
-  dbgc!(nick, k,v,p);
+  if k == "Piece" {
+    let v = v.as_object().unwrap();
+    let piece = v["piece"].as_str().unwrap();
+    let p = pieces.iter_mut().find(|p| p.id == piece);
+    let (op, d) = v["op"].as_object().unwrap().iter().next().unwrap();
+    if_let!{ Some(p) = p; else return }
+
+    match op.as_str() {
+      "Move" => {
+        p.pos = coord(d);
+      },
+      "Modify" | "ModifyQuiet" => {
+        let d = d.as_object().unwrap();
+        p.pos = coord(&d["pos"]);
+        for (k,v) in d {
+          p.info
+            .as_object_mut().unwrap()
+            .insert(k.to_string(), v.clone());
+        }
+      },
+      _ => {
+        panic!("unknown op {:?} {:?}", &op, &d);
+      },
+    };
+    dbgc!(nick, k,v,p);
+  }
 }
 
 pub type PieceOpData = (&'static str, JsV);
