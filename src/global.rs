@@ -1457,7 +1457,7 @@ impl IPieces {
   }
 
   pub fn is_empty(&self) -> bool {
-    let  IPieces(actual) = self;
+    let IPieces(actual) = self;
     actual.is_empty()
   }
 }
