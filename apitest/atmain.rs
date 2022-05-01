@@ -324,8 +324,10 @@ impl Session {
         dbgc!(nick, k, &v);
         if let Some(y) = {
           if k != "Error" {
+            info!("update ok {} {:?}", k, v);
             f(self, new_gen, k, v)
           } else if let Some(ef) = &mut ef {
+            warn!("update error {:?}", v);
             ef(self, new_gen, v)?
           } else {
             panic!("synch error: {:?}", &(k, v));
