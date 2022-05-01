@@ -71,7 +71,8 @@
        height="10"
        x="-5"
        y="-5"
-       ry="2" />
+       ry="2"
+       inkscape:label="dierect" />
     <text
        xml:space="preserve"
        font-size="8px"
