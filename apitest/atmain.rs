@@ -431,14 +431,14 @@ pub fn update_update_pieces<PI:Idx>(
       p.info.set(k, &v[k]);
     }
   } else if k == "Piece" {
-    let p = p.unwrap();
     let (op, d) = v["op"].as_object().unwrap().iter().next().unwrap();
 
     match op.as_str() {
       "Move" => {
-        p.pos = coord(d);
+        p.unwrap().pos = coord(d);
       },
       "Modify" | "ModifyQuiet" => {
+        let p = p.unwrap();
         let d = d.as_object().unwrap();
         p.pos = coord(&d["pos"]);
         p.info.extend(d);
