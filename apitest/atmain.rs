@@ -416,15 +416,14 @@ pub fn update_update_pieces<PI:Idx>(
   }
 
   fn findp<'p, PI:Idx>(pieces: &'p mut Pieces<PI>, piece: &'_ str)
-               -> Option<&'p mut PieceInfo<JsV>> {
-    pieces.iter_mut().find(|p| p.id == piece)
+               -> &'p mut PieceInfo<JsV> {
+    pieces.iter_mut().find(|p| p.id == piece).unwrap()
   }
 
   let v = v.as_object().unwrap();
 
   if k == "Piece" {
     let p = findp(pieces, v["piece"].as_str().unwrap());
-    if_let!{ Some(p) = p; else return }
     let (op, d) = v["op"].as_object().unwrap().iter().next().unwrap();
 
     match op.as_str() {
