@@ -196,7 +196,7 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
       piece,
       was_held,
     );
-    let unprepared = thunk.resolve(&mut ig, (player,));
+    let unprepared = thunk.and_then(|t| t.resolve(&mut ig, (player,)));
     if let Ok(unprepared) = unprepared.map_err(
       |e| error!("internal error on change hook: {:?}", e));
     then {
