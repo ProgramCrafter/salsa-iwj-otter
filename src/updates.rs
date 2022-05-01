@@ -380,6 +380,17 @@ impl StableIndexOffset for UpdateId {
   fn zero() -> Self { UpdateId(0) }
 }
 
+#[ext(pub)]
+impl<A,T,E> Result<OpOutcomeThunkGeneric<A,T,E>,E> {
+  fn resolve(self, ig: &mut InstanceGuard, args: A) -> Result<T,E> {
+    match self {
+      Err(e) => Err(e),
+      Ok(OOTG::Immediate(uu)) => Ok(uu),
+      Ok(OOTG::Reborrow(f)) => f(ig, args),
+    }
+  }
+}
+
 // ---------- prepared updates, queued in memory ----------
 
 pub struct PlayerUpdatesStartContext {

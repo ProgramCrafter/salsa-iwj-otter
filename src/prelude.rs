@@ -236,6 +236,7 @@ pub type IOI = IOccultIlk;
 pub use PriOccultedGeneral as PriOG;
 
 // updates.rs
+pub use OpOutcomeThunkGeneric as OOTG;
 pub type PUE = PreparedUpdateEntry;
 pub type PUFOS = PieceUpdateFromOpSimple;
 pub type PUO<NS,ZL> = PieceUpdateOp<NS,ZL>;
