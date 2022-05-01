@@ -87,6 +87,12 @@ impl<P,Z> PriOccultedGeneral<P,Z> {
   }
 }
 
+pub struct Rendered {
+  pub svg: Html,
+  pub desc: Html,
+  pub bbox: Rect,
+}
+
 impl PieceRenderInstructions {
   #[throws(IE)]
   pub fn map_piece_update_op(&self, ioccults: &IOccults, gs: &GameState,
@@ -127,8 +133,8 @@ impl PieceRenderInstructions {
     let (pos, zlevel) = pri.pos_zlevel(gpc);
     let occregion = gpc.occult.active_region(&gs.occults)?
       .map(|r| JsonString(r.clone()));
-    let (svg, bbox) = pri.make_svg_defs(ioccults, gs, gpc, ipc)?;
-    let desc = pri.describe(ioccults,&gs.occults, gpc, ipc);
+    let Rendered { svg, bbox, desc } = pri.render(ioccults, gs, gpc, ipc)?;
+
     let r = PreparedPieceState {
       pos, svg, desc, occregion, bbox,
       held       : gpc.held,
@@ -151,8 +157,7 @@ impl PieceRenderInstructions {
                          gpc: &GPiece, ipc: &IPiece)
                          -> PreparedPieceImage {
     let pri = self;
-    let (svg, bbox) = pri.make_svg_defs(ioccults, gs, gpc, ipc)?;
-    let desc = pri.describe(ioccults, &gs.occults, gpc, ipc);
+    let Rendered { svg, bbox, desc } = pri.render(ioccults, gs, gpc, ipc)?;
     let r = PreparedPieceImage {
       svg, desc, bbox,
       uos: pri.ui_operations(gs, gpc, ipc)?,
@@ -184,7 +189,16 @@ impl PieceRenderInstructions {
   }
 
   #[throws(IE)]
-  pub fn make_svg_defs(&self, ioccults: &IOccults, gs: &GameState,
+  pub fn render(&self, ioccults: &IOccults, gs: &GameState,
+                gpc: &GPiece, ipc: &IPiece) -> Rendered
+  {
+    let (svg, bbox) = self.make_just_svg_defs(ioccults, gs, gpc, ipc)?;
+    let desc = self.describe(ioccults,&gs.occults, gpc, ipc);
+    Rendered { svg, desc, bbox }
+  }
+
+  #[throws(IE)]
+  fn make_just_svg_defs(&self, ioccults: &IOccults, gs: &GameState,
                        gpc: &GPiece, ipc: &IPiece) -> (Html, Rect)
   {
     let pri = self;
