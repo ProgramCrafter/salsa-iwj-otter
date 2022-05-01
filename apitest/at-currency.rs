@@ -14,7 +14,7 @@ impl Ctx {
 
     let [bn] = a_pieces.iter_enumerated()
       .filter_map(|(i,p)| {
-        if ! p.info["desc"].as_str()?.contains("400") { return None }
+        if ! p.info["desc"].as_str()?.contains("400ƒ") { return None }
         Some(i)
       })
       .collect::<ArrayVec<_,1>>()
