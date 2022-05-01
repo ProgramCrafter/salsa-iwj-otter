@@ -434,6 +434,15 @@ pub fn update_update_pieces<PI:Idx>(
     let (op, d) = v["op"].as_object().unwrap().iter().next().unwrap();
 
     match op.as_str() {
+      "Insert" | "InsertQuiet" => {
+        assert!(p.is_none());
+        let piece = v["piece"].as_str().unwrap();
+        pieces.push(PieceInfo {
+          id: piece.into(),
+          pos: coord(d.get("pos").unwrap()),
+          info: d.clone(),
+        });
+      },
       "Move" => {
         p.unwrap().pos = coord(d);
       },
