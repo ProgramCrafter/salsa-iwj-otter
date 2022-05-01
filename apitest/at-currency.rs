@@ -12,13 +12,7 @@ impl Ctx {
     let mut alice = self.connect_player(&self.alice)?;
     let mut a_pieces = alice.pieces::<PIA>()?;
 
-    let [bn] = a_pieces.iter_enumerated()
-      .filter_map(|(i,p)| {
-        if ! p.info["desc"].as_str()?.contains("400ƒ") { return None }
-        Some(i)
-      })
-      .collect::<ArrayVec<_,1>>()
-      .into_inner().unwrap();
+    let bn = a_pieces.find_by_desc_glob("*400ƒ*");
 
     let other_pile = PosC::new(40,20);
 
