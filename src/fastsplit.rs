@@ -166,6 +166,44 @@ impl InstanceGuard<'_> {
       (t_pu, unprepared)
     })()// <- no ?, infallible (to avoid having not completed implementation
   }
+
+  #[throws(IE)]
+  pub fn fastsplit_delete(&mut self,
+                          show: ShowUnocculted,
+                          piece: PieceId,
+                          _proof_that_caller_handles_logging: &Vec<LogEntry>)
+                          -> (PieceUpdateOp<(),()>, UnpreparedUpdates)
+  {
+    let missing_e = || internal_error_bydebug(&piece);
+
+    // See reasoning in fastsplit_split
+    let modperm = self.modify_pieces_not_necessarily_saving_aux();
+
+    let gpc = self.gs.pieces.get(piece).ok_or_else(missing_e)?;
+    let ipc = self.ipieces.get(piece).ok_or_else(missing_e)?;
+    let _p: &Piece = ipc.p.show(show).downcast_piece()?;
+
+    let _fsid: &FastSplitId = gpc.fastsplit.as_ref()
+      .ok_or_else(|| internal_error_bydebug(gpc))?;
+    // We allow merging things with different FastSplitIds.  The
+    // FastSplitId identifies not the "kind of piece", but simply
+    // ancestry.  For example, all banknotes split from the same
+    // original note will have the same id, but otherwise, different
+    // banknotes even of the same currency have different ids.
+
+    match ToRecalculate::with(|mut to_permute| {
+      let r = self.delete_piece(modperm,&mut to_permute, piece,|_,_,_,_|());
+      (r, to_permute.implement(self))
+    }) {
+      (Err(e), uu_p) => {
+        PrepareUpdatesBuffer::only_unprepared(self, uu_p);
+        throw!(e);
+      },
+      (Ok(((), puo, uu_d)), uu_p) => {
+        (puo, chain!(uu_d, uu_p).collect())
+      },
+    }
+  }
 }
 
 impl IFastSplits {
