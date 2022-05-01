@@ -57,14 +57,10 @@ struct Session {
 mod scraper_ext {
   use super::*;
   use scraper::*;
-  use scraper::html::{*, Html};
+  use scraper::html::Html;
 
   #[ext(pub)]
   impl Html {
-    fn select<'a,'b>(&'a self, selector: &'b Selector) -> Select<'a, 'b> {
-      self.select(selector)
-    }
-
     #[throws(as Option)]
     fn element<S>(&self, sel: S) -> ElementRef
     where S: TryInto<Selector>,
