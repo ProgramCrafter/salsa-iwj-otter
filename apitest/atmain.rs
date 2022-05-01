@@ -415,20 +415,22 @@ pub fn update_update_pieces<PI:Idx>(
     )
   }
 
-  fn findp<'p, PI:Idx>(pieces: &'p mut Pieces<PI>, piece: &'_ str)
-               -> &'p mut PieceInfo<JsV> {
-    pieces.iter_mut().find(|p| p.id == piece).unwrap()
+  fn findp<'p, PI:Idx>(pieces: &'p mut Pieces<PI>,
+                       v: &'_ serde_json::Map<String,JsV>)
+                       -> Option<&'p mut PieceInfo<JsV>> {
+    let piece = v.get("piece")?.as_str()?;
+    pieces.iter_mut().find(|p| p.id == piece)
   }
 
   let v = v.as_object().unwrap();
 
   if k == "Recorded" {
-    let p = findp(pieces, v["piece"].as_str().unwrap());
+    let p = findp(pieces, v).unwrap();
     for k in ["zg", "svg"] {
       p.info.set(k, &v[k]);
     }
   } else if k == "Piece" {
-    let p = findp(pieces, v["piece"].as_str().unwrap());
+    let p = findp(pieces, v).unwrap();
     let (op, d) = v["op"].as_object().unwrap().iter().next().unwrap();
 
     match op.as_str() {
