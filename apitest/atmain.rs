@@ -302,8 +302,8 @@ impl Session {
   #[throws(Explode)]
   fn await_update<
     R,
-    F: FnMut(&mut Session, Generation, &str, &JsV) -> Option<R>,
     G: FnMut(&mut Session, Generation) -> Option<R>,
+    F: FnMut(&mut Session, Generation, &str, &JsV) -> Option<R>,
     E: FnMut(&mut Session, Generation, &JsV)
              -> Result<Option<R>, AE>
    > (&mut self, mut g: G, mut f: F, mut ef: Option<E>) -> R {
