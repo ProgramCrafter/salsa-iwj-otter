@@ -371,6 +371,60 @@ Example::
   image.faces = ["#ccccff", "#ccffcc"]
 
 
+``"Currency"``
+```````````````
+
+Quantified resources of any kind.
+This could be money, or "resources", or perhaps VPs.
+In what follows we call each piece representing some currency a "banknote",
+but it might represent some resource cubes, or whatever.
+
+Each banknote has an integer quantity.
+Currency is fungible: it can be split and merged.
+Dropping a banknote onto another banknote of the same currency will
+merge the two.
+The quantity selection function in the game UI can be used to take
+a subset of the value out of a banknote,
+splitting the amount requested off the note,
+and leaving the change behind.
+
+So individual banknotes can be created or destroyed in play.
+Each note can represent either resources being moved
+from one place to another,
+or a repository such as a bank or a player's stash.
+(There is no enforced distinction between banknotes
+in motion or lying about randomly on the table,
+and a "bank", or players' money.
+Players are expected to use location on the table to indicate
+whose money is what, as they would with physical money.)
+
+Each currency is identified by a string.
+Different banknotes with the same currency can be merged,
+even if they look totally different.
+To avoid confusion,
+it is a good idea for all banknotes of the same
+currency in the same game to have the same image.
+
+The total amount in the game of each currency
+remains constant during play.
+(More can be introduced by using ``otter`` to add more banknotes.)
+
+Currency is not currently occultable:
+banknotes are always publicly visible.
+
+Parameters:
+
+ * ``image``: Specifies what each banknote should look like.
+   The image must have only one face.
+   [inner piece spec, as dictionary; required].
+
+ * ``qty``: The initial amount of this banknote or stash.
+   [nonnegative integer; required]
+
+ * ``currency``: The currency, which defines which other
+   banknotes this one can interchange with.
+
+
 ``"Rect"``
 ``````````
 
