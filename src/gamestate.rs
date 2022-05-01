@@ -226,8 +226,11 @@ pub trait PieceTrait: PieceBaseTrait + Downcast + Send + Debug + 'static {
   /// may be occulted!
   fn held_change_hook(&self,
                       _ig: &InstanceRef,
+                      _gplayers: &GPlayers,
+                      _ipieces: &IPieces,
+                      _goccults: &GOccults,
                       _gpieces: &mut GPieces,
-                      _piece: PieceId,
+                      _tpiece: PieceId,
                       _was_held: Option<PlayerId>)
                       -> Result<OpHookThunk,IE> { Ok(default()) }
 

@@ -714,6 +714,9 @@ impl PieceTrait for Clock {
   #[throws(IE)]
   fn held_change_hook(&self,
                       ig: &InstanceRef,
+                      _gplayers: &GPlayers,
+                      _ipieces: &IPieces,
+                      _goccults: &GOccults,
                       gpieces: &mut GPieces,
                       piece: PieceId,
                       was_held: Option<PlayerId>)

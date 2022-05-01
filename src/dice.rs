@@ -408,6 +408,9 @@ impl PieceTrait for Die {
   #[throws(IE)]
   fn held_change_hook(&self,
                       _: &InstanceRef,
+                      _gplayers: &GPlayers,
+                      _ipieces: &IPieces,
+                      _goccults: &GOccults,
                       gpieces: &mut GPieces,
                       piece: PieceId,
                       _was_held: Option<PlayerId>)

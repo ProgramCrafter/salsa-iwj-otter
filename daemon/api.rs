@@ -190,6 +190,9 @@ fn api_piece_op<O: op::Complex>(form: Json<ApiPiece<O>>)
     if let Some(ipc) = &g.ipieces.get(piece);
     let thunk = ipc.direct_trait_access().held_change_hook(
       &iad.gref,
+      &g.gs.players,
+      &g.ipieces,
+      &g.gs.occults,
       &mut g.gs.pieces,
       piece,
       was_held,
