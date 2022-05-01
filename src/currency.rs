@@ -127,7 +127,7 @@ impl PieceTrait for Banknote {
                   take: MultigrabQty, new_z: ShouldSetZLevel) -> OpOutcomeThunk {
     let currency = self.currency.clone();
     OpOutcomeThunk::Reborrow(Box::new(
-      move |ig: &mut InstanceGuard, player: PlayerId, tpiece: PieceId|
+      move |ig: &mut InstanceGuard, (player, tpiece)|
   {
     ig.fastsplit_split(player, tpiece, show, new_z,
       move |_: &IOccults, _: &GameOccults, gpl: &GPlayer,
