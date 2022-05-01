@@ -372,14 +372,14 @@ pub fn permute(occid: OccId,
 pub fn consistency_check(
   _gplayers: &GPlayers,
   _gpieces: &GPieces,
-  _goccults: &GameOccults,
+  _goccults: &GOccults,
 ) { }
 
 #[cfg(debug_assertions)]
 pub fn consistency_check(
   gplayers: &GPlayers,
   gpieces: &GPieces,
-  goccults: &GameOccults,
+  goccults: &GOccults,
 ) {
   for (_player, gpl) in gplayers.iter() {
     for (piece, &vpid) in gpl.idmap.f.iter() {

@@ -66,7 +66,7 @@ impl<P,Z> PriOccultedGeneral<P,Z> {
     }
   }
 
-  pub fn describe(&self, ioccults: &IOccults, goccults: &GameOccults,
+  pub fn describe(&self, ioccults: &IOccults, goccults: &GOccults,
                   gpc: &GPiece, ipc: &IPiece) -> Html
   {
     self.describe_fallible(ioccults, goccults, gpc, ipc)
@@ -78,7 +78,7 @@ impl<P,Z> PriOccultedGeneral<P,Z> {
 
   #[throws(IE)]
   pub fn describe_fallible(&self, ioccults: &IOccults,
-                           goccults: &GameOccults,
+                           goccults: &GOccults,
                            gpc: &GPiece, ipc: &IPiece) -> Html {
     match self.instead(ioccults, ipc)? {
       Left(y) => ipc.show(y).describe_html(gpc, goccults)?,

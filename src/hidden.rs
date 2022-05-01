@@ -30,7 +30,7 @@ pub struct OcculterRotationChecked(());
 pub struct IPieceTraitObj(Box<dyn PieceTrait>);
 
 #[derive(Clone,Debug,Default,Serialize,Deserialize)]
-pub struct GameOccults {
+pub struct GOccults {
   occults: DenseSlotMap<OccId, Occultation>,
 }
 
@@ -114,7 +114,7 @@ impl PieceOccult {
   pub fn is_active(&self) -> bool { self.active.is_some() }
 
   #[throws(IE)]
-  fn active_occ<'r>(&'r self, goccults: &'r GameOccults)
+  fn active_occ<'r>(&'r self, goccults: &'r GOccults)
                     -> Option<&'r Occultation> {
     if let Some(occid) = self.active {
       let occ = goccults.occults.get(occid).ok_or_else(
@@ -126,7 +126,7 @@ impl PieceOccult {
   }
 
   #[throws(IE)]
-  pub fn active_views<'r>(&'r self, goccults: &'r GameOccults)
+  pub fn active_views<'r>(&'r self, goccults: &'r GOccults)
                           -> Option<&'r OccultationViews> {
     self.active_occ(goccults)?.map(
       |occ| &occ.views
@@ -134,7 +134,7 @@ impl PieceOccult {
   }
 
   #[throws(IE)]
-  pub fn active_region<'r>(&'r self, goccults: &'r GameOccults)
+  pub fn active_region<'r>(&'r self, goccults: &'r GOccults)
                            -> Option<&'r Region> {
     self.active_occ(goccults)?.map(
       |occ| &occ.region
@@ -142,7 +142,7 @@ impl PieceOccult {
   }
 
   #[throws(IE)]
-  pub fn active_total_ppieces(&self, goccults: &GameOccults)
+  pub fn active_total_ppieces(&self, goccults: &GOccults)
                               -> Option<usize> {
     self.active_occ(goccults)?.map(|occ| {
       let notches_len = usize::try_from(occ.notches.len()).unwrap();
@@ -151,7 +151,7 @@ impl PieceOccult {
   }
 
   pub fn passive_occid(&self) -> Option<OccId> { Some(self.passive?.occid) }
-  pub fn passive_delete_hook(&self, goccults: &mut GameOccults,
+  pub fn passive_delete_hook(&self, goccults: &mut GOccults,
                              piece: PieceId) {
     if_chain! {
       if let Some(Passive { occid, permute_notch }) = self.passive;
@@ -257,7 +257,7 @@ impl Occultation {
   }
 }
 
-impl GameOccults {
+impl GOccults {
   #[throws(IE)]
   fn by_id(&self, occid: OccId) -> &Occultation {
     self.occults.get(occid).ok_or_else(
@@ -272,7 +272,7 @@ impl GameOccults {
   }
 
   #[throws(IE)]
-  pub fn pos_occulter(&self, goccults: &GameOccults, pos: Pos)
+  pub fn pos_occulter(&self, goccults: &GOccults, pos: Pos)
                       -> Option<PieceId> {
     goccults.occults.iter().find_map(|(_occid, occ)| {
       if occ.in_region(pos) {
@@ -284,7 +284,7 @@ impl GameOccults {
   }
 
   pub fn is_empty(&self) -> bool {
-    let GameOccults { occults } = self;
+    let GOccults { occults } = self;
     occults.is_empty()
   }
 }
@@ -294,7 +294,7 @@ impl GameOccults {
 /// None => do not render at all
 pub fn piece_pri(
   _ioccults: &IOccults,
-  occults: &GameOccults,
+  occults: &GOccults,
   player: PlayerId, gpl: &mut GPlayer,
   piece: PieceId, gpc: &GPiece, _ipc: &IPiece,
 ) -> Option<PieceRenderInstructions>
@@ -462,7 +462,7 @@ impl GPiece {
   }
 
 
-  pub fn fully_visible_to(&self, goccults: &GameOccults, player: PlayerId)
+  pub fn fully_visible_to(&self, goccults: &GOccults, player: PlayerId)
                           -> Option<ShowUnocculted>
   {
     const HIDE: Option<ShowUnocculted> = None;
@@ -521,7 +521,7 @@ fn recalculate_occultation_general<
   gen: &mut UniqueGenGen,
   //
   gplayers: &GPlayers, gpieces: &mut GPieces,
-  goccults: &mut GameOccults, ipieces: &IPieces, ioccults: &IOccults,
+  goccults: &mut GOccults, ipieces: &IPieces, ioccults: &IOccults,
   //
   to_recalculate: &mut ToRecalculate, piece: PieceId,
   // if no change, we return ret_vanilla()
@@ -707,7 +707,7 @@ fn recalculate_occultation_general<
 
   (||{
     let occultation:
-       &mut dyn for<'g> FnMut(&'g mut GameOccults, OccId) -> &mut Occultation
+       &mut dyn for<'g> FnMut(&'g mut GOccults, OccId) -> &mut Occultation
       = &mut |goccults, occid|
       // rust-lang/rust/issues/58525
     {
@@ -805,7 +805,7 @@ fn recalculate_occultation_ofmany(
   gen: &mut UniqueGenGen,
   gplayers: &GPlayers,
   gpieces: &mut GPieces,
-  goccults: &mut GameOccults,
+  goccults: &mut GOccults,
   ipieces: &IPieces,
   ioccults: &IOccults,
   to_recalculate: &mut ToRecalculate,
@@ -853,7 +853,7 @@ mod recompute {
     pub fn implement(self,
                      gplayers: &mut GPlayers,
                      gpieces: &mut GPieces,
-                     goccults: &mut GameOccults,
+                     goccults: &mut GOccults,
                      ipieces: &IPieces) -> Implemented {
       let mut unprepared = vec![];
 
@@ -919,7 +919,7 @@ pub fn create_occultation(
   max_z: &mut ZLevel,
   gplayers: &mut GPlayers,
   gpieces: &mut GPieces,
-  goccults: &mut GameOccults,
+  goccults: &mut GOccults,
   ipieces: &IPieces,
   ioccults: &IOccults,
   to_recalculate: &mut ToRecalculate,
@@ -1029,7 +1029,7 @@ pub fn remove_occultation(
   gen: &mut UniqueGenGen,
   gplayers: &mut GPlayers,
   gpieces: &mut GPieces,
-  goccults: &mut GameOccults,
+  goccults: &mut GOccults,
   ipieces: &IPieces,
   ioccults: &IOccults,
   to_recalculate: &mut ToRecalculate,

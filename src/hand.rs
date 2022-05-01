@@ -196,7 +196,7 @@ impl PieceTrait for Hand {
   }
 
   #[throws(IE)]
-  fn describe_html(&self, gpc: &GPiece, _goccults: &GameOccults) -> Html {
+  fn describe_html(&self, gpc: &GPiece, _goccults: &GOccults) -> Html {
     let xdata = gpc.xdata.get()?;
     self.behaviour.describe_html_inner(xdata)
   }

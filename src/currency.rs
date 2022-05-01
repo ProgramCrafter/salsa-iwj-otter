@@ -99,7 +99,7 @@ impl PieceBaseTrait for Banknote {
 #[typetag::serde(name="Currency")]
 impl PieceTrait for Banknote {
   #[throws(IE)]
-  fn describe_html(&self, gpc: &GPiece, _: &GameOccults) -> Html {
+  fn describe_html(&self, gpc: &GPiece, _: &GOccults) -> Html {
     let value: &Value = gpc.xdata.get_exp()?;
     hformat!("{}, {}{}",
              self.image.describe_html(gpc.face)?,
@@ -130,7 +130,7 @@ impl PieceTrait for Banknote {
       move |ig: &mut InstanceGuard, (player, tpiece)|
   {
     ig.fastsplit_split(player, tpiece, show, new_z,
-      move |_: &IOccults, _: &GameOccults, gpl: &GPlayer,
+      move |_: &IOccults, _: &GOccults, gpl: &GPlayer,
             tgpc: &mut GPiece, tipc: &IPiece,
             ngpc: &mut GPiece|
   {

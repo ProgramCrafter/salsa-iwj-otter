@@ -86,7 +86,7 @@ impl InstanceGuard<'_> {
     tpiece: PieceId, _: ShowUnocculted, tpc_new_z: ShouldSetZLevel,
     implementation: I
   ) -> UpdateFromOpComplex
-  where I: FnOnce(&IOccults, &GameOccults, &GPlayer,
+  where I: FnOnce(&IOccults, &GOccults, &GPlayer,
                   &mut GPiece, &IPiece,
                   &mut GPiece)
                   -> Result<UpdateFromOpComplex, ApiPieceOpError>

@@ -389,7 +389,7 @@ impl PieceTrait for Item {
     self.svg_face(f, gpc.face, vpid, &gpc.xdata)?;
   }
   #[throws(IE)]
-  fn describe_html(&self, gpc: &GPiece, _goccults: &GameOccults) -> Html {
+  fn describe_html(&self, gpc: &GPiece, _goccults: &GOccults) -> Html {
     self.describe_face(gpc.face)?
   }
 

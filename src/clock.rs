@@ -535,7 +535,7 @@ impl PieceTrait for Clock {
   }
 
   #[throws(IE)]
-  fn describe_html(&self, _gpc: &GPiece, _goccults: &GameOccults) -> Html {
+  fn describe_html(&self, _gpc: &GPiece, _goccults: &GOccults) -> Html {
     Html::lit("the chess clock").into()
   }
 

@@ -316,7 +316,7 @@ struct FormattedLogEntry<'u> {
 // ---------- helpful utilities ----------
 
 #[throws(Fatal)]
-pub fn log_did_to_piece_whoby(ioccults: &IOccults, goccults: &GameOccults,
+pub fn log_did_to_piece_whoby(ioccults: &IOccults, goccults: &GOccults,
                               by_gpl: &GPlayer,
                               gpc: &GPiece, ipc: &IPiece, did: &str)
                               -> (Vec<LogEntry>, Option<Html>)
@@ -343,7 +343,7 @@ pub fn log_did_to_piece_whoby(ioccults: &IOccults, goccults: &GameOccults,
 }
 
 #[throws(Fatal)]
-pub fn log_did_to_piece(ioccults: &IOccults, goccults: &GameOccults,
+pub fn log_did_to_piece(ioccults: &IOccults, goccults: &GOccults,
                         by_gpl: &GPlayer,
                         gpc: &GPiece, ipc: &IPiece, did: &str)
                         -> Vec<LogEntry> {

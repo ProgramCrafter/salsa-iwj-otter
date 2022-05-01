@@ -49,7 +49,7 @@ pub struct GameState { // usual variable: gs
   pub log: VecDeque<(Generation, Arc<CommittedLogEntry>)>,
   pub max_z: ZLevel,
   pub players: GPlayers,
-  pub occults: GameOccults,
+  pub occults: GOccults,
 }
 
 pub type GPlayers = DenseSlotMap<PlayerId, GPlayer>;
@@ -219,7 +219,7 @@ pub trait PieceTrait: PieceBaseTrait + Downcast + Send + Debug + 'static {
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece, gs: &GameState,
                id: VisiblePieceId) -> Result<(),IE>;
 
-  fn describe_html(&self, gpc: &GPiece, _goccults: &GameOccults)
+  fn describe_html(&self, gpc: &GPiece, _goccults: &GOccults)
                    -> Result<Html,IE>;
 
   /// Piece is responsible for dealing with the possibility that they

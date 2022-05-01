@@ -328,7 +328,7 @@ impl PieceBaseTrait for Die {
 #[typetag::serde(name="Die")]
 impl PieceTrait for Die {
   #[throws(IE)]
-  fn describe_html(&self, gpc: &GPiece, _: &GameOccults) -> Html {
+  fn describe_html(&self, gpc: &GPiece, _: &GOccults) -> Html {
     let nfaces = self.nfaces();
     let showing = {
       let label = &self.labels[gpc.face];

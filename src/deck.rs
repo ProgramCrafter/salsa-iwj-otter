@@ -77,7 +77,7 @@ impl PieceSpec for piece_specs::Deck {
 
 impl Deck {
   #[throws(IE)]
-  fn state(&self, gpc: &GPiece, goccults: &GameOccults) -> State {
+  fn state(&self, gpc: &GPiece, goccults: &GOccults) -> State {
     match gpc.occult.active_views(goccults)? {
       None                                                       => Disabled,
       Some(OccultationViews { defview: OccK::Visible,..       }) => Counting,
@@ -88,7 +88,7 @@ impl Deck {
   }
 
   #[throws(IE)]
-  fn current_face(&self, gpc: &GPiece, goccults: &GameOccults) -> FaceId {
+  fn current_face(&self, gpc: &GPiece, goccults: &GOccults) -> FaceId {
     RawFaceId::into(match self.state(gpc, goccults)? {
       Disabled | Counting => 0,
       Enabled             => 1,
@@ -128,7 +128,7 @@ impl PieceTrait for Deck {
   }
 
   #[throws(IE)]
-  fn describe_html(&self, gpc: &GPiece, goccults: &GameOccults) -> Html {
+  fn describe_html(&self, gpc: &GPiece, goccults: &GOccults) -> Html {
     match self.state(gpc, goccults)? {
       Disabled => DISABLED_DESC,
       Counting => COUNTING_DESC,
