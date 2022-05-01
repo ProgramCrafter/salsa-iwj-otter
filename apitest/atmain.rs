@@ -452,6 +452,7 @@ pub fn update_update_pieces<PI:Idx>(
     let p = p.unwrap();
     let im = v.get("im").unwrap();
     p.info.extend(im.as_object().unwrap());
+  } else if k.starts_with("MoveHist") {
   }
 }
 
