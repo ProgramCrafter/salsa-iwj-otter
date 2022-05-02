@@ -235,7 +235,7 @@ pub fn svg_parse_size(xml: &str) -> Option<PosC<f64>> {
   for token in &mut tokens {
     match token? {
       Tk::ElementStart{ local, .. } => {
-        if local.eq_ignore_ascii_case("svg") { break }
+        if local.as_str() == "svg" { break }
         else { throw!(SvSE::WrongFirstElement) }
       }
       _ => { },
@@ -249,9 +249,11 @@ pub fn svg_parse_size(xml: &str) -> Option<PosC<f64>> {
         break
       },
       Tk::Attribute { local, value, .. } => {
-        let i =
-          if local.eq_ignore_ascii_case("width" ) { 0 } else
-          if local.eq_ignore_ascii_case("height") { 1 } else { continue };
+        let i = match local.as_str() {
+          "width"  => 0,
+          "height" => 1,
+          _ => continue,
+        };
         if wh[i].is_some() {
           throw!(SvSE::AttributeRepeated(local.to_string()))
         }
