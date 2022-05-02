@@ -224,11 +224,14 @@ pub enum SVGSizeError {
 
 #[throws(SVGSizeError)]
 pub fn svg_parse_size(xml: &str) -> Option<PosC<f64>> {
+  let mut tokens = xmlparser::Tokenizer::from(xml)
+    .map(|t| t.map_err(|e| SvSE::ParseError(e.to_string())));
+
   use xmlparser::Token as Tk;
   let mut in_svg_element = false;
   let mut wh = [None; 2];
-  for token in xmlparser::Tokenizer::from(xml) {
-    match token.map_err(|e| SvSE::ParseError(e.to_string()))? {
+  for token in &mut tokens {
+    match token? {
       Tk::ElementStart{ local, .. } => {
         in_svg_element = local.eq_ignore_ascii_case("svg");
       },
