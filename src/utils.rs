@@ -220,6 +220,7 @@ pub enum SVGSizeError {
   #[error("attribute {0} repeated")]     AttributeRepeated(String),
   #[error("attribute {0} unparseable")]  AttributeUnparseable(String),
   #[error("specifies only one of width and height")] OneOfWidthHeight,
+  #[error("first element is not <svg>")] WrongFirstElement,
   #[error("encountered EOF before SVG element")] UnexpectedEOF,
 }
 
@@ -230,17 +231,24 @@ pub fn svg_parse_size(xml: &str) -> Option<PosC<f64>> {
     .chain(iter::repeat_with(|| Err(SvSE::UnexpectedEOF)));
 
   use xmlparser::Token as Tk;
-  let mut in_svg_element = false;
-  let mut wh = [None; 2];
+
   for token in &mut tokens {
     match token? {
       Tk::ElementStart{ local, .. } => {
-        in_svg_element = local.eq_ignore_ascii_case("svg");
-      },
+        if local.eq_ignore_ascii_case("svg") { break }
+        else { throw!(SvSE::WrongFirstElement) }
+      }
+      _ => { },
+    }
+  }
+
+  let mut wh = [None; 2];
+  for token in &mut tokens {
+    match token? {
       Tk::ElementEnd{..} => {
-        if in_svg_element { return None }
+        break
       },
-      Tk::Attribute { local, value, .. } if in_svg_element => {
+      Tk::Attribute { local, value, .. } => {
         let i =
           if local.eq_ignore_ascii_case("width" ) { 0 } else
           if local.eq_ignore_ascii_case("height") { 1 } else { continue };
