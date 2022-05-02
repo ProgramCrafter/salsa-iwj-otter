@@ -5,21 +5,43 @@
 use crate::imports::*;
 use crate::prelude::*;
 
-#[macro_export]
-macro_rules! ensure_eq {
-  ($v1:expr, $v2:expr) => {
-    ({
-      let v1 = &$v1;
-      let v2 = &$v2;
-      if v1 != v2 {
-        Err(anyhow!("ensure_eq failed: {} != {}: {:?} != {:?}",
-                    stringify!($v1), stringify!($v2),
-                    v1, v2))
-      } else {
-        Ok(())
-      }
-    }?)
+/*
+put trait OptionExt {
+  type Output;
+  fn get_or_try_insert_with<
+      E: Error,
+      F: FnOnce() -> Result<Output,E>,
+    >(&mut self, f: F) -> Result<&mut Output, E>;
+}
+
+impl<T> OptionExt for Option<T> {
+  type Output = T;
+  fn get_or_try_insert_with<E,F>
+    (&mut self, f: F) -> Result<&mut Output, E>
+    where E: Error, F: FnOnce() -> Result<Output,E>,
+  {
+    if self.is_none() {
+      *self = Some(f()?);
+    }
+    Ok(self.as_mut().unwrap())
   }
+}
+*/
+
+//========== miscellany ==========
+// (roughly in order of implementation length)
+
+pub fn is_default<T: ConstDefault + Eq>(t: &T) -> bool { t == &T::DEFAULT }
+
+// TODO: this is not used anywhere!
+#[derive(Error,Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize)]
+#[error("error parsing Z coordinate")]
+pub struct FooParseError;
+
+#[ext(pub, name=SeekExt)]
+impl<T: io::Seek> T {
+  #[throws(io::Error)]
+  fn rewind(&mut self) { self.seek(io::SeekFrom::Start(0))? }
 }
 
 #[ext(pub, name=OrdExt)]
@@ -38,6 +60,148 @@ impl str {
     }
   }
 }
+
+#[derive(Debug,Clone)]
+pub struct JsonString<T:Serialize>(pub T);
+impl<T> Serialize for JsonString<T> where T:Serialize {
+  #[throws(S::Error)]
+  fn serialize<S>(&self, s: S) -> S::Ok where S:Serializer {
+    let json = serde_json::to_string(&self.0)
+      .map_err(|e| <S::Error as serde::ser::Error>::custom(e))?;
+    Serialize::serialize(&json, s)?
+  }
+}
+
+#[throws(Either<io::Error, io::Error>)]
+pub fn io_copy_interactive<R,W>(read: &mut BufReader<R>, write: &mut W)
+where R: Read, W: Write {
+  loop {
+    let buf = read.fill_buf().map_err(Either::Left)?;
+    if buf.len() == 0 { break }
+
+    let did = (||{
+      let did = write.write(buf)?;
+      if did == 0 { throw!(ErrorKind::WriteZero) }
+      Ok::<_,io::Error>(did)
+    })().map_err(Either::Right)?;
+        
+    read.consume(did);
+    write.flush().map_err(Either::Right)?;
+  }
+}
+
+/// Allows the use of serde for a compat struct
+///
+/// Ideally we would have
+/// ```rust ignore
+/// #[derive(Deserialize)]
+/// #[serde(try_from=Compat)]
+/// struct Main { /* new definition */ }
+///
+/// #[derive(Deserialize)]
+/// #[serde(untagged)]
+/// enum Compat { V1(Main), V2(Old) }
+///
+/// #[derive(Deserialize)]
+/// struct Old { /* old version we still want to read */ }
+///
+/// impl TryFrom<Compat> for Main { /* ... */ }
+/// ```
+///
+/// But the impl for `Compat` ends up honouring the `try_from` on `Main`
+/// so is recursive.  We solve that abusing serde's remote feature.
+///
+/// For an example, see `IOccultIlk`.
+///
+/// The name of the main structure must be passed twice, once as an
+/// identifier and once as a literal, because `stringify!` doesn't work
+/// in the serde attribute.
+#[macro_export]
+macro_rules! serde_with_compat { {
+  [ $( #[ $($attrs:meta)* ] )* ] [ $vis:vis ] [ $($intro:tt)* ]
+    $main:ident=$main_s:literal $new:ident $compat_s:literal
+  [ $($body:tt)* ]
+} => {
+  $(#[ $($attrs)* ])* 
+  #[serde(try_from=$compat_s)]
+  $vis $($intro)* $main $($body)*
+
+  #[allow(non_camel_case_types)]
+  $(#[ $($attrs)* ])* 
+  #[serde(remote=$main_s)]
+  $($intro)* $new $($body)*
+} }
+
+//---------- Timespec (for serde) ----------
+
+pub mod timespec_serde {
+  use super::*;
+
+  #[derive(Serialize, Deserialize)]
+  struct Timespec(i64, u32);
+
+  #[throws(S::Error)]
+  pub fn serialize<S:Serializer>(v: &TimeSpec, s: S) -> S::Ok {
+    let v = Timespec(v.tv_sec(), v.tv_nsec().try_into().unwrap());
+    Serialize::serialize(&v, s)?
+  }
+  #[throws(D::Error)]
+  pub fn deserialize<'de, D:Deserializer<'de>>(d: D) -> TimeSpec {
+    let Timespec(sec, nsec) = Deserialize::deserialize(d)?;
+    libc::timespec { tv_sec: sec, tv_nsec: nsec.into() }.into()
+  }
+}
+
+//---------- emptytype ----------
+
+// TODO: replace with Void
+
+pub trait EmptyType { fn diverge<T>(self) -> T; }
+
+impl EmptyType for Infallible {
+  fn diverge<T>(self) -> T { match self { } }
+}
+
+//---------- IpAddress ----------
+
+pub trait IpAddress: Debug {
+  fn with_port(&self, port: u16) -> SocketAddr;
+}
+
+impl<A> IpAddress for A where A: Into<IpAddr> + Debug + Clone {
+  fn with_port(&self, port: u16) -> SocketAddr {
+    match (self.clone().into(), port)
+      .to_socket_addrs()
+      .map(|i| i.at_most_one()) {
+        Ok(Ok(Some(addr))) => addr,
+        x => panic!("{:?},{} gave {:?}", self, port, x),
+      }
+  }
+}
+
+//---------- get_or_extend_with ----------
+
+
+#[ext(pub)]
+impl<T> Vec<T> {
+  fn get_or_extend_with<F>(&mut self, i: usize, f: F) -> &mut T
+  where F: FnMut() -> T {
+    if self.get(i).is_none() {
+      self.resize_with(i+1, f);
+    }
+    &mut self[i]
+  }
+}
+
+#[ext(pub)]
+impl<I,T> IndexVec<I,T> where I: index_vec::Idx {
+  fn get_or_extend_with<F>(&mut self, i: I, f: F) -> &mut T
+  where F: FnMut() -> T {
+    self.raw.get_or_extend_with(i.index(), f)
+  }
+}
+
+//========== OldNew ==========
 
 #[derive(Copy,Clone,Debug,From,Into)]
 #[derive(Hash,Eq,PartialEq,Serialize,Deserialize)]
@@ -86,49 +250,7 @@ impl<T> Index<OldNewIndex> for OldNew<T> {
   fn index(&self, i: OldNewIndex) -> &T { &self.0[i as usize] }
 }
 
-/*
-put trait OptionExt {
-  type Output;
-  fn get_or_try_insert_with<
-      E: Error,
-      F: FnOnce() -> Result<Output,E>,
-    >(&mut self, f: F) -> Result<&mut Output, E>;
-}
-
-impl<T> OptionExt for Option<T> {
-  type Output = T;
-  fn get_or_try_insert_with<E,F>
-    (&mut self, f: F) -> Result<&mut Output, E>
-    where E: Error, F: FnOnce() -> Result<Output,E>,
-  {
-    if self.is_none() {
-      *self = Some(f()?);
-    }
-    Ok(self.as_mut().unwrap())
-  }
-}
-*/
-
-// https://github.com/rust-lang/rust/issues/32255 :-(
-
-#[ext(pub, name=LocalFileExt, supertraits=Sized)]
-impl fs::File {
-  #[throws(io::Error)]
-  fn close(self) {
-    let r = unsafe {
-      let fd = self.into_raw_fd();
-      libc::close(fd)
-    };
-    if r == 0 {
-      ()
-    } else if r == -1 {
-      throw!(io::Error::last_os_error())
-    } else {
-      panic!("close(2) returned {}", r)
-    }
-  }
-}
-
+//========== Thunk ==========
 
 // todo #[derive(Clone)]
 pub struct Thunk<U: Sync, F: Sync + FnOnce() -> U> (
@@ -177,27 +299,7 @@ impl<Y: Sync, E: Sync, F: Sync + FnOnce() -> Result<Y,E>>
 
 // todo: DerefMut
 
-#[derive(Error,Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize)]
-#[error("error parsing Z coordinate")]
-pub struct FooParseError;
-
-pub mod timespec_serde {
-  use super::*;
-
-  #[derive(Serialize, Deserialize)]
-  struct Timespec(i64, u32);
-
-  #[throws(S::Error)]
-  pub fn serialize<S:Serializer>(v: &TimeSpec, s: S) -> S::Ok {
-    let v = Timespec(v.tv_sec(), v.tv_nsec().try_into().unwrap());
-    Serialize::serialize(&v, s)?
-  }
-  #[throws(D::Error)]
-  pub fn deserialize<'de, D:Deserializer<'de>>(d: D) -> TimeSpec {
-    let Timespec(sec, nsec) = Deserialize::deserialize(d)?;
-    libc::timespec { tv_sec: sec, tv_nsec: nsec.into() }.into()
-  }
-}
+//========== toml_merge ====================
 
 pub fn toml_merge<'u,
                   S: 'u + AsRef<str>,
@@ -238,41 +340,276 @@ pub fn toml_merge<'u,
   }
 }
 
-#[derive(Debug,Clone)]
-pub struct JsonString<T:Serialize>(pub T);
-impl<T> Serialize for JsonString<T> where T:Serialize {
-  #[throws(S::Error)]
-  fn serialize<S>(&self, s: S) -> S::Ok where S:Serializer {
-    let json = serde_json::to_string(&self.0)
-      .map_err(|e| <S::Error as serde::ser::Error>::custom(e))?;
-    Serialize::serialize(&json, s)?
+//========== .insert() and .remove() on various Entry ==========
+
+macro_rules! entry_define_insert_remove {
+  { $name:ident, $name_mod:ident, $entry:path, $into_key:ident } =>
+  {
+    #[allow(non_snake_case)]
+    mod $name_mod {
+      use $crate::imports::extend::ext;
+      use $entry as Entry;
+      use Entry::{Occupied, Vacant};
+      #[ext(pub, name=EntryExt)]
+      impl<'e,K,V> Entry<'e,K,V> where K: slotmap::Key {
+        fn insert(self, v: V) {
+          match self {
+            Vacant(ve)   => { ve.insert(v); }
+            Occupied(mut oe) => { oe.insert(v); }
+          }
+        }
+        fn remove(self) -> (K, Option<V>) {
+          match self {
+            Vacant(ve)   => { let k = ve.$into_key();        (k, None)    }
+            Occupied(oe) => { let (k,v) = oe.remove_entry(); (k, Some(v)) }
+          }
+        }
+      }
+    }
+    pub use $name_mod::EntryExt as $name;
   }
 }
 
-#[macro_export]
-macro_rules! deref_to_field {
-  {$({ $($gen:tt)* })? $outer:ty, $inner:ty, $($field:tt)*} => {
-    impl $(< $($gen)* >)? Deref for $outer {
-      type Target = $inner;
-      fn deref(&self) -> &$inner { &self.$($field)* }
+entry_define_insert_remove!{
+  SlotmapSparseSecondaryEntryExt,
+  SlotmapSparseSecondaryEntryExt_mod,
+  slotmap::sparse_secondary::Entry,
+  key
+}
+
+//========== FutureInstant ==========
+
+#[derive(Debug,Copy,Clone,Eq,PartialEq,Ord,PartialOrd)]
+#[derive(From,Into)]
+#[derive(Serialize, Deserialize)]
+#[serde(into="Duration", try_from="Duration")]
+pub struct FutureInstant(pub Instant);
+
+impl Into<Duration> for FutureInstant {
+  fn into(self) -> Duration {
+    let now = config().global_clock.now();
+    Instant::from(self).checked_duration_since(now).unwrap_or_default()
+  }
+}
+
+#[derive(Error,Debug)]
+#[error("Duration (eg during load) implies out-of-range FutureInstant")]
+pub struct FutureInstantOutOfRange;
+
+impl TryFrom<Duration> for FutureInstant {
+  type Error = FutureInstantOutOfRange;
+  #[throws(FutureInstantOutOfRange)]
+  fn try_from(duration: Duration) -> FutureInstant {
+    let now = config().global_clock.now();
+    now.checked_add(duration).ok_or(FutureInstantOutOfRange)?.into()
+  }
+}      
+
+//========== Error handling ==========
+
+#[derive(Debug)]
+pub struct AnyhowDisplay<'a>(pub &'a anyhow::Error);
+impl Display for AnyhowDisplay<'_> {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut fmt::Formatter) {
+    let mut delim = "";
+    self.0.for_each(&mut |s|{
+      write!(f, "{}{}", delim, s)?;
+      delim = ": ";
+      Ok(())
+    })?;
+  }
+}
+
+#[ext(pub)]
+impl anyhow::Error {
+  fn for_each(&self, f: &mut dyn FnMut(&str) -> fmt::Result) -> fmt::Result {
+    let mut done = String::new();
+    for e in self.chain() {
+      let s = e.to_string();
+      if done.contains(&s) { continue }
+      f(&s)?;
+      done = s;
+    }
+    Ok(())
+  }
+
+  fn d(&self) -> AnyhowDisplay<'_> { AnyhowDisplay(self) }
+
+  fn end_process(self, estatus: u8) -> ! {
+    #[derive(Default,Debug)] struct Sol { any: bool, progname: String }
+    impl Sol {
+      fn nl(&mut self) {
+        if self.any { eprintln!("") };
+        self.any = false;
+      }
+      fn head(&mut self) {
+        if ! self.any { eprint!("{}: error", &self.progname); }
+        self.any = true
+      }
+    }
+    let mut sol: Sol = Sol { any: false, progname: program_name() };
+    self.for_each(&mut |s|{
+      let long = s.len() > 80;
+      if long && sol.any { sol.nl() }
+      sol.head();
+      eprint!(": {}", &s);
+      if long { sol.nl() }
+      Ok::<_,fmt::Error>(())
+    }).unwrap();
+    sol.nl();
+    assert!(estatus > 0);
+    exit(estatus.into());
+  }
+}
+
+//========== IO - File::close ==========
+
+// https://github.com/rust-lang/rust/issues/32255 :-(
+
+#[ext(pub, name=LocalFileExt, supertraits=Sized)]
+impl fs::File {
+  #[throws(io::Error)]
+  fn close(self) {
+    let r = unsafe {
+      let fd = self.into_raw_fd();
+      libc::close(fd)
+    };
+    if r == 0 {
+      ()
+    } else if r == -1 {
+      throw!(io::Error::last_os_error())
+    } else {
+      panic!("close(2) returned {}", r)
     }
   }
 }
-#[macro_export]
-macro_rules! deref_to_field_mut {
-  {$({ $($gen:tt)* })? $outer:ty, $inner:ty, $($field:tt)*} => {
-    deref_to_field!{ $({ $($gen)* })? $outer, $inner, $($field)*}
-    impl $(< $($gen)* >)? DerefMut for $outer {
-      fn deref_mut(&mut self) -> &mut $inner { &mut self.$($field)* }
+
+
+//========== IO - SigPipeWriter and RawStdout/CookedStdout ==========
+
+pub struct SigPipeWriter<W>(pub W);
+
+impl<W:Write> SigPipeWriter<W> {
+  fn handle_err(e: io::Error) -> io::Error {
+    if e.kind() != ErrorKind::BrokenPipe { return e }
+
+    match (||{
+      use nix::sys::signal::*;
+      use Signal::SIGPIPE;
+      unsafe {
+        sigaction(SIGPIPE, &SigAction::new(
+          SigHandler::SigDfl, SaFlags::empty(), SigSet::empty()))
+          .context("sigaction")?;
+      };
+      raise(SIGPIPE).context("raise")?;
+      Err::<Void,_>(anyhow!("continued after raise"))
+    })() {
+      Err(ae) => ae
+        .context("attempt to die with SIGPIPE failed")
+        .end_process(127),
+      Ok(v) => match v { },
     }
   }
 }
 
-pub trait EmptyType { fn diverge<T>(self) -> T; }
-
-impl EmptyType for Infallible {
-  fn diverge<T>(self) -> T { match self { } }
+impl<W:Write> Write for SigPipeWriter<W> {
+  fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+    self.0.write(buf).map_err(Self::handle_err)
+  }
+  fn flush(&mut self)             -> io::Result<()>    {
+    self.0.flush()   .map_err(Self::handle_err)
+  }
 }
+
+pub type RawStdout = SigPipeWriter<io::Stdout>;
+#[allow(clippy::new_without_default)] // Don't want these made willy-nilly
+impl RawStdout { pub fn new() -> Self { SigPipeWriter(io::stdout()) } }
+
+pub struct CookedStdout(pub BufWriter<SigPipeWriter<io::Stdout>>);
+#[allow(clippy::new_without_default)] // Don't want these made willy-nilly
+impl CookedStdout {
+  pub fn new() -> Self { Self(BufWriter::new(RawStdout::new())) }
+  fn handle_err(e: io::Error) -> ! {
+    AE::from(e).context("write stdout").end_process(EXIT_DISASTER as _);
+  }
+  fn must_flush(&mut self) {
+    self.0.flush().unwrap_or_else(|e| Self::handle_err(e))
+  }
+}
+impl Write for CookedStdout {
+  #[throws(io::Error)]
+  fn write(&mut self, buf: &[u8]) -> usize {
+    let r = self.0.write(buf).unwrap_or_else(|e| Self::handle_err(e));
+    if buf.contains(&b'\n') { self.flush()? }
+    r
+  }
+  #[throws(io::Error)]
+  fn flush(&mut self) { self.must_flush() }
+}
+impl Drop for CookedStdout {
+  fn drop(&mut self) { self.must_flush() }
+}
+
+//========== hex ==========
+
+#[throws(fmt::Error)]
+pub fn fmt_hex(f: &mut Formatter, buf: &[u8]) {
+  for v in buf { write!(f, "{:02x}", v)?; }
+}
+
+#[throws(as Option)]
+#[must_use]
+pub fn parse_slice_hex(s: &str, buf: &mut [u8]) -> usize {
+  let l = s.len();
+  if l % 2 != 0 { throw!() }
+  let l = l/2;
+  if l > buf.len() { throw!() }
+
+  for (h, o) in izip!(
+    s.as_bytes().chunks(2),
+    buf.iter_mut(),
+  ) {
+    let h = str::from_utf8(h).ok()?;
+    *o = u8::from_str_radix(h,16).ok()?;
+  }
+
+  l
+}
+
+#[throws(as Option)]
+pub fn parse_fixed_hex<const N: usize>(s: &str) -> [u8; N] {
+  let mut buf = [0u8; N];
+  let l = parse_slice_hex(s, &mut buf)?;
+  if l != N { throw!() }
+  buf
+}
+
+#[macro_export]
+macro_rules! format_by_fmt_hex {
+  ($trait:ty, for $self:ty, . $($memb:tt)+) => {
+    impl $trait for $self {
+      #[throws(fmt::Error)]
+      fn fmt(&self, f: &mut Formatter) {
+        fmt_hex(f, &self . $($memb)+)?
+      }
+    }
+  }
+}
+
+#[test]
+fn test_parse_hex(){
+  assert_eq!( parse_fixed_hex(""),     Some([          ]) );
+  assert_eq!( parse_fixed_hex("41"  ), Some([b'A'      ]) );
+  assert_eq!( parse_fixed_hex("4165"), Some([b'A', b'e']) );
+  assert_eq!( parse_fixed_hex("4165"), Some([b'A', b'e']) );
+  assert_eq!( parse_fixed_hex("41"  ), None::<[_;0]>      );
+  assert_eq!( parse_fixed_hex("41"  ), None::<[_;2]>      );
+  assert_eq!( parse_fixed_hex("1"   ), None::<[_;1]>      );
+  assert_eq!( parse_fixed_hex("xy"  ), None::<[_;1]>      );
+}
+
+//========== matches_doesnot ==========
 
 #[macro_export] // <- otherwise bogus warning `unused_macros`
 macro_rules! matches_doesnot_yn2bool {
@@ -328,18 +665,7 @@ fn matches_doesnot_test() {
   );
 }
 
-#[macro_export]
-macro_rules! trace_dbg {
-  ($msg:expr $(,$val:expr)*) => {
-    if log_enabled!(log::Level::Trace) {
-      #[allow(unused_mut)]
-      let mut buf = format!("{}", &$msg);
-      $( write!(&mut buf, " {}={:?}", stringify!($val), &$val).unwrap(); )*
-      trace!("{}", buf);
-    }
-  }
-
-}
+//========== want* macros ==========
 
 #[macro_export]
 macro_rules! want_failed_internal {
@@ -407,428 +733,53 @@ macro_rules! want_let {
   };
 }
 
-/// Allows the use of serde for a compat struct
-///
-/// Ideally we would have
-/// ```rust ignore
-/// #[derive(Deserialize)]
-/// #[serde(try_from=Compat)]
-/// struct Main { /* new definition */ }
-///
-/// #[derive(Deserialize)]
-/// #[serde(untagged)]
-/// enum Compat { V1(Main), V2(Old) }
-///
-/// #[derive(Deserialize)]
-/// struct Old { /* old version we still want to read */ }
-///
-/// impl TryFrom<Compat> for Main { /* ... */ }
-/// ```
-///
-/// But the impl for `Compat` ends up honouring the `try_from` on `Main`
-/// so is recursive.  We solve that abusing serde's remote feature.
-///
-/// For an example, see `IOccultIlk`.
-///
-/// The name of the main structure must be passed twice, once as an
-/// identifier and once as a literal, because `stringify!` doesn't work
-/// in the serde attribute.
+//========== miscellaneous macros ==========
+
 #[macro_export]
-macro_rules! serde_with_compat { {
-  [ $( #[ $($attrs:meta)* ] )* ] [ $vis:vis ] [ $($intro:tt)* ]
-    $main:ident=$main_s:literal $new:ident $compat_s:literal
-  [ $($body:tt)* ]
-} => {
-  $(#[ $($attrs)* ])* 
-  #[serde(try_from=$compat_s)]
-  $vis $($intro)* $main $($body)*
-
-  #[allow(non_camel_case_types)]
-  $(#[ $($attrs)* ])* 
-  #[serde(remote=$main_s)]
-  $($intro)* $new $($body)*
-} }
-
-macro_rules! entry_define_insert_remove {
-  { $name:ident, $name_mod:ident, $entry:path, $into_key:ident } =>
-  {
-    #[allow(non_snake_case)]
-    mod $name_mod {
-      use $crate::imports::extend::ext;
-      use $entry as Entry;
-      use Entry::{Occupied, Vacant};
-      #[ext(pub, name=EntryExt)]
-      impl<'e,K,V> Entry<'e,K,V> where K: slotmap::Key {
-        fn insert(self, v: V) {
-          match self {
-            Vacant(ve)   => { ve.insert(v); }
-            Occupied(mut oe) => { oe.insert(v); }
-          }
-        }
-        fn remove(self) -> (K, Option<V>) {
-          match self {
-            Vacant(ve)   => { let k = ve.$into_key();        (k, None)    }
-            Occupied(oe) => { let (k,v) = oe.remove_entry(); (k, Some(v)) }
-          }
-        }
-      }
-    }
-    pub use $name_mod::EntryExt as $name;
-  }
-}
-
-entry_define_insert_remove!{
-  SlotmapSparseSecondaryEntryExt,
-  SlotmapSparseSecondaryEntryExt_mod,
-  slotmap::sparse_secondary::Entry,
-  key
-}
-
-#[derive(Debug,Copy,Clone,Eq,PartialEq,Ord,PartialOrd)]
-#[derive(From,Into)]
-#[derive(Serialize, Deserialize)]
-#[serde(into="Duration", try_from="Duration")]
-pub struct FutureInstant(pub Instant);
-
-impl Into<Duration> for FutureInstant {
-  fn into(self) -> Duration {
-    let now = config().global_clock.now();
-    Instant::from(self).checked_duration_since(now).unwrap_or_default()
-  }
-}
-
-#[derive(Error,Debug)]
-#[error("Duration (eg during load) implies out-of-range FutureInstant")]
-pub struct FutureInstantOutOfRange;
-
-impl TryFrom<Duration> for FutureInstant {
-  type Error = FutureInstantOutOfRange;
-  #[throws(FutureInstantOutOfRange)]
-  fn try_from(duration: Duration) -> FutureInstant {
-    let now = config().global_clock.now();
-    now.checked_add(duration).ok_or(FutureInstantOutOfRange)?.into()
-  }
-}      
-
-
-#[derive(Debug,Copy,Clone)]
-pub struct DigestRead<D: Digest, R: Read> {
-  d: D,
-  r: R,
-}
-
-impl<D: Digest, R: Read> DigestRead<D, R> {
-  pub fn new(r: R) -> Self { DigestRead { r, d: D::new() } }
-  pub fn into_inner(self) -> (D, R) { (self.d, self.r) }
-  pub fn finish(self) -> digest::Output<D> {
-    self.d.finalize()
-  }
-}
-
-impl<D: Digest, R: Read> Read for DigestRead<D, R> {
-  #[throws(io::Error)]
-  fn read(&mut self, buf: &mut [u8]) -> usize {
-    let count = self.r.read(buf)?;
-    self.d.update(&buf[0..count]);
-    count
-  }
-}
-
-#[test]
-#[cfg(not(miri))]
-fn test_digest_read() {
-  let ibuffer = b"abc";
-  let exp = Sha512_256::digest(&ibuffer[..]);
-  let inner = &ibuffer[..];
-  let mut dr = DigestRead::<Sha512_256,_>::new(inner);
-  let mut obuffer = [0;4];
-  assert_eq!( dr.read(&mut obuffer).unwrap(), 3 );
-  assert_eq!( &obuffer, b"abc\0" );
-  let got = dr.finish();
-  assert_eq!( got, exp );
-}
-
-#[derive(Debug,Copy,Clone)]
-pub struct DigestWrite<D: Digest, W: Write> {
-  d: D,
-  w: W,
-}
-
-impl<D: Digest, W: Write> DigestWrite<D, W> {
-  pub fn new(w: W) -> Self { DigestWrite { w, d: D::new() } }
-  pub fn into_inner(self) -> (D, W) { (self.d, self.w) }
-  pub fn finish(self) -> (digest::Output<D>, W) {
-    (self.d.finalize(), self.w)
-  }
-}
-impl<D: Digest> DigestWrite<D, io::Sink> {
-  pub fn sink() -> Self { DigestWrite::new(io::sink()) }
-
-  #[throws(io::Error)]
-  pub fn of<R>(r: &mut R) -> digest::Output<D> where R: Read {
-    let mut dw = DigestWrite::<D,_>::sink();
-    io::copy(r, &mut dw)?;
-    dw.finish().0
-  }
-}
-
-impl<D: Digest, W: Write> Write for DigestWrite<D, W> {
-  #[throws(io::Error)]
-  fn write(&mut self, buf: &[u8]) -> usize {
-    let count = self.w.write(buf)?;
-    self.d.update(&buf[0..count]);
-    count
-  }
-  #[throws(io::Error)]
-  fn flush(&mut self) { self.w.flush()? }
-}
-
-#[test]
-#[cfg(not(miri))]
-fn test_digest_write() {
-  let ibuffer = b"xyz";
-  let exp = Sha512_256::digest(&ibuffer[..]);
-  let mut obuffer = [0;4];
-  let inner = &mut obuffer[..];
-  let mut dw = bundles::DigestWrite::new(inner);
-  assert_eq!( dw.write(&ibuffer[..]).unwrap(), 3);
-  let (got, recov) = dw.finish();
-  assert_eq!( recov, b"\0" );
-  assert_eq!( got, exp );
-  assert_eq!( &obuffer, b"xyz\0" );
-}
-
-#[ext(pub, name=SeekExt)]
-impl<T: io::Seek> T {
-  #[throws(io::Error)]
-  fn rewind(&mut self) { self.seek(io::SeekFrom::Start(0))? }
-}
-
-#[ext(pub)]
-impl<T> Vec<T> {
-  fn get_or_extend_with<F>(&mut self, i: usize, f: F) -> &mut T
-  where F: FnMut() -> T {
-    if self.get(i).is_none() {
-      self.resize_with(i+1, f);
-    }
-    &mut self[i]
-  }
-}
-
-#[ext(pub)]
-impl<I,T> IndexVec<I,T> where I: index_vec::Idx {
-  fn get_or_extend_with<F>(&mut self, i: I, f: F) -> &mut T
-  where F: FnMut() -> T {
-    self.raw.get_or_extend_with(i.index(), f)
-  }
-}
-
-pub fn is_default<T: ConstDefault + Eq>(t: &T) -> bool { t == &T::DEFAULT }
-
-#[derive(Debug)]
-pub struct AnyhowDisplay<'a>(pub &'a anyhow::Error);
-impl Display for AnyhowDisplay<'_> {
-  #[throws(fmt::Error)]
-  fn fmt(&self, f: &mut fmt::Formatter) {
-    let mut delim = "";
-    self.0.for_each(&mut |s|{
-      write!(f, "{}{}", delim, s)?;
-      delim = ": ";
-      Ok(())
-    })?;
-  }
-}
-
-#[ext(pub)]
-impl anyhow::Error {
-  fn for_each(&self, f: &mut dyn FnMut(&str) -> fmt::Result) -> fmt::Result {
-    let mut done = String::new();
-    for e in self.chain() {
-      let s = e.to_string();
-      if done.contains(&s) { continue }
-      f(&s)?;
-      done = s;
-    }
-    Ok(())
-  }
-
-  fn d(&self) -> AnyhowDisplay<'_> { AnyhowDisplay(self) }
-
-  fn end_process(self, estatus: u8) -> ! {
-    #[derive(Default,Debug)] struct Sol { any: bool, progname: String }
-    impl Sol {
-      fn nl(&mut self) {
-        if self.any { eprintln!("") };
-        self.any = false;
-      }
-      fn head(&mut self) {
-        if ! self.any { eprint!("{}: error", &self.progname); }
-        self.any = true
-      }
-    }
-    let mut sol: Sol = Sol { any: false, progname: program_name() };
-    self.for_each(&mut |s|{
-      let long = s.len() > 80;
-      if long && sol.any { sol.nl() }
-      sol.head();
-      eprint!(": {}", &s);
-      if long { sol.nl() }
-      Ok::<_,fmt::Error>(())
-    }).unwrap();
-    sol.nl();
-    assert!(estatus > 0);
-    exit(estatus.into());
-  }
-}
-
-#[throws(Either<io::Error, io::Error>)]
-pub fn io_copy_interactive<R,W>(read: &mut BufReader<R>, write: &mut W)
-where R: Read, W: Write {
-  loop {
-    let buf = read.fill_buf().map_err(Either::Left)?;
-    if buf.len() == 0 { break }
-
-    let did = (||{
-      let did = write.write(buf)?;
-      if did == 0 { throw!(ErrorKind::WriteZero) }
-      Ok::<_,io::Error>(did)
-    })().map_err(Either::Right)?;
-        
-    read.consume(did);
-    write.flush().map_err(Either::Right)?;
-  }
-}
-
-pub struct SigPipeWriter<W>(pub W);
-
-impl<W:Write> SigPipeWriter<W> {
-  fn handle_err(e: io::Error) -> io::Error {
-    if e.kind() != ErrorKind::BrokenPipe { return e }
-
-    match (||{
-      use nix::sys::signal::*;
-      use Signal::SIGPIPE;
-      unsafe {
-        sigaction(SIGPIPE, &SigAction::new(
-          SigHandler::SigDfl, SaFlags::empty(), SigSet::empty()))
-          .context("sigaction")?;
-      };
-      raise(SIGPIPE).context("raise")?;
-      Err::<Void,_>(anyhow!("continued after raise"))
-    })() {
-      Err(ae) => ae
-        .context("attempt to die with SIGPIPE failed")
-        .end_process(127),
-      Ok(v) => match v { },
+macro_rules! trace_dbg {
+  ($msg:expr $(,$val:expr)*) => {
+    if log_enabled!(log::Level::Trace) {
+      #[allow(unused_mut)]
+      let mut buf = format!("{}", &$msg);
+      $( write!(&mut buf, " {}={:?}", stringify!($val), &$val).unwrap(); )*
+      trace!("{}", buf);
     }
   }
-}
 
-impl<W:Write> Write for SigPipeWriter<W> {
-  fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-    self.0.write(buf).map_err(Self::handle_err)
-  }
-  fn flush(&mut self)             -> io::Result<()>    {
-    self.0.flush()   .map_err(Self::handle_err)
-  }
-}
-
-pub type RawStdout = SigPipeWriter<io::Stdout>;
-#[allow(clippy::new_without_default)] // Don't want these made willy-nilly
-impl RawStdout { pub fn new() -> Self { SigPipeWriter(io::stdout()) } }
-
-pub struct CookedStdout(pub BufWriter<SigPipeWriter<io::Stdout>>);
-#[allow(clippy::new_without_default)] // Don't want these made willy-nilly
-impl CookedStdout {
-  pub fn new() -> Self { Self(BufWriter::new(RawStdout::new())) }
-  fn handle_err(e: io::Error) -> ! {
-    AE::from(e).context("write stdout").end_process(EXIT_DISASTER as _);
-  }
-  fn must_flush(&mut self) {
-    self.0.flush().unwrap_or_else(|e| Self::handle_err(e))
-  }
-}
-impl Write for CookedStdout {
-  #[throws(io::Error)]
-  fn write(&mut self, buf: &[u8]) -> usize {
-    let r = self.0.write(buf).unwrap_or_else(|e| Self::handle_err(e));
-    if buf.contains(&b'\n') { self.flush()? }
-    r
-  }
-  #[throws(io::Error)]
-  fn flush(&mut self) { self.must_flush() }
-}
-impl Drop for CookedStdout {
-  fn drop(&mut self) { self.must_flush() }
-}
-
-pub trait IpAddress: Debug {
-  fn with_port(&self, port: u16) -> SocketAddr;
-}
-
-impl<A> IpAddress for A where A: Into<IpAddr> + Debug + Clone {
-  fn with_port(&self, port: u16) -> SocketAddr {
-    match (self.clone().into(), port)
-      .to_socket_addrs()
-      .map(|i| i.at_most_one()) {
-        Ok(Ok(Some(addr))) => addr,
-        x => panic!("{:?},{} gave {:?}", self, port, x),
-      }
-  }
-}
-
-#[throws(fmt::Error)]
-pub fn fmt_hex(f: &mut Formatter, buf: &[u8]) {
-  for v in buf { write!(f, "{:02x}", v)?; }
-}
-
-#[throws(as Option)]
-#[must_use]
-pub fn parse_slice_hex(s: &str, buf: &mut [u8]) -> usize {
-  let l = s.len();
-  if l % 2 != 0 { throw!() }
-  let l = l/2;
-  if l > buf.len() { throw!() }
-
-  for (h, o) in izip!(
-    s.as_bytes().chunks(2),
-    buf.iter_mut(),
-  ) {
-    let h = str::from_utf8(h).ok()?;
-    *o = u8::from_str_radix(h,16).ok()?;
-  }
-
-  l
-}
-
-#[throws(as Option)]
-pub fn parse_fixed_hex<const N: usize>(s: &str) -> [u8; N] {
-  let mut buf = [0u8; N];
-  let l = parse_slice_hex(s, &mut buf)?;
-  if l != N { throw!() }
-  buf
 }
 
 #[macro_export]
-macro_rules! format_by_fmt_hex {
-  ($trait:ty, for $self:ty, . $($memb:tt)+) => {
-    impl $trait for $self {
-      #[throws(fmt::Error)]
-      fn fmt(&self, f: &mut Formatter) {
-        fmt_hex(f, &self . $($memb)+)?
+macro_rules! ensure_eq {
+  ($v1:expr, $v2:expr) => {
+    ({
+      let v1 = &$v1;
+      let v2 = &$v2;
+      if v1 != v2 {
+        Err(anyhow!("ensure_eq failed: {} != {}: {:?} != {:?}",
+                    stringify!($v1), stringify!($v2),
+                    v1, v2))
+      } else {
+        Ok(())
       }
-    }
+    }?)
   }
 }
 
-#[test]
-fn test_parse_hex(){
-  assert_eq!( parse_fixed_hex(""),     Some([          ]) );
-  assert_eq!( parse_fixed_hex("41"  ), Some([b'A'      ]) );
-  assert_eq!( parse_fixed_hex("4165"), Some([b'A', b'e']) );
-  assert_eq!( parse_fixed_hex("4165"), Some([b'A', b'e']) );
-  assert_eq!( parse_fixed_hex("41"  ), None::<[_;0]>      );
-  assert_eq!( parse_fixed_hex("41"  ), None::<[_;2]>      );
-  assert_eq!( parse_fixed_hex("1"   ), None::<[_;1]>      );
-  assert_eq!( parse_fixed_hex("xy"  ), None::<[_;1]>      );
+#[macro_export]
+macro_rules! deref_to_field {
+  {$({ $($gen:tt)* })? $outer:ty, $inner:ty, $($field:tt)*} => {
+    impl $(< $($gen)* >)? Deref for $outer {
+      type Target = $inner;
+      fn deref(&self) -> &$inner { &self.$($field)* }
+    }
+  }
+}
+#[macro_export]
+macro_rules! deref_to_field_mut {
+  {$({ $($gen:tt)* })? $outer:ty, $inner:ty, $($field:tt)*} => {
+    deref_to_field!{ $({ $($gen)* })? $outer, $inner, $($field)*}
+    impl $(< $($gen)* >)? DerefMut for $outer {
+      fn deref_mut(&mut self) -> &mut $inner { &mut self.$($field)* }
+    }
+  }
 }

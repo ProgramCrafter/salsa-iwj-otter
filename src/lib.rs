@@ -32,6 +32,7 @@ pub mod config;
 pub mod currency;
 pub mod deck;
 pub mod dice;
+pub mod digestrw;
 pub mod debugmutex;
 pub mod debugreader;
 pub mod error;

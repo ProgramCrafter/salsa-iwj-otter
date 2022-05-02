@@ -7,7 +7,7 @@ use crate::prelude::*;
 //---------- public types ----------
 
 pub use crate::prelude::Sha512_256 as Digester;
-pub type DigestWrite<W> = crate::utils::DigestWrite<Digester, W>;
+pub type DigestWrite<W> = digestrw::DigestWrite<Digester, W>;
 
 #[derive(Copy,Clone,Hash,Eq,PartialEq,Serialize,Deserialize)]
 pub struct Hash(pub [u8; 32]);

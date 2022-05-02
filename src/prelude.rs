@@ -154,6 +154,7 @@ pub use crate::commands::{ProgressUpdateMode};
 pub use crate::config::*;
 pub use crate::debugmutex::DebugIdentify;
 pub use crate::debugreader::DebugReader;
+pub use crate::digestrw::{self, *};
 pub use crate::error::*;
 pub use crate::fake_rng::*;
 pub use crate::fake_time::*;
