@@ -520,6 +520,15 @@ impl ItemSpec {
   }
 }
 
+#[derive(Error,Clone,Serialize,Deserialize,Debug)]
+pub enum SVGSizeError {
+  #[error("parse error: {0}")]           ParseError(String),
+  #[error("attribute {0} repeated")]     AttributeRepeated(String),
+  #[error("attribute {0} unparseable")]  AttributeUnparseable(String),
+  #[error("specifies only one of width and height")] OneOfWidthHeight,
+}
+use SVGSizeError as SvSE;
+
 impl Contents {
   #[throws(SpecError)]
   fn load_svg(&self, item_name: &SvgBaseName<str>,
@@ -537,6 +546,47 @@ impl Contents {
         error!("{}: {} {:?}: {}", &m, &svg_path, item_for, &e);
         SpE::InternalError(m.to_string())
       })?;
+
+    #[throws(SVGSizeError)]
+    fn get_width_height(xml: &str) -> Option<PosC<f64>> {
+      use xmlparser::Token as Tk;
+      let mut in_svg_element = false;
+      let mut wh = [None; 2];
+      for token in xmlparser::Tokenizer::from(xml) {
+        match token.map_err(|e| SvSE::ParseError(e.to_string()))? {
+          Tk::ElementStart{ local, .. } => {
+            in_svg_element = local.eq_ignore_ascii_case("svg");
+          },
+          Tk::ElementEnd{..} => {
+            if in_svg_element { return None }
+          },
+          Tk::Attribute { local, value, .. } if in_svg_element => {
+            let i =
+              if local.eq_ignore_ascii_case("width" ) { 0 } else
+              if local.eq_ignore_ascii_case("height") { 1 } else { continue };
+            if wh[i].is_some() {
+              throw!(SvSE::AttributeRepeated(local.to_string()))
+            }
+            let v: f64 = value.parse().map_err(
+              |_| SvSE::AttributeUnparseable(local.to_string())
+            )?;
+            wh[i] = Some(v);
+            if wh.iter().all(Option::is_some) { break }
+          },
+          _ => { },
+        }
+      }
+      Some(PosC::try_from_iter_2(
+        wh.into_iter().map(|v| v.ok_or_else(|| SvSE::OneOfWidthHeight))
+      )?)
+    }
+
+    let _ = get_width_height(&svg_data).map_err(|error| SpE::SVGError {
+      error,
+      item_name: item_name.as_str().into(),
+      item_for_lib: lib_name_for.into(),
+      item_for_item: item_for.into(),
+    })?;
 
     Html::from_html_string(svg_data)
   }

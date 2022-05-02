@@ -92,6 +92,12 @@ pub enum SpecError {
   CurrencyQtyNotMultipleOfUnit,
   #[error("coordinate overflow")]
   CoordinateOverflow(#[from] CoordinateOverflow),
+  #[error("SVG handling error: {item_name} for {item_for_lib} {item_for_item} {error}")] SVGError {
+    item_name: String,
+    item_for_lib: String,
+    item_for_item: String,
+    error: crate::shapelib::SVGSizeError, // TODO it needs to move
+  },
   #[error("image for supposedly-occultable piece \
            is not itself occultable but has multiple faces")]
   UnoccultableButRichImageForOccultation,
