@@ -30,6 +30,7 @@ use crate::accounts::AccountName;
 use crate::error::UnsupportedColourSpec;
 use crate::gamestate::PieceSpec;
 use crate::prelude::default;
+use crate::utils::SVGSizeError;
 
 pub use imp::PlayerAccessSpec;
 
@@ -96,7 +97,7 @@ pub enum SpecError {
     item_name: String,
     item_for_lib: String,
     item_for_item: String,
-    error: crate::shapelib::SVGSizeError, // TODO it needs to move
+    error: SVGSizeError,
   },
   #[error("image for supposedly-occultable piece \
            is not itself occultable but has multiple faces")]
