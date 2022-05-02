@@ -10,8 +10,6 @@ use Data::Dumper;
 
 my $dom = XML::LibXML->load_xml(IO => \*STDIN) or die;
 
-print "<!--made by dice/extract-image-only-->\n" or die $!;
-
 my $nodes = $dom->findnodes('//*[@inkscape:label]');
 foreach my $node (@$nodes) {
   my $l = $node->getAttribute('inkscape:label');
@@ -21,3 +19,5 @@ foreach my $node (@$nodes) {
 }
 
 print $dom->toString or die $!;
+
+print "<!-- made by dice/extract-image-only -->\n" or die $!;
