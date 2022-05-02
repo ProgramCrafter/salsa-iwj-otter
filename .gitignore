@@ -15,7 +15,7 @@ save/lock
 /library/*/files.make
 /library/*/*.usvg
 /library/*/*.coloured.svg
-/library/edited/dice-d6-blue.svg
+/library/edited/die-image-d6-_c.svg
 *.tmp
 .tsconfig.*.json
 stamp/*
