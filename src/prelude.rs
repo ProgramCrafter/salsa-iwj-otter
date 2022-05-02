@@ -101,7 +101,7 @@ pub use sha2::{Sha512, Sha512_256};
 pub use slotmap::{dense::DenseSlotMap, SparseSecondaryMap, Key as _};
 pub use strum::{EnumCount, EnumDiscriminants};
 pub use strum::{EnumString, EnumIter, EnumMessage, EnumProperty};
-pub use strum::{IntoEnumIterator, IntoStaticStr};
+pub use strum::{AsRefStr, IntoEnumIterator, IntoStaticStr};
 pub use subtle::ConstantTimeEq;
 pub use tempfile::{self, NamedTempFile};
 pub use tera::Tera;

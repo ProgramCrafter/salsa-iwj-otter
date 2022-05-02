@@ -216,12 +216,19 @@ impl<T> Index<OldNewIndex> for OldNew<T> {
 
 #[derive(Error,Clone,Serialize,Deserialize,Debug)]
 pub enum SVGSizeError {
-  #[error("parse error: {0}")]           ParseError(String),
-  #[error("attribute {0} repeated")]     AttributeRepeated(String),
-  #[error("attribute {0} unparseable")]  AttributeUnparseable(String),
+  #[error("parse error: {0}")]          ParseError(String),
+  #[error("attribute {0} repeated")]    AttributeRepeated(SVGWidthOrHeight),
+  #[error("attribute {0} unparseable")] AttributeUnparseable(SVGWidthOrHeight),
   #[error("specifies only one of width and height")] OneOfWidthHeight,
   #[error("first element is not <svg>")] WrongFirstElement,
   #[error("encountered EOF before SVG element")] UnexpectedEOF,
+}
+
+#[derive(Clone,Copy,Serialize,Deserialize,Debug,AsRefStr,Display,EnumIter)]
+#[allow(non_camel_case_types)]
+pub enum SVGWidthOrHeight {
+  width,
+  height,
 }
 
 #[throws(SVGSizeError)]
@@ -243,22 +250,26 @@ pub fn svg_parse_size(xml: &str) -> Option<PosC<f64>> {
   }
 
   let mut wh = [None; 2];
+
   for token in &mut tokens {
     match token? {
       Tk::ElementEnd{..} => {
         break
       },
       Tk::Attribute { local, value, .. } => {
-        let i = match local.as_str() {
-          "width"  => 0,
-          "height" => 1,
-          _ => continue,
-        };
+        let local = local.as_str();
+        if_let!{
+          Some(f) = SVGWidthOrHeight::iter().find(
+            |n| local == n.as_ref()
+          );
+          else continue;
+        }
+        let i = f as usize;
         if wh[i].is_some() {
-          throw!(SvSE::AttributeRepeated(local.to_string()))
+          throw!(SvSE::AttributeRepeated(f))
         }
         let v: f64 = value.parse().map_err(
-          |_| SvSE::AttributeUnparseable(local.to_string())
+          |_| SvSE::AttributeUnparseable(f)
         )?;
         wh[i] = Some(v);
         if wh.iter().all(Option::is_some) { break }
