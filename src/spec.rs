@@ -68,7 +68,7 @@ pub enum SpecError {
   #[error("internal error: {0}")]            InternalError(String),
   #[error("specified position is off table")] PosOffTable,
   #[error("library not found")]              LibraryNotFound,
-  #[error("item not found inlibrary")]       LibraryItemNotFound(ItemSpec),
+  #[error("item not found in library")]      LibraryItemNotFound(ItemSpec),
   #[error("acl contains invalid account glob")] AclInvalidAccountGlob,
   #[error("acl entry allow/deny overlap")]   AclEntryOverlappingAllowDeny,
   #[error("inconsistent piece count")]       InconsistentPieceCount,
