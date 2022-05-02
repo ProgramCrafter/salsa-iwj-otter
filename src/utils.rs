@@ -220,12 +220,14 @@ pub enum SVGSizeError {
   #[error("attribute {0} repeated")]     AttributeRepeated(String),
   #[error("attribute {0} unparseable")]  AttributeUnparseable(String),
   #[error("specifies only one of width and height")] OneOfWidthHeight,
+  #[error("encountered EOF before SVG element")] UnexpectedEOF,
 }
 
 #[throws(SVGSizeError)]
 pub fn svg_parse_size(xml: &str) -> Option<PosC<f64>> {
   let mut tokens = xmlparser::Tokenizer::from(xml)
-    .map(|t| t.map_err(|e| SvSE::ParseError(e.to_string())));
+    .map(|t| t.map_err(|e| SvSE::ParseError(e.to_string())))
+    .chain(iter::repeat_with(|| Err(SvSE::UnexpectedEOF)));
 
   use xmlparser::Token as Tk;
   let mut in_svg_element = false;
