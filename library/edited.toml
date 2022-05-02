@@ -24,3 +24,15 @@ w-portal-blue	-	a blue portal piece belonging to white
 b-portal-orange	-	an orange portal piece belonging to black
 w-portal-orange	-	an orange portal piece belonging to white
 """
+
+[group.dice]
+size = [22]
+outline.shape = "Circle"
+outline.scale = 0.5
+item_prefix = "die-image-"
+files = """
+d6-_c	-	a _colour die
+"""
+
+[group.dice.colours.blue]
+abbrev = "blue"
