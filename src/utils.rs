@@ -219,7 +219,7 @@ pub enum SVGSizeError {
   #[error("parse error: {0}")]          ParseError(String),
   #[error("attribute {0} repeated")]    AttributeRepeated(SVGWidthOrHeight),
   #[error("attribute {0} unparseable")] AttributeUnparseable(SVGWidthOrHeight),
-  #[error("specifies only one of width and height")] OneOfWidthHeight,
+  #[error("missing attribute {0}")]     MissingAttribute(SVGWidthOrHeight),
   #[error("first element is not <svg>")] WrongFirstElement,
   #[error("encountered EOF before SVG element")] UnexpectedEOF,
 }
@@ -232,7 +232,7 @@ pub enum SVGWidthOrHeight {
 }
 
 #[throws(SVGSizeError)]
-pub fn svg_parse_size(xml: &str) -> Option<PosC<f64>> {
+pub fn svg_parse_size(xml: &str) -> PosC<f64> {
   let mut tokens = xmlparser::Tokenizer::from(xml)
     .map(|t| t.map_err(|e| SvSE::ParseError(e.to_string())))
     .chain(iter::repeat_with(|| Err(SvSE::UnexpectedEOF)));
@@ -272,14 +272,15 @@ pub fn svg_parse_size(xml: &str) -> Option<PosC<f64>> {
           |_| SvSE::AttributeUnparseable(f)
         )?;
         wh[i] = Some(v);
-        if wh.iter().all(Option::is_some) { break }
       },
       _ => { },
     }
   }
-  Some(PosC::try_from_iter_2(
-    wh.into_iter().map(|v| v.ok_or_else(|| SvSE::OneOfWidthHeight))
-  )?)
+  PosC::try_from_iter_2(
+    izip!(SVGWidthOrHeight::iter(), wh).map(
+      |(f,v)| v.ok_or_else(|| SvSE::MissingAttribute(f))
+    )
+  )?
 }
 
 //========== Thunk ==========
