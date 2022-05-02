@@ -776,51 +776,18 @@ fn base64_usvg(meta: &Base64Meta, mut input: BufReader<File>, output: File) {
 }
 
 #[throws(InternalError)]
-fn usvg_size(f: &mut BufReader<File>) -> [f64;2] {
-  let mut buf = [0; 1024];
-  f.read(&mut buf).context("read start of usvg to get size")?;
+fn usvg_size(f: &mut BufReader<File>) -> PosC<f64> {
+  (||{
+    let mut buf = [0; 1024];
+    f.read(&mut buf).context("read start of usvg")?;
 
-  let s = str::from_utf8(&buf).unwrap_or_else(
-    |e| str::from_utf8(&buf[0.. e.valid_up_to()]).unwrap());
-  
-  let mut stream = xmlparser::Tokenizer::from(s);
-  let mut token = || Ok::<_,AE>(
-    stream.next().ok_or_else(||anyhow!("eof or too far"))??
-  );
-  use xmlparser::Token as XT;
-  (|| Ok::<_,AE>( loop {
-    match token()? {
-      XT::ElementStart { local,.. } => {
-        ensure_eq!( local.as_str(), "svg" );
-        break;
-      },
-      _ => { },
-    }
-  }))().context("looking for svg element")?;
+    let s = str::from_utf8(&buf).unwrap_or_else(
+      |e| str::from_utf8(&buf[0.. e.valid_up_to()]).unwrap());
 
-  let mut size: [Option<f64>; 2] = default();
-  (|| Ok::<_,AE>( loop {
-    match token()? {
-      XT::Attribute { local, value, .. } => {
-        size[match local.as_str() {
-          "width" => 0,
-          "height" => 1,
-          _ => continue,
-        }] = Some(
-          value.parse().context("parse width/height")?
-        );
+    let size = svg_parse_size(s)?;
 
-        if let Ok(output) = size.iter().cloned()
-          .flatten()
-          .collect::<ArrayVec<_,2>>()
-          .into_inner() {
-            break output;
-          }
-      },
-      XT::ElementEnd {..} => throw!(anyhow!("not found")),
-      _ => { }
-    }
-  }))().context("looking for width/height attributes")?
+    Ok::<_,AE>(size)
+  })().context("looking for width/height attributes")?
 }
 
 #[throws(LE)]
@@ -884,7 +851,7 @@ fn make_usvg(instance_name: &str, bundle_name: &str, za: &mut IndexedZip,
 
       usvg1.rewind().context("rewind temporary usvg").map_err(IE::from)?;
       let mut usvg1 = BufReader::new(usvg1);
-      let [width,height] = usvg_size(&mut usvg1)?;
+      let PosC { coords: [width,height] } = usvg_size(&mut usvg1)?;
 
       let render = Base64Meta { width, height, ctype: "image/svg+xml", ctx };
       base64_usvg(&render, usvg1, output)?;
