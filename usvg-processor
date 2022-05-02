@@ -26,5 +26,7 @@ sub add_lic () {
 add_lic();
 
 flush STDOUT or die $!;
-$!=0; $?=0; system qw(sh -ec), "exec $usvg - -c" and die "exec usvg: $? $!";
-rename "$out.tmp", $out or die $!;
+my $cmd = "$usvg - -c";
+my $cmd_m = "$cmd <$in >$out.tmp";
+$!=0; $?=0; system qw(sh -ec), "exec $cmd" and die "exec usvg: $cmd_m: $? $!";
+rename "$out.tmp", $out or die "'$cmd_m': $!";
