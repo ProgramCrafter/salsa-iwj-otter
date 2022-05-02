@@ -559,6 +559,9 @@ impl Contents {
       .map_err(|e| SpE::InternalError(format!("rechecking outline: {}",&e)))?;
     let outline = idata.outline.clone();
 
+    let xform = FaceTransform::from_group(&idata.group.d)
+      .map_err(|e| SpE::InternalError(format!("reckoning transform: {}",&e)))?;
+
     let mut svgs = IndexVec::with_capacity(1);
     let svg = svgs.push(svg_data);
 
@@ -566,8 +569,6 @@ impl Contents {
     let desc = descs.push(idata.d.desc.clone());
     descs.shrink_to_fit();
 
-    let xform = FaceTransform::from_group(&idata.group.d)
-      .map_err(|e| SpE::InternalError(format!("reckoning transform: {}",&e)))?;
     let mut face = ItemFace { svg, desc, xform };
     let mut faces = index_vec![ face ];
     let mut back = None::<Arc<dyn InertPieceTrait>>;
