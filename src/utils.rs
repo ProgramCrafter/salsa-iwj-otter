@@ -5,38 +5,10 @@
 use crate::imports::*;
 use crate::prelude::*;
 
-/*
-put trait OptionExt {
-  type Output;
-  fn get_or_try_insert_with<
-      E: Error,
-      F: FnOnce() -> Result<Output,E>,
-    >(&mut self, f: F) -> Result<&mut Output, E>;
-}
-
-impl<T> OptionExt for Option<T> {
-  type Output = T;
-  fn get_or_try_insert_with<E,F>
-    (&mut self, f: F) -> Result<&mut Output, E>
-    where E: Error, F: FnOnce() -> Result<Output,E>,
-  {
-    if self.is_none() {
-      *self = Some(f()?);
-    }
-    Ok(self.as_mut().unwrap())
-  }
-}
-*/
-
 //========== miscellany ==========
 // (roughly in order of implementation length)
 
 pub fn is_default<T: ConstDefault + Eq>(t: &T) -> bool { t == &T::DEFAULT }
-
-// TODO: this is not used anywhere!
-#[derive(Error,Clone,Copy,Debug,Eq,PartialEq,Serialize,Deserialize)]
-#[error("error parsing Z coordinate")]
-pub struct FooParseError;
 
 #[ext(pub, name=SeekExt)]
 impl<T: io::Seek> T {
