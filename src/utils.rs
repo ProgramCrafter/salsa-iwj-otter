@@ -124,16 +124,6 @@ pub mod timespec_serde {
   }
 }
 
-//---------- emptytype ----------
-
-// TODO: replace with Void
-
-pub trait EmptyType { fn diverge<T>(self) -> T; }
-
-impl EmptyType for Infallible {
-  fn diverge<T>(self) -> T { match self { } }
-}
-
 //---------- IpAddress ----------
 
 pub trait IpAddress: Debug {
