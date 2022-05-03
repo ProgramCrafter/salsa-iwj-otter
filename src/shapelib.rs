@@ -33,6 +33,8 @@ pub trait OutlineDefn: Debug + Sync + Send + 'static {
   fn check(&self, lgi: &GroupData) -> Result<(),LLE>;
   fn load(&self, lgi: &GroupData) -> Result<Outline,IE>;
 }
+#[derive(Debug,Clone,Copy)]
+pub struct OutlineCalculable { }
 
 #[derive(Debug)]
 pub struct Contents {
@@ -53,8 +55,8 @@ struct ItemData {
   d: Arc<ItemDetails>,
   sort: Option<String>,
   group: Arc<GroupData>,
-  outline: Outline,
   occ: OccData,
+  outline_calculable: OutlineCalculable,
 }
 
 #[derive(Debug,Clone)]
@@ -68,9 +70,7 @@ enum OccData {
 #[derive(Debug)]
 struct OccData_Internal {
   item_name: SvgBaseName<GoodItemName>,
-  outline: Outline,
   desc: Html,
-  xform: FaceTransform,
   loaded: lazy_init::Lazy<Result<OccInertLoaded,SpecError>>,
 }
 
@@ -78,6 +78,8 @@ struct OccData_Internal {
 #[derive(Debug,Clone)]
 struct OccInertLoaded {
   svgd: Html,
+  xform: FaceTransform,
+  outline: Outline,
 }
 
 #[derive(Error,Debug)]
@@ -222,6 +224,19 @@ impl<T> SvgBaseName<T> where T: Borrow<GoodItemName> {
     src.note_svg(i.borrow(), src_name)?;
     SvgBaseName(i)
   }
+}
+
+impl OutlineCalculable {
+  pub fn map_err(&self) -> impl Fn(LLE) -> IE {
+    |e| internal_logic_error(format!(
+      "outline calculable but failed {} {:?}",&e,&e
+    ))
+  }
+}
+// todo: we want to defer outline calculation until load, so this
+// is going to be redundant.
+impl From<Outline> for OutlineCalculable {
+  fn from(_: Outline) -> OutlineCalculable { OutlineCalculable { } }
 }
 
 #[dyn_upcast]
@@ -563,9 +578,7 @@ impl Contents {
            -> ItemSpecLoaded {
     let svg_data = self.load_svg(name, lib_name, &**name)?;
 
-    idata.group.d.outline.check(&idata.group)
-      .map_err(|e| SpE::InternalError(format!("rechecking outline: {}",&e)))?;
-    let outline = idata.outline.clone();
+    let outline = idata.group.d.outline.load(&idata.group, )?;
 
     let xform = FaceTransform::from_group(&idata.group.d)
       .map_err(|e| SpE::InternalError(format!("reckoning transform: {}",&e)))?;
@@ -607,22 +620,26 @@ impl Contents {
       },
       OccData::Internal(occ) => {
         let occ_name = occ.item_name.clone();
-        let OccInertLoaded { svgd } = occ.loaded.get_or_create(||{
+        let OccInertLoaded { svgd, outline, xform } = occ.loaded.get_or_create(||{
           let svgd = self.load_svg(
             occ.item_name.unnest::<GoodItemName>().unnest(),
             /* original: */ lib_name, name.as_str()
           )?;
+          let outline = idata.group.d.outline.load(&idata.group)?;
+          let xform = FaceTransform::from_group(&idata.group.d)
+            .map_err(idata.outline_calculable.map_err())?;
           let loaded = OccInertLoaded {
             svgd,
+            outline,
+            xform,
           };
           Ok(loaded)
         }).clone()?;
+
         let it = Arc::new(ItemInertForOcculted {
-          svgd,
+          svgd, outline, xform,
           itemname: occ_name.clone().into_inner(),
-          xform: occ.xform.clone(),
           desc: occ.desc.clone(),
-          outline: occ.outline.clone(),
         }) as Arc<dyn InertPieceTrait>;
         Some((LOI::Mix(occ_name.into_inner()), it))
       },
@@ -807,7 +824,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
           + rhs
       }
 
-      let outline = group.d.outline.load(&group)?;
+      let outline_calculable = group.d.outline.load(&group)?.into();
 
       let item_name = format!("{}{}{}", gdefn.item_prefix,
                               fe.item_spec, gdefn.item_suffix);
@@ -835,8 +852,6 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
           let desc = subst(&fe.desc, "_colour", "")?.to_html();
           OccData::Internal(Arc::new(OccData_Internal {
             item_name,
-            outline: outline.clone(),
-            xform: FaceTransform::from_group(&group.d)?,
             loaded: default(),
             desc,
           }))
@@ -863,8 +878,8 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
         let idata = ItemData {
           group: group.clone(),
           occ: occ.clone(),
-          outline: outline.clone(),
           sort,
+          outline_calculable,
           d: Arc::new(ItemDetails { desc }),
         };
         type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
