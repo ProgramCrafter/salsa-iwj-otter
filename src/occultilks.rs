@@ -18,7 +18,7 @@ slotmap::new_key_type!{ pub struct OccultIlkId; }
 #[serde(transparent)]
 pub struct OccultIlkOwningId(Id);
 
-pub type OccultIlkName = Arc<GoodItemName>;
+pub type OccultIlkName = GoodItemName;
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct OccultIlkData {

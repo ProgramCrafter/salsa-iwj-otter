@@ -67,11 +67,11 @@ enum OccData {
 #[allow(non_camel_case_types)]
 #[derive(Debug)]
 struct OccData_Internal {
-  item_name: SvgBaseName<Arc<GoodItemName>>,
+  item_name: SvgBaseName<GoodItemName>,
   outline: Outline,
   desc: Html,
   xform: FaceTransform,
-  svgd: lazy_init::Lazy<Result<Arc<Html>,SpecError>>,
+  svgd: lazy_init::Lazy<Result<Html,SpecError>>,
 }
 
 #[derive(Error,Debug)]
@@ -178,9 +178,9 @@ pub struct Item {
 
 #[derive(Debug,Serialize,Deserialize)]
 struct ItemInertForOcculted {
-  itemname: Arc<GoodItemName>,
+  itemname: GoodItemName,
   desc: Html,
-  svgd: Arc<Html>,
+  svgd: Html,
   xform: FaceTransform,
   outline: Outline,
 }
@@ -604,7 +604,7 @@ impl Contents {
             occ.item_name.unnest::<GoodItemName>().unnest(),
             /* original: */ lib_name, name.as_str()
           )?;
-          Ok(Arc::new(occ_data))
+          Ok(occ_data)
         }).clone()?;
         let it = Arc::new(ItemInertForOcculted {
           svgd,
@@ -819,7 +819,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
           let src_name  = subst(&fe.src_file_spec, "_c", &colour.0);
           let item_name: GoodItemName = item_name.try_into()?;
           let item_name = SvgBaseName::note(
-            src, Arc::new(item_name), src_name.as_ref().map(|s| s.as_str()),
+            src, item_name, src_name.as_ref().map(|s| s.as_str()),
           )?;
           let desc = subst(&fe.desc, "_colour", "")?.to_html();
           OccData::Internal(Arc::new(OccData_Internal {
