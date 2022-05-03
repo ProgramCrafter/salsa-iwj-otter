@@ -71,7 +71,13 @@ struct OccData_Internal {
   outline: Outline,
   desc: Html,
   xform: FaceTransform,
-  svgd: lazy_init::Lazy<Result<Html,SpecError>>,
+  loaded: lazy_init::Lazy<Result<OccInertLoaded,SpecError>>,
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Debug,Clone)]
+struct OccInertLoaded {
+  svgd: Html,
 }
 
 #[derive(Error,Debug)]
@@ -601,12 +607,15 @@ impl Contents {
       },
       OccData::Internal(occ) => {
         let occ_name = occ.item_name.clone();
-        let svgd = occ.svgd.get_or_create(||{
-          let occ_data = self.load_svg(
+        let OccInertLoaded { svgd } = occ.loaded.get_or_create(||{
+          let svgd = self.load_svg(
             occ.item_name.unnest::<GoodItemName>().unnest(),
             /* original: */ lib_name, name.as_str()
           )?;
-          Ok(occ_data)
+          let loaded = OccInertLoaded {
+            svgd,
+          };
+          Ok(loaded)
         }).clone()?;
         let it = Arc::new(ItemInertForOcculted {
           svgd,
@@ -828,7 +837,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
             item_name,
             outline: outline.clone(),
             xform: FaceTransform::from_group(&group.d)?,
-            svgd: default(),
+            loaded: default(),
             desc,
           }))
         },
