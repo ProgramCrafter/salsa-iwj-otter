@@ -30,8 +30,8 @@ pub struct GroupData {
 
 #[typetag::deserialize(tag="outline")]
 pub trait OutlineDefn: Debug + Sync + Send + 'static {
-  fn check(&self, lgi: &GroupData) -> Result<(),LLE>;
-  fn load(&self, lgi: &GroupData) -> Result<Outline,IE>;
+  fn check(&self, lgi: &GroupData) -> Result<OutlineCalculable,LLE>;
+  fn load(&self, lgi: &GroupData, svg_sz: PosC<f64>) -> Result<Outline,IE>;
 }
 #[derive(Debug,Clone,Copy)]
 pub struct OutlineCalculable { }
@@ -545,7 +545,7 @@ impl Contents {
   #[throws(SpecError)]
   fn load_svg(&self, item_name: &SvgBaseName<str>,
               lib_name_for: &str, item_for: &str)
-              -> Html {
+              -> (Html, PosC<f64>) {
     let svg_path = format!("{}/{}.usvg", self.dirname, item_name);
     let svg_data = fs::read_to_string(&svg_path)
       .map_err(|e| if e.kind() == ErrorKind::NotFound {
@@ -561,14 +561,14 @@ impl Contents {
 
     let svg_data = Html::from_html_string(svg_data);
 
-    let _ = svg_parse_size(&svg_data).map_err(|error| SpE::SVGError {
+    let sz = svg_parse_size(&svg_data).map_err(|error| SpE::SVGError {
       error,
       item_name: item_name.as_str().into(),
       item_for_lib: lib_name_for.into(),
       item_for_item: item_for.into(),
     })?;
 
-    svg_data
+    (svg_data, sz)
   }
 
   #[throws(SpecError)]
@@ -576,9 +576,8 @@ impl Contents {
            name: &SvgBaseName<str>,
            ig: &Instance, depth:SpecDepth)
            -> ItemSpecLoaded {
-    let svg_data = self.load_svg(name, lib_name, &**name)?;
-
-    let outline = idata.group.d.outline.load(&idata.group, )?;
+    let (svg_data, svg_sz) = self.load_svg(name, lib_name, &**name)?;
+    let outline = idata.group.d.outline.load(&idata.group, svg_sz)?;
 
     let xform = FaceTransform::from_group(&idata.group.d)
       .map_err(|e| SpE::InternalError(format!("reckoning transform: {}",&e)))?;
@@ -621,11 +620,11 @@ impl Contents {
       OccData::Internal(occ) => {
         let occ_name = occ.item_name.clone();
         let OccInertLoaded { svgd, outline, xform } = occ.loaded.get_or_create(||{
-          let svgd = self.load_svg(
+          let (svgd, occ_svg_sz) = self.load_svg(
             occ.item_name.unnest::<GoodItemName>().unnest(),
             /* original: */ lib_name, name.as_str()
           )?;
-          let outline = idata.group.d.outline.load(&idata.group)?;
+          let outline = idata.group.d.outline.load(&idata.group, occ_svg_sz)?;
           let xform = FaceTransform::from_group(&idata.group.d)
             .map_err(idata.outline_calculable.map_err())?;
           let loaded = OccInertLoaded {
@@ -824,7 +823,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
           + rhs
       }
 
-      let outline_calculable = group.d.outline.load(&group)?.into();
+      let outline_calculable = group.d.outline.check(&group)?.into();
 
       let item_name = format!("{}{}{}", gdefn.item_prefix,
                               fe.item_spec, gdefn.item_suffix);
@@ -1045,8 +1044,10 @@ struct CircleDefn { }
 #[typetag::deserialize(name="Circle")]
 impl OutlineDefn for CircleDefn {
   #[throws(LibraryLoadError)]
-  fn check(&self, lgd: &GroupData) { Self::get_size(lgd)?; }
-  fn load(&self, lgd: &GroupData) -> Result<Outline,IE> {
+  fn check(&self, lgd: &GroupData) -> OutlineCalculable {
+    Self::get_size(lgd).map(|_| OutlineCalculable{})?
+  }
+  fn load(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Result<Outline,IE> {
     Ok(CircleShape {
       diam: Self::get_size(lgd).map_err(|e| e.ought())?,
     }.into())
@@ -1117,8 +1118,10 @@ struct RectDefn { }
 #[typetag::deserialize(name="Rect")]
 impl OutlineDefn for RectDefn {
   #[throws(LibraryLoadError)]
-  fn check(&self, lgd: &GroupData) { Self::get(lgd)?; }
-  fn load(&self, lgd: &GroupData) -> Result<Outline,IE> {
+  fn check(&self, lgd: &GroupData) -> OutlineCalculable {
+    Self::get(lgd).map(|_| OutlineCalculable{})?
+  }
+  fn load(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Result<Outline,IE> {
     Ok(
       Self::get(lgd).map_err(|e| e.ought())?.into()
     )
