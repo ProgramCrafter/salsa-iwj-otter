@@ -768,6 +768,11 @@ macro_rules! want_let {
 
 //========== miscellaneous macros ==========
 
+paste!{
+  #[cfg(debug_assertions)]
+  pub fn [<x x x>]<T>() -> T { panic!("todo item triggered") }
+}
+
 #[macro_export]
 macro_rules! trace_dbg {
   ($msg:expr $(,$val:expr)*) => {

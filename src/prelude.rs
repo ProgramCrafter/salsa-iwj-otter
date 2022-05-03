@@ -83,6 +83,7 @@ pub use nix::time::clock_gettime;
 pub use num_derive::{ToPrimitive, FromPrimitive};
 pub use num_traits::{Bounded, FromPrimitive, ToPrimitive};
 pub use ordered_float::OrderedFloat;
+pub use paste::paste;
 pub use percent_encoding::percent_decode_str;
 pub use percent_encoding::utf8_percent_encode;
 pub use percent_encoding::NON_ALPHANUMERIC;

@@ -2708,6 +2708,7 @@ dependencies = [
  "ordered-float",
  "otter-base",
  "parking_lot",
+ "paste",
  "percent-encoding",
  "pwd",
  "rand 0.8.5",
