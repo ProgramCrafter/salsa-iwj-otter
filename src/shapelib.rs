@@ -71,12 +71,12 @@ enum OccData {
 struct OccData_Internal {
   item_name: SvgBaseName<GoodItemName>,
   desc: Html,
-  loaded: lazy_init::Lazy<Result<OccInertLoaded,SpecError>>,
+  loaded: lazy_init::Lazy<Result<ImageLoaded,SpecError>>,
 }
 
 #[allow(non_camel_case_types)]
 #[derive(Debug,Clone)]
-struct OccInertLoaded {
+struct ImageLoaded {
   svgd: Html,
   xform: FaceTransform,
   outline: Outline,
@@ -609,7 +609,7 @@ impl Contents {
       },
       OccData::Internal(occ) => {
         let occ_name = occ.item_name.clone();
-        let OccInertLoaded {
+        let ImageLoaded {
           svgd, outline, xform
         } = occ.loaded.get_or_create(||{
           let (svgd, occ_svg_sz) = self.load_svg(
@@ -620,7 +620,7 @@ impl Contents {
             .map_err(idata.outline_calculable.err_mapper())?;
           let xform = FaceTransform::from_group(&idata.group.d)
             .map_err(idata.outline_calculable.err_mapper())?;
-          let loaded = OccInertLoaded {
+          let loaded = ImageLoaded {
             svgd,
             outline,
             xform,
