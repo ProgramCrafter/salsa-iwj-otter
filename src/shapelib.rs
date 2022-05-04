@@ -31,7 +31,7 @@ pub struct GroupData {
 #[typetag::deserialize(tag="outline")]
 pub trait OutlineDefn: Debug + Sync + Send + 'static {
   fn check(&self, lgi: &GroupData) -> Result<OutlineCalculable,LLE>;
-  fn load(&self, lgi: &GroupData, svg_sz: PosC<f64>) -> Result<Outline,IE>;
+  fn load(&self, lgi: &GroupData, svg_sz: PosC<f64>) -> Result<Outline,LLE>;
 }
 #[derive(Debug,Clone,Copy)]
 pub struct OutlineCalculable { }
@@ -119,12 +119,6 @@ pub enum LibraryLoadError {
   #[error("{0}")]                       BadSubstitution(#[from] SubstError),
   #[error("{0}")] UnsupportedColourSpec(#[from] UnsupportedColourSpec),
   #[error("bad item name (invalid characters) in {0:?}")] BadItemName(String),
-}
-
-impl LibraryLoadError {
-  fn ought(&self) -> InternalError {
-    internal_error_bydebug(self)
-  }
 }
 
 #[derive(Error,Copy,Clone,Debug)]
@@ -572,10 +566,11 @@ impl Contents {
            ig: &Instance, depth:SpecDepth)
            -> ItemSpecLoaded {
     let (svg_data, svg_sz) = self.load_svg(name, lib_name, &**name)?;
-    let outline = idata.group.d.outline.load(&idata.group, svg_sz)?;
+    let outline = idata.group.d.outline.load(&idata.group, svg_sz)
+      .map_err(idata.outline_calculable.map_err())?;
 
     let xform = FaceTransform::from_group(&idata.group.d)
-      .map_err(|e| SpE::InternalError(format!("reckoning transform: {}",&e)))?;
+      .map_err(idata.outline_calculable.map_err())?;
 
     let mut svgs = IndexVec::with_capacity(1);
     let svg = svgs.push(svg_data);
@@ -619,7 +614,8 @@ impl Contents {
             occ.item_name.unnest::<GoodItemName>().unnest(),
             /* original: */ lib_name, name.as_str()
           )?;
-          let outline = idata.group.d.outline.load(&idata.group, occ_svg_sz)?;
+          let outline = idata.group.d.outline.load(&idata.group, occ_svg_sz)
+            .map_err(idata.outline_calculable.map_err())?;
           let xform = FaceTransform::from_group(&idata.group.d)
             .map_err(idata.outline_calculable.map_err())?;
           let loaded = OccInertLoaded {
@@ -1042,10 +1038,11 @@ impl OutlineDefn for CircleDefn {
   fn check(&self, lgd: &GroupData) -> OutlineCalculable {
     Self::get_size(lgd).map(|_| OutlineCalculable{})?
   }
-  fn load(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Result<Outline,IE> {
-    Ok(CircleShape {
-      diam: Self::get_size(lgd).map_err(|e| e.ought())?,
-    }.into())
+  #[throws(LibraryLoadError)]
+  fn load(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
+    CircleShape {
+      diam: Self::get_size(lgd)?,
+    }.into()
   }
 }
 impl CircleDefn {
@@ -1116,10 +1113,9 @@ impl OutlineDefn for RectDefn {
   fn check(&self, lgd: &GroupData) -> OutlineCalculable {
     Self::get(lgd).map(|_| OutlineCalculable{})?
   }
-  fn load(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Result<Outline,IE> {
-    Ok(
-      Self::get(lgd).map_err(|e| e.ought())?.into()
-    )
+  #[throws(LibraryLoadError)]
+  fn load(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
+    Self::get(lgd)?.into()
   }
 }
 impl RectDefn {
