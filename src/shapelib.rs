@@ -233,11 +233,6 @@ impl OutlineCalculable {
     ))
   }
 }
-// todo: we want to defer outline calculation until load, so this
-// is going to be redundant.
-impl From<Outline> for OutlineCalculable {
-  fn from(_: Outline) -> OutlineCalculable { OutlineCalculable { } }
-}
 
 #[dyn_upcast]
 impl OutlineTrait for ItemInertForOcculted { delegate! { to self.outline {
