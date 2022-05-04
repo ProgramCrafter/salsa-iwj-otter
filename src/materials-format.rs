@@ -49,6 +49,15 @@ impl TryFrom<Raw> for Version {
   }
 }
 
+impl Version {
+  #[throws(VersionError)]
+  pub fn try_from_integer<I>(i: I) -> Version
+  where I: num::Integer + ToPrimitive {
+    let v = i.to_u32().ok_or_else(|| MFVE::Other("integer out of range"))?;
+    v.try_into()?
+  }
+}
+
 impl FromStr for Version {
   type Err = VersionError;
   #[throws(VersionError)]
