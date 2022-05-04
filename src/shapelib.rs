@@ -532,9 +532,10 @@ impl ItemSpec {
 
 impl Contents {
   #[throws(SpecError)]
-  fn load_svg(&self, item_name: &SvgBaseName<str>,
-              lib_name_for: &str, item_for: &str)
-              -> (Html, PosC<f64>) {
+  fn load_image(&self, item_name: &SvgBaseName<str>,
+                lib_name_for: &str, item_for: &str,
+                group: &GroupData, outline_calculable: OutlineCalculable)
+              -> ImageLoaded {
     let svg_path = format!("{}/{}.usvg", self.dirname, item_name);
     let svg_data = fs::read_to_string(&svg_path)
       .map_err(|e| if e.kind() == ErrorKind::NotFound {
@@ -557,7 +558,16 @@ impl Contents {
       item_for_item: item_for.into(),
     })?;
 
-    (svg_data, sz)
+    let eh = outline_calculable.err_mapper();
+
+    let outline = group.d.outline.load(&group, sz).map_err(eh)?;
+    let xform = FaceTransform::from_group(&group.d).map_err(eh)?;
+
+    ImageLoaded {
+      svgd: svg_data,
+      outline,
+      xform,
+    }
   }
 
   #[throws(SpecError)]
@@ -565,12 +575,9 @@ impl Contents {
            name: &SvgBaseName<str>,
            ig: &Instance, depth:SpecDepth)
            -> ItemSpecLoaded {
-    let (svg_data, svg_sz) = self.load_svg(name, lib_name, &**name)?;
-    let outline = idata.group.d.outline.load(&idata.group, svg_sz)
-      .map_err(idata.outline_calculable.err_mapper())?;
-
-    let xform = FaceTransform::from_group(&idata.group.d)
-      .map_err(idata.outline_calculable.err_mapper())?;
+    let ImageLoaded { svgd: svg_data, outline, xform } =
+      self.load_image(name, lib_name, &**name,
+                       &idata.group, idata.outline_calculable)?;
 
     let mut svgs = IndexVec::with_capacity(1);
     let svg = svgs.push(svg_data);
@@ -611,22 +618,13 @@ impl Contents {
         let occ_name = occ.item_name.clone();
         let ImageLoaded {
           svgd, outline, xform
-        } = occ.loaded.get_or_create(||{
-          let (svgd, occ_svg_sz) = self.load_svg(
+        } = occ.loaded.get_or_create(
+          || self.load_image(
             occ.item_name.unnest::<GoodItemName>().unnest(),
-            /* original: */ lib_name, name.as_str()
-          )?;
-          let outline = idata.group.d.outline.load(&idata.group, occ_svg_sz)
-            .map_err(idata.outline_calculable.err_mapper())?;
-          let xform = FaceTransform::from_group(&idata.group.d)
-            .map_err(idata.outline_calculable.err_mapper())?;
-          let loaded = ImageLoaded {
-            svgd,
-            outline,
-            xform,
-          };
-          Ok(loaded)
-        }).clone()?;
+            /* original: */ lib_name, name.as_str(),
+            &idata.group, idata.outline_calculable,
+          )
+        ).clone()?;
 
         let it = Arc::new(ItemInertForOcculted {
           svgd, outline, xform,
