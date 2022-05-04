@@ -13,9 +13,9 @@ pub struct Version(Raw);
 pub type Raw = u32;
 
 impl Version {
-  pub const MIN: Raw = 1;
-  pub const MAX: Raw = 1;
-  pub const CURRENT: Raw = 1;
+  pub const MIN:     Version = Version(1);
+  pub const MAX:     Version = Version(1);
+  pub const CURRENT: Version = Version::MAX;
 }
 
 // The version from before we invented this versioning scheme
@@ -41,7 +41,7 @@ impl TryFrom<Raw> for Version {
   type Error = Unsupported;
   #[throws(Unsupported)]
   fn try_from(raw: Raw) -> Self {
-    if raw >= Self::MIN && raw <= Self::MAX {
+    if raw >= *Self::MIN && raw <= *Self::MAX {
       Version(raw)
     } else {
       throw!(Unsupported(raw));
