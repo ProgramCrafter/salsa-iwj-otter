@@ -609,7 +609,9 @@ impl Contents {
       },
       OccData::Internal(occ) => {
         let occ_name = occ.item_name.clone();
-        let OccInertLoaded { svgd, outline, xform } = occ.loaded.get_or_create(||{
+        let OccInertLoaded {
+          svgd, outline, xform
+        } = occ.loaded.get_or_create(||{
           let (svgd, occ_svg_sz) = self.load_svg(
             occ.item_name.unnest::<GoodItemName>().unnest(),
             /* original: */ lib_name, name.as_str()
