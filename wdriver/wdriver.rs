@@ -30,10 +30,10 @@ use once_cell::sync::OnceCell;
 
 pub use std::rc::Rc;
 
-#[derive(Debug,Clone)]
+#[derive(Debug,Clone,Deref)]
 #[derive(StructOpt)]
 pub struct Opts {
-  #[structopt(flatten)]
+  #[structopt(flatten)] #[deref]
   at: apitest::Opts,
 
   #[structopt(long="--layout", default_value="Portrait")]
@@ -42,7 +42,6 @@ pub struct Opts {
   #[structopt(long="--geckodriver-args", default_value="")]
   geckodriver_args: String,
 }
-deref_to_field!{Opts, apitest::Opts, at}
 impl AsRef<apitest::Opts> for Opts {
   fn as_ref(&self) -> &apitest::Opts { &self.at }
 }
@@ -53,17 +52,16 @@ pub struct FinalInfoCollection;
 type ScreenShotCount = u32;
 type WindowState = Option<String>;
 
-#[derive(Debug)]
+#[derive(Debug,Deref,DerefMut)]
 pub struct Setup {
   pub opts: Opts,
-  pub core: SetupCore,
+  #[deref] #[deref_mut] pub core: SetupCore,
   driver: T4d,
   current_window: WindowState,
   screenshot_count: ScreenShotCount,
   #[allow(dead_code)] /* here for Drop impl */ final_hook: FinalInfoCollection,
   windows_squirreled: Vec<JsLogfile>, // see Drop impl
 }
-deref_to_field_mut!{Setup, SetupCore, core}
 
 #[derive(Debug)]
 pub struct Window {
@@ -491,12 +489,12 @@ impl Vec<String> {
 pub type WebCoord = i32;
 pub type WebPos = (WebCoord, WebCoord);
 
+#[derive(Deref)]
 pub struct PieceElement<'g> {
   pieceid: Vpid,
   w: &'g WindowGuard<'g>,
-  elem: t4::WebElement<'g>,
+  #[deref] elem: t4::WebElement<'g>,
 }
-deref_to_field!{{'g} PieceElement<'g>, t4::WebElement<'g>, elem}
 
 impl<'g> PieceElement<'g> {
   #[throws(AE)]
