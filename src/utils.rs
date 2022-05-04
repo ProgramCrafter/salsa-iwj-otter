@@ -232,8 +232,8 @@ pub enum SVGWidthOrHeight {
 }
 
 #[throws(SVGSizeError)]
-pub fn svg_parse_size(xml: &str) -> PosC<f64> {
-  let mut tokens = xmlparser::Tokenizer::from(xml)
+pub fn svg_parse_size(xml: &HtmlStr) -> PosC<f64> {
+  let mut tokens = xmlparser::Tokenizer::from(xml.as_html_str())
     .map(|t| t.map_err(|e| SvSE::ParseError(e.to_string())))
     .chain(iter::repeat_with(|| Err(SvSE::UnexpectedEOF)));
 

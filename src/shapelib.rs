@@ -538,6 +538,8 @@ impl Contents {
         SpE::InternalError(m.to_string())
       })?;
 
+    let svg_data = Html::from_html_string(svg_data);
+
     let _ = svg_parse_size(&svg_data).map_err(|error| SpE::SVGError {
       error,
       item_name: item_name.as_str().into(),
@@ -545,7 +547,7 @@ impl Contents {
       item_for_item: item_for.into(),
     })?;
 
-    Html::from_html_string(svg_data)
+    svg_data
   }
 
   #[throws(SpecError)]

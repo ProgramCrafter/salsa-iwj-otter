@@ -784,7 +784,7 @@ fn usvg_size(f: &mut BufReader<File>) -> PosC<f64> {
     let s = str::from_utf8(&buf).unwrap_or_else(
       |e| str::from_utf8(&buf[0.. e.valid_up_to()]).unwrap());
 
-    let size = svg_parse_size(s)?;
+    let size = svg_parse_size(HtmlStr::from_html_str(s))?;
 
     Ok::<_,AE>(size)
   })().context("looking for width/height attributes")?
