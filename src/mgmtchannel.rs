@@ -194,13 +194,12 @@ impl IoTryClone for UnixStream {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug,Deref,DerefMut)]
 pub struct MgmtChannelForGame {
-  pub chan: ClientMgmtChannel,
+  #[deref] #[deref_mut] pub chan: ClientMgmtChannel,
   pub game: InstanceName,
   pub how: MgmtGameUpdateMode,
 }
-deref_to_field_mut!{MgmtChannelForGame, ClientMgmtChannel, chan}
 
 impl MgmtChannelForGame {
   #[throws(AE)]
