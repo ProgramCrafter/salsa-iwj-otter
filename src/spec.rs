@@ -29,6 +29,7 @@ use otter_base::hformat_as_display;
 use crate::accounts::AccountName;
 use crate::error::UnsupportedColourSpec;
 use crate::gamestate::PieceSpec;
+use crate::materials_format;
 use crate::prelude::default;
 use crate::utils::SVGSizeError;
 
@@ -121,6 +122,8 @@ pub enum SpecError {
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct BundleMeta {
   pub title: String,
+  #[serde(default, rename="format")]
+  pub mformat: materials_format::Version,
 }
 
 //---------- Table TOML file ----------

@@ -119,6 +119,7 @@ pub enum LibraryLoadError {
   #[error("{0}")]                       BadSubstitution(#[from] SubstError),
   #[error("{0}")] UnsupportedColourSpec(#[from] UnsupportedColourSpec),
   #[error("bad item name (invalid characters) in {0:?}")] BadItemName(String),
+  #[error("{0:?}")] MaterialsFormatVersionError(#[from] MFVE),
 }
 
 #[derive(Error,Copy,Clone,Debug)]
@@ -741,6 +742,9 @@ pub trait LibrarySource {
   fn note_svg(&mut self, _basename: &GoodItemName,
               _src_name: Result<&str, &SubstError>) { }
   fn bundle(&self) -> Option<bundles::Id>;
+
+  fn default_materials_format(&self)
+                              -> Result<materials_format::Version, MFVE>;
 }
 
 struct BuiltinLibrary<'l> {
@@ -752,6 +756,12 @@ impl LibrarySource for BuiltinLibrary<'_> {
   fn catalogue_data(&self) -> &str { self.catalogue_data }
   fn svg_dir(&self) -> String { self.dirname.to_string() }
   fn bundle(&self) -> Option<bundles::Id> { None }
+
+  #[throws(materials_format::VersionError)]
+  fn default_materials_format(&self) -> materials_format::Version {
+    materials_format::Version::CURRENT
+    //throw!(MFVE::Other("builtin libraries must have explicit version now!"));
+  }
 }
 
 #[throws(LibraryLoadError)]
@@ -760,6 +770,15 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
   let toplevel: toml::Value = src.catalogue_data().parse()?;
   let toplevel = toplevel
     .as_table().ok_or_else(|| LLE::ExpectedTable(format!("toplevel")))?;
+  let mformat = match toplevel.get("format") {
+    None => src.default_materials_format()?,
+    Some(v) => {
+      let v = v.as_integer().ok_or_else(|| MFVE::Other("not an integer"))?;
+      materials_format::Version::try_from_integer(v)?
+    },
+  };
+  let _: materials_format::Version = mformat;
+
   let mut l = Catalogue {
     bundle: src.bundle(),
     libname: libname.to_string(),

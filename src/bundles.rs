@@ -304,7 +304,7 @@ impl Display for State {
   fn fmt(&self, f: &mut Formatter) {
     match self {
       State::Loaded(Loaded{ meta, size, hash }) => {
-        let BundleMeta { title } = meta;
+        let BundleMeta { title, mformat:_ } = meta;
         write!(f, "Loaded {:10} {} {:?}", size, hash, title)?;
       }
       other => write!(f, "{:?}", other)?,
@@ -335,7 +335,7 @@ impl MgmtBundleList {
     }
     let bundles = self.iter().filter_map(|(&id, state)| {
       if_let!{ State::Loaded(Loaded { meta,.. }) = state; else return None; }
-      let BundleMeta { title } = meta;
+      let BundleMeta { title, mformat:_ } = meta;
       let title = Html::from_txt(title);
       let token = id.token(ig);
       let url = hformat!("/_/bundle/{}/{}?{}", &*ig.name, &id, &token);
@@ -568,7 +568,8 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName,
     Ok::<_,LE>(meta)
   }, ||{
     BundleMeta {
-      title: "[bundle metadata could not be reloaded]".to_owned()
+      title: "[bundle metadata could not be reloaded]".to_owned(),
+      mformat: materials_format::Version::CURRENT, // dummy value
     }
   })?;
 
@@ -629,6 +630,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName,
     svg_dir: &'l String,
     need_svgs: Vec<SvgNoted>,
     id: &'l Id,
+    mformat: materials_format::Version,
   }
 
   impl shapelib::LibrarySource for LibraryInBundle<'_> {
@@ -646,6 +648,11 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName,
       self.need_svgs.push(SvgNoted { item, src_name });
     }
     fn bundle(&self) -> Option<bundles::Id> { Some(*self.id) }
+
+    #[throws(materials_format::VersionError)]
+    fn default_materials_format(&self) -> materials_format::Version {
+      self.mformat
+    }
   }
 
   for LibScanned { libname, dir_inzip, inzip } in libs {
@@ -661,6 +668,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName,
         svg_dir: &svg_dir,
         need_svgs: Vec::new(),
         id: &id,
+        mformat: meta.mformat,
       };
       let contents = shapelib::load_catalogue(&libname, &mut src)
         .map_err(|e| LE::badlib(&libname, &e))?;
