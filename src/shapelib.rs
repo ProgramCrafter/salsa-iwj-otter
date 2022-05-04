@@ -189,7 +189,7 @@ struct ItemInertForOcculted {
 
 /// Represents a `T` which is an SVG basename which has been noted
 /// for processing during bundle load.
-#[derive(Debug,Copy,Clone,Hash,Eq,PartialEq,Ord,PartialOrd)]
+#[derive(Debug,Copy,Clone,Hash,Eq,PartialEq,Ord,PartialOrd,Deref)]
 #[repr(transparent)]
 struct SvgBaseName<T:?Sized>(T);
 impl<T> Display for SvgBaseName<T> where T: Display + ?Sized {
@@ -210,7 +210,6 @@ impl<T> SvgBaseName<T> where T: ?Sized {
     u
   }
 }
-deref_to_field!{{ T: ?Sized } SvgBaseName<T>, T, 0 }
 impl<T> SvgBaseName<T> where T: Borrow<GoodItemName> {
   #[throws(SubstError)]
   fn note(src: &mut dyn LibrarySource, i: T,
