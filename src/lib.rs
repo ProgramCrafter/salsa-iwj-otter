@@ -60,8 +60,8 @@ pub mod updates;
 pub mod ui;
 pub mod utils;
 
+#[path = "fake-rng.rs"]           pub mod fake_rng;
+#[path = "fake-time.rs"]          pub mod fake_time;
 #[path = "shapelib-toml.rs"]      pub mod shapelib_toml;
 #[path = "slotmap-slot-idx.rs"]   pub mod slotmap_slot_idx;
 #[path = "toml-de.rs"]            pub mod toml_de;
-#[path = "fake-rng.rs"]           pub mod fake_rng;
-#[path = "fake-time.rs"]          pub mod fake_time;
