@@ -49,6 +49,16 @@ impl TryFrom<Raw> for Version {
   }
 }
 
+impl FromStr for Version {
+  type Err = VersionError;
+  #[throws(VersionError)]
+  fn from_str(s: &str) -> Version {
+    let v: Raw = s.parse()
+      .map_err(|_| MFVE::Other("could not parse as ingeger"))?;
+    v.try_into()?
+  }
+}
+
 macro_rules! impl_compar_i32 { {
   $(
     impl $Trait:ident { fn $method:ident -> $out:ty; }
