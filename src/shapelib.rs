@@ -221,7 +221,7 @@ impl<T> SvgBaseName<T> where T: Borrow<GoodItemName> {
 }
 
 impl OutlineCalculable {
-  pub fn err_mapper(&self) -> impl Fn(LLE) -> IE {
+  pub fn err_mapper(&self) -> impl Fn(LLE) -> IE + Copy {
     |e| internal_logic_error(format!(
       "outline calculable but failed {} {:?}",&e,&e
     ))
