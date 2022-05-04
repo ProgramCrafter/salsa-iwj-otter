@@ -365,12 +365,11 @@ impl From<ZipError> for LoadError {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug,Deref,DerefMut)]
 pub struct IndexedZip {
-  za: ZipArchive,
+  #[deref] #[deref_mut] za: ZipArchive,
   members: BTreeMap<UniCase<String>, usize>,
 }
-deref_to_field_mut!{IndexedZip, ZipArchive, za }
 
 #[derive(Debug,Copy,Clone,Hash,Eq,PartialEq,Ord,PartialOrd)]
 pub struct ZipIndex(pub usize);

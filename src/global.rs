@@ -40,9 +40,9 @@ pub struct InstanceOuter {
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize,Default)]
+#[derive(Deref,DerefMut)]
 #[serde(transparent)]
 pub struct LinksTable(pub EnumMap<LinkKind, Option<String>>);
-deref_to_field_mut!{LinksTable, EnumMap<LinkKind, Option<String>>, 0}
 
 pub struct Instance {
   pub name: Arc<InstanceName>,
@@ -79,12 +79,12 @@ pub struct IPlayer { // usual variable: ipl
 
 /// Strange ownership and serialisation rules, like `OccultIlkOwningId`
 #[derive(Debug,Serialize,Deserialize)]
+#[derive(Deref)]
 pub struct IPiece {
-  pub p: IPieceTraitObj,
+  #[deref] pub p: IPieceTraitObj,
   pub occilk: Option<IOccultIlk>,
   #[serde(default)] pub special: PieceSpecialProperties,
 }
-deref_to_field!{IPiece, IPieceTraitObj, p}
 
 #[derive(Debug,Serialize,Deserialize)]
 #[serde(transparent)]
