@@ -482,11 +482,10 @@ impl<'c,W:Write> ResponseWriter<'c,W> {
 fn write_test(){
 
   // pretty printing the test message buffer
-  #[derive(Clone,Default)]
+  #[derive(Clone,Default,Deref,DerefMut)]
   struct Framed {
     buf: Vec<u8>,
   }
-  deref_to_field_mut!{ Framed, Vec<u8>, buf }
   impl Debug for Framed {
     #[throws(fmt::Error)]
     fn fmt(&self, f: &mut fmt::Formatter) {
