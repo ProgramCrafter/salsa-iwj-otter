@@ -26,6 +26,7 @@ pub struct Registry {
 pub struct GroupData {
   groupname: String,
   d: GroupDetails,
+  #[allow(dead_code)] /*TODO*/ mformat: materials_format::Version,
 }
 
 #[typetag::deserialize(tag="outline")]
@@ -777,7 +778,6 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
       materials_format::Version::try_from_integer(v)?
     },
   };
-  let _: materials_format::Version = mformat;
 
   let mut l = Catalogue {
     bundle: src.bundle(),
@@ -799,7 +799,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
     };
     let group = Arc::new(GroupData {
       groupname: groupname.clone(),
-      d,
+      d, mformat,
     });
     group.d.outline.check(&group)?;
     if [
