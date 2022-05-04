@@ -24,8 +24,8 @@ pub struct Registry {
 
 #[derive(Debug)]
 pub struct GroupData {
-  pub groupname: String,
-  pub d: GroupDetails,
+  groupname: String,
+  d: GroupDetails,
 }
 
 #[typetag::deserialize(tag="outline")]
