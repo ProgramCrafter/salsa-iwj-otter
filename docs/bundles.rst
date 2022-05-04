@@ -172,6 +172,14 @@ follow the link to the latest published documentation for that format.
     - Status
     - Changes
 
+  * - ``2``
+    - unreleased
+    - unreleased
+    - Handling of the ``size``, ``scale`` and ``outline``
+      of library pieces overhauled.  ``size`` is now the in-game
+      size, and the SVG size is obtained from the SVG.
+      Library catalogues must be overhauled.
+
   * - ``1``
     - 0.x - `1.0.0 <https://www.chiark.greenend.org.uk/~ianmdlvl/otter/1.0.0/docs/README.html>`_
     - supported
@@ -179,6 +187,7 @@ follow the link to the latest published documentation for that format.
       Note that ``format`` may be omitted in this version.
 
 .. _bundle-compatibility-otter-footnote:
+
 [1] The earliest version of Otter that supports this format,
 and the newest version which uses it as the primary format.
 (Currently, newer versions of Otter can read files in any older format.)

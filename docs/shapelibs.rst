@@ -77,7 +77,7 @@ The catalogue is a TOML file.
 The file should have a toplevel key ``format``, specifying which
 version of the Otter data formats the file was written to.
 This document describes ``format=1``.
-See `bundle compatibility`_.
+See :ref:`Bundle compatibility <bundle-compatibility>`.
 
 The catalogue's main contents is a dictionary
 ``groups``, mapping each group name to a sub-dict of parameters:
@@ -183,25 +183,36 @@ These are the entries which can appear in each ``group.GROUP``
 dictionary:
 
 Mandatory parameters
-`````````````````````
-
- * ``size``:
-   The size at which the piece will show up in the game, in nominal
-   game coordinate units.
-   NB, this value can be affected by ``scale``.
-   [1- or 2-element array of numbers: width and height]
-
-   For reference: the builtin library's chess
-   pieces are 9.5 units; the builtin playing cards are 9.65, 17.125.
-
- * ``outline`` [``"Circle"`` or ``"Rect"`` ]:
-   Defines the outline shape.  This is used for drawing selection
-   highlights, etc.  The size is taken from ``size``.  If ``outline``
-   is ``Circle``, ``size`` must be a 1-element array: ellipses are not
-   supported.
+````````````````````
 
  * ``files``: The list of pieces to define, one per line.  See `Files
    entry`_.  [multi-line string]
+
+ * ``outline`` [dictionary]: Defines the outline of the piece,
+   which is used for drawing "haloes" around the piece,
+   indicating selection and movement.
+
+ * ``outline`` [string]: Abbreviated way of specifying
+   ``outline = { shape: ... }``.
+   The shape mkust be specified, either via ``outline = "Shape"``
+   or by setting ``outline.shape``.
+
+ * ``outline.shape`` [``"Circle"`` or ``"Rect"`` ]:
+   If ``outline`` is ``Circle``, and the the nominal size
+   (calculated from all the other parameters)
+   has different width and height, the larger of the width and height is used
+   (ellipses are not supported).
+
+ * ``outline.size``: nominal size of the piece, used for calculating
+   the size of "haloes".  Note that this is not the szie of the
+   "haloes"; it is the (nominal) size of the piece image itself:
+   the "haloes" indicating selection etc. will be somewhat larger.
+   [1- or 2-element array of numbers: width and height;
+   default: calculated from the piece's ``size`` and ``scale`` ]
+
+ * ``outline.scale``: Adjusts the nominal size of the outline,
+   multiplying it by this factor.  Not meaningful together with
+   ``outline.size``.  [number; default ``1.0``]
 
 Important parameters
 ````````````````````
@@ -225,15 +236,28 @@ Geometry parameters
    the image's own internal units.  If not supplied, calculated from
    the size.  [2-element array]
 
- * ``orig_size``: If non-empty, the supplied image is first scaled
-   from ``orig_size`` to ``size``.  If both ``size`` and
-   ```orig_size`` are 2 elements, this can scale by different amounts
-   in x and y, distorting the image.  [array of up to 2 elements]
+ * ``size``:
+   The size at which the piece will show up in the game, in nominal
+   game coordinate units.
+   The supplied SVG will be reiszed from its internall specified
+   witdth and height, to that specified.
+   If the aspect ratio does not match the supplied image,
+   ``scale`` controls the behaviour.
+   (Specifying only one value for ``size`` means a square of that size.)
+   [1- or 2-element array of numbers: width and height]
 
- * ``scale``.  Scale the image by a factor (in both x and y).
-   ``size`` and ``centre`` are in the image file's own internal
-   coordinate system, not the Otter scaled coordinates which result
-   from multiplying by by this scale factor.  [number]
+   For reference: the builtin library's chess
+   pieces are 9.5 units; the builtin playing cards are 9.65, 17.125.
+
+ * ``scale`` [string]: Specifies what to do if the SVG's own size does
+   not have the same aspect ratio as a sspecified ``size``:
+
+    - ``"fit"``: the image is placed within the specified ``size``;
+    - ``"cover"``: the image is placed around the specified ``size``;
+    - ``"stretch"``: the image is distorted to become exactly ``size``.
+
+ * ``scale`` [number]: Specifies that the image SVG should be rescaled
+    by this amount.  This use of ``scale`` cannot be combined with ``size``.
 
 Parameters for defining faces
 `````````````````````````````
