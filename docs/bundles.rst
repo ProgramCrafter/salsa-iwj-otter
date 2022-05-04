@@ -76,6 +76,13 @@ The top-level ``otter.toml`` contains the following keys:
    zipfile's name is not stored in the server.
    [string, mandatory]
 
+ * ``format``.  Identifies which version of this specification
+   the bundle was written to.  This is also used as a default for
+   further TOML files which are found in the bundle.
+   The current format version is ``1``.
+   [integer]
+   See `bundle compatibility`_.
+
 Newer versions of Otter may assign meanings to other keys.
 
 Bundle management
@@ -131,3 +138,47 @@ There are also several game spec examples, such as:
 
 Consult the `webserver directory listing <examples/>`__ for a complete
 list.
+
+
+.. _bundle-compatibility:
+
+Bundle compatibility
+---------------------
+
+The ``format`` key at the toplevel of many of Otter's TOML files
+declares which version of the Otter data formats and specifications
+the file adheres to.
+This allows old files to keep working, even as Otter evolves.
+
+If no format is specified for a file in a bundle, the bundle's
+overall format is taken.  However,
+it is a good idea for each file to contain its own ``format=``
+setting, so that the file doesn't change meaning when put into a
+different bundle with a different overall format version.
+
+The current version is ``format=1``.
+
+This table gives the format versions,
+and the corresponding versions of Otter.
+For full details of the earlier formats,
+follow the link to the latest published documentation for that format.
+
+.. list-table::
+  :widths: 8 15 11 66
+  :header-rows: 1
+
+  * - ``format``
+    - Otter :ref:`[1] <bundle-compatibility-otter-footnote>`
+    - Status
+    - Changes
+
+  * - ``1``
+    - 0.x - `1.0.0 <https://www.chiark.greenend.org.uk/~ianmdlvl/otter/1.0.0/docs/README.html>`_
+    - supported
+    - First release.
+      Note that ``format`` may be omitted in this version.
+
+.. _bundle-compatibility-otter-footnote:
+[1] The earliest version of Otter that supports this format,
+and the newest version which uses it as the primary format.
+(Currently, newer versions of Otter can read files in any older format.)

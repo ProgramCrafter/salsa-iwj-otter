@@ -72,7 +72,14 @@ piece it defines each face looks like, how big it is on the screen,
 whether and how the piece can be occulted, and what source image files
 are to be used to display it.
 
-The catalogue is a TOML file.  Its main contents is a dictionary
+The catalogue is a TOML file.
+
+The file should have a toplevel key ``format``, specifying which
+version of the Otter data formats the file was written to.
+This document describes ``format=1``.
+See `bundle compatibility`_.
+
+The catalogue's main contents is a dictionary
 ``groups``, mapping each group name to a sub-dict of parameters:
 
 Each catalogue is organised into named **groups**.  Each group defines

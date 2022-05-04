@@ -28,6 +28,12 @@ level:
  * ``pieces``: Array of `Piece Specs`_.  Defines the initial pieces
    and their layout.  Each entry is a piece spec dictionary.
 
+ * ``format`` [integer]: Specifies which version of the Otter data
+   formats the spec file was written to.
+   This document describes ``format=1``.
+   See :ref:`bundle-compatibility`.
+
+
 Templating
 ``````````
 
