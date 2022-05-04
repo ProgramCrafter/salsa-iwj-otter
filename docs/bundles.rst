@@ -70,9 +70,13 @@ must refer to it in lowercase.
 ``otter.toml`` bundle top-level metadata
 ----------------------------------------
 
-The top-level ``otter.toml`` contains a single entry ``title``, which
-should be a string.  This is useful because the zipfile's name is not
-stored in the server.
+The top-level ``otter.toml`` contains the following keys:
+
+ * ``title`` identifying the bundle.  This is useful because the
+   zipfile's name is not stored in the server.
+   [string, mandatory]
+
+Newer versions of Otter may assign meanings to other keys.
 
 Bundle management
 -----------------
