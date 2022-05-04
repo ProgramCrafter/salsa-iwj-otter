@@ -19,12 +19,11 @@ pub enum SpecialClientRendering {
   Die { },
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug,Clone,Deref)]
 pub struct PieceRenderInstructions {
   pub vpid: VisiblePieceId,
-  pub occulted: PriOcculted,
+  #[deref] pub occulted: PriOcculted,
 }
-deref_to_field!{PieceRenderInstructions, PriOcculted, occulted}
 
 #[derive(Debug,Clone)]
 pub enum PriOccultedGeneral<P,Z> {
