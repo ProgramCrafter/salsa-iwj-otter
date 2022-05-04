@@ -212,6 +212,7 @@ pub struct GameSpec {
   #[serde(default)] pub pieces: Vec<PiecesSpec>,
   #[serde(default="imp::def_table_colour")] pub table_colour: ColourSpec,
   #[serde(default)] pub pcaliases: HashMap<String, Box<dyn PieceSpec>>,
+  #[serde(default, rename="format")] pub mformat: materials_format::Version,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -659,6 +659,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         .map_err(|e: toml::de::Error| ME::TomlSyntaxError(e.to_string()))?;
       let GameSpec {
         pieces, table_size, table_colour, pcaliases,
+        mformat: _,
       } = toml_de::from_value(&spec)
         .map_err(|e: toml_de::Error| ME::TomlStructureError(e.to_string()))?;
 
