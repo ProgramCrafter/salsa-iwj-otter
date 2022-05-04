@@ -221,7 +221,7 @@ impl<T> SvgBaseName<T> where T: Borrow<GoodItemName> {
 }
 
 impl OutlineCalculable {
-  pub fn map_err(&self) -> impl Fn(LLE) -> IE {
+  pub fn err_mapper(&self) -> impl Fn(LLE) -> IE {
     |e| internal_logic_error(format!(
       "outline calculable but failed {} {:?}",&e,&e
     ))
@@ -567,10 +567,10 @@ impl Contents {
            -> ItemSpecLoaded {
     let (svg_data, svg_sz) = self.load_svg(name, lib_name, &**name)?;
     let outline = idata.group.d.outline.load(&idata.group, svg_sz)
-      .map_err(idata.outline_calculable.map_err())?;
+      .map_err(idata.outline_calculable.err_mapper())?;
 
     let xform = FaceTransform::from_group(&idata.group.d)
-      .map_err(idata.outline_calculable.map_err())?;
+      .map_err(idata.outline_calculable.err_mapper())?;
 
     let mut svgs = IndexVec::with_capacity(1);
     let svg = svgs.push(svg_data);
@@ -617,9 +617,9 @@ impl Contents {
             /* original: */ lib_name, name.as_str()
           )?;
           let outline = idata.group.d.outline.load(&idata.group, occ_svg_sz)
-            .map_err(idata.outline_calculable.map_err())?;
+            .map_err(idata.outline_calculable.err_mapper())?;
           let xform = FaceTransform::from_group(&idata.group.d)
-            .map_err(idata.outline_calculable.map_err())?;
+            .map_err(idata.outline_calculable.err_mapper())?;
           let loaded = OccInertLoaded {
             svgd,
             outline,
