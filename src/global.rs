@@ -103,6 +103,7 @@ pub struct IOccults {
 }
 
 #[derive(Debug,Serialize,Deserialize,Default)]
+#[derive(Deref)] // No DerefMut to make sure we send updates, save, etc.
 #[serde(transparent)]
 pub struct GPieces(pub(in crate::global) ActualGPieces);
 type ActualGPieces = DenseSlotMap<PieceId, GPiece>;
@@ -1518,9 +1519,6 @@ impl IPieces {
 }
 
 // ---------- gamestate pieces table ----------
-
-// No DerefMut to make sure we send updates, save, etc.
-deref_to_field!{GPieces, ActualGPieces, 0}
 
 impl GPieces {
   pub fn get_mut(&mut self, piece: PieceId) -> Option<&mut GPiece> {
