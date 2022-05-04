@@ -758,6 +758,8 @@ impl LibrarySource for BuiltinLibrary<'_> {
 pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
                       -> Catalogue {
   let toplevel: toml::Value = src.catalogue_data().parse()?;
+  let toplevel = toplevel
+    .as_table().ok_or_else(|| LLE::ExpectedTable(format!("toplevel")))?;
   let mut l = Catalogue {
     bundle: src.bundle(),
     libname: libname.to_string(),
@@ -765,9 +767,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
     dirname: src.svg_dir(),
   };
   let empty_table = toml::value::Value::Table(default());
-  let groups =
-    toplevel
-    .as_table().ok_or_else(|| LLE::ExpectedTable(format!("toplevel")))?
+  let groups = toplevel
     .get("group").unwrap_or(&empty_table)
     .as_table().ok_or_else(|| LLE::ExpectedTable(format!("group")))?;
   for (groupname, gdefn) in groups {
