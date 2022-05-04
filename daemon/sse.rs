@@ -21,15 +21,15 @@ struct UpdateReaderWN {
   to_send: UpdateId,
 }
 
+#[derive(Deref)] // no DerefMut
 struct UpdateReader {
-  wn: UpdateReaderWN,
+  #[deref] wn: UpdateReaderWN,
   overflow: Option<io::Cursor<Box<[u8]>>>,
   gref: InstanceRef,
   keepalives: Wrapping<u32>,
   ending_send: Option<io::Cursor<Box<[u8]>>>,
   init_confirmation_send: iter::Once<()>,
 }
-deref_to_field!{UpdateReader, UpdateReaderWN, wn} // no DerefMut
 
 impl UpdateReaderWN {
   #[throws(io::Error)]

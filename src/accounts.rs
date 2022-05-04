@@ -37,6 +37,7 @@ pub struct AccountName {
 /// Record of acess for a player.  Newtype prevents mutable access
 /// without invalidating old tokens and permissions check.
 #[derive(Serialize,Deserialize,Debug)]
+#[derive(Deref)] // No DerefMut, to make sure we save properly etc.
 #[serde(transparent)]
 pub struct AccessRecord(Arc<dyn PlayerAccessSpec>);
 
@@ -243,9 +244,6 @@ impl FromStr for AccountName {
 }
 
 //---------- AccessRecord ----------
-
-// No DerefMut, to make sure we save properly etc.
-deref_to_field!{AccessRecord, Arc<dyn PlayerAccessSpec>, 0}
 
 impl AccessRecord {
   pub fn new_unset() -> Self{ Self( Arc::new(PlayerAccessUnset) ) }

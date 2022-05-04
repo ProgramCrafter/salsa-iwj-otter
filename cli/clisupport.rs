@@ -295,11 +295,10 @@ impl String {
   fn leak(self) -> &'static str { Box::<str>::leak(self.into()) }
 }
 
+#[derive(Deref,DerefMut)]
 pub struct Conn {
   pub chan: ClientMgmtChannel,
 }
-
-deref_to_field_mut!{Conn, MgmtChannel, chan}
 
 impl Conn {
   #[throws(AE)]
