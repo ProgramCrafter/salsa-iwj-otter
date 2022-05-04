@@ -4,13 +4,13 @@
 
 use crate::*;
 
+#[derive(Deref)]
 struct Ctx {
-  su: Setup,
+  #[deref] su: Setup,
   alice: Window,
   bob: Window,
   spec: GameSpec,
 }
-deref_to_field!{Ctx, Setup, su}
 usual_wanted_tests!{Ctx, su}
 
 impl Ctx {

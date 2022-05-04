@@ -4,12 +4,12 @@
 
 use crate::*;
 
+#[derive(Deref)]
 struct Ctx {
-  su: Setup,
+  #[deref] su: Setup,
   alice: Window,
   bob: Window,
 }
-deref_to_field!{Ctx, Setup, su}
 usual_wanted_tests!{Ctx, su}
 
 const HAND: &str = "6v1";
