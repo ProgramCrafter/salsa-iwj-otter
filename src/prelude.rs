@@ -165,6 +165,7 @@ pub use crate::global::*;
 pub use crate::hidden::*;
 pub use crate::keydata::*;
 pub use crate::nwtemplates;
+pub use crate::materials_format;
 pub use crate::mgmtchannel::*;
 pub use crate::occultilks::*;
 pub use crate::organise;
@@ -229,6 +230,10 @@ pub use PieceLoadArgs as PLA;
 pub type OccK = OccultationKind;
 pub use OccultationKindGeneral as OccKG;
 pub use OccultationKindAlwaysOk as OccKA;
+
+// materials-format.rs
+
+pub use materials_format::VersionError as MFVE;
 
 // occultilks.rs
 pub type LOI = LOccultIlk;
