@@ -192,8 +192,7 @@ Navigating the otter source code
 
 * `jstest/`
 
-  Node.js--based unit-end tests.
-  XXX explain
+  Node.js-based unit tests.
 
 * `specs/`.  The table and game specs, as used directly by `otter`.
 
