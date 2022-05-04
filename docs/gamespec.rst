@@ -133,14 +133,16 @@ This is discussed in the descriptions for each piece spec type.
 
  * ``label``.  Controls display of the label with information about
    the in-game state.  Dictionary with two sub-entries:
-    * ``colour`` [string, defaults to the edge colour].
-    * ``place`` [string]: One of ``"BottomLeft"`` (default),
+
+    - ``colour`` [string, defaults to the edge colour].
+    - ``place`` [string]: One of ``"BottomLeft"`` (default),
       ``"TopLeft"``, ``"BottomLeftOutside"``, ``"TopLeftOutside"``.
 
  * ``shape``.  The shape of a piece.  Dictionary with two sub-entries:
-    * ``type``.  ``"Circle"`` or ``"Rect"`` [required]
-    * ``size`` [array of 1 or 2 numbers]: required if ``type="Rect"``.
-    * ``diam`` [number]: required if ``type="Circle"``.
+
+    - ``type``.  ``"Circle"`` or ``"Rect"`` [required]
+    - ``size`` [array of 1 or 2 numbers]: required if ``type="Rect"``.
+    - ``diam`` [number]: required if ``type="Circle"``.
 
  * ``itemname``: Used when other parts of the game want to refer to
    this one.  [string]
