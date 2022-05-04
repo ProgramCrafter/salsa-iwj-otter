@@ -102,7 +102,7 @@ define_index_type!{ pub struct LibInBundleI = usize; }
 #[derive(Debug)]
 struct Parsed {
   meta: BundleMeta,
-  libs: IndexVec<LibInBundleI, shapelib::Contents>,
+  libs: IndexVec<LibInBundleI, shapelib::Catalogue>,
   specs: SpecsInBundles,
   size: usize,
   hash: Hash,

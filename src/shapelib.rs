@@ -19,7 +19,7 @@ static GLOBAL_SHAPELIBS: RwLock<Option<Registry>> = const_rwlock(None);
 
 #[derive(Default)]
 pub struct Registry {
-  libs: HashMap<String, Vec<shapelib::Contents>>,
+  libs: HashMap<String, Vec<shapelib::Catalogue>>,
 }
 
 #[derive(Debug)]
@@ -37,7 +37,7 @@ pub trait OutlineDefn: Debug + Sync + Send + 'static {
 pub struct OutlineCalculable { }
 
 #[derive(Debug)]
-pub struct Contents {
+pub struct Catalogue {
   libname: String,
   dirname: String,
   bundle: Option<bundles::Id>,
@@ -420,7 +420,7 @@ impl InertPieceTrait for Item {
 }
 
 impl Registry {
-  pub fn add(&mut self, data: Contents) {
+  pub fn add(&mut self, data: Catalogue) {
     self.libs
       .entry(data.libname.clone()).or_default()
       .push(data);
@@ -430,7 +430,7 @@ impl Registry {
     self.libs.clear()
   }
 
-  pub fn iter(&self) -> impl Iterator<Item=&[Contents]> {
+  pub fn iter(&self) -> impl Iterator<Item=&[Catalogue]> {
     self.libs.values().map(|v| v.as_slice())
   }
 }
@@ -483,12 +483,12 @@ pub fn lib_name_list(ig: &Instance) -> Vec<String> {
 }
 
 impl<'ig> AllRegistries<'ig> {
-  pub fn all_libs(&self) -> impl Iterator<Item=&[Contents]> {
+  pub fn all_libs(&self) -> impl Iterator<Item=&[Catalogue]> {
     self.iter().map(|reg| &reg.libs).flatten().map(
       |(_libname, lib)| lib.as_slice()
     )
   }
-  pub fn lib_name_lookup(&self, libname: &str) -> Result<&[Contents], SpE> {
+  pub fn lib_name_lookup(&self, libname: &str) -> Result<&[Catalogue], SpE> {
     for reg in self.iter() {
       if let Some(r) = reg.libs.get(libname) { return Ok(r) }
     }
@@ -530,7 +530,7 @@ impl ItemSpec {
   }
 }
 
-impl Contents {
+impl Catalogue {
   #[throws(SpecError)]
   fn load_image(&self, item_name: &SvgBaseName<str>,
                 lib_name_for: &str, item_for: &str,
@@ -756,9 +756,10 @@ impl LibrarySource for BuiltinLibrary<'_> {
 }
 
 #[throws(LibraryLoadError)]
-pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource) -> Contents {
+pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
+                      -> Catalogue {
   let toplevel: toml::Value = src.catalogue_data().parse()?;
-  let mut l = Contents {
+  let mut l = Catalogue {
     bundle: src.bundle(),
     libname: libname.to_string(),
     items: HashMap::new(),
