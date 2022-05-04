@@ -77,8 +77,8 @@ pub struct IPlayer { // usual variable: ipl
   pub tz: Timezone,
 }
 
-#[derive(Debug,Serialize,Deserialize)]
 /// Strange ownership and serialisation rules, like `OccultIlkOwningId`
+#[derive(Debug,Serialize,Deserialize)]
 pub struct IPiece {
   pub p: IPieceTraitObj,
   pub occilk: Option<IOccultIlk>,
