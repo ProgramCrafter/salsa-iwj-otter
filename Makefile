@@ -477,6 +477,9 @@ publish: doc-sphinx
 	rsync -r --delete-delay docs/html/. $(PUBLISH_DOC_SPHINX)/.
 	git branch -f $(PUBLISHED_BRANCH)
 
+publish-make-current:
+	ssh $(PUBLISH_USER) 'set -e; cd $(PUBLISH_DOC_SPHINX_BASE); rm -f current.tmp; ln -s $(PUBLISH_VERSION) current.tmp; mv -T current.tmp current'
+
 #---------- deployment ----------
 
 DEPLOY_USER=ian@login.chiark.greenend.org.uk
