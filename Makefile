@@ -468,7 +468,9 @@ stamp/wdt-%.lcheck:	$(WDT_DEPS)
 
 PUBLISH_VERSION=unreleased
 PUBLISH_USER=ianmdlvl@login.chiark.greenend.org.uk
-PUBLISH_DOC_SPHINX=$(PUBLISH_USER):public-html/otter/$(PUBLISH_VERSION)/docs
+PUBLISH_DOC_SPHINX_BASE=public-html/otter
+PUBLISH_DOC_SPHINX_TAIL=$(PUBLISH_VERSION)/docs
+PUBLISH_DOC_SPHINX=$(PUBLISH_USER):$(PUBLISH_DOC_SPHINX_BASE)/$(PUBLISH_DOC_SPHINX_TAIL)
 
 publish: doc-sphinx
 	rsync -r --delete-delay docs/html/. $(PUBLISH_DOC_SPHINX)/.
