@@ -102,7 +102,7 @@ $dryrun git push origin $branch
 
 #---------- non-idempotent things ----------
 
-$dryrun make -j12 publish
+$dryrun make -j12 PUBLISH_VERSION=$version publish
 
 $dryrun git tag -s -u "$keyid" -m "Otter v$version" $tag
 $dryrun git push chiark $tag
