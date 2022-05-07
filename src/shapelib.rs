@@ -137,6 +137,7 @@ pub enum LibraryLoadError {
 #[derive(Error,Debug,Clone,Copy,Serialize,Deserialize)]
 pub enum LibraryLoadMFIncompat {
   #[error("bad scale definition")] Scale,
+  #[error("size not specified")] SizeRequired,
 }
 pub use LibraryLoadMFIncompat as LLMI;
 
@@ -595,6 +596,7 @@ impl FaceTransform {
     };
     let centre = d.centre.map(Ok).unwrap_or_else(|| Ok::<_,LLE>({
       resolve_square_size(&d.size)?
+        .ok_or_else(|| group.mformat.incompat(LLMI::SizeRequired))?
         .coords.iter().cloned().zip(&scale).map(|(size,scale)| {
           size * 0.5 / scale
         })
@@ -615,13 +617,14 @@ impl FaceTransform {
 }
 
 #[throws(LLE)]
-fn resolve_square_size<T:Copy>(size: &[T]) -> PosC<T> {
-  PosC{ coords: match size {
+fn resolve_square_size<T:Copy>(size: &[T]) -> Option<PosC<T>> {
+  Some(PosC{ coords: match size {
+    [] => return None,
     &[s] => [s,s],
     &[w,h] => [w,h],
     _ => throw!(LLE::WrongNumberOfSizeDimensions
                 { got: size.len(), expected: [1,2]}),
-  } }
+  } })
 }
 
 //---------- Outlines ----------
@@ -720,13 +723,16 @@ struct RectDefn { }
 impl OutlineDefn for RectDefn {
   #[throws(LibraryLoadError)]
   fn load_mf1(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
-    Self::get(lgd)?.into()
+    Self::get_mf1(lgd)?.into()
   }
 }
 impl RectDefn {
   #[throws(LibraryLoadError)]
-  fn get(group: &GroupData) -> RectShape {
-    RectShape { xy: resolve_square_size(&group.d.size)? }
+  fn get_mf1(group: &GroupData) -> RectShape {
+    RectShape {
+      xy: resolve_square_size(&group.d.size)?
+        .ok_or_else(|| group.mformat.incompat(LLMI::SizeRequired))?
+    }
   }
 }
 
