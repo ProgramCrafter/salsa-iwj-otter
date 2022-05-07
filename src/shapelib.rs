@@ -622,6 +622,7 @@ impl OutlineCalculable {
 pub struct RectShape { pub xy: PosC<f64> }
 
 impl RectShape {
+  // Used by code elsewhere eg deck.rs for occultation boundaries etc.
   #[throws(CoordinateOverflow)]
   pub fn rect(&self, centre: Pos) -> RectC<Coord> {
     let offset = (self.xy * 0.5)?;
