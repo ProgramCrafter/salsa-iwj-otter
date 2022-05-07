@@ -578,16 +578,10 @@ impl FaceTransform {
       [s,s]
     };
     let centre = d.centre.map(Ok).unwrap_or_else(|| Ok::<_,LLE>({
-      match d.size.as_slice() {
-        [a] => [a,a],
-        [a,b] => [a,b],
-        x => throw!(LLE::WrongNumberOfSizeDimensions {
-          got: x.len(),
-          expected: [1,2],
-        }),
-      }.iter().cloned().zip(&scale).map(|(size,scale)| {
-        size * 0.5 / scale
-      })
+      resolve_square_size(&d.size)?
+        .coords.iter().cloned().zip(&scale).map(|(size,scale)| {
+          size * 0.5 / scale
+        })
         .collect::<ArrayVec<_,2>>()
         .into_inner()
         .unwrap()
@@ -602,6 +596,16 @@ impl FaceTransform {
            self.scale[0], self.scale[1], -self.centre[0], -self.centre[1],
            svgd)?;
   }
+}
+
+#[throws(LLE)]
+fn resolve_square_size<T:Copy>(size: &[T]) -> PosC<T> {
+  PosC{ coords: match size {
+    &[s] => [s,s],
+    &[w,h] => [w,h],
+    _ => throw!(LLE::WrongNumberOfSizeDimensions
+                { got: size.len(), expected: [1,2]}),
+  } }
 }
 
 //---------- Outlines ----------
@@ -695,14 +699,7 @@ impl OutlineDefn for RectDefn {
 impl RectDefn {
   #[throws(LibraryLoadError)]
   fn get(group: &GroupData) -> RectShape {
-    RectShape { xy: PosC{ coords:
-      match group.d.size.as_slice() {
-        &[s] => [s,s],
-        s if s.len() == 2 => s.try_into().unwrap(),
-        size => throw!(LLE::WrongNumberOfSizeDimensions
-                       { got: size.len(), expected: [1,2]}),
-      }
-    }}
+    RectShape { xy: resolve_square_size(&group.d.size)? }
   }
 }
 
