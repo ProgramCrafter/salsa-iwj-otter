@@ -147,6 +147,8 @@ pub enum LibraryLoadError {
 pub enum LibraryLoadMFIncompat {
   #[error("bad scale definition")] Scale,
   #[error("size not specified")] SizeRequired,
+  #[error("orig_size no longer supported")] OrigSizeForbidden,
+  #[error("specified both size and numeric scale")] ContradictoryScale,
 }
 pub use LibraryLoadMFIncompat as LLMI;
 
@@ -656,10 +658,61 @@ impl GroupData {
   }
 
   #[throws(LibraryLoadError)]
-  fn load_shape(&self, _svg_sz: PosC<f64>) -> (FaceTransform, Outline) {
-    let xform = FaceTransform::from_group_mf1(self)?;
-    let outline = self.d.outline.shape().load_mf1(&self)?;
-    (xform, outline)
+  /// As with OutlineDefn::load, success must not depend on svg_sz value
+  fn load_shape(&self, svg_sz: PosC<f64>) -> (FaceTransform, Outline) {
+    if self.mformat >= 2 {
+
+      if self.d.orig_size.len() > 0 {
+        throw!(self.mformat.incompat(LLMI::OrigSizeForbidden))
+      }
+
+      let centre: PosC<f64> = self.d.centre
+        .map(|coords| PosC { coords })
+        .unwrap_or_else(|| geometry::Mean::mean(&svg_sz, &PosC::zero()));
+
+      let size = resolve_square_size(&self.d.size)?;
+
+      use ScaleDetails as SD;
+      let scale = self.d.scale.unwrap_or(SD::Fit(ScaleFitDetails::Fit));
+
+      let of_stretch = |scale| {
+        let scale = PosC { coords: scale };
+        let size = pos_zip_map!( svg_sz, scale => |(sz,sc)| sz * sc );
+        (size, scale)
+      };
+
+      let (size, scale) = match (size, scale) {
+        (Some(size), SD::Fit(fit)) => {
+          let scale = pos_zip_map!( size, svg_sz => |(a,b)| a/b );
+          type Of = OrderedFloat<f64>;
+          let of = |minmax: fn(Of,Of) -> Of| {
+            let v = minmax(scale.coords[0].into(),
+                           scale.coords[1].into()).into_inner();
+            PosC::new(v,v)
+          };
+          let scale = match fit {
+            ScaleFitDetails::Fit => of(min),
+            ScaleFitDetails::Cover => of(max),
+            ScaleFitDetails::Stretch => scale,
+          };
+          (size, scale)
+        },
+        (Some(_), SD::Scale(_)) |
+        (Some(_), SD::Stretch(_))
+          => throw!(self.mformat.incompat(LLMI::ContradictoryScale)),
+        (None, SD::Fit(_)) => (svg_sz, PosC::new(1.,1.)),
+        (None, SD::Scale(s)) => of_stretch([s,s]),
+        (None, SD::Stretch(s)) => of_stretch(s),
+      };
+
+      let outline = self.d.outline.shape().load(size);
+      (FaceTransform { scale: scale.coords, centre: centre.coords }, outline)
+
+    } else {
+      let xform = FaceTransform::from_group_mf1(self)?;
+      let outline = self.d.outline.shape().load_mf1(&self)?;
+      (xform, outline)
+    }
   }
 }
 
