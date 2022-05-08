@@ -38,7 +38,8 @@ pub trait OutlineDefn: Debug + Sync + Send + 'static {
   /// Called to *check* the group configuration before load, but
   /// with a dummy svg_gz of [1,1].  That must correctly predict
   /// success with other sizes.
-  fn load(&self, lgi: &GroupData, svg_sz: PosC<f64>) -> Result<Outline,LLE>;
+  fn load_mf1(&self, lgi: &GroupData, svg_sz: PosC<f64>)
+              -> Result<Outline,LLE>;
 }
 #[derive(Debug,Clone,Copy)]
 pub struct ShapeCalculable { }
@@ -575,7 +576,7 @@ impl Catalogue {
 
 impl FaceTransform {
   #[throws(LLE)]
-  fn from_group(d: &GroupDetails) -> Self {
+  fn from_group_mf1(d: &GroupDetails) -> Self {
     // by this point d.size has already been scaled by scale
     let scale = if ! d.orig_size.is_empty() && ! d.size.is_empty() {
       izip!(&d.orig_size, &d.size)
@@ -643,8 +644,8 @@ impl GroupData {
 
   #[throws(LibraryLoadError)]
   fn load_shape(&self, svg_sz: PosC<f64>) -> (FaceTransform, Outline) {
-    let xform = FaceTransform::from_group(&self.d)?;
-    let outline = self.d.outline.load(&self, svg_sz)?;
+    let xform = FaceTransform::from_group_mf1(&self.d)?;
+    let outline = self.d.outline.load_mf1(&self, svg_sz)?;
     (xform, outline)
   }
 }
@@ -706,7 +707,7 @@ struct RectDefn { }
 #[typetag::deserialize(name="Rect")]
 impl OutlineDefn for RectDefn {
   #[throws(LibraryLoadError)]
-  fn load(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
+  fn load_mf1(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
     Self::get(lgd)?.into()
   }
 }
@@ -744,7 +745,7 @@ struct CircleDefn { }
 #[typetag::deserialize(name="Circle")]
 impl OutlineDefn for CircleDefn {
   #[throws(LibraryLoadError)]
-  fn load(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
+  fn load_mf1(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
     CircleShape {
       diam: Self::get_size(lgd)?,
     }.into()
