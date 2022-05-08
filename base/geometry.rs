@@ -99,10 +99,18 @@ impl<T> PosPromote for PosC<T> where T: Into<f64> + Copy + Debug {
 pub struct PosCFromIteratorError;
 display_as_debug!{PosCFromIteratorError}
 
-macro_rules! pos_zip_map { {
+macro_rules! pos_zip_try_map { {
   $( $input:expr ),* => $closure:expr
 } => {
   PosC::try_from_iter_2(
+    izip!($( $input .coords(), )*)
+      .map($closure)
+  )
+} }
+macro_rules! pos_zip_map { {
+  $( $input:expr ),* => $closure:expr
+} => {
+  PosC::from_iter_2(
     izip!($( $input .coords(), )*)
       .map($closure)
   )
@@ -185,7 +193,7 @@ impl<T:CheckedArith> Add<PosC<T>> for PosC<T> {
   type Output = Result<Self, CoordinateOverflow>;
   #[throws(CoordinateOverflow)]
   fn add(self, rhs: PosC<T>) -> PosC<T> {
-    pos_zip_map!( self, rhs => |(a,b)| a.checked_add(b) )?
+    pos_zip_try_map!( self, rhs => |(a,b)| a.checked_add(b) )?
   }
 }
 
@@ -193,12 +201,7 @@ impl<T:CheckedArith> Sub<PosC<T>> for PosC<T> {
   type Output = Result<Self, CoordinateOverflow>;
   #[throws(CoordinateOverflow)]
   fn sub(self, rhs: PosC<T>) -> PosC<T> {
-    PosC::try_from_iter_2(
-      itertools::zip_eq(
-        self.coords.iter().cloned(),
-        rhs .coords.iter().cloned(),
-      ).map(|(a,b)| a.checked_sub(b))
-    )?
+    pos_zip_try_map!( self, rhs => |(a,b)| a.checked_sub(b) )?
   }
 }
 
@@ -206,11 +209,7 @@ impl<S:Copy+Debug+Clone+'static,T:CheckedArithMul<S>> Mul<S> for PosC<T> {
   type Output = Result<Self, CoordinateOverflow>;
   #[throws(CoordinateOverflow)]
   fn mul(self, rhs: S) -> PosC<T> {
-    PosC::try_from_iter_2(
-      self.coords.iter().cloned().map(
-        |a| a.checked_mul(rhs)
-      )
-    )?
+    pos_zip_try_map!( self => |a| a.checked_mul(rhs) )?
   }
 }
 
@@ -218,17 +217,13 @@ impl<T:CheckedArith> Neg for PosC<T> {
   type Output = Result<Self, CoordinateOverflow>;
   #[throws(CoordinateOverflow)]
   fn neg(self) -> Self {
-    PosC::try_from_iter_2(
-      self.coords.iter().cloned().map(|a| a.checked_neg())
-    )?
+    pos_zip_try_map!( self => |a| a.checked_neg() )?
   }
 }
 
 impl<T:Copy+Clone+Debug> PosC<T> {
   pub fn map<U:Copy+Clone+Debug, F: FnMut(T) -> U>(self, f: F) -> PosC<U> {
-    PosC::from_iter(
-      self.coords.iter().cloned().map(f)
-    ).unwrap()
+    pos_zip_map!( self => f )
   }
 }
 
@@ -236,18 +231,13 @@ impl<T:Copy+Clone+Debug> PosC<T> {
   pub fn try_map<E:Debug, U:Copy+Clone+Debug, F: FnMut(T) -> Result<U,E>>
     (self, f: F) -> Result<PosC<U>,E>
   {
-    PosC::try_from_iter_2(
-      self.coords.iter().cloned().map(f)
-    )
+    pos_zip_try_map!( self => f )
   }
 }
 
-impl<T> Mean for PosC<T> where T: Mean + Debug {
+impl<T> Mean for PosC<T> where T: Mean + Debug + Copy {
   fn mean(&self, other: &Self) -> Self where T: Mean {
-    PosC::from_iter_2(
-      izip!(&self.coords, &other.coords)
-        .map(|(a,b)| a.mean(b))
-    )
+    pos_zip_map!( self, other => |(a,b)| a.mean(&b) )
   }
 }
 
