@@ -33,11 +33,11 @@ pub struct GroupData {
 
 #[typetag::deserialize(tag="outline")]
 pub trait OutlineDefn: Debug + Sync + Send + 'static {
-  fn check(&self, lgi: &GroupData) -> Result<OutlineCalculable,LLE>;
+  fn check(&self, lgi: &GroupData) -> Result<ShapeCalculable,LLE>;
   fn load(&self, lgi: &GroupData, svg_sz: PosC<f64>) -> Result<Outline,LLE>;
 }
 #[derive(Debug,Clone,Copy)]
-pub struct OutlineCalculable { }
+pub struct ShapeCalculable { }
 
 #[derive(Debug)]
 pub struct Catalogue {
@@ -59,7 +59,7 @@ struct ItemData {
   sort: Option<String>,
   group: Arc<GroupData>,
   occ: OccData,
-  outline_calculable: OutlineCalculable,
+  shape_calculable: ShapeCalculable,
 }
 
 #[derive(Debug,Clone)]
@@ -451,7 +451,7 @@ impl Catalogue {
   #[throws(SpecError)]
   fn load_image(&self, item_name: &SvgBaseName<str>,
                 lib_name_for: &str, item_for: &str,
-                group: &GroupData, outline_calculable: OutlineCalculable)
+                group: &GroupData, shape_calculable: ShapeCalculable)
               -> ImageLoaded {
     let svg_path = format!("{}/{}.usvg", self.dirname, item_name);
     let svg_data = fs::read_to_string(&svg_path)
@@ -475,7 +475,7 @@ impl Catalogue {
       item_for_item: item_for.into(),
     })?;
 
-    let eh = outline_calculable.err_mapper();
+    let eh = shape_calculable.err_mapper();
 
     let outline = group.d.outline.load(&group, sz).map_err(eh)?;
     let xform = FaceTransform::from_group(&group.d).map_err(eh)?;
@@ -494,7 +494,7 @@ impl Catalogue {
            -> ItemSpecLoaded {
     let ImageLoaded { svgd: svg_data, outline, xform } =
       self.load_image(name, lib_name, &**name,
-                       &idata.group, idata.outline_calculable)?;
+                       &idata.group, idata.shape_calculable)?;
 
     let mut svgs = IndexVec::with_capacity(1);
     let svg = svgs.push(svg_data);
@@ -539,7 +539,7 @@ impl Catalogue {
           || self.load_image(
             occ.item_name.unnest::<GoodItemName>().unnest(),
             /* original: */ lib_name, name.as_str(),
-            &idata.group, idata.outline_calculable,
+            &idata.group, idata.shape_calculable,
           )
         ).clone()?;
 
@@ -608,7 +608,7 @@ impl FaceTransform {
 
 //---------- Outlines ----------
 
-impl OutlineCalculable {
+impl ShapeCalculable {
   pub fn err_mapper(&self) -> impl Fn(LLE) -> IE + Copy {
     |e| internal_logic_error(format!(
       "outline calculable but failed {} {:?}",&e,&e
@@ -673,8 +673,8 @@ struct RectDefn { }
 #[typetag::deserialize(name="Rect")]
 impl OutlineDefn for RectDefn {
   #[throws(LibraryLoadError)]
-  fn check(&self, lgd: &GroupData) -> OutlineCalculable {
-    Self::get(lgd).map(|_| OutlineCalculable{})?
+  fn check(&self, lgd: &GroupData) -> ShapeCalculable {
+    Self::get(lgd).map(|_| ShapeCalculable{})?
   }
   #[throws(LibraryLoadError)]
   fn load(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
@@ -722,8 +722,8 @@ struct CircleDefn { }
 #[typetag::deserialize(name="Circle")]
 impl OutlineDefn for CircleDefn {
   #[throws(LibraryLoadError)]
-  fn check(&self, lgd: &GroupData) -> OutlineCalculable {
-    Self::get_size(lgd).map(|_| OutlineCalculable{})?
+  fn check(&self, lgd: &GroupData) -> ShapeCalculable {
+    Self::get_size(lgd).map(|_| ShapeCalculable{})?
   }
   #[throws(LibraryLoadError)]
   fn load(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
@@ -855,7 +855,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
     // We do this here rather than in the files loop because
     //  1. we want to check it even if there are no files specified
     //  2. this is OK because the group doesn't change from here on
-    let outline_calculable = group.d.outline.check(&group)?.into();
+    let shape_calculable = group.d.outline.check(&group)?.into();
 
     if [
       group.d.flip,
@@ -942,7 +942,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
           group: group.clone(),
           occ: occ.clone(),
           sort,
-          outline_calculable,
+          shape_calculable,
           d: Arc::new(ItemDetails { desc }),
         };
         type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
