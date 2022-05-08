@@ -8,7 +8,7 @@ pub use std::convert::{TryFrom, TryInto};
 pub use std::f64::consts::TAU;
 pub use std::fmt::{self, Debug, Display, Formatter, Write as _};
 pub use std::hash::{Hash, Hasher};
-pub use std::iter;
+pub use std::iter::{self, FusedIterator};
 pub use std::mem;
 pub use std::num::{TryFromIntError, Wrapping};
 pub use std::ops::{Deref, DerefMut, Index, IndexMut};

@@ -99,6 +99,15 @@ impl<T> PosPromote for PosC<T> where T: Into<f64> + Copy + Debug {
 pub struct PosCFromIteratorError;
 display_as_debug!{PosCFromIteratorError}
 
+macro_rules! pos_zip_map { {
+  $( $input:expr ),* => $closure:expr
+} => {
+  PosC::try_from_iter_2(
+    izip!($( $input .coords(), )*)
+      .map($closure)
+  )
+} }
+
 impl<T> PosC<T> {
   pub const fn new(x: T, y: T) -> Self { PosC{ coords: [x,y] } }
   pub fn both(v: T) -> Self where T: Copy { PosC::new(v,v) }
@@ -106,10 +115,14 @@ impl<T> PosC<T> {
     PosC::both(<T as num_traits::Zero>::zero())
   }
 
+  fn coords(self) -> impl ExactSizeIterator<Item=T> + FusedIterator<Item=T> {
+    self.coords.into_iter()
+  }
+
   #[throws(CoordinateOverflow)]
   pub fn len2(self) -> f64 where PosC<T>: PosPromote {
-    self.promote().coords.iter()
-      .try_fold(0., |b, &c| {
+    self.promote().coords()
+      .try_fold(0., |b, c| {
         let c2 = c.checked_mul(c)?;
         b.checked_add(c2)
       })?
@@ -172,14 +185,7 @@ impl<T:CheckedArith> Add<PosC<T>> for PosC<T> {
   type Output = Result<Self, CoordinateOverflow>;
   #[throws(CoordinateOverflow)]
   fn add(self, rhs: PosC<T>) -> PosC<T> {
-    PosC::try_from_iter_2(
-      itertools::zip_eq(
-        self.coords.iter().cloned(),
-        rhs .coords.iter().cloned(),
-      ).map(
-        |(a,b)| a.checked_add(b)
-      )
-    )?
+    pos_zip_map!( self, rhs => |(a,b)| a.checked_add(b) )?
   }
 }
 

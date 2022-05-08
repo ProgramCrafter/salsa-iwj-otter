@@ -30,7 +30,7 @@ pub use std::io;
 pub use std::io::ErrorKind;
 pub use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 pub use std::iter;
-pub use std::iter::repeat_with;
+pub use std::iter::{repeat_with};
 pub use std::marker::PhantomData;
 pub use std::num::{NonZeroUsize, TryFromIntError, Wrapping};
 pub use std::os::linux::fs::MetadataExt as _; // todo why linux for st_mode??
