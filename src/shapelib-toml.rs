@@ -26,11 +26,49 @@ pub struct GroupDetails {
   #[serde(default)] pub centre: Option<[f64; 2]>,
   #[serde(default)] pub flip: bool,
   #[serde(default)] pub back: Option<Box <dyn PieceSpec>>,
-  #[serde(default="num_traits::identities::One::one")] pub scale: f64,
+  #[serde(default)] pub scale: Option<ScaleDetails>,
   #[serde(default)] pub colours: HashMap<String, RecolourData>,
   pub desc_template: Option<String>,
   pub occulted: Option<OccultationMethod>,
-  #[serde(flatten)] pub outline: Box<dyn shapelib::OutlineDefn>,
+  #[serde(flatten)] pub outline: OutlineDetails,
+}
+
+#[derive(Debug,Deserialize,Copy,Clone)]
+#[serde(untagged)]
+pub enum ScaleDetails {
+  Fit(ScaleFitDetails),
+  Scale(f64),
+  Stretch([f64;2]),
+}
+
+#[derive(Debug,Deserialize,Copy,Clone)]
+pub enum ScaleFitDetails { Fit, Cover, Stretch }
+
+#[derive(Debug,Deserialize)]
+#[serde(untagged)]
+pub enum OutlineDetails {
+  Full(FullOutlineDetails), // introduced with mformat=2
+  Shape(Box<dyn shapelib::OutlineDefn>),
+}
+
+#[derive(Debug,Deserialize)]
+pub struct FullOutlineDetails {
+  shape: Box<dyn shapelib::OutlineDefn>,
+  #[serde(default)] size: Vec<f64>,
+  #[serde(default)] scale: Option<f64>,
+}
+
+impl OutlineDetails {
+  // enum_access could perhaps do this but controlling the serde
+  // would become confusing
+  pub fn shape(&self) -> &dyn shapelib::OutlineDefn { match self {
+    OutlineDetails::Full(full) => &*full.shape,
+    OutlineDetails::Shape(shape) => &**shape,
+  }}
+  pub fn size_scale(&self) -> (&[f64], Option<&f64>) { match self {
+    OutlineDetails::Full(full) => (&full.size, full.scale.as_ref()),
+    OutlineDetails::Shape(_) => default(),
+  }}
 }
 
 #[derive(Deserialize,Clone,Debug)]

@@ -590,7 +590,7 @@ impl FaceTransform {
         .into_inner()
         .unwrap()
     } else {
-      let s = d.scale;
+      let s = group.d.scale_mf1(group.mformat)?;
       [s,s]
     };
     let centre = d.centre.map(Ok).unwrap_or_else(|| Ok::<_,LLE>({
@@ -646,8 +646,19 @@ impl GroupData {
   #[throws(LibraryLoadError)]
   fn load_shape(&self, svg_sz: PosC<f64>) -> (FaceTransform, Outline) {
     let xform = FaceTransform::from_group_mf1(self)?;
-    let outline = self.d.outline.load_mf1(&self, svg_sz)?;
+    let outline = self.d.outline.shape().load_mf1(&self, svg_sz)?;
     (xform, outline)
+  }
+}
+
+impl GroupDetails {
+  #[throws(materials_format::Incompat<LLMI>)]
+  fn scale_mf1(&self, mformat: materials_format::Version) -> f64 {
+    match self.scale {
+      None => 1.,
+      Some(ScaleDetails::Scale(s)) => s,
+      _ => throw!(mformat.incompat(LLMI::Scale)),
+    }
   }
 }
 
@@ -862,9 +873,14 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
     let gdefn = resolve_inherit(INHERIT_DEPTH_LIMIT,
                                 groups, groupname, gdefn)?;
     let gdefn: GroupDefn = TV::Table(gdefn.into_owned()).try_into()?;
-    let d = GroupDetails {
-      size: gdefn.d.size.iter().map(|s| s * gdefn.d.scale).collect(),
-      ..gdefn.d
+    let d = if mformat == 1 {
+      let scale = gdefn.d.scale_mf1(mformat)?;
+      GroupDetails {
+        size: gdefn.d.size.iter().map(|s| s * scale).collect(),
+        ..gdefn.d
+      }
+    } else {
+      gdefn.d // v2 isn't going to do this, do this right now
     };
     let group = Arc::new(GroupData {
       groupname: groupname.clone(),
