@@ -29,6 +29,7 @@ pub use void::{self, Void};
 
 pub use crate::html::*;
 
+pub use crate::{pos_zip_map, pos_zip_try_map};
 pub use crate::geometry::{CoordinateOverflow, PosC, PosPromote};
 pub use crate::{dbgc, hformat, hformat_as_display, hwrite};
 pub use crate::misc::default;

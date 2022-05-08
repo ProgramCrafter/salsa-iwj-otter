@@ -125,6 +125,7 @@ use nix::time::ClockId;
 pub const CLOCK_REALTIME : ClockId = ClockId::CLOCK_REALTIME ;
 pub const CLOCK_MONOTONIC: ClockId = ClockId::CLOCK_MONOTONIC;
 
+pub use otter_base::{pos_zip_map, pos_zip_try_map};
 pub use otter_base::geometry::{self,Coord,Pos,PosC,Rect,RectC};
 pub use otter_base::geometry::{CoordinateOverflow,Region};
 pub use otter_base::zcoord::{self, ZCoord};

@@ -87,11 +87,8 @@ impl Attempt {
       A::AbutCompr  => (- bbox.tl().map(|v| v/ 3 ))?,
       A::Hanging    => return atleast,
     };
-    PosC::from_iter_2(
-      izip!(atleast.coords.iter(), want.coords.iter()).map(
-        |(v, atleast)| Ord::max(*v,*atleast)
-      )
-    )
+    pos_zip_map!( atleast, want
+                  => |(v, atleast)| Ord::max(v,atleast) )
   }
 }     
 

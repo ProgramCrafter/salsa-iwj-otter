@@ -99,6 +99,7 @@ impl<T> PosPromote for PosC<T> where T: Into<f64> + Copy + Debug {
 pub struct PosCFromIteratorError;
 display_as_debug!{PosCFromIteratorError}
 
+#[macro_export]
 macro_rules! pos_zip_try_map { {
   $( $input:expr ),* => $closure:expr
 } => {
@@ -107,6 +108,7 @@ macro_rules! pos_zip_try_map { {
       .map($closure)
   )
 } }
+#[macro_export]
 macro_rules! pos_zip_map { {
   $( $input:expr ),* => $closure:expr
 } => {
@@ -123,7 +125,7 @@ impl<T> PosC<T> {
     PosC::both(<T as num_traits::Zero>::zero())
   }
 
-  fn coords(self) -> impl ExactSizeIterator<Item=T> + FusedIterator<Item=T> {
+  pub fn coords(self) -> impl ExactSizeIterator<Item=T> + FusedIterator {
     self.coords.into_iter()
   }
 
