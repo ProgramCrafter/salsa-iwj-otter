@@ -8,6 +8,8 @@ pub use crate::shapelib_toml::*;
 use parking_lot::{const_rwlock, RwLock};
 use parking_lot::RwLockReadGuard;
 
+//==================== structs and definitions ====================
+
 // Naming convention:
 //  *Data, *List   from toml etc. (processed if need be)
 //  *Defn          raw read from library toml file (where different from Info)
@@ -189,6 +191,8 @@ struct ItemInertForOcculted {
   outline: Outline,
 }
 
+//==================== SvgBsseName ====================
+
 /// Represents a `T` which is an SVG basename which has been noted
 /// for processing during bundle load.
 #[derive(Debug,Copy,Clone,Hash,Eq,PartialEq,Ord,PartialOrd,Deref)]
@@ -221,13 +225,7 @@ impl<T> SvgBaseName<T> where T: Borrow<GoodItemName> {
   }
 }
 
-impl OutlineCalculable {
-  pub fn err_mapper(&self) -> impl Fn(LLE) -> IE + Copy {
-    |e| internal_logic_error(format!(
-      "outline calculable but failed {} {:?}",&e,&e
-    ))
-  }
-}
+//==================== impls for ItemInertForOcculted ====================
 
 #[dyn_upcast]
 impl OutlineTrait for ItemInertForOcculted { delegate! { to self.outline {
@@ -253,6 +251,8 @@ impl InertPieceTrait for ItemInertForOcculted {
   #[throws(IE)]
   fn describe_html(&self, _: FaceId) -> Html { self.desc.clone() }
 }
+
+//---------- ItemEnquiryData, LibraryEnquiryData ----------
 
 #[derive(Debug,Clone,Serialize,Deserialize,Eq,PartialEq,Ord,PartialOrd)]
 pub struct ItemEnquiryData {
@@ -301,57 +301,14 @@ impl Display for LibraryEnquiryData {
   }
 }
 
+//==================== Item ====================
+
 #[dyn_upcast]
 impl OutlineTrait for Item { delegate! { to self.outline {
   fn outline_path(&self, scale: f64) -> Result<Html, IE>;
   fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
   fn bbox_approx(&self) -> Result<Rect, IE>;
 }}}
-
-impl FaceTransform {
-  #[throws(LLE)]
-  fn from_group(d: &GroupDetails) -> Self {
-    // by this point d.size has already been scaled by scale
-    let scale = if ! d.orig_size.is_empty() && ! d.size.is_empty() {
-      izip!(&d.orig_size, &d.size)
-        .map(|(&orig_size, &target_size)| {
-          target_size / orig_size
-        })
-        .cycle()
-        .take(2)
-        .collect::<ArrayVec<_,2>>()
-        .into_inner()
-        .unwrap()
-    } else {
-      let s = d.scale;
-      [s,s]
-    };
-    let centre = d.centre.map(Ok).unwrap_or_else(|| Ok::<_,LLE>({
-      match d.size.as_slice() {
-        [a] => [a,a],
-        [a,b] => [a,b],
-        x => throw!(LLE::WrongNumberOfSizeDimensions {
-          got: x.len(),
-          expected: [1,2],
-        }),
-      }.iter().cloned().zip(&scale).map(|(size,scale)| {
-        size * 0.5 / scale
-      })
-        .collect::<ArrayVec<_,2>>()
-        .into_inner()
-        .unwrap()
-    }))?;
-    FaceTransform { centre, scale }
-  }
-
-  #[throws(IE)]
-  fn write_svgd(&self, f: &mut Html, svgd: &Html) {
-    hwrite!(f,
-           r##"<g transform="scale({} {}) translate({} {})">{}</g>"##,
-           self.scale[0], self.scale[1], -self.centre[0], -self.centre[1],
-           svgd)?;
-  }
-}
 
 impl Item {
   #[throws(IE)]
@@ -420,82 +377,9 @@ impl InertPieceTrait for Item {
   }
 }
 
-impl Registry {
-  pub fn add(&mut self, data: Catalogue) {
-    self.libs
-      .entry(data.libname.clone()).or_default()
-      .push(data);
-  }
+//==================== ItemSpec and item loading ====================
 
-  pub fn clear(&mut self) {
-    self.libs.clear()
-  }
-
-  pub fn iter(&self) -> impl Iterator<Item=&[Catalogue]> {
-    self.libs.values().map(|v| v.as_slice())
-  }
-}
-
-pub struct AllRegistries<'ig> {
-  global: RwLockReadGuard<'static, Option<Registry>>,
-  ig: &'ig Instance,
-}
-pub struct AllRegistriesIterator<'i> {
-  regs: &'i AllRegistries<'i>,
-  count: u8,
-}
-
-impl<'i> Iterator for AllRegistriesIterator<'i> {
-  type Item = &'i Registry;
-  fn next(&mut self) -> Option<&'i Registry> {
-    loop {
-      let r = match self.count {
-        0 => self.regs.global.as_ref(),
-        1 => Some(&self.regs.ig.local_libs),
-        _ => return None,
-      };
-      self.count += 1;
-      if r.is_some() { return r }
-    }
-  }
-}
-
-impl Instance {
-  pub fn all_shapelibs(&self) -> AllRegistries<'_> {
-    AllRegistries {
-      global: GLOBAL_SHAPELIBS.read(),
-      ig: self,
-    }
-  }
-} 
-impl<'ig> AllRegistries<'ig> {
-  pub fn iter(&'ig self) -> AllRegistriesIterator<'ig> {
-    AllRegistriesIterator {
-      regs: self,
-      count: 0,
-    }
-  }
-}
-
-pub fn lib_name_list(ig: &Instance) -> Vec<String> {
-  ig.all_shapelibs().iter().map(
-    |reg| reg.libs.keys().cloned()
-  ).flatten().collect()
-}
-
-impl<'ig> AllRegistries<'ig> {
-  pub fn all_libs(&self) -> impl Iterator<Item=&[Catalogue]> {
-    self.iter().map(|reg| &reg.libs).flatten().map(
-      |(_libname, lib)| lib.as_slice()
-    )
-  }
-  pub fn lib_name_lookup(&self, libname: &str) -> Result<&[Catalogue], SpE> {
-    for reg in self.iter() {
-      if let Some(r) = reg.libs.get(libname) { return Ok(r) }
-    }
-    return Err(SpE::LibraryNotFound);
-  }
-}
+//---------- ItemSpec, MultiSpec ----------
 
 pub type ItemSpecLoaded = (Box<Item>, PieceSpecLoadedOccultable);
 
@@ -530,6 +414,38 @@ impl ItemSpec {
     ItemSpec{ lib, item }
   }
 }
+
+#[typetag::serde(name="Lib")]
+impl PieceSpec for ItemSpec {
+  #[throws(SpecError)]
+  fn load(&self, PLA { ig,depth,.. }: PLA) -> SpecLoaded {
+    self.find_load(ig,depth)?.into()
+  }
+  #[throws(SpecError)]
+  fn load_inert(&self, ig: &Instance, depth: SpecDepth) -> SpecLoadedInert {
+    let (p, occultable) = self.find_load(ig,depth)?;
+    SpecLoadedInert { p: p as _, occultable }
+  }
+}
+
+#[typetag::serde(name="LibList")]
+impl PieceSpec for MultiSpec {
+  #[throws(SpecError)]
+  fn count(&self, _pcaliases: &PieceAliases) -> usize { self.items.len() }
+
+  #[throws(SpecError)]
+  fn load(&self, PLA { i,ig,depth,.. }: PLA) -> SpecLoaded
+  {
+    let item = self.items.get(i).ok_or_else(
+      || SpE::InternalError(format!("item {:?} from {:?}", i, &self))
+    )?;
+    let item = format!("{}{}{}", &self.prefix, item, &self.suffix);
+    let lib = self.lib.clone();
+    ItemSpec { lib, item }.find_load(ig,depth)?.into()
+  }
+}
+
+//---------- Loading ----------
 
 impl Catalogue {
   #[throws(SpecError)]
@@ -641,7 +557,196 @@ impl Catalogue {
                     itemname: name.to_string() };
     (Box::new(it), occultable)
   }
+}
 
+//==================== size handling, and outlines ====================
+
+impl FaceTransform {
+  #[throws(LLE)]
+  fn from_group(d: &GroupDetails) -> Self {
+    // by this point d.size has already been scaled by scale
+    let scale = if ! d.orig_size.is_empty() && ! d.size.is_empty() {
+      izip!(&d.orig_size, &d.size)
+        .map(|(&orig_size, &target_size)| {
+          target_size / orig_size
+        })
+        .cycle()
+        .take(2)
+        .collect::<ArrayVec<_,2>>()
+        .into_inner()
+        .unwrap()
+    } else {
+      let s = d.scale;
+      [s,s]
+    };
+    let centre = d.centre.map(Ok).unwrap_or_else(|| Ok::<_,LLE>({
+      match d.size.as_slice() {
+        [a] => [a,a],
+        [a,b] => [a,b],
+        x => throw!(LLE::WrongNumberOfSizeDimensions {
+          got: x.len(),
+          expected: [1,2],
+        }),
+      }.iter().cloned().zip(&scale).map(|(size,scale)| {
+        size * 0.5 / scale
+      })
+        .collect::<ArrayVec<_,2>>()
+        .into_inner()
+        .unwrap()
+    }))?;
+    FaceTransform { centre, scale }
+  }
+
+  #[throws(IE)]
+  fn write_svgd(&self, f: &mut Html, svgd: &Html) {
+    hwrite!(f,
+           r##"<g transform="scale({} {}) translate({} {})">{}</g>"##,
+           self.scale[0], self.scale[1], -self.centre[0], -self.centre[1],
+           svgd)?;
+  }
+}
+
+//---------- Outlines ----------
+
+impl OutlineCalculable {
+  pub fn err_mapper(&self) -> impl Fn(LLE) -> IE + Copy {
+    |e| internal_logic_error(format!(
+      "outline calculable but failed {} {:?}",&e,&e
+    ))
+  }
+}
+
+//---------- RectShape ----------
+
+#[derive(Clone,Copy,Debug,Serialize,Deserialize)]
+pub struct RectShape { pub xy: PosC<f64> }
+
+impl RectShape {
+  #[throws(CoordinateOverflow)]
+  pub fn rect(&self, centre: Pos) -> RectC<Coord> {
+    let offset = (self.xy * 0.5)?;
+    let offset = offset.try_map(
+      |c| c.floor().to_i32().ok_or(CoordinateOverflow)
+    )?;
+    let rect = RectC{ corners:
+      [-1,1].iter().map(|&signum| Ok::<_,CoordinateOverflow>({
+        (centre + (offset * signum)?)?
+      }))
+        .collect::<Result<ArrayVec<_,2>,_>>()?
+        .into_inner().unwrap()
+    };
+    rect
+  }
+
+  #[throws(CoordinateOverflow)]
+  pub fn region(&self, centre: Pos) -> Region {
+    Region::Rect(self.rect(centre)?)
+  }
+}
+
+#[dyn_upcast]
+impl OutlineTrait for RectShape {
+  #[throws(IE)]
+  fn outline_path(&self, scale: f64) -> Html {
+    let xy = (self.xy * scale)?;
+    svg_rectangle_path(xy)?
+  }
+  #[throws(IE)]
+  fn thresh_dragraise(&self) -> Option<Coord> {
+    let smallest: f64 = self.xy.coords.iter().cloned()
+      .map(OrderedFloat::from).min().unwrap().into();
+    Some((smallest * 0.5) as Coord)
+  }
+  #[throws(IE)]
+  fn bbox_approx(&self) -> Rect {
+    let pos: Pos = self.xy.map(
+      |v| ((v * 0.5).round()) as Coord
+    );
+    let neg = (-pos)?;
+    Rect{ corners: [ neg, pos ] }
+  }
+}
+
+#[derive(Deserialize,Debug)]
+struct RectDefn { }
+#[typetag::deserialize(name="Rect")]
+impl OutlineDefn for RectDefn {
+  #[throws(LibraryLoadError)]
+  fn check(&self, lgd: &GroupData) -> OutlineCalculable {
+    Self::get(lgd).map(|_| OutlineCalculable{})?
+  }
+  #[throws(LibraryLoadError)]
+  fn load(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
+    Self::get(lgd)?.into()
+  }
+}
+impl RectDefn {
+  #[throws(LibraryLoadError)]
+  fn get(group: &GroupData) -> RectShape {
+    RectShape { xy: PosC{ coords:
+      match group.d.size.as_slice() {
+        &[s] => [s,s],
+        s if s.len() == 2 => s.try_into().unwrap(),
+        size => throw!(LLE::WrongNumberOfSizeDimensions
+                       { got: size.len(), expected: [1,2]}),
+      }
+    }}
+  }
+}
+
+//---------- CircleShape ----------
+
+#[derive(Clone,Copy,Debug,Serialize,Deserialize)]
+pub struct CircleShape { pub diam: f64 }
+
+#[dyn_upcast]
+impl OutlineTrait for CircleShape {
+  #[throws(IE)]
+  fn outline_path(&self, scale: f64) -> Html {
+    svg_circle_path(self.diam * scale)?
+  }
+  #[throws(IE)]
+  fn thresh_dragraise(&self) -> Option<Coord> {
+    Some((self.diam * 0.5) as Coord)
+  }
+  #[throws(IE)]
+  fn bbox_approx(&self) -> Rect {
+    let d = (self.diam * 0.5).round() as Coord;
+    Rect{ corners: [PosC::new(-d,-d), PosC::new(d, d)]}
+  }
+}
+
+#[derive(Deserialize,Debug)]
+struct CircleDefn { }
+#[typetag::deserialize(name="Circle")]
+impl OutlineDefn for CircleDefn {
+  #[throws(LibraryLoadError)]
+  fn check(&self, lgd: &GroupData) -> OutlineCalculable {
+    Self::get_size(lgd).map(|_| OutlineCalculable{})?
+  }
+  #[throws(LibraryLoadError)]
+  fn load(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
+    CircleShape {
+      diam: Self::get_size(lgd)?,
+    }.into()
+  }
+}
+impl CircleDefn {
+  #[throws(LibraryLoadError)]
+  fn get_size(group: &GroupData) -> f64 {
+    match group.d.size.as_slice() {
+      &[c] => c,
+      size => throw!(LLE::WrongNumberOfSizeDimensions
+                     { got: size.len(), expected: [1,1] }),
+    }
+  }
+}
+
+//==================== Catalogues ====================
+
+//---------- enquiries etc. ----------
+
+impl Catalogue {
   pub fn enquiry(&self) -> LibraryEnquiryData {
     LibraryEnquiryData {
       libname: self.libname.clone(),
@@ -678,64 +783,6 @@ impl Catalogue {
   }
 }
 
-#[typetag::serde(name="Lib")]
-impl PieceSpec for ItemSpec {
-  #[throws(SpecError)]
-  fn load(&self, PLA { ig,depth,.. }: PLA) -> SpecLoaded {
-    self.find_load(ig,depth)?.into()
-  }
-  #[throws(SpecError)]
-  fn load_inert(&self, ig: &Instance, depth: SpecDepth) -> SpecLoadedInert {
-    let (p, occultable) = self.find_load(ig,depth)?;
-    SpecLoadedInert { p: p as _, occultable }
-  }
-}
-
-#[typetag::serde(name="LibList")]
-impl PieceSpec for MultiSpec {
-  #[throws(SpecError)]
-  fn count(&self, _pcaliases: &PieceAliases) -> usize { self.items.len() }
-
-  #[throws(SpecError)]
-  fn load(&self, PLA { i,ig,depth,.. }: PLA) -> SpecLoaded
-  {
-    let item = self.items.get(i).ok_or_else(
-      || SpE::InternalError(format!("item {:?} from {:?}", i, &self))
-    )?;
-    let item = format!("{}{}{}", &self.prefix, item, &self.suffix);
-    let lib = self.lib.clone();
-    ItemSpec { lib, item }.find_load(ig,depth)?.into()
-  }
-}
-
-#[throws(LibraryLoadError)]
-fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
-                       group_name: &str, group: &'r toml::Value)
-                       -> Cow<'r, toml::value::Table> {
-  let gn = || format!("{}", group_name);
-  let gp = || format!("group.{}", group_name);
-
-  let group = group.as_table().ok_or_else(|| LLE::ExpectedTable(gp()))?;
-
-  let parent_name = match group.get("inherit") {
-    None => { return Cow::Borrowed(group) }
-    Some(p) => p,
-  };
-  let parent_name = parent_name
-    .as_str().ok_or_else(|| LLE::ExpectedString(format!("group.{}.inherit",
-                                                        group_name)))?;
-  let parent = groups.get(parent_name)
-    .ok_or_else(|| LLE::InheritMissingParent(gn(), parent_name.to_string()))?;
-
-  let mut build = resolve_inherit(
-    depth.checked_sub(1).ok_or_else(|| LLE::InheritDepthLimitExceeded(gn()))?,
-    groups, parent_name, parent
-  )?.into_owned();
-
-  build.extend(group.iter().map(|(k,v)| (k.clone(), v.clone())));
-  Cow::Owned(build)
-}
-
 pub trait LibrarySource {
   fn catalogue_data(&self) -> &str;
   fn svg_dir(&self) -> String;
@@ -764,6 +811,8 @@ impl LibrarySource for BuiltinLibrary<'_> {
     //throw!(MFVE::Other("builtin libraries must have explicit version now!"));
   }
 }
+
+//---------- reading ----------
 
 #[throws(LibraryLoadError)]
 pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
@@ -934,6 +983,156 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
   l
 }
 
+//---------- reading, support functions ----------
+
+#[throws(LibraryLoadError)]
+fn resolve_inherit<'r>(depth: u8, groups: &toml::value::Table,
+                       group_name: &str, group: &'r toml::Value)
+                       -> Cow<'r, toml::value::Table> {
+  let gn = || format!("{}", group_name);
+  let gp = || format!("group.{}", group_name);
+
+  let group = group.as_table().ok_or_else(|| LLE::ExpectedTable(gp()))?;
+
+  let parent_name = match group.get("inherit") {
+    None => { return Cow::Borrowed(group) }
+    Some(p) => p,
+  };
+  let parent_name = parent_name
+    .as_str().ok_or_else(|| LLE::ExpectedString(format!("group.{}.inherit",
+                                                        group_name)))?;
+  let parent = groups.get(parent_name)
+    .ok_or_else(|| LLE::InheritMissingParent(gn(), parent_name.to_string()))?;
+
+  let mut build = resolve_inherit(
+    depth.checked_sub(1).ok_or_else(|| LLE::InheritDepthLimitExceeded(gn()))?,
+    groups, parent_name, parent
+  )?.into_owned();
+
+  build.extend(group.iter().map(|(k,v)| (k.clone(), v.clone())));
+  Cow::Owned(build)
+}
+
+impl TryFrom<String> for FileList {
+  type Error = LLE;
+//  #[throws(LLE)]
+  fn try_from(s: String) -> Result<FileList,LLE> {
+    let mut o = Vec::new();
+    let mut xfields = Vec::new();
+    for (lno,l) in s.lines().enumerate() {
+      let l = l.trim();
+      if l=="" || l.starts_with('#') { continue }
+      if let Some(xfields_spec) = l.strip_prefix(':') {
+        if ! (o.is_empty() && xfields.is_empty()) {
+          throw!(LLE::FilesListFieldsMustBeAtStart(lno));
+        }
+        xfields = xfields_spec.split_ascii_whitespace()
+          .filter(|s| !s.is_empty())
+          .map(|s| s.to_owned())
+          .collect::<Vec<_>>();
+        continue;
+      }
+      let mut remain = &*l;
+      let mut n = ||{
+        let ws = remain.find(char::is_whitespace)
+          .ok_or(LLE::FilesListLineMissingWhitespace(lno))?;
+        let (l, r) = remain.split_at(ws);
+        remain = r.trim_start();
+        Ok::<_,LLE>(l.to_owned())
+      };
+      let item_spec = n()?;
+      let src_file_spec = n()?;
+      let extra_fields = xfields.iter()
+        .map(|field| Ok::<_,LLE>((field.to_owned(), n()?)))
+        .collect::<Result<_,_>>()?;
+      let desc = remain.to_owned();
+      o.push(FileData{ item_spec, src_file_spec, extra_fields, desc });
+    }
+    Ok(FileList(o))
+  }
+}
+
+//==================== Registry ====================
+
+impl Registry {
+  pub fn add(&mut self, data: Catalogue) {
+    self.libs
+      .entry(data.libname.clone()).or_default()
+      .push(data);
+  }
+
+  pub fn clear(&mut self) {
+    self.libs.clear()
+  }
+
+  pub fn iter(&self) -> impl Iterator<Item=&[Catalogue]> {
+    self.libs.values().map(|v| v.as_slice())
+  }
+}
+
+pub struct AllRegistries<'ig> {
+  global: RwLockReadGuard<'static, Option<Registry>>,
+  ig: &'ig Instance,
+}
+pub struct AllRegistriesIterator<'i> {
+  regs: &'i AllRegistries<'i>,
+  count: u8,
+}
+
+impl<'i> Iterator for AllRegistriesIterator<'i> {
+  type Item = &'i Registry;
+  fn next(&mut self) -> Option<&'i Registry> {
+    loop {
+      let r = match self.count {
+        0 => self.regs.global.as_ref(),
+        1 => Some(&self.regs.ig.local_libs),
+        _ => return None,
+      };
+      self.count += 1;
+      if r.is_some() { return r }
+    }
+  }
+}
+
+impl Instance {
+  pub fn all_shapelibs(&self) -> AllRegistries<'_> {
+    AllRegistries {
+      global: GLOBAL_SHAPELIBS.read(),
+      ig: self,
+    }
+  }
+} 
+impl<'ig> AllRegistries<'ig> {
+  pub fn iter(&'ig self) -> AllRegistriesIterator<'ig> {
+    AllRegistriesIterator {
+      regs: self,
+      count: 0,
+    }
+  }
+}
+
+pub fn lib_name_list(ig: &Instance) -> Vec<String> {
+  ig.all_shapelibs().iter().map(
+    |reg| reg.libs.keys().cloned()
+  ).flatten().collect()
+}
+
+impl<'ig> AllRegistries<'ig> {
+  pub fn all_libs(&self) -> impl Iterator<Item=&[Catalogue]> {
+    self.iter().map(|reg| &reg.libs).flatten().map(
+      |(_libname, lib)| lib.as_slice()
+    )
+  }
+  pub fn lib_name_lookup(&self, libname: &str) -> Result<&[Catalogue], SpE> {
+    for reg in self.iter() {
+      if let Some(r) = reg.libs.get(libname) { return Ok(r) }
+    }
+    return Err(SpE::LibraryNotFound);
+  }
+}
+
+//==================== configu and loading global libs ====================
+
 #[derive(Deserialize,Debug,Clone)]
 #[serde(untagged)]
 pub enum Config1 {
@@ -1030,166 +1229,5 @@ pub fn load_global_libs(libs: &[Config1]) {
     }
     info!("loaded {} shape libraries from {:?}", n, &l);
           
-  }
-}
-
-#[derive(Clone,Copy,Debug,Serialize,Deserialize)]
-pub struct CircleShape { pub diam: f64 }
-
-#[dyn_upcast]
-impl OutlineTrait for CircleShape {
-  #[throws(IE)]
-  fn outline_path(&self, scale: f64) -> Html {
-    svg_circle_path(self.diam * scale)?
-  }
-  #[throws(IE)]
-  fn thresh_dragraise(&self) -> Option<Coord> {
-    Some((self.diam * 0.5) as Coord)
-  }
-  #[throws(IE)]
-  fn bbox_approx(&self) -> Rect {
-    let d = (self.diam * 0.5).round() as Coord;
-    Rect{ corners: [PosC::new(-d,-d), PosC::new(d, d)]}
-  }
-}
-
-#[derive(Deserialize,Debug)]
-struct CircleDefn { }
-#[typetag::deserialize(name="Circle")]
-impl OutlineDefn for CircleDefn {
-  #[throws(LibraryLoadError)]
-  fn check(&self, lgd: &GroupData) -> OutlineCalculable {
-    Self::get_size(lgd).map(|_| OutlineCalculable{})?
-  }
-  #[throws(LibraryLoadError)]
-  fn load(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
-    CircleShape {
-      diam: Self::get_size(lgd)?,
-    }.into()
-  }
-}
-impl CircleDefn {
-  #[throws(LibraryLoadError)]
-  fn get_size(group: &GroupData) -> f64 {
-    match group.d.size.as_slice() {
-      &[c] => c,
-      size => throw!(LLE::WrongNumberOfSizeDimensions
-                     { got: size.len(), expected: [1,1] }),
-    }
-  }
-}
-
-#[derive(Clone,Copy,Debug,Serialize,Deserialize)]
-pub struct RectShape { pub xy: PosC<f64> }
-
-impl RectShape {
-  #[throws(CoordinateOverflow)]
-  pub fn rect(&self, centre: Pos) -> RectC<Coord> {
-    let offset = (self.xy * 0.5)?;
-    let offset = offset.try_map(
-      |c| c.floor().to_i32().ok_or(CoordinateOverflow)
-    )?;
-    let rect = RectC{ corners:
-      [-1,1].iter().map(|&signum| Ok::<_,CoordinateOverflow>({
-        (centre + (offset * signum)?)?
-      }))
-        .collect::<Result<ArrayVec<_,2>,_>>()?
-        .into_inner().unwrap()
-    };
-    rect
-  }
-
-  #[throws(CoordinateOverflow)]
-  pub fn region(&self, centre: Pos) -> Region {
-    Region::Rect(self.rect(centre)?)
-  }
-}
-
-#[dyn_upcast]
-impl OutlineTrait for RectShape {
-  #[throws(IE)]
-  fn outline_path(&self, scale: f64) -> Html {
-    let xy = (self.xy * scale)?;
-    svg_rectangle_path(xy)?
-  }
-  #[throws(IE)]
-  fn thresh_dragraise(&self) -> Option<Coord> {
-    let smallest: f64 = self.xy.coords.iter().cloned()
-      .map(OrderedFloat::from).min().unwrap().into();
-    Some((smallest * 0.5) as Coord)
-  }
-  #[throws(IE)]
-  fn bbox_approx(&self) -> Rect {
-    let pos: Pos = self.xy.map(
-      |v| ((v * 0.5).round()) as Coord
-    );
-    let neg = (-pos)?;
-    Rect{ corners: [ neg, pos ] }
-  }
-}
-
-#[derive(Deserialize,Debug)]
-struct RectDefn { }
-#[typetag::deserialize(name="Rect")]
-impl OutlineDefn for RectDefn {
-  #[throws(LibraryLoadError)]
-  fn check(&self, lgd: &GroupData) -> OutlineCalculable {
-    Self::get(lgd).map(|_| OutlineCalculable{})?
-  }
-  #[throws(LibraryLoadError)]
-  fn load(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
-    Self::get(lgd)?.into()
-  }
-}
-impl RectDefn {
-  #[throws(LibraryLoadError)]
-  fn get(group: &GroupData) -> RectShape {
-    RectShape { xy: PosC{ coords:
-      match group.d.size.as_slice() {
-        &[s] => [s,s],
-        s if s.len() == 2 => s.try_into().unwrap(),
-        size => throw!(LLE::WrongNumberOfSizeDimensions
-                       { got: size.len(), expected: [1,2]}),
-      }
-    }}
-  }
-}
-
-impl TryFrom<String> for FileList {
-  type Error = LLE;
-//  #[throws(LLE)]
-  fn try_from(s: String) -> Result<FileList,LLE> {
-    let mut o = Vec::new();
-    let mut xfields = Vec::new();
-    for (lno,l) in s.lines().enumerate() {
-      let l = l.trim();
-      if l=="" || l.starts_with('#') { continue }
-      if let Some(xfields_spec) = l.strip_prefix(':') {
-        if ! (o.is_empty() && xfields.is_empty()) {
-          throw!(LLE::FilesListFieldsMustBeAtStart(lno));
-        }
-        xfields = xfields_spec.split_ascii_whitespace()
-          .filter(|s| !s.is_empty())
-          .map(|s| s.to_owned())
-          .collect::<Vec<_>>();
-        continue;
-      }
-      let mut remain = &*l;
-      let mut n = ||{
-        let ws = remain.find(char::is_whitespace)
-          .ok_or(LLE::FilesListLineMissingWhitespace(lno))?;
-        let (l, r) = remain.split_at(ws);
-        remain = r.trim_start();
-        Ok::<_,LLE>(l.to_owned())
-      };
-      let item_spec = n()?;
-      let src_file_spec = n()?;
-      let extra_fields = xfields.iter()
-        .map(|field| Ok::<_,LLE>((field.to_owned(), n()?)))
-        .collect::<Result<_,_>>()?;
-      let desc = remain.to_owned();
-      o.push(FileData{ item_spec, src_file_spec, extra_fields, desc });
-    }
-    Ok(FileList(o))
   }
 }
