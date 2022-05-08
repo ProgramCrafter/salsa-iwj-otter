@@ -28,6 +28,35 @@ impl Default for Version {
 #[error(r#"unsupported bundle, library or spec format version "format={0}""#)]
 pub struct Unsupported(u32);
 
+#[derive(Error,Debug,Copy,Clone,Serialize,Deserialize)]
+pub struct Incompat<E> {
+  mformat: Version,
+  error: E,
+}
+impl<E> Display for Incompat<E> where E: Display {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut fmt::Formatter) {
+    if self.mformat == 1 {
+      write!(f,
+             r#"{}: not supported in format 1, maybe you forgoot "format="#,
+             self.error)?;
+    } else {
+      write!(f,
+             r#"{}: not supported with "format={}""#,
+             self.error, self.mformat)?;
+    }
+  }
+}
+impl Version {
+  pub fn incompat<E>(self, error: E) -> Incompat<E> {
+    Incompat { mformat: self, error }
+  }
+
+  pub fn err_mapper<E>(self) -> impl Fn(E) -> Incompat<E> {
+    move |error| self.incompat(error)
+  }
+}
+
 #[derive(Error,Debug,Clone,Copy,Serialize,Deserialize)]
 #[derive(Eq,PartialEq)]
 pub enum VersionError {

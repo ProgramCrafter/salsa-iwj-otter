@@ -123,11 +123,21 @@ pub enum LibraryLoadError {
                                         FilesListFieldsMustBeAtStart(usize),
   #[error("piece defines multiple faces in multiple ways")]
                                         MultipleMultipleFaceDefinitions,
+  #[error("{0}")]
+  MaterialsFormatIncompat(#[from] materials_format::Incompat<
+    LibraryLoadMFIncompat
+  >),
   #[error("{0}")]                       BadSubstitution(#[from] SubstError),
   #[error("{0}")] UnsupportedColourSpec(#[from] UnsupportedColourSpec),
   #[error("bad item name (invalid characters) in {0:?}")] BadItemName(String),
   #[error("{0:?}")] MaterialsFormatVersionError(#[from] MFVE),
 }
+
+#[derive(Error,Debug,Clone,Copy,Serialize,Deserialize)]
+pub enum LibraryLoadMFIncompat {
+  #[error("bad scale definition")] Scale,
+}
+pub use LibraryLoadMFIncompat as LLMI;
 
 #[derive(Error,Copy,Clone,Debug)]
 pub enum SubstErrorKind {
