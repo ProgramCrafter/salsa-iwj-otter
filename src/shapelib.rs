@@ -475,10 +475,8 @@ impl Catalogue {
       item_for_item: item_for.into(),
     })?;
 
-    let eh = shape_calculable.err_mapper();
-
-    let outline = group.d.outline.load(&group, sz).map_err(eh)?;
-    let xform = FaceTransform::from_group(&group.d).map_err(eh)?;
+    let (xform, outline) = group.load_shape(sz)
+      .map_err(shape_calculable.err_mapper())?;
 
     ImageLoaded {
       svgd: svg_data,
@@ -613,6 +611,19 @@ impl ShapeCalculable {
     |e| internal_logic_error(format!(
       "outline calculable but failed {} {:?}",&e,&e
     ))
+  }
+}
+
+impl GroupData {
+  #[throws(LibraryLoadError)]
+  fn check_shape(&self) -> ShapeCalculable {
+    self.d.outline.check(self)?
+  }
+  #[throws(LibraryLoadError)]
+  fn load_shape(&self, svg_sz: PosC<f64>) -> (FaceTransform, Outline) {
+    let xform = FaceTransform::from_group(&self.d)?;
+    let outline = self.d.outline.load(&self, svg_sz)?;
+    (xform, outline)
   }
 }
 
@@ -855,7 +866,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
     // We do this here rather than in the files loop because
     //  1. we want to check it even if there are no files specified
     //  2. this is OK because the group doesn't change from here on
-    let shape_calculable = group.d.outline.check(&group)?.into();
+    let shape_calculable = group.check_shape()?.into();
 
     if [
       group.d.flip,
