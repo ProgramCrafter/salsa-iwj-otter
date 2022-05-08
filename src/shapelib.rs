@@ -33,7 +33,11 @@ pub struct GroupData {
 
 #[typetag::deserialize(tag="outline")]
 pub trait OutlineDefn: Debug + Sync + Send + 'static {
-  fn check(&self, lgi: &GroupData) -> Result<ShapeCalculable,LLE>;
+  /// Success or failure must not depend on `svg_sz`
+  ///
+  /// Called to *check* the group configuration before load, but
+  /// with a dummy svg_gz of [1,1].  That must correctly predict
+  /// success with other sizes.
   fn load(&self, lgi: &GroupData, svg_sz: PosC<f64>) -> Result<Outline,LLE>;
 }
 #[derive(Debug,Clone,Copy)]
@@ -621,8 +625,12 @@ impl ShapeCalculable {
 impl GroupData {
   #[throws(LibraryLoadError)]
   fn check_shape(&self) -> ShapeCalculable {
-    self.d.outline.check(self)?
+    let _ = self.load_shape(PosC::new(
+      1.,1. /* dummy value, suffices for error check */
+    ))?;
+    ShapeCalculable{}
   }
+
   #[throws(LibraryLoadError)]
   fn load_shape(&self, svg_sz: PosC<f64>) -> (FaceTransform, Outline) {
     let xform = FaceTransform::from_group(&self.d)?;
@@ -688,10 +696,6 @@ struct RectDefn { }
 #[typetag::deserialize(name="Rect")]
 impl OutlineDefn for RectDefn {
   #[throws(LibraryLoadError)]
-  fn check(&self, lgd: &GroupData) -> ShapeCalculable {
-    Self::get(lgd).map(|_| ShapeCalculable{})?
-  }
-  #[throws(LibraryLoadError)]
   fn load(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
     Self::get(lgd)?.into()
   }
@@ -729,10 +733,6 @@ impl OutlineTrait for CircleShape {
 struct CircleDefn { }
 #[typetag::deserialize(name="Circle")]
 impl OutlineDefn for CircleDefn {
-  #[throws(LibraryLoadError)]
-  fn check(&self, lgd: &GroupData) -> ShapeCalculable {
-    Self::get_size(lgd).map(|_| ShapeCalculable{})?
-  }
   #[throws(LibraryLoadError)]
   fn load(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
     CircleShape {
