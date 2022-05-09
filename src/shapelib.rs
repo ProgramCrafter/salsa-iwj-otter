@@ -801,13 +801,19 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
       groupname: groupname.clone(),
       d, mformat,
     });
-    group.d.outline.check(&group)?;
+
+    // We do this here rather than in the files loop because
+    //  1. we want to check it even if there are no files specified
+    //  2. this is OK because the group doesn't change from here on
+    let outline_calculable = group.d.outline.check(&group)?.into();
+
     if [
       group.d.flip,
       group.d.back.is_some(),
     ].iter().filter(|x|**x).count() > 1 {
       throw!(LLE::MultipleMultipleFaceDefinitions)
     }
+
     for fe in gdefn.files.0 {
       #[throws(SubstError)]
       fn subst(before: &str, needle: &'static str, replacement: &str)
@@ -832,8 +838,6 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
           + replacement
           + rhs
       }
-
-      let outline_calculable = group.d.outline.check(&group)?.into();
 
       let item_name = format!("{}{}{}", gdefn.item_prefix,
                               fe.item_spec, gdefn.item_suffix);
