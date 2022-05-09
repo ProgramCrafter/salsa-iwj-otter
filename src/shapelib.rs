@@ -576,7 +576,8 @@ impl Catalogue {
 
 impl FaceTransform {
   #[throws(LLE)]
-  fn from_group_mf1(d: &GroupDetails) -> Self {
+  fn from_group_mf1(group: &GroupData) -> Self {
+    let d = &group.d;
     // by this point d.size has already been scaled by scale
     let scale = if ! d.orig_size.is_empty() && ! d.size.is_empty() {
       izip!(&d.orig_size, &d.size)
@@ -644,7 +645,7 @@ impl GroupData {
 
   #[throws(LibraryLoadError)]
   fn load_shape(&self, svg_sz: PosC<f64>) -> (FaceTransform, Outline) {
-    let xform = FaceTransform::from_group_mf1(&self.d)?;
+    let xform = FaceTransform::from_group_mf1(self)?;
     let outline = self.d.outline.load_mf1(&self, svg_sz)?;
     (xform, outline)
   }
