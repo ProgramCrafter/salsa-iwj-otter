@@ -38,6 +38,10 @@ pub trait OutlineDefn: Debug + Sync + Send + 'static {
   /// Called to *check* the group configuration before load, but
   /// with a dummy svg_gz of [1,1].  That must correctly predict
   /// success with other sizes.
+  fn load(&self, size: PosC<f64>) -> Outline {
+    RectShape { xy: size }.into()
+  }
+
   fn load_mf1(&self, lgi: &GroupData, svg_sz: PosC<f64>)
               -> Result<Outline,LLE>;
 }
@@ -721,12 +725,15 @@ impl OutlineTrait for RectShape {
 struct RectDefn { }
 #[typetag::deserialize(name="Rect")]
 impl OutlineDefn for RectDefn {
+  fn load(&self, size: PosC<f64>) -> Outline {
+    RectShape { xy: size }.into()
+  }
+
   #[throws(LibraryLoadError)]
   fn load_mf1(&self, group: &GroupData, _svg_sz: PosC<f64>) -> Outline {
-    RectShape {
-      xy: resolve_square_size(&group.d.size)?
-        .ok_or_else(|| group.mformat.incompat(LLMI::SizeRequired))?
-    }.into()
+    let size = resolve_square_size(&group.d.size)?
+        .ok_or_else(|| group.mformat.incompat(LLMI::SizeRequired))?;
+    self.load(size)
   }
 }
 
@@ -756,6 +763,17 @@ impl OutlineTrait for CircleShape {
 struct CircleDefn { }
 #[typetag::deserialize(name="Circle")]
 impl OutlineDefn for CircleDefn {
+  fn load(&self, size: PosC<f64>) -> Outline {
+    let diam = size
+      .coords.into_iter()
+      .map(OrderedFloat)
+      .max().unwrap().
+      into_inner();
+    CircleShape {
+      diam,
+    }.into()
+  }
+
   #[throws(LibraryLoadError)]
   fn load_mf1(&self, group: &GroupData, _svg_sz: PosC<f64>) -> Outline {
     let diam = match group.d.size.as_slice() {
