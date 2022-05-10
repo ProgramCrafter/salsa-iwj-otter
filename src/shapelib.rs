@@ -42,8 +42,7 @@ pub trait OutlineDefn: Debug + Sync + Send + 'static {
     RectShape { xy: size }.into()
   }
 
-  fn load_mf1(&self, lgi: &GroupData, svg_sz: PosC<f64>)
-              -> Result<Outline,LLE>;
+  fn load_mf1(&self, group: &GroupData) -> Result<Outline,LLE>;
 }
 #[derive(Debug,Clone,Copy)]
 pub struct ShapeCalculable { }
@@ -651,9 +650,9 @@ impl GroupData {
   }
 
   #[throws(LibraryLoadError)]
-  fn load_shape(&self, svg_sz: PosC<f64>) -> (FaceTransform, Outline) {
+  fn load_shape(&self, _svg_sz: PosC<f64>) -> (FaceTransform, Outline) {
     let xform = FaceTransform::from_group_mf1(self)?;
-    let outline = self.d.outline.shape().load_mf1(&self, svg_sz)?;
+    let outline = self.d.outline.shape().load_mf1(&self)?;
     (xform, outline)
   }
 }
@@ -730,7 +729,7 @@ impl OutlineDefn for RectDefn {
   }
 
   #[throws(LibraryLoadError)]
-  fn load_mf1(&self, group: &GroupData, _svg_sz: PosC<f64>) -> Outline {
+  fn load_mf1(&self, group: &GroupData) -> Outline {
     let size = resolve_square_size(&group.d.size)?
         .ok_or_else(|| group.mformat.incompat(LLMI::SizeRequired))?;
     self.load(size)
@@ -775,7 +774,7 @@ impl OutlineDefn for CircleDefn {
   }
 
   #[throws(LibraryLoadError)]
-  fn load_mf1(&self, group: &GroupData, _svg_sz: PosC<f64>) -> Outline {
+  fn load_mf1(&self, group: &GroupData) -> Outline {
     let diam = match group.d.size.as_slice() {
       &[c] => c,
       size => throw!(LLE::WrongNumberOfSizeDimensions
