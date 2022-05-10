@@ -85,6 +85,9 @@ pub trait Mean { fn mean(&self, other: &Self) -> Self; }
 impl Mean for i32 { fn mean(&self, other: &Self) -> Self {
   ((*self as i64 + *other as i64) / 2) as i32
 } }
+impl Mean for f64 { fn mean(&self, other: &Self) -> Self {
+  self * 0.5 + other * 0.5
+} }
 
 //---------- Pos ----------
 
