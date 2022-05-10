@@ -722,17 +722,11 @@ struct RectDefn { }
 #[typetag::deserialize(name="Rect")]
 impl OutlineDefn for RectDefn {
   #[throws(LibraryLoadError)]
-  fn load_mf1(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
-    Self::get_mf1(lgd)?.into()
-  }
-}
-impl RectDefn {
-  #[throws(LibraryLoadError)]
-  fn get_mf1(group: &GroupData) -> RectShape {
+  fn load_mf1(&self, group: &GroupData, _svg_sz: PosC<f64>) -> Outline {
     RectShape {
       xy: resolve_square_size(&group.d.size)?
         .ok_or_else(|| group.mformat.incompat(LLMI::SizeRequired))?
-    }
+    }.into()
   }
 }
 
@@ -763,20 +757,15 @@ struct CircleDefn { }
 #[typetag::deserialize(name="Circle")]
 impl OutlineDefn for CircleDefn {
   #[throws(LibraryLoadError)]
-  fn load_mf1(&self, lgd: &GroupData, _svg_sz: PosC<f64>) -> Outline {
-    CircleShape {
-      diam: Self::get_size(lgd)?,
-    }.into()
-  }
-}
-impl CircleDefn {
-  #[throws(LibraryLoadError)]
-  fn get_size(group: &GroupData) -> f64 {
-    match group.d.size.as_slice() {
+  fn load_mf1(&self, group: &GroupData, _svg_sz: PosC<f64>) -> Outline {
+    let diam = match group.d.size.as_slice() {
       &[c] => c,
       size => throw!(LLE::WrongNumberOfSizeDimensions
                      { got: size.len(), expected: [1,1] }),
-    }
+    };
+    CircleShape {
+      diam,
+    }.into()
   }
 }
 
