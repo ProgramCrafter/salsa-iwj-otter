@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR CC-BY-SA-3.0
 # There is NO WARRANTY.
 
+format=2
+
 [scraper]
 method = "none"
 
 [group.chess-board]
-size = [242, 246]
 scale = 0.38
 outline = "Rect"
 files = """
@@ -14,8 +15,7 @@ chess-board	-	the chessboard
 """
 
 [group.chess-misc]
-size = [32]
-scale = 0.38
+size = [12]
 item_prefix = "chess-"
 outline = "Circle"
 files = """
