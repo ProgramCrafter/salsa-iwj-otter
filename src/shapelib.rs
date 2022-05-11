@@ -135,6 +135,9 @@ pub enum LibraryLoadError {
   #[error("{0}")] UnsupportedColourSpec(#[from] UnsupportedColourSpec),
   #[error("bad item name (invalid characters) in {0:?}")] BadItemName(String),
   #[error("{0:?}")] MaterialsFormatVersionError(#[from] MFVE),
+
+  #[error("library {lib}: {error}")]
+  InLibrary { lib: String, error: Box<LLE> },
 }
 
 #[derive(Error,Debug,Clone,Copy,Serialize,Deserialize)]
@@ -860,6 +863,8 @@ impl LibrarySource for BuiltinLibrary<'_> {
 #[throws(LibraryLoadError)]
 pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
                       -> Catalogue {
+  (||{
+
   let toplevel: toml::Value = src.catalogue_data().parse()?;
   let toplevel = toplevel
     .as_table().ok_or_else(|| LLE::ExpectedTable(format!("toplevel")))?;
@@ -1028,7 +1033,11 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
       }
     }
   }
-  l
+
+  Ok(l)
+  })().map_err(
+    |error| LLE::InLibrary { lib: libname.into(), error: Box::new(error) }
+  )?
 }
 
 //---------- reading, support functions ----------
