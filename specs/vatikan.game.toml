@@ -17,6 +17,7 @@
 # Inforemation about game variants from:
 #  https://www.pagat.com/rummy/carousel.html
 
+format=2
 table_size = [300, 200]
 table_colour = "#bbd"
 

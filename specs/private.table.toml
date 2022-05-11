@@ -3,3 +3,5 @@
 # There is NO WARRANTY.
 
 # No ACL, so no permissions.  Only game's own account can access it.
+
+format=2

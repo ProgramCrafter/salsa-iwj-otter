@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # There is NO WARRANTY.
 
+format=2
 table_size = [180, 60]
 
 [[pieces]]

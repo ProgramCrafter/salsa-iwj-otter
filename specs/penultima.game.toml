@@ -2,6 +2,8 @@
    SPDX-License-Identifier: AGPL-3.0-or-later
    There is NO WARRANTY. #}
 
+format=2
+
 {% macro vanilla_officers() -%}
 ["R","N","B","Q","K","B","N","R"]
 {% endmacro vanilla_officers %}

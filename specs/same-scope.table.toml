@@ -2,5 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # There is NO WARRANTY.
 
+format=2
+
 [[players]]
 same_scope = true
