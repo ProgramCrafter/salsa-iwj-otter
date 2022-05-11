@@ -80,6 +80,7 @@ Build just the command line game management client `otter`
 ..........................................................
 
 ::
+
      cargo build -p otter-cli
 
 and then copy ``target/debug/otter`` onto your path.
@@ -88,6 +89,7 @@ Alternatively, you can let ``cargo`` directly install and download the
 latest released version:
 
 ::
+
      cargo install otter-cli
 
 Build just the shape library preview
