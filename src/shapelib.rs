@@ -134,7 +134,7 @@ pub enum LibraryLoadError {
   #[error("{0}")]                       BadSubstitution(#[from] SubstError),
   #[error("{0}")] UnsupportedColourSpec(#[from] UnsupportedColourSpec),
   #[error("bad item name (invalid characters) in {0:?}")] BadItemName(String),
-  #[error("{0:?}")] MaterialsFormatVersionError(#[from] MFVE),
+  #[error("{0}")] MaterialsFormatVersionError(#[from] MFVE),
 
   #[error("group {group}: {error}")]
   InGroup { group: String, error: Box<LLE> },

@@ -62,7 +62,7 @@ impl Version {
 pub enum VersionError {
   #[error("{0}")]
   Unsupported(#[from] Unsupported),
-  #[error("bad format version (must be a reasonable integer): {0}")]
+  #[error("bad format version: {0}")]
   Other(&'static str),
 }
 
