@@ -910,7 +910,7 @@ impl LibrarySource for BuiltinLibrary<'_> {
 
   #[throws(materials_format::VersionError)]
   fn default_materials_format(&self) -> materials_format::Version {
-    1.try_into().unwrap() // TODO
+    throw!(MFVE::Other("builtin libraries must have explicit version now!"));
   }
 }
 
