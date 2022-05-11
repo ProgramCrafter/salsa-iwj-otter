@@ -59,15 +59,12 @@ impl Piece {
 impl_via_ambassador!{
   #[dyn_upcast]
   impl OutlineTrait for Piece { inner() } 
-}
 
-#[dyn_upcast]
-impl PieceBaseTrait for Piece {
-  ambassador_impl_PieceBaseTrait! {body_struct(<>, _, (), (inner()), ())}
-}
-#[typetag::serde(name="FastSplit")]
-impl PieceTrait for Piece {
-  ambassador_impl_PieceTrait! {body_struct(<>, _, (), (inner()), ())}
+  #[dyn_upcast]
+  impl PieceBaseTrait for Piece { inner() }
+
+  #[typetag::serde(name="FastSplit")]
+  impl PieceTrait for Piece { inner() }
 }
 
 impl Record {

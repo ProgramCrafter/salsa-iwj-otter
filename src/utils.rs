@@ -776,10 +776,12 @@ paste!{
 #[macro_export]
 macro_rules! impl_via_ambassador{
   { 
-    $( #[ $attr:meta ] )*
-    impl $Trait:ident for $Type:ty
-    { $($how_immut:tt)* }
-  } => { paste!{
+    $(
+      $( #[ $attr:meta ] )*
+      impl $Trait:ident for $Type:ty
+      { $($how_immut:tt)* }
+    )*
+  } => { $( paste!{
     $( #[ $attr ] )*
     impl $Trait for $Type {
       [< ambassador_impl_ $Trait >]!{ body_struct( <>, dyn $Trait,
@@ -788,7 +790,7 @@ macro_rules! impl_via_ambassador{
           ()
       ) }
     }
-  } }
+  } )* }
 }
 
 #[macro_export]
