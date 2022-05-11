@@ -21,7 +21,7 @@ pub struct GroupDefn {
 #[derive(Debug,Deserialize)]
 pub struct GroupDetails {
   #[cfg(doc)] inherit: String, // handled specially
-  pub size: Vec<f64>,  // scaled when put into GroupData
+  #[serde(default)] pub size: Vec<f64>, // scaled in GroupData in mf1
   #[serde(default)] pub orig_size: Vec<f64>,
   #[serde(default)] pub centre: Option<[f64; 2]>,
   #[serde(default)] pub flip: bool,
