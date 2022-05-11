@@ -57,6 +57,12 @@ Setup
 
    and just dump the resulting ``geckodriver`` binary on your ``PATH``.
 
+5. The tests also use Nightly Rust because we use Miri to test the
+   small amount of ``unsafe`` in the Otter codebase::
+
+     rustup toolchain add nightly
+     rustup +nightly component add miri
+
 
 Full build
 ----------
