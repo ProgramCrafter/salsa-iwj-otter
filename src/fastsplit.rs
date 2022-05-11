@@ -58,15 +58,15 @@ impl Piece {
 
 #[dyn_upcast]
 impl OutlineTrait for Piece {
-  ambassador_impl_OutlineTrait! {body_struct(<>, dyn PieceTrait, (), (inner()), (inner_mut()))}
+  ambassador_impl_OutlineTrait! {body_struct(<>, _, (), (inner()), ())}
 }
 #[dyn_upcast]
 impl PieceBaseTrait for Piece {
-  ambassador_impl_PieceBaseTrait! {body_struct(<>, dyn PieceTrait, (), (inner()), (inner_mut()))}
+  ambassador_impl_PieceBaseTrait! {body_struct(<>, _, (), (inner()), ())}
 }
 #[typetag::serde(name="FastSplit")]
 impl PieceTrait for Piece {
-  ambassador_impl_PieceTrait! {body_struct(<>, dyn PieceTrait, (), (inner()), (inner_mut()))}
+  ambassador_impl_PieceTrait! {body_struct(<>, _, (), (inner()), ())}
 }
 
 impl Record {
