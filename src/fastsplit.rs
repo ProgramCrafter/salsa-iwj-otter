@@ -56,10 +56,11 @@ impl Piece {
   }
 }
 
-#[dyn_upcast]
-impl OutlineTrait for Piece {
-  ambassador_impl_OutlineTrait! {body_struct(<>, _, (), (inner()), ())}
+impl_via_ambassador!{
+  #[dyn_upcast]
+  impl OutlineTrait for Piece { inner() } 
 }
+
 #[dyn_upcast]
 impl PieceBaseTrait for Piece {
   ambassador_impl_PieceBaseTrait! {body_struct(<>, _, (), (inner()), ())}

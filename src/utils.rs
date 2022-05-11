@@ -774,6 +774,24 @@ paste!{
 }
 
 #[macro_export]
+macro_rules! impl_via_ambassador{
+  { 
+    $( #[ $attr:meta ] )*
+    impl $Trait:ident for $Type:ty
+    { $($how_immut:tt)* }
+  } => { paste!{
+    $( #[ $attr ] )*
+    impl $Trait for $Type {
+      [< ambassador_impl_ $Trait >]!{ body_struct( <>, _,
+          (),
+          ($($how_immut)*),
+          ()
+      ) }
+    }
+  } }
+}
+
+#[macro_export]
 macro_rules! trace_dbg {
   ($msg:expr $(,$val:expr)*) => {
     if log_enabled!(log::Level::Trace) {

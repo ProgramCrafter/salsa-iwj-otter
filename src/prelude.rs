@@ -136,6 +136,7 @@ pub use base_misc::*;
 pub use crate::{deref_to_field, deref_to_field_mut};
 pub use crate::ensure_eq;
 pub use crate::format_by_fmt_hex;
+pub use crate::impl_via_ambassador;
 pub use crate::matches_doesnot;
 pub use crate::trace_dbg;
 pub use crate::{want, wantok, wants, want_let, want_failed_internal};
