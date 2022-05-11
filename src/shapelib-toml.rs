@@ -4,6 +4,8 @@
 
 pub use crate::prelude::*;
 
+use shapelib::OutlineDefnEnum;
+
 #[doc(hidden)] pub type LLE = shapelib::LibraryLoadError;
 
 // At the implementation level, each loaded item contains an
@@ -30,7 +32,7 @@ pub struct GroupDetails {
   #[serde(default)] pub colours: HashMap<String, RecolourData>,
   pub desc_template: Option<String>,
   pub occulted: Option<OccultationMethod>,
-  #[serde(flatten)] pub outline: OutlineDetails,
+  pub outline: OutlineDetails,
 }
 
 #[derive(Debug,Deserialize,Copy,Clone)]
@@ -48,12 +50,12 @@ pub enum ScaleFitDetails { Fit, Cover, Stretch }
 #[serde(untagged)]
 pub enum OutlineDetails {
   Full(FullOutlineDetails), // introduced with mformat=2
-  Shape(Box<dyn shapelib::OutlineDefn>),
+  Shape(OutlineDefnEnum),
 }
 
 #[derive(Debug,Deserialize)]
 pub struct FullOutlineDetails {
-  shape: Box<dyn shapelib::OutlineDefn>,
+  shape: OutlineDefnEnum,
   #[serde(default)] size: Vec<f64>,
   #[serde(default)] scale: Option<f64>,
 }
@@ -61,9 +63,9 @@ pub struct FullOutlineDetails {
 impl OutlineDetails {
   // enum_access could perhaps do this but controlling the serde
   // would become confusing
-  pub fn shape(&self) -> &dyn shapelib::OutlineDefn { match self {
-    OutlineDetails::Full(full) => &*full.shape,
-    OutlineDetails::Shape(shape) => &**shape,
+  pub fn shape(&self) -> OutlineDefnEnum { match self {
+    OutlineDetails::Full(full) => full.shape,
+    OutlineDetails::Shape(shape) => *shape,
   }}
   pub fn size_scale(&self) -> (&[f64], Option<&f64>) { match self {
     OutlineDetails::Full(full) => (&full.size, full.scale.as_ref()),

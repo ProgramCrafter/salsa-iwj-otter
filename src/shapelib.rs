@@ -31,19 +31,6 @@ pub struct GroupData {
   #[allow(dead_code)] /*TODO*/ mformat: materials_format::Version,
 }
 
-#[typetag::deserialize(tag="outline")]
-pub trait OutlineDefn: Debug + Sync + Send + 'static {
-  /// Success or failure must not depend on `svg_sz`
-  ///
-  /// Called to *check* the group configuration before load, but
-  /// with a dummy svg_gz of [1,1].  That must correctly predict
-  /// success with other sizes.
-  fn load(&self, size: PosC<f64>) -> Outline {
-    RectShape { xy: size }.into()
-  }
-
-  fn load_mf1(&self, group: &GroupData) -> Result<Outline,LLE>;
-}
 #[derive(Debug,Clone,Copy)]
 pub struct ShapeCalculable { }
 
@@ -727,6 +714,51 @@ impl GroupDetails {
   }
 }
 
+//---------- OutlineDefn etc. ----------
+
+#[ambassador::delegatable_trait]
+pub trait OutlineDefn: Debug + Sync + Send + 'static {
+  /// Success or failure must not depend on `svg_sz`
+  ///
+  /// Called to *check* the group configuration before load, but
+  /// with a dummy svg_gz of [1,1].  That must correctly predict
+  /// success with other sizes.
+  fn load(&self, size: PosC<f64>) -> Outline {
+    RectShape { xy: size }.into()
+  }
+
+  fn load_mf1(&self, group: &GroupData) -> Result<Outline,LLE>;
+}
+
+// We used to do this via typetag and Box<dyn OutlineDefn>
+//
+// But I didnt manage to get typetag to deserialise these unit variants.
+// Instead, we have this enum and a cheesy macro to impl OutlineDefn
+// by delegating to a freshly made (static) unit struct value.
+macro_rules! outline_defns {
+  { $( $Shape:ident ),* } => { paste!{
+
+    #[derive(Deserialize,Debug,Copy,Clone,Eq,PartialEq)]
+    pub enum OutlineDefnEnum {
+      $( $Shape, )*
+    }
+
+    impl OutlineDefnEnum {
+      fn defn(self) -> &'static dyn OutlineDefn {
+        match self { $(
+          Self::$Shape => &[< $Shape Defn >] as _,
+        )* }
+      }
+    }
+
+  } }
+}
+
+outline_defns! { Circle, Rect }
+impl_via_ambassador!{
+  impl OutlineDefn for OutlineDefnEnum { defn() }
+}
+
 //---------- RectShape ----------
 
 #[derive(Clone,Copy,Debug,Serialize,Deserialize)]
@@ -780,8 +812,7 @@ impl OutlineTrait for RectShape {
 }
 
 #[derive(Deserialize,Debug)]
-struct RectDefn { }
-#[typetag::deserialize(name="Rect")]
+struct RectDefn;
 impl OutlineDefn for RectDefn {
   fn load(&self, size: PosC<f64>) -> Outline {
     RectShape { xy: size }.into()
@@ -818,8 +849,7 @@ impl OutlineTrait for CircleShape {
 }
 
 #[derive(Deserialize,Debug)]
-struct CircleDefn { }
-#[typetag::deserialize(name="Circle")]
+struct CircleDefn;
 impl OutlineDefn for CircleDefn {
   fn load(&self, size: PosC<f64>) -> Outline {
     let diam = size
