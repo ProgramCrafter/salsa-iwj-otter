@@ -142,6 +142,7 @@ WASM := wasm32-unknown-unknown
 # ?  But maybe it doesn't matter since we're very conservative and
 # only pass JsValue and a few strings across the WASM ABI.
 
+RUST_NIGHTLY_VERSION ?= +nightly
 CARGO = $(CARGO_CMD) $(RUST_VERSION)
 
 #---------- toplevel aggregate targets ----------
@@ -223,7 +224,8 @@ stamp/cargo.%-check: $(call rsrcs,.)
 	$(stamp)
 
 stamp/cargo.%-miri: $(call rsrcs,.)
-	$(CARGO) miri test --workspace $(call cr,$*)
+	$(CARGO_CMD) $(RUST_NIGHTLY_VERSION) \
+		miri test --workspace $(call cr,$*)
 	$(stamp)
 
 stamp/cargo-at.debug: $(call rsrcs,.)
