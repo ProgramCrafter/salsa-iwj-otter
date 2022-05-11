@@ -782,7 +782,7 @@ macro_rules! impl_via_ambassador{
   } => { paste!{
     $( #[ $attr ] )*
     impl $Trait for $Type {
-      [< ambassador_impl_ $Trait >]!{ body_struct( <>, _,
+      [< ambassador_impl_ $Trait >]!{ body_struct( <>, dyn $Trait,
           (),
           ($($how_immut)*),
           ()
