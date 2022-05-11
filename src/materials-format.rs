@@ -14,7 +14,7 @@ pub type Raw = u32;
 
 impl Version {
   pub const MIN:     Version = Version(1);
-  pub const MAX:     Version = Version(1);
+  pub const MAX:     Version = Version(2);
   pub const CURRENT: Version = Version::MAX;
 }
 
@@ -150,7 +150,8 @@ mod test {
 
     check(0, eus(0));
     check(1, Ok(Version(1)));
-    check(2, eus(02));
+    check(2, Ok(Version(2)));
+    check(3, eus(03));
   }
 
   #[test]
