@@ -136,6 +136,9 @@ pub enum LibraryLoadError {
   #[error("bad item name (invalid characters) in {0:?}")] BadItemName(String),
   #[error("{0:?}")] MaterialsFormatVersionError(#[from] MFVE),
 
+  #[error("group {group}: {error}")]
+  InGroup { group: String, error: Box<LLE> },
+
   #[error("library {lib}: {error}")]
   InLibrary { lib: String, error: Box<LLE> },
 }
@@ -887,6 +890,8 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
     .get("group").unwrap_or(&empty_table)
     .as_table().ok_or_else(|| LLE::ExpectedTable(format!("group")))?;
   for (groupname, gdefn) in groups {
+    (||{
+
     let gdefn = resolve_inherit(INHERIT_DEPTH_LIMIT,
                                 groups, groupname, gdefn)?;
     let gdefn: GroupDefn = TV::Table(gdefn.into_owned()).try_into()?;
@@ -1032,12 +1037,19 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
 
       }
     }
+      
+    Ok(())
+    })().map_err(|error| LLE::InGroup {
+      group: groupname.to_string(),
+      error: Box::new(error),
+    })?
   }
 
   Ok(l)
-  })().map_err(
-    |error| LLE::InLibrary { lib: libname.into(), error: Box::new(error) }
-  )?
+  })().map_err(|error| LLE::InLibrary {
+    lib: libname.into(),
+    error: Box::new(error),
+  })?
 }
 
 //---------- reading, support functions ----------
