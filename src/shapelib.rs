@@ -114,6 +114,10 @@ pub enum LibraryLoadError {
                                         FilesListFieldsMustBeAtStart(usize),
   #[error("piece defines multiple faces in multiple ways")]
                                         MultipleMultipleFaceDefinitions,
+  #[error("outline specified both size and numeric scale")]
+                                        OutlineContradictoryScale,
+  #[error("{0}")] CoordinateOverflow(#[from] CoordinateOverflow),
+
   #[error("{0}")]
   MaterialsFormatIncompat(#[from] materials_format::Incompat<
     LibraryLoadMFIncompat
@@ -692,7 +696,19 @@ impl GroupData {
         (None, SD::Stretch(s)) => of_stretch(s),
       };
 
-      let outline = self.d.outline.shape().load(size);
+      let osize = {
+        let (osize, oscale) = self.d.outline.size_scale();
+        let osize = resolve_square_size(&osize)?;
+        match (osize, oscale) {
+          (Some(osize), None         ) => osize,
+          (None,        Some(&oscale)) => (size * oscale)?,
+          (None,        None         ) => size,
+          (Some(_),     Some(_)      ) =>
+            throw!(LLE::OutlineContradictoryScale)
+        }
+      };
+
+      let outline = self.d.outline.shape().load(osize);
       (FaceTransform { scale: scale.coords, centre: centre.coords }, outline)
 
     } else {
