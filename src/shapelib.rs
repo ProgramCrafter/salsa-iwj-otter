@@ -721,7 +721,7 @@ pub trait OutlineDefn: Debug + Sync + Send + 'static {
   /// Success or failure must not depend on `svg_sz`
   ///
   /// Called to *check* the group configuration before load, but
-  /// with a dummy svg_gz of [1,1].  That must correctly predict
+  /// with a dummy svg_gz of `[1,1]`.  That must correctly predict
   /// success with other sizes.
   fn load(&self, size: PosC<f64>) -> Outline {
     RectShape { xy: size }.into()
