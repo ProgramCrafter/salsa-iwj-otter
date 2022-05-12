@@ -733,7 +733,7 @@ impl GroupDetails {
 //---------- OutlineDefn etc. ----------
 
 #[ambassador::delegatable_trait]
-pub trait OutlineDefn: Debug + Sync + Send + 'static {
+pub trait OutlineDefnTrait: Debug + Sync + Send + 'static {
   /// Success or failure must not depend on `svg_sz`
   ///
   /// Called to *check* the group configuration before load, but
@@ -760,7 +760,7 @@ macro_rules! outline_defns {
     }
 
     impl OutlineDefnEnum {
-      fn defn(self) -> &'static dyn OutlineDefn {
+      fn defn(self) -> &'static dyn OutlineDefnTrait {
         match self { $(
           Self::$Shape => &[< $Shape Defn >] as _,
         )* }
@@ -772,7 +772,7 @@ macro_rules! outline_defns {
 
 outline_defns! { Circle, Rect }
 impl_via_ambassador!{
-  impl OutlineDefn for OutlineDefnEnum { defn() }
+  impl OutlineDefnTrait for OutlineDefnEnum { defn() }
 }
 
 //---------- RectShape ----------
@@ -829,7 +829,7 @@ impl OutlineTrait for RectShape {
 
 #[derive(Deserialize,Debug)]
 struct RectDefn;
-impl OutlineDefn for RectDefn {
+impl OutlineDefnTrait for RectDefn {
   fn load(&self, size: PosC<f64>) -> Outline {
     RectShape { xy: size }.into()
   }
@@ -866,7 +866,7 @@ impl OutlineTrait for CircleShape {
 
 #[derive(Deserialize,Debug)]
 struct CircleDefn;
-impl OutlineDefn for CircleDefn {
+impl OutlineDefnTrait for CircleDefn {
   fn load(&self, size: PosC<f64>) -> Outline {
     let diam = size
       .coords.into_iter()
