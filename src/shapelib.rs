@@ -910,6 +910,7 @@ impl Catalogue {
     let mut out = vec![];
     for (k,v) in &self.items {
       if !pat.matches(k.as_str()) { continue }
+      let gpc = GPiece::dummy();
       let (loaded, _) = match
         self.load1(v, &self.libname, k.unnest(),
                    &Instance::dummy(), SpecDepth::zero())
@@ -922,7 +923,7 @@ impl Catalogue {
       let ier = ItemEnquiryData {
         lib: self.enquiry(),
         itemname: (**k).to_owned(),
-        sortkey: v.sort.to_owned(),
+        sortkey: loaded.sortkey().map(|s| s.to_owned()),
         f0bbox,
         f0desc: loaded.describe_face(default())?,
       };
