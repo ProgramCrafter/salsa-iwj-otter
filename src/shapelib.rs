@@ -1085,122 +1085,14 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
     }
 
     for fe in gdefn.files.0 {
-      #[throws(SubstError)]
-      fn subst(before: &str, needle: &'static str, replacement: &str)
-               -> String {
-        use SubstErrorKind as SEK;
-        let err = |kind| SubstError { kind, input: before.to_string() };
-        let mut matches = before.match_indices(needle);
-        let m1 = matches.next().ok_or_else(|| err(SEK::MissingToken(needle)))?;
-        if matches.next().is_some() { Err(err(SEK::RepeatedToken(needle)))?; }
-        let mut lhs = &before[0.. m1.0];
-        let mut rhs = &before[m1.0 + m1.1.len() ..];
-        if replacement.is_empty() {
-          let lhs_trimmed = lhs.trim_end();
-          if lhs_trimmed.len() != lhs.len() {
-            lhs = lhs_trimmed;
-          } else {
-            rhs = rhs.trim_start();
-          } 
-        }
-        lhs
-          .to_owned()
-          + replacement
-          + rhs
-      }
-
-      let item_name = format!("{}{}{}", gdefn.item_prefix,
-                              fe.item_spec, gdefn.item_suffix);
-      let item_name: GoodItemName = item_name.try_into()?;
-
-      let sort = match (gdefn.sort.as_str(), fe.extra_fields.get("sort")) {
-        ("", None) => None,
-        (gd,  None) => Some(gd.to_string()),
-        ("", Some(ef)) => Some(ef.to_string()),
-        (gd, Some(ef)) => Some(subst(gd, "_s", ef)?),
-      };
-
-      let occ = match &group.d.occulted {
-        None => OccData::None,
-        Some(OccultationMethod::ByColour { colour }) => {
-          if ! group.d.colours.contains_key(colour.0.as_str()) {
-            throw!(LLE::OccultationColourMissing(colour.0.clone()));
-          }
-          let item_name = subst(item_name.as_str(), "_c", &colour.0)?;
-          let src_name  = subst(&fe.src_file_spec, "_c", &colour.0);
-          let item_name: GoodItemName = item_name.try_into()?;
-          let item_name = SvgBaseName::note(
-            src, item_name, src_name.as_ref().map(|s| s.as_str()),
-          )?;
-          let desc = subst(&fe.desc, "_colour", "")?.to_html();
-          OccData::Internal(Arc::new(OccData_Internal {
-            item_name,
-            loaded: default(),
-            desc,
-          }))
-        },
-        Some(OccultationMethod::ByBack { ilk }) => {
-          if group.d.back.is_none() {
-            throw!(LLE::BackMissingForOccultation)
-          }
-          OccData::Back(ilk.clone())
-        },
-      };
-
-      let mut add1 = |
-        item_name: &GoodItemName,
-        src_name: Result<&str,&SubstError>,
-        sort, 
-        desc: &str
-      | {
-        let desc = if let Some(desc_template) = &group.d.desc_template {
-          subst(desc_template, "_desc", desc)?.to_html()
-        } else {
-          desc.to_html()
-        };
-        let idata = ItemData {
-          group: group.clone(),
-          occ: occ.clone(),
-          sort,
-          shape_calculable,
-          d: Arc::new(ItemDetails { desc }),
-        };
-        type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
-        let new_item = SvgBaseName::note(
-          src, item_name.clone(), src_name.clone()
-        )?;
-        match l.items.entry(new_item) {
-          H::Occupied(oe) => throw!(LLE::DuplicateItem {
-            item: item_name.as_str().to_owned(),
-            group1: oe.get().group().groupname.clone(),
-            group2: groupname.clone(),
-          }),
-          H::Vacant(ve) => {
-            debug!("loaded shape {} {}", libname, item_name.as_str());
-            ve.insert(CatEnt::Item(idata));
-          }
-        };
-        Ok::<_,LLE>(())
-      };
-
-      if group.d.colours.is_empty() {
-        add1(&item_name, Ok(fe.src_file_spec.as_str()),
-             sort, &fe.desc.clone())?;
-      } else {
-        for (colour, recolourdata) in &group.d.colours {
-          let t_sort = sort.as_ref().map(
-            |s| subst(s, "_c", colour)).transpose()?;
-          let c_abbrev = &recolourdata.abbrev;
-          let t_item_name = subst(item_name.as_str(), "_c", c_abbrev)?;
-          let t_src_name = subst(&fe.src_file_spec, "_c", c_abbrev);
-          let t_src_name = t_src_name.as_ref().map(|s| s.as_str());
-          let t_desc = subst(&fe.desc, "_colour", colour)?;
-          add1(&t_item_name.try_into()?, t_src_name, t_sort, &t_desc)?;
-        }
-
-      }
+      process_files_entry(
+        libname, src, &mut l,
+        groupname,
+        &gdefn.item_prefix, &gdefn.item_suffix, &gdefn.sort,
+        &group, shape_calculable, fe
+      )?;
     }
-      
+
     Ok(())
     })().map_err(|error| LLE::InGroup {
       group: groupname.to_string(),
@@ -1213,6 +1105,130 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
     lib: libname.into(),
     error: Box::new(error),
   })?
+}
+
+#[throws(SubstError)]
+fn subst(before: &str, needle: &'static str, replacement: &str)
+         -> String {
+  use SubstErrorKind as SEK;
+  let err = |kind| SubstError { kind, input: before.to_string() };
+  let mut matches = before.match_indices(needle);
+  let m1 = matches.next().ok_or_else(|| err(SEK::MissingToken(needle)))?;
+  if matches.next().is_some() { Err(err(SEK::RepeatedToken(needle)))?; }
+  let mut lhs = &before[0.. m1.0];
+  let mut rhs = &before[m1.0 + m1.1.len() ..];
+  if replacement.is_empty() {
+    let lhs_trimmed = lhs.trim_end();
+    if lhs_trimmed.len() != lhs.len() {
+      lhs = lhs_trimmed;
+    } else {
+      rhs = rhs.trim_start();
+    } 
+  }
+  lhs
+    .to_owned()
+    + replacement
+    + rhs
+}
+
+#[throws(LibraryLoadError)]
+fn process_files_entry(
+  libname: &str, src: &mut dyn LibrarySource, l: &mut Catalogue,
+  groupname: &str,
+  item_prefix: &str, item_suffix: &str, sort: &str,
+  group: &Arc<GroupData>, shape_calculable: ShapeCalculable,
+  fe: FileData
+) {
+  let item_name = format!("{}{}{}", item_prefix,
+                          fe.item_spec, item_suffix);
+  let item_name: GoodItemName = item_name.try_into()?;
+
+  let sort = match (sort, fe.extra_fields.get("sort")) {
+    ("", None) => None,
+    (gd,  None) => Some(gd.to_string()),
+    ("", Some(ef)) => Some(ef.to_string()),
+    (gd, Some(ef)) => Some(subst(gd, "_s", ef)?),
+  };
+
+  let occ = match &group.d.occulted {
+    None => OccData::None,
+    Some(OccultationMethod::ByColour { colour }) => {
+      if ! group.d.colours.contains_key(colour.0.as_str()) {
+        throw!(LLE::OccultationColourMissing(colour.0.clone()));
+      }
+      let item_name = subst(item_name.as_str(), "_c", &colour.0)?;
+      let src_name  = subst(&fe.src_file_spec, "_c", &colour.0);
+      let item_name: GoodItemName = item_name.try_into()?;
+      let item_name = SvgBaseName::note(
+        src, item_name, src_name.as_ref().map(|s| s.as_str()),
+      )?;
+      let desc = subst(&fe.desc, "_colour", "")?.to_html();
+      OccData::Internal(Arc::new(OccData_Internal {
+        item_name,
+        loaded: default(),
+        desc,
+      }))
+    },
+    Some(OccultationMethod::ByBack { ilk }) => {
+      if group.d.back.is_none() {
+        throw!(LLE::BackMissingForOccultation)
+      }
+      OccData::Back(ilk.clone())
+    },
+  };
+
+  let mut add1 = |
+    item_name: &GoodItemName,
+    src_name: Result<&str,&SubstError>,
+    sort, 
+    desc: &str
+  | {
+    let desc = if let Some(desc_template) = &group.d.desc_template {
+      subst(desc_template, "_desc", desc)?.to_html()
+    } else {
+      desc.to_html()
+    };
+    let idata = ItemData {
+      group: group.clone(),
+      occ: occ.clone(),
+      sort,
+      shape_calculable,
+      d: Arc::new(ItemDetails { desc }),
+    };
+    type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
+    let new_item = SvgBaseName::note(
+      src, item_name.clone(), src_name.clone()
+    )?;
+    match l.items.entry(new_item) {
+      H::Occupied(oe) => throw!(LLE::DuplicateItem {
+        item: item_name.as_str().to_owned(),
+        group1: oe.get().group().groupname.clone(),
+        group2: groupname.to_owned(),
+      }),
+      H::Vacant(ve) => {
+        debug!("loaded shape {} {}", libname, item_name.as_str());
+        ve.insert(CatEnt::Item(idata));
+      }
+    };
+    Ok::<_,LLE>(())
+  };
+
+  if group.d.colours.is_empty() {
+    add1(&item_name, Ok(fe.src_file_spec.as_str()),
+         sort, &fe.desc.clone())?;
+  } else {
+    for (colour, recolourdata) in &group.d.colours {
+      let t_sort = sort.as_ref().map(
+        |s| subst(s, "_c", colour)).transpose()?;
+      let c_abbrev = &recolourdata.abbrev;
+      let t_item_name = subst(item_name.as_str(), "_c", c_abbrev)?;
+      let t_src_name = subst(&fe.src_file_spec, "_c", c_abbrev);
+      let t_src_name = t_src_name.as_ref().map(|s| s.as_str());
+      let t_desc = subst(&fe.desc, "_colour", colour)?;
+      add1(&t_item_name.try_into()?, t_src_name, t_sort, &t_desc)?;
+    }
+
+  }
 }
 
 //---------- reading, support functions ----------
