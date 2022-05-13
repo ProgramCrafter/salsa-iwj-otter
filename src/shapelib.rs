@@ -51,6 +51,8 @@ struct ItemDetails {
 #[derive(Debug,Clone)]
 enum CatalogueEntry {
   Item(ItemData),
+  #[allow(dead_code)] // XXX
+  Magic { group: Arc<GroupData>, spec: Arc<dyn PieceSpec> },
 }
 use CatalogueEntry as CatEnt;
 
@@ -433,15 +435,19 @@ impl ItemSpec {
   }
 
   #[throws(SpecError)]
-  fn find_load_general<MUN,T>(&self, ig: &Instance, depth: SpecDepth,
-                                  mundanef: MUN) -> T
+  fn find_load_general<MAG,MUN,T>(&self, ig: &Instance, depth: SpecDepth,
+                                      mundanef: MUN, magicf: MAG) -> T
   where MUN: FnOnce(ItemSpecLoaded) -> Result<T, SpE>,
+        MAG: FnOnce(&Arc<dyn PieceSpec>) -> Result<T, SpE>,
   {
     self.find_then(ig, |lib, item, catent| Ok(match catent {
       CatEnt::Item(idata) => {
         let loaded = lib.load1(idata, &self.lib, item.unnest::<str>(),
                                ig, depth)?;
         mundanef(loaded)?
+      },
+      CatEnt::Magic { spec,.. } => {
+        magicf(spec)?
       },
     }))?
   }
@@ -451,6 +457,7 @@ impl ItemSpec {
                            depth: SpecDepth) -> ItemSpecLoaded {
     self.find_load_general(
       ig, depth, |loaded| Ok(loaded),
+      |_| Err(SpE::ComplexPieceWhereInertRequired)
     )?
   }
 
@@ -471,6 +478,7 @@ impl PieceSpec for ItemSpec {
     self.find_load_general(
       pla.ig, pla.depth,
       |loaded| Ok(loaded.into()),
+      |magic| magic.load(pla),
     )?
   }
   #[throws(SpecError)]
@@ -667,6 +675,7 @@ fn resolve_square_size<T:Copy>(size: &[T]) -> Option<PosC<T>> {
 impl CatalogueEntry {
   fn group(&self) -> &Arc<GroupData> { match self {
     CatEnt::Item(item) => &item.group,
+    CatEnt::Magic{group,..} => group,
   } }
 }
 
@@ -949,9 +958,10 @@ impl Catalogue {
     let pat = glob::Pattern::new(pat).map_err(|pe| ME::BadGlob {
       pat: pat.to_string(), msg: pe.msg.to_string() })?;
     let mut out = vec![];
+    let ig_dummy = Instance::dummy();
     for (k,v) in &self.items {
       if !pat.matches(k.as_str()) { continue }
-      let gpc = GPiece::dummy();
+      let mut gpc = GPiece::dummy();
       let loaded = match (|| Ok(match v {
         CatEnt::Item(item) => {
           let (loaded, _) =
@@ -959,6 +969,14 @@ impl Catalogue {
                        &Instance::dummy(), SpecDepth::zero())?;
           loaded as Box<dyn PieceTrait>
         },
+        CatEnt::Magic{spec,..} => {
+          spec.load(PieceLoadArgs {
+            i: 0,
+            gpc: &mut gpc,
+            ig: &ig_dummy,
+            depth: SpecDepth::zero(),
+          })?.p
+        }
       }))() {
         Err(SpecError::LibraryItemNotFound(_)) => continue,
         e@ Err(_) => e?,
