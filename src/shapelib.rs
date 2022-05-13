@@ -39,7 +39,7 @@ pub struct Catalogue {
   libname: String,
   dirname: String,
   bundle: Option<bundles::Id>,
-  items: HashMap<SvgBaseName<GoodItemName>, ItemData>,
+  items: HashMap<SvgBaseName<GoodItemName>, CatalogueEntry>,
 }
 
 #[derive(Debug,Clone)]
@@ -47,6 +47,12 @@ pub struct Catalogue {
 struct ItemDetails {
   desc: Html,
 }
+
+#[derive(Debug,Clone)]
+enum CatalogueEntry {
+  Item(ItemData),
+}
+use CatalogueEntry as CatEnt;
 
 #[derive(Debug,Clone)]
 struct ItemData {
@@ -414,7 +420,7 @@ impl From<ItemSpecLoaded> for SpecLoaded {
 impl ItemSpec {
   #[throws(SpecError)]
   fn find_then<F,T>(&self, ig: &Instance, then: F) -> T
-  where F: FnOnce(&Catalogue, &SvgBaseName<GoodItemName>, &ItemData)
+  where F: FnOnce(&Catalogue, &SvgBaseName<GoodItemName>, &CatalogueEntry)
                   -> Result<T, SpecError>
   {
     let regs = ig.all_shapelibs();
@@ -427,11 +433,25 @@ impl ItemSpec {
   }
 
   #[throws(SpecError)]
-  fn find_load(&self, ig: &Instance,
-                   depth: SpecDepth) -> ItemSpecLoaded {
-    self.find_then(ig, |lib, item, idata| {
-      lib.load1(idata, &self.lib, item.unnest::<str>(), ig, depth)
-    })?
+  fn find_load_general<MUN,T>(&self, ig: &Instance, depth: SpecDepth,
+                                  mundanef: MUN) -> T
+  where MUN: FnOnce(ItemSpecLoaded) -> Result<T, SpE>,
+  {
+    self.find_then(ig, |lib, item, catent| Ok(match catent {
+      CatEnt::Item(idata) => {
+        let loaded = lib.load1(idata, &self.lib, item.unnest::<str>(),
+                               ig, depth)?;
+        mundanef(loaded)?
+      },
+    }))?
+  }
+
+  #[throws(SpecError)]
+  pub fn find_load_mundane(&self, ig: &Instance,
+                           depth: SpecDepth) -> ItemSpecLoaded {
+    self.find_load_general(
+      ig, depth, |loaded| Ok(loaded),
+    )?
   }
 
   fn from_strs<L,I>(lib: &L, item: &I) -> Self
@@ -447,12 +467,15 @@ impl ItemSpec {
 #[typetag::serde(name="Lib")]
 impl PieceSpec for ItemSpec {
   #[throws(SpecError)]
-  fn load(&self, PLA { ig,depth,.. }: PLA) -> SpecLoaded {
-    self.find_load(ig,depth)?.into()
+  fn load(&self, pla: PLA) -> SpecLoaded {
+    self.find_load_general(
+      pla.ig, pla.depth,
+      |loaded| Ok(loaded.into()),
+    )?
   }
   #[throws(SpecError)]
   fn load_inert(&self, ig: &Instance, depth: SpecDepth) -> SpecLoadedInert {
-    let (p, occultable) = self.find_load(ig,depth)?;
+    let (p, occultable) = self.find_load_mundane(ig,depth)?;
     SpecLoadedInert { p: p as _, occultable }
   }
 }
@@ -463,14 +486,15 @@ impl PieceSpec for MultiSpec {
   fn count(&self, _pcaliases: &PieceAliases) -> usize { self.items.len() }
 
   #[throws(SpecError)]
-  fn load(&self, PLA { i,ig,depth,.. }: PLA) -> SpecLoaded
+  fn load(&self, pla: PLA) -> SpecLoaded
   {
+    let PLA { i,.. } = pla;
     let item = self.items.get(i).ok_or_else(
       || SpE::InternalError(format!("item {:?} from {:?}", i, &self))
     )?;
     let item = format!("{}{}{}", &self.prefix, item, &self.suffix);
     let lib = self.lib.clone();
-    ItemSpec { lib, item }.find_load(ig,depth)?.into()
+    ItemSpec { lib, item }.load(pla)?
   }
 }
 
@@ -638,6 +662,12 @@ fn resolve_square_size<T:Copy>(size: &[T]) -> Option<PosC<T>> {
     _ => throw!(LLE::WrongNumberOfSizeDimensions
                 { got: size.len(), expected: [1,2]}),
   } })
+}
+
+impl CatalogueEntry {
+  fn group(&self) -> &Arc<GroupData> { match self {
+    CatEnt::Item(item) => &item.group,
+  } }
 }
 
 //---------- Outlines ----------
@@ -922,10 +952,14 @@ impl Catalogue {
     for (k,v) in &self.items {
       if !pat.matches(k.as_str()) { continue }
       let gpc = GPiece::dummy();
-      let (loaded, _) = match
-        self.load1(v, &self.libname, k.unnest(),
-                   &Instance::dummy(), SpecDepth::zero())
-      {
+      let loaded = match (|| Ok(match v {
+        CatEnt::Item(item) => {
+          let (loaded, _) =
+            self.load1(item, &self.libname, k.unnest(),
+                       &Instance::dummy(), SpecDepth::zero())?;
+          loaded as Box<dyn PieceTrait>
+        },
+      }))() {
         Err(SpecError::LibraryItemNotFound(_)) => continue,
         e@ Err(_) => e?,
         Ok(r) => r,
@@ -1120,12 +1154,12 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
         match l.items.entry(new_item) {
           H::Occupied(oe) => throw!(LLE::DuplicateItem {
             item: item_name.as_str().to_owned(),
-            group1: oe.get().group.groupname.clone(),
+            group1: oe.get().group().groupname.clone(),
             group2: groupname.clone(),
           }),
           H::Vacant(ve) => {
             debug!("loaded shape {} {}", libname, item_name.as_str());
-            ve.insert(idata);
+            ve.insert(CatEnt::Item(idata));
           }
         };
         Ok::<_,LLE>(())
