@@ -925,7 +925,7 @@ impl Catalogue {
         itemname: (**k).to_owned(),
         sortkey: loaded.sortkey().map(|s| s.to_owned()),
         f0bbox,
-        f0desc: loaded.describe_face(default())?,
+        f0desc: PieceTrait::describe_html(&*loaded, &gpc, &default())?,
       };
       out.push(ier);
     }
