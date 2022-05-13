@@ -156,7 +156,7 @@ it is a good idea for each file to contain its own ``format=``
 setting, so that the file doesn't change meaning when put into a
 different bundle with a different overall format version.
 
-The current version is ``format=1``.
+The current version is ``format=2``.
 
 This table gives the format versions,
 and the corresponding versions of Otter.
