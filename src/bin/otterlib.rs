@@ -96,8 +96,14 @@ fn preview(items: Vec<ItemForOutput>) {
     let spec = ItemSpec::from(&it);
     let sortkey = it.sortkey;
     (||{
-      let (p, _occultable) = spec.clone()
-        .find_load(&ig_dummy, SpecDepth::zero())
+      let mut gpc = GPiece::dummy();
+      let SpecLoaded { p, .. } = spec.clone()
+        .load(PieceLoadArgs {
+          ig: &ig_dummy,
+          gpc: &mut gpc,
+          depth: SpecDepth::zero(),
+          i: 0,
+        })
         .context("load")?;
       // todo show occulted version too
       let mut uos = vec![];

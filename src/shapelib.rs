@@ -399,7 +399,7 @@ impl InertPieceTrait for Item {
 
 //---------- ItemSpec, MultiSpec ----------
 
-pub type ItemSpecLoaded = (Box<Item>, PieceSpecLoadedOccultable);
+type ItemSpecLoaded = (Box<Item>, PieceSpecLoadedOccultable);
 
 impl From<ItemSpecLoaded> for SpecLoaded {
   fn from((p, occultable):  ItemSpecLoaded) -> SpecLoaded {
@@ -413,7 +413,7 @@ impl From<ItemSpecLoaded> for SpecLoaded {
 
 impl ItemSpec {
   #[throws(SpecError)]
-  pub fn find_load(&self, ig: &Instance, depth: SpecDepth) -> ItemSpecLoaded {
+  fn find_load(&self, ig: &Instance, depth: SpecDepth) -> ItemSpecLoaded {
     let regs = ig.all_shapelibs();
     let libs = regs.lib_name_lookup(&self.lib)?;
     let (lib, (item, idata)) = libs.iter().rev().find_map(
