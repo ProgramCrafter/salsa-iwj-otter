@@ -51,7 +51,6 @@ struct ItemDetails {
 #[derive(Debug,Clone)]
 enum CatalogueEntry {
   Item(ItemData),
-  #[allow(dead_code)] // XXX
   Magic { group: Arc<GroupData>, spec: Arc<dyn PieceSpec> },
 }
 use CatalogueEntry as CatEnt;
@@ -134,6 +133,9 @@ pub enum LibraryLoadError {
   #[error("{0}")] UnsupportedColourSpec(#[from] UnsupportedColourSpec),
   #[error("bad item name (invalid characters) in {0:?}")] BadItemName(String),
   #[error("{0}")] MaterialsFormatVersionError(#[from] MFVE),
+
+  #[error("could not parse template-expaneded TOML: {error} (in {toml:?}")]
+  TemplatedTomlError { toml: String, error: toml_de::Error },
 
   #[error("group {group}: {error}")]
   InGroup { group: String, error: Box<LLE> },
@@ -1228,6 +1230,36 @@ fn process_files_entry(
       d: Arc::new(ItemDetails { desc }),
     };
     l.add_item(src, src_name, &item_name, CatEnt::Item(idata))?;
+
+    if let Some(magic) = &group.d.magic { 
+      // Ideally the toml crate would have had let us build an inline
+      // table.  But in fact it won't even toml-escape the strings without
+      // a fuss, so we bodge it with strings:
+      let image_table = format!(
+        r#"{{ type="Lib", lib="{}", item="{}" }}"#,
+        TomlQuote(&l.libname), TomlQuote(item_name.as_str())
+      );
+
+      let item_name = subst_item_name(&format_item_name(
+        &magic.item_prefix, &fe, &magic.item_suffix)?)?;
+
+      let spec = regex!(r#"(?m)(^[\sA-Za-z0-9._-]+=\s*)!\s*$"#)
+        .replace_all(&magic.template, |caps: &regex::Captures| {
+          format!("{}{}", caps.get(1).unwrap().as_str(), &image_table)
+        });
+
+      let spec: Box<dyn PieceSpec> = toml_de::from_str(&spec)
+        .map_err(|error| LLE::TemplatedTomlError {
+          toml: spec.into_owned(),
+          error,
+        })?;
+
+      l.add_item(src, src_name, &item_name, CatEnt::Magic {
+        group: group.clone(),
+        spec: spec.into(),
+      })?;
+    }
+
     Ok::<_,LLE>(())
   };
 

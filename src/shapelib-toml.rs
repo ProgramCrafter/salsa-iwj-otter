@@ -33,6 +33,14 @@ pub struct GroupDetails {
   pub desc_template: Option<String>,
   pub occulted: Option<OccultationMethod>,
   pub outline: OutlineDetails,
+  #[serde(default)] pub magic: Option<MagicDetails>,
+}
+
+#[derive(Debug,Deserialize)]
+pub struct MagicDetails {
+  #[serde(default)] pub item_prefix: String,
+  #[serde(default)] pub item_suffix: String,
+  pub template: String,
 }
 
 #[derive(Debug,Deserialize,Copy,Clone)]
