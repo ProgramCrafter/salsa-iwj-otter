@@ -413,14 +413,25 @@ impl From<ItemSpecLoaded> for SpecLoaded {
 
 impl ItemSpec {
   #[throws(SpecError)]
-  fn find_load(&self, ig: &Instance, depth: SpecDepth) -> ItemSpecLoaded {
+  fn find_then<F,T>(&self, ig: &Instance, then: F) -> T
+  where F: FnOnce(&Catalogue, &SvgBaseName<GoodItemName>, &ItemData)
+                  -> Result<T, SpecError>
+  {
     let regs = ig.all_shapelibs();
     let libs = regs.lib_name_lookup(&self.lib)?;
     let (lib, (item, idata)) = libs.iter().rev().find_map(
       |lib| Some((lib, lib.items.get_key_value(self.item.as_str())?))
     )
       .ok_or_else(|| SpE::LibraryItemNotFound(self.clone()))?;
-    lib.load1(idata, &self.lib, item.unnest::<str>(), ig, depth)?
+    then(lib, item, idata)?
+  }
+
+  #[throws(SpecError)]
+  fn find_load(&self, ig: &Instance,
+                   depth: SpecDepth) -> ItemSpecLoaded {
+    self.find_then(ig, |lib, item, idata| {
+      lib.load1(idata, &self.lib, item.unnest::<str>(), ig, depth)
+    })?
   }
 
   fn from_strs<L,I>(lib: &L, item: &I) -> Self
