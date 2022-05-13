@@ -970,7 +970,7 @@ impl Catalogue {
         itemname: (**k).to_owned(),
         sortkey: loaded.sortkey().map(|s| s.to_owned()),
         f0bbox,
-        f0desc: PieceTrait::describe_html(&*loaded, &gpc, &default())?,
+        f0desc: loaded.describe_html(&gpc, &default())?,
       };
       out.push(ier);
     }
