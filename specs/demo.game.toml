@@ -74,14 +74,9 @@ image.faces = ["#ccccff", "#ccffcc"]
 
 [[pieces]]
 pos = [140, 15]
-type = "Die"
-labels = 6
-desc = "a blue die"
-occult.ilk = "d6-blue"
-occult.label = "?"
-image.type = "Lib"
-image.lib = "edited"
-image.item = "die-image-d6-blue"
+type = "Lib"
+lib = "edited"
+item = "die-d6-blue"
 
 [[pieces]]
 pos = [125, 15]
