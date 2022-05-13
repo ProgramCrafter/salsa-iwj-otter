@@ -1086,8 +1086,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
 
     for fe in gdefn.files.0 {
       process_files_entry(
-        libname, src, &mut l,
-        groupname,
+        src, &mut l,
         &gdefn.item_prefix, &gdefn.item_suffix, &gdefn.sort,
         &group, shape_calculable, fe
       )?;
@@ -1133,8 +1132,7 @@ fn subst(before: &str, needle: &'static str, replacement: &str)
 
 #[throws(LibraryLoadError)]
 fn process_files_entry(
-  libname: &str, src: &mut dyn LibrarySource, l: &mut Catalogue,
-  groupname: &str,
+  src: &mut dyn LibrarySource, l: &mut Catalogue,
   item_prefix: &str, item_suffix: &str, sort: &str,
   group: &Arc<GroupData>, shape_calculable: ShapeCalculable,
   fe: FileData
@@ -1195,21 +1193,7 @@ fn process_files_entry(
       shape_calculable,
       d: Arc::new(ItemDetails { desc }),
     };
-    type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
-    let new_item = SvgBaseName::note(
-      src, item_name.clone(), src_name.clone()
-    )?;
-    match l.items.entry(new_item) {
-      H::Occupied(oe) => throw!(LLE::DuplicateItem {
-        item: item_name.as_str().to_owned(),
-        group1: oe.get().group().groupname.clone(),
-        group2: groupname.to_owned(),
-      }),
-      H::Vacant(ve) => {
-        debug!("loaded shape {} {}", libname, item_name.as_str());
-        ve.insert(CatEnt::Item(idata));
-      }
-    };
+    l.add_item(src, src_name, item_name, CatEnt::Item(idata))?;
     Ok::<_,LLE>(())
   };
 
@@ -1228,6 +1212,31 @@ fn process_files_entry(
       add1(&t_item_name.try_into()?, t_src_name, t_sort, &t_desc)?;
     }
 
+  }
+}
+
+impl Catalogue {
+  #[throws(LLE)]
+  fn add_item(&mut self,
+              src: &mut dyn LibrarySource, src_name: Result<&str,&SubstError>,
+              item_name: &GoodItemName, catent: CatalogueEntry) {
+    type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
+
+    let new_item = SvgBaseName::note(
+      src, item_name.clone(), src_name.clone()
+    )?;
+
+    match self.items.entry(new_item) {
+      H::Occupied(oe) => throw!(LLE::DuplicateItem {
+        item: item_name.as_str().to_owned(),
+        group1: oe.get().group().groupname.clone(),
+        group2: catent.group().groupname.clone(),
+      }),
+      H::Vacant(ve) => {
+        debug!("loaded shape {} {}", &self.libname, item_name.as_str());
+        ve.insert(catent);
+      }
+    };
   }
 }
 
