@@ -74,6 +74,7 @@ pub use fs2::FileExt;
 pub use if_chain::if_chain;
 pub use index_vec::{define_index_type, index_vec, IndexSlice, IndexVec};
 pub use itertools::{chain, iproduct, izip, zip_eq, EitherOrBoth, Itertools};
+pub use lazy_regex::regex;
 pub use lazy_static::lazy_static;
 pub use log::{debug, error, info, trace, warn};
 pub use log::{log, log_enabled};
