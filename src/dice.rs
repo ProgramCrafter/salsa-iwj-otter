@@ -433,6 +433,17 @@ impl PieceTrait for Die {
                         , _: &InstanceRef) {
     self.cooldown_cleanup_hook(&mut gs.pieces, piece)?;
   }
+
+  #[throws(IE)]
+  fn loaded_hook_preview(&self, gpc: &mut GPiece) {
+    let state: &mut State = gpc.xdata.get_mut_exp()?;
+    state.cooldown_expires = Some(FutureInstant::try_from(
+      Duration::from_secs_f64(
+        self.cooldown_time.as_secs_f64() * 0.25
+      )
+    )?)
+//.map_err(|e| internal_error_bydebug(&e))?
+  }
 }
 
 #[typetag::serde(name="Die")]

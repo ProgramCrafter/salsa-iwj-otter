@@ -110,6 +110,7 @@ fn preview(opts: &Opts, items: Vec<ItemForOutput>) {
           i: 0,
         })
         .context("load")?;
+      p.loaded_hook_preview(&mut gpc)?;
       // todo show occulted version too
       let mut uos = vec![];
       p.add_ui_operations(VIS, &mut uos, &GameState::dummy(), &GPiece::dummy())

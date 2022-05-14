@@ -236,6 +236,10 @@ pub trait PieceTrait: PieceBaseTrait + Downcast + Send + Debug + 'static {
     Ok(())
   }
 
+  fn loaded_hook_preview(&self, _gpc: &mut GPiece) -> Result<(),IE> {
+    Ok(())
+  }
+
   /// Not called if the whole game is destroyed.
   /// You can use Drop of course but it's not usually much use since
   /// you don't have a reference to the game or anything.
