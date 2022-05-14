@@ -1442,7 +1442,7 @@ impl CommandStream<'_> {
   #[throws(CSE)]
   pub fn mainloop(&mut self) {
     loop {
-      use MgmtChannelReadError::*;
+      use PacketFrameReadError::*;
       match {
         self.chan.read.inner_mut().set_timeout(Some(IDLE_TIMEOUT));
         let r = self.chan.read.read_withbulk::<MgmtCommand>();

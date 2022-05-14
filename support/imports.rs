@@ -58,7 +58,7 @@ pub use crate::childio;
 pub use crate::debugmutex::DebugIdentify;
 pub use crate::packetframe::{FrameReader, FrameWriter, ReadFrame, WriteFrame};
 pub use crate::packetframe::{ReadExt, ResponseWriter};
-pub use crate::packetframe::{MgmtChannelReadError, MgmtChannelWriteError};
+pub use crate::packetframe::{PacketFrameReadError, PacketFrameWriteError};
 pub use crate::progress::{self, ProgressInfo, OriginatorExt as _};
 pub use crate::support::*;
 pub use crate::termprogress;

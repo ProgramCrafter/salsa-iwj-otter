@@ -18,29 +18,29 @@ use crate::prelude::*;
 // ---------- errors (MgmtChannel, anomalous name) ----------
 
 #[derive(Debug,Error)]
-pub enum MgmtChannelReadError {
+pub enum PacketFrameReadError {
   #[error("unexpected EOF")]         EOF,
   #[error("parse MessagePack: {0}")] Parse(String),
   #[error("{0}")]                    IO(#[from] io::Error),
 }
 
 #[derive(Debug,Error)]
-pub enum MgmtChannelWriteError {
+pub enum PacketFrameWriteError {
   Serialize(rmp_serde::encode::Error), // but not ValueWriteError so no from
   IO(#[from] io::Error),
 }
-display_as_debug!{MgmtChannelWriteError}
+display_as_debug!{PacketFrameWriteError}
 
-impl From<rmp_serde::encode::Error> for MgmtChannelWriteError {
-  fn from(re: rmp_serde::encode::Error) -> MgmtChannelWriteError {
+impl From<rmp_serde::encode::Error> for PacketFrameWriteError {
+  fn from(re: rmp_serde::encode::Error) -> PacketFrameWriteError {
     use rmp_serde::encode::Error::*;
-    use MgmtChannelWriteError as MCWE;
+    use PacketFrameWriteError as PFWE;
     use rmp::encode::ValueWriteError as RVWE;
     match re {
-      InvalidValueWrite(RVWE::InvalidMarkerWrite(ioe)) => MCWE::IO(ioe),
-      InvalidValueWrite(RVWE::InvalidDataWrite  (ioe)) => MCWE::IO(ioe),
+      InvalidValueWrite(RVWE::InvalidMarkerWrite(ioe)) => PFWE::IO(ioe),
+      InvalidValueWrite(RVWE::InvalidDataWrite  (ioe)) => PFWE::IO(ioe),
       ser@ (UnknownLength | InvalidDataModel(_) |
-            DepthLimitExceeded | Syntax(_)) => MCWE::Serialize(ser),
+            DepthLimitExceeded | Syntax(_)) => PFWE::Serialize(ser),
     }
   }
 }
@@ -326,17 +326,17 @@ impl<R:Read> FrameReader<R> {
     }
   }
 
-  #[throws(MgmtChannelReadError)]
+  #[throws(PacketFrameReadError)]
   pub fn read_withbulk<'c,T>(&'c mut self) -> (T, ReadFrame<'c,R>)
   where T: DeserializeOwned + Debug
   {
-    let mut f = self.new_frame()?.ok_or(MgmtChannelReadError::EOF)?;
+    let mut f = self.new_frame()?.ok_or(PacketFrameReadError::EOF)?;
     let v = f.read_rmp()?;
     trace!("read OK {:?}", &v);
     (v, f)
   }
 
-  #[throws(MgmtChannelReadError)]
+  #[throws(PacketFrameReadError)]
   pub fn read<T>(&mut self) -> T
   where T: DeserializeOwned + Debug
   {
@@ -354,14 +354,14 @@ impl<'r,R:Read> ReadFrame<'r,R> {
 
 #[ext(pub, name=ReadExt)]
 impl<R: Read> R {
-  #[throws(MgmtChannelReadError)]
+  #[throws(PacketFrameReadError)]
   fn read_rmp<T>(&mut self) -> T
   where T: DeserializeOwned,
         R: Read
   {
-    use MgmtChannelReadError as MCRE;
+    use PacketFrameReadError as PFRE;
     let r = rmp_serde::decode::from_read(self);
-    let v = r.map_err(|e| MCRE::Parse(format!("{}", &e)))?;
+    let v = r.map_err(|e| PFRE::Parse(format!("{}", &e)))?;
     v
   }
 }
@@ -431,12 +431,12 @@ impl<W:Write> FrameWriter<W> {
     }
   }
 
-  #[throws(MgmtChannelWriteError)]
+  #[throws(PacketFrameWriteError)]
   pub fn write_withbulk<'c>(&'c mut self) -> ResponseWriter<'c,W> {
     ResponseWriter { f: self.new_frame()? }
   }
 
-  #[throws(MgmtChannelWriteError)]
+  #[throws(PacketFrameWriteError)]
   pub fn write<T>(&mut self, val: &T)
   where T: Serialize + Debug
   {
@@ -488,7 +488,7 @@ impl<'w,W:Write> Write for WriteFrame<'w,W> {
 pub struct ResponseWriter<'c,W:Write> { f: WriteFrame<'c,W> }
 
 impl<'c,W:Write> ResponseWriter<'c,W> {
-  #[throws(MgmtChannelWriteError)]
+  #[throws(PacketFrameWriteError)]
   pub fn respond<'t,T>(mut self, val: &'t T) -> WriteFrame<'c,W>
   where T: Serialize + Debug
   {
@@ -497,13 +497,13 @@ impl<'c,W:Write> ResponseWriter<'c,W> {
     self.f
   }
 
-  #[throws(MgmtChannelWriteError)]
+  #[throws(PacketFrameWriteError)]
   pub fn progress_with<RESP: Serialize>(&mut self, resp: RESP) {
     rmp_serde::encode::write_named(&mut self.f, &resp)?;
     self.f.flush()?;
   }
 /*
-  #[throws(MgmtChannelWriteError)]
+  #[throws(PacketFrameWriteError)]
   pub fn progress(&mut self, pi: ProgressInfo<'_>) {
     let resp = crate::commands::MgmtResponse::Progress(pi.into_owned());
     rmp_serde::encode::write_named(&mut self.f, &resp)?;
