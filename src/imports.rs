@@ -96,6 +96,7 @@ pub use crate::materials_format;
 pub use crate::mgmtchannel::*;
 pub use crate::occultilks::*;
 pub use crate::organise;
+pub use crate::outline::*;
 pub use crate::pcaliases::*;
 pub use crate::pcrender::*;
 pub use crate::pieces::*;
