@@ -1160,7 +1160,10 @@ impl Uploading {
   {
     let mut for_progress_box: Box<dyn progress::Originator> =
       if progress_mode >= PUM::Simplex {
-        Box::new(progress::ResponseOriginator::new(progress_stream))
+        Box::new(progress::ResponseOriginator::new(
+          progress_stream,
+          |pi: ProgressInfo<'_>| MgmtResponse::Progress(pi.into_owned()),
+        ))
       } else {
         Box::new(())
       };

@@ -27,15 +27,24 @@ otter-base.path="../base"
 otter-base.version="=1.0.0"
 	
 anyhow="1"
+byteorder="1.3"
 chrono="0.4"
 chrono-tz="0.6"
+console="0.15"
+derive-into-owned="0.2"
 fehler="1"
 log="0.4"
 nix="0.23"
+num-derive="0.3"
 parking_lot="0.12"
+rmp="0.8"
+rmp-serde="1"
+unicode-width="0.1"
 
+# Repeated in other Cargo.toml's because importing does not work properly
+num-traits="0.2"
 serde_with="1"
-
 serde        = { version="1"    , features=["derive", "rc"] }
+strum        = { version="0.24" , features=["derive"      ] }
 
 #fin.

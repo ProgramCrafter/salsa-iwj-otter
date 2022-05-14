@@ -12,3 +12,5 @@ pub use chrono_tz;
 pub use log;
 pub use nix;
 pub use parking_lot;
+pub use rmp_serde;
+pub use unicode_width;

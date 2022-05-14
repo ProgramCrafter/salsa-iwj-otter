@@ -670,62 +670,6 @@ fn test_parse_hex(){
   assert_eq!( parse_fixed_hex("xy"  ), None::<[_;1]>      );
 }
 
-//========== matches_doesnot ==========
-
-#[macro_export] // <- otherwise bogus warning `unused_macros`
-macro_rules! matches_doesnot_yn2bool {
-  (=) => (true);
-  (!) => (false);
-}
-
-#[macro_export]
-macro_rules! matches_doesnot {
-  ($v:expr,
-   $(
-     $yn:tt $p:pat
-   ),* $(,)?
-  ) => {
-    match $v {
-      $(
-        $p => $crate::matches_doesnot_yn2bool!($yn),
-      )*
-    }
-  }
-}
-
-#[test]
-fn matches_doesnot_test() {
-  assert!(
-    matches_doesnot!(
-      Some(42),
-      = Some(_),
-      ! None
-    )
-  );
-  assert!(
-    matches_doesnot!(
-      Some(42),
-      ! None,
-      ! Some(3),
-      = Some(_),
-    )
-  );
-  assert!(
-    matches_doesnot!(
-      Some(1),
-      = Some(1) | Some(2),
-      ! Some(_) | None
-    )
-  );
-  assert!(
-    ! matches_doesnot!(
-      Some(1),
-      ! Some(1) | Some(2),
-      = Some(_) | None
-    )
-  );
-}
-
 //========== want* macros ==========
 
 #[macro_export]

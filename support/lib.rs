@@ -8,5 +8,8 @@ pub mod prelude;
 
 pub mod childio;
 pub mod debugmutex;
+pub mod packetframe;
+pub mod progress;
 pub mod support;
+pub mod termprogress;
 pub mod tz;

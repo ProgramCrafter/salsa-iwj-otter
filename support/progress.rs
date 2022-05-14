@@ -23,22 +23,30 @@ pub trait Originator {
   fn item_(&mut self, item: usize, desc: Cow<'_, str>);
 }
 
-pub struct ResponseOriginator<'c,'w,W> where W: Write {
+pub struct ResponseOriginator<'c,'w,W,F> where W: Write {
   chan: &'c mut ResponseWriter<'w,W>,
   phase: Count<'static>,
   len: usize,
+  formatter: F,
 }
-impl<'c,'w,W> ResponseOriginator<'c,'w,W> where W: Write {
-  pub fn new(chan: &'c mut ResponseWriter<'w,W>) -> Self { Self {
+impl<'c,'w,W,F> ResponseOriginator<'c,'w,W,F> where W: Write {
+  pub fn new(chan: &'c mut ResponseWriter<'w,W>,
+             formatter: F) -> Self { Self {
     chan,
     phase: Count { i:0, n:0, desc: Cow::Borrowed("") },
     len: 0,
+    formatter,
   } }
 }
 
-impl<W> Originator for ResponseOriginator<'_,'_,W> where W: Write {
+impl<W,F,M> Originator for ResponseOriginator<'_,'_,W,F>
+where W: Write,
+      F: Fn(ProgressInfo<'_>) -> M,
+      M: Serialize,
+{
   fn report(&mut self, pi: ProgressInfo<'_>) {
-    self.chan.progress(pi).unwrap_or(());
+    let resp = (self.formatter)(pi);
+    self.chan.progress_with(resp).unwrap_or(());
   }
   fn phase_begin_(&mut self, phase: Count<'_>, len: usize) {
     self.phase = phase.into_owned();
