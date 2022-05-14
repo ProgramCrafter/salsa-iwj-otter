@@ -661,12 +661,15 @@ macro_rules! impl_via_ambassador{
   { 
     $(
       $( #[ $attr:meta ] )*
-      impl $Trait:ident for $Type:ty
+      impl $( [ $($generics:tt)* ] )? $Trait:ident for $Type:ty
+      $( where [ $($where:tt)* ] )?
       { $($how_immut:tt)* }
     )*
   } => { $( paste!{
     $( #[ $attr ] )*
-    impl $Trait for $Type {
+    impl $( < $($generics)* > )? $Trait for $Type
+    $( where $($where)* )?
+    {
       [< ambassador_impl_ $Trait >]!{ body_struct( <>, dyn $Trait,
           (),
           ($($how_immut)*),
