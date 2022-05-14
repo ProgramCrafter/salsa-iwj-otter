@@ -1247,6 +1247,7 @@ fn process_files_entry(
         .replace_all(&magic.template, |caps: &regex::Captures| {
           format!("{}{}", caps.get(1).unwrap().as_str(), &image_table)
         });
+      let spec = c_colour(&spec)?;
 
       trace!("magic item {}\n\n{}\n", &item_name, &spec);
 
