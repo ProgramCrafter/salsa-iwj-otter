@@ -1016,6 +1016,9 @@ pub trait LibrarySource: LibrarySvgNoter {
   fn svg_noter(&mut self) -> &mut dyn LibrarySvgNoter;
 }
 
+pub struct NullLibrarySvgNoter;
+impl LibrarySvgNoter for NullLibrarySvgNoter { }
+
 struct BuiltinLibrary<'l> {
   catalogue_data: &'l str,
   dirname: &'l str,
@@ -1303,7 +1306,8 @@ fn process_files_entry(
           error,
         })?;
 
-      l.add_item(src, src_name, &item_name, CatEnt::Magic {
+      l.add_item(&mut NullLibrarySvgNoter, // there's no SVG for *this* item
+                 src_name, &item_name, CatEnt::Magic {
         group: group.clone(),
         spec: spec.into(),
       })?;
