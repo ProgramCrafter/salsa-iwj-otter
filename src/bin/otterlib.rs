@@ -46,6 +46,9 @@ use structopt::StructOpt;
 #[derive(Debug,Clone)]
 #[derive(StructOpt)]
 pub struct Opts {
+  #[structopt(long="--nwtemplates", default_value="./nwtemplates")]
+  nwtemplates: String,
+
   #[structopt(long="--libs", default_value="library/*.toml")]
   libs: String,
 
@@ -81,6 +84,8 @@ fn preview(opts: &Opts, items: Vec<ItemForOutput>) {
 
   const SEVERAL: usize = 3;
   let ig_dummy = Instance::dummy();
+
+  nwtemplates::init_from_dir(&opts.nwtemplates)?;
 
   impl Prep {
     fn want_several(&self) -> bool {
