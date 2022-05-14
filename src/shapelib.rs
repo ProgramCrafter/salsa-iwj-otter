@@ -1233,6 +1233,7 @@ fn process_files_entry(
     c_colour: Option<(&'static str, &str)>,
     c_abbrev: Option<(&'static str, &str)>,
   | {
+    let c_colour_all = colour_subst_1(substn, c_colour);
     let c_colour = colour_subst_1(subst, c_colour);
     let c_abbrev = colour_subst_1(subst, c_abbrev);
 
@@ -1282,7 +1283,7 @@ fn process_files_entry(
         .replace_all(&magic.template, |caps: &regex::Captures| {
           format!("{}{}", caps.get(1).unwrap().as_str(), &image_table)
         });
-      let spec = c_colour(&spec)?;
+      let spec = c_colour_all(&spec)?;
 
       trace!("magic item {}\n\n{}\n", &item_name, &spec);
 
