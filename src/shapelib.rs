@@ -1248,6 +1248,8 @@ fn process_files_entry(
           format!("{}{}", caps.get(1).unwrap().as_str(), &image_table)
         });
 
+      trace!("magic item {}\n\n{}\n", &item_name, &spec);
+
       let spec: Box<dyn PieceSpec> = toml_de::from_str(&spec)
         .map_err(|error| LLE::TemplatedTomlError {
           toml: spec.into_owned(),
