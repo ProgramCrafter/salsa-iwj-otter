@@ -37,7 +37,6 @@ pub mod gamestate;
 pub mod global;
 pub mod hand;
 pub mod hidden;
-pub mod keydata;
 pub mod mgmtchannel;
 pub mod nwtemplates;
 pub mod occultilks;
@@ -53,4 +52,3 @@ pub mod utils;
 
 #[path = "materials-format.rs"]   pub mod materials_format;
 #[path = "shapelib-toml.rs"]      pub mod shapelib_toml;
-#[path = "slotmap-slot-idx.rs"]   pub mod slotmap_slot_idx;

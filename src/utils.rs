@@ -324,6 +324,7 @@ macro_rules! entry_define_insert_remove {
     #[allow(non_snake_case)]
     mod $name_mod {
       use $crate::prelude::extend::ext;
+      use $crate::prelude::slotmap;
       use $entry as Entry;
       use Entry::{Occupied, Vacant};
       #[ext(pub, name=EntryExt)]

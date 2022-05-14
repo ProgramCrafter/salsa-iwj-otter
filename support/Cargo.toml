@@ -52,6 +52,8 @@ unicode-width="0.1"
 flexi_logger = { version="0.22" , features=["specfile"    ] }
 mio          = { version="0.8",   features=["os-ext", "os-poll" ] }
 
+slotmap = { package="slotmap-fork-otter", version="1", git="https://github.com/ijackson/slotmap", branch="slotmap-fork-otter", features=["serde"] }
+
 # Repeated in other Cargo.toml's because importing does not work properly
 num-traits="0.2"
 serde_with="1"

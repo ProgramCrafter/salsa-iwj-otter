@@ -23,7 +23,6 @@ pub use libc;
 pub use once_cell;
 pub use ordered_float;
 pub use regex;
-pub use slotmap;
 pub use tera;
 pub use uds;
 pub use vecdeque_stableix;

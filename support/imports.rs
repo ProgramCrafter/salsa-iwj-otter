@@ -55,6 +55,7 @@ pub use serde::{Deserializer, Serializer};
 pub use serde_with::DeserializeFromStr;
 pub use serde_with::SerializeDisplay;
 pub use sha2::{Sha512, Sha512_256};
+pub use slotmap::{dense::DenseSlotMap, SparseSecondaryMap, Key as _};
 pub use strum::{EnumCount, EnumDiscriminants};
 pub use strum::{EnumString, EnumIter, EnumMessage, EnumProperty};
 pub use strum::{AsRefStr, IntoEnumIterator, IntoStaticStr};
@@ -77,16 +78,19 @@ pub use crate::debugmutex::DebugIdentify;
 pub use crate::digestrw::{self, *};
 pub use crate::fake_rng::*;
 pub use crate::fake_time::*;
+pub use crate::keydata::*;
 pub use crate::packetframe::{FrameReader, FrameWriter, ReadFrame, WriteFrame};
 pub use crate::packetframe::{ReadExt, ResponseWriter};
 pub use crate::packetframe::{PacketFrameReadError, PacketFrameWriteError};
 pub use crate::progress::{self, ProgressInfo, OriginatorExt as _};
+pub use crate::slotmap_slot_idx::*;
 pub use crate::support::*;
 pub use crate::termprogress;
 pub use crate::timedfd::*;
 pub use crate::toml_de;
 pub use crate::tz::*;
 
+pub type SecondarySlotMap<K,V> = slotmap::secondary::SecondaryMap<K,V>;
 pub type StartupError = anyhow::Error;
 
 pub const MS: time::Duration = time::Duration::from_millis(1);

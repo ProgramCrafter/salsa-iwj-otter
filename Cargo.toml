@@ -75,8 +75,6 @@ enum-map     = { version="2"    , features=["serde"       ] }
 image = { version = "0.24", default-features=false, features=["jpeg","png"] }
 index_vec    = { version="0.1.1", features=["serde"       ] }
 
-slotmap = { package="slotmap-fork-otter", version="1", git="https://github.com/ijackson/slotmap", branch="slotmap-fork-otter", features=["serde"] }
-
 # Repeated in other Cargo.toml's because importing does not work properly
 fehler="1"
 num-traits="0.2"
