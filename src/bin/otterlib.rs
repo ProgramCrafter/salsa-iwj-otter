@@ -67,7 +67,7 @@ pub type ItemForOutput = ItemEnquiryData;
 pub const VIS: ShowUnocculted = ShowUnocculted::new_visible();
 
 #[throws(AE)]
-fn preview(items: Vec<ItemForOutput>) {
+fn preview(opts: &Opts, items: Vec<ItemForOutput>) {
   const BORDER: f64 = 1.;
 
   struct Prep {
@@ -256,7 +256,7 @@ fn main() {
       println!("{}", item);
     }
     OutputKind::Preview => {
-      preview(items)?
+      preview(&opts, items)?
     }
   }
 }
