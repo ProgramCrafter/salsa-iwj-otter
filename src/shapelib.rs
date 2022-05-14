@@ -10,6 +10,9 @@ pub use crate::prelude::GoodItemName; // not sure why this is needed
 use parking_lot::{const_rwlock, RwLock};
 use parking_lot::RwLockReadGuard;
 
+use ShapelibConfig1 as Config1;
+use ShapelibExplicit1 as Explicit1;
+
 //==================== structs and definitions ====================
 
 // Naming convention:
@@ -1504,20 +1507,6 @@ impl<'ig> AllRegistries<'ig> {
 
 //==================== configu and loading global libs ====================
 
-#[derive(Deserialize,Debug,Clone)]
-#[serde(untagged)]
-pub enum Config1 {
-  PathGlob(String),
-  Explicit(Explicit1),
-}
-
-#[derive(Deserialize,Debug,Clone)]
-pub struct Explicit1 {
-  pub name: String,
-  pub catalogue: String,
-  pub dirname: String,
-}
-
 #[throws(LibraryLoadError)]
 pub fn load_1_global_library(l: &Explicit1) {
   let toml_path = &l.catalogue;
@@ -1542,7 +1531,8 @@ pub fn load_1_global_library(l: &Explicit1) {
         count, &l.name, &l.catalogue, &l.dirname);
 }
 
-impl Config1 {
+#[ext(pub)]
+impl ShapelibConfig1 {
   fn resolve(&self) -> Result<Box<dyn ExactSizeIterator<Item=Explicit1>>, LibraryLoadError> {
     use Config1::*;
     Ok(match self {

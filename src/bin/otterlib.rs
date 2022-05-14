@@ -239,7 +239,7 @@ fn main() {
   const SPLIT: &[char] = &[',', ' '];
 
   for libs in opts.libs.split(SPLIT) {
-    let tlibs = Config1::PathGlob(libs.to_owned());
+    let tlibs = ShapelibConfig1::PathGlob(libs.to_owned());
     load_global_libs(&[tlibs.clone()])?;
   }
   let mut items: Vec<ItemForOutput> = default();

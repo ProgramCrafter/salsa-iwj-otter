@@ -34,7 +34,7 @@ pub type MC = MgmtCommand;
 
 // -------------------- private crates ----------
 
-use otter::config::DAEMON_STARTUP_REPORT;
+use otter_support::config::DAEMON_STARTUP_REPORT;
 
 // ==================== public constants ====================
 

@@ -125,23 +125,6 @@ pub mod timespec_serde {
   }
 }
 
-//---------- IpAddress ----------
-
-pub trait IpAddress: Debug {
-  fn with_port(&self, port: u16) -> SocketAddr;
-}
-
-impl<A> IpAddress for A where A: Into<IpAddr> + Debug + Clone {
-  fn with_port(&self, port: u16) -> SocketAddr {
-    match (self.clone().into(), port)
-      .to_socket_addrs()
-      .map(|i| i.at_most_one()) {
-        Ok(Ok(Some(addr))) => addr,
-        x => panic!("{:?},{} gave {:?}", self, port, x),
-      }
-  }
-}
-
 //---------- get_or_extend_with ----------
 
 
@@ -332,74 +315,6 @@ impl<Y: Sync, E: Sync, F: Sync + FnOnce() -> Result<Y,E>>
 }
 
 // todo: DerefMut
-
-//========== toml ====================
-
-#[derive(Debug,Copy,Clone,Eq,PartialEq,Ord,PartialOrd)]
-pub struct TomlQuote<'s>(pub &'s str);
-
-// We reimplement this because the toml crate doesn't expose it, and
-// looking at the github issues etc. for that crate isn't encuraging.
-impl<'s> Display for TomlQuote<'s> {
-  #[throws(fmt::Error)]
-  fn fmt(&self, f: &mut fmt::Formatter) {
-    for c in self.0.chars() {
-      match c {
-        '"' | '\\'=> write!(f, "\\{}", c)?,
-        c if (c < ' ' && c != '\t') || c == '\x7f' => {
-          write!(f, r#"\u{:04x}"#, c as u32).unwrap();
-          continue;
-        }
-        c => write!(f, "{}", c)?,
-      }
-    }
-  }
-}
-
-#[test]
-fn toml_quote_string_test(){
-  assert_eq!(TomlQuote(r#"w \ "	ƒ."#).to_string(),
-                       r#"w \\ \"	\u0007\u007fƒ."#);
-}
-
-pub fn toml_merge<'u,
-                  S: 'u + AsRef<str>,
-                  KV: IntoIterator<Item=(&'u S, &'u toml::Value)>
-                  >(
-  table: &mut toml::value::Table,
-  updates: KV,
-) {
-  use toml::value::{Table, Value};
-  type TME<'e> = toml::map::Entry<'e>;
-
-  let mut kv = updates.into_iter().map(|(k, v)| (k.as_ref(), v));
-  inner(table, &mut kv);
-
-  fn inner<'u>(
-    table: &mut Table,
-    updates: &'u mut dyn Iterator<Item=(&'u str, &'u Value)>
-  ) {
-    for (k, v) in updates {
-      let e = table.entry(k);
-      match e {
-        TME::Vacant(ve) => {
-          ve.insert(v.clone());
-        }
-        TME::Occupied(mut oe) => match (oe.get_mut(), v) {
-          (Value::Table(old), Value::Table(new)) => {
-            toml_merge(old, new);
-          }
-          (Value::Array(old), Value::Array(new)) => {
-            old.extend(new.iter().cloned());
-          }
-          (old, new) => {
-            *old = new.clone();
-          }
-        }
-      }
-    }
-  }
-}
 
 //========== .insert() and .remove() on various Entry ==========
 
@@ -740,11 +655,6 @@ macro_rules! want_let {
 
 //========== miscellaneous macros ==========
 
-paste!{
-  #[cfg(debug_assertions)]
-  pub fn [<x x x>]<T>() -> T { panic!("todo item triggered") }
-}
-
 #[macro_export]
 macro_rules! impl_via_ambassador{
   { 
@@ -763,19 +673,6 @@ macro_rules! impl_via_ambassador{
       ) }
     }
   } )* }
-}
-
-#[macro_export]
-macro_rules! trace_dbg {
-  ($msg:expr $(,$val:expr)*) => {
-    if log_enabled!(log::Level::Trace) {
-      #[allow(unused_mut)]
-      let mut buf = format!("{}", &$msg);
-      $( write!(&mut buf, " {}={:?}", stringify!($val), &$val).unwrap(); )*
-      trace!("{}", buf);
-    }
-  }
-
 }
 
 #[macro_export]

@@ -188,8 +188,6 @@ pub enum Inapplicable {
                                             BadPieceStateForOperation,
 }
 
-pub type StartupError = anyhow::Error;
-
 pub use Fatal::{NoClient,NoPlayer};
 
 pub enum AggregatedIE {

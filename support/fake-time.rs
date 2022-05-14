@@ -9,6 +9,10 @@ use parking_lot::Mutex;
 type Millis = u32;
 type Micros = u64;
 
+#[derive(Serialize,Deserialize,Error,Debug,Clone)]
+#[error("Time is real")]
+pub struct TimeIsReal;
+
 #[derive(Deserialize,Debug,Clone,Default)]
 #[serde(transparent)]
 pub struct FakeTimeConfig(pub Option<FakeTimeSpec>);
@@ -81,9 +85,9 @@ impl GlobalClock {
     fake.start + Duration::from_micros(fake.current)
   }
 
-  #[throws(MgmtError)]
+  #[throws(TimeIsReal)]
   pub fn set_fake(&self, fspec: FakeTimeSpec, _: AuthorisationSuperuser) {
-    let mut guard = self.fakeable.as_ref().ok_or(ME::TimeIsReal)?.lock();
+    let mut guard = self.fakeable.as_ref().ok_or(TimeIsReal)?.lock();
     *guard = FakeClock::from_spec(fspec)
   }
 

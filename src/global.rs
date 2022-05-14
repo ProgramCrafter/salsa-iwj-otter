@@ -217,8 +217,6 @@ pub struct Global {
   // (in order of lock acquisition (L first), so also in order of criticality
   // (perf impact); outermost first, innermost last)
 
-  // slow global locks:
-  pub save_area_lock: Mutex<Option<File>>,
   // <- accounts::accounts ->
   games_table: RwLock<GamesTable>,
 
@@ -226,7 +224,6 @@ pub struct Global {
   // <- InstanceContainer ->
   // inner locks which the game needs:
   dirty: Mutex<VecDeque<InstanceRef>>,
-  pub config: RwLock<WholeServerConfig>,
 
   // fast global lookups
   players: RwLock<TokenTable<PlayerId>>,
@@ -324,14 +321,15 @@ impl InstanceWeakRef {
   }
 }
 
+#[ext(pub)]
 impl<A> Unauthorised<InstanceRef, A> {
   #[throws(GameBeingDestroyed)]
-  pub fn lock<'r>(&'r self) -> Unauthorised<InstanceGuard<'r>, A> {
+  fn lock<'r>(&'r self) -> Unauthorised<InstanceGuard<'r>, A> {
     let must_not_escape = self.by_ref(Authorisation::promise_any());
     Unauthorised::of(must_not_escape.lock()?)
   }
 
-  pub fn lock_even_destroying<'r>(&'r self) -> Unauthorised<InstanceGuard<'r>, A> {
+  fn lock_even_destroying<'r>(&'r self) -> Unauthorised<InstanceGuard<'r>, A> {
     let must_not_escape = self.by_ref(Authorisation::promise_any());
     Unauthorised::of(InstanceGuard {
       c: must_not_escape.lock_even_destroying(),
@@ -339,7 +337,7 @@ impl<A> Unauthorised<InstanceRef, A> {
     })
   }
 
-  pub fn lock_bundles<'r>(&'r self) -> Unauthorised<BundlesGuard<'_>, A> {
+  fn lock_bundles<'r>(&'r self) -> Unauthorised<BundlesGuard<'_>, A> {
     let must_not_escape = self.by_ref(Authorisation::promise_any());
     Unauthorised::of(must_not_escape.lock_bundles())
   }

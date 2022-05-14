@@ -16,6 +16,8 @@ pub use std::fs::File;
 pub use std::io;
 pub use std::io::ErrorKind;
 pub use std::io::{BufRead, BufReader, BufWriter, Read, Write};
+pub use std::marker::PhantomData;
+pub use std::net::{IpAddr, SocketAddr, ToSocketAddrs, Ipv6Addr, Ipv4Addr};
 pub use std::os::linux::fs::MetadataExt as _; // todo why linux for st_mode??
 pub use std::os::unix;
 pub use std::os::unix::ffi::OsStrExt;
@@ -25,16 +27,26 @@ pub use std::os::unix::net::UnixStream;
 pub use std::os::unix::process::{CommandExt, ExitStatusExt};
 pub use std::process::{exit, Child, Command, Stdio};
 pub use std::sync::Arc;
+pub use std::time::{self, Duration, Instant};
 
 pub use anyhow::{anyhow, ensure, Context};
 pub use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
 pub use derive_into_owned::IntoOwned;
+pub use flexi_logger::LogSpecification;
+pub use fs2::FileExt;
+pub use lazy_static::lazy_static;
 pub use log::{debug, error, info, trace, warn};
+pub use log::{log, log_enabled};
 pub use nix::unistd::{self, Uid};
 pub use nix::sys::time::TimeSpec;
 pub use nix::time::clock_gettime;
 pub use num_derive::{ToPrimitive, FromPrimitive};
 pub use num_traits::{Bounded, FromPrimitive, ToPrimitive};
+pub use paste::paste;
+pub use rand::distributions::Alphanumeric;
+pub use rand::thread_rng;
+pub use rand::Rng;
+pub use rand::prelude::SliceRandom;
 pub use serde::ser::SerializeTuple;
 pub use serde::{de::DeserializeOwned, Deserialize, Serialize};
 pub use serde::de::Error as _;
@@ -53,16 +65,27 @@ pub use parking_lot::{Mutex, MutexGuard};
 //pub use crate::debugmutex::{Mutex, MutexGuard};
 
 pub use crate::matches_doesnot;
+pub use crate::trace_dbg;
 
+pub use crate::authproofs::{self, Authorisation, Unauthorised};
+pub use crate::authproofs::AuthorisationSuperuser;
 pub use crate::childio;
+pub use crate::config::*;
 pub use crate::debugmutex::DebugIdentify;
+pub use crate::fake_rng::*;
+pub use crate::fake_time::*;
 pub use crate::packetframe::{FrameReader, FrameWriter, ReadFrame, WriteFrame};
 pub use crate::packetframe::{ReadExt, ResponseWriter};
 pub use crate::packetframe::{PacketFrameReadError, PacketFrameWriteError};
 pub use crate::progress::{self, ProgressInfo, OriginatorExt as _};
 pub use crate::support::*;
 pub use crate::termprogress;
+pub use crate::toml_de;
 pub use crate::tz::*;
+
+pub type StartupError = anyhow::Error;
+
+pub const MS: time::Duration = time::Duration::from_millis(1);
 
 // ---------- type abbreviations ----------
 

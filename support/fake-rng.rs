@@ -11,6 +11,10 @@ use rand::distributions::uniform::SampleUniform;
 #[serde(transparent)]
 pub struct FakeRngSpec(Option<Vec<String>>);
 
+#[derive(Serialize,Deserialize,Error,Debug,Clone)]
+#[error("RNG is real")]
+pub struct RngIsReal;
+
 impl FakeRngSpec {
   pub fn make_game_rng(self) -> RngWrap { RngWrap( match self.0 {
     None => None,
@@ -35,9 +39,9 @@ struct FakeRng {
 impl RngWrap {
   pub fn is_fake(&self) -> bool { self.0.is_some() }
 
-  #[throws(MgmtError)]
+  #[throws(RngIsReal)]
   pub fn set_fake(&self, v: Vec<String>, _: AuthorisationSuperuser) {
-    let mut fake = self.0.as_ref().ok_or(ME::RngIsReal)?.lock();
+    let mut fake = self.0.as_ref().ok_or(RngIsReal)?.lock();
     fake.i = 0;
     fake.ents = v;
   }

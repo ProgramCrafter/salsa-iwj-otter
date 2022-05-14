@@ -3,7 +3,6 @@
 // There is NO WARRANTY.
 
 use crate::crates::*;
-use otter_support::crates::*;
 use otter_base::crates::*;
 
 use std::fmt::{Debug, Display};

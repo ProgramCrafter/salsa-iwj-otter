@@ -267,7 +267,7 @@ fn main() {
             });
           ServerConfig::read(Some(&config_filename), default())
             .context("read config file")?;
-          Ok::<_,AE>((otter::config::config(), config_filename))
+          Ok::<_,AE>((otter_support::config::config(), config_filename))
         })().map_err(|e| ArgumentParseError(
           format!("failed to find/load config: {}", &e)
         ))

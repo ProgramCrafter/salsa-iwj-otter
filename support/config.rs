@@ -38,7 +38,7 @@ pub struct ServerConfigSpec {
   pub wasm_dir: Option<String>,
   pub log: Option<toml::Value>,
   pub bundled_sources: Option<String>,
-  pub shapelibs: Option<Vec<shapelib::Config1>>,
+  pub shapelibs: Option<Vec<ShapelibConfig1>>,
   pub specs_dir: Option<String>,
   pub sendmail: Option<String>,
   /// for auth keys, split on spaces
@@ -52,6 +52,20 @@ pub struct ServerConfigSpec {
   #[serde(default)] pub fake_time: FakeTimeConfig,
   /// Disable this for local testing only.  See LICENCE.
   pub check_bundled_sources: Option<bool>,
+}
+
+#[derive(Deserialize,Debug,Clone)]
+#[serde(untagged)]
+pub enum ShapelibConfig1 {
+  PathGlob(String),
+  Explicit(ShapelibExplicit1),
+}
+
+#[derive(Deserialize,Debug,Clone)]
+pub struct ShapelibExplicit1 {
+  pub name: String,
+  pub catalogue: String,
+  pub dirname: String,
 }
 
 #[derive(Debug,Clone)]
@@ -74,7 +88,7 @@ pub struct ServerConfig {
   pub libexec_dir: String,
   pub usvg_bin: String,
   pub bundled_sources: String,
-  pub shapelibs: Vec<shapelib::Config1>,
+  pub shapelibs: Vec<ShapelibConfig1>,
   pub specs_dir: String,
   pub sendmail: String,
   pub ssh_proxy_bin: String,
@@ -213,7 +227,7 @@ impl ServerConfigSpec {
 
     let shapelibs = shapelibs.unwrap_or_else(||{
       let glob = defpath(None, DEFAULT_LIBRARY_GLOB);
-      vec![ shapelib::Config1::PathGlob(glob) ]
+      vec![ ShapelibConfig1::PathGlob(glob) ]
     });
 
     let sendmail = prctx.resolve(&sendmail.unwrap_or_else(
@@ -318,15 +332,21 @@ impl ServerConfigSpec {
   }
 }
 
+lazy_static! {
+  static ref SAVE_AREA_LOCK: Mutex<Option<File>> = default();
+
+  static ref CONFIG: RwLock<WholeServerConfig> = default();
+}
+
 pub fn config() -> Arc<ServerConfig> {
-  GLOBAL.config.read().server.clone()
+  CONFIG.read().server.clone()
 }
 pub fn log_config() -> LogSpecification {
-  GLOBAL.config.read().log.clone()
+  CONFIG.read().log.clone()
 }
 
 fn set_config(whole: WholeServerConfig) {
-  *GLOBAL.config.write() = whole;
+  *CONFIG.write() = whole;
 }
 
 impl ServerConfig {
@@ -346,7 +366,7 @@ impl ServerConfig {
 
   #[throws(AE)]
   pub fn lock_save_area(&self) {
-    let mut st = GLOBAL.save_area_lock.lock();
+    let mut st = SAVE_AREA_LOCK.lock();
     let st = &mut *st;
     if st.is_none() {
       let lockfile = format!("{}/lock", config().save_dir);
@@ -359,7 +379,7 @@ impl ServerConfig {
   }
 
   pub fn save_dir(&self) -> &String {
-    let st = GLOBAL.save_area_lock.lock();
+    let st = SAVE_AREA_LOCK.lock();
     let mut _f: &File = st.as_ref().unwrap();
     &self.save_dir
   }

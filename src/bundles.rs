@@ -295,8 +295,9 @@ impl Id {
 
 //---------- displaing/presenting/authorising ----------
 
+#[ext(pub)]
 impl Authorisation<InstanceName> {
-  pub fn bundles(self) -> Authorisation<Id> { self.so_promise() }
+  fn bundles(self) -> Authorisation<Id> { self.so_promise() }
 }
 
 impl Display for State {

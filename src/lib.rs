@@ -24,11 +24,9 @@ pub mod prelude;
 
 pub mod accounts;
 pub mod asseturl;
-pub mod authproofs;
 pub mod bundles;
 pub mod clock;
 pub mod commands;
-pub mod config;
 pub mod currency;
 pub mod deck;
 pub mod dice;
@@ -55,9 +53,6 @@ pub mod updates;
 pub mod ui;
 pub mod utils;
 
-#[path = "fake-rng.rs"]           pub mod fake_rng;
-#[path = "fake-time.rs"]          pub mod fake_time;
 #[path = "materials-format.rs"]   pub mod materials_format;
 #[path = "shapelib-toml.rs"]      pub mod shapelib_toml;
 #[path = "slotmap-slot-idx.rs"]   pub mod slotmap_slot_idx;
-#[path = "toml-de.rs"]            pub mod toml_de;

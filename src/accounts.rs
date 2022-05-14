@@ -6,8 +6,6 @@ use crate::prelude::*;
 
 use parking_lot::{Mutex, const_mutex, MutexGuard};
 
-use authproofs::*;
-
 #[path="sshkeys.rs"]
 pub mod sshkeys;
 
@@ -490,7 +488,6 @@ pub fn load_accounts() {
 
 pub mod loaded_acl {
   use crate::prelude::*;
-  use authproofs::*;
 
   pub trait Perm: FromPrimitive + ToPrimitive +
     Copy + Eq + Hash + Debug + Sync + Send + 'static
