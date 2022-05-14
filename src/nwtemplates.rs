@@ -25,6 +25,11 @@ pub fn init() {
     .context("load tamplates")
     .with_context(|| nwtemplate_dir.to_string())?;
 
+  if tera.get_template_names().next().is_none() {
+    warn!("nwtemplates directory {:?} contains no templates!",
+          nwtemplate_dir);
+  }
+
   *guard = Some(State {
     tera,
   })
