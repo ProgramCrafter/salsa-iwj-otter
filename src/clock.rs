@@ -427,6 +427,7 @@ impl OutlineTrait for Clock {
       fn outline_path(&self, scale: f64) -> Result<Html, IE>;
       fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
       fn bbox_approx(&self) -> Result<Rect, IE>;
+      fn shape(&self) -> Option<Shape>;
     }
   }
 }

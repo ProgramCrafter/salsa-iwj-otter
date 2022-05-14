@@ -74,6 +74,7 @@ impl OutlineTrait for CircleOutline {
     let d = (self.diam * 0.5).round() as Coord;
     Rect{ corners: [PosC::new(-d,-d), PosC::new(d, d)]}
   }
+  fn shape(&self) -> Option<Shape> { Some(Shape::Circle) }
 }
 
 //---------- RectOutline ----------
@@ -126,4 +127,5 @@ impl OutlineTrait for RectOutline {
     let neg = (-pos)?;
     Rect{ corners: [ neg, pos ] }
   }
+  fn shape(&self) -> Option<Shape> { Some(Shape::Rect) }
 }

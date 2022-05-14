@@ -166,6 +166,7 @@ pub trait OutlineTrait: Debug + Sync + Send + 'static {
   }
   fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
   fn bbox_approx(&self) -> Result<Rect, IE>;
+  fn shape(&self) -> Option<Shape>; // None means not a sane shape
 }
 
 #[derive(Debug,Copy,Clone,Serialize,Deserialize)]
