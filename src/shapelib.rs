@@ -1131,15 +1131,20 @@ fn subst(before: &str, needle: &'static str, replacement: &str)
 }
 
 #[throws(LibraryLoadError)]
+fn format_item_name(item_prefix: &str, fe: &FileData, item_suffix: &str)
+                    -> GoodItemName {
+  format!("{}{}{}", item_prefix, fe.item_spec, item_suffix)
+    .try_into()?
+}
+
+#[throws(LibraryLoadError)]
 fn process_files_entry(
   src: &mut dyn LibrarySource, l: &mut Catalogue,
   item_prefix: &str, item_suffix: &str, sort: &str,
   group: &Arc<GroupData>, shape_calculable: ShapeCalculable,
   fe: FileData
 ) {
-  let item_name = format!("{}{}{}", item_prefix,
-                          fe.item_spec, item_suffix);
-  let item_name: GoodItemName = item_name.try_into()?;
+  let item_name = format_item_name(item_prefix, &fe, item_suffix)?;
 
   let sort = match (sort, fe.extra_fields.get("sort")) {
     ("", None) => None,
