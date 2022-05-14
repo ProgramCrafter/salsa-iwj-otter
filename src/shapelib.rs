@@ -153,7 +153,7 @@ pub enum LibraryLoadMFIncompat {
 }
 pub use LibraryLoadMFIncompat as LLMI;
 
-#[derive(Error,Copy,Clone,Debug)]
+#[derive(Error,Copy,Clone,Debug,Eq,PartialEq)]
 pub enum SubstErrorKind {
   #[error("missing or unrecognised token {0}")] MissingToken (&'static str),
   #[error("repeated token {0}")]                RepeatedToken(&'static str),
@@ -1130,6 +1130,19 @@ fn subst(before: &str, needle: &'static str, replacement: &str)
     .to_owned()
     + replacement
     + rhs
+}
+
+#[test]
+fn test_subst() {
+  use SubstErrorKind as SEK;
+  assert_eq!(subst("a _colour die", "_colour", "blue").unwrap(),
+             "a blue die");
+  assert_eq!(subst("a _colour die", "_colour", "").unwrap(),
+             "a die");
+  assert_eq!(subst("a die", "_colour", "").unwrap_err().kind,
+             SEK::MissingToken("_colour"));
+  assert_eq!(subst("a _colour _colour die", "_colour", "").unwrap_err().kind,
+             SEK::RepeatedToken("_colour"));
 }
 
 #[throws(LibraryLoadError)]
