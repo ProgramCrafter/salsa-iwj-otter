@@ -101,7 +101,6 @@ pub use crate::pcaliases::*;
 pub use crate::pcrender::*;
 pub use crate::pieces::*;
 pub use crate::shapelib;
-pub use crate::shapelib::{CircleOutline, RectOutline};
 pub use crate::shapelib::{ItemEnquiryData, LibraryEnquiryData};
 pub use crate::shapelib::{LibraryLoadError};
 pub use crate::spec::*;

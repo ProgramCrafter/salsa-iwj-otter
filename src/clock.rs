@@ -3,7 +3,6 @@
 // There is NO WARRANTY.
 
 use crate::prelude::*;
-use shapelib::RectOutline;
 
 use nix::sys::time::TimeValLike as TVL;
 
