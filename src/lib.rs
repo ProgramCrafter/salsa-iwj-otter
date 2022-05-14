@@ -18,7 +18,7 @@
 //! To run an Otter server, you will need to read the
 //! [build instructions](https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/build.html).
 
-pub mod imports;
+pub mod crates;
 pub mod prelude;
 
 #[path="prelude-part.rs"]

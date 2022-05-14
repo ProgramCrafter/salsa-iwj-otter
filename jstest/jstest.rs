@@ -11,7 +11,7 @@
 #![allow(clippy::or_fun_call)]
 #![allow(clippy::unnecessary_operation)] // trips on #[throws(Explode)]
 
-pub use otter::imports::*;
+pub use otter::crates::*;
 pub use otter::prelude::*;
 
 pub use otter_api_tests::Explode;

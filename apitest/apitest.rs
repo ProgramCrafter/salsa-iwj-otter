@@ -10,14 +10,14 @@
 
 // ==================== namespace preparation ====================
 
-pub mod imports {
+pub mod crates {
   pub use otter;
-  pub use otter::imports::*;
+  pub use otter::crates::*;
 
   pub use humantime;
 }
 
-pub use imports::*;
+pub use crates::*;
 pub use otter::prelude::*;
 
 pub use std::cell::{RefCell, RefMut};
@@ -32,7 +32,7 @@ pub type MgmtChannel = ClientMgmtChannel;
 pub type JsV = serde_json::Value;
 pub type MC = MgmtCommand;
 
-// -------------------- private imports ----------
+// -------------------- private crates ----------
 
 use otter::config::DAEMON_STARTUP_REPORT;
 
@@ -344,7 +344,7 @@ impl<T,E> Result<T,E> {
 // -------------------- cleanup_notify (signaling) --------------------
 
 pub mod cleanup_notify {
-  use super::imports::*;
+  use super::crates::*;
   use super::AE;
   pub use super::Void; // TODO remove the need for this
 

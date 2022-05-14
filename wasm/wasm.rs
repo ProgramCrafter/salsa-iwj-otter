@@ -10,7 +10,7 @@
 
 #![allow(clippy::unused_unit)] // #[wasm_bindgen] produces these?
 
-use otter_base::imports::*;
+use otter_base::crates::*;
 
 use std::fmt::Display;
 use std::collections::hash_map::HashMap;
@@ -22,7 +22,7 @@ use js_sys::JsString;
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
-use otter_base::imports::serde_json;
+use otter_base::crates::serde_json;
 
 use otter_base::geometry::{PosC,RegionC};
 use otter_base::zcoord;

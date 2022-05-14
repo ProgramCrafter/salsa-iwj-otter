@@ -9,9 +9,9 @@
 //! This program requires many additional runtime resources, which you are
 //! expected to build, along with the daemon, using the Otter `Makefile`.
 
-use otter::imports::*;
+use otter::crates::*;
 
-pub mod imports;
+pub mod crates;
 
 pub mod api;
 pub mod cmdlistener;

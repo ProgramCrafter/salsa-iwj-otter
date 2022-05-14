@@ -4,7 +4,7 @@
 
 // management API implementation
 
-use otter::imports::*;
+use otter::crates::*;
 
 use super::*;
 use otter::commands::*;

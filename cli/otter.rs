@@ -14,7 +14,7 @@
 
 pub type MgmtChannel = ClientMgmtChannel;
 
-pub use otter::imports::*;
+pub use otter::crates::*;
 
 pub use std::cell::Cell;
 pub use std::cell::RefCell;

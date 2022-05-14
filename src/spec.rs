@@ -4,9 +4,9 @@
 
 // game specs
 
-use crate::imports::*;
-use otter_support::imports::*;
-use otter_base::imports::*;
+use crate::crates::*;
+use otter_support::crates::*;
+use otter_base::crates::*;
 
 use std::borrow::Cow;
 use std::collections::hash_map::HashMap;

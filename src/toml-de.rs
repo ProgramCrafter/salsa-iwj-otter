@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-use crate::imports::*;
-use otter_support::imports::*;
-use otter_base::imports::*;
+use crate::crates::*;
+use otter_support::crates::*;
+use otter_base::crates::*;
 
 use std::fmt::{Debug, Display};
 use std::iter::Peekable;

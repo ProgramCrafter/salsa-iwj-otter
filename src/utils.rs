@@ -4,7 +4,7 @@
 
 use crate::prelude::*;
 
-pub use otter_base::imports::extend::ext;
+pub use otter_base::crates::extend::ext;
 
 //========== miscellany ==========
 // (roughly in order of implementation length)

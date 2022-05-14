@@ -2,4 +2,4 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-pub use otter::imports::*;
+pub use otter::crates::*;

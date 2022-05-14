@@ -11,7 +11,7 @@
 #![allow(clippy::redundant_closure_call)]
 #![allow(clippy::writeln_empty_string)]
 
-pub mod imports;
+pub mod crates;
 pub mod prelude;
 
 #[path="prelude-part.rs"]
