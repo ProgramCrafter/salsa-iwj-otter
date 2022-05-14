@@ -1109,8 +1109,8 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
 }
 
 #[throws(SubstError)]
-fn substn(input: &str, needle: &'static str, replacement: &str)
-          -> (String, usize) {
+fn subst_general(input: &str, needle: &'static str, replacement: &str)
+                 -> (String, usize) {
   let mut count = 0;
   let mut work = input.to_owned();
   for m in input.rmatch_indices(needle) {
@@ -1137,10 +1137,15 @@ fn substn(input: &str, needle: &'static str, replacement: &str)
 fn subst(before: &str, needle: &'static str, replacement: &str) -> String {
   use SubstErrorKind as SEK;
   let err = |kind| SubstError { kind, input: before.to_string() };
-  let (out, count) = substn(before, needle, replacement)?;
+  let (out, count) = subst_general(before, needle, replacement)?;
   if count == 0 { throw!(err(SEK::MissingToken(needle))) }
   if count > 1 { throw!(err(SEK::RepeatedToken(needle))) }
   out
+}
+
+#[throws(SubstError)]
+fn substn(before: &str, needle: &'static str, replacement: &str) -> String {
+  subst_general(before, needle, replacement)?.0
 }
 
 #[test]
@@ -1156,8 +1161,8 @@ fn test_subst() {
              SEK::RepeatedToken("_colour"));
 
   assert_eq!(substn("a _colour die being _colour", "_colour", "blue").unwrap(),
-             ("a blue die being blue".to_owned(), 2));
-  assert_eq!(substn("a _colour _colour die", "_colour", "").unwrap(),
+             "a blue die being blue");
+  assert_eq!(subst_general("a _colour _colour die", "_colour", "").unwrap(),
              ("a die".to_owned(), 2));
 }
 
