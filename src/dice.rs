@@ -152,8 +152,16 @@ impl PieceSpec for Spec {
     if_let!{ Some((nfaces,_)) = nfaces;
              else throw!(SpecError::MultipleFacesRequired) };
 
+    let radius = image.bbox_approx()?.size()?.len()? * 0.5;
+    let radius = radius * if image.shape() == Some(Shape::Circle) {
+      // bbox_approx is the diagonal of the enclosing square
+      // go back to the circle
+      0.5f64 .sqrt()
+    } else {
+      1.0
+    };
     let radius = if (0.5 .. 1.5).contains(&self.circle_scale) {
-      image.bbox_approx()?.size()?.len()? * 0.5 * self.circle_scale
+      radius * self.circle_scale
     } else {
       throw!(SpecError::InvalidSizeScale)
     };
