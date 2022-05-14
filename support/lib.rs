@@ -6,5 +6,7 @@ pub mod crates;
 pub mod imports;
 pub mod prelude;
 
+pub mod childio;
+pub mod debugmutex;
 pub mod support;
 pub mod tz;

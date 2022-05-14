@@ -345,6 +345,7 @@ impl<T,E> Result<T,E> {
 
 pub mod cleanup_notify {
   use super::crates::*;
+  use otter_support::crates::*;
   use super::AE;
   pub use super::Void; // TODO remove the need for this
 

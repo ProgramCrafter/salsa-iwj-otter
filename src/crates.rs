@@ -6,7 +6,6 @@
 
 pub use otter_support;
 
-pub use anyhow;
 pub use async_condvar_fair;
 pub use base64;
 pub use boolinator;
@@ -25,7 +24,6 @@ pub use lazy_init;
 pub use lazy_static;
 pub use inventory;
 pub use libc;
-pub use nix;
 pub use once_cell;
 pub use ordered_float;
 pub use pwd;

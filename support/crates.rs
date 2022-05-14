@@ -6,7 +6,9 @@
 
 pub use otter_base;
 
+pub use anyhow;
 pub use chrono;
 pub use chrono_tz;
 pub use log;
+pub use nix;
 pub use parking_lot;

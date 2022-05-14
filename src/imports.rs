@@ -13,9 +13,6 @@ use otter_base::imports::*;
 pub use std::any::Any;
 pub use std::borrow::Cow;
 pub use std::cmp::{self, max, min, Ordering};
-pub use std::collections::VecDeque;
-pub use std::collections::{btree_map, BTreeMap};
-pub use std::collections::{btree_set, BTreeSet};
 pub use std::convert::{Infallible, TryFrom, TryInto};
 pub use std::env;
 pub use std::error::Error;
@@ -23,26 +20,13 @@ pub use std::ffi::OsStr;
 pub use std::fmt::Formatter;
 pub use std::fmt::Write as _;
 pub use std::fmt::{self, Debug, Display};
-pub use std::fs;
-pub use std::fs::File;
 pub use std::hash::Hash;
-pub use std::io;
-pub use std::io::ErrorKind;
-pub use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 pub use std::iter;
 pub use std::iter::{repeat_with};
 pub use std::marker::PhantomData;
 pub use std::num::{NonZeroUsize, TryFromIntError, Wrapping};
-pub use std::os::linux::fs::MetadataExt as _; // todo why linux for st_mode??
-pub use std::os::unix;
-pub use std::os::unix::ffi::OsStrExt;
-pub use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
-pub use std::os::unix::io::{AsRawFd, IntoRawFd, RawFd};
-pub use std::os::unix::net::UnixStream;
-pub use std::os::unix::process::{CommandExt, ExitStatusExt};
 pub use std::net::{IpAddr, SocketAddr, ToSocketAddrs, Ipv6Addr, Ipv4Addr};
 pub use std::path::PathBuf;
-pub use std::process::{exit, Child, Command, Stdio};
 pub use std::str;
 pub use std::str::FromStr;
 pub use std::string::ParseError;
@@ -51,7 +35,6 @@ pub use std::sync::mpsc;
 pub use std::thread::{self, sleep};
 pub use std::time::{self, Duration, Instant};
 
-pub use anyhow::{anyhow, ensure, Context};
 pub use async_condvar_fair::{Condvar, BatonExt as _};
 pub use boolinator::Boolinator as _;
 pub use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
@@ -72,9 +55,6 @@ pub use index_vec::{define_index_type, index_vec, IndexSlice, IndexVec};
 pub use lazy_regex::regex;
 pub use lazy_static::lazy_static;
 pub use log::{log, log_enabled};
-pub use nix::unistd::{self, Uid};
-pub use nix::sys::time::TimeSpec;
-pub use nix::time::clock_gettime;
 pub use num_derive::{ToPrimitive, FromPrimitive};
 pub use num_traits::{Bounded, FromPrimitive, ToPrimitive};
 pub use ordered_float::OrderedFloat;
@@ -129,14 +109,12 @@ pub use crate::authproofs::{self, Authorisation, Unauthorised};
 pub use crate::authproofs::AuthorisationSuperuser;
 pub use crate::asseturl::*;
 pub use crate::bundles::{self, InstanceBundles, MgmtBundleListExt};
-pub use crate::childio;
 pub use crate::commands::{AccessTokenInfo, AccessTokenReport, MgmtError};
 pub use crate::commands::{MgmtCommand, MgmtResponse};
 pub use crate::commands::{MgmtGameInstruction, MgmtGameResponse};
 pub use crate::commands::{MgmtBundleList, MgmtGameUpdateMode};
 pub use crate::commands::{ProgressUpdateMode};
 pub use crate::config::*;
-pub use crate::debugmutex::DebugIdentify;
 pub use crate::debugreader::DebugReader;
 pub use crate::digestrw::{self, *};
 pub use crate::error::*;
@@ -182,8 +160,6 @@ pub type Colour = Html;
 pub const MS: time::Duration = time::Duration::from_millis(1);
 
 // ---------- type abbreviations ----------
-
-pub type AE = anyhow::Error;
 
 // accounts.rs
 pub type AS = AccountScope;

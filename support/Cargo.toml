@@ -26,10 +26,12 @@ path="lib.rs"
 otter-base.path="../base"
 otter-base.version="=1.0.0"
 	
+anyhow="1"
 chrono="0.4"
 chrono-tz="0.6"
 fehler="1"
 log="0.4"
+nix="0.23"
 parking_lot="0.12"
 
 serde_with="1"

@@ -2673,7 +2673,6 @@ name = "otter"
 version = "1.0.0"
 dependencies = [
  "ambassador",
- "anyhow",
  "async-condvar-fair",
  "backtrace",
  "base64 0.13.0",
@@ -2706,7 +2705,6 @@ dependencies = [
  "lazy_static",
  "libc",
  "mio 0.8.2",
- "nix 0.23.1",
  "num",
  "num-derive",
  "num-traits",
@@ -2832,10 +2830,12 @@ dependencies = [
 name = "otter-support"
 version = "1.0.0"
 dependencies = [
+ "anyhow",
  "chrono",
  "chrono-tz",
  "fehler",
  "log",
+ "nix 0.23.1",
  "otter-base",
  "parking_lot",
  "serde",
