@@ -15,7 +15,7 @@ struct MagicOwner {
 
 #[derive(Debug,Serialize,Deserialize)]
 struct Hand {
-  shape: GenericSimpleShape<(), RectShape>,
+  shape: GenericSimpleShape<(), RectOutline>,
   label: Option<PieceLabelLoaded>,
   #[serde(default="Behaviour::backcompat_upgrade")]
   #[serde(alias="sort")]
@@ -96,7 +96,7 @@ impl piece_specs::OwnedCommon {
       edge_width: self.edge_width,
     };
     let shape = match self.shape {
-      Outline::RectShape(r) => r,
+      Outline::RectOutline(r) => r,
       _ => throw!(SpecError::UnsupportedShape),
     };
     let shape = GenericSimpleShape::new(

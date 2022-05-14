@@ -259,14 +259,14 @@ pub struct ItemSpec {
 mod outline {
   use super::*;
   use crate::prelude::*;
-  use crate::shapelib::{CircleShape, RectShape};
+  use crate::shapelib::{CircleOutline, RectOutline};
   #[dyn_upcast(OutlineTrait)]
   #[enum_dispatch(OutlineTrait)]
   #[derive(Clone,Debug,Serialize,Deserialize)]
   #[serde(tag="type")]
   pub enum Outline {
-    #[serde(rename="Circle")] CircleShape,
-    #[serde(rename="Rect")]   RectShape,
+    #[serde(rename="Circle")] CircleOutline,
+    #[serde(rename="Rect")]   RectOutline,
   }
 }
 pub use outline::*;

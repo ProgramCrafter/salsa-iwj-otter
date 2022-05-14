@@ -185,7 +185,7 @@ impl Option<piece_specs::PieceLabel> {
 impl PieceLabelLoaded {
   #[throws(IE)]
   pub fn svg(&self, f: &mut Html,
-             outline: &RectShape,
+             outline: &RectOutline,
              def_colour: Option<&Colour>,
              text: &Html) {
     let colour = {
@@ -310,7 +310,7 @@ pub trait SimplePieceSpec: Debug {
 impl SimplePieceSpec for piece_specs::Disc {
   #[throws(SpecError)]
   fn load_raw(&self) -> (SimpleShape, &SimpleCommon) {
-    let outline = CircleShape { diam: self.diam as f64 };
+    let outline = CircleOutline { diam: self.diam as f64 };
     (SimpleShape::new(
       Html::lit("disc").into(),
       outline.into(),
@@ -335,7 +335,7 @@ impl piece_specs::Rect {
 impl SimplePieceSpec for piece_specs::Rect {
   #[throws(SpecError)]
   fn load_raw(&self) -> (SimpleShape, &SimpleCommon) {
-    let outline = RectShape { xy: self.xy()?.map(|v| v as f64) };
+    let outline = RectOutline { xy: self.xy()?.map(|v| v as f64) };
     let desc = Html::lit(
       if outline.xy.x() == outline.xy.y()
       { "square" } else { "rectangle" }

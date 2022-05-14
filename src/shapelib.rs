@@ -795,7 +795,7 @@ pub trait OutlineDefnTrait: Debug + Sync + Send + 'static {
   /// with a dummy svg_gz of `[1,1]`.  That must correctly predict
   /// success with other sizes.
   fn load(&self, size: PosC<f64>) -> Outline {
-    RectShape { xy: size }.into()
+    RectOutline { xy: size }.into()
   }
 
   fn load_mf1(&self, group: &GroupData) -> Result<Outline,LLE>;
@@ -830,12 +830,12 @@ impl_via_ambassador!{
   impl OutlineDefnTrait for OutlineDefnEnum { defn() }
 }
 
-//---------- RectShape ----------
+//---------- RectOutline ----------
 
 #[derive(Clone,Copy,Debug,Serialize,Deserialize)]
-pub struct RectShape { pub xy: PosC<f64> }
+pub struct RectOutline { pub xy: PosC<f64> }
 
-impl RectShape {
+impl RectOutline {
   // Used by code elsewhere eg deck.rs for occultation boundaries etc.
   #[throws(CoordinateOverflow)]
   pub fn rect(&self, nominal: Pos) -> RectC<Coord> {
@@ -860,7 +860,7 @@ impl RectShape {
 }
 
 #[dyn_upcast]
-impl OutlineTrait for RectShape {
+impl OutlineTrait for RectOutline {
   #[throws(IE)]
   fn outline_path(&self, scale: f64) -> Html {
     let xy = (self.xy * scale)?;
@@ -886,7 +886,7 @@ impl OutlineTrait for RectShape {
 struct RectDefn;
 impl OutlineDefnTrait for RectDefn {
   fn load(&self, size: PosC<f64>) -> Outline {
-    RectShape { xy: size }.into()
+    RectOutline { xy: size }.into()
   }
 
   #[throws(LibraryLoadError)]
@@ -897,13 +897,13 @@ impl OutlineDefnTrait for RectDefn {
   }
 }
 
-//---------- CircleShape ----------
+//---------- CircleOutline ----------
 
 #[derive(Clone,Copy,Debug,Serialize,Deserialize)]
-pub struct CircleShape { pub diam: f64 }
+pub struct CircleOutline { pub diam: f64 }
 
 #[dyn_upcast]
-impl OutlineTrait for CircleShape {
+impl OutlineTrait for CircleOutline {
   #[throws(IE)]
   fn outline_path(&self, scale: f64) -> Html {
     svg_circle_path(self.diam * scale)?
@@ -928,7 +928,7 @@ impl OutlineDefnTrait for CircleDefn {
       .map(OrderedFloat)
       .max().unwrap().
       into_inner();
-    CircleShape {
+    CircleOutline {
       diam,
     }.into()
   }
@@ -940,7 +940,7 @@ impl OutlineDefnTrait for CircleDefn {
       size => throw!(LLE::WrongNumberOfSizeDimensions
                      { got: size.len(), expected: [1,1] }),
     };
-    CircleShape {
+    CircleOutline {
       diam,
     }.into()
   }

@@ -11,7 +11,7 @@ pub const ENABLED_DESC : HtmlLit = Html::lit("a pickup deck (enabled)");
 
 #[derive(Debug,Serialize,Deserialize)]
 struct Deck {
-  shape: GenericSimpleShape<(), RectShape>,
+  shape: GenericSimpleShape<(), RectOutline>,
   label: Option<PieceLabelLoaded>,
 }
 
@@ -45,7 +45,7 @@ impl PieceSpec for piece_specs::Deck {
       edge_width: self.edge_width,
     };
     let shape = match self.shape {
-      Outline::RectShape(r) => r,
+      Outline::RectOutline(r) => r,
       _ => throw!(SpecError::UnsupportedShape),
     };
     let shape = GenericSimpleShape::new(

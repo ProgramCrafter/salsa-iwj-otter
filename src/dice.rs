@@ -68,7 +68,7 @@ struct Die {
   itemname: String,
   labels: IndexVec<FaceId, String>, // if .len()==1, always use [0]
   image: Arc<dyn InertPieceTrait>, // if image.nfaces()==1, always use face 0
-  surround_outline: CircleShape,
+  surround_outline: CircleOutline,
   cooldown_radius: f64,
   cooldown_time: Duration,
 }
@@ -157,7 +157,7 @@ impl PieceSpec for Spec {
     } else {
       throw!(SpecError::InvalidSizeScale)
     };
-    let surround_outline = CircleShape { diam: radius * 2. };
+    let surround_outline = CircleOutline { diam: radius * 2. };
     let cooldown_radius = radius + COOLDOWN_EXTRA_RADIUS;
 
     let cooldown_time = {
