@@ -1175,17 +1175,42 @@ fn process_files_entry(
     },
   };
 
+  fn colour_subst_1<'s>(substitutor: Option<(&'static str, &'s str)>)
+      -> impl for <'i> Fn(&'i str) -> Result<Cow<'i, str>, SubstError> + 's
+  {
+    move |input| Ok(
+      if let Some((keyword, val)) = substitutor {
+        subst(input, keyword, val)?.into()
+      } else {
+        input.into()
+      }
+    )
+  }
+
   let mut add1 = |
-    item_name: &GoodItemName,
-    src_name: Result<&str,&SubstError>,
-    sort, 
-    desc: &str
+    c_colour: Option<(&'static str, &str)>,
+    c_abbrev: Option<(&'static str, &str)>,
   | {
+    let c_colour = colour_subst_1(c_colour);
+    let c_abbrev = colour_subst_1(c_abbrev);
+
+    let sort = sort.as_deref().map(|v| c_abbrev(v)).transpose()?;
+    let sort = sort.map(|s| s.into_owned());
+
+    let item_name = c_abbrev(item_name.as_str())?;
+    let item_name = item_name.into_owned().try_into()?;
+
+    let src_name = c_abbrev(&fe.src_file_spec);
+    let src_name = src_name.as_deref();
+
+    let desc = c_colour(&fe.desc)?;
+
     let desc = if let Some(desc_template) = &group.d.desc_template {
-      subst(desc_template, "_desc", desc)?.to_html()
+      subst(desc_template, "_desc", &desc)?.to_html()
     } else {
-      desc.to_html()
+      (&*desc).to_html()
     };
+
     let idata = ItemData {
       group: group.clone(),
       occ: occ.clone(),
@@ -1193,25 +1218,17 @@ fn process_files_entry(
       shape_calculable,
       d: Arc::new(ItemDetails { desc }),
     };
-    l.add_item(src, src_name, item_name, CatEnt::Item(idata))?;
+    l.add_item(src, src_name, &item_name, CatEnt::Item(idata))?;
     Ok::<_,LLE>(())
   };
 
   if group.d.colours.is_empty() {
-    add1(&item_name, Ok(fe.src_file_spec.as_str()),
-         sort, &fe.desc.clone())?;
+    add1(None, None)?;
   } else {
     for (colour, recolourdata) in &group.d.colours {
-      let c_abbrev = &recolourdata.abbrev;
-      let t_sort = sort.as_ref().map(
-        |s| subst(s, "_c", c_abbrev)).transpose()?;
-      let t_item_name = subst(item_name.as_str(), "_c", c_abbrev)?;
-      let t_src_name = subst(&fe.src_file_spec, "_c", c_abbrev);
-      let t_src_name = t_src_name.as_ref().map(|s| s.as_str());
-      let t_desc = subst(&fe.desc, "_colour", colour)?;
-      add1(&t_item_name.try_into()?, t_src_name, t_sort, &t_desc)?;
+      add1(Some(("_colour", colour)),
+           Some(("_c", &recolourdata.abbrev)))?;
     }
-
   }
 }
 
