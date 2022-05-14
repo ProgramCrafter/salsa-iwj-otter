@@ -28,7 +28,7 @@ w-portal-orange	-	an orange portal piece belonging to white
 [group.dice]
 size = [21]
 outline.shape = "Circle"
-outline.size = [10]
+outline.size = [14]
 item_prefix = "die-image-"
 files = """
 d6-_c	-	a _colour die image
