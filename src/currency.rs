@@ -14,6 +14,7 @@
 //  - can have a back face which is less manipulable (if image has 2 faces)
 
 use crate::prelude::*;
+use crate::*; // to get ambassador_impls, macro resolution trouble
 
 const QTY_FONT_SIZE: f64 = 6.;
 
@@ -79,15 +80,9 @@ impl PieceSpec for Spec {
   }
 }
 
-#[dyn_upcast]
-impl OutlineTrait for Banknote {
-  delegate!{
-    to self.image {
-      fn outline_path(&self, scale: f64) -> Result<Html, IE>;
-      fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
-      fn bbox_approx(&self) -> Result<Rect, IE>;
-    }
-  }
+impl_via_ambassador!{
+  #[dyn_upcast]
+  impl OutlineTrait for Banknote { image }
 }
 
 #[dyn_upcast]

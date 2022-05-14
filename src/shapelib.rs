@@ -3,6 +3,7 @@
 // There is NO WARRANTY.
 
 use crate::prelude::*;
+use crate::*; // to get ambassador_impls, macro resolution trouble
 pub use crate::shapelib_toml::*;
 
 pub use crate::prelude::GoodItemName; // not sure why this is needed
@@ -258,12 +259,10 @@ impl<T> SvgBaseName<T> where T: Borrow<GoodItemName> {
 
 //==================== impls for ItemInertForOcculted ====================
 
-#[dyn_upcast]
-impl OutlineTrait for ItemInertForOcculted { delegate! { to self.outline {
-  fn outline_path(&self, scale: f64) -> Result<Html, IE>;
-  fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
-  fn bbox_approx(&self) -> Result<Rect, IE>;
-}}}
+impl_via_ambassador!{
+  #[dyn_upcast]
+  impl OutlineTrait for ItemInertForOcculted { outline }
+}
 #[dyn_upcast]
 impl PieceBaseTrait for ItemInertForOcculted {
   fn nfaces(&self) -> RawFaceId { 1 }
@@ -334,12 +333,10 @@ impl Display for LibraryEnquiryData {
 
 //==================== Item ====================
 
-#[dyn_upcast]
-impl OutlineTrait for Item { delegate! { to self.outline {
-  fn outline_path(&self, scale: f64) -> Result<Html, IE>;
-  fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
-  fn bbox_approx(&self) -> Result<Rect, IE>;
-}}}
+impl_via_ambassador!{
+  #[dyn_upcast]
+  impl OutlineTrait for Item { outline }
+}
 
 impl Item {
   #[throws(IE)]

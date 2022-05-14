@@ -3,6 +3,7 @@
 // There is NO WARRANTY.
 
 use crate::prelude::*;
+use crate::*; // to get ambassador_impls, macro resolution trouble
 
 pub const CORE_DESC    : HtmlLit = Html::lit("a play/pickup deck");
 pub const DISABLED_DESC: HtmlLit = Html::lit("a play/pickup deck (disabled)");
@@ -23,15 +24,9 @@ enum State {
 }
 use State::*;
 
-#[dyn_upcast]
-impl OutlineTrait for Deck {
-  delegate!{
-    to self.shape {
-      fn outline_path(&self, scale: f64) -> Result<Html,IE>;
-      fn thresh_dragraise(&self) -> Result<Option<Coord>,IE>;
-      fn bbox_approx(&self) -> Result<Rect, IE>;
-    }
-  }
+impl_via_ambassador!{
+  #[dyn_upcast]
+  impl OutlineTrait for Deck { shape }
 }
 
 #[typetag::serde(name="PickupDeck")]

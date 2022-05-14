@@ -5,6 +5,7 @@
 // pieces
 
 use crate::prelude::*;
+use crate::*; // to get ambassador_impls, macro resolution trouble
 
 use piece_specs::SimpleCommon;
 

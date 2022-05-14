@@ -3,6 +3,7 @@
 // There is NO WARRANTY.
 
 use crate::prelude::*;
+use crate::*; // to get ambassador_impls, macro resolution trouble
 
 pub const UNCLAIMED_HAND_DESC: &str = "a hand repository";
 
@@ -75,15 +76,9 @@ impl PieceXData for HandState {
   fn dummy() -> Self { default() }
 }
 
-#[dyn_upcast]
-impl OutlineTrait for Hand {
-  delegate!{
-    to self.shape {
-      fn outline_path(&self, scale: f64) -> Result<Html,IE>;
-      fn thresh_dragraise(&self) -> Result<Option<Coord>,IE>;
-      fn bbox_approx(&self) -> Result<Rect, IE>;
-    }
-  }
+impl_via_ambassador!{
+  #[dyn_upcast]
+  impl OutlineTrait for Hand { shape }
 }
 
 impl piece_specs::OwnedCommon {
