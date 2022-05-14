@@ -7,5 +7,4 @@ pub mod imports;
 pub mod prelude;
 
 pub mod support;
-
-#[path="../src/tz.rs"] pub mod tz;
+pub mod tz;
