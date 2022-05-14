@@ -105,17 +105,14 @@ pub fn svg_rectangle_path(PosC{coords: [x,y]}: PosC<f64>) -> Html {
            -x*0.5, -y*0.5, x, y, -x)
 }
 
-#[dyn_upcast]
-impl<Desc, Outl:'static> OutlineTrait for GenericSimpleShape<Desc, Outl>
-    where Desc: Debug + Send + Sync + 'static,
-          Outl: OutlineTrait,
-{
-  delegate! {
-    to self.outline {
-      fn outline_path(&self, scale: f64) -> Result<Html,IE>;
-      fn thresh_dragraise(&self) -> Result<Option<Coord>,IE>;
-      fn bbox_approx(&self) -> Result<Rect, IE>;
-    }
+impl_via_ambassador! {
+  #[dyn_upcast]
+  impl [ Desc, Outl:'static ]
+    OutlineTrait for GenericSimpleShape<Desc, Outl>
+  where [ Desc: Debug + Send + Sync + 'static,
+          Outl: OutlineTrait, ]
+  {
+    outline
   }
 }
 //    let edge_attrs = format!(r##"stroke-width="" stroke"##
