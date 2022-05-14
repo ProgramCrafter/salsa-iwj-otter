@@ -156,8 +156,6 @@ pub enum LibraryLoadMFIncompat {
   #[error("orig_size no longer supported")] OrigSizeForbidden,
   #[error("specified both size and numeric scale")] ContradictoryScale,
 }
-pub use LibraryLoadMFIncompat as LLMI;
-
 #[derive(Error,Copy,Clone,Debug,Eq,PartialEq)]
 pub enum SubstErrorKind {
   #[error("missing or unrecognised token {0}")] MissingToken (&'static str),

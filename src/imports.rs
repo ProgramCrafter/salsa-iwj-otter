@@ -156,6 +156,10 @@ pub type IOI = IOccultIlk;
 // pcrender.rs
 pub use PriOccultedGeneral as PriOG;
 
+// shapelib.rs
+pub use shapelib::LibraryLoadError as LLE;
+pub use shapelib::LibraryLoadMFIncompat as LLMI;
+
 // updates.rs
 pub use OpOutcomeThunkGeneric as OOTG;
 pub type PUE = PreparedUpdateEntry;

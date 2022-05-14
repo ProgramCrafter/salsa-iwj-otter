@@ -6,8 +6,6 @@ use crate::prelude::*;
 
 use shapelib::OutlineDefnEnum;
 
-#[doc(hidden)] pub type LLE = shapelib::LibraryLoadError;
-
 // At the implementation level, each loaded item contains an
 // `Arc<GroupDetails>`, which is simply stored directly.  The
 // `GroupDefn` is processed.
