@@ -1211,11 +1211,12 @@ fn process_files_entry(
     },
   };
 
-  fn colour_subst_1<'s>(substitutor: Option<(&'static str, &'s str)>)
+  fn colour_subst_1<'s, S>(subst: S, kv: Option<(&'static str, &'s str)>)
       -> impl for <'i> Fn(&'i str) -> Result<Cow<'i, str>, SubstError> + 's
+  where S: Fn(&str, &'static str, &str) -> Result<String, SubstError> + 's
   {
     move |input| Ok(
-      if let Some((keyword, val)) = substitutor {
+      if let Some((keyword, val)) = kv {
         subst(input, keyword, val)?.into()
       } else {
         input.into()
@@ -1227,8 +1228,8 @@ fn process_files_entry(
     c_colour: Option<(&'static str, &str)>,
     c_abbrev: Option<(&'static str, &str)>,
   | {
-    let c_colour = colour_subst_1(c_colour);
-    let c_abbrev = colour_subst_1(c_abbrev);
+    let c_colour = colour_subst_1(subst, c_colour);
+    let c_abbrev = colour_subst_1(subst, c_abbrev);
 
     let sort = sort.as_deref().map(|v| c_abbrev(v)).transpose()?;
     let sort = sort.map(|s| s.into_owned());
