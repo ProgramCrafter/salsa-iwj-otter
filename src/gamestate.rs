@@ -19,10 +19,6 @@ pub struct Generation(pub u64);
 
 visible_slotmap_key!{ VisiblePieceId(b'.') }
 
-#[derive(Copy,Clone,Debug,Serialize,Deserialize,Eq,Ord,PartialEq,PartialOrd)]
-#[serde(transparent)]
-pub struct Timestamp(pub u64); /* time_t */
-
 #[derive(Copy,Clone,Debug,Eq,Ord,PartialEq,PartialOrd)]
 pub struct SpecDepth(u16);
 
@@ -405,22 +401,6 @@ impl SpecDepth {
     const MAX: SpecDepth = SpecDepth(5);
     if self > MAX { return None }
     Some(Self(self.0 + 1))
-  }
-}
-
-impl Timestamp {
-  /// Always >= previously
-  pub fn now() -> Timestamp {
-    use std::time::SystemTime;
-    let now = SystemTime::now()
-      .duration_since(SystemTime::UNIX_EPOCH)
-      .unwrap()
-      .as_secs();
-    Timestamp(now)
-  }
-
-  pub fn render(&self, tz: &Timezone) -> String {
-    tz.format(*self)
   }
 }
 

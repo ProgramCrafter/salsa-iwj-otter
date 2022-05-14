@@ -4,7 +4,7 @@
 
 [package]
 name="otter"
-description="Otter game system; common infrastructure Rust crate."
+description="Otter game system; main data structures Rust crate."
 
 version="1.0.0"
 license="AGPL-3.0-or-later"
@@ -29,8 +29,8 @@ bundle-sources="0.0.1"
 
 [dependencies]
 
-otter-base.path="base"
-otter-base.version="=1.0.0"
+otter-support.path="support"
+otter-support.version="=1.0.0"
 	
 anyhow="1"
 backtrace="0.3"
@@ -38,8 +38,6 @@ base64="0.13"
 boolinator="2"
 byteorder="1.3"
 cast_trait_object="0.1"
-chrono="0.4"
-chrono-tz="0.6"
 console="0.15"
 crossbeam-utils="0.8"
 delegate="0.6"
@@ -50,7 +48,6 @@ educe="0.4"
 either="1"
 enum_dispatch="0.3.5"
 env_logger="0.9"
-fehler="1"
 fs2="0.4"
 glob="0.3"
 humantime-serde="1"
@@ -59,7 +56,6 @@ lazy-init="0.5"
 lazy-regex="2"
 lazy_static="1"
 libc="0.2"
-log="0.4"
 nix="0.23"
 num="0.4"
 num-derive="0.3"
@@ -68,14 +64,12 @@ once_cell="1"
 openssh-keys="0.5"
 ordered-float="2"
 paste="1"
-parking_lot="0.12"
 percent-encoding="2"
 pwd="1"
 rand="0.8"
 regex="1"
 rmp="0.8"
 rmp-serde="1"
-serde_with="1"
 structopt="0.3"
 sha2="0.10"
 subtle="2.4"
@@ -100,9 +94,14 @@ flexi_logger = { version="0.22" , features=["specfile"    ] }
 image = { version = "0.24", default-features=false, features=["jpeg","png"] }
 index_vec    = { version="0.1.1", features=["serde"       ] }
 mio          = { version="0.8",   features=["os-ext", "os-poll" ] }
-serde        = { version="1"    , features=["derive", "rc"] }
 strum        = { version="0.24" , features=["derive"      ] }
 
 slotmap = { package="slotmap-fork-otter", version="1", git="https://github.com/ijackson/slotmap", branch="slotmap-fork-otter", features=["serde"] }
+
+# Repeated in other Cargo.toml's because importing does not work properly
+fehler="1"
+serde        = { version="1"    , features=["derive", "rc"] }
+serde_with="1"
+thiserror="1"
 
 #fin.

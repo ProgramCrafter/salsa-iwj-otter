@@ -2681,8 +2681,6 @@ dependencies = [
  "bundle-sources",
  "byteorder",
  "cast_trait_object",
- "chrono",
- "chrono-tz",
  "console",
  "const-default",
  "crossbeam-utils",
@@ -2707,7 +2705,6 @@ dependencies = [
  "lazy-regex",
  "lazy_static",
  "libc",
- "log",
  "mio 0.8.2",
  "nix 0.23.1",
  "num",
@@ -2716,8 +2713,7 @@ dependencies = [
  "once_cell",
  "openssh-keys",
  "ordered-float",
- "otter-base",
- "parking_lot",
+ "otter-support",
  "paste",
  "percent-encoding",
  "pwd",
@@ -2734,6 +2730,7 @@ dependencies = [
  "subtle",
  "tempfile",
  "tera",
+ "thiserror",
  "toml",
  "typetag",
  "uds",
@@ -2829,6 +2826,20 @@ dependencies = [
  "otter-api-tests",
  "serde",
  "structopt",
+]
+
+[[package]]
+name = "otter-support"
+version = "1.0.0"
+dependencies = [
+ "chrono",
+ "chrono-tz",
+ "fehler",
+ "log",
+ "otter-base",
+ "parking_lot",
+ "serde",
+ "serde_with",
 ]
 
 [[package]]

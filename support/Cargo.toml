@@ -1,0 +1,39 @@
+# Copyright 2020-2021 Ian Jackson and contributors to Otter
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# There is NO WARRANTY.
+
+[package]
+name="otter-support"
+description="Otter game system; support code Rust crate."
+
+version="1.0.0"
+license="AGPL-3.0-or-later"
+edition="2021"
+resolver="1" # new resolver crashes!
+homepage="https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/"
+repository="https://salsa.debian.org/iwj/otter"
+keywords=["games"]
+authors=["Ian Jackson <ijackson@chiark.greenend.org.uk>",
+         "and the contributors to Otter"]
+
+[lib]
+name="otter_support"
+path="lib.rs"
+
+
+[dependencies]
+
+otter-base.path="../base"
+otter-base.version="=1.0.0"
+	
+chrono="0.4"
+chrono-tz="0.6"
+fehler="1"
+log="0.4"
+parking_lot="0.12"
+
+serde_with="1"
+
+serde        = { version="1"    , features=["derive", "rc"] }
+
+#fin.

@@ -21,6 +21,9 @@
 pub mod imports;
 pub mod prelude;
 
+#[path="prelude-part.rs"]
+pub mod prelude_part;
+
 pub mod accounts;
 pub mod asseturl;
 pub mod authproofs;
@@ -55,7 +58,6 @@ pub mod shapelib;
 pub mod spec;
 pub mod termprogress;
 pub mod timedfd;
-pub mod tz;
 pub mod updates;
 pub mod ui;
 pub mod utils;

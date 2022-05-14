@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-use crate::imports::*;
 use crate::prelude::*;
+
+pub use otter_base::imports::extend::ext;
 
 //========== miscellany ==========
 // (roughly in order of implementation length)
@@ -407,7 +408,7 @@ macro_rules! entry_define_insert_remove {
   {
     #[allow(non_snake_case)]
     mod $name_mod {
-      use $crate::imports::extend::ext;
+      use $crate::prelude::extend::ext;
       use $entry as Entry;
       use Entry::{Occupied, Vacant};
       #[ext(pub, name=EntryExt)]

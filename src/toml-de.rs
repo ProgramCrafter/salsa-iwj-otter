@@ -3,6 +3,8 @@
 // There is NO WARRANTY.
 
 use crate::imports::*;
+use otter_support::imports::*;
+use otter_base::imports::*;
 
 use std::fmt::{Debug, Display};
 use std::iter::Peekable;

@@ -4,3 +4,7 @@
 
 pub use crate::imports::*;
 pub use crate::prelude_part::*;
+
+pub use otter_base::imports::*;
+pub use otter_base::prelude_part::*;
+

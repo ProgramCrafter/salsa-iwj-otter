@@ -2,16 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-pub use otter_base;
-pub use otter_base::imports::*;
+pub use otter_support;
 
 pub use anyhow;
 pub use async_condvar_fair;
 pub use base64;
 pub use boolinator;
 pub use cast_trait_object;
-pub use chrono;
-pub use chrono_tz;
 pub use delegate;
 pub use digest;
 pub use educe;
@@ -26,11 +23,9 @@ pub use lazy_init;
 pub use lazy_static;
 pub use inventory;
 pub use libc;
-pub use log;
 pub use nix;
 pub use once_cell;
 pub use ordered_float;
-pub use parking_lot;
 pub use pwd;
 pub use regex;
 pub use rmp_serde;

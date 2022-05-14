@@ -14,6 +14,9 @@
 pub mod imports;
 pub mod prelude;
 
+#[path="prelude-part.rs"]
+pub mod prelude_part;
+
 pub mod geometry;
 pub mod html;
 pub mod zcoord;

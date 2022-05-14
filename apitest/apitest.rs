@@ -346,6 +346,7 @@ impl<T,E> Result<T,E> {
 pub mod cleanup_notify {
   use super::imports::*;
   use super::AE;
+  pub use super::Void; // TODO remove the need for this
 
   use anyhow::Context;
   use fehler::{throw, throws};
@@ -353,7 +354,6 @@ pub mod cleanup_notify {
   use nix::{unistd::*, fcntl::OFlag};
   use nix::sys::signal::*;
   use nix::Error as NE;
-  use void::Void;
   use std::io;
   use std::os::unix::io::RawFd;
   use std::panic::catch_unwind;

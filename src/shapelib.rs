@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
-pub use crate::prelude::*;
+use crate::prelude::*;
 pub use crate::shapelib_toml::*;
+
+pub use crate::prelude::GoodItemName; // not sure why this is needed
 
 use parking_lot::{const_rwlock, RwLock};
 use parking_lot::RwLockReadGuard;
