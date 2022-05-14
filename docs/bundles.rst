@@ -179,6 +179,9 @@ follow the link to the latest published documentation for that format.
       of library pieces overhauled.  ``size`` is now the in-game
       size, and the SVG size is obtained from the SVG.
       Library catalogues must be overhauled.
+    - In library group ``sort`` parameters, when colouring, ``_c`` 
+      is correctly replaced by the colour *abbreviation*, rather than
+      the descriptive string.
 
   * - ``1``
     - 0.x - `1.0.0 <https://www.chiark.greenend.org.uk/~ianmdlvl/otter/1.0.0/docs/README.html>`_

@@ -1202,9 +1202,9 @@ fn process_files_entry(
          sort, &fe.desc.clone())?;
   } else {
     for (colour, recolourdata) in &group.d.colours {
-      let t_sort = sort.as_ref().map(
-        |s| subst(s, "_c", colour)).transpose()?;
       let c_abbrev = &recolourdata.abbrev;
+      let t_sort = sort.as_ref().map(
+        |s| subst(s, "_c", c_abbrev)).transpose()?;
       let t_item_name = subst(item_name.as_str(), "_c", c_abbrev)?;
       let t_src_name = subst(&fe.src_file_spec, "_c", c_abbrev);
       let t_src_name = t_src_name.as_ref().map(|s| s.as_str());
