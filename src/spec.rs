@@ -257,16 +257,24 @@ pub struct ItemSpec {
 }
 
 mod outline {
-  use super::*;
   use crate::prelude::*;
-  use crate::shapelib::{CircleOutline, RectOutline};
-  #[dyn_upcast(OutlineTrait)]
-  #[enum_dispatch(OutlineTrait)]
-  #[derive(Clone,Debug,Serialize,Deserialize)]
-  #[serde(tag="type")]
-  pub enum Outline {
-    #[serde(rename="Circle")] CircleOutline,
-    #[serde(rename="Rect")]   RectOutline,
+
+  macro_rules! shape_defns { {
+    $( $Shape:ident  $serde:literal  ;)*
+  } => { paste!{
+    $( use crate::shapelib::[< $Shape Outline >]; )*
+    #[dyn_upcast(OutlineTrait)]
+    #[enum_dispatch(OutlineTrait)]
+    #[derive(Clone,Debug,Serialize,Deserialize)]
+    #[serde(tag="type")]
+    pub enum Outline { $(
+      #[serde(rename=$serde)] [< $Shape Outline >],
+    )* }
+  } } }
+
+  shape_defns! {
+    Circle "Circle";
+    Rect   "Rect"  ;
   }
 }
 pub use outline::*;
