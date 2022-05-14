@@ -334,27 +334,31 @@ impl<Y: Sync, E: Sync, F: Sync + FnOnce() -> Result<Y,E>>
 
 //========== toml ====================
 
+#[derive(Debug,Copy,Clone,Eq,PartialEq,Ord,PartialOrd)]
+struct TomlQuote<'s>(pub &'s str);
+
 // We reimplement this because the toml crate doesn't expose it, and
 // looking at the github issues etc. for that crate isn't encuraging.
-pub fn toml_quote_string(s: &str) -> String {
-  let mut o = String::new();
-  for c in s.chars() {
-    match c {
-      '"' | '\\'=> { o.push('\\'); o.push(c); },
-      c if (c < ' ' && c != '\t') || c == '\x7f' => {
-        write!(o, r#"\u{:04x}"#, c as u32).unwrap();
-        continue;
+impl<'s> Display for TomlQuote<'s> {
+  #[throws(fmt::Error)]
+  fn fmt(&self, f: &mut fmt::Formatter) {
+    for c in self.0.chars() {
+      match c {
+        '"' | '\\'=> write!(f, "\\{}", c)?,
+        c if (c < ' ' && c != '\t') || c == '\x7f' => {
+          write!(f, r#"\u{:04x}"#, c as u32).unwrap();
+          continue;
+        }
+        c => write!(f, "{}", c)?,
       }
-      c => o.push(c),
     }
   }
-  o
 }
 
 #[test]
 fn toml_quote_string_test(){
-  assert_eq!(toml_quote_string(r#"w \ "	ƒ."#),
-                                r#"w \\ \"	\u0007\u007fƒ."#);
+  assert_eq!(TomlQuote(r#"w \ "	ƒ."#).to_string(),
+                       r#"w \\ \"	\u0007\u007fƒ."#);
 }
 
 pub fn toml_merge<'u,
