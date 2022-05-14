@@ -196,16 +196,17 @@ fn preview(opts: &Opts, items: Vec<ItemForOutput>) {
         print!(r#"<svg xmlns="http://www.w3.org/2000/svg"
                        viewBox="{}" width={} height={}>"#,
                &viewport, wh[0], wh[1]);
+        let mut html = Html::lit("").into();
+        gpc.face = face.into();
+        p.svg_piece(&mut html, &gpc, &GameState::dummy(), default())?;
+        println!("{}", html);
         if inseveral == 1 {
           let dasharray = player_num_dasharray(1.try_into().unwrap());
           println!(r#"<path d="{}" stroke-dasharray="{}"
                           fill="none" stroke="{}" />"#,
                  &surround, &dasharray, HELD_SURROUND_COLOUR);
         }
-        let mut html = Html::lit("").into();
-        gpc.face = face.into();
-        p.svg_piece(&mut html, &gpc, &GameState::dummy(), default())?;
-        println!("{}</svg>", html);
+        println!("</svg>");
       }
       println!("</td>");
 
