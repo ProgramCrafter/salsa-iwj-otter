@@ -6,7 +6,7 @@ use crate::crates::*;
 use otter_support::crates::*;
 use otter_base::crates::*;
 
-use otter_base::prelude_part::*;
+use otter_base::imports::*;
 
 pub use std::any::Any;
 pub use std::borrow::Cow;

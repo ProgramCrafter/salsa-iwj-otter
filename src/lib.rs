@@ -19,10 +19,8 @@
 //! [build instructions](https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/build.html).
 
 pub mod crates;
+pub mod imports;
 pub mod prelude;
-
-#[path="prelude-part.rs"]
-pub mod prelude_part;
 
 pub mod accounts;
 pub mod asseturl;

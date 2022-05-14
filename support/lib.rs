@@ -3,10 +3,8 @@
 // There is NO WARRANTY.
 
 pub mod crates;
+pub mod imports;
 pub mod prelude;
-
-#[path="prelude-part.rs"]
-pub mod prelude_part;
 
 pub mod support;
 
