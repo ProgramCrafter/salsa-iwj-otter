@@ -14,11 +14,14 @@ struct State {
 }
 
 #[throws(StartupError)]
-pub fn init() {
+pub fn init_from_config() {
+  init_from_dir(&config().nwtemplate_dir)?;
+}
+
+#[throws(StartupError)]
+pub fn init_from_dir(nwtemplate_dir: &str) {
   let mut guard = STATE.write();
   assert!(guard.is_none());
-  let config = config();
-  let nwtemplate_dir = &config.nwtemplate_dir;
   let glob = format!("{}/*.tera", nwtemplate_dir);
   let tera = Tera::new(&glob)
     .map_err(|e| anyhow!("{}", e))

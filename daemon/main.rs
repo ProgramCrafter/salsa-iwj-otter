@@ -498,7 +498,7 @@ async fn main() -> Result<(),StartupError> {
       .context("check bundled-sources directory")?;
   }
 
-  nwtemplates::init()?;
+  nwtemplates::init_from_config()?;
   shapelib::load_global_libs(&config().shapelibs)?;
 
   c.lock_save_area()?;
