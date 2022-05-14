@@ -1202,8 +1202,12 @@ fn process_files_entry(
     let sort = sort.as_deref().map(|v| c_abbrev(v)).transpose()?;
     let sort = sort.map(|s| s.into_owned());
 
-    let item_name = c_abbrev(item_name.as_str())?;
-    let item_name = item_name.into_owned().try_into()?;
+    let subst_item_name = |item_name: &GoodItemName| {
+      let item_name = c_abbrev(item_name.as_str())?;
+      let item_name = item_name.into_owned().try_into()?;
+      Ok::<_,LLE>(item_name)
+    };
+    let item_name = subst_item_name(&item_name)?;
 
     let src_name = c_abbrev(&fe.src_file_spec);
     let src_name = src_name.as_deref();
