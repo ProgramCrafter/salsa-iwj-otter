@@ -92,7 +92,7 @@ fn preview(items: Vec<ItemForOutput>) {
     }
   }
 
-  let mut pieces: Vec<Prep> = items.into_iter().map(|it| {
+  let mut pieces: Vec<(Prep, GPiece)> = items.into_iter().map(|it| {
     let spec = ItemSpec::from(&it);
     let sortkey = it.sortkey;
     (||{
@@ -124,20 +124,20 @@ fn preview(items: Vec<ItemForOutput>) {
         .map(|(min,max)| max-min)
         .collect::<Vec<_>>();
 
-      Ok::<_,AE>(Prep { spec, p, sortkey, uos, bbox, size })
+      Ok::<_,AE>((Prep { spec, p, sortkey, uos, bbox, size }, gpc ))
     })().with_context(|| format!("{:?}", &spec))
   }).collect::<Result<Vec<_>,_>>()?;
 
   // clones as a bodge for https://github.com/rust-lang/rust/issues/34162
-  pieces.sort_by_key(|p| (p.spec.item.clone(), p.spec.lib.clone()));
+  pieces.sort_by_key(|(p,_)| (p.spec.item.clone(), p.spec.lib.clone()));
                      
-  let max_facecols = pieces.iter().map(|s| s.face_cols()).max().unwrap_or(1);
-  let max_uos = pieces.iter().map(|s| s.uos.len()).max().unwrap_or(0);
+  let max_facecols = pieces.iter().map(|s| s.0.face_cols()).max().unwrap_or(1);
+  let max_uos = pieces.iter().map(|s| s.0.uos.len()).max().unwrap_or(0);
 
   println!("{}", &HTML_PRELUDE);
   println!(r#"<table rules="all">"#);
-  for s in &pieces {
-    let Prep { spec, sortkey, p, uos, bbox, size } = s;
+  for (s, gpc) in &mut pieces {
+    let Prep { spec, sortkey, p, uos, bbox, size } = &*s;
 
     macro_rules! println {
       ($($x:tt)*) => ({
@@ -198,7 +198,7 @@ fn preview(items: Vec<ItemForOutput>) {
                  &surround, &dasharray, HELD_SURROUND_COLOUR);
         }
         let mut html = Html::lit("").into();
-        let gpc = GPiece { face: face.into(), ..GPiece::dummy() };
+        gpc.face = face.into();
         p.svg_piece(&mut html, &gpc, &GameState::dummy(), default())?;
         println!("{}</svg>", html);
       }
