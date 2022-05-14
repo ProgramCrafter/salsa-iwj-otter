@@ -633,9 +633,7 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName,
     mformat: materials_format::Version,
   }
 
-  impl shapelib::LibrarySource for LibraryInBundle<'_> {
-    fn catalogue_data(&self) -> &str { &self.catalogue_data }
-    fn svg_dir(&self) -> String { self.svg_dir.clone() }
+  impl shapelib::LibrarySvgNoter for LibraryInBundle<'_> {
     #[throws(shapelib::SubstError)]
     fn note_svg(&mut self, basename: &GoodItemName,
                 src_name: Result<&str, &shapelib::SubstError>) {
@@ -647,12 +645,17 @@ fn parse_bundle<EH>(id: Id, instance: &InstanceName,
       let item = basename.clone();
       self.need_svgs.push(SvgNoted { item, src_name });
     }
+  }
+  impl shapelib::LibrarySource for LibraryInBundle<'_> {
+    fn catalogue_data(&self) -> &str { &self.catalogue_data }
+    fn svg_dir(&self) -> String { self.svg_dir.clone() }
     fn bundle(&self) -> Option<bundles::Id> { Some(*self.id) }
 
     #[throws(materials_format::VersionError)]
     fn default_materials_format(&self) -> materials_format::Version {
       self.mformat
     }
+    fn svg_noter(&mut self) -> &mut dyn shapelib::LibrarySvgNoter { self }
   }
 
   for LibScanned { libname, dir_inzip, inzip } in libs {

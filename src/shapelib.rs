@@ -246,7 +246,7 @@ impl<T> SvgBaseName<T> where T: ?Sized {
 }
 impl<T> SvgBaseName<T> where T: Borrow<GoodItemName> {
   #[throws(SubstError)]
-  fn note(src: &mut dyn LibrarySource, i: T,
+  fn note(src: &mut dyn LibrarySvgNoter, i: T,
           src_name: Result<&str, &SubstError>) -> Self {
     src.note_svg(i.borrow(), src_name)?;
     SvgBaseName(i)
@@ -998,16 +998,22 @@ impl Catalogue {
   }
 }
 
-pub trait LibrarySource {
-  fn catalogue_data(&self) -> &str;
-  fn svg_dir(&self) -> String;
+pub trait LibrarySvgNoter {
   #[throws(SubstError)]
   fn note_svg(&mut self, _basename: &GoodItemName,
               _src_name: Result<&str, &SubstError>) { }
+}
+pub trait LibrarySource: LibrarySvgNoter {
+  fn catalogue_data(&self) -> &str;
+  fn svg_dir(&self) -> String;
   fn bundle(&self) -> Option<bundles::Id>;
 
   fn default_materials_format(&self)
                               -> Result<materials_format::Version, MFVE>;
+
+  // Sadly dyn_upcast doesn't work because it doesn't support the
+  // non-'static lifetime on BuiltinLibrary
+  fn svg_noter(&mut self) -> &mut dyn LibrarySvgNoter;
 }
 
 struct BuiltinLibrary<'l> {
@@ -1015,7 +1021,9 @@ struct BuiltinLibrary<'l> {
   dirname: &'l str,
 }
 
-impl LibrarySource for BuiltinLibrary<'_> {
+impl LibrarySvgNoter for BuiltinLibrary<'_> {
+}
+impl<'l> LibrarySource for BuiltinLibrary<'l> {
   fn catalogue_data(&self) -> &str { self.catalogue_data }
   fn svg_dir(&self) -> String { self.dirname.to_string() }
   fn bundle(&self) -> Option<bundles::Id> { None }
@@ -1024,6 +1032,8 @@ impl LibrarySource for BuiltinLibrary<'_> {
   fn default_materials_format(&self) -> materials_format::Version {
     throw!(MFVE::Other("builtin libraries must have explicit version now!"));
   }
+
+  fn svg_noter(&mut self) -> &mut dyn LibrarySvgNoter { self }
 }
 
 //---------- reading ----------
@@ -1088,7 +1098,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
 
     for fe in gdefn.files.0 {
       process_files_entry(
-        src, &mut l,
+        src.svg_noter(), &mut l,
         &gdefn.item_prefix, &gdefn.item_suffix, &gdefn.sort,
         &group, shape_calculable, fe
       )?;
@@ -1175,7 +1185,7 @@ fn format_item_name(item_prefix: &str, fe: &FileData, item_suffix: &str)
 
 #[throws(LibraryLoadError)]
 fn process_files_entry(
-  src: &mut dyn LibrarySource, l: &mut Catalogue,
+  src: &mut dyn LibrarySvgNoter, l: &mut Catalogue,
   item_prefix: &str, item_suffix: &str, sort: &str,
   group: &Arc<GroupData>, shape_calculable: ShapeCalculable,
   fe: FileData
@@ -1315,7 +1325,8 @@ fn process_files_entry(
 impl Catalogue {
   #[throws(LLE)]
   fn add_item(&mut self,
-              src: &mut dyn LibrarySource, src_name: Result<&str,&SubstError>,
+              src: &mut dyn LibrarySvgNoter,
+              src_name: Result<&str,&SubstError>,
               item_name: &GoodItemName, catent: CatalogueEntry) {
     type H<'e,X,Y> = hash_map::Entry<'e,X,Y>;
 
