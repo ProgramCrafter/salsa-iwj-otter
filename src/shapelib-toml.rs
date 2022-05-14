@@ -4,8 +4,6 @@
 
 use crate::prelude::*;
 
-use shapelib::OutlineDefnEnum;
-
 // At the implementation level, each loaded item contains an
 // `Arc<GroupDetails>`, which is simply stored directly.  The
 // `GroupDefn` is processed.
@@ -56,12 +54,12 @@ pub enum ScaleFitDetails { Fit, Cover, Stretch }
 #[serde(untagged)]
 pub enum OutlineDetails {
   Full(FullOutlineDetails), // introduced with mformat=2
-  Shape(OutlineDefnEnum),
+  Shape(Shape),
 }
 
 #[derive(Debug,Deserialize)]
 pub struct FullOutlineDetails {
-  shape: OutlineDefnEnum,
+  shape: Shape,
   #[serde(default)] size: Vec<f64>,
   #[serde(default)] scale: Option<f64>,
 }
@@ -69,7 +67,7 @@ pub struct FullOutlineDetails {
 impl OutlineDetails {
   // enum_access could perhaps do this but controlling the serde
   // would become confusing
-  pub fn shape(&self) -> OutlineDefnEnum { match self {
+  pub fn shape(&self) -> Shape { match self {
     OutlineDetails::Full(full) => full.shape,
     OutlineDetails::Shape(shape) => *shape,
   }}

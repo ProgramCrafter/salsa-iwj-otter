@@ -788,7 +788,7 @@ impl GroupDetails {
 //---------- OutlineDefn etc. ----------
 
 #[ambassador::delegatable_trait]
-pub trait OutlineDefnTrait: Debug + Sync + Send + 'static {
+pub trait ShapeLoadableTrait: Debug + Sync + Send + 'static {
   /// Success or failure must not depend on `svg_sz`
   ///
   /// Called to *check* the group configuration before load, but
@@ -801,33 +801,14 @@ pub trait OutlineDefnTrait: Debug + Sync + Send + 'static {
   fn load_mf1(&self, group: &GroupData) -> Result<Outline,LLE>;
 }
 
-// We used to do this via typetag and Box<dyn OutlineDefn>
+// We used to do shape deser via typetag and Box<dyn OutlineDefn>
 //
-// But I didnt manage to get typetag to deserialise these unit variants.
-// Instead, we have this enum and a cheesy macro to impl OutlineDefn
-// by delegating to a freshly made (static) unit struct value.
-macro_rules! outline_defns {
-  { $( $Shape:ident ),* } => { paste!{
-
-    #[derive(Deserialize,Debug,Copy,Clone,Eq,PartialEq)]
-    pub enum OutlineDefnEnum {
-      $( $Shape, )*
-    }
-
-    impl OutlineDefnEnum {
-      fn defn(self) -> &'static dyn OutlineDefnTrait {
-        match self { $(
-          Self::$Shape => &[< $Shape Defn >] as _,
-        )* }
-      }
-    }
-
-  } }
-}
-
-outline_defns! { Circle, Rect }
+// But I didnt manage to get typetag to deserialise the way I wanted.
+// Instead, we have the Shape enum and a cheesy macro to impl OutlineDefn
+// by delegating to a freshly made (static) unit struct value,
+// - see outline_defn in mod outline in spec.rs.
 impl_via_ambassador!{
-  impl OutlineDefnTrait for OutlineDefnEnum { defn() }
+  impl ShapeLoadableTrait for Shape { shapelib_loadable() }
 }
 
 //---------- RectOutline ----------
@@ -882,9 +863,7 @@ impl OutlineTrait for RectOutline {
   }
 }
 
-#[derive(Deserialize,Debug)]
-struct RectDefn;
-impl OutlineDefnTrait for RectDefn {
+impl ShapeLoadableTrait for RectShapeIndicator {
   fn load(&self, size: PosC<f64>) -> Outline {
     RectOutline { xy: size }.into()
   }
@@ -919,9 +898,7 @@ impl OutlineTrait for CircleOutline {
   }
 }
 
-#[derive(Deserialize,Debug)]
-struct CircleDefn;
-impl OutlineDefnTrait for CircleDefn {
+impl ShapeLoadableTrait for CircleShapeIndicator {
   fn load(&self, size: PosC<f64>) -> Outline {
     let diam = size
       .coords.into_iter()
