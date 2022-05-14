@@ -32,6 +32,7 @@ chrono="0.4"
 chrono-tz="0.6"
 console="0.15"
 derive-into-owned="0.2"
+digest="0.10"
 fehler="1"
 fs2="0.4"
 lazy_static="1"
@@ -44,10 +45,12 @@ pwd="1"
 rand="0.8"
 rmp="0.8"
 rmp-serde="1"
+sha2="0.10"
 toml="0.5"
 unicode-width="0.1"
 
 flexi_logger = { version="0.22" , features=["specfile"    ] }
+mio          = { version="0.8",   features=["os-ext", "os-poll" ] }
 
 # Repeated in other Cargo.toml's because importing does not work properly
 num-traits="0.2"

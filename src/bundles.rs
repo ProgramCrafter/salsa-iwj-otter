@@ -1374,3 +1374,18 @@ fn id_file_parse() {
   check_n("00000.xyz", "bad extension");
   check_n("65536.zip", "bad index");
 }
+
+#[test]
+#[cfg(not(miri))]
+fn test_digest_write() {
+  let ibuffer = b"xyz";
+  let exp = Sha512_256::digest(&ibuffer[..]);
+  let mut obuffer = [0;4];
+  let inner = &mut obuffer[..];
+  let mut dw = bundles::DigestWrite::new(inner);
+  assert_eq!( dw.write(&ibuffer[..]).unwrap(), 3);
+  let (got, recov) = dw.finish();
+  assert_eq!( recov, b"\0" );
+  assert_eq!( got, exp );
+  assert_eq!( &obuffer, b"xyz\0" );
+}

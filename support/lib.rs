@@ -10,10 +10,12 @@ pub mod authproofs;
 pub mod childio;
 pub mod config;
 pub mod debugmutex;
+pub mod digestrw;
 pub mod packetframe;
 pub mod progress;
 pub mod support;
 pub mod termprogress;
+pub mod timedfd;
 pub mod tz;
 
 #[path = "fake-rng.rs"]           pub mod fake_rng;
