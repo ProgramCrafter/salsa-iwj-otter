@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // There is NO WARRANTY.
 
+// See Import Structure Doctrine in src/prelude.rs
+
 pub use otter_base;
 
 pub use chrono;
