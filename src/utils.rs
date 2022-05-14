@@ -335,7 +335,7 @@ impl<Y: Sync, E: Sync, F: Sync + FnOnce() -> Result<Y,E>>
 //========== toml ====================
 
 #[derive(Debug,Copy,Clone,Eq,PartialEq,Ord,PartialOrd)]
-struct TomlQuote<'s>(pub &'s str);
+pub struct TomlQuote<'s>(pub &'s str);
 
 // We reimplement this because the toml crate doesn't expose it, and
 // looking at the github issues etc. for that crate isn't encuraging.
