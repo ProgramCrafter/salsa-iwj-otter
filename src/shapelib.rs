@@ -1109,27 +1109,38 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
 }
 
 #[throws(SubstError)]
-fn subst(before: &str, needle: &'static str, replacement: &str)
-         -> String {
+fn substn(input: &str, needle: &'static str, replacement: &str)
+          -> (String, usize) {
+  let mut count = 0;
+  let mut work = input.to_owned();
+  for m in input.rmatch_indices(needle) {
+    count += 1;
+    let mut lhs = &work[0.. m.0];
+    let mut rhs = &work[m.0 + m.1.len() ..];
+    if replacement.is_empty() {
+      let lhs_trimmed = lhs.trim_end();
+      if lhs_trimmed.len() != lhs.len() {
+        lhs = lhs_trimmed;
+      } else {
+        rhs = rhs.trim_start();
+      } 
+    }
+    work = lhs
+      .to_owned()
+      + replacement
+      + rhs
+  }
+  (work, count)
+}
+
+#[throws(SubstError)]
+fn subst(before: &str, needle: &'static str, replacement: &str) -> String {
   use SubstErrorKind as SEK;
   let err = |kind| SubstError { kind, input: before.to_string() };
-  let mut matches = before.match_indices(needle);
-  let m1 = matches.next().ok_or_else(|| err(SEK::MissingToken(needle)))?;
-  if matches.next().is_some() { Err(err(SEK::RepeatedToken(needle)))?; }
-  let mut lhs = &before[0.. m1.0];
-  let mut rhs = &before[m1.0 + m1.1.len() ..];
-  if replacement.is_empty() {
-    let lhs_trimmed = lhs.trim_end();
-    if lhs_trimmed.len() != lhs.len() {
-      lhs = lhs_trimmed;
-    } else {
-      rhs = rhs.trim_start();
-    } 
-  }
-  lhs
-    .to_owned()
-    + replacement
-    + rhs
+  let (out, count) = substn(before, needle, replacement)?;
+  if count == 0 { throw!(err(SEK::MissingToken(needle))) }
+  if count > 1 { throw!(err(SEK::RepeatedToken(needle))) }
+  out
 }
 
 #[test]
@@ -1143,6 +1154,11 @@ fn test_subst() {
              SEK::MissingToken("_colour"));
   assert_eq!(subst("a _colour _colour die", "_colour", "").unwrap_err().kind,
              SEK::RepeatedToken("_colour"));
+
+  assert_eq!(substn("a _colour die being _colour", "_colour", "blue").unwrap(),
+             ("a blue die being blue".to_owned(), 2));
+  assert_eq!(substn("a _colour _colour die", "_colour", "").unwrap(),
+             ("a die".to_owned(), 2));
 }
 
 #[throws(LibraryLoadError)]
