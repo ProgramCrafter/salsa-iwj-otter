@@ -230,7 +230,7 @@ pub trait PieceTrait: PieceBaseTrait + Downcast + Send + Debug + 'static {
                       _was_held: Option<PlayerId>)
                       -> Result<OpHookThunk,IE> { Ok(default()) }
 
-  fn loaded_hook(&self, _piece: PieceId,
+  fn save_reloaded_hook(&self, _piece: PieceId,
                  _gs: &mut GameState, _ig: &InstanceRef) -> Result<(),IE> {
     Ok(())
   }

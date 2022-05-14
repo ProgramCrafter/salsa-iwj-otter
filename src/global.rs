@@ -1337,7 +1337,8 @@ impl InstanceGuard<'_> {
 
     let ig = &mut *g;
     for (piece, ipc) in ig.ipieces.0.iter() {
-      ipc.direct_trait_access().loaded_hook(piece, &mut ig.gs, &gref)?;
+      ipc.direct_trait_access()
+        .save_reloaded_hook(piece, &mut ig.gs, &gref)?;
     }
 
     for (token, _) in &tokens_players {

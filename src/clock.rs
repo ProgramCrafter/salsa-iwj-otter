@@ -743,8 +743,8 @@ impl PieceTrait for Clock {
   }
 
   #[throws(IE)]
-  fn loaded_hook(&self, piece: PieceId, gs: &mut GameState,
-                 ig: &InstanceRef) {
+  fn save_reloaded_hook(&self, piece: PieceId, gs: &mut GameState,
+                        ig: &InstanceRef) {
     // The effect of this is to reload to the amount remaining at the
     // last game save.  That's probably tolerable, and even arguably
     // better than having the clock "have kept running" during the

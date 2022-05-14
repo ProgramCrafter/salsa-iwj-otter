@@ -420,7 +420,8 @@ impl PieceTrait for Die {
   }
 
   #[throws(IE)]
-  fn loaded_hook(&self, piece: PieceId, gs: &mut GameState, _: &InstanceRef) {
+  fn save_reloaded_hook(&self, piece: PieceId, gs: &mut GameState
+                        , _: &InstanceRef) {
     self.cooldown_cleanup_hook(&mut gs.pieces, piece)?;
   }
 }
