@@ -88,12 +88,23 @@ fn preview(opts: &Opts, items: Vec<ItemForOutput>) {
   nwtemplates::init_from_dir(&opts.nwtemplates)?;
 
   impl Prep {
-    fn want_several(&self) -> bool {
-      self.size[0] < 50.0
+    fn large(&self) -> bool {
+      self.size[0] >= 50.0
     }
-    fn face_cols(&self) -> usize {
-      usize::from(self.p.nfaces())
-        * if self.want_several() { SEVERAL } else { 1 }
+    fn face_want_span(&self) -> usize {
+      if self.large() { 4 } else { 1 }
+    }
+    fn face_want_several(&self, _face: RawFaceId) -> usize {
+      if self.large() { 1 } else { SEVERAL }
+    }
+    fn face_want_cols(&self, face: RawFaceId) -> usize {
+      self.face_want_several(face) *
+      self.face_want_span()
+    }
+    fn want_cols(&self) -> usize {
+      (0 .. self.p.nfaces())
+        .map(|face| self.face_want_cols(face))
+        .sum()
     }
   }
 
@@ -137,7 +148,7 @@ fn preview(opts: &Opts, items: Vec<ItemForOutput>) {
   // clones as a bodge for https://github.com/rust-lang/rust/issues/34162
   pieces.sort_by_key(|(p,_)| (p.spec.item.clone(), p.spec.lib.clone()));
                      
-  let max_facecols = pieces.iter().map(|s| s.0.face_cols()).max().unwrap_or(1);
+  let total_cols = pieces.iter().map(|s| s.0.want_cols()).max().unwrap_or(1);
   let max_uos = pieces.iter().map(|s| s.0.uos.len()).max().unwrap_or(0);
 
   println!("{}", &HTML_PRELUDE);
@@ -165,27 +176,34 @@ fn preview(opts: &Opts, items: Vec<ItemForOutput>) {
     println!(r#"</th>"#);
     println!(r#"<th align="left">{}</th>"#,
              p.describe_html(&GPiece::dummy(), &default())?);
-    let only1 = s.face_cols() == 1;
+    if max_uos > 0 {
+      println!(r#"<td>{}</td>"#,
+               uos.iter()
+               .map(|uo| Html::from_txt(uo))
+               .collect::<Vec<Html>>()
+               .iter()
+               .hjoin(&Html::lit(" ")));
+    }
 
-    for facecol in 0..(if only1 { 1 } else { max_facecols }) {
-      let (face, inseveral) = if s.want_several() {
-        (facecol / SEVERAL, facecol % SEVERAL)
-      } else {
-        (facecol, 0)
-      };
-      print!(r#"<td align="center""#);
-      if only1 {
-        assert!(!s.want_several());
-        print!(r#" colspan="{}""#, max_facecols);
-      }
-      print!(r##" bgcolor="#{}""##,
-             match inseveral {
-               0 | 1 => "eee",
-               2 => "555",
-               _ => panic!(),
-             });
-      println!(r#">"#);
-      if face < (p.nfaces() as usize) {
+    let mut cols_done = 0;
+    let face_span = s.face_want_span();
+
+    for face in 0.. s.p.nfaces() {
+      for inseveral in 0.. s.face_want_several(face) {
+        print!(r#"<td align="center""#);
+        if face_span != 1 {
+          print!(r#" colspan="{}""#, face_span);
+        }
+        cols_done += face_span;
+
+        print!(r##" bgcolor="#{}""##,
+               match inseveral {
+                 0 | 1 => "eee",
+                 2 => "555",
+                 _ => panic!(),
+               });
+        println!(r#">"#);
+
         let viewport =
           [bbox[0].clone(), size.clone()]
           .iter().flatten().cloned()
@@ -208,18 +226,13 @@ fn preview(opts: &Opts, items: Vec<ItemForOutput>) {
                  &surround, &dasharray, HELD_SURROUND_COLOUR);
         }
         println!("</svg>");
-      }
-      println!("</td>");
+        println!("</td>");
+      }}
+    
+    if cols_done < total_cols {
+      print!(r#"<td colspan="{}"></td>"#, total_cols - cols_done);
+    }
 
-      if max_uos > 0 {
-        println!(r#"<td>{}</td>"#,
-                 uos.iter()
-                 .map(|uo| Html::from_txt(uo))
-                 .collect::<Vec<Html>>()
-                 .iter()
-                 .hjoin(&Html::lit(" ")));
-      }
-    };
     println!("</tr>");
   }
   println!("</table>");
