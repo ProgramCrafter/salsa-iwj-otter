@@ -1051,7 +1051,7 @@ impl<'s> Substituting<'s> {
   #[throws(SubstError)]
   pub fn finish(self) -> String {
     if self.do_dollars() {
-      subst_general_precisely(&self, "${$}", "$")?.0
+      self.subst_general_precisely("${$}", "$")?.0
     } else {
       self
     }.s.into()
@@ -1086,58 +1086,57 @@ impl Dollars {
   }
 }
 
+impl<'i> Substituting<'i> {
 #[throws(SubstError)]
-fn subst_general_precisely<'i>(input: &Substituting<'i>,
-                               needle: & str,
-                               replacement: &str)
-                               -> (Substituting<'i>, usize) {
-  let mut count = 0;
-  let mut work = (*input.s).to_owned();
-  for m in input.s.rmatch_indices(needle) {
-    count += 1;
-    let mut lhs = &work[0.. m.0];
-    let mut rhs = &work[m.0 + m.1.len() ..];
-    if replacement.is_empty() {
-      let lhs_trimmed = lhs.trim_end();
-      if lhs_trimmed.len() != lhs.len() {
-        lhs = lhs_trimmed;
-      } else {
-        rhs = rhs.trim_start();
-      } 
+  fn subst_general_precisely(&self, needle: & str, replacement: &str)
+                             -> (Substituting<'i>, usize) {
+    let mut count = 0;
+    let mut work = (*self.s).to_owned();
+    for m in self.s.rmatch_indices(needle) {
+      count += 1;
+      let mut lhs = &work[0.. m.0];
+      let mut rhs = &work[m.0 + m.1.len() ..];
+      if replacement.is_empty() {
+        let lhs_trimmed = lhs.trim_end();
+        if lhs_trimmed.len() != lhs.len() {
+          lhs = lhs_trimmed;
+        } else {
+          rhs = rhs.trim_start();
+        } 
+      }
+      work = lhs
+        .to_owned()
+        + replacement
+        + rhs
     }
-    work = lhs
-      .to_owned()
-      + replacement
-      + rhs
+    (Substituting{
+      s: work.into(),
+      mformat: self.mformat,
+      dollars: self.dollars,
+    }, count)
   }
-  (Substituting{
-    s: work.into(),
-    mformat: input.mformat,
-    dollars: input.dollars,
-  }, count)
-}
 
-#[throws(SubstError)]
-// This takes &Substituting.  The rest of the code uses subst or
-// substn, which takes Substituting, thus ensuring that at some future
-// time we might be able to accumulate all the substitutions in
-// Substituting and do them all at once.
-fn subst_general<'i>(input: &Substituting<'i>,
-                 needle: &'static str, replacement: &str)
-                     -> (Substituting<'i>, usize) {
-  match input.dollars {
-    Dollars::Filename => if needle != "_c" {
-      throw!(input.internal_err("long subst in filename"))
-    },
-    Dollars::Text => { },
-  }
-  if input.do_dollars() {
-    let token = needle.strip_prefix('_')
-      .ok_or_else(|| input.internal_err("needle has no '_'"))?;
-    let needle = format!("${{{}}}", token);
-    subst_general_precisely(input, &needle, replacement)?
-  } else {
-    subst_general_precisely(input, needle, replacement)?
+  #[throws(SubstError)]
+  // This takes &Substituting.  The rest of the code uses subst or
+  // substn, which takes Substituting, thus ensuring that at some future
+  // time we might be able to accumulate all the substitutions in
+  // Substituting and do them all at once.
+  fn subst_general(&self, needle: &'static str, replacement: &str)
+                   -> (Substituting<'i>, usize) {
+    match self.dollars {
+      Dollars::Filename => if needle != "_c" {
+        throw!(self.internal_err("long subst in filename"))
+      },
+      Dollars::Text => { },
+    }
+    if self.do_dollars() {
+      let token = needle.strip_prefix('_')
+        .ok_or_else(|| self.internal_err("needle has no '_'"))?;
+      let needle = format!("${{{}}}", token);
+      self.subst_general_precisely(&needle, replacement)?
+    } else {
+      self.subst_general_precisely(needle, replacement)?
+    }
   }
 }
 
@@ -1145,7 +1144,7 @@ fn subst_general<'i>(input: &Substituting<'i>,
 fn subst<'i>(before: Substituting<'i>, needle: &'static str, replacement: &str)
          -> Substituting<'i> {
   use SubstErrorKind as SEK;
-  let (out, count) = subst_general(&before, needle, replacement)?;
+  let (out, count) = before.subst_general(needle, replacement)?;
   if count == 0 { throw!(before.err(SEK::MissingToken(needle))) }
   if count > 1 { throw!(before.err(SEK::RepeatedToken(needle))) }
   out
@@ -1154,7 +1153,7 @@ fn subst<'i>(before: Substituting<'i>, needle: &'static str, replacement: &str)
 #[throws(SubstError)]
 fn substn<'i>(before: Substituting<'i>, needle: &'static str, replacement: &str)
           -> Substituting<'i> {
-  subst_general(&before, needle, replacement)?.0
+  before.subst_general(needle, replacement)?.0
 }
 
 /*
