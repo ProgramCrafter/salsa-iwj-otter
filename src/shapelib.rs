@@ -1184,6 +1184,9 @@ fn test_subst_mf1() {
   assert_eq!(subst(s_t("a _colour die"), "_colour", "blue")
              .unwrap().finish().unwrap(),
              "a blue die");
+  assert_eq!(subst(s_t("a _colour die"), "${colour}", "blue")
+             .unwrap().finish().unwrap(),
+             "a blue die");
   assert_eq!(subst(s_t("a _colour die"), "_colour", "")
              .unwrap().finish().unwrap(),
              "a die");
@@ -1232,6 +1235,9 @@ fn test_subst_mf2() {
              .unwrap().finish().unwrap(),
              "a blue die");
   assert_eq!(subst(s_t("a ${colour} die"), "_colour", "")
+             .unwrap().finish().unwrap(),
+             "a die");
+  assert_eq!(subst(s_t("a ${colour} die"), "${colour}", "")
              .unwrap().finish().unwrap(),
              "a die");
   assert!{matches!{
