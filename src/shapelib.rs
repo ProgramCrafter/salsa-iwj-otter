@@ -1156,31 +1156,37 @@ fn substn<'i>(before: Substituting<'i>, needle: &'static str, replacement: &str)
   before.subst_general(needle, replacement)?.0
 }
 
-/*
 #[test]
-fn test_subst() {
+fn test_subst_mf1() {
   use SubstErrorKind as SEK;
-  assert_eq!(subst("a _colour die", "_colour", "blue")
+
+  let mformat = materials_format::Version::try_from_integer(1).unwrap();
+  let s_t = |s| Substituting::new(mformat, Dollars::Text, s);
+
+  assert_eq!(subst(s_t("a _colour die"), "_colour", "blue")
              .unwrap().finish().unwrap(),
              "a blue die");
-  assert_eq!(subst("a _colour die", "_colour", "")
+  assert_eq!(subst(s_t("a _colour die"), "_colour", "")
              .unwrap().finish().unwrap(),
              "a die");
-  assert_eq!(subst("a die", "_colour", "").unwrap_err().kind,
-             SEK::MissingToken("_colour"));
-  assert_eq!(subst("a _colour _colour die", "_colour", "").unwrap_err().kind,
-             SEK::RepeatedToken("_colour"));
+  assert!{matches!{
+    subst(s_t("a die"), "_colour", "").unwrap_err().kind,
+    SEK::MissingToken(c) if c == "_colour",
+  }}
+  assert!{matches!{
+    subst(s_t("a _colour _colour die"), "_colour", "").unwrap_err().kind,
+    SEK::RepeatedToken(c) if c == "_colour",
+  }}
 
-  assert_eq!(substn("a _colour die being _colour", "_colour", "blue")
+  assert_eq!(substn(s_t("a _colour die being _colour"), "_colour", "blue")
              .unwrap().finish().unwrap(),
              "a blue die being blue");
 
-  let (s, n) = subst_general("a _colour _colour die", "_colour", "")
+  let (s, n) = s_t("a _colour _colour die").subst_general("_colour", "")
     .unwrap();
   assert_eq!(s.finish().unwrap(), "a die".to_owned());
   assert_eq!(n, 2);
 }
-*/
 
 #[throws(LibraryLoadError)]
 fn format_item_name(mformat: materials_format::Version,
