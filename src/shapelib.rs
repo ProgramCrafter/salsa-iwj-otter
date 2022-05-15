@@ -1440,9 +1440,8 @@ fn process_files_entry(
       let item_name = subst_item_name(&format_item_name(
         mformat, &magic.item_prefix, &fe, &magic.item_suffix)?)?;
 
-      let spec = Substituting::new(mformat, Dollars::Text, &magic.template);
-      let spec = substn(spec, "${image}", &image_table)?;
-      let mut spec = c_colour_all(spec.into())?.is_y()?;
+      let mut spec = Substituting::new(mformat, Dollars::Text,
+                                       &magic.template);
       for (k,v) in chain!{
         c_substs.into_iter().map(IntoIterator::into_iter).flatten(),
         &magic.substs,
@@ -1450,6 +1449,8 @@ fn process_files_entry(
       } {
         spec = substn(spec, format!("${{{}}}", k), v)?;
       }
+      let spec = substn(spec, "${image}", &image_table)?;
+      let spec = c_colour_all(spec.into())?.is_y()?;
       let spec = spec.finish()?;
       trace!("magic item {}\n\n{}\n", &item_name, &spec);
 
