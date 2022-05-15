@@ -161,17 +161,17 @@ impl Drop for TermReporter {
   }
 }
 
-pub struct Nest {
+pub struct NestEqual {
   outer_n: usize,
   outer_i: usize,
   inner_last_frac: f32,
   actual_reporter: Box<dyn Reporter>,
 }
 
-impl Nest {
+impl NestEqual {
   /// Assumes that every inner phase is of the same length as the first
   pub fn new(outer_count: usize, actual_reporter: Box<dyn Reporter>)
-             -> Self { Nest {
+             -> Self { NestEqual {
     actual_reporter,
     outer_n: outer_count,
     outer_i: 0,
@@ -179,7 +179,7 @@ impl Nest {
   } }
 }
 
-impl Reporter for Nest {
+impl Reporter for NestEqual {
   fn report(&mut self, inner_pi: &ProgressInfo<'_>) {
     use progress::Value;
 
