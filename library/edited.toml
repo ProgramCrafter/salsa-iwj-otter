@@ -37,10 +37,12 @@ d8-_c	-	8	a ${colour} die image
 """
 
 magic.item_prefix = "die-"
+magic.substs.text = "black"
 magic.template = """
 image = ${image}
 type = "Die"
 labels = ${xd}
+label.colour = "${text}"
 desc = "a ${colour} die"
 occult.label = "?"
 occult.ilk = "d${xd}-${colour}"
@@ -51,4 +53,5 @@ abbrev = "blue"
 
 [group.dice.colours.red]
 abbrev = "red"
+substs.text = "white"
 map = { "#8fc6ff" = "#e64104", "#000000" = "#ffffff", "#ffffff" = "#000000" }
