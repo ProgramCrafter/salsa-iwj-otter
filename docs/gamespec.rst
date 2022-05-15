@@ -339,7 +339,10 @@ Parameters:
    [inner piece spec, as dictionary; required].
 
  * ``labels``: Text strings to superimpose on the image.
-   [list of strings; optional]
+
+    - [list of strings] One string per face.
+    - [list of two numbers] Label faces numerically (inclusive).
+    - [single number] Label faces numerically from 1 to n (inclusive).
 
  * ``cooldown``: Duration of the cooldown time.
    [duration - number(s) with units; default "4s"]
