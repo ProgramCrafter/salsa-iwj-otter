@@ -1308,7 +1308,7 @@ fn process_files_entry(
         src, item_name, src_name.as_deref(),
       )?;
       let desc = Substituting::new(mformat, Dollars::Text, &fe.desc);
-      let desc = subst(desc, "_colour", "")?.finish()?.to_html();
+      let desc = subst(desc, "${colour}", "")?.finish()?.to_html();
       OccData::Internal(Arc::new(OccData_Internal {
         item_name,
         loaded: default(),
@@ -1413,7 +1413,7 @@ fn process_files_entry(
     let desc = if let Some(desc_template) = &group.d.desc_template {
       let desc_template = Substituting::new(
         mformat, Dollars::Text, desc_template);
-      subst(desc_template, "_desc", &desc.nest()?)?.finish()?.to_html()
+      subst(desc_template, "${desc}", &desc.nest()?)?.finish()?.to_html()
     } else {
       desc.finish()?.to_html()
     };
@@ -1440,11 +1440,11 @@ fn process_files_entry(
         mformat, &magic.item_prefix, &fe, &magic.item_suffix)?)?;
 
       let spec = Substituting::new(mformat, Dollars::Text, &magic.template);
-      let spec = substn(spec, "_image", &image_table)?;
+      let spec = substn(spec, "${image}", &image_table)?;
       let mut spec = c_colour_all(spec.into())?.is_y()?;
       for (k,v) in &fe.extra_fields {
         if k.starts_with('x') {
-          spec = substn(spec, format!("_{}", k), v)?;
+          spec = substn(spec, format!("${{{}}}", k), v)?;
         }
       }
       let spec = spec.finish()?;
@@ -1470,7 +1470,7 @@ fn process_files_entry(
     add1(None, None)?;
   } else {
     for (colour, recolourdata) in &group.d.colours {
-      add1(Some(("_colour", colour)),
+      add1(Some(("${colour}", colour)),
            Some(("_c", &recolourdata.abbrev)))?;
     }
   }
