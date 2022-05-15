@@ -42,7 +42,7 @@ pub use nix::unistd::{self, Uid};
 pub use nix::sys::time::TimeSpec;
 pub use nix::time::clock_gettime;
 pub use num_derive::{ToPrimitive, FromPrimitive};
-pub use num_traits::{cast, Bounded, FromPrimitive, ToPrimitive};
+pub use num_traits::{Bounded, FromPrimitive, ToPrimitive};
 pub use paste::paste;
 pub use rand::distributions::Alphanumeric;
 pub use rand::thread_rng;

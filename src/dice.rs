@@ -317,37 +317,9 @@ impl OutlineTrait for Die {
     self.surround_outline.outline_path(1.0)?
   }
 
-  // This is not consistent with the surround_path: the surround_path
-  // does not include the cooldown circle, but this does.  The effecti
-  // is that if the piece needs to be tiled, there is room for the circle.
-  // This happens when:
-  //
-  //  * Pieces are added with the CLI.  Presumably not many dice so
-  //    this is probably OK.  (Size is also returned via ListPieces.)
-  //  * Library preview.  Boxes for dice are big enough for the cooldown
-  //    which is shown in the preview.
-  //  * Hidden tiling etc.  Not relevant for dice, which do not Mix
-  //    in occultation.
-  //  * "Organise" function.
-  //  * Finding pieces that have been clicked on in the client.
-  //
-  // More places...
-  //
-  // bbox is also used with other non-inert pieces, eg, currency
-  // (are we merging)
-  //
-  // Because we don't get auto-rearranged during occultation, 
-  #[throws(IE)]
-  fn bbox_approx(&self) -> Rect {
-    let r: Coord = cast(self.cooldown_radius.ceil())
-      .ok_or(CoordinateOverflow)?;
-    let br = PosC::new(r,r);
-    let tl = (-br)?;
-    Rect{ corners: [tl,br] }
-  }
-
   delegate! {
     to self.surround_outline {
+      fn bbox_approx(&self) -> Result<Rect, IE>;
       fn shape(&self) -> Option<Shape>;
     }
   }
