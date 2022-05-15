@@ -1272,15 +1272,16 @@ fn process_files_entry(
 
   fn colour_subst_1<'s, S>(
     mformat: materials_format::Version,
+    dollars: Dollars,
     subst: S, kv: Option<(&'static str, &'s str)>
   )
-    -> impl for <'i> Fn(Dollars, PerhapsSubst<'i>)
+    -> impl for <'i> Fn(PerhapsSubst<'i>)
                         -> Result<PerhapsSubst<'i>, SubstError>
                      + 's
   where S: for <'i> Fn(Substituting<'i>, &'static str, &str)
               -> Result<Substituting<'i>, SubstError> + 's
   {
-    move |dollars, input| Ok(
+    move |input| Ok(
       if let Some((keyword, val)) = kv {
         subst(input.mky(mformat, dollars), keyword, val)?.into()
       } else {
@@ -1293,25 +1294,26 @@ fn process_files_entry(
     c_colour: Option<(&'static str, &str)>,
     c_abbrev: Option<(&'static str, &str)>,
   | {
-    let c_colour_all = colour_subst_1(mformat, substn, c_colour);
-    let c_colour = colour_subst_1(mformat, subst, c_colour);
-    let c_abbrev = colour_subst_1(mformat, subst, c_abbrev);
+    let c_colour_all =colour_subst_1(mformat,Dollars::Text, substn, c_colour);
+    let c_colour =    colour_subst_1(mformat,Dollars::Text, subst,  c_colour);
+    let c_abbrev_t =  colour_subst_1(mformat,Dollars::Text, subst,  c_abbrev);
+    let c_abbrev_f =colour_subst_1(mformat,Dollars::Filename,subst, c_abbrev);
 
-    let sort = sort.clone().map(|v| c_abbrev(Dollars::Text, v)).transpose()?;
+    let sort = sort.clone().map(|v| c_abbrev_t(v)).transpose()?;
     let sort = sort.map(|s| s.finish()).transpose()?;
 
     let subst_item_name = |item_name: &Substituting| {
-      let item_name = c_abbrev(Dollars::Filename, item_name.clone().into())?;
+      let item_name = c_abbrev_f(item_name.clone().into())?;
       let item_name = item_name.finish()?.try_into()?;
       Ok::<_,LLE>(item_name)
     };
     let item_name = subst_item_name(&item_name)?;
 
-    let src_name = c_abbrev(Dollars::Filename, (&fe.src_file_spec).into())
+    let src_name = c_abbrev_f((&fe.src_file_spec).into())
       .and_then(|s| s.finish());
     let src_name = src_name.as_deref();
 
-    let desc = c_colour(Dollars::Text, (&fe.desc).into())?;
+    let desc = c_colour((&fe.desc).into())?;
 
     let desc = if let Some(desc_template) = &group.d.desc_template {
       let desc_template = Substituting::new(
@@ -1346,7 +1348,7 @@ fn process_files_entry(
         .replace_all(&magic.template, |caps: &regex::Captures| {
           format!("{}{}", caps.get(1).unwrap().as_str(), &image_table)
         });
-      let spec = c_colour_all(Dollars::Text, (*spec).into())?;
+      let spec = c_colour_all((*spec).into())?;
 
       let spec = spec.finish()?;
       trace!("magic item {}\n\n{}\n", &item_name, &spec);
