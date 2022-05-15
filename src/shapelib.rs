@@ -1444,6 +1444,7 @@ fn process_files_entry(
       let mut spec = c_colour_all(spec.into())?.is_y()?;
       for (k,v) in chain!{
         fe.extra_fields.iter().filter(|(k,_v)| k.starts_with('x')),
+        &magic.substs,
       } {
         spec = substn(spec, format!("${{{}}}", k), v)?;
       }

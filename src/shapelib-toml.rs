@@ -37,6 +37,7 @@ pub struct MagicDetails {
   #[serde(default)] pub item_prefix: String,
   #[serde(default)] pub item_suffix: String,
   pub template: String,
+  #[serde(default)] pub substs: HashMap<String,String>,
 }
 
 #[derive(Debug,Deserialize,Copy,Clone)]
