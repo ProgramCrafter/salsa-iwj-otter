@@ -1388,6 +1388,7 @@ fn process_files_entry(
   let mut add1 = |
     c_colour: Option<(&'static str, &str)>,
     c_abbrev: Option<(&'static str, &str)>,
+    c_substs: Option<&HashMap<String, String>>,
   | {
     let c_colour_all =colour_subst_1(mformat,Dollars::Text, substn, c_colour);
     let c_colour =    colour_subst_1(mformat,Dollars::Text, subst,  c_colour);
@@ -1445,6 +1446,7 @@ fn process_files_entry(
       for (k,v) in chain!{
         fe.extra_fields.iter().filter(|(k,_v)| k.starts_with('x')),
         &magic.substs,
+        c_substs.into_iter().map(IntoIterator::into_iter).flatten(),
       } {
         spec = substn(spec, format!("${{{}}}", k), v)?;
       }
@@ -1468,11 +1470,12 @@ fn process_files_entry(
   };
 
   if group.d.colours.is_empty() {
-    add1(None, None)?;
+    add1(None, None, None)?;
   } else {
     for (colour, recolourdata) in &group.d.colours {
       add1(Some(("${colour}", colour)),
-           Some(("_c", &recolourdata.abbrev)))?;
+           Some(("_c", &recolourdata.abbrev)),
+           Some(&recolourdata.substs))?;
     }
   }
 }

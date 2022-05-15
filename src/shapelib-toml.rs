@@ -93,6 +93,7 @@ pub enum OccultationMethod {
 pub struct RecolourData {
   pub abbrev: String,
   #[cfg(doc)] pub map: HashMap<String, String>,
+  #[serde(default)] pub substs: HashMap<String,String>,
 }
 
 #[doc(hidden)]
