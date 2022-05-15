@@ -313,7 +313,9 @@ impl OutlineTrait for Die {
   // apply that to surround_outline's outline_path, rather than its
   // surround_path.
   #[throws(IE)]
-  fn surround_path(&self) -> Html { self.surround_outline.outline_path(1.0)? }
+  fn surround_path(&self) -> Html {
+    self.surround_outline.outline_path(1.0)?
+  }
 
   delegate! {
     to self.surround_outline {
