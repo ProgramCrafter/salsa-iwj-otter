@@ -1444,9 +1444,9 @@ fn process_files_entry(
       let spec = substn(spec, "${image}", &image_table)?;
       let mut spec = c_colour_all(spec.into())?.is_y()?;
       for (k,v) in chain!{
-        fe.extra_fields.iter().filter(|(k,_v)| k.starts_with('x')),
-        &magic.substs,
         c_substs.into_iter().map(IntoIterator::into_iter).flatten(),
+        &magic.substs,
+        fe.extra_fields.iter().filter(|(k,_v)| k.starts_with('x')),
       } {
         spec = substn(spec, format!("${{{}}}", k), v)?;
       }
