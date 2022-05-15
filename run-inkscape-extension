@@ -17,8 +17,22 @@
 #   - If these scripts are executable, they can be executed
 #   - Otherwise, they are not using ancient and obsolete python
 
+set -e
+
 $(
   if test -x "$1"; then :; else
     type -p python3 || type -p python
   fi
 ) "$@"
+
+# Additionally, sometimes inkscape doesn't write the output file.  It
+# likes to do this if "nothing changed", presumably because of some
+# "don't save non-dirty files" logic.  That is really nto very
+# convenient here!
+
+if test -f /dev/stdout; then
+  if test -s /dev/stdout; then :; else
+    x=("$@");
+    cat ${x[-1]}
+  fi
+fi
