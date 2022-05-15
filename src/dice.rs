@@ -319,6 +319,8 @@ impl OutlineTrait for Die {
 
   delegate! {
     to self.surround_outline {
+      // see also PieceTraitbbox_preview (below, which would noormally
+      // ccall this, but we override it.
       fn bbox_approx(&self) -> Result<Rect, IE>;
       fn shape(&self) -> Option<Shape>;
     }
@@ -450,6 +452,26 @@ impl PieceTrait for Die {
       )
     )?)
 //.map_err(|e| internal_error_bydebug(&e))?
+  }
+
+  // This is not consistent with the surround_path: the surround_path
+  // does not include the cooldown circle, but this does.
+  //
+  // OutlineTrait::bbox_approx is used in lots of places, eg
+  //
+  //  * Pieces are added with the CLI.  (Size also returned via ListPieces.)
+  //  * "Organise" function.
+  //  * Finding pieces that have been clicked on in the client.
+  //  etc.
+  //
+  // So we have to have a different entrypoint for just this:
+  #[throws(IE)]
+  fn bbox_preview(&self) -> Rect {
+    let r: Coord = cast(self.cooldown_radius.ceil())
+      .ok_or(CoordinateOverflow)?;
+    let br = PosC::new(r,r);
+    let tl = (-br)?;
+    Rect{ corners: [tl,br] }
   }
 }
 

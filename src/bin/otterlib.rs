@@ -119,7 +119,7 @@ fn preview(opts: &Opts, items: Vec<ItemForOutput>) {
       let spec = spec.clone();
 
       let bbox = p
-        .bbox_approx()?;
+        .bbox_preview()?;
       let mut bbox = bbox.corners.iter()
         .map(|PosC{coords}| coords.iter().map(|&p| p as f64)
              .collect::<Vec<_>>())

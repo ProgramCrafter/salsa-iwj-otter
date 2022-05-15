@@ -239,6 +239,8 @@ pub trait PieceTrait: PieceBaseTrait + Downcast + Send + Debug + 'static {
   fn loaded_hook_preview(&self, _gpc: &mut GPiece) -> Result<(),IE> {
     Ok(())
   }
+  // Specialised by dice.rs.
+  fn bbox_preview(&self) -> Result<Rect, IE> { self.bbox_approx() }
 
   /// Not called if the whole game is destroyed.
   /// You can use Drop of course but it's not usually much use since
