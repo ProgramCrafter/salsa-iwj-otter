@@ -1136,15 +1136,32 @@ fn process_files_entry(
     },
   };
 
+  #[derive(Debug)]
+  enum PerhapsSubst<'i> {
+    Y(String),
+    N(&'i str),
+  }
+
+  impl<'i> PerhapsSubst<'i> {
+    pub fn finish(self) -> String { match self {
+      PerhapsSubst::N(s) => s.to_owned(),
+      PerhapsSubst::Y(s) => s,
+    } }
+    pub fn chain(&'i self) -> &'i str { match self {
+      PerhapsSubst::N(s) => s,
+      PerhapsSubst::Y(s) => s,
+    } }
+  }
+
   fn colour_subst_1<'s, S>(subst: S, kv: Option<(&'static str, &'s str)>)
-      -> impl for <'i> Fn(&'i str) -> Result<Cow<'i, str>, SubstError> + 's
+    -> impl for <'i> Fn(&'i str) -> Result<PerhapsSubst<'i>, SubstError> + 's
   where S: Fn(&str, &'static str, &str) -> Result<String, SubstError> + 's
   {
     move |input| Ok(
       if let Some((keyword, val)) = kv {
-        subst(input, keyword, val)?.into()
+        PerhapsSubst::Y(subst(input, keyword, val)?)
       } else {
-        input.into()
+        PerhapsSubst::N(input)
       }
     )
   }
@@ -1158,24 +1175,24 @@ fn process_files_entry(
     let c_abbrev = colour_subst_1(subst, c_abbrev);
 
     let sort = sort.as_deref().map(|v| c_abbrev(v)).transpose()?;
-    let sort = sort.map(|s| s.into_owned());
+    let sort = sort.map(|s| s.finish());
 
     let subst_item_name = |item_name: &GoodItemName| {
       let item_name = c_abbrev(item_name.as_str())?;
-      let item_name = item_name.into_owned().try_into()?;
+      let item_name = item_name.finish().try_into()?;
       Ok::<_,LLE>(item_name)
     };
     let item_name = subst_item_name(&item_name)?;
 
-    let src_name = c_abbrev(&fe.src_file_spec);
+    let src_name = c_abbrev(&fe.src_file_spec).map(|s| s.finish());
     let src_name = src_name.as_deref();
 
     let desc = c_colour(&fe.desc)?;
 
     let desc = if let Some(desc_template) = &group.d.desc_template {
-      subst(desc_template, "_desc", &desc)?.to_html()
+      subst(desc_template, "_desc", desc.chain())?.to_html()
     } else {
-      (&*desc).to_html()
+      desc.finish().to_html()
     };
 
     let idata = ItemData {
@@ -1205,11 +1222,12 @@ fn process_files_entry(
         });
       let spec = c_colour_all(&spec)?;
 
+      let spec = spec.finish();
       trace!("magic item {}\n\n{}\n", &item_name, &spec);
 
       let spec: Box<dyn PieceSpec> = toml_de::from_str(&spec)
         .map_err(|error| LLE::TemplatedTomlError {
-          toml: spec.into_owned(),
+          toml: spec,
           error,
         })?;
 
