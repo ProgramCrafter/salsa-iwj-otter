@@ -1143,6 +1143,7 @@ fn process_files_entry(
   }
 
   impl<'i> PerhapsSubst<'i> {
+    #[throws(SubstError)]
     pub fn finish(self) -> String { match self {
       PerhapsSubst::N(s) => s.to_owned(),
       PerhapsSubst::Y(s) => s,
@@ -1175,16 +1176,16 @@ fn process_files_entry(
     let c_abbrev = colour_subst_1(subst, c_abbrev);
 
     let sort = sort.as_deref().map(|v| c_abbrev(v)).transpose()?;
-    let sort = sort.map(|s| s.finish());
+    let sort = sort.map(|s| s.finish()).transpose()?;
 
     let subst_item_name = |item_name: &GoodItemName| {
       let item_name = c_abbrev(item_name.as_str())?;
-      let item_name = item_name.finish().try_into()?;
+      let item_name = item_name.finish()?.try_into()?;
       Ok::<_,LLE>(item_name)
     };
     let item_name = subst_item_name(&item_name)?;
 
-    let src_name = c_abbrev(&fe.src_file_spec).map(|s| s.finish());
+    let src_name = c_abbrev(&fe.src_file_spec).and_then(|s| s.finish());
     let src_name = src_name.as_deref();
 
     let desc = c_colour(&fe.desc)?;
@@ -1192,7 +1193,7 @@ fn process_files_entry(
     let desc = if let Some(desc_template) = &group.d.desc_template {
       subst(desc_template, "_desc", desc.chain())?.to_html()
     } else {
-      desc.finish().to_html()
+      desc.finish()?.to_html()
     };
 
     let idata = ItemData {
@@ -1222,7 +1223,7 @@ fn process_files_entry(
         });
       let spec = c_colour_all(&spec)?;
 
-      let spec = spec.finish();
+      let spec = spec.finish()?;
       trace!("magic item {}\n\n{}\n", &item_name, &spec);
 
       let spec: Box<dyn PieceSpec> = toml_de::from_str(&spec)
