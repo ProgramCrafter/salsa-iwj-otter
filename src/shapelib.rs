@@ -1129,13 +1129,20 @@ impl<'i> Substituting<'i> {
       },
       Dollars::Text => { },
     }
-    let needle: Cow<str> = if self.do_dollars() {
-      let token = needle.strip_prefix('_')
-        .ok_or_else(|| self.internal_err("needle has no '_'"))?;
-      format!("${{{}}}", token).into()
-    } else {
-      needle
-    };
+    let needle: Cow<str> = (move || Some({
+      if let Some(rhs) = needle.strip_prefix("${") {
+        let token = rhs.strip_suffix("}")?;
+        if self.do_dollars() { needle.into() }
+        else { format!("_{}", token).into() }
+      } else if let Some(token) = needle.strip_prefix("_") {
+        if ! self.do_dollars() { needle.into() }
+        else { format!("${{{}}}", token).into() }
+      } else {
+        return None
+      }
+    }))()
+      .ok_or_else(|| self.internal_err("needle has no '_'"))?;
+
     let (r, count) = self.subst_general_precisely(&needle, replacement)?;
     (r, count, needle)
   }
