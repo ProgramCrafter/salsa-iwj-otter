@@ -1032,17 +1032,22 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
 pub struct Substituting<'s> {
   s: Cow<'s, str>,
   mformat: materials_format::Version,
+  dollars: bool,
 }
 
 impl<'s> Substituting<'s> {
   pub fn new<S: Into<Cow<'s, str>>>(mformat: materials_format::Version, s: S)
                               -> Self {
-    Substituting { s: s.into(), mformat }
+    Substituting { s: s.into(), mformat, dollars: false }
   }
 
   #[throws(SubstError)]
   pub fn finish(self) -> String {
-    self.s.into()
+    if self.dollars {
+      subst_general_precisely(&self, "${$}", true, "$")?.0
+    } else {
+      self
+    }.s.into()
   }
 
   #[throws(SubstError)]
@@ -1056,9 +1061,10 @@ impl<'s> Substituting<'s> {
 }
 
 #[throws(SubstError)]
-fn subst_general_mf1<'i>(input: &Substituting<'i>,
-                 needle: &'static str, replacement: &str)
-                 -> (Substituting<'i>, usize) {
+fn subst_general_precisely<'i>(input: &Substituting<'i>,
+                               needle: & str, dollars: bool,
+                               replacement: &str)
+                               -> (Substituting<'i>, usize) {
   let mut count = 0;
   let mut work = (*input.s).to_owned();
   for m in input.s.rmatch_indices(needle) {
@@ -1078,7 +1084,26 @@ fn subst_general_mf1<'i>(input: &Substituting<'i>,
       + replacement
       + rhs
   }
-  (Substituting{ s: work.into(), mformat: input.mformat }, count)
+  (Substituting{
+    s: work.into(),
+    mformat: input.mformat,
+    dollars: input.dollars | dollars,
+  }, count)
+}
+
+#[throws(SubstError)]
+fn subst_general_mf2<'i>(input: &Substituting<'i>,
+                         needle: &'static str, replacement: &str)
+                         -> (Substituting<'i>, usize) {
+  let needle_buf;
+  let (needle, dollars) = if needle != "_c" {
+    let token = needle.strip_prefix('_').expect("needle has no '_'");
+    needle_buf = format!("${{{}}}", token);
+    (&*needle_buf, true)
+  } else {
+    (needle, false)
+  };
+  subst_general_precisely(input, needle, dollars, replacement)?
 }
 
 #[throws(SubstError)]
@@ -1088,8 +1113,12 @@ fn subst_general_mf1<'i>(input: &Substituting<'i>,
 // Substituting and do them all at once.
 fn subst_general<'i>(input: &Substituting<'i>,
                  needle: &'static str, replacement: &str)
-                 -> (Substituting<'i>, usize) {
-  subst_general_mf1(input, needle, replacement)?
+                     -> (Substituting<'i>, usize) {
+  if input.mformat == 1 {
+    subst_general_precisely(input, needle, false, replacement)?
+  } else {
+    subst_general_mf2(input, needle, replacement)?
+  }
 }
 
 #[throws(SubstError)]

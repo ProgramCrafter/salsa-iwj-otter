@@ -25,14 +25,14 @@ occulted.method = "ByColour"
 occulted.colour = "grey"
 
 files = """
-_c-P	plt45	a _colour pawn
-_c-B	blt45	a _colour bishop
-_c-R	rlt45	a _colour rook
-_c-K	klt45	the _colour king
-_c-Q	qlt45	the _colour queen
+_c-P	plt45	a ${colour} pawn
+_c-B	blt45	a ${colour} bishop
+_c-R	rlt45	a ${colour} rook
+_c-K	klt45	the ${colour} king
+_c-Q	qlt45	the ${colour} queen
 
-_c-elephant	elt45	a _colour elephant piece
-_c-mann		Mlt45	a _colour Mann piece
+_c-elephant	elt45	a ${colour} elephant piece
+_c-mann		Mlt45	a ${colour} Mann piece
 """
 
 [group.chess.colours.white]
@@ -66,41 +66,41 @@ map = { "#ffffff" = "#888888" }
 inherit = "chess"
 scale = 0.3461
 files = """
-_c-siege-engine	tlt26	a _colour siege engine piece
+_c-siege-engine	tlt26	a ${colour} siege engine piece
 """
 
 [group.chess-flip]
 inherit = "chess"
 flip = true
 files = """
-_c-N	alt45	a _colour knight
+_c-N	alt45	a ${colour} knight
 
-_c-giraffe	Glt45	a _colour giraffe piece
-_c-knight-king	Cet45	a _colour knight king piece
+_c-giraffe	Glt45	a ${colour} giraffe piece
+_c-knight-king	Cet45	a ${colour} knight king piece
 # ^ wikimedia calls these Centaurs
-_c-ship		ship_slt45		a _colour ship piece
-_c-zebra	Zlt45	a _colour zebra piece
+_c-ship		ship_slt45		a ${colour} ship piece
+_c-zebra	Zlt45	a ${colour} zebra piece
 """
 
 [group.chess-flip-26]
 inherit = "chess-26"
 flip = true
 files = """
-_c-flag		Blt26	a _colour flag piece
+_c-flag		Blt26	a ${colour} flag piece
 """
 
 [group.chess-flip-26-ship-adj]
 inherit = "chess-flip-26"
 flip = true
 files = """
-_c-cannon	Clt26	a _colour cannon piece
+_c-cannon	Clt26	a ${colour} cannon piece
 """
 
 [group.chess-anomalous-filenames]
 inherit = "chess"
 stem_prefix = ""
 files = """
-_c-commoner	Commoner_Transparent		a _colour commoner piece
+_c-commoner	Commoner_Transparent		a ${colour} commoner piece
 """
 
 [group.chess-onecolour]

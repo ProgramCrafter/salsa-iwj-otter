@@ -16,8 +16,8 @@ outline = "Rect"
 size = [18.25, 24.25]
 
 item_suffix = "-c"
-sort = "card-playing-c_s"
-desc_template = "the _desc of clubs"
+sort = "card-playing-c${s}"
+desc_template = "the ${desc} of clubs"
 
 occulted.method = "ByBack"
 occulted.ilk = "card-back"
@@ -46,17 +46,17 @@ target = "card-back"
 [group.diamonds]
 inherit = "clubs"
 item_suffix = "-d"
-sort = "card-playing-d_s"
-desc_template = "the _desc of diamonds"
+sort = "card-playing-d${s}"
+desc_template = "the ${desc} of diamonds"
 
 [group.hearts]
 inherit = "clubs"
-sort = "card-playing-h_s"
+sort = "card-playing-h${s}"
 item_suffix = "-h"
-desc_template = "the _desc of hearts"
+desc_template = "the ${desc} of hearts"
 
 [group.spades]
 inherit = "clubs"
-sort = "card-playing-s_s"
+sort = "card-playing-s${s}"
 item_suffix = "-s"
-desc_template = "the _desc of spades"
+desc_template = "the ${desc} of spades"

@@ -31,7 +31,7 @@ outline.shape = "Circle"
 outline.size = [14]
 item_prefix = "die-image-"
 files = """
-d6-_c	-	a _colour die image
+d6-_c	-	a ${colour} die image
 """
 
 magic.item_prefix = "die-"
@@ -39,9 +39,9 @@ magic.template = """
 image = !
 type = "Die"
 labels = 6
-desc = "a _colour die"
+desc = "a ${colour} die"
 occult.label = "?"
-occult.ilk = "d6-_colour"
+occult.ilk = "d6-${colour}"
 """
 
 [group.dice.colours.blue]
