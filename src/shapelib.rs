@@ -1121,22 +1121,23 @@ impl<'i> Substituting<'i> {
   // substn, which takes Substituting, thus ensuring that at some future
   // time we might be able to accumulate all the substitutions in
   // Substituting and do them all at once.
-  fn subst_general(&self, needle: &str, replacement: &str)
-                   -> (Substituting<'i>, usize) {
+  fn subst_general(&self, needle: Cow<'static, str>, replacement: &str)
+                   -> (Substituting<'i>, usize, Cow<'static, str>) {
     match self.dollars {
       Dollars::Filename => if needle != "_c" {
         throw!(self.internal_err("long subst in filename"))
       },
       Dollars::Text => { },
     }
-    if self.do_dollars() {
+    let needle: Cow<str> = if self.do_dollars() {
       let token = needle.strip_prefix('_')
         .ok_or_else(|| self.internal_err("needle has no '_'"))?;
-      let needle = format!("${{{}}}", token);
-      self.subst_general_precisely(&needle, replacement)?
+      format!("${{{}}}", token).into()
     } else {
-      self.subst_general_precisely(&needle, replacement)?
-    }
+      needle
+    };
+    let (r, count) = self.subst_general_precisely(&needle, replacement)?;
+    (r, count, needle)
   }
 }
 
@@ -1147,17 +1148,18 @@ where N: Into<Cow<'static, str>>
 {
   use SubstErrorKind as SEK;
   let needle = needle.into();
-  let (out, count) = before.subst_general(&needle, replacement)?;
+  let (out, count, needle) = before.subst_general(needle, replacement)?;
   if count == 0 { throw!(before.err(SEK::MissingToken(needle))) }
   if count > 1 { throw!(before.err(SEK::RepeatedToken(needle))) }
   out
 }
 
 #[throws(SubstError)]
-fn substn<'i>(before: Substituting<'i>, needle: &str, replacement: &str)
+fn substn<'i,N>(before: Substituting<'i>, needle: N, replacement: &str)
               -> Substituting<'i>
+where N: Into<Cow<'static, str>>
 {
-  before.subst_general(needle, replacement)?.0
+  before.subst_general(needle.into(), replacement)?.0
 }
 
 #[cfg(not(miri))]
@@ -1191,10 +1193,12 @@ fn test_subst_mf1() {
              .unwrap().finish().unwrap(),
              "a blue die being blue");
 
-  let (s, n) = s_t("a _colour _colour die").subst_general("_colour", "")
+  let (s, count, needle) = s_t("a _colour _colour die")
+    .subst_general("_colour".into(), "")
     .unwrap();
   assert_eq!(s.finish().unwrap(), "a die".to_owned());
-  assert_eq!(n, 2);
+  assert_eq!(count, 2);
+  assert_eq!(needle, "_colour");
 }
 
 #[cfg(not(miri))]
@@ -1225,22 +1229,24 @@ fn test_subst_mf2() {
              "a die");
   assert!{matches!{
     dbg!(subst(s_t("a die"), "_colour", "")).unwrap_err().kind,
-    SEK::MissingToken(c) if c == "_colour",
+    SEK::MissingToken(c) if c == "${colour}",
   }}
   assert!{matches!{
     dbg!(subst(s_t("a ${colour} ${colour} die"), "_colour", ""))
       .unwrap_err().kind,
-    SEK::RepeatedToken(c) if c == "_colour",
+    SEK::RepeatedToken(c) if c == "${colour}",
   }}
 
   assert_eq!(substn(s_t("a ${colour} die being ${colour}"), "_colour", "blue")
              .unwrap().finish().unwrap(),
              "a blue die being blue");
 
-  let (s, n) = s_t("a ${colour} ${colour} die").subst_general("_colour", "")
+  let (s, count, needle) = s_t("a ${colour} ${colour} die")
+    .subst_general("_colour".into(), "")
     .unwrap();
   assert_eq!(s.finish().unwrap(), "a die".to_owned());
-  assert_eq!(n, 2);
+  assert_eq!(count, 2);
+  assert_eq!(needle, "${colour}");
 }
 
 #[throws(LibraryLoadError)]
@@ -1425,7 +1431,7 @@ fn process_files_entry(
       let mut spec = c_colour_all(spec.into())?.is_y()?;
       for (k,v) in &fe.extra_fields {
         if k.starts_with('x') {
-          spec = substn(spec, &format!("_{}", k), v)?;
+          spec = substn(spec, format!("_{}", k), v)?;
         }
       }
       let spec = spec.finish()?;
