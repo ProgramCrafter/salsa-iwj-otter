@@ -1189,36 +1189,6 @@ fn format_item_name(mformat: materials_format::Version,
   )
 }
 
-#[derive(Debug,From,Clone)]
-enum PerhapsSubst<'i> {
-  Y(Substituting<'i>),
-  N(&'i str),
-}
-impl<'i> From<&'i String> for PerhapsSubst<'i> {
-  fn from(s: &'i String) -> Self { (&**s).into() }
-}
-
-impl<'i> PerhapsSubst<'i> {
-  #[throws(SubstError)]
-  pub fn finish(self) -> String { match self {
-    PerhapsSubst::N(s) => s.to_owned(),
-    PerhapsSubst::Y(s) => s.finish()?,
-  } }
-  #[throws(SubstError)]
-  pub fn nest(self) -> String { match self {
-    PerhapsSubst::N(s) => s.to_owned(),
-    PerhapsSubst::Y(s) => s.nest()?,
-  } }
-  pub fn mky(
-    self,
-    mformat: materials_format::Version,
-    dollars: Dollars,
-  ) -> Substituting<'i> { match self {
-    PerhapsSubst::N(s) => Substituting::new(mformat, dollars, s),
-    PerhapsSubst::Y(s) => s,
-  } }
-}
-
 #[throws(LibraryLoadError)]
 fn process_files_entry(
   src: &mut dyn LibrarySvgNoter, l: &mut Catalogue,
@@ -1269,6 +1239,36 @@ fn process_files_entry(
       OccData::Back(ilk.clone())
     },
   };
+
+  #[derive(Debug,From,Clone)]
+  enum PerhapsSubst<'i> {
+    Y(Substituting<'i>),
+    N(&'i str),
+  }
+  impl<'i> From<&'i String> for PerhapsSubst<'i> {
+    fn from(s: &'i String) -> Self { (&**s).into() }
+  }
+
+  impl<'i> PerhapsSubst<'i> {
+    #[throws(SubstError)]
+    pub fn finish(self) -> String { match self {
+      PerhapsSubst::N(s) => s.to_owned(),
+      PerhapsSubst::Y(s) => s.finish()?,
+    } }
+    #[throws(SubstError)]
+    pub fn nest(self) -> String { match self {
+      PerhapsSubst::N(s) => s.to_owned(),
+      PerhapsSubst::Y(s) => s.nest()?,
+    } }
+    pub fn mky(
+      self,
+      mformat: materials_format::Version,
+      dollars: Dollars,
+    ) -> Substituting<'i> { match self {
+      PerhapsSubst::N(s) => Substituting::new(mformat, dollars, s),
+      PerhapsSubst::Y(s) => s,
+    } }
+  }
 
   fn colour_subst_1<'s, S>(
     mformat: materials_format::Version,
