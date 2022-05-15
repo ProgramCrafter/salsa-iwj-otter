@@ -1071,6 +1071,8 @@ impl InstanceBundles {
       };
 
       let iu: usize = parsed.index().into();
+      ib.bundles.get_or_extend_with(iu, default);
+
       let hash = match ig.bundle_hashes.hashes.get(iu) {
         Some(Some(hash)) => hash,
         _ => {
@@ -1078,8 +1080,6 @@ impl InstanceBundles {
           continue;
         }
       };
-
-      ib.bundles.get_or_extend_with(parsed.index().into(), default);
 
       if_let!{ BundleSavefile::Bundle(id) = parsed;
                else continue; }
