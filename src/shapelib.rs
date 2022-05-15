@@ -1179,11 +1179,11 @@ fn test_subst_mf1() {
              .unwrap().finish().unwrap(),
              "a die");
   assert!{matches!{
-    subst(s_t("a die"), "_colour", "").unwrap_err().kind,
+    dbg!(subst(s_t("a die"), "_colour", "")).unwrap_err().kind,
     SEK::MissingToken(c) if c == "_colour",
   }}
   assert!{matches!{
-    subst(s_t("a _colour _colour die"), "_colour", "").unwrap_err().kind,
+    dbg!(subst(s_t("a _colour _colour die"), "_colour", "")).unwrap_err().kind,
     SEK::RepeatedToken(c) if c == "_colour",
   }}
 
@@ -1224,11 +1224,12 @@ fn test_subst_mf2() {
              .unwrap().finish().unwrap(),
              "a die");
   assert!{matches!{
-    subst(s_t("a die"), "_colour", "").unwrap_err().kind,
+    dbg!(subst(s_t("a die"), "_colour", "")).unwrap_err().kind,
     SEK::MissingToken(c) if c == "_colour",
   }}
   assert!{matches!{
-    subst(s_t("a ${colour} ${colour} die"), "_colour", "").unwrap_err().kind,
+    dbg!(subst(s_t("a ${colour} ${colour} die"), "_colour", ""))
+      .unwrap_err().kind,
     SEK::RepeatedToken(c) if c == "_colour",
   }}
 
