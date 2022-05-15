@@ -94,8 +94,8 @@ fn preview(opts: &Opts, items: Vec<ItemForOutput>) {
     fn face_want_span(&self) -> usize {
       if self.large() { 4 } else { 1 }
     }
-    fn face_want_several(&self, _face: RawFaceId) -> usize {
-      if self.large() { 1 } else { SEVERAL }
+    fn face_want_several(&self, face: RawFaceId) -> usize {
+      if self.large() || face >= 2 { 1 } else { SEVERAL }
     }
     fn face_want_cols(&self, face: RawFaceId) -> usize {
       self.face_want_several(face) *
