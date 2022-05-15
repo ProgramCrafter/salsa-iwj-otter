@@ -1093,6 +1093,24 @@ fn format_item_name(item_prefix: &str, fe: &FileData, item_suffix: &str)
     .try_into()?
 }
 
+#[derive(Debug)]
+enum PerhapsSubst<'i> {
+  Y(String),
+  N(&'i str),
+}
+
+impl<'i> PerhapsSubst<'i> {
+  #[throws(SubstError)]
+  pub fn finish(self) -> String { match self {
+    PerhapsSubst::N(s) => s.to_owned(),
+    PerhapsSubst::Y(s) => s,
+  } }
+  pub fn chain(&'i self) -> &'i str { match self {
+    PerhapsSubst::N(s) => s,
+    PerhapsSubst::Y(s) => s,
+  } }
+}
+
 #[throws(LibraryLoadError)]
 fn process_files_entry(
   src: &mut dyn LibrarySvgNoter, l: &mut Catalogue,
@@ -1135,24 +1153,6 @@ fn process_files_entry(
       OccData::Back(ilk.clone())
     },
   };
-
-  #[derive(Debug)]
-  enum PerhapsSubst<'i> {
-    Y(String),
-    N(&'i str),
-  }
-
-  impl<'i> PerhapsSubst<'i> {
-    #[throws(SubstError)]
-    pub fn finish(self) -> String { match self {
-      PerhapsSubst::N(s) => s.to_owned(),
-      PerhapsSubst::Y(s) => s,
-    } }
-    pub fn chain(&'i self) -> &'i str { match self {
-      PerhapsSubst::N(s) => s,
-      PerhapsSubst::Y(s) => s,
-    } }
-  }
 
   fn colour_subst_1<'s, S>(subst: S, kv: Option<(&'static str, &'s str)>)
     -> impl for <'i> Fn(&'i str) -> Result<PerhapsSubst<'i>, SubstError> + 's
