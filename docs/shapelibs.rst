@@ -310,9 +310,10 @@ Other group parameters
    Every effective item name (i.e., after the ``item_prefix`` and
    ``item_suffix`` have been added) must contain the substring ``_c``
    exactly once, and every item description must contain the substring
-   ``_colour`` exactly once.  ``_c`` will be replaced with the value
-   of the recoluring's ``abbrev``, and ``_colour`` with the
-   recolouring name (the key of the ``colours`` dict).
+   ``${colour}`` exactly once.  ``_c`` in the item name will be
+   replaced with the value of the recoluring's ``abbrev``, and
+   ``${colour}`` with the recolouring name (the key of the ``colours``
+   dict).
 
    For libraries in bundles, a separate image file must be supplied
    for each recolouring.  If ``SRC`` is not ``-``, it also must
@@ -326,10 +327,10 @@ Other group parameters
 
  * ``desc`` [string: template]: : If specified, provides a template
    for the description, to allow formulaic descriptions of pieces in
-   this group.  The string specified by ``desc`` must contain ``_desc``
+   this group.  The string specified by ``desc`` must contain ``${desc}``
    exactly once; that will be replaced with the description calculated
-   according to the other rules.  (``_desc`` substitution happens
-   after ``_colour`` substitution.)
+   according to the other rules.  (``${desc}`` substitution happens
+   after ``${colour}`` substitution.)
 
  * ``occulted`` [dict, contents depend on ``occulted.method``].  If
    specified, these pieces be occulted.  For example, when a player
@@ -342,7 +343,7 @@ Other group parameters
     this piece.  The sub-entry ``occulted.colour`` names a
     recolouring - one of the keys of the ``colours`` group parameter.
     When the piece is occulted it will show that colour, instead of
-    its actual colour.  In the description, ``_colour`` will be elided
+    its actual colour.  In the description, ``${colour}`` will be elided
     rather than substituted (along with up to one of any spaces either
     side of it).
 

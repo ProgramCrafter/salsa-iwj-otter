@@ -181,6 +181,9 @@ follow the link to the latest published documentation for that format.
       Library catalogues must be overhauled.
     - Handling of the ``angle`` parameter in game specs is now
       much more sensible, and also accurately documented.
+    - Shape library escaping in text strings now uses ``${subst}``
+      (while in filenames and item names, still ``__c`` since that
+      appears literally in filenames).
 
   * - ``1``
     - 0.x - `1.0.0 <https://www.chiark.greenend.org.uk/~ianmdlvl/otter/1.0.0/docs/README.html>`_
