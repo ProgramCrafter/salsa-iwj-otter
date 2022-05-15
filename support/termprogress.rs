@@ -162,6 +162,7 @@ impl Drop for TermReporter {
 }
 
 pub struct Nest {
+  outer_total: f32,
   outer_phase_base: f32,
   outer_phase_size: f32,
   desc_prefix: String,
@@ -169,10 +170,19 @@ pub struct Nest {
 }
 
 impl Nest {
-  /// Assumes that every inner phase is of the same length as the first
   pub fn new(actual_reporter: Box<dyn Reporter>)
              -> Self { Nest {
     actual_reporter,
+    outer_total: 1.,
+    outer_phase_base: 0.,
+    outer_phase_size: 0.,
+    desc_prefix: default(),
+  } }
+
+  pub fn with_total(outer_total: f32, actual_reporter: Box<dyn Reporter>)
+             -> Self { Nest {
+    actual_reporter,
+    outer_total,
     outer_phase_base: 0.,
     outer_phase_size: 0.,
     desc_prefix: default(),
@@ -193,8 +203,8 @@ impl Reporter for Nest {
   fn report(&mut self, inner_pi: &ProgressInfo<'_>) {
     let inner_frac = inner_pi.phase.value.fraction();
     let outer_frac =
-      self.outer_phase_size * inner_frac +
-      self.outer_phase_base;
+      (self.outer_phase_size * inner_frac +
+       self.outer_phase_base) / self.outer_total;
 
     let desc = if self.desc_prefix != "" {
       format!("{} {}", &self.desc_prefix, inner_pi.phase.desc).into()

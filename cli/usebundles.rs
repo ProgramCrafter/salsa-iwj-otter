@@ -6,6 +6,10 @@ use super::*;
 
 //---------- upload-bundle ----------
 
+pub const PROGFRAC_PREP:   f32 = 0.20;
+pub const PROGFRAC_HASH:   f32 = 0.10;
+pub const PROGFRAC_UPLOAD: f32 = 0.70;
+
 #[derive(Debug)]
 pub struct BundleForUpload {
   pub file: String,
@@ -17,7 +21,9 @@ pub struct BundleForUpload {
 
 impl BundleForUpload {
   #[throws(AE)]
-  pub fn prepare(file: String) -> Self {
+  pub fn prepare(file: String, progress: &mut termprogress::Nest) -> Self {
+    progress.start_phase(PROGFRAC_PREP, default());
+
     let mut walk = WalkDir::new(&file)
       .same_file_system(true)
       .follow_links(true)
@@ -34,14 +40,17 @@ impl BundleForUpload {
     };
     if ! peek.file_type().is_dir() {
       let f = File::open(&file).context("open")?;
-      Self::prepare_open_file(&file, f)?
+      Self::prepare_open_file(&file, progress, f)?
     } else {
-      Self::prepare_from_dir(&file, walk)?
+      Self::prepare_from_dir(&file, progress, walk)?
     }
   }
 
   #[throws(AE)]
-  pub fn prepare_open_file(file: &str, f: File) -> Self {
+  pub fn prepare_open_file(file: &str, progress: &mut termprogress::Nest,
+                           f: File) -> Self {
+    progress.start_phase(PROGFRAC_HASH, default());
+
     let size = f
       .metadata().context("fstat bundle file")?
       .len()
@@ -75,7 +84,8 @@ impl BundleForUpload {
   }
 
   #[throws(AE)]
-  pub fn prepare_from_dir<W>(dir: &str, walk: W) -> Self
+  pub fn prepare_from_dir<W>(dir: &str, progress: &mut termprogress::Nest,
+                             walk: W) -> Self
   where W: Iterator<Item=walkdir::Result<walkdir::DirEntry>>
   {
     let zipfile = tempfile::tempfile().context("create tmp zipfile")?;
@@ -129,7 +139,7 @@ impl BundleForUpload {
       .map_err(|e| e.into_error()).context("flush zipfile")?;
     zipfile.rewind().context("rewind zipfile")?;
 
-    Self::prepare_open_file(dir, zipfile)?
+    Self::prepare_open_file(dir,progress, zipfile)?
   }
 }
 
@@ -153,9 +163,12 @@ mod upload_bundle {
   fn call(SCCA{ mut out, ma, args,.. }:SCCA) {
     let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
     let mut chan = ma.access_game()?;
-    let mut progress = ma.progressbar()?;
-    let for_upload = BundleForUpload::prepare(args.bundle_file)?;
-    let bundle = for_upload.upload(&ma, &mut chan, &mut *progress)?;
+    let progress = ma.progressbar()?;
+    let mut progress = termprogress::Nest::new(progress);
+
+    let for_upload = BundleForUpload::prepare(args.bundle_file,
+                                              &mut progress)?;
+    let bundle = for_upload.upload(&ma, &mut chan, &mut progress)?;
     writeln!(out, "{}", bundle)?;
   }
 

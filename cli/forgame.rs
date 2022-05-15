@@ -89,8 +89,13 @@ mod reset_game {
     }
 
     if args.bundles_only || args.bundles.len() != 0 {
+      let n_bundles = args.bundles.len();
+      let progress = ma.progressbar()?;
+      let mut progress = termprogress::Nest::with_total
+        (n_bundles as f32, progress);
+
       let local = args.bundles.into_iter().map(|file| {
-        BundleForUpload::prepare(file)
+        BundleForUpload::prepare(file, &mut progress)
       }).collect::<Result<Vec<_>,_>>()?;
 
       let resp = chan.cmd(&MgmtCommand::ListBundles { game: ma.instance() })?;
@@ -142,11 +147,8 @@ mod reset_game {
           if bundles_only {
             clear_game(&ma, &mut chan)?;
           }
-          let progress = ma.progressbar()?;
-          let n_bundles = local.len();
-          let mut progress = termprogress::Nest::new(progress);
           for (i, bundle) in local.into_iter().enumerate() {
-            progress.start_phase((i as f32)/(n_bundles as f32),
+            progress.start_phase(PROGFRAC_UPLOAD,
                                  format!("{}/{}", i, n_bundles));
             bundle.upload(&ma, &mut chan, &mut progress)?;
           }
