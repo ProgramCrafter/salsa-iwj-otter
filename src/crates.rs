@@ -11,7 +11,6 @@ pub use base64;
 pub use boolinator;
 pub use cast_trait_object;
 pub use delegate;
-pub use educe;
 pub use either;
 pub use env_logger;
 pub use glob;

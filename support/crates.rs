@@ -10,6 +10,7 @@ pub use anyhow;
 pub use chrono;
 pub use chrono_tz;
 pub use digest;
+pub use educe;
 pub use flexi_logger;
 pub use fs2;
 pub use lazy_static;

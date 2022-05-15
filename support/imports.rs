@@ -75,6 +75,7 @@ pub use crate::authproofs::AuthorisationSuperuser;
 pub use crate::childio;
 pub use crate::config::*;
 pub use crate::debugmutex::DebugIdentify;
+pub use educe::Educe;
 pub use crate::digestrw::{self, *};
 pub use crate::fake_rng::*;
 pub use crate::fake_time::*;

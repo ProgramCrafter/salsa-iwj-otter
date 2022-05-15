@@ -12,9 +12,31 @@ pub struct ProgressInfo<'pi> {
 
 #[derive(Debug,Clone,Serialize,Deserialize,IntoOwned)]
 pub struct Count<'pi> {
-  pub i: usize,
-  pub n: usize,
+  pub value: Value,
   pub desc: Cow<'pi, str>,
+}
+
+#[derive(Debug,Clone,Serialize,Deserialize,IntoOwned)]
+#[derive(Educe)]
+#[educe(Default)]
+pub enum Value {
+  #[educe(Default)] Exact {
+    i: usize,
+    n: usize,
+  },
+  Fraction {
+    f: f32, // [0..1]
+  }
+}
+
+impl Value {
+  pub fn fraction(&self) -> f32 {
+    match self {
+      &Value::Exact{ i:_, n } if n == 0 => 0.,
+      &Value::Exact{ i, n } => (i as f32) / (n as f32),
+      &Value::Fraction{ f } => f,
+    }
+  }
 }
 
 pub trait Originator {
@@ -31,12 +53,14 @@ pub struct ResponseOriginator<'c,'w,W,F> where W: Write {
 }
 impl<'c,'w,W,F> ResponseOriginator<'c,'w,W,F> where W: Write {
   pub fn new(chan: &'c mut ResponseWriter<'w,W>,
-             formatter: F) -> Self { Self {
-    chan,
-    phase: Count { i:0, n:0, desc: Cow::Borrowed("") },
-    len: 0,
-    formatter,
-  } }
+             formatter: F) -> Self {
+    Self {
+      chan,
+      phase: Count { value: default(), desc: Cow::Borrowed("") },
+      len: 0,
+      formatter,
+    }
+  }
 }
 
 impl<W,F,M> Originator for ResponseOriginator<'_,'_,W,F>
@@ -53,9 +77,10 @@ where W: Write,
     self.len = len;
   }
   fn item_(&mut self, item: usize, desc: Cow<'_, str>) {
+    let value = Value::Exact { i: item, n: self.len };
     self.report(ProgressInfo {
       phase: self.phase.clone(),
-      item: Count { i: item, n: self.len, desc }
+      item: Count { value, desc }
     })
   }
 }
@@ -70,9 +95,12 @@ impl Originator for () {
 pub trait Enum: EnumCount + ToPrimitive + EnumMessage { }
 impl<T> From<T> for Count<'static> where T: Enum {
   fn from(t: T) -> Count<'static> {
-    Count {
+    let value = Value::Exact { 
       i: t.to_usize().unwrap(),
       n: T::COUNT - 1,
+    };
+    Count {
+      value,
       // Show be Borrowed  https://github.com/Peternator7/strum/issues/159
       desc: Cow::Owned(t.get_message().unwrap_or("...").to_owned()),
     }
@@ -80,16 +108,16 @@ impl<T> From<T> for Count<'static> where T: Enum {
 }
 impl<'t> From<&'t str> for Count<'t> {
   fn from(s: &'t str) -> Count<'t> {
-    Count { i:0, n:0, desc: Cow::Borrowed(s) }
+    Count { value: default(), desc: Cow::Borrowed(s) }
   }
 }
 impl From<String> for Count<'static> {
   fn from(s: String) -> Count<'static> {
-    Count { i:0, n:0, desc: Cow::Owned(s) }
+    Count { value: default(), desc: Cow::Owned(s) }
   }
 }
 impl<'t> From<()> for Count<'t> { fn from(_:()) -> Count<'t> {
-    Count { i:0, n:0, desc: Cow::Borrowed("") }
+    Count { value: default(), desc: Cow::Borrowed("") }
 } }
 
 #[ext(pub, name=OriginatorExt)]

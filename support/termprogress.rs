@@ -120,12 +120,10 @@ impl TermReporter {
 
   fn bar(&self, out: &mut String, fwidth: Col, info: &progress::Count) {
     let desc = console::strip_ansi_codes(&info.desc);
-    let w_change = if info.n == 0 { 0 } else {
-      min(
-        ((info.i as f32) / (info.n as f32) * (fwidth as f32)) as Col,
-        fwidth // just in case
-      )
-    };
+    let w_change = min(
+      (info.value.fraction() * (fwidth as f32)) as Col,
+      fwidth // just in case
+    );
     let mut desc = desc
       .chars()
       .chain(iter::repeat(' '))
@@ -166,7 +164,7 @@ impl Drop for TermReporter {
 pub struct Nest {
   outer_n: usize,
   outer_i: usize,
-  inner_last_phase: usize,
+  inner_last_frac: f32,
   actual_reporter: Box<dyn Reporter>,
 }
 
@@ -177,17 +175,20 @@ impl Nest {
     actual_reporter,
     outer_n: outer_count,
     outer_i: 0,
-    inner_last_phase: 0,
+    inner_last_frac: 0.,
   } }
 }
 
 impl Reporter for Nest {
   fn report(&mut self, inner_pi: &ProgressInfo<'_>) {
+    use progress::Value;
+
     // Autodetect new outer phase item, when inner pahse rewinds
-    if inner_pi.phase.i < self.inner_last_phase {
+    let inner_frac = inner_pi.phase.value.fraction();
+    if inner_frac < self.inner_last_frac {
       self.outer_i += 1;
     }
-    self.inner_last_phase = inner_pi.phase.i;
+    self.inner_last_frac = inner_frac;
 
     let desc = if self.outer_n > 1 {
       format!("{}/{} {}", self.outer_i, self.outer_n,
@@ -196,10 +197,19 @@ impl Reporter for Nest {
       inner_pi.phase.desc.clone()
     };
 
+    let outer_value = match inner_pi.phase.value {
+      Value::Exact { i, n } => Value::Exact {
+        i: i + n * self.outer_i,
+        n:     n * self.outer_n,
+      },
+      Value::Fraction { f } => Value::Fraction {
+        f: f * (1.0 / self.outer_n as f32)
+           + Value::Exact { i: self.outer_i, n: self.outer_n }.fraction(),
+      },
+    };
     let outer_phase = progress::Count {
-      i: inner_pi.phase.i + inner_pi.phase.n * self.outer_i,
-      n:                    inner_pi.phase.n * self.outer_n,
       desc,
+      value: outer_value,
     };
 
     let outer_pi = ProgressInfo {

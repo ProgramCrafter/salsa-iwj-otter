@@ -35,7 +35,6 @@ pub use cast_trait_object::{dyn_upcast, DynCastExt};
 pub use const_default::ConstDefault;
 pub use delegate::delegate;
 pub use downcast_rs::{impl_downcast, Downcast};
-pub use educe::Educe;
 pub use either::{Either, Left, Right};
 pub use enum_dispatch::enum_dispatch;
 pub use enum_map::{Enum, EnumMap};
