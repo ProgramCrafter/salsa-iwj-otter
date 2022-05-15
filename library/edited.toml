@@ -36,7 +36,7 @@ d6-_c	-	a ${colour} die image
 
 magic.item_prefix = "die-"
 magic.template = """
-image = !
+image = ${image}
 type = "Die"
 labels = 6
 desc = "a ${colour} die"

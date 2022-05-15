@@ -1405,11 +1405,9 @@ fn process_files_entry(
       let item_name = subst_item_name(&format_item_name(
         mformat, &magic.item_prefix, &fe, &magic.item_suffix)?)?;
 
-      let spec = regex!(r#"(?m)(^[\sA-Za-z0-9._-]+=\s*)!\s*$"#)
-        .replace_all(&magic.template, |caps: &regex::Captures| {
-          format!("{}{}", caps.get(1).unwrap().as_str(), &image_table)
-        });
-      let spec = c_colour_all((*spec).into())?;
+      let spec = Substituting::new(mformat, Dollars::Text, &magic.template);
+      let spec = substn(spec, "_image", &image_table)?;
+      let spec = c_colour_all(spec.into())?;
 
       let spec = spec.finish()?;
       trace!("magic item {}\n\n{}\n", &item_name, &spec);
