@@ -1009,7 +1009,8 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
     for fe in gdefn.files.0 {
       process_files_entry(
         src.svg_noter(), &mut l,
-        &gdefn.item_prefix, &gdefn.item_suffix, &gdefn.sort,
+        &gdefn.item_prefix, &gdefn.item_suffix,
+        PerhapsSubst::N(&gdefn.sort),
         &group, shape_calculable, fe
       )?;
     }
@@ -1028,9 +1029,23 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
   })?
 }
 
+#[derive(Debug,Clone)]
+pub struct Substituting(pub String);
+
+impl Substituting {
+  pub fn chain(&self) -> &str {
+    &self.0
+  }
+
+  #[throws(SubstError)]
+  pub fn finish(self) -> String {
+    self.0
+  }
+}
+
 #[throws(SubstError)]
 fn subst_general(input: &str, needle: &'static str, replacement: &str)
-                 -> (String, usize) {
+                 -> (Substituting, usize) {
   let mut count = 0;
   let mut work = input.to_owned();
   for m in input.rmatch_indices(needle) {
@@ -1050,11 +1065,12 @@ fn subst_general(input: &str, needle: &'static str, replacement: &str)
       + replacement
       + rhs
   }
-  (work, count)
+  (Substituting(work), count)
 }
 
 #[throws(SubstError)]
-fn subst(before: &str, needle: &'static str, replacement: &str) -> String {
+fn subst(before: &str, needle: &'static str, replacement: &str)
+         -> Substituting {
   use SubstErrorKind as SEK;
   let err = |kind| SubstError { kind, input: before.to_string() };
   let (out, count) = subst_general(before, needle, replacement)?;
@@ -1064,38 +1080,44 @@ fn subst(before: &str, needle: &'static str, replacement: &str) -> String {
 }
 
 #[throws(SubstError)]
-fn substn(before: &str, needle: &'static str, replacement: &str) -> String {
+fn substn(before: &str, needle: &'static str, replacement: &str)
+          -> Substituting {
   subst_general(before, needle, replacement)?.0
 }
 
 #[test]
 fn test_subst() {
   use SubstErrorKind as SEK;
-  assert_eq!(subst("a _colour die", "_colour", "blue").unwrap(),
+  assert_eq!(subst("a _colour die", "_colour", "blue")
+             .unwrap().finish().unwrap(),
              "a blue die");
-  assert_eq!(subst("a _colour die", "_colour", "").unwrap(),
+  assert_eq!(subst("a _colour die", "_colour", "")
+             .unwrap().finish().unwrap(),
              "a die");
   assert_eq!(subst("a die", "_colour", "").unwrap_err().kind,
              SEK::MissingToken("_colour"));
   assert_eq!(subst("a _colour _colour die", "_colour", "").unwrap_err().kind,
              SEK::RepeatedToken("_colour"));
 
-  assert_eq!(substn("a _colour die being _colour", "_colour", "blue").unwrap(),
+  assert_eq!(substn("a _colour die being _colour", "_colour", "blue")
+             .unwrap().finish().unwrap(),
              "a blue die being blue");
-  assert_eq!(subst_general("a _colour _colour die", "_colour", "").unwrap(),
-             ("a die".to_owned(), 2));
+
+  let (s, n) = subst_general("a _colour _colour die", "_colour", "")
+    .unwrap();
+  assert_eq!(s.finish().unwrap(), "a die".to_owned());
+  assert_eq!(n, 2);
 }
 
 #[throws(LibraryLoadError)]
 fn format_item_name(item_prefix: &str, fe: &FileData, item_suffix: &str)
-                    -> GoodItemName {
-  format!("{}{}{}", item_prefix, fe.item_spec, item_suffix)
-    .try_into()?
+                    -> Substituting {
+  Substituting(format!("{}{}{}", item_prefix, fe.item_spec, item_suffix))
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 enum PerhapsSubst<'i> {
-  Y(String),
+  Y(Substituting),
   N(&'i str),
 }
 
@@ -1103,28 +1125,29 @@ impl<'i> PerhapsSubst<'i> {
   #[throws(SubstError)]
   pub fn finish(self) -> String { match self {
     PerhapsSubst::N(s) => s.to_owned(),
-    PerhapsSubst::Y(s) => s,
+    PerhapsSubst::Y(s) => s.finish()?,
   } }
   pub fn chain(&'i self) -> &'i str { match self {
     PerhapsSubst::N(s) => s,
-    PerhapsSubst::Y(s) => s,
+    PerhapsSubst::Y(s) => s.chain(),
   } }
+  pub fn is_empty(&self) -> bool { self.chain().is_empty() }
 }
 
 #[throws(LibraryLoadError)]
 fn process_files_entry(
   src: &mut dyn LibrarySvgNoter, l: &mut Catalogue,
-  item_prefix: &str, item_suffix: &str, sort: &str,
+  item_prefix: &str, item_suffix: &str, sort: PerhapsSubst,
   group: &Arc<GroupData>, shape_calculable: ShapeCalculable,
   fe: FileData
 ) {
   let item_name = format_item_name(item_prefix, &fe, item_suffix)?;
 
-  let sort = match (sort, fe.extra_fields.get("sort")) {
-    ("", None) => None,
-    (gd,  None) => Some(gd.to_string()),
-    ("", Some(ef)) => Some(ef.to_string()),
-    (gd, Some(ef)) => Some(subst(gd, "_s", ef)?),
+  let sort = match (sort.is_empty(), fe.extra_fields.get("sort")) {
+    (true, None) => None,
+    (false,  None) => Some(sort.finish()?),
+    (true, Some(ef)) => Some(ef.to_string()),
+    (false, Some(ef)) => Some(subst(sort.chain(), "_s", ef)?.finish()?),
   };
 
   let occ = match &group.d.occulted {
@@ -1133,13 +1156,14 @@ fn process_files_entry(
       if ! group.d.colours.contains_key(colour.0.as_str()) {
         throw!(LLE::OccultationColourMissing(colour.0.clone()));
       }
-      let item_name = subst(item_name.as_str(), "_c", &colour.0)?;
-      let src_name  = subst(&fe.src_file_spec, "_c", &colour.0);
-      let item_name: GoodItemName = item_name.try_into()?;
+      let item_name = subst(item_name.chain(), "_c", &colour.0)?;
+      let src_name  = subst(&fe.src_file_spec, "_c", &colour.0)
+        .and_then(|s| s.finish());
+      let item_name: GoodItemName = item_name.finish()?.try_into()?;
       let item_name = SvgBaseName::note(
-        src, item_name, src_name.as_ref().map(|s| s.as_str()),
+        src, item_name, src_name.as_deref(),
       )?;
-      let desc = subst(&fe.desc, "_colour", "")?.to_html();
+      let desc = subst(&fe.desc, "_colour", "")?.finish()?.to_html();
       OccData::Internal(Arc::new(OccData_Internal {
         item_name,
         loaded: default(),
@@ -1156,7 +1180,8 @@ fn process_files_entry(
 
   fn colour_subst_1<'s, S>(subst: S, kv: Option<(&'static str, &'s str)>)
     -> impl for <'i> Fn(&'i str) -> Result<PerhapsSubst<'i>, SubstError> + 's
-  where S: Fn(&str, &'static str, &str) -> Result<String, SubstError> + 's
+  where S: Fn(&str, &'static str, &str)
+              -> Result<Substituting, SubstError> + 's
   {
     move |input| Ok(
       if let Some((keyword, val)) = kv {
@@ -1178,8 +1203,8 @@ fn process_files_entry(
     let sort = sort.as_deref().map(|v| c_abbrev(v)).transpose()?;
     let sort = sort.map(|s| s.finish()).transpose()?;
 
-    let subst_item_name = |item_name: &GoodItemName| {
-      let item_name = c_abbrev(item_name.as_str())?;
+    let subst_item_name = |item_name: &Substituting| {
+      let item_name = c_abbrev(item_name.chain())?;
       let item_name = item_name.finish()?.try_into()?;
       Ok::<_,LLE>(item_name)
     };
@@ -1191,7 +1216,7 @@ fn process_files_entry(
     let desc = c_colour(&fe.desc)?;
 
     let desc = if let Some(desc_template) = &group.d.desc_template {
-      subst(desc_template, "_desc", desc.chain())?.to_html()
+      subst(desc_template, "_desc", desc.chain())?.finish()?.to_html()
     } else {
       desc.finish()?.to_html()
     };
