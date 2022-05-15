@@ -1442,10 +1442,10 @@ fn process_files_entry(
       let spec = Substituting::new(mformat, Dollars::Text, &magic.template);
       let spec = substn(spec, "${image}", &image_table)?;
       let mut spec = c_colour_all(spec.into())?.is_y()?;
-      for (k,v) in &fe.extra_fields {
-        if k.starts_with('x') {
-          spec = substn(spec, format!("${{{}}}", k), v)?;
-        }
+      for (k,v) in chain!{
+        fe.extra_fields.iter().filter(|(k,_v)| k.starts_with('x')),
+      } {
+        spec = substn(spec, format!("${{{}}}", k), v)?;
       }
       let spec = spec.finish()?;
       trace!("magic item {}\n\n{}\n", &item_name, &spec);
