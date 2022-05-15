@@ -1058,6 +1058,10 @@ impl<'s> Substituting<'s> {
   pub fn nest(self) -> String {
     self.s.into()
   }
+
+  fn err(&self, kind: SubstErrorKind) -> SubstError {
+    SubstError { kind, input: (*self.s).to_owned() }
+  }
 }
 
 #[throws(SubstError)]
@@ -1125,10 +1129,9 @@ fn subst_general<'i>(input: &Substituting<'i>,
 fn subst<'i>(before: Substituting<'i>, needle: &'static str, replacement: &str)
          -> Substituting<'i> {
   use SubstErrorKind as SEK;
-  let err = |kind| SubstError { kind, input: (*before.s).to_owned() };
   let (out, count) = subst_general(&before, needle, replacement)?;
-  if count == 0 { throw!(err(SEK::MissingToken(needle))) }
-  if count > 1 { throw!(err(SEK::RepeatedToken(needle))) }
+  if count == 0 { throw!(before.err(SEK::MissingToken(needle))) }
+  if count > 1 { throw!(before.err(SEK::RepeatedToken(needle))) }
   out
 }
 
