@@ -1288,6 +1288,8 @@ fn process_files_entry(
     move |input| Ok(
       if let Some((keyword, val)) = kv {
         subst(input.mky(mformat, dollars), keyword, val)?.into()
+      } else if dollars.enabled(mformat) {
+        input.mky(mformat, dollars).into()
       } else {
         input
       }
