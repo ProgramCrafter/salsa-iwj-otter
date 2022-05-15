@@ -316,13 +316,18 @@ impl OutlineTrait for Die {
   fn surround_path(&self) -> Html { self.surround_outline.outline_path(1.0)? }
 
   delegate! {
+    to self.surround_outline {
+      fn bbox_approx(&self) -> Result<Rect, IE>;
+      fn shape(&self) -> Option<Shape>;
+    }
+  }
+
+  delegate! {
     to self.image {
       // `outline_path` won't be called at all,
       // since we provide `surround_path`
       fn outline_path(&self, scale: f64) -> Result<Html, IE>;
       fn thresh_dragraise(&self) -> Result<Option<Coord>, IE>;
-      fn bbox_approx(&self) -> Result<Rect, IE>;
-      fn shape(&self) -> Option<Shape>;
     }
   }
 }
