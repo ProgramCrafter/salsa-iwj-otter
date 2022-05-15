@@ -64,10 +64,10 @@ pub enum InternalError {
 #[error("Unsupported colour spec")]
 pub struct UnsupportedColourSpec;
 
-#[derive(Error)]
+#[derive(Error,Clone)]
 pub struct InternalLogicError {
   desc: Cow<'static, str>,
-  backtrace: parking_lot::Mutex<backtrace::Backtrace>,
+  backtrace: Arc<parking_lot::Mutex<backtrace::Backtrace>>,
 }
 
 pub fn internal_error_bydebug(desc: &dyn Debug) -> IE {
@@ -79,7 +79,7 @@ impl InternalLogicError {
     let backtrace = backtrace::Backtrace::new_unresolved();
     InternalLogicError {
       desc: desc.into(),
-      backtrace: parking_lot::Mutex::new(backtrace),
+      backtrace: Arc::new(parking_lot::Mutex::new(backtrace)),
     }
   }
 }
