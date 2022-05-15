@@ -2,9 +2,9 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="11.062973"
-   height="11.051731"
-   viewBox="-10 -10 11.062973 11.051731"
+   width="16.462973"
+   height="16.451731"
+   viewBox="-10 -10 16.462973 16.451731"
    version="1.1"
    id="svg5"
    sodipodi:docname="die-image-d8-_c.svg"
@@ -30,20 +30,20 @@
      width="100px"
      viewbox-width="20"
      viewbox-height="20"
-     inkscape:zoom="43.478367"
-     inkscape:cx="5.5314865"
-     inkscape:cy="5.5314865"
+     inkscape:zoom="30.0625"
+     inkscape:cx="9.962578"
+     inkscape:cy="5.970894"
      inkscape:window-width="1195"
      inkscape:window-height="969"
-     inkscape:window-x="303"
+     inkscape:window-x="614"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer1"
      lock-margins="true"
-     fit-margin-top="0"
-     fit-margin-left="0"
-     fit-margin-right="0"
-     fit-margin-bottom="0">
+     fit-margin-top="2.7"
+     fit-margin-left="2.7"
+     fit-margin-right="2.7"
+     fit-margin-bottom="2.7">
     <inkscape:grid
        type="xygrid"
        id="grid846"
@@ -53,8 +53,8 @@
        enabled="true"
        spacingx="0.052916667"
        spacingy="0.052916667"
-       originx="-4.5170593"
-       originy="-4.5283011" />
+       originx="-1.8170593"
+       originy="-1.8283011" />
   </sodipodi:namedview>
   <metadata
      id="metadata830">
@@ -106,7 +106,7 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-4.5170594,-4.5283011)">
+     transform="translate(-1.8170594,-1.8283011)">
     <path
        style="fill:#8fc6ff;fill-opacity:1;stroke:#000000;stroke-width:0.24;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="m -5.0787506,0.74208276 4.42581055,4.42581054 a 1,1 9.8432253e-8 0 0 1.41421356,0 L 5.1678933,0.76127351 a 1,1 90.000001 0 0 0,-1.41421358 L 0.76127377,-5.0595598 a 1,1 1.2304033e-6 0 0 -1.41421357,0 l -4.4258108,4.42581052 a 0.97286015,0.97286015 90.000001 0 0 0,1.37583204 z"

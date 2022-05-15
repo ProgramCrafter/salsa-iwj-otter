@@ -31,17 +31,19 @@ outline.shape = "Circle"
 outline.size = [14]
 item_prefix = "die-image-"
 files = """
-d6-_c	-	a ${colour} die image
+:xd
+d6-_c	-	6	a ${colour} die image
+d8-_c	-	8	a ${colour} die image
 """
 
 magic.item_prefix = "die-"
 magic.template = """
 image = ${image}
 type = "Die"
-labels = 6
+labels = ${xd}
 desc = "a ${colour} die"
 occult.label = "?"
-occult.ilk = "d6-${colour}"
+occult.ilk = "d${xd}-${colour}"
 """
 
 [group.dice.colours.blue]
@@ -49,20 +51,4 @@ abbrev = "blue"
 
 [group.dice.colours.red]
 abbrev = "red"
-map = { "#8fc6ff" = "#e64104", "#000000" = "#ffffff" }
-
-[group.dice-d8]
-inherit = "dice"
-size = [14]
-files = """
-d8-_c	-	a ${colour} die image
-"""
-magic.item_prefix = "die-"
-magic.template = """
-image = ${image}
-type = "Die"
-labels = 8
-desc = "a ${colour} die"
-occult.label = "?"
-occult.ilk = "d8-${colour}"
-"""
+map = { "#8fc6ff" = "#e64104", "#000000" = "#ffffff", "#ffffff" = "#000000" }
