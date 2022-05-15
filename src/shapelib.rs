@@ -157,10 +157,11 @@ pub enum LibraryLoadMFIncompat {
   #[error("orig_size no longer supported")] OrigSizeForbidden,
   #[error("specified both size and numeric scale")] ContradictoryScale,
 }
-#[derive(Error,Copy,Clone,Debug,Eq,PartialEq)]
+#[derive(Error,Clone,Debug)]
 pub enum SubstErrorKind {
   #[error("missing or unrecognised token {0}")] MissingToken (&'static str),
   #[error("repeated token {0}")]                RepeatedToken(&'static str),
+  #[error("internal logic error {0}")] Internal(#[from] InternalLogicError),
 }
 
 #[derive(Error,Clone,Debug)]
@@ -1062,6 +1063,10 @@ impl<'s> Substituting<'s> {
   fn err(&self, kind: SubstErrorKind) -> SubstError {
     SubstError { kind, input: (*self.s).to_owned() }
   }
+
+  fn internal_err(&self, msg: &'static str) -> SubstError {
+    self.err(InternalLogicError::new(msg).into())
+  }
 }
 
 #[throws(SubstError)]
@@ -1101,7 +1106,8 @@ fn subst_general_mf2<'i>(input: &Substituting<'i>,
                          -> (Substituting<'i>, usize) {
   let needle_buf;
   let (needle, dollars) = if needle != "_c" {
-    let token = needle.strip_prefix('_').expect("needle has no '_'");
+    let token = needle.strip_prefix('_')
+      .ok_or_else(|| input.internal_err("needle has no '_'"))?;
     needle_buf = format!("${{{}}}", token);
     (&*needle_buf, true)
   } else {
