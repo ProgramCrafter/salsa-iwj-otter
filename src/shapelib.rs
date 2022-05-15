@@ -1056,7 +1056,7 @@ impl<'s> Substituting<'s> {
 }
 
 #[throws(SubstError)]
-fn subst_general<'i>(input: Substituting<'i>,
+fn subst_general_mf1<'i>(input: &Substituting<'i>,
                  needle: &'static str, replacement: &str)
                  -> (Substituting<'i>, usize) {
   let mut count = 0;
@@ -1082,12 +1082,22 @@ fn subst_general<'i>(input: Substituting<'i>,
 }
 
 #[throws(SubstError)]
+// This takes &Substituting.  The rest of the code uses subst or
+// substn, which takes Substituting, thus ensuring that at some future
+// time we might be able to accumulate all the substitutions in
+// Substituting and do them all at once.
+fn subst_general<'i>(input: &Substituting<'i>,
+                 needle: &'static str, replacement: &str)
+                 -> (Substituting<'i>, usize) {
+  subst_general_mf1(input, needle, replacement)?
+}
+
+#[throws(SubstError)]
 fn subst<'i>(before: Substituting<'i>, needle: &'static str, replacement: &str)
          -> Substituting<'i> {
   use SubstErrorKind as SEK;
-  let err_s = (*before.s).to_owned(); // todo: avoid this
-  let err = |kind| SubstError { kind, input: err_s };
-  let (out, count) = subst_general(before, needle, replacement)?;
+  let err = |kind| SubstError { kind, input: (*before.s).to_owned() };
+  let (out, count) = subst_general(&before, needle, replacement)?;
   if count == 0 { throw!(err(SEK::MissingToken(needle))) }
   if count > 1 { throw!(err(SEK::RepeatedToken(needle))) }
   out
@@ -1096,7 +1106,7 @@ fn subst<'i>(before: Substituting<'i>, needle: &'static str, replacement: &str)
 #[throws(SubstError)]
 fn substn<'i>(before: Substituting<'i>, needle: &'static str, replacement: &str)
           -> Substituting<'i> {
-  subst_general(before, needle, replacement)?.0
+  subst_general(&before, needle, replacement)?.0
 }
 
 /*
