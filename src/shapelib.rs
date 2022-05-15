@@ -1162,7 +1162,11 @@ fn test_subst_mf1() {
 
   let mformat = materials_format::Version::try_from_integer(1).unwrap();
   let s_t = |s| Substituting::new(mformat, Dollars::Text, s);
+  let s_f = |s| Substituting::new(mformat, Dollars::Filename, s);
 
+  assert_eq!(subst(s_f("die-image-_c"), "_c", "blue")
+             .unwrap().finish().unwrap(),
+             "die-image-blue");
   assert_eq!(subst(s_t("a _colour die"), "_colour", "blue")
              .unwrap().finish().unwrap(),
              "a blue die");
