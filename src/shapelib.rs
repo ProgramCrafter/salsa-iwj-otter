@@ -1029,26 +1029,39 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
   })?
 }
 
+#[derive(Debug,Copy,Clone,Eq,PartialEq)]
+pub enum Dollars { Text, Filename }
+
 #[derive(Debug,Clone)]
 pub struct Substituting<'s> {
   s: Cow<'s, str>,
   mformat: materials_format::Version,
-  dollars: bool,
+  dollars: Dollars,
 }
 
 impl<'s> Substituting<'s> {
-  pub fn new<S: Into<Cow<'s, str>>>(mformat: materials_format::Version, s: S)
-                              -> Self {
-    Substituting { s: s.into(), mformat, dollars: false }
+  pub fn new<S: Into<Cow<'s, str>>>(
+    mformat: materials_format::Version,
+    dollars: Dollars,
+    s: S
+  ) -> Self {
+    Substituting { s: s.into(), mformat, dollars }
   }
 
   #[throws(SubstError)]
   pub fn finish(self) -> String {
-    if self.dollars {
-      subst_general_precisely(&self, "${$}", true, "$")?.0
+    if self.do_dollars() {
+      subst_general_precisely(&self, "${$}", "$")?.0
     } else {
       self
     }.s.into()
+  }
+
+  fn do_dollars(&self) -> bool {
+    match self.dollars {
+      Dollars::Filename => false,
+      Dollars::Text => self.mformat >= 2,
+    }
   }
 
   #[throws(SubstError)]
@@ -1071,7 +1084,7 @@ impl<'s> Substituting<'s> {
 
 #[throws(SubstError)]
 fn subst_general_precisely<'i>(input: &Substituting<'i>,
-                               needle: & str, dollars: bool,
+                               needle: & str,
                                replacement: &str)
                                -> (Substituting<'i>, usize) {
   let mut count = 0;
@@ -1096,24 +1109,8 @@ fn subst_general_precisely<'i>(input: &Substituting<'i>,
   (Substituting{
     s: work.into(),
     mformat: input.mformat,
-    dollars: input.dollars | dollars,
+    dollars: input.dollars,
   }, count)
-}
-
-#[throws(SubstError)]
-fn subst_general_mf2<'i>(input: &Substituting<'i>,
-                         needle: &'static str, replacement: &str)
-                         -> (Substituting<'i>, usize) {
-  let needle_buf;
-  let (needle, dollars) = if needle != "_c" {
-    let token = needle.strip_prefix('_')
-      .ok_or_else(|| input.internal_err("needle has no '_'"))?;
-    needle_buf = format!("${{{}}}", token);
-    (&*needle_buf, true)
-  } else {
-    (needle, false)
-  };
-  subst_general_precisely(input, needle, dollars, replacement)?
 }
 
 #[throws(SubstError)]
@@ -1124,10 +1121,19 @@ fn subst_general_mf2<'i>(input: &Substituting<'i>,
 fn subst_general<'i>(input: &Substituting<'i>,
                  needle: &'static str, replacement: &str)
                      -> (Substituting<'i>, usize) {
-  if input.mformat == 1 {
-    subst_general_precisely(input, needle, false, replacement)?
+  match input.dollars {
+    Dollars::Filename => if needle != "_c" {
+      throw!(input.internal_err("long subst in filename"))
+    },
+    Dollars::Text => { },
+  }
+  if input.do_dollars() {
+    let token = needle.strip_prefix('_')
+      .ok_or_else(|| input.internal_err("needle has no '_'"))?;
+    let needle = format!("${{{}}}", token);
+    subst_general_precisely(input, &needle, replacement)?
   } else {
-    subst_general_mf2(input, needle, replacement)?
+    subst_general_precisely(input, needle, replacement)?
   }
 }
 
@@ -1178,7 +1184,7 @@ fn format_item_name(mformat: materials_format::Version,
                     item_prefix: &str, fe: &FileData, item_suffix: &str)
                     -> Substituting<'static> {
   Substituting::new(
-    mformat,
+    mformat, Dollars::Filename,
     format!("{}{}{}", item_prefix, fe.item_spec, item_suffix)
   )
 }
@@ -1206,8 +1212,9 @@ impl<'i> PerhapsSubst<'i> {
   pub fn mky(
     self,
     mformat: materials_format::Version,
+    dollars: Dollars,
   ) -> Substituting<'i> { match self {
-    PerhapsSubst::N(s) => Substituting::new(mformat, s),
+    PerhapsSubst::N(s) => Substituting::new(mformat, dollars, s),
     PerhapsSubst::Y(s) => s,
   } }
 }
@@ -1227,7 +1234,7 @@ fn process_files_entry(
     (gd, None) => Some(gd.into()),
     ("", Some(ef)) => Some(ef.into()),
     (gd, Some(ef)) => {
-      let sort = Substituting::new(mformat, gd);
+      let sort = Substituting::new(mformat, Dollars::Text, gd);
       Some(subst(sort, "_s", ef)?.into())
     },
   };
@@ -1239,14 +1246,15 @@ fn process_files_entry(
         throw!(LLE::OccultationColourMissing(colour.0.clone()));
       }
       let item_name = subst(item_name.clone(), "_c", &colour.0)?;
-      let src_name = Substituting::new(mformat, &fe.src_file_spec);
+      let src_name = Substituting::new(mformat, Dollars::Filename,
+                                       &fe.src_file_spec);
       let src_name  = subst(src_name, "_c", &colour.0)
         .and_then(|s| s.finish());
       let item_name: GoodItemName = item_name.finish()?.try_into()?;
       let item_name = SvgBaseName::note(
         src, item_name, src_name.as_deref(),
       )?;
-      let desc = Substituting::new(mformat, &fe.desc);
+      let desc = Substituting::new(mformat, Dollars::Text, &fe.desc);
       let desc = subst(desc, "_colour", "")?.finish()?.to_html();
       OccData::Internal(Arc::new(OccData_Internal {
         item_name,
@@ -1266,13 +1274,15 @@ fn process_files_entry(
     mformat: materials_format::Version,
     subst: S, kv: Option<(&'static str, &'s str)>
   )
-    -> impl for <'i> Fn(PerhapsSubst<'i>) -> Result<PerhapsSubst<'i>, SubstError> + 's
+    -> impl for <'i> Fn(Dollars, PerhapsSubst<'i>)
+                        -> Result<PerhapsSubst<'i>, SubstError>
+                     + 's
   where S: for <'i> Fn(Substituting<'i>, &'static str, &str)
               -> Result<Substituting<'i>, SubstError> + 's
   {
-    move |input| Ok(
+    move |dollars, input| Ok(
       if let Some((keyword, val)) = kv {
-        subst(input.mky(mformat), keyword, val)?.into()
+        subst(input.mky(mformat, dollars), keyword, val)?.into()
       } else {
         input
       }
@@ -1287,24 +1297,25 @@ fn process_files_entry(
     let c_colour = colour_subst_1(mformat, subst, c_colour);
     let c_abbrev = colour_subst_1(mformat, subst, c_abbrev);
 
-    let sort = sort.clone().map(|v| c_abbrev(v)).transpose()?;
+    let sort = sort.clone().map(|v| c_abbrev(Dollars::Text, v)).transpose()?;
     let sort = sort.map(|s| s.finish()).transpose()?;
 
     let subst_item_name = |item_name: &Substituting| {
-      let item_name = c_abbrev(item_name.clone().into())?;
+      let item_name = c_abbrev(Dollars::Filename, item_name.clone().into())?;
       let item_name = item_name.finish()?.try_into()?;
       Ok::<_,LLE>(item_name)
     };
     let item_name = subst_item_name(&item_name)?;
 
-    let src_name = c_abbrev((&fe.src_file_spec).into())
+    let src_name = c_abbrev(Dollars::Filename, (&fe.src_file_spec).into())
       .and_then(|s| s.finish());
     let src_name = src_name.as_deref();
 
-    let desc = c_colour((&fe.desc).into())?;
+    let desc = c_colour(Dollars::Text, (&fe.desc).into())?;
 
     let desc = if let Some(desc_template) = &group.d.desc_template {
-      let desc_template = Substituting::new(mformat, desc_template);
+      let desc_template = Substituting::new(
+        mformat, Dollars::Text, desc_template);
       subst(desc_template, "_desc", &desc.nest()?)?.finish()?.to_html()
     } else {
       desc.finish()?.to_html()
@@ -1335,7 +1346,7 @@ fn process_files_entry(
         .replace_all(&magic.template, |caps: &regex::Captures| {
           format!("{}{}", caps.get(1).unwrap().as_str(), &image_table)
         });
-      let spec = c_colour_all((*spec).into())?;
+      let spec = c_colour_all(Dollars::Text, (*spec).into())?;
 
       let spec = spec.finish()?;
       trace!("magic item {}\n\n{}\n", &item_name, &spec);
