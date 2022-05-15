@@ -1085,6 +1085,7 @@ fn substn(before: &str, needle: &'static str, replacement: &str)
   subst_general(before, needle, replacement)?.0
 }
 
+/*
 #[test]
 fn test_subst() {
   use SubstErrorKind as SEK;
@@ -1108,6 +1109,7 @@ fn test_subst() {
   assert_eq!(s.finish().unwrap(), "a die".to_owned());
   assert_eq!(n, 2);
 }
+*/
 
 #[throws(LibraryLoadError)]
 fn format_item_name(item_prefix: &str, fe: &FileData, item_suffix: &str)
