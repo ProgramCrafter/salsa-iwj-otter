@@ -1331,6 +1331,16 @@ fn process_files_entry(
       PerhapsSubst::N(s) => Substituting::new(mformat, dollars, s),
       PerhapsSubst::Y(s) => s,
     } }
+    #[throws(SubstError)]
+    pub fn is_y(
+      self,
+    ) -> Substituting<'i> { match self {
+      PerhapsSubst::Y(s) => s,
+      PerhapsSubst::N(s) => throw!(SubstError {
+        kind: InternalLogicError::new("expected Y").into(),
+        input: s.into(),
+      })
+    } }
   }
 
   fn colour_subst_1<'s, S>(
@@ -1411,8 +1421,12 @@ fn process_files_entry(
 
       let spec = Substituting::new(mformat, Dollars::Text, &magic.template);
       let spec = substn(spec, "_image", &image_table)?;
-      let spec = c_colour_all(spec.into())?;
-
+      let mut spec = c_colour_all(spec.into())?.is_y()?;
+      for (k,v) in &fe.extra_fields {
+        if k.starts_with('x') {
+          spec = substn(spec, &format!("_{}", k), v)?;
+        }
+      }
       let spec = spec.finish()?;
       trace!("magic item {}\n\n{}\n", &item_name, &spec);
 
