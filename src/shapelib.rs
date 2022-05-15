@@ -1205,7 +1205,15 @@ fn test_subst_mf2() {
   assert_eq!(subst(s_f("die-image-_c"), "_c", "blue")
              .unwrap().finish().unwrap(),
              "die-image-blue");
+  assert!{matches!{
+    dbg!(subst(s_f("die-image-_c"), "_colour", "")).unwrap_err().kind,
+    SEK::Internal(_)
+  }}
+
   assert_eq!(subst(s_t("a ${colour} die"), "_colour", "blue")
+             .unwrap().finish().unwrap(),
+             "a blue die");
+  assert_eq!(subst(s_t("a ${c} die"), "_c", "blue")
              .unwrap().finish().unwrap(),
              "a blue die");
   assert_eq!(subst(s_t("a ${colour} die"), "_colour", "")
