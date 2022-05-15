@@ -1156,6 +1156,7 @@ fn substn<'i>(before: Substituting<'i>, needle: &'static str, replacement: &str)
   before.subst_general(needle, replacement)?.0
 }
 
+#[cfg(not(miri))]
 #[test]
 fn test_subst_mf1() {
   use SubstErrorKind as SEK;
@@ -1192,6 +1193,7 @@ fn test_subst_mf1() {
   assert_eq!(n, 2);
 }
 
+#[cfg(not(miri))]
 #[test]
 fn test_subst_mf2() {
   use SubstErrorKind as SEK;
