@@ -159,8 +159,8 @@ pub enum LibraryLoadMFIncompat {
 }
 #[derive(Error,Clone,Debug)]
 pub enum SubstErrorKind {
-  #[error("missing or unrecognised token {0}")] MissingToken (&'static str),
-  #[error("repeated token {0}")]                RepeatedToken(&'static str),
+  #[error("missing or unrecognised token {0}")] MissingToken(Cow<'static,str>),
+  #[error("repeated token {0}")]               RepeatedToken(Cow<'static,str>),
   #[error("internal logic error {0}")] Internal(#[from] InternalLogicError),
 }
 
@@ -1088,7 +1088,7 @@ impl Dollars {
 
 impl<'i> Substituting<'i> {
 #[throws(SubstError)]
-  fn subst_general_precisely(&self, needle: & str, replacement: &str)
+  fn subst_general_precisely(&self, needle: &str, replacement: &str)
                              -> (Substituting<'i>, usize) {
     let mut count = 0;
     let mut work = (*self.s).to_owned();
@@ -1121,7 +1121,7 @@ impl<'i> Substituting<'i> {
   // substn, which takes Substituting, thus ensuring that at some future
   // time we might be able to accumulate all the substitutions in
   // Substituting and do them all at once.
-  fn subst_general(&self, needle: &'static str, replacement: &str)
+  fn subst_general(&self, needle: &str, replacement: &str)
                    -> (Substituting<'i>, usize) {
     match self.dollars {
       Dollars::Filename => if needle != "_c" {
@@ -1135,24 +1135,28 @@ impl<'i> Substituting<'i> {
       let needle = format!("${{{}}}", token);
       self.subst_general_precisely(&needle, replacement)?
     } else {
-      self.subst_general_precisely(needle, replacement)?
+      self.subst_general_precisely(&needle, replacement)?
     }
   }
 }
 
 #[throws(SubstError)]
-fn subst<'i>(before: Substituting<'i>, needle: &'static str, replacement: &str)
-         -> Substituting<'i> {
+fn subst<'i,N>(before: Substituting<'i>, needle: N, replacement: &str)
+               -> Substituting<'i>
+where N: Into<Cow<'static, str>>
+{
   use SubstErrorKind as SEK;
-  let (out, count) = before.subst_general(needle, replacement)?;
+  let needle = needle.into();
+  let (out, count) = before.subst_general(&needle, replacement)?;
   if count == 0 { throw!(before.err(SEK::MissingToken(needle))) }
   if count > 1 { throw!(before.err(SEK::RepeatedToken(needle))) }
   out
 }
 
 #[throws(SubstError)]
-fn substn<'i>(before: Substituting<'i>, needle: &'static str, replacement: &str)
-          -> Substituting<'i> {
+fn substn<'i>(before: Substituting<'i>, needle: &str, replacement: &str)
+              -> Substituting<'i>
+{
   before.subst_general(needle, replacement)?.0
 }
 
