@@ -18,9 +18,30 @@ pub struct BundleForUpload {
 impl BundleForUpload {
   #[throws(AE)]
   pub fn prepare(file: String) -> Self {
-    let f = File::open(&file)
-      .with_context(|| file.clone())
-      .context("open bundle file")?;
+    let mut walk = WalkDir::new(&file)
+      .same_file_system(true)
+      .follow_links(true)
+      .sort_by_file_name()
+      .into_iter()
+      .peekable();
+
+    let peek = walk.peek().ok_or_else(|| anyhow!("unable to inspect"))?;
+    if_let!{
+      Ok(peek) = peek;
+      else Err(
+        walk.next().unwrap().unwrap_err()
+      ).context("inspect")?
+    };
+    if ! peek.file_type().is_dir() {
+      let f = File::open(&file).context("open")?;
+      Self::prepare_open_file(&file, f)?
+    } else {
+      Self::prepare_from_dir(&file, walk)?
+    }
+  }
+
+  #[throws(AE)]
+  pub fn prepare_open_file(file: &str, f: File) -> Self {
     let size = f
       .metadata().context("fstat bundle file")?
       .len()
@@ -31,7 +52,7 @@ impl BundleForUpload {
     let hash = bundles::Hash(hash.into());
     let kind = bundles::Kind::only();
     f.rewind().context("rewind bundle file")?;
-    BundleForUpload { file, f, size, hash, kind }
+    BundleForUpload { file: file.to_owned(), f, size, hash, kind }
   }
 
   #[throws(AE)]
@@ -51,6 +72,16 @@ impl BundleForUpload {
              else throw!(anyhow!("unexpected {:?}", &resp)) };
     progress.clear();
     bundle
+  }
+
+//  #[throws(AE)]
+  pub fn prepare_from_dir<W>(_file: &str, walk: W) -> Result<Self,AE>
+  where W: Iterator<Item=walkdir::Result<walkdir::DirEntry>>
+  {
+    for ent in walk {
+      eprintln!("GOT {:?} {:?}", &ent, &ent.as_ref().unwrap().file_name());
+    }
+    panic!("NYI")
   }
 }
 

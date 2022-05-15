@@ -2773,6 +2773,7 @@ dependencies = [
  "serde",
  "serde_with",
  "strum",
+ "walkdir",
 ]
 
 [[package]]

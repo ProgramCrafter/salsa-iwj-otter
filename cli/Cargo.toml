@@ -31,6 +31,7 @@ otter-base.version="=1.0.0"
 argparse="0.2"
 directories="4"
 ron="0.7"
+walkdir="2.3"
 
 fehler="1"
 num-traits="0.2"

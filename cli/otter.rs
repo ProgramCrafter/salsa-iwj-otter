@@ -23,6 +23,7 @@ pub use std::rc::Rc;
 pub use argparse::{self,ArgumentParser,action::{TypedAction,ParseResult}};
 pub use argparse::action::{Action,IFlagAction,IArgAction};
 pub use derive_more::Display;
+pub use walkdir::WalkDir;
 
 pub use otter::prelude::*;
 pub use otter::commands::*;
