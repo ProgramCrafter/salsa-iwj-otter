@@ -74,14 +74,62 @@ impl BundleForUpload {
     bundle
   }
 
-//  #[throws(AE)]
-  pub fn prepare_from_dir<W>(_file: &str, walk: W) -> Result<Self,AE>
+  #[throws(AE)]
+  pub fn prepare_from_dir<W>(dir: &str, walk: W) -> Self
   where W: Iterator<Item=walkdir::Result<walkdir::DirEntry>>
   {
+    let zipfile = tempfile::tempfile().context("create tmp zipfile")?;
+    let zipfile = BufWriter::new(zipfile);
+    let mut zipfile = zipfile::ZipWriter::new(zipfile);
+
     for ent in walk {
-      eprintln!("GOT {:?} {:?}", &ent, &ent.as_ref().unwrap().file_name());
+      let ent = ent?;
+      if ent.file_type().is_dir() { continue }
+
+      let tail = {
+        let comps = ent.path().components().rev()
+          .take(ent.depth())
+          .collect_vec();
+        comps.into_iter().rev().collect::<PathBuf>()
+      };
+
+      let tail = tail.to_str()
+        .ok_or_else(|| anyhow!("non-UTF-8 path in bundle {:?}", tail))?;
+
+      (||{
+        let mut f = File::open(ent.path())
+          .context("start to read")?;
+
+        let metadata = f.metadata().context("fstat")?;
+
+        let perms = metadata.permissions().mode() & 0o700;
+        let perms = perms * 0o111;
+
+        // Can't copy timestamp due to lack of useful support in
+        // the `zip` crate.
+
+        let options = zipfile::write::FileOptions::default()
+          .compression_level(Some(1))
+          .unix_permissions(perms);
+
+        let () = zipfile.start_file(tail, options) // yoy no typestate!
+          .context("start to write")?;
+
+        io::copy(&mut f, &mut zipfile)
+          .context("copy data")?;
+
+        Ok::<_,AE>(())
+      })()
+        .with_context(|| format!("{:?}", tail))
+        .context("add member")?;
     }
-    panic!("NYI")
+
+    let zipfile = zipfile.finish().context("finish zipfile")?;
+    let mut zipfile = zipfile.into_inner()
+      .map_err(|e| e.into_error()).context("flush zipfile")?;
+    zipfile.rewind().context("rewind zipfile")?;
+
+    Self::prepare_open_file(dir, zipfile)?
   }
 }
 

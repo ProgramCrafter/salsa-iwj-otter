@@ -21,7 +21,7 @@ pub use std::net::{IpAddr, SocketAddr, ToSocketAddrs, Ipv6Addr, Ipv4Addr};
 pub use std::os::linux::fs::MetadataExt as _; // todo why linux for st_mode??
 pub use std::os::unix;
 pub use std::os::unix::ffi::OsStrExt;
-pub use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
+pub use std::os::unix::fs::{MetadataExt, OpenOptionsExt, PermissionsExt};
 pub use std::os::unix::io::{AsRawFd, IntoRawFd, RawFd};
 pub use std::os::unix::net::UnixStream;
 pub use std::os::unix::process::{CommandExt, ExitStatusExt};
