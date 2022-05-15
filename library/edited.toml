@@ -47,6 +47,10 @@ occult.ilk = "d6-${colour}"
 [group.dice.colours.blue]
 abbrev = "blue"
 
+[group.dice.colours.red]
+abbrev = "red"
+map = { "#8fc6ff" = "#e64104", "#000000" = "#ffffff" }
+
 [group.dice-d8]
 inherit = "dice"
 size = [14]
