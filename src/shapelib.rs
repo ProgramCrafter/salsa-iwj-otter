@@ -1192,6 +1192,42 @@ fn test_subst_mf1() {
   assert_eq!(n, 2);
 }
 
+#[test]
+fn test_subst_mf2() {
+  use SubstErrorKind as SEK;
+
+  let mformat = materials_format::Version::try_from_integer(2).unwrap();
+  let s_t = |s| Substituting::new(mformat, Dollars::Text, s);
+  let s_f = |s| Substituting::new(mformat, Dollars::Filename, s);
+
+  assert_eq!(subst(s_f("die-image-_c"), "_c", "blue")
+             .unwrap().finish().unwrap(),
+             "die-image-blue");
+  assert_eq!(subst(s_t("a ${colour} die"), "_colour", "blue")
+             .unwrap().finish().unwrap(),
+             "a blue die");
+  assert_eq!(subst(s_t("a ${colour} die"), "_colour", "")
+             .unwrap().finish().unwrap(),
+             "a die");
+  assert!{matches!{
+    subst(s_t("a die"), "_colour", "").unwrap_err().kind,
+    SEK::MissingToken(c) if c == "_colour",
+  }}
+  assert!{matches!{
+    subst(s_t("a ${colour} ${colour} die"), "_colour", "").unwrap_err().kind,
+    SEK::RepeatedToken(c) if c == "_colour",
+  }}
+
+  assert_eq!(substn(s_t("a ${colour} die being ${colour}"), "_colour", "blue")
+             .unwrap().finish().unwrap(),
+             "a blue die being blue");
+
+  let (s, n) = s_t("a ${colour} ${colour} die").subst_general("_colour", "")
+    .unwrap();
+  assert_eq!(s.finish().unwrap(), "a die".to_owned());
+  assert_eq!(n, 2);
+}
+
 #[throws(LibraryLoadError)]
 fn format_item_name(mformat: materials_format::Version,
                     item_prefix: &str, fe: &FileData, item_suffix: &str)
