@@ -1057,12 +1057,7 @@ impl<'s> Substituting<'s> {
     }.s.into()
   }
 
-  fn do_dollars(&self) -> bool {
-    match self.dollars {
-      Dollars::Filename => false,
-      Dollars::Text => self.mformat >= 2,
-    }
-  }
+  fn do_dollars(&self) -> bool { self.dollars.enabled(self.mformat) }
 
   #[throws(SubstError)]
   /// Expand, but do not do final unescaping
@@ -1079,6 +1074,15 @@ impl<'s> Substituting<'s> {
 
   fn internal_err(&self, msg: &'static str) -> SubstError {
     self.err(InternalLogicError::new(msg).into())
+  }
+}
+
+impl Dollars {
+  fn enabled(self, mformat: materials_format::Version) -> bool {
+    match self {
+      Dollars::Filename => false,
+      Dollars::Text => mformat >= 2,
+    }
   }
 }
 
