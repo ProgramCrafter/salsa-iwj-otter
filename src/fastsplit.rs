@@ -169,6 +169,7 @@ impl InstanceGuard<'_> {
   pub fn fastsplit_delete(&mut self,
                           show: ShowUnocculted,
                           piece: PieceId,
+                          #[allow(clippy::ptr_arg)]
                           _proof_that_caller_handles_logging: &Vec<LogEntry>)
                           -> (PieceUpdateOp<(),()>, UnpreparedUpdates)
   {

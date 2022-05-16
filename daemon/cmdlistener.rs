@@ -1023,7 +1023,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
                         |ioccults, goccults, ipc, gpc| {
           if let (Some(ipc), Some(gpc)) = (ipc, gpc) {
             let pri = PieceRenderInstructions::new_visible(default());
-            pri.describe(ioccults,goccults, gpc, &ipc)
+            pri.describe(ioccults,goccults, gpc, ipc)
           } else {
             "<piece partially missing from game state>".to_html()
           }

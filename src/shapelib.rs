@@ -751,7 +751,7 @@ impl GroupData {
 
       let osize = {
         let (osize, oscale) = self.d.outline.size_scale();
-        let osize = resolve_square_size(&osize)?;
+        let osize = resolve_square_size(osize)?;
         match (osize, oscale) {
           (Some(osize), None         ) => osize,
           (None,        Some(&oscale)) => (size * oscale)?,
@@ -766,7 +766,7 @@ impl GroupData {
 
     } else {
       let xform = FaceTransform::from_group_mf1(self)?;
-      let outline = self.d.outline.shape().load_mf1(&self)?;
+      let outline = self.d.outline.shape().load_mf1(self)?;
       (xform, outline)
     }
   }
@@ -998,7 +998,7 @@ pub fn load_catalogue(libname: &str, src: &mut dyn LibrarySource)
     // We do this here rather than in the files loop because
     //  1. we want to check it even if there are no files specified
     //  2. this is OK because the group doesn't change from here on
-    let shape_calculable = group.check_shape()?.into();
+    let shape_calculable = group.check_shape()?;
 
     if [
       group.d.flip,
@@ -1131,11 +1131,11 @@ impl<'i> Substituting<'i> {
     }
     let needle: Cow<str> = (move || Some({
       if let Some(rhs) = needle.strip_prefix("${") {
-        let token = rhs.strip_suffix("}")?;
-        if self.do_dollars() { needle.into() }
+        let token = rhs.strip_suffix('}')?;
+        if self.do_dollars() { needle }
         else { format!("_{}", token).into() }
-      } else if let Some(token) = needle.strip_prefix("_") {
-        if ! self.do_dollars() { needle.into() }
+      } else if let Some(token) = needle.strip_prefix('_') {
+        if ! self.do_dollars() { needle }
         else { format!("${{{}}}", token).into() }
       } else {
         return None
@@ -1352,7 +1352,7 @@ fn process_files_entry(
       PerhapsSubst::Y(s) => s,
     } }
     #[throws(SubstError)]
-    pub fn is_y(
+    pub fn into_of_y(
       self,
     ) -> Substituting<'i> { match self {
       PerhapsSubst::Y(s) => s,
@@ -1450,7 +1450,7 @@ fn process_files_entry(
         spec = substn(spec, format!("${{{}}}", k), v)?;
       }
       let spec = substn(spec, "${image}", &image_table)?;
-      let spec = c_colour_all(spec.into())?.is_y()?;
+      let spec = c_colour_all(spec.into())?.into_of_y()?;
       let spec = spec.finish()?;
       trace!("magic item {}\n\n{}\n", &item_name, &spec);
 

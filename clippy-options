@@ -45,3 +45,4 @@
 -A clippy::needless_match
 -A clippy::from_over_into # buggy in 1.61.0-nightly (1bfe40d11 2022-03-18)
 -A clippy::await_holding_lock # moans about synch mutex in async
+-A clippy::neg_cmp_op_on_partial_ord

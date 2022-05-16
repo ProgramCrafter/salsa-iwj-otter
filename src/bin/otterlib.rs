@@ -217,7 +217,7 @@ fn preview(opts: &Opts, items: Vec<ItemForOutput>) {
                &viewport, wh[0], wh[1]);
         let mut html = Html::lit("").into();
         gpc.face = face.into();
-        p.svg_piece(&mut html, &gpc, &GameState::dummy(), default())?;
+        p.svg_piece(&mut html, gpc, &GameState::dummy(), default())?;
         println!("{}", html);
         if inseveral == 1 {
           let dasharray = player_num_dasharray(1.try_into().unwrap());
