@@ -50,7 +50,7 @@ impl BundleForUpload {
   #[throws(AE)]
   pub fn prepare_open_file(file: &str, progress: &mut termprogress::Nest,
                            f: File) -> Self {
-    progress.start_phase(PROGFRAC_HASH, default());
+    progress.start_phase(PROGFRAC_HASH, "hashing".into());
 
     let size = f
       .metadata().context("fstat bundle file")?
