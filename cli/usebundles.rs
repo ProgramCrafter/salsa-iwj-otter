@@ -129,6 +129,7 @@ impl BundleForUpload {
         // the `zip` crate.
 
         let options = zipfile::write::FileOptions::default()
+          .compression_method(zipfile::CompressionMethod::Deflated)
           .compression_level(Some(1))
           .unix_permissions(perms);
 
