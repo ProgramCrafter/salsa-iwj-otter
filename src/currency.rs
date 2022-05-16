@@ -250,7 +250,7 @@ impl PieceTrait for Banknote {
 
     let (puo, uu_d) = igg.fastsplit_delete(show, tpiece, &logents)?;
     // commitment point
-  Ok(((move ||{
+  Ok((move ||{
     let ig = &mut **igg;
 
     let () = (||{
@@ -273,6 +273,6 @@ impl PieceTrait for Banknote {
       prepub.add_unprepared(uu_d);
     }) as _]
 
-  }))()) // <- no ?
+  })()) // <- no ?
   }))}
 }
