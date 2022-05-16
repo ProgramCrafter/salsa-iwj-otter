@@ -481,7 +481,7 @@ impl PieceSpec for ItemSpec {
     self.find_load_general(
       pla.ig, pla.depth,
       |loaded| Ok(loaded.into()),
-      |magic| magic.load(pla),
+      |magic| magic.load(pla.recursing()?)
     )?
   }
   #[throws(SpecError)]

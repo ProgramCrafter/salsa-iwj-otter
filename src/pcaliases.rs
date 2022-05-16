@@ -49,9 +49,7 @@ impl Alias {
 
   #[throws(SpecError)]
   fn new_depth(&self, depth: SpecDepth) -> SpecDepth {
-    depth.increment().ok_or_else(||{
-      SpE::AliasLoop(self.target.clone())
-    })?
+    depth.increment().ok_or_else(|| SpE::ImageOrAliasLoop)?
   }
 }
 
@@ -64,9 +62,9 @@ impl PieceSpec for Alias {
     self.resolve(pcaliases)?.count(&default())?
   }
   #[throws(SpecError)]
-  fn load(&self, PLA { i,gpc,ig,depth,.. }: PLA) -> SpecLoaded {
-    let r = self.resolve(&ig.pcaliases)?
-      .load(PLA { i, gpc, ig, depth: self.new_depth(depth)? })?;
+  fn load(&self, pla: PLA) -> SpecLoaded {
+    let r = self.resolve(&pla.ig.pcaliases)?
+      .load(pla.recursing()?)?;
     r
   }
   #[throws(SpecError)]

@@ -411,6 +411,15 @@ impl SpecDepth {
   }
 }
 
+impl<'a> PieceLoadArgs<'a> {
+  #[throws(SpE)]
+  pub fn recursing(mut self) -> Self {
+    self.depth = self.depth.increment()
+      .ok_or_else(|| SpE::ImageOrAliasLoop)?;
+    self
+  }
+}
+
 #[derive(Error, Debug)]
 #[error("{self:?}")]
 pub struct PieceTraitDowncastFailed<'p> {

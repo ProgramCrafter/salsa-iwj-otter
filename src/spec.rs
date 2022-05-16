@@ -89,7 +89,7 @@ pub enum SpecError {
   #[error("piece alias not found")]          AliasNotFound,
   #[error("piece alias target is multi spec")] AliasTargetMultiSpec,
   #[error("invalid range ({0} to {1})")]     InvalidRange(usize,usize),
-  #[error("piece alias loop")]               AliasLoop(String),
+  #[error("piece image/alias depth exceeded")] ImageOrAliasLoop,
   #[error("invalid size scale")]             InvalidSizeScale,
   #[error("multiple faces required")]        MultipleFacesRequired,
   #[error("far too many faces ({0})")]       FarTooManyFaces(usize),
