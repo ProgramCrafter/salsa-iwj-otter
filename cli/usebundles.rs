@@ -42,7 +42,8 @@ impl BundleForUpload {
       let f = File::open(&file).context("open")?;
       Self::prepare_open_file(&file, progress, f)?
     } else {
-      Self::prepare_from_dir(&file, progress, walk)?
+      let entries = walk.collect::<Result<Vec<_>,_>>()?;
+      Self::prepare_from_dir(&file, progress, entries)?
     }
   }
 
@@ -84,16 +85,13 @@ impl BundleForUpload {
   }
 
   #[throws(AE)]
-  pub fn prepare_from_dir<W>(dir: &str, progress: &mut termprogress::Nest,
-                             walk: W) -> Self
-  where W: Iterator<Item=walkdir::Result<walkdir::DirEntry>>
-  {
+  pub fn prepare_from_dir(dir: &str, progress: &mut termprogress::Nest,
+                          entries: Vec<walkdir::DirEntry>) -> Self {
     let zipfile = tempfile::tempfile().context("create tmp zipfile")?;
     let zipfile = BufWriter::new(zipfile);
     let mut zipfile = zipfile::ZipWriter::new(zipfile);
 
-    for ent in walk {
-      let ent = ent?;
+    for ent in entries {
       if ent.file_type().is_dir() { continue }
 
       let tail = {
