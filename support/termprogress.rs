@@ -193,7 +193,7 @@ impl Nest {
   /// From now on, when reports are issued, the inner phases are each
   /// mapped to the range "now" to "now" `frac`
   pub fn start_phase(&mut self, frac: f32, desc_prefix: String) {
-    self.outer_phase_base = self.outer_phase_size;
+    self.outer_phase_base += self.outer_phase_size;
     self.outer_phase_size = frac;
 
     let f = self.outer_phase_base / self.outer_total;
