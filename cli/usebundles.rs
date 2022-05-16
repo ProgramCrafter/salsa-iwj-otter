@@ -91,7 +91,8 @@ impl BundleForUpload {
     let zipfile = BufWriter::new(zipfile);
     let mut zipfile = zipfile::ZipWriter::new(zipfile);
 
-    for ent in entries {
+    let n_entries = entries.len();
+    for (entry_i, ent) in entries.into_iter().enumerate() {
       if ent.file_type().is_dir() { continue }
 
       let tail = {
@@ -103,6 +104,17 @@ impl BundleForUpload {
 
       let tail = tail.to_str()
         .ok_or_else(|| anyhow!("non-UTF-8 path in bundle {:?}", tail))?;
+
+      progress.report(&ProgressInfo {
+        phase: progress::Count {
+          desc: "building zip".into(),
+          value: progress::Value::Exact { i: 0, n: 1 },
+        },
+        item: progress::Count {
+          desc: tail.into(),
+          value: progress::Value::Exact { i: entry_i, n: n_entries },
+        }
+      });
 
       (||{
         let mut f = File::open(ent.path())
