@@ -86,7 +86,7 @@ pub use crate::packetframe::{PacketFrameReadError, PacketFrameWriteError};
 pub use crate::progress::{self, ProgressInfo, OriginatorExt as _};
 pub use crate::slotmap_slot_idx::*;
 pub use crate::support::*;
-pub use crate::termprogress;
+pub use crate::termprogress::{self, Reporter as _};
 pub use crate::timedfd::*;
 pub use crate::toml_de;
 pub use crate::tz::*;

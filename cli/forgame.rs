@@ -103,6 +103,7 @@ mod reset_game {
         MR::Bundles { bundles } => bundles,
         x => throw!(anyhow!("unexpected response to ListBundles: {:?}",x)),
       };
+      progress.clear();
 
       let bundles_only = args.bundles_only;
       match Itertools::zip_longest(
