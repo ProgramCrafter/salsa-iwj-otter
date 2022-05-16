@@ -143,8 +143,11 @@ mod reset_game {
             clear_game(&ma, &mut chan)?;
           }
           let progress = ma.progressbar()?;
-          let mut progress = termprogress::NestEqual::new(local.len(), progress);
-          for bundle in local {
+          let n_bundles = local.len();
+          let mut progress = termprogress::Nest::new(progress);
+          for (i, bundle) in local.into_iter().enumerate() {
+            progress.start_phase((i as f32)/(n_bundles as f32),
+                                 format!("{}/{}", i, n_bundles));
             bundle.upload(&ma, &mut chan, &mut progress)?;
           }
         },
