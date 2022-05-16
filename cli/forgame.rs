@@ -93,8 +93,10 @@ mod reset_game {
       let progress = ma.progressbar()?;
       let mut progress = termprogress::Nest::with_total
         (n_bundles as f32, progress);
+      let bundle_i_msg = |i| Some(format!("{}/{}", i, n_bundles));
 
-      let local = args.bundles.into_iter().map(|file| {
+      let local = args.bundles.into_iter().enumerate().map(|(i,file)| {
+        progress.start_phase(0., bundle_i_msg(i), "preparing".into());
         BundleForUpload::prepare(file, &mut progress)
       }).collect::<Result<Vec<_>,_>>()?;
 
@@ -150,7 +152,8 @@ mod reset_game {
           }
           for (i, bundle) in local.into_iter().enumerate() {
             progress.start_phase(PROGFRAC_UPLOAD,
-                                 format!("{}/{}", i, n_bundles));
+                                 bundle_i_msg(i),
+                                 "uploading".into());
             bundle.upload(&ma, &mut chan, &mut progress)?;
           }
         },

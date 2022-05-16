@@ -192,19 +192,23 @@ impl Nest {
   ///
   /// From now on, when reports are issued, the inner phases are each
   /// mapped to the range "now" to "now" `frac`
-  pub fn start_phase(&mut self, frac: f32, desc_prefix: String) {
+  pub fn start_phase(&mut self, frac: f32,
+                     phase_prefix: Option<String>,
+                     item_desc: Cow<'_,str>) {
     self.outer_phase_base += self.outer_phase_size;
     self.outer_phase_size = frac;
+
+    if let Some(p) = phase_prefix {
+      self.desc_prefix = p;
+    }
 
     let f = self.outer_phase_base / self.outer_total;
     let value = progress::Value::Fraction { f };
 
     self.actual_reporter.report(&ProgressInfo {
-      phase: progress::Count { desc: (&*desc_prefix).into(), value: value },
-      item:  progress::Count { desc: default(),            value: default() },
+      phase: progress::Count { desc: (&*self.desc_prefix).into(), value },
+      item:  progress::Count { desc: item_desc,          value: default() },
     });
-
-    self.desc_prefix = desc_prefix;
   }
 }
 

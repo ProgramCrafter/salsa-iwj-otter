@@ -22,7 +22,7 @@ pub struct BundleForUpload {
 impl BundleForUpload {
   #[throws(AE)]
   pub fn prepare(file: String, progress: &mut termprogress::Nest) -> Self {
-    progress.start_phase(PROGFRAC_PREP, default());
+    progress.start_phase(PROGFRAC_PREP, None, "inspecting".into());
 
     let mut walk = WalkDir::new(&file)
       .same_file_system(true)
@@ -50,7 +50,7 @@ impl BundleForUpload {
   #[throws(AE)]
   pub fn prepare_open_file(file: &str, progress: &mut termprogress::Nest,
                            f: File) -> Self {
-    progress.start_phase(PROGFRAC_HASH, "hashing".into());
+    progress.start_phase(PROGFRAC_HASH, None, "hashing".into());
 
     let size = f
       .metadata().context("fstat bundle file")?
