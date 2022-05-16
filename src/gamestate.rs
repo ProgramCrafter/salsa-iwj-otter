@@ -412,6 +412,18 @@ impl SpecDepth {
 }
 
 impl<'a> PieceLoadArgs<'a> {
+  /// Call when recursing to not-strictly-weaker method
+  ///
+  /// Call this when your implementation of any PieceTrait method
+  /// calls another PieceTrait method from another object,
+  /// unless the call is *strictly* lower in the following hierarchy:
+  ///
+  ///  * `load`
+  ///  * `load_inert`
+  ///  * `count` with nonempty `PieceAliases`
+  ///  * `count` with empty `PieceAliases`
+  ///
+  /// If this rule is followed, recursion will be bounded.
   #[throws(SpE)]
   pub fn recursing(mut self) -> Self {
     self.depth = self.depth.increment()
