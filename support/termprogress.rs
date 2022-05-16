@@ -195,6 +195,15 @@ impl Nest {
   pub fn start_phase(&mut self, frac: f32, desc_prefix: String) {
     self.outer_phase_base = self.outer_phase_size;
     self.outer_phase_size = frac;
+
+    let f = self.outer_phase_base / self.outer_total;
+    let value = progress::Value::Fraction { f };
+
+    self.actual_reporter.report(&ProgressInfo {
+      phase: progress::Count { desc: (&*desc_prefix).into(), value: value },
+      item:  progress::Count { desc: default(),            value: default() },
+    });
+
     self.desc_prefix = desc_prefix;
   }
 }
