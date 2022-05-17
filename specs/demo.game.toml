@@ -94,7 +94,6 @@ image.faces = ["#ff0000"]
 pos = [125, 45]
 type = "Currency"
 qty = 400
-min_unit = 5
 currency = "ƒ"
 image.type = "Rect"
 image.size = [20,7]
