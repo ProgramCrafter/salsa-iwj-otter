@@ -14,7 +14,9 @@ impl Debug for HtmlStr {
     if self.len() < MAX {
       write!(f, "<{}>", &self.0)
     } else {
-      write!(f, "<{}>...", &self.0[0..MAX-3])
+      let lim = (MAX-3 ..).into_iter()
+        .find(|&i| self.0.is_char_boundary(i)).unwrap();
+      write!(f, "<{}>...", &self.0[0..lim])
     }
   }
 }
