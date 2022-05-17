@@ -25,6 +25,12 @@ pub struct Spec {
   image: Box<dyn PieceSpec>,
   qty: Qty,
   currency: String,
+  #[serde(default)] label: LabelSpec,
+}
+
+#[derive(Debug,Default,Clone,Serialize,Deserialize)]
+pub struct LabelSpec {
+  pub colour: Option<ColourSpec>,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
@@ -32,6 +38,7 @@ pub struct Banknote {
   itemname: String,
   image: Arc<dyn InertPieceTrait>,
   currency: String,
+  label_colour: Colour,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -48,7 +55,10 @@ impl PieceSpec for Spec {
   fn load(&self, PLA { gpc,ig,depth,.. }: PLA) -> SpecLoaded {
     gpc.rotateable = false;
 
-    let Spec { ref image, ref currency, qty } = *self;
+    let Spec { ref image, ref currency, qty,
+               label: LabelSpec { colour: ref label_colour } } = *self;
+
+    let label_colour = label_colour.resolve()?;
 
     let SpecLoadedInert { p: image, occultable:_ } =
       image.load_inert(ig, depth)?;
@@ -67,7 +77,7 @@ impl PieceSpec for Spec {
     let bnote = Banknote {
       image: image.into(),
       currency: currency.clone(),
-      itemname,
+      itemname, label_colour,
     };
 
     gpc.fastsplit = FastSplitId::new_placeholder();
@@ -111,9 +121,9 @@ impl PieceTrait for Banknote {
     let label_y_adj = label_font_size * SVG_FONT_Y_ADJUST_OF_FONT_SIZE;
 
     hwrite!(f,
-            r##"<{} text-align="center" text-anchor="middle" x="0" y="{}" font-size="{}">{}{}</text>"##,
+            r##"<{} text-align="center" text-anchor="middle" x="0" y="{}" fill="{}" font-size="{}">{}{}</text>"##,
             HTML_TEXT_LABEL_ELEM_START,
-            label_y_adj, label_font_size,
+            label_y_adj, &self.label_colour, label_font_size,
             value.qty, &self.currency)?;
   }
 

@@ -438,6 +438,9 @@ Parameters:
  * ``currency``: The currency, which defines which other
    banknotes this one can interchange with.
 
+ * ``label.colour``: Text colour to use for the value.
+   [string, default "black"]
+
 Exammple::
 
   [[pieces]]
