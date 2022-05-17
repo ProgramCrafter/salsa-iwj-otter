@@ -606,6 +606,16 @@ pub mod imp {
     }
   }
 
+  #[ext(pub, name=ColourSpecExt)]
+  impl Option<ColourSpec> {
+    #[throws(UnsupportedColourSpec)]
+    fn resolve(&self) -> Colour {
+      self.as_ref()
+        .map(TryInto::try_into).transpose()?
+        .unwrap_or_else(|| Html::lit("black").into())
+    }
+  }
+
   impl TryFrom<&ColourSpec> for Colour {
     type Error = UnsupportedColourSpec;
     #[throws(UnsupportedColourSpec)]

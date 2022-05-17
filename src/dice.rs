@@ -157,9 +157,7 @@ impl PieceSpec for Spec {
       index_vec!["".into()]
     };
 
-    let label_colour: Colour = self.label.colour.as_ref()
-      .map(TryInto::try_into).transpose()?
-      .unwrap_or_else(|| Html::lit("black").into());
+    let label_colour = self.label.colour.resolve()?;
 
     if_let!{ Some((nfaces,_)) = nfaces;
              else throw!(SpecError::MultipleFacesRequired) };
