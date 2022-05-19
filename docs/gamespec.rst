@@ -345,7 +345,7 @@ Parameters:
     - [single number] Label faces numerically from 1 to n (inclusive).
 
  * ``label.colour`` [string, defaults to black]:
-   Colour to write the ``labels`` Text strings.
+   Colour to write the ``labels`` text strings.
 
  * ``cooldown``: Duration of the cooldown time.
    [duration - number(s) with units; default "4s"]
