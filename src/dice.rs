@@ -88,8 +88,7 @@ impl PieceXData for State {
 #[derive(Serialize, Debug)]
 struct OverlayTemplateContext<'c> {
   label_text: &'c str,
-  label_y_adjust: f64,
-  label_options: &'c TextOptions,
+  label_start_element: Html,
   cooldown_active: bool,
   radius: f64,
   remprop: f64,
@@ -506,13 +505,11 @@ impl InertPieceTrait for Die {
       default()
     };
 
-    // todo: Ideally we would use text_options.start_element
-    // but I don't see how to readily  make a template suitable for that
+    let label_start_element = self.text_options.start_element();
 
     let tc = OverlayTemplateContext {
       label_text: label,
-      label_options: &self.text_options,
-      label_y_adjust: self.text_options.y_adjust(),
+      label_start_element,
 
       cooldown_active,
       radius: self.cooldown_radius,
