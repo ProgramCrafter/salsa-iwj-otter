@@ -26,7 +26,7 @@ sub process_node ($$) {
   die "$label ?" unless @$nodes == 1;
   $node = $nodes->[0];
   $fn->($node);
-  p $node->toString, "\n";
+  $node->toString. "\n";
 }
 
 our $nom_radius;
@@ -66,15 +66,15 @@ sub filter_text () {
 }
 # This <text> node also acts as the sentinel for when the JS
 # wants to remove the cooldown timer.
-process_node('textlabel', \&filter_text);
+p process_node('textlabel', \&filter_text);
 
 p "{% if cooldown_active %}\n";
-process_node('timeblack', sub {
+p process_node('timeblack', sub {
   $nom_radius = $node->getAttribute('r');
   filter_circle();
 });
-process_node('timewhite', \&filter_circle);
-process_node('timegrey', sub {
+p process_node('timewhite', \&filter_circle);
+p process_node('timegrey', sub {
   filter_element('path');
   $node->setAttribute('d', "{{path_d}}");
   $node->setAttribute('id', "{{cd_elid}}");
