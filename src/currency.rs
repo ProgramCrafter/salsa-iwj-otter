@@ -112,9 +112,7 @@ impl PieceTrait for Banknote {
   #[throws(IE)]
   fn describe_html(&self, gpc: &GPiece, _: &GOccults) -> Html {
     let value: &Value = gpc.xdata.get_exp()?;
-    hformat!("{}, {}{}",
-             self.image.describe_html(gpc.face)?,
-             &value.html(), &self.currency)
+    self.describe(gpc.face, &value.html())?
   }
 
   #[throws(IE)]
@@ -289,6 +287,13 @@ impl Value {
 }
 
 impl Banknote {
+  #[throws(IE)]
+  fn describe(&self, face: FaceId, qty: &HtmlStr) -> Html {
+    hformat!("{}, {}{}",
+             self.image.describe_html(face)?,
+             qty, &self.currency)
+  }
+
   #[throws(IE)]
   fn render(&self, f: &mut Html, vpid: VisiblePieceId, face: FaceId,
             xdata_for_image_only: &PieceXDataState, qty: &HtmlStr) {
