@@ -30,6 +30,8 @@ pub struct Spec {
 
 #[derive(Debug,Default,Clone,Serialize,Deserialize)]
 pub struct LabelSpec {
+  pub unit_rel_size: Option<f64>,
+
   #[serde(flatten,default)]
   pub options: TextOptionsSpec,
 }
@@ -39,6 +41,7 @@ pub struct Banknote {
   itemname: String,
   image: Arc<dyn InertPieceTrait>,
   currency: String,
+  unit_size: f64,
   label_options: TextOptions,
 }
 
@@ -56,10 +59,12 @@ impl PieceSpec for Spec {
   fn load(&self, PLA { gpc,ig,depth,.. }: PLA) -> SpecLoaded {
     gpc.rotateable = false;
 
-    let Spec { ref image, ref currency, qty,
-               label: LabelSpec { options: ref label_options } } = *self;
+    let Spec { ref image, ref currency, qty, label: LabelSpec {
+      options: ref label_options, unit_rel_size,
+    } } = *self;
 
     let label_options = label_options.resolve(DEFAULT_QTY_FONT_SIZE)?;
+    let unit_size = label_options.size * unit_rel_size.unwrap_or(1.);
 
     let SpecLoadedInert { p: image, occultable:_ } =
       image.load_inert(ig, depth)?;
@@ -78,7 +83,7 @@ impl PieceSpec for Spec {
     let bnote = Banknote {
       image: image.into(),
       currency: currency.clone(),
-      itemname, label_options,
+      itemname, label_options, unit_size,
     };
 
     gpc.fastsplit = FastSplitId::new_placeholder();
@@ -120,8 +125,9 @@ impl PieceTrait for Banknote {
     let value: &Value = gpc.xdata.get_exp()?;
 
     hwrite!(f,
-            r##"<{}>{}{}</text>"##,
-            &self.label_options.start_element(), value.qty, &self.currency)?;
+            r##"<{}>{}<tspan font-size="{}">{}</tspan></text>"##,
+            &self.label_options.start_element(), value.qty,
+            &self.unit_size, &self.currency)?;
   }
 
   #[throws(ApiPieceOpError)]
