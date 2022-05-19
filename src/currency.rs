@@ -66,7 +66,7 @@ impl PieceSpec for Spec {
     let label_options = label_options.resolve(DEFAULT_QTY_FONT_SIZE)?;
     let unit_size = label_options.size * unit_rel_size.unwrap_or(1.);
 
-    let SpecLoadedInert { p: image, occultable:_ } =
+    let SpecLoadedInert { p: image, occultable: image_occultable } =
       image.load_inert(ig, depth)?;
 
     let itemname = format!("currency-{}", image.itemname());
@@ -80,6 +80,23 @@ impl PieceSpec for Spec {
 
     let _value: &mut Value = gpc.xdata_mut(|| Value { qty })?;
     let image: Arc<dyn InertPieceTrait> = image.into();
+
+    let occultable = Some({
+      let image = image_occultable
+        .map(|(_,o)| o)
+        .unwrap_or_else(|| image.clone());
+
+      (
+        LOI::Distinct,
+        Arc::new(Banknote {
+          image,
+          currency: currency.clone(),
+          itemname: itemname.clone(),
+          label_options: label_options.clone(),
+          unit_size,
+        }) as _
+      )
+    });
         
     let bnote = Banknote {
       image,
@@ -93,7 +110,7 @@ impl PieceSpec for Spec {
       multigrab: true,
       ..default()
     };
-    SpecLoaded { p: Box::new(bnote) as _, occultable: None, special }
+    SpecLoaded { p: Box::new(bnote) as _, occultable, special }
   }
 }
 
@@ -304,5 +321,21 @@ impl Banknote {
             r##"<{}>{}<tspan font-size="{}">{}</tspan></text>"##,
             &self.label_options.start_element(), qty,
             &self.unit_size, &self.currency)?;
+  }
+}
+
+const OCCULT_QTY: HtmlLit = Html::lit("?");
+
+#[typetag::serde(name="Currency")]
+impl InertPieceTrait for Banknote {
+  #[throws(IE)]
+  fn svg(&self, f: &mut Html, id: VisiblePieceId, face: FaceId,
+         xdata_for_image_only: &PieceXDataState /* use with care! */) {
+    self.render(f, id, face, xdata_for_image_only, &OCCULT_QTY)?;
+  }
+
+  #[throws(IE)]
+  fn describe_html(&self, face: FaceId) -> Html {
+    self.describe(face, &OCCULT_QTY)?
   }
 }
