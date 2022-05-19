@@ -205,22 +205,12 @@ impl PieceTrait for Banknote {
     if tgpc.held.is_some() { /*wat*/ return default(); }
     let gpl = gplayers.get(player);
 
-    // Occultation is not yet supported here.  When implementing
-    // occultation, delete this and fix all the things.
-    let show = ShowUnocculted::new_visible();
-
     let merge_with = gpieces.iter().filter_map(|(mpiece, mgpc)|{
       if mpiece == tpiece { throw!() }
       let mipc = ipieces.get(mpiece)?;
 
-      if mgpc.occult.passive_occid().is_some() {
-        // We don't do occultation yet.  But, anyway, we don't want to
-        // deal with this since it might mean we're totally invisible
-        // to our player!  When we do support this, call
-        // Occultation::get_kind ?
-        throw!();
-      }
-      let show_to_player = show;
+      // We're to merge with something the moving player can see
+      let show_to_player = mgpc.fully_visible_to(goccults, player)?;
 
       // Our position is within its bbox
       if ! mipc.show(show_to_player).abs_bbox(mgpc).ok()?
@@ -256,13 +246,15 @@ impl PieceTrait for Banknote {
       else return Ok(default());
     }
 
-    let tqty = tgpc.xdata_exp::<Value>()?.qty;
+    let tvalue = tgpc.xdata_exp::<Value>()?;
+    let tqty = tvalue.qty;
     let mqty = mgpc.xdata_exp::<Value>()?.qty;
     let new_value = match mqty.checked_add(tqty) {
       Some(qty) => Value { qty },
       None => return default(), // arithmetic overflow!
     };
 
+    let show_tqty    = tgpc.fully_visible_to_everyone();
     let show_new_qty = mgpc.fully_visible_to_everyone();
 
     let logent = hformat!(
@@ -271,7 +263,7 @@ impl PieceTrait for Banknote {
         Some(gpl) => gpl.nick.to_html(),
         None => Html::lit("Departing player").into(),
       },
-      tipc.p.show(show).describe_html(tgpc, goccults)?,
+      tself.describe(tgpc.face, &tvalue.html(show_tqty))?,
       &new_value.html(show_new_qty),
       currency,
     );
