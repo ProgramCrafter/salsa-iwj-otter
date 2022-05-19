@@ -506,6 +506,9 @@ impl InertPieceTrait for Die {
       default()
     };
 
+    // todo: Ideally we would use text_options.start_element
+    // but I don't see how to readily  make a template suitable for that
+
     let tc = OverlayTemplateContext {
       label_text: label,
       label_options: &self.text_options,
