@@ -200,7 +200,6 @@ impl PieceTrait for Banknote {
 
     let tself = self;
     let tgpc = gpieces.get(tpiece).ok_or_else(missing_e)?;
-    let tipc = ipieces.get(tpiece).ok_or_else(missing_e)?;
 
     if_let!{ Some(player) = was_held; else return Ok(default()) }
     if tgpc.held.is_some() { /*wat*/ return default(); }
