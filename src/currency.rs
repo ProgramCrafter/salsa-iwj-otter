@@ -256,10 +256,10 @@ impl PieceTrait for Banknote {
 
     let tqty = tgpc.xdata_exp::<Value>()?.qty;
     let mqty = mgpc.xdata_exp::<Value>()?.qty;
-    if_let!{
-      Some(new_qty) = mqty.checked_add(tqty);
-      else return Ok(default()); // arithmetic overflow!
-    }
+    let new_value = match mqty.checked_add(tqty) {
+      Some(qty) => Value { qty },
+      None => return default(), // arithmetic overflow!
+    };
 
     let logent = hformat!(
       "{} deposited {}, giving {}{}",
@@ -268,7 +268,8 @@ impl PieceTrait for Banknote {
         None => Html::lit("Departing player").into(),
       },
       tipc.p.show(show).describe_html(tgpc, goccults)?,
-      new_qty, currency,
+      &new_value.html(),
+      currency,
     );
 
     let logents = vec![ LogEntry { html: logent } ];
@@ -286,7 +287,7 @@ impl PieceTrait for Banknote {
       let mgpc = ig.gs.pieces.get_mut(mpiece).ok_or("tpiece vanished")?;
       let mvalue = mgpc.xdata_mut_exp::<Value>().map_err(|_|"xdata vanished")?;
       mvalue.qty = mvalue.qty.checked_add(tqty).ok_or("overflow")?;
-      if mvalue.qty != new_qty { throw!("modified value") }
+      if mvalue.qty != new_value.qty { throw!("modified value") }
       Ok::<_,&'static str>(())
     })().unwrap_or_else(|m|{
       warn!("during dorp-and-merge of currency {tpiece:?} into {mpiece:?}: {m}");
