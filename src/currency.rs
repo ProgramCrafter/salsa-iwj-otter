@@ -169,10 +169,9 @@ impl PieceTrait for Banknote {
     tgpc.pinned = false;
 
     let logents = vec![ LogEntry { html: hformat!(
-      "{} took {} {}{}, leaving {}{}",
+      "{} took {}, leaving {}{}",
       gpl.nick.to_html(),
-      self_.image.describe_html(tgpc.face)?,
-      take, &currency,
+      self_.describe(tgpc.face, &tgpc_value.html(Some(show)))?,
       remaining, &currency,
     )}];
 
