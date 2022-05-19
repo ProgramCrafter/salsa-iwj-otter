@@ -218,7 +218,7 @@ pub mod test {
   fn t_false() {
     let setup = ||{
       let c = Command::new("false");
-      run_pair(c, "cat".into()).unwrap()
+      run_pair(c, "false".into()).unwrap()
     };
 
     let one = | f: &dyn Fn(&mut Stdin, &mut Stdout) -> io::Result<()> |{
@@ -236,6 +236,27 @@ pub mod test {
 
     let lose_race = |w: &mut Stdin| {
       w.child.lock().child.wait().unwrap();
+
+      // On Linux you can sometimes eperience this:
+      //   fork a child, giving it the only reading end of a pipe
+      //   wait for the child to complete
+      //   get the child's exit status with waitpid
+      //   write to the pipe anc get success, even though no-one has a
+      //   reading end any more
+      // I think this is a bug but I bet the kernel people will argue
+      // the contrary and I don't even think it worth reporting.
+      // So here is a countermeasure:
+      for ms in 0.. {
+        let fd = w.rw.as_raw_fd();
+        match nix::unistd::write(fd, &[0]) {
+          Err(nix::errno::Errno::EPIPE) => break,
+          Ok(x) if x <= 1 => {
+            eprintln!("wait/pipe Linux bug ({}), taking countermeasures!", x);
+          },
+          x => panic!("{:?}", x),
+        }
+        std::thread::sleep(Duration::from_millis(ms));
+      }
     };
 
     one(&|w, _r|{
