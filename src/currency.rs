@@ -170,7 +170,8 @@ impl PieceTrait for Banknote {
 
     let logents = vec![ LogEntry { html: hformat!(
       "{} took {} {}{}, leaving {}{}",
-      gpl.nick.to_html(), self_.image.describe_html(tgpc.face)?,
+      gpl.nick.to_html(),
+      self_.image.describe_html(tgpc.face)?,
       take, &currency,
       remaining, &currency,
     )}];
