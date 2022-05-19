@@ -347,6 +347,9 @@ Parameters:
  * ``label.colour`` [string, defaults to black]:
    Colour to write the ``labels`` text strings.
 
+ * ``label.size`` [number, default 8]:
+   Font size for the ``labels`` text strings (in pixeels, svg ``px``).
+
  * ``cooldown``: Duration of the cooldown time.
    [duration - number(s) with units; default "4s"]
 

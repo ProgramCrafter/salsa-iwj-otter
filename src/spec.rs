@@ -244,6 +244,7 @@ impl PieceAngle {
 #[derive(Debug,Default,Clone,Serialize,Deserialize)]
 pub struct TextOptionsSpec {
   pub colour: Option<ColourSpec>,
+  pub size: Option<f64>,
 }
 
 #[derive(Debug,Copy,Clone,Eq,PartialEq)]
@@ -644,10 +645,11 @@ pub mod imp {
   impl TextOptionsSpec {
     #[throws(SpecError)]
     /// Default colour is always black
-    pub fn resolve(&self) -> TextOptions {
-      let TextOptionsSpec { colour } = self;
+    pub fn resolve(&self, default_size: f64) -> TextOptions {
+      let TextOptionsSpec { colour, size } = self;
       let colour = colour.resolve()?;
-      TextOptions { colour }
+      let size = size.unwrap_or(default_size);
+      TextOptions { colour, size }
     }
   }
 

@@ -29,6 +29,7 @@ pub const HTML_TEXT_LABEL_ELEM_START: HtmlLit =
 #[derive(Debug,Serialize,Deserialize,Clone)]
 pub struct TextOptions {
   pub colour: Colour,
+  pub size: f64, // px
 }
 
 /// Fudge factor

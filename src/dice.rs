@@ -88,7 +88,6 @@ impl PieceXData for State {
 #[derive(Serialize, Debug)]
 struct OverlayTemplateContext<'c> {
   label_text: &'c str,
-  label_font_size: f64,
   label_y_adjust: f64,
   label_options: &'c TextOptions,
   cooldown_active: bool,
@@ -151,7 +150,7 @@ impl PieceSpec for Spec {
       index_vec!["".into()]
     };
 
-    let text_options = self.label.resolve()?;
+    let text_options = self.label.resolve(DEFAULT_LABEL_FONT_SIZE)?;
 
     if_let!{ Some((nfaces,_)) = nfaces;
              else throw!(SpecError::MultipleFacesRequired) };
@@ -507,14 +506,10 @@ impl InertPieceTrait for Die {
       default()
     };
 
-    let label_font_size = DEFAULT_LABEL_FONT_SIZE;
-    
-
     let tc = OverlayTemplateContext {
       label_text: label,
       label_options: &self.text_options,
-      label_font_size,
-      label_y_adjust: label_font_size * SVG_FONT_Y_ADJUST_OF_FONT_SIZE,
+      label_y_adjust: self.text_options.size * SVG_FONT_Y_ADJUST_OF_FONT_SIZE,
 
       cooldown_active,
       radius: self.cooldown_radius,
