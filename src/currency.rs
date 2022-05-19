@@ -129,15 +129,17 @@ impl PieceBaseTrait for Banknote {
 impl PieceTrait for Banknote {
   #[throws(IE)]
   fn describe_html(&self, gpc: &GPiece, _: &GOccults) -> Html {
+    let show = ShowUnocculted::new_visible(); // we are in PieceTrait, so ok
     let value: &Value = gpc.xdata.get_exp()?;
-    self.describe(gpc.face, &value.html())?
+    self.describe(gpc.face, &value.html(Some(show)))?
   }
 
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _gs: &GameState,
                vpid: VisiblePieceId) {
+    let show = ShowUnocculted::new_visible(); // we are in PieceTrait, so ok
     let value: &Value = gpc.xdata.get_exp()?;
-    self.render(f, vpid, gpc.face, &gpc.xdata, &value.html())?
+    self.render(f, vpid, gpc.face, &gpc.xdata, &value.html(Some(show)))?
   }
 
   #[throws(ApiPieceOpError)]
@@ -261,6 +263,8 @@ impl PieceTrait for Banknote {
       None => return default(), // arithmetic overflow!
     };
 
+    let show_qty = mgpc.fully_visible_to_everyone();
+
     let logent = hformat!(
       "{} deposited {}, giving {}{}",
       match gpl {
@@ -268,7 +272,7 @@ impl PieceTrait for Banknote {
         None => Html::lit("Departing player").into(),
       },
       tipc.p.show(show).describe_html(tgpc, goccults)?,
-      &new_value.html(),
+      &new_value.html(show_qty),
       currency,
     );
 
@@ -305,8 +309,16 @@ impl PieceTrait for Banknote {
   }))}
 }
 
+const OCCULT_QTY: HtmlLit = Html::lit("?");
+
 impl Value {
-  fn html(&self) -> Html { hformat!("{}", self.qty) }
+  fn html(&self, show: Option<ShowUnocculted>) -> Html {
+    if show.is_some() {
+      hformat!("{}", self.qty)
+    } else {
+      hformat!("{}", OCCULT_QTY)
+    }
+  }
 }
 
 impl Banknote {
@@ -328,8 +340,6 @@ impl Banknote {
             &self.unit_size, &self.currency)?;
   }
 }
-
-const OCCULT_QTY: HtmlLit = Html::lit("?");
 
 #[typetag::serde(name="Currency")]
 impl InertPieceTrait for Banknote {
