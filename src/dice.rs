@@ -512,7 +512,7 @@ impl InertPieceTrait for Die {
     let tc = OverlayTemplateContext {
       label_text: label,
       label_options: &self.text_options,
-      label_y_adjust: self.text_options.size * SVG_FONT_Y_ADJUST_OF_FONT_SIZE,
+      label_y_adjust: self.text_options.y_adjust(),
 
       cooldown_active,
       radius: self.cooldown_radius,
