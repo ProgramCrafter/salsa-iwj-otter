@@ -444,6 +444,9 @@ Parameters:
  * ``label.colour``: Text colour to use for the value.
    [string, default "black"]
 
+ * ``label.size`` [number, default 6]:
+   Font size for the value (in pixeels, svg ``px``).
+
 Exammple::
 
   [[pieces]]

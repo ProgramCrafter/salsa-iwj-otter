@@ -16,7 +16,7 @@
 use crate::prelude::*;
 use crate::*; // to get ambassador_impls, macro resolution trouble
 
-const QTY_FONT_SIZE: f64 = 6.;
+const DEFAULT_QTY_FONT_SIZE: f64 = 6.;
 
 type Qty = MultigrabQty;
 
@@ -30,7 +30,8 @@ pub struct Spec {
 
 #[derive(Debug,Default,Clone,Serialize,Deserialize)]
 pub struct LabelSpec {
-  pub colour: Option<ColourSpec>,
+  #[serde(flatten,default)]
+  pub options: TextOptionsSpec,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
@@ -38,7 +39,7 @@ pub struct Banknote {
   itemname: String,
   image: Arc<dyn InertPieceTrait>,
   currency: String,
-  label_colour: Colour,
+  label_options: TextOptions,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -56,9 +57,9 @@ impl PieceSpec for Spec {
     gpc.rotateable = false;
 
     let Spec { ref image, ref currency, qty,
-               label: LabelSpec { colour: ref label_colour } } = *self;
+               label: LabelSpec { options: ref label_options } } = *self;
 
-    let label_colour = label_colour.resolve()?;
+    let label_options = label_options.resolve(DEFAULT_QTY_FONT_SIZE)?;
 
     let SpecLoadedInert { p: image, occultable:_ } =
       image.load_inert(ig, depth)?;
@@ -77,7 +78,7 @@ impl PieceSpec for Spec {
     let bnote = Banknote {
       image: image.into(),
       currency: currency.clone(),
-      itemname, label_colour,
+      itemname, label_options,
     };
 
     gpc.fastsplit = FastSplitId::new_placeholder();
@@ -117,13 +118,12 @@ impl PieceTrait for Banknote {
     self.image.svg(f, vpid, gpc.face, &gpc.xdata)?;
     
     let value: &Value = gpc.xdata.get_exp()?;
-    let label_font_size = QTY_FONT_SIZE;
-    let label_y_adj = label_font_size * SVG_FONT_Y_ADJUST_OF_FONT_SIZE;
+    let label_y_adj = self.label_options.size * SVG_FONT_Y_ADJUST_OF_FONT_SIZE;
 
     hwrite!(f,
             r##"<{} text-align="center" text-anchor="middle" x="0" y="{}" fill="{}" font-size="{}">{}{}</text>"##,
             HTML_TEXT_LABEL_ELEM_START,
-            label_y_adj, &self.label_colour, label_font_size,
+            label_y_adj, &self.label_options.colour, self.label_options.size,
             value.qty, &self.currency)?;
   }
 
