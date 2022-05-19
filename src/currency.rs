@@ -263,7 +263,7 @@ impl PieceTrait for Banknote {
       None => return default(), // arithmetic overflow!
     };
 
-    let show_qty = mgpc.fully_visible_to_everyone();
+    let show_new_qty = mgpc.fully_visible_to_everyone();
 
     let logent = hformat!(
       "{} deposited {}, giving {}{}",
@@ -272,7 +272,7 @@ impl PieceTrait for Banknote {
         None => Html::lit("Departing player").into(),
       },
       tipc.p.show(show).describe_html(tgpc, goccults)?,
-      &new_value.html(show_qty),
+      &new_value.html(show_new_qty),
       currency,
     );
 
