@@ -280,7 +280,7 @@ impl PieceTrait for Banknote {
 
   OpHookThunk::Reborrow(Box::new(move |igg: &mut InstanceGuard, (_player,)| {
 
-    let (puo, uu_d) = igg.fastsplit_delete(show, tpiece, &logents)?;
+    let (puo, uu_d) = igg.fastsplit_delete(tpiece, &logents)?;
     // commitment point
   Ok((move ||{
     let ig = &mut **igg;

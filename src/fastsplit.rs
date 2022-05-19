@@ -167,7 +167,6 @@ impl InstanceGuard<'_> {
 
   #[throws(IE)]
   pub fn fastsplit_delete(&mut self,
-                          show: ShowUnocculted,
                           piece: PieceId,
                           #[allow(clippy::ptr_arg)]
                           _proof_that_caller_handles_logging: &Vec<LogEntry>)
@@ -180,7 +179,12 @@ impl InstanceGuard<'_> {
 
     let gpc = self.gs.pieces.get(piece).ok_or_else(missing_e)?;
     let ipc = self.ipieces.get(piece).ok_or_else(missing_e)?;
-    let _p: &Piece = ipc.p.show(show).downcast_piece()?;
+
+    // If we are merging or deleting here, presumably someone has
+    // already checked that this is appropriate wrt occultations,
+    // since we don't just do that willy-nilly and occultation will
+    // have been checked when deciding *what* to merge with.
+    let _p: &Piece = ipc.p.direct_trait_access().downcast_piece()?;
 
     let _fsid: &FastSplitId = gpc.fastsplit.as_ref()
       .ok_or_else(|| internal_error_bydebug(gpc))?;
