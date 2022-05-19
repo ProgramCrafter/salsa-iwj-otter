@@ -79,9 +79,10 @@ impl PieceSpec for Spec {
     }
 
     let _value: &mut Value = gpc.xdata_mut(|| Value { qty })?;
+    let image: Arc<dyn InertPieceTrait> = image.into();
         
     let bnote = Banknote {
-      image: image.into(),
+      image,
       currency: currency.clone(),
       itemname, label_options, unit_size,
     };
