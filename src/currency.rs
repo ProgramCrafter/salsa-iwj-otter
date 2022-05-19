@@ -114,14 +114,14 @@ impl PieceTrait for Banknote {
     let value: &Value = gpc.xdata.get_exp()?;
     hformat!("{}, {}{}",
              self.image.describe_html(gpc.face)?,
-             value.qty, &self.currency)
+             &value.html(), &self.currency)
   }
 
   #[throws(IE)]
   fn svg_piece(&self, f: &mut Html, gpc: &GPiece, _gs: &GameState,
                vpid: VisiblePieceId) {
     let value: &Value = gpc.xdata.get_exp()?;
-    self.render(f, vpid, gpc.face, &gpc.xdata, &hformat!("{}", value.qty))?;
+    self.render(f, vpid, gpc.face, &gpc.xdata, &value.html())?
   }
 
   #[throws(ApiPieceOpError)]
@@ -282,6 +282,10 @@ impl PieceTrait for Banknote {
 
   })()) // <- no ?
   }))}
+}
+
+impl Value {
+  fn html(&self) -> Html { hformat!("{}", self.qty) }
 }
 
 impl Banknote {
