@@ -31,7 +31,7 @@ pub struct Spec {
   // must be >1 faces on image, or >1 texts, and if both, same number
   image: Box<dyn PieceSpec>,
   #[serde(default)] labels: SpecLabels,
-  #[serde(default)] label: SpecLabelSection,
+  #[serde(default)] label: TextOptionsSpec,
   occult: Option<OccultSpec>,
   // 1.0 means base outline circle size on most distant corner of bounding box
   // minimum is 0.5; maximum is 1.5
@@ -45,11 +45,6 @@ pub struct Spec {
 #[derive(Debug,Default,Clone,Serialize,Deserialize)]
 pub struct OccultSpec {
   #[serde(default)] label: String,
-}
-
-#[derive(Debug,Default,Clone,Serialize,Deserialize)]
-pub struct SpecLabelSection {
-  pub colour: Option<ColourSpec>,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
@@ -74,7 +69,7 @@ struct Die {
   itemname: String,
   labels: IndexVec<FaceId, String>, // if .len()==1, always use [0]
   image: Arc<dyn InertPieceTrait>, // if image.nfaces()==1, always use face 0
-  label_colour: Colour,
+  text_options: TextOptions,
   surround_outline: CircleOutline,
   cooldown_radius: f64,
   cooldown_time: Duration,
@@ -95,8 +90,7 @@ struct OverlayTemplateContext<'c> {
   label_text: &'c str,
   label_font_size: f64,
   label_y_adjust: f64,
-  label_colour: &'c Html,
-
+  label_options: &'c TextOptions,
   cooldown_active: bool,
   radius: f64,
   remprop: f64,
@@ -157,7 +151,7 @@ impl PieceSpec for Spec {
       index_vec!["".into()]
     };
 
-    let label_colour = self.label.colour.resolve()?;
+    let text_options = self.label.resolve()?;
 
     if_let!{ Some((nfaces,_)) = nfaces;
              else throw!(SpecError::MultipleFacesRequired) };
@@ -228,7 +222,7 @@ impl PieceSpec for Spec {
       let occ_ilk = LOI::Distinct;
       let our_occ_image = Arc::new(Die {
         nfaces, cooldown_time, cooldown_radius, surround_outline,
-        label_colour: label_colour.clone(),
+        text_options: text_options.clone(),
         itemname: itemname.clone(),
         desc: desc.clone(),
         image: occ_image,
@@ -240,7 +234,7 @@ impl PieceSpec for Spec {
 
     let die = Die {
       nfaces, cooldown_time, cooldown_radius, surround_outline,
-      itemname, labels, desc, label_colour,
+      itemname, labels, desc, text_options,
       image: image.into()
     };
 
@@ -518,7 +512,7 @@ impl InertPieceTrait for Die {
 
     let tc = OverlayTemplateContext {
       label_text: label,
-      label_colour: &self.label_colour,
+      label_options: &self.text_options,
       label_font_size,
       label_y_adjust: label_font_size * SVG_FONT_Y_ADJUST_OF_FONT_SIZE,
 

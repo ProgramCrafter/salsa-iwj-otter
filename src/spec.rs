@@ -241,6 +241,11 @@ impl PieceAngle {
   } }
 }
 
+#[derive(Debug,Default,Clone,Serialize,Deserialize)]
+pub struct TextOptionsSpec {
+  pub colour: Option<ColourSpec>,
+}
+
 #[derive(Debug,Copy,Clone,Eq,PartialEq)]
 #[derive(Default,Serialize,Deserialize)]
 #[serde(try_from="u8")]
@@ -633,6 +638,16 @@ pub mod imp {
         throw!(UnsupportedColourSpec);
       }
       Html::from_html_string(spec.0.clone())
+    }
+  }
+
+  impl TextOptionsSpec {
+    #[throws(SpecError)]
+    /// Default colour is always black
+    pub fn resolve(&self) -> TextOptions {
+      let TextOptionsSpec { colour } = self;
+      let colour = colour.resolve()?;
+      TextOptions { colour }
     }
   }
 

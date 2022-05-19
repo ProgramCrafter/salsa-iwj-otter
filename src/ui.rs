@@ -26,6 +26,11 @@ pub const LABEL_FONT_SIZE: f64 = 4.0;
 pub const HTML_TEXT_LABEL_ELEM_START: HtmlLit =
   Html::lit(r##"text pointer-events="none""##);
 
+#[derive(Debug,Serialize,Deserialize,Clone)]
+pub struct TextOptions {
+  pub colour: Colour,
+}
+
 /// Fudge factor
 ///
 /// When trying to centre text, we use text-align and/or text-anchor
