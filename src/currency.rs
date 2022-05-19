@@ -218,12 +218,14 @@ impl PieceTrait for Banknote {
         // Occultation::get_kind ?
         throw!();
       }
+      let show_to_player = show;
 
       // Our position is within its bbox
-      if ! mipc.show(show).abs_bbox(mgpc).ok()?.contains(tgpc.pos) { throw!() }
+      if ! mipc.show(show_to_player).abs_bbox(mgpc).ok()?
+        .contains(tgpc.pos) { throw!() }
 
       // It's a banknote
-      let mself: &Banknote = mipc.p.show(show)
+      let mself: &Banknote = mipc.p.show(show_to_player)
         .downcast_piece_fastsplit().ok()?;
 
       // Of our currency
@@ -232,7 +234,7 @@ impl PieceTrait for Banknote {
 
       // We are in the ellipse inscribed in its bbox
       let delta = (tgpc.pos - mgpc.pos).ok()?.promote();
-      let bbox_sz = mipc.show(show).bbox_approx().ok()?;
+      let bbox_sz = mipc.show(show_to_player).bbox_approx().ok()?;
       let dist2: f64 = (0..2).map(|i| {
         // The bbox may not be centred.  We imagine a quarter ellipse
         // inscribed in each corner, with the centre at the nominal position.
