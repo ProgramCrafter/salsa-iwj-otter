@@ -45,7 +45,7 @@ pub struct Banknote {
   label_options: TextOptions,
 }
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct Value {
   qty: Qty,
 }
@@ -162,9 +162,10 @@ impl PieceTrait for Banknote {
     let tgpc_value: &mut Value = tgpc.xdata.get_mut_exp()?;
     let remaining = tgpc_value.qty.checked_sub(take)
       .ok_or(Ia::CurrencyShortfall)?;
+    let remaining = Value { qty: remaining };
 
     tgpc_value.qty = take;
-    ngpc.xdata_init(Value { qty: remaining })?;
+    ngpc.xdata_init(remaining.clone())?;
 
     tgpc.held = Some(player);
     ngpc.held = None;
@@ -175,7 +176,8 @@ impl PieceTrait for Banknote {
       "{} took {}, leaving {}{}",
       gpl.nick.to_html(),
       self_unocc.describe(tgpc.face, &tgpc_value.html(show_to_all))?,
-      remaining, &currency,
+      remaining.html(show_to_all),
+      &currency,
     )}];
 
     let update = PieceUpdateOp::ModifyQuiet(());
