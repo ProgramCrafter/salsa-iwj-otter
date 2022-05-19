@@ -118,13 +118,10 @@ impl PieceTrait for Banknote {
     self.image.svg(f, vpid, gpc.face, &gpc.xdata)?;
     
     let value: &Value = gpc.xdata.get_exp()?;
-    let label_y_adj = self.label_options.size * SVG_FONT_Y_ADJUST_OF_FONT_SIZE;
 
     hwrite!(f,
-            r##"<{} text-align="center" text-anchor="middle" x="0" y="{}" fill="{}" font-size="{}">{}{}</text>"##,
-            HTML_TEXT_LABEL_ELEM_START,
-            label_y_adj, &self.label_options.colour, self.label_options.size,
-            value.qty, &self.currency)?;
+            r##"<{}>{}{}</text>"##,
+            &self.label_options.start_element(), value.qty, &self.currency)?;
   }
 
   #[throws(ApiPieceOpError)]

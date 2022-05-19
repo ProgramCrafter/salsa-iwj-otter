@@ -133,3 +133,14 @@ impl Display for AbbrevPresentationLayout {
     })?
   }
 }
+
+impl TextOptions {
+  pub fn start_element(&self) -> Html {
+    let y_adj = self.size * SVG_FONT_Y_ADJUST_OF_FONT_SIZE;
+    hformat!{
+ r##"{} text-align="center" text-anchor="middle" x="0" y="{}" fill="{}" font-size="{}px""##,
+             HTML_TEXT_LABEL_ELEM_START,
+             y_adj, &self.colour, self.size,
+    }
+  }
+}
