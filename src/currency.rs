@@ -259,7 +259,7 @@ impl PieceTrait for Banknote {
       else return Ok(default()); // arithmetic overflow!
     }
 
-    let logents = vec![ LogEntry { html: hformat!(
+    let logent = hformat!(
       "{} deposited {}, giving {}{}",
       match gpl {
         Some(gpl) => gpl.nick.to_html(),
@@ -267,7 +267,9 @@ impl PieceTrait for Banknote {
       },
       tipc.p.show(show).describe_html(tgpc, goccults)?,
       new_qty, currency,
-    )}];
+    );
+
+    let logents = vec![ LogEntry { html: logent } ];
 
   OpHookThunk::Reborrow(Box::new(move |igg: &mut InstanceGuard, (_player,)| {
 
