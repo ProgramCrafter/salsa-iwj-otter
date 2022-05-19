@@ -39,7 +39,8 @@ pub struct TextOptions {
 /// troublesome.  We bodge it.  Multiple the font size (in pixels)
 /// by this, and add it to the SVG y coordinate (ie, shufting the text
 /// down).
-pub const SVG_FONT_Y_ADJUST_OF_FONT_SIZE: f64 = 0.35;
+pub const SVG_FONT_Y_ADJUST_OF_FONT_SIZE: f64 =
+  include!("SVG_FONT_Y_ADJUST_OF_FONT_SIZE.txt");
 
 pub fn default_edge_width() -> f64 { DEFAULT_EDGE_WIDTH }
 
