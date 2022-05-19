@@ -211,6 +211,14 @@ impl PieceTrait for Banknote {
       if mpiece == tpiece { throw!() }
       let mipc = ipieces.get(mpiece)?;
 
+      if mgpc.occult.passive_occid().is_some() {
+        // We don't do occultation yet.  But, anyway, we don't want to
+        // deal with this since it might mean we're totally invisible
+        // to our player!  When we do support this, call
+        // Occultation::get_kind ?
+        throw!();
+      }
+
       // Our position is within its bbox
       if ! mipc.show(show).abs_bbox(mgpc).ok()?.contains(tgpc.pos) { throw!() }
 
@@ -221,14 +229,6 @@ impl PieceTrait for Banknote {
       // Of our currency
       if mself.currency != tself.currency { throw!() }
       let currency = &mself.currency;
-
-      if mgpc.occult.passive_occid().is_some() {
-        // We don't do occultation yet.  But, anyway, we don't want to
-        // deal with this since it might mean we're totally invisible
-        // to our player!  When we do support this, call
-        // Occultation::get_kind ?
-        throw!();
-      }
 
       // We are in the ellipse inscribed in its bbox
       let delta = (tgpc.pos - mgpc.pos).ok()?.promote();
