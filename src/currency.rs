@@ -143,18 +143,21 @@ impl PieceTrait for Banknote {
   }
 
   #[throws(ApiPieceOpError)]
-  fn op_multigrab(&self, _: ApiPieceOpArgs, show: ShowUnocculted,
+  fn op_multigrab(&self, _: ApiPieceOpArgs, show_to_player: ShowUnocculted,
                   take: MultigrabQty, new_z: ShouldSetZLevel) -> OpOutcomeThunk {
     let currency = self.currency.clone();
     OpOutcomeThunk::Reborrow(Box::new(
       move |ig: &mut InstanceGuard, (player, tpiece)|
   {
-    ig.fastsplit_split(player, tpiece, show, new_z,
+    ig.fastsplit_split(player, tpiece, show_to_player, new_z,
       move |_: &IOccults, _: &GOccults, gpl: &GPlayer,
             tgpc: &mut GPiece, tipc: &IPiece,
             ngpc: &mut GPiece|
   {
-    let self_: &Banknote = tipc.p.show(show).downcast_piece_fastsplit()?;
+    // A player who can see it can split it
+    let self_unocc: &Banknote = tipc.p.show(show_to_player)
+      .downcast_piece_fastsplit()?;
+    let show_to_all = tgpc.fully_visible_to_everyone();
 
     let tgpc_value: &mut Value = tgpc.xdata.get_mut_exp()?;
     let remaining = tgpc_value.qty.checked_sub(take)
@@ -171,7 +174,7 @@ impl PieceTrait for Banknote {
     let logents = vec![ LogEntry { html: hformat!(
       "{} took {}, leaving {}{}",
       gpl.nick.to_html(),
-      self_.describe(tgpc.face, &tgpc_value.html(Some(show)))?,
+      self_unocc.describe(tgpc.face, &tgpc_value.html(show_to_all))?,
       remaining, &currency,
     )}];
 
