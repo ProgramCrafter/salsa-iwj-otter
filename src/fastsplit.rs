@@ -140,14 +140,15 @@ impl InstanceGuard<'_> {
       &mut ngpc
     )?;
 
+    let ipc_from_record = fs_record.ipc.clone();
+
     // Committing.
 
     // This is outside the infallible closure because borrowck
     // can't see that we drop tgpc before doing stuff with ig.
     tpc_new_z.implement(tgpc);
     (||{
-      let nipc = IFastSplits::make_ipc(&mut ig.ioccults.ilks,
-                                       fs_record.ipc.clone());
+      let nipc = IFastSplits::make_ipc(&mut ig.ioccults.ilks, ipc_from_record);
       let npiece = ig.gs.pieces.as_mut(modperm).insert(ngpc);
       ig.ipieces.as_mut(modperm).insert(npiece, nipc);
 
