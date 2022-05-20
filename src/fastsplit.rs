@@ -152,6 +152,28 @@ impl InstanceGuard<'_> {
       let npiece = ig.gs.pieces.as_mut(modperm).insert(ngpc);
       ig.ipieces.as_mut(modperm).insert(npiece, nipc);
 
+      // "Recalculate" the occultation of the piece we're leaving behind.
+      let ((), r_unprepared) = ToRecalculate::with(|mut to_permute| {
+        let () = recalculate_occultation_general(
+          &mut ig.gs.gen.unique_gen(),
+          &mut ig.gs.players, &mut ig.gs.pieces,
+          &mut ig.gs.occults, &ig.ipieces, &ig.ioccults,
+          &mut to_permute, npiece,
+          // We are treat this as a new piece, but it's not, semantically.
+          // We don't log anything, since that new piece is not really
+          // supposed to be interesting and the piece implwementation
+          // is supposed to have logged whatever is needed.
+          || (),
+          (),
+          |_old,_new,_desc| (),
+          |_puopp, ()| (),
+        ).unwrap_or_else(|e| {
+          // not good
+          error!("failed to recalculate after piece split! {:?}", &e);
+        });
+        ((), to_permute.implement(ig))
+      });
+
       let n_unprepared = vec![(
         npiece,
         PUOs::Simple(PUO::Insert(())),
@@ -159,6 +181,7 @@ impl InstanceGuard<'_> {
 
       let unprepared = chain!(
         n_unprepared,
+        r_unprepared,
         t_unprepared,
       ).collect();
 

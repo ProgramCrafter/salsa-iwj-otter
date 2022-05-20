@@ -510,7 +510,7 @@ pub fn vpiece_decode(
 }
 
 #[throws(InternalError)]
-fn recalculate_occultation_general<
+pub fn recalculate_occultation_general<
   RD: Debug,                                          // return data
   LD: Debug,                                          // log data
   VF: FnOnce() -> RD,                                 // ret_vanilla
