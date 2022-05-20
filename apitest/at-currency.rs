@@ -48,11 +48,31 @@ impl Ctx {
     let _ = bank;
     let _ = pile;
   }
+
+  #[throws(Explode)]
+  fn occult(&mut self) {
+    self.clear_reset_to_demo()?;
+
+    let mut alice = self.connect_player(&self.alice)?;
+    let mut a_pieces = alice.pieces::<PIA>()?;
+
+    let mut bob = self.connect_player(&self.bob)?;
+
+    let hand = a_pieces.find_by_desc_glob(otter::hand::UNCLAIMED_HAND_DESC);
+    alice.api_piece(GH::With, PuSynch(&mut (&mut a_pieces, hand)),
+                    ("k", json!({ "opname": "claim",
+                                   "wrc": WRC::Unpredictable })))?;
+    let hand_pos = a_pieces[hand].pos;
+
+    let _ = &mut bob;
+    let _ = bob;
+  }
 }
 
 #[throws(Explode)]
 fn tests(mut c: Ctx) {
   test!(c, "multigrab",                     c.multigrab()              ?);
+  test!(c, "occult",                        c.occult()                 ?);
 }
 
 #[throws(Explode)]
