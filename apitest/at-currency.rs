@@ -64,6 +64,16 @@ impl Ctx {
                                    "wrc": WRC::Unpredictable })))?;
     let hand_pos = a_pieces[hand].pos;
 
+    alice.synchu(&mut a_pieces)?;
+
+    let bank = a_pieces.find_by_desc_glob("*400ƒ*");
+    alice.api_piece_op_single(PuSynch((&mut a_pieces, bank)).id(), (
+      "multigrab", json!({ "n": 399, 'z': "u000000000" })
+    ))?;
+
+    alice.api_piece(GH::Ungrab, PuSynch((&mut a_pieces, bank)), hand_pos)?;
+    alice.synchu(&mut a_pieces)?;
+    
     let _ = &mut bob;
     let _ = bob;
   }
