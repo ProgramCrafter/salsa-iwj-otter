@@ -6,15 +6,17 @@ use crate::*;
 
 type Ctx = UsualCtx;
 
-#[throws(Explode)]
-fn move_money<PI:Idx>(alice: &mut Session,
-                      a_pieces: &mut Pieces<PI>, piece: PI,
-                      qty: i32, z: &str, pos: Pos) {
-  alice.api_piece_op_single(PuSynch((&mut *a_pieces, piece)).id(), (
-    "multigrab", json!({ "n": qty, 'z': z })
-  ))?;
+impl Session {
+  #[throws(Explode)]
+  fn move_money<PI:Idx>(&mut self,
+                        a_pieces: &mut Pieces<PI>, piece: PI,
+                        qty: i32, z: &str, pos: Pos) {
+    self.api_piece_op_single(PuSynch((&mut *a_pieces, piece)).id(), (
+      "multigrab", json!({ "n": qty, 'z': z })
+    ))?;
 
-  alice.api_piece(GH::Ungrab, PuSynch((&mut *a_pieces, piece)), pos)?;
+    self.api_piece(GH::Ungrab, PuSynch((&mut *a_pieces, piece)), pos)?;
+  }
 }
 
 impl Ctx {
@@ -79,7 +81,7 @@ impl Ctx {
 
     let bank = a_pieces.find_by_desc_glob("*400ƒ*");
 
-    move_money(&mut alice, &mut a_pieces, bank, 399, "u000000000", hand_pos)?;
+    alice.move_money(&mut a_pieces, bank, 399, "u000000000", hand_pos)?;
     alice.synchu(&mut a_pieces)?;
     
     let _ = &mut bob;
