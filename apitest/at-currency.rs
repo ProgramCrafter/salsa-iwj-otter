@@ -42,11 +42,8 @@ impl Ctx {
     alice.api_piece(GH::Ungrab, PuSynch((&mut a_pieces, pile)), pile_pos)?;
     alice.synchu(&mut a_pieces)?;
 
-    alice.api_piece_op_single(PuSynch((&mut a_pieces, bank)).id(), (
-      "multigrab", json!({ "n": 13, 'z': "t000000000" })
-    ))?;
+    alice.move_money(&mut a_pieces, bank, 13, "t000000000", temp_pos)?;
     let moved = bank;
-    alice.api_piece(GH::Ungrab, PuSynch((&mut a_pieces, moved)), temp_pos)?;
     alice.synchu(&mut a_pieces)?;
     let bank = a_pieces.find_by_desc_glob("* 337ƒ*");
     a_pieces[moved].assert_desc_contains(" 13ƒ");
