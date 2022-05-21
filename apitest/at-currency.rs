@@ -80,7 +80,18 @@ impl Ctx {
 
     alice.move_money(&mut a_pieces, bank, 399, "u000000000", hand_pos)?;
     alice.synchu(&mut a_pieces)?;
+    // old bank has 1f, current piece has 399
+
+    let div1_pos = (hand_pos + PosC::new(-30,-5))?;
+    alice.move_money(&mut a_pieces, bank, 99, "u010000000", div1_pos)?;
+    // in hand has 300, current piece, aside, has 99
     
+    alice.move_money(&mut a_pieces, bank, 9, "u020000000", hand_pos)?;
+    alice.synchu(&mut a_pieces)?;
+    // aside has 90, in hand has 9, original hand pos has 309
+
+    bob.synch()?;
+
     let _ = &mut bob;
     let _ = bob;
   }
