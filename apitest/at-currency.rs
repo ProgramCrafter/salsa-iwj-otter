@@ -90,7 +90,12 @@ impl Ctx {
     alice.synchu(&mut a_pieces)?;
     // aside has 90, in hand has 9, original hand pos has 309
 
-    bob.synch()?;
+    bob.synchx::<PIB,_>(None, None, |_session, gen, _k, v| v.tree_walk(|k,v| {
+      if let Some(s) = v.as_str() {
+        eprintln!("{} {:?} {:?}", gen, k, s);
+      }
+      Ok::<_,Void>(())
+    }).void_unwrap())?;
 
     let _ = &mut bob;
     let _ = bob;

@@ -142,6 +142,35 @@ impl JsV {
     let i = i.into_iter().map(|(k,v)| (k.into(), v.borrow().clone()));
     self.as_object_mut().unwrap().extend(i);
   }
+
+  #[throws(E)]
+  fn tree_walk<F,E>(&self, #[allow(unused_mut,unused_variables)] mut f: F)
+  where F: FnMut(&[String], &JsV) -> Result<(),E>
+  {
+    #[throws(E)]
+    fn recurse<F,E>(kl: &mut Vec<String>, v: &JsV, f: &mut F)
+    where F: FnMut(&[String], &JsV) -> Result<(),E> {
+      f(&**kl, v)?;
+      if let Some(o) = v.as_object() {
+        for (k,v) in o {
+          kl.push(k.to_owned());
+          let y = recurse(kl, v, f);
+          kl.pop();
+          let () = y?;
+        }
+      } else if let Some(a) = v.as_array() {
+        for (k,v) in a.iter().enumerate() {
+          kl.push(k.to_string());
+          let y = recurse(kl, v, f);
+          kl.pop();
+          let () = y?;
+        }
+      }
+    }
+
+    let mut kl = vec![];
+    recurse(&mut kl, self, &mut f)?
+  }
 }
 
 // -------------------- Substition --------------------
