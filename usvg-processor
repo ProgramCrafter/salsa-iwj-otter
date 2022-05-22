@@ -28,5 +28,7 @@ add_lic();
 flush STDOUT or die $!;
 my $cmd = "$usvg - -c";
 my $cmd_m = "$cmd <$in >$out.tmp";
+print STDERR "+ $cmd_m\n";
+
 $!=0; $?=0; system qw(sh -ec), "exec $cmd" and die "exec usvg: $cmd_m: $? $!";
 rename "$out.tmp", $out or die "'$cmd_m': $!";
