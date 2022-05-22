@@ -92,7 +92,9 @@ impl Ctx {
 
     bob.synchx::<PIB,_>(None, None, |_session, gen, _k, v| v.tree_walk(|k,v| {
       if let Some(s) = v.as_str() {
-        eprintln!("{} {:?} {:?}", gen, k, s);
+        for (_, qty) in regex_captures!(r#"([0-9.?]*)ƒ"#, s) {
+          eprintln!("{} {:?} {:?} {:?}", gen, qty, k, s);
+        }
       }
       Ok::<_,Void>(())
     }).void_unwrap())?;

@@ -40,7 +40,7 @@ pub use enum_dispatch::enum_dispatch;
 pub use enum_map::{Enum, EnumMap};
 pub use fehler::{throw, throws};
 pub use index_vec::{define_index_type, index_vec, IndexSlice, IndexVec};
-pub use lazy_regex::regex;
+pub use lazy_regex::{self, regex, regex_captures};
 pub use ordered_float::OrderedFloat;
 pub use percent_encoding::percent_decode_str;
 pub use percent_encoding::utf8_percent_encode;
