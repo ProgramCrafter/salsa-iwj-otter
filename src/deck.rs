@@ -14,6 +14,7 @@ pub const ENABLED_DESC : HtmlLit = Html::lit("a pickup deck (enabled)");
 struct Deck {
   shape: GenericSimpleShape<(), RectOutline>,
   label: Option<PieceLabelLoaded>,
+  stack_pos: Pos,
 }
 
 #[derive(Debug,Clone,Copy,Ord,PartialOrd,Eq,PartialEq)]
@@ -60,6 +61,7 @@ impl PieceSpec for piece_specs::Deck {
     gpc.rotateable = false;
     let p = Box::new(Deck {
       shape,
+      stack_pos: PosC { coords: self.stack_pos },
       label: self.label.load()?,
     }) as Box<dyn PieceTrait>;
     SpecLoaded {
@@ -196,7 +198,11 @@ impl PieceTrait for Deck {
       Disabled => None,
       Counting => Some(OccKG::Visible),
       Enabled  => {
-        let displace = OccDisplacement::Stack { pos: gpc.pos };
+        let pos = (|| {
+          (gpc.pos + self.stack_pos).ok()?
+            .clamped(gs.table_size).ok()
+        })().ok_or_else(|| Ia::PosOffTable)?;
+        let displace = OccDisplacement::Stack { pos };
         let displace = (displace, gpc.zlevel.z.clone());
                   Some(OccKG::Displaced(displace))
       },

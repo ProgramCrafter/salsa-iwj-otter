@@ -335,6 +335,7 @@ pub mod piece_specs {
     pub edge_width: Option<f64>,
     pub shape: Outline,
     pub label: Option<PieceLabel>,
+    #[serde(default)] pub stack_pos: [Coord; 2],
   }
 }
 

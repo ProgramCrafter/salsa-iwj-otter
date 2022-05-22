@@ -237,6 +237,9 @@ Honours ``edges``, ``edge_width``.
 
 Honours ``label``, displaying the number of of pieces in (on) this deck.
 
+ * ``stack_pos``: When stacking neatly, stack here relative to the
+   deck centre.  [two numbers, ``[0,0]``]
+
 Example::
   
   [[pieces]]
