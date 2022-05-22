@@ -1,5 +1,20 @@
 # One argument per line
 # Lines starting with #, and empty lines, are ignored
 
+--font-family
+DejaVu Sans
+
+--serif-family
+DejaVu Serif
+
 --sans-serif-family
 DejaVu Sans
+
+--cursive-family
+DejaVu Serif
+
+--fantasy-family
+DejaVu Serif
+
+--monospace-family
+DejaVu Sans Mono
