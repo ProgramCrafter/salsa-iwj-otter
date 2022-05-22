@@ -225,9 +225,16 @@ pub struct PiecesSpec {
   pub count: Option<u32>,
   pub face: Option<FaceId>,
   pub pinned: Option<bool>,
-  #[serde(default)] pub angle: PieceAngle,
+  #[serde(default)] pub angle: Option<PieceAngleSpec>,
   #[serde(flatten)]
   pub info: Box<dyn PieceSpec>,
+}
+
+#[derive(Debug,Clone,Serialize,Deserialize)]
+#[serde(untagged)]
+pub enum PieceAngleSpec {
+  Compass(String),
+  Degrees(i32),
 }
 
 #[derive(Debug,Copy,Clone,Serialize,Deserialize)]
@@ -650,6 +657,30 @@ pub mod imp {
       let colour = colour.resolve()?;
       let size = size.unwrap_or(default_size);
       TextOptions { colour, size }
+    }
+  }
+
+  #[ext(pub)]
+  impl Option<PieceAngleSpec> {
+    #[throws(SpecError)]
+    fn resolve(&self) -> PieceAngle {
+      use PieceAngleSpec as PAS;
+      let i = match self {
+        None => return default(),
+        Some(PAS::Compass(s)) => {
+          let (i,_) = [
+            "N" , "NE", "E" , "SE", "S" , "SW", "W" , "NW",
+          ].iter().enumerate().find(|(_i,&exp)| s == exp)
+            .ok_or_else(|| SpE::CompassAngleInvalid)?;
+          i as u8
+        },
+        Some(PAS::Degrees(deg)) => {
+          let deg = deg.rem_euclid(360);
+          if deg % 45 != 0 { throw!(SpE::CompassAngleInvalid) }
+          (deg / 45) as u8
+        },
+      };
+      PieceAngle::Compass(i.try_into()?)
     }
   }
 

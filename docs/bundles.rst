@@ -179,6 +179,8 @@ follow the link to the latest published documentation for that format.
       of library pieces overhauled.  ``size`` is now the in-game
       size, and the SVG size is obtained from the SVG.
       Library catalogues must be overhauled.
+    - Handling of the ``angle`` parameter in game specs is now
+      much more sensible, and also accurately documented.
 
   * - ``1``
     - 0.x - `1.0.0 <https://www.chiark.greenend.org.uk/~ianmdlvl/otter/1.0.0/docs/README.html>`_

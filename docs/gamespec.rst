@@ -109,10 +109,9 @@ These apply regardless of the value of ``type``.
    pin and unpin pieces during the game; this is the initial state.
    [boolean]
 
- * ``angle``: Initial orientation of the piece.  The
-   specified value is multiplied by 45 degrees, increasing values
-   rotating anticlockwise.  So for example ``6`` would mean to rotate
-   90 degrees clockwise.  [integer 0..7]
+ * ``angle``: Initial orientation of the piece.  Only 45-degree
+   angles are supported.
+   [number, degrees, clockwise; or string, "N", "NE" etc.]
 
 
 Common parameters

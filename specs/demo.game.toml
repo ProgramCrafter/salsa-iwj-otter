@@ -16,7 +16,7 @@ edges = ["black","white"]
 pos = [90, 20]
 type = "Rect"
 size = [10]
-angle.Compass = 1
+angle = "SW"
 faces = ["blue", "grey"]
 
 [[pieces]]
@@ -28,7 +28,7 @@ item = "chess-w-B"
 [[pieces]]
 pos = [160,40]
 type = "Lib"
-angle.Compass = 1
+angle = "NE"
 lib = "wikimedia"
 item = "chess-b-N"
 
@@ -36,7 +36,7 @@ item = "chess-b-N"
 pos = [120, 30]
 type = "Rect"
 size = [10]
-angle.Compass = 1
+angle = 45
 faces = [ ]
 edges = ["yellow", "orange"]
 edge_width = 0.5

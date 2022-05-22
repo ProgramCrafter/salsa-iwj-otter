@@ -103,7 +103,7 @@ pub use crate::shapelib;
 pub use crate::shapelib::{ItemEnquiryData, LibraryEnquiryData};
 pub use crate::shapelib::{LibraryLoadError};
 pub use crate::spec::*;
-pub use crate::spec::imp::ColourSpecExt as _;
+pub use crate::spec::imp::{ColourSpecExt as _, OptionPieceAngleSpecExt as _};
 pub use crate::spec::piece_specs::{FaceColourSpecs, SimpleCommon};
 pub use crate::updates::*;
 pub use crate::utils::*;

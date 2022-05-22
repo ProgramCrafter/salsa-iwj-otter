@@ -1049,6 +1049,7 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         .try_into().map_err(
           |_| SpE::InternalError(format!("implicit item count out of range"))
         )?;
+      let angle = angle.resolve()?;
       let count: Box<dyn ExactSizeIterator<Item=u32>> = match count {
         Some(explicit) if implicit == 1 => {
           Box::new((0..explicit).map(|_| 0))
