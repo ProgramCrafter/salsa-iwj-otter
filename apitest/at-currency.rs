@@ -76,19 +76,19 @@ impl Ctx {
 
     alice.synchu(&mut a_pieces)?;
 
-    let bank = a_pieces.find_by_desc_glob("*400ƒ*");
+    let tmoney = a_pieces.find_by_desc_glob("*400ƒ*");
 
-    alice.move_money(&mut a_pieces, bank, 399, "u000000000", hand_pos)?;
+    alice.move_money(&mut a_pieces, tmoney, 399, "u000000000", hand_pos)?;
     alice.synchu(&mut a_pieces)?;
-    // old bank has 1f, current piece has 399
+    // old tmoney has 1f, current piece has 399
 
     let div1_pos = (hand_pos + PosC::new(-30,-5))?;
-    alice.move_money(&mut a_pieces, bank, 99, "u010000000", div1_pos)?;
+    alice.move_money(&mut a_pieces, tmoney, 99, "u010000000", div1_pos)?;
     // in hand has 300, current piece, aside, has 99
     
-    alice.move_money(&mut a_pieces, bank, 9, "u020000000", hand_pos)?;
+    alice.move_money(&mut a_pieces, tmoney, 9, "u020000000", hand_pos)?;
     alice.synchu(&mut a_pieces)?;
-    // aside has 90, in hand has 9, original hand pos has 309
+    // aside has 90, in hand has 309 (original pos)
 
     let expected = [1, 399];
     let expected = expected.into_iter()
