@@ -445,7 +445,7 @@ Parameters:
    [string, default "black"]
 
  * ``label.size`` [number, default 6]:
-   Font size for the value (in pixeels, svg ``px``).
+   Font size for the value (in pixels, svg ``px``).
 
  * ``label.unit_rel_size`` [number, default 1]:
    Relative font size for the unit part of the value.
