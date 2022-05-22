@@ -90,14 +90,27 @@ impl Ctx {
     alice.synchu(&mut a_pieces)?;
     // aside has 90, in hand has 9, original hand pos has 309
 
+    let expected = [399];
+    let expected = expected.into_iter()
+      .map(|s| s.to_string())
+      .chain(iter::once("?".to_string()))
+      .collect_vec();
+
+    let mut qtys = vec![];
     bob.synchx::<PIB,_>(None, None, |_session, gen, _k, v| v.tree_walk(|k,v| {
       if let Some(s) = v.as_str() {
         for (_, qty) in regex_captures!(r#"([0-9.?]*)ƒ"#, s) {
-          eprintln!("{} {:?} {:?} {:?}", gen, qty, k, s);
+          dbg!(gen, qty, k, s);
+          qtys.push(qty.to_string());
+//          assert!(expected.iter().map(|s| &**s).contains(&qty));
         }
       }
       Ok::<_,Void>(())
     }).void_unwrap())?;
+
+    for exp in expected {
+      assert!(qtys.contains(&exp), "{:?}", exp);
+    }
 
     let _ = &mut bob;
     let _ = bob;
