@@ -9,6 +9,8 @@ pub const HELD_SURROUND_COLOUR: &str = "black";
 const MONOSPACE: HtmlLit = Html::lit(
   r#"font-family="Latin Modern Mono, monospace" font-weight="700""#);
 
+const USVG_DEFAULT_ARGS_TEXT: &str = include_str!("USVG_DEFAULT_ARGS.txt");
+
 pub const DEFAULT_TABLE_SIZE: Pos = PosC::new( 300, 200 );
 pub const DEFAULT_TABLE_COLOUR: &str = "green";
 
@@ -147,4 +149,11 @@ impl TextOptions {
              self.y_adjust(), &self.colour, self.size,
     }
   }
+}
+
+pub fn usvg_default_args() -> impl Iterator<Item=&'static str> {
+  USVG_DEFAULT_ARGS_TEXT
+    .lines()
+    .map(|l| l.trim())
+    .filter(|l| l.len() > 0 && ! l.starts_with('#'))
 }

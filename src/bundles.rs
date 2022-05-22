@@ -850,6 +850,7 @@ fn make_usvg(instance_name: &str, bundle_name: &str, za: &mut IndexedZip,
         .context("create temporary usvg").map_err(IE::from)?;
 
       let mut cmd = Command::new(&config().usvg_bin);
+      cmd.args(usvg_default_args());
       cmd.args(&["-","-c"])
         .stdin(input)
         .stdout(usvg1.try_clone().context("dup usvg1").map_err(IE::from)?);
