@@ -77,6 +77,7 @@ impl Ctx {
     alice.synchu(&mut a_pieces)?;
 
     let tmoney = a_pieces.find_by_desc_glob("*400ƒ*");
+    let pubmoney_pos = a_pieces[tmoney].pos;
 
     alice.move_money(&mut a_pieces, tmoney, 399, "u000000000", hand_pos)?;
     alice.synchu(&mut a_pieces)?;
@@ -90,7 +91,18 @@ impl Ctx {
     alice.synchu(&mut a_pieces)?;
     // aside has 90, in hand has 309 (original pos)
 
-    let expected = [1, 399];
+    let tmoney = a_pieces.iter_enumerated().filter(|(_,p)| {
+      ! p.info.is_null() &&
+      p.pos == hand_pos &&
+      dbg!(p).info["desc"].as_str().unwrap().contains("ƒ")
+    }).collect_vec();
+    let tmoney = match &*tmoney { [p] => p.0, x => panic!("{:?}", &x) };
+
+    alice.move_money(&mut a_pieces, tmoney, 20, "u030000000", pubmoney_pos)?;
+    alice.synchu(&mut a_pieces)?;
+    // alice has 90 (aside) and 289.  Public got 20 and now has 21.
+
+    let expected = [1, 399, 20, 21];
     let expected = expected.into_iter()
       .map(|s| s.to_string())
       .chain(iter::once("?".to_string()))
