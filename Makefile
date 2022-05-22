@@ -39,8 +39,6 @@ BUNDLED_SOURCES += $(BUNDLED_SOURCES_FILES)
 
 TARGET_DIR ?= target
 
-USVG_OPTIONS = "--sans-serif-family=DejaVu Sans"
-
 WASM_BINDGEN = $(TARGET_DIR)/debug/wasm-bindgen
 WASM_BINDGEN_OPTIONS =						\
 	--remove-name-section --remove-producers-section	\
@@ -343,7 +341,7 @@ bundled-sources::
 #---------- svg processing ----------
 
 LIBRARIES ?= $(basename $(wildcard library/*.toml))
-USVG_DEP = stamp/cargo.usvg
+USVG_DEP = stamp/cargo.usvg src/USVG_DEFAULT_ARGS.txt
 
 include $(addsuffix /files.make, $(LIBRARIES))
 

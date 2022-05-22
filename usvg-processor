@@ -26,7 +26,17 @@ sub add_lic () {
 add_lic();
 
 flush STDOUT or die $!;
-my $cmd = "$usvg - -c";
+my $cmd = "$usvg";
+
+open OPTS, "src/USVG_DEFAULT_ARGS.txt" or die $!;
+while (<OPTS>) {
+  s/^\s*$//; s/\s*$//;
+  next unless m/^[^#]/;
+  $cmd .= " '$_'";
+}
+
+$cmd .= " - -c";
+
 my $cmd_m = "$cmd <$in >$out.tmp";
 print STDERR "+ $cmd_m\n";
 

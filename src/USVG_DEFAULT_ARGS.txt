@@ -1,0 +1,5 @@
+# One argument per line
+# Lines starting with #, and empty lines, are ignored
+
+--sans-serif-family
+DejaVu Sans
