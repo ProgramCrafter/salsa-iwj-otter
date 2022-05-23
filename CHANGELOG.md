@@ -1,3 +1,107 @@
+UNRELEASED
+==========
+
+Bundle format
+-------------
+
+Introduced bundle format versions, and bundle format version `2`.
+Bundle format version `1` is still supported.  There are significant
+changes and improvements in version `2`, available by writing
+`format=2`.  See "Bundle compatibility" in the documentation.
+
+ * Handling of piece size and angle specification overhauled.
+ * New and better template substitution syntax.
+ * Fixed piece angle specification in game specs.
+
+Breaking change to otterlib CLI program
+---------------------------------------
+
+ * otterlib (the library preview utility, not normally needed for bundle
+   development) now needs to know the nwtemplates directory (so it can
+   properly process etc. magic library items).
+
+New features
+------------
+
+ * Dice, via the `Die` piece type.
+ * Currency (money, and similar things), via the `Currency` piece type.
+ * Shape libraries can provide canned "magic" items
+   (which are then based on the library's own image(s).
+ * `stack_pos` parameter for `PickupDeck` pieces, specifying where the
+   "neat pickup deck" should appear, so it doesn't have to central.
+ * otter CLI client: Allow uploading a directory directly as a
+   bundle zipfile (helpful for bundle development).
+ * Include piece description in some log messages.
+
+Fixes and improvements
+----------------------
+
+ * Do not randomly panic when trying to print truncated debug output
+   for non-ASCII piece HTML.
+ * Set default fonts for SVG processing: in bundle SVGs, at all (so
+   that text is not elided); in builtin libraries, more widely
+   (without effect on the existing pieces).
+ * Notice errors during JS startup, and display them.
+ * Correct sense of pin/unpin log message.
+ * Shape library previews: fix (and improve) the HTML (from otterlib).
+ * Fix a tiny rendering error in arrowheads.
+ * Test suite: `childio`: work around a Linux kernel race bug: you can
+   sometimes reap a child and then write to its pipe without EPIPE.
+ * Build system: run miri with +nightly, so that tests work when stable
+   Rust is the default.  Document that these tests require nightly.
+ * Correct an error message about JSON serialisation.
+ * Remove some direct stderr debug prints from production code.
+ * Log message colourisation on a tty now leaves the logs more readable.
+ * Some improvements to bundle/shapelib loading error messages.
+
+Docs
+----
+
+ * Dcouemnt the semver stability promises.
+ * Publish the docs to an Otter-version-specific directory, so that
+   old docs versions are retained.
+ * Fix some formatting errors and typos.
+ * Correct some leftover todos.
+ * Clarify extra field syntax in shape library catalogue `files` entries.
+
+Protocol and model enhancements
+-------------------------------
+
+ * `multigrab`: pieces that can capture the number of pieces the user
+   says to grab, and instead handle the whole multigrab operation.
+ * `fastsplit`: pieces that can be split and merged during play
+   without having to rewrite the aux save file (containing SVG images).
+ * Non-mixing OccultIlk, for pieces which always remain distinguishable.
+ * Special rendering instructions, for pieces whose display involves
+   bespoke code in the TypeScript.
+ * OpOutcomeThunk system to allow piece implementations to be reinvoked
+   with an ability to make much wider mutable borrows.
+
+Build system, internal changes, etc.
+------------------------------
+
+ * Update to Rust 2021.
+ * Break out an additional `otter-support` crate (to try to
+   improve incremental build times).
+ * Use `ambassador` macro crate to help delegate trait impls.
+ * When formatting the Rust docs, pass `--document-private-items`.
+   (The Rust doc tree is for Otter developers.)
+ * Rationalised and sanitised the item import (`use`) practices.
+ * Refactoring in the test suite to support new tests.
+ * Fake time facility for testing.
+ * Concrete protocol: more Quiet PieceUpdateOps.
+ * Work around inkscape extension fail-to-save bug (seen in recolour).
+ * Reorganised and shuffled about `Outline` types.
+ * Avoid saving various things to savefiles that aren't needed
+   (mostly `None`s).
+ * Add some internal documentation about `ModifyingPieces`.
+ * Code motion to better organise shapelib.rs and utils.rs
+ * Centralised some UI properties in ui.rs.
+ * Made some type names more consistent (eg `GOccults`, `Catalogue`).
+ * Renamed some PacketFrame types etc. from MgmtChannel.
+ * Other minor improvements.
+
+
 Version 1.0.0 - 2022-04-02
 ==========================
 
