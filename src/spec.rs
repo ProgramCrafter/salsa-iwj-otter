@@ -235,6 +235,8 @@ pub struct PiecesSpec {
 pub enum PieceAngleSpec {
   Compass(String),
   Degrees(i32),
+
+  CompatMF1 { #[serde(rename="Compass")] i: u8 },
 }
 
 #[derive(Debug,Copy,Clone,Serialize,Deserialize)]
@@ -680,6 +682,7 @@ pub mod imp {
           if deg % 45 != 0 { throw!(SpE::CompassAngleInvalid) }
           (deg / 45) as u8
         },
+        Some(PAS::CompatMF1 { i }) => *i,
       };
       PieceAngle::Compass(i.try_into()?)
     }
