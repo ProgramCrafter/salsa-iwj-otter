@@ -253,7 +253,7 @@ struct InstanceSaveAuxiliary<RawTokenStr, PiecesLoadedRef, OccultIlksRef,
   pub links: Arc<LinksTable>,
   asset_url_key: AssetUrlKey,
   #[serde(default)] pub bundle_hashes: bundles::HashCache,
-  ifastsplits: IFastSplitsRef,
+  #[serde(default)] ifastsplits: IFastSplitsRef,
 }
 
 pub struct PrivateCaller(());
