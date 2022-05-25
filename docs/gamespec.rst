@@ -71,6 +71,8 @@ For examples, see the built-in game specs.
 
 .. _the Tera documentation: https://tera.netlify.app/docs/#templates
 
+.. _piece-specs:
+
 Piece Specs
 -----------
 
