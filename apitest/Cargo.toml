@@ -33,7 +33,7 @@ otter.version="=1.0.0"
 ego-tree="0.6"
 fehler="1"
 num-traits="0.2"
-scraper="0.12"
+scraper="0.13"
 structopt="0.3"
 
 reqwest      = { version="0.11" , features=["blocking","json","stream"] }
