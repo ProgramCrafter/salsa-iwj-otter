@@ -155,6 +155,8 @@ Currently the extra fields supported are:
  * ``sort``: Specifies the sort key.  See the ``sort`` group
    parameter.
 
+ * ``x...``: Can be referenced by templates in `"Magic" items`_.
+
 The values for these extra fields come just before the
 ``DWSCRIPTION``, after the other whitespace-delimited fields, in the
 same order as specified in the ``:`` heading line.
@@ -279,6 +281,56 @@ Parameters for defining faces
    looking like ``back``.  If you want to make the piece be
    occultable, you must also specify ``occulted``.  ``back`` is not
    compatible with ``flip``.
+
+"Magic" items
+`````````````
+
+The shape library primarily defines inert image pieces.  But it is
+also possible to define, as part of a library, a non-inert behaviour
+to go with an image.  (These could be defined directly, in game spec
+files, but library items are more convenient to reuse, since the
+necessary parameters do not need to be recapitulated for each use.)
+
+Magic items are produced by a ``magic`` section in the group.  This is
+applied once for each item (ie, once for each entry in ``files``).
+The ``magic`` section generates an additional item in the library for
+each ordinary item defined by the group via its ``files``.
+
+The magic item is typically defined using a non-library piece spec type,
+and usually references the corresponding ordinary (base) item.
+
+The magic section in the group may contain:
+
+ * ``magic.item_prefix``, ``magic.item_suffix``
+   [strings, default ``""``].
+   Defines the magic item name.  The item name to define is assembled
+   the same way as the base image item name, only with these prefix
+   and suffix instead of the main ones in the group.
+
+ * ``template``.  Template which will generate TOML defining the magic
+   piece.  The string value has variables ``${...}`` expanded, and
+   is then reparsed as a new piece of nested TOML.  The resulting
+   dictionary must be a valid :ref:`Piece Spec <piece-specs>`
+   Substitution variables are (in precedence order):
+
+   - ``${CVAR}``, the value of ``colours.COLOUR.substs.CVAR``
+     for the current ``COLOUR``, and for each ``SVAR`` defined there.
+
+   - ``${SVAR}``, the value of ``magic.substs.SVAR`` for each
+     any ``SVAR`` defined there.
+
+   - ``${x...}``, values of extra fields in the ``files`` list
+     (but only those starting with an ``x``).
+
+   - ``${image}`` a TOML in-line dictionary for the piece
+     spec for the base item.  (The substitution references the
+     containing library by name, so it is possible that later-loaded
+     libraries might intercept this reference.)
+   
+   - ``${colour}``, the recolouring name from the ``colours``
+     group parameter.
+
+ * ``substs``: Extra substitutions for the template.
 
 Other group parameters
 ```````````````````````
