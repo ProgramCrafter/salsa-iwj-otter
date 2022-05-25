@@ -146,8 +146,9 @@ It will be HTML-escaped, so it should be plain text, not HTML.
 It is also possible to specify additional data for each piece by
 adding fields to each line in ``files``.  This is done by adding a
 line at the start starting with ``:`` listing the extra fields, and
-then additng one additional whitespace separated value on each data
-line.  Values given for unknown field are ignored.
+then additng one additional whitespace separated value before the
+description on each data line.  Values given for unknown field are
+ignored.
 
 Currently the extra fields supported are:
 
