@@ -179,10 +179,12 @@ follow the link to the latest published documentation for that format.
       of library pieces overhauled.  ``size`` is now the in-game
       size, and the SVG size is obtained from the SVG.
       Library catalogues must be overhauled.
-    - Handling of the ``angle`` parameter in game specs is now
+
+      Handling of the ``angle`` parameter in game specs is now
       much more sensible, and also accurately documented.
-    - Shape library escaping in text strings now uses ``${subst}``
-      (while in filenames and item names, still ``__c`` since that
+
+      Shape library escaping in text strings now uses ``${subst}``
+      (while in filenames and item names, still ``_c`` since that
       appears literally in filenames).
 
   * - ``1``
