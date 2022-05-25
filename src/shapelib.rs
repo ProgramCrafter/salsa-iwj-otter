@@ -217,7 +217,7 @@ pub struct Item {
 
 #[derive(Debug,Serialize,Deserialize)]
 struct ItemInertForOcculted {
-  itemname: GoodItemName,
+  #[serde(default="dummy_item_name")] itemname: GoodItemName,
   desc: Html,
   svgd: Html,
   xform: FaceTransform,
@@ -281,6 +281,15 @@ impl InertPieceTrait for ItemInertForOcculted {
   }
   #[throws(IE)]
   fn describe_html(&self, _: FaceId) -> Html { self.desc.clone() }
+}
+
+fn dummy_item_name() -> GoodItemName {
+  "".to_string().try_into().unwrap()
+}
+
+#[test]
+fn test_dummy_item_name() {
+  let _ = dummy_item_name();
 }
 
 //---------- ItemEnquiryData, LibraryEnquiryData ----------
