@@ -67,24 +67,26 @@ Stability and semver
 The following interfaces are covered by semantic versioning:
 
  * Save game compatibility (new servers loading old games)
- * Command line (new client invoked in old ways)
+ * Command line (new client invoked in old ways) for otter CLI
  * Game and table specifications (new software, old specs)
  * Library bundles (new servers, old bundles)
 
-Additionally,
-we will try to support old library bundles indefinitely
-(and to break them as little as possible).
+Additionally, we will try to support old library bundles indefinitely,
+and to break them as little as possible, so long as anyone is using
+an older format.g
 
 Of course when a new server is handling a game that uses new features,
 old software (eg old management clients) may not cope.
 
 The following are **NOT** covered by semantic versioning:
 
- * All Rust library APIs.
+ * Rust library APIs.
  * The web templates, AJAX protocol between frontend and backend,
    and JavaScript internals.
  * Server-client game management protocol (you may need to run the
    same version of otter on the client as the server is running)
+ * Build system interfaces
+ * Ancillary utilities
 
 This means that the Otter crates do not offer a public stable API.
 You may of course use them outside of the Otter project,
