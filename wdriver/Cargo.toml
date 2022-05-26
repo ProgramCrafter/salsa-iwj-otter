@@ -6,7 +6,7 @@
 name="otter-webdriver-tests"
 description="Otter game system; API tests crate."
 
-version="1.0.0"
+version="1.1.0"
 license="AGPL-3.0-or-later"
 edition="2021"
 resolver="1" # new resolver crashes!
@@ -24,7 +24,7 @@ path="wdriver.rs"
 [dependencies]
 
 otter-api-tests.path="../apitest"
-otter-api-tests.version="=1.0.0"
+otter-api-tests.version="=1.1.0"
 
 fehler="1"
 ndarray="0.15"

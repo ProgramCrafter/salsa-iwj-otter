@@ -6,7 +6,7 @@
 name="otter-support"
 description="Otter game system; support code Rust crate."
 
-version="1.0.0"
+version="1.1.0"
 license="AGPL-3.0-or-later"
 edition="2021"
 resolver="1" # new resolver crashes!
@@ -24,7 +24,7 @@ path="lib.rs"
 [dependencies]
 
 otter-base.path="../base"
-otter-base.version="=1.0.0"
+otter-base.version="=1.1.0"
 	
 anyhow="1"
 byteorder="1.3"
