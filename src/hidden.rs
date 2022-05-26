@@ -52,6 +52,7 @@ pub struct Occultation {
   region: Region, // automatically affect pieces here
   occulter: PieceId, // kept in synch with PieceOccult::active
   notches: Notches, // kept in synch with PieceOccult::passive
+  #[serde(default)]
   unnotched: HashSet<PieceId>, // kept in synch with PieceOccult::passive
   ppiece_use_size: Pos, // taken from first piece
   #[serde(flatten)] views: OccultationViews,

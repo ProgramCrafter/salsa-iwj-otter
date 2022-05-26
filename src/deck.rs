@@ -14,6 +14,7 @@ pub const ENABLED_DESC : HtmlLit = Html::lit("a pickup deck (enabled)");
 struct Deck {
   shape: GenericSimpleShape<(), RectOutline>,
   label: Option<PieceLabelLoaded>,
+  #[serde(default="PosC::zero")]
   stack_pos: Pos,
 }
 
