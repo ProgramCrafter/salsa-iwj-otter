@@ -251,7 +251,7 @@ stamp/cargo.wasm-%: $(call rsrcs, base wasm Cargo.*)
 	$(stamp)
 
 stamp/cargo.deploy-build: $(call rsrcs,.)
-	$(CARGO) build --target $(DEPLOY_ARCH) $(call cr,$(DEPLOY_RELEASE)) -p otter -p otter-cli -p otter-daemon
+	$(CARGO) build --target $(DEPLOY_ARCH) $(call cr,$(DEPLOY_RELEASE)) -p otter -p otter-cli -p otter-daemon -p usvg
 	$(NAILING_CARGO_JUST_RUN) \
 	ln -sf otter $(abspath $(TARGET_DIR)/$(DEPLOY_ARCH))/$(DEPLOY_RELEASE)/otter-ssh-proxy
 	$(stamp)
@@ -495,7 +495,7 @@ DEPLOY_FINISH=/home/Otter/etc/deploy-finish
 for-deploy: stamp/cargo.deploy-build
 deploy: for-deploy bundled-sources assets libraries
 	rsync -zvl --progress $(addprefix $(DEPLOY_TARGET_DIR)/,$(PROGRAMS) otter-ssh-proxy) $(DEPLOY_BASE)/bin/
-	rsync -zv --progress $(TARGET_DIR)/release/usvg $(DEPLOY_BASE)/libexec/
+	rsync -zv --progress $(DEPLOY_TARGET_DIR)/usvg $(DEPLOY_BASE)/libexec/
 	rsync -rv --progress $(TARGET_DIR)/bundled-sources/. $(DEPLOY_BASE)/bundled-sources
 	rsync -r README.md $(DEPLOY_BASE)/.
 	rsync -r --delete --exclude=\*~ library specs $(DEPLOY_BASE)/.
