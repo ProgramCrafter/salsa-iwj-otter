@@ -211,13 +211,6 @@ impl UsualCtx {
   }
 }
 
-mod pi {
-  use otter::prelude::define_index_type;
-  define_index_type!{ pub struct PIA = usize; }
-  define_index_type!{ pub struct PIB = usize; }
-}
-pub use pi::*;
-
 type Pieces<PI> = IndexVec<PI, PieceInfo<JsV /*~PreparedPieceState*/>>;
 type PiecesSlice<PI> = IndexSlice<PI,[PieceInfo<JsV>]>;
 

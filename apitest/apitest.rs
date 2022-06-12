@@ -32,6 +32,13 @@ pub type MgmtChannel = ClientMgmtChannel;
 pub type JsV = serde_json::Value;
 pub type MC = MgmtCommand;
 
+mod pi {
+  use otter::prelude::define_index_type;
+  define_index_type!{ pub struct PIA = usize; }
+  define_index_type!{ pub struct PIB = usize; }
+}
+pub use pi::*;
+
 // -------------------- private crates ----------
 
 use otter_support::config::DAEMON_STARTUP_REPORT;
