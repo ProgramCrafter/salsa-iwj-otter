@@ -435,9 +435,8 @@ impl IPiece {
     match y {
       Some(y) => Left(y),
       None => Right({
-        let occilk = self.occilk.as_ref()
-          .ok_or_else(|| internal_logic_error(format!(
-            "occulted non-occultable {:?}", self)))?;
+        if_let!{ Some(occilk) = self.occilk.as_ref();
+                 else return Ok(Left(ShowUnocculted::new_visible())); }
         let occ_data = ioccults.ilks.from_iilk(occilk)
           .ok_or_else(|| internal_logic_error(format!(
             "occulted ilk vanished {:?} {:?}", self, occilk)))?;
@@ -588,10 +587,6 @@ pub fn recalculate_occultation_general<
             // prevent occulting pieces being occulted
             // (also prevents reflexive occultation)
             return None
-          } else if ipc.occilk.is_none() {
-            // if we cannot make it look identical to the others, we
-            // cannot occult it beause we can't hide its identity
-            return None
           } else if occ.in_region(gpc.pos) {
             Some(Occulted { occid, occ })
           } else {
@@ -731,14 +726,14 @@ pub fn recalculate_occultation_general<
       if let Some(occid) = occulteds.new;
       let zg = gen.next();
       let occ = occultation(goccults, occid);
-      if let Some(ilk) = wants!( ipc.occilk.as_ref() );
+      let ilk = ipc.occilk.as_ref();
       then {
         let permute_notch = match ilk {
-          IOI::Distinct(_) => {
+          Some(IOI::Distinct(_)) | None => {
             occ.unnotched.insert(piece);
             None
           },
-          IOI::Mix(ilk) => {
+          Some(IOI::Mix(ilk)) => {
             if_chain!{
               if occ.notches.is_empty();
               if let Some(ilk) = wants!( ioccults.ilks.get(ilk) );

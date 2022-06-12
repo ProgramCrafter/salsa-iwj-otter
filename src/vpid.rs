@@ -280,7 +280,7 @@ fn exhaustive() {
   st.recurse();
 }                                        
 
-pub fn permute(occid: OccId,
+pub fn permute(_occid: OccId,
                occ: &mut Occultation,
                gplayers: &mut GPlayers,
                gpieces: &mut GPieces,
@@ -297,10 +297,7 @@ pub fn permute(occid: OccId,
       if_let!{ Some(gpc) = gpieces.get(piece); else continue }
       if gpc.held.is_some() { continue }
       let occilk = (|| Some(ipieces.get(piece)?.occilk.as_ref()?))();
-      if_let!{ Some(occilk) = occilk; else {
-        error!("{}", internal_error_bydebug(&(occid, &occ, &nr, piece)));
-        continue;
-      }}
+      if_let!{ Some(occilk) = occilk; else { continue; }}
       if_let!{ IOI::Mix(occilk) = occilk; else continue; }
       let (notches, pieces) = ilks.entry(*occilk.borrow()).or_default();
       notches.push(notch);
