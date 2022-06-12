@@ -18,11 +18,14 @@ impl Ctx {
   fn drag(&mut self){
     let su = &mut self.su;
 
+    let p1_vpid = su.initial_vpid_by_desc_glob("a red disc")?;
+    let p2_vpid = su.initial_vpid_by_desc_glob("a blue square")?;
+
     let alice_p1g = {
       let mut w = su.w(&self.alice)?;
       w.synch()?;
-      let p1 = w.find_piece("1v1")?;
-      let p2 = w.find_piece("2v1")?;
+      let p1 = w.find_piece(&p1_vpid)?;
+      let p2 = w.find_piece(&p2_vpid)?;
       let p1g_old = p1.posg()?;
       let (p2x,p2y) = p2.posw()?;
 
@@ -44,26 +47,26 @@ impl Ctx {
     {
       let mut w = su.w(&self.bob)?;
       w.synch()?;
-      let p1 = w.find_piece("1v1")?;
+      let p1 = w.find_piece(&p1_vpid)?;
       assert_eq!(p1.posg()?, alice_p1g);
     }
   }
 
   #[throws(Explode)]
-  fn rotate(&mut self) -> &'static str {
-    let pc = "4v1";
+  fn rotate(&mut self) -> String {
     let su = &mut self.su;
+    let pc = su.initial_vpid_by_desc_glob("a black knight")?;
 
     let chk = |w: &WindowGuard<'_>| {
       let transform = format!("rotate(-90)");
-      let pd = w.find_element(By::Id(&w.vpidelem("piece",pc)?))?;
+      let pd = w.find_element(By::Id(&w.vpidelem("piece",&pc)?))?;
       assert_eq!(pd.get_attribute("transform")?, Some(transform));
       Ok::<_,AE>(())
     };
 
     {
       let mut w = su.w(&self.alice)?;
-      let p = w.find_piece(pc)?;
+      let p = w.find_piece(&pc)?;
       w.action_chain()
         .move_pos(&p)?
         .click()
@@ -85,7 +88,7 @@ impl Ctx {
   }
 
   #[throws(Explode)]
-  fn drag_off(&mut self, pc: &'static str) {
+  fn drag_off(&mut self, pc: &str) {
     let su = &mut self.su;
 
     let chk = |w: &WindowGuard<'_>, exp_end| {
@@ -127,7 +130,7 @@ impl Ctx {
   }
 
   #[throws(Explode)]
-  fn unselect(&mut self, pc: &'static str) {
+  fn unselect(&mut self, pc: &str) {
     let su = &mut self.su;
 
     let chk = |w: &WindowGuard<'_>| {
@@ -157,14 +160,14 @@ impl Ctx {
 
   #[throws(Explode)]
   fn conflict(&mut self) {
-    let pc = "1v1";
     let su = &mut self.su;
+    let pc = su.initial_vpid_by_desc_glob("a red disc")?;
 
     {
-      let pc = "4v1";
+      let pc = su.initial_vpid_by_desc_glob("a black knight")?;
       let w = su.w(&self.alice)?;
       w.action_chain()
-        .move_pc(&w, pc)?
+        .move_pc(&w, &pc)?
         .click();
     }
 
@@ -178,7 +181,7 @@ impl Ctx {
 
     let mut mk_side = |window, dx| {
       let mut w = su.w(window)?;
-      let p = w.find_piece(pc)?;
+      let p = w.find_piece(&pc)?;
       let start = p.posg()?;
       let try_end = (start + PosC::new(dx, 0))?;
 
@@ -222,11 +225,11 @@ impl Ctx {
       let gots = sides.iter().map(|side|{
         let mut w = su.w(side.window)?;
         w.synch()?;
-        let p = w.find_piece(pc)?;
+        let p = w.find_piece(&pc)?;
         let now = p.posg()?;
 
         let log = w.retrieve_log(before_gen)?;
-        let held = w.piece_held(pc)?;
+        let held = w.piece_held(&pc)?;
         let client = w.client()?;
         let yes = held.as_ref() == Some(&client);
 
@@ -322,8 +325,8 @@ fn tests(UsualSetup { su, alice, bob, spec, ..}: UsualSetup) {
 
   test!(c, "drag-rotate-unselect", {
     let pc = c.rotate().did("rotate")?;
-    c.drag_off(pc).did("drag off")?;
-    c.unselect(pc).did("unselect")?;
+    c.drag_off(&pc).did("drag off")?;
+    c.unselect(&pc).did("unselect")?;
   });
 
   test!(c, "conflict", c.conflict()?);
