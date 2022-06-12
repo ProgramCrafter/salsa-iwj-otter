@@ -504,6 +504,8 @@ impl PieceTrait for Clock {
              y, font, Html::lit(show.text),
              mins_pad, HtmlStr::from_html_str(&mins), Html::lit(show.sigil)
       )?;
+      // We write this separately because, empirically, not all the
+      // sigil characters have the same width, even in a mono font.
       hwrite!(f, r##"
   <{} x="14" y="{}" {} fill="{}" >{:02}</text>"##,
              HTML_TEXT_LABEL_ELEM_START,
