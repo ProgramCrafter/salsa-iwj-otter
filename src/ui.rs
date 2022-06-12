@@ -7,7 +7,7 @@ use crate::prelude::*;
 pub const HELD_SURROUND_COLOUR: &str = "black";
 
 const MONOSPACE: HtmlLit = Html::lit(
-  r#"font-family="Latin Modern Mono, monospace" font-weight="700""#);
+  r#"font-family="DejaVu Sans Mono, monospace" font-weight="700""#);
 
 const USVG_DEFAULT_ARGS_TEXT: &str = include_str!("USVG_DEFAULT_ARGS.txt");
 
