@@ -417,7 +417,8 @@ pub const PLAYER_DEFAULT_PERMS: &[TablePermission] = &[
 ];
 
 #[throws(AE)]
-pub fn setup_table(_ma: &MainOpts, instance_name: &InstanceName, spec: &TableSpec)
+pub fn setup_table(_ma: &MainOpts, instance_name: &InstanceName,
+                   spec: &TableSpec, do_links: bool)
                -> Vec<MGI> {
   let TableSpec { players, player_perms, acl, links } = spec;
   let mut player_perms = player_perms.clone()
@@ -439,7 +440,7 @@ pub fn setup_table(_ma: &MainOpts, instance_name: &InstanceName, spec: &TableSpe
 
   let mut insns = vec![];
   insns.push(MGI::SetACL { acl });
-  insns.push(MGI::SetLinks(links.clone()));
+  if do_links { insns.push(MGI::SetLinks(links.clone())); }
   insns
 }
 

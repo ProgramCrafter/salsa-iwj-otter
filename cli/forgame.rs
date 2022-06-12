@@ -85,7 +85,7 @@ mod reset_game {
         Err(e)
       })?;
 
-      insns.extend(setup_table(&ma, &instance_name, &table_spec)?);
+      insns.extend(setup_table(&ma, &instance_name, &table_spec, true)?);
     }
 
     if args.bundles_only || args.bundles.len() != 0 {
