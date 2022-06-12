@@ -713,13 +713,7 @@ impl<'ig> InstanceGuard<'ig> {
     self.c.g.iplayers.insert(player, record);
 
     let update = (||{
-      let new_info_pane = Arc::new(self.player_info_pane()?);
-
-      let update = PreparedUpdateEntry::SetPlayer {
-        player, new_info_pane,
-        data: DataLoadPlayer::from_player(self, player),
-      };
-
+      let update = self.prepare_set_player_update(player)?;
       self.save_game_now()?;
       self.save_aux_now()?;
       Ok::<_,InternalError>(update)
@@ -740,6 +734,16 @@ impl<'ig> InstanceGuard<'ig> {
   pub fn check_new_nick(&mut self, new_nick: &str) {
     if self.c.g.gs.players.values().any(|old| old.nick == new_nick) {
       Err(ME::NickCollision)?;
+    }
+  }
+
+  #[throws(IE)]
+  pub fn prepare_set_player_update(&self, player: PlayerId)
+                                   -> PreparedUpdateEntry {
+    let new_info_pane = Arc::new(self.player_info_pane()?);
+    PreparedUpdateEntry::SetPlayer {
+      player, new_info_pane,
+      data: DataLoadPlayer::from_player(self, player),
     }
   }
 
