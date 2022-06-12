@@ -299,7 +299,7 @@ impl From<InternalError> for MgmtError {
 impl AccessTokenInfo {
   pub fn report(self) -> Vec<String> {
     vec![
-      "Game access url:".to_string(),
+      "Game access url (personal and private):".to_string(),
       self.url,
     ]
   }
