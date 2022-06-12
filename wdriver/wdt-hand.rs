@@ -30,8 +30,8 @@ impl Ctx {
   fn claim(&mut self){
     let su = &mut self.su;
 
-    let hand_vpid = "6v1".to_owned(); // todo
-    let pawn_vpid = "7v1".to_owned(); // todo
+    let hand_vpid = su.initial_vpid_by_desc_glob("a hand repository")?;
+    let pawn_vpid = su.initial_vpid_by_desc_glob("a white pawn")?;
 
     let chk = |
         w: &mut WindowGuard<'_>, pc: &str,
@@ -154,8 +154,8 @@ impl Ctx {
   fn ungrab_race(&mut self){
     let su = &mut self.su;
  
-    let p_alice = "7v1".to_owned(); // todo
-    let p_bob =   "8v1".to_owned(); // todo
+    let p_alice = su.initial_vpid_by_desc_glob("a white pawn")?;
+    let p_bob =   su.initial_vpid_by_desc_glob("a black pawn")?;
     const DEST: Pos = PosC::new(50, 20);
 
     {
@@ -222,7 +222,7 @@ impl Ctx {
   #[throws(Explode)]
   fn regrab_race(&mut self){
     let su = &mut self.su;
-    let pawn_vpid = "7v1".to_owned(); // todo
+    let pawn_vpid = su.initial_vpid_by_desc_glob("a white pawn")?;
     const MIDHAND: Pos = PosC::new(40, 40);
     const OUTHAND: Pos = PosC::new(20, 20);
 
