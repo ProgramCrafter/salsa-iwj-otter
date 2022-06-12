@@ -544,13 +544,13 @@ function pane_switch(newpane: PaneName) {
 function special_count_reupdate() {
   let style_elem = document.getElementById("space-cursor-style")!;
   let style_text;
+  let svg;
+  let xy;
+  let path = 'stroke-linecap="square" d="M -10 -10 10 10 M 10 -10 -10 10"';
+  
   if (special_count == null) {
-    style_text = '';
   } else {
-    let svg;
-    let xy;
     if (special_count != 0) {
-      let path = 'stroke-linecap="square" d="M -10 -10 10 10 M 10 -10 -10 10"';
       let text_len = special_count.toString().length;
       let text_x = text_len <= 3 ? 0 : -15;
       let text_size = text_len <= 3 ? 50 : 45 * (4/text_len);
@@ -575,11 +575,15 @@ function special_count_reupdate() {
     <path stroke-width="4" stroke="purple" ${path}/>
   </g></svg>`;
     }
+  }
+  if (svg !== undefined) {
     let svg_data = btoa(svg);
     style_text =
 `svg[id=space] {
   cursor: url(data:image/svg+xml;base64,${svg_data}) ${xy}, auto;
 }`;
+  } else {
+    style_text = '';
   }
   style_elem.innerHTML = style_text;
   recompute_keybindings();
