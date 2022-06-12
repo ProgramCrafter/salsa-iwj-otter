@@ -1508,7 +1508,7 @@ function rectsel_mouseup(e: MouseEvent) {
 
 type PlayersUpdate = { new_info_pane: string };
 
-messages.AddPlayer = <MessageHandler>function
+messages.SetPlayer = <MessageHandler>function
 (j: { player: string, data: PlayerInfo } & PlayersUpdate) {
   players[j.player] = j.data;
   player_info_pane_set(j);

@@ -68,7 +68,7 @@ pub enum PreparedUpdateEntry {
   SetTableSize(Pos),
   SetTableColour(Colour),
   SetLinks(Arc<LinksTable>),
-  AddPlayer {
+  SetPlayer {
     player: PlayerId,
     data: DataLoadPlayer,
     new_info_pane: Arc<Html>,
@@ -264,7 +264,7 @@ enum TransmitUpdateEntry<'u> {
   },
   SetTableSize(Pos),
   SetTableColour(&'u Colour),
-  AddPlayer {
+  SetPlayer {
     player: PlayerId,
     data: &'u DataLoadPlayer,
     new_info_pane: &'u Html,
@@ -959,8 +959,8 @@ impl PreparedUpdate {
         PUE::SetTableColour(colour) => {
           TUE::SetTableColour(colour)
         }
-        &PUE::AddPlayer { player, ref new_info_pane, ref data } => {
-          TUE::AddPlayer { player, new_info_pane, data }
+        &PUE::SetPlayer { player, ref new_info_pane, ref data } => {
+          TUE::SetPlayer { player, new_info_pane, data }
         }
         &PUE::RemovePlayer { player, ref new_info_pane } => {
           TUE::RemovePlayer { player, new_info_pane }

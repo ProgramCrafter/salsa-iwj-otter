@@ -715,7 +715,7 @@ impl<'ig> InstanceGuard<'ig> {
     let update = (||{
       let new_info_pane = Arc::new(self.player_info_pane()?);
 
-      let update = PreparedUpdateEntry::AddPlayer {
+      let update = PreparedUpdateEntry::SetPlayer {
         player, new_info_pane,
         data: DataLoadPlayer::from_player(self, player),
       };
