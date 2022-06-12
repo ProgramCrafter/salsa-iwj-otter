@@ -1061,6 +1061,8 @@ pub fn setup_core<O>(module_paths: &[&str]) ->
     "html5ever::tokenizer",
     "html5ever::tree_builder",
     "selectors::matching",
+    "hyper::proto::h1",
+    "hyper::client::pool",
   ] {
     builder.filter_module(too_verbose, log::LevelFilter::Info);
   }
