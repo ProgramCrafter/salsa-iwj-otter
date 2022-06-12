@@ -887,9 +887,11 @@ fn execute_game_insn<'cs, 'igr, 'ig: 'igr>(
         });
         gpl.nick = new_nick;
       }
+      let update = ig.prepare_set_player_update(player)?;
+
       (U{ log,
           pcs: vec![],
-          raw: None},
+          raw: Some(vec![update])},
        Fine, default(), vec![], ig)
     },
 
