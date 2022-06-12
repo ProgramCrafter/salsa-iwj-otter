@@ -7,7 +7,7 @@ use super::usebundles::*;
 
 // todo: list-players
 
-//---------- reset-game ----------
+//---------- reset ----------
 
 mod reset_game {
   use super::*;
@@ -23,7 +23,7 @@ mod reset_game {
   fn subargs(sa: &mut Args) -> ArgumentParser {
     use argparse::*;
     let mut ap = ArgumentParser::new();
-    ap.refer(&mut sa.table_file).metavar("TABLE-SPEC[-TOML]")
+    ap.refer(&mut sa.table_file).metavar("TABLE-SPEC[-TOML")
       .add_option(&["--reset-table"],StoreOption,
                   "reset the players and access too");
     ap.refer(&mut sa.game_spec).required()
