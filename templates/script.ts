@@ -548,7 +548,26 @@ function mousecursor_etc_reupdate() {
   let xy;
   let path = 'stroke-linecap="square" d="M -10 -10 10 10 M 10 -10 -10 10"';
   
-  if (special_count == null) {
+  if (wresting) {
+    let text;
+    if (special_count == null) {
+      text = "WREST";
+    } else if (special_count == 0) {
+      text = "W v";
+    } else {
+      text = "W " + special_count;
+    }
+    xy = '60 15';
+    svg =
+`<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="-60 -15 120 60" width="120" height="60">
+  <g transform="translate(0 0)">
+    <path stroke-width="8" stroke="black" ${path}/>
+    <path stroke-width="4" stroke="#cc0" ${path}/>
+ <text x="0" y="40" fill="black" stroke="#cc0" stroke-width="1.7" text-align="center" text-anchor="middle"
+ font-family="sans-serif" font-size="30">${text}</text>
+  </g></svg>`;
+  } else if (special_count == null) {
   } else {
     if (special_count != 0) {
       let text_len = special_count.toString().length;
