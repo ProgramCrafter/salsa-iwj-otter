@@ -12,9 +12,6 @@ struct Ctx {
 }
 usual_wanted_tests!{Ctx, su}
 
-const HAND: &str = "6v1";
-const PAWN: &str = "7v1";
-const PAWN2: &str = "8v1";
 const ALICE: &str = "1#1";
 
 #[throws(Explode)]
@@ -32,6 +29,9 @@ impl Ctx {
   #[throws(Explode)]
   fn claim(&mut self){
     let su = &mut self.su;
+
+    let hand_vpid = "6v1".to_owned(); // todo
+    let pawn_vpid = "7v1".to_owned(); // todo
 
     let chk = |
         w: &mut WindowGuard<'_>, pc: &str,
@@ -52,7 +52,7 @@ impl Ctx {
       let mut w = su.w(&self.alice)?;
       w.synch()?;
 
-      let hand = w.find_piece(HAND)?;
+      let hand = w.find_piece(&hand_vpid)?;
       let hand_pieceid = hand.pieceid.to_string();
 
       let hand_posg = hand.posg()?;
@@ -89,22 +89,22 @@ impl Ctx {
         .perform()
         .did("deselect")?;
 
-      chk(&mut w, HAND, Some(ALICE))?;
+      chk(&mut w, &hand_pieceid, Some(ALICE))?;
 
       hand_posg
     };
 
     {
       let mut w = su.w(&self.bob)?;
-      chk(&mut w, HAND, Some(ALICE))?;
+      chk(&mut w, &hand_vpid, Some(ALICE))?;
 
       w.get(w.current_url()?)?;
-      chk(&mut w, HAND, Some(ALICE))?;
+      chk(&mut w, &hand_vpid, Some(ALICE))?;
     }
 
     {
       let mut w = su.w(&self.alice)?;
-      let pawn = w.find_piece(PAWN)?;
+      let pawn = w.find_piece(&pawn_vpid)?;
       w.action_chain()
         .move_pos(&pawn)?
         .click_and_hold()
@@ -124,7 +124,7 @@ impl Ctx {
     {
       let mut w = su.w(&self.alice)?;
 
-      let hand = w.find_piece(HAND)?;
+      let hand = w.find_piece(&hand_vpid)?;
       w.action_chain()
         .move_pos(&hand)?
         .click()
@@ -142,27 +142,27 @@ impl Ctx {
         .perform()
         .did("deselect")?;
 
-      chk(&mut w, HAND, None)?;
+      chk(&mut w, &hand_vpid, None)?;
     }
     {
       let mut w = su.w(&self.bob)?;
-      chk(&mut w, HAND, None)?;
+      chk(&mut w, &hand_vpid, None)?;
     }
   }
 
   #[throws(Explode)]
   fn ungrab_race(&mut self){
     let su = &mut self.su;
-
-    const P_ALICE: &str = PAWN;
-    const P_BOB:   &str = PAWN2;
+ 
+    let p_alice = "7v1".to_owned(); // todo
+    let p_bob =   "8v1".to_owned(); // todo
     const DEST: Pos = PosC::new(50, 20);
 
     {
       let mut w = su.w(&self.alice)?;
 
       w.action_chain()
-        .move_pc(&w, P_ALICE)?
+        .move_pc(&w, &p_alice)?
         .click()
 
         .click_and_hold()
@@ -178,7 +178,7 @@ impl Ctx {
       let mut w = su.w(&self.bob)?;
 
       w.action_chain()
-        .move_pc(&w, P_BOB)?
+        .move_pc(&w, &p_bob)?
         .click_and_hold()
         .move_w(&w, (DEST + PosC::new(2,0))?)?
         .release()
@@ -191,7 +191,7 @@ impl Ctx {
       let mut w = su.w(&self.alice)?;
 
       w.action_chain()
-        .move_pc(&w, P_ALICE)?
+        .move_pc(&w, &p_alice)?
         .click()
         .perform()
         .did("alice, drop pawn on target")?;
@@ -209,7 +209,7 @@ impl Ctx {
           .unwrap()
       };
       assert!(
-        dbgc!( find(P_ALICE) ) > dbgc!( find(P_BOB) )
+        dbgc!( find(&p_alice) ) > dbgc!( find(&p_bob) )
       );
       Ok::<_,AE>(())
     };
@@ -222,6 +222,7 @@ impl Ctx {
   #[throws(Explode)]
   fn regrab_race(&mut self){
     let su = &mut self.su;
+    let pawn_vpid = "7v1".to_owned(); // todo
     const MIDHAND: Pos = PosC::new(40, 40);
     const OUTHAND: Pos = PosC::new(20, 20);
 
@@ -230,7 +231,7 @@ impl Ctx {
 
       w.action_chain()
         
-        .move_pc(&w, PAWN)?
+        .move_pc(&w, &pawn_vpid)?
         .click_and_hold()
         .move_w(&w, (MIDHAND + Pos::new(-20,0))?)?
         .release()
@@ -251,7 +252,7 @@ impl Ctx {
       
       let mut w = su.w(&self.alice)?;
       w.synch()?;
-      let pawn = w.find_piece(PAWN)?;
+      let pawn = w.find_piece(&pawn_vpid)?;
       let start = pawn.posw()?;
 
       let paused = pauseable.pause()?;
@@ -277,7 +278,7 @@ impl Ctx {
       dbgc!(&who.name);
       let w = su.w(who)?;
 
-      let held = w.piece_held(PAWN)?;
+      let held = w.piece_held(&pawn_vpid)?;
       assert_eq!( held.unwrap(), ALICE );
 
       let log = w.retrieve_log(*gen)?;
