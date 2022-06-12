@@ -89,6 +89,7 @@ pub struct SetupCore {
   pub server_child: Child,
   pub wanted_tests: TrackWantedTests,
   pub cln: cleanup_notify::Handle,
+  pub initial_pieces_cache: Option<Vec<MgmtGamePieceInfo>>,
 }
 
 #[derive(Clone,Debug)]
@@ -1053,6 +1054,30 @@ impl MgmtChannel {
   }
 }
 
+impl SetupCore {
+  #[throws(AE)]
+  pub fn initial_id_by_desc_glob(&mut self, desc_glob: &str) -> PieceId {
+    let pieces = self.initial_pieces_cache.get_or_insert_with(||{
+      self.mgmt_conn.borrow_mut().list_pieces().unwrap().0
+    });
+
+    let glob = glob::Pattern::new(desc_glob).unwrap();
+    pieces.iter().filter_map(|mgpi| {
+
+      let vis = mgpi.visible.as_ref()?;
+      glob.matches(vis.desc_html.as_html_str()).then(||())?;
+      Some(mgpi.piece)
+
+    }).exactly_one().map_err(|_| anyhow!("not exactly one {:?}", desc_glob))?
+  }
+
+  #[throws(AE)]
+  pub fn initial_vpid_by_desc_glob(&mut self, desc_glob: &str) -> String {
+    let id = self.initial_id_by_desc_glob(desc_glob)?;
+    VisiblePieceId::from(id.data()).to_string()
+  }
+}
+
 // ==================== core entrypoint, for wdriver too ====================
 
 #[throws(AE)]
@@ -1125,6 +1150,7 @@ pub fn setup_core<O>(module_paths: &[&str]) ->
      mgmt_conn: mgmt_conn.into(),
      server_child,
      wanted_tests,
+     initial_pieces_cache: None,
    })
 }
 
