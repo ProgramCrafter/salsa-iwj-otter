@@ -176,6 +176,47 @@ mod reset_game {
   }
 }
 
+//---------- set-access ----------
+
+mod set_access {
+  use super::*;
+
+  #[derive(Default,Debug)]
+  struct Args {
+    table_file: String,
+  }
+
+  fn subargs(sa: &mut Args) -> ArgumentParser {
+    use argparse::*;
+    let mut ap = ArgumentParser::new();
+
+    ap.refer(&mut sa.table_file).required()
+      .add_argument("TABLE-SPEC[-TOML",Store,
+                    "table spec filename");
+    ap
+  }
+
+  fn call(SCCA{ ma, args,.. }:SCCA) -> Result<(),AE> {
+    let args = parse_args::<Args,_>(args, &subargs, &ok_id, None);
+    let instance_name = ma.instance();
+    let mut chan = ma.access_game()?;
+
+    let table_spec = read_spec(&ma, &args.table_file, SpecParseToml::new())?;
+    let insns = setup_table(&ma, &instance_name, &table_spec, false)?;
+    chan.alter_game(insns, None)?;
+
+    if ma.verbose >= 0 {
+      eprintln!("access update successful.");
+    }
+    Ok(())
+  }
+
+  inventory_subcmd!{
+    "set-access",
+    "Set the table's access control list",
+  }
+}
+
 //---------- set-link ----------
 
 mod set_link {
