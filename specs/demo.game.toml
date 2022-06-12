@@ -3,7 +3,7 @@
 # There is NO WARRANTY.
 
 format=2
-table_size = [180, 60]
+table_size = [180, 80]
 
 [[pieces]]
 pos = [90,40]
