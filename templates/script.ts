@@ -850,7 +850,7 @@ keyops_local['wrest'] = function (uo: UoRecord) {
   document.getElementById('wresting-warning')!.innerHTML = !wresting ? "" :
     " <strong>(wresting mode!)</strong>";
   ungrab_all();
-  recompute_keybindings();
+  mousecursor_etc_reupdate();
 }
 
 keyops_local['motion-hint-history'] = function (uo: UoRecord) {
