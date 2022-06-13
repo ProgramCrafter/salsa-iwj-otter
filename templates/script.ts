@@ -397,7 +397,7 @@ function recompute_keybindings() {
     }
   }
   add_uo(null, {
-    def_key: 'W',
+    def_key: wresting ? 'W SPC' /* won't match, handle ad-hoc */ : 'W',
     kind: 'ClientExtra',
     opname: 'wrest',
     desc: wresting ? 'Exit wresting mode' : 'Enter wresting mode',
@@ -495,9 +495,10 @@ function some_keydown(e: KeyboardEvent) {
     mousecursor_etc_reupdate();
     return;
   }
-  if (e.key == ' ') {
+  if (e.key == ' ' || (e.key == 'W' && wresting)) {
     y();
     special_count = null;
+    wresting = false;
     mousecursor_etc_reupdate();
     return;
   }
