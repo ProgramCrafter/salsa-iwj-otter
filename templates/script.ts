@@ -595,16 +595,17 @@ function mousecursor_etc_reupdate() {
   </g></svg>`;
     }
   }
+  // Empirically, setting this to '' and then back to the SVG data
+  // seems to cause Firefox to update it more promptly.
+  style_elem.innerHTML = '';
   if (svg !== undefined) {
     let svg_data = btoa(svg);
     style_text =
 `svg[id=space] {
   cursor: url(data:image/svg+xml;base64,${svg_data}) ${xy}, auto;
 }`;
-  } else {
-    style_text = '';
+    style_elem.innerHTML = style_text;
   }
-  style_elem.innerHTML = style_text;
   recompute_keybindings();
 }
 
