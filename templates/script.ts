@@ -491,13 +491,13 @@ function some_keydown(e: KeyboardEvent) {
     special_count *= 10;
     special_count += special_count_key;
     special_count %= 100000;
-    special_count_reupdate();
+    mousecursor_etc_reupdate();
     return;
   }
   if (e.key == ' ') {
     y();
     special_count = null;
-    special_count_reupdate();
+    mousecursor_etc_reupdate();
     return;
   }
 
@@ -541,7 +541,7 @@ function pane_switch(newpane: PaneName) {
   new_e.removeAttribute('style');
 }
 
-function special_count_reupdate() {
+function mousecursor_etc_reupdate() {
   let style_elem = document.getElementById("space-cursor-style")!;
   let style_text;
   let svg;
@@ -1160,7 +1160,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   let multigrab = c.multigrab;
 
   special_count = null;
-  special_count_reupdate();
+  mousecursor_etc_reupdate();
   drag_cancel();
 
   drag_pieces = [];
@@ -1448,7 +1448,7 @@ function rectsel_mouseup(e: MouseEvent) {
   if (pos2 == null) {
     // clicked not on a piece, and didn't drag
     special_count = null;
-    special_count_reupdate();
+    mousecursor_etc_reupdate();
     // we'll bail in a moment, after possibly unselecting things
   }
 
@@ -1495,7 +1495,7 @@ function rectsel_mouseup(e: MouseEvent) {
 
   // did the special
   special_count = null;
-  special_count_reupdate();
+  mousecursor_etc_reupdate();
 
   if (rectsel_shifted && c.held == us) {
     ungrab_clicked(c.clicked);
