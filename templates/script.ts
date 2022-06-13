@@ -558,6 +558,9 @@ function mousecursor_etc_reupdate() {
   let svg;
   let xy;
   let path = 'stroke-linecap="square" d="M -10 -10 10 10 M 10 -10 -10 10"';
+
+  document.getElementById('wresting-warning')!.innerHTML = !wresting ? "" :
+    " <strong>(wresting mode!)</strong>";
   
   if (wresting) {
     let text;
@@ -878,8 +881,6 @@ function lower_pieces(targets_todo: LowerTodoList):
 
 keyops_local['wrest'] = function (uo: UoRecord) {
   wresting = !wresting;
-  document.getElementById('wresting-warning')!.innerHTML = !wresting ? "" :
-    " <strong>(wresting mode!)</strong>";
   ungrab_all();
   mousecursor_etc_reupdate();
 }
