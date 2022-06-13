@@ -158,6 +158,7 @@ var uos_node : HTMLElement;
 var zoom_val : HTMLInputElement;
 var zoom_btn : HTMLInputElement;
 var links_elem : HTMLElement;
+var was_wresting: boolean;
 var wresting: boolean;
 var occregions: wasm_bindgen.RegionList;
 let special_count: number | null;
@@ -561,6 +562,11 @@ function mousecursor_etc_reupdate() {
 
   document.getElementById('wresting-warning')!.innerHTML = !wresting ? "" :
     " <strong>(wresting mode!)</strong>";
+
+  if (wresting != was_wresting) {
+    ungrab_all();
+    was_wresting = wresting;
+  }
   
   if (wresting) {
     let text;
@@ -881,7 +887,6 @@ function lower_pieces(targets_todo: LowerTodoList):
 
 keyops_local['wrest'] = function (uo: UoRecord) {
   wresting = !wresting;
-  ungrab_all();
   mousecursor_etc_reupdate();
 }
 
