@@ -500,6 +500,17 @@ function some_keydown(e: KeyboardEvent) {
     mousecursor_etc_reupdate();
     return;
   }
+  if (e.key == 'Backspace') {
+    if (special_count == null) {
+      wresting = false;
+    } else if (special_count >= 10) {
+      special_count = Math.round(special_count / 10 - .45);
+    } else {
+      special_count = null;
+    }
+    mousecursor_etc_reupdate();
+    return;
+  }
 
   let uo = uo_map[e.key];
   if (uo === undefined || uo === null) return;
