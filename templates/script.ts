@@ -979,6 +979,7 @@ const DRAGTHRESH = 5;
 
 let rectsel_start: Pos | null;
 let rectsel_shifted: boolean | null;
+let rectsel_started_on_pinned: PieceInfo | null;
 const RECTSELTHRESH = 5;
 
 function piece_xy(p: PieceInfo): Pos {
@@ -1186,9 +1187,13 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   let target = e.target as SVGGraphicsElement; // we check this just now!
   let piece: PieceId | undefined = target.dataset.piece;
 
-  if (!piece) {
+  let p = null;
+  if (piece) p = pieces[piece]!;
+
+  if (!piece || treat_as_pinned(p!)) {
     rectsel_start = mouseevent_pos(e);
     rectsel_shifted = shifted;
+    rectsel_started_on_pinned = p;
     window.addEventListener('mousemove', rectsel_mousemove, true);
     window.addEventListener('mouseup',   rectsel_mouseup,   true);
     return;
@@ -1488,7 +1493,10 @@ function rectsel_mouseup(e: MouseEvent) {
   let pos2 = rectsel_nontrivial_pos2(e);
 
   if (pos2 == null) {
-    // clicked not on a piece, and didn't drag
+    // clicked not on an unpinned piece, and didn't drag
+    if (rectsel_started_on_pinned !== null) {
+      pinned_log_message(rectsel_started_on_pinned);
+    }
     special_count = null;
     mousecursor_etc_reupdate();
     // we'll bail in a moment, after possibly unselecting things
