@@ -980,6 +980,7 @@ const DRAGTHRESH = 5;
 let rectsel_start: Pos | null;
 let rectsel_shifted: boolean | null;
 let rectsel_started_on_whynot: string | null;
+let rectsel_started_on_grab: PieceId | null;
 const RECTSELTHRESH = 5;
 
 function piece_xy(p: PieceInfo): Pos {
@@ -1189,6 +1190,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   let piece: PieceId | undefined = target.dataset.piece;
 
   rectsel_started_on_whynot = null;
+  rectsel_started_on_grab = null;
 
   if (piece) {
     let p = pieces[piece]!;
@@ -1197,6 +1199,12 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       rectsel_started_on_whynot = pinned_message_for_log(p!);
       piece = undefined;
       console.log('mousedown pinned');
+    }
+
+    if (special_count === null && !wresting && !piece_moveable(p)) {
+      rectsel_started_on_grab = piece!;
+      piece = undefined;
+      console.log('mousedown unmoveable');
     }
   }
 
@@ -1226,6 +1234,9 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   window.addEventListener('mouseup',   drag_mouseup,   true);
 }
 
+// Mostly, run on mousedown.
+// Sometimes run on mouseup, if we decided that the user might be
+// intending a drag instead.
 function mouseclick_core(c: MouseFoundClicked, shifted: boolean,
 			note_already: PieceSet | null) {
   let held = c.held;
@@ -1515,6 +1526,16 @@ function rectsel_mouseup(e: MouseEvent) {
     // clicked not on an unpinned piece, and didn't drag
     if (rectsel_started_on_whynot) {
       add_log_message(rectsel_started_on_whynot);
+    }
+    if (rectsel_started_on_grab) {
+      let p = pieces[rectsel_started_on_grab];
+      mouseclick_core({ clicked: [rectsel_started_on_grab],
+			held: p.held,
+			pinned: treat_as_pinned(p),
+			multigrab: undefined, },
+		      e.shiftKey,
+		      null);
+      return;
     }
     special_count = null;
     mousecursor_etc_reupdate();
