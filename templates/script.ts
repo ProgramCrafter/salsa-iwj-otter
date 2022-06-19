@@ -300,6 +300,9 @@ function piece_element(base: string, piece: PieceId): SVGGraphicsElement | null
 function piece_moveable(p: PieceInfo) {
   return p.moveable == 'Yes' || p.moveable == 'IfWresting' && wresting;
 }
+function treat_as_pinned(p: { pinned: boolean }): boolean {
+  return p.pinned && !wresting;
+}
 
 // ----- key handling -----
 
@@ -1095,7 +1098,7 @@ function mouse_find_predicate(
     }
 
     let p = pieces[piece];
-    if (p.pinned && !wresting) continue;
+    if (treat_as_pinned(p)) continue;
     if (p.held && p.held != us && !wresting) continue;
     if (i > 0 && !piece_moveable(p))
       continue;
@@ -1194,7 +1197,6 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   if (c == null) return;
   let clicked = c.clicked;
   let held = c.held;
-  let pinned = c.pinned;
   let multigrab = c.multigrab;
 
   special_count = null;
@@ -1212,7 +1214,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     if (!shifted) {
       ungrab_all_except(note_already);
     }
-    if (pinned && !wresting) {
+    if (treat_as_pinned(c)) {
       let p = pieces[c.clicked[0]!]!;
       add_log_message('That piece ('+p.desc+') is pinned to the table.');
       return;
