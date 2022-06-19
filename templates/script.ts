@@ -1029,7 +1029,8 @@ function some_mousedown(e : MouseEvent) {
   }
 }
 
-type MouseFindClicked = null | {
+type MouseFindClicked = null | MouseFoundClicked;
+type MouseFoundClicked = {
   clicked: PieceId[],
   held: PlayerId | null,
   pinned: boolean,
@@ -1210,13 +1211,24 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
 
   let c = mouse_find_clicked(e, target, piece, false, note_already);
   if (c == null) return;
-  let clicked = c.clicked;
-  let held = c.held;
-  let multigrab = c.multigrab;
 
   special_count = null;
   mousecursor_etc_reupdate();
   drag_cancel();
+
+  mouseclick_core(c, shifted, note_already);
+  dcx = e.clientX;
+  dcy = e.clientY;
+
+  window.addEventListener('mousemove', drag_mousemove, true);
+  window.addEventListener('mouseup',   drag_mouseup,   true);
+}
+
+function mouseclick_core(c: MouseFoundClicked, shifted: boolean,
+			note_already: PieceSet | null) {
+  let held = c.held;
+  let clicked = c.clicked;
+  let multigrab = c.multigrab;
 
   drag_pieces = [];
   if (held == us) {
@@ -1239,11 +1251,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     add_log_message('That piece is held by another player.');
     return;
   }
-  dcx = e.clientX;
-  dcy = e.clientY;
 
-  window.addEventListener('mousemove', drag_mousemove, true);
-  window.addEventListener('mouseup',   drag_mouseup,   true);
 }
 
 function mouseevent_pos(e: MouseEvent): Pos {
