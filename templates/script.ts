@@ -1244,7 +1244,7 @@ function mouseclick_core(c: MouseFoundClicked, shifted: boolean,
   let multigrab = c.multigrab;
 
   drag_pieces = [];
-  if (held == us) {
+  if (held == us && multigrab == null) {
     if (shifted) {
       ungrab_clicked(clicked);
       return;
