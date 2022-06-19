@@ -979,7 +979,7 @@ const DRAGTHRESH = 5;
 
 let rectsel_start: Pos | null;
 let rectsel_shifted: boolean | null;
-let rectsel_started_on_pinned: PieceInfo | null;
+let rectsel_started_on_whynot: string | null;
 const RECTSELTHRESH = 5;
 
 function piece_xy(p: PieceInfo): Pos {
@@ -1187,13 +1187,20 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
   let target = e.target as SVGGraphicsElement; // we check this just now!
   let piece: PieceId | undefined = target.dataset.piece;
 
-  let p = null;
-  if (piece) p = pieces[piece]!;
+  rectsel_started_on_whynot = null;
 
-  if (!piece || treat_as_pinned(p!)) {
+  if (piece) {
+    let p = pieces[piece]!;
+
+    if (treat_as_pinned(p!)) {
+      rectsel_started_on_whynot = pinned_message_for_log(p!);
+      piece = undefined;
+    }
+  }
+
+  if (!piece) {
     rectsel_start = mouseevent_pos(e);
     rectsel_shifted = shifted;
-    rectsel_started_on_pinned = p;
     window.addEventListener('mousemove', rectsel_mousemove, true);
     window.addEventListener('mouseup',   rectsel_mouseup,   true);
     return;
@@ -1496,8 +1503,8 @@ function rectsel_mouseup(e: MouseEvent) {
 
   if (pos2 == null) {
     // clicked not on an unpinned piece, and didn't drag
-    if (rectsel_started_on_pinned !== null) {
-      add_log_message(pinned_message_for_log(rectsel_started_on_pinned));
+    if (rectsel_started_on_whynot) {
+      add_log_message(rectsel_started_on_whynot);
     }
     special_count = null;
     mousecursor_etc_reupdate();
