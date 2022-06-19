@@ -303,6 +303,9 @@ function piece_moveable(p: PieceInfo) {
 function treat_as_pinned(p: { pinned: boolean }): boolean {
   return p.pinned && !wresting;
 }
+function pinned_log_message(p: PieceInfo) {
+  add_log_message('That piece ('+p.desc+') is pinned to the table.');
+}
 
 // ----- key handling -----
 
@@ -1215,8 +1218,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       ungrab_all_except(note_already);
     }
     if (treat_as_pinned(c)) {
-      let p = pieces[c.clicked[0]!]!;
-      add_log_message('That piece ('+p.desc+') is pinned to the table.');
+      pinned_log_message(pieces[c.clicked[0]!]!);
       return;
     }
     grab_clicked(clicked, !wresting, multigrab);
