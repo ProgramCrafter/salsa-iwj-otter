@@ -1196,10 +1196,12 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
     if (treat_as_pinned(p!)) {
       rectsel_started_on_whynot = pinned_message_for_log(p!);
       piece = undefined;
+      console.log('mousedown pinned');
     }
   }
 
   if (!piece) {
+    console.log('mousedown rectsel');
     rectsel_start = mouseevent_pos(e);
     rectsel_shifted = shifted;
     window.addEventListener('mousemove', rectsel_mousemove, true);
