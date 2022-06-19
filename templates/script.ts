@@ -303,8 +303,8 @@ function piece_moveable(p: PieceInfo) {
 function treat_as_pinned(p: { pinned: boolean }): boolean {
   return p.pinned && !wresting;
 }
-function pinned_log_message(p: PieceInfo) {
-  add_log_message('That piece ('+p.desc+') is pinned to the table.');
+function pinned_message_for_log(p: PieceInfo): string {
+  return 'That piece ('+p.desc+') is pinned to the table.';
 }
 
 // ----- key handling -----
@@ -1223,7 +1223,7 @@ function drag_mousedown(e : MouseEvent, shifted: boolean) {
       ungrab_all_except(note_already);
     }
     if (treat_as_pinned(c)) {
-      pinned_log_message(pieces[c.clicked[0]!]!);
+      add_log_message(pinned_message_for_log(pieces[c.clicked[0]!]!));
       return;
     }
     grab_clicked(clicked, !wresting, multigrab);
@@ -1497,7 +1497,7 @@ function rectsel_mouseup(e: MouseEvent) {
   if (pos2 == null) {
     // clicked not on an unpinned piece, and didn't drag
     if (rectsel_started_on_pinned !== null) {
-      pinned_log_message(rectsel_started_on_pinned);
+      add_log_message(pinned_message_for_log(rectsel_started_on_pinned));
     }
     special_count = null;
     mousecursor_etc_reupdate();
