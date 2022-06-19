@@ -1378,9 +1378,11 @@ function drag_mousemove(e: MouseEvent) {
 	  continue;
 	} else if (tp.moveable == "IfWresting") {
 	  if (wresting) continue;
-	  add_log_message('That piece can only be moved when Wresting.');
+	  add_log_message(
+	    `That piece (${tp.desc}) can only be moved when Wresting.`);
 	} else {
-	  add_log_message('That piece cannot be moved at the moment.');
+	  add_log_message(
+	    `That piece (${tp.desc}) cannot be moved at the moment.`);
 	}
 	return ddr2;
       }
