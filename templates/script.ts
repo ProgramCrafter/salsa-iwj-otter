@@ -1940,6 +1940,8 @@ pieceops.Delete = <PieceHandler>function
   if (p.held == us) {
     recompute_keybindings();
   }
+  let occregions_changed = occregion_update(piece, p, { occregion: null });
+  if (occregions_changed) redisplay_held_ancillaries();
 }
 
 piece_error_handlers.PosOffTable = <PieceErrorHandler>function()
@@ -2015,7 +2017,7 @@ function piece_modify_core(piece: PieceId, p: PieceInfo,
   console.log('MODIFY DONE');
 }
 function occregion_update(piece: PieceId, p: PieceInfo,
-			  info: PreparedPieceState) {
+			  info: { occregion: string | null } ) {
   let occregions_changed = (
     info.occregion != null
       ? occregions.insert(piece, info.occregion)
