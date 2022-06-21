@@ -1914,7 +1914,6 @@ function insert_piece(piece: PieceId, xp: any,
   console.log('PIECE UPDATE INSERT ',piece,info)
   let delem = document.createElementNS(svg_ns,'defs');
   delem.setAttributeNS(null,'id','defs'+piece);
-  delem.innerHTML = info.svg;
   defs_marker.insertAdjacentElement('afterend', delem);
   let pelem = piece_element('piece',piece);
   let uelem = document.createElementNS(svg_ns,'use');
@@ -1923,14 +1922,11 @@ function insert_piece(piece: PieceId, xp: any,
   uelem.setAttributeNS(null,'data-piece',piece);
   let p = {
     uelem: uelem,
-    pelem: pelem,
     delem: delem,
   } as any as PieceInfo; // fudge this, piece_modify_core will fix it
   pieces[piece] = p;
-  p.uos = info.uos;
   p.queued_moves = 0;
-  piece_resolve_special(piece, p);
-  piece_modify_core(piece, p, info);
+  piece_modify(piece, p, info);
   return p;
 }
 
