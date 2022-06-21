@@ -1,3 +1,74 @@
+Version 1.2.0 - 2022-06-21
+==========================
+
+General changes to game and UI
+------------------------------
+
+ * Counting pickup decks, hands, etc., now include un-occulatable
+   pieces in their count, not only occultable ones.  This means
+   counting piles can now be used to count unoccultable pieces.
+
+ * Fiddle with CSS to try to get mouse cursor to update more promptly.
+   (This is still not perfect, probably due to browser misbehaviour.)
+
+ * otter(1): When printing game access URL, say in message that it's private
+
+ * Change monospace font to DejaVu Sans.  Reportedly the previous font
+   was not always available, causing the chess clock to perhaps misrender.
+
+ * Add piece descriptions to more messages.
+
+ * UI improvements relating to selecting, wresting, and dragging:
+   - Mouse cursor shows differently when in wresting mode.
+   - Allow backspace to delete typed special count.
+   - Leave wresting mode when the user presses space.
+   - Allow rectangle select drag to start on pinned pieces. hands, etc.
+
+Otter CLI
+---------
+
+ * Provide set-access subcommand.  Previously the game ACL could only
+   be adjusted by resetting the whole game, or abstruse alter-game-* runes.
+
+ * fix typo in usage message part concerning `otter reset`.
+
+Game client UI fixes
+--------------------
+
+ * Split a banknote (currency) when the user makes a counted click,
+   even if they are currently holding the note itself.
+   (previously this would simply unselect it).
+
+ * When pieces are newly inserted (inclidng on game reset), properly
+   record their description (for use in messages) and bbox.
+   Previously, the description would show as "undefined" until page reload.
+
+ * When pieces are deleted (including on game reset), properly remove
+   the client's idea of any active occultations they might have had.
+   Previously, "ghost" occultations would remain, causing dotted-line
+   grasp highlighting in places where the hands etc. were.
+
+ * When a player changes their nick, update this in the clients, so
+   that the new nick appears in the info pane and in the various affordances.
+
+ * Fix minor bugs in mouse click handling corner cases.
+
+Demo (testing) game changes
+---------------------------
+
+ * Increase table size.
+ * Add a pickup deck.
+ * Fix a misindent in the spec file.
+
+Internal and testing chnages
+-----------------------------
+
+ * Server/client protocol change: Rename AddPlayer to SetPlayer.
+ * apitest: Suppress some hyper log messages by default.
+ * Add two debug console.log's to the JS code.
+ * Refactorings and internal comment updates.
+
+
 Version 1.1.0 - 2022-05-26
 ==========================
 
