@@ -378,12 +378,13 @@ Other group parameters
    have a ``map`` entry which is a sub-sub-dict mapping input colours
    (strings in ``#rrggbb`` format) to output colours.
 
- * ``desc`` [string: template]: : If specified, provides a template
-   for the description, to allow formulaic descriptions of pieces in
-   this group.  The string specified by ``desc`` must contain ``${desc}``
-   exactly once; that will be replaced with the description calculated
-   according to the other rules.  (``${desc}`` substitution happens
-   after ``${colour}`` substitution.)
+ * ``desc_template`` [string: template]: : If specified, provides a
+   template for the description, to allow formulaic descriptions of
+   pieces in this group.  The string specified by ``desc_template``
+   must contain ``${desc}`` exactly once; that will be replaced with
+   the description calculated according to the other rules.
+   (``${desc}`` substitution happens after ``${colour}``
+   substitution.)
 
  * ``occulted`` [dict, contents depend on ``occulted.method``].  If
    specified, these pieces be occulted.  For example, when a player

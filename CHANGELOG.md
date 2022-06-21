@@ -53,6 +53,12 @@ Game client UI fixes
 
  * Fix minor bugs in mouse click handling corner cases.
 
+Documentation
+-------------
+
+ * Correct the description of the shapelib group parameter `desc_template`.
+   (Previously this wrongly said the parameter was `desc`.)
+
 Demo (testing) game changes
 ---------------------------
 
