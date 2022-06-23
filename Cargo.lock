@@ -3056,9 +3056,9 @@ dependencies = [
 
 [[package]]
 name = "pico-args"
-version = "0.4.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db8bcd96cb740d03149cbad5518db9fd87126a10ab519c011893b1754134c468"
+checksum = "5be167a7af36ee22fe3115051bc51f6e6c7054c9348e28deb4f49bd6f705a315"
 
 [[package]]
 name = "pin-project-lite"
@@ -4505,9 +4505,9 @@ checksum = "110352d4e9076c67839003c7788d8604e24dcded13e0b375af3efaa8cf468517"
 
 [[package]]
 name = "usvg"
-version = "0.22.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a261d60a7215fa339482047cc3dafd4e22e2bf34396aaebef2b707355bbb39c0"
+checksum = "28a82565b5c96dcbb58c9bdbb6aa3642abd395a6a6b480658532c6f74c3c4b7a"
 dependencies = [
  "base64 0.13.0",
  "data-url",
