@@ -6,7 +6,7 @@
 name="otter-base"
 description="Otter game system; WASM/hostside common code crate."
 
-version="1.1.0"
+version="1.2.0"
 license="AGPL-3.0-or-later"
 edition="2021"
 resolver="1" # new resolver crashes!

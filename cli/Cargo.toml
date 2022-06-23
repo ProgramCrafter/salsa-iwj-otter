@@ -6,7 +6,7 @@
 name="otter-cli"
 description="Otter game system; command line game management client."
 
-version="1.1.0"
+version="1.2.0"
 license="AGPL-3.0-or-later"
 edition="2021"
 resolver="1" # new resolver crashes!
@@ -24,9 +24,9 @@ doc=false
 [dependencies]
 
 otter.path=".."
-otter.version="=1.1.0"
+otter.version="=1.2.0"
 otter-base.path="../base"
-otter-base.version="=1.1.0"
+otter-base.version="=1.2.0"
 
 argparse="0.2"
 directories="4"

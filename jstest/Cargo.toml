@@ -6,7 +6,7 @@
 name="otter-nodejs-tests"
 description="Otter game system; JavaScript out-of-browser test support."
 
-version="1.1.0"
+version="1.2.0"
 license="AGPL-3.0-or-later"
 edition="2021"
 resolver="1" # new resolver crashes!
@@ -28,10 +28,10 @@ path="jst-lower.rs"
 [dependencies]
 
 otter.path=".."
-otter.version="=1.1.0"
+otter.version="=1.2.0"
 
 otter-api-tests.path="../apitest"
-otter-api-tests.version="=1.1.0"
+otter-api-tests.version="=1.2.0"
 
 indexmap = { version = "1.6", features=["serde"] }
 
