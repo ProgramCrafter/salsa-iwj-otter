@@ -31,7 +31,7 @@ ndarray="0.15"
 num-traits="0.2"
 structopt="0.3"
 thirtyfour_sync="0.27"
-x11rb="0.9"
+x11rb="0.10"
 
 serde        = { version="1"    , features=["derive", "rc"] }
 strum        = { version="0.24" , features=["derive"      ] }
