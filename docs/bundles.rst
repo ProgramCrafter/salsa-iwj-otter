@@ -173,8 +173,8 @@ follow the link to the latest published documentation for that format.
     - Changes
 
   * - ``2``
-    - unreleased
-    - unreleased
+    - 1.1.0 - `current <https://www.chiark.greenend.org.uk/~ianmdlvl/otter/docs/README.html>`_
+    - supported
     - Handling of the ``size``, ``scale`` and ``outline``
       of library pieces overhauled.  ``size`` is now the in-game
       size, and the SVG size is obtained from the SVG.
@@ -189,7 +189,7 @@ follow the link to the latest published documentation for that format.
 
   * - ``1``
     - 0.x - `1.0.0 <https://www.chiark.greenend.org.uk/~ianmdlvl/otter/1.0.0/docs/README.html>`_
-    - supported
+    - considering deprecation
     - First release.
       Note that ``format`` may be omitted in this version.
 
