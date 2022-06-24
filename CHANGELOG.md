@@ -1,4 +1,4 @@
-Version 1.2.0 - 2022-06-21
+Version 1.2.0 - 2022-06-24
 ==========================
 
 General changes to game and UI
