@@ -13,6 +13,7 @@
 #  - update versions
 #  - ensure pretest == tested == main
 #  - make deploy and test that chiark still works
+#  - make-release --dry-run
 #  - make-release
 #  - release announcement to mailing list
 #  - blog post
