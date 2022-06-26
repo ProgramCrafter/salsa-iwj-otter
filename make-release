@@ -9,6 +9,7 @@
 # Overall release steps:
 #
 #  - update dependencies (cargo update, cargo upgrades)
+#  - check `cargo audit`
 #  - edit CHANGELOG.md
 #  - update versions
 #  - ensure pretest == tested == main
