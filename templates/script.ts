@@ -312,27 +312,38 @@ function pinned_message_for_log(p: PieceInfo): string {
 function recompute_keybindings() {
   uo_map = Object.create(null);
   let all_targets = [];
+
+  // Types here are a little messy
+  function prep_add_uo(uo: UoDescription)
+  : null | { targets: PieceId[] | null }
+  {
+    let currently = uo_map[uo.def_key];
+    if (currently === null) return null;
+    if (currently !== undefined) {
+      if (currently.opname != uo.opname) {
+	uo_map[uo.def_key] = null;
+	return null;
+      }
+    } else {
+      currently = {
+	targets: [],
+	...uo
+      };
+      uo_map[uo.def_key] = currently;
+    }
+    currently.desc = currently.desc < uo.desc ? currently.desc : uo.desc;
+    return currently as unknown as any;
+  };
+  
   for (let piece of Object.keys(pieces)) {
     let p = pieces[piece];
     if (p.held != us) continue;
     all_targets.push(piece);
     for (var uo of p.uos) {
-      let currently = uo_map[uo.def_key];
-      if (currently === null) continue;
-      if (currently !== undefined) {
-	if (currently.opname != uo.opname) {
-	  uo_map[uo.def_key] = null;
-	  continue;
-	}
-      } else {
-	currently = {
-	  targets: [],
-	  ...uo
-	};
-	uo_map[uo.def_key] = currently;
+      let currently = prep_add_uo(uo);
+      if (currently) {
+	currently.targets!.push(piece);
       }
-      currently.desc = currently.desc < uo.desc ? currently.desc : uo.desc;
-      currently.targets!.push(piece);
     }
   }
   all_targets.sort(pieceid_z_cmp);
