@@ -1,3 +1,19 @@
+Version 1.2.1 - 2022-06-26
+==========================
+
+Bugfixes
+--------
+
+ * Fix "flickering drag select" effect in Chromium, by preventing
+   propagation of mouse events which Otter's JS has handled itself.
+
+ * Fix documetation of
+    - Date of Version 1.2.0 in this changelog
+    - Format version status and release dates
+
+ * Developer docs: improvements to internal release checklist.
+
+
 Version 1.2.0 - 2022-06-24
 ==========================
 
