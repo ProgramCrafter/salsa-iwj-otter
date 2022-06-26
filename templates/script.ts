@@ -1026,6 +1026,8 @@ function some_mousedown(e : MouseEvent) {
   if (e.ctrlKey) {
     return;
   } else {
+    e.preventDefault();
+    e.stopPropagation();
     drag_mousedown(e, e.shiftKey);
   }
 }
