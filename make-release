@@ -134,6 +134,7 @@ for cargo_dir in $cargo_order; do
     $dryrun_no_more_cargo \
     nailing-cargo --no-nail --preclean-build=src --git --- \
         sh -xec "
+          unset http_proxy; unset https_proxy
           cd $cargo_dir; cargo publish $cargo_dryrun
         "
 
