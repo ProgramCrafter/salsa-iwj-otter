@@ -15,7 +15,7 @@ Bugfixes
     - Date of Version 1.2.0 in this changelog
     - Format version status and release dates
 
- * Developer docs: improvements to internal release checklist.
+ * Developer release script and checklist improvements.
 
 
 Version 1.2.0 - 2022-06-24
