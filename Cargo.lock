@@ -2636,7 +2636,7 @@ dependencies = [
 
 [[package]]
 name = "otter"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "ambassador",
  "async-condvar-fair",
@@ -2690,7 +2690,7 @@ dependencies = [
 
 [[package]]
 name = "otter-api-tests"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "ego-tree",
  "fehler",
@@ -2705,7 +2705,7 @@ dependencies = [
 
 [[package]]
 name = "otter-base"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "arrayvec",
  "derive_more",
@@ -2725,7 +2725,7 @@ dependencies = [
 
 [[package]]
 name = "otter-cli"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "argparse",
  "const-default",
@@ -2743,7 +2743,7 @@ dependencies = [
 
 [[package]]
 name = "otter-daemon"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "actix-cors",
  "actix-files",
@@ -2764,7 +2764,7 @@ dependencies = [
 
 [[package]]
 name = "otter-nodejs-tests"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "fehler",
  "indexmap",
@@ -2776,7 +2776,7 @@ dependencies = [
 
 [[package]]
 name = "otter-support"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "anyhow",
  "byteorder",
@@ -2813,7 +2813,7 @@ dependencies = [
 
 [[package]]
 name = "otter-wasm"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "console_error_panic_hook",
  "fehler",
@@ -2825,7 +2825,7 @@ dependencies = [
 
 [[package]]
 name = "otter-webdriver-tests"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "fehler",
  "ndarray",
