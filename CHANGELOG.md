@@ -7,6 +7,10 @@ Bugfixes
  * Fix "flickering drag select" effect in Chromium, by preventing
    propagation of mouse events which Otter's JS has handled itself.
 
+ * Do not allow "r for rotate" to trump "r for roll" when dice and
+   rotateable pieces are both selected.  Instead, suppress that keybinding
+   in that case.
+
  * Fix documetation of
     - Date of Version 1.2.0 in this changelog
     - Format version status and release dates
