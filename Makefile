@@ -493,7 +493,8 @@ DEPLOY_BASE=$(DEPLOY_USER):/volatile/Otter
 DEPLOY_FINISH=/home/Otter/etc/deploy-finish
 
 for-deploy: stamp/cargo.deploy-build
-deploy: for-deploy bundled-sources assets libraries
+
+deploy-copy: for-deploy bundled-sources assets libraries
 	rsync -zvl --progress $(addprefix $(DEPLOY_TARGET_DIR)/,$(PROGRAMS) otter-ssh-proxy) $(DEPLOY_BASE)/bin/
 	rsync -zv --progress $(DEPLOY_TARGET_DIR)/usvg $(DEPLOY_BASE)/libexec/
 	rsync -rv --progress $(TARGET_DIR)/bundled-sources/. $(DEPLOY_BASE)/bundled-sources
@@ -502,6 +503,8 @@ deploy: for-deploy bundled-sources assets libraries
 	rsync -r $(FILEASSETS) $(addprefix $(WASM_PACKED)/, $(WASM_ASSETS)) \
 		$(DEPLOY_BASE)/assets/
 	rsync -r nwtemplates/*.tera $(DEPLOY_BASE)/nwtemplates/
+
+deploy: deploy-copy
 	ssh -o BatchMode=true $(DEPLOY_USER) $(DEPLOY_FINISH)
 	git branch -f $(DEPLOYED_BRANCH)
 	-git push origin main
