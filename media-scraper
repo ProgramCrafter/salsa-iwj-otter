@@ -311,7 +311,7 @@ END
 	    }
 	  };
 	  if (defined $cycle) {
-	    my $temp = 'abcbfb'; # chosen at random
+	    my $temp = '#abcbfb6f'; # chosen at random
 	    my $aside = $maybe_cycle[-1];
 	    $emitmap->($aside, $temp);
 	    $emit_most->($#maybe_cycle-1);
