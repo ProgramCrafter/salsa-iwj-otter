@@ -1,0 +1,11 @@
+#
+
+%:
+	dh "$@"
+
+override_dh_auto_build:
+	make all
+
+override_dh_auto_install:
+	mkdir -p debian/tmp/deploy
+	make deploy-copy DEPLOY_BASE=debian/tmp/deploy

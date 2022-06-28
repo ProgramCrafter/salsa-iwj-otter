@@ -1,0 +1,5 @@
+otter (1.2.1-0~pre) unstable; urgency=medium
+
+  * Initial attempts at packaging
+
+ -- Ian Jackson <ijackson@chiark.greenend.org.uk>  Tue, 28 Jun 2022 20:00:41 +0100

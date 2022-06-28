@@ -1,0 +1,11 @@
+Source: otter
+Section: games
+Priority: optional
+Maintainer: Ian Jackson <ijackson@chiark.greenend.org.uk>
+Standards-Version: 4.4.0.0
+Build-Depends: debhelper (>= 9)
+
+Package: Otter
+Depends: ${misc:Depends}
+Architecture: any
+Description: Otter game server
