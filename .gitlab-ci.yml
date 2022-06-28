@@ -13,7 +13,7 @@ build-main:
    - perl <docs/build.rst -ne 'print if s/^\s*sudo (apt install)/apt-get -y install/..!m/\S/' | sh -xe
    - rustup target add wasm32-unknown-unknown
    - cd /volatile/rustcargo/CI/otter
-   - set -xe; make -j$(nproc || echo 4) RUST_VERSION=''
+   - set -xe; make -j$(nproc || echo 4) all RUST_VERSION=''
   cache:
     untracked: true
     paths:
