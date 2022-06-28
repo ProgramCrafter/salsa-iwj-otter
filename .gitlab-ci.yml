@@ -1,0 +1,35 @@
+stages:
+ - build
+
+build-main:
+  stage: build
+  image: rust:1.61.0
+  script:
+   - rustup show
+   - pwd
+   - apt-get update
+   - mkdir -p /volatile/rustcargo/CI/otter
+   - mount --bind $(pwd) /volatile/rustcargo/CI/otter
+   - perl <docs/build.rst -ne 'print if s/^\s*sudo (apt install)/apt-get -y install/..!m/\S/' | sh -xe
+   - rustup target add wasm32-unknown-unknown
+   - cd /volatile/rustcargo/CI/otter
+   - set -xe; make -j$(nproc || echo 4) RUST_VERSION=''
+  cache:
+    untracked: true
+    paths:
+      - $HOME/.cargo/
+      - target/
+
+variables:
+  RUST_BACKTRACE: "FULL"
+
+#defaults:
+#  before_script:
+#    - export PATH="/root/.cargo/bin:$PATH"
+
+#test:
+#  image: "rustdocker/rust:nightly"
+#  script:
+#  - rustc --version && cargo --version
+#  - cargo build --workspace
+#  - cargo test --workspace --verbose
