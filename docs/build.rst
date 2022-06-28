@@ -47,7 +47,6 @@ Setup
 3. Add the WASM Rust target::
 
      rustup target add wasm32-unknown-unknown
-     rustup component add miri # for the tests
 
    **If you just want to run the otter cli client over ssh to an existing server, or edit and preview the shape libraries (ie the piece shapes) you can stop here.**
 
