@@ -14,6 +14,9 @@ build-main:
    - rustup target add wasm32-unknown-unknown
    - cd /volatile/rustcargo/CI/otter
    - set -xe; make -j$(nproc || echo 4) all RUST_VERSION=''
+  artifacts:
+    paths:
+      - target/debug/otter
   cache:
     untracked: true
     paths:
